@@ -1,0 +1,1207 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
+enum UserRole {
+  ADMIN
+  TEACHER
+  NURSE
+  DOCTOR
+  MANAGER
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum ParentType {
+  MOTHER
+  FATHER
+}
+
+enum DailyReportStatus {
+  DRAFT
+  SUBMITTED
+}
+
+enum AbsenceStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum MedicalFormType {
+  GENERAL
+  CONDITIONS
+  VISITS
+  VACCINATIONS
+  ACCIDENTS
+}
+
+enum MedicalFormStatus {
+  DRAFT
+  SUBMITTED
+  REVIEWED
+}
+
+enum FoodCategory {
+  BREAKFAST
+  LUNCH
+  DESSERT
+  SNACK
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DESSERT
+  SNACK
+}
+
+enum PaymentMethod {
+  CASH
+  CHECK
+  TRANSFER
+}
+
+enum AccountingEntryType {
+  FEE
+  DISCOUNT
+  PAYMENT
+  ADJUSTMENT
+}
+
+enum SenderType {
+  ADMIN
+  TEACHER
+  PARENT
+}
+
+enum RecipientType {
+  ADMIN
+  TEACHER
+  PARENT
+}
+
+enum AlarmType {
+  BIRTHDAY
+  ASSESSMENT
+  VACCINATION
+  MEDICAL
+  MEDICINE
+  EVENT
+  INSURANCE
+  PAYMENT
+  REQUEST
+  CONTRACT
+  OTHER
+}
+
+enum PushPlatform {
+  IOS
+  ANDROID
+  WEB
+}
+
+enum AssessmentStatus {
+  DRAFT
+  SUBMITTED
+  REVIEWED
+}
+
+enum PortionSize {
+  NONE
+  LITTLE
+  HALF
+  MOST
+  ALL
+}
+
+// ─────────────────────────────────────────────
+// ORGANIZATION & STRUCTURE
+// ─────────────────────────────────────────────
+
+model Organization {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  logo      String?
+  settings  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  branches Branch[]
+
+  @@map("organizations")
+}
+
+model Branch {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @db.Uuid
+  name           String
+  address        String?
+  phone          String?
+  email          String?
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  users            User[]
+  classes          Class[]
+  settings         Settings[]
+  teachers         Teacher[]
+  nurses           Nurse[]
+  doctors          Doctor[]
+  managers         Manager[]
+  children         Child[]
+  foodCalendars    FoodCalendar[]
+  events           Event[]
+  holidays         Holiday[]
+  alarms           Alarm[]
+  assessmentDates  AssessmentDate[]
+
+  @@index([organizationId])
+  @@map("branches")
+}
+
+model SchoolYear {
+  id        String   @id @default(uuid()) @db.Uuid
+  label     String
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  children          Child[]
+  assessments       Assessment[]
+  accountingEntries AccountingEntry[]
+
+  @@map("school_years")
+}
+
+model Class {
+  id        String   @id @default(uuid()) @db.Uuid
+  branchId  String   @db.Uuid
+  name      String
+  capacity  Int      @default(0)
+  ageGroup  String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  branch   Branch  @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  children Child[]
+
+  @@index([branchId])
+  @@map("classes")
+}
+
+model Settings {
+  id        String   @id @default(uuid()) @db.Uuid
+  branchId  String   @db.Uuid
+  key       String
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@unique([branchId, key])
+  @@index([branchId])
+  @@map("settings")
+}
+
+// ─────────────────────────────────────────────
+// USERS & AUTH (Auth.js compatible)
+// ─────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(uuid()) @db.Uuid
+  email         String    @unique
+  emailVerified DateTime?
+  passwordHash  String?
+  name          String?
+  image         String?
+  role          UserRole  @default(TEACHER)
+  isActive      Boolean   @default(true)
+  branchId      String?   @db.Uuid
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  branch Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+
+  accounts      Account[]
+  sessions      Session[]
+  dailyReports  DailyReport[]   @relation("DailyReportCreator")
+  absenceReports AbsenceReport[] @relation("AbsenceReportCreator")
+  assessments   Assessment[]    @relation("AssessmentCreator")
+  payments      Payment[]       @relation("PaymentCreator")
+  notifications Notification[]
+  pushTokens    PushToken[]     @relation("UserPushTokens")
+
+  @@index([branchId])
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(uuid()) @db.Uuid
+  userId            String  @db.Uuid
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @db.Uuid
+  sessionToken String   @unique
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  createdAt  DateTime @default(now())
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model ParentUser {
+  id           String   @id @default(uuid()) @db.Uuid
+  username     String   @unique
+  passwordHash String
+  token        String?
+  isActive     Boolean  @default(true)
+  childId      String   @db.Uuid
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  child      Child       @relation(fields: [childId], references: [id], onDelete: Cascade)
+  pushTokens PushToken[] @relation("ParentPushTokens")
+
+  @@index([childId])
+  @@index([username])
+  @@map("parent_users")
+}
+
+// ─────────────────────────────────────────────
+// CHILDREN
+// ─────────────────────────────────────────────
+
+model Child {
+  id             String    @id @default(uuid()) @db.Uuid
+  firstName      String
+  middleName     String?
+  lastName       String
+  dateOfBirth    DateTime? @db.Date
+  placeOfBirth   String?
+  gender         Gender?
+  nationality    String?
+  bloodType      String?
+  allergies      String?   @db.Text
+  photo          String?
+  branchId       String    @db.Uuid
+  classId        String?   @db.Uuid
+  schoolYearId   String?   @db.Uuid
+  isActive       Boolean   @default(true)
+  isDraft        Boolean   @default(false)
+  enrollmentDate DateTime? @db.Date
+  busAttendance  Boolean   @default(false)
+  diaperType     String?
+  milkType       String?
+  milkPortions   Int?
+  sleepFrom      DateTime? @db.Time(6)
+  sleepTo        DateTime? @db.Time(6)
+  remarks        String?   @db.Text
+  language       String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  branch     Branch      @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  class      Class?      @relation(fields: [classId], references: [id], onDelete: SetNull)
+  schoolYear SchoolYear? @relation(fields: [schoolYearId], references: [id], onDelete: SetNull)
+
+  addresses        ChildAddress[]
+  parents          Parent[]
+  relatives        Relative[]
+  attachments      ChildAttachment[]
+  history          ChildHistory[]
+  parentUsers      ParentUser[]
+  dailyReports     DailyReport[]
+  absenceReports   AbsenceReport[]
+  medicalForms     MedicalForm[]
+  vaccinations     Vaccination[]
+  assessments      Assessment[]
+  payments         Payment[]
+  accountingEntries AccountingEntry[]
+
+  @@index([branchId])
+  @@index([classId])
+  @@index([schoolYearId])
+  @@index([isActive])
+  @@index([lastName, firstName])
+  @@map("children")
+}
+
+model ChildAddress {
+  id        String   @id @default(uuid()) @db.Uuid
+  childId   String   @db.Uuid
+  street    String?
+  building  String?
+  floor     String?
+  city      String?
+  regionId  String?  @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  child  Child   @relation(fields: [childId], references: [id], onDelete: Cascade)
+  region Region? @relation(fields: [regionId], references: [id], onDelete: SetNull)
+
+  @@index([childId])
+  @@index([regionId])
+  @@map("child_addresses")
+}
+
+model Parent {
+  id          String     @id @default(uuid()) @db.Uuid
+  childId     String     @db.Uuid
+  type        ParentType
+  firstName   String?
+  lastName    String?
+  nationality String?
+  phone       String?
+  mobile      String?
+  email       String?
+  workplace   String?
+  workPhone   String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  child Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@index([childId])
+  @@index([type])
+  @@map("parents")
+}
+
+model Relative {
+  id           String   @id @default(uuid()) @db.Uuid
+  childId      String   @db.Uuid
+  name         String
+  relation     String?
+  phone        String?
+  isAuthorized Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  child Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@index([childId])
+  @@map("relatives")
+}
+
+model ChildAttachment {
+  id        String   @id @default(uuid()) @db.Uuid
+  childId   String   @db.Uuid
+  filename  String
+  fileUrl   String
+  type      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  child Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@index([childId])
+  @@map("child_attachments")
+}
+
+model ChildHistory {
+  id        String   @id @default(uuid()) @db.Uuid
+  childId   String   @db.Uuid
+  snapshot  Json
+  changedBy String?
+  changeNote String?
+  createdAt DateTime @default(now())
+
+  child Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@index([childId])
+  @@index([createdAt])
+  @@map("child_history")
+}
+
+// ─────────────────────────────────────────────
+// STAFF
+// ─────────────────────────────────────────────
+
+model Teacher {
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String?   @db.Uuid
+  firstName      String
+  lastName       String
+  phone          String?
+  mobile         String?
+  email          String?
+  nationality    String?
+  dateOfBirth    DateTime? @db.Date
+  hireDate       DateTime? @db.Date
+  branchId       String    @db.Uuid
+  specialization String?
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  branch      Branch              @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  addresses   TeacherAddress[]
+  attachments TeacherAttachment[]
+
+  @@index([branchId])
+  @@index([userId])
+  @@index([isActive])
+  @@map("teachers")
+}
+
+model TeacherAddress {
+  id        String   @id @default(uuid()) @db.Uuid
+  teacherId String   @db.Uuid
+  street    String?
+  city      String?
+  region    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([teacherId])
+  @@map("teacher_addresses")
+}
+
+model TeacherAttachment {
+  id        String   @id @default(uuid()) @db.Uuid
+  teacherId String   @db.Uuid
+  filename  String
+  fileUrl   String
+  type      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([teacherId])
+  @@map("teacher_attachments")
+}
+
+model Nurse {
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String?   @db.Uuid
+  firstName      String
+  lastName       String
+  phone          String?
+  mobile         String?
+  email          String?
+  nationality    String?
+  dateOfBirth    DateTime? @db.Date
+  hireDate       DateTime? @db.Date
+  branchId       String    @db.Uuid
+  specialization String?
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  branch      Branch            @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  addresses   NurseAddress[]
+  attachments NurseAttachment[]
+
+  @@index([branchId])
+  @@index([userId])
+  @@index([isActive])
+  @@map("nurses")
+}
+
+model NurseAddress {
+  id        String   @id @default(uuid()) @db.Uuid
+  nurseId   String   @db.Uuid
+  street    String?
+  city      String?
+  region    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  nurse Nurse @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+
+  @@index([nurseId])
+  @@map("nurse_addresses")
+}
+
+model NurseAttachment {
+  id        String   @id @default(uuid()) @db.Uuid
+  nurseId   String   @db.Uuid
+  filename  String
+  fileUrl   String
+  type      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  nurse Nurse @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+
+  @@index([nurseId])
+  @@map("nurse_attachments")
+}
+
+model Doctor {
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String?   @db.Uuid
+  firstName      String
+  lastName       String
+  phone          String?
+  mobile         String?
+  email          String?
+  nationality    String?
+  dateOfBirth    DateTime? @db.Date
+  hireDate       DateTime? @db.Date
+  branchId       String    @db.Uuid
+  specialization String?
+  licenseNumber  String?
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  branch      Branch              @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  addresses   DoctorAddress[]
+  attachments DoctorAttachment[]
+
+  @@index([branchId])
+  @@index([userId])
+  @@index([isActive])
+  @@map("doctors")
+}
+
+model DoctorAddress {
+  id        String   @id @default(uuid()) @db.Uuid
+  doctorId  String   @db.Uuid
+  street    String?
+  city      String?
+  region    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@index([doctorId])
+  @@map("doctor_addresses")
+}
+
+model DoctorAttachment {
+  id        String   @id @default(uuid()) @db.Uuid
+  doctorId  String   @db.Uuid
+  filename  String
+  fileUrl   String
+  type      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@index([doctorId])
+  @@map("doctor_attachments")
+}
+
+model Manager {
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String?   @db.Uuid
+  firstName      String
+  lastName       String
+  phone          String?
+  mobile         String?
+  email          String?
+  nationality    String?
+  dateOfBirth    DateTime? @db.Date
+  hireDate       DateTime? @db.Date
+  branchId       String    @db.Uuid
+  specialization String?
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  branch      Branch               @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  addresses   ManagerAddress[]
+  attachments ManagerAttachment[]
+
+  @@index([branchId])
+  @@index([userId])
+  @@index([isActive])
+  @@map("managers")
+}
+
+model ManagerAddress {
+  id        String   @id @default(uuid()) @db.Uuid
+  managerId String   @db.Uuid
+  street    String?
+  city      String?
+  region    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  manager Manager @relation(fields: [managerId], references: [id], onDelete: Cascade)
+
+  @@index([managerId])
+  @@map("manager_addresses")
+}
+
+model ManagerAttachment {
+  id        String   @id @default(uuid()) @db.Uuid
+  managerId String   @db.Uuid
+  filename  String
+  fileUrl   String
+  type      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  manager Manager @relation(fields: [managerId], references: [id], onDelete: Cascade)
+
+  @@index([managerId])
+  @@map("manager_attachments")
+}
+
+// ─────────────────────────────────────────────
+// DAILY REPORTS
+// ─────────────────────────────────────────────
+
+model DailyReport {
+  id               String            @id @default(uuid()) @db.Uuid
+  childId          String            @db.Uuid
+  reportDate       DateTime          @db.Date
+  status           DailyReportStatus @default(DRAFT)
+  breakfastFoodId  String?           @db.Uuid
+  breakfastPortion PortionSize?
+  breakfastTime    DateTime?         @db.Time(6)
+  lunchFoodId      String?           @db.Uuid
+  lunchPortion     PortionSize?
+  lunchTime        DateTime?         @db.Time(6)
+  dessert          String?
+  dessertPortion   PortionSize?
+  dessertTime      DateTime?         @db.Time(6)
+  isSleep          Boolean           @default(false)
+  sleepFrom        DateTime?         @db.Time(6)
+  sleepTo          DateTime?         @db.Time(6)
+  diarrhea         Boolean           @default(false)
+  urinePotty       Int               @default(0)
+  stoolPotty       Int               @default(0)
+  urineDiaper      Int               @default(0)
+  stoolDiaper      Int               @default(0)
+  mood             String?
+  cough            Boolean           @default(false)
+  runnyNose        Boolean           @default(false)
+  vomit            Boolean           @default(false)
+  remarks          String?           @db.Text
+  createdById      String?           @db.Uuid
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  child         Child                   @relation(fields: [childId], references: [id], onDelete: Cascade)
+  breakfastFood Food?                   @relation("BreakfastFood", fields: [breakfastFoodId], references: [id], onDelete: SetNull)
+  lunchFood     Food?                   @relation("LunchFood", fields: [lunchFoodId], references: [id], onDelete: SetNull)
+  createdBy     User?                   @relation("DailyReportCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  fevers        DailyReportFever[]
+  milks         DailyReportMilk[]
+  attachments   DailyReportAttachment[]
+
+  @@unique([childId, reportDate])
+  @@index([childId])
+  @@index([reportDate])
+  @@index([status])
+  @@index([createdById])
+  @@index([breakfastFoodId])
+  @@index([lunchFoodId])
+  @@map("daily_reports")
+}
+
+model DailyReportFever {
+  id            String   @id @default(uuid()) @db.Uuid
+  dailyReportId String   @db.Uuid
+  temperature   Decimal  @db.Decimal(4, 1)
+  time          DateTime @db.Time(6)
+  createdAt     DateTime @default(now())
+
+  dailyReport DailyReport @relation(fields: [dailyReportId], references: [id], onDelete: Cascade)
+
+  @@index([dailyReportId])
+  @@map("daily_report_fevers")
+}
+
+model DailyReportMilk {
+  id            String   @id @default(uuid()) @db.Uuid
+  dailyReportId String   @db.Uuid
+  amountCc      Int
+  time          DateTime @db.Time(6)
+  createdAt     DateTime @default(now())
+
+  dailyReport DailyReport @relation(fields: [dailyReportId], references: [id], onDelete: Cascade)
+
+  @@index([dailyReportId])
+  @@map("daily_report_milks")
+}
+
+model DailyReportAttachment {
+  id            String   @id @default(uuid()) @db.Uuid
+  dailyReportId String   @db.Uuid
+  filename      String
+  fileUrl       String
+  createdAt     DateTime @default(now())
+
+  dailyReport DailyReport @relation(fields: [dailyReportId], references: [id], onDelete: Cascade)
+
+  @@index([dailyReportId])
+  @@map("daily_report_attachments")
+}
+
+// ─────────────────────────────────────────────
+// ABSENCE
+// ─────────────────────────────────────────────
+
+model AbsenceReport {
+  id          String        @id @default(uuid()) @db.Uuid
+  childId     String        @db.Uuid
+  date        DateTime      @db.Date
+  reason      String?       @db.Text
+  status      AbsenceStatus @default(PENDING)
+  createdById String?       @db.Uuid
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  child       Child                @relation(fields: [childId], references: [id], onDelete: Cascade)
+  createdBy   User?                @relation("AbsenceReportCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  attachments AbsenceAttachment[]
+
+  @@index([childId])
+  @@index([date])
+  @@index([status])
+  @@index([createdById])
+  @@map("absence_reports")
+}
+
+model AbsenceAttachment {
+  id              String   @id @default(uuid()) @db.Uuid
+  absenceReportId String   @db.Uuid
+  filename        String
+  fileUrl         String
+  createdAt       DateTime @default(now())
+
+  absenceReport AbsenceReport @relation(fields: [absenceReportId], references: [id], onDelete: Cascade)
+
+  @@index([absenceReportId])
+  @@map("absence_attachments")
+}
+
+// ─────────────────────────────────────────────
+// MEDICAL
+// ─────────────────────────────────────────────
+
+model MedicalForm {
+  id        String            @id @default(uuid()) @db.Uuid
+  childId   String            @db.Uuid
+  formType  MedicalFormType
+  status    MedicalFormStatus @default(DRAFT)
+  data      Json?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  child   Child              @relation(fields: [childId], references: [id], onDelete: Cascade)
+  entries MedicalFormEntry[]
+
+  @@index([childId])
+  @@index([formType])
+  @@index([status])
+  @@map("medical_forms")
+}
+
+model MedicalFormEntry {
+  id            String   @id @default(uuid()) @db.Uuid
+  medicalFormId String   @db.Uuid
+  field         String
+  value         String?  @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  medicalForm MedicalForm @relation(fields: [medicalFormId], references: [id], onDelete: Cascade)
+
+  @@index([medicalFormId])
+  @@index([field])
+  @@map("medical_form_entries")
+}
+
+model Vaccination {
+  id           String    @id @default(uuid()) @db.Uuid
+  childId      String    @db.Uuid
+  vaccineName  String
+  dateGiven    DateTime? @db.Date
+  nextDueDate  DateTime? @db.Date
+  notes        String?   @db.Text
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  child Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@index([childId])
+  @@index([nextDueDate])
+  @@map("vaccinations")
+}
+
+// ─────────────────────────────────────────────
+// FOOD
+// ─────────────────────────────────────────────
+
+model Food {
+  id        String       @id @default(uuid()) @db.Uuid
+  name      String
+  category  FoodCategory
+  isActive  Boolean      @default(true)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  breakfastReports DailyReport[]  @relation("BreakfastFood")
+  lunchReports     DailyReport[]  @relation("LunchFood")
+  foodCalendars    FoodCalendar[]
+
+  @@index([category])
+  @@index([isActive])
+  @@map("foods")
+}
+
+model FoodCalendar {
+  id        String   @id @default(uuid()) @db.Uuid
+  branchId  String   @db.Uuid
+  date      DateTime @db.Date
+  mealType  MealType
+  foodId    String   @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  food   Food   @relation(fields: [foodId], references: [id], onDelete: Cascade)
+
+  @@unique([branchId, date, mealType])
+  @@index([branchId])
+  @@index([date])
+  @@index([foodId])
+  @@map("food_calendars")
+}
+
+// ─────────────────────────────────────────────
+// ASSESSMENTS
+// ─────────────────────────────────────────────
+
+model Assessment {
+  id             String           @id @default(uuid()) @db.Uuid
+  childId        String           @db.Uuid
+  assessmentType Int
+  schoolYearId   String?          @db.Uuid
+  status         AssessmentStatus @default(DRAFT)
+  data           Json?
+  createdById    String?          @db.Uuid
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  child      Child       @relation(fields: [childId], references: [id], onDelete: Cascade)
+  schoolYear SchoolYear? @relation(fields: [schoolYearId], references: [id], onDelete: SetNull)
+  createdBy  User?       @relation("AssessmentCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([childId])
+  @@index([assessmentType])
+  @@index([schoolYearId])
+  @@index([createdById])
+  @@map("assessments")
+}
+
+model AssessmentDate {
+  id             String   @id @default(uuid()) @db.Uuid
+  assessmentType Int
+  branchId       String   @db.Uuid
+  scheduledDate  DateTime @db.Date
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@index([branchId])
+  @@index([assessmentType])
+  @@index([scheduledDate])
+  @@map("assessment_dates")
+}
+
+// ─────────────────────────────────────────────
+// FINANCIAL
+// ─────────────────────────────────────────────
+
+model Payment {
+  id          String        @id @default(uuid()) @db.Uuid
+  childId     String        @db.Uuid
+  amount      Decimal       @db.Decimal(10, 2)
+  date        DateTime      @db.Date
+  method      PaymentMethod
+  reference   String?
+  notes       String?       @db.Text
+  createdById String?       @db.Uuid
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  child     Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+  createdBy User? @relation("PaymentCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([childId])
+  @@index([date])
+  @@index([method])
+  @@index([createdById])
+  @@map("payments")
+}
+
+model AccountingEntry {
+  id           String              @id @default(uuid()) @db.Uuid
+  childId      String              @db.Uuid
+  description  String?
+  amount       Decimal             @db.Decimal(10, 2)
+  type         AccountingEntryType
+  date         DateTime            @db.Date
+  schoolYearId String?             @db.Uuid
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  child      Child       @relation(fields: [childId], references: [id], onDelete: Cascade)
+  schoolYear SchoolYear? @relation(fields: [schoolYearId], references: [id], onDelete: SetNull)
+
+  @@index([childId])
+  @@index([type])
+  @@index([date])
+  @@index([schoolYearId])
+  @@map("accounting_entries")
+}
+
+// ─────────────────────────────────────────────
+// MESSAGES
+// ─────────────────────────────────────────────
+
+model MessageThread {
+  id        String   @id @default(uuid()) @db.Uuid
+  subject   String?
+  createdAt DateTime @default(now())
+
+  messages Message[]
+
+  @@map("message_threads")
+}
+
+model Message {
+  id            String        @id @default(uuid()) @db.Uuid
+  senderId      String        @db.Uuid
+  senderType    SenderType
+  recipientId   String        @db.Uuid
+  recipientType RecipientType
+  subject       String?
+  body          String        @db.Text
+  threadId      String?       @db.Uuid
+  isRead        Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+
+  thread MessageThread? @relation(fields: [threadId], references: [id], onDelete: SetNull)
+
+  @@index([senderId, senderType])
+  @@index([recipientId, recipientType])
+  @@index([threadId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("messages")
+}
+
+// ─────────────────────────────────────────────
+// EVENTS & CALENDAR
+// ─────────────────────────────────────────────
+
+model EventType {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  color     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  events Event[]
+
+  @@map("event_types")
+}
+
+model Event {
+  id          String    @id @default(uuid()) @db.Uuid
+  title       String
+  description String?   @db.Text
+  date        DateTime  @db.Date
+  endDate     DateTime? @db.Date
+  eventTypeId String?   @db.Uuid
+  branchId    String?   @db.Uuid
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  eventType EventType? @relation(fields: [eventTypeId], references: [id], onDelete: SetNull)
+  branch    Branch?    @relation(fields: [branchId], references: [id], onDelete: SetNull)
+
+  @@index([date])
+  @@index([eventTypeId])
+  @@index([branchId])
+  @@index([isActive])
+  @@map("events")
+}
+
+model Holiday {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  date      DateTime @db.Date
+  branchId  String?  @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  branch Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+
+  @@index([date])
+  @@index([branchId])
+  @@map("holidays")
+}
+
+// ─────────────────────────────────────────────
+// ALARMS & NOTIFICATIONS
+// ─────────────────────────────────────────────
+
+model Alarm {
+  id            String    @id @default(uuid()) @db.Uuid
+  type          AlarmType
+  referenceId   String?   @db.Uuid
+  referenceType String?
+  message       String?   @db.Text
+  dueDate       DateTime? @db.Date
+  isActive      Boolean   @default(true)
+  branchId      String?   @db.Uuid
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  branch Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+
+  @@index([type])
+  @@index([dueDate])
+  @@index([isActive])
+  @@index([branchId])
+  @@index([referenceId, referenceType])
+  @@map("alarms")
+}
+
+model Notification {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  title     String
+  body      String?  @db.Text
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model PushToken {
+  id           String       @id @default(uuid()) @db.Uuid
+  userId       String?      @db.Uuid
+  parentUserId String?      @db.Uuid
+  token        String       @unique
+  platform     PushPlatform
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  user       User?       @relation("UserPushTokens", fields: [userId], references: [id], onDelete: Cascade)
+  parentUser ParentUser? @relation("ParentPushTokens", fields: [parentUserId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([parentUserId])
+  @@index([platform])
+  @@map("push_tokens")
+}
+
+// ─────────────────────────────────────────────
+// LOCATION (Lebanon administrative divisions)
+// ─────────────────────────────────────────────
+
+model Province {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  districts District[]
+
+  @@map("provinces")
+}
+
+model District {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String
+  provinceId String   @db.Uuid
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  province Province @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+  regions  Region[]
+
+  @@index([provinceId])
+  @@map("districts")
+}
+
+model Region {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String
+  districtId String   @db.Uuid
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  district       District       @relation(fields: [districtId], references: [id], onDelete: Cascade)
+  childAddresses ChildAddress[]
+
+  @@index([districtId])
+  @@map("regions")
+}

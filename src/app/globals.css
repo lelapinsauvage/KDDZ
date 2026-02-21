@@ -1,26 +1,170 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
+
+/* ── Metronic Dark Blue Theme for Garderie / KiddzOnline ── */
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  /* shadcn semantic tokens */
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+
+  /* Garderie-specific dashboard card colors */
+  --color-card-blue: #4b77be;
+  --color-card-blue-hoki: #67809f;
+  --color-card-green: #1caf9a;
+  --color-card-red: #e7505a;
+  --color-card-red-pink: #e08283;
+  --color-card-purple: #8e44ad;
+  --color-card-yellow: #f2784b;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  --radius: 0.5rem;
+
+  /* Light content area — matches Metronic page background */
+  --background: #eef1f5;
+  --foreground: #333333;
+
+  --card: #ffffff;
+  --card-foreground: #333333;
+  --popover: #ffffff;
+  --popover-foreground: #333333;
+
+  /* Primary = teal accent from Metronic */
+  --primary: #1caf9a;
+  --primary-foreground: #ffffff;
+
+  --secondary: #f1f3f6;
+  --secondary-foreground: #333333;
+
+  --muted: #f1f3f6;
+  --muted-foreground: #6f7b8a;
+
+  --accent: #f1f3f6;
+  --accent-foreground: #333333;
+
+  --destructive: #e7505a;
+
+  --border: #e1e5ec;
+  --input: #e1e5ec;
+  --ring: #1caf9a;
+
+  /* Dashboard charts */
+  --chart-1: #4b77be;
+  --chart-2: #1caf9a;
+  --chart-3: #e7505a;
+  --chart-4: #f2784b;
+  --chart-5: #8e44ad;
+
+  /* Sidebar — always dark blue-gray (Metronic darkblue theme) */
+  --sidebar: #364150;
+  --sidebar-foreground: #b4bcc8;
+  --sidebar-primary: #1caf9a;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #2c3542;
+  --sidebar-accent-foreground: #dde2e8;
+  --sidebar-border: #3f4b5a;
+  --sidebar-ring: #1caf9a;
+}
+
+/* ── Typography ── */
+@font-face {
+  font-family: "Open Sans";
+  src: local("Open Sans");
+  font-display: swap;
+}
+
+:root {
+  --font-sans: "Open Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", "Fira Code", monospace;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-size: 14px;
+    line-height: 1.5;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ── Metronic-style header ── */
+.header-bar {
+  background: #2b3643;
+  height: 46px;
+}
+
+/* ── Metronic-style footer ── */
+.footer-bar {
+  background: #28303b;
+  color: #98a6ba;
+}
+
+/* ── Dashboard stat card styles ── */
+.stat-card-blue { background: #4b77be; color: white; }
+.stat-card-blue-hoki { background: #67809f; color: white; }
+.stat-card-green { background: #1caf9a; color: white; }
+.stat-card-red { background: #e7505a; color: white; }
+.stat-card-red-pink { background: #e08283; color: white; }
+.stat-card-purple { background: #8e44ad; color: white; }
+.stat-card-yellow { background: #f2784b; color: white; }
+
+/* ── Scrollbar styling (matches dark sidebar) ── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #505f72;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #6f7b8a;
 }

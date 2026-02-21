@@ -1,0 +1,15 @@
+import { getEmployees } from "@/lib/actions/employees";
+import { mapEmployee } from "@/lib/map-employee";
+import { EmployeeListingClient } from "@/components/employees/employee-listing-client";
+
+export default async function TeachersListingPage() {
+  const result = await getEmployees("teacher", { pageSize: 100 });
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const raw = result.data as any;
+  const employees = (raw?.employees ?? []).map((e: unknown) =>
+    mapEmployee(e, "teacher")
+  );
+
+  return <EmployeeListingClient type="teacher" employees={employees} />;
+}
