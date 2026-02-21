@@ -1,0 +1,134 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { PageHeader } from "@/components/layout/page-header";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Send } from "lucide-react";
+import { sendMessage } from "@/lib/actions/messages";
+import type { RecipientType } from "@/generated/prisma/enums";
+
+interface Recipient {
+  id: string;
+  name: string;
+  type: "employee" | "parent";
+  recipientType: RecipientType;
+}
+
+interface ComposeClientProps {
+  recipients: Recipient[];
+}
+
+export function ComposeClient({ recipients }: ComposeClientProps) {
+  const router = useRouter();
+  const [recipient, setRecipient] = useState("");
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  function handleSend() {
+    const selected = recipients.find((r) => r.id === recipient);
+    if (!selected) return;
+
+    setError(null);
+    startTransition(async () => {
+      const result = await sendMessage({
+        recipientId: selected.id,
+        recipientType: selected.recipientType,
+        subject: subject || null,
+        body,
+      });
+
+      if (result.success) {
+        router.push("/messages/sent");
+      } else {
+        setError(result.error ?? "Failed to send message");
+      }
+    });
+  }
+
+  return (
+    <>
+      <PageHeader
+        title="Compose Message"
+        breadcrumbs={[
+          { label: "Home", href: "/dashboard" },
+          { label: "Messages" },
+          { label: "Compose" },
+        ]}
+      />
+
+      <div className="p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">New Message</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>To</Label>
+              <Select value={recipient} onValueChange={setRecipient}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select recipient..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {recipients.map((r) => (
+                    <SelectItem key={r.id} value={r.id}>
+                      {r.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Subject</Label>
+              <Input
+                placeholder="Message subject..."
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Message</Label>
+              <Textarea
+                placeholder="Type your message..."
+                rows={10}
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+              />
+            </div>
+
+            {error && (
+              <p className="text-sm text-red-600">{error}</p>
+            )}
+
+            <div className="flex justify-end gap-3 pt-2">
+              <Button variant="outline">Save Draft</Button>
+              <Button
+                onClick={handleSend}
+                style={{ background: "#1caf9a" }}
+                disabled={!recipient || !subject || !body || isPending}
+              >
+                <Send className="mr-1 size-3.5" />
+                {isPending ? "Sending..." : "Send Message"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </>
+  );
+}

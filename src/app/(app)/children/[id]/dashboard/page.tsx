@@ -1,206 +1,142 @@
-"use client";
-
-import { use } from "react";
-import { PageHeader } from "@/components/layout/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import {
-  Baby,
-  Heart,
-  Calendar,
-  ClipboardList,
-  Stethoscope,
-  DollarSign,
-  FileText,
-  Phone,
-  AlertTriangle,
-  TrendingUp,
-} from "lucide-react";
-import { demoChildren } from "@/lib/demo-data";
+import { notFound } from "next/navigation";
+import { getChild } from "@/lib/actions/children";
+import { getDailyReports } from "@/lib/actions/daily-reports";
+import { getAlarms } from "@/lib/actions/alarms";
+import { getChildAttendance, getChildAbsences } from "@/lib/actions/attendance";
+import { getMedicalForms } from "@/lib/actions/medical";
+import { getAccountingSummary } from "@/lib/actions/accounting";
+import { DashboardClient } from "./dashboard-client";
 
 interface Props {
   params: Promise<{ id: string }>;
 }
 
-export default function ChildDashboardPage({ params }: Props) {
-  const { id } = use(params);
-  const child = demoChildren.find((c) => c.id === id) ?? demoChildren[0];
+export default async function ChildDashboardPage({ params }: Props) {
+  const { id } = await params;
 
-  const stats = [
-    { label: "Attendance Rate", value: "92%", icon: Calendar, color: "text-[#1caf9a]" },
-    { label: "Daily Reports", value: "45", icon: ClipboardList, color: "text-blue-500" },
-    { label: "Medical Records", value: "3", icon: Stethoscope, color: "text-red-500" },
-    { label: "Outstanding Balance", value: "$250.00", icon: DollarSign, color: "text-amber-500" },
-  ];
+  const child = await getChild(id);
+  if (!child) {
+    notFound();
+  }
 
-  const recentReports = [
-    { date: "2025-02-21", mood: "HAPPY", meals: "All meals eaten", sleep: "1.5 hrs" },
-    { date: "2025-02-20", mood: "CALM", meals: "Skipped dessert", sleep: "2 hrs" },
-    { date: "2025-02-19", mood: "FUSSY", meals: "Half lunch", sleep: "1 hr" },
-    { date: "2025-02-18", mood: "HAPPY", meals: "All meals eaten", sleep: "1.5 hrs" },
-    { date: "2025-02-17", mood: "SLEEPY", meals: "Light breakfast", sleep: "2.5 hrs" },
-  ];
+  // Fetch data in parallel
+  const [
+    { reports: recentReportsRaw },
+    alarmsResult,
+    attendanceRecords,
+    absences,
+    { forms: medicalForms },
+    accountingSummary,
+  ] = await Promise.all([
+    getDailyReports({ childId: id, pageSize: 5 }),
+    getAlarms({ isActive: true, pageSize: 10 }),
+    getChildAttendance(id),
+    getChildAbsences(id),
+    getMedicalForms({ childId: id }),
+    getAccountingSummary(id),
+  ]);
 
-  const moodColors: Record<string, string> = {
-    HAPPY: "bg-green-100 text-green-700",
-    CALM: "bg-blue-100 text-blue-700",
-    FUSSY: "bg-orange-100 text-orange-700",
-    CRYING: "bg-red-100 text-red-700",
-    SLEEPY: "bg-purple-100 text-purple-700",
+  // Compute attendance rate
+  const totalDays = attendanceRecords.length;
+  const presentDays = attendanceRecords.filter((r) => r.status === "PRESENT").length;
+  const attendanceRate = totalDays > 0 ? `${Math.round((presentDays / totalDays) * 100)}%` : "N/A";
+
+  // Compute outstanding balance
+  const balanceStr = accountingSummary.balance > 0
+    ? `$${accountingSummary.balance.toFixed(2)}`
+    : accountingSummary.balance < 0
+      ? `-$${Math.abs(accountingSummary.balance).toFixed(2)}`
+      : "$0.00";
+
+  // Map child to serializable shape
+  const childData = {
+    id: child.id,
+    firstName: child.firstName,
+    lastName: child.lastName,
+    className: child.class?.name ?? null,
+    branchName: child.branch?.name ?? null,
+    dateOfBirth: child.dateOfBirth ? child.dateOfBirth.toISOString().slice(0, 10) : null,
+    bloodType: child.bloodType ?? null,
+    isActive: child.isActive,
+    gender: child.gender ?? null,
+    nationality: child.nationality ?? null,
   };
 
-  const upcomingAlarms = [
-    { type: "Vaccination", message: "Hepatitis B booster due", date: "2025-03-01", color: "text-red-500" },
-    { type: "Assessment", message: "Motor skills assessment scheduled", date: "2025-03-15", color: "text-blue-500" },
-    { type: "Birthday", message: `${child.firstName}'s birthday`, date: child.dateOfBirth, color: "text-pink-500" },
-  ];
+  // Map recent reports
+  const recentReports = recentReportsRaw.map((r) => {
+    // Determine meal summary
+    const meals = [
+      r.breakfastPortion ? `Breakfast: ${r.breakfastPortion}` : null,
+      r.lunchPortion ? `Lunch: ${r.lunchPortion}` : null,
+      r.dessertPortion ? `Dessert: ${r.dessertPortion}` : null,
+    ]
+      .filter(Boolean)
+      .join(", ") || "No meal data";
+
+    // Determine sleep duration
+    let sleep = "N/A";
+    if (r.isSleep && r.sleepFrom && r.sleepTo) {
+      const fromMs = r.sleepFrom.getTime();
+      const toMs = r.sleepTo.getTime();
+      const diffHours = Math.abs(toMs - fromMs) / (1000 * 60 * 60);
+      sleep = `${diffHours.toFixed(1)} hrs`;
+    }
+
+    return {
+      date: r.reportDate.toISOString().slice(0, 10),
+      mood: r.mood ?? null,
+      meals,
+      sleep,
+    };
+  });
+
+  // Map alarms — filter to those relevant to this child (by referenceId) or general alarms
+  const alarmsData = alarmsResult.success && alarmsResult.data
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ? (alarmsResult.data as any).alarms ?? []
+    : [];
+
+  const upcomingAlarms = alarmsData
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .filter((a: any) => !a.referenceId || a.referenceId === id)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .slice(0, 5)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .map((a: any) => {
+      const colorMap: Record<string, string> = {
+        VACCINATION: "text-red-500",
+        ASSESSMENT: "text-blue-500",
+        BIRTHDAY: "text-pink-500",
+        MEDICAL: "text-red-500",
+        MEDICINE: "text-orange-500",
+        EVENT: "text-purple-500",
+        INSURANCE: "text-yellow-500",
+        PAYMENT: "text-green-500",
+        REQUEST: "text-blue-500",
+        CONTRACT: "text-gray-500",
+        OTHER: "text-gray-500",
+      };
+      return {
+        type: a.type as string,
+        message: a.message as string | null,
+        date: a.dueDate ? new Date(a.dueDate).toISOString().slice(0, 10) : null,
+        color: colorMap[a.type] ?? "text-gray-500",
+      };
+    });
+
+  const stats = {
+    attendanceRate,
+    totalReports: recentReportsRaw.length > 0 ? recentReportsRaw.length : 0,
+    medicalRecords: medicalForms.length,
+    outstandingBalance: balanceStr,
+  };
 
   return (
-    <>
-      <PageHeader
-        title={`${child.firstName} ${child.lastName} — Dashboard`}
-        breadcrumbs={[
-          { label: "Home", href: "/dashboard" },
-          { label: "Children", href: "/children" },
-          { label: `${child.firstName} ${child.lastName}` },
-          { label: "Dashboard" },
-        ]}
-      />
-
-      <div className="space-y-6 p-6">
-        {/* Child Info Card */}
-        <Card>
-          <CardContent className="flex items-center gap-6 pt-6">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#1caf9a]/10">
-              <Baby className="h-10 w-10 text-[#1caf9a]" />
-            </div>
-            <div className="flex-1">
-              <h2 className="text-xl font-semibold">{child.firstName} {child.lastName}</h2>
-              <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                <span>{child.className}</span>
-                <span>•</span>
-                <span>{child.branchName}</span>
-                <span>•</span>
-                <span>DOB: {child.dateOfBirth}</span>
-                <span>•</span>
-                <span>Blood: {child.bloodType}</span>
-              </div>
-              <div className="mt-2 flex gap-2">
-                <Badge className={child.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}>
-                  {child.isActive ? "Active" : "Inactive"}
-                </Badge>
-                <Badge variant="outline">{child.gender}</Badge>
-                <Badge variant="outline">{child.nationality}</Badge>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" asChild>
-                <Link href={`/children/${id}`}>Edit Profile</Link>
-              </Button>
-              <Button size="sm" style={{ background: "#1caf9a" }} asChild>
-                <Link href={`/children/${id}/report`}>View Report</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Stats Row */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {stats.map((stat) => (
-            <Card key={stat.label}>
-              <CardContent className="flex items-center gap-4 pt-6">
-                <stat.icon className={`h-8 w-8 ${stat.color}`} />
-                <div>
-                  <p className="text-2xl font-bold">{stat.value}</p>
-                  <p className="text-xs text-muted-foreground">{stat.label}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* Recent Daily Reports */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Recent Daily Reports</CardTitle>
-              <Button variant="ghost" size="sm" asChild>
-                <Link href={`/daily-reports?child=${id}`}>View All</Link>
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {recentReports.map((r) => (
-                  <div key={r.date} className="flex items-center justify-between rounded-md border p-3">
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium">{r.date}</p>
-                        <p className="text-xs text-muted-foreground">{r.meals} · Sleep: {r.sleep}</p>
-                      </div>
-                    </div>
-                    <Badge className={moodColors[r.mood]}>{r.mood}</Badge>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Quick Links & Alarms */}
-          <div className="space-y-6">
-            {/* Quick Links */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Quick Links</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { label: "Attendance", href: `/children/${id}/attendance`, icon: Calendar },
-                    { label: "Absence", href: `/children/${id}/absence`, icon: AlertTriangle },
-                    { label: "Accidents", href: `/children/${id}/accidents`, icon: Heart },
-                    { label: "Accounting", href: `/children/${id}/accounting`, icon: DollarSign },
-                    { label: "Call Log", href: `/children/${id}/calls`, icon: Phone },
-                    { label: "Health", href: `/medical/general`, icon: Stethoscope },
-                  ].map((link) => (
-                    <Button key={link.label} variant="outline" className="justify-start" asChild>
-                      <Link href={link.href}>
-                        <link.icon className="mr-2 h-4 w-4" />
-                        {link.label}
-                      </Link>
-                    </Button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Upcoming Alarms */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <TrendingUp className="h-4 w-4" />
-                  Upcoming
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {upcomingAlarms.map((alarm, i) => (
-                    <div key={i} className="flex items-center justify-between rounded-md border p-3">
-                      <div>
-                        <p className="text-sm font-medium">{alarm.type}</p>
-                        <p className="text-xs text-muted-foreground">{alarm.message}</p>
-                      </div>
-                      <span className="text-xs text-muted-foreground">{alarm.date}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
-    </>
+    <DashboardClient
+      child={childData}
+      stats={stats}
+      recentReports={recentReports}
+      upcomingAlarms={upcomingAlarms}
+    />
   );
 }

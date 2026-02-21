@@ -1,109 +1,72 @@
-"use client";
+import { getEmployees } from "@/lib/actions/employees";
+import { getParentUsers } from "@/lib/actions/parent-users";
+import { DirectMessageClient } from "./direct-message-client";
+import type { RecipientType } from "@/generated/prisma/enums";
 
-import { useState } from "react";
-import { PageHeader } from "@/components/layout/page-header";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Send } from "lucide-react";
+export default async function DirectMessagePage() {
+  // Fetch individual recipients from DB
+  const [teachersRes, nursesRes, doctorsRes, managersRes, parentRes] = await Promise.all([
+    getEmployees("teacher", { isActive: true, pageSize: 200 }),
+    getEmployees("nurse", { isActive: true, pageSize: 200 }),
+    getEmployees("doctor", { isActive: true, pageSize: 200 }),
+    getEmployees("manager", { isActive: true, pageSize: 200 }),
+    getParentUsers({ isActive: true, pageSize: 200 }),
+  ]);
 
-// Individual recipients only (no groups)
-const individualRecipients = [
-  { id: "sara-khalil", name: "Sara Khalil", role: "Teacher" },
-  { id: "rima-haddad", name: "Rima Haddad", role: "Teacher" },
-  { id: "layla-bazzi", name: "Layla Bazzi", role: "Nurse" },
-  { id: "omar-gemayel", name: "Omar Gemayel", role: "Manager" },
-  { id: "maya-nassar", name: "Maya Nassar", role: "Parent" },
-  { id: "nada-boustany", name: "Nada Boustany", role: "Parent" },
-  { id: "hala-daher", name: "Hala Daher", role: "Nurse" },
-];
+  type EmployeeRow = { id: string; firstName: string; lastName: string };
 
-export default function DirectMessagePage() {
-  const [recipient, setRecipient] = useState("");
-  const [subject, setSubject] = useState("");
-  const [body, setBody] = useState("");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const teachers = ((teachersRes.data as any)?.employees ?? []) as EmployeeRow[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const nurses = ((nursesRes.data as any)?.employees ?? []) as EmployeeRow[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const doctors = ((doctorsRes.data as any)?.employees ?? []) as EmployeeRow[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const managers = ((managersRes.data as any)?.employees ?? []) as EmployeeRow[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const parentUsers = ((parentRes.data as any)?.parentUsers ?? []) as Array<{
+    id: string;
+    username: string;
+    child: { firstName: string; lastName: string };
+  }>;
 
-  function handleSend() {
-    console.log("Sending direct message:", { recipient, subject, body });
-    // TODO: POST to API
-  }
+  const recipients: Array<{
+    id: string;
+    name: string;
+    role: string;
+    recipientType: RecipientType;
+  }> = [
+    ...teachers.map((e) => ({
+      id: e.id,
+      name: `${e.firstName} ${e.lastName}`,
+      role: "Teacher",
+      recipientType: "TEACHER" as RecipientType,
+    })),
+    ...nurses.map((e) => ({
+      id: e.id,
+      name: `${e.firstName} ${e.lastName}`,
+      role: "Nurse",
+      recipientType: "ADMIN" as RecipientType,
+    })),
+    ...doctors.map((e) => ({
+      id: e.id,
+      name: `${e.firstName} ${e.lastName}`,
+      role: "Doctor",
+      recipientType: "ADMIN" as RecipientType,
+    })),
+    ...managers.map((e) => ({
+      id: e.id,
+      name: `${e.firstName} ${e.lastName}`,
+      role: "Manager",
+      recipientType: "ADMIN" as RecipientType,
+    })),
+    ...parentUsers.map((pu) => ({
+      id: pu.id,
+      name: `${pu.username} (${pu.child.firstName} ${pu.child.lastName})`,
+      role: "Parent",
+      recipientType: "PARENT" as RecipientType,
+    })),
+  ];
 
-  return (
-    <>
-      <PageHeader
-        title="Direct Message"
-        breadcrumbs={[
-          { label: "Home", href: "/dashboard" },
-          { label: "Messages", href: "/messages/inbox" },
-          { label: "Compose", href: "/messages/compose" },
-          { label: "Direct Message" },
-        ]}
-      />
-
-      <div className="p-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">New Direct Message</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>To</Label>
-              <Select value={recipient} onValueChange={setRecipient}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a person..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {individualRecipients.map((r) => (
-                    <SelectItem key={r.id} value={r.id}>
-                      {r.name} ({r.role})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Subject</Label>
-              <Input
-                placeholder="Message subject..."
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Message</Label>
-              <Textarea
-                placeholder="Type your message..."
-                rows={10}
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-              />
-            </div>
-
-            <div className="flex justify-end gap-3 pt-2">
-              <Button variant="outline">Save Draft</Button>
-              <Button
-                onClick={handleSend}
-                style={{ background: "#1caf9a" }}
-                disabled={!recipient || !subject || !body}
-              >
-                <Send className="mr-1 size-3.5" />
-                Send Message
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </>
-  );
+  return <DirectMessageClient recipients={recipients} />;
 }

@@ -1,348 +1,53 @@
-"use client";
+import { db } from "@/lib/db";
+import { getBranches } from "@/lib/actions/branches";
+import { AbsentReportsClient } from "./absent-reports-client";
 
-import { useState, useMemo } from "react";
-import { type ColumnDef } from "@tanstack/react-table";
-import {
-  Plus,
-  Eye,
-  Pencil,
-  Trash2,
-  MoreHorizontal,
-  ArrowUpDown,
-} from "lucide-react";
-import Link from "next/link";
-
-import { PageHeader } from "@/components/layout/page-header";
-import { DataTable } from "@/components/shared/data-table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { demoBranches } from "@/lib/demo-data";
-
-// ── Types ───────────────────────────────────────
-type AbsenceStatus = "PENDING" | "APPROVED" | "REJECTED";
-
-interface AbsenceReport {
-  id: string;
-  childName: string;
-  date: string;
-  reason: string;
-  status: AbsenceStatus;
-  createdBy: string;
-  branchId: string;
-  branchName: string;
-}
-
-// ── Demo Data ───────────────────────────────────
-const demoAbsenceReports: AbsenceReport[] = [
-  {
-    id: "abs-1",
-    childName: "Lara Haddad",
-    date: "2026-02-17",
-    reason: "Fever and cold symptoms",
-    status: "APPROVED",
-    createdBy: "Admin",
-    branchId: "branch-1",
-    branchName: "Main Branch",
-  },
-  {
-    id: "abs-2",
-    childName: "Adam Khoury",
-    date: "2026-02-18",
-    reason: "Family travel",
-    status: "APPROVED",
-    createdBy: "Parent",
-    branchId: "branch-1",
-    branchName: "Main Branch",
-  },
-  {
-    id: "abs-3",
-    childName: "Karim Saab",
-    date: "2026-02-19",
-    reason: "Doctor appointment",
-    status: "PENDING",
-    createdBy: "Parent",
-    branchId: "branch-2",
-    branchName: "Downtown Branch",
-  },
-  {
-    id: "abs-4",
-    childName: "Nour Mansour",
-    date: "2026-02-19",
-    reason: "Stomach flu",
-    status: "PENDING",
-    createdBy: "Admin",
-    branchId: "branch-2",
-    branchName: "Downtown Branch",
-  },
-  {
-    id: "abs-5",
-    childName: "Rayan Frem",
-    date: "2026-02-20",
-    reason: "Personal reasons",
-    status: "REJECTED",
-    createdBy: "Parent",
-    branchId: "branch-3",
-    branchName: "Suburb Branch",
-  },
-  {
-    id: "abs-6",
-    childName: "Zein Abi Saab",
-    date: "2026-02-20",
-    reason: "Allergic reaction",
-    status: "APPROVED",
-    createdBy: "Admin",
-    branchId: "branch-2",
-    branchName: "Downtown Branch",
-  },
-  {
-    id: "abs-7",
-    childName: "Jad Nassar",
-    date: "2026-02-21",
-    reason: "Eye infection",
-    status: "PENDING",
-    createdBy: "Parent",
-    branchId: "branch-1",
-    branchName: "Main Branch",
-  },
-  {
-    id: "abs-8",
-    childName: "Yasmine Geagea",
-    date: "2026-02-21",
-    reason: "Dental appointment",
-    status: "PENDING",
-    createdBy: "Admin",
-    branchId: "branch-3",
-    branchName: "Suburb Branch",
-  },
-];
-
-// ── Helpers ─────────────────────────────────────
-function formatDate(iso: string) {
-  const d = new Date(iso);
-  const day = String(d.getDate()).padStart(2, "0");
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const year = d.getFullYear();
-  return `${day}/${month}/${year}`;
-}
-
-const statusColors: Record<AbsenceStatus, string> = {
-  PENDING: "bg-amber-100 text-amber-700 border-amber-200",
-  APPROVED: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  REJECTED: "bg-red-100 text-red-700 border-red-200",
-};
-
-const statusLabels: Record<AbsenceStatus, string> = {
-  PENDING: "Pending",
-  APPROVED: "Approved",
-  REJECTED: "Rejected",
-};
-
-// ── Column definitions ──────────────────────────
-const absenceColumns: ColumnDef<AbsenceReport>[] = [
-  {
-    accessorKey: "childName",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8 text-xs font-semibold uppercase"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Child Name
-        <ArrowUpDown className="ml-1 size-3" />
-      </Button>
-    ),
-    cell: ({ row }) => (
-      <span className="font-medium text-[#333]">{row.original.childName}</span>
-    ),
-  },
-  {
-    accessorKey: "date",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8 text-xs font-semibold uppercase"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Date
-        <ArrowUpDown className="ml-1 size-3" />
-      </Button>
-    ),
-    cell: ({ row }) => (
-      <span className="text-[#555]">{formatDate(row.original.date)}</span>
-    ),
-  },
-  {
-    accessorKey: "reason",
-    header: "Reason",
-    cell: ({ row }) => (
-      <span className="text-[#555]">{row.original.reason}</span>
-    ),
-  },
-  {
-    accessorKey: "status",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8 text-xs font-semibold uppercase"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Status
-        <ArrowUpDown className="ml-1 size-3" />
-      </Button>
-    ),
-    cell: ({ row }) => {
-      const status = row.original.status;
-      return (
-        <Badge className={statusColors[status]}>
-          {statusLabels[status]}
-        </Badge>
-      );
+export default async function AbsentReportsPage() {
+  // Fetch all absence reports with child and branch info
+  const absenceReports = await db.absenceReport.findMany({
+    include: {
+      child: {
+        include: {
+          branch: true,
+        },
+      },
+      createdBy: {
+        select: {
+          name: true,
+          email: true,
+          role: true,
+        },
+      },
     },
-    filterFn: (row, _columnId, filterValue) => {
-      if (!filterValue || filterValue === "ALL") return true;
-      return row.original.status === filterValue;
-    },
-  },
-  {
-    accessorKey: "createdBy",
-    header: "Created By",
-    cell: ({ row }) => (
-      <span className="text-[#555]">{row.original.createdBy}</span>
-    ),
-  },
-  {
-    id: "actions",
-    header: "",
-    cell: ({ row }) => {
-      const report = row.original;
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon-sm">
-              <MoreHorizontal className="size-4" />
-              <span className="sr-only">Actions</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() => console.log("View report:", report.id)}
-            >
-              <Eye className="mr-2 size-4" />
-              View
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => console.log("Edit report:", report.id)}
-            >
-              <Pencil className="mr-2 size-4" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              variant="destructive"
-              onClick={() => console.log("Delete report:", report.id)}
-            >
-              <Trash2 className="mr-2 size-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-    enableSorting: false,
-  },
-];
+    orderBy: { date: "desc" },
+  });
 
-// ── Page Component ──────────────────────────────
-export default function AbsentReportsPage() {
-  const [statusFilter, setStatusFilter] = useState("ALL");
-  const [branchFilter, setBranchFilter] = useState("ALL");
+  // Fetch branches for the filter
+  const branchesResult = await getBranches();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const branchesRaw = branchesResult.success ? (branchesResult.data as any[]) ?? [] : [];
 
-  const filteredReports = useMemo(() => {
-    return demoAbsenceReports.filter((r) => {
-      if (statusFilter !== "ALL" && r.status !== statusFilter) return false;
-      if (branchFilter !== "ALL" && r.branchId !== branchFilter) return false;
-      return true;
-    });
-  }, [statusFilter, branchFilter]);
+  const branches = branchesRaw.map((b) => ({
+    id: b.id as string,
+    name: b.name as string,
+  }));
+
+  // Serialize to plain objects
+  const reports = absenceReports.map((r) => ({
+    id: r.id,
+    childName: `${r.child.firstName} ${r.child.lastName}`,
+    date: r.date.toISOString().slice(0, 10),
+    reason: r.reason ?? "",
+    status: r.status as "PENDING" | "APPROVED" | "REJECTED",
+    createdBy: r.createdBy?.name ?? r.createdBy?.email ?? "Unknown",
+    branchId: r.child.branchId,
+    branchName: r.child.branch?.name ?? "Unknown",
+  }));
 
   return (
-    <>
-      <PageHeader
-        title="Absence Reports"
-        breadcrumbs={[
-          { label: "Absence Reports", href: "/absent-reports" },
-          { label: "All Reports" },
-        ]}
-      />
-
-      <div className="space-y-4 p-6">
-        {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Status filter */}
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="All Statuses" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All Statuses</SelectItem>
-              <SelectItem value="PENDING">Pending</SelectItem>
-              <SelectItem value="APPROVED">Approved</SelectItem>
-              <SelectItem value="REJECTED">Rejected</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {/* Branch filter */}
-          <Select value={branchFilter} onValueChange={setBranchFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="All Branches" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All Branches</SelectItem>
-              {demoBranches.map((b) => (
-                <SelectItem key={b.id} value={b.id}>
-                  {b.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <div className="flex-1" />
-
-          {/* Create Report button */}
-          <Button
-            asChild
-            className="bg-[#1caf9a] text-white hover:bg-[#18a08d]"
-          >
-            <Link href="/absent-reports/drafts">
-              <Plus className="mr-1 size-4" />
-              Create Absence Report
-            </Link>
-          </Button>
-        </div>
-
-        {/* Data Table */}
-        <DataTable
-          columns={absenceColumns}
-          data={filteredReports}
-          searchKey="childName"
-          searchPlaceholder="Search by child name..."
-        />
-      </div>
-    </>
+    <AbsentReportsClient
+      reports={reports}
+      branches={branches}
+    />
   );
 }

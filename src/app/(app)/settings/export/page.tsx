@@ -21,6 +21,11 @@ import {
   DollarSign,
   CalendarCheck,
 } from "lucide-react";
+import { getChildren } from "@/lib/actions/children";
+import { getEmployees } from "@/lib/actions/employees";
+import { getDailyReports } from "@/lib/actions/daily-reports";
+import { getPayments } from "@/lib/actions/payments";
+import { getMedicalForms } from "@/lib/actions/medical";
 
 interface ExportCard {
   id: string;
@@ -53,7 +58,7 @@ const exportCards: ExportCard[] = [
     title: "Medical Records",
     description: "Export medical records including vaccinations, conditions, and visit history.",
     icon: <HeartPulse className="size-5 text-red-500" />,
-    formats: ["PDF"],
+    formats: ["CSV"],
     hasDateRange: false,
   },
   {
@@ -65,33 +70,163 @@ const exportCards: ExportCard[] = [
     hasDateRange: true,
   },
   {
-    id: "attendance",
-    title: "Attendance Records",
-    description: "Export check-in/check-out logs and attendance summaries.",
+    id: "employees",
+    title: "Employee Records",
+    description: "Export all employee records (teachers, nurses, doctors, managers).",
     icon: <CalendarCheck className="size-5 text-purple-500" />,
     formats: ["CSV"],
-    hasDateRange: true,
+    hasDateRange: false,
   },
 ];
+
+function triggerDownload(filename: string, content: string) {
+  const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function escapeCSV(value: string | number | null | undefined): string {
+  const str = String(value ?? "");
+  if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
 
 export default function ExportDatabasePage() {
   const [selectedFormats, setSelectedFormats] = useState<Record<string, string>>({
     children: "CSV",
     "daily-reports": "CSV",
-    medical: "PDF",
+    medical: "CSV",
     financial: "CSV",
-    attendance: "CSV",
+    employees: "CSV",
   });
   const [dateRanges, setDateRanges] = useState<Record<string, { from: string; to: string }>>({
     "daily-reports": { from: "2026-02-01", to: "2026-02-21" },
     financial: { from: "2026-01-01", to: "2026-02-21" },
-    attendance: { from: "2026-02-01", to: "2026-02-21" },
   });
   const [exporting, setExporting] = useState<string | null>(null);
 
-  function handleExport(cardId: string) {
+  async function handleExport(cardId: string) {
     setExporting(cardId);
-    setTimeout(() => setExporting(null), 1500);
+    try {
+      switch (cardId) {
+        case "children": {
+          const result = await getChildren({ pageSize: 10000 });
+          const children = result.children ?? [];
+          const headers = ["ID", "First Name", "Last Name", "Date of Birth", "Gender", "Branch", "Class", "Active", "Enrollment Date"];
+          const rows = children.map((c: any) => [
+            escapeCSV(c.id),
+            escapeCSV(c.firstName),
+            escapeCSV(c.lastName),
+            escapeCSV(c.dateOfBirth ? new Date(c.dateOfBirth).toISOString().split("T")[0] : ""),
+            escapeCSV(c.gender),
+            escapeCSV(c.branch?.name),
+            escapeCSV(c.class?.name),
+            escapeCSV(c.isActive ? "Yes" : "No"),
+            escapeCSV(c.enrollmentDate ? new Date(c.enrollmentDate).toISOString().split("T")[0] : ""),
+          ].join(","));
+          const csv = [headers.join(","), ...rows].join("\n");
+          triggerDownload("children-export.csv", csv);
+          break;
+        }
+        case "employees": {
+          const types = ["teacher", "nurse", "doctor", "manager"] as const;
+          const allEmployees: any[] = [];
+          for (const type of types) {
+            const result = await getEmployees(type, { pageSize: 10000 });
+            const data = result.data as any;
+            const employees = data?.employees ?? [];
+            for (const emp of employees) {
+              allEmployees.push({ ...emp, type });
+            }
+          }
+          const headers = ["ID", "Type", "First Name", "Last Name", "Email", "Phone", "Branch", "Active"];
+          const rows = allEmployees.map((e) => [
+            escapeCSV(e.id),
+            escapeCSV(e.type),
+            escapeCSV(e.firstName),
+            escapeCSV(e.lastName),
+            escapeCSV(e.email),
+            escapeCSV(e.phone),
+            escapeCSV(e.branch?.name),
+            escapeCSV(e.isActive ? "Yes" : "No"),
+          ].join(","));
+          const csv = [headers.join(","), ...rows].join("\n");
+          triggerDownload("employees-export.csv", csv);
+          break;
+        }
+        case "daily-reports": {
+          const range = dateRanges["daily-reports"];
+          const result = await getDailyReports({
+            dateFrom: range?.from,
+            dateTo: range?.to,
+            pageSize: 10000,
+          });
+          const reports = result.reports ?? [];
+          const headers = ["ID", "Child", "Date", "Status", "Mood", "Remarks"];
+          const rows = reports.map((r: any) => [
+            escapeCSV(r.id),
+            escapeCSV(`${r.child?.firstName ?? ""} ${r.child?.lastName ?? ""}`),
+            escapeCSV(r.reportDate ? new Date(r.reportDate).toISOString().split("T")[0] : ""),
+            escapeCSV(r.status),
+            escapeCSV(r.mood),
+            escapeCSV(r.remarks),
+          ].join(","));
+          const csv = [headers.join(","), ...rows].join("\n");
+          triggerDownload("daily-reports-export.csv", csv);
+          break;
+        }
+        case "medical": {
+          const result = await getMedicalForms({ pageSize: 10000 });
+          const forms = result.forms ?? [];
+          const headers = ["ID", "Child", "Form Type", "Status", "Created At"];
+          const rows = forms.map((f: any) => [
+            escapeCSV(f.id),
+            escapeCSV(`${f.child?.firstName ?? ""} ${f.child?.lastName ?? ""}`),
+            escapeCSV(f.formType),
+            escapeCSV(f.status),
+            escapeCSV(f.createdAt ? new Date(f.createdAt).toISOString().split("T")[0] : ""),
+          ].join(","));
+          const csv = [headers.join(","), ...rows].join("\n");
+          triggerDownload("medical-records-export.csv", csv);
+          break;
+        }
+        case "financial": {
+          const range = dateRanges["financial"];
+          const result = await getPayments({
+            dateFrom: range?.from,
+            dateTo: range?.to,
+            pageSize: 10000,
+          });
+          const data = result.data as any;
+          const payments = data?.payments ?? [];
+          const headers = ["ID", "Child", "Amount", "Date", "Method", "Reference", "Notes"];
+          const rows = payments.map((p: any) => [
+            escapeCSV(p.id),
+            escapeCSV(`${p.child?.firstName ?? ""} ${p.child?.lastName ?? ""}`),
+            escapeCSV(p.amount),
+            escapeCSV(p.date ? new Date(p.date).toISOString().split("T")[0] : ""),
+            escapeCSV(p.method),
+            escapeCSV(p.reference),
+            escapeCSV(p.notes),
+          ].join(","));
+          const csv = [headers.join(","), ...rows].join("\n");
+          triggerDownload("financial-export.csv", csv);
+          break;
+        }
+      }
+    } catch (error) {
+      console.error("Export error:", error);
+    } finally {
+      setExporting(null);
+    }
   }
 
   return (
