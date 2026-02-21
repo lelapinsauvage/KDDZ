@@ -50,7 +50,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           };
         } catch {
           // DB not connected yet — allow demo login
-          if (email === "admin@garderie.com" && password === "admin123") {
+          if (email === "admin@garderie.com" && password === "password123") {
             return {
               id: "demo-admin",
               email: "admin@garderie.com",

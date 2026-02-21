@@ -117,7 +117,7 @@ function LoginForm() {
           {/* Demo credentials hint */}
           <div className="mt-6 rounded-md bg-muted p-3 text-center text-xs text-muted-foreground">
             <p className="font-medium">Demo credentials:</p>
-            <p>admin@garderie.com / admin123</p>
+            <p>admin@garderie.com / password123</p>
           </div>
         </CardContent>
       </Card>
