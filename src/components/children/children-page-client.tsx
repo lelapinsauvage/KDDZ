@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Plus, Search } from "lucide-react";
+import { toast } from "sonner";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
-import { childrenColumns, type ChildRow } from "@/components/children/children-columns";
+import { getChildrenColumns, type ChildRow } from "@/components/children/children-columns";
+import { deleteChild } from "@/lib/actions/children";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -16,6 +19,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 // ── Props types matching what the server actions return ──
 
@@ -41,10 +52,19 @@ export function ChildrenPageClient({
   branches,
   classes,
 }: ChildrenPageClientProps) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
   const [branchFilter, setBranchFilter] = useState("ALL");
   const [classFilter, setClassFilter] = useState("ALL");
+  const [genderFilter, setGenderFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
+
+  // Delete confirmation state
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   // Classes filtered by selected branch (for cascading filter)
   const availableClasses = useMemo(() => {
@@ -75,14 +95,53 @@ export function ChildrenPageClient({
         if (!fullName.includes(search.toLowerCase())) return false;
       }
       // Branch
-      if (branchFilter !== "ALL" && child.branchId !== branchFilter) return false;
+      if (branchFilter !== "ALL" && child.branchId !== branchFilter)
+        return false;
       // Class
-      if (effectiveClassFilter !== "ALL" && child.classId !== effectiveClassFilter) return false;
+      if (
+        effectiveClassFilter !== "ALL" &&
+        child.classId !== effectiveClassFilter
+      )
+        return false;
+      // Gender
+      if (genderFilter !== "ALL" && child.gender !== genderFilter) return false;
       // Status
-      if (statusFilter !== "ALL" && getStatus(child) !== statusFilter) return false;
+      if (statusFilter !== "ALL" && getStatus(child) !== statusFilter)
+        return false;
       return true;
     });
-  }, [search, branchFilter, effectiveClassFilter, statusFilter, children]);
+  }, [
+    search,
+    branchFilter,
+    effectiveClassFilter,
+    genderFilter,
+    statusFilter,
+    children,
+  ]);
+
+  const handleDeleteRequest = useCallback((id: string, name: string) => {
+    setDeleteTarget({ id, name });
+  }, []);
+
+  const handleDeleteConfirm = useCallback(() => {
+    if (!deleteTarget) return;
+    const { id, name } = deleteTarget;
+    setDeleteTarget(null);
+    startTransition(async () => {
+      const result = await deleteChild(id);
+      if (result.success) {
+        toast.success(`${name} has been deactivated.`);
+        router.refresh();
+      } else {
+        toast.error(result.error);
+      }
+    });
+  }, [deleteTarget, router]);
+
+  const columns = useMemo(
+    () => getChildrenColumns({ onDelete: handleDeleteRequest }),
+    [handleDeleteRequest],
+  );
 
   return (
     <>
@@ -109,7 +168,13 @@ export function ChildrenPageClient({
           </div>
 
           {/* Branch filter */}
-          <Select value={branchFilter} onValueChange={(v) => { setBranchFilter(v); setClassFilter("ALL"); }}>
+          <Select
+            value={branchFilter}
+            onValueChange={(v) => {
+              setBranchFilter(v);
+              setClassFilter("ALL");
+            }}
+          >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="All Branches" />
             </SelectTrigger>
@@ -124,7 +189,10 @@ export function ChildrenPageClient({
           </Select>
 
           {/* Class filter */}
-          <Select value={effectiveClassFilter} onValueChange={setClassFilter}>
+          <Select
+            value={effectiveClassFilter}
+            onValueChange={setClassFilter}
+          >
             <SelectTrigger className="w-[170px]">
               <SelectValue placeholder="All Classes" />
             </SelectTrigger>
@@ -135,6 +203,18 @@ export function ChildrenPageClient({
                   {c.name}
                 </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+
+          {/* Gender filter */}
+          <Select value={genderFilter} onValueChange={setGenderFilter}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="All Genders" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All Genders</SelectItem>
+              <SelectItem value="MALE">Male</SelectItem>
+              <SelectItem value="FEMALE">Female</SelectItem>
             </SelectContent>
           </Select>
 
@@ -167,11 +247,39 @@ export function ChildrenPageClient({
         </div>
 
         {/* ── Data Table ──────────────────────────── */}
-        <DataTable
-          columns={childrenColumns}
-          data={filteredChildren}
-        />
+        <DataTable columns={columns} data={filteredChildren} />
       </div>
+
+      {/* ── Delete Confirmation Dialog ──────────── */}
+      <Dialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Deactivation</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to deactivate{" "}
+              <strong>{deleteTarget?.name}</strong>? This will mark the child as
+              inactive.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={isPending}
+            >
+              {isPending ? "Deactivating..." : "Deactivate"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

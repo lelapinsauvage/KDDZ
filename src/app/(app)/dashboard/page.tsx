@@ -38,6 +38,12 @@ export default async function DashboardPage() {
   const next7Days = new Date(today);
   next7Days.setDate(next7Days.getDate() + 7);
 
+  // Get active school year for attendance trend date range
+  const activeSchoolYear = await db.schoolYear.findFirst({
+    where: { isActive: true },
+    select: { startDate: true, endDate: true },
+  });
+
   // Fetch all real counts in parallel
   const [
     branchesResult,
@@ -53,6 +59,11 @@ export default async function DashboardPage() {
     draftMedicalResult,
     upcomingEventsCount,
     accidentReportsCount,
+    // Chart data
+    childrenPerClass,
+    genderGroups,
+    attendanceByMonth,
+    absenceByMonth,
   ] = await Promise.all([
     getBranches(),
     getClasses(),
@@ -78,6 +89,43 @@ export default async function DashboardPage() {
     db.medicalForm.count({
       where: { formType: "ACCIDENTS" },
     }),
+    // Children per class
+    db.class.findMany({
+      where: { isActive: true },
+      select: {
+        name: true,
+        _count: {
+          select: { children: { where: { isActive: true, isDraft: false } } },
+        },
+      },
+      orderBy: { name: "asc" },
+    }),
+    // Gender stats
+    db.child.groupBy({
+      by: ["gender"],
+      _count: { _all: true },
+      where: { isActive: true, isDraft: false, gender: { not: null } },
+    }),
+    // Attendance by month (daily reports)
+    activeSchoolYear
+      ? db.$queryRaw<{ month: string; count: bigint }[]>`
+          SELECT TO_CHAR("reportDate", 'Mon') as month, COUNT(*) as count
+          FROM daily_reports
+          WHERE "reportDate" BETWEEN ${activeSchoolYear.startDate} AND ${activeSchoolYear.endDate}
+          GROUP BY DATE_TRUNC('month', "reportDate"), TO_CHAR("reportDate", 'Mon')
+          ORDER BY DATE_TRUNC('month', "reportDate")
+        `
+      : Promise.resolve([]),
+    // Absence by month
+    activeSchoolYear
+      ? db.$queryRaw<{ month: string; count: bigint }[]>`
+          SELECT TO_CHAR("date", 'Mon') as month, COUNT(*) as count
+          FROM absence_reports
+          WHERE "date" BETWEEN ${activeSchoolYear.startDate} AND ${activeSchoolYear.endDate}
+          GROUP BY DATE_TRUNC('month', "date"), TO_CHAR("date", 'Mon')
+          ORDER BY DATE_TRUNC('month', "date")
+        `
+      : Promise.resolve([]),
   ]);
 
   const branchCount = Array.isArray(branchesResult.data)
@@ -112,6 +160,37 @@ export default async function DashboardPage() {
   // Overdue vaccinations as medical alerts
   const overdueVax = Array.isArray(overdueVaxResult.data) ? overdueVaxResult.data : [];
   const accidentReports = accidentReportsCount;
+
+  // Chart data transformations
+  const classChartData = childrenPerClass.map((c) => ({
+    name: c.name,
+    children: c._count.children,
+  }));
+
+  const genderChartData = genderGroups.map((g) => ({
+    name: g.gender === "MALE" ? "Male" : "Female",
+    value: g._count._all,
+  }));
+
+  // Merge attendance + absence by month
+  const absenceMap = new Map(
+    absenceByMonth.map((r) => [r.month, Number(r.count)])
+  );
+  const attendanceChartData = attendanceByMonth.map((r) => ({
+    month: r.month,
+    attendance: Number(r.count),
+    absence: absenceMap.get(r.month) ?? 0,
+  }));
+  // Add months that only have absences (no daily reports)
+  for (const r of absenceByMonth) {
+    if (!attendanceByMonth.some((a) => a.month === r.month)) {
+      attendanceChartData.push({
+        month: r.month,
+        attendance: 0,
+        absence: Number(r.count),
+      });
+    }
+  }
 
   // Messages
   const incomingCalls = unreadMessagesCount;
@@ -158,8 +237,8 @@ export default async function DashboardPage() {
 
         {/* Row 2: Charts */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <ChildrenPerClassChart />
-          <GenderStatsChart />
+          <ChildrenPerClassChart data={classChartData} />
+          <GenderStatsChart data={genderChartData} />
         </div>
 
         {/* Row 3: Attendance metrics */}
@@ -194,7 +273,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Row 4: Attendance trend chart */}
-        <AttendanceChart />
+        <AttendanceChart data={attendanceChartData} />
 
         {/* Row 5: Financial & incident metrics */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">

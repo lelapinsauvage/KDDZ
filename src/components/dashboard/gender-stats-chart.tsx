@@ -10,15 +10,13 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-// Demo data — will be replaced with real data from API
-const data = [
-  { name: "Male", value: 48 },
-  { name: "Female", value: 43 },
-];
-
 const COLORS = ["#4b77be", "#e08283"];
 
-export function GenderStatsChart() {
+interface GenderStatsChartProps {
+  data: { name: string; value: number }[];
+}
+
+export function GenderStatsChart({ data }: GenderStatsChartProps) {
   return (
     <Card>
       <CardHeader className="pb-2">

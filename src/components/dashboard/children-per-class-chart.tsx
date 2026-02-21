@@ -11,17 +11,11 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-// Demo data — will be replaced with real data from API
-const data = [
-  { name: "Nursery A", children: 12 },
-  { name: "Nursery B", children: 18 },
-  { name: "Toddler A", children: 15 },
-  { name: "Toddler B", children: 10 },
-  { name: "Pre-K A", children: 20 },
-  { name: "Pre-K B", children: 16 },
-];
+interface ChildrenPerClassChartProps {
+  data: { name: string; children: number }[];
+}
 
-export function ChildrenPerClassChart() {
+export function ChildrenPerClassChart({ data }: ChildrenPerClassChartProps) {
   return (
     <Card>
       <CardHeader className="pb-2">

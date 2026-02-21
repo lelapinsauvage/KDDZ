@@ -49,16 +49,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             branchId: user.branchId,
           };
         } catch {
-          // DB not connected yet — allow demo login
-          if (email === "admin@garderie.com" && password === "password123") {
-            return {
-              id: "demo-admin",
-              email: "admin@garderie.com",
-              name: "Admin",
-              role: "ADMIN",
-              branchId: null,
-            };
-          }
           return null;
         }
       },

@@ -12,19 +12,11 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-// Demo data — will be replaced with real data from API
-const data = [
-  { month: "Sep", attendance: 85, absence: 6 },
-  { month: "Oct", attendance: 88, absence: 4 },
-  { month: "Nov", attendance: 82, absence: 9 },
-  { month: "Dec", attendance: 78, absence: 12 },
-  { month: "Jan", attendance: 90, absence: 3 },
-  { month: "Feb", attendance: 87, absence: 5 },
-  { month: "Mar", attendance: 91, absence: 2 },
-  { month: "Apr", attendance: 86, absence: 7 },
-];
+interface AttendanceChartProps {
+  data: { month: string; attendance: number; absence: number }[];
+}
 
-export function AttendanceChart() {
+export function AttendanceChart({ data }: AttendanceChartProps) {
   return (
     <Card>
       <CardHeader className="pb-2">

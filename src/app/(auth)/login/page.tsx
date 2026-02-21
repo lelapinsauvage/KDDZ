@@ -114,10 +114,10 @@ function LoginForm() {
             </div>
           </form>
 
-          {/* Demo credentials hint */}
+          {/* Dev credentials hint */}
           <div className="mt-6 rounded-md bg-muted p-3 text-center text-xs text-muted-foreground">
-            <p className="font-medium">Demo credentials:</p>
-            <p>admin@garderie.com / password123</p>
+            <p className="font-medium">Dev credentials:</p>
+            <p>nassibsaab@lebarbar.com / changeme123</p>
           </div>
         </CardContent>
       </Card>

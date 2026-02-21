@@ -3,24 +3,23 @@ import { AppSidebar } from "@/components/layout/app-sidebar"
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import { AppContextProvider } from "@/components/providers/app-context-provider"
+import { db } from "@/lib/db"
+import { auth } from "@/lib/auth"
 
-// TODO: Fetch from database when connected
-const demoBranches = [
-  { id: "branch-1", name: "Main Branch" },
-  { id: "branch-2", name: "Downtown Branch" },
-  { id: "branch-3", name: "Suburb Branch" },
-]
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  const [session, branches, years] = await Promise.all([
+    auth(),
+    db.branch.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    db.schoolYear.findMany({ select: { id: true, label: true }, orderBy: { startDate: "desc" } }),
+  ])
 
-const demoYears = [
-  { id: "year-1", label: "2024-2025" },
-  { id: "year-2", label: "2023-2024" },
-]
+  const defaultBranchId = session?.user?.branchId ?? null
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <AppContextProvider
-      branches={demoBranches}
-      years={demoYears}
+      branches={branches}
+      years={years}
+      defaultBranchId={defaultBranchId}
     >
       <SidebarProvider
         defaultOpen

@@ -11,7 +11,8 @@ import type { Prisma } from "@/generated/prisma/client";
 interface GetChildrenParams {
   branchId?: string;
   classId?: string;
-  status?: "ACTIVE" | "DRAFT";
+  gender?: "MALE" | "FEMALE";
+  status?: "ACTIVE" | "DRAFT" | "INACTIVE";
   search?: string;
   page?: number;
   pageSize?: number;
@@ -27,6 +28,7 @@ export async function getChildren(params: GetChildrenParams = {}) {
   const {
     branchId,
     classId,
+    gender,
     status,
     search,
     page = 1,
@@ -46,12 +48,20 @@ export async function getChildren(params: GetChildrenParams = {}) {
       where.classId = classId;
     }
 
+    // Gender filter
+    if (gender) {
+      where.gender = gender;
+    }
+
     // Status filter
     if (status === "ACTIVE") {
       where.isActive = true;
       where.isDraft = false;
     } else if (status === "DRAFT") {
       where.isDraft = true;
+    } else if (status === "INACTIVE") {
+      where.isActive = false;
+      where.isDraft = false;
     }
 
     // Search by firstName + lastName (case insensitive)

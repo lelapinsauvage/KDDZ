@@ -15,16 +15,16 @@ export const authConfig = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = (user as any).role;
-        token.branchId = (user as any).branchId;
+        token.role = user.role;
+        token.branchId = user.branchId;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
-        (session.user as any).role = token.role;
-        (session.user as any).branchId = token.branchId;
+        session.user.role = token.role as typeof session.user.role;
+        session.user.branchId = token.branchId as string | null;
       }
       return session;
     },
