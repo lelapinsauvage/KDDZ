@@ -143,6 +143,16 @@
   border-top: 1px solid #E7E5E4;
 }
 
+/* ── Skeleton shimmer animation ── */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
 /* ── Scrollbar styling (subtle, modern) ── */
 ::-webkit-scrollbar {
   width: 6px;
