@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useMemo, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -33,10 +33,22 @@ interface DirectMessageClientProps {
 export function DirectMessageClient({ recipients }: DirectMessageClientProps) {
   const router = useRouter();
   const [recipient, setRecipient] = useState("");
+  const [recipientSearch, setRecipientSearch] = useState("");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  const filteredRecipients = useMemo(() => {
+    if (!recipientSearch) return recipients;
+    const q = recipientSearch.toLowerCase();
+    return recipients.filter(
+      (r) =>
+        r.name.toLowerCase().includes(q) ||
+        r.role.toLowerCase().includes(q),
+    );
+  }, [recipients, recipientSearch]);
 
   function handleSend() {
     const selected = recipients.find((r) => r.id === recipient);
@@ -52,7 +64,8 @@ export function DirectMessageClient({ recipients }: DirectMessageClientProps) {
       });
 
       if (result.success) {
-        router.push("/messages/sent");
+        setSuccess(true);
+        setTimeout(() => router.push("/messages/sent"), 1000);
       } else {
         setError(result.error ?? "Failed to send message");
       }
@@ -79,16 +92,28 @@ export function DirectMessageClient({ recipients }: DirectMessageClientProps) {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>To</Label>
+              <Input
+                placeholder="Search by name or role..."
+                value={recipientSearch}
+                onChange={(e) => setRecipientSearch(e.target.value)}
+                className="mb-2"
+              />
               <Select value={recipient} onValueChange={setRecipient}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a person..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {recipients.map((r) => (
-                    <SelectItem key={r.id} value={r.id}>
-                      {r.name} ({r.role})
-                    </SelectItem>
-                  ))}
+                  {filteredRecipients.length > 0 ? (
+                    filteredRecipients.map((r) => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.name} ({r.role})
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                      No recipients found
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -112,16 +137,24 @@ export function DirectMessageClient({ recipients }: DirectMessageClientProps) {
               />
             </div>
 
-            {error && (
-              <p className="text-sm text-red-600">{error}</p>
+            {error && <p className="text-sm text-red-600">{error}</p>}
+            {success && (
+              <p className="text-sm text-green-600">
+                Message sent successfully! Redirecting...
+              </p>
             )}
 
             <div className="flex justify-end gap-3 pt-2">
-              <Button variant="outline">Save Draft</Button>
+              <Button
+                variant="outline"
+                onClick={() => router.push("/messages/compose")}
+              >
+                Cancel
+              </Button>
               <Button
                 onClick={handleSend}
                 style={{ background: "#1caf9a" }}
-                disabled={!recipient || !subject || !body || isPending}
+                disabled={!recipient || !subject || !body || isPending || success}
               >
                 <Send className="mr-1 size-3.5" />
                 {isPending ? "Sending..." : "Send Message"}

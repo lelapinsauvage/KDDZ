@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useMemo, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Send } from "lucide-react";
+import { Send, UserRound, Users, Inbox } from "lucide-react";
 import { sendMessage } from "@/lib/actions/messages";
 import type { RecipientType } from "@/generated/prisma/enums";
 
@@ -33,10 +34,18 @@ interface ComposeClientProps {
 export function ComposeClient({ recipients }: ComposeClientProps) {
   const router = useRouter();
   const [recipient, setRecipient] = useState("");
+  const [recipientSearch, setRecipientSearch] = useState("");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  const filteredRecipients = useMemo(() => {
+    if (!recipientSearch) return recipients;
+    const q = recipientSearch.toLowerCase();
+    return recipients.filter((r) => r.name.toLowerCase().includes(q));
+  }, [recipients, recipientSearch]);
 
   function handleSend() {
     const selected = recipients.find((r) => r.id === recipient);
@@ -52,7 +61,8 @@ export function ComposeClient({ recipients }: ComposeClientProps) {
       });
 
       if (result.success) {
-        router.push("/messages/sent");
+        setSuccess(true);
+        setTimeout(() => router.push("/messages/sent"), 1000);
       } else {
         setError(result.error ?? "Failed to send message");
       }
@@ -65,12 +75,65 @@ export function ComposeClient({ recipients }: ComposeClientProps) {
         title="Compose Message"
         breadcrumbs={[
           { label: "Home", href: "/dashboard" },
-          { label: "Messages" },
+          { label: "Messages", href: "/messages/inbox" },
           { label: "Compose" },
         ]}
       />
 
-      <div className="p-6">
+      <div className="p-6 space-y-4">
+        {/* Quick Links */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <Card className="border-[#1caf9a]/30 bg-[#1caf9a]/5">
+            <CardContent className="flex items-center gap-3 py-3">
+              <UserRound className="size-5 text-[#1caf9a]" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-[#333]">
+                  Direct Message
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Send to one person
+                </p>
+              </div>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/messages/compose/direct">Go</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="border-blue-300/50 bg-blue-50/50">
+            <CardContent className="flex items-center gap-3 py-3">
+              <Users className="size-5 text-blue-600" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-[#333]">
+                  Class Message
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Send to all parents in a class
+                </p>
+              </div>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/messages/compose/class">Go</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="flex items-center gap-3 py-3">
+              <Inbox className="size-5 text-muted-foreground" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-[#333]">Inbox</p>
+                <p className="text-xs text-muted-foreground">
+                  View received messages
+                </p>
+              </div>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/messages/inbox">Go</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Compose Form */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base">New Message</CardTitle>
@@ -78,16 +141,28 @@ export function ComposeClient({ recipients }: ComposeClientProps) {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>To</Label>
+              <Input
+                placeholder="Search recipients..."
+                value={recipientSearch}
+                onChange={(e) => setRecipientSearch(e.target.value)}
+                className="mb-2"
+              />
               <Select value={recipient} onValueChange={setRecipient}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select recipient..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {recipients.map((r) => (
-                    <SelectItem key={r.id} value={r.id}>
-                      {r.name}
-                    </SelectItem>
-                  ))}
+                  {filteredRecipients.length > 0 ? (
+                    filteredRecipients.map((r) => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                      No recipients found
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -111,16 +186,24 @@ export function ComposeClient({ recipients }: ComposeClientProps) {
               />
             </div>
 
-            {error && (
-              <p className="text-sm text-red-600">{error}</p>
+            {error && <p className="text-sm text-red-600">{error}</p>}
+            {success && (
+              <p className="text-sm text-green-600">
+                Message sent successfully! Redirecting...
+              </p>
             )}
 
             <div className="flex justify-end gap-3 pt-2">
-              <Button variant="outline">Save Draft</Button>
+              <Button
+                variant="outline"
+                onClick={() => router.push("/messages/inbox")}
+              >
+                Cancel
+              </Button>
               <Button
                 onClick={handleSend}
                 style={{ background: "#1caf9a" }}
-                disabled={!recipient || !subject || !body || isPending}
+                disabled={!recipient || !subject || !body || isPending || success}
               >
                 <Send className="mr-1 size-3.5" />
                 {isPending ? "Sending..." : "Send Message"}

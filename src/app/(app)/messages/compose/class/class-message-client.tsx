@@ -37,6 +37,8 @@ export function ClassMessageClient({ classes }: ClassMessageClientProps) {
   const [body, setBody] = useState("");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [sentCount, setSentCount] = useState(0);
 
   const selectedClassDetail = useMemo(() => {
     if (!selectedClass) return null;
@@ -55,7 +57,11 @@ export function ClassMessageClient({ classes }: ClassMessageClientProps) {
       });
 
       if (result.success) {
-        router.push("/messages/sent");
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const data = result.data as any;
+        setSentCount(data?.recipientCount ?? 0);
+        setSuccess(true);
+        setTimeout(() => router.push("/messages/sent"), 2000);
       } else {
         setError(result.error ?? "Failed to send class message");
       }
@@ -100,10 +106,18 @@ export function ClassMessageClient({ classes }: ClassMessageClientProps) {
                   <Users className="size-4 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">
                     Send to all parents in{" "}
-                    <span className="font-medium text-[#333]">{selectedClassDetail.name}</span>
+                    <span className="font-medium text-[#333]">
+                      {selectedClassDetail.name}
+                    </span>
                   </span>
-                  <Badge variant="secondary" className="bg-[#1caf9a]/10 text-[#1caf9a] font-normal">
-                    {selectedClassDetail.childCount} {selectedClassDetail.childCount === 1 ? "child" : "children"}
+                  <Badge
+                    variant="secondary"
+                    className="bg-[#1caf9a]/10 text-[#1caf9a] font-normal"
+                  >
+                    {selectedClassDetail.childCount}{" "}
+                    {selectedClassDetail.childCount === 1
+                      ? "child"
+                      : "children"}
                   </Badge>
                 </div>
               )}
@@ -128,16 +142,27 @@ export function ClassMessageClient({ classes }: ClassMessageClientProps) {
               />
             </div>
 
-            {error && (
-              <p className="text-sm text-red-600">{error}</p>
+            {error && <p className="text-sm text-red-600">{error}</p>}
+            {success && (
+              <p className="text-sm text-green-600">
+                Message sent to {sentCount} parent
+                {sentCount !== 1 ? "s" : ""} successfully! Redirecting...
+              </p>
             )}
 
             <div className="flex justify-end gap-3 pt-2">
-              <Button variant="outline">Save Draft</Button>
+              <Button
+                variant="outline"
+                onClick={() => router.push("/messages/compose")}
+              >
+                Cancel
+              </Button>
               <Button
                 onClick={handleSend}
                 style={{ background: "#1caf9a" }}
-                disabled={!selectedClass || !subject || !body || isPending}
+                disabled={
+                  !selectedClass || !subject || !body || isPending || success
+                }
               >
                 <Send className="mr-1 size-3.5" />
                 {isPending ? "Sending..." : "Send to Class"}

@@ -1,21 +1,68 @@
 "use client";
 
+import { useState, useMemo, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ColumnDef } from "@tanstack/react-table";
 import { PageHeader } from "@/components/layout/page-header";
+import { DataTable } from "@/components/shared/data-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Mail, MailOpen, Search, PenSquare, Trash2, Star } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Mail,
+  MailOpen,
+  PenSquare,
+  MoreHorizontal,
+  Trash2,
+  Eye,
+  MailCheck,
+  MailX,
+  ArrowUpDown,
+} from "lucide-react";
+import {
+  markAsRead,
+  markAsUnread,
+  deleteMessage,
+} from "@/lib/actions/messages";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 interface InboxMessage {
   id: string;
   senderId: string;
   senderType: string;
+  senderName: string;
+  recipientId: string;
+  recipientType: string;
   subject: string | null;
   body: string;
   isRead: boolean;
+  threadId: string | null;
   createdAt: string;
 }
 
@@ -24,7 +71,241 @@ interface InboxClientProps {
   total: number;
 }
 
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
 export function InboxClient({ messages, total }: InboxClientProps) {
+  const router = useRouter();
+  const [readFilter, setReadFilter] = useState("ALL");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  // Filter messages
+  const filteredMessages = useMemo(() => {
+    return messages.filter((msg) => {
+      if (readFilter === "READ" && !msg.isRead) return false;
+      if (readFilter === "UNREAD" && msg.isRead) return false;
+      return true;
+    });
+  }, [messages, readFilter]);
+
+  // Counts
+  const unreadCount = useMemo(
+    () => messages.filter((m) => !m.isRead).length,
+    [messages],
+  );
+
+  function handleMarkRead(id: string) {
+    startTransition(async () => {
+      await markAsRead(id);
+      router.refresh();
+    });
+  }
+
+  function handleMarkUnread(id: string) {
+    startTransition(async () => {
+      await markAsUnread(id);
+      router.refresh();
+    });
+  }
+
+  function handleDelete() {
+    if (!deletingId) return;
+    startTransition(async () => {
+      await deleteMessage(deletingId);
+      setDeleteDialogOpen(false);
+      setDeletingId(null);
+      router.refresh();
+    });
+  }
+
+  // Column definitions
+  const columns: ColumnDef<InboxMessage>[] = [
+    {
+      accessorKey: "isRead",
+      header: "",
+      size: 40,
+      cell: ({ row }) =>
+        row.original.isRead ? (
+          <MailOpen className="size-4 text-muted-foreground" />
+        ) : (
+          <Mail className="size-4 text-[#1caf9a]" />
+        ),
+    },
+    {
+      accessorKey: "senderName",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="px-0"
+          onClick={() =>
+            column.toggleSorting(column.getIsSorted() === "asc")
+          }
+        >
+          From
+          <ArrowUpDown className="ml-1 size-3" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        const msg = row.original;
+        return (
+          <div className="flex items-center gap-2">
+            <span
+              className={`text-sm ${!msg.isRead ? "font-semibold text-[#333]" : "text-muted-foreground"}`}
+            >
+              {msg.senderName}
+            </span>
+            <Badge variant="outline" className="text-[10px]">
+              {msg.senderType}
+            </Badge>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "subject",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="px-0"
+          onClick={() =>
+            column.toggleSorting(column.getIsSorted() === "asc")
+          }
+        >
+          Subject
+          <ArrowUpDown className="ml-1 size-3" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        const msg = row.original;
+        return (
+          <div>
+            <Link
+              href={`/messages/${msg.id}`}
+              className={`text-sm hover:underline ${!msg.isRead ? "font-medium text-[#333]" : "text-muted-foreground"}`}
+            >
+              {msg.subject ?? "(No subject)"}
+            </Link>
+            <p className="max-w-md truncate text-xs text-muted-foreground">
+              {msg.body}
+            </p>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "createdAt",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="px-0"
+          onClick={() =>
+            column.toggleSorting(column.getIsSorted() === "asc")
+          }
+        >
+          Date
+          <ArrowUpDown className="ml-1 size-3" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        const date = new Date(row.original.createdAt);
+        return (
+          <div className="text-right">
+            <p className="text-sm text-muted-foreground">
+              {date.toLocaleDateString("en-GB", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {date.toLocaleTimeString("en-GB", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </p>
+          </div>
+        );
+      },
+      sortingFn: (a, b) => {
+        return (
+          new Date(a.original.createdAt).getTime() -
+          new Date(b.original.createdAt).getTime()
+        );
+      },
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const msg = row.original;
+        return msg.isRead ? (
+          <Badge
+            variant="secondary"
+            className="bg-gray-100 text-gray-600 font-normal"
+          >
+            Read
+          </Badge>
+        ) : (
+          <Badge className="bg-[#1caf9a]/10 text-[#1caf9a] font-normal hover:bg-[#1caf9a]/20">
+            Unread
+          </Badge>
+        );
+      },
+    },
+    {
+      id: "actions",
+      header: "",
+      size: 50,
+      cell: ({ row }) => {
+        const msg = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="size-8">
+                <MoreHorizontal className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <Link href={`/messages/${msg.id}`}>
+                  <Eye className="mr-2 size-4" />
+                  View Message
+                </Link>
+              </DropdownMenuItem>
+              {msg.isRead ? (
+                <DropdownMenuItem onClick={() => handleMarkUnread(msg.id)}>
+                  <MailX className="mr-2 size-4" />
+                  Mark as Unread
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem onClick={() => handleMarkRead(msg.id)}>
+                  <MailCheck className="mr-2 size-4" />
+                  Mark as Read
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem
+                className="text-red-600"
+                onClick={() => {
+                  setDeletingId(msg.id);
+                  setDeleteDialogOpen(true);
+                }}
+              >
+                <Trash2 className="mr-2 size-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
+
   return (
     <>
       <PageHeader
@@ -38,15 +319,31 @@ export function InboxClient({ messages, total }: InboxClientProps) {
 
       <div className="p-6 space-y-4">
         {/* Toolbar */}
-        <div className="flex items-center justify-between gap-4">
-          <div className="relative max-w-sm flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Search messages..." className="pl-9" />
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Select value={readFilter} onValueChange={setReadFilter}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Messages</SelectItem>
+                <SelectItem value="UNREAD">Unread ({unreadCount})</SelectItem>
+                <SelectItem value="READ">Read</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {unreadCount > 0 && (
+              <Badge className="bg-[#1caf9a]/10 text-[#1caf9a] font-normal">
+                {unreadCount} unread
+              </Badge>
+            )}
           </div>
+
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
-              <Trash2 className="mr-1 size-3.5" />
-              Delete
+            <Button asChild variant="outline" size="sm">
+              <Link href="/messages/sent">
+                Sent Messages
+              </Link>
             </Button>
             <Button asChild size="sm" style={{ background: "#1caf9a" }}>
               <Link href="/messages/compose">
@@ -57,77 +354,43 @@ export function InboxClient({ messages, total }: InboxClientProps) {
           </div>
         </div>
 
-        {/* Message List */}
-        <Card>
-          <CardContent className="p-0">
-            <div className="divide-y">
-              {messages.length > 0 ? (
-                messages.map((msg) => {
-                  const date = new Date(msg.createdAt);
-                  const dateStr = date.toLocaleDateString("en-GB", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  });
-                  const timeStr = date.toLocaleTimeString("en-GB", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  });
-
-                  return (
-                    <div
-                      key={msg.id}
-                      className={`flex items-start gap-3 px-4 py-3 transition-colors hover:bg-muted/50 ${
-                        !msg.isRead ? "bg-[#1caf9a]/5" : ""
-                      }`}
-                    >
-                      <Checkbox className="mt-1" />
-                      <button className="mt-1 text-muted-foreground hover:text-yellow-500">
-                        <Star className="size-4" />
-                      </button>
-                      {msg.isRead ? (
-                        <MailOpen className="mt-1 size-4 shrink-0 text-muted-foreground" />
-                      ) : (
-                        <Mail className="mt-1 size-4 shrink-0 text-[#1caf9a]" />
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className={`text-sm ${!msg.isRead ? "font-semibold" : ""}`}>
-                            {msg.senderId.slice(0, 8)}...
-                          </span>
-                          <Badge variant="outline" className="text-[10px]">
-                            {msg.senderType}
-                          </Badge>
-                        </div>
-                        <p className={`text-sm ${!msg.isRead ? "font-medium" : "text-muted-foreground"}`}>
-                          {msg.subject ?? "(No subject)"}
-                        </p>
-                        <p className="truncate text-xs text-muted-foreground">
-                          {msg.body}
-                        </p>
-                      </div>
-                      <div className="shrink-0 text-right">
-                        <p className="text-xs text-muted-foreground">{dateStr}</p>
-                        <p className="text-xs text-muted-foreground">{timeStr}</p>
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="py-12 text-center text-sm text-muted-foreground">
-                  Your inbox is empty.
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        {/* DataTable */}
+        <DataTable
+          columns={columns}
+          data={filteredMessages}
+          searchKey="subject"
+          searchPlaceholder="Search by subject..."
+        />
 
         {total > 0 && (
           <p className="text-xs text-muted-foreground text-center">
-            Showing {messages.length} of {total} messages
+            Showing {filteredMessages.length} of {total} messages
           </p>
         )}
       </div>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Message</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this message? This action cannot
+              be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={isPending}
+            >
+              {isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
