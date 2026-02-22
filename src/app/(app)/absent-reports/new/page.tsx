@@ -2,7 +2,12 @@ import { PageHeader } from "@/components/layout/page-header";
 import { AbsenceReportForm } from "@/components/absent-reports/absence-report-form";
 import { getChildren } from "@/lib/actions/children";
 
-export default async function NewAbsenceReportPage() {
+interface Props {
+  searchParams: Promise<{ childId?: string }>;
+}
+
+export default async function NewAbsenceReportPage({ searchParams }: Props) {
+  const { childId } = await searchParams;
   const childrenResult = await getChildren({ status: "ACTIVE", pageSize: 500 });
 
   const children = (childrenResult.children ?? []).map((c) => ({
@@ -10,6 +15,8 @@ export default async function NewAbsenceReportPage() {
     name: `${c.firstName} ${c.lastName}`,
     className: c.class?.name ?? "",
   }));
+
+  const defaultValues = childId ? { childId } : undefined;
 
   return (
     <>
@@ -21,7 +28,7 @@ export default async function NewAbsenceReportPage() {
           { label: "New Report" },
         ]}
       />
-      <AbsenceReportForm childrenList={children} />
+      <AbsenceReportForm childrenList={children} defaultValues={defaultValues} />
     </>
   );
 }

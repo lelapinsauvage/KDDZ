@@ -21,7 +21,7 @@ interface Props {
 
 const navItems = [
   { label: "Dashboard", href: "dashboard", icon: LayoutDashboard },
-  { label: "Edit Profile", href: "", icon: UserPen },
+  { label: "Edit Profile", href: "edit", icon: UserPen },
   { label: "Attendance", href: "attendance", icon: Calendar },
   { label: "Absence", href: "absence", icon: AlertTriangle },
   { label: "Accidents", href: "accidents", icon: ShieldAlert },

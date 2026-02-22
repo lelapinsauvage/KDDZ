@@ -3,7 +3,13 @@ import { DailyReportForm } from "@/components/daily-reports/daily-report-form";
 import { getChildren } from "@/lib/actions/children";
 import { getFoods } from "@/lib/actions/food";
 
-export default async function NewDailyReportPage() {
+interface Props {
+  searchParams: Promise<{ childId?: string }>;
+}
+
+export default async function NewDailyReportPage({ searchParams }: Props) {
+  const { childId } = await searchParams;
+
   const [childrenResult, breakfastFoods, lunchFoods, dessertFoods] =
     await Promise.all([
       getChildren({ status: "ACTIVE", pageSize: 500 }),
@@ -24,6 +30,8 @@ export default async function NewDailyReportPage() {
     dessert: dessertFoods.foods.map((f) => ({ id: f.id, name: f.name })),
   };
 
+  const defaultValues = childId ? { childId } : undefined;
+
   return (
     <>
       <PageHeader
@@ -34,7 +42,7 @@ export default async function NewDailyReportPage() {
           { label: "New Report" },
         ]}
       />
-      <DailyReportForm childrenList={children} foods={foods} />
+      <DailyReportForm childrenList={children} foods={foods} defaultValues={defaultValues} />
     </>
   );
 }

@@ -10,10 +10,15 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  Baby,
+  LayoutGrid,
+  TableIcon,
 } from "lucide-react";
 import { ExportButton } from "@/components/shared/export-button";
 import type { ExportColumn } from "@/lib/export";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { getChildrenColumns, type ChildRow } from "@/components/children/children-columns";
@@ -51,6 +56,23 @@ import {
 } from "@tanstack/react-table";
 
 // ── Types ────────────────────────────────────────
+
+function getChildAge(date: Date | string): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  const now = new Date();
+  let years = now.getFullYear() - d.getFullYear();
+  let months = now.getMonth() - d.getMonth();
+  if (months < 0 || (months === 0 && now.getDate() < d.getDate())) {
+    years--;
+    months += 12;
+  }
+  if (now.getDate() < d.getDate()) {
+    months--;
+    if (months < 0) months += 12;
+  }
+  if (years > 0) return `${years}y ${months}m`;
+  return `${months}m`;
+}
 
 interface BranchItem {
   id: string;
@@ -129,6 +151,8 @@ export function ChildrenPageClient({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+
+  const [viewMode, setViewMode] = useState<"table" | "cards">("table");
 
   // Delete confirmation state
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -377,6 +401,26 @@ export function ChildrenPageClient({
           {/* Spacer */}
           <div className="flex-1" />
 
+          {/* View toggle */}
+          <div className="flex items-center rounded-md border bg-muted/30 p-0.5">
+            <Button
+              variant={viewMode === "table" ? "secondary" : "ghost"}
+              size="icon-sm"
+              onClick={() => setViewMode("table")}
+              className="h-7 w-7"
+            >
+              <TableIcon className="size-3.5" />
+            </Button>
+            <Button
+              variant={viewMode === "cards" ? "secondary" : "ghost"}
+              size="icon-sm"
+              onClick={() => setViewMode("cards")}
+              className="h-7 w-7"
+            >
+              <LayoutGrid className="size-3.5" />
+            </Button>
+          </div>
+
           {/* Export */}
           <ExportButton
             filename="children"
@@ -397,65 +441,151 @@ export function ChildrenPageClient({
           </Button>
         </div>
 
-        {/* ── Data Table ──────────────────────────── */}
+        {/* ── Data View ──────────────────────────── */}
         <div className="space-y-4">
-          <div className="overflow-x-auto rounded-md border bg-card">
-            <Table className="min-w-[700px]">
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <TableHead
-                        key={header.id}
-                        className="bg-muted/50 text-xs font-semibold uppercase text-muted-foreground"
-                      >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {isPending ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center text-muted-foreground"
-                    >
-                      Loading...
-                    </TableCell>
-                  </TableRow>
-                ) : table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id}>
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id} className="text-sm">
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </TableCell>
+          {viewMode === "cards" ? (
+            /* Cards Grid */
+            childrenList.length === 0 ? (
+              <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+                <Baby className="size-10 text-muted-foreground/40 mb-3" />
+                <p className="text-sm font-medium text-muted-foreground">No children found</p>
+                <p className="mt-1 text-xs text-muted-foreground/70">
+                  Try adjusting your search or filters, or register a new child.
+                </p>
+                <Button asChild size="sm" className="mt-3">
+                  <Link href="/children/new">
+                    <Plus className="mr-1 size-3.5" />
+                    Register Child
+                  </Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {childrenList.map((child) => {
+                  const status = child.isDraft
+                    ? "DRAFT"
+                    : child.isActive
+                    ? "ACTIVE"
+                    : "INACTIVE";
+                  const statusColor =
+                    status === "ACTIVE"
+                      ? "bg-emerald-100 text-emerald-700"
+                      : status === "DRAFT"
+                      ? "bg-amber-100 text-amber-700"
+                      : "bg-gray-100 text-gray-700";
+                  const age = child.dateOfBirth ? getChildAge(child.dateOfBirth) : null;
+
+                  return (
+                    <Link key={child.id} href={`/children/${child.id}/dashboard`}>
+                      <Card className="transition-colors hover:border-primary/40 hover:bg-muted/30">
+                        <CardContent className="flex items-start gap-3 py-4">
+                          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                            {child.firstName.charAt(0)}
+                            {child.lastName.charAt(0)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">
+                              {child.firstName} {child.lastName}
+                            </p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {child.class?.name ?? "No class"}
+                              {child.branch?.name ? ` · ${child.branch.name}` : ""}
+                            </p>
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                              <Badge className={`text-[10px] px-1.5 py-0 ${statusColor}`}>
+                                {status === "ACTIVE" ? "Active" : status === "DRAFT" ? "Draft" : "Inactive"}
+                              </Badge>
+                              {child.gender && (
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  {child.gender === "MALE" ? "M" : "F"}
+                                </Badge>
+                              )}
+                              {age && (
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  {age}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  );
+                })}
+              </div>
+            )
+          ) : (
+            /* Table View */
+            <div className="overflow-x-auto rounded-md border bg-card">
+              <Table className="min-w-[700px]">
+                <TableHeader>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => (
+                        <TableHead
+                          key={header.id}
+                          className="bg-muted/50 text-xs font-semibold uppercase text-muted-foreground"
+                        >
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
+                        </TableHead>
                       ))}
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center text-muted-foreground"
-                    >
-                      No results found.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  ))}
+                </TableHeader>
+                <TableBody>
+                  {isPending ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={columns.length}
+                        className="h-24 text-center text-muted-foreground"
+                      >
+                        Loading...
+                      </TableCell>
+                    </TableRow>
+                  ) : table.getRowModel().rows?.length ? (
+                    table.getRowModel().rows.map((row) => (
+                      <TableRow key={row.id}>
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell key={cell.id} className="text-sm">
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={columns.length}
+                        className="h-40 text-center"
+                      >
+                        <div className="flex flex-col items-center justify-center">
+                          <Baby className="size-10 text-muted-foreground/40 mb-3" />
+                          <p className="text-sm font-medium text-muted-foreground">No children found</p>
+                          <p className="mt-1 text-xs text-muted-foreground/70">
+                            Try adjusting your search or filters, or register a new child.
+                          </p>
+                          <Button asChild size="sm" className="mt-3">
+                            <Link href="/children/new">
+                              <Plus className="mr-1 size-3.5" />
+                              Register Child
+                            </Link>
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
 
           {/* ── Pagination ──────────────────────────── */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

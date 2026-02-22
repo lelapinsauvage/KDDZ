@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo, useTransition } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -16,9 +16,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Send, UserRound, Users, Inbox } from "lucide-react";
-import { sendMessage } from "@/lib/actions/messages";
+import { Send, UserRound, Users } from "lucide-react";
+import { sendMessage, sendClassMessage } from "@/lib/actions/messages";
 import type { RecipientType } from "@/generated/prisma/enums";
+
+type MessageMode = "person" | "class";
 
 interface Recipient {
   id: string;
@@ -27,19 +29,30 @@ interface Recipient {
   recipientType: RecipientType;
 }
 
-interface ComposeClientProps {
-  recipients: Recipient[];
+interface ClassOption {
+  id: string;
+  name: string;
+  branchName: string;
+  childCount: number;
 }
 
-export function ComposeClient({ recipients }: ComposeClientProps) {
+interface ComposeClientProps {
+  recipients: Recipient[];
+  classes: ClassOption[];
+}
+
+export function ComposeClient({ recipients, classes }: ComposeClientProps) {
   const router = useRouter();
+  const [mode, setMode] = useState<MessageMode>("person");
   const [recipient, setRecipient] = useState("");
   const [recipientSearch, setRecipientSearch] = useState("");
+  const [selectedClass, setSelectedClass] = useState("");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [sentCount, setSentCount] = useState(0);
 
   const filteredRecipients = useMemo(() => {
     if (!recipientSearch) return recipients;
@@ -47,27 +60,60 @@ export function ComposeClient({ recipients }: ComposeClientProps) {
     return recipients.filter((r) => r.name.toLowerCase().includes(q));
   }, [recipients, recipientSearch]);
 
+  const selectedClassDetail = useMemo(() => {
+    if (!selectedClass) return null;
+    return classes.find((c) => c.id === selectedClass) ?? null;
+  }, [selectedClass, classes]);
+
   function handleSend() {
-    const selected = recipients.find((r) => r.id === recipient);
-    if (!selected) return;
-
     setError(null);
-    startTransition(async () => {
-      const result = await sendMessage({
-        recipientId: selected.id,
-        recipientType: selected.recipientType,
-        subject: subject || null,
-        body,
-      });
 
-      if (result.success) {
-        setSuccess(true);
-        setTimeout(() => router.push("/messages/sent"), 1000);
-      } else {
-        setError(result.error ?? "Failed to send message");
-      }
-    });
+    if (mode === "person") {
+      const selected = recipients.find((r) => r.id === recipient);
+      if (!selected) return;
+
+      startTransition(async () => {
+        const result = await sendMessage({
+          recipientId: selected.id,
+          recipientType: selected.recipientType,
+          subject: subject || null,
+          body,
+        });
+
+        if (result.success) {
+          setSuccess(true);
+          setTimeout(() => router.push("/messages/sent"), 1000);
+        } else {
+          setError(result.error ?? "Failed to send message");
+        }
+      });
+    } else {
+      if (!selectedClass) return;
+
+      startTransition(async () => {
+        const result = await sendClassMessage({
+          classId: selectedClass,
+          subject: subject || null,
+          body,
+        });
+
+        if (result.success) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const data = result.data as any;
+          setSentCount(data?.recipientCount ?? 0);
+          setSuccess(true);
+          setTimeout(() => router.push("/messages/sent"), 2000);
+        } else {
+          setError(result.error ?? "Failed to send class message");
+        }
+      });
+    }
   }
+
+  const canSend =
+    mode === "person"
+      ? recipient && subject && body && !isPending && !success
+      : selectedClass && subject && body && !isPending && !success;
 
   return (
     <>
@@ -80,92 +126,107 @@ export function ComposeClient({ recipients }: ComposeClientProps) {
         ]}
       />
 
-      <div className="p-4 md:p-6 space-y-4">
-        {/* Quick Links */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <Card className="border-primary/30 bg-primary/5">
-            <CardContent className="flex items-center gap-3 py-3">
-              <UserRound className="size-5 text-primary" />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-foreground">
-                  Direct Message
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Send to one person
-                </p>
-              </div>
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/messages/compose/direct">Go</Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="border-blue-300/50 bg-blue-50/50">
-            <CardContent className="flex items-center gap-3 py-3">
-              <Users className="size-5 text-blue-600" />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-foreground">
-                  Class Message
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Send to all parents in a class
-                </p>
-              </div>
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/messages/compose/class">Go</Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="flex items-center gap-3 py-3">
-              <Inbox className="size-5 text-muted-foreground" />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-foreground">Inbox</p>
-                <p className="text-xs text-muted-foreground">
-                  View received messages
-                </p>
-              </div>
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/messages/inbox">Go</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Compose Form */}
+      <div className="p-4 md:p-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">New Message</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">New Message</CardTitle>
+              <div className="flex rounded-lg border p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setMode("person")}
+                  className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                    mode === "person"
+                      ? "bg-primary text-white"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <UserRound className="size-3.5" />
+                  Person
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode("class")}
+                  className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                    mode === "class"
+                      ? "bg-primary text-white"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Users className="size-3.5" />
+                  Class
+                </button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>To</Label>
-              <Input
-                placeholder="Search recipients..."
-                value={recipientSearch}
-                onChange={(e) => setRecipientSearch(e.target.value)}
-                className="mb-2"
-              />
-              <Select value={recipient} onValueChange={setRecipient}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select recipient..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredRecipients.length > 0 ? (
-                    filteredRecipients.map((r) => (
-                      <SelectItem key={r.id} value={r.id}>
-                        {r.name}
+            {/* Recipient picker — changes based on mode */}
+            {mode === "person" ? (
+              <div className="space-y-2">
+                <Label>To</Label>
+                <Input
+                  placeholder="Search recipients..."
+                  value={recipientSearch}
+                  onChange={(e) => setRecipientSearch(e.target.value)}
+                  className="mb-2"
+                />
+                <Select value={recipient} onValueChange={setRecipient}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select recipient..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filteredRecipients.length > 0 ? (
+                      filteredRecipients.map((r) => (
+                        <SelectItem key={r.id} value={r.id}>
+                          {r.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                        No recipients found
+                      </div>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label>To (Class)</Label>
+                <Select value={selectedClass} onValueChange={setSelectedClass}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a class..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {classes.map((cls) => (
+                      <SelectItem key={cls.id} value={cls.id}>
+                        {cls.name} — {cls.branchName}
                       </SelectItem>
-                    ))
-                  ) : (
-                    <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                      No recipients found
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {selectedClassDetail && (
+                  <div className="flex items-center gap-2 pt-1">
+                    <Users className="size-4 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">
+                      Send to all parents in{" "}
+                      <span className="font-medium text-foreground">
+                        {selectedClassDetail.name}
+                      </span>
+                    </span>
+                    <Badge
+                      variant="secondary"
+                      className="bg-primary/10 text-primary font-normal"
+                    >
+                      {selectedClassDetail.childCount}{" "}
+                      {selectedClassDetail.childCount === 1
+                        ? "child"
+                        : "children"}
+                    </Badge>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>Subject</Label>
@@ -179,7 +240,11 @@ export function ComposeClient({ recipients }: ComposeClientProps) {
             <div className="space-y-2">
               <Label>Message</Label>
               <Textarea
-                placeholder="Type your message..."
+                placeholder={
+                  mode === "person"
+                    ? "Type your message..."
+                    : "Type your message to all parents in the selected class..."
+                }
                 rows={10}
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
@@ -189,7 +254,9 @@ export function ComposeClient({ recipients }: ComposeClientProps) {
             {error && <p className="text-sm text-red-600">{error}</p>}
             {success && (
               <p className="text-sm text-green-600">
-                Message sent successfully! Redirecting...
+                {mode === "class"
+                  ? `Message sent to ${sentCount} parent${sentCount !== 1 ? "s" : ""} successfully! Redirecting...`
+                  : "Message sent successfully! Redirecting..."}
               </p>
             )}
 
@@ -202,11 +269,14 @@ export function ComposeClient({ recipients }: ComposeClientProps) {
               </Button>
               <Button
                 onClick={handleSend}
-               
-                disabled={!recipient || !subject || !body || isPending || success}
+                disabled={!canSend}
               >
                 <Send className="mr-1 size-3.5" />
-                {isPending ? "Sending..." : "Send Message"}
+                {isPending
+                  ? "Sending..."
+                  : mode === "class"
+                    ? "Send to Class"
+                    : "Send Message"}
               </Button>
             </div>
           </CardContent>

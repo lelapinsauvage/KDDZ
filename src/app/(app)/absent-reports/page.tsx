@@ -2,7 +2,15 @@ import { db } from "@/lib/db";
 import { getBranches } from "@/lib/actions/branches";
 import { AbsentReportsClient } from "./absent-reports-client";
 
-export default async function AbsentReportsPage() {
+interface PageProps {
+  searchParams: Promise<{
+    status?: string;
+  }>;
+}
+
+export default async function AbsentReportsPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+
   // Fetch all absence reports with child and branch info
   const absenceReports = await db.absenceReport.findMany({
     include: {
@@ -48,6 +56,7 @@ export default async function AbsentReportsPage() {
     <AbsentReportsClient
       reports={reports}
       branches={branches}
+      initialStatusFilter={params.status ?? "ALL"}
     />
   );
 }

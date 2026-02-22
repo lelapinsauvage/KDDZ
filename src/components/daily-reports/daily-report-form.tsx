@@ -172,7 +172,7 @@ export function DailyReportForm({
       if ("error" in result && result.error) {
         setError(result.error);
       } else {
-        router.push(status === "DRAFT" ? "/daily-reports/drafts" : "/daily-reports");
+        router.push(status === "DRAFT" ? "/daily-reports?status=DRAFT" : "/daily-reports");
       }
     });
   }

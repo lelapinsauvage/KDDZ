@@ -177,12 +177,21 @@ export function DashboardClient({ child, stats, recentReports, upcomingAlarms, u
                 </div>
               )}
             </div>
-            <div className="flex shrink-0 gap-2">
-              <Button variant="outline" size="sm" asChild>
-                <Link href={`/children/${id}`}>Edit Profile</Link>
-              </Button>
+            <div className="flex shrink-0 flex-wrap gap-2">
               <Button size="sm" asChild>
-                <Link href={`/children/${id}/report`}>View Reports</Link>
+                <Link href={`/daily-reports/new?childId=${id}`}>
+                  <FileText className="mr-1 h-3.5 w-3.5" />
+                  + Report
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/absent-reports/new?childId=${id}`}>
+                  <AlertTriangle className="mr-1 h-3.5 w-3.5" />
+                  + Absence
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/children/${id}/edit`}>Edit Profile</Link>
               </Button>
             </div>
           </CardContent>
@@ -235,20 +244,22 @@ export function DashboardClient({ child, stats, recentReports, upcomingAlarms, u
 
           {/* Quick Links & Vaccinations */}
           <div className="space-y-6">
-            {/* Quick Links */}
+            {/* Quick Actions & Links */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Quick Links</CardTitle>
+                <CardTitle className="text-base">Quick Actions</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-2">
                   {[
+                    { label: "+ Daily Report", href: `/daily-reports/new?childId=${id}`, icon: FileText },
+                    { label: "+ Absence", href: `/absent-reports/new?childId=${id}`, icon: AlertTriangle },
+                    { label: "+ Medical Record", href: `/medical/general`, icon: Stethoscope },
+                    { label: "+ Payment", href: `/children/${id}/accounting`, icon: DollarSign },
                     { label: "Attendance", href: `/children/${id}/attendance`, icon: Calendar },
-                    { label: "Absence", href: `/children/${id}/absence`, icon: AlertTriangle },
                     { label: "Accidents", href: `/children/${id}/accidents`, icon: Heart },
-                    { label: "Accounting", href: `/children/${id}/accounting`, icon: DollarSign },
                     { label: "Call Log", href: `/children/${id}/calls`, icon: Phone },
-                    { label: "Health", href: `/medical/general`, icon: Stethoscope },
+                    { label: "Reports", href: `/children/${id}/report`, icon: ClipboardList },
                   ].map((link) => (
                     <Button key={link.label} variant="outline" className="justify-start" asChild>
                       <Link href={link.href}>

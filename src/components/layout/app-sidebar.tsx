@@ -20,9 +20,7 @@ import {
   UserCheck,
   DollarSign,
   Bell,
-  MapPin,
   Baby,
-  Send,
 } from "lucide-react"
 import {
   Sidebar,
@@ -36,7 +34,6 @@ import {
   SidebarMenuSubItem,
   SidebarMenuSubButton,
   SidebarHeader,
-  SidebarFooter,
 } from "@/components/ui/sidebar"
 import { BranchYearSelector } from "./branch-year-selector"
 import {
@@ -44,6 +41,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
+
+type UserRole = "ADMIN" | "TEACHER" | "NURSE" | "DOCTOR" | "MANAGER"
 
 interface NavSubItem {
   title: string
@@ -60,11 +59,15 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>
   href?: string
   items?: (NavSubItem | NavSubCollapsible)[]
+  /** Which roles can see this item. If omitted, all roles can see it. */
+  roles?: UserRole[]
 }
 
 interface NavGroup {
   label: string
   items: NavItem[]
+  /** Which roles can see this group. If omitted, all roles can see it. */
+  roles?: UserRole[]
 }
 
 function isSubCollapsible(item: NavSubItem | NavSubCollapsible): item is NavSubCollapsible {
@@ -76,9 +79,16 @@ const navGroups: NavGroup[] = [
     label: "Overview",
     items: [
       {
+        title: "Today",
+        icon: LayoutDashboard,
+        href: "/today",
+        roles: ["TEACHER"],
+      },
+      {
         title: "Dashboard",
         icon: LayoutDashboard,
         href: "/dashboard",
+        roles: ["ADMIN", "MANAGER", "NURSE", "DOCTOR"],
       },
     ],
   },
@@ -90,25 +100,25 @@ const navGroups: NavGroup[] = [
         icon: Baby,
         items: [
           { title: "All Children", href: "/children" },
-          { title: "Drafts", href: "/children/drafts" },
           { title: "Parent Users", href: "/settings/parent-users" },
         ],
+        roles: ["ADMIN", "MANAGER", "NURSE", "DOCTOR"],
+      },
+      {
+        title: "My Class",
+        icon: Baby,
+        href: "/children",
+        roles: ["TEACHER"],
       },
       {
         title: "Daily Reports",
         icon: FileText,
-        items: [
-          { title: "All Reports", href: "/daily-reports" },
-          { title: "Drafts", href: "/daily-reports/drafts" },
-        ],
+        href: "/daily-reports",
       },
       {
         title: "Absences",
         icon: CalendarDays,
-        items: [
-          { title: "Absence Reports", href: "/absent-reports" },
-          { title: "Drafts", href: "/absent-reports/drafts" },
-        ],
+        href: "/absent-reports",
       },
     ],
   },
@@ -135,6 +145,7 @@ const navGroups: NavGroup[] = [
         href: "/medical/accidents",
       },
     ],
+    roles: ["ADMIN", "MANAGER", "NURSE", "DOCTOR"],
   },
   {
     label: "Communication",
@@ -145,7 +156,6 @@ const navGroups: NavGroup[] = [
         items: [
           { title: "Inbox", href: "/messages/inbox" },
           { title: "Compose", href: "/messages/compose" },
-          { title: "Direct Message", href: "/messages/compose/direct" },
           { title: "Sent", href: "/messages/sent" },
         ],
       },
@@ -166,15 +176,7 @@ const navGroups: NavGroup[] = [
       {
         title: "Staff",
         icon: UserCheck,
-        items: [
-          { title: "Nurses", href: "/employees/nurses" },
-          { title: "Doctors", href: "/employees/doctors" },
-          { title: "Managers", href: "/employees/managers" },
-          { title: "Teachers", href: "/employees/teachers" },
-          { title: "Calendar", href: "/employees/calendar" },
-          { title: "Upload Attendance", href: "/employees/attendance" },
-          { title: "Attendance Logs", href: "/employees/attendance-logs" },
-        ],
+        href: "/employees/staff",
       },
       {
         title: "Accounting",
@@ -188,62 +190,68 @@ const navGroups: NavGroup[] = [
           { title: "Food Listing", href: "/food" },
           { title: "Food Calendar", href: "/food/calendar" },
         ],
+        roles: ["ADMIN", "MANAGER"],
+      },
+      {
+        title: "Food Calendar",
+        icon: UtensilsCrossed,
+        href: "/food/calendar",
+        roles: ["TEACHER"],
       },
       {
         title: "Assessments",
         icon: ClipboardList,
-        items: [
-          { title: "1-3 Months", href: "/assessments/1" },
-          { title: "4-7 Months", href: "/assessments/2" },
-          { title: "8-12 Months", href: "/assessments/3" },
-          { title: "12-24 Months", href: "/assessments/4" },
-          { title: "24-36 Months", href: "/assessments/5" },
-          { title: "36-48 Months", href: "/assessments/6" },
-          { title: "48-60 Months", href: "/assessments/7" },
-          { title: "Assessment Dates", href: "/assessments/dates" },
-        ],
+        href: "/assessments",
       },
     ],
+    roles: ["ADMIN", "MANAGER", "TEACHER"],
   },
   {
-    label: "Settings",
+    label: "System",
     items: [
+      {
+        title: "Notifications",
+        icon: Bell,
+        href: "/alarms",
+      },
       {
         title: "Settings",
         icon: Settings,
         items: [
+          { title: "Nursery", href: "/settings/nursery" },
           { title: "Holidays", href: "/settings/holidays" },
           { title: "Events", href: "/settings/events" },
           { title: "Zones", href: "/settings/zones" },
           { title: "Areas", href: "/settings/areas" },
           { title: "Regions", href: "/settings/regions" },
+          { title: "Export", href: "/settings/export" },
         ],
-      },
-      {
-        title: "Notifications",
-        icon: Bell,
-        items: [
-          { title: "Overview", href: "/alarms" },
-          { title: "Birthday", href: "/alarms/birthdays" },
-          { title: "Assessment", href: "/alarms/assessments" },
-          { title: "Vaccinations", href: "/alarms/vaccinations" },
-          { title: "Medical", href: "/alarms/medical" },
-          { title: "Medicine", href: "/alarms/medicine" },
-          { title: "Events", href: "/alarms/events" },
-          { title: "Insurance", href: "/alarms/insurance" },
-          { title: "Payments", href: "/alarms/payments" },
-          { title: "Requests", href: "/alarms/requests" },
-          { title: "Others", href: "/alarms/others" },
-          { title: "Contracts", href: "/alarms/contracts" },
-          { title: "Settings", href: "/alarms/settings" },
-        ],
+        roles: ["ADMIN", "MANAGER"],
       },
     ],
   },
 ]
 
-export function AppSidebar() {
+/**
+ * Filter nav groups and items based on user role.
+ */
+function getFilteredNav(role: UserRole): NavGroup[] {
+  return navGroups
+    .filter((group) => !group.roles || group.roles.includes(role))
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => !item.roles || item.roles.includes(role)),
+    }))
+    .filter((group) => group.items.length > 0)
+}
+
+interface AppSidebarProps {
+  userRole: UserRole
+}
+
+export function AppSidebar({ userRole }: AppSidebarProps) {
   const pathname = usePathname()
+  const filteredGroups = getFilteredNav(userRole)
 
   return (
     <Sidebar
@@ -254,7 +262,7 @@ export function AppSidebar() {
         <BranchYearSelector />
       </SidebarHeader>
       <SidebarContent className="pt-1">
-        {navGroups.map((group) => (
+        {filteredGroups.map((group) => (
           <SidebarGroup key={group.label}>
             <SidebarGroupLabel className="uppercase text-[10px] tracking-widest font-semibold text-muted-foreground/70 px-3">
               {group.label}
@@ -265,10 +273,10 @@ export function AppSidebar() {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
                       asChild
-                      isActive={pathname === item.href}
+                      isActive={pathname === item.href || pathname.startsWith(item.href + "/")}
                       tooltip={item.title}
                       className={
-                        pathname === item.href
+                        pathname === item.href || pathname.startsWith(item.href + "/")
                           ? "bg-primary/10 text-primary font-medium hover:bg-primary/15 hover:text-primary"
                           : "text-muted-foreground hover:text-foreground"
                       }
@@ -306,7 +314,7 @@ function CollapsibleNavItem({
     if (isSubCollapsible(sub)) {
       return sub.items.some((s) => pathname === s.href)
     }
-    return pathname === sub.href
+    return pathname === sub.href || pathname.startsWith(sub.href + "/")
   })
 
   return (
@@ -339,9 +347,9 @@ function CollapsibleNavItem({
                 <SidebarMenuSubItem key={sub.href}>
                   <SidebarMenuSubButton
                     asChild
-                    isActive={pathname === sub.href}
+                    isActive={pathname === sub.href || pathname.startsWith(sub.href + "/")}
                     className={
-                      pathname === sub.href
+                      pathname === sub.href || pathname.startsWith(sub.href + "/")
                         ? "bg-primary/10 text-primary font-medium hover:bg-primary/15 hover:text-primary"
                         : "text-muted-foreground hover:text-foreground"
                     }

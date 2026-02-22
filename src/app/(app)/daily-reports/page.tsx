@@ -2,7 +2,15 @@ import { getDailyReports } from "@/lib/actions/daily-reports";
 import { getBranches } from "@/lib/actions/branches";
 import { DailyReportsClient } from "./daily-reports-client";
 
-export default async function DailyReportsPage() {
+interface PageProps {
+  searchParams: Promise<{
+    status?: string;
+  }>;
+}
+
+export default async function DailyReportsPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+
   const [{ reports, total }, branchesResult] = await Promise.all([
     getDailyReports({ pageSize: 500 }),
     getBranches(),
@@ -40,6 +48,7 @@ export default async function DailyReportsPage() {
       reports={serializedReports}
       total={total}
       branches={branches}
+      initialStatusFilter={params.status ?? "all"}
     />
   );
 }

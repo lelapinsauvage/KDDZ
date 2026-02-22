@@ -11,6 +11,10 @@ import {
   Trash2,
   MoreHorizontal,
   ArrowUpDown,
+  CalendarDays,
+  Check,
+  X,
+  Loader2,
 } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
@@ -41,7 +45,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { deleteAbsenceReport } from "@/lib/actions/absent-reports";
+import { deleteAbsenceReport, updateAbsenceReportStatus } from "@/lib/actions/absent-reports";
+import { toast } from "sonner";
 
 // ── Types ───────────────────────────────────────
 type AbsenceStatus = "PENDING" | "APPROVED" | "REJECTED";
@@ -65,6 +70,7 @@ interface BranchOption {
 interface Props {
   reports: AbsenceReport[];
   branches: BranchOption[];
+  initialStatusFilter?: string;
 }
 
 // ── Helpers ─────────────────────────────────────
@@ -89,10 +95,10 @@ const statusLabels: Record<AbsenceStatus, string> = {
 };
 
 // ── Component ──────────────────────────────
-export function AbsentReportsClient({ reports, branches }: Props) {
+export function AbsentReportsClient({ reports, branches, initialStatusFilter = "ALL" }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState(initialStatusFilter);
   const [branchFilter, setBranchFilter] = useState("ALL");
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -110,6 +116,18 @@ export function AbsentReportsClient({ reports, branches }: Props) {
       await deleteAbsenceReport(deleteId);
       setDeleteId(null);
       router.refresh();
+    });
+  }
+
+  function handleStatusUpdate(id: string, status: "APPROVED" | "REJECTED") {
+    startTransition(async () => {
+      const result = await updateAbsenceReportStatus(id, status);
+      if (result.success) {
+        toast.success(`Absence report ${status.toLowerCase()}`);
+        router.refresh();
+      } else {
+        toast.error(result.error ?? "Failed to update status");
+      }
     });
   }
 
@@ -191,36 +209,62 @@ export function AbsentReportsClient({ reports, branches }: Props) {
       cell: ({ row }) => {
         const report = row.original;
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm">
-                <MoreHorizontal className="size-4" />
-                <span className="sr-only">Actions</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href={`/absent-reports/${report.id}`}>
-                  <Eye className="mr-2 size-4" />
-                  View
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href={`/absent-reports/${report.id}/edit`}>
-                  <Pencil className="mr-2 size-4" />
-                  Edit
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                variant="destructive"
-                onClick={() => setDeleteId(report.id)}
-              >
-                <Trash2 className="mr-2 size-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex items-center gap-1">
+            {report.status === "PENDING" && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                  onClick={() => handleStatusUpdate(report.id, "APPROVED")}
+                  disabled={isPending}
+                >
+                  {isPending ? <Loader2 className="size-3 animate-spin" /> : <Check className="size-3.5" />}
+                  <span className="ml-1 text-xs">Approve</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => handleStatusUpdate(report.id, "REJECTED")}
+                  disabled={isPending}
+                >
+                  {isPending ? <Loader2 className="size-3 animate-spin" /> : <X className="size-3.5" />}
+                  <span className="ml-1 text-xs">Reject</span>
+                </Button>
+              </>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon-sm">
+                  <MoreHorizontal className="size-4" />
+                  <span className="sr-only">Actions</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link href={`/absent-reports/${report.id}`}>
+                    <Eye className="mr-2 size-4" />
+                    View
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={`/absent-reports/${report.id}/edit`}>
+                    <Pencil className="mr-2 size-4" />
+                    Edit
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => setDeleteId(report.id)}
+                >
+                  <Trash2 className="mr-2 size-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         );
       },
       enableSorting: false,
@@ -278,6 +322,21 @@ export function AbsentReportsClient({ reports, branches }: Props) {
           data={filteredReports}
           searchKey="childName"
           searchPlaceholder="Search by child name..."
+          emptyState={
+            <div className="flex flex-col items-center py-4">
+              <CalendarDays className="size-10 text-muted-foreground/40 mb-3" />
+              <p className="text-sm font-medium">No absence reports found</p>
+              <p className="mt-1 text-xs text-muted-foreground/70">
+                No absence reports match your current filters.
+              </p>
+              <Button asChild size="sm" className="mt-3">
+                <Link href="/absent-reports/new">
+                  <Plus className="mr-1 size-3.5" />
+                  Report Absence
+                </Link>
+              </Button>
+            </div>
+          }
         />
       </div>
 

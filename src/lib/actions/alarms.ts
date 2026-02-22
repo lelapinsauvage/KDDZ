@@ -582,26 +582,18 @@ export async function getHeaderAlarmCounts(): Promise<ActionResult> {
     const sevenDaysFromNow = new Date(today);
     sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
 
-    const [birthdayCount, assessmentCount, medicalCount, totalAlarmCount] =
+    const [birthdayResult, assessmentCount, medicalCount, totalAlarmCount] =
       await Promise.all([
-        // Birthdays in next 7 days
-        db.child
-          .findMany({
-            where: { isActive: true, dateOfBirth: { not: null } },
-            select: { dateOfBirth: true },
-          })
-          .then((children) => {
-            return children.filter((c) => {
-              const dob = c.dateOfBirth!;
-              const next = new Date(
-                today.getFullYear(),
-                dob.getMonth(),
-                dob.getDate(),
-              );
-              if (next < today) next.setFullYear(today.getFullYear() + 1);
-              return next <= sevenDaysFromNow;
-            }).length;
-          }),
+        // Birthdays in next 7 days — single DB count instead of fetching all children
+        db.$queryRaw<[{ count: bigint }]>`
+          SELECT COUNT(*) as count FROM children
+          WHERE "isActive" = true AND "dateOfBirth" IS NOT NULL
+          AND (EXTRACT(MONTH FROM "dateOfBirth") * 100 + EXTRACT(DAY FROM "dateOfBirth"))
+          IN (
+            SELECT EXTRACT(MONTH FROM d) * 100 + EXTRACT(DAY FROM d)
+            FROM generate_series(CURRENT_DATE, CURRENT_DATE + INTERVAL '7 days', '1 day') AS d
+          )
+        `,
         // Upcoming assessments
         db.assessmentDate.count({
           where: { scheduledDate: { gte: today } },
@@ -615,6 +607,8 @@ export async function getHeaderAlarmCounts(): Promise<ActionResult> {
           where: { isActive: true },
         }),
       ]);
+
+    const birthdayCount = Number(birthdayResult[0]?.count ?? 0);
 
     return {
       success: true,

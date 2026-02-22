@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import {
   Building2,
   BookOpen,
@@ -17,6 +18,7 @@ import { StatCard } from "@/components/dashboard/stat-card";
 import { ChildrenPerClassChart } from "@/components/dashboard/children-per-class-chart";
 import { GenderStatsChart } from "@/components/dashboard/gender-stats-chart";
 import { AttendanceChart } from "@/components/dashboard/attendance-chart";
+import { TodayMenuWidget } from "@/components/dashboard/today-menu-widget";
 import { getBranches } from "@/lib/actions/branches";
 import { getClasses } from "@/lib/actions/classes";
 import { getChildren, getDrafts } from "@/lib/actions/children";
@@ -29,6 +31,12 @@ import { auth } from "@/lib/auth";
 
 export default async function DashboardPage() {
   const session = await auth();
+
+  // Teachers get the Today view as their default landing page
+  if (session?.user?.role === "TEACHER") {
+    redirect("/today");
+  }
+
   const userName = session?.user?.name?.split(" ")[0] || "there";
 
   const today = new Date();
@@ -63,6 +71,7 @@ export default async function DashboardPage() {
     genderGroups,
     attendanceByMonth,
     absenceByMonth,
+    todayFoodCalendar,
   ] = await Promise.all([
     getBranches(),
     getClasses(),
@@ -121,6 +130,10 @@ export default async function DashboardPage() {
           ORDER BY DATE_TRUNC('month', "date")
         `
       : Promise.resolve([]),
+    db.foodCalendar.findMany({
+      where: { date: { gte: today, lt: tomorrow } },
+      include: { food: { select: { name: true } } },
+    }),
   ]);
 
   const branchCount = Array.isArray(branchesResult.data)
@@ -172,6 +185,14 @@ export default async function DashboardPage() {
       });
     }
   }
+
+  // Today's menu
+  const todayMenu = {
+    breakfast: todayFoodCalendar.find((c) => c.mealType === "BREAKFAST")?.food.name ?? null,
+    lunch: todayFoodCalendar.find((c) => c.mealType === "LUNCH")?.food.name ?? null,
+    dessert: todayFoodCalendar.find((c) => c.mealType === "DESSERT")?.food.name ?? null,
+    snack: todayFoodCalendar.find((c) => c.mealType === "SNACK")?.food.name ?? null,
+  };
 
   // Greeting based on time of day
   const hour = new Date().getHours();
@@ -231,10 +252,11 @@ export default async function DashboardPage() {
         />
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      {/* Charts + Menu */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <ChildrenPerClassChart data={classChartData} />
         <GenderStatsChart data={genderChartData} />
+        <TodayMenuWidget {...todayMenu} />
       </div>
 
       {/* Infrastructure stats */}
@@ -258,7 +280,7 @@ export default async function DashboardPage() {
           value={missingAbsentReports}
           icon={FileText}
           color="orange"
-          href="/absent-reports/drafts"
+          href="/absent-reports?status=PENDING"
         />
       </div>
 
@@ -309,7 +331,7 @@ export default async function DashboardPage() {
           value={totalDrafts}
           icon={FileEdit}
           color="purple"
-          href="/children/drafts"
+          href="/children?status=DRAFT"
         />
       </div>
     </div>

@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useState, useEffect } from "react"
 import { useSession, signOut } from "next-auth/react"
 import {
   Mail,
@@ -24,34 +25,28 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { NotificationDropdown } from "./notification-dropdown"
+import { GlobalSearch } from "./global-search"
+import { getHeaderData } from "@/lib/actions/header"
 
-interface HeaderProps {
-  alarmCounts?: {
-    birthdays: number
-    assessments: number
-    medical: number
-    totalAlarms: number
-  }
-  notifications?: Array<{
-    id: string
-    title: string
-    body: string | null
-    isRead: boolean
-    createdAt: string
-  }>
-  unreadNotificationCount?: number
-  unreadMessageCount?: number
-}
-
-export function Header({
-  alarmCounts = { birthdays: 0, assessments: 0, medical: 0, totalAlarms: 0 },
-  notifications = [],
-  unreadNotificationCount = 0,
-  unreadMessageCount = 0,
-}: HeaderProps) {
+export function Header() {
   const { data: session } = useSession()
   const userName = session?.user?.name || "User"
   const userInitial = userName.charAt(0).toUpperCase()
+  const [searchOpen, setSearchOpen] = useState(false)
+
+  const [alarmCounts, setAlarmCounts] = useState({ birthdays: 0, assessments: 0, medical: 0, totalAlarms: 0 })
+  const [notifications, setNotifications] = useState<Array<{ id: string; title: string; body: string | null; isRead: boolean; createdAt: string }>>([])
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0)
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0)
+
+  useEffect(() => {
+    getHeaderData().then((data) => {
+      setAlarmCounts(data.alarmCounts)
+      setNotifications(data.notifications)
+      setUnreadNotificationCount(data.unreadNotificationCount)
+      setUnreadMessageCount(data.unreadMessageCount)
+    })
+  }, [])
 
   const navIcons = [
     { icon: Mail, label: "Messages", count: unreadMessageCount, href: "/messages/inbox", color: "text-blue-500" },
@@ -78,13 +73,18 @@ export function Header({
           <SidebarTrigger className="text-muted-foreground hover:text-foreground hover:bg-muted" />
 
           {/* Search hint */}
-          <button className="hidden items-center gap-2 rounded-xl border border-stone-200 bg-stone-50 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-stone-100 md:flex">
+          <button
+            onClick={() => setSearchOpen(true)}
+            className="hidden items-center gap-2 rounded-xl border border-stone-200 bg-stone-50 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-stone-100 md:flex"
+          >
             <Search className="size-3.5" />
             <span>Search...</span>
             <kbd className="ml-4 rounded bg-stone-200 px-1.5 py-0.5 text-[10px] font-medium text-stone-500">
-              /
+              ⌘K
             </kbd>
           </button>
+
+          <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
         </div>
 
         <div className="flex items-center gap-0.5 sm:gap-1">

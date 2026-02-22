@@ -230,6 +230,38 @@ export async function updateAbsenceReport(id: string, formData: FormData) {
 }
 
 // ─────────────────────────────────────────────
+// updateAbsenceReportStatus — Quick status change (approve/reject)
+// ─────────────────────────────────────────────
+
+export async function updateAbsenceReportStatus(
+  id: string,
+  status: "APPROVED" | "REJECTED"
+) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { error: "Unauthorized" };
+    }
+
+    const existing = await db.absenceReport.findUnique({ where: { id } });
+    if (!existing) {
+      return { error: "Absence report not found" };
+    }
+
+    await db.absenceReport.update({
+      where: { id },
+      data: { status },
+    });
+
+    revalidatePath("/absent-reports");
+    return { success: true };
+  } catch (error) {
+    console.error("updateAbsenceReportStatus error:", error);
+    return { error: "Failed to update absence report status" };
+  }
+}
+
+// ─────────────────────────────────────────────
 // deleteAbsenceReport
 // ─────────────────────────────────────────────
 

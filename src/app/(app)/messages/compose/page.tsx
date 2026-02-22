@@ -1,16 +1,18 @@
 import { getEmployees } from "@/lib/actions/employees";
 import { getParentUsers } from "@/lib/actions/parent-users";
+import { getClasses } from "@/lib/actions/classes";
 import { ComposeClient } from "./compose-client";
 import type { RecipientType } from "@/generated/prisma/enums";
 
 export default async function ComposeMessagePage() {
-  // Fetch real recipients from DB
-  const [teachersRes, nursesRes, doctorsRes, managersRes, parentRes] = await Promise.all([
+  // Fetch recipients and classes in parallel
+  const [teachersRes, nursesRes, doctorsRes, managersRes, parentRes, classesRes] = await Promise.all([
     getEmployees("teacher", { isActive: true, pageSize: 200 }),
     getEmployees("nurse", { isActive: true, pageSize: 200 }),
     getEmployees("doctor", { isActive: true, pageSize: 200 }),
     getEmployees("manager", { isActive: true, pageSize: 200 }),
     getParentUsers({ isActive: true, pageSize: 200 }),
+    getClasses({ isActive: true }),
   ]);
 
   type EmployeeRow = { id: string; firstName: string; lastName: string };
@@ -68,5 +70,19 @@ export default async function ComposeMessagePage() {
     })),
   ];
 
-  return <ComposeClient recipients={recipients} />;
+  const rawClasses = (classesRes.data ?? []) as Array<{
+    id: string;
+    name: string;
+    branch: { id: string; name: string };
+    _count: { children: number };
+  }>;
+
+  const classes = rawClasses.map((cls) => ({
+    id: cls.id,
+    name: cls.name,
+    branchName: cls.branch.name,
+    childCount: cls._count.children,
+  }));
+
+  return <ComposeClient recipients={recipients} classes={classes} />;
 }

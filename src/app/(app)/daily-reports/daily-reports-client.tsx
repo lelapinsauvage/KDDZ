@@ -40,9 +40,13 @@ import {
   Eye,
   Pencil,
   Trash2,
+  FileText,
+  Send,
+  Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
-import { deleteDailyReport } from "@/lib/actions/daily-reports";
+import { deleteDailyReport, submitDailyReport } from "@/lib/actions/daily-reports";
+import { toast } from "sonner";
 import { ExportButton } from "@/components/shared/export-button";
 import type { ExportColumn } from "@/lib/export";
 
@@ -156,6 +160,7 @@ interface DailyReportsClientProps {
   reports: DailyReportRow[];
   total: number;
   branches: Array<{ id: string; name: string }>;
+  initialStatusFilter?: string;
 }
 
 // --- Page Component ---
@@ -163,6 +168,7 @@ interface DailyReportsClientProps {
 export function DailyReportsClient({
   reports,
   branches,
+  initialStatusFilter = "all",
 }: DailyReportsClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -171,7 +177,7 @@ export function DailyReportsClient({
   const [dateTo, setDateTo] = useState("");
   const [branchFilter, setBranchFilter] = useState("all");
   const [classFilter, setClassFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState(initialStatusFilter);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const filteredData = useMemo(() => {
@@ -216,6 +222,18 @@ export function DailyReportsClient({
       await deleteDailyReport(deleteId);
       setDeleteId(null);
       router.refresh();
+    });
+  }
+
+  function handleSubmit(id: string) {
+    startTransition(async () => {
+      const result = await submitDailyReport(id);
+      if (result.success) {
+        toast.success("Report submitted");
+        router.refresh();
+      } else {
+        toast.error(result.error ?? "Failed to submit report");
+      }
     });
   }
 
@@ -316,36 +334,50 @@ export function DailyReportsClient({
       cell: ({ row }) => {
         const report = row.original;
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm">
-                <MoreHorizontal className="size-4" />
-                <span className="sr-only">Open menu</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href={`/daily-reports/${report.id}`}>
-                  <Eye className="size-4" />
-                  View Report
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href={`/daily-reports/${report.id}/edit`}>
-                  <Pencil className="size-4" />
-                  Edit
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                variant="destructive"
-                onClick={() => setDeleteId(report.id)}
+          <div className="flex items-center gap-1">
+            {report.status === "DRAFT" && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-primary hover:text-primary hover:bg-primary/10"
+                onClick={() => handleSubmit(report.id)}
+                disabled={isPending}
               >
-                <Trash2 className="size-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                {isPending ? <Loader2 className="size-3 animate-spin" /> : <Send className="size-3.5" />}
+                <span className="ml-1 text-xs">Submit</span>
+              </Button>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon-sm">
+                  <MoreHorizontal className="size-4" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link href={`/daily-reports/${report.id}`}>
+                    <Eye className="size-4" />
+                    View Report
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={`/daily-reports/${report.id}/edit`}>
+                    <Pencil className="size-4" />
+                    Edit
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => setDeleteId(report.id)}
+                >
+                  <Trash2 className="size-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         );
       },
       enableSorting: false,
@@ -443,8 +475,25 @@ export function DailyReportsClient({
         </div>
 
         {filteredData.length === 0 ? (
-          <div className="flex items-center justify-center rounded-lg border border-dashed p-12">
-            <p className="text-sm text-muted-foreground">No daily reports found.</p>
+          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+            <FileText className="size-10 text-muted-foreground/40 mb-3" />
+            <p className="text-sm font-medium text-muted-foreground">No daily reports found</p>
+            <p className="mt-1 text-xs text-muted-foreground/70">
+              {search || dateFrom || dateTo || branchFilter !== "all" || classFilter !== "all" || statusFilter !== "all"
+                ? "Try adjusting your filters to see more results."
+                : "No reports have been submitted yet. Start filling out daily reports for your class."}
+            </p>
+            <div className="mt-4 flex gap-2">
+              <Button asChild size="sm">
+                <Link href="/daily-reports/new">
+                  <Plus className="mr-1 size-3.5" />
+                  New Report
+                </Link>
+              </Button>
+              <Button asChild size="sm" variant="outline">
+                <Link href="/daily-reports/batch">Start Batch Reports</Link>
+              </Button>
+            </div>
           </div>
         ) : (
           <DataTable columns={dailyReportColumns} data={filteredData} />

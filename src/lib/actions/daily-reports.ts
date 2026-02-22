@@ -367,6 +367,39 @@ export async function updateDailyReport(id: string, formData: FormData) {
 }
 
 // ─────────────────────────────────────────────
+// submitDailyReport — Quick status change from DRAFT to SUBMITTED
+// ─────────────────────────────────────────────
+
+export async function submitDailyReport(id: string) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { error: "Unauthorized" };
+    }
+
+    const existing = await db.dailyReport.findUnique({ where: { id } });
+    if (!existing) {
+      return { error: "Daily report not found" };
+    }
+
+    if (existing.status !== "DRAFT") {
+      return { error: "Only draft reports can be submitted" };
+    }
+
+    await db.dailyReport.update({
+      where: { id },
+      data: { status: "SUBMITTED" },
+    });
+
+    revalidatePath("/daily-reports");
+    return { success: true };
+  } catch (error) {
+    console.error("submitDailyReport error:", error);
+    return { error: "Failed to submit daily report" };
+  }
+}
+
+// ─────────────────────────────────────────────
 // deleteDailyReport
 // ─────────────────────────────────────────────
 
