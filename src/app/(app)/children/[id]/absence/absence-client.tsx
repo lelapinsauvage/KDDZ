@@ -1,17 +1,11 @@
 "use client";
 
+import { type ColumnDef } from "@tanstack/react-table";
 import { PageHeader } from "@/components/layout/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/shared/data-table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,6 +38,63 @@ const statusColors: Record<string, string> = {
   APPROVED: "bg-green-100 text-green-700",
   REJECTED: "bg-red-100 text-red-700",
 };
+
+const columns: ColumnDef<AbsenceRecord>[] = [
+  {
+    accessorKey: "date",
+    header: "Date",
+    cell: ({ row }) => <span className="font-medium">{row.original.date}</span>,
+  },
+  {
+    accessorKey: "reason",
+    header: "Reason",
+    cell: ({ row }) => (
+      <span className="max-w-[300px] truncate">{row.original.reason ?? "\u2014"}</span>
+    ),
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => (
+      <Badge className={statusColors[row.original.status] ?? "bg-gray-100 text-gray-700"}>
+        {row.original.status}
+      </Badge>
+    ),
+    filterFn: (row, _columnId, filterValue) => {
+      if (!filterValue || filterValue === "ALL") return true;
+      return row.original.status === filterValue;
+    },
+  },
+  {
+    accessorKey: "createdBy",
+    header: "Reported By",
+    cell: ({ row }) => (
+      <span className="text-muted-foreground">{row.original.createdBy ?? "\u2014"}</span>
+    ),
+  },
+  {
+    id: "actions",
+    header: "",
+    cell: () => (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem>
+            <FileText className="mr-2 h-4 w-4" /> View Details
+          </DropdownMenuItem>
+          <DropdownMenuItem className="text-red-600">
+            <Trash2 className="mr-2 h-4 w-4" /> Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    ),
+    enableSorting: false,
+  },
+];
 
 export function AbsenceClient({ child, absences }: Props) {
   const id = child.id;
@@ -94,60 +145,12 @@ export function AbsenceClient({ child, absences }: Props) {
           </Button>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Absence History</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a]">Date</TableHead>
-                  <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a]">Reason</TableHead>
-                  <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a]">Status</TableHead>
-                  <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a]">Reported By</TableHead>
-                  <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a] w-[60px]" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {absences.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center text-sm text-muted-foreground py-8">
-                      No absence records found.
-                    </TableCell>
-                  </TableRow>
-                )}
-                {absences.map((row) => (
-                  <TableRow key={row.id}>
-                    <TableCell className="text-sm font-medium">{row.date}</TableCell>
-                    <TableCell className="text-sm">{row.reason ?? "\u2014"}</TableCell>
-                    <TableCell>
-                      <Badge className={statusColors[row.status] ?? "bg-gray-100 text-gray-700"}>{row.status}</Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{row.createdBy ?? "\u2014"}</TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <FileText className="mr-2 h-4 w-4" /> View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600">
-                            <Trash2 className="mr-2 h-4 w-4" /> Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <DataTable
+          columns={columns}
+          data={absences}
+          searchKey="reason"
+          searchPlaceholder="Search by reason..."
+        />
       </div>
     </>
   );

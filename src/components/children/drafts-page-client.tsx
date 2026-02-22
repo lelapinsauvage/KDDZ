@@ -2,12 +2,18 @@
 
 import { useState, useMemo, useCallback, useTransition } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Plus, Search } from "lucide-react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import {
+  Plus,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/layout/page-header";
-import { DataTable } from "@/components/shared/data-table";
 import { getChildrenColumns, type ChildRow } from "@/components/children/children-columns";
 import { deleteChild } from "@/lib/actions/children";
 import { Button } from "@/components/ui/button";
@@ -27,8 +33,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  type SortingState,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
 
-// ── Props types matching what the server actions return ──
+// ── Types ────────────────────────────────────────
 
 interface BranchItem {
   id: string;
@@ -41,56 +61,137 @@ interface ClassItem {
   branchId: string;
 }
 
+interface Filters {
+  search: string;
+  branch: string;
+  class: string;
+  gender: string;
+  page: number;
+  pageSize: number;
+  sort: string;
+  order: "asc" | "desc";
+}
+
 interface DraftsPageClientProps {
   children: ChildRow[];
+  total: number;
   branches: BranchItem[];
   classes: ClassItem[];
+  filters: Filters;
 }
 
 export function DraftsPageClient({
   children,
+  total,
   branches,
   classes,
+  filters,
 }: DraftsPageClientProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
-  const [search, setSearch] = useState("");
-  const [branchFilter, setBranchFilter] = useState("ALL");
-  const [classFilter, setClassFilter] = useState("ALL");
-  const [genderFilter, setGenderFilter] = useState("ALL");
 
-  // Delete confirmation state
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
-  // Classes filtered by selected branch
-  const availableClasses = useMemo(() => {
-    if (branchFilter === "ALL") return classes;
-    return classes.filter((c) => c.branchId === branchFilter);
-  }, [branchFilter, classes]);
+  const [searchValue, setSearchValue] = useState(filters.search);
 
-  const effectiveClassFilter = useMemo(() => {
-    if (classFilter === "ALL") return "ALL";
-    const stillAvailable = availableClasses.some((c) => c.id === classFilter);
-    return stillAvailable ? classFilter : "ALL";
-  }, [classFilter, availableClasses]);
+  // ── URL param helpers ──────────────────────────
 
-  // Apply toolbar filters
-  const filteredChildren = useMemo(() => {
-    return children.filter((child) => {
-      // Search by name
-      if (search) {
-        const fullName = `${child.firstName} ${child.lastName}`.toLowerCase();
-        if (!fullName.includes(search.toLowerCase())) return false;
+  const updateParams = useCallback(
+    (updates: Record<string, string>) => {
+      const params = new URLSearchParams(searchParams.toString());
+      for (const [key, value] of Object.entries(updates)) {
+        if (!value || value === "ALL" || value === "") {
+          params.delete(key);
+        } else {
+          params.set(key, value);
+        }
       }
-      // Branch
-      if (branchFilter !== "ALL" && child.branchId !== branchFilter) return false;
-      // Class
-      if (effectiveClassFilter !== "ALL" && child.classId !== effectiveClassFilter) return false;
-      // Gender
-      if (genderFilter !== "ALL" && child.gender !== genderFilter) return false;
-      return true;
-    });
-  }, [search, branchFilter, effectiveClassFilter, genderFilter, children]);
+      if (!("page" in updates)) {
+        params.delete("page");
+      }
+      startTransition(() => {
+        router.replace(`${pathname}?${params.toString()}`);
+      });
+    },
+    [searchParams, pathname, router]
+  );
+
+  const availableClasses = useMemo(() => {
+    if (filters.branch === "ALL") return classes;
+    return classes.filter((c) => c.branchId === filters.branch);
+  }, [filters.branch, classes]);
+
+  // ── Handlers ───────────────────────────────────
+
+  const handleSearchSubmit = useCallback(() => {
+    updateParams({ search: searchValue });
+  }, [searchValue, updateParams]);
+
+  const handleBranchChange = useCallback(
+    (value: string) => {
+      updateParams({ branch: value, class: "" });
+    },
+    [updateParams]
+  );
+
+  const handleClassChange = useCallback(
+    (value: string) => {
+      updateParams({ class: value });
+    },
+    [updateParams]
+  );
+
+  const handleGenderChange = useCallback(
+    (value: string) => {
+      updateParams({ gender: value });
+    },
+    [updateParams]
+  );
+
+  const handlePageChange = useCallback(
+    (newPage: number) => {
+      updateParams({ page: String(newPage) });
+    },
+    [updateParams]
+  );
+
+  const handlePageSizeChange = useCallback(
+    (newSize: string) => {
+      updateParams({ pageSize: newSize, page: "" });
+    },
+    [updateParams]
+  );
+
+  // ── Sorting ────────────────────────────────────
+
+  const sorting: SortingState = filters.sort
+    ? [{ id: filters.sort, desc: filters.order === "desc" }]
+    : [];
+
+  const handleSortingChange = useCallback(
+    (updaterOrValue: SortingState | ((prev: SortingState) => SortingState)) => {
+      const newSorting =
+        typeof updaterOrValue === "function"
+          ? updaterOrValue(sorting)
+          : updaterOrValue;
+      if (newSorting.length === 0) {
+        updateParams({ sort: "", order: "" });
+      } else {
+        updateParams({
+          sort: newSorting[0].id,
+          order: newSorting[0].desc ? "desc" : "asc",
+        });
+      }
+    },
+    [sorting, updateParams]
+  );
+
+  // ── Delete ─────────────────────────────────────
 
   const handleDeleteRequest = useCallback((id: string, name: string) => {
     setDeleteTarget({ id, name });
@@ -111,10 +212,27 @@ export function DraftsPageClient({
     });
   }, [deleteTarget, router]);
 
+  // ── Table setup ────────────────────────────────
+
   const columns = useMemo(
     () => getChildrenColumns({ onDelete: handleDeleteRequest }),
     [handleDeleteRequest]
   );
+
+  const table = useReactTable({
+    data: children,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    manualSorting: true,
+    manualPagination: true,
+    onSortingChange: handleSortingChange,
+    state: { sorting },
+    pageCount: Math.ceil(total / filters.pageSize),
+  });
+
+  const pageCount = Math.ceil(total / filters.pageSize);
+  const canPreviousPage = filters.page > 1;
+  const canNextPage = filters.page < pageCount;
 
   return (
     <>
@@ -130,18 +248,25 @@ export function DraftsPageClient({
         {/* ── Toolbar ─────────────────────────────── */}
         <div className="flex flex-wrap items-center gap-3">
           {/* Search */}
-          <div className="relative w-full max-w-xs">
+          <form
+            className="relative w-full max-w-xs"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSearchSubmit();
+            }}
+          >
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search by name..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              onBlur={handleSearchSubmit}
               className="pl-9"
             />
-          </div>
+          </form>
 
           {/* Branch filter */}
-          <Select value={branchFilter} onValueChange={(v) => { setBranchFilter(v); setClassFilter("ALL"); }}>
+          <Select value={filters.branch} onValueChange={handleBranchChange}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="All Branches" />
             </SelectTrigger>
@@ -156,7 +281,7 @@ export function DraftsPageClient({
           </Select>
 
           {/* Class filter */}
-          <Select value={effectiveClassFilter} onValueChange={setClassFilter}>
+          <Select value={filters.class} onValueChange={handleClassChange}>
             <SelectTrigger className="w-[170px]">
               <SelectValue placeholder="All Classes" />
             </SelectTrigger>
@@ -171,7 +296,7 @@ export function DraftsPageClient({
           </Select>
 
           {/* Gender filter */}
-          <Select value={genderFilter} onValueChange={setGenderFilter}>
+          <Select value={filters.gender} onValueChange={handleGenderChange}>
             <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="All Genders" />
             </SelectTrigger>
@@ -198,19 +323,147 @@ export function DraftsPageClient({
         </div>
 
         {/* ── Data Table ──────────────────────────── */}
-        <DataTable
-          columns={columns}
-          data={filteredChildren}
-        />
+        <div className="space-y-4">
+          <div className="rounded-md border bg-card">
+            <Table>
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => (
+                      <TableHead
+                        key={header.id}
+                        className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a]"
+                      >
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {isPending ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="h-24 text-center text-muted-foreground"
+                    >
+                      Loading...
+                    </TableCell>
+                  </TableRow>
+                ) : table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow key={row.id}>
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id} className="text-sm">
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="h-24 text-center text-muted-foreground"
+                    >
+                      No results found.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* ── Pagination ──────────────────────────── */}
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              {total} total row(s)
+            </p>
+            <div className="flex items-center gap-2">
+              <Select
+                value={String(filters.pageSize)}
+                onValueChange={handlePageSizeChange}
+              >
+                <SelectTrigger className="h-8 w-[70px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {[10, 20, 30, 50, 100].map((size) => (
+                    <SelectItem key={size} value={String(size)}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => handlePageChange(1)}
+                  disabled={!canPreviousPage}
+                >
+                  <ChevronsLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => handlePageChange(filters.page - 1)}
+                  disabled={!canPreviousPage}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  Page {filters.page} of {pageCount || 1}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => handlePageChange(filters.page + 1)}
+                  disabled={!canNextPage}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => handlePageChange(pageCount)}
+                  disabled={!canNextPage}
+                >
+                  <ChevronsRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* ── Delete Confirmation Dialog ──────────── */}
-      <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+      <Dialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirm Deactivation</DialogTitle>
             <DialogDescription>
-              Are you sure you want to deactivate <strong>{deleteTarget?.name}</strong>? This will mark the child as inactive.
+              Are you sure you want to deactivate{" "}
+              <strong>{deleteTarget?.name}</strong>? This will mark the child as
+              inactive.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

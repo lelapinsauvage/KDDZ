@@ -8,6 +8,8 @@ import { childFormSchema, type ChildFormValues } from "@/lib/validations/child";
 import { createChild, updateChild } from "@/lib/actions/children";
 import { getBranches } from "@/lib/actions/branches";
 import { getClasses } from "@/lib/actions/classes";
+import { getSchoolYears } from "@/lib/actions/school-years";
+import { toast } from "sonner";
 import {
   Tabs,
   TabsList,
@@ -41,16 +43,15 @@ import {
   Heart,
   UserPlus,
   Receipt,
+  Paperclip,
   Plus,
   Trash2,
   Save,
   Send,
+  Loader2,
 } from "lucide-react";
 
-const SCHOOL_YEARS = [
-  { id: "year-1", label: "2024-2025" },
-  { id: "year-2", label: "2025-2026" },
-];
+// ── Constants ──
 
 const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
@@ -68,6 +69,13 @@ const NATIONALITIES = [
   "Other",
 ];
 
+const RELIGIONS = [
+  "Muslim",
+  "Christian",
+  "Druze",
+  "Other",
+];
+
 const DIAPER_TYPES = ["Pampers", "Huggies", "Molfix", "Fine Baby", "Other"];
 
 const MILK_TYPES = [
@@ -82,7 +90,42 @@ const MILK_TYPES = [
 
 const LANGUAGES = ["Arabic", "English", "French", "Armenian", "Other"];
 
+const MARITAL_STATUSES = [
+  "Normal life",
+  "Separated",
+  "Divorced",
+  "Widow(er)",
+];
+
+const DIVORCE_SITUATIONS = [
+  "Child With Father",
+  "Child With Mother",
+  "Child between Father and Mother",
+];
+
+const MEDICAL_CASES = [
+  "No",
+  "Hearing",
+  "Visual",
+  "Motion",
+  "Mental",
+  "Psychological",
+  "Neural",
+];
+
+const BUS_OPTIONS = [
+  { value: "false", label: "No" },
+  { value: "morning", label: "Morning" },
+  { value: "noon", label: "Noon" },
+  { value: "afternoon", label: "Afternoon" },
+  { value: "morning-noon", label: "Morning / Noon" },
+  { value: "morning-afternoon", label: "Morning / Afternoon" },
+];
+
+const MILK_SCOOPS = Array.from({ length: 10 }, (_, i) => i + 1);
+
 // ── Helper: form field with label + error ──
+
 function FormField({
   label,
   error,
@@ -111,6 +154,7 @@ function FormField({
 }
 
 // ── Props ──
+
 interface ChildFormProps {
   defaultValues?: Partial<ChildFormValues>;
   childId?: string;
@@ -120,12 +164,16 @@ interface ChildFormProps {
 function toFormData(data: ChildFormValues, isDraft = false): FormData {
   const fd = new FormData();
   fd.set("firstName", data.firstName);
+  fd.set("firstNameAr", data.firstNameAr ?? "");
   fd.set("middleName", data.middleName ?? "");
   fd.set("lastName", data.lastName);
+  fd.set("lastNameAr", data.lastNameAr ?? "");
   fd.set("dateOfBirth", data.dateOfBirth ?? "");
   fd.set("placeOfBirth", data.placeOfBirth ?? "");
   fd.set("gender", data.gender ?? "");
   fd.set("nationality", data.nationality ?? "");
+  fd.set("religion", data.religion ?? "");
+  fd.set("idNumber", data.idNumber ?? "");
   fd.set("bloodType", data.bloodType ?? "");
   fd.set("allergies", data.allergies ?? "");
   fd.set("photo", data.photo ?? "");
@@ -139,10 +187,17 @@ function toFormData(data: ChildFormValues, isDraft = false): FormData {
   fd.set("diaperType", data.diaperType ?? "");
   fd.set("milkType", data.milkType ?? "");
   fd.set("milkPortions", String(data.milkPortions ?? 0));
+  fd.set("milkScoop", String(data.milkScoop ?? 0));
+  fd.set("milkTime1", data.milkTime1 ?? "");
+  fd.set("milkTime2", data.milkTime2 ?? "");
+  fd.set("milkTime3", data.milkTime3 ?? "");
+  fd.set("lunchIncluded", String(data.lunchIncluded ?? true));
   fd.set("sleepFrom", data.sleepFrom ?? "");
   fd.set("sleepTo", data.sleepTo ?? "");
   fd.set("remarks", data.remarks ?? "");
   fd.set("language", data.language ?? "");
+  fd.set("previousGarderie", String(data.previousGarderie ?? false));
+  fd.set("previousGarderieName", data.previousGarderieName ?? "");
 
   // Nested objects as JSON strings
   if (data.mother) fd.set("mother", JSON.stringify(data.mother));
@@ -153,29 +208,228 @@ function toFormData(data: ChildFormValues, isDraft = false): FormData {
   return fd;
 }
 
+// ── Reusable guardian section ──
+
+function GuardianSection({
+  type,
+  register,
+  control,
+  errors,
+}: {
+  type: "mother" | "father";
+  register: ReturnType<typeof useForm<ChildFormValues>>["register"];
+  control: ReturnType<typeof useForm<ChildFormValues>>["control"];
+  errors: ReturnType<typeof useForm<ChildFormValues>>["formState"]["errors"];
+}) {
+  const label = type === "mother" ? "Mother" : "Father";
+  const parentErrors = errors[type];
+
+  return (
+    <Card>
+      <CardHeader className="border-b">
+        <CardTitle className="text-base">{label} Information</CardTitle>
+        <CardDescription>
+          Contact, identification, and details for the {type}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
+          <FormField label="First Name" error={parentErrors?.firstName?.message}>
+            <Input
+              {...register(`${type}.firstName`)}
+              placeholder={`${label}'s first name`}
+            />
+          </FormField>
+
+          <FormField label="Last Name" error={parentErrors?.lastName?.message}>
+            <Input
+              {...register(`${type}.lastName`)}
+              placeholder={`${label}'s last name`}
+            />
+          </FormField>
+
+          <FormField label="Nationality" error={parentErrors?.nationality?.message}>
+            <Controller
+              name={`${type}.nationality`}
+              control={control}
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select nationality" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {NATIONALITIES.map((n) => (
+                      <SelectItem key={n} value={n}>{n}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </FormField>
+
+          <FormField label="Profession" error={parentErrors?.profession?.message}>
+            <Input
+              {...register(`${type}.profession`)}
+              placeholder="Occupation / Profession"
+            />
+          </FormField>
+
+          <FormField label="Workplace" error={parentErrors?.workplace?.message}>
+            <Input
+              {...register(`${type}.workplace`)}
+              placeholder="Company or workplace"
+            />
+          </FormField>
+
+          <FormField label="Work Phone" error={parentErrors?.workPhone?.message}>
+            <Input
+              {...register(`${type}.workPhone`)}
+              placeholder="+961 XX XXX XXX"
+            />
+          </FormField>
+
+          <FormField label="Phone" error={parentErrors?.phone?.message}>
+            <Input
+              {...register(`${type}.phone`)}
+              placeholder="+961 XX XXX XXX"
+            />
+          </FormField>
+
+          <FormField label="Mobile" required error={parentErrors?.mobile?.message}>
+            <Input
+              {...register(`${type}.mobile`)}
+              placeholder="+961 XX XXX XXX"
+            />
+          </FormField>
+
+          <FormField label="Email" error={parentErrors?.email?.message}>
+            <Input
+              type="email"
+              {...register(`${type}.email`)}
+              placeholder={`${type}@email.com`}
+            />
+          </FormField>
+
+          <FormField label="ID Number" error={parentErrors?.idNumber?.message}>
+            <Input
+              {...register(`${type}.idNumber`)}
+              placeholder="National ID or passport number"
+            />
+          </FormField>
+
+          <FormField label="Can Pick Up" error={parentErrors?.canPickUp?.message}>
+            <Controller
+              name={`${type}.canPickUp`}
+              control={control}
+              render={({ field }) => (
+                <Select
+                  value={field.value ? "yes" : "no"}
+                  onValueChange={(v) => field.onChange(v === "yes")}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Can pick up?" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="yes">Yes</SelectItem>
+                    <SelectItem value="no">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </FormField>
+
+          <FormField label="Medical Case" error={parentErrors?.medicalCase?.message}>
+            <Controller
+              name={`${type}.medicalCase`}
+              control={control}
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select if applicable" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MEDICAL_CASES.map((mc) => (
+                      <SelectItem key={mc} value={mc}>{mc}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </FormField>
+        </div>
+
+        <Separator className="my-6" />
+
+        <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
+          <FormField label="Marital Status" error={parentErrors?.maritalStatus?.message}>
+            <Controller
+              name={`${type}.maritalStatus`}
+              control={control}
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MARITAL_STATUSES.map((ms) => (
+                      <SelectItem key={ms} value={ms}>{ms}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </FormField>
+
+          <FormField label="Divorce Situation" error={parentErrors?.divorceSituation?.message}>
+            <Controller
+              name={`${type}.divorceSituation`}
+              control={control}
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select if applicable" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DIVORCE_SITUATIONS.map((ds) => (
+                      <SelectItem key={ds} value={ds}>{ds}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </FormField>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Main form component ──
+
 export function ChildForm({ defaultValues, childId }: ChildFormProps) {
   const isEditing = !!childId;
   const router = useRouter();
 
-  // Fetch branches and classes from the server
+  // Dynamic data from server
   const [branches, setBranches] = useState<Array<{ id: string; name: string }>>([]);
   const [classes, setClasses] = useState<Array<{ id: string; name: string }>>([]);
+  const [schoolYears, setSchoolYears] = useState<Array<{ id: string; label: string }>>([]);
 
   useEffect(() => {
     async function loadOptions() {
-      const [branchesResult, classesResult] = await Promise.all([
+      const [branchesResult, classesResult, schoolYearsResult] = await Promise.all([
         getBranches(),
         getClasses(),
+        getSchoolYears(),
       ]);
       if (branchesResult.success && branchesResult.data) {
-        setBranches(
-          (branchesResult.data as Array<{ id: string; name: string }>)
-        );
+        setBranches(branchesResult.data as Array<{ id: string; name: string }>);
       }
       if (classesResult.success && classesResult.data) {
-        setClasses(
-          (classesResult.data as Array<{ id: string; name: string }>)
-        );
+        setClasses(classesResult.data as Array<{ id: string; name: string }>);
+      }
+      if (schoolYearsResult.success && schoolYearsResult.data) {
+        setSchoolYears(schoolYearsResult.data as Array<{ id: string; label: string }>);
       }
     }
     loadOptions();
@@ -191,12 +445,16 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
     resolver: zodResolver(childFormSchema),
     defaultValues: {
       firstName: "",
+      firstNameAr: "",
       middleName: "",
       lastName: "",
+      lastNameAr: "",
       dateOfBirth: "",
       placeOfBirth: "",
       gender: undefined,
       nationality: "",
+      religion: "",
+      idNumber: "",
       bloodType: "",
       allergies: "",
       photo: "",
@@ -207,6 +465,14 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
         phone: "",
         mobile: "",
         email: "",
+        profession: "",
+        workplace: "",
+        workPhone: "",
+        maritalStatus: "",
+        divorceSituation: "",
+        medicalCase: "",
+        canPickUp: true,
+        idNumber: "",
       },
       father: {
         firstName: "",
@@ -215,8 +481,14 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
         phone: "",
         mobile: "",
         email: "",
+        profession: "",
         workplace: "",
         workPhone: "",
+        maritalStatus: "",
+        divorceSituation: "",
+        medicalCase: "",
+        canPickUp: true,
+        idNumber: "",
       },
       branchId: "",
       classId: "",
@@ -228,10 +500,17 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
       diaperType: "",
       milkType: "",
       milkPortions: 0,
+      milkScoop: 0,
+      milkTime1: "",
+      milkTime2: "",
+      milkTime3: "",
+      lunchIncluded: true,
       sleepFrom: "",
       sleepTo: "",
       remarks: "",
       language: "",
+      previousGarderie: false,
+      previousGarderieName: "",
       relatives: [],
       accountingEntries: [],
       ...defaultValues,
@@ -250,6 +529,8 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
     remove: removeAccounting,
   } = useFieldArray({ control, name: "accountingEntries" });
 
+  const watchPreviousGarderie = watch("previousGarderie");
+
   async function onSubmit(data: ChildFormValues) {
     const fd = toFormData(data);
     let result;
@@ -259,10 +540,10 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
       result = await createChild(fd);
     }
     if (result.success) {
+      toast.success(isEditing ? "Child updated successfully" : "Child enrolled successfully");
       router.push("/children");
     } else {
-      // TODO: show a toast or inline error
-      console.error("Save failed:", result.error);
+      toast.error(result.error || "Failed to save");
     }
   }
 
@@ -276,16 +557,17 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
       result = await createChild(fd);
     }
     if (result.success) {
+      toast.success("Draft saved successfully");
       router.push("/children/drafts");
     } else {
-      console.error("Draft save failed:", result.error);
+      toast.error(result.error || "Failed to save draft");
     }
   }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
       <Tabs defaultValue="basic" className="w-full">
-        <TabsList variant="line" className="w-full justify-start border-b border-[#e1e5ec] bg-transparent px-0">
+        <TabsList variant="line" className="w-full justify-start overflow-x-auto border-b border-[#e1e5ec] bg-transparent px-0">
           <TabsTrigger value="basic" className="gap-1.5 data-[state=active]:text-[#1caf9a] after:bg-[#1caf9a]">
             <User className="size-4" />
             Basic Info
@@ -310,6 +592,10 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
             <Receipt className="size-4" />
             Accounting
           </TabsTrigger>
+          <TabsTrigger value="attachments" className="gap-1.5 data-[state=active]:text-[#1caf9a] after:bg-[#1caf9a]">
+            <Paperclip className="size-4" />
+            Attachments
+          </TabsTrigger>
         </TabsList>
 
         {/* ── Basic Info Tab ── */}
@@ -323,69 +609,40 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
-                <FormField
-                  label="First Name"
-                  required
-                  error={errors.firstName?.message}
-                >
-                  <Input
-                    {...register("firstName")}
-                    placeholder="Enter first name"
-                  />
+                <FormField label="First Name (EN)" required error={errors.firstName?.message}>
+                  <Input {...register("firstName")} placeholder="Enter first name" />
                 </FormField>
 
-                <FormField
-                  label="Middle Name"
-                  error={errors.middleName?.message}
-                >
-                  <Input
-                    {...register("middleName")}
-                    placeholder="Enter middle name"
-                  />
+                <FormField label="First Name (AR)" error={errors.firstNameAr?.message}>
+                  <Input {...register("firstNameAr")} placeholder="الاسم الأول" dir="rtl" />
                 </FormField>
 
-                <FormField
-                  label="Last Name"
-                  required
-                  error={errors.lastName?.message}
-                >
-                  <Input
-                    {...register("lastName")}
-                    placeholder="Enter last name"
-                  />
+                <FormField label="Middle Name" error={errors.middleName?.message}>
+                  <Input {...register("middleName")} placeholder="Enter middle name" />
                 </FormField>
 
-                <FormField
-                  label="Date of Birth"
-                  required
-                  error={errors.dateOfBirth?.message}
-                >
+                <FormField label="Last Name (EN)" required error={errors.lastName?.message}>
+                  <Input {...register("lastName")} placeholder="Enter last name" />
+                </FormField>
+
+                <FormField label="Last Name (AR)" error={errors.lastNameAr?.message}>
+                  <Input {...register("lastNameAr")} placeholder="اسم العائلة" dir="rtl" />
+                </FormField>
+
+                <FormField label="Date of Birth" required error={errors.dateOfBirth?.message}>
                   <Input type="date" {...register("dateOfBirth")} />
                 </FormField>
 
-                <FormField
-                  label="Place of Birth"
-                  error={errors.placeOfBirth?.message}
-                >
-                  <Input
-                    {...register("placeOfBirth")}
-                    placeholder="Enter place of birth"
-                  />
+                <FormField label="Place of Birth" error={errors.placeOfBirth?.message}>
+                  <Input {...register("placeOfBirth")} placeholder="Enter place of birth" />
                 </FormField>
 
-                <FormField
-                  label="Gender"
-                  required
-                  error={errors.gender?.message}
-                >
+                <FormField label="Gender" required error={errors.gender?.message}>
                   <Controller
                     name="gender"
                     control={control}
                     render={({ field }) => (
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
+                      <Select value={field.value} onValueChange={field.onChange}>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select gender" />
                         </SelectTrigger>
@@ -398,26 +655,18 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                   />
                 </FormField>
 
-                <FormField
-                  label="Nationality"
-                  error={errors.nationality?.message}
-                >
+                <FormField label="Nationality" error={errors.nationality?.message}>
                   <Controller
                     name="nationality"
                     control={control}
                     render={({ field }) => (
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
+                      <Select value={field.value} onValueChange={field.onChange}>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select nationality" />
                         </SelectTrigger>
                         <SelectContent>
                           {NATIONALITIES.map((n) => (
-                            <SelectItem key={n} value={n}>
-                              {n}
-                            </SelectItem>
+                            <SelectItem key={n} value={n}>{n}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -425,26 +674,41 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                   />
                 </FormField>
 
-                <FormField
-                  label="Blood Type"
-                  error={errors.bloodType?.message}
-                >
+                <FormField label="Religion" error={errors.religion?.message}>
+                  <Controller
+                    name="religion"
+                    control={control}
+                    render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select religion" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {RELIGIONS.map((r) => (
+                            <SelectItem key={r} value={r}>{r}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </FormField>
+
+                <FormField label="ID Number" error={errors.idNumber?.message}>
+                  <Input {...register("idNumber")} placeholder="National ID or document number" />
+                </FormField>
+
+                <FormField label="Blood Type" error={errors.bloodType?.message}>
                   <Controller
                     name="bloodType"
                     control={control}
                     render={({ field }) => (
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
+                      <Select value={field.value} onValueChange={field.onChange}>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select blood type" />
                         </SelectTrigger>
                         <SelectContent>
                           {BLOOD_TYPES.map((bt) => (
-                            <SelectItem key={bt} value={bt}>
-                              {bt}
-                            </SelectItem>
+                            <SelectItem key={bt} value={bt}>{bt}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -453,18 +717,12 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                 </FormField>
 
                 <FormField label="Photo URL" error={errors.photo?.message}>
-                  <Input
-                    {...register("photo")}
-                    placeholder="Photo URL or upload path"
-                  />
+                  <Input {...register("photo")} placeholder="Photo URL or upload path" />
                 </FormField>
               </div>
 
               <div className="mt-4">
-                <FormField
-                  label="Allergies"
-                  error={errors.allergies?.message}
-                >
+                <FormField label="Allergies" error={errors.allergies?.message}>
                   <Textarea
                     {...register("allergies")}
                     placeholder="List any known allergies, food sensitivities, or medical conditions..."
@@ -479,209 +737,18 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
         {/* ── Guardian Info Tab ── */}
         <TabsContent value="guardians">
           <div className="flex flex-col gap-6">
-            {/* Mother */}
-            <Card>
-              <CardHeader className="border-b">
-                <CardTitle className="text-base">Mother Information</CardTitle>
-                <CardDescription>
-                  Contact and identification details for the mother
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
-                  <FormField
-                    label="First Name"
-                    error={errors.mother?.firstName?.message}
-                  >
-                    <Input
-                      {...register("mother.firstName")}
-                      placeholder="Mother's first name"
-                    />
-                  </FormField>
-
-                  <FormField
-                    label="Last Name"
-                    error={errors.mother?.lastName?.message}
-                  >
-                    <Input
-                      {...register("mother.lastName")}
-                      placeholder="Mother's last name"
-                    />
-                  </FormField>
-
-                  <FormField
-                    label="Nationality"
-                    error={errors.mother?.nationality?.message}
-                  >
-                    <Controller
-                      name="mother.nationality"
-                      control={control}
-                      render={({ field }) => (
-                        <Select
-                          value={field.value}
-                          onValueChange={field.onChange}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select nationality" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {NATIONALITIES.map((n) => (
-                              <SelectItem key={n} value={n}>
-                                {n}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
-                  </FormField>
-
-                  <FormField
-                    label="Phone"
-                    error={errors.mother?.phone?.message}
-                  >
-                    <Input
-                      {...register("mother.phone")}
-                      placeholder="+961 XX XXX XXX"
-                    />
-                  </FormField>
-
-                  <FormField
-                    label="Mobile"
-                    error={errors.mother?.mobile?.message}
-                  >
-                    <Input
-                      {...register("mother.mobile")}
-                      placeholder="+961 XX XXX XXX"
-                    />
-                  </FormField>
-
-                  <FormField
-                    label="Email"
-                    error={errors.mother?.email?.message}
-                  >
-                    <Input
-                      type="email"
-                      {...register("mother.email")}
-                      placeholder="mother@email.com"
-                    />
-                  </FormField>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Father */}
-            <Card>
-              <CardHeader className="border-b">
-                <CardTitle className="text-base">Father Information</CardTitle>
-                <CardDescription>
-                  Contact, identification, and workplace details for the father
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
-                  <FormField
-                    label="First Name"
-                    error={errors.father?.firstName?.message}
-                  >
-                    <Input
-                      {...register("father.firstName")}
-                      placeholder="Father's first name"
-                    />
-                  </FormField>
-
-                  <FormField
-                    label="Last Name"
-                    error={errors.father?.lastName?.message}
-                  >
-                    <Input
-                      {...register("father.lastName")}
-                      placeholder="Father's last name"
-                    />
-                  </FormField>
-
-                  <FormField
-                    label="Nationality"
-                    error={errors.father?.nationality?.message}
-                  >
-                    <Controller
-                      name="father.nationality"
-                      control={control}
-                      render={({ field }) => (
-                        <Select
-                          value={field.value}
-                          onValueChange={field.onChange}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select nationality" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {NATIONALITIES.map((n) => (
-                              <SelectItem key={n} value={n}>
-                                {n}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
-                  </FormField>
-
-                  <FormField
-                    label="Phone"
-                    error={errors.father?.phone?.message}
-                  >
-                    <Input
-                      {...register("father.phone")}
-                      placeholder="+961 XX XXX XXX"
-                    />
-                  </FormField>
-
-                  <FormField
-                    label="Mobile"
-                    error={errors.father?.mobile?.message}
-                  >
-                    <Input
-                      {...register("father.mobile")}
-                      placeholder="+961 XX XXX XXX"
-                    />
-                  </FormField>
-
-                  <FormField
-                    label="Email"
-                    error={errors.father?.email?.message}
-                  >
-                    <Input
-                      type="email"
-                      {...register("father.email")}
-                      placeholder="father@email.com"
-                    />
-                  </FormField>
-
-                  <Separator className="col-span-full my-2" />
-
-                  <FormField
-                    label="Workplace"
-                    error={errors.father?.workplace?.message}
-                  >
-                    <Input
-                      {...register("father.workplace")}
-                      placeholder="Company or workplace name"
-                    />
-                  </FormField>
-
-                  <FormField
-                    label="Work Phone"
-                    error={errors.father?.workPhone?.message}
-                  >
-                    <Input
-                      {...register("father.workPhone")}
-                      placeholder="+961 XX XXX XXX"
-                    />
-                  </FormField>
-                </div>
-              </CardContent>
-            </Card>
+            <GuardianSection
+              type="father"
+              register={register}
+              control={control}
+              errors={errors}
+            />
+            <GuardianSection
+              type="mother"
+              register={register}
+              control={control}
+              errors={errors}
+            />
           </div>
         </TabsContent>
 
@@ -689,36 +756,25 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
         <TabsContent value="enrollment">
           <Card>
             <CardHeader className="border-b">
-              <CardTitle className="text-base">
-                Enrollment Information
-              </CardTitle>
+              <CardTitle className="text-base">Enrollment Information</CardTitle>
               <CardDescription>
                 Branch assignment, class placement, and enrollment status
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
-                <FormField
-                  label="Branch"
-                  required
-                  error={errors.branchId?.message}
-                >
+                <FormField label="Branch" required error={errors.branchId?.message}>
                   <Controller
                     name="branchId"
                     control={control}
                     render={({ field }) => (
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
+                      <Select value={field.value} onValueChange={field.onChange}>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select branch" />
                         </SelectTrigger>
                         <SelectContent>
                           {branches.map((b) => (
-                            <SelectItem key={b.id} value={b.id}>
-                              {b.name}
-                            </SelectItem>
+                            <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -726,27 +782,18 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                   />
                 </FormField>
 
-                <FormField
-                  label="Class"
-                  required
-                  error={errors.classId?.message}
-                >
+                <FormField label="Class" required error={errors.classId?.message}>
                   <Controller
                     name="classId"
                     control={control}
                     render={({ field }) => (
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
+                      <Select value={field.value} onValueChange={field.onChange}>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select class" />
                         </SelectTrigger>
                         <SelectContent>
                           {classes.map((c) => (
-                            <SelectItem key={c.id} value={c.id}>
-                              {c.name}
-                            </SelectItem>
+                            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -754,27 +801,18 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                   />
                 </FormField>
 
-                <FormField
-                  label="School Year"
-                  required
-                  error={errors.schoolYearId?.message}
-                >
+                <FormField label="School Year" required error={errors.schoolYearId?.message}>
                   <Controller
                     name="schoolYearId"
                     control={control}
                     render={({ field }) => (
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
+                      <Select value={field.value} onValueChange={field.onChange}>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select school year" />
                         </SelectTrigger>
                         <SelectContent>
-                          {SCHOOL_YEARS.map((y) => (
-                            <SelectItem key={y.id} value={y.id}>
-                              {y.label}
-                            </SelectItem>
+                          {schoolYears.map((y) => (
+                            <SelectItem key={y.id} value={y.id}>{y.label}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -782,10 +820,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                   />
                 </FormField>
 
-                <FormField
-                  label="Enrollment Date"
-                  error={errors.enrollmentDate?.message}
-                >
+                <FormField label="Enrollment Date" error={errors.enrollmentDate?.message}>
                   <Input type="date" {...register("enrollmentDate")} />
                 </FormField>
               </div>
@@ -847,18 +882,13 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                     name="language"
                     control={control}
                     render={({ field }) => (
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
+                      <Select value={field.value} onValueChange={field.onChange}>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Preferred language" />
                         </SelectTrigger>
                         <SelectContent>
                           {LANGUAGES.map((l) => (
-                            <SelectItem key={l} value={l}>
-                              {l}
-                            </SelectItem>
+                            <SelectItem key={l} value={l}>{l}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -866,26 +896,61 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                   />
                 </FormField>
 
-                <FormField
-                  label="Diaper Type"
-                  error={errors.diaperType?.message}
-                >
+                <FormField label="Bus Service" error={errors.busAttendance?.message}>
+                  <Controller
+                    name="busAttendance"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value ? "true" : "false"}
+                        onValueChange={(v) => field.onChange(v !== "false")}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Bus service" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {BUS_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </FormField>
+
+                <FormField label="Lunch Included" error={errors.lunchIncluded?.message}>
+                  <Controller
+                    name="lunchIncluded"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value ? "yes" : "no"}
+                        onValueChange={(v) => field.onChange(v === "yes")}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Lunch included?" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="yes">Yes</SelectItem>
+                          <SelectItem value="no">No</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </FormField>
+
+                <FormField label="Diaper Type" error={errors.diaperType?.message}>
                   <Controller
                     name="diaperType"
                     control={control}
                     render={({ field }) => (
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
+                      <Select value={field.value} onValueChange={field.onChange}>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select diaper type" />
                         </SelectTrigger>
                         <SelectContent>
                           {DIAPER_TYPES.map((d) => (
-                            <SelectItem key={d} value={d}>
-                              {d}
-                            </SelectItem>
+                            <SelectItem key={d} value={d}>{d}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -898,18 +963,13 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                     name="milkType"
                     control={control}
                     render={({ field }) => (
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
+                      <Select value={field.value} onValueChange={field.onChange}>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select milk type" />
                         </SelectTrigger>
                         <SelectContent>
                           {MILK_TYPES.map((m) => (
-                            <SelectItem key={m} value={m}>
-                              {m}
-                            </SelectItem>
+                            <SelectItem key={m} value={m}>{m}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -917,16 +977,47 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                   />
                 </FormField>
 
-                <FormField
-                  label="Milk Portions (per day)"
-                  error={errors.milkPortions?.message}
-                >
+                <FormField label="Milk Portions (ML)" error={errors.milkPortions?.message}>
                   <Input
                     type="number"
                     min={0}
                     {...register("milkPortions")}
                     placeholder="0"
                   />
+                </FormField>
+
+                <FormField label="Milk Scoop" error={errors.milkScoop?.message}>
+                  <Controller
+                    name="milkScoop"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value ? String(field.value) : ""}
+                        onValueChange={(v) => field.onChange(Number(v))}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Number of scoops" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {MILK_SCOOPS.map((s) => (
+                            <SelectItem key={s} value={String(s)}>{s}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </FormField>
+
+                <FormField label="Milk Time 1" error={errors.milkTime1?.message}>
+                  <Input type="time" {...register("milkTime1")} />
+                </FormField>
+
+                <FormField label="Milk Time 2" error={errors.milkTime2?.message}>
+                  <Input type="time" {...register("milkTime2")} />
+                </FormField>
+
+                <FormField label="Milk Time 3" error={errors.milkTime3?.message}>
+                  <Input type="time" {...register("milkTime3")} />
                 </FormField>
 
                 <FormField label="Sleep From" error={errors.sleepFrom?.message}>
@@ -940,25 +1031,36 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
 
               <Separator className="my-6" />
 
-              <div className="flex items-center gap-3">
-                <Controller
-                  name="busAttendance"
-                  control={control}
-                  render={({ field }) => (
-                    <Checkbox
-                      id="busAttendance"
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
+              <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
+                <div className="flex items-center gap-3">
+                  <Controller
+                    name="previousGarderie"
+                    control={control}
+                    render={({ field }) => (
+                      <Checkbox
+                        id="previousGarderie"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    )}
+                  />
+                  <Label htmlFor="previousGarderie" className="cursor-pointer text-[#333]">
+                    Child attended another garderie before
+                  </Label>
+                </div>
+
+                {watchPreviousGarderie && (
+                  <FormField label="Previous Garderie Name" error={errors.previousGarderieName?.message}>
+                    <Input
+                      {...register("previousGarderieName")}
+                      placeholder="Name of previous garderie"
                     />
-                  )}
-                />
-                <Label htmlFor="busAttendance" className="cursor-pointer text-[#333]">
-                  Uses bus transportation
-                </Label>
+                  </FormField>
+                )}
               </div>
 
               <div className="mt-6">
-                <FormField label="Remarks" error={errors.remarks?.message}>
+                <FormField label="Remarks / Special Needs" error={errors.remarks?.message}>
                   <Textarea
                     {...register("remarks")}
                     placeholder="Any additional notes about care preferences, habits, or special instructions..."
@@ -1159,34 +1261,22 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                       <FormField
                         label="Description"
                         className="md:hidden"
-                        error={
-                          errors.accountingEntries?.[index]?.description
-                            ?.message
-                        }
+                        error={errors.accountingEntries?.[index]?.description?.message}
                       >
                         <Input
-                          {...register(
-                            `accountingEntries.${index}.description`
-                          )}
+                          {...register(`accountingEntries.${index}.description`)}
                           placeholder="e.g. Monthly tuition"
                         />
                       </FormField>
                       <div className="hidden md:block">
                         <Input
-                          {...register(
-                            `accountingEntries.${index}.description`
-                          )}
+                          {...register(`accountingEntries.${index}.description`)}
                           placeholder="e.g. Monthly tuition"
-                          aria-invalid={
-                            !!errors.accountingEntries?.[index]?.description
-                          }
+                          aria-invalid={!!errors.accountingEntries?.[index]?.description}
                         />
                         {errors.accountingEntries?.[index]?.description && (
                           <p className="mt-1 text-xs text-[#e7505a]">
-                            {
-                              errors.accountingEntries[index].description
-                                ?.message
-                            }
+                            {errors.accountingEntries[index].description?.message}
                           </p>
                         )}
                       </div>
@@ -1194,9 +1284,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                       <FormField
                         label="Amount"
                         className="md:hidden"
-                        error={
-                          errors.accountingEntries?.[index]?.amount?.message
-                        }
+                        error={errors.accountingEntries?.[index]?.amount?.message}
                       >
                         <Input
                           type="number"
@@ -1213,9 +1301,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                           min="0"
                           {...register(`accountingEntries.${index}.amount`)}
                           placeholder="0.00"
-                          aria-invalid={
-                            !!errors.accountingEntries?.[index]?.amount
-                          }
+                          aria-invalid={!!errors.accountingEntries?.[index]?.amount}
                         />
                         {errors.accountingEntries?.[index]?.amount && (
                           <p className="mt-1 text-xs text-[#e7505a]">
@@ -1227,30 +1313,21 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                       <FormField
                         label="Type"
                         className="md:hidden"
-                        error={
-                          errors.accountingEntries?.[index]?.type?.message
-                        }
+                        error={errors.accountingEntries?.[index]?.type?.message}
                       >
                         <Controller
                           name={`accountingEntries.${index}.type`}
                           control={control}
                           render={({ field: f }) => (
-                            <Select
-                              value={f.value}
-                              onValueChange={f.onChange}
-                            >
+                            <Select value={f.value} onValueChange={f.onChange}>
                               <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Type" />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="FEE">Fee</SelectItem>
-                                <SelectItem value="DISCOUNT">
-                                  Discount
-                                </SelectItem>
+                                <SelectItem value="DISCOUNT">Discount</SelectItem>
                                 <SelectItem value="PAYMENT">Payment</SelectItem>
-                                <SelectItem value="ADJUSTMENT">
-                                  Adjustment
-                                </SelectItem>
+                                <SelectItem value="ADJUSTMENT">Adjustment</SelectItem>
                               </SelectContent>
                             </Select>
                           )}
@@ -1261,22 +1338,15 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                           name={`accountingEntries.${index}.type`}
                           control={control}
                           render={({ field: f }) => (
-                            <Select
-                              value={f.value}
-                              onValueChange={f.onChange}
-                            >
+                            <Select value={f.value} onValueChange={f.onChange}>
                               <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Type" />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="FEE">Fee</SelectItem>
-                                <SelectItem value="DISCOUNT">
-                                  Discount
-                                </SelectItem>
+                                <SelectItem value="DISCOUNT">Discount</SelectItem>
                                 <SelectItem value="PAYMENT">Payment</SelectItem>
-                                <SelectItem value="ADJUSTMENT">
-                                  Adjustment
-                                </SelectItem>
+                                <SelectItem value="ADJUSTMENT">Adjustment</SelectItem>
                               </SelectContent>
                             </Select>
                           )}
@@ -1306,6 +1376,32 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* ── Attachments Tab ── */}
+        <TabsContent value="attachments">
+          <Card>
+            <CardHeader className="border-b">
+              <CardTitle className="text-base">Attachments</CardTitle>
+              <CardDescription>
+                Upload documents such as photos, ID copies, vaccination cards,
+                doctor assessments, and medical reports
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-[#e1e5ec] py-12 text-center">
+                <Paperclip className="mb-3 size-10 text-[#6f7b8a]" />
+                <p className="text-sm text-[#6f7b8a]">
+                  {isEditing
+                    ? "Attachment management will be available after saving."
+                    : "Save the enrollment first, then add attachments."}
+                </p>
+                <p className="mt-1 text-xs text-[#6f7b8a]">
+                  Supported: Photo, ID, Vaccination Card, Doctor Assessment, Medical Report
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* ── Sticky Action Bar ── */}
@@ -1317,7 +1413,11 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
             onClick={onSaveDraft}
             disabled={isSubmitting}
           >
-            <Save className="size-4" />
+            {isSubmitting ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Save className="size-4" />
+            )}
             Save as Draft
           </Button>
           <Button
@@ -1325,7 +1425,11 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
             className="bg-[#1caf9a] text-white hover:bg-[#18a08c]"
             disabled={isSubmitting}
           >
-            <Send className="size-4" />
+            {isSubmitting ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Send className="size-4" />
+            )}
             {isEditing ? "Update Child" : "Submit Enrollment"}
           </Button>
         </div>

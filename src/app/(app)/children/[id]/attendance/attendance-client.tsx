@@ -1,25 +1,11 @@
 "use client";
 
+import { type ColumnDef } from "@tanstack/react-table";
 import { PageHeader } from "@/components/layout/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Calendar, CheckCircle, XCircle, Clock } from "lucide-react";
+import { DataTable } from "@/components/shared/data-table";
+import { CheckCircle, XCircle, Clock } from "lucide-react";
 
 interface ChildData {
   id: string;
@@ -46,6 +32,55 @@ const statusConfig: Record<string, { label: string; className: string; icon: typ
   HALF_DAY: { label: "Half Day", className: "bg-blue-100 text-blue-700", icon: Clock },
   DRAFT: { label: "Draft", className: "bg-gray-100 text-gray-700", icon: Clock },
 };
+
+function getHours(checkIn: string | null, checkOut: string | null): string {
+  if (!checkIn || !checkOut || checkIn === "\u2014" || checkOut === "\u2014") return "\u2014";
+  const [inH, inM] = checkIn.split(":").map(Number);
+  const [outH, outM] = checkOut.split(":").map(Number);
+  const diff = (outH * 60 + outM - inH * 60 - inM) / 60;
+  return `${diff.toFixed(1)} hrs`;
+}
+
+const columns: ColumnDef<AttendanceRecord>[] = [
+  {
+    accessorKey: "date",
+    header: "Date",
+    cell: ({ row }) => <span className="font-medium">{row.original.date}</span>,
+  },
+  {
+    accessorKey: "checkIn",
+    header: "Check In",
+    cell: ({ row }) => row.original.checkIn ?? "\u2014",
+  },
+  {
+    accessorKey: "checkOut",
+    header: "Check Out",
+    cell: ({ row }) => row.original.checkOut ?? "\u2014",
+  },
+  {
+    id: "hours",
+    header: "Hours",
+    cell: ({ row }) => getHours(row.original.checkIn, row.original.checkOut),
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => {
+      const cfg = statusConfig[row.original.status] ?? statusConfig.DRAFT;
+      const Icon = cfg.icon;
+      return (
+        <Badge className={cfg.className}>
+          <Icon className="mr-1 h-3 w-3" />
+          {cfg.label}
+        </Badge>
+      );
+    },
+    filterFn: (row, _columnId, filterValue) => {
+      if (!filterValue || filterValue === "ALL") return true;
+      return row.original.status === filterValue;
+    },
+  },
+];
 
 export function AttendanceClient({ child, attendance }: Props) {
   const id = child.id;
@@ -99,74 +134,13 @@ export function AttendanceClient({ child, attendance }: Props) {
           </Card>
         </div>
 
-        {/* Filters */}
-        <div className="flex items-center gap-3">
-          <Select defaultValue="all">
-            <SelectTrigger className="w-[180px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Records</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size="sm">
-            <Calendar className="mr-1 h-4 w-4" />
-            Export
-          </Button>
-        </div>
-
         {/* Attendance Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Attendance Log</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a]">Date</TableHead>
-                  <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a]">Check In</TableHead>
-                  <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a]">Check Out</TableHead>
-                  <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a]">Hours</TableHead>
-                  <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a]">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {attendance.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center text-sm text-muted-foreground py-8">
-                      No attendance records found.
-                    </TableCell>
-                  </TableRow>
-                )}
-                {attendance.map((row) => {
-                  const cfg = statusConfig[row.status] ?? statusConfig.DRAFT;
-                  let hours = "\u2014";
-                  if (row.checkIn && row.checkOut && row.checkIn !== "\u2014" && row.checkOut !== "\u2014") {
-                    const [inH, inM] = row.checkIn.split(":").map(Number);
-                    const [outH, outM] = row.checkOut.split(":").map(Number);
-                    const diff = (outH * 60 + outM - inH * 60 - inM) / 60;
-                    hours = `${diff.toFixed(1)} hrs`;
-                  }
-                  return (
-                    <TableRow key={row.date}>
-                      <TableCell className="text-sm font-medium">{row.date}</TableCell>
-                      <TableCell className="text-sm">{row.checkIn ?? "\u2014"}</TableCell>
-                      <TableCell className="text-sm">{row.checkOut ?? "\u2014"}</TableCell>
-                      <TableCell className="text-sm">{hours}</TableCell>
-                      <TableCell>
-                        <Badge className={cfg.className}>
-                          <cfg.icon className="mr-1 h-3 w-3" />
-                          {cfg.label}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <DataTable
+          columns={columns}
+          data={attendance}
+          searchKey="date"
+          searchPlaceholder="Search by date..."
+        />
       </div>
     </>
   );

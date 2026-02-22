@@ -4,6 +4,7 @@ import { getDailyReports } from "@/lib/actions/daily-reports";
 import { getAlarms } from "@/lib/actions/alarms";
 import { getChildAttendance, getChildAbsences } from "@/lib/actions/attendance";
 import { getMedicalForms } from "@/lib/actions/medical";
+import { getVaccinations } from "@/lib/actions/medical";
 import { getAccountingSummary } from "@/lib/actions/accounting";
 import { DashboardClient } from "./dashboard-client";
 
@@ -26,6 +27,7 @@ export default async function ChildDashboardPage({ params }: Props) {
     attendanceRecords,
     absences,
     { forms: medicalForms },
+    { vaccinations },
     accountingSummary,
   ] = await Promise.all([
     getDailyReports({ childId: id, pageSize: 5 }),
@@ -33,6 +35,7 @@ export default async function ChildDashboardPage({ params }: Props) {
     getChildAttendance(id),
     getChildAbsences(id),
     getMedicalForms({ childId: id }),
+    getVaccinations({ childId: id }),
     getAccountingSummary(id),
   ]);
 
@@ -48,11 +51,19 @@ export default async function ChildDashboardPage({ params }: Props) {
       ? `-$${Math.abs(accountingSummary.balance).toFixed(2)}`
       : "$0.00";
 
+  // Get parent phones
+  const parents = (child.parents ?? []).map((p) => ({
+    type: p.type,
+    name: [p.firstName, p.lastName].filter(Boolean).join(" ") || null,
+    phone: p.phone ?? p.mobile ?? null,
+  }));
+
   // Map child to serializable shape
   const childData = {
     id: child.id,
     firstName: child.firstName,
     lastName: child.lastName,
+    photo: child.photo ?? null,
     className: child.class?.name ?? null,
     branchName: child.branch?.name ?? null,
     dateOfBirth: child.dateOfBirth ? child.dateOfBirth.toISOString().slice(0, 10) : null,
@@ -60,11 +71,14 @@ export default async function ChildDashboardPage({ params }: Props) {
     isActive: child.isActive,
     gender: child.gender ?? null,
     nationality: child.nationality ?? null,
+    allergies: child.allergies ?? null,
+    busAttendance: child.busAttendance,
+    lunchIncluded: child.lunchIncluded,
+    parents,
   };
 
   // Map recent reports
   const recentReports = recentReportsRaw.map((r) => {
-    // Determine meal summary
     const meals = [
       r.breakfastPortion ? `Breakfast: ${r.breakfastPortion}` : null,
       r.lunchPortion ? `Lunch: ${r.lunchPortion}` : null,
@@ -73,7 +87,6 @@ export default async function ChildDashboardPage({ params }: Props) {
       .filter(Boolean)
       .join(", ") || "No meal data";
 
-    // Determine sleep duration
     let sleep = "N/A";
     if (r.isSleep && r.sleepFrom && r.sleepTo) {
       const fromMs = r.sleepFrom.getTime();
@@ -90,7 +103,7 @@ export default async function ChildDashboardPage({ params }: Props) {
     };
   });
 
-  // Map alarms — filter to those relevant to this child (by referenceId) or general alarms
+  // Map alarms — filter to those relevant to this child or general
   const alarmsData = alarmsResult.success && alarmsResult.data
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ? (alarmsResult.data as any).alarms ?? []
@@ -99,7 +112,6 @@ export default async function ChildDashboardPage({ params }: Props) {
   const upcomingAlarms = alarmsData
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .filter((a: any) => !a.referenceId || a.referenceId === id)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .slice(0, 5)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .map((a: any) => {
@@ -124,9 +136,19 @@ export default async function ChildDashboardPage({ params }: Props) {
       };
     });
 
+  // Map vaccinations
+  const upcomingVaccinations = vaccinations
+    .filter((v) => v.nextDueDate && v.nextDueDate >= new Date())
+    .slice(0, 5)
+    .map((v) => ({
+      name: v.vaccineName,
+      dueDate: v.nextDueDate!.toISOString().slice(0, 10),
+    }));
+
   const stats = {
     attendanceRate,
     totalReports: recentReportsRaw.length > 0 ? recentReportsRaw.length : 0,
+    totalAbsences: absences.length,
     medicalRecords: medicalForms.length,
     outstandingBalance: balanceStr,
   };
@@ -137,6 +159,7 @@ export default async function ChildDashboardPage({ params }: Props) {
       stats={stats}
       recentReports={recentReports}
       upcomingAlarms={upcomingAlarms}
+      upcomingVaccinations={upcomingVaccinations}
     />
   );
 }

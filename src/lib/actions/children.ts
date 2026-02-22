@@ -16,11 +16,39 @@ interface GetChildrenParams {
   search?: string;
   page?: number;
   pageSize?: number;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
 }
 
 type ActionResult =
   | { success: true; id: string }
   | { success: false; error: string };
+
+// ── Helpers ───────────────────────────────────────
+
+function parseTimeField(value: string | undefined): Date | null {
+  if (!value) return null;
+  return new Date(`1970-01-01T${value}`);
+}
+
+function parseParentData(raw: Record<string, unknown>) {
+  return {
+    ...raw,
+    mother: raw.mother ? JSON.parse(raw.mother as string) : undefined,
+    father: raw.father ? JSON.parse(raw.father as string) : undefined,
+    relatives: raw.relatives ? JSON.parse(raw.relatives as string) : [],
+    accountingEntries: raw.accountingEntries
+      ? JSON.parse(raw.accountingEntries as string)
+      : [],
+    busAttendance: raw.busAttendance === "true",
+    isActive: raw.isActive === "true" || raw.isActive === undefined,
+    isDraft: raw.isDraft === "true",
+    lunchIncluded: raw.lunchIncluded === "true" || raw.lunchIncluded === undefined,
+    previousGarderie: raw.previousGarderie === "true",
+    milkPortions: raw.milkPortions ? Number(raw.milkPortions) : 0,
+    milkScoop: raw.milkScoop ? Number(raw.milkScoop) : 0,
+  };
+}
 
 // ── getChildren ───────────────────────────────────
 
@@ -33,27 +61,17 @@ export async function getChildren(params: GetChildrenParams = {}) {
     search,
     page = 1,
     pageSize = 20,
+    sortBy,
+    sortOrder = "asc",
   } = params;
 
   try {
     const where: Prisma.ChildWhereInput = {};
 
-    // Branch filter
-    if (branchId) {
-      where.branchId = branchId;
-    }
+    if (branchId) where.branchId = branchId;
+    if (classId) where.classId = classId;
+    if (gender) where.gender = gender;
 
-    // Class filter
-    if (classId) {
-      where.classId = classId;
-    }
-
-    // Gender filter
-    if (gender) {
-      where.gender = gender;
-    }
-
-    // Status filter
     if (status === "ACTIVE") {
       where.isActive = true;
       where.isDraft = false;
@@ -64,7 +82,6 @@ export async function getChildren(params: GetChildrenParams = {}) {
       where.isDraft = false;
     }
 
-    // Search by firstName + lastName (case insensitive)
     if (search && search.trim() !== "") {
       where.OR = [
         { firstName: { contains: search, mode: "insensitive" } },
@@ -74,6 +91,19 @@ export async function getChildren(params: GetChildrenParams = {}) {
 
     const skip = (page - 1) * pageSize;
 
+    const orderBy: Prisma.ChildOrderByWithRelationInput[] = [];
+    if (sortBy === "fullName") {
+      orderBy.push({ lastName: sortOrder }, { firstName: sortOrder });
+    } else if (sortBy === "branchName") {
+      orderBy.push({ branch: { name: sortOrder } });
+    } else if (sortBy === "className") {
+      orderBy.push({ class: { name: sortOrder } });
+    } else if (sortBy === "gender" || sortBy === "dateOfBirth") {
+      orderBy.push({ [sortBy]: sortOrder });
+    } else {
+      orderBy.push({ lastName: "asc" }, { firstName: "asc" });
+    }
+
     const [children, total] = await Promise.all([
       db.child.findMany({
         where,
@@ -81,7 +111,7 @@ export async function getChildren(params: GetChildrenParams = {}) {
           class: true,
           branch: true,
         },
-        orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+        orderBy,
         skip,
         take: pageSize,
       }),
@@ -132,28 +162,9 @@ export async function createChild(formData: FormData): Promise<ActionResult> {
   }
 
   try {
-    // Parse FormData into a plain object
-    const raw = Object.fromEntries(formData.entries());
+    const raw = Object.fromEntries(formData.entries()) as Record<string, unknown>;
+    const parsed = parseParentData(raw);
 
-    // FormData sends nested objects as JSON strings from the client,
-    // so we need to parse those back
-    const parsed = {
-      ...raw,
-      mother: raw.mother ? JSON.parse(raw.mother as string) : undefined,
-      father: raw.father ? JSON.parse(raw.father as string) : undefined,
-      relatives: raw.relatives
-        ? JSON.parse(raw.relatives as string)
-        : [],
-      accountingEntries: raw.accountingEntries
-        ? JSON.parse(raw.accountingEntries as string)
-        : [],
-      busAttendance: raw.busAttendance === "true",
-      isActive: raw.isActive === "true" || raw.isActive === undefined,
-      isDraft: raw.isDraft === "true",
-      milkPortions: raw.milkPortions ? Number(raw.milkPortions) : 0,
-    };
-
-    // Validate
     const validation = childFormSchema.safeParse(parsed);
     if (!validation.success) {
       const firstIssue = validation.error.issues[0];
@@ -165,16 +176,19 @@ export async function createChild(formData: FormData): Promise<ActionResult> {
 
     const data = validation.data;
 
-    // Build the child create input
     const child = await db.child.create({
       data: {
         firstName: data.firstName,
+        firstNameAr: data.firstNameAr || null,
         middleName: data.middleName || null,
         lastName: data.lastName,
+        lastNameAr: data.lastNameAr || null,
         dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
         placeOfBirth: data.placeOfBirth || null,
         gender: data.gender,
         nationality: data.nationality || null,
+        religion: data.religion || null,
+        idNumber: data.idNumber || null,
         bloodType: data.bloodType || null,
         allergies: data.allergies || null,
         photo: data.photo || null,
@@ -190,21 +204,22 @@ export async function createChild(formData: FormData): Promise<ActionResult> {
         diaperType: data.diaperType || null,
         milkType: data.milkType || null,
         milkPortions: data.milkPortions || null,
-        sleepFrom: data.sleepFrom
-          ? new Date(`1970-01-01T${data.sleepFrom}`)
-          : null,
-        sleepTo: data.sleepTo
-          ? new Date(`1970-01-01T${data.sleepTo}`)
-          : null,
+        milkScoop: data.milkScoop || null,
+        milkTime1: parseTimeField(data.milkTime1),
+        milkTime2: parseTimeField(data.milkTime2),
+        milkTime3: parseTimeField(data.milkTime3),
+        lunchIncluded: data.lunchIncluded,
+        sleepFrom: parseTimeField(data.sleepFrom),
+        sleepTo: parseTimeField(data.sleepTo),
         remarks: data.remarks || null,
         language: data.language || null,
+        previousGarderie: data.previousGarderie,
+        previousGarderieName: data.previousGarderieName || null,
 
         // Nested create for parents
         parents: {
           create: [
-            // Mother
-            ...(data.mother &&
-            (data.mother.firstName || data.mother.lastName)
+            ...(data.mother && (data.mother.firstName || data.mother.lastName)
               ? [
                   {
                     type: "MOTHER" as const,
@@ -214,12 +229,18 @@ export async function createChild(formData: FormData): Promise<ActionResult> {
                     phone: data.mother.phone || null,
                     mobile: data.mother.mobile || null,
                     email: data.mother.email || null,
+                    profession: data.mother.profession || null,
+                    workplace: data.mother.workplace || null,
+                    workPhone: data.mother.workPhone || null,
+                    maritalStatus: data.mother.maritalStatus || null,
+                    divorceSituation: data.mother.divorceSituation || null,
+                    medicalCase: data.mother.medicalCase || null,
+                    canPickUp: data.mother.canPickUp,
+                    idNumber: data.mother.idNumber || null,
                   },
                 ]
               : []),
-            // Father
-            ...(data.father &&
-            (data.father.firstName || data.father.lastName)
+            ...(data.father && (data.father.firstName || data.father.lastName)
               ? [
                   {
                     type: "FATHER" as const,
@@ -229,8 +250,14 @@ export async function createChild(formData: FormData): Promise<ActionResult> {
                     phone: data.father.phone || null,
                     mobile: data.father.mobile || null,
                     email: data.father.email || null,
+                    profession: data.father.profession || null,
                     workplace: data.father.workplace || null,
                     workPhone: data.father.workPhone || null,
+                    maritalStatus: data.father.maritalStatus || null,
+                    divorceSituation: data.father.divorceSituation || null,
+                    medicalCase: data.father.medicalCase || null,
+                    canPickUp: data.father.canPickUp,
+                    idNumber: data.father.idNumber || null,
                   },
                 ]
               : []),
@@ -300,25 +327,9 @@ export async function updateChild(
   }
 
   try {
-    // Parse FormData
-    const raw = Object.fromEntries(formData.entries());
-    const parsed = {
-      ...raw,
-      mother: raw.mother ? JSON.parse(raw.mother as string) : undefined,
-      father: raw.father ? JSON.parse(raw.father as string) : undefined,
-      relatives: raw.relatives
-        ? JSON.parse(raw.relatives as string)
-        : [],
-      accountingEntries: raw.accountingEntries
-        ? JSON.parse(raw.accountingEntries as string)
-        : [],
-      busAttendance: raw.busAttendance === "true",
-      isActive: raw.isActive === "true" || raw.isActive === undefined,
-      isDraft: raw.isDraft === "true",
-      milkPortions: raw.milkPortions ? Number(raw.milkPortions) : 0,
-    };
+    const raw = Object.fromEntries(formData.entries()) as Record<string, unknown>;
+    const parsed = parseParentData(raw);
 
-    // Validate
     const validation = childFormSchema.safeParse(parsed);
     if (!validation.success) {
       const firstIssue = validation.error.issues[0];
@@ -339,7 +350,6 @@ export async function updateChild(
       return { success: false, error: "Child not found" };
     }
 
-    // Find existing parent records for upsert
     const existingMother = existing.parents.find((p) => p.type === "MOTHER");
     const existingFather = existing.parents.find((p) => p.type === "FATHER");
 
@@ -348,12 +358,16 @@ export async function updateChild(
       where: { id },
       data: {
         firstName: data.firstName,
+        firstNameAr: data.firstNameAr || null,
         middleName: data.middleName || null,
         lastName: data.lastName,
+        lastNameAr: data.lastNameAr || null,
         dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
         placeOfBirth: data.placeOfBirth || null,
         gender: data.gender,
         nationality: data.nationality || null,
+        religion: data.religion || null,
+        idNumber: data.idNumber || null,
         bloodType: data.bloodType || null,
         allergies: data.allergies || null,
         photo: data.photo || null,
@@ -369,77 +383,66 @@ export async function updateChild(
         diaperType: data.diaperType || null,
         milkType: data.milkType || null,
         milkPortions: data.milkPortions || null,
-        sleepFrom: data.sleepFrom
-          ? new Date(`1970-01-01T${data.sleepFrom}`)
-          : null,
-        sleepTo: data.sleepTo
-          ? new Date(`1970-01-01T${data.sleepTo}`)
-          : null,
+        milkScoop: data.milkScoop || null,
+        milkTime1: parseTimeField(data.milkTime1),
+        milkTime2: parseTimeField(data.milkTime2),
+        milkTime3: parseTimeField(data.milkTime3),
+        lunchIncluded: data.lunchIncluded,
+        sleepFrom: parseTimeField(data.sleepFrom),
+        sleepTo: parseTimeField(data.sleepTo),
         remarks: data.remarks || null,
         language: data.language || null,
+        previousGarderie: data.previousGarderie,
+        previousGarderieName: data.previousGarderieName || null,
       },
     });
 
+    // Helper to build parent data
+    function buildParentData(guardian: typeof data.mother) {
+      return {
+        firstName: guardian.firstName || null,
+        lastName: guardian.lastName || null,
+        nationality: guardian.nationality || null,
+        phone: guardian.phone || null,
+        mobile: guardian.mobile || null,
+        email: guardian.email || null,
+        profession: guardian.profession || null,
+        workplace: guardian.workplace || null,
+        workPhone: guardian.workPhone || null,
+        maritalStatus: guardian.maritalStatus || null,
+        divorceSituation: guardian.divorceSituation || null,
+        medicalCase: guardian.medicalCase || null,
+        canPickUp: guardian.canPickUp,
+        idNumber: guardian.idNumber || null,
+      };
+    }
+
     // Upsert mother
     if (data.mother && (data.mother.firstName || data.mother.lastName)) {
+      const motherData = buildParentData(data.mother);
       if (existingMother) {
         await db.parent.update({
           where: { id: existingMother.id },
-          data: {
-            firstName: data.mother.firstName || null,
-            lastName: data.mother.lastName || null,
-            nationality: data.mother.nationality || null,
-            phone: data.mother.phone || null,
-            mobile: data.mother.mobile || null,
-            email: data.mother.email || null,
-          },
+          data: motherData,
         });
       } else {
         await db.parent.create({
-          data: {
-            childId: id,
-            type: "MOTHER",
-            firstName: data.mother.firstName || null,
-            lastName: data.mother.lastName || null,
-            nationality: data.mother.nationality || null,
-            phone: data.mother.phone || null,
-            mobile: data.mother.mobile || null,
-            email: data.mother.email || null,
-          },
+          data: { childId: id, type: "MOTHER", ...motherData },
         });
       }
     }
 
     // Upsert father
     if (data.father && (data.father.firstName || data.father.lastName)) {
+      const fatherData = buildParentData(data.father);
       if (existingFather) {
         await db.parent.update({
           where: { id: existingFather.id },
-          data: {
-            firstName: data.father.firstName || null,
-            lastName: data.father.lastName || null,
-            nationality: data.father.nationality || null,
-            phone: data.father.phone || null,
-            mobile: data.father.mobile || null,
-            email: data.father.email || null,
-            workplace: data.father.workplace || null,
-            workPhone: data.father.workPhone || null,
-          },
+          data: fatherData,
         });
       } else {
         await db.parent.create({
-          data: {
-            childId: id,
-            type: "FATHER",
-            firstName: data.father.firstName || null,
-            lastName: data.father.lastName || null,
-            nationality: data.father.nationality || null,
-            phone: data.father.phone || null,
-            mobile: data.father.mobile || null,
-            email: data.father.email || null,
-            workplace: data.father.workplace || null,
-            workPhone: data.father.workPhone || null,
-          },
+          data: { childId: id, type: "FATHER", ...fatherData },
         });
       }
     }
@@ -505,7 +508,6 @@ export async function deleteChild(
   }
 
   try {
-    // Soft delete: set isActive=false, isDraft=false
     await db.child.update({
       where: { id },
       data: {

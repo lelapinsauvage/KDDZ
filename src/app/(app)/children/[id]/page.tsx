@@ -26,6 +26,41 @@ function toTimeString(date: Date | string | null | undefined): string {
   return `${hours}:${minutes}`;
 }
 
+/** Map a Parent record to the guardian form shape */
+function mapParent(parent: {
+  firstName?: string | null;
+  lastName?: string | null;
+  nationality?: string | null;
+  phone?: string | null;
+  mobile?: string | null;
+  email?: string | null;
+  profession?: string | null;
+  workplace?: string | null;
+  workPhone?: string | null;
+  maritalStatus?: string | null;
+  divorceSituation?: string | null;
+  medicalCase?: string | null;
+  canPickUp?: boolean;
+  idNumber?: string | null;
+} | undefined) {
+  return {
+    firstName: parent?.firstName ?? "",
+    lastName: parent?.lastName ?? "",
+    nationality: parent?.nationality ?? "",
+    phone: parent?.phone ?? "",
+    mobile: parent?.mobile ?? "",
+    email: parent?.email ?? "",
+    profession: parent?.profession ?? "",
+    workplace: parent?.workplace ?? "",
+    workPhone: parent?.workPhone ?? "",
+    maritalStatus: parent?.maritalStatus ?? "",
+    divorceSituation: parent?.divorceSituation ?? "",
+    medicalCase: parent?.medicalCase ?? "",
+    canPickUp: parent?.canPickUp ?? true,
+    idNumber: parent?.idNumber ?? "",
+  };
+}
+
 export default async function ChildDetailsPage({ params }: ChildDetailsPageProps) {
   const { id } = await params;
 
@@ -35,42 +70,28 @@ export default async function ChildDetailsPage({ params }: ChildDetailsPageProps
     notFound();
   }
 
-  // Find mother and father from the parents array
   const mother = child.parents?.find((p) => p.type === "MOTHER");
   const father = child.parents?.find((p) => p.type === "FATHER");
 
-  // Map Prisma result to ChildFormValues shape
   const defaultValues: Partial<ChildFormValues> = {
     firstName: child.firstName ?? "",
+    firstNameAr: child.firstNameAr ?? "",
     middleName: child.middleName ?? "",
     lastName: child.lastName ?? "",
+    lastNameAr: child.lastNameAr ?? "",
     dateOfBirth: toDateString(child.dateOfBirth),
     placeOfBirth: child.placeOfBirth ?? "",
     gender: child.gender ?? undefined,
     nationality: child.nationality ?? "",
+    religion: child.religion ?? "",
+    idNumber: child.idNumber ?? "",
     bloodType: child.bloodType ?? "",
     allergies: child.allergies ?? "",
     photo: child.photo ?? "",
 
     // Guardian info
-    mother: {
-      firstName: mother?.firstName ?? "",
-      lastName: mother?.lastName ?? "",
-      nationality: mother?.nationality ?? "",
-      phone: mother?.phone ?? "",
-      mobile: mother?.mobile ?? "",
-      email: mother?.email ?? "",
-    },
-    father: {
-      firstName: father?.firstName ?? "",
-      lastName: father?.lastName ?? "",
-      nationality: father?.nationality ?? "",
-      phone: father?.phone ?? "",
-      mobile: father?.mobile ?? "",
-      email: father?.email ?? "",
-      workplace: father?.workplace ?? "",
-      workPhone: father?.workPhone ?? "",
-    },
+    mother: mapParent(mother),
+    father: mapParent(father),
 
     // Enrollment
     branchId: child.branchId ?? "",
@@ -85,10 +106,17 @@ export default async function ChildDetailsPage({ params }: ChildDetailsPageProps
     diaperType: child.diaperType ?? "",
     milkType: child.milkType ?? "",
     milkPortions: child.milkPortions ?? 0,
+    milkScoop: child.milkScoop ?? 0,
+    milkTime1: toTimeString(child.milkTime1),
+    milkTime2: toTimeString(child.milkTime2),
+    milkTime3: toTimeString(child.milkTime3),
+    lunchIncluded: child.lunchIncluded,
     sleepFrom: toTimeString(child.sleepFrom),
     sleepTo: toTimeString(child.sleepTo),
     remarks: child.remarks ?? "",
     language: child.language ?? "",
+    previousGarderie: child.previousGarderie,
+    previousGarderieName: child.previousGarderieName ?? "",
 
     // Relatives
     relatives: (child.relatives ?? []).map((r) => ({

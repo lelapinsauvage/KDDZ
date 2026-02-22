@@ -1,13 +1,18 @@
 import { notFound } from "next/navigation";
 import { getChild } from "@/lib/actions/children";
+import { getChildCallLogs } from "@/lib/actions/calls";
 import { CallsClient } from "./calls-client";
-
-// Note: There is no CallLog model in the Prisma schema yet.
-// When a CallLog model is added, replace the empty array below
-// with a direct db query: db.callLog.findMany({ where: { childId: id } })
 
 interface Props {
   params: Promise<{ id: string }>;
+}
+
+/** Format a time-only Date to HH:mm string or null */
+function formatTime(date: Date | null): string | null {
+  if (!date) return null;
+  const hours = String(date.getUTCHours()).padStart(2, "0");
+  const minutes = String(date.getUTCMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
 }
 
 export default async function ChildCallsPage({ params }: Props) {
@@ -18,25 +23,26 @@ export default async function ChildCallsPage({ params }: Props) {
     notFound();
   }
 
+  const callsRaw = await getChildCallLogs(id);
+
   const childData = {
     id: child.id,
     firstName: child.firstName,
     lastName: child.lastName,
   };
 
-  // No CallLog model exists in the schema — return empty array
-  // TODO: Wire to db.callLog.findMany({ where: { childId: id } }) once model is added
-  const calls: Array<{
-    id: string;
-    date: string;
-    time: string;
-    direction: string;
-    contact: string;
-    phone: string;
-    reason: string;
-    duration: string;
-    notes: string;
-  }> = [];
+  const calls = callsRaw.map((c) => ({
+    id: c.id,
+    date: c.date.toISOString().slice(0, 10),
+    time: formatTime(c.time),
+    direction: c.direction,
+    contact: c.contact ?? "",
+    phone: c.phone ?? "",
+    subject: c.subject ?? "",
+    reason: c.reason ?? "",
+    remarks: c.remarks ?? "",
+    createdBy: c.createdBy?.name ?? c.createdBy?.email ?? null,
+  }));
 
   return (
     <CallsClient

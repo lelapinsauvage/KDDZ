@@ -1,17 +1,11 @@
 "use client";
 
+import { type ColumnDef } from "@tanstack/react-table";
 import { PageHeader } from "@/components/layout/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/shared/data-table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,6 +39,65 @@ const typeConfig: Record<string, { color: string; sign: string }> = {
   DISCOUNT: { color: "bg-orange-100 text-orange-700", sign: "\u2212" },
   ADJUSTMENT: { color: "bg-gray-100 text-gray-700", sign: "+" },
 };
+
+const columns: ColumnDef<AccountingEntry>[] = [
+  {
+    accessorKey: "date",
+    header: "Date",
+    cell: ({ row }) => <span className="font-medium">{row.original.date}</span>,
+  },
+  {
+    accessorKey: "type",
+    header: "Type",
+    cell: ({ row }) => {
+      const cfg = typeConfig[row.original.type] ?? { color: "bg-gray-100 text-gray-700" };
+      return <Badge className={cfg.color}>{row.original.type}</Badge>;
+    },
+    filterFn: (row, _columnId, filterValue) => {
+      if (!filterValue || filterValue === "ALL") return true;
+      return row.original.type === filterValue;
+    },
+  },
+  {
+    accessorKey: "description",
+    header: "Description",
+    cell: ({ row }) => row.original.description ?? "\u2014",
+  },
+  {
+    accessorKey: "amount",
+    header: () => <div className="text-right">Amount</div>,
+    cell: ({ row }) => {
+      const cfg = typeConfig[row.original.type] ?? { sign: "" };
+      return (
+        <div className="text-right font-medium">
+          {cfg.sign}${row.original.amount.toFixed(2)}
+        </div>
+      );
+    },
+  },
+  {
+    id: "actions",
+    header: "",
+    cell: () => (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem>
+            <FileText className="mr-2 h-4 w-4" /> View
+          </DropdownMenuItem>
+          <DropdownMenuItem className="text-red-600">
+            <Trash2 className="mr-2 h-4 w-4" /> Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    ),
+    enableSorting: false,
+  },
+];
 
 export function AccountingClient({ child, entries }: Props) {
   const id = child.id;
@@ -117,7 +170,7 @@ export function AccountingClient({ child, entries }: Props) {
                     ${Math.abs(balance).toFixed(2)}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {balance > 0 ? "Outstanding Balance" : "Overpaid"}
+                    {balance > 0 ? "Outstanding Balance" : balance < 0 ? "Overpaid" : "Settled"}
                   </p>
                 </div>
               </div>
@@ -132,66 +185,12 @@ export function AccountingClient({ child, entries }: Props) {
           </Button>
         </div>
 
-        {/* Entries Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Transaction History</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a]">Date</TableHead>
-                  <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a]">Type</TableHead>
-                  <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a]">Description</TableHead>
-                  <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a] text-right">Amount</TableHead>
-                  <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a] w-[60px]" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {entries.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center text-sm text-muted-foreground py-8">
-                      No accounting entries found.
-                    </TableCell>
-                  </TableRow>
-                )}
-                {entries.map((entry) => {
-                  const cfg = typeConfig[entry.type] ?? { color: "bg-gray-100 text-gray-700", sign: "" };
-                  return (
-                    <TableRow key={entry.id}>
-                      <TableCell className="text-sm font-medium">{entry.date}</TableCell>
-                      <TableCell>
-                        <Badge className={cfg.color}>{entry.type}</Badge>
-                      </TableCell>
-                      <TableCell className="text-sm">{entry.description ?? "\u2014"}</TableCell>
-                      <TableCell className="text-right text-sm font-medium">
-                        {cfg.sign}${entry.amount.toFixed(2)}
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <FileText className="mr-2 h-4 w-4" /> View
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600">
-                              <Trash2 className="mr-2 h-4 w-4" /> Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <DataTable
+          columns={columns}
+          data={entries}
+          searchKey="description"
+          searchPlaceholder="Search transactions..."
+        />
       </div>
     </>
   );

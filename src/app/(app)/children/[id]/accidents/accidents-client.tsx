@@ -1,17 +1,10 @@
 "use client";
 
+import { type ColumnDef } from "@tanstack/react-table";
 import { PageHeader } from "@/components/layout/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/shared/data-table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,6 +41,86 @@ const severityColors: Record<string, string> = {
   SEVERE: "bg-red-100 text-red-700",
 };
 
+const columns: ColumnDef<AccidentRecord>[] = [
+  {
+    accessorKey: "date",
+    header: "Date & Time",
+    cell: ({ row }) => (
+      <div>
+        <div className="font-medium">{row.original.date}</div>
+        {row.original.time && (
+          <div className="text-xs text-muted-foreground">{row.original.time}</div>
+        )}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "location",
+    header: "Location",
+  },
+  {
+    accessorKey: "description",
+    header: "Description",
+    cell: ({ row }) => (
+      <span className="line-clamp-2 max-w-[250px]">{row.original.description}</span>
+    ),
+  },
+  {
+    accessorKey: "severity",
+    header: "Severity",
+    cell: ({ row }) => (
+      <Badge className={severityColors[row.original.severity] ?? "bg-gray-100 text-gray-700"}>
+        {row.original.severity}
+      </Badge>
+    ),
+    filterFn: (row, _columnId, filterValue) => {
+      if (!filterValue || filterValue === "ALL") return true;
+      return row.original.severity === filterValue;
+    },
+  },
+  {
+    accessorKey: "firstAid",
+    header: "First Aid",
+    cell: ({ row }) => (
+      <span className="max-w-[200px] text-muted-foreground">{row.original.firstAid || "\u2014"}</span>
+    ),
+  },
+  {
+    id: "parentNotified",
+    header: "Parent",
+    cell: ({ row }) => (
+      <Badge
+        variant={row.original.parentNotified ? "default" : "outline"}
+        className={row.original.parentNotified ? "bg-green-100 text-green-700" : ""}
+      >
+        {row.original.parentNotified ? "Notified" : "Not Notified"}
+      </Badge>
+    ),
+  },
+  {
+    id: "actions",
+    header: "",
+    cell: () => (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem>
+            <FileText className="mr-2 h-4 w-4" /> View Details
+          </DropdownMenuItem>
+          <DropdownMenuItem className="text-red-600">
+            <Trash2 className="mr-2 h-4 w-4" /> Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    ),
+    enableSorting: false,
+  },
+];
+
 export function AccidentsClient({ child, accidents }: Props) {
   const id = child.id;
 
@@ -75,71 +148,12 @@ export function AccidentsClient({ child, accidents }: Props) {
           </Button>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Accident History</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a]">Date & Time</TableHead>
-                  <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a]">Location</TableHead>
-                  <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a]">Description</TableHead>
-                  <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a]">Severity</TableHead>
-                  <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a]">First Aid</TableHead>
-                  <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a]">Parent</TableHead>
-                  <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a] w-[60px]" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {accidents.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-8">
-                      No accident records found.
-                    </TableCell>
-                  </TableRow>
-                )}
-                {accidents.map((row) => (
-                  <TableRow key={row.id}>
-                    <TableCell className="text-sm">
-                      <div className="font-medium">{row.date}</div>
-                      <div className="text-xs text-muted-foreground">{row.time}</div>
-                    </TableCell>
-                    <TableCell className="text-sm">{row.location}</TableCell>
-                    <TableCell className="max-w-[250px] text-sm">{row.description}</TableCell>
-                    <TableCell>
-                      <Badge className={severityColors[row.severity] ?? "bg-gray-100 text-gray-700"}>{row.severity}</Badge>
-                    </TableCell>
-                    <TableCell className="max-w-[200px] text-sm text-muted-foreground">{row.firstAid}</TableCell>
-                    <TableCell>
-                      <Badge variant={row.parentNotified ? "default" : "outline"} className={row.parentNotified ? "bg-green-100 text-green-700" : ""}>
-                        {row.parentNotified ? "Notified" : "Not Notified"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <FileText className="mr-2 h-4 w-4" /> View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600">
-                            <Trash2 className="mr-2 h-4 w-4" /> Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <DataTable
+          columns={columns}
+          data={accidents}
+          searchKey="description"
+          searchPlaceholder="Search accidents..."
+        />
       </div>
     </>
   );

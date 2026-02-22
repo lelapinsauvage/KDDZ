@@ -1,17 +1,10 @@
 "use client";
 
+import { type ColumnDef } from "@tanstack/react-table";
 import { PageHeader } from "@/components/layout/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/shared/data-table";
 import { Plus, Phone, PhoneIncoming, PhoneOutgoing, PhoneMissed } from "lucide-react";
 
 interface ChildData {
@@ -23,13 +16,14 @@ interface ChildData {
 interface CallRecord {
   id: string;
   date: string;
-  time: string;
+  time: string | null;
   direction: string;
   contact: string;
   phone: string;
+  subject: string;
   reason: string;
-  duration: string;
-  notes: string;
+  remarks: string;
+  createdBy: string | null;
 }
 
 interface Props {
@@ -42,6 +36,69 @@ const directionConfig: Record<string, { label: string; icon: typeof Phone; class
   OUTGOING: { label: "Outgoing", icon: PhoneOutgoing, className: "bg-green-100 text-green-700" },
   MISSED: { label: "Missed", icon: PhoneMissed, className: "bg-red-100 text-red-700" },
 };
+
+const columns: ColumnDef<CallRecord>[] = [
+  {
+    accessorKey: "date",
+    header: "Date & Time",
+    cell: ({ row }) => (
+      <div>
+        <div className="font-medium">{row.original.date}</div>
+        {row.original.time && (
+          <div className="text-xs text-muted-foreground">{row.original.time}</div>
+        )}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "direction",
+    header: "Direction",
+    cell: ({ row }) => {
+      const cfg = directionConfig[row.original.direction] ?? directionConfig.OUTGOING;
+      const Icon = cfg.icon;
+      return (
+        <Badge className={cfg.className}>
+          <Icon className="mr-1 h-3 w-3" />
+          {cfg.label}
+        </Badge>
+      );
+    },
+    filterFn: (row, _columnId, filterValue) => {
+      if (!filterValue || filterValue === "ALL") return true;
+      return row.original.direction === filterValue;
+    },
+  },
+  {
+    accessorKey: "contact",
+    header: "Contact",
+  },
+  {
+    accessorKey: "phone",
+    header: "Phone",
+    cell: ({ row }) => (
+      <span className="text-muted-foreground">{row.original.phone || "\u2014"}</span>
+    ),
+  },
+  {
+    accessorKey: "subject",
+    header: "Subject",
+    cell: ({ row }) => row.original.subject || "\u2014",
+  },
+  {
+    accessorKey: "reason",
+    header: "Reason",
+    cell: ({ row }) => (
+      <span className="line-clamp-2 max-w-[250px]">{row.original.reason || "\u2014"}</span>
+    ),
+  },
+  {
+    accessorKey: "createdBy",
+    header: "Staff",
+    cell: ({ row }) => (
+      <span className="text-muted-foreground">{row.original.createdBy ?? "\u2014"}</span>
+    ),
+  },
+];
 
 export function CallsClient({ child, calls }: Props) {
   const id = child.id;
@@ -70,56 +127,12 @@ export function CallsClient({ child, calls }: Props) {
           </Button>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Call History</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a]">Date & Time</TableHead>
-                  <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a]">Direction</TableHead>
-                  <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a]">Contact</TableHead>
-                  <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a]">Phone</TableHead>
-                  <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a]">Reason</TableHead>
-                  <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a]">Duration</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {calls.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-8">
-                      No call records found.
-                    </TableCell>
-                  </TableRow>
-                )}
-                {calls.map((call) => {
-                  const cfg = directionConfig[call.direction] ?? directionConfig.OUTGOING;
-                  const Icon = cfg.icon;
-                  return (
-                    <TableRow key={call.id}>
-                      <TableCell className="text-sm">
-                        <div className="font-medium">{call.date}</div>
-                        <div className="text-xs text-muted-foreground">{call.time}</div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={cfg.className}>
-                          <Icon className="mr-1 h-3 w-3" />
-                          {cfg.label}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm">{call.contact}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{call.phone}</TableCell>
-                      <TableCell className="max-w-[250px] text-sm">{call.reason}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{call.duration}</TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <DataTable
+          columns={columns}
+          data={calls}
+          searchKey="contact"
+          searchPlaceholder="Search by contact..."
+        />
       </div>
     </>
   );

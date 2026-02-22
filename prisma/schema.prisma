@@ -119,6 +119,12 @@ enum AssessmentStatus {
   REVIEWED
 }
 
+enum CallDirection {
+  INCOMING
+  OUTGOING
+  MISSED
+}
+
 enum PortionSize {
   NONE
   LITTLE
@@ -248,6 +254,7 @@ model User {
   absenceReports AbsenceReport[] @relation("AbsenceReportCreator")
   assessments   Assessment[]    @relation("AssessmentCreator")
   payments      Payment[]       @relation("PaymentCreator")
+  callLogs      CallLog[]       @relation("CallLogCreator")
   notifications Notification[]
   pushTokens    PushToken[]     @relation("UserPushTokens")
 
@@ -329,12 +336,16 @@ model ParentUser {
 model Child {
   id             String    @id @default(uuid()) @db.Uuid
   firstName      String
+  firstNameAr    String?
   middleName     String?
   lastName       String
+  lastNameAr     String?
   dateOfBirth    DateTime? @db.Date
   placeOfBirth   String?
   gender         Gender?
   nationality    String?
+  religion       String?
+  idNumber       String?
   bloodType      String?
   allergies      String?   @db.Text
   photo          String?
@@ -348,10 +359,17 @@ model Child {
   diaperType     String?
   milkType       String?
   milkPortions   Int?
+  milkScoop      Int?
+  milkTime1      DateTime? @db.Time(6)
+  milkTime2      DateTime? @db.Time(6)
+  milkTime3      DateTime? @db.Time(6)
+  lunchIncluded  Boolean   @default(true)
   sleepFrom      DateTime? @db.Time(6)
   sleepTo        DateTime? @db.Time(6)
   remarks        String?   @db.Text
   language       String?
+  previousGarderie     Boolean @default(false)
+  previousGarderieName String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
@@ -372,6 +390,7 @@ model Child {
   assessments      Assessment[]
   payments         Payment[]
   accountingEntries AccountingEntry[]
+  callLogs         CallLog[]
 
   @@index([branchId])
   @@index([classId])
@@ -401,19 +420,25 @@ model ChildAddress {
 }
 
 model Parent {
-  id          String     @id @default(uuid()) @db.Uuid
-  childId     String     @db.Uuid
-  type        ParentType
-  firstName   String?
-  lastName    String?
-  nationality String?
-  phone       String?
-  mobile      String?
-  email       String?
-  workplace   String?
-  workPhone   String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id               String     @id @default(uuid()) @db.Uuid
+  childId          String     @db.Uuid
+  type             ParentType
+  firstName        String?
+  lastName         String?
+  nationality      String?
+  phone            String?
+  mobile           String?
+  email            String?
+  profession       String?
+  workplace        String?
+  workPhone        String?
+  maritalStatus    String?
+  divorceSituation String?
+  medicalCase      String?
+  canPickUp        Boolean    @default(true)
+  idNumber         String?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 
   child Child @relation(fields: [childId], references: [id], onDelete: Cascade)
 
@@ -1012,6 +1037,36 @@ model AccountingEntry {
   @@index([date])
   @@index([schoolYearId])
   @@map("accounting_entries")
+}
+
+// ─────────────────────────────────────────────
+// CALL LOG
+// ─────────────────────────────────────────────
+
+model CallLog {
+  id          String        @id @default(uuid()) @db.Uuid
+  childId     String        @db.Uuid
+  direction   CallDirection
+  date        DateTime      @db.Date
+  time        DateTime?     @db.Time(6)
+  contact     String?
+  phone       String?
+  subject     String?
+  reason      String?       @db.Text
+  remarks     String?       @db.Text
+  staffId     String?       @db.Uuid
+  createdById String?       @db.Uuid
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  child     Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+  createdBy User? @relation("CallLogCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([childId])
+  @@index([date])
+  @@index([direction])
+  @@index([createdById])
+  @@map("call_logs")
 }
 
 // ─────────────────────────────────────────────
