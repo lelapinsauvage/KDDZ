@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,11 +16,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Save, KeyRound, Clock, Loader2 } from "lucide-react";
+import { Save, KeyRound, Clock, Loader2, Phone, Mail, MessageCircle, User, Users, ExternalLink, Shield } from "lucide-react";
 import {
   updateParentUser,
   resetParentPassword,
 } from "@/lib/actions/parent-users";
+import { getAvatarColor, getInitials } from "@/components/children/children-columns";
+
+interface ParentContact {
+  type: string;
+  name: string | null;
+  phone: string | null;
+  email: string | null;
+}
+
+interface RelativeContact {
+  name: string;
+  relation: string | null;
+  phone: string | null;
+  isAuthorized: boolean;
+}
 
 interface ChildOption {
   id: string;
@@ -32,10 +48,22 @@ interface ParentUserDetailClientProps {
     username: string;
     childId: string;
     childName: string;
+    childFirstName: string;
+    childLastName: string;
+    childClassName: string | null;
+    childBranchName: string | null;
     isActive: boolean;
     createdAt: string;
+    updatedAt: string;
+    parents: ParentContact[];
+    relatives: RelativeContact[];
   };
   childrenList: ChildOption[];
+}
+
+function formatWhatsAppUrl(phone: string): string {
+  const cleaned = phone.replace(/[\s\-\(\)\.+]/g, "");
+  return `https://wa.me/${cleaned}`;
 }
 
 export function ParentUserDetailClient({ parentUser, childrenList }: ParentUserDetailClientProps) {
@@ -69,6 +97,9 @@ export function ParentUserDetailClient({ parentUser, childrenList }: ParentUserD
     });
   }
 
+  const initials = getInitials(parentUser.childFirstName || "?", parentUser.childLastName || "?");
+  const avatarBg = getAvatarColor(parentUser.childName);
+
   return (
     <>
       <PageHeader
@@ -81,7 +112,140 @@ export function ParentUserDetailClient({ parentUser, childrenList }: ParentUserD
       />
 
       <div className="space-y-4 p-4 md:space-y-6 md:p-6">
-        {/* ── Account Form ────────────────── */}
+        {/* Linked Child Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Users className="size-4" />
+              Linked Child
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Link href={`/children/${parentUser.childId}/dashboard`} className="flex items-center gap-3 group">
+              <div className={`flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${avatarBg}`}>
+                {initials}
+              </div>
+              <div>
+                <p className="font-medium group-hover:underline">{parentUser.childName}</p>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  {parentUser.childClassName && <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{parentUser.childClassName}</Badge>}
+                  {parentUser.childBranchName && <span>{parentUser.childBranchName}</span>}
+                </div>
+              </div>
+              <ExternalLink className="ml-auto size-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+            </Link>
+          </CardContent>
+        </Card>
+
+        {/* Contact Info Card */}
+        {parentUser.parents.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Phone className="size-4" />
+                Contact Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {parentUser.parents.map((p, i) => (
+                <div key={i} className="flex items-start justify-between rounded-lg border p-3">
+                  <div className="flex items-start gap-3">
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                      <User className="size-4 text-primary" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{p.name ?? "Unknown"}</span>
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">{p.type}</Badge>
+                      </div>
+                      {p.phone && <p className="text-sm text-muted-foreground mt-0.5">{p.phone}</p>}
+                      {p.email && <p className="text-sm text-muted-foreground">{p.email}</p>}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {p.phone && (
+                      <>
+                        <a
+                          href={`tel:${p.phone}`}
+                          className="inline-flex size-8 items-center justify-center rounded-md text-blue-600 hover:bg-blue-50 transition-colors"
+                          title="Call"
+                        >
+                          <Phone className="size-4" />
+                        </a>
+                        <a
+                          href={formatWhatsAppUrl(p.phone)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex size-8 items-center justify-center rounded-md text-green-600 hover:bg-green-50 transition-colors"
+                          title="WhatsApp"
+                        >
+                          <MessageCircle className="size-4" />
+                        </a>
+                      </>
+                    )}
+                    {p.email && (
+                      <a
+                        href={`mailto:${p.email}`}
+                        className="inline-flex size-8 items-center justify-center rounded-md text-violet-600 hover:bg-violet-50 transition-colors"
+                        title="Email"
+                      >
+                        <Mail className="size-4" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Relatives Card */}
+        {parentUser.relatives.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Shield className="size-4" />
+                Relatives & Emergency Contacts
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {parentUser.relatives.map((r, i) => (
+                <div key={i} className="flex items-center justify-between rounded-lg border p-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">{r.name}</span>
+                      {r.relation && <Badge variant="outline" className="text-[10px] px-1.5 py-0">{r.relation}</Badge>}
+                      {r.isAuthorized && <Badge className="bg-emerald-100 text-emerald-700 text-[10px] px-1.5 py-0">Authorized Pickup</Badge>}
+                    </div>
+                  </div>
+                  {r.phone && (
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-muted-foreground mr-1">{r.phone}</span>
+                      <a
+                        href={`tel:${r.phone}`}
+                        className="inline-flex size-7 items-center justify-center rounded-md text-blue-600 hover:bg-blue-50 transition-colors"
+                        title="Call"
+                      >
+                        <Phone className="size-3.5" />
+                      </a>
+                      <a
+                        href={formatWhatsAppUrl(r.phone)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex size-7 items-center justify-center rounded-md text-green-600 hover:bg-green-50 transition-colors"
+                        title="WhatsApp"
+                      >
+                        <MessageCircle className="size-3.5" />
+                      </a>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Account Form */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Account Information</CardTitle>
@@ -127,7 +291,7 @@ export function ParentUserDetailClient({ parentUser, childrenList }: ParentUserD
 
             <div className="flex items-center gap-3 pt-2">
               <Button
-               
+
                 className="text-white"
                 onClick={handleSave}
                 disabled={isPending}
@@ -148,7 +312,7 @@ export function ParentUserDetailClient({ parentUser, childrenList }: ParentUserD
           </CardContent>
         </Card>
 
-        {/* ── Info Card ─────────────────── */}
+        {/* Info Card */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
@@ -163,6 +327,10 @@ export function ParentUserDetailClient({ parentUser, childrenList }: ParentUserD
                 <Badge variant="secondary">{parentUser.createdAt}</Badge>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>Last Updated:</span>
+                <Badge variant="secondary">{parentUser.updatedAt}</Badge>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>Status:</span>
                 <Badge
                   className={
@@ -171,6 +339,7 @@ export function ParentUserDetailClient({ parentUser, childrenList }: ParentUserD
                       : "bg-gray-100 text-gray-600"
                   }
                 >
+                  <span className={`mr-1.5 inline-block size-1.5 rounded-full ${parentUser.isActive ? "bg-emerald-500" : "bg-gray-400"}`} />
                   {parentUser.isActive ? "Active" : "Inactive"}
                 </Badge>
               </div>

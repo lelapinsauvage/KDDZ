@@ -6,6 +6,7 @@ import { getChildAttendance, getChildAbsences } from "@/lib/actions/attendance";
 import { getMedicalForms } from "@/lib/actions/medical";
 import { getVaccinations } from "@/lib/actions/medical";
 import { getAccountingSummary } from "@/lib/actions/accounting";
+import { getChildTimeline } from "@/lib/actions/timeline";
 import { DashboardClient } from "./dashboard-client";
 
 interface Props {
@@ -29,6 +30,7 @@ export default async function ChildDashboardPage({ params }: Props) {
     { forms: medicalForms },
     { vaccinations },
     accountingSummary,
+    timeline,
   ] = await Promise.all([
     getDailyReports({ childId: id, pageSize: 5 }),
     getAlarms({ isActive: true, pageSize: 10 }),
@@ -37,6 +39,7 @@ export default async function ChildDashboardPage({ params }: Props) {
     getMedicalForms({ childId: id }),
     getVaccinations({ childId: id }),
     getAccountingSummary(id),
+    getChildTimeline(id),
   ]);
 
   // Compute attendance rate
@@ -51,11 +54,12 @@ export default async function ChildDashboardPage({ params }: Props) {
       ? `-$${Math.abs(accountingSummary.balance).toFixed(2)}`
       : "$0.00";
 
-  // Get parent phones
+  // Get parent contacts
   const parents = (child.parents ?? []).map((p) => ({
     type: p.type,
     name: [p.firstName, p.lastName].filter(Boolean).join(" ") || null,
     phone: p.phone ?? p.mobile ?? null,
+    email: p.email ?? null,
   }));
 
   // Map child to serializable shape
@@ -160,6 +164,7 @@ export default async function ChildDashboardPage({ params }: Props) {
       recentReports={recentReports}
       upcomingAlarms={upcomingAlarms}
       upcomingVaccinations={upcomingVaccinations}
+      timeline={timeline}
     />
   );
 }

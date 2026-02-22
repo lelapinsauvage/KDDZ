@@ -19,6 +19,7 @@ import {
   Bus,
   Utensils,
   User,
+  MessageCircle,
 } from "lucide-react";
 import { ChildTimeline } from "@/components/children/child-timeline";
 import { getAvatarColor, getInitials } from "@/components/children/children-columns";
@@ -29,6 +30,12 @@ interface ParentInfo {
   type: string;
   name: string | null;
   phone: string | null;
+  email: string | null;
+}
+
+function formatWhatsAppUrl(phone: string): string {
+  const cleaned = phone.replace(/[\s\-\(\)\.+]/g, "");
+  return `https://wa.me/${cleaned}`;
 }
 
 interface ChildData {
@@ -224,7 +231,27 @@ export function DashboardClient({ child, stats, upcomingAlarms, upcomingVaccinat
                     <User className="h-3.5 w-3.5" />
                     <span className="font-medium">{p.type}:</span>
                     <span>{p.name ?? "N/A"}</span>
-                    {p.phone && <span className="text-primary">({p.phone})</span>}
+                    {p.phone && (
+                      <>
+                        <span className="text-primary">({p.phone})</span>
+                        <a
+                          href={`tel:${p.phone}`}
+                          title="Call"
+                          className="inline-flex size-6 items-center justify-center rounded text-blue-600 hover:bg-blue-50 transition-colors"
+                        >
+                          <Phone className="size-3" />
+                        </a>
+                        <a
+                          href={formatWhatsAppUrl(p.phone)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="WhatsApp"
+                          className="inline-flex size-6 items-center justify-center rounded text-green-600 hover:bg-green-50 transition-colors"
+                        >
+                          <MessageCircle className="size-3" />
+                        </a>
+                      </>
+                    )}
                   </div>
                 ))}
               </div>

@@ -22,21 +22,32 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, KeyRound, UserX, Eye, Loader2 } from "lucide-react";
+import { Plus, Pencil, KeyRound, UserX, Eye, Loader2, Phone, Mail, MessageCircle } from "lucide-react";
 import {
   createParentUser,
   toggleParentUserStatus,
   resetParentPassword,
 } from "@/lib/actions/parent-users";
+import { getAvatarColor, getInitials } from "@/components/children/children-columns";
+
+interface ParentContact {
+  type: string;
+  name: string | null;
+  phone: string | null;
+  email: string | null;
+}
 
 interface ParentUser {
   id: string;
   username: string;
   childName: string;
   childId: string;
+  childFirstName: string;
+  childLastName: string;
   branchName: string;
   status: "Active" | "Inactive";
   createdAt: string;
+  parents: ParentContact[];
 }
 
 interface ChildOption {
@@ -49,6 +60,37 @@ interface ParentUsersClientProps {
   childrenList: ChildOption[];
 }
 
+function formatWhatsAppUrl(phone: string): string {
+  const cleaned = phone.replace(/[\s\-\(\)\.+]/g, "");
+  return `https://wa.me/${cleaned}`;
+}
+
+function WhatsAppButton({ phone }: { phone: string }) {
+  return (
+    <a
+      href={formatWhatsAppUrl(phone)}
+      target="_blank"
+      rel="noopener noreferrer"
+      title={`WhatsApp ${phone}`}
+      className="inline-flex size-7 items-center justify-center rounded-md text-green-600 hover:bg-green-50 transition-colors"
+    >
+      <MessageCircle className="size-3.5" />
+    </a>
+  );
+}
+
+function PhoneButton({ phone }: { phone: string }) {
+  return (
+    <a
+      href={`tel:${phone}`}
+      title={`Call ${phone}`}
+      className="inline-flex size-7 items-center justify-center rounded-md text-blue-600 hover:bg-blue-50 transition-colors"
+    >
+      <Phone className="size-3.5" />
+    </a>
+  );
+}
+
 export function ParentUsersClient({ users: initialUsers, childrenList }: ParentUsersClientProps) {
   const [users, setUsers] = useState(initialUsers);
   const [createOpen, setCreateOpen] = useState(false);
@@ -56,6 +98,18 @@ export function ParentUsersClient({ users: initialUsers, childrenList }: ParentU
   const [newChild, setNewChild] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [search, setSearch] = useState("");
+
+  const filteredUsers = useMemo(() => {
+    if (!search.trim()) return users;
+    const q = search.toLowerCase();
+    return users.filter(
+      (u) =>
+        u.username.toLowerCase().includes(q) ||
+        u.childName.toLowerCase().includes(q) ||
+        u.parents.some((p) => p.name?.toLowerCase().includes(q))
+    );
+  }, [users, search]);
 
   function handleCreate() {
     if (!newUsername.trim() || !newChild || !newPassword) return;
@@ -70,7 +124,9 @@ export function ParentUsersClient({ users: initialUsers, childrenList }: ParentU
       if (result.success && result.data) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const newUser = result.data as any;
-        const childName = childrenList.find((c) => c.id === newChild)?.name ?? "—";
+        const child = childrenList.find((c) => c.id === newChild);
+        const childName = child?.name ?? "—";
+        const names = childName.split(" ");
         setUsers([
           ...users,
           {
@@ -78,9 +134,12 @@ export function ParentUsersClient({ users: initialUsers, childrenList }: ParentU
             username: newUsername.trim(),
             childName,
             childId: newChild,
+            childFirstName: names[0] ?? "",
+            childLastName: names.slice(1).join(" ") ?? "",
             branchName: "—",
             status: "Active",
             createdAt: new Date().toISOString().split("T")[0],
+            parents: [],
           },
         ]);
         setCreateOpen(false);
@@ -119,17 +178,82 @@ export function ParentUsersClient({ users: initialUsers, childrenList }: ParentU
   const columns: ColumnDef<ParentUser>[] = useMemo(
     () => [
       {
-        accessorKey: "username",
-        header: "Username",
-        cell: ({ row }) => <span className="font-medium">{row.original.username}</span>,
+        id: "parent",
+        header: "Parent / Guardian",
+        cell: ({ row }) => {
+          const u = row.original;
+          const primaryParent = u.parents[0];
+          const parentName = primaryParent?.name ?? u.username;
+          const phone = primaryParent?.phone ?? null;
+          const email = primaryParent?.email ?? null;
+          return (
+            <div className="flex flex-col gap-0.5">
+              <Link href={`/settings/parent-users/${u.id}`} className="font-medium hover:underline">
+                {parentName}
+              </Link>
+              <span className="text-xs text-muted-foreground">@{u.username}</span>
+              {(phone || email) && (
+                <div className="flex items-center gap-1 mt-0.5">
+                  {phone && (
+                    <span className="text-xs text-muted-foreground">{phone}</span>
+                  )}
+                  {email && (
+                    <span className="text-xs text-muted-foreground">{phone ? ` · ${email}` : email}</span>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        },
       },
       {
-        accessorKey: "childName",
-        header: "Child Name",
+        id: "child",
+        header: "Linked Child",
+        cell: ({ row }) => {
+          const u = row.original;
+          const initials = getInitials(u.childFirstName || "?", u.childLastName || "?");
+          const bg = getAvatarColor(u.childName);
+          return (
+            <Link href={`/children/${u.childId}/dashboard`} className="flex items-center gap-2 group">
+              <div className={`flex size-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white ${bg}`}>
+                {initials}
+              </div>
+              <span className="text-sm group-hover:underline">{u.childName}</span>
+            </Link>
+          );
+        },
       },
       {
         accessorKey: "branchName",
         header: "Branch",
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground">{row.original.branchName}</span>
+        ),
+      },
+      {
+        id: "contact",
+        header: "Quick Contact",
+        cell: ({ row }) => {
+          const u = row.original;
+          const phone = u.parents[0]?.phone ?? null;
+          const email = u.parents[0]?.email ?? null;
+          if (!phone && !email) return <span className="text-xs text-muted-foreground">—</span>;
+          return (
+            <div className="flex items-center gap-0.5">
+              {phone && <PhoneButton phone={phone} />}
+              {phone && <WhatsAppButton phone={phone} />}
+              {email && (
+                <a
+                  href={`mailto:${email}`}
+                  title={`Email ${email}`}
+                  className="inline-flex size-7 items-center justify-center rounded-md text-violet-600 hover:bg-violet-50 transition-colors"
+                >
+                  <Mail className="size-3.5" />
+                </a>
+              )}
+            </div>
+          );
+        },
       },
       {
         accessorKey: "status",
@@ -142,15 +266,9 @@ export function ParentUsersClient({ users: initialUsers, childrenList }: ParentU
                 : "bg-gray-100 text-gray-600"
             }
           >
+            <span className={`mr-1.5 inline-block size-1.5 rounded-full ${row.original.status === "Active" ? "bg-emerald-500" : "bg-gray-400"}`} />
             {row.original.status}
           </Badge>
-        ),
-      },
-      {
-        accessorKey: "createdAt",
-        header: "Created",
-        cell: ({ row }) => (
-          <span className="text-muted-foreground">{row.original.createdAt}</span>
         ),
       },
       {
@@ -213,11 +331,21 @@ export function ParentUsersClient({ users: initialUsers, childrenList }: ParentU
       />
 
       <div className="space-y-4 p-4 md:p-6">
+        <div className="flex items-center gap-3">
+          <Input
+            placeholder="Search by parent name, username, or child name..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="max-w-sm"
+          />
+          <span className="text-sm text-muted-foreground">
+            {filteredUsers.length} account{filteredUsers.length !== 1 ? "s" : ""}
+          </span>
+        </div>
+
         <DataTable
           columns={columns}
-          data={users}
-          searchKey="username"
-          searchPlaceholder="Search by username..."
+          data={filteredUsers}
         />
       </div>
 
@@ -265,7 +393,7 @@ export function ParentUsersClient({ users: initialUsers, childrenList }: ParentU
               Cancel
             </Button>
             <Button
-             
+
               className="text-white"
               onClick={handleCreate}
               disabled={!newUsername.trim() || !newChild || !newPassword || isPending}

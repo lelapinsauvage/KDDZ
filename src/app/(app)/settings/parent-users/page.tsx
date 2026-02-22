@@ -17,17 +17,35 @@ export default async function ParentUsersPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rawUsers = (rawData.parentUsers ?? []) as Array<any>;
 
-  const serializedUsers = rawUsers.map((u) => ({
-    id: u.id as string,
-    username: u.username as string,
-    childName: u.child
-      ? `${u.child.firstName} ${u.child.lastName}`
-      : "—",
-    childId: u.childId as string,
-    branchName: (u.child?.branch?.name ?? "—") as string,
-    status: (u.isActive ? "Active" : "Inactive") as "Active" | "Inactive",
-    createdAt: (u.createdAt as Date).toISOString().split("T")[0],
-  }));
+  const serializedUsers = rawUsers.map((u) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const childParents = (u.child?.parents ?? []).map((p: any) => ({
+      type: p.type as string,
+      name: [p.firstName, p.lastName].filter(Boolean).join(" ") || null,
+      phone: p.phone || p.mobile || null,
+      email: p.email || null,
+    }));
+
+    return {
+      id: u.id as string,
+      username: u.username as string,
+      childName: u.child
+        ? `${u.child.firstName} ${u.child.lastName}`
+        : "—",
+      childId: u.childId as string,
+      childFirstName: (u.child?.firstName ?? "") as string,
+      childLastName: (u.child?.lastName ?? "") as string,
+      branchName: (u.child?.branch?.name ?? "—") as string,
+      status: (u.isActive ? "Active" : "Inactive") as "Active" | "Inactive",
+      createdAt: (u.createdAt as Date).toISOString().split("T")[0],
+      parents: childParents as Array<{
+        type: string;
+        name: string | null;
+        phone: string | null;
+        email: string | null;
+      }>,
+    };
+  });
 
   const childOptions = children.map((c) => ({
     id: c.id,

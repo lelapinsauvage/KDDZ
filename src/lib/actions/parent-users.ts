@@ -75,7 +75,19 @@ export async function getParentUsers(
           createdAt: true,
           updatedAt: true,
           child: {
-            include: { branch: true },
+            include: {
+              branch: true,
+              parents: {
+                select: {
+                  type: true,
+                  firstName: true,
+                  lastName: true,
+                  phone: true,
+                  mobile: true,
+                  email: true,
+                },
+              },
+            },
           },
         },
         orderBy: { username: "asc" },
@@ -117,7 +129,28 @@ export async function getParentUser(id: string): Promise<ActionResult> {
         createdAt: true,
         updatedAt: true,
         child: {
-          include: { branch: true, class: true },
+          include: {
+            branch: true,
+            class: true,
+            parents: {
+              select: {
+                type: true,
+                firstName: true,
+                lastName: true,
+                phone: true,
+                mobile: true,
+                email: true,
+              },
+            },
+            relatives: {
+              select: {
+                name: true,
+                relation: true,
+                phone: true,
+                isAuthorized: true,
+              },
+            },
+          },
         },
       },
     });
