@@ -4,7 +4,7 @@ import { DailyReportsClient } from "./daily-reports-client";
 
 export default async function DailyReportsPage() {
   const [{ reports, total }, branchesResult] = await Promise.all([
-    getDailyReports(),
+    getDailyReports({ pageSize: 500 }),
     getBranches(),
   ]);
 
@@ -32,6 +32,7 @@ export default async function DailyReportsPage() {
       : null,
     mood: report.mood ?? null,
     status: report.status,
+    createdBy: report.createdBy?.name ?? report.createdBy?.email ?? "—",
   }));
 
   return (

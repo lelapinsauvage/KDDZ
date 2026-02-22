@@ -1,11 +1,14 @@
 "use client";
 
+import { useState, useTransition } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import {
   dailyReportSchema,
   type DailyReportFormValues,
 } from "@/lib/validations/daily-report";
+import { createDailyReport, updateDailyReport } from "@/lib/actions/daily-reports";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,40 +32,8 @@ import {
   Moon,
   Heart,
   Smile,
+  Loader2,
 } from "lucide-react";
-
-// Demo data — will come from API
-const demoChildren = [
-  { id: "c1", name: "Lara Haddad", className: "Nursery A" },
-  { id: "c2", name: "Adam Khoury", className: "Nursery A" },
-  { id: "c3", name: "Mia Gemayel", className: "Toddler A" },
-  { id: "c4", name: "Jad Nassar", className: "Toddler A" },
-  { id: "c5", name: "Lea Boustany", className: "Nursery B" },
-  { id: "c6", name: "Karim Saab", className: "Nursery B" },
-  { id: "c7", name: "Nour Mansour", className: "Pre-K A" },
-  { id: "c8", name: "Zein Abi Saab", className: "Pre-K A" },
-  { id: "c9", name: "Tia Daher", className: "Toddler B" },
-  { id: "c10", name: "Rayan Frem", className: "Toddler B" },
-  { id: "c11", name: "Yasmine Geagea", className: "Pre-K B" },
-  { id: "c12", name: "Tarek Hariri", className: "Pre-K B" },
-];
-
-const demoFoods = {
-  breakfast: [
-    { id: "f1", name: "Cereal" },
-    { id: "f2", name: "Pancakes" },
-    { id: "f3", name: "Fruit Bowl" },
-  ],
-  lunch: [
-    { id: "f4", name: "Chicken Rice" },
-    { id: "f5", name: "Pasta" },
-    { id: "f6", name: "Grilled Fish" },
-  ],
-  dessert: [
-    { id: "f7", name: "Yogurt" },
-    { id: "f8", name: "Fruit Salad" },
-  ],
-};
 
 const portionOptions = [
   { value: "NONE", label: "None" },
@@ -80,15 +51,38 @@ const moodOptions = [
   { value: "SLEEPY", label: "Sleepy", emoji: "😴" },
 ];
 
+interface ChildOption {
+  id: string;
+  name: string;
+  className: string;
+}
+
+interface FoodOption {
+  id: string;
+  name: string;
+}
+
 interface DailyReportFormProps {
+  children: ChildOption[];
+  foods: {
+    breakfast: FoodOption[];
+    lunch: FoodOption[];
+    dessert: FoodOption[];
+  };
   defaultValues?: Partial<DailyReportFormValues>;
   reportId?: string;
 }
 
 export function DailyReportForm({
+  children: childrenList,
+  foods,
   defaultValues,
   reportId,
 }: DailyReportFormProps) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
   const form = useForm<DailyReportFormValues>({
     resolver: zodResolver(dailyReportSchema),
     defaultValues: {
@@ -121,19 +115,80 @@ export function DailyReportForm({
 
   const isSleep = watch("isSleep");
 
-  function onSubmit(data: DailyReportFormValues) {
-    console.log("Daily report submitted:", data);
-    // TODO: POST to API
+  function buildFormData(data: DailyReportFormValues, status: "DRAFT" | "SUBMITTED"): FormData {
+    const fd = new FormData();
+    fd.set("childId", data.childId);
+    fd.set("reportDate", data.reportDate);
+    fd.set("status", status);
+
+    // Meals
+    if (data.breakfastFoodId) fd.set("breakfastFoodId", data.breakfastFoodId);
+    if (data.breakfastPortion) fd.set("breakfastPortion", data.breakfastPortion);
+    if (data.breakfastTime) fd.set("breakfastTime", data.breakfastTime);
+    if (data.lunchFoodId) fd.set("lunchFoodId", data.lunchFoodId);
+    if (data.lunchPortion) fd.set("lunchPortion", data.lunchPortion);
+    if (data.lunchTime) fd.set("lunchTime", data.lunchTime);
+    if (data.dessert) fd.set("dessert", data.dessert);
+    if (data.dessertPortion) fd.set("dessertPortion", data.dessertPortion);
+    if (data.dessertTime) fd.set("dessertTime", data.dessertTime);
+
+    // Sleep
+    fd.set("isSleep", String(data.isSleep));
+    if (data.sleepFrom) fd.set("sleepFrom", data.sleepFrom);
+    if (data.sleepTo) fd.set("sleepTo", data.sleepTo);
+
+    // Health
+    fd.set("diarrhea", String(data.diarrhea));
+    fd.set("urinePotty", String(data.urinePotty));
+    fd.set("stoolPotty", String(data.stoolPotty));
+    fd.set("urineDiaper", String(data.urineDiaper));
+    fd.set("stoolDiaper", String(data.stoolDiaper));
+
+    // Symptoms
+    if (data.mood) fd.set("mood", data.mood);
+    fd.set("cough", String(data.cough));
+    fd.set("runnyNose", String(data.runnyNose));
+    fd.set("vomit", String(data.vomit));
+
+    // Dynamic entries
+    fd.set("feverEntries", JSON.stringify(data.feverEntries));
+    fd.set("milkEntries", JSON.stringify(data.milkEntries));
+
+    // Remarks
+    if (data.remarks) fd.set("remarks", data.remarks);
+
+    return fd;
   }
 
-  function onSaveDraft(data: DailyReportFormValues) {
-    console.log("Daily report saved as draft:", data);
-    // TODO: POST to API with status DRAFT
+  function submitReport(data: DailyReportFormValues, status: "DRAFT" | "SUBMITTED") {
+    setError(null);
+    const fd = buildFormData(data, status);
+
+    startTransition(async () => {
+      const result = reportId
+        ? await updateDailyReport(reportId, fd)
+        : await createDailyReport(fd);
+
+      if ("error" in result && result.error) {
+        setError(result.error);
+      } else {
+        router.push(status === "DRAFT" ? "/daily-reports/drafts" : "/daily-reports");
+      }
+    });
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-6">
-      {/* ── Child & Date Selection ── */}
+    <form
+      onSubmit={handleSubmit((data) => submitReport(data, "SUBMITTED"))}
+      className="space-y-6 p-6"
+    >
+      {error && (
+        <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {/* Child & Date Selection */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
@@ -153,9 +208,9 @@ export function DailyReportForm({
                   <SelectValue placeholder="Select a child..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {demoChildren.map((child) => (
+                  {childrenList.map((child) => (
                     <SelectItem key={child.id} value={child.id}>
-                      {child.name} — {child.className}
+                      {child.name}{child.className ? ` — ${child.className}` : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -180,7 +235,7 @@ export function DailyReportForm({
         </CardContent>
       </Card>
 
-      {/* ── Meals ── */}
+      {/* Meals */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
@@ -205,7 +260,7 @@ export function DailyReportForm({
                     <SelectValue placeholder="Select..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {demoFoods.breakfast.map((f) => (
+                    {foods.breakfast.map((f) => (
                       <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -215,7 +270,7 @@ export function DailyReportForm({
                 <Label>Portion</Label>
                 <Select
                   value={watch("breakfastPortion") || ""}
-                  onValueChange={(val) => setValue("breakfastPortion", val as any)}
+                  onValueChange={(val) => setValue("breakfastPortion", val as "NONE" | "LITTLE" | "HALF" | "MOST" | "ALL")}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select..." />
@@ -252,7 +307,7 @@ export function DailyReportForm({
                     <SelectValue placeholder="Select..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {demoFoods.lunch.map((f) => (
+                    {foods.lunch.map((f) => (
                       <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -262,7 +317,7 @@ export function DailyReportForm({
                 <Label>Portion</Label>
                 <Select
                   value={watch("lunchPortion") || ""}
-                  onValueChange={(val) => setValue("lunchPortion", val as any)}
+                  onValueChange={(val) => setValue("lunchPortion", val as "NONE" | "LITTLE" | "HALF" | "MOST" | "ALL")}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select..." />
@@ -299,7 +354,7 @@ export function DailyReportForm({
                     <SelectValue placeholder="Select..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {demoFoods.dessert.map((f) => (
+                    {foods.dessert.map((f) => (
                       <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -309,7 +364,7 @@ export function DailyReportForm({
                 <Label>Portion</Label>
                 <Select
                   value={watch("dessertPortion") || ""}
-                  onValueChange={(val) => setValue("dessertPortion", val as any)}
+                  onValueChange={(val) => setValue("dessertPortion", val as "NONE" | "LITTLE" | "HALF" | "MOST" | "ALL")}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select..." />
@@ -330,7 +385,7 @@ export function DailyReportForm({
         </CardContent>
       </Card>
 
-      {/* ── Sleep ── */}
+      {/* Sleep */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
@@ -365,7 +420,7 @@ export function DailyReportForm({
         </CardContent>
       </Card>
 
-      {/* ── Health & Hygiene ── */}
+      {/* Health & Hygiene */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
@@ -374,7 +429,6 @@ export function DailyReportForm({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Potty / Diaper counts */}
           <div>
             <h4 className="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">
               Bathroom
@@ -401,7 +455,6 @@ export function DailyReportForm({
 
           <Separator />
 
-          {/* Symptoms checkboxes */}
           <div>
             <h4 className="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">
               Symptoms
@@ -427,7 +480,7 @@ export function DailyReportForm({
         </CardContent>
       </Card>
 
-      {/* ── Mood ── */}
+      {/* Mood */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
@@ -443,7 +496,7 @@ export function DailyReportForm({
                 <button
                   key={mood.value}
                   type="button"
-                  onClick={() => setValue("mood", mood.value as any)}
+                  onClick={() => setValue("mood", mood.value as "HAPPY" | "CALM" | "FUSSY" | "CRYING" | "SLEEPY")}
                   className={`flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm transition-colors ${
                     isSelected
                       ? "border-[#1caf9a] bg-[#1caf9a]/10 text-[#1caf9a]"
@@ -459,7 +512,7 @@ export function DailyReportForm({
         </CardContent>
       </Card>
 
-      {/* ── Fever Log ── */}
+      {/* Fever Log */}
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
@@ -516,7 +569,7 @@ export function DailyReportForm({
         </CardContent>
       </Card>
 
-      {/* ── Milk Log ── */}
+      {/* Milk Log */}
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
@@ -572,7 +625,7 @@ export function DailyReportForm({
         </CardContent>
       </Card>
 
-      {/* ── Remarks ── */}
+      {/* Remarks */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Remarks</CardTitle>
@@ -586,16 +639,19 @@ export function DailyReportForm({
         </CardContent>
       </Card>
 
-      {/* ── Action Bar ── */}
+      {/* Action Bar */}
       <div className="sticky bottom-0 flex items-center justify-end gap-3 border-t bg-card px-6 py-4">
         <Button
           type="button"
           variant="outline"
-          onClick={handleSubmit(onSaveDraft)}
+          disabled={isPending}
+          onClick={handleSubmit((data) => submitReport(data, "DRAFT"))}
         >
+          {isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
           Save as Draft
         </Button>
-        <Button type="submit" style={{ background: "#1caf9a" }}>
+        <Button type="submit" disabled={isPending} style={{ background: "#1caf9a" }}>
+          {isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
           {reportId ? "Update Report" : "Submit Report"}
         </Button>
       </div>

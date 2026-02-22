@@ -89,6 +89,12 @@ export async function getDailyReports(params: GetDailyReportsParams = {}) {
               branch: true,
             },
           },
+          createdBy: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
         },
         orderBy: { reportDate: "desc" },
         skip,
@@ -197,7 +203,7 @@ export async function createDailyReport(formData: FormData) {
       data: {
         childId: data.childId,
         reportDate: new Date(data.reportDate),
-        status: "DRAFT",
+        status: (rawData.status === "SUBMITTED" ? "SUBMITTED" : "DRAFT") as DailyReportStatus,
         breakfastFoodId: data.breakfastFoodId || null,
         breakfastPortion: data.breakfastPortion || null,
         breakfastTime: data.breakfastTime ? new Date(`1970-01-01T${data.breakfastTime}`) : null,
