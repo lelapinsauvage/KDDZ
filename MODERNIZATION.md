@@ -6,6 +6,77 @@ KiddzOnline is currently a **data entry tool**. Teachers fill forms, admins look
 
 ---
 
+## The Three Users — What Each One Actually Wants
+
+### The Nursery Manager / Admin (the buyer)
+
+They don't want to "use" software. They want to:
+- **Know the nursery is running properly** without asking anyone
+- **See money** — who paid, who didn't, revenue trends
+- **Prove compliance** — to regulators, to parents, to insurance
+- **Not get surprised** — by a missing teacher, an expired vaccine, an angry parent
+
+**Their dream:** Open the app once a day, see a green/red status board, handle exceptions, close it. They should almost never fill a form — the system fills itself from what teachers do.
+
+**What we build for them:**
+- Morning briefing screen: "Here's what needs your attention today"
+- Auto-generated compliance reports (vaccination coverage, staff ratios, attendance records)
+- Revenue dashboard that flags problems ("3 invoices overdue > 30 days")
+- Exception-based workflow: only surface what's broken, not everything
+
+### The Teachers (the engine)
+
+They're the engine. Everything flows from their actions. But they hate admin work — they became teachers to work with kids, not to type into forms.
+
+**Their dream:** Mark attendance in 10 seconds, log activities with photos as they happen, send reports without writing paragraphs.
+
+**What we build for them:**
+- **Tap attendance** — photo grid, tap tap tap, done
+- **Activity logging as it happens** — snap photo, tag activity type, done. Not a form at the end of the day trying to remember what happened
+- **AI writes the report** — from the activities they logged throughout the day, AI generates the parent-facing daily report. Teacher reviews, taps send
+- **One screen for their class** — everything about their class on one page
+
+**The trick:** The teacher thinks they're just sharing cute photos. But behind the scenes, we're building the daily report, attendance log, activity documentation, and parent feed automatically.
+
+### The Parents (the paying customers)
+
+They're the paying customers — literally. They drop off their child and worry all day.
+
+**Their dream:** A notification pops up with a photo of their kid playing, with a note from the teacher. They smile, heart it, go back to work.
+
+**What we build for them:**
+- Live timeline / feed (private, just their child)
+- Push notifications for key moments (photo, incident, pickup ready)
+- Invoice & payment portal (pay online, see history)
+- Medical records access (vaccinations, conditions, doctor visits)
+- Direct messaging with teachers
+- Event calendar and holiday schedule
+
+---
+
+## The Irrefusable Offer
+
+> **"Your teachers take photos anyway — for WhatsApp groups, for themselves. With KiddzOnline, those same photos automatically build daily reports, update parents in real-time, and create compliance documentation. Zero extra work. Parents love it, teachers save 1-2 hours daily, and you get a dashboard that runs itself."**
+
+### The Math
+
+- 10 teachers saving 1.5 hours/day = **15 hours/day saved** = **75 hours/week**
+- Parents getting real-time updates = **fewer calls, fewer complaints, higher retention**
+- Auto-generated reports = **audit-ready at all times**
+- Happy parents tell other parents = **organic growth**
+
+### Who Does What
+
+| Role | Effort Level | What They Do | What They Get |
+|------|-------------|--------------|---------------|
+| **Teacher** | Medium (but fast/easy) | Tap attendance, snap photos, tag activities, review AI reports | Less paperwork, more time with kids |
+| **Manager** | Minimal | Review morning briefing, handle exceptions, check revenue | Full visibility without asking anyone |
+| **Parent** | Zero | Open app, see feed, heart photos, pay invoices | Peace of mind, feels included |
+
+The teacher does the most "work" — but it's designed to feel like sharing moments, not filling forms. The manager does the least. The parent does nothing and gets the most emotional value.
+
+---
+
 ## Competitive Landscape
 
 ### Market Leaders
@@ -29,7 +100,7 @@ KiddzOnline is currently a **data entry tool**. Teachers fill forms, admins look
 
 ---
 
-## The Gap: What KiddzOnline Is Missing
+## The 7 Missing Features
 
 ### 1. Live Parent Feed (highest impact)
 
@@ -112,14 +183,14 @@ Foundation for everything above:
 
 ---
 
-## The Core Philosophy Shift
+## The Core Philosophy
 
 > **Stop making people fill forms. Observe what they do and generate the paperwork for them.**
 
-Every feature should be measured against this principle:
-- Does this reduce taps/clicks for the teacher?
-- Does this give parents something they'd actually open the app to see?
-- Does this surface an insight the admin wouldn't have found on their own?
+Every feature should be measured against three questions:
+1. Does this reduce taps/clicks for the teacher?
+2. Does this give parents something they'd actually open the app to see?
+3. Does this surface an insight the admin wouldn't have found on their own?
 
 If the answer is no, it's just more data entry.
 
