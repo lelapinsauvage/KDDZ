@@ -20,6 +20,7 @@ import {
   Utensils,
   User,
   MessageCircle,
+  Printer,
 } from "lucide-react";
 import { ChildTimeline } from "@/components/children/child-timeline";
 import { getAvatarColor, getInitials } from "@/components/children/children-columns";
@@ -272,6 +273,12 @@ export function DashboardClient({ child, stats, upcomingAlarms, upcomingVaccinat
             </Button>
             <Button variant="outline" size="sm" asChild>
               <Link href={`/children/${id}/edit`}>Edit Profile</Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/children/${id}/print`}>
+                <Printer className="mr-1 h-3.5 w-3.5" />
+                Print
+              </Link>
             </Button>
           </div>
         </CardContent>

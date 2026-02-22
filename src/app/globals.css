@@ -170,3 +170,51 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #A8A29E;
 }
+
+/* ── Print styles ── */
+@media print {
+  /* Hide navigation, sidebar, header, footer */
+  [data-slot="sidebar"],
+  [data-slot="sidebar-trigger"],
+  nav,
+  header,
+  footer,
+  .header-bar,
+  .footer-bar,
+  .print\\:hidden {
+    display: none !important;
+  }
+
+  /* Full-width content on white background */
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12px !important;
+  }
+
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Hide interactive elements */
+  button:not(.print-visible),
+  .print-hide {
+    display: none !important;
+  }
+
+  /* Show URLs after links */
+  a[href^="http"]::after,
+  a[href^="tel"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.75em;
+    color: #666;
+  }
+
+  /* Default page settings */
+  @page {
+    margin: 1.5cm;
+  }
+}

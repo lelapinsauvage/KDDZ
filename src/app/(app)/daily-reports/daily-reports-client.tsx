@@ -56,6 +56,7 @@ import {
   BedDouble,
   SunMedium,
   Filter,
+  Printer,
 } from "lucide-react";
 import { format } from "date-fns";
 import { deleteDailyReport, submitDailyReport } from "@/lib/actions/daily-reports";
@@ -432,6 +433,12 @@ export function DailyReportsClient({
                   <Link href={`/daily-reports/${report.id}/edit`}>
                     <Pencil className="size-4" />
                     Edit
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={`/daily-reports/${report.id}/print`}>
+                    <Printer className="size-4" />
+                    Print
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
