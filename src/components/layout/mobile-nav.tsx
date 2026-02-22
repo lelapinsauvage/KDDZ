@@ -66,21 +66,26 @@ export function MobileNav({ userRole }: MobileNavProps) {
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 z-50 flex h-16 items-stretch border-t border-border bg-white/85 backdrop-blur-xl md:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+      <nav className="fixed bottom-0 left-0 right-0 z-50 flex h-16 items-stretch border-t border-border/60 bg-white/90 backdrop-blur-xl shadow-[0_-1px_3px_rgba(0,0,0,0.05)] md:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         {tabs.map((tab) => {
           const isActive = pathname === tab.href || pathname.startsWith(tab.href + "/")
           return (
             <Link
               key={tab.href}
               href={tab.href}
-              className={`flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors ${
+              className={`flex flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors ${
                 isActive
                   ? "text-primary"
                   : "text-muted-foreground"
               }`}
             >
-              <tab.icon className={`size-5 ${isActive ? "text-primary" : ""}`} />
-              <span>{tab.label}</span>
+              <div className="relative">
+                <tab.icon className={`size-[22px] ${isActive ? "text-primary" : ""}`} />
+                {isActive && (
+                  <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-[3px] w-4 rounded-full bg-primary" />
+                )}
+              </div>
+              <span className={isActive ? "font-semibold" : ""}>{tab.label}</span>
             </Link>
           )
         })}
@@ -88,9 +93,9 @@ export function MobileNav({ userRole }: MobileNavProps) {
         {/* More tab */}
         <button
           onClick={() => setMoreOpen(true)}
-          className="flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-muted-foreground transition-colors"
+          className="flex flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium text-muted-foreground transition-colors"
         >
-          <MoreHorizontal className="size-5" />
+          <MoreHorizontal className="size-[22px]" />
           <span>More</span>
         </button>
       </nav>

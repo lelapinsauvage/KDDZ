@@ -28,10 +28,10 @@ export function MobileMoreSheet({ open, onOpenChange, userRole }: MobileMoreShee
           <SheetTitle className="text-base font-semibold">Navigation</SheetTitle>
         </SheetHeader>
         <ScrollArea className="h-[calc(85vh-57px)]">
-          <div className="space-y-4 p-4">
+          <div className="space-y-5 p-4">
             {sections.map((section) => (
               <div key={section.label}>
-                <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 px-1">
                   {section.label}
                 </p>
                 <div className="space-y-0.5">
@@ -45,11 +45,11 @@ export function MobileMoreSheet({ open, onOpenChange, userRole }: MobileMoreShee
                         onClick={() => onOpenChange(false)}
                         className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
                           isActive
-                            ? "bg-primary/10 font-medium text-primary"
+                            ? "bg-primary/10 font-semibold text-primary border-l-[3px] border-primary rounded-l-none"
                             : "text-foreground hover:bg-muted"
                         }`}
                       >
-                        <item.icon className="size-4" />
+                        <item.icon className={`size-4 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
                         <span>{item.title}</span>
                       </Link>
                     )

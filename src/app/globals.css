@@ -131,18 +131,18 @@
 
 /* ── Modern header ── */
 .header-bar {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   height: 52px;
-  border-bottom: 1px solid #E7E5E4;
+  border-bottom: 1px solid rgba(231, 229, 228, 0.7);
 }
 
 /* ── Modern footer ── */
 .footer-bar {
-  background: #ffffff;
-  color: #78716C;
-  border-top: 1px solid #E7E5E4;
+  background: transparent;
+  color: #A8A29E;
+  border-top: 1px solid rgba(231, 229, 228, 0.5);
 }
 
 /* ── Skeleton shimmer animation ── */
