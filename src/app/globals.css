@@ -181,7 +181,7 @@
   footer,
   .header-bar,
   .footer-bar,
-  .print\\:hidden {
+  .print\:hidden {
     display: none !important;
   }
 
