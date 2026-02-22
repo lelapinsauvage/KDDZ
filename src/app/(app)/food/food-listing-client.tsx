@@ -281,11 +281,17 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
   return (
     <>
       <PageHeader
-        title="Food Listing"
+        title="Food Items"
         breadcrumbs={[
-          { label: "Food Management", href: "/food" },
-          { label: "Food Listing" },
+          { label: "Food", href: "/food" },
+          { label: "Items" },
         ]}
+        actions={
+          <Button className="bg-primary text-white hover:bg-primary/90" onClick={openAdd}>
+            <Plus className="mr-1 size-4" />
+            Add Food
+          </Button>
+        }
       />
 
       <div className="space-y-4 p-4 md:p-6">
@@ -304,15 +310,6 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
             </SelectContent>
           </Select>
 
-          <div className="flex-1" />
-
-          <Button
-            className="bg-primary text-white hover:bg-primary/90"
-            onClick={openAdd}
-          >
-            <Plus className="mr-1 size-4" />
-            Add Food
-          </Button>
         </div>
 
         {filteredItems.length === 0 ? (

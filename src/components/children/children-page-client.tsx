@@ -353,11 +353,18 @@ export function ChildrenPageClient({
   return (
     <>
       <PageHeader
-        title="Children Listing"
+        title="Children"
         breadcrumbs={[
-          { label: "Children Management", href: "/children" },
-          { label: "Children Listing" },
+          { label: "Children" },
         ]}
+        actions={
+          <Button asChild className="bg-primary text-white hover:bg-primary/90">
+            <Link href="/children/new">
+              <Plus className="mr-1 size-4" />
+              Add Child
+            </Link>
+          </Button>
+        }
       />
 
       <div className="space-y-4 p-4 md:p-6">
@@ -467,16 +474,6 @@ export function ChildrenPageClient({
             data={childrenList as unknown as Record<string, unknown>[]}
           />
 
-          {/* Add Child button */}
-          <Button
-            asChild
-            className="bg-primary text-white hover:bg-primary/90"
-          >
-            <Link href="/children/new">
-              <Plus className="mr-1 size-4" />
-              Add Child
-            </Link>
-          </Button>
         </div>
 
         {/* ── Active Filter Pills ──────────────────── */}

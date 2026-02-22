@@ -313,9 +313,17 @@ export function MedicalVisitsClient({
       <PageHeader
         title="Doctor Visits"
         breadcrumbs={[
-          { label: "Medical", href: "/medical/general" },
+          { label: "Health", href: "/medical/general" },
           { label: "Visits" },
         ]}
+        actions={
+          <Button asChild className="bg-primary text-white hover:bg-primary/90">
+            <Link href="/medical/visits/new">
+              <Plus className="mr-1 size-4" />
+              Add New
+            </Link>
+          </Button>
+        }
       />
       <div className="p-4 md:p-6 space-y-4">
         {/* Toolbar */}
@@ -356,12 +364,6 @@ export function MedicalVisitsClient({
             </SelectContent>
           </Select>
 
-          <Link href="/medical/visits/new" className="ml-auto">
-            <Button className="text-white">
-              <Plus className="size-4" />
-              Add New
-            </Button>
-          </Link>
         </div>
 
         {filteredData.length === 0 ? (

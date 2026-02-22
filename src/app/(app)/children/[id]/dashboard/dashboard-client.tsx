@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { ChildTimeline } from "@/components/children/child-timeline";
 import { getAvatarColor, getInitials } from "@/components/children/children-columns";
+import { PageHeader } from "@/components/layout/page-header";
 import type { TimelineEvent } from "@/lib/actions/timeline";
 
 interface ParentInfo {
@@ -133,7 +134,15 @@ export function DashboardClient({ child, stats, upcomingAlarms, upcomingVaccinat
   ];
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
+    <>
+      <PageHeader
+        title={`${child.firstName} ${child.lastName}`}
+        breadcrumbs={[
+          { label: "Children", href: "/children" },
+          { label: `${child.firstName} ${child.lastName}` },
+        ]}
+      />
+      <div className="space-y-6 p-4 md:p-6">
       {/* Child Info Card */}
       <Card className="overflow-hidden">
         <div className="h-1.5 bg-gradient-to-r from-teal-400 via-sky-400 to-violet-400" />
@@ -352,5 +361,6 @@ export function DashboardClient({ child, stats, upcomingAlarms, upcomingVaccinat
         </Card>
       )}
     </div>
+    </>
   );
 }

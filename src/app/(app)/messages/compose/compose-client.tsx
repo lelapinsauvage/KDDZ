@@ -120,7 +120,6 @@ export function ComposeClient({ recipients, classes }: ComposeClientProps) {
       <PageHeader
         title="Compose Message"
         breadcrumbs={[
-          { label: "Home", href: "/dashboard" },
           { label: "Messages", href: "/messages/inbox" },
           { label: "Compose" },
         ]}

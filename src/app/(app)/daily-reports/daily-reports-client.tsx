@@ -456,6 +456,14 @@ export function DailyReportsClient({
       <PageHeader
         title="Daily Reports"
         breadcrumbs={[{ label: "Daily Reports" }]}
+        actions={
+          <Button asChild className="bg-primary hover:bg-primary/90 text-white">
+            <Link href="/daily-reports/new">
+              <Plus className="size-4" />
+              New Report
+            </Link>
+          </Button>
+        }
       />
       <div className="p-4 space-y-4 md:p-6">
         {/* Toolbar */}
@@ -541,12 +549,6 @@ export function DailyReportsClient({
                   columns={dailyReportsExportColumns}
                   data={filteredData as unknown as Record<string, unknown>[]}
                 />
-                <Button asChild className="bg-primary hover:bg-primary/90 text-white">
-                  <Link href="/daily-reports/new">
-                    <Plus className="size-4" />
-                    New Report
-                  </Link>
-                </Button>
               </div>
             </div>
           </CardContent>

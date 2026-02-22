@@ -287,9 +287,17 @@ export function FoodCalendarClient({
       <PageHeader
         title="Food Calendar"
         breadcrumbs={[
-          { label: "Food Management", href: "/food" },
-          { label: "Food Calendar" },
+          { label: "Food", href: "/food" },
+          { label: "Calendar" },
         ]}
+        actions={
+          <Link href="/food/calendar/print">
+            <Button variant="outline">
+              <Printer className="mr-1 size-4" />
+              Print
+            </Button>
+          </Link>
+        }
       />
 
       <div className="space-y-4 p-4 md:p-6">
@@ -339,12 +347,6 @@ export function FoodCalendarClient({
             </Button>
           </div>
 
-          <Link href="/food/calendar/print">
-            <Button variant="outline">
-              <Printer className="mr-1 size-4" />
-              Print
-            </Button>
-          </Link>
         </div>
 
         {/* Calendar Grid */}

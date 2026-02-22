@@ -138,20 +138,18 @@ export default function AreasClient({ initialAreas, zoneOptions }: AreasClientPr
       <PageHeader
         title="Areas Management"
         breadcrumbs={[
-          { label: "Settings", href: "/settings/areas" },
-          { label: "Areas Management" },
+          { label: "Settings", href: "/settings/nursery" },
+          { label: "Areas" },
         ]}
-      />
-
-      <div className="space-y-4 p-4 md:p-6">
-        <div className="flex flex-wrap items-center justify-between">
-          <div />
+        actions={
           <Button className="bg-primary text-white hover:bg-primary/90" onClick={openAdd}>
             <Plus className="mr-1 size-4" />
             Add Area
           </Button>
-        </div>
+        }
+      />
 
+      <div className="space-y-4 p-4 md:p-6">
         <DataTable columns={columns} data={areas} searchKey="name" searchPlaceholder="Search areas..." />
       </div>
 

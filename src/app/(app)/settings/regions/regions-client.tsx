@@ -238,8 +238,8 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
       <PageHeader
         title="Regions Management"
         breadcrumbs={[
-          { label: "Settings", href: "/settings/regions" },
-          { label: "Regions Management" },
+          { label: "Settings", href: "/settings/nursery" },
+          { label: "Regions" },
         ]}
       />
 

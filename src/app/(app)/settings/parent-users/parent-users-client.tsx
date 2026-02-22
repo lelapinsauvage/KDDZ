@@ -201,20 +201,18 @@ export function ParentUsersClient({ users: initialUsers, childrenList }: ParentU
       <PageHeader
         title="Parent Users"
         breadcrumbs={[
-          { label: "Settings", href: "/settings/parent-users" },
+          { label: "Settings", href: "/settings/nursery" },
           { label: "Parent Users" },
         ]}
-      />
-
-      <div className="space-y-4 p-4 md:p-6">
-        <div className="flex items-center justify-between">
-          <div />
+        actions={
           <Button className="bg-primary text-white hover:bg-primary/90" onClick={() => setCreateOpen(true)} disabled={isPending}>
             <Plus className="mr-1 size-4" />
             Create Parent Account
           </Button>
-        </div>
+        }
+      />
 
+      <div className="space-y-4 p-4 md:p-6">
         <DataTable
           columns={columns}
           data={users}

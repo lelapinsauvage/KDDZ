@@ -113,7 +113,7 @@ export default function NurseryClient({ branchId, initialSettings }: NurseryClie
         title="Nursery Configuration"
         breadcrumbs={[
           { label: "Settings", href: "/settings/nursery" },
-          { label: "Nursery Configuration" },
+          { label: "Nursery" },
         ]}
       />
 

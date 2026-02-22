@@ -291,8 +291,8 @@ export default function ExportDatabasePage() {
       <PageHeader
         title="Export Data"
         breadcrumbs={[
-          { label: "Settings", href: "/settings/export" },
-          { label: "Export Data" },
+          { label: "Settings", href: "/settings/nursery" },
+          { label: "Export" },
         ]}
       />
 

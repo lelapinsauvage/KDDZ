@@ -123,7 +123,15 @@ export function StaffPageClient({ employees }: StaffPageClientProps) {
     <>
       <PageHeader
         title="Staff"
-        breadcrumbs={[{ label: "Staff" }]}
+        breadcrumbs={[{ label: "Employees", href: "/employees/staff" }, { label: "Staff" }]}
+        actions={
+          <Button asChild className="bg-primary hover:bg-primary/90 text-white">
+            <Link href={newLink}>
+              <Plus className="size-4" />
+              Add Staff
+            </Link>
+          </Button>
+        }
       />
       <div className="p-4 md:p-6 space-y-4">
         {/* Role summary chips */}
@@ -175,13 +183,6 @@ export function StaffPageClient({ employees }: StaffPageClientProps) {
             columns={employeeExportColumns}
             data={filteredData as unknown as Record<string, unknown>[]}
           />
-
-          <Button asChild className="bg-primary hover:bg-primary/90 text-white">
-            <Link href={newLink}>
-              <Plus className="size-4" />
-              Add Staff
-            </Link>
-          </Button>
         </div>
 
         <DataTable columns={columns} data={filteredData} />

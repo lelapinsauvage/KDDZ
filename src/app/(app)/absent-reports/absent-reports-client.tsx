@@ -341,10 +341,15 @@ export function AbsentReportsClient({ reports, branches, initialStatusFilter = "
     <>
       <PageHeader
         title="Absence Reports"
-        breadcrumbs={[
-          { label: "Absence Reports", href: "/absent-reports" },
-          { label: "All Reports" },
-        ]}
+        breadcrumbs={[{ label: "Absence Reports" }]}
+        actions={
+          <Button asChild className="bg-primary text-white hover:bg-primary/90">
+            <Link href="/absent-reports/new">
+              <Plus className="mr-1 size-4" />
+              Report Absence
+            </Link>
+          </Button>
+        }
       />
 
       <div className="space-y-4 p-4 md:p-6">
@@ -411,13 +416,6 @@ export function AbsentReportsClient({ reports, branches, initialStatusFilter = "
               )}
 
               <div className="flex-1" />
-
-              <Button asChild className="bg-primary text-white hover:bg-primary/90">
-                <Link href="/absent-reports/new">
-                  <Plus className="mr-1 size-4" />
-                  Report Absence
-                </Link>
-              </Button>
             </div>
           </CardContent>
         </Card>

@@ -278,10 +278,17 @@ export function SentClient({ messages, total }: SentClientProps) {
       <PageHeader
         title="Sent Messages"
         breadcrumbs={[
-          { label: "Home", href: "/dashboard" },
-          { label: "Messages" },
+          { label: "Messages", href: "/messages/inbox" },
           { label: "Sent" },
         ]}
+        actions={
+          <Button asChild size="sm">
+            <Link href="/messages/compose">
+              <PenSquare className="mr-1 size-3.5" />
+              Compose
+            </Link>
+          </Button>
+        }
       />
 
       <div className="p-4 md:p-6 space-y-4">
@@ -295,12 +302,6 @@ export function SentClient({ messages, total }: SentClientProps) {
               <Link href="/messages/inbox">
                 <Inbox className="mr-1 size-3.5" />
                 Inbox
-              </Link>
-            </Button>
-            <Button asChild size="sm">
-              <Link href="/messages/compose">
-                <PenSquare className="mr-1 size-3.5" />
-                Compose
               </Link>
             </Button>
           </div>

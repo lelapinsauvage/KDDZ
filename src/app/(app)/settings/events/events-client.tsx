@@ -428,9 +428,19 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
       <PageHeader
         title="Events Calendar"
         breadcrumbs={[
-          { label: "Settings", href: "/settings/events" },
-          { label: "Events Calendar" },
+          { label: "Settings", href: "/settings/nursery" },
+          { label: "Events" },
         ]}
+        actions={
+          <Button
+            className="bg-primary text-white hover:bg-primary/90"
+            onClick={() => openAdd()}
+            disabled={isPending}
+          >
+            <Plus className="mr-1 size-4" />
+            Add Event
+          </Button>
+        }
       />
 
       <div className="space-y-6 p-4 md:p-6">
@@ -450,14 +460,6 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
                   <ChevronRight className="size-4" />
                 </Button>
               </div>
-              <Button
-                className="bg-primary text-white hover:bg-primary/90"
-                onClick={() => openAdd()}
-                disabled={isPending}
-              >
-                <Plus className="mr-1 size-4" />
-                Add Event
-              </Button>
             </div>
 
             {/* Calendar grid */}

@@ -329,10 +329,17 @@ export function InboxClient({ messages, total }: InboxClientProps) {
       <PageHeader
         title="Message Inbox"
         breadcrumbs={[
-          { label: "Home", href: "/dashboard" },
-          { label: "Messages" },
+          { label: "Messages", href: "/messages/inbox" },
           { label: "Inbox" },
         ]}
+        actions={
+          <Button asChild size="sm">
+            <Link href="/messages/compose">
+              <PenSquare className="mr-1 size-3.5" />
+              Compose
+            </Link>
+          </Button>
+        }
       />
 
       <div className="p-4 md:p-6 space-y-4">
@@ -361,12 +368,6 @@ export function InboxClient({ messages, total }: InboxClientProps) {
             <Button asChild variant="outline" size="sm">
               <Link href="/messages/sent">
                 Sent Messages
-              </Link>
-            </Button>
-            <Button asChild size="sm">
-              <Link href="/messages/compose">
-                <PenSquare className="mr-1 size-3.5" />
-                Compose
               </Link>
             </Button>
           </div>

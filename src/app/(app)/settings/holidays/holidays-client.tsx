@@ -329,9 +329,19 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
       <PageHeader
         title="Holiday Calendar"
         breadcrumbs={[
-          { label: "Settings", href: "/settings/holidays" },
-          { label: "Holiday Calendar" },
+          { label: "Settings", href: "/settings/nursery" },
+          { label: "Holidays" },
         ]}
+        actions={
+          <Button
+            className="bg-primary text-white hover:bg-primary/90"
+            onClick={() => openAdd()}
+            disabled={isPending}
+          >
+            <Plus className="mr-1 size-4" />
+            Add Holiday
+          </Button>
+        }
       />
 
       <div className="space-y-6 p-4 md:p-6">
@@ -351,14 +361,6 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                   <ChevronRight className="size-4" />
                 </Button>
               </div>
-              <Button
-                className="bg-primary text-white hover:bg-primary/90"
-                onClick={() => openAdd()}
-                disabled={isPending}
-              >
-                <Plus className="mr-1 size-4" />
-                Add Holiday
-              </Button>
             </div>
 
             {/* Calendar grid */}

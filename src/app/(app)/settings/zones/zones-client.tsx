@@ -121,20 +121,18 @@ export default function ZonesClient({ initialZones }: ZonesClientProps) {
       <PageHeader
         title="Zones Management"
         breadcrumbs={[
-          { label: "Settings", href: "/settings/zones" },
-          { label: "Zones Management" },
+          { label: "Settings", href: "/settings/nursery" },
+          { label: "Zones" },
         ]}
-      />
-
-      <div className="space-y-4 p-4 md:p-6">
-        <div className="flex flex-wrap items-center justify-between">
-          <div />
+        actions={
           <Button className="bg-primary text-white hover:bg-primary/90" onClick={openAdd}>
             <Plus className="mr-1 size-4" />
             Add Zone
           </Button>
-        </div>
+        }
+      />
 
+      <div className="space-y-4 p-4 md:p-6">
         <DataTable columns={columns} data={zones} searchKey="name" searchPlaceholder="Search zones..." />
       </div>
 

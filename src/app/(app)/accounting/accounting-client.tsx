@@ -495,11 +495,19 @@ export function AccountingClient({
   return (
     <>
       <PageHeader
-        title="Invoice - Receipt"
-        breadcrumbs={[
-          { label: "Home", href: "/dashboard" },
-          { label: "Invoice - Receipt" },
-        ]}
+        title="Accounting"
+        breadcrumbs={[{ label: "Accounting" }]}
+        actions={
+          <Button
+            onClick={() => {
+              setEditPayment(null);
+              setDialogOpen(true);
+            }}
+          >
+            <Plus className="mr-1 size-4" />
+            New Payment
+          </Button>
+        }
       />
 
       <div className="space-y-6 p-4 md:p-6">
@@ -668,17 +676,6 @@ export function AccountingClient({
             columns={paymentsExportColumns}
             data={filteredPayments as unknown as Record<string, unknown>[]}
           />
-
-          <Button
-
-            onClick={() => {
-              setEditPayment(null);
-              setDialogOpen(true);
-            }}
-          >
-            <Plus className="mr-1 size-4" />
-            New Payment
-          </Button>
         </div>
 
         {/* Data Table */}
