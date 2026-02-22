@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
 import { z } from "zod/v4";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,18 +26,35 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ArrowLeft, Save, Send } from "lucide-react";
+import { ArrowLeft, Save, Send, Loader2 } from "lucide-react";
+import {
+  createMedicalForm,
+  updateMedicalForm,
+} from "@/lib/actions/medical";
+
+// --- Constants ---
+
+const CONDITION_TYPES = [
+  "Allergy",
+  "Asthma",
+  "Diabetes",
+  "Epilepsy",
+  "Heart Condition",
+  "Skin Condition",
+  "Digestive",
+  "Respiratory",
+  "Other",
+] as const;
 
 // --- Schema ---
 
 const conditionFormSchema = z.object({
-  childName: z.string().min(1, "Child name is required"),
-  condition: z.string().min(1, "Condition name is required"),
+  childId: z.string().min(1, "Child is required"),
+  conditionType: z.string().min(1, "Condition type is required"),
   description: z.string().optional(),
   severity: z.string().min(1, "Severity is required"),
-  diagnosedDate: z.string().min(1, "Diagnosed date is required"),
+  diagnosisDate: z.string().min(1, "Diagnosis date is required"),
   treatmentPlan: z.string().optional(),
-  currentStatus: z.string().min(1, "Status is required"),
   doctorNotes: z.string().optional(),
 });
 
@@ -42,24 +62,24 @@ type ConditionFormValues = z.infer<typeof conditionFormSchema>;
 
 // --- Status badge ---
 
-function getConditionStatusBadge(status: string) {
+function getStatusBadge(status: string) {
   switch (status) {
-    case "Active":
-      return (
-        <Badge className="bg-blue-50 text-blue-700 border-blue-200">
-          Active
-        </Badge>
-      );
-    case "Managed":
-      return (
-        <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
-          Managed
-        </Badge>
-      );
-    case "Resolved":
+    case "DRAFT":
       return (
         <Badge variant="outline" className="border-gray-300 text-gray-600">
-          Resolved
+          Draft
+        </Badge>
+      );
+    case "SUBMITTED":
+      return (
+        <Badge className="bg-blue-50 text-blue-700 border-blue-200">
+          Submitted
+        </Badge>
+      );
+    case "REVIEWED":
+      return (
+        <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
+          Reviewed
         </Badge>
       );
     default:
@@ -71,13 +91,24 @@ function getConditionStatusBadge(status: string) {
 
 interface ConditionDetailClientProps {
   isNew: boolean;
+  formId: string | null;
   formData: ConditionFormValues;
   children: { id: string; name: string }[];
 }
 
 // --- Client Component ---
 
-export function ConditionDetailClient({ isNew, formData, children }: ConditionDetailClientProps) {
+export function ConditionDetailClient({
+  isNew,
+  formId,
+  formData,
+  children,
+}: ConditionDetailClientProps) {
+  const router = useRouter();
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentStatus, setCurrentStatus] = useState<string>(isNew ? "DRAFT" : "SUBMITTED");
+
   const {
     register,
     handleSubmit,
@@ -89,15 +120,93 @@ export function ConditionDetailClient({ isNew, formData, children }: ConditionDe
     defaultValues: formData,
   });
 
-  const currentStatus = watch("currentStatus");
+  async function onSaveDraft(data: ConditionFormValues) {
+    setIsSaving(true);
+    try {
+      const payload = {
+        conditionType: data.conditionType,
+        description: data.description ?? "",
+        severity: data.severity,
+        diagnosisDate: data.diagnosisDate,
+        treatmentPlan: data.treatmentPlan ?? "",
+        doctorNotes: data.doctorNotes ?? "",
+      };
 
-  const onSave = (data: ConditionFormValues) => {
-    console.log("Saving condition:", data);
-  };
+      let result;
 
-  const onSubmit = (data: ConditionFormValues) => {
-    console.log("Submitting condition:", data);
-  };
+      if (isNew) {
+        result = await createMedicalForm({
+          childId: data.childId,
+          formType: "CONDITIONS",
+          status: "DRAFT",
+          data: payload,
+        });
+      } else {
+        result = await updateMedicalForm(formId!, {
+          childId: data.childId,
+          status: "DRAFT",
+          data: payload,
+        });
+      }
+
+      if (result.success) {
+        setCurrentStatus("DRAFT");
+        toast.success("Draft saved successfully.");
+        router.push("/medical/conditions");
+      } else {
+        toast.error(result.error || "Failed to save draft.");
+      }
+    } catch {
+      toast.error("An unexpected error occurred.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function onSubmit(data: ConditionFormValues) {
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        conditionType: data.conditionType,
+        description: data.description ?? "",
+        severity: data.severity,
+        diagnosisDate: data.diagnosisDate,
+        treatmentPlan: data.treatmentPlan ?? "",
+        doctorNotes: data.doctorNotes ?? "",
+      };
+
+      let result;
+
+      if (isNew) {
+        result = await createMedicalForm({
+          childId: data.childId,
+          formType: "CONDITIONS",
+          status: "SUBMITTED",
+          data: payload,
+        });
+      } else {
+        result = await updateMedicalForm(formId!, {
+          childId: data.childId,
+          status: "SUBMITTED",
+          data: payload,
+        });
+      }
+
+      if (result.success) {
+        setCurrentStatus("SUBMITTED");
+        toast.success(isNew ? "Condition submitted successfully." : "Condition updated successfully.");
+        router.push("/medical/conditions");
+      } else {
+        toast.error(result.error || "Failed to submit condition.");
+      }
+    } catch {
+      toast.error("An unexpected error occurred.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  const isLoading = isSaving || isSubmitting;
 
   return (
     <>
@@ -106,7 +215,7 @@ export function ConditionDetailClient({ isNew, formData, children }: ConditionDe
         breadcrumbs={[
           { label: "Medical", href: "/medical/general" },
           { label: "Conditions", href: "/medical/conditions" },
-          { label: isNew ? "New" : formData.condition || "Details" },
+          { label: isNew ? "New" : formData.conditionType || "Details" },
         ]}
       />
       <div className="p-6 space-y-6">
@@ -119,56 +228,83 @@ export function ConditionDetailClient({ isNew, formData, children }: ConditionDe
             </Button>
           </Link>
           <div className="flex items-center gap-3">
-            {currentStatus && getConditionStatusBadge(currentStatus)}
-            <Button variant="outline" onClick={handleSubmit(onSave)}>
-              <Save className="size-4" />
+            {getStatusBadge(currentStatus)}
+            <Button
+              variant="outline"
+              onClick={handleSubmit(onSaveDraft)}
+              disabled={isLoading}
+            >
+              {isSaving ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Save className="size-4" />
+              )}
               Save Draft
             </Button>
             <Button
               style={{ background: "#1caf9a" }}
               className="text-white"
               onClick={handleSubmit(onSubmit)}
+              disabled={isLoading}
             >
-              <Send className="size-4" />
+              {isSubmitting ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Send className="size-4" />
+              )}
               Submit
             </Button>
           </div>
         </div>
 
         <form className="space-y-6">
-          {/* Child & Condition Info */}
+          {/* Child & Condition */}
           <Card>
             <CardHeader>
-              <CardTitle>Condition Information</CardTitle>
+              <CardTitle>Child & Condition</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>Child Name</Label>
+                  <Label>Child</Label>
                   <Select
-                    value={watch("childName")}
-                    onValueChange={(val) => setValue("childName", val)}
+                    value={watch("childId")}
+                    onValueChange={(val) => setValue("childId", val)}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select a child" />
                     </SelectTrigger>
                     <SelectContent>
                       {children.map((child) => (
-                        <SelectItem key={child.id} value={child.name}>
+                        <SelectItem key={child.id} value={child.id}>
                           {child.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  {errors.childName && (
-                    <p className="text-xs text-red-500">{errors.childName.message}</p>
+                  {errors.childId && (
+                    <p className="text-xs text-red-500">{errors.childId.message}</p>
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label>Condition Name</Label>
-                  <Input placeholder="e.g. Peanut Allergy, Asthma, etc." {...register("condition")} />
-                  {errors.condition && (
-                    <p className="text-xs text-red-500">{errors.condition.message}</p>
+                  <Label>Condition Type</Label>
+                  <Select
+                    value={watch("conditionType")}
+                    onValueChange={(val) => setValue("conditionType", val)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select condition type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CONDITION_TYPES.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.conditionType && (
+                    <p className="text-xs text-red-500">{errors.conditionType.message}</p>
                   )}
                 </div>
               </div>
@@ -183,13 +319,13 @@ export function ConditionDetailClient({ isNew, formData, children }: ConditionDe
             </CardContent>
           </Card>
 
-          {/* Severity & Dates */}
+          {/* Severity & Diagnosis */}
           <Card>
             <CardHeader>
-              <CardTitle>Severity & Status</CardTitle>
+              <CardTitle>Severity & Diagnosis</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Severity</Label>
                   <Select
@@ -210,29 +346,10 @@ export function ConditionDetailClient({ isNew, formData, children }: ConditionDe
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label>Diagnosed Date</Label>
-                  <Input type="date" {...register("diagnosedDate")} />
-                  {errors.diagnosedDate && (
-                    <p className="text-xs text-red-500">{errors.diagnosedDate.message}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label>Current Status</Label>
-                  <Select
-                    value={watch("currentStatus")}
-                    onValueChange={(val) => setValue("currentStatus", val)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Active">Active</SelectItem>
-                      <SelectItem value="Managed">Managed</SelectItem>
-                      <SelectItem value="Resolved">Resolved</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {errors.currentStatus && (
-                    <p className="text-xs text-red-500">{errors.currentStatus.message}</p>
+                  <Label>Diagnosis Date</Label>
+                  <Input type="date" {...register("diagnosisDate")} />
+                  {errors.diagnosisDate && (
+                    <p className="text-xs text-red-500">{errors.diagnosisDate.message}</p>
                   )}
                 </div>
               </div>

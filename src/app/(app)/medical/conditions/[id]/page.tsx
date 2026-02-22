@@ -26,14 +26,14 @@ export default async function ConditionDetailPage({ params }: PageProps) {
     return (
       <ConditionDetailClient
         isNew
+        formId={null}
         formData={{
-          childName: "",
-          condition: "",
+          childId: "",
+          conditionType: "",
           description: "",
           severity: "",
-          diagnosedDate: "",
+          diagnosisDate: new Date().toISOString().split("T")[0],
           treatmentPlan: "",
-          currentStatus: "",
           doctorNotes: "",
         }}
         children={childOptions}
@@ -52,19 +52,19 @@ export default async function ConditionDetailPage({ params }: PageProps) {
   const data = (form.data ?? {}) as Record<string, any>;
 
   const formData = {
-    childName: `${form.child.firstName} ${form.child.lastName}`,
-    condition: (data.condition as string) ?? "",
+    childId: form.childId,
+    conditionType: (data.conditionType as string) ?? "",
     description: (data.description as string) ?? "",
     severity: (data.severity as string) ?? "",
-    diagnosedDate: (data.diagnosedDate as string) ?? "",
+    diagnosisDate: (data.diagnosisDate as string) ?? form.createdAt.toISOString().split("T")[0],
     treatmentPlan: (data.treatmentPlan as string) ?? "",
-    currentStatus: (data.currentStatus as string) ?? "",
     doctorNotes: (data.doctorNotes as string) ?? "",
   };
 
   return (
     <ConditionDetailClient
       isNew={false}
+      formId={form.id}
       formData={formData}
       children={childOptions}
     />

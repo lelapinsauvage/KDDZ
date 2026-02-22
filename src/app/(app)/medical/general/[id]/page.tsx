@@ -7,20 +7,6 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-// Map MedicalFormStatus to display label
-function statusLabel(s: string): string {
-  switch (s) {
-    case "DRAFT":
-      return "Draft";
-    case "SUBMITTED":
-      return "Submitted";
-    case "REVIEWED":
-      return "Reviewed";
-    default:
-      return s;
-  }
-}
-
 export default async function GeneralMedicalDetailPage({ params }: PageProps) {
   const { id } = await params;
   const isNew = id === "new";
@@ -41,17 +27,24 @@ export default async function GeneralMedicalDetailPage({ params }: PageProps) {
     return (
       <GeneralDetailClient
         isNew
-        formData={{
-          childName: "",
-          date: new Date().toISOString().split("T")[0],
+        formId={null}
+        initialData={{
+          childId: "",
           doctor: "",
-          height: "",
-          weight: "",
-          headCircumference: "",
+          bloodType: "",
+          allergies: "",
+          chronicConditions: "",
+          medications: "",
+          specialNeeds: "",
+          emergencyContactName: "",
+          emergencyContactPhone: "",
+          hasInsurance: false,
+          insuranceType: "",
+          insuranceExpiry: "",
           generalHealthNotes: "",
           doctorNotes: "",
-          status: "Draft",
         }}
+        initialStatus="DRAFT"
         children={childOptions}
       />
     );
@@ -68,22 +61,29 @@ export default async function GeneralMedicalDetailPage({ params }: PageProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const data = (form.data ?? {}) as Record<string, any>;
 
-  const formData = {
-    childName: `${form.child.firstName} ${form.child.lastName}`,
-    date: data.date ?? form.createdAt.toISOString().split("T")[0],
+  const initialData = {
+    childId: form.childId,
     doctor: (data.doctor as string) ?? "",
-    height: (data.height as string) ?? "",
-    weight: (data.weight as string) ?? "",
-    headCircumference: (data.headCircumference as string) ?? "",
+    bloodType: (data.bloodType as string) ?? "",
+    allergies: (data.allergies as string) ?? "",
+    chronicConditions: (data.chronicConditions as string) ?? "",
+    medications: (data.medications as string) ?? "",
+    specialNeeds: (data.specialNeeds as string) ?? "",
+    emergencyContactName: (data.emergencyContactName as string) ?? "",
+    emergencyContactPhone: (data.emergencyContactPhone as string) ?? "",
+    hasInsurance: (data.hasInsurance as boolean) ?? false,
+    insuranceType: (data.insuranceType as string) ?? "",
+    insuranceExpiry: (data.insuranceExpiry as string) ?? "",
     generalHealthNotes: (data.generalHealthNotes as string) ?? "",
     doctorNotes: (data.doctorNotes as string) ?? "",
-    status: statusLabel(form.status),
   };
 
   return (
     <GeneralDetailClient
       isNew={false}
-      formData={formData}
+      formId={form.id}
+      initialData={initialData}
+      initialStatus={form.status as "DRAFT" | "SUBMITTED" | "REVIEWED"}
       children={childOptions}
     />
   );

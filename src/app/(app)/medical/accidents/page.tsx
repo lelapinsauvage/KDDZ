@@ -1,21 +1,34 @@
 import { getMedicalForms } from "@/lib/actions/medical";
+import { getBranches } from "@/lib/actions/branches";
 import { AccidentReportsClient } from "./accident-reports-client";
 
 export default async function AccidentReportsPage() {
-  const { forms, total } = await getMedicalForms({ formType: "ACCIDENTS" });
+  const [{ forms, total }, branchesResult] = await Promise.all([
+    getMedicalForms({ formType: "ACCIDENTS", pageSize: 500 }),
+    getBranches(),
+  ]);
+
+  const branches = (branchesResult.data ?? []) as Array<{ id: string; name: string }>;
 
   const serializedForms = forms.map((form) => {
-    const formData = form.data as Record<string, unknown> | null;
+    const d = (form.data ?? {}) as Record<string, unknown>;
     return {
       id: form.id,
+      childId: form.childId,
       childName: `${form.child.firstName} ${form.child.lastName}`,
-      date: form.createdAt.toISOString().split("T")[0],
-      description: (formData?.description as string) ?? "",
-      severity: (formData?.severity as string) ?? "Minor",
+      date: (d.date as string) ?? form.createdAt.toISOString().split("T")[0],
+      time: (d.time as string) ?? "",
+      location: (d.location as string) ?? "",
+      description: (d.description as string) ?? "",
+      injuryType: (d.injuryType as string) ?? "",
+      severity: (d.severity as string) ?? "",
+      firstAidGiven: (d.firstAidGiven as string) ?? "",
+      parentNotified: (d.parentNotified as boolean) ?? false,
       status: form.status as "DRAFT" | "SUBMITTED" | "REVIEWED",
+      branchId: form.child.branchId,
       branchName: form.child.branch?.name ?? "—",
     };
   });
 
-  return <AccidentReportsClient reports={serializedForms} total={total} />;
+  return <AccidentReportsClient reports={serializedForms} total={total} branches={branches} />;
 }

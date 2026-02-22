@@ -26,17 +26,18 @@ export default async function VisitDetailPage({ params }: PageProps) {
     return (
       <VisitDetailClient
         isNew
-        formData={{
-          childName: "",
-          doctor: "",
+        formId={null}
+        initialData={{
+          childId: "",
           visitDate: new Date().toISOString().split("T")[0],
+          doctor: "",
           reason: "",
           diagnosis: "",
           treatment: "",
-          prescriptions: "",
           followUpDate: "",
           notes: "",
         }}
+        status="DRAFT"
         children={childOptions}
       />
     );
@@ -52,22 +53,21 @@ export default async function VisitDetailPage({ params }: PageProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const data = (form.data ?? {}) as Record<string, any>;
 
-  const formData = {
-    childName: `${form.child.firstName} ${form.child.lastName}`,
-    doctor: (data.doctor as string) ?? "",
-    visitDate: (data.visitDate as string) ?? form.createdAt.toISOString().split("T")[0],
-    reason: (data.reason as string) ?? "",
-    diagnosis: (data.diagnosis as string) ?? "",
-    treatment: (data.treatment as string) ?? "",
-    prescriptions: (data.prescriptions as string) ?? "",
-    followUpDate: (data.followUpDate as string) ?? "",
-    notes: (data.notes as string) ?? "",
-  };
-
   return (
     <VisitDetailClient
       isNew={false}
-      formData={formData}
+      formId={form.id}
+      initialData={{
+        childId: form.childId,
+        visitDate: (data.visitDate as string) ?? form.createdAt.toISOString().split("T")[0],
+        doctor: (data.doctor as string) ?? "",
+        reason: (data.reason as string) ?? "",
+        diagnosis: (data.diagnosis as string) ?? "",
+        treatment: (data.treatment as string) ?? "",
+        followUpDate: (data.followUpDate as string) ?? "",
+        notes: (data.notes as string) ?? "",
+      }}
+      status={form.status as "DRAFT" | "SUBMITTED" | "REVIEWED"}
       children={childOptions}
     />
   );

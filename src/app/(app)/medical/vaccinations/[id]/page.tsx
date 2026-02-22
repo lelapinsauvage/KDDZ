@@ -25,15 +25,14 @@ export default async function VaccinationDetailPage({ params }: PageProps) {
     return (
       <VaccinationDetailClient
         isNew
-        formData={{
-          childName: "",
-          vaccineName: "",
-          dateGiven: new Date().toISOString().split("T")[0],
-          nextDueDate: "",
-          batchNumber: "",
-          administeredBy: "",
-          notes: "",
-        }}
+        vaccinationId={null}
+        childId=""
+        vaccineName=""
+        doseNumber=""
+        dateGiven={new Date().toISOString().split("T")[0]}
+        nextDueDate=""
+        administeredBy=""
+        notes=""
         children={childOptions}
       />
     );
@@ -49,24 +48,37 @@ export default async function VaccinationDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const formData = {
-    childName: `${vaccination.child.firstName} ${vaccination.child.lastName}`,
-    vaccineName: vaccination.vaccineName,
-    dateGiven: vaccination.dateGiven
-      ? vaccination.dateGiven.toISOString().split("T")[0]
-      : "",
-    nextDueDate: vaccination.nextDueDate
-      ? vaccination.nextDueDate.toISOString().split("T")[0]
-      : "",
-    batchNumber: "",
-    administeredBy: "",
-    notes: vaccination.notes ?? "",
-  };
+  // Parse dose number and administered by from vaccineName and notes
+  let vaccineName = vaccination.vaccineName;
+  let doseNumber = "";
+  let administeredBy = "";
+  let userNotes = vaccination.notes ?? "";
+
+  // Extract dose from vaccine name: "DTaP (2nd Dose)" -> vaccineName="DTaP", doseNumber="2nd Dose"
+  const doseMatch = vaccineName.match(/^(.+?)\s*\((\d+(?:st|nd|rd|th)\s+(?:Dose|Booster))\)$/);
+  if (doseMatch) {
+    vaccineName = doseMatch[1].trim();
+    doseNumber = doseMatch[2];
+  }
+
+  // Extract administered by from notes: "Administered by: Dr. X.\n..." or "Administered by: Dr. X."
+  const adminMatch = userNotes.match(/^Administered by:\s*(.+?)\.?\n?/);
+  if (adminMatch) {
+    administeredBy = adminMatch[1].trim();
+    userNotes = userNotes.replace(/^Administered by:\s*.+?\.?\n?/, "").trim();
+  }
 
   return (
     <VaccinationDetailClient
       isNew={false}
-      formData={formData}
+      vaccinationId={vaccination.id}
+      childId={vaccination.childId}
+      vaccineName={vaccineName}
+      doseNumber={doseNumber}
+      dateGiven={vaccination.dateGiven ? vaccination.dateGiven.toISOString().split("T")[0] : ""}
+      nextDueDate={vaccination.nextDueDate ? vaccination.nextDueDate.toISOString().split("T")[0] : ""}
+      administeredBy={administeredBy}
+      notes={userNotes}
       children={childOptions}
     />
   );

@@ -1,10 +1,14 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/page-header";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,35 +26,74 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ArrowLeft, Save, Send } from "lucide-react";
+import { ArrowLeft, Save, Send, Loader2 } from "lucide-react";
+import { createMedicalForm, updateMedicalForm } from "@/lib/actions/medical";
 
 // --- Schema ---
 
 const visitFormSchema = z.object({
-  childName: z.string().min(1, "Child name is required"),
-  doctor: z.string().min(1, "Doctor is required"),
+  childId: z.string().min(1, "Child is required"),
   visitDate: z.string().min(1, "Visit date is required"),
-  reason: z.string().min(1, "Reason is required"),
+  doctor: z.string().min(1, "Doctor is required"),
+  reason: z.string().min(1, "Reason for visit is required"),
   diagnosis: z.string().optional(),
   treatment: z.string().optional(),
-  prescriptions: z.string().optional(),
   followUpDate: z.string().optional(),
   notes: z.string().optional(),
 });
 
 type VisitFormValues = z.infer<typeof visitFormSchema>;
 
+// --- Status badge ---
+
+function getStatusBadge(status: string) {
+  switch (status) {
+    case "DRAFT":
+      return (
+        <Badge variant="outline" className="border-gray-300 text-gray-600">
+          Draft
+        </Badge>
+      );
+    case "SUBMITTED":
+      return (
+        <Badge className="bg-blue-50 text-blue-700 border-blue-200">
+          Submitted
+        </Badge>
+      );
+    case "REVIEWED":
+      return (
+        <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
+          Reviewed
+        </Badge>
+      );
+    default:
+      return <Badge variant="outline">{status}</Badge>;
+  }
+}
+
 // --- Props ---
 
 interface VisitDetailClientProps {
   isNew: boolean;
-  formData: VisitFormValues;
+  formId: string | null;
+  initialData: VisitFormValues;
+  status: "DRAFT" | "SUBMITTED" | "REVIEWED";
   children: { id: string; name: string }[];
 }
 
 // --- Client Component ---
 
-export function VisitDetailClient({ isNew, formData, children }: VisitDetailClientProps) {
+export function VisitDetailClient({
+  isNew,
+  formId,
+  initialData,
+  status,
+  children,
+}: VisitDetailClientProps) {
+  const router = useRouter();
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const {
     register,
     handleSubmit,
@@ -59,16 +102,73 @@ export function VisitDetailClient({ isNew, formData, children }: VisitDetailClie
     formState: { errors },
   } = useForm<VisitFormValues>({
     resolver: zodResolver(visitFormSchema),
-    defaultValues: formData,
+    defaultValues: initialData,
   });
 
-  const onSave = (data: VisitFormValues) => {
-    console.log("Saving visit:", data);
+  const selectedChildId = watch("childId");
+  const selectedChildName =
+    children.find((c) => c.id === selectedChildId)?.name ?? "";
+
+  const buildPayload = (data: VisitFormValues, formStatus: "DRAFT" | "SUBMITTED") => ({
+    childId: data.childId,
+    formType: "VISITS" as const,
+    status: formStatus,
+    data: {
+      visitDate: data.visitDate,
+      doctor: data.doctor,
+      reason: data.reason,
+      diagnosis: data.diagnosis ?? "",
+      treatment: data.treatment ?? "",
+      followUpDate: data.followUpDate ?? "",
+      notes: data.notes ?? "",
+    },
+  });
+
+  const onSaveDraft = async (data: VisitFormValues) => {
+    setIsSaving(true);
+    try {
+      const payload = buildPayload(data, "DRAFT");
+
+      const result = isNew
+        ? await createMedicalForm(payload)
+        : await updateMedicalForm(formId!, payload);
+
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success("Visit saved as draft.");
+        router.push("/medical/visits");
+      }
+    } catch {
+      toast.error("Failed to save visit.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const onSubmit = (data: VisitFormValues) => {
-    console.log("Submitting visit:", data);
+  const onSubmitForm = async (data: VisitFormValues) => {
+    setIsSubmitting(true);
+    try {
+      const payload = buildPayload(data, "SUBMITTED");
+
+      const result = isNew
+        ? await createMedicalForm(payload)
+        : await updateMedicalForm(formId!, payload);
+
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success("Visit submitted successfully.");
+        router.push("/medical/visits");
+      }
+    } catch {
+      toast.error("Failed to submit visit.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  const busy = isSaving || isSubmitting;
 
   return (
     <>
@@ -77,7 +177,7 @@ export function VisitDetailClient({ isNew, formData, children }: VisitDetailClie
         breadcrumbs={[
           { label: "Medical", href: "/medical/general" },
           { label: "Visits", href: "/medical/visits" },
-          { label: isNew ? "New" : formData.childName },
+          { label: isNew ? "New" : selectedChildName || "Details" },
         ]}
       />
       <div className="p-6 space-y-6">
@@ -90,23 +190,37 @@ export function VisitDetailClient({ isNew, formData, children }: VisitDetailClie
             </Button>
           </Link>
           <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={handleSubmit(onSave)}>
-              <Save className="size-4" />
+            {getStatusBadge(status)}
+            <Button
+              variant="outline"
+              onClick={handleSubmit(onSaveDraft)}
+              disabled={busy}
+            >
+              {isSaving ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Save className="size-4" />
+              )}
               Save Draft
             </Button>
             <Button
               style={{ background: "#1caf9a" }}
               className="text-white"
-              onClick={handleSubmit(onSubmit)}
+              onClick={handleSubmit(onSubmitForm)}
+              disabled={busy}
             >
-              <Send className="size-4" />
+              {isSubmitting ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Send className="size-4" />
+              )}
               Submit
             </Button>
           </div>
         </div>
 
         <form className="space-y-6">
-          {/* Visit Info */}
+          {/* Visit Information */}
           <Card>
             <CardHeader>
               <CardTitle>Visit Information</CardTitle>
@@ -114,31 +228,24 @@ export function VisitDetailClient({ isNew, formData, children }: VisitDetailClie
             <CardContent>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div className="space-y-2">
-                  <Label>Child Name</Label>
+                  <Label>Child</Label>
                   <Select
-                    value={watch("childName")}
-                    onValueChange={(val) => setValue("childName", val)}
+                    value={watch("childId")}
+                    onValueChange={(val) => setValue("childId", val)}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select a child" />
                     </SelectTrigger>
                     <SelectContent>
                       {children.map((child) => (
-                        <SelectItem key={child.id} value={child.name}>
+                        <SelectItem key={child.id} value={child.id}>
                           {child.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  {errors.childName && (
-                    <p className="text-xs text-red-500">{errors.childName.message}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label>Doctor</Label>
-                  <Input placeholder="e.g. Dr. Antoine Karam" {...register("doctor")} />
-                  {errors.doctor && (
-                    <p className="text-xs text-red-500">{errors.doctor.message}</p>
+                  {errors.childId && (
+                    <p className="text-xs text-red-500">{errors.childId.message}</p>
                   )}
                 </div>
                 <div className="space-y-2">
@@ -148,10 +255,20 @@ export function VisitDetailClient({ isNew, formData, children }: VisitDetailClie
                     <p className="text-xs text-red-500">{errors.visitDate.message}</p>
                   )}
                 </div>
+                <div className="space-y-2">
+                  <Label>Doctor</Label>
+                  <Input placeholder="e.g. Dr. Antoine Karam" {...register("doctor")} />
+                  {errors.doctor && (
+                    <p className="text-xs text-red-500">{errors.doctor.message}</p>
+                  )}
+                </div>
               </div>
               <div className="mt-4 space-y-2">
                 <Label>Reason for Visit</Label>
-                <Input placeholder="e.g. Annual checkup, follow-up, etc." {...register("reason")} />
+                <Input
+                  placeholder="e.g. Annual checkup, follow-up, illness..."
+                  {...register("reason")}
+                />
                 {errors.reason && (
                   <p className="text-xs text-red-500">{errors.reason.message}</p>
                 )}
@@ -180,14 +297,6 @@ export function VisitDetailClient({ isNew, formData, children }: VisitDetailClie
                     placeholder="Treatment plan and instructions..."
                     rows={3}
                     {...register("treatment")}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Prescriptions</Label>
-                  <Textarea
-                    placeholder="Medications prescribed..."
-                    rows={2}
-                    {...register("prescriptions")}
                   />
                 </div>
               </div>

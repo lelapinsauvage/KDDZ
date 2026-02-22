@@ -1,37 +1,44 @@
 import { getVaccinations } from "@/lib/actions/medical";
+import { getBranches } from "@/lib/actions/branches";
 import { VaccinationsClient } from "./vaccinations-client";
 
 export default async function VaccinationsPage() {
-  const { vaccinations, total } = await getVaccinations();
+  const [{ vaccinations, total }, branchesResult] = await Promise.all([
+    getVaccinations({ pageSize: 500 }),
+    getBranches(),
+  ]);
+
+  const branches = (branchesResult.data ?? []) as Array<{ id: string; name: string }>;
 
   const serializedVaccinations = vaccinations.map((v) => {
-    // Compute status based on nextDueDate
-    let status: "Up to date" | "Overdue" | "Upcoming" = "Up to date";
+    let vacStatus: "Up to date" | "Overdue" | "Upcoming" = "Up to date";
     if (v.nextDueDate) {
       const now = new Date();
       const dueDate = new Date(v.nextDueDate);
       if (dueDate < now) {
-        status = "Overdue";
+        vacStatus = "Overdue";
       } else {
-        // Upcoming if within 60 days
-        const sixtyDaysFromNow = new Date();
-        sixtyDaysFromNow.setDate(sixtyDaysFromNow.getDate() + 60);
-        if (dueDate <= sixtyDaysFromNow) {
-          status = "Upcoming";
+        const sixtyDays = new Date();
+        sixtyDays.setDate(sixtyDays.getDate() + 60);
+        if (dueDate <= sixtyDays) {
+          vacStatus = "Upcoming";
         }
       }
     }
 
     return {
       id: v.id,
+      childId: v.childId,
       childName: `${v.child.firstName} ${v.child.lastName}`,
       vaccine: v.vaccineName,
       dateGiven: v.dateGiven ? v.dateGiven.toISOString().split("T")[0] : null,
       nextDue: v.nextDueDate ? v.nextDueDate.toISOString().split("T")[0] : null,
-      status,
+      notes: v.notes ?? "",
+      vacStatus,
+      branchId: v.child.branchId,
       branchName: v.child.branch?.name ?? "—",
     };
   });
 
-  return <VaccinationsClient vaccinations={serializedVaccinations} total={total} />;
+  return <VaccinationsClient vaccinations={serializedVaccinations} total={total} branches={branches} />;
 }

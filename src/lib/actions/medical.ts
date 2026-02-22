@@ -42,6 +42,7 @@ interface UpdateMedicalFormData {
 
 interface GetVaccinationsParams {
   childId?: string;
+  branchId?: string;
   search?: string;
   page?: number;
   pageSize?: number;
@@ -295,12 +296,16 @@ export async function deleteMedicalForm(id: string) {
 
 export async function getVaccinations(params: GetVaccinationsParams = {}) {
   try {
-    const { childId, search, page = 1, pageSize = 20 } = params;
+    const { childId, branchId, search, page = 1, pageSize = 20 } = params;
 
     const where: Prisma.VaccinationWhereInput = {};
 
     if (childId) {
       where.childId = childId;
+    }
+
+    if (branchId) {
+      where.child = { ...((where.child as Prisma.ChildWhereInput) ?? {}), branchId };
     }
 
     if (search) {
@@ -420,6 +425,32 @@ export async function updateVaccination(id: string, input: UpdateVaccinationData
   } catch (error) {
     console.error("updateVaccination error:", error);
     return { error: "Failed to update vaccination" };
+  }
+}
+
+// ─────────────────────────────────────────────
+// deleteVaccination
+// ─────────────────────────────────────────────
+
+export async function getVaccination(id: string) {
+  try {
+    const vaccination = await db.vaccination.findUnique({
+      where: { id },
+      include: {
+        child: {
+          include: { branch: true },
+        },
+      },
+    });
+
+    if (!vaccination) {
+      return { error: "Vaccination not found" };
+    }
+
+    return { vaccination };
+  } catch (error) {
+    console.error("getVaccination error:", error);
+    return { error: "Failed to load vaccination" };
   }
 }
 

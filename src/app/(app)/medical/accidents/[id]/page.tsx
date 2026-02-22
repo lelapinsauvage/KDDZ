@@ -7,23 +7,11 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-function statusLabel(s: string): string {
-  switch (s) {
-    case "DRAFT":
-      return "Draft";
-    case "SUBMITTED":
-      return "Submitted";
-    case "REVIEWED":
-      return "Reviewed";
-    default:
-      return s;
-  }
-}
-
 export default async function AccidentReportDetailPage({ params }: PageProps) {
   const { id } = await params;
   const isNew = id === "new";
 
+  // Fetch children list for the dropdown
   const children = await db.child.findMany({
     where: { isActive: true },
     select: { id: true, firstName: true, lastName: true },
@@ -39,24 +27,31 @@ export default async function AccidentReportDetailPage({ params }: PageProps) {
     return (
       <AccidentDetailClient
         isNew
+        formId={null}
+        childId=""
         formData={{
-          childName: "",
+          childId: "",
           date: new Date().toISOString().split("T")[0],
           time: "",
           location: "",
+          accidentCause: "",
           description: "",
           injuryType: "",
           severity: "",
           firstAidGiven: "",
+          emergencyHospital: false,
+          treatment: "",
           parentNotified: false,
-          doctorNotes: "",
-          status: "Draft",
+          witnesses: "",
+          followUpNotes: "",
+          status: "DRAFT",
         }}
         children={childOptions}
       />
     );
   }
 
+  // Load existing form
   const result = await getMedicalForm(id);
 
   if ("error" in result && result.error) {
@@ -68,22 +63,31 @@ export default async function AccidentReportDetailPage({ params }: PageProps) {
   const data = (form.data ?? {}) as Record<string, any>;
 
   const formData = {
-    childName: `${form.child.firstName} ${form.child.lastName}`,
+    childId: form.childId,
     date: (data.date as string) ?? form.createdAt.toISOString().split("T")[0],
     time: (data.time as string) ?? "",
     location: (data.location as string) ?? "",
+    accidentCause: (data.accidentCause as string) ?? "",
     description: (data.description as string) ?? "",
     injuryType: (data.injuryType as string) ?? "",
     severity: (data.severity as string) ?? "",
     firstAidGiven: (data.firstAidGiven as string) ?? "",
+    emergencyHospital: (data.emergencyHospital as boolean) ?? false,
+    treatment: (data.treatment as string) ?? "",
     parentNotified: (data.parentNotified as boolean) ?? false,
-    doctorNotes: (data.doctorNotes as string) ?? "",
-    status: statusLabel(form.status),
+    witnesses: (data.witnesses as string) ?? "",
+    followUpNotes: (data.followUpNotes as string) ?? "",
+    status: form.status as "DRAFT" | "SUBMITTED" | "REVIEWED",
   };
+
+  const childName = `${form.child.firstName} ${form.child.lastName}`;
 
   return (
     <AccidentDetailClient
       isNew={false}
+      formId={form.id}
+      childId={form.childId}
+      childName={childName}
       formData={formData}
       children={childOptions}
     />

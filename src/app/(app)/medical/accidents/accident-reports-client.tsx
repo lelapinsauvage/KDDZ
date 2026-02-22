@@ -3,6 +3,8 @@
 import { useState, useMemo } from "react";
 import { type ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
 import { Badge } from "@/components/ui/badge";
@@ -23,27 +25,45 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Plus,
   Search,
   MoreHorizontal,
   Eye,
   Pencil,
   Trash2,
+  Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
+import { deleteMedicalForm } from "@/lib/actions/medical";
 
 // --- Types ---
 
-type Severity = "Minor" | "Moderate" | "Severe";
 type AccidentStatus = "DRAFT" | "SUBMITTED" | "REVIEWED";
 
 interface AccidentReportRow {
   id: string;
+  childId: string;
   childName: string;
   date: string;
+  time: string;
+  location: string;
   description: string;
+  injuryType: string;
   severity: string;
+  firstAidGiven: string;
+  parentNotified: boolean;
   status: AccidentStatus;
+  branchId: string;
   branchName: string;
 }
 
@@ -101,95 +121,157 @@ function getStatusBadge(status: AccidentStatus) {
   }
 }
 
-// --- Column Definitions ---
-
-const columns: ColumnDef<AccidentReportRow>[] = [
-  {
-    accessorKey: "childName",
-    header: "Child Name",
-    cell: ({ row }) => (
-      <span className="font-medium text-[#333]">{row.original.childName}</span>
-    ),
-  },
-  {
-    accessorKey: "date",
-    header: "Date",
-    cell: ({ row }) => (
-      <span className="text-sm text-[#333]">
-        {format(new Date(row.original.date), "MMM d, yyyy")}
-      </span>
-    ),
-  },
-  {
-    accessorKey: "description",
-    header: "Description",
-    cell: ({ row }) => (
-      <span className="text-sm text-[#6f7b8a] line-clamp-1 max-w-[300px]">
-        {row.original.description || "—"}
-      </span>
-    ),
-  },
-  {
-    accessorKey: "severity",
-    header: "Severity",
-    cell: ({ row }) => getSeverityBadge(row.original.severity),
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => getStatusBadge(row.original.status),
-  },
-  {
-    id: "actions",
-    header: "",
-    cell: ({ row }) => {
-      const report = row.original;
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon-sm">
-              <MoreHorizontal className="size-4" />
-              <span className="sr-only">Open menu</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
-              <Link href={`/medical/accidents/${report.id}`}>
-                <Eye className="size-4" />
-                View
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href={`/medical/accidents/${report.id}`}>
-                <Pencil className="size-4" />
-                Edit
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive">
-              <Trash2 className="size-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-    enableSorting: false,
-  },
-];
-
 // --- Props ---
 
 interface AccidentReportsClientProps {
   reports: AccidentReportRow[];
   total: number;
+  branches: Array<{ id: string; name: string }>;
 }
 
 // --- Page Component ---
 
-export function AccidentReportsClient({ reports, total }: AccidentReportsClientProps) {
+export function AccidentReportsClient({
+  reports,
+  total,
+  branches,
+}: AccidentReportsClientProps) {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [branchFilter, setBranchFilter] = useState("all");
+  const [deleteTarget, setDeleteTarget] = useState<AccidentReportRow | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // --- Delete handler ---
+
+  async function handleDeleteConfirm() {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    try {
+      const result = await deleteMedicalForm(deleteTarget.id);
+      if ("error" in result && result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success(`Accident report for ${deleteTarget.childName} deleted.`);
+        router.refresh();
+      }
+    } catch {
+      toast.error("Failed to delete accident report.");
+    } finally {
+      setIsDeleting(false);
+      setDeleteTarget(null);
+    }
+  }
+
+  // --- Column Definitions ---
+
+  const columns: ColumnDef<AccidentReportRow>[] = [
+    {
+      accessorKey: "childName",
+      header: "Child Name",
+      cell: ({ row }) => (
+        <span className="font-medium text-[#333]">{row.original.childName}</span>
+      ),
+    },
+    {
+      accessorKey: "date",
+      header: "Date",
+      cell: ({ row }) => (
+        <span className="text-sm text-[#333]">
+          {format(new Date(row.original.date), "MMM d, yyyy")}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "location",
+      header: "Location",
+      cell: ({ row }) => (
+        <span className="text-sm text-[#6f7b8a]">
+          {row.original.location || "—"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "injuryType",
+      header: "Injury Type",
+      cell: ({ row }) => (
+        <span className="text-sm text-[#6f7b8a]">
+          {row.original.injuryType || "—"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "severity",
+      header: "Severity",
+      cell: ({ row }) => getSeverityBadge(row.original.severity),
+    },
+    {
+      accessorKey: "firstAidGiven",
+      header: "First Aid",
+      cell: ({ row }) => (
+        <span className="text-sm text-[#6f7b8a] line-clamp-1 max-w-[200px]">
+          {row.original.firstAidGiven || "—"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => getStatusBadge(row.original.status),
+    },
+    {
+      accessorKey: "branchName",
+      header: "Branch",
+      cell: ({ row }) => (
+        <Badge variant="secondary" className="bg-[#eef0f3] text-[#6f7b8a] font-normal">
+          {row.original.branchName}
+        </Badge>
+      ),
+    },
+    {
+      id: "actions",
+      header: "",
+      cell: ({ row }) => {
+        const report = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon-sm">
+                <MoreHorizontal className="size-4" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <Link href={`/medical/accidents/${report.id}`}>
+                  <Eye className="size-4" />
+                  View
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={`/medical/accidents/${report.id}`}>
+                  <Pencil className="size-4" />
+                  Edit
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => setDeleteTarget(report)}
+              >
+                <Trash2 className="size-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+      enableSorting: false,
+    },
+  ];
+
+  // --- Filtering ---
 
   const filteredData = useMemo(() => {
     let data = reports;
@@ -199,7 +281,8 @@ export function AccidentReportsClient({ reports, total }: AccidentReportsClientP
       data = data.filter(
         (r) =>
           r.childName.toLowerCase().includes(lower) ||
-          r.description.toLowerCase().includes(lower)
+          r.description.toLowerCase().includes(lower) ||
+          r.location.toLowerCase().includes(lower)
       );
     }
 
@@ -207,8 +290,12 @@ export function AccidentReportsClient({ reports, total }: AccidentReportsClientP
       data = data.filter((r) => r.status === statusFilter);
     }
 
+    if (branchFilter && branchFilter !== "all") {
+      data = data.filter((r) => r.branchId === branchFilter);
+    }
+
     return data;
-  }, [reports, search, statusFilter]);
+  }, [reports, search, statusFilter, branchFilter]);
 
   return (
     <>
@@ -225,12 +312,26 @@ export function AccidentReportsClient({ reports, total }: AccidentReportsClientP
           <div className="relative max-w-sm flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search by child or description..."
+              placeholder="Search by child, description or location..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
             />
           </div>
+
+          <Select value={branchFilter} onValueChange={setBranchFilter}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="All Branches" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Branches</SelectItem>
+              {branches.map((b) => (
+                <SelectItem key={b.id} value={b.id}>
+                  {b.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[160px]">
@@ -260,6 +361,42 @@ export function AccidentReportsClient({ reports, total }: AccidentReportsClientP
           <DataTable columns={columns} data={filteredData} />
         )}
       </div>
+
+      {/* Delete Confirmation */}
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Accident Report</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the accident report for{" "}
+              <strong>{deleteTarget?.childName}</strong>? This action cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

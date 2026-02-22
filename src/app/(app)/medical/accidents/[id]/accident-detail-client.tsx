@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod/v4";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,21 +27,29 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ArrowLeft, Save, Send } from "lucide-react";
+import { ArrowLeft, Save, Send, Loader2 } from "lucide-react";
+import {
+  createMedicalForm,
+  updateMedicalForm,
+} from "@/lib/actions/medical";
 
 // --- Schema ---
 
 const accidentFormSchema = z.object({
-  childName: z.string().min(1, "Child name is required"),
+  childId: z.string().min(1, "Child is required"),
   date: z.string().min(1, "Date is required"),
   time: z.string().min(1, "Time is required"),
   location: z.string().min(1, "Location is required"),
+  accidentCause: z.string().optional(),
   description: z.string().min(1, "Description is required"),
   injuryType: z.string().min(1, "Injury type is required"),
   severity: z.string().min(1, "Severity is required"),
   firstAidGiven: z.string().optional(),
+  emergencyHospital: z.boolean(),
+  treatment: z.string().optional(),
   parentNotified: z.boolean(),
-  doctorNotes: z.string().optional(),
+  witnesses: z.string().optional(),
+  followUpNotes: z.string().optional(),
   status: z.string(),
 });
 
@@ -48,19 +59,19 @@ type AccidentFormValues = z.infer<typeof accidentFormSchema>;
 
 function getStatusBadge(status: string) {
   switch (status) {
-    case "Draft":
+    case "DRAFT":
       return (
         <Badge variant="outline" className="border-gray-300 text-gray-600">
           Draft
         </Badge>
       );
-    case "Submitted":
+    case "SUBMITTED":
       return (
         <Badge className="bg-blue-50 text-blue-700 border-blue-200">
           Submitted
         </Badge>
       );
-    case "Reviewed":
+    case "REVIEWED":
       return (
         <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
           Reviewed
@@ -71,17 +82,67 @@ function getStatusBadge(status: string) {
   }
 }
 
+// --- Constants ---
+
+const LOCATIONS = [
+  "Classroom",
+  "Outdoor playground",
+  "Indoor play area",
+  "Hallway",
+  "Cafeteria",
+  "Bathroom",
+  "Stairs",
+  "Swing",
+  "Slide",
+  "Other",
+];
+
+const ACCIDENT_CAUSES = [
+  "Fall",
+  "Bite",
+  "Hitting",
+  "Collision",
+  "Other",
+];
+
+const INJURY_TYPES = [
+  "Scrape/Abrasion",
+  "Bump/Bruise",
+  "Cut/Laceration",
+  "Sprain/Strain",
+  "Bite",
+  "Burn",
+  "Fracture",
+  "Other",
+];
+
+const SEVERITIES = ["Minor", "Moderate", "Severe"];
+
 // --- Props ---
 
 interface AccidentDetailClientProps {
   isNew: boolean;
+  formId: string | null;
+  childId: string;
+  childName?: string;
   formData: AccidentFormValues;
   children: { id: string; name: string }[];
 }
 
 // --- Client Component ---
 
-export function AccidentDetailClient({ isNew, formData, children }: AccidentDetailClientProps) {
+export function AccidentDetailClient({
+  isNew,
+  formId,
+  childId,
+  childName,
+  formData,
+  children,
+}: AccidentDetailClientProps) {
+  const router = useRouter();
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const {
     register,
     handleSubmit,
@@ -95,14 +156,105 @@ export function AccidentDetailClient({ isNew, formData, children }: AccidentDeta
   });
 
   const currentStatus = watch("status");
+  const emergencyHospital = watch("emergencyHospital");
 
-  const onSave = (data: AccidentFormValues) => {
-    console.log("Saving accident report:", data);
-  };
+  // --- Build data payload ---
 
-  const onSubmit = (data: AccidentFormValues) => {
-    console.log("Submitting accident report:", { ...data, status: "Submitted" });
-  };
+  function buildPayload(data: AccidentFormValues) {
+    return {
+      date: data.date,
+      time: data.time,
+      location: data.location,
+      accidentCause: data.accidentCause ?? "",
+      description: data.description,
+      injuryType: data.injuryType,
+      severity: data.severity,
+      firstAidGiven: data.firstAidGiven ?? "",
+      emergencyHospital: data.emergencyHospital,
+      treatment: data.treatment ?? "",
+      parentNotified: data.parentNotified,
+      witnesses: data.witnesses ?? "",
+      followUpNotes: data.followUpNotes ?? "",
+    };
+  }
+
+  // --- Save Draft ---
+
+  async function onSaveDraft(data: AccidentFormValues) {
+    setIsSaving(true);
+    try {
+      if (isNew) {
+        const result = await createMedicalForm({
+          childId: data.childId,
+          formType: "ACCIDENTS",
+          status: "DRAFT",
+          data: buildPayload(data),
+        });
+        if ("error" in result && result.error) {
+          toast.error(result.error);
+        } else {
+          toast.success("Accident report saved as draft.");
+          router.push("/medical/accidents");
+        }
+      } else {
+        const result = await updateMedicalForm(formId!, {
+          childId: data.childId,
+          status: "DRAFT",
+          data: buildPayload(data),
+        });
+        if ("error" in result && result.error) {
+          toast.error(result.error);
+        } else {
+          toast.success("Accident report draft updated.");
+          router.push("/medical/accidents");
+        }
+      }
+    } catch {
+      toast.error("Failed to save accident report.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  // --- Submit ---
+
+  async function onSubmit(data: AccidentFormValues) {
+    setIsSubmitting(true);
+    try {
+      if (isNew) {
+        const result = await createMedicalForm({
+          childId: data.childId,
+          formType: "ACCIDENTS",
+          status: "SUBMITTED",
+          data: buildPayload(data),
+        });
+        if ("error" in result && result.error) {
+          toast.error(result.error);
+        } else {
+          toast.success("Accident report submitted.");
+          router.push("/medical/accidents");
+        }
+      } else {
+        const result = await updateMedicalForm(formId!, {
+          childId: data.childId,
+          status: "SUBMITTED",
+          data: buildPayload(data),
+        });
+        if ("error" in result && result.error) {
+          toast.error(result.error);
+        } else {
+          toast.success("Accident report submitted.");
+          router.push("/medical/accidents");
+        }
+      }
+    } catch {
+      toast.error("Failed to submit accident report.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  const busy = isSaving || isSubmitting;
 
   return (
     <>
@@ -111,7 +263,7 @@ export function AccidentDetailClient({ isNew, formData, children }: AccidentDeta
         breadcrumbs={[
           { label: "Medical", href: "/medical/general" },
           { label: "Accidents", href: "/medical/accidents" },
-          { label: isNew ? "New" : formData.childName },
+          { label: isNew ? "New" : (childName ?? "Detail") },
         ]}
       />
       <div className="p-6 space-y-6">
@@ -125,23 +277,36 @@ export function AccidentDetailClient({ isNew, formData, children }: AccidentDeta
           </Link>
           <div className="flex items-center gap-3">
             {getStatusBadge(currentStatus)}
-            <Button variant="outline" onClick={handleSubmit(onSave)}>
-              <Save className="size-4" />
+            <Button
+              variant="outline"
+              onClick={handleSubmit(onSaveDraft)}
+              disabled={busy}
+            >
+              {isSaving ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Save className="size-4" />
+              )}
               Save Draft
             </Button>
             <Button
               style={{ background: "#1caf9a" }}
               className="text-white"
               onClick={handleSubmit(onSubmit)}
+              disabled={busy}
             >
-              <Send className="size-4" />
+              {isSubmitting ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Send className="size-4" />
+              )}
               Submit
             </Button>
           </div>
         </div>
 
         <form className="space-y-6">
-          {/* Child & Timing */}
+          {/* Card 1: Child & Timing */}
           <Card>
             <CardHeader>
               <CardTitle>Child & Timing</CardTitle>
@@ -149,24 +314,24 @@ export function AccidentDetailClient({ isNew, formData, children }: AccidentDeta
             <CardContent>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div className="space-y-2">
-                  <Label>Child Name</Label>
+                  <Label>Child</Label>
                   <Select
-                    value={watch("childName")}
-                    onValueChange={(val) => setValue("childName", val)}
+                    value={watch("childId")}
+                    onValueChange={(val) => setValue("childId", val)}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select a child" />
                     </SelectTrigger>
                     <SelectContent>
                       {children.map((child) => (
-                        <SelectItem key={child.id} value={child.name}>
+                        <SelectItem key={child.id} value={child.id}>
                           {child.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  {errors.childName && (
-                    <p className="text-xs text-red-500">{errors.childName.message}</p>
+                  {errors.childId && (
+                    <p className="text-xs text-red-500">{errors.childId.message}</p>
                   )}
                 </div>
                 <div className="space-y-2">
@@ -187,7 +352,7 @@ export function AccidentDetailClient({ isNew, formData, children }: AccidentDeta
             </CardContent>
           </Card>
 
-          {/* Incident Details */}
+          {/* Card 2: Incident Details */}
           <Card>
             <CardHeader>
               <CardTitle>Incident Details</CardTitle>
@@ -204,18 +369,34 @@ export function AccidentDetailClient({ isNew, formData, children }: AccidentDeta
                       <SelectValue placeholder="Select location" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Outdoor playground">Outdoor playground</SelectItem>
-                      <SelectItem value="Indoor play area">Indoor play area</SelectItem>
-                      <SelectItem value="Classroom">Classroom</SelectItem>
-                      <SelectItem value="Cafeteria">Cafeteria</SelectItem>
-                      <SelectItem value="Hallway">Hallway</SelectItem>
-                      <SelectItem value="Bathroom">Bathroom</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
+                      {LOCATIONS.map((loc) => (
+                        <SelectItem key={loc} value={loc}>
+                          {loc}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   {errors.location && (
                     <p className="text-xs text-red-500">{errors.location.message}</p>
                   )}
+                </div>
+                <div className="space-y-2">
+                  <Label>Accident Cause</Label>
+                  <Select
+                    value={watch("accidentCause") ?? ""}
+                    onValueChange={(val) => setValue("accidentCause", val)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select cause" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ACCIDENT_CAUSES.map((cause) => (
+                        <SelectItem key={cause} value={cause}>
+                          {cause}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Injury Type</Label>
@@ -227,19 +408,19 @@ export function AccidentDetailClient({ isNew, formData, children }: AccidentDeta
                       <SelectValue placeholder="Select injury type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Scrape / Abrasion">Scrape / Abrasion</SelectItem>
-                      <SelectItem value="Bump / Bruise">Bump / Bruise</SelectItem>
-                      <SelectItem value="Cut / Laceration">Cut / Laceration</SelectItem>
-                      <SelectItem value="Sprain / Strain">Sprain / Strain</SelectItem>
-                      <SelectItem value="Bite">Bite</SelectItem>
-                      <SelectItem value="Burn">Burn</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
+                      {INJURY_TYPES.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   {errors.injuryType && (
                     <p className="text-xs text-red-500">{errors.injuryType.message}</p>
                   )}
                 </div>
+              </div>
+              <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div className="space-y-2">
                   <Label>Severity</Label>
                   <Select
@@ -250,9 +431,11 @@ export function AccidentDetailClient({ isNew, formData, children }: AccidentDeta
                       <SelectValue placeholder="Select severity" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Minor">Minor</SelectItem>
-                      <SelectItem value="Moderate">Moderate</SelectItem>
-                      <SelectItem value="Severe">Severe</SelectItem>
+                      {SEVERITIES.map((sev) => (
+                        <SelectItem key={sev} value={sev}>
+                          {sev}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   {errors.severity && (
@@ -274,21 +457,54 @@ export function AccidentDetailClient({ isNew, formData, children }: AccidentDeta
             </CardContent>
           </Card>
 
-          {/* First Aid & Notifications */}
+          {/* Card 3: First Aid & Response */}
           <Card>
             <CardHeader>
-              <CardTitle>First Aid & Notifications</CardTitle>
+              <CardTitle>First Aid & Response</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label>First Aid Given</Label>
                   <Textarea
-                    placeholder="Describe first aid measures taken..."
+                    placeholder="e.g. Water, Soap, Hydrogen peroxide, Adhesive bandage, Ice pack..."
                     rows={3}
                     {...register("firstAidGiven")}
                   />
                 </div>
+                <div className="flex items-center gap-2">
+                  <Controller
+                    name="emergencyHospital"
+                    control={control}
+                    render={({ field }) => (
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    )}
+                  />
+                  <Label className="cursor-pointer">Emergency Hospital Visit</Label>
+                </div>
+                {emergencyHospital && (
+                  <div className="space-y-2">
+                    <Label>Treatment at Hospital</Label>
+                    <Input
+                      placeholder="Describe the treatment received..."
+                      {...register("treatment")}
+                    />
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Card 4: Notifications & Follow-up */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Notifications & Follow-up</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <Controller
                     name="parentNotified"
@@ -302,21 +518,23 @@ export function AccidentDetailClient({ isNew, formData, children }: AccidentDeta
                   />
                   <Label className="cursor-pointer">Parent / Guardian Notified</Label>
                 </div>
+                <div className="space-y-2">
+                  <Label>Witnesses</Label>
+                  <Textarea
+                    placeholder="Names or descriptions of witnesses..."
+                    rows={2}
+                    {...register("witnesses")}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Follow-up Notes</Label>
+                  <Textarea
+                    placeholder="Any follow-up actions or observations..."
+                    rows={3}
+                    {...register("followUpNotes")}
+                  />
+                </div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Doctor Notes */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Doctor Notes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                placeholder="Doctor's observations and recommendations..."
-                rows={4}
-                {...register("doctorNotes")}
-              />
             </CardContent>
           </Card>
         </form>
