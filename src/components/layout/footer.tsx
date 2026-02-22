@@ -7,12 +7,12 @@ export function Footer() {
 
   return (
     <footer className="footer-bar flex items-center justify-between px-6 py-3 text-sm">
-      <span>2025 &copy; KiddzOnline</span>
+      <span>{new Date().getFullYear()} &copy; KiddzOnline</span>
       <button
         onClick={scrollToTop}
-        className="transition-colors hover:text-white"
+        className="font-medium text-primary/70 transition-colors hover:text-primary"
       >
-        Go To Top
+        Back to top
       </button>
     </footer>
   )

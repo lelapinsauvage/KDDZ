@@ -170,14 +170,14 @@ export function AccidentReportsClient({
       accessorKey: "childName",
       header: "Child Name",
       cell: ({ row }) => (
-        <span className="font-medium text-[#333]">{row.original.childName}</span>
+        <span className="font-medium text-foreground">{row.original.childName}</span>
       ),
     },
     {
       accessorKey: "date",
       header: "Date",
       cell: ({ row }) => (
-        <span className="text-sm text-[#333]">
+        <span className="text-sm text-foreground">
           {format(new Date(row.original.date), "MMM d, yyyy")}
         </span>
       ),
@@ -186,7 +186,7 @@ export function AccidentReportsClient({
       accessorKey: "location",
       header: "Location",
       cell: ({ row }) => (
-        <span className="text-sm text-[#6f7b8a]">
+        <span className="text-sm text-muted-foreground">
           {row.original.location || "—"}
         </span>
       ),
@@ -195,7 +195,7 @@ export function AccidentReportsClient({
       accessorKey: "injuryType",
       header: "Injury Type",
       cell: ({ row }) => (
-        <span className="text-sm text-[#6f7b8a]">
+        <span className="text-sm text-muted-foreground">
           {row.original.injuryType || "—"}
         </span>
       ),
@@ -209,7 +209,7 @@ export function AccidentReportsClient({
       accessorKey: "firstAidGiven",
       header: "First Aid",
       cell: ({ row }) => (
-        <span className="text-sm text-[#6f7b8a] line-clamp-1 max-w-[200px]">
+        <span className="text-sm text-muted-foreground line-clamp-1 max-w-[200px]">
           {row.original.firstAidGiven || "—"}
         </span>
       ),
@@ -223,7 +223,7 @@ export function AccidentReportsClient({
       accessorKey: "branchName",
       header: "Branch",
       cell: ({ row }) => (
-        <Badge variant="secondary" className="bg-[#eef0f3] text-[#6f7b8a] font-normal">
+        <Badge variant="secondary" className="bg-muted/50 text-muted-foreground font-normal">
           {row.original.branchName}
         </Badge>
       ),
@@ -345,7 +345,7 @@ export function AccidentReportsClient({
           </Select>
 
           <Link href="/medical/accidents/new" className="ml-auto">
-            <Button style={{ background: "#1caf9a" }} className="text-white">
+            <Button className="text-white">
               <Plus className="size-4" />
               Add New
             </Button>

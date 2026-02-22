@@ -266,7 +266,7 @@ export function AccountingClient({
       cell: ({ row }) => (
         <a
           href={`/children/${row.original.childId}/accounting`}
-          className="font-medium text-[#333] hover:text-[#1caf9a] hover:underline"
+          className="font-medium text-foreground hover:text-primary hover:underline"
         >
           {row.original.childName}
         </a>
@@ -301,7 +301,7 @@ export function AccountingClient({
         </Button>
       ),
       cell: ({ row }) => (
-        <span className="font-medium text-[#333]">
+        <span className="font-medium text-foreground">
           {formatCurrency(row.original.amount)}
         </span>
       ),
@@ -451,7 +451,7 @@ export function AccountingClient({
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Revenue</p>
-                <p className="text-xl font-semibold text-[#333]">
+                <p className="text-xl font-semibold text-foreground">
                   {formatCurrency(summary.totalRevenue)}
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -502,7 +502,7 @@ export function AccountingClient({
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">This Month</p>
-                <p className="text-xl font-semibold text-[#333]">
+                <p className="text-xl font-semibold text-foreground">
                   {formatCurrency(summary.thisMonthCollections)}
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -605,7 +605,7 @@ export function AccountingClient({
           />
 
           <Button
-            style={{ background: "#1caf9a" }}
+           
             onClick={() => {
               setEditPayment(null);
               setDialogOpen(true);

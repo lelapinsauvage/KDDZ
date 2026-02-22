@@ -307,7 +307,7 @@ export function AttendanceClient({
         header: "Employee",
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
-            <UserCheck className="size-4 text-[#1caf9a]" />
+            <UserCheck className="size-4 text-primary" />
             <span className="font-medium">{row.original.employeeName}</span>
           </div>
         ),
@@ -447,18 +447,18 @@ export function AttendanceClient({
         )}
 
         {/* CSV Upload section */}
-        <div className="rounded-md border border-[#e1e5ec] border-t-4 border-t-[#1caf9a] bg-white shadow-sm">
-          <div className="border-b border-[#e1e5ec] bg-[#f1f3f6] px-4 py-3">
-            <h3 className="text-sm font-semibold text-[#333]">
+        <div className="rounded-md border border-border border-t-4 border-t-primary bg-white shadow-sm">
+          <div className="border-b border-border bg-muted/50 px-4 py-3">
+            <h3 className="text-sm font-semibold text-foreground">
               Teachers Attendance Upload
             </h3>
           </div>
           <div className="p-4">
             <div className="rounded-md bg-[#f8f9fa] p-4 space-y-3">
-              <p className="text-sm font-medium text-[#333]">
-                Form Allowed: <span className="text-[#6f7b8a]">CSV ONLY</span>
+              <p className="text-sm font-medium text-foreground">
+                Form Allowed: <span className="text-muted-foreground">CSV ONLY</span>
               </p>
-              <p className="text-xs text-[#6f7b8a]">
+              <p className="text-xs text-muted-foreground">
                 Expected CSV format: EmployeeName, Date (YYYY-MM-DD), TimeIn
                 (HH:MM), TimeOut (HH:MM), Status (CHECK_IN/LATE), Note
               </p>
@@ -478,7 +478,7 @@ export function AttendanceClient({
                   Choose CSV
                 </Button>
                 {csvFile && (
-                  <span className="text-sm text-[#6f7b8a]">{csvFile.name}</span>
+                  <span className="text-sm text-muted-foreground">{csvFile.name}</span>
                 )}
               </div>
             </div>
@@ -513,7 +513,7 @@ export function AttendanceClient({
             </Select>
 
           <Button
-            className="bg-[#1caf9a] hover:bg-[#18a08d] text-white"
+            className="bg-primary hover:bg-primary/90 text-white"
             onClick={handleSubmitAttendance}
             disabled={isPending || filtered.length === 0}
           >
@@ -541,11 +541,11 @@ export function AttendanceClient({
             {csvPreview.length > 0 ? (
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b bg-[#f1f3f6]">
+                  <tr className="border-b bg-muted/50">
                     {csvPreview[0].map((header, i) => (
                       <th
                         key={i}
-                        className="px-2 py-1.5 text-left text-xs font-semibold text-[#6f7b8a]"
+                        className="px-2 py-1.5 text-left text-xs font-semibold text-muted-foreground"
                       >
                         {header || `Col ${i + 1}`}
                       </th>
@@ -558,7 +558,7 @@ export function AttendanceClient({
                       {row.map((cell, ci) => (
                         <td
                           key={ci}
-                          className="px-2 py-1.5 text-[#333]"
+                          className="px-2 py-1.5 text-foreground"
                         >
                           {cell}
                         </td>
@@ -585,7 +585,7 @@ export function AttendanceClient({
               Cancel
             </Button>
             <Button
-              className="bg-[#1caf9a] hover:bg-[#18a08d] text-white"
+              className="bg-primary hover:bg-primary/90 text-white"
               onClick={handleCsvUpload}
               disabled={isPending}
             >

@@ -52,8 +52,8 @@ export function ChildSubNav({ childId }: Props) {
               className={cn(
                 "flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition-colors",
                 isActive
-                  ? "border-[#1caf9a] text-[#1caf9a]"
-                  : "border-transparent text-[#6f7b8a] hover:border-gray-300 hover:text-[#333]"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:border-gray-300 hover:text-foreground"
               )}
             >
               <item.icon className="h-4 w-4" />

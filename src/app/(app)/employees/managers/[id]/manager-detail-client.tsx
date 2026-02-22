@@ -167,7 +167,7 @@ export function ManagerDetailClient({ manager, branchStats }: ManagerDetailClien
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                   {branchStats.map((stat) => (
                     <div key={stat.label} className="rounded-md border p-4 text-center">
-                      <p className="text-2xl font-bold text-[#1caf9a]">{stat.value}</p>
+                      <p className="text-2xl font-bold text-primary">{stat.value}</p>
                       <p className="mt-1 text-xs text-muted-foreground">{stat.label}</p>
                     </div>
                   ))}

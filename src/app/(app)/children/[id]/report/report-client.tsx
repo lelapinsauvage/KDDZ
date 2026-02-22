@@ -255,7 +255,7 @@ export function ReportClient({ child, reports, total }: Props) {
                     <Moon className="h-4 w-4" /> Sleep
                   </h4>
                   <div className="rounded-md border p-4 text-center">
-                    <p className="text-3xl font-bold text-[#1caf9a]">{expandedReport.sleepDuration}</p>
+                    <p className="text-3xl font-bold text-primary">{expandedReport.sleepDuration}</p>
                     <p className="mt-1 text-sm text-muted-foreground">
                       {expandedReport.sleepFrom ?? "\u2014"} — {expandedReport.sleepTo ?? "\u2014"}
                     </p>

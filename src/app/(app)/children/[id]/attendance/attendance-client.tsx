@@ -106,7 +106,7 @@ export function AttendanceClient({ child, attendance }: Props) {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
           <Card>
             <CardContent className="pt-6">
-              <p className="text-2xl font-bold text-[#1caf9a]">{rate}%</p>
+              <p className="text-2xl font-bold text-primary">{rate}%</p>
               <p className="text-xs text-muted-foreground">Attendance Rate</p>
             </CardContent>
           </Card>

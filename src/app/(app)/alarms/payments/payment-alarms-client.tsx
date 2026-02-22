@@ -115,7 +115,7 @@ export function PaymentAlarmsClient({
         cell: ({ row }) => (
           <a
             href={`/children/${row.original.childId}/accounting`}
-            className="font-medium text-[#333] hover:text-[#1caf9a] hover:underline"
+            className="font-medium text-foreground hover:text-primary hover:underline"
           >
             {row.original.childName}
           </a>
@@ -182,7 +182,7 @@ export function PaymentAlarmsClient({
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Overdue Payments</p>
-                <p className="text-xl font-semibold text-[#333]">
+                <p className="text-xl font-semibold text-foreground">
                   {totalOverdueCount}
                 </p>
               </div>
@@ -195,7 +195,7 @@ export function PaymentAlarmsClient({
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Children with Overdue</p>
-                <p className="text-xl font-semibold text-[#333]">
+                <p className="text-xl font-semibold text-foreground">
                   {overdueChildren.length}
                 </p>
               </div>

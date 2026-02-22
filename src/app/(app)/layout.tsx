@@ -80,9 +80,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
         {/* Sidebar + main content area below header */}
         <AppSidebar />
-        <SidebarInset className="mt-[46px] flex min-h-[calc(100svh-46px)] flex-col">
+        <SidebarInset className="mt-[56px] flex min-h-[calc(100svh-56px)] flex-col">
           {/* Scrollable content area */}
-          <div className="flex-1 bg-[#eef1f5]">
+          <div className="flex-1 bg-background">
             {children}
           </div>
 

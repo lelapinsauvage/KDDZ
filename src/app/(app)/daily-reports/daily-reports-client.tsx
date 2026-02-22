@@ -138,7 +138,7 @@ function getMealColor(portion: string | null): string {
     case "NONE":
       return "text-red-600";
     default:
-      return "text-[#6f7b8a]";
+      return "text-muted-foreground";
   }
 }
 
@@ -224,7 +224,7 @@ export function DailyReportsClient({
       accessorKey: "date",
       header: "Date",
       cell: ({ row }) => (
-        <span className="text-sm font-medium text-[#333]">
+        <span className="text-sm font-medium text-foreground">
           {format(new Date(row.original.date), "MMM d, yyyy")}
         </span>
       ),
@@ -233,14 +233,14 @@ export function DailyReportsClient({
       accessorKey: "childName",
       header: "Child Name",
       cell: ({ row }) => (
-        <span className="font-medium text-[#333]">{row.original.childName}</span>
+        <span className="font-medium text-foreground">{row.original.childName}</span>
       ),
     },
     {
       accessorKey: "className",
       header: "Class",
       cell: ({ row }) => (
-        <Badge variant="secondary" className="bg-[#eef0f3] text-[#6f7b8a] font-normal">
+        <Badge variant="secondary" className="bg-muted/50 text-muted-foreground font-normal">
           {row.original.className}
         </Badge>
       ),
@@ -294,7 +294,7 @@ export function DailyReportsClient({
           <Badge
             className={
               status === "SUBMITTED"
-                ? "bg-[#1caf9a]/10 text-[#1caf9a] border-[#1caf9a]/20"
+                ? "bg-primary/10 text-primary border-primary/20"
                 : "bg-amber-50 text-amber-700 border-amber-200"
             }
           >
@@ -372,7 +372,7 @@ export function DailyReportsClient({
           </div>
 
           <div className="flex items-center gap-1.5">
-            <label className="text-xs font-medium text-[#6f7b8a] whitespace-nowrap">From</label>
+            <label className="text-xs font-medium text-muted-foreground whitespace-nowrap">From</label>
             <Input
               type="date"
               value={dateFrom}
@@ -382,7 +382,7 @@ export function DailyReportsClient({
           </div>
 
           <div className="flex items-center gap-1.5">
-            <label className="text-xs font-medium text-[#6f7b8a] whitespace-nowrap">To</label>
+            <label className="text-xs font-medium text-muted-foreground whitespace-nowrap">To</label>
             <Input
               type="date"
               value={dateTo}
@@ -433,7 +433,7 @@ export function DailyReportsClient({
               columns={dailyReportsExportColumns}
               data={filteredData as unknown as Record<string, unknown>[]}
             />
-            <Button asChild className="bg-[#1caf9a] hover:bg-[#18a08d] text-white">
+            <Button asChild className="bg-primary hover:bg-primary/90 text-white">
               <Link href="/daily-reports/new">
                 <Plus className="size-4" />
                 New Report

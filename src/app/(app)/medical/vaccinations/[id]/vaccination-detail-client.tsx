@@ -243,7 +243,7 @@ export function VaccinationDetailClient({
               </Button>
             )}
             <Button
-              style={{ background: "#1caf9a" }}
+             
               className="text-white"
               onClick={handleSubmit(onSave)}
               disabled={saving}

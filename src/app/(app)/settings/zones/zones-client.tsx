@@ -129,7 +129,7 @@ export default function ZonesClient({ initialZones }: ZonesClientProps) {
       <div className="space-y-4 p-4 md:p-6">
         <div className="flex flex-wrap items-center justify-between">
           <div />
-          <Button className="bg-[#1caf9a] text-white hover:bg-[#18a08d]" onClick={openAdd}>
+          <Button className="bg-primary text-white hover:bg-primary/90" onClick={openAdd}>
             <Plus className="mr-1 size-4" />
             Add Zone
           </Button>
@@ -158,7 +158,7 @@ export default function ZonesClient({ initialZones }: ZonesClientProps) {
               Cancel
             </Button>
             <Button
-              style={{ background: "#1caf9a" }}
+             
               className="text-white"
               onClick={handleSave}
               disabled={!zoneName.trim() || isPending}

@@ -106,13 +106,13 @@ export function ClassMessageClient({ classes }: ClassMessageClientProps) {
                   <Users className="size-4 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">
                     Send to all parents in{" "}
-                    <span className="font-medium text-[#333]">
+                    <span className="font-medium text-foreground">
                       {selectedClassDetail.name}
                     </span>
                   </span>
                   <Badge
                     variant="secondary"
-                    className="bg-[#1caf9a]/10 text-[#1caf9a] font-normal"
+                    className="bg-primary/10 text-primary font-normal"
                   >
                     {selectedClassDetail.childCount}{" "}
                     {selectedClassDetail.childCount === 1
@@ -159,7 +159,7 @@ export function ClassMessageClient({ classes }: ClassMessageClientProps) {
               </Button>
               <Button
                 onClick={handleSend}
-                style={{ background: "#1caf9a" }}
+               
                 disabled={
                   !selectedClass || !subject || !body || isPending || success
                 }

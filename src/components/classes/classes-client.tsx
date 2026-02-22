@@ -69,7 +69,7 @@ const classColumns: ColumnDef<ClassRow>[] = [
       </Button>
     ),
     cell: ({ row }) => (
-      <span className="font-medium text-[#333]">{row.original.name}</span>
+      <span className="font-medium text-foreground">{row.original.name}</span>
     ),
   },
   {
@@ -267,7 +267,7 @@ export function ClassesClient({ classes, branches }: ClassesClientProps) {
 
           <div className="flex-1" />
 
-          <Button style={{ background: "#1caf9a" }}>
+          <Button>
             <Plus className="mr-1 size-4" />
             Add Class
           </Button>

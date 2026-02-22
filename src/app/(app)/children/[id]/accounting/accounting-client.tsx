@@ -435,7 +435,7 @@ export function AccountingClient({
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5 text-[#1caf9a]" />
+                <DollarSign className="h-5 w-5 text-primary" />
                 <div>
                   <p className={`text-2xl font-bold ${balance > 0 ? "text-red-500" : "text-green-600"}`}>
                     ${Math.abs(balance).toFixed(2)}
@@ -452,7 +452,7 @@ export function AccountingClient({
         {/* Action Buttons */}
         <div className="flex items-center gap-3">
           <Button
-            style={{ background: "#1caf9a" }}
+           
             onClick={() => {
               setEditPayment(null);
               setDialogOpen(true);

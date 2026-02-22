@@ -180,14 +180,14 @@ export function MedicalConditionsClient({
       accessorKey: "childName",
       header: "Child Name",
       cell: ({ row }) => (
-        <span className="font-medium text-[#333]">{row.original.childName}</span>
+        <span className="font-medium text-foreground">{row.original.childName}</span>
       ),
     },
     {
       accessorKey: "conditionType",
       header: "Condition Type",
       cell: ({ row }) => (
-        <span className="text-sm text-[#333]">{row.original.conditionType || "\u2014"}</span>
+        <span className="text-sm text-foreground">{row.original.conditionType || "\u2014"}</span>
       ),
     },
     {
@@ -199,7 +199,7 @@ export function MedicalConditionsClient({
       accessorKey: "diagnosisDate",
       header: "Diagnosis Date",
       cell: ({ row }) => (
-        <span className="text-sm text-[#6f7b8a]">
+        <span className="text-sm text-muted-foreground">
           {row.original.diagnosisDate
             ? format(new Date(row.original.diagnosisDate), "MMM d, yyyy")
             : "\u2014"}
@@ -215,7 +215,7 @@ export function MedicalConditionsClient({
       accessorKey: "branchName",
       header: "Branch",
       cell: ({ row }) => (
-        <Badge variant="secondary" className="bg-[#eef0f3] text-[#6f7b8a] font-normal">
+        <Badge variant="secondary" className="bg-muted/50 text-muted-foreground font-normal">
           {row.original.branchName}
         </Badge>
       ),
@@ -311,7 +311,7 @@ export function MedicalConditionsClient({
           </Select>
 
           <Link href="/medical/conditions/new" className="ml-auto">
-            <Button style={{ background: "#1caf9a" }} className="text-white">
+            <Button className="text-white">
               <Plus className="size-4" />
               Add New
             </Button>

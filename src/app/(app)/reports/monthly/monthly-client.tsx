@@ -54,7 +54,7 @@ export default function MonthlyClient({
 
   // Build summary stats from real data
   const summaryStats: SummaryStat[] = [
-    { label: "Total Children", value: String(totalChildren), icon: Users, color: "#1caf9a" },
+    { label: "Total Children", value: String(totalChildren), icon: Users, color: "var(--primary)" },
     { label: "Total Payments", value: String(totalPayments), icon: CalendarCheck, color: "#3b82f6" },
     { label: "Reports Submitted", value: String(totalReportsSubmitted), icon: ClipboardList, color: "#22c55e" },
     { label: "Reports Pending", value: String(totalReportsDraft), icon: FileText, color: "#f97316" },
@@ -134,7 +134,7 @@ export default function MonthlyClient({
           </div>
           <div className="flex-1" />
           <div className="flex items-end gap-2">
-            <Button style={{ background: "#1caf9a" }} className="text-white">
+            <Button className="text-white">
               <TrendingUp className="mr-1 size-4" />
               Generate Report
             </Button>
@@ -182,7 +182,7 @@ export default function MonthlyClient({
                         className="absolute bottom-0 w-full rounded-t-md"
                         style={{
                           height: `${(w.pct / maxAtt) * 100}%`,
-                          background: "linear-gradient(to top, #1caf9a, #1caf9a90)",
+                          background: "linear-gradient(to top, #14B8A6, #14B8A690)",
                         }}
                       />
                     </div>

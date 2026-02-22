@@ -131,7 +131,7 @@ export function InboxClient({ messages, total }: InboxClientProps) {
         row.original.isRead ? (
           <MailOpen className="size-4 text-muted-foreground" />
         ) : (
-          <Mail className="size-4 text-[#1caf9a]" />
+          <Mail className="size-4 text-primary" />
         ),
     },
     {
@@ -154,7 +154,7 @@ export function InboxClient({ messages, total }: InboxClientProps) {
         return (
           <div className="flex items-center gap-2">
             <span
-              className={`text-sm ${!msg.isRead ? "font-semibold text-[#333]" : "text-muted-foreground"}`}
+              className={`text-sm ${!msg.isRead ? "font-semibold text-foreground" : "text-muted-foreground"}`}
             >
               {msg.senderName}
             </span>
@@ -186,7 +186,7 @@ export function InboxClient({ messages, total }: InboxClientProps) {
           <div>
             <Link
               href={`/messages/${msg.id}`}
-              className={`text-sm hover:underline ${!msg.isRead ? "font-medium text-[#333]" : "text-muted-foreground"}`}
+              className={`text-sm hover:underline ${!msg.isRead ? "font-medium text-foreground" : "text-muted-foreground"}`}
             >
               {msg.subject ?? "(No subject)"}
             </Link>
@@ -252,7 +252,7 @@ export function InboxClient({ messages, total }: InboxClientProps) {
             Read
           </Badge>
         ) : (
-          <Badge className="bg-[#1caf9a]/10 text-[#1caf9a] font-normal hover:bg-[#1caf9a]/20">
+          <Badge className="bg-primary/10 text-primary font-normal hover:bg-primary/20">
             Unread
           </Badge>
         );
@@ -333,7 +333,7 @@ export function InboxClient({ messages, total }: InboxClientProps) {
             </Select>
 
             {unreadCount > 0 && (
-              <Badge className="bg-[#1caf9a]/10 text-[#1caf9a] font-normal">
+              <Badge className="bg-primary/10 text-primary font-normal">
                 {unreadCount} unread
               </Badge>
             )}
@@ -345,7 +345,7 @@ export function InboxClient({ messages, total }: InboxClientProps) {
                 Sent Messages
               </Link>
             </Button>
-            <Button asChild size="sm" style={{ background: "#1caf9a" }}>
+            <Button asChild size="sm">
               <Link href="/messages/compose">
                 <PenSquare className="mr-1 size-3.5" />
                 Compose

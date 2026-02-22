@@ -135,14 +135,14 @@ export function MedicalVisitsClient({
       accessorKey: "childName",
       header: "Child Name",
       cell: ({ row }) => (
-        <span className="font-medium text-[#333]">{row.original.childName}</span>
+        <span className="font-medium text-foreground">{row.original.childName}</span>
       ),
     },
     {
       accessorKey: "visitDate",
       header: "Visit Date",
       cell: ({ row }) => (
-        <span className="text-sm text-[#333]">
+        <span className="text-sm text-foreground">
           {row.original.visitDate
             ? format(new Date(row.original.visitDate), "MMM d, yyyy")
             : "\u2014"}
@@ -153,14 +153,14 @@ export function MedicalVisitsClient({
       accessorKey: "doctor",
       header: "Doctor",
       cell: ({ row }) => (
-        <span className="text-sm text-[#6f7b8a]">{row.original.doctor || "\u2014"}</span>
+        <span className="text-sm text-muted-foreground">{row.original.doctor || "\u2014"}</span>
       ),
     },
     {
       accessorKey: "reason",
       header: "Reason",
       cell: ({ row }) => (
-        <span className="text-sm text-[#6f7b8a] line-clamp-1 max-w-[200px]">
+        <span className="text-sm text-muted-foreground line-clamp-1 max-w-[200px]">
           {row.original.reason || "\u2014"}
         </span>
       ),
@@ -169,7 +169,7 @@ export function MedicalVisitsClient({
       accessorKey: "followUpDate",
       header: "Follow-up Date",
       cell: ({ row }) => (
-        <span className="text-sm text-[#6f7b8a]">
+        <span className="text-sm text-muted-foreground">
           {row.original.followUpDate
             ? format(new Date(row.original.followUpDate), "MMM d, yyyy")
             : "\u2014"}
@@ -185,7 +185,7 @@ export function MedicalVisitsClient({
       accessorKey: "branchName",
       header: "Branch",
       cell: ({ row }) => (
-        <Badge variant="secondary" className="bg-[#eef0f3] text-[#6f7b8a] font-normal">
+        <Badge variant="secondary" className="bg-muted/50 text-muted-foreground font-normal">
           {row.original.branchName}
         </Badge>
       ),
@@ -305,7 +305,7 @@ export function MedicalVisitsClient({
           </Select>
 
           <Link href="/medical/visits/new" className="ml-auto">
-            <Button style={{ background: "#1caf9a" }} className="text-white">
+            <Button className="text-white">
               <Plus className="size-4" />
               Add New
             </Button>

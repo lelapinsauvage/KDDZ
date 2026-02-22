@@ -18,51 +18,62 @@ interface AttendanceChartProps {
 
 export function AttendanceChart({ data }: AttendanceChartProps) {
   return (
-    <Card>
+    <Card className="rounded-2xl border-border/50 shadow-sm">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold">
-          Attendance &amp; Absence Statistics
+          Attendance & Absence Trends
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e1e5ec" />
+              <defs>
+                <linearGradient id="gradAttendance" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#14B8A6" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#14B8A6" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="gradAbsence" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#FB7185" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#FB7185" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#E7E5E4" vertical={false} />
               <XAxis
                 dataKey="month"
-                tick={{ fontSize: 12, fill: "#6f7b8a" }}
-                axisLine={{ stroke: "#e1e5ec" }}
+                tick={{ fontSize: 12, fill: "#78716C" }}
+                axisLine={false}
+                tickLine={false}
               />
               <YAxis
-                tick={{ fontSize: 12, fill: "#6f7b8a" }}
-                axisLine={{ stroke: "#e1e5ec" }}
+                tick={{ fontSize: 12, fill: "#78716C" }}
+                axisLine={false}
+                tickLine={false}
               />
               <Tooltip
                 contentStyle={{
                   background: "#fff",
-                  border: "1px solid #e1e5ec",
-                  borderRadius: 4,
+                  border: "1px solid #E7E5E4",
+                  borderRadius: 12,
                   fontSize: 13,
+                  boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
                 }}
               />
               <Legend verticalAlign="top" height={36} iconType="circle" />
               <Area
                 type="monotone"
                 dataKey="attendance"
-                stroke="#1caf9a"
-                fill="#1caf9a"
-                fillOpacity={0.15}
-                strokeWidth={2}
+                stroke="#14B8A6"
+                fill="url(#gradAttendance)"
+                strokeWidth={2.5}
                 name="Attendance"
               />
               <Area
                 type="monotone"
                 dataKey="absence"
-                stroke="#e7505a"
-                fill="#e7505a"
-                fillOpacity={0.15}
-                strokeWidth={2}
+                stroke="#FB7185"
+                fill="url(#gradAbsence)"
+                strokeWidth={2.5}
                 name="Absence"
               />
             </AreaChart>

@@ -186,7 +186,7 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
           </Button>
         ),
         cell: ({ row }) => (
-          <span className="font-medium text-[#333]">{row.original.name}</span>
+          <span className="font-medium text-foreground">{row.original.name}</span>
         ),
       },
       {
@@ -307,7 +307,7 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
           <div className="flex-1" />
 
           <Button
-            className="bg-[#1caf9a] text-white hover:bg-[#18a08d]"
+            className="bg-primary text-white hover:bg-primary/90"
             onClick={openAdd}
           >
             <Plus className="mr-1 size-4" />
@@ -382,7 +382,7 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
               Cancel
             </Button>
             <Button
-              style={{ background: "#1caf9a" }}
+             
               className="text-white"
               onClick={handleSave}
               disabled={!formName.trim() || isPending}

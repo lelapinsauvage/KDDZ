@@ -15,10 +15,10 @@ export function BranchYearSelector() {
     useAppContext();
 
   return (
-    <div className="space-y-3 border-b border-[#3f4b5a] px-4 pb-4">
+    <div className="space-y-3 border-b border-border px-4 pb-4">
       {/* Branch selector */}
       <div>
-        <label className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#6f7b8a]">
+        <label className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
           <Building2 className="size-3" />
           Branch
         </label>
@@ -33,7 +33,7 @@ export function BranchYearSelector() {
             }
           }}
         >
-          <SelectTrigger className="h-8 border-[#3f4b5a] bg-[#2c3542] text-xs text-[#dde2e8]">
+          <SelectTrigger className="h-8 rounded-lg border-border bg-muted/50 text-xs">
             <SelectValue placeholder="All Branches" />
           </SelectTrigger>
           <SelectContent>
@@ -49,7 +49,7 @@ export function BranchYearSelector() {
 
       {/* School year selector */}
       <div>
-        <label className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#6f7b8a]">
+        <label className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
           <CalendarDays className="size-3" />
           School Year
         </label>
@@ -60,7 +60,7 @@ export function BranchYearSelector() {
             if (year) setYear(year);
           }}
         >
-          <SelectTrigger className="h-8 border-[#3f4b5a] bg-[#2c3542] text-xs text-[#dde2e8]">
+          <SelectTrigger className="h-8 rounded-lg border-border bg-muted/50 text-xs">
             <SelectValue placeholder="Select Year" />
           </SelectTrigger>
           <SelectContent>

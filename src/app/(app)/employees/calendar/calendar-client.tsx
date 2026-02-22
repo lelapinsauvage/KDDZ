@@ -368,11 +368,11 @@ export function CalendarClient({
         {/* Calendar grid */}
         <div className="rounded-lg border bg-card overflow-hidden">
           {/* Weekday headers */}
-          <div className="grid grid-cols-7 bg-[#f1f3f6]">
+          <div className="grid grid-cols-7 bg-muted/50">
             {WEEKDAY_LABELS.map((label) => (
               <div
                 key={label}
-                className="border-r last:border-r-0 px-2 py-2 text-center text-xs font-semibold uppercase text-[#6f7b8a]"
+                className="border-r last:border-r-0 px-2 py-2 text-center text-xs font-semibold uppercase text-muted-foreground"
               >
                 {label}
               </div>
@@ -394,14 +394,14 @@ export function CalendarClient({
                     key={di}
                     className={`min-h-[100px] border-r last:border-r-0 p-1.5 transition-colors ${
                       day === null ? "bg-muted/30" : "hover:bg-muted/10 cursor-pointer"
-                    } ${isTodayCell ? "bg-[#1caf9a]/5" : ""}`}
+                    } ${isTodayCell ? "bg-primary/5" : ""}`}
                     onClick={() => day && openCreateDialog(day)}
                   >
                     {day !== null && (
                       <>
                         <div
                           className={`text-sm font-medium mb-1 ${
-                            isTodayCell ? "text-[#1caf9a] font-bold" : "text-[#333]"
+                            isTodayCell ? "text-primary font-bold" : "text-foreground"
                           }`}
                         >
                           {day}
@@ -516,7 +516,7 @@ export function CalendarClient({
               Close
             </Button>
             <Button
-              className="bg-[#1caf9a] hover:bg-[#18a08d] text-white"
+              className="bg-primary hover:bg-primary/90 text-white"
               onClick={handleSave}
               disabled={isPending}
             >

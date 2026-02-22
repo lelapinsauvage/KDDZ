@@ -294,7 +294,7 @@ export function AlarmSettingsClient({
           <Button
             onClick={handleSave}
             disabled={isPending || !branchId}
-            className="bg-[#1caf9a] hover:bg-[#18a08d]"
+            className="bg-primary hover:bg-primary/90"
           >
             <Save className="mr-2 size-4" />
             {isPending ? "Saving..." : "Save Settings"}

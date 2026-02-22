@@ -52,7 +52,7 @@ export function AssessmentsClient({ assessments, branches }: AssessmentsClientPr
         header: "Assessment Type",
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
-            <ClipboardCheck className="size-4 text-[#1caf9a]" />
+            <ClipboardCheck className="size-4 text-primary" />
             <span className="font-medium">{row.original.assessmentType}</span>
           </div>
         ),

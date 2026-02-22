@@ -153,7 +153,7 @@ export function DirectMessageClient({ recipients }: DirectMessageClientProps) {
               </Button>
               <Button
                 onClick={handleSend}
-                style={{ background: "#1caf9a" }}
+               
                 disabled={!recipient || !subject || !body || isPending || success}
               >
                 <Send className="mr-1 size-3.5" />

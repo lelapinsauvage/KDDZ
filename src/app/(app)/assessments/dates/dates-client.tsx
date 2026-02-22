@@ -130,7 +130,7 @@ export default function AssessmentDatesClient({
           </Button>
         ),
         cell: ({ row }) => (
-          <span className="font-medium text-[#333]">
+          <span className="font-medium text-foreground">
             {row.original.assessmentTypeName}
           </span>
         ),
@@ -214,12 +214,12 @@ export default function AssessmentDatesClient({
       <div className="space-y-4 p-4 md:p-6">
         {/* Toolbar */}
         <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
-          <div className="text-sm text-[#6f7b8a]">
+          <div className="text-sm text-muted-foreground">
             {dates.length} scheduled assessment{dates.length !== 1 ? "s" : ""}
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button style={{ background: "#1caf9a" }}>
+              <Button>
                 <Plus className="mr-1 size-4" />
                 Schedule Assessment
               </Button>
@@ -280,7 +280,7 @@ export default function AssessmentDatesClient({
                   <Button
                     onClick={handleCreate}
                     disabled={isPending}
-                    style={{ background: "#1caf9a" }}
+                   
                   >
                     {isPending && (
                       <Loader2 className="mr-2 size-4 animate-spin" />

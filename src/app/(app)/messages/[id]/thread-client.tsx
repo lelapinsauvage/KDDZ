@@ -185,7 +185,7 @@ export function ThreadClient({
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-[#333]">
+                <h2 className="text-lg font-semibold text-foreground">
                   {message.subject ?? "(No subject)"}
                 </h2>
                 <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
@@ -208,14 +208,14 @@ export function ThreadClient({
                     Read
                   </Badge>
                 ) : (
-                  <Badge className="bg-[#1caf9a]/10 text-[#1caf9a] font-normal hover:bg-[#1caf9a]/20">
+                  <Badge className="bg-primary/10 text-primary font-normal hover:bg-primary/20">
                     Unread
                   </Badge>
                 )}
                 {isConversation && (
                   <Badge
                     variant="outline"
-                    className="border-[#1caf9a] text-[#1caf9a]"
+                    className="border-primary text-primary"
                   >
                     {threadMessages.length} messages
                   </Badge>
@@ -233,7 +233,7 @@ export function ThreadClient({
               <Card
                 key={msg.id}
                 className={
-                  isOwn ? "border-l-4 border-l-[#1caf9a]/50" : ""
+                  isOwn ? "border-l-4 border-l-primary/50" : ""
                 }
               >
                 <CardContent className="py-4">
@@ -241,13 +241,13 @@ export function ThreadClient({
                     <div className="flex items-center gap-2">
                       <div
                         className={`flex size-8 items-center justify-center rounded-full text-xs font-semibold text-white ${
-                          isOwn ? "bg-[#1caf9a]" : "bg-[#364150]"
+                          isOwn ? "bg-primary" : "bg-card"
                         }`}
                       >
                         {msg.senderName.charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-[#333]">
+                        <p className="text-sm font-medium text-foreground">
                           {msg.senderName}
                           {isOwn && (
                             <span className="ml-1 text-xs text-muted-foreground">
@@ -267,7 +267,7 @@ export function ThreadClient({
                     </Badge>
                   </div>
                   <Separator className="my-2" />
-                  <div className="prose prose-sm max-w-none text-sm text-[#333] whitespace-pre-wrap">
+                  <div className="prose prose-sm max-w-none text-sm text-foreground whitespace-pre-wrap">
                     {msg.body}
                   </div>
                 </CardContent>
@@ -279,7 +279,7 @@ export function ThreadClient({
         {/* Reply Section */}
         <Card>
           <CardContent className="py-4 space-y-3">
-            <p className="text-sm font-medium text-[#333]">Reply</p>
+            <p className="text-sm font-medium text-foreground">Reply</p>
             <Textarea
               placeholder="Type your reply..."
               rows={5}
@@ -290,7 +290,7 @@ export function ThreadClient({
             <div className="flex justify-end">
               <Button
                 onClick={handleReply}
-                style={{ background: "#1caf9a" }}
+               
                 disabled={!replyBody.trim() || isPending}
               >
                 <Send className="mr-1 size-3.5" />

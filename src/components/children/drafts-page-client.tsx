@@ -316,7 +316,7 @@ export function DraftsPageClient({
           {/* Add Child button */}
           <Button
             asChild
-            className="bg-[#1caf9a] text-white hover:bg-[#18a08d]"
+            className="bg-primary text-white hover:bg-primary/90"
           >
             <Link href="/children/new">
               <Plus className="mr-1 size-4" />
@@ -335,7 +335,7 @@ export function DraftsPageClient({
                     {headerGroup.headers.map((header) => (
                       <TableHead
                         key={header.id}
-                        className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a]"
+                        className="bg-muted/50 text-xs font-semibold uppercase text-muted-foreground"
                       >
                         {header.isPlaceholder
                           ? null

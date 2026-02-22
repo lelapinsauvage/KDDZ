@@ -67,20 +67,20 @@ export function TeacherDetailClient({ teacher }: TeacherDetailClientProps) {
           <CardContent className="pt-0">
             <div className="flex flex-col sm:flex-row items-start gap-6">
               {/* Avatar */}
-              <div className="flex size-20 items-center justify-center rounded-full bg-[#1caf9a]/10 text-xl font-bold text-[#1caf9a] shrink-0">
+              <div className="flex size-20 items-center justify-center rounded-full bg-primary/10 text-xl font-bold text-primary shrink-0">
                 {getInitials(teacher.firstName, teacher.lastName)}
               </div>
 
               {/* Info */}
               <div className="flex-1 space-y-3">
                 <div className="flex items-center gap-3">
-                  <h2 className="text-xl font-semibold text-[#333]">
+                  <h2 className="text-xl font-semibold text-foreground">
                     {teacher.firstName} {teacher.lastName}
                   </h2>
                   <Badge
                     className={
                       teacher.isActive
-                        ? "bg-[#1caf9a]/10 text-[#1caf9a] border-[#1caf9a]/20"
+                        ? "bg-primary/10 text-primary border-primary/20"
                         : "bg-red-50 text-red-600 border-red-200"
                     }
                   >
@@ -90,29 +90,29 @@ export function TeacherDetailClient({ teacher }: TeacherDetailClientProps) {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
                   {teacher.email && (
-                    <div className="flex items-center gap-2 text-[#6f7b8a]">
+                    <div className="flex items-center gap-2 text-muted-foreground">
                       <Mail className="size-4 shrink-0" />
                       <span>{teacher.email}</span>
                     </div>
                   )}
                   {teacher.phone && (
-                    <div className="flex items-center gap-2 text-[#6f7b8a]">
+                    <div className="flex items-center gap-2 text-muted-foreground">
                       <Phone className="size-4 shrink-0" />
                       <span>{teacher.phone}</span>
                     </div>
                   )}
-                  <div className="flex items-center gap-2 text-[#6f7b8a]">
+                  <div className="flex items-center gap-2 text-muted-foreground">
                     <Building2 className="size-4 shrink-0" />
                     <span>{teacher.branch.name}</span>
                   </div>
                   {teacher.specialization && (
-                    <div className="flex items-center gap-2 text-[#6f7b8a]">
+                    <div className="flex items-center gap-2 text-muted-foreground">
                       <GraduationCap className="size-4 shrink-0" />
                       <span>{teacher.specialization}</span>
                     </div>
                   )}
                   {teacher.hireDate && (
-                    <div className="flex items-center gap-2 text-[#6f7b8a]">
+                    <div className="flex items-center gap-2 text-muted-foreground">
                       <Calendar className="size-4 shrink-0" />
                       <span>Hired {format(new Date(teacher.hireDate), "MMM d, yyyy")}</span>
                     </div>
@@ -148,68 +148,68 @@ export function TeacherDetailClient({ teacher }: TeacherDetailClientProps) {
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-5 gap-x-8">
                   <div>
-                    <p className="text-xs font-medium uppercase text-[#6f7b8a] mb-1">
+                    <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
                       First Name
                     </p>
-                    <p className="text-sm text-[#333]">{teacher.firstName}</p>
+                    <p className="text-sm text-foreground">{teacher.firstName}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-medium uppercase text-[#6f7b8a] mb-1">
+                    <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
                       Last Name
                     </p>
-                    <p className="text-sm text-[#333]">{teacher.lastName}</p>
+                    <p className="text-sm text-foreground">{teacher.lastName}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-medium uppercase text-[#6f7b8a] mb-1">
+                    <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
                       Email Address
                     </p>
-                    <p className="text-sm text-[#333]">{teacher.email ?? "—"}</p>
+                    <p className="text-sm text-foreground">{teacher.email ?? "—"}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-medium uppercase text-[#6f7b8a] mb-1">
+                    <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
                       Phone Number
                     </p>
-                    <p className="text-sm text-[#333]">{teacher.phone ?? "—"}</p>
+                    <p className="text-sm text-foreground">{teacher.phone ?? "—"}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-medium uppercase text-[#6f7b8a] mb-1">
+                    <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
                       Date of Birth
                     </p>
-                    <p className="text-sm text-[#333]">
+                    <p className="text-sm text-foreground">
                       {teacher.dateOfBirth
                         ? format(new Date(teacher.dateOfBirth), "MMM d, yyyy")
                         : "—"}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs font-medium uppercase text-[#6f7b8a] mb-1">
+                    <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
                       Nationality
                     </p>
-                    <p className="text-sm text-[#333]">{teacher.nationality ?? "—"}</p>
+                    <p className="text-sm text-foreground">{teacher.nationality ?? "—"}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-medium uppercase text-[#6f7b8a] mb-1">
+                    <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
                       Mobile
                     </p>
-                    <p className="text-sm text-[#333]">{teacher.mobile ?? "—"}</p>
+                    <p className="text-sm text-foreground">{teacher.mobile ?? "—"}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-medium uppercase text-[#6f7b8a] mb-1">
+                    <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
                       Branch
                     </p>
-                    <p className="text-sm text-[#333]">{teacher.branch.name}</p>
+                    <p className="text-sm text-foreground">{teacher.branch.name}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-medium uppercase text-[#6f7b8a] mb-1">
+                    <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
                       Specialization
                     </p>
-                    <p className="text-sm text-[#333]">{teacher.specialization ?? "—"}</p>
+                    <p className="text-sm text-foreground">{teacher.specialization ?? "—"}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-medium uppercase text-[#6f7b8a] mb-1">
+                    <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
                       Hire Date
                     </p>
-                    <p className="text-sm text-[#333]">
+                    <p className="text-sm text-foreground">
                       {teacher.hireDate
                         ? format(new Date(teacher.hireDate), "MMM d, yyyy")
                         : "—"}
@@ -230,22 +230,22 @@ export function TeacherDetailClient({ teacher }: TeacherDetailClientProps) {
                 {address ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-5 gap-x-8">
                     <div className="sm:col-span-2">
-                      <p className="text-xs font-medium uppercase text-[#6f7b8a] mb-1">
+                      <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
                         Street Address
                       </p>
-                      <p className="text-sm text-[#333]">{address.street ?? "—"}</p>
+                      <p className="text-sm text-foreground">{address.street ?? "—"}</p>
                     </div>
                     <div>
-                      <p className="text-xs font-medium uppercase text-[#6f7b8a] mb-1">
+                      <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
                         City
                       </p>
-                      <p className="text-sm text-[#333]">{address.city ?? "—"}</p>
+                      <p className="text-sm text-foreground">{address.city ?? "—"}</p>
                     </div>
                     <div>
-                      <p className="text-xs font-medium uppercase text-[#6f7b8a] mb-1">
+                      <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
                         Region
                       </p>
-                      <p className="text-sm text-[#333]">{address.region ?? "—"}</p>
+                      <p className="text-sm text-foreground">{address.region ?? "—"}</p>
                     </div>
                   </div>
                 ) : (
@@ -273,10 +273,10 @@ export function TeacherDetailClient({ teacher }: TeacherDetailClientProps) {
                   </ul>
                 ) : (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="size-12 rounded-full bg-[#f1f3f6] flex items-center justify-center mb-3">
-                      <MapPin className="size-5 text-[#6f7b8a]" />
+                    <div className="size-12 rounded-full bg-muted/50 flex items-center justify-center mb-3">
+                      <MapPin className="size-5 text-muted-foreground" />
                     </div>
-                    <p className="text-sm text-[#6f7b8a] mb-1">
+                    <p className="text-sm text-muted-foreground mb-1">
                       No attachments uploaded yet
                     </p>
                     <p className="text-xs text-[#a0a8b4] mb-4">
@@ -285,7 +285,7 @@ export function TeacherDetailClient({ teacher }: TeacherDetailClientProps) {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="border-[#1caf9a] text-[#1caf9a] hover:bg-[#1caf9a]/5"
+                      className="border-primary text-primary hover:bg-primary/5"
                     >
                       Upload File
                     </Button>

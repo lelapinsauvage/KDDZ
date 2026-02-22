@@ -170,7 +170,7 @@ export function AttendanceLogsClient({
         accessorKey: "employeeType",
         header: "Role",
         cell: ({ row }) => (
-          <Badge className="bg-[#eef0f3] text-[#6f7b8a] font-normal capitalize">
+          <Badge className="bg-muted/50 text-muted-foreground font-normal capitalize">
             {row.original.employeeType}
           </Badge>
         ),

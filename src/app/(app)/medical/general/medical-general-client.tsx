@@ -167,7 +167,7 @@ export function MedicalGeneralClient({
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           {getStatusDot(row.original.status)}
-          <span className="font-medium text-[#333]">{row.original.childName}</span>
+          <span className="font-medium text-foreground">{row.original.childName}</span>
         </div>
       ),
     },
@@ -175,14 +175,14 @@ export function MedicalGeneralClient({
       accessorKey: "doctor",
       header: "Doctor",
       cell: ({ row }) => (
-        <span className="text-sm text-[#333]">{row.original.doctor || "\u2014"}</span>
+        <span className="text-sm text-foreground">{row.original.doctor || "\u2014"}</span>
       ),
     },
     {
       accessorKey: "bloodType",
       header: "Blood Type",
       cell: ({ row }) => (
-        <span className="text-sm text-[#333]">{row.original.bloodType || "\u2014"}</span>
+        <span className="text-sm text-foreground">{row.original.bloodType || "\u2014"}</span>
       ),
     },
     {
@@ -194,7 +194,7 @@ export function MedicalGeneralClient({
       accessorKey: "branchName",
       header: "Branch",
       cell: ({ row }) => (
-        <Badge variant="secondary" className="bg-[#eef0f3] text-[#6f7b8a] font-normal">
+        <Badge variant="secondary" className="bg-muted/50 text-muted-foreground font-normal">
           {row.original.branchName || "\u2014"}
         </Badge>
       ),
@@ -203,7 +203,7 @@ export function MedicalGeneralClient({
       accessorKey: "date",
       header: "Date",
       cell: ({ row }) => (
-        <span className="text-sm text-[#333]">
+        <span className="text-sm text-foreground">
           {format(new Date(row.original.date), "MMM d, yyyy")}
         </span>
       ),
@@ -299,7 +299,7 @@ export function MedicalGeneralClient({
           </Select>
 
           <Link href="/medical/general/new" className="ml-auto">
-            <Button style={{ background: "#1caf9a" }} className="text-white">
+            <Button className="text-white">
               <Plus className="size-4" />
               Add New
             </Button>

@@ -59,15 +59,15 @@ function FormSection({
   children: React.ReactNode;
 }) {
   const colorMap: Record<string, string> = {
-    blue: "border-t-[#4b8df8]",
-    green: "border-t-[#1caf9a]",
-    yellow: "border-t-[#c49f47]",
-    purple: "border-t-[#8e44ad]",
+    blue: "border-t-sky-400",
+    green: "border-t-primary",
+    yellow: "border-t-amber-400",
+    purple: "border-t-violet-400",
   };
   return (
-    <div className={`rounded-md border border-[#e1e5ec] bg-white ${colorMap[color]} border-t-4 shadow-sm`}>
-      <div className="border-b border-[#e1e5ec] bg-[#f1f3f6] px-4 py-3">
-        <h3 className="text-sm font-semibold text-[#333]">{title}</h3>
+    <div className={`rounded-md border border-border bg-white ${colorMap[color]} border-t-4 shadow-sm`}>
+      <div className="border-b border-border bg-muted/50 px-4 py-3">
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
       </div>
       <div className="p-4">{children}</div>
     </div>
@@ -163,11 +163,11 @@ export function EmployeeFormClient({
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
           {/* ── Left sidebar: profile photo + save button ── */}
           <div className="space-y-4">
-            <div className="rounded-md border border-[#e1e5ec] bg-white p-6 text-center shadow-sm">
-              <div className="mx-auto flex size-40 items-center justify-center rounded-full bg-[#f1f3f6]">
+            <div className="rounded-md border border-border bg-white p-6 text-center shadow-sm">
+              <div className="mx-auto flex size-40 items-center justify-center rounded-full bg-muted/50">
                 <User className="size-20 text-[#c5ccd6]" />
               </div>
-              <p className="mt-4 text-lg font-semibold text-[#333]">
+              <p className="mt-4 text-lg font-semibold text-foreground">
                 {watch("firstName") || watch("lastName")
                   ? `${watch("firstName")} ${watch("lastName")}`
                   : `New ${singular}`}
@@ -184,7 +184,7 @@ export function EmployeeFormClient({
               <Button
                 type="submit"
                 disabled={isPending}
-                className="bg-[#1caf9a] hover:bg-[#18a08d] text-white"
+                className="bg-primary hover:bg-primary/90 text-white"
               >
                 <Save className="size-4" />
                 {isPending ? "Saving..." : isEditing ? `Update ${singular}` : `Create ${singular}`}
@@ -345,7 +345,7 @@ export function EmployeeFormClient({
 
             {/* Attachments placeholder */}
             <FormSection title="Attachments" color="purple">
-              <p className="text-sm text-[#6f7b8a]">
+              <p className="text-sm text-muted-foreground">
                 Attach photo, ID, vaccination card, certificates, contract documents, etc.
               </p>
               <p className="mt-2 text-xs text-[#999]">

@@ -18,7 +18,7 @@ export default async function EventAlarmsPage() {
     title: e.title as string,
     date: e.date ? (e.date as Date).toISOString().split("T")[0] : "",
     type: (e.eventType?.name ?? "General") as string,
-    typeColor: (e.eventType?.color ?? "#1caf9a") as string,
+    typeColor: (e.eventType?.color ?? "#14B8A6") as string,
     branch: (e.branch?.name ?? "All Branches") as string,
   }));
 

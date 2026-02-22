@@ -85,26 +85,26 @@ export function NotificationDropdown({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="relative flex h-[46px] w-10 items-center justify-center text-[#b4bcc8] transition-colors hover:text-white focus:outline-none">
-          <Bell className="size-[18px]" />
+        <button className="relative flex h-10 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none sm:w-10">
+          <Bell className={`size-[18px] ${unreadCount > 0 ? "text-amber-500" : ""}`} />
           {unreadCount > 0 && (
             <Badge
               variant="destructive"
-              className="absolute top-1.5 right-0.5 flex size-[18px] items-center justify-center p-0 text-[10px] leading-none"
+              className="absolute -top-0.5 -right-0.5 flex size-[18px] items-center justify-center rounded-full p-0 text-[10px] leading-none"
             >
               {unreadCount > 99 ? "99+" : unreadCount}
             </Badge>
           )}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80">
+      <DropdownMenuContent align="end" className="w-80 rounded-xl">
         <DropdownMenuLabel className="flex items-center justify-between">
           <span>Notifications</span>
           {unreadCount > 0 && (
             <button
               onClick={handleMarkAllRead}
               disabled={isPending}
-              className="flex items-center gap-1 text-xs font-normal text-[#1caf9a] hover:underline disabled:opacity-50"
+              className="flex items-center gap-1 text-xs font-normal text-primary hover:underline disabled:opacity-50"
             >
               <CheckCheck className="size-3" />
               Mark all read
@@ -122,12 +122,12 @@ export function NotificationDropdown({
               >
                 <div className="flex w-full items-start justify-between gap-2">
                   <span
-                    className={`text-sm leading-tight ${n.isRead ? "text-muted-foreground" : "font-medium text-[#333]"}`}
+                    className={`text-sm leading-tight ${n.isRead ? "text-muted-foreground" : "font-medium text-foreground"}`}
                   >
                     {n.title}
                   </span>
                   {!n.isRead && (
-                    <span className="mt-0.5 size-2 shrink-0 rounded-full bg-[#1caf9a]" />
+                    <span className="mt-0.5 size-2 shrink-0 rounded-full bg-primary" />
                   )}
                 </div>
                 {n.body && (
@@ -152,9 +152,9 @@ export function NotificationDropdown({
             <DropdownMenuItem asChild>
               <Link
                 href="/alarms"
-                className="flex justify-center text-xs font-medium text-[#1caf9a]"
+                className="flex justify-center text-xs font-medium text-primary"
               >
-                View all alarms
+                View all notifications
               </Link>
             </DropdownMenuItem>
           </>

@@ -192,7 +192,7 @@ export function DailyReportForm({
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Baby className="size-4 text-[#1caf9a]" />
+            <Baby className="size-4 text-primary" />
             Child &amp; Date
           </CardTitle>
         </CardHeader>
@@ -239,7 +239,7 @@ export function DailyReportForm({
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
-            <UtensilsCrossed className="size-4 text-[#1caf9a]" />
+            <UtensilsCrossed className="size-4 text-primary" />
             Meals
           </CardTitle>
         </CardHeader>
@@ -389,7 +389,7 @@ export function DailyReportForm({
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Moon className="size-4 text-[#1caf9a]" />
+            <Moon className="size-4 text-primary" />
             Sleep
           </CardTitle>
         </CardHeader>
@@ -424,7 +424,7 @@ export function DailyReportForm({
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Heart className="size-4 text-[#1caf9a]" />
+            <Heart className="size-4 text-primary" />
             Health &amp; Hygiene
           </CardTitle>
         </CardHeader>
@@ -484,7 +484,7 @@ export function DailyReportForm({
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Smile className="size-4 text-[#1caf9a]" />
+            <Smile className="size-4 text-primary" />
             Mood
           </CardTitle>
         </CardHeader>
@@ -499,8 +499,8 @@ export function DailyReportForm({
                   onClick={() => setValue("mood", mood.value as "HAPPY" | "CALM" | "FUSSY" | "CRYING" | "SLEEPY")}
                   className={`flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm transition-colors ${
                     isSelected
-                      ? "border-[#1caf9a] bg-[#1caf9a]/10 text-[#1caf9a]"
-                      : "border-border hover:border-[#1caf9a]/50"
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border hover:border-primary/50"
                   }`}
                 >
                   <span className="text-lg">{mood.emoji}</span>
@@ -517,7 +517,7 @@ export function DailyReportForm({
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Thermometer className="size-4 text-[#e7505a]" />
+              <Thermometer className="size-4 text-destructive" />
               Fever Log
             </CardTitle>
             <Button
@@ -574,7 +574,7 @@ export function DailyReportForm({
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Baby className="size-4 text-[#4b77be]" />
+              <Baby className="size-4 text-sky-500" />
               Milk Intake
             </CardTitle>
             <Button
@@ -650,7 +650,7 @@ export function DailyReportForm({
           {isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
           Save as Draft
         </Button>
-        <Button type="submit" disabled={isPending} style={{ background: "#1caf9a" }}>
+        <Button type="submit" disabled={isPending}>
           {isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
           {reportId ? "Update Report" : "Submit Report"}
         </Button>

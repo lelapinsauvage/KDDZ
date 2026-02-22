@@ -45,7 +45,7 @@ interface MonthlyBranchClientProps {
 }
 
 const statIcons = [
-  { key: "children", label: "Children", icon: Users, color: "#1caf9a" },
+  { key: "children", label: "Children", icon: Users, color: "var(--primary)" },
   { key: "classes", label: "Classes", icon: BookOpen, color: "#3b82f6" },
   { key: "teachers", label: "Teachers", icon: GraduationCap, color: "#a855f7" },
   { key: "attendanceRate", label: "Attendance Rate", icon: CalendarCheck, color: "#22c55e" },

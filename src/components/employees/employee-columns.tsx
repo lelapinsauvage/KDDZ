@@ -62,7 +62,7 @@ export function createEmployeeColumns(
       cell: ({ row }) => {
         const employee = row.original;
         return (
-          <div className="flex size-9 items-center justify-center rounded-full bg-[#1caf9a]/10 text-xs font-semibold text-[#1caf9a]">
+          <div className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
             {getInitials(employee.firstName, employee.lastName)}
           </div>
         );
@@ -89,7 +89,7 @@ export function createEmployeeColumns(
         return (
           <Link
             href={getDetailPath(employee.type, employee.id)}
-            className="font-medium text-[#333] hover:text-[#1caf9a] transition-colors"
+            className="font-medium text-foreground hover:text-primary transition-colors"
           >
             {fullName}
           </Link>
@@ -110,21 +110,21 @@ export function createEmployeeColumns(
         </Button>
       ),
       cell: ({ row }) => (
-        <span className="text-[#6f7b8a]">{row.original.email}</span>
+        <span className="text-muted-foreground">{row.original.email}</span>
       ),
     },
     {
       accessorKey: "phone",
       header: "Phone",
       cell: ({ row }) => (
-        <span className="text-[#6f7b8a]">{row.original.phone}</span>
+        <span className="text-muted-foreground">{row.original.phone}</span>
       ),
     },
     {
       accessorKey: "branch",
       header: "Branch",
       cell: ({ row }) => (
-        <Badge variant="secondary" className="bg-[#eef0f3] text-[#6f7b8a] font-normal">
+        <Badge variant="secondary" className="bg-muted/50 text-muted-foreground font-normal">
           {row.original.branch}
         </Badge>
       ),
@@ -137,7 +137,7 @@ export function createEmployeeColumns(
       accessorKey: "specialization",
       header: "Specialization",
       cell: ({ row }) => (
-        <span className="text-[#6f7b8a]">
+        <span className="text-muted-foreground">
           {row.original.specialization || "---"}
         </span>
       ),
@@ -159,7 +159,7 @@ export function createEmployeeColumns(
         </Button>
       ),
       cell: ({ row }) => (
-        <span className="text-[#6f7b8a]">
+        <span className="text-muted-foreground">
           {format(new Date(row.original.hireDate), "MMM d, yyyy")}
         </span>
       ),
@@ -173,7 +173,7 @@ export function createEmployeeColumns(
           <Badge
             className={
               status === "Active"
-                ? "bg-[#1caf9a]/10 text-[#1caf9a] border-[#1caf9a]/20"
+                ? "bg-primary/10 text-primary border-primary/20"
                 : "bg-red-50 text-red-600 border-red-200"
             }
           >

@@ -10,7 +10,7 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-const COLORS = ["#4b77be", "#e08283"];
+const COLORS = ["#38BDF8", "#F472B6"];
 
 interface GenderStatsChartProps {
   data: { name: string; value: number }[];
@@ -18,10 +18,10 @@ interface GenderStatsChartProps {
 
 export function GenderStatsChart({ data }: GenderStatsChartProps) {
   return (
-    <Card>
+    <Card className="rounded-2xl border-border/50 shadow-sm">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold">
-          Gender Statistics
+          Gender Distribution
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -32,11 +32,12 @@ export function GenderStatsChart({ data }: GenderStatsChartProps) {
                 data={data}
                 cx="50%"
                 cy="50%"
-                innerRadius={60}
-                outerRadius={100}
-                paddingAngle={3}
+                innerRadius={65}
+                outerRadius={105}
+                paddingAngle={4}
                 dataKey="value"
                 label={({ name, value }) => `${name}: ${value}`}
+                strokeWidth={0}
               >
                 {data.map((_, index) => (
                   <Cell
@@ -48,9 +49,10 @@ export function GenderStatsChart({ data }: GenderStatsChartProps) {
               <Tooltip
                 contentStyle={{
                   background: "#fff",
-                  border: "1px solid #e1e5ec",
-                  borderRadius: 4,
+                  border: "1px solid #E7E5E4",
+                  borderRadius: 12,
                   fontSize: 13,
+                  boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
                 }}
               />
               <Legend

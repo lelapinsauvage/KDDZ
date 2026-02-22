@@ -141,13 +141,13 @@ function FormField({
 }) {
   return (
     <div className={className}>
-      <Label className="mb-1.5 text-[#333]">
+      <Label className="mb-1.5 text-foreground">
         {label}
-        {required && <span className="ml-0.5 text-[#e7505a]">*</span>}
+        {required && <span className="ml-0.5 text-destructive">*</span>}
       </Label>
       {children}
       {error && (
-        <p className="mt-1 text-xs text-[#e7505a]">{error}</p>
+        <p className="mt-1 text-xs text-destructive">{error}</p>
       )}
     </div>
   );
@@ -567,32 +567,32 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
       <Tabs defaultValue="basic" className="w-full">
-        <TabsList variant="line" className="w-full justify-start overflow-x-auto border-b border-[#e1e5ec] bg-transparent px-0">
-          <TabsTrigger value="basic" className="gap-1.5 data-[state=active]:text-[#1caf9a] after:bg-[#1caf9a]">
+        <TabsList variant="line" className="w-full justify-start overflow-x-auto border-b border-border bg-transparent px-0">
+          <TabsTrigger value="basic" className="gap-1.5 data-[state=active]:text-primary after:bg-primary">
             <User className="size-4" />
             Basic Info
           </TabsTrigger>
-          <TabsTrigger value="guardians" className="gap-1.5 data-[state=active]:text-[#1caf9a] after:bg-[#1caf9a]">
+          <TabsTrigger value="guardians" className="gap-1.5 data-[state=active]:text-primary after:bg-primary">
             <Users className="size-4" />
             Guardian Info
           </TabsTrigger>
-          <TabsTrigger value="enrollment" className="gap-1.5 data-[state=active]:text-[#1caf9a] after:bg-[#1caf9a]">
+          <TabsTrigger value="enrollment" className="gap-1.5 data-[state=active]:text-primary after:bg-primary">
             <GraduationCap className="size-4" />
             Enrollment
           </TabsTrigger>
-          <TabsTrigger value="care" className="gap-1.5 data-[state=active]:text-[#1caf9a] after:bg-[#1caf9a]">
+          <TabsTrigger value="care" className="gap-1.5 data-[state=active]:text-primary after:bg-primary">
             <Heart className="size-4" />
             Care Preferences
           </TabsTrigger>
-          <TabsTrigger value="relatives" className="gap-1.5 data-[state=active]:text-[#1caf9a] after:bg-[#1caf9a]">
+          <TabsTrigger value="relatives" className="gap-1.5 data-[state=active]:text-primary after:bg-primary">
             <UserPlus className="size-4" />
             Relatives
           </TabsTrigger>
-          <TabsTrigger value="accounting" className="gap-1.5 data-[state=active]:text-[#1caf9a] after:bg-[#1caf9a]">
+          <TabsTrigger value="accounting" className="gap-1.5 data-[state=active]:text-primary after:bg-primary">
             <Receipt className="size-4" />
             Accounting
           </TabsTrigger>
-          <TabsTrigger value="attachments" className="gap-1.5 data-[state=active]:text-[#1caf9a] after:bg-[#1caf9a]">
+          <TabsTrigger value="attachments" className="gap-1.5 data-[state=active]:text-primary after:bg-primary">
             <Paperclip className="size-4" />
             Attachments
           </TabsTrigger>
@@ -840,7 +840,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                       />
                     )}
                   />
-                  <Label htmlFor="isActive" className="cursor-pointer text-[#333]">
+                  <Label htmlFor="isActive" className="cursor-pointer text-foreground">
                     Active enrollment
                   </Label>
                 </div>
@@ -857,7 +857,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                       />
                     )}
                   />
-                  <Label htmlFor="isDraft" className="cursor-pointer text-[#333]">
+                  <Label htmlFor="isDraft" className="cursor-pointer text-foreground">
                     Save as draft (incomplete enrollment)
                   </Label>
                 </div>
@@ -1044,7 +1044,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                       />
                     )}
                   />
-                  <Label htmlFor="previousGarderie" className="cursor-pointer text-[#333]">
+                  <Label htmlFor="previousGarderie" className="cursor-pointer text-foreground">
                     Child attended another garderie before
                   </Label>
                 </div>
@@ -1106,12 +1106,12 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
             </CardHeader>
             <CardContent>
               {relativeFields.length === 0 ? (
-                <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-[#e1e5ec] py-12 text-center">
-                  <UserPlus className="mb-3 size-10 text-[#6f7b8a]" />
-                  <p className="text-sm text-[#6f7b8a]">
+                <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-12 text-center">
+                  <UserPlus className="mb-3 size-10 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">
                     No relatives added yet.
                   </p>
-                  <p className="mt-1 text-xs text-[#6f7b8a]">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     Click &quot;Add Relative&quot; to add emergency contacts and
                     authorized persons.
                   </p>
@@ -1121,17 +1121,17 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                   {relativeFields.map((field, index) => (
                     <div
                       key={field.id}
-                      className="rounded-lg border border-[#e1e5ec] bg-[#f9fafb] p-4"
+                      className="rounded-lg border border-border bg-muted/30 p-4"
                     >
                       <div className="mb-3 flex items-center justify-between">
-                        <span className="text-sm font-medium text-[#333]">
+                        <span className="text-sm font-medium text-foreground">
                           Relative #{index + 1}
                         </span>
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon-xs"
-                          className="text-[#e7505a] hover:bg-[#e7505a]/10 hover:text-[#e7505a]"
+                          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                           onClick={() => removeRelative(index)}
                         >
                           <Trash2 className="size-3.5" />
@@ -1186,7 +1186,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                             />
                             <Label
                               htmlFor={`relative-auth-${index}`}
-                              className="cursor-pointer text-[#333]"
+                              className="cursor-pointer text-foreground"
                             >
                               Authorized for pickup
                             </Label>
@@ -1233,12 +1233,12 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
             </CardHeader>
             <CardContent>
               {accountingFields.length === 0 ? (
-                <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-[#e1e5ec] py-12 text-center">
-                  <Receipt className="mb-3 size-10 text-[#6f7b8a]" />
-                  <p className="text-sm text-[#6f7b8a]">
+                <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-12 text-center">
+                  <Receipt className="mb-3 size-10 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">
                     No accounting entries yet.
                   </p>
-                  <p className="mt-1 text-xs text-[#6f7b8a]">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     Click &quot;Add Entry&quot; to add fees, payments, or
                     adjustments.
                   </p>
@@ -1246,7 +1246,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
               ) : (
                 <div className="flex flex-col gap-4">
                   {/* Table header */}
-                  <div className="hidden grid-cols-[1fr_150px_180px_40px] gap-4 px-4 text-xs font-medium uppercase tracking-wide text-[#6f7b8a] md:grid">
+                  <div className="hidden grid-cols-[1fr_150px_180px_40px] gap-4 px-4 text-xs font-medium uppercase tracking-wide text-muted-foreground md:grid">
                     <span>Description</span>
                     <span>Amount</span>
                     <span>Type</span>
@@ -1256,7 +1256,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                   {accountingFields.map((field, index) => (
                     <div
                       key={field.id}
-                      className="grid grid-cols-1 gap-4 rounded-lg border border-[#e1e5ec] bg-[#f9fafb] p-4 md:grid-cols-[1fr_150px_180px_40px] md:items-start md:rounded-none md:border-0 md:bg-transparent md:p-0 md:px-4"
+                      className="grid grid-cols-1 gap-4 rounded-lg border border-border bg-muted/30 p-4 md:grid-cols-[1fr_150px_180px_40px] md:items-start md:rounded-none md:border-0 md:bg-transparent md:p-0 md:px-4"
                     >
                       <FormField
                         label="Description"
@@ -1275,7 +1275,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                           aria-invalid={!!errors.accountingEntries?.[index]?.description}
                         />
                         {errors.accountingEntries?.[index]?.description && (
-                          <p className="mt-1 text-xs text-[#e7505a]">
+                          <p className="mt-1 text-xs text-destructive">
                             {errors.accountingEntries[index].description?.message}
                           </p>
                         )}
@@ -1304,7 +1304,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                           aria-invalid={!!errors.accountingEntries?.[index]?.amount}
                         />
                         {errors.accountingEntries?.[index]?.amount && (
-                          <p className="mt-1 text-xs text-[#e7505a]">
+                          <p className="mt-1 text-xs text-destructive">
                             {errors.accountingEntries[index].amount?.message}
                           </p>
                         )}
@@ -1352,7 +1352,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                           )}
                         />
                         {errors.accountingEntries?.[index]?.type && (
-                          <p className="mt-1 text-xs text-[#e7505a]">
+                          <p className="mt-1 text-xs text-destructive">
                             {errors.accountingEntries[index].type?.message}
                           </p>
                         )}
@@ -1363,7 +1363,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                           type="button"
                           variant="ghost"
                           size="icon-xs"
-                          className="text-[#e7505a] hover:bg-[#e7505a]/10 hover:text-[#e7505a]"
+                          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                           onClick={() => removeAccounting(index)}
                         >
                           <Trash2 className="size-3.5" />
@@ -1388,14 +1388,14 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-[#e1e5ec] py-12 text-center">
-                <Paperclip className="mb-3 size-10 text-[#6f7b8a]" />
-                <p className="text-sm text-[#6f7b8a]">
+              <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-12 text-center">
+                <Paperclip className="mb-3 size-10 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
                   {isEditing
                     ? "Attachment management will be available after saving."
                     : "Save the enrollment first, then add attachments."}
                 </p>
-                <p className="mt-1 text-xs text-[#6f7b8a]">
+                <p className="mt-1 text-xs text-muted-foreground">
                   Supported: Photo, ID, Vaccination Card, Doctor Assessment, Medical Report
                 </p>
               </div>
@@ -1405,7 +1405,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
       </Tabs>
 
       {/* ── Sticky Action Bar ── */}
-      <div className="sticky bottom-0 z-10 -mx-6 -mb-6 border-t border-[#e1e5ec] bg-white px-6 py-4">
+      <div className="sticky bottom-0 z-10 -mx-6 -mb-6 border-t border-border bg-white px-6 py-4">
         <div className="flex items-center justify-end gap-3">
           <Button
             type="button"
@@ -1422,7 +1422,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
           </Button>
           <Button
             type="submit"
-            className="bg-[#1caf9a] text-white hover:bg-[#18a08c]"
+            className="bg-primary text-white hover:bg-[#18a08c]"
             disabled={isSubmitting}
           >
             {isSubmitting ? (

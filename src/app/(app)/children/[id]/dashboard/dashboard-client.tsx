@@ -93,7 +93,7 @@ export function DashboardClient({ child, stats, recentReports, upcomingAlarms, u
   const id = child.id;
 
   const statCards = [
-    { label: "Attendance Rate", value: stats.attendanceRate, icon: Calendar, color: "text-[#1caf9a]" },
+    { label: "Attendance Rate", value: stats.attendanceRate, icon: Calendar, color: "text-primary" },
     { label: "Daily Reports", value: String(stats.totalReports), icon: ClipboardList, color: "text-blue-500" },
     { label: "Absences", value: String(stats.totalAbsences), icon: AlertTriangle, color: "text-red-500" },
     { label: "Medical Records", value: String(stats.medicalRecords), icon: Stethoscope, color: "text-purple-500" },
@@ -116,12 +116,12 @@ export function DashboardClient({ child, stats, recentReports, upcomingAlarms, u
         {/* Child Info Card */}
         <Card>
           <CardContent className="flex items-start gap-6 pt-6">
-            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-[#1caf9a]/10">
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-primary/10">
               {child.photo ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={child.photo} alt="" className="h-20 w-20 rounded-full object-cover" />
               ) : (
-                <Baby className="h-10 w-10 text-[#1caf9a]" />
+                <Baby className="h-10 w-10 text-primary" />
               )}
             </div>
             <div className="flex-1 min-w-0">
@@ -181,7 +181,7 @@ export function DashboardClient({ child, stats, recentReports, upcomingAlarms, u
               <Button variant="outline" size="sm" asChild>
                 <Link href={`/children/${id}`}>Edit Profile</Link>
               </Button>
-              <Button size="sm" style={{ background: "#1caf9a" }} asChild>
+              <Button size="sm" asChild>
                 <Link href={`/children/${id}/report`}>View Reports</Link>
               </Button>
             </div>

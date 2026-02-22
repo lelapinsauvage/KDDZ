@@ -95,7 +95,7 @@ export function AbsenceReportForm({
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
-            <UserX className="size-4 text-[#1caf9a]" />
+            <UserX className="size-4 text-primary" />
             Absence Details
           </CardTitle>
         </CardHeader>
@@ -175,7 +175,7 @@ export function AbsenceReportForm({
         >
           Cancel
         </Button>
-        <Button type="submit" disabled={isPending} style={{ background: "#1caf9a" }}>
+        <Button type="submit" disabled={isPending}>
           {isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
           {reportId ? "Update Report" : "Submit Report"}
         </Button>

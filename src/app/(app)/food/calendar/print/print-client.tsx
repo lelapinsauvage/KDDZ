@@ -184,7 +184,7 @@ export default function PrintClient({
             <Button variant="outline" size="icon" onClick={prevMonth}>
               <ChevronLeft className="size-4" />
             </Button>
-            <div className="flex items-center gap-2 rounded-md border px-4 py-1.5 text-sm font-medium text-[#333] min-w-[180px] justify-center">
+            <div className="flex items-center gap-2 rounded-md border px-4 py-1.5 text-sm font-medium text-foreground min-w-[180px] justify-center">
               {MONTH_NAMES[month - 1]} {year}
               {isPending && (
                 <span className="text-xs text-muted-foreground ml-1">
@@ -198,7 +198,7 @@ export default function PrintClient({
           </div>
 
           <Button
-            className="bg-[#1caf9a] text-white hover:bg-[#18a08d]"
+            className="bg-primary text-white hover:bg-primary/90"
             onClick={() => window.print()}
           >
             <Printer className="mr-1 size-4" />
@@ -211,7 +211,7 @@ export default function PrintClient({
       <div className="p-6 print:p-0">
         {/* Print-only title */}
         <div className="mb-4 hidden text-center print:block">
-          <h1 className="text-2xl font-bold text-[#333]">
+          <h1 className="text-2xl font-bold text-foreground">
             Monthly Food Calendar
           </h1>
           <p className="mt-1 text-base text-[#555]">
@@ -226,7 +226,7 @@ export default function PrintClient({
               {DAY_NAMES.map((day) => (
                 <th
                   key={day}
-                  className="border border-gray-300 bg-[#f1f3f6] px-2 py-2 text-center text-xs font-semibold uppercase text-[#6f7b8a] print:bg-gray-100 print:text-[9px]"
+                  className="border border-gray-300 bg-muted/50 px-2 py-2 text-center text-xs font-semibold uppercase text-muted-foreground print:bg-gray-100 print:text-[9px]"
                 >
                   {day}
                 </th>
@@ -254,7 +254,7 @@ export default function PrintClient({
                       key={dayIdx}
                       className="border border-gray-300 p-1.5 align-top h-[90px] print:h-[70px] print:p-1"
                     >
-                      <div className="text-xs font-semibold text-[#333] mb-0.5 print:text-[9px]">
+                      <div className="text-xs font-semibold text-foreground mb-0.5 print:text-[9px]">
                         {day}
                       </div>
                       <div className="space-y-0.5">

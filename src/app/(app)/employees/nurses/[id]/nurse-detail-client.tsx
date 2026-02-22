@@ -187,10 +187,10 @@ export function NurseDetailClient({ nurse, recentActivities }: NurseDetailClient
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a]">Date</TableHead>
-                        <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a]">Child</TableHead>
-                        <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a]">Status</TableHead>
-                        <TableHead className="bg-[#f1f3f6] text-xs font-semibold uppercase text-[#6f7b8a]">Type</TableHead>
+                        <TableHead className="bg-muted/50 text-xs font-semibold uppercase text-muted-foreground">Date</TableHead>
+                        <TableHead className="bg-muted/50 text-xs font-semibold uppercase text-muted-foreground">Child</TableHead>
+                        <TableHead className="bg-muted/50 text-xs font-semibold uppercase text-muted-foreground">Status</TableHead>
+                        <TableHead className="bg-muted/50 text-xs font-semibold uppercase text-muted-foreground">Type</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>

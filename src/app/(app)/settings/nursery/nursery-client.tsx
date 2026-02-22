@@ -239,7 +239,7 @@ export default function NurseryClient({ branchId, initialSettings }: NurseryClie
         {/* Save Button */}
         <div className="flex flex-wrap items-center gap-3">
           <Button
-            style={{ background: "#1caf9a" }}
+           
             className="text-white"
             onClick={handleSave}
             disabled={isPending}
@@ -247,7 +247,7 @@ export default function NurseryClient({ branchId, initialSettings }: NurseryClie
             <Save className="mr-1 size-4" />
             {isPending ? "Saving..." : "Save Settings"}
           </Button>
-          {saved && <span className="text-sm text-[#1caf9a] font-medium">Settings saved successfully!</span>}
+          {saved && <span className="text-sm text-primary font-medium">Settings saved successfully!</span>}
         </div>
       </div>
     </>

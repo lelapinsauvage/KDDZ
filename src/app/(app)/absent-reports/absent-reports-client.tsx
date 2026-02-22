@@ -129,7 +129,7 @@ export function AbsentReportsClient({ reports, branches }: Props) {
         </Button>
       ),
       cell: ({ row }) => (
-        <span className="font-medium text-[#333]">{row.original.childName}</span>
+        <span className="font-medium text-foreground">{row.original.childName}</span>
       ),
     },
     {
@@ -265,7 +265,7 @@ export function AbsentReportsClient({ reports, branches }: Props) {
 
           <div className="flex-1" />
 
-          <Button asChild className="bg-[#1caf9a] text-white hover:bg-[#18a08d]">
+          <Button asChild className="bg-primary text-white hover:bg-primary/90">
             <Link href="/absent-reports/new">
               <Plus className="mr-1 size-4" />
               Create Absence Report

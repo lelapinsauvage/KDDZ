@@ -320,7 +320,7 @@ export function FoodCalendarClient({
             >
               <ChevronLeft className="size-4" />
             </Button>
-            <div className="flex items-center gap-2 rounded-md border px-4 py-1.5 text-sm font-medium text-[#333] min-w-[180px] justify-center">
+            <div className="flex items-center gap-2 rounded-md border px-4 py-1.5 text-sm font-medium text-foreground min-w-[180px] justify-center">
               {MONTH_NAMES[month - 1]} {year}
               {isPending && (
                 <span className="ml-2 text-xs text-muted-foreground">
@@ -363,7 +363,7 @@ export function FoodCalendarClient({
                       {DAY_NAMES.map((day) => (
                         <th
                           key={day}
-                          className="border-b bg-[#f1f3f6] px-2 py-2.5 text-center text-xs font-semibold uppercase text-[#6f7b8a] w-[14.28%]"
+                          className="border-b bg-muted/50 px-2 py-2.5 text-center text-xs font-semibold uppercase text-muted-foreground w-[14.28%]"
                         >
                           {day}
                         </th>
@@ -391,7 +391,7 @@ export function FoodCalendarClient({
                           return (
                             <td
                               key={dayIdx}
-                              className={`border-b border-r last:border-r-0 p-2 align-top h-[120px] cursor-pointer transition-colors hover:bg-[#1caf9a]/5 ${
+                              className={`border-b border-r last:border-r-0 p-2 align-top h-[120px] cursor-pointer transition-colors hover:bg-primary/5 ${
                                 isWeekend ? "bg-gray-50/70" : "bg-white"
                               }`}
                               onClick={() => openDayDialog(day)}
@@ -400,8 +400,8 @@ export function FoodCalendarClient({
                                 <span
                                   className={`text-sm font-medium ${
                                     hasMeals
-                                      ? "text-[#1caf9a]"
-                                      : "text-[#333]"
+                                      ? "text-primary"
+                                      : "text-foreground"
                                   }`}
                                 >
                                   {day}
@@ -572,7 +572,7 @@ export function FoodCalendarClient({
               Cancel
             </Button>
             <Button
-              style={{ background: "#1caf9a" }}
+             
               className="text-white"
               onClick={handleSaveDay}
               disabled={isPending}

@@ -10,6 +10,7 @@ import {
   User,
   LogOut,
   Settings,
+  Search,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -53,24 +54,38 @@ export function Header({
   const userInitial = userName.charAt(0).toUpperCase()
 
   const navIcons = [
-    { icon: Mail, label: "Messages", count: unreadMessageCount, href: "/messages/inbox" },
-    { icon: Heart, label: "Medical", count: alarmCounts.medical, href: "/alarms/medical" },
-    { icon: Cake, label: "Birthdays", count: alarmCounts.birthdays, href: "/alarms/birthdays" },
-    { icon: ClipboardCheck, label: "Assessment", count: alarmCounts.assessments, href: "/alarms/assessments" },
+    { icon: Mail, label: "Messages", count: unreadMessageCount, href: "/messages/inbox", color: "text-blue-500" },
+    { icon: Heart, label: "Medical", count: alarmCounts.medical, href: "/alarms/medical", color: "text-rose-500" },
+    { icon: Cake, label: "Birthdays", count: alarmCounts.birthdays, href: "/alarms/birthdays", color: "text-amber-500" },
+    { icon: ClipboardCheck, label: "Assessment", count: alarmCounts.assessments, href: "/alarms/assessments", color: "text-violet-500" },
   ]
 
   return (
     <header className="header-bar fixed top-0 left-0 right-0 z-50 flex items-center">
-      {/* Logo area — matches sidebar width on desktop, compact on mobile */}
-      <div className="flex h-[46px] w-auto shrink-0 items-center px-3 md:w-[270px] md:px-5">
-        <Link href="/dashboard" className="text-lg font-bold text-white tracking-wide">
-          KiddzOnline
+      {/* Logo area */}
+      <div className="flex h-[56px] w-auto shrink-0 items-center gap-3 px-4 md:w-[270px] md:px-5">
+        <div className="flex size-8 items-center justify-center rounded-xl bg-gradient-to-br from-teal-400 to-teal-600 text-white text-sm font-bold shadow-sm">
+          K
+        </div>
+        <Link href="/dashboard" className="text-lg font-bold text-foreground tracking-tight">
+          Kidd<span className="text-primary">z</span>Online
         </Link>
       </div>
 
-      {/* Right side: sidebar trigger + notifications + user menu */}
+      {/* Right side */}
       <div className="flex flex-1 items-center justify-between px-2 md:px-4">
-        <SidebarTrigger className="text-[#b4bcc8] hover:text-white hover:bg-white/10" />
+        <div className="flex items-center gap-2">
+          <SidebarTrigger className="text-muted-foreground hover:text-foreground hover:bg-muted" />
+
+          {/* Search hint */}
+          <button className="hidden items-center gap-2 rounded-xl border border-stone-200 bg-stone-50 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-stone-100 md:flex">
+            <Search className="size-3.5" />
+            <span>Search...</span>
+            <kbd className="ml-4 rounded bg-stone-200 px-1.5 py-0.5 text-[10px] font-medium text-stone-500">
+              /
+            </kbd>
+          </button>
+        </div>
 
         <div className="flex items-center gap-0.5 sm:gap-1">
           {/* Navigation icon links */}
@@ -78,13 +93,14 @@ export function Header({
             <Link
               key={item.label}
               href={item.href}
-              className="relative flex h-[46px] w-8 items-center justify-center text-[#b4bcc8] transition-colors hover:text-white sm:w-10"
+              className="relative flex h-10 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:w-10"
+              title={item.label}
             >
-              <item.icon className="size-[18px]" />
+              <item.icon className={`size-[18px] ${item.count > 0 ? item.color : ""}`} />
               {item.count > 0 && (
                 <Badge
                   variant="destructive"
-                  className="absolute top-1.5 right-0.5 flex size-[18px] items-center justify-center p-0 text-[10px] leading-none"
+                  className="absolute -top-0.5 -right-0.5 flex size-[18px] items-center justify-center rounded-full p-0 text-[10px] leading-none"
                 >
                   {item.count > 99 ? "99+" : item.count}
                 </Badge>
@@ -101,14 +117,14 @@ export function Header({
           {/* User dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="ml-2 flex items-center gap-2 rounded px-3 py-1.5 text-sm text-[#b4bcc8] transition-colors hover:text-white focus:outline-none">
-                <div className="flex size-8 items-center justify-center rounded-full bg-[#1caf9a] text-white text-xs font-semibold">
+              <button className="ml-2 flex items-center gap-2.5 rounded-xl px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-muted focus:outline-none">
+                <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-teal-400 to-emerald-500 text-white text-xs font-bold shadow-sm">
                   {userInitial}
                 </div>
-                <span className="hidden sm:inline">{userName}</span>
+                <span className="hidden font-medium sm:inline">{userName}</span>
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuContent align="end" className="w-48 rounded-xl">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>

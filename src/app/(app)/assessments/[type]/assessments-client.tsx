@@ -113,7 +113,7 @@ export default function AssessmentsClient({
         cell: ({ row }) => (
           <Link
             href={`/assessments/${typeParam}/${row.original.id}`}
-            className="font-medium text-[#1caf9a] hover:underline"
+            className="font-medium text-primary hover:underline"
           >
             {row.original.childName}
           </Link>
@@ -283,7 +283,7 @@ export default function AssessmentsClient({
 
           <div className="flex-1" />
 
-          <Button asChild style={{ background: "#1caf9a" }}>
+          <Button asChild>
             <Link href={`/assessments/${typeParam}/new`}>
               <Plus className="mr-1 size-4" />
               New Assessment

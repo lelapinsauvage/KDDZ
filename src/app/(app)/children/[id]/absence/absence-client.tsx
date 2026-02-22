@@ -139,7 +139,7 @@ export function AbsenceClient({ child, absences }: Props) {
         </div>
 
         <div className="flex justify-end">
-          <Button size="sm" style={{ background: "#1caf9a" }}>
+          <Button size="sm">
             <Plus className="mr-1 h-4 w-4" />
             Report Absence
           </Button>

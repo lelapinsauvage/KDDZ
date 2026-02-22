@@ -127,7 +127,7 @@ export function ParentUserDetailClient({ parentUser, childrenList }: ParentUserD
 
             <div className="flex items-center gap-3 pt-2">
               <Button
-                style={{ background: "#1caf9a" }}
+               
                 className="text-white"
                 onClick={handleSave}
                 disabled={isPending}
@@ -140,7 +140,7 @@ export function ParentUserDetailClient({ parentUser, childrenList }: ParentUserD
                 Save Changes
               </Button>
               {saved && (
-                <span className="text-sm font-medium text-[#1caf9a]">
+                <span className="text-sm font-medium text-primary">
                   Saved successfully!
                 </span>
               )}

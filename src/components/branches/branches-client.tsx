@@ -53,12 +53,12 @@ export function BranchesClient({ branches }: BranchesClientProps) {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Card className="py-4">
             <CardContent className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-[#1caf9a]/10">
-                <GitBranch className="size-5 text-[#1caf9a]" />
+              <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
+                <GitBranch className="size-5 text-primary" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Branches</p>
-                <p className="text-2xl font-semibold text-[#333]">
+                <p className="text-2xl font-semibold text-foreground">
                   {totalBranches}
                 </p>
               </div>
@@ -71,7 +71,7 @@ export function BranchesClient({ branches }: BranchesClientProps) {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Classes</p>
-                <p className="text-2xl font-semibold text-[#333]">
+                <p className="text-2xl font-semibold text-foreground">
                   {totalClasses}
                 </p>
               </div>
@@ -84,7 +84,7 @@ export function BranchesClient({ branches }: BranchesClientProps) {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Students</p>
-                <p className="text-2xl font-semibold text-[#333]">
+                <p className="text-2xl font-semibold text-foreground">
                   {totalStudents}
                 </p>
               </div>
@@ -94,7 +94,7 @@ export function BranchesClient({ branches }: BranchesClientProps) {
 
         {/* Add Branch button */}
         <div className="flex justify-end">
-          <Button style={{ background: "#1caf9a" }}>
+          <Button>
             <Plus className="mr-1 size-4" />
             Add Branch
           </Button>
@@ -105,8 +105,8 @@ export function BranchesClient({ branches }: BranchesClientProps) {
           {branches.map((branch) => (
             <Card key={branch.id} className="relative">
               <CardHeader className="flex-row items-center gap-3">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-[#1caf9a]/10">
-                  <Building2 className="size-5 text-[#1caf9a]" />
+                <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
+                  <Building2 className="size-5 text-primary" />
                 </div>
                 <div className="flex-1">
                   <CardTitle className="text-base">{branch.name}</CardTitle>
@@ -138,7 +138,7 @@ export function BranchesClient({ branches }: BranchesClientProps) {
                 <div className="border-t pt-3 mt-1">
                   <div className="flex items-center justify-between">
                     <div className="text-center flex-1">
-                      <p className="text-lg font-semibold text-[#333]">
+                      <p className="text-lg font-semibold text-foreground">
                         {branch.classCount}
                       </p>
                       <p className="text-xs text-muted-foreground">
@@ -147,7 +147,7 @@ export function BranchesClient({ branches }: BranchesClientProps) {
                     </div>
                     <div className="h-8 w-px bg-border" />
                     <div className="text-center flex-1">
-                      <p className="text-lg font-semibold text-[#333]">
+                      <p className="text-lg font-semibold text-foreground">
                         {branch.childrenCount}
                       </p>
                       <p className="text-xs text-muted-foreground">

@@ -108,13 +108,13 @@ export function SentClient({ messages, total }: SentClientProps) {
         const isGroup = msg.threadId !== null;
         return (
           <div className="flex items-center gap-2">
-            <span className="text-sm text-[#333]">
+            <span className="text-sm text-foreground">
               {msg.recipientName}
             </span>
             <Badge
               variant="outline"
               className={`text-[10px] ${
-                isGroup ? "border-[#1caf9a] text-[#1caf9a]" : ""
+                isGroup ? "border-primary text-primary" : ""
               }`}
             >
               {isGroup ? "Group" : msg.recipientType}
@@ -144,7 +144,7 @@ export function SentClient({ messages, total }: SentClientProps) {
           <div>
             <Link
               href={`/messages/${msg.id}`}
-              className="text-sm text-[#333] hover:underline"
+              className="text-sm text-foreground hover:underline"
             >
               {msg.subject ?? "(No subject)"}
             </Link>
@@ -280,7 +280,7 @@ export function SentClient({ messages, total }: SentClientProps) {
                 Inbox
               </Link>
             </Button>
-            <Button asChild size="sm" style={{ background: "#1caf9a" }}>
+            <Button asChild size="sm">
               <Link href="/messages/compose">
                 <PenSquare className="mr-1 size-3.5" />
                 Compose

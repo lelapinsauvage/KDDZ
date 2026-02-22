@@ -92,7 +92,7 @@ const exportCards: ExportCard[] = [
     id: "children",
     title: "Children Data",
     description: "Export all children records including personal info, classes, and parent contacts.",
-    icon: <Users className="size-5 text-[#1caf9a]" />,
+    icon: <Users className="size-5 text-primary" />,
     formats: ["CSV", "Excel"],
     hasDateRange: false,
   },
@@ -359,7 +359,7 @@ export default function ExportDatabasePage() {
                 )}
 
                 <Button
-                  className="w-full bg-[#1caf9a] text-white hover:bg-[#18a08d]"
+                  className="w-full bg-primary text-white hover:bg-primary/90"
                   onClick={() => handleExport(card.id)}
                   disabled={exporting === card.id}
                 >

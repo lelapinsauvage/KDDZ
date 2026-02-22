@@ -247,11 +247,11 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {/* ── Provinces Column ─────────────── */}
           <div className="rounded-lg border bg-card">
-            <div className="flex items-center justify-between border-b bg-[#f1f3f6] px-4 py-3">
-              <h2 className="text-sm font-semibold uppercase text-[#6f7b8a]">Provinces</h2>
+            <div className="flex items-center justify-between border-b bg-muted/50 px-4 py-3">
+              <h2 className="text-sm font-semibold uppercase text-muted-foreground">Provinces</h2>
               <Button
                 size="sm"
-                className="h-7 bg-[#1caf9a] text-white hover:bg-[#18a08d]"
+                className="h-7 bg-primary text-white hover:bg-primary/90"
                 onClick={() => openAddDialog("province")}
                 disabled={isPending}
               >
@@ -272,7 +272,7 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
                   }}
                 >
                   <div className="flex items-center gap-2">
-                    <MapPin className="size-4 text-[#1caf9a]" />
+                    <MapPin className="size-4 text-primary" />
                     <span className="text-sm font-medium">{prov.name}</span>
                     <span className="text-xs text-muted-foreground">
                       ({prov.districts.length})
@@ -315,11 +315,11 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
 
           {/* ── Districts Column ─────────────── */}
           <div className="rounded-lg border bg-card">
-            <div className="flex items-center justify-between border-b bg-[#f1f3f6] px-4 py-3">
-              <h2 className="text-sm font-semibold uppercase text-[#6f7b8a]">Districts</h2>
+            <div className="flex items-center justify-between border-b bg-muted/50 px-4 py-3">
+              <h2 className="text-sm font-semibold uppercase text-muted-foreground">Districts</h2>
               <Button
                 size="sm"
-                className="h-7 bg-[#1caf9a] text-white hover:bg-[#18a08d]"
+                className="h-7 bg-primary text-white hover:bg-primary/90"
                 onClick={() => openAddDialog("district")}
                 disabled={!selectedProvinceId || isPending}
               >
@@ -385,11 +385,11 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
 
           {/* ── Regions Column ──────────────── */}
           <div className="rounded-lg border bg-card">
-            <div className="flex items-center justify-between border-b bg-[#f1f3f6] px-4 py-3">
-              <h2 className="text-sm font-semibold uppercase text-[#6f7b8a]">Regions</h2>
+            <div className="flex items-center justify-between border-b bg-muted/50 px-4 py-3">
+              <h2 className="text-sm font-semibold uppercase text-muted-foreground">Regions</h2>
               <Button
                 size="sm"
-                className="h-7 bg-[#1caf9a] text-white hover:bg-[#18a08d]"
+                className="h-7 bg-primary text-white hover:bg-primary/90"
                 onClick={() => openAddDialog("region")}
                 disabled={!selectedDistrictId || isPending}
               >
@@ -463,7 +463,7 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
               Cancel
             </Button>
             <Button
-              style={{ background: "#1caf9a" }}
+             
               className="text-white"
               onClick={handleSave}
               disabled={!dialogValue.trim() || isPending}

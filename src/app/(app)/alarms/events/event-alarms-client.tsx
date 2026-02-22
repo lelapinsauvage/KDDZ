@@ -44,7 +44,7 @@ export function EventAlarmsClient({ events, branches }: EventAlarmsClientProps) 
         header: "Event Title",
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
-            <CalendarDays className="size-4 text-[#1caf9a]" />
+            <CalendarDays className="size-4 text-primary" />
             <span className="font-medium">{row.original.title}</span>
           </div>
         ),

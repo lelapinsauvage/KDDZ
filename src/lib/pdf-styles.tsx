@@ -7,14 +7,14 @@ import { StyleSheet } from "@react-pdf/renderer";
 // Register default font (Helvetica is built-in, no registration needed)
 
 export const colors = {
-  primary: "#2b3643",
-  accent: "#1caf9a",
-  textDark: "#333333",
-  textMuted: "#666666",
-  border: "#dee2e6",
-  headerBg: "#f1f3f6",
+  primary: "#0D9488",
+  accent: "#14B8A6",
+  textDark: "#1C1917",
+  textMuted: "#78716C",
+  border: "#E7E5E4",
+  headerBg: "#F5F5F4",
   white: "#ffffff",
-  lightGray: "#f8f9fa",
+  lightGray: "#FAFAF9",
 };
 
 export const pdfStyles = StyleSheet.create({

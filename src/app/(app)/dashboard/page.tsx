@@ -8,12 +8,11 @@ import {
   FileWarning,
   DollarSign,
   AlertTriangle,
-  PhoneCall,
+  MessageSquare,
   Stethoscope,
   FileMinus,
   FileEdit,
 } from "lucide-react";
-import { PageHeader } from "@/components/layout/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { ChildrenPerClassChart } from "@/components/dashboard/children-per-class-chart";
 import { GenderStatsChart } from "@/components/dashboard/gender-stats-chart";
@@ -26,25 +25,26 @@ import { getPaymentsSummary } from "@/lib/actions/payments";
 import { getOverdueVaccinations } from "@/lib/actions/alarms";
 import { getMedicalForms } from "@/lib/actions/medical";
 import { db } from "@/lib/db";
+import { auth } from "@/lib/auth";
 
 export default async function DashboardPage() {
+  const session = await auth();
+  const userName = session?.user?.name?.split(" ")[0] || "there";
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const todayISO = today.toISOString().split("T")[0];
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
-  // Next 7 days for upcoming events
   const next7Days = new Date(today);
   next7Days.setDate(next7Days.getDate() + 7);
 
-  // Get active school year for attendance trend date range
   const activeSchoolYear = await db.schoolYear.findFirst({
     where: { isActive: true },
     select: { startDate: true, endDate: true },
   });
 
-  // Fetch all real counts in parallel
   const [
     branchesResult,
     classesResult,
@@ -59,7 +59,6 @@ export default async function DashboardPage() {
     draftMedicalResult,
     _upcomingEventsCount,
     accidentReportsCount,
-    // Chart data
     childrenPerClass,
     genderGroups,
     attendanceByMonth,
@@ -89,7 +88,6 @@ export default async function DashboardPage() {
     db.medicalForm.count({
       where: { formType: "ACCIDENTS" },
     }),
-    // Children per class
     db.class.findMany({
       where: { isActive: true },
       select: {
@@ -100,13 +98,11 @@ export default async function DashboardPage() {
       },
       orderBy: { name: "asc" },
     }),
-    // Gender stats
     db.child.groupBy({
       by: ["gender"],
       _count: { _all: true },
       where: { isActive: true, isDraft: false, gender: { not: null } },
     }),
-    // Attendance by month (daily reports)
     activeSchoolYear
       ? db.$queryRaw<{ month: string; count: bigint }[]>`
           SELECT TO_CHAR("reportDate", 'Mon') as month, COUNT(*) as count
@@ -116,7 +112,6 @@ export default async function DashboardPage() {
           ORDER BY DATE_TRUNC('month', "reportDate")
         `
       : Promise.resolve([]),
-    // Absence by month
     activeSchoolYear
       ? db.$queryRaw<{ month: string; count: bigint }[]>`
           SELECT TO_CHAR("date", 'Mon') as month, COUNT(*) as count
@@ -136,43 +131,30 @@ export default async function DashboardPage() {
     : 0;
   const activeChildrenCount = activeChildrenResult.total ?? 0;
   const totalDrafts = draftsResult.total ?? 0;
-
-  // Today's attendance (daily reports submitted today)
   const totalAttendance = todayReportsResult.total ?? 0;
-
-  // Today's absences
   const totalAbsence = todayAbsenceCount;
-
-  // Missing daily reports: active children without a daily report today
   const missingDailyReports = Math.max(0, activeChildrenCount - totalAttendance);
-
-  // Missing absent reports: absences without approved status
   const pendingAbsences = await db.absenceReport.count({
     where: { status: "PENDING" },
   });
   const missingAbsentReports = pendingAbsences;
-
-  // Payments
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const paymentData = paymentsSummaryResult.data as any;
   const totalPayments = paymentData?.totalCount ?? 0;
-
-  // Overdue vaccinations as medical alerts
   const _overdueVax = Array.isArray(overdueVaxResult.data) ? overdueVaxResult.data : [];
   const accidentReports = accidentReportsCount;
+  const incomingCalls = unreadMessagesCount;
+  const totalMedicalReports = allMedicalResult.total ?? 0;
+  const missingMedicalReports = draftMedicalResult.total ?? 0;
 
-  // Chart data transformations
   const classChartData = childrenPerClass.map((c) => ({
     name: c.name,
     children: c._count.children,
   }));
-
   const genderChartData = genderGroups.map((g) => ({
     name: g.gender === "MALE" ? "Male" : "Female",
     value: g._count._all,
   }));
-
-  // Merge attendance + absence by month
   const absenceMap = new Map(
     absenceByMonth.map((r) => [r.month, Number(r.count)])
   );
@@ -181,7 +163,6 @@ export default async function DashboardPage() {
     attendance: Number(r.count),
     absence: absenceMap.get(r.month) ?? 0,
   }));
-  // Add months that only have absences (no daily reports)
   for (const r of absenceByMonth) {
     if (!attendanceByMonth.some((a) => a.month === r.month)) {
       attendanceChartData.push({
@@ -192,137 +173,145 @@ export default async function DashboardPage() {
     }
   }
 
-  // Messages
-  const incomingCalls = unreadMessagesCount;
+  // Greeting based on time of day
+  const hour = new Date().getHours();
+  const greeting =
+    hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
-  // Medical
-  const totalMedicalReports = allMedicalResult.total ?? 0;
-  const missingMedicalReports = draftMedicalResult.total ?? 0;
+  const todayFormatted = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   return (
-    <>
-      <PageHeader
-        title="Dashboard"
-        breadcrumbs={[
-          { label: "Home", href: "/dashboard" },
-          { label: "Dashboard" },
-        ]}
-      />
-
-      <div className="space-y-4 p-4 md:space-y-6 md:p-6">
-        {/* Row 1: Branch / Class / Children totals */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <StatCard
-            title="Total Branches"
-            value={branchCount}
-            icon={Building2}
-            color="blue"
-            href="/branches"
-          />
-          <StatCard
-            title="Total Classes"
-            value={classCount}
-            icon={BookOpen}
-            color="blue-hoki"
-            href="/classes"
-          />
-          <StatCard
-            title="Active Children"
-            value={activeChildrenCount}
-            icon={Users}
-            color="green"
-            href="/children"
-          />
-        </div>
-
-        {/* Row 2: Charts */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <ChildrenPerClassChart data={classChartData} />
-          <GenderStatsChart data={genderChartData} />
-        </div>
-
-        {/* Row 3: Attendance metrics */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
-          <StatCard
-            title="Total Attendance"
-            value={totalAttendance}
-            icon={CheckCircle}
-            color="green"
-          />
-          <StatCard
-            title="Total Absence"
-            value={totalAbsence}
-            icon={XCircle}
-            color="red"
-            href="/absent-reports"
-          />
-          <StatCard
-            title="Missing Daily Reports"
-            value={missingDailyReports}
-            icon={FileWarning}
-            color="blue-hoki"
-            href="/daily-reports"
-          />
-          <StatCard
-            title="Missing Absent Reports"
-            value={missingAbsentReports}
-            icon={FileText}
-            color="blue-hoki"
-            href="/absent-reports/drafts"
-          />
-        </div>
-
-        {/* Row 4: Attendance trend chart */}
-        <AttendanceChart data={attendanceChartData} />
-
-        {/* Row 5: Financial & incident metrics */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <StatCard
-            title="Total Payments"
-            value={totalPayments}
-            icon={DollarSign}
-            color="green"
-            href="/accounting"
-          />
-          <StatCard
-            title="Accident Reports"
-            value={accidentReports}
-            icon={AlertTriangle}
-            color="red-pink"
-            href="/medical/accidents"
-          />
-          <StatCard
-            title="Unread Messages"
-            value={incomingCalls}
-            icon={PhoneCall}
-            color="blue-hoki"
-          />
-        </div>
-
-        {/* Row 6: Medical metrics */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <StatCard
-            title="Total Medical Reports"
-            value={totalMedicalReports}
-            icon={Stethoscope}
-            color="green"
-            href="/medical/general"
-          />
-          <StatCard
-            title="Missing Medical Reports"
-            value={missingMedicalReports}
-            icon={FileMinus}
-            color="red-pink"
-          />
-          <StatCard
-            title="Total Drafts"
-            value={totalDrafts}
-            icon={FileEdit}
-            color="blue-hoki"
-            href="/children/drafts"
-          />
+    <div className="space-y-6 p-4 md:p-6">
+      {/* Greeting */}
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            {greeting}, {userName}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {todayFormatted}
+          </p>
         </div>
       </div>
-    </>
+
+      {/* Priority cards: what needs attention */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          title="Active Children"
+          value={activeChildrenCount}
+          icon={Users}
+          color="teal"
+          href="/children"
+        />
+        <StatCard
+          title="Reports Today"
+          value={`${totalAttendance} / ${activeChildrenCount}`}
+          icon={CheckCircle}
+          color="emerald"
+          href="/daily-reports"
+        />
+        <StatCard
+          title="Absences Today"
+          value={totalAbsence}
+          icon={XCircle}
+          color="rose"
+          href="/absent-reports"
+        />
+        <StatCard
+          title="Missing Reports"
+          value={missingDailyReports}
+          icon={FileWarning}
+          color="amber"
+          href="/daily-reports"
+        />
+      </div>
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <ChildrenPerClassChart data={classChartData} />
+        <GenderStatsChart data={genderChartData} />
+      </div>
+
+      {/* Infrastructure stats */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <StatCard
+          title="Branches"
+          value={branchCount}
+          icon={Building2}
+          color="blue"
+          href="/branches"
+        />
+        <StatCard
+          title="Classes"
+          value={classCount}
+          icon={BookOpen}
+          color="purple"
+          href="/classes"
+        />
+        <StatCard
+          title="Pending Absences"
+          value={missingAbsentReports}
+          icon={FileText}
+          color="orange"
+          href="/absent-reports/drafts"
+        />
+      </div>
+
+      {/* Attendance trend */}
+      <AttendanceChart data={attendanceChartData} />
+
+      {/* Financial, medical, messaging */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <StatCard
+          title="Total Payments"
+          value={totalPayments}
+          icon={DollarSign}
+          color="emerald"
+          href="/accounting"
+        />
+        <StatCard
+          title="Accident Reports"
+          value={accidentReports}
+          icon={AlertTriangle}
+          color="rose"
+          href="/medical/accidents"
+        />
+        <StatCard
+          title="Unread Messages"
+          value={incomingCalls}
+          icon={MessageSquare}
+          color="sky"
+        />
+      </div>
+
+      {/* Medical & drafts */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <StatCard
+          title="Medical Reports"
+          value={totalMedicalReports}
+          icon={Stethoscope}
+          color="teal"
+          href="/medical/general"
+        />
+        <StatCard
+          title="Draft Medical"
+          value={missingMedicalReports}
+          icon={FileMinus}
+          color="amber"
+        />
+        <StatCard
+          title="Child Drafts"
+          value={totalDrafts}
+          icon={FileEdit}
+          color="purple"
+          href="/children/drafts"
+        />
+      </div>
+    </div>
   );
 }

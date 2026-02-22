@@ -105,7 +105,7 @@ export function DraftDailyReportsClient({
         </Button>
       ),
       cell: ({ row }) => (
-        <span className="font-medium text-[#333]">{row.original.childName}</span>
+        <span className="font-medium text-foreground">{row.original.childName}</span>
       ),
     },
     {

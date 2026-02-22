@@ -2,22 +2,24 @@ import { type LucideIcon } from "lucide-react";
 import Link from "next/link";
 
 export type StatCardColor =
+  | "teal"
   | "blue"
-  | "blue-hoki"
-  | "green"
-  | "red"
-  | "red-pink"
   | "purple"
-  | "yellow";
+  | "rose"
+  | "amber"
+  | "orange"
+  | "sky"
+  | "emerald";
 
-const colorMap: Record<StatCardColor, string> = {
-  blue: "stat-card-blue",
-  "blue-hoki": "stat-card-blue-hoki",
-  green: "stat-card-green",
-  red: "stat-card-red",
-  "red-pink": "stat-card-red-pink",
-  purple: "stat-card-purple",
-  yellow: "stat-card-yellow",
+const colorStyles: Record<StatCardColor, { bg: string; icon: string; text: string }> = {
+  teal: { bg: "bg-teal-50", icon: "text-teal-600 bg-teal-100", text: "text-teal-700" },
+  blue: { bg: "bg-blue-50", icon: "text-blue-600 bg-blue-100", text: "text-blue-700" },
+  purple: { bg: "bg-violet-50", icon: "text-violet-600 bg-violet-100", text: "text-violet-700" },
+  rose: { bg: "bg-rose-50", icon: "text-rose-600 bg-rose-100", text: "text-rose-700" },
+  amber: { bg: "bg-amber-50", icon: "text-amber-600 bg-amber-100", text: "text-amber-700" },
+  orange: { bg: "bg-orange-50", icon: "text-orange-600 bg-orange-100", text: "text-orange-700" },
+  sky: { bg: "bg-sky-50", icon: "text-sky-600 bg-sky-100", text: "text-sky-700" },
+  emerald: { bg: "bg-emerald-50", icon: "text-emerald-600 bg-emerald-100", text: "text-emerald-700" },
 };
 
 interface StatCardProps {
@@ -29,21 +31,25 @@ interface StatCardProps {
 }
 
 export function StatCard({ title, value, icon: Icon, color, href }: StatCardProps) {
+  const styles = colorStyles[color];
+
   const content = (
-    <div className={`${colorMap[color]} rounded-md p-5 shadow-sm`}>
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium uppercase tracking-wider opacity-80">
+    <div className={`rounded-2xl border border-border/50 bg-white p-5 shadow-sm transition-all hover:shadow-md ${href ? "cursor-pointer" : ""}`}>
+      <div className="flex items-start justify-between">
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-muted-foreground">
             {title}
           </p>
-          <p className="mt-1 text-3xl font-bold">{value}</p>
+          <p className={`text-3xl font-bold tracking-tight ${styles.text}`}>{value}</p>
         </div>
-        <Icon className="h-12 w-12 opacity-30" />
+        <div className={`flex size-11 items-center justify-center rounded-xl ${styles.icon}`}>
+          <Icon className="size-5" />
+        </div>
       </div>
       {href && (
-        <div className="mt-3 border-t border-white/20 pt-3">
-          <span className="text-xs font-medium uppercase tracking-wider opacity-80 hover:opacity-100">
-            View More →
+        <div className="mt-3 pt-3 border-t border-border/50">
+          <span className={`text-xs font-medium ${styles.text}`}>
+            View details &rarr;
           </span>
         </div>
       )}

@@ -261,7 +261,7 @@ export function AssessmentForm({
         <Button
           onClick={() => handleSubmit("SUBMITTED")}
           disabled={isPending}
-          style={{ background: "#1caf9a" }}
+         
         >
           {isPending ? (
             <Loader2 className="mr-2 size-4 animate-spin" />
@@ -301,8 +301,8 @@ function CriteriaSection({
           <div key={criterion.key}>
             {idx > 0 && <Separator className="my-3" />}
             <div className="flex items-start justify-between gap-4">
-              <Label className="text-sm leading-5 font-normal text-[#333] flex-1">
-                <span className="font-semibold text-[#1caf9a] mr-1.5">
+              <Label className="text-sm leading-5 font-normal text-foreground flex-1">
+                <span className="font-semibold text-primary mr-1.5">
                   {criterion.key.toUpperCase()}
                 </span>
                 {criterion.label}
@@ -374,7 +374,7 @@ function RedFlagSection({
               />
               <Label
                 htmlFor={criterion.key}
-                className="text-sm leading-5 font-normal text-[#333] cursor-pointer"
+                className="text-sm leading-5 font-normal text-foreground cursor-pointer"
               >
                 <span className="font-semibold text-red-500 mr-1.5">
                   {criterion.key.toUpperCase()}

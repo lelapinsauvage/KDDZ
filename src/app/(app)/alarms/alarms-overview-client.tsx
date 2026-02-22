@@ -61,7 +61,7 @@ export function AlarmsOverviewClient({
               <p className="text-sm text-muted-foreground">
                 Total Active Alerts
               </p>
-              <p className="text-2xl font-semibold text-[#333]">
+              <p className="text-2xl font-semibold text-foreground">
                 {totalActive}
               </p>
             </div>
@@ -84,7 +84,7 @@ export function AlarmsOverviewClient({
                       <Icon className={`size-5 ${textClass}`} />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-[#333] group-hover:text-[#1caf9a]">
+                      <p className="text-sm font-medium text-foreground group-hover:text-primary">
                         {item.label}
                       </p>
                       <div className="flex items-center gap-2">

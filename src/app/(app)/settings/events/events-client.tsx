@@ -193,7 +193,7 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
               date: evDate,
               endDate: evEndDate || null,
               eventTypeId,
-              eventTypeColor: eventType?.color ?? "#1caf9a",
+              eventTypeColor: eventType?.color ?? "#14B8A6",
               eventTypeName: eventType?.name ?? "—",
               branchId,
               branchName,
@@ -222,7 +222,7 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
                     date: evDate,
                     endDate: evEndDate || null,
                     eventTypeId,
-                    eventTypeColor: eventType?.color ?? "#1caf9a",
+                    eventTypeColor: eventType?.color ?? "#14B8A6",
                     eventTypeName: eventType?.name ?? "—",
                     branchId,
                     branchName,
@@ -418,7 +418,7 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
                 <Button variant="outline" size="icon" onClick={prevMonth}>
                   <ChevronLeft className="size-4" />
                 </Button>
-                <h3 className="min-w-[160px] text-center text-base font-semibold text-[#333]">
+                <h3 className="min-w-[160px] text-center text-base font-semibold text-foreground">
                   {MONTH_NAMES[calMonth - 1]} {calYear}
                 </h3>
                 <Button variant="outline" size="icon" onClick={nextMonth}>
@@ -426,7 +426,7 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
                 </Button>
               </div>
               <Button
-                className="bg-[#1caf9a] text-white hover:bg-[#18a08d]"
+                className="bg-primary text-white hover:bg-primary/90"
                 onClick={() => openAdd()}
                 disabled={isPending}
               >
@@ -443,7 +443,7 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
                     {DAY_NAMES.map((day) => (
                       <th
                         key={day}
-                        className="w-[14.28%] border-b bg-[#f1f3f6] px-2 py-2 text-center text-xs font-semibold uppercase text-[#6f7b8a]"
+                        className="w-[14.28%] border-b bg-muted/50 px-2 py-2 text-center text-xs font-semibold uppercase text-muted-foreground"
                       >
                         {day}
                       </th>
@@ -474,7 +474,7 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
                         return (
                           <td
                             key={dayIdx}
-                            className={`h-[80px] cursor-pointer border-b border-r p-2 align-top transition-colors last:border-r-0 hover:bg-[#1caf9a]/5 ${
+                            className={`h-[80px] cursor-pointer border-b border-r p-2 align-top transition-colors last:border-r-0 hover:bg-primary/5 ${
                               hasEvents ? "bg-blue-50/40" : "bg-white"
                             }`}
                             onClick={() => openAdd(dateKey)}
@@ -483,8 +483,8 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
                               <span
                                 className={`text-sm font-medium ${
                                   isToday
-                                    ? "flex size-6 items-center justify-center rounded-full bg-[#1caf9a] text-white"
-                                    : "text-[#333]"
+                                    ? "flex size-6 items-center justify-center rounded-full bg-primary text-white"
+                                    : "text-foreground"
                                 }`}
                               >
                                 {day}
@@ -628,7 +628,7 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
               Cancel
             </Button>
             <Button
-              style={{ background: "#1caf9a" }}
+             
               className="text-white"
               onClick={handleSave}
               disabled={!evTitle.trim() || !evDate || isPending}

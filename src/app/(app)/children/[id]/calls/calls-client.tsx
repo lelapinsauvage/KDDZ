@@ -121,7 +121,7 @@ export function CallsClient({ child, calls }: Props) {
             <Phone className="h-5 w-5" />
             <span className="text-sm">{calls.length} call(s) logged</span>
           </div>
-          <Button size="sm" style={{ background: "#1caf9a" }}>
+          <Button size="sm">
             <Plus className="mr-1 h-4 w-4" />
             Log Call
           </Button>

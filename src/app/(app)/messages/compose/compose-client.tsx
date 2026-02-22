@@ -83,11 +83,11 @@ export function ComposeClient({ recipients }: ComposeClientProps) {
       <div className="p-4 md:p-6 space-y-4">
         {/* Quick Links */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <Card className="border-[#1caf9a]/30 bg-[#1caf9a]/5">
+          <Card className="border-primary/30 bg-primary/5">
             <CardContent className="flex items-center gap-3 py-3">
-              <UserRound className="size-5 text-[#1caf9a]" />
+              <UserRound className="size-5 text-primary" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-[#333]">
+                <p className="text-sm font-medium text-foreground">
                   Direct Message
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -104,7 +104,7 @@ export function ComposeClient({ recipients }: ComposeClientProps) {
             <CardContent className="flex items-center gap-3 py-3">
               <Users className="size-5 text-blue-600" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-[#333]">
+                <p className="text-sm font-medium text-foreground">
                   Class Message
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -121,7 +121,7 @@ export function ComposeClient({ recipients }: ComposeClientProps) {
             <CardContent className="flex items-center gap-3 py-3">
               <Inbox className="size-5 text-muted-foreground" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-[#333]">Inbox</p>
+                <p className="text-sm font-medium text-foreground">Inbox</p>
                 <p className="text-xs text-muted-foreground">
                   View received messages
                 </p>
@@ -202,7 +202,7 @@ export function ComposeClient({ recipients }: ComposeClientProps) {
               </Button>
               <Button
                 onClick={handleSend}
-                style={{ background: "#1caf9a" }}
+               
                 disabled={!recipient || !subject || !body || isPending || success}
               >
                 <Send className="mr-1 size-3.5" />

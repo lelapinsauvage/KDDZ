@@ -49,7 +49,7 @@ export function ContractAlarmsClient({ alarms }: ContractAlarmsClientProps) {
         header: "Description",
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
-            <FileText className="size-4 text-[#1caf9a]" />
+            <FileText className="size-4 text-primary" />
             <span className="font-medium">{row.original.message || "—"}</span>
           </div>
         ),

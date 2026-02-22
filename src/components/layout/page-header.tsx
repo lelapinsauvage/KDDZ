@@ -13,10 +13,10 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, breadcrumbs }: PageHeaderProps) {
   return (
-    <div className="flex flex-col gap-1 border-b border-[#e1e5ec] bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
-      <h1 className="text-lg font-semibold text-[#333] sm:text-xl">{title}</h1>
-      <nav className="hidden items-center gap-1 text-sm text-[#6f7b8a] sm:flex">
-        <Link href="/dashboard" className="transition-colors hover:text-[#333]">
+    <div className="flex flex-col gap-1 border-b border-border bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
+      <h1 className="text-lg font-bold tracking-tight text-foreground sm:text-xl">{title}</h1>
+      <nav className="hidden items-center gap-1 text-sm text-muted-foreground sm:flex">
+        <Link href="/dashboard" className="transition-colors hover:text-foreground">
           Home
         </Link>
         {breadcrumbs.map((crumb, index) => (
@@ -25,12 +25,12 @@ export function PageHeader({ title, breadcrumbs }: PageHeaderProps) {
             {crumb.href ? (
               <Link
                 href={crumb.href}
-                className="transition-colors hover:text-[#333]"
+                className="transition-colors hover:text-foreground"
               >
                 {crumb.label}
               </Link>
             ) : (
-              <span className="text-[#333]">{crumb.label}</span>
+              <span className="font-medium text-foreground">{crumb.label}</span>
             )}
           </span>
         ))}

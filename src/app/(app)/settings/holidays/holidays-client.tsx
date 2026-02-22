@@ -256,7 +256,7 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
         header: "Holiday Name",
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
-            <CalendarDays className="size-4 text-[#1caf9a]" />
+            <CalendarDays className="size-4 text-primary" />
             <span className="font-medium">{row.original.name}</span>
           </div>
         ),
@@ -331,7 +331,7 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                 <Button variant="outline" size="icon" onClick={prevMonth}>
                   <ChevronLeft className="size-4" />
                 </Button>
-                <h3 className="text-base font-semibold text-[#333] min-w-[160px] text-center">
+                <h3 className="text-base font-semibold text-foreground min-w-[160px] text-center">
                   {MONTH_NAMES[calMonth - 1]} {calYear}
                 </h3>
                 <Button variant="outline" size="icon" onClick={nextMonth}>
@@ -339,7 +339,7 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                 </Button>
               </div>
               <Button
-                className="bg-[#1caf9a] text-white hover:bg-[#18a08d]"
+                className="bg-primary text-white hover:bg-primary/90"
                 onClick={() => openAdd()}
                 disabled={isPending}
               >
@@ -356,7 +356,7 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                     {DAY_NAMES.map((day) => (
                       <th
                         key={day}
-                        className="border-b bg-[#f1f3f6] px-2 py-2 text-center text-xs font-semibold uppercase text-[#6f7b8a] w-[14.28%]"
+                        className="border-b bg-muted/50 px-2 py-2 text-center text-xs font-semibold uppercase text-muted-foreground w-[14.28%]"
                       >
                         {day}
                       </th>
@@ -387,7 +387,7 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                         return (
                           <td
                             key={dayIdx}
-                            className={`border-b border-r last:border-r-0 p-2 align-top h-[80px] cursor-pointer transition-colors hover:bg-[#1caf9a]/5 ${
+                            className={`border-b border-r last:border-r-0 p-2 align-top h-[80px] cursor-pointer transition-colors hover:bg-primary/5 ${
                               hasHolidays ? "bg-red-50/60" : "bg-white"
                             }`}
                             onClick={() => openAdd(dateKey)}
@@ -396,10 +396,10 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                               <span
                                 className={`text-sm font-medium ${
                                   isToday
-                                    ? "bg-[#1caf9a] text-white rounded-full size-6 flex items-center justify-center"
+                                    ? "bg-primary text-white rounded-full size-6 flex items-center justify-center"
                                     : hasHolidays
                                       ? "text-red-600"
-                                      : "text-[#333]"
+                                      : "text-foreground"
                                 }`}
                               >
                                 {day}
@@ -472,7 +472,7 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
               Cancel
             </Button>
             <Button
-              style={{ background: "#1caf9a" }}
+             
               className="text-white"
               onClick={handleSave}
               disabled={!holName.trim() || !holDate || isPending}

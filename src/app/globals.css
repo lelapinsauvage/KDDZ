@@ -4,7 +4,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* ── Metronic Dark Blue Theme for Garderie / KiddzOnline ── */
+/* ── KiddzOnline — Playful Modern Kids Platform ── */
 
 @theme inline {
   --color-background: var(--background);
@@ -50,74 +50,69 @@
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
 
-  /* Garderie-specific dashboard card colors */
-  --color-card-blue: #4b77be;
-  --color-card-blue-hoki: #67809f;
-  --color-card-green: #1caf9a;
-  --color-card-red: #e7505a;
-  --color-card-red-pink: #e08283;
-  --color-card-purple: #8e44ad;
-  --color-card-yellow: #f2784b;
+  /* Playful accent palette for dashboard & UI */
+  --color-accent-coral: #FB7185;
+  --color-accent-purple: #A78BFA;
+  --color-accent-sky: #38BDF8;
+  --color-accent-lime: #4ADE80;
+  --color-accent-orange: #FB923C;
+  --color-accent-amber: #F59E0B;
+  --color-accent-pink: #F472B6;
+  --color-accent-indigo: #818CF8;
 }
 
 :root {
-  --radius: 0.5rem;
+  --radius: 0.75rem;
 
-  /* Light content area — matches Metronic page background */
-  --background: #eef1f5;
-  --foreground: #333333;
+  /* Warm, airy background — not cold corporate gray */
+  --background: #FAFAF9;
+  --foreground: #1C1917;
 
   --card: #ffffff;
-  --card-foreground: #333333;
+  --card-foreground: #1C1917;
   --popover: #ffffff;
-  --popover-foreground: #333333;
+  --popover-foreground: #1C1917;
 
-  /* Primary = teal accent from Metronic */
-  --primary: #1caf9a;
+  /* Primary = warm teal — trustworthy, calming, kid-friendly */
+  --primary: #14B8A6;
   --primary-foreground: #ffffff;
 
-  --secondary: #f1f3f6;
-  --secondary-foreground: #333333;
+  --secondary: #F5F5F4;
+  --secondary-foreground: #1C1917;
 
-  --muted: #f1f3f6;
-  --muted-foreground: #6f7b8a;
+  --muted: #F5F5F4;
+  --muted-foreground: #78716C;
 
-  --accent: #f1f3f6;
-  --accent-foreground: #333333;
+  --accent: #F0FDFA;
+  --accent-foreground: #0D9488;
 
-  --destructive: #e7505a;
+  --destructive: #EF4444;
 
-  --border: #e1e5ec;
-  --input: #e1e5ec;
-  --ring: #1caf9a;
+  --border: #E7E5E4;
+  --input: #D6D3D1;
+  --ring: #14B8A6;
 
-  /* Dashboard charts */
-  --chart-1: #4b77be;
-  --chart-2: #1caf9a;
-  --chart-3: #e7505a;
-  --chart-4: #f2784b;
-  --chart-5: #8e44ad;
+  /* Playful chart colors */
+  --chart-1: #14B8A6;
+  --chart-2: #A78BFA;
+  --chart-3: #FB7185;
+  --chart-4: #38BDF8;
+  --chart-5: #FB923C;
 
-  /* Sidebar — always dark blue-gray (Metronic darkblue theme) */
-  --sidebar: #364150;
-  --sidebar-foreground: #b4bcc8;
-  --sidebar-primary: #1caf9a;
+  /* Light, clean sidebar */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #44403C;
+  --sidebar-primary: #14B8A6;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #2c3542;
-  --sidebar-accent-foreground: #dde2e8;
-  --sidebar-border: #3f4b5a;
-  --sidebar-ring: #1caf9a;
+  --sidebar-accent: #F0FDFA;
+  --sidebar-accent-foreground: #0D9488;
+  --sidebar-border: #E7E5E4;
+  --sidebar-ring: #14B8A6;
 }
 
 /* ── Typography ── */
-@font-face {
-  font-family: "Open Sans";
-  src: local("Open Sans");
-  font-display: swap;
-}
-
 :root {
-  --font-sans: "Open Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: ui-monospace, "Cascadia Code", "Fira Code", monospace;
 }
 
@@ -128,43 +123,38 @@
   body {
     @apply bg-background text-foreground font-sans;
     font-size: 14px;
-    line-height: 1.5;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
-/* ── Metronic-style header ── */
+/* ── Modern header ── */
 .header-bar {
-  background: #2b3643;
-  height: 46px;
+  background: #ffffff;
+  height: 56px;
+  border-bottom: 1px solid #E7E5E4;
 }
 
-/* ── Metronic-style footer ── */
+/* ── Modern footer ── */
 .footer-bar {
-  background: #28303b;
-  color: #98a6ba;
+  background: #ffffff;
+  color: #78716C;
+  border-top: 1px solid #E7E5E4;
 }
 
-/* ── Dashboard stat card styles ── */
-.stat-card-blue { background: #4b77be; color: white; }
-.stat-card-blue-hoki { background: #67809f; color: white; }
-.stat-card-green { background: #1caf9a; color: white; }
-.stat-card-red { background: #e7505a; color: white; }
-.stat-card-red-pink { background: #e08283; color: white; }
-.stat-card-purple { background: #8e44ad; color: white; }
-.stat-card-yellow { background: #f2784b; color: white; }
-
-/* ── Scrollbar styling (matches dark sidebar) ── */
+/* ── Scrollbar styling (subtle, modern) ── */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #505f72;
-  border-radius: 4px;
+  background: #D6D3D1;
+  border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #6f7b8a;
+  background: #A8A29E;
 }

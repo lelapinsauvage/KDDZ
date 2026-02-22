@@ -142,7 +142,7 @@ export function AccidentsClient({ child, accidents }: Props) {
             <AlertTriangle className="h-5 w-5" />
             <span className="text-sm">{accidents.length} accident(s) on record</span>
           </div>
-          <Button size="sm" style={{ background: "#1caf9a" }}>
+          <Button size="sm">
             <Plus className="mr-1 h-4 w-4" />
             Report Accident
           </Button>

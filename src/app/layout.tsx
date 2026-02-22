@@ -1,17 +1,17 @@
 import type { Metadata } from "next"
-import { Open_Sans } from "next/font/google"
+import { Plus_Jakarta_Sans } from "next/font/google"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { SessionProvider } from "@/components/providers/session-provider"
 import "./globals.css"
 
-const openSans = Open_Sans({
+const plusJakarta = Plus_Jakarta_Sans({
   variable: "--font-sans",
   subsets: ["latin"],
   display: "swap",
 })
 
 export const metadata: Metadata = {
-  title: "KiddzOnline \u2014 Daycare Management",
+  title: "KiddzOnline — Daycare Management",
   description: "Daycare and nursery management platform",
 }
 
@@ -22,7 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${openSans.variable} antialiased`}>
+      <body className={`${plusJakarta.variable} antialiased`}>
         <SessionProvider>
           <TooltipProvider>
             {children}

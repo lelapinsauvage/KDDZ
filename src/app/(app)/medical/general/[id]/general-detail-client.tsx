@@ -257,7 +257,7 @@ export function GeneralDetailClient({
               Save Draft
             </Button>
             <Button
-              style={{ background: "#1caf9a" }}
+             
               className="text-white"
               onClick={handleSubmit(onSubmitForm)}
               disabled={isLoading}

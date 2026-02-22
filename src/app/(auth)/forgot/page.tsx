@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -17,51 +16,72 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ background: "#364150" }}>
-      <Card className="w-full max-w-md border-0 shadow-2xl">
-        <CardHeader className="space-y-1 pb-4 text-center">
-          <h1 className="text-3xl font-bold tracking-tight" style={{ color: "#1caf9a" }}>
-            KiddzOnline
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-teal-50 via-white to-amber-50 p-4">
+      {/* Decorative blobs */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -top-32 -left-32 h-80 w-80 rounded-full bg-teal-200/30 blur-3xl" />
+        <div className="absolute -bottom-32 -right-32 h-80 w-80 rounded-full bg-amber-200/30 blur-3xl" />
+      </div>
+
+      <div className="relative w-full max-w-md">
+        {/* Logo */}
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-400 to-teal-600 text-white shadow-lg shadow-teal-200">
+            <span className="text-2xl font-bold">K</span>
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            Kidd<span className="text-teal-500">z</span>Online
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Reset your password
           </p>
-        </CardHeader>
-        <CardContent>
+        </div>
+
+        {/* Card */}
+        <div className="rounded-2xl border border-border/50 bg-white/80 p-8 shadow-xl shadow-black/5 backdrop-blur-sm">
           {sent ? (
             <div className="space-y-4 text-center">
+              <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-teal-50">
+                <svg className="size-6 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
               <p className="text-sm text-muted-foreground">
-                If an account exists for <strong>{email}</strong>, you will receive a password reset email.
+                If an account exists for <strong className="text-foreground">{email}</strong>, you will receive a password reset email.
               </p>
-              <a href="/login" className="text-sm hover:underline" style={{ color: "#1caf9a" }}>
+              <a href="/login" className="text-sm font-medium text-teal-600 hover:text-teal-700 hover:underline">
                 Back to login
               </a>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email address</Label>
+                <Label htmlFor="email" className="text-sm font-medium">Email address</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder="you@nursery.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  className="h-11 rounded-xl border-stone-200 bg-stone-50/50 transition-colors focus:bg-white"
                   required
                 />
               </div>
-              <Button type="submit" className="w-full" style={{ background: "#1caf9a" }}>
+              <Button
+                type="submit"
+                className="h-11 w-full rounded-xl bg-gradient-to-r from-teal-500 to-teal-600 text-white font-medium shadow-md shadow-teal-200 transition-all hover:shadow-lg hover:shadow-teal-200 hover:from-teal-600 hover:to-teal-700"
+              >
                 Send Reset Link
               </Button>
               <div className="text-center">
-                <a href="/login" className="text-sm hover:underline" style={{ color: "#1caf9a" }}>
+                <a href="/login" className="text-sm text-teal-600 hover:text-teal-700 hover:underline">
                   Back to login
                 </a>
               </div>
             </form>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

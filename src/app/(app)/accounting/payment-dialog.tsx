@@ -400,7 +400,7 @@ export function PaymentDialog({
               Close
             </Button>
             <Button
-              style={{ background: "#1caf9a" }}
+             
               onClick={handleSubmit}
               disabled={isPending}
             >

@@ -150,21 +150,21 @@ export function VaccinationsClient({
       accessorKey: "childName",
       header: "Child Name",
       cell: ({ row }) => (
-        <span className="font-medium text-[#333]">{row.original.childName}</span>
+        <span className="font-medium text-foreground">{row.original.childName}</span>
       ),
     },
     {
       accessorKey: "vaccine",
       header: "Vaccine",
       cell: ({ row }) => (
-        <span className="text-sm text-[#333]">{row.original.vaccine}</span>
+        <span className="text-sm text-foreground">{row.original.vaccine}</span>
       ),
     },
     {
       accessorKey: "dateGiven",
       header: "Date Given",
       cell: ({ row }) => (
-        <span className="text-sm text-[#6f7b8a]">
+        <span className="text-sm text-muted-foreground">
           {row.original.dateGiven
             ? format(new Date(row.original.dateGiven), "MMM d, yyyy")
             : "—"}
@@ -175,7 +175,7 @@ export function VaccinationsClient({
       accessorKey: "nextDue",
       header: "Next Due",
       cell: ({ row }) => (
-        <span className="text-sm text-[#6f7b8a]">
+        <span className="text-sm text-muted-foreground">
           {row.original.nextDue
             ? format(new Date(row.original.nextDue), "MMM d, yyyy")
             : "N/A"}
@@ -191,7 +191,7 @@ export function VaccinationsClient({
       accessorKey: "branchName",
       header: "Branch",
       cell: ({ row }) => (
-        <span className="text-sm text-[#6f7b8a]">{row.original.branchName}</span>
+        <span className="text-sm text-muted-foreground">{row.original.branchName}</span>
       ),
     },
     {
@@ -283,7 +283,7 @@ export function VaccinationsClient({
           </Select>
 
           <Link href="/medical/vaccinations/new" className="ml-auto">
-            <Button style={{ background: "#1caf9a" }} className="text-white">
+            <Button className="text-white">
               <Plus className="size-4" />
               Add New
             </Button>
