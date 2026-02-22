@@ -21,6 +21,7 @@ import type { ExportColumn } from "@/lib/export";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { getChildrenColumns, getInitials, getAvatarColor, type ChildRow } from "@/components/children/children-columns";
@@ -509,7 +510,7 @@ export function ChildrenPageClient({
           {viewMode === "cards" ? (
             /* Cards Grid */
             childrenList.length === 0 ? (
-              <EmptyState />
+              <ChildrenEmptyState />
             ) : (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {childrenList.map((child) => {
@@ -625,7 +626,7 @@ export function ChildrenPageClient({
                         colSpan={columns.length}
                         className="h-40 text-center"
                       >
-                        <EmptyState />
+                        <ChildrenEmptyState />
                       </TableCell>
                     </TableRow>
                   )}
@@ -750,22 +751,13 @@ export function ChildrenPageClient({
 
 // ── Warm Empty State ─────────────────────────
 
-function EmptyState() {
+function ChildrenEmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-primary/20 bg-primary/[0.02] p-12 text-center">
-      <div className="flex size-16 items-center justify-center rounded-full bg-primary/10 mb-4">
-        <Sparkles className="size-7 text-primary" />
-      </div>
-      <h3 className="text-base font-semibold text-foreground">No children found</h3>
-      <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-        Try adjusting your search or filters. Or start by enrolling a new child to the nursery.
-      </p>
-      <Button asChild size="sm" className="mt-4 bg-primary text-white hover:bg-primary/90">
-        <Link href="/children/new">
-          <Plus className="mr-1 size-3.5" />
-          Enroll a Child
-        </Link>
-      </Button>
-    </div>
+    <EmptyState
+      icon={Sparkles}
+      title="No children found"
+      description="Try adjusting your search or filters. Or start by enrolling a new child to the nursery."
+      action={{ label: "Enroll a Child", href: "/children/new", icon: Plus }}
+    />
   );
 }

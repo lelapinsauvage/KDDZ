@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -371,10 +372,11 @@ export function MedicalConditionsClient({
         </div>
 
         {filteredData.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12">
-            <Heart className="size-10 text-muted-foreground/40 mb-3" />
-            <p className="text-sm text-muted-foreground">No medical conditions found.</p>
-          </div>
+          <EmptyState
+            icon={Heart}
+            title="No medical conditions found"
+            description="No medical conditions match your current filters."
+          />
         ) : (
           <DataTable columns={columns} data={filteredData} />
         )}

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -352,10 +353,11 @@ export function MedicalGeneralClient({
         </div>
 
         {filteredData.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12">
-            <Stethoscope className="size-10 text-muted-foreground/40 mb-3" />
-            <p className="text-sm text-muted-foreground">No general medical forms found.</p>
-          </div>
+          <EmptyState
+            icon={Stethoscope}
+            title="No general medical forms found"
+            description="No general medical forms match your current filters."
+          />
         ) : (
           <DataTable columns={columns} data={filteredData} />
         )}

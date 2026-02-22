@@ -25,6 +25,7 @@ import {
 
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -421,21 +422,12 @@ export function AbsentReportsClient({ reports, branches, initialStatusFilter = "
         </Card>
 
         {filteredReports.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/30 p-16 text-center">
-            <div className="flex size-14 items-center justify-center rounded-full bg-amber-100 mb-4">
-              <CalendarDays className="size-7 text-amber-600" />
-            </div>
-            <p className="text-sm font-semibold text-foreground">No absence reports found</p>
-            <p className="mt-1.5 text-xs text-muted-foreground max-w-sm">
-              No absence reports match your current filters.
-            </p>
-            <Button asChild size="sm" className="mt-5">
-              <Link href="/absent-reports/new">
-                <Plus className="mr-1 size-3.5" />
-                Report Absence
-              </Link>
-            </Button>
-          </div>
+          <EmptyState
+            icon={CalendarDays}
+            title="No absence reports found"
+            description="No absence reports match your current filters."
+            action={{ label: "Report Absence", href: "/absent-reports/new", icon: Plus }}
+          />
         ) : (
           <DataTable
             columns={absenceColumns}

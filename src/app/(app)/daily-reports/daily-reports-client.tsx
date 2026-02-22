@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Select,
   SelectContent,
@@ -562,28 +563,17 @@ export function DailyReportsClient({
         </Card>
 
         {filteredData.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/30 p-16 text-center">
-            <div className="flex size-14 items-center justify-center rounded-full bg-primary/10 mb-4">
-              <FileText className="size-7 text-primary/60" />
-            </div>
-            <p className="text-sm font-semibold text-foreground">No daily reports found</p>
-            <p className="mt-1.5 text-xs text-muted-foreground max-w-sm">
-              {search || dateFrom || dateTo || branchFilter !== "all" || classFilter !== "all" || statusFilter !== "all"
+          <EmptyState
+            icon={FileText}
+            title="No daily reports found"
+            description={
+              search || dateFrom || dateTo || branchFilter !== "all" || classFilter !== "all" || statusFilter !== "all"
                 ? "Try adjusting your filters to see more results."
-                : "No reports have been submitted yet. Start filling out daily reports for your class."}
-            </p>
-            <div className="mt-5 flex gap-2">
-              <Button asChild size="sm">
-                <Link href="/daily-reports/new">
-                  <Plus className="mr-1 size-3.5" />
-                  New Report
-                </Link>
-              </Button>
-              <Button asChild size="sm" variant="outline">
-                <Link href="/daily-reports/batch">Start Batch Reports</Link>
-              </Button>
-            </div>
-          </div>
+                : "No reports have been submitted yet. Start filling out daily reports for your class."
+            }
+            action={{ label: "New Report", href: "/daily-reports/new", icon: Plus }}
+            secondaryAction={{ label: "Start Batch Reports", href: "/daily-reports/batch" }}
+          />
         ) : (
           <DataTable columns={dailyReportColumns} data={filteredData} />
         )}

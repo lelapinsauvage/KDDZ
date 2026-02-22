@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -403,10 +404,11 @@ export function AccidentReportsClient({
         </div>
 
         {filteredData.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12">
-            <AlertTriangle className="size-10 text-muted-foreground/40 mb-3" />
-            <p className="text-sm text-muted-foreground">No accident reports found.</p>
-          </div>
+          <EmptyState
+            icon={AlertTriangle}
+            title="No accident reports found"
+            description="No accident reports match your current filters."
+          />
         ) : (
           <DataTable columns={columns} data={filteredData} />
         )}

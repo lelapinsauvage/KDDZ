@@ -10,10 +10,12 @@ import {
   MoreHorizontal,
   ArrowUpDown,
   Loader2,
+  UtensilsCrossed,
 } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -313,9 +315,11 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
         </div>
 
         {filteredItems.length === 0 ? (
-          <div className="flex items-center justify-center rounded-lg border border-dashed p-12">
-            <p className="text-sm text-muted-foreground">No food items found.</p>
-          </div>
+          <EmptyState
+            icon={UtensilsCrossed}
+            title="No food items found"
+            description="Add food items to build your nursery menu and track meals."
+          />
         ) : (
           <DataTable columns={foodColumns} data={filteredItems} searchKey="name" searchPlaceholder="Search food items..." />
         )}

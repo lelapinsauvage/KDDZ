@@ -24,6 +24,7 @@ import {
 
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -693,6 +694,13 @@ export function AccountingClient({
           data={filteredPayments}
           searchKey="childName"
           searchPlaceholder="Search by child name..."
+          emptyState={
+            <EmptyState
+              icon={DollarSign}
+              title="No payments recorded"
+              description="No payments match your current filters. Start by recording a payment."
+            />
+          }
         />
       </div>
 

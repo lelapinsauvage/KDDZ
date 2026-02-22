@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -39,6 +40,7 @@ import {
   MailCheck,
   MailX,
   ArrowUpDown,
+  Inbox,
 } from "lucide-react";
 import {
   markAsRead,
@@ -379,6 +381,13 @@ export function InboxClient({ messages, total }: InboxClientProps) {
           data={filteredMessages}
           searchKey="subject"
           searchPlaceholder="Search by subject..."
+          emptyState={
+            <EmptyState
+              icon={Inbox}
+              title="Your inbox is empty"
+              description="No messages match your current filters. New messages will appear here."
+            />
+          }
         />
 
         {total > 0 && (

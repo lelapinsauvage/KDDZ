@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   createEmployeeColumns,
   roleColors,
@@ -185,7 +186,18 @@ export function StaffPageClient({ employees }: StaffPageClientProps) {
           />
         </div>
 
-        <DataTable columns={columns} data={filteredData} />
+        <DataTable
+          columns={columns}
+          data={filteredData}
+          emptyState={
+            <EmptyState
+              icon={Users}
+              title="No staff members"
+              description="No staff members match your current filters. Add your first team member to get started."
+              action={{ label: "Add Staff", href: "/employees/staff/new", icon: Plus }}
+            />
+          }
+        />
       </div>
     </>
   );
