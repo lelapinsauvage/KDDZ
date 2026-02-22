@@ -14,6 +14,8 @@ import {
   DollarSign,
   Inbox,
   Zap,
+  Clock,
+  Sparkles,
 } from "lucide-react"
 import {
   CommandDialog,
@@ -26,6 +28,30 @@ import {
 } from "@/components/ui/command"
 import { globalSearch, type GlobalSearchResult } from "@/lib/actions/search"
 
+const RECENT_KEY = "garderie-recent-pages"
+const MAX_RECENT = 5
+
+function getRecentPages(): Array<{ name: string; href: string }> {
+  if (typeof window === "undefined") return []
+  try {
+    const stored = localStorage.getItem(RECENT_KEY)
+    return stored ? JSON.parse(stored) : []
+  } catch {
+    return []
+  }
+}
+
+function addRecentPage(name: string, href: string) {
+  if (typeof window === "undefined") return
+  try {
+    const recent = getRecentPages().filter((p) => p.href !== href)
+    recent.unshift({ name, href })
+    localStorage.setItem(RECENT_KEY, JSON.stringify(recent.slice(0, MAX_RECENT)))
+  } catch {
+    // ignore
+  }
+}
+
 const quickActions = [
   { name: "New Daily Report", href: "/daily-reports/new", icon: FileText, keywords: "create add report daily" },
   { name: "Batch Daily Reports", href: "/daily-reports/batch", icon: ClipboardList, keywords: "batch bulk class reports start" },
@@ -37,28 +63,33 @@ const quickActions = [
   { name: "Register Child", href: "/children/new", icon: Plus, keywords: "create add new child enroll register" },
 ]
 
+const workflowShortcuts = [
+  { name: "Start my day", href: "/today", icon: Sparkles, keywords: "start day morning begin" },
+  { name: "Quick attendance", href: "/today", icon: Sparkles, keywords: "attendance check mark present" },
+  { name: "Reports for class", href: "/daily-reports/batch", icon: Sparkles, keywords: "reports class batch group" },
+]
+
 const pages = [
   { name: "Today", href: "/today", group: "Overview" },
   { name: "Dashboard", href: "/dashboard", group: "Overview" },
   { name: "All Children", href: "/children", group: "Children" },
-  { name: "Daily Reports", href: "/daily-reports", group: "Children" },
-  { name: "Absence Reports", href: "/absent-reports", group: "Children" },
+  { name: "Parent Users", href: "/settings/parent-users", group: "Children" },
+  { name: "Daily Reports", href: "/daily-reports", group: "Daily Ops" },
+  { name: "Attendance & Absences", href: "/absent-reports", group: "Daily Ops" },
+  { name: "Food Calendar", href: "/food/calendar", group: "Daily Ops" },
   { name: "Medical Records", href: "/medical/general", group: "Health" },
   { name: "Medical Conditions", href: "/medical/conditions", group: "Health" },
   { name: "Medical Visits", href: "/medical/visits", group: "Health" },
   { name: "Vaccinations", href: "/medical/vaccinations", group: "Health" },
   { name: "Accidents", href: "/medical/accidents", group: "Health" },
-  { name: "Messages Inbox", href: "/messages/inbox", group: "Communication" },
-  { name: "Sent Messages", href: "/messages/sent", group: "Communication" },
-  { name: "Branches", href: "/branches", group: "Management" },
-  { name: "Classes", href: "/classes", group: "Management" },
-  { name: "Staff", href: "/employees/staff", group: "Management" },
-  { name: "Accounting", href: "/accounting", group: "Management" },
-  { name: "Food Listing", href: "/food", group: "Management" },
-  { name: "Food Calendar", href: "/food/calendar", group: "Management" },
-  { name: "Assessments", href: "/assessments", group: "Management" },
-  { name: "Notifications", href: "/alarms", group: "System" },
-  { name: "Settings", href: "/settings/nursery", group: "System" },
+  { name: "Accounting", href: "/accounting", group: "Finance" },
+  { name: "Staff", href: "/employees/staff", group: "Staff & Setup" },
+  { name: "Branches & Classes", href: "/branches", group: "Staff & Setup" },
+  { name: "Assessments", href: "/assessments", group: "Staff & Setup" },
+  { name: "Messages", href: "/messages/inbox", group: "Staff & Setup" },
+  { name: "Sent Messages", href: "/messages/sent", group: "Staff & Setup" },
+  { name: "Notifications", href: "/alarms", group: "Staff & Setup" },
+  { name: "Settings", href: "/settings/nursery", group: "Staff & Setup" },
 ]
 
 interface GlobalSearchProps {
@@ -71,7 +102,15 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<GlobalSearchResult>({ children: [], employees: [] })
   const [loading, setLoading] = useState(false)
+  const [recentPages, setRecentPages] = useState<Array<{ name: string; href: string }>>([])
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null)
+
+  // Load recent pages on open
+  useEffect(() => {
+    if (open) {
+      setRecentPages(getRecentPages())
+    }
+  }, [open])
 
   // CMD+K / Ctrl+K keyboard shortcut
   useEffect(() => {
@@ -117,7 +156,8 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
   }, [query])
 
   const handleSelect = useCallback(
-    (href: string) => {
+    (href: string, name?: string) => {
+      if (name) addRecentPage(name, href)
       onOpenChange(false)
       setQuery("")
       setResults({ children: [], employees: [] })
@@ -135,6 +175,7 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
   }, [onOpenChange])
 
   const hasEntityResults = results.children.length > 0 || results.employees.length > 0
+  const showRecent = recentPages.length > 0 && query.trim().length === 0
 
   return (
     <CommandDialog
@@ -160,17 +201,52 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
           )}
         </CommandEmpty>
 
-        {/* Quick Actions — shown prominently at top */}
+        {/* Recent pages — shown when no query */}
+        {showRecent && (
+          <>
+            <CommandGroup heading="Recent">
+              {recentPages.map((page) => (
+                <CommandItem
+                  key={`recent-${page.href}`}
+                  value={`recent ${page.name}`}
+                  onSelect={() => handleSelect(page.href, page.name)}
+                >
+                  <Clock className="size-4 text-muted-foreground" />
+                  <span>{page.name}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+            <CommandSeparator />
+          </>
+        )}
+
+        {/* Quick Actions */}
         <CommandGroup heading="Quick Actions">
           {quickActions.map((action) => (
             <CommandItem
               key={action.href}
               value={`action ${action.name} ${action.keywords}`}
-              onSelect={() => handleSelect(action.href)}
+              onSelect={() => handleSelect(action.href, action.name)}
             >
               <action.icon className="size-4 text-primary" />
               <span>{action.name}</span>
               <Zap className="ml-auto size-3 text-muted-foreground/50" />
+            </CommandItem>
+          ))}
+        </CommandGroup>
+
+        <CommandSeparator />
+
+        {/* Workflow shortcuts */}
+        <CommandGroup heading="Workflows">
+          {workflowShortcuts.map((shortcut) => (
+            <CommandItem
+              key={`workflow-${shortcut.name}`}
+              value={`workflow ${shortcut.name} ${shortcut.keywords}`}
+              onSelect={() => handleSelect(shortcut.href, shortcut.name)}
+            >
+              <shortcut.icon className="size-4 text-amber-500" />
+              <span>{shortcut.name}</span>
             </CommandItem>
           ))}
         </CommandGroup>
@@ -184,7 +260,7 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
               <CommandItem
                 key={child.id}
                 value={`child ${child.name} ${child.description}`}
-                onSelect={() => handleSelect(child.href)}
+                onSelect={() => handleSelect(child.href, child.name)}
               >
                 <Baby className="size-4 text-muted-foreground" />
                 <span>{child.name}</span>
@@ -201,7 +277,7 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
               <CommandItem
                 key={`${emp.type}-${emp.id}`}
                 value={`employee ${emp.name} ${emp.description}`}
-                onSelect={() => handleSelect(emp.href)}
+                onSelect={() => handleSelect(emp.href, emp.name)}
               >
                 <UserCheck className="size-4 text-muted-foreground" />
                 <span>{emp.name}</span>
@@ -211,7 +287,7 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
           </CommandGroup>
         )}
 
-        {/* Loading indicator when there are page results but entities still loading */}
+        {/* Loading indicator */}
         {loading && !hasEntityResults && query.trim().length >= 2 && (
           <CommandGroup heading="Searching...">
             <CommandItem disabled value="loading">
@@ -229,7 +305,7 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
             <CommandItem
               key={page.href}
               value={`${page.name} ${page.group}`}
-              onSelect={() => handleSelect(page.href)}
+              onSelect={() => handleSelect(page.href, page.name)}
             >
               <FileText className="size-4 text-muted-foreground" />
               <span>{page.name}</span>

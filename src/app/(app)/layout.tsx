@@ -2,18 +2,22 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/layout/app-sidebar"
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
+import { MobileNav } from "@/components/layout/mobile-nav"
 import { AppContextProvider } from "@/components/providers/app-context-provider"
 import { db } from "@/lib/db"
 import { auth } from "@/lib/auth"
+import { getSidebarBadges } from "@/lib/actions/sidebar"
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const [session, branches, years] = await Promise.all([
+  const [session, branches, years, badges] = await Promise.all([
     auth(),
     db.branch.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
     db.schoolYear.findMany({ select: { id: true, label: true }, orderBy: { startDate: "desc" } }),
+    getSidebarBadges(),
   ])
 
   const defaultBranchId = session?.user?.branchId ?? null
+  const userRole = session?.user?.role ?? "TEACHER"
 
   return (
     <AppContextProvider
@@ -33,16 +37,21 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <Header />
 
         {/* Sidebar + main content area below header */}
-        <AppSidebar userRole={session?.user?.role ?? "TEACHER"} />
-        <SidebarInset className="mt-[56px] flex min-h-[calc(100svh-56px)] flex-col">
+        <AppSidebar userRole={userRole} badges={badges} />
+        <SidebarInset className="mt-[52px] flex min-h-[calc(100svh-52px)] flex-col">
           {/* Scrollable content area */}
-          <div className="flex-1 bg-background">
+          <div className="flex-1 bg-background pb-16 md:pb-0">
             {children}
           </div>
 
-          {/* Footer */}
-          <Footer />
+          {/* Footer — hidden on mobile (tab bar takes that space) */}
+          <div className="hidden md:block">
+            <Footer />
+          </div>
         </SidebarInset>
+
+        {/* Mobile bottom tab bar */}
+        <MobileNav userRole={userRole} />
       </SidebarProvider>
     </AppContextProvider>
   )

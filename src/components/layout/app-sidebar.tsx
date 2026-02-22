@@ -3,13 +3,11 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
-  ChevronRight,
   LayoutDashboard,
   Building2,
   Inbox,
   Users,
   UtensilsCrossed,
-  GraduationCap,
   ClipboardList,
   Settings,
   FileText,
@@ -21,6 +19,8 @@ import {
   DollarSign,
   Bell,
   Baby,
+  Search,
+  Pill,
 } from "lucide-react"
 import {
   Sidebar,
@@ -30,380 +30,250 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarMenuSub,
-  SidebarMenuSubItem,
-  SidebarMenuSubButton,
-  SidebarHeader,
+  SidebarFooter,
 } from "@/components/ui/sidebar"
-import { BranchYearSelector } from "./branch-year-selector"
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
+import { Badge } from "@/components/ui/badge"
+import type { SidebarBadges } from "@/lib/actions/sidebar"
 
 type UserRole = "ADMIN" | "TEACHER" | "NURSE" | "DOCTOR" | "MANAGER"
 
-interface NavSubItem {
-  title: string
-  href: string
-}
-
-interface NavSubCollapsible {
-  title: string
-  items: NavSubItem[]
-}
-
-interface NavItem {
+interface FlatNavItem {
   title: string
   icon: React.ComponentType<{ className?: string }>
-  href?: string
-  items?: (NavSubItem | NavSubCollapsible)[]
-  /** Which roles can see this item. If omitted, all roles can see it. */
-  roles?: UserRole[]
+  href: string
+  /** Badge key for dynamic badge counts */
+  badgeKey?: keyof SidebarBadges
 }
 
-interface NavGroup {
+interface NavSection {
   label: string
-  items: NavItem[]
-  /** Which roles can see this group. If omitted, all roles can see it. */
-  roles?: UserRole[]
+  items: FlatNavItem[]
 }
 
-function isSubCollapsible(item: NavSubItem | NavSubCollapsible): item is NavSubCollapsible {
-  return "items" in item
-}
+// ---------------------------------------------------------------------------
+// Role-specific nav configs — flat, workflow-oriented
+// ---------------------------------------------------------------------------
 
-const navGroups: NavGroup[] = [
+const adminNav: NavSection[] = [
   {
     label: "Overview",
     items: [
-      {
-        title: "Today",
-        icon: LayoutDashboard,
-        href: "/today",
-        roles: ["TEACHER"],
-      },
-      {
-        title: "Dashboard",
-        icon: LayoutDashboard,
-        href: "/dashboard",
-        roles: ["ADMIN", "MANAGER", "NURSE", "DOCTOR"],
-      },
+      { title: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+    ],
+  },
+  {
+    label: "Daily Ops",
+    items: [
+      { title: "Daily Reports", icon: FileText, href: "/daily-reports", badgeKey: "missingReports" },
+      { title: "Attendance & Absences", icon: CalendarDays, href: "/absent-reports" },
+      { title: "Food Calendar", icon: UtensilsCrossed, href: "/food/calendar" },
     ],
   },
   {
     label: "Children",
     items: [
-      {
-        title: "Children",
-        icon: Baby,
-        items: [
-          { title: "All Children", href: "/children" },
-          { title: "Parent Users", href: "/settings/parent-users" },
-        ],
-        roles: ["ADMIN", "MANAGER", "NURSE", "DOCTOR"],
-      },
-      {
-        title: "My Class",
-        icon: Baby,
-        href: "/children",
-        roles: ["TEACHER"],
-      },
-      {
-        title: "Daily Reports",
-        icon: FileText,
-        href: "/daily-reports",
-      },
-      {
-        title: "Absences",
-        icon: CalendarDays,
-        href: "/absent-reports",
-      },
+      { title: "All Children", icon: Baby, href: "/children" },
+      { title: "Parent Users", icon: Users, href: "/settings/parent-users" },
     ],
   },
   {
     label: "Health",
     items: [
-      {
-        title: "Medical Records",
-        icon: Stethoscope,
-        items: [
-          { title: "General", href: "/medical/general" },
-          { title: "Conditions", href: "/medical/conditions" },
-          { title: "Visits", href: "/medical/visits" },
-        ],
-      },
-      {
-        title: "Vaccinations",
-        icon: Syringe,
-        href: "/medical/vaccinations",
-      },
-      {
-        title: "Accidents",
-        icon: AlertTriangle,
-        href: "/medical/accidents",
-      },
-    ],
-    roles: ["ADMIN", "MANAGER", "NURSE", "DOCTOR"],
-  },
-  {
-    label: "Communication",
-    items: [
-      {
-        title: "Messages",
-        icon: Inbox,
-        items: [
-          { title: "Inbox", href: "/messages/inbox" },
-          { title: "Compose", href: "/messages/compose" },
-          { title: "Sent", href: "/messages/sent" },
-        ],
-      },
+      { title: "Medical Records", icon: Stethoscope, href: "/medical/general" },
+      { title: "Conditions", icon: Pill, href: "/medical/conditions" },
+      { title: "Visits", icon: Stethoscope, href: "/medical/visits" },
+      { title: "Vaccinations", icon: Syringe, href: "/medical/vaccinations" },
+      { title: "Accidents", icon: AlertTriangle, href: "/medical/accidents" },
     ],
   },
   {
-    label: "Management",
+    label: "Finance",
     items: [
-      {
-        title: "Nursery",
-        icon: Building2,
-        items: [
-          { title: "Branches", href: "/branches" },
-          { title: "Classes", href: "/classes" },
-          { title: "Monthly Attendance", href: "/reports/monthly" },
-        ],
-      },
-      {
-        title: "Staff",
-        icon: UserCheck,
-        href: "/employees/staff",
-      },
-      {
-        title: "Accounting",
-        icon: DollarSign,
-        href: "/accounting",
-      },
-      {
-        title: "Food & Menu",
-        icon: UtensilsCrossed,
-        items: [
-          { title: "Food Listing", href: "/food" },
-          { title: "Food Calendar", href: "/food/calendar" },
-        ],
-        roles: ["ADMIN", "MANAGER"],
-      },
-      {
-        title: "Food Calendar",
-        icon: UtensilsCrossed,
-        href: "/food/calendar",
-        roles: ["TEACHER"],
-      },
-      {
-        title: "Assessments",
-        icon: ClipboardList,
-        href: "/assessments",
-      },
+      { title: "Accounting", icon: DollarSign, href: "/accounting" },
     ],
-    roles: ["ADMIN", "MANAGER", "TEACHER"],
   },
   {
-    label: "System",
+    label: "Staff & Setup",
     items: [
-      {
-        title: "Notifications",
-        icon: Bell,
-        href: "/alarms",
-      },
-      {
-        title: "Settings",
-        icon: Settings,
-        items: [
-          { title: "Nursery", href: "/settings/nursery" },
-          { title: "Holidays", href: "/settings/holidays" },
-          { title: "Events", href: "/settings/events" },
-          { title: "Zones", href: "/settings/zones" },
-          { title: "Areas", href: "/settings/areas" },
-          { title: "Regions", href: "/settings/regions" },
-          { title: "Export", href: "/settings/export" },
-        ],
-        roles: ["ADMIN", "MANAGER"],
-      },
+      { title: "Staff", icon: UserCheck, href: "/employees/staff" },
+      { title: "Branches & Classes", icon: Building2, href: "/branches" },
+      { title: "Assessments", icon: ClipboardList, href: "/assessments" },
+      { title: "Messages", icon: Inbox, href: "/messages/inbox", badgeKey: "unreadMessages" },
+      { title: "Notifications", icon: Bell, href: "/alarms", badgeKey: "activeAlarms" },
+      { title: "Settings", icon: Settings, href: "/settings/nursery" },
     ],
   },
 ]
 
-/**
- * Filter nav groups and items based on user role.
- */
-function getFilteredNav(role: UserRole): NavGroup[] {
-  return navGroups
-    .filter((group) => !group.roles || group.roles.includes(role))
-    .map((group) => ({
-      ...group,
-      items: group.items.filter((item) => !item.roles || item.roles.includes(role)),
-    }))
-    .filter((group) => group.items.length > 0)
+const teacherNav: NavSection[] = [
+  {
+    label: "My Day",
+    items: [
+      { title: "Today", icon: LayoutDashboard, href: "/today" },
+    ],
+  },
+  {
+    label: "Reports",
+    items: [
+      { title: "Daily Reports", icon: FileText, href: "/daily-reports", badgeKey: "missingReports" },
+      { title: "Batch Reports", icon: ClipboardList, href: "/daily-reports/batch" },
+      { title: "Absences", icon: CalendarDays, href: "/absent-reports" },
+    ],
+  },
+  {
+    label: "My Class",
+    items: [
+      { title: "Children", icon: Baby, href: "/children" },
+    ],
+  },
+  {
+    label: "Communication",
+    items: [
+      { title: "Messages", icon: Inbox, href: "/messages/inbox", badgeKey: "unreadMessages" },
+    ],
+  },
+  {
+    label: "Reference",
+    items: [
+      { title: "Food Calendar", icon: UtensilsCrossed, href: "/food/calendar" },
+      { title: "Notifications", icon: Bell, href: "/alarms", badgeKey: "activeAlarms" },
+    ],
+  },
+]
+
+const nurseNav: NavSection[] = [
+  {
+    label: "Overview",
+    items: [
+      { title: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+    ],
+  },
+  {
+    label: "Health Center",
+    items: [
+      { title: "Medical Records", icon: Stethoscope, href: "/medical/general" },
+      { title: "Conditions", icon: Pill, href: "/medical/conditions" },
+      { title: "Visits", icon: Stethoscope, href: "/medical/visits" },
+      { title: "Vaccinations", icon: Syringe, href: "/medical/vaccinations" },
+      { title: "Accidents", icon: AlertTriangle, href: "/medical/accidents" },
+    ],
+  },
+  {
+    label: "Children",
+    items: [
+      { title: "All Children", icon: Baby, href: "/children" },
+    ],
+  },
+  {
+    label: "Communication",
+    items: [
+      { title: "Messages", icon: Inbox, href: "/messages/inbox", badgeKey: "unreadMessages" },
+      { title: "Notifications", icon: Bell, href: "/alarms", badgeKey: "activeAlarms" },
+    ],
+  },
+]
+
+function getNavForRole(role: UserRole): NavSection[] {
+  switch (role) {
+    case "TEACHER":
+      return teacherNav
+    case "NURSE":
+    case "DOCTOR":
+      return nurseNav
+    case "ADMIN":
+    case "MANAGER":
+    default:
+      return adminNav
+  }
 }
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
 interface AppSidebarProps {
   userRole: UserRole
+  badges?: SidebarBadges
 }
 
-export function AppSidebar({ userRole }: AppSidebarProps) {
+export function AppSidebar({ userRole, badges }: AppSidebarProps) {
   const pathname = usePathname()
-  const filteredGroups = getFilteredNav(userRole)
+  const sections = getNavForRole(userRole)
 
   return (
     <Sidebar
       collapsible="icon"
-      className="top-[56px] h-[calc(100svh-56px)] border-r border-border"
+      className="top-[52px] h-[calc(100svh-52px)] border-r border-border"
     >
-      <SidebarHeader className="pt-3">
-        <BranchYearSelector />
-      </SidebarHeader>
-      <SidebarContent className="pt-1">
-        {filteredGroups.map((group) => (
-          <SidebarGroup key={group.label}>
+      <SidebarContent className="pt-2">
+        {sections.map((section) => (
+          <SidebarGroup key={section.label} className="py-1">
             <SidebarGroupLabel className="uppercase text-[10px] tracking-widest font-semibold text-muted-foreground/70 px-3">
-              {group.label}
+              {section.label}
             </SidebarGroupLabel>
             <SidebarMenu>
-              {group.items.map((item) =>
-                item.href ? (
-                  <SidebarMenuItem key={item.title}>
+              {section.items.map((item) => {
+                const isActive =
+                  pathname === item.href || pathname.startsWith(item.href + "/")
+                const badgeCount = item.badgeKey && badges ? badges[item.badgeKey] : 0
+
+                return (
+                  <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton
                       asChild
-                      isActive={pathname === item.href || pathname.startsWith(item.href + "/")}
+                      isActive={isActive}
                       tooltip={item.title}
                       className={
-                        pathname === item.href || pathname.startsWith(item.href + "/")
-                          ? "bg-primary/10 text-primary font-medium hover:bg-primary/15 hover:text-primary"
+                        isActive
+                          ? "border-l-3 border-primary bg-primary/5 text-primary font-medium hover:bg-primary/10 hover:text-primary rounded-none rounded-r-lg"
                           : "text-muted-foreground hover:text-foreground"
                       }
                     >
                       <Link href={item.href}>
                         <item.icon className="size-4" />
-                        <span>{item.title}</span>
+                        <span className="flex-1">{item.title}</span>
+                        {badgeCount > 0 && (
+                          <Badge
+                            variant="secondary"
+                            className="ml-auto size-5 justify-center rounded-full p-0 text-[10px] font-medium bg-primary/10 text-primary"
+                          >
+                            {badgeCount > 99 ? "99+" : badgeCount}
+                          </Badge>
+                        )}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                ) : (
-                  <CollapsibleNavItem
-                    key={item.title}
-                    item={item}
-                    pathname={pathname}
-                  />
                 )
-              )}
+              })}
             </SidebarMenu>
           </SidebarGroup>
         ))}
       </SidebarContent>
+
+      <SidebarFooter className="border-t p-3">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              tooltip="Quick Actions ⌘K"
+              className="text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                document.dispatchEvent(
+                  new KeyboardEvent("keydown", { key: "k", metaKey: true })
+                )
+              }}
+            >
+              <Search className="size-4" />
+              <span>Quick Actions</span>
+              <kbd className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                ⌘K
+              </kbd>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   )
 }
 
-function CollapsibleNavItem({
-  item,
-  pathname,
-}: {
-  item: NavItem
-  pathname: string
-}) {
-  const isGroupActive = item.items?.some((sub) => {
-    if (isSubCollapsible(sub)) {
-      return sub.items.some((s) => pathname === s.href)
-    }
-    return pathname === sub.href || pathname.startsWith(sub.href + "/")
-  })
-
-  return (
-    <Collapsible defaultOpen={isGroupActive} className="group/collapsible">
-      <SidebarMenuItem>
-        <CollapsibleTrigger asChild>
-          <SidebarMenuButton
-            tooltip={item.title}
-            className={
-              isGroupActive
-                ? "text-primary font-medium"
-                : "text-muted-foreground hover:text-foreground"
-            }
-          >
-            <item.icon className="size-4" />
-            <span>{item.title}</span>
-            <ChevronRight className="ml-auto size-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-          </SidebarMenuButton>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <SidebarMenuSub>
-            {item.items?.map((sub) =>
-              isSubCollapsible(sub) ? (
-                <SubCollapsibleItem
-                  key={sub.title}
-                  sub={sub}
-                  pathname={pathname}
-                />
-              ) : (
-                <SidebarMenuSubItem key={sub.href}>
-                  <SidebarMenuSubButton
-                    asChild
-                    isActive={pathname === sub.href || pathname.startsWith(sub.href + "/")}
-                    className={
-                      pathname === sub.href || pathname.startsWith(sub.href + "/")
-                        ? "bg-primary/10 text-primary font-medium hover:bg-primary/15 hover:text-primary"
-                        : "text-muted-foreground hover:text-foreground"
-                    }
-                  >
-                    <Link href={sub.href}>{sub.title}</Link>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-              )
-            )}
-          </SidebarMenuSub>
-        </CollapsibleContent>
-      </SidebarMenuItem>
-    </Collapsible>
-  )
-}
-
-function SubCollapsibleItem({
-  sub,
-  pathname,
-}: {
-  sub: NavSubCollapsible
-  pathname: string
-}) {
-  const isActive = sub.items.some((s) => pathname === s.href)
-
-  return (
-    <SidebarMenuSubItem>
-      <Collapsible defaultOpen={isActive} className="group/sub-collapsible">
-        <CollapsibleTrigger asChild>
-          <SidebarMenuSubButton className="cursor-pointer text-muted-foreground hover:text-foreground">
-            <span>{sub.title}</span>
-            <ChevronRight className="ml-auto size-3.5 transition-transform duration-200 group-data-[state=open]/sub-collapsible:rotate-90" />
-          </SidebarMenuSubButton>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <SidebarMenuSub>
-            {sub.items.map((subItem) => (
-              <SidebarMenuSubItem key={subItem.href}>
-                <SidebarMenuSubButton
-                  asChild
-                  isActive={pathname === subItem.href}
-                  className={
-                    pathname === subItem.href
-                      ? "bg-primary/10 text-primary font-medium hover:bg-primary/15 hover:text-primary"
-                      : "text-muted-foreground hover:text-foreground"
-                  }
-                >
-                  <Link href={subItem.href}>{subItem.title}</Link>
-                </SidebarMenuSubButton>
-              </SidebarMenuSubItem>
-            ))}
-          </SidebarMenuSub>
-        </CollapsibleContent>
-      </Collapsible>
-    </SidebarMenuSubItem>
-  )
-}
+// Export the nav configs for use by mobile nav
+export { getNavForRole, type NavSection, type FlatNavItem, type UserRole }
