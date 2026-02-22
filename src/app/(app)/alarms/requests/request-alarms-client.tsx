@@ -27,7 +27,7 @@ interface RequestAlarmsClientProps {
   branches: { id: string; name: string }[];
 }
 
-export function RequestAlarmsClient({ alarms, branches }: RequestAlarmsClientProps) {
+export function RequestAlarmsClient({ alarms }: RequestAlarmsClientProps) {
   const [statusFilter, setStatusFilter] = useState("ALL");
 
   const filtered = useMemo(() => {
@@ -83,10 +83,10 @@ export function RequestAlarmsClient({ alarms, branches }: RequestAlarmsClientPro
           { label: "Requests" },
         ]}
       />
-      <div className="space-y-4 p-6">
-        <div className="flex items-center gap-3">
+      <div className="space-y-4 p-4 md:p-6">
+        <div className="flex flex-wrap items-center gap-3">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="All Statuses" />
             </SelectTrigger>
             <SelectContent>

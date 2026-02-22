@@ -243,7 +243,7 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
         ]}
       />
 
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {/* ── Provinces Column ─────────────── */}
           <div className="rounded-lg border bg-card">

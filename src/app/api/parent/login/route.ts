@@ -4,7 +4,6 @@ import { z } from "zod/v4";
 import { db } from "@/lib/db";
 import {
   createParentToken,
-  formatChildName,
   jsonError,
   jsonSuccess,
   checkRateLimit,

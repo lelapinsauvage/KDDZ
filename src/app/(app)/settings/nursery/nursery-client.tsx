@@ -99,7 +99,7 @@ export default function NurseryClient({ branchId, initialSettings }: NurseryClie
         ]}
       />
 
-      <div className="space-y-6 p-6">
+      <div className="space-y-6 p-4 md:p-6">
         {/* General Info */}
         <Card>
           <CardHeader>
@@ -237,7 +237,7 @@ export default function NurseryClient({ branchId, initialSettings }: NurseryClie
         </Card>
 
         {/* Save Button */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Button
             style={{ background: "#1caf9a" }}
             className="text-white"

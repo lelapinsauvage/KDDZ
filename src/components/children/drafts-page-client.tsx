@@ -73,7 +73,7 @@ interface Filters {
 }
 
 interface DraftsPageClientProps {
-  children: ChildRow[];
+  childrenList: ChildRow[];
   total: number;
   branches: BranchItem[];
   classes: ClassItem[];
@@ -81,7 +81,7 @@ interface DraftsPageClientProps {
 }
 
 export function DraftsPageClient({
-  children,
+  childrenList,
   total,
   branches,
   classes,
@@ -169,9 +169,12 @@ export function DraftsPageClient({
 
   // ── Sorting ────────────────────────────────────
 
-  const sorting: SortingState = filters.sort
-    ? [{ id: filters.sort, desc: filters.order === "desc" }]
-    : [];
+  const sorting: SortingState = useMemo(
+    () => filters.sort
+      ? [{ id: filters.sort, desc: filters.order === "desc" }]
+      : [],
+    [filters.sort, filters.order]
+  );
 
   const handleSortingChange = useCallback(
     (updaterOrValue: SortingState | ((prev: SortingState) => SortingState)) => {
@@ -220,7 +223,7 @@ export function DraftsPageClient({
   );
 
   const table = useReactTable({
-    data: children,
+    data: childrenList,
     columns,
     getCoreRowModel: getCoreRowModel(),
     manualSorting: true,
@@ -244,12 +247,12 @@ export function DraftsPageClient({
         ]}
       />
 
-      <div className="space-y-4 p-6">
+      <div className="space-y-4 p-4 md:p-6">
         {/* ── Toolbar ─────────────────────────────── */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {/* Search */}
           <form
-            className="relative w-full max-w-xs"
+            className="relative w-full sm:max-w-xs"
             onSubmit={(e) => {
               e.preventDefault();
               handleSearchSubmit();
@@ -267,7 +270,7 @@ export function DraftsPageClient({
 
           {/* Branch filter */}
           <Select value={filters.branch} onValueChange={handleBranchChange}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[180px]">
               <SelectValue placeholder="All Branches" />
             </SelectTrigger>
             <SelectContent>
@@ -282,7 +285,7 @@ export function DraftsPageClient({
 
           {/* Class filter */}
           <Select value={filters.class} onValueChange={handleClassChange}>
-            <SelectTrigger className="w-[170px]">
+            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[170px]">
               <SelectValue placeholder="All Classes" />
             </SelectTrigger>
             <SelectContent>
@@ -297,7 +300,7 @@ export function DraftsPageClient({
 
           {/* Gender filter */}
           <Select value={filters.gender} onValueChange={handleGenderChange}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[140px]">
               <SelectValue placeholder="All Genders" />
             </SelectTrigger>
             <SelectContent>
@@ -324,8 +327,8 @@ export function DraftsPageClient({
 
         {/* ── Data Table ──────────────────────────── */}
         <div className="space-y-4">
-          <div className="rounded-md border bg-card">
-            <Table>
+          <div className="overflow-x-auto rounded-md border bg-card">
+            <Table className="min-w-[700px]">
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
@@ -383,7 +386,7 @@ export function DraftsPageClient({
           </div>
 
           {/* ── Pagination ──────────────────────────── */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-muted-foreground">
               {total} total row(s)
             </p>

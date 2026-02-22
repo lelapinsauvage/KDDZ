@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useTransition } from "react";
+import { useCallback, useState, useMemo, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { type ColumnDef } from "@tanstack/react-table";
 import {
@@ -77,14 +77,17 @@ export default function AssessmentDatesClient({
   const [newBranch, setNewBranch] = useState("");
   const [newDate, setNewDate] = useState("");
 
-  function handleDelete(id: string) {
-    if (!confirm("Are you sure you want to delete this assessment date?"))
-      return;
-    startTransition(async () => {
-      await deleteAssessmentDate(id);
-      router.refresh();
-    });
-  }
+  const handleDelete = useCallback(
+    (id: string) => {
+      if (!confirm("Are you sure you want to delete this assessment date?"))
+        return;
+      startTransition(async () => {
+        await deleteAssessmentDate(id);
+        router.refresh();
+      });
+    },
+    [router]
+  );
 
   function handleCreate() {
     if (!newType || !newBranch || !newDate) {
@@ -194,7 +197,7 @@ export default function AssessmentDatesClient({
         enableSorting: false,
       },
     ],
-    []
+    [handleDelete]
   );
 
   return (
@@ -208,9 +211,9 @@ export default function AssessmentDatesClient({
         ]}
       />
 
-      <div className="space-y-4 p-6">
+      <div className="space-y-4 p-4 md:p-6">
         {/* Toolbar */}
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
           <div className="text-sm text-[#6f7b8a]">
             {dates.length} scheduled assessment{dates.length !== 1 ? "s" : ""}
           </div>

@@ -115,8 +115,8 @@ export function CallsClient({ child, calls }: Props) {
         ]}
       />
 
-      <div className="space-y-6 p-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-6 p-4 md:p-6">
+        <div className="flex flex-wrap items-center justify-between">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Phone className="h-5 w-5" />
             <span className="text-sm">{calls.length} call(s) logged</span>

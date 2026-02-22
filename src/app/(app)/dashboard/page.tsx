@@ -57,7 +57,7 @@ export default async function DashboardPage() {
     unreadMessagesCount,
     allMedicalResult,
     draftMedicalResult,
-    upcomingEventsCount,
+    _upcomingEventsCount,
     accidentReportsCount,
     // Chart data
     childrenPerClass,
@@ -158,7 +158,7 @@ export default async function DashboardPage() {
   const totalPayments = paymentData?.totalCount ?? 0;
 
   // Overdue vaccinations as medical alerts
-  const overdueVax = Array.isArray(overdueVaxResult.data) ? overdueVaxResult.data : [];
+  const _overdueVax = Array.isArray(overdueVaxResult.data) ? overdueVaxResult.data : [];
   const accidentReports = accidentReportsCount;
 
   // Chart data transformations
@@ -209,7 +209,7 @@ export default async function DashboardPage() {
         ]}
       />
 
-      <div className="space-y-6 p-6">
+      <div className="space-y-4 p-4 md:space-y-6 md:p-6">
         {/* Row 1: Branch / Class / Children totals */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <StatCard
@@ -242,7 +242,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Row 3: Attendance metrics */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
           <StatCard
             title="Total Attendance"
             value={totalAttendance}

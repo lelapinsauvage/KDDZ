@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import "dotenv/config";
 import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -389,7 +390,7 @@ async function migrateSchoolYears(
   // Map year number → school year for child lookups
   for (const row of rows) {
     const oldId = colInt(row, "id", columns);
-    const sid = colInt(row, "sid", columns);
+    const _sid = colInt(row, "sid", columns);
     const sdate = colStr(row, "sdate", columns);
     if (!oldId || !sdate) continue;
 

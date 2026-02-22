@@ -69,7 +69,7 @@ async function migrateFormTable(
 
     // Idempotency: check if form already exists for this child+type
     // Use the old ID in mapping to avoid false positives for children with multiple forms
-    const mapKey = `${formTypeKey}_${oldId}`;
+    const _mapKey = `${formTypeKey}_${oldId}`;
     const existing = await prisma.medicalForm.findFirst({
       where: {
         childId,

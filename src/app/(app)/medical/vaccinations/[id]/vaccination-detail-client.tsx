@@ -92,7 +92,7 @@ interface VaccinationDetailClientProps {
   nextDueDate: string;
   administeredBy: string;
   notes: string;
-  children: { id: string; name: string }[];
+  childrenList: { id: string; name: string }[];
 }
 
 // --- Client Component ---
@@ -107,7 +107,7 @@ export function VaccinationDetailClient({
   nextDueDate,
   administeredBy,
   notes,
-  children,
+  childrenList,
 }: VaccinationDetailClientProps) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
@@ -221,7 +221,7 @@ export function VaccinationDetailClient({
           { label: isNew ? "New" : watch("vaccineName") || "Details" },
         ]}
       />
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Top bar */}
         <div className="flex items-center justify-between">
           <Link href="/medical/vaccinations">
@@ -258,7 +258,7 @@ export function VaccinationDetailClient({
           </div>
         </div>
 
-        <form className="space-y-6">
+        <form className="space-y-4 md:space-y-6">
           {/* Vaccination Information */}
           <Card>
             <CardHeader>
@@ -278,7 +278,7 @@ export function VaccinationDetailClient({
                       <SelectValue placeholder="Select a child" />
                     </SelectTrigger>
                     <SelectContent>
-                      {children.map((child) => (
+                      {childrenList.map((child) => (
                         <SelectItem key={child.id} value={child.id}>
                           {child.name}
                         </SelectItem>

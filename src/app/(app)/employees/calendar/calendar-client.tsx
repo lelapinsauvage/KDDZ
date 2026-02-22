@@ -3,7 +3,6 @@
 import { useState, useMemo, useTransition, useCallback } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -33,8 +32,6 @@ import {
 import {
   ChevronLeft,
   ChevronRight,
-  Plus,
-  Pencil,
   Trash2,
 } from "lucide-react";
 import {
@@ -316,7 +313,7 @@ export function CalendarClient({
         ]}
       />
 
-      <div className="p-6 space-y-4">
+      <div className="p-4 md:p-6 space-y-4">
         {/* Legend */}
         <div className="flex flex-wrap items-center gap-3">
           {STATUS_OPTIONS.map((s) => (
@@ -354,7 +351,7 @@ export function CalendarClient({
           </div>
 
           <Select value={employeeFilter} onValueChange={setEmployeeFilter}>
-            <SelectTrigger className="w-[220px]">
+            <SelectTrigger className="w-full sm:w-[220px]">
               <SelectValue placeholder="All Employees" />
             </SelectTrigger>
             <SelectContent>

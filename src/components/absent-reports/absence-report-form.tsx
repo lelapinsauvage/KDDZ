@@ -33,13 +33,13 @@ interface ChildOption {
 }
 
 interface AbsenceReportFormProps {
-  children: ChildOption[];
+  childrenList: ChildOption[];
   defaultValues?: Partial<AbsenceReportFormValues>;
   reportId?: string;
 }
 
 export function AbsenceReportForm({
-  children: childrenList,
+  childrenList,
   defaultValues,
   reportId,
 }: AbsenceReportFormProps) {
@@ -84,7 +84,7 @@ export function AbsenceReportForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-4 md:p-6">
       {error && (
         <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">
           {error}
@@ -167,7 +167,7 @@ export function AbsenceReportForm({
       </Card>
 
       {/* Action Bar */}
-      <div className="sticky bottom-0 flex items-center justify-end gap-3 border-t bg-card px-6 py-4">
+      <div className="sticky bottom-0 flex items-center justify-end gap-3 border-t bg-card px-4 py-3 md:px-6 md:py-4">
         <Button
           type="button"
           variant="outline"

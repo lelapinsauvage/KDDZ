@@ -78,7 +78,7 @@ interface VisitDetailClientProps {
   formId: string | null;
   initialData: VisitFormValues;
   status: "DRAFT" | "SUBMITTED" | "REVIEWED";
-  children: { id: string; name: string }[];
+  childrenList: { id: string; name: string }[];
 }
 
 // --- Client Component ---
@@ -88,7 +88,7 @@ export function VisitDetailClient({
   formId,
   initialData,
   status,
-  children,
+  childrenList,
 }: VisitDetailClientProps) {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
@@ -107,7 +107,7 @@ export function VisitDetailClient({
 
   const selectedChildId = watch("childId");
   const selectedChildName =
-    children.find((c) => c.id === selectedChildId)?.name ?? "";
+    childrenList.find((c) => c.id === selectedChildId)?.name ?? "";
 
   const buildPayload = (data: VisitFormValues, formStatus: "DRAFT" | "SUBMITTED") => ({
     childId: data.childId,
@@ -180,7 +180,7 @@ export function VisitDetailClient({
           { label: isNew ? "New" : selectedChildName || "Details" },
         ]}
       />
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Top bar */}
         <div className="flex items-center justify-between">
           <Link href="/medical/visits">
@@ -219,7 +219,7 @@ export function VisitDetailClient({
           </div>
         </div>
 
-        <form className="space-y-6">
+        <form className="space-y-4 md:space-y-6">
           {/* Visit Information */}
           <Card>
             <CardHeader>
@@ -237,7 +237,7 @@ export function VisitDetailClient({
                       <SelectValue placeholder="Select a child" />
                     </SelectTrigger>
                     <SelectContent>
-                      {children.map((child) => (
+                      {childrenList.map((child) => (
                         <SelectItem key={child.id} value={child.id}>
                           {child.name}
                         </SelectItem>

@@ -145,14 +145,6 @@ interface OldRelative {
   active: number;
 }
 
-interface OldAttachment {
-  tattid: number;
-  att_title: string;
-  url: string;
-  child_id: string;
-  active: number;
-}
-
 export async function migrateChildren(prisma: PrismaClient) {
   log("=== Migrating Children ===");
   const dryRun = isDryRun();

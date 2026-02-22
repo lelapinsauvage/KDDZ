@@ -21,7 +21,6 @@ import { queryMysql, closeMysqlPool } from "./lib/mysql-client";
 import {
   generateUUID,
   setMapping,
-  getMapping,
   isDryRun,
   toBool,
   log,

@@ -129,9 +129,10 @@ function MedicalFormPdf({ form }: MedicalFormPdfProps) {
   const formTitle =
     FORM_TITLES[form.formType] || "Medical Form";
   const fields = FORM_FIELDS[form.formType] || [];
-  const data = (form.data || {}) as Record<string, unknown>;
+  const rawData = (form.data || {}) as Record<string, unknown>;
 
-  // Merge entry data into data for display
+  // Merge entry data into data for display (clone to avoid mutating props)
+  const data = { ...rawData };
   for (const entry of form.entries) {
     if (!(entry.field in data) && entry.value) {
       data[entry.field] = entry.value;

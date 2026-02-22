@@ -28,7 +28,7 @@ interface ChildOption {
 interface AssessmentFormProps {
   assessmentType: number;
   typeConfig: AssessmentTypeConfig;
-  children: ChildOption[];
+  childrenList: ChildOption[];
   defaultValues?: {
     id?: string;
     childId?: string;
@@ -40,7 +40,7 @@ interface AssessmentFormProps {
 export function AssessmentForm({
   assessmentType,
   typeConfig,
-  children: childrenList,
+  childrenList,
   defaultValues,
 }: AssessmentFormProps) {
   const router = useRouter();
@@ -137,7 +137,7 @@ export function AssessmentForm({
     );
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-4 md:p-6">
       {/* Child Selector & Status */}
       <Card>
         <CardHeader>
@@ -245,7 +245,7 @@ export function AssessmentForm({
       </Card>
 
       {/* Actions */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
         <Button
           variant="outline"
           onClick={() => handleSubmit("DRAFT")}

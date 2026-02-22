@@ -33,7 +33,7 @@ export default async function VaccinationDetailPage({ params }: PageProps) {
         nextDueDate=""
         administeredBy=""
         notes=""
-        children={childOptions}
+        childrenList={childOptions}
       />
     );
   }
@@ -79,7 +79,7 @@ export default async function VaccinationDetailPage({ params }: PageProps) {
       nextDueDate={vaccination.nextDueDate ? vaccination.nextDueDate.toISOString().split("T")[0] : ""}
       administeredBy={administeredBy}
       notes={userNotes}
-      children={childOptions}
+      childrenList={childOptions}
     />
   );
 }

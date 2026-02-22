@@ -45,7 +45,6 @@ import {
   mapPaymentMethod,
   mapPaymentCategory,
   toFloat,
-  toInt,
   cleanString,
   log,
   logError,

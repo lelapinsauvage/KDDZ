@@ -105,10 +105,10 @@ export function BirthdaysClient({ birthdays, branches }: BirthdaysClientProps) {
           { label: "Birthdays" },
         ]}
       />
-      <div className="space-y-4 p-6">
-        <div className="flex items-center gap-3">
+      <div className="space-y-4 p-4 md:p-6">
+        <div className="flex flex-wrap items-center gap-3">
           <Select value={branchFilter} onValueChange={setBranchFilter}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="All Branches" />
             </SelectTrigger>
             <SelectContent>

@@ -111,7 +111,7 @@ export default async function AccountingPage() {
       summary={summary}
       branches={branches}
       classes={classes}
-      children={children}
+      childrenList={children}
     />
   );
 }

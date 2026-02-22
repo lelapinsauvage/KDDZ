@@ -45,7 +45,6 @@ export default function MonthlyClient({
   totalReportsSubmitted,
   totalReportsDraft,
   totalPayments,
-  totalMedicalForms,
   branches,
   classes,
 }: MonthlyClientProps) {
@@ -89,9 +88,9 @@ export default function MonthlyClient({
         ]}
       />
 
-      <div className="space-y-6 p-6">
+      <div className="space-y-6 p-4 md:p-6">
         {/* Filters */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <div>
             <label className="mb-1 block text-xs font-medium text-muted-foreground">Month</label>
             <input
@@ -104,7 +103,7 @@ export default function MonthlyClient({
           <div>
             <label className="mb-1 block text-xs font-medium text-muted-foreground">Branch</label>
             <Select value={selectedBranch} onValueChange={setSelectedBranch}>
-              <SelectTrigger className="w-[170px]">
+              <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[170px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -120,7 +119,7 @@ export default function MonthlyClient({
           <div>
             <label className="mb-1 block text-xs font-medium text-muted-foreground">Class</label>
             <Select value={selectedClass} onValueChange={setSelectedClass}>
-              <SelectTrigger className="w-[150px]">
+              <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[150px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

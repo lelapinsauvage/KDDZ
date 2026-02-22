@@ -136,8 +136,8 @@ export function AccidentsClient({ child, accidents }: Props) {
         ]}
       />
 
-      <div className="space-y-6 p-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-6 p-4 md:p-6">
+        <div className="flex flex-wrap items-center justify-between">
           <div className="flex items-center gap-2 text-muted-foreground">
             <AlertTriangle className="h-5 w-5" />
             <span className="text-sm">{accidents.length} accident(s) on record</span>

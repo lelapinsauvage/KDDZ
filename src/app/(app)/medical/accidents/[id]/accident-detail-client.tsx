@@ -126,7 +126,7 @@ interface AccidentDetailClientProps {
   childId: string;
   childName?: string;
   formData: AccidentFormValues;
-  children: { id: string; name: string }[];
+  childrenList: { id: string; name: string }[];
 }
 
 // --- Client Component ---
@@ -134,10 +134,10 @@ interface AccidentDetailClientProps {
 export function AccidentDetailClient({
   isNew,
   formId,
-  childId,
+  childId: _childId,
   childName,
   formData,
-  children,
+  childrenList,
 }: AccidentDetailClientProps) {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
@@ -266,7 +266,7 @@ export function AccidentDetailClient({
           { label: isNew ? "New" : (childName ?? "Detail") },
         ]}
       />
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Top bar */}
         <div className="flex items-center justify-between">
           <Link href="/medical/accidents">
@@ -305,7 +305,7 @@ export function AccidentDetailClient({
           </div>
         </div>
 
-        <form className="space-y-6">
+        <form className="space-y-4 md:space-y-6">
           {/* Card 1: Child & Timing */}
           <Card>
             <CardHeader>
@@ -323,7 +323,7 @@ export function AccidentDetailClient({
                       <SelectValue placeholder="Select a child" />
                     </SelectTrigger>
                     <SelectContent>
-                      {children.map((child) => (
+                      {childrenList.map((child) => (
                         <SelectItem key={child.id} value={child.id}>
                           {child.name}
                         </SelectItem>

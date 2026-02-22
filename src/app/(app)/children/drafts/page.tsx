@@ -50,7 +50,7 @@ export default async function ChildrenDraftsPage({ searchParams }: PageProps) {
 
   return (
     <DraftsPageClient
-      children={children}
+      childrenList={children}
       total={total}
       branches={branches}
       classes={classes}

@@ -93,7 +93,7 @@ interface ConditionDetailClientProps {
   isNew: boolean;
   formId: string | null;
   formData: ConditionFormValues;
-  children: { id: string; name: string }[];
+  childrenList: { id: string; name: string }[];
 }
 
 // --- Client Component ---
@@ -102,7 +102,7 @@ export function ConditionDetailClient({
   isNew,
   formId,
   formData,
-  children,
+  childrenList,
 }: ConditionDetailClientProps) {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
@@ -218,7 +218,7 @@ export function ConditionDetailClient({
           { label: isNew ? "New" : formData.conditionType || "Details" },
         ]}
       />
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Top bar */}
         <div className="flex items-center justify-between">
           <Link href="/medical/conditions">
@@ -257,7 +257,7 @@ export function ConditionDetailClient({
           </div>
         </div>
 
-        <form className="space-y-6">
+        <form className="space-y-4 md:space-y-6">
           {/* Child & Condition */}
           <Card>
             <CardHeader>
@@ -275,7 +275,7 @@ export function ConditionDetailClient({
                       <SelectValue placeholder="Select a child" />
                     </SelectTrigger>
                     <SelectContent>
-                      {children.map((child) => (
+                      {childrenList.map((child) => (
                         <SelectItem key={child.id} value={child.id}>
                           {child.name}
                         </SelectItem>

@@ -88,7 +88,7 @@ interface Props {
   entries: AccountingEntry[];
   payments: PaymentRow[];
   paymentSummary: PaymentSummary;
-  children: ChildOption[];
+  childrenList: ChildOption[];
 }
 
 // ── Helpers ──
@@ -157,7 +157,7 @@ export function AccountingClient({
   entries,
   payments,
   paymentSummary,
-  children,
+  childrenList,
 }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editPayment, setEditPayment] = useState<PaymentRow & { childId: string; childName: string } | null>(null);
@@ -379,7 +379,7 @@ export function AccountingClient({
         ]}
       />
 
-      <div className="space-y-6 p-6">
+      <div className="space-y-4 p-4 md:space-y-6 md:p-6">
         {/* Summary Cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <Card>
@@ -526,7 +526,7 @@ export function AccountingClient({
       <PaymentDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        children={children}
+        childrenList={childrenList}
         editData={editPayment}
       />
 

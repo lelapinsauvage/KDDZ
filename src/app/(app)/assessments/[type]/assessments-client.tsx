@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useTransition } from "react";
+import { useCallback, useState, useMemo, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { type ColumnDef } from "@tanstack/react-table";
@@ -76,13 +76,16 @@ export default function AssessmentsClient({
   const [classFilter, setClassFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
 
-  function handleDelete(id: string) {
-    if (!confirm("Are you sure you want to delete this assessment?")) return;
-    startTransition(async () => {
-      await deleteAssessment(id);
-      router.refresh();
-    });
-  }
+  const handleDelete = useCallback(
+    (id: string) => {
+      if (!confirm("Are you sure you want to delete this assessment?")) return;
+      startTransition(async () => {
+        await deleteAssessment(id);
+        router.refresh();
+      });
+    },
+    [router]
+  );
 
   const filteredEntries = useMemo(() => {
     return assessments.filter((entry) => {
@@ -235,7 +238,7 @@ export default function AssessmentsClient({
         enableSorting: false,
       },
     ],
-    [typeParam]
+    [typeParam, handleDelete]
   );
 
   return (
@@ -249,11 +252,11 @@ export default function AssessmentsClient({
         ]}
       />
 
-      <div className="space-y-4 p-6">
+      <div className="space-y-4 p-4 md:p-6">
         {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <Select value={classFilter} onValueChange={setClassFilter}>
-            <SelectTrigger className="w-[170px]">
+            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[170px]">
               <SelectValue placeholder="All Classes" />
             </SelectTrigger>
             <SelectContent>
@@ -267,7 +270,7 @@ export default function AssessmentsClient({
           </Select>
 
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[150px]">
+            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[150px]">
               <SelectValue placeholder="All Statuses" />
             </SelectTrigger>
             <SelectContent>

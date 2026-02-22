@@ -35,10 +35,10 @@ interface ParentUserDetailClientProps {
     isActive: boolean;
     createdAt: string;
   };
-  children: ChildOption[];
+  childrenList: ChildOption[];
 }
 
-export function ParentUserDetailClient({ parentUser, children }: ParentUserDetailClientProps) {
+export function ParentUserDetailClient({ parentUser, childrenList }: ParentUserDetailClientProps) {
   const [username, setUsername] = useState(parentUser.username);
   const [childId, setChildId] = useState(parentUser.childId);
   const [isActive, setIsActive] = useState(parentUser.isActive);
@@ -80,7 +80,7 @@ export function ParentUserDetailClient({ parentUser, children }: ParentUserDetai
         ]}
       />
 
-      <div className="space-y-6 p-6">
+      <div className="space-y-4 p-4 md:space-y-6 md:p-6">
         {/* ── Account Form ────────────────── */}
         <Card>
           <CardHeader>
@@ -99,7 +99,7 @@ export function ParentUserDetailClient({ parentUser, children }: ParentUserDetai
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {children.map((c) => (
+                    {childrenList.map((c) => (
                       <SelectItem key={c.id} value={c.id}>
                         {c.name}
                       </SelectItem>

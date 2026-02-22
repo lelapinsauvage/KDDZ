@@ -45,7 +45,7 @@ export default async function ParentUserDetailPage({ params }: PageProps) {
   return (
     <ParentUserDetailClient
       parentUser={serializedUser}
-      children={childOptions}
+      childrenList={childOptions}
     />
   );
 }

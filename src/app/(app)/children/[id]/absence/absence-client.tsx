@@ -111,7 +111,7 @@ export function AbsenceClient({ child, absences }: Props) {
         ]}
       />
 
-      <div className="space-y-6 p-6">
+      <div className="space-y-6 p-4 md:p-6">
         {/* Summary */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Card>

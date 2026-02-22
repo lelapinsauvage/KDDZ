@@ -100,7 +100,6 @@ interface MedicalVisitsClientProps {
 
 export function MedicalVisitsClient({
   visits,
-  total,
   branches,
 }: MedicalVisitsClientProps) {
   const router = useRouter();
@@ -266,10 +265,10 @@ export function MedicalVisitsClient({
           { label: "Visits" },
         ]}
       />
-      <div className="p-6 space-y-4">
+      <div className="p-4 md:p-6 space-y-4">
         {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative max-w-sm flex-1 min-w-[200px]">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <div className="relative max-w-sm flex-1 min-w-0">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search by child, doctor or reason..."
@@ -280,7 +279,7 @@ export function MedicalVisitsClient({
           </div>
 
           <Select value={branchFilter} onValueChange={setBranchFilter}>
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[160px]">
               <SelectValue placeholder="All Branches" />
             </SelectTrigger>
             <SelectContent>
@@ -294,7 +293,7 @@ export function MedicalVisitsClient({
           </Select>
 
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[160px]">
               <SelectValue placeholder="All Statuses" />
             </SelectTrigger>
             <SelectContent>

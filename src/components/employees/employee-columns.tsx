@@ -46,7 +46,7 @@ function getDetailPath(type: EmployeeType, id: string): string {
 export function createEmployeeColumns(
   type: EmployeeType
 ): ColumnDef<Employee>[] {
-  const typePlural =
+  const _typePlural =
     type === "nurse"
       ? "Nurses"
       : type === "teacher"

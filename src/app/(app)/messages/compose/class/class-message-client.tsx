@@ -80,7 +80,7 @@ export function ClassMessageClient({ classes }: ClassMessageClientProps) {
         ]}
       />
 
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Send Message to Class</CardTitle>

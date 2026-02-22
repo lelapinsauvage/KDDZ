@@ -3,6 +3,8 @@ import { z } from "zod/v4";
 import { db } from "@/lib/db";
 import {
   authenticateParent,
+  checkRateLimit,
+  getRateLimitKey,
   jsonError,
   jsonSuccess,
 } from "@/lib/parent-auth";
@@ -17,6 +19,12 @@ const deleteSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 30 push-token operations per minute per IP
+  const rlKey = getRateLimitKey(request, "push-token");
+  if (!checkRateLimit(rlKey, 30, 60_000)) {
+    return jsonError("Too many requests", 429);
+  }
+
   const auth = await authenticateParent(request);
   if ("error" in auth) return auth.error;
   const { parentUser } = auth;

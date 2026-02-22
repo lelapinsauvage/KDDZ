@@ -89,7 +89,7 @@ interface GeneralDetailClientProps {
   formId: string | null;
   initialData: GeneralFormValues;
   initialStatus: "DRAFT" | "SUBMITTED" | "REVIEWED";
-  children: { id: string; name: string }[];
+  childrenList: { id: string; name: string }[];
 }
 
 // --- Client Component ---
@@ -99,7 +99,7 @@ export function GeneralDetailClient({
   formId,
   initialData,
   initialStatus,
-  children,
+  childrenList,
 }: GeneralDetailClientProps) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
@@ -123,7 +123,7 @@ export function GeneralDetailClient({
 
   // Find selected child name for breadcrumb
   const selectedChildName =
-    children.find((c) => c.id === selectedChildId)?.name ?? "";
+    childrenList.find((c) => c.id === selectedChildId)?.name ?? "";
 
   // --- Build data payload ---
 
@@ -233,7 +233,7 @@ export function GeneralDetailClient({
           { label: isNew ? "New" : selectedChildName || "Detail" },
         ]}
       />
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Top bar */}
         <div className="flex items-center justify-between">
           <Link href="/medical/general">
@@ -272,7 +272,7 @@ export function GeneralDetailClient({
           </div>
         </div>
 
-        <form className="space-y-6">
+        <form className="space-y-4 md:space-y-6">
           {/* Child Information */}
           <Card>
             <CardHeader>
@@ -290,7 +290,7 @@ export function GeneralDetailClient({
                       <SelectValue placeholder="Select a child" />
                     </SelectTrigger>
                     <SelectContent>
-                      {children.map((child) => (
+                      {childrenList.map((child) => (
                         <SelectItem key={child.id} value={child.id}>
                           {child.name}
                         </SelectItem>

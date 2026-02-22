@@ -285,7 +285,7 @@ export function AttendanceLogsClient({
           { label: "Attendance Logs" },
         ]}
       />
-      <div className="space-y-4 p-6">
+      <div className="space-y-4 p-4 md:p-6">
         {/* Filters row */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
@@ -294,7 +294,7 @@ export function AttendanceLogsClient({
             </Label>
             <Input
               type="date"
-              className="w-[160px]"
+              className="w-[130px] sm:w-[160px]"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
             />
@@ -305,13 +305,13 @@ export function AttendanceLogsClient({
             </Label>
             <Input
               type="date"
-              className="w-[160px]"
+              className="w-[130px] sm:w-[160px]"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
             />
           </div>
           <Select value={employeeFilter} onValueChange={setEmployeeFilter}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[200px]">
               <SelectValue placeholder="All Employees" />
             </SelectTrigger>
             <SelectContent>
@@ -324,7 +324,7 @@ export function AttendanceLogsClient({
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[150px]">
+            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[150px]">
               <SelectValue placeholder="All Statuses" />
             </SelectTrigger>
             <SelectContent>

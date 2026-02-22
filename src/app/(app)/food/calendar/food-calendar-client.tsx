@@ -280,13 +280,6 @@ export function FoodCalendarClient({
     return weeks;
   }, [daysInMonth, firstDayOfWeek]);
 
-  const getFoodName = useCallback(
-    (foodId: string | null): string => {
-      if (!foodId) return "";
-      return foods.find((f) => f.id === foodId)?.name ?? "";
-    },
-    [foods]
-  );
 
   return (
     <>
@@ -298,12 +291,12 @@ export function FoodCalendarClient({
         ]}
       />
 
-      <div className="space-y-4 p-6">
+      <div className="space-y-4 p-4 md:p-6">
         {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-3">
           {/* Branch selector */}
           <Select value={branch} onValueChange={handleBranchChange}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-full sm:w-[200px]">
               <SelectValue placeholder="Select Branch" />
             </SelectTrigger>
             <SelectContent>

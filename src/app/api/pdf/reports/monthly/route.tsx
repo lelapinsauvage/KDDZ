@@ -123,8 +123,8 @@ function MonthlyReportPdf({
   branchName,
   className,
   daysInMonth,
-  weekends,
-  holidays,
+  weekends: _weekends,
+  holidays: _holidays,
   attendance,
 }: MonthlyReportPdfProps) {
   const monthName = new Date(year, month - 1).toLocaleString("en-US", {

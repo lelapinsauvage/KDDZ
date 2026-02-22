@@ -7,9 +7,17 @@ import type { PortionSize } from "@/generated/prisma/client";
 // JWT Token Management
 // ─────────────────────────────────────────────
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.PARENT_JWT_SECRET || process.env.AUTH_SECRET || "parent-portal-secret-change-me"
-);
+function getJwtSecret(): Uint8Array {
+  const secret = process.env.PARENT_JWT_SECRET || process.env.AUTH_SECRET;
+  if (!secret) {
+    throw new Error(
+      "PARENT_JWT_SECRET or AUTH_SECRET environment variable must be set"
+    );
+  }
+  return new TextEncoder().encode(secret);
+}
+
+const JWT_SECRET = getJwtSecret();
 
 export interface ParentTokenPayload {
   sub: string; // parentUser.id

@@ -143,8 +143,8 @@ export default function AreasClient({ initialAreas, zoneOptions }: AreasClientPr
         ]}
       />
 
-      <div className="space-y-4 p-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-4 p-4 md:p-6">
+        <div className="flex flex-wrap items-center justify-between">
           <div />
           <Button className="bg-[#1caf9a] text-white hover:bg-[#18a08d]" onClick={openAdd}>
             <Plus className="mr-1 size-4" />

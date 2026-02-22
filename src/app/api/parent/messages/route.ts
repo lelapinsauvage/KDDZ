@@ -3,6 +3,8 @@ import { z } from "zod/v4";
 import { db } from "@/lib/db";
 import {
   authenticateParent,
+  checkRateLimit,
+  getRateLimitKey,
   jsonError,
   jsonSuccess,
 } from "@/lib/parent-auth";
@@ -16,6 +18,12 @@ const sendMessageSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 20 messages per minute per IP
+  const rlKey = getRateLimitKey(request, "messages");
+  if (!checkRateLimit(rlKey, 20, 60_000)) {
+    return jsonError("Too many requests", 429);
+  }
+
   const auth = await authenticateParent(request);
   if ("error" in auth) return auth.error;
   const { parentUser } = auth;

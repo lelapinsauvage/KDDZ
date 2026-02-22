@@ -46,10 +46,10 @@ interface ChildOption {
 
 interface ParentUsersClientProps {
   users: ParentUser[];
-  children: ChildOption[];
+  childrenList: ChildOption[];
 }
 
-export function ParentUsersClient({ users: initialUsers, children }: ParentUsersClientProps) {
+export function ParentUsersClient({ users: initialUsers, childrenList }: ParentUsersClientProps) {
   const [users, setUsers] = useState(initialUsers);
   const [createOpen, setCreateOpen] = useState(false);
   const [newUsername, setNewUsername] = useState("");
@@ -70,7 +70,7 @@ export function ParentUsersClient({ users: initialUsers, children }: ParentUsers
       if (result.success && result.data) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const newUser = result.data as any;
-        const childName = children.find((c) => c.id === newChild)?.name ?? "—";
+        const childName = childrenList.find((c) => c.id === newChild)?.name ?? "—";
         setUsers([
           ...users,
           {
@@ -206,7 +206,7 @@ export function ParentUsersClient({ users: initialUsers, children }: ParentUsers
         ]}
       />
 
-      <div className="space-y-4 p-6">
+      <div className="space-y-4 p-4 md:p-6">
         <div className="flex items-center justify-between">
           <div />
           <Button className="bg-[#1caf9a] text-white hover:bg-[#18a08d]" onClick={() => setCreateOpen(true)} disabled={isPending}>
@@ -244,7 +244,7 @@ export function ParentUsersClient({ users: initialUsers, children }: ParentUsers
                   <SelectValue placeholder="Select child" />
                 </SelectTrigger>
                 <SelectContent>
-                  {children.map((c) => (
+                  {childrenList.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.name}
                     </SelectItem>

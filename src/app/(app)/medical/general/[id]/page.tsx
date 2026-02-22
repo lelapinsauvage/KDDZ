@@ -45,7 +45,7 @@ export default async function GeneralMedicalDetailPage({ params }: PageProps) {
           doctorNotes: "",
         }}
         initialStatus="DRAFT"
-        children={childOptions}
+        childrenList={childOptions}
       />
     );
   }
@@ -84,7 +84,7 @@ export default async function GeneralMedicalDetailPage({ params }: PageProps) {
       formId={form.id}
       initialData={initialData}
       initialStatus={form.status as "DRAFT" | "SUBMITTED" | "REVIEWED"}
-      children={childOptions}
+      childrenList={childOptions}
     />
   );
 }

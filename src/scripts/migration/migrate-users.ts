@@ -46,7 +46,6 @@ import {
   getMapping,
   isDryRun,
   toBool,
-  cleanString,
   log,
   logError,
   logProgress,

@@ -4,7 +4,6 @@ import { ClassMessageClient } from "./class-message-client";
 export default async function ClassMessagePage() {
   const classesResult = await getClasses({ isActive: true });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rawClasses = (classesResult.data ?? []) as Array<{
     id: string;
     name: string;

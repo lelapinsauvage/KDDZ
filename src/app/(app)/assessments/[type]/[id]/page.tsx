@@ -56,7 +56,7 @@ export default async function EditAssessmentPage({ params }: PageProps) {
       <AssessmentForm
         assessmentType={typeNum}
         typeConfig={typeConfig}
-        children={children}
+        childrenList={children}
         defaultValues={{
           id: assessment.id,
           childId: assessment.childId,

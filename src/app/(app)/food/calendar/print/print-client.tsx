@@ -163,10 +163,10 @@ export default function PrintClient({
       </div>
 
       {/* Screen-only toolbar */}
-      <div className="space-y-4 p-6 print:hidden">
-        <div className="flex flex-wrap items-center gap-3">
+      <div className="space-y-4 p-4 md:p-6 print:hidden">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <Select value={branch} onValueChange={setBranch}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-full sm:w-[200px]">
               <SelectValue placeholder="Select Branch" />
             </SelectTrigger>
             <SelectContent>

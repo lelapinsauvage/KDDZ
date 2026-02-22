@@ -80,7 +80,7 @@ export function ComposeClient({ recipients }: ComposeClientProps) {
         ]}
       />
 
-      <div className="p-6 space-y-4">
+      <div className="p-4 md:p-6 space-y-4">
         {/* Quick Links */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <Card className="border-[#1caf9a]/30 bg-[#1caf9a]/5">

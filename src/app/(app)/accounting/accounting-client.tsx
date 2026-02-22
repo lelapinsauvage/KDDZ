@@ -100,7 +100,7 @@ interface AccountingClientProps {
   summary: SummaryData;
   branches: Array<{ id: string; name: string }>;
   classes: Array<{ id: string; name: string }>;
-  children: ChildOption[];
+  childrenList: ChildOption[];
 }
 
 // ── Helpers ──
@@ -160,7 +160,7 @@ export function AccountingClient({
   summary,
   branches,
   classes,
-  children,
+  childrenList,
 }: AccountingClientProps) {
   // Filters
   const [branchFilter, setBranchFilter] = useState("ALL");
@@ -441,7 +441,7 @@ export function AccountingClient({
         ]}
       />
 
-      <div className="space-y-6 p-6">
+      <div className="space-y-6 p-4 md:p-6">
         {/* Summary Cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card className="py-4">
@@ -514,9 +514,9 @@ export function AccountingClient({
         </div>
 
         {/* Filters Toolbar */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <Select value={branchFilter} onValueChange={setBranchFilter}>
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[160px]">
               <SelectValue placeholder="All Branches" />
             </SelectTrigger>
             <SelectContent>
@@ -530,7 +530,7 @@ export function AccountingClient({
           </Select>
 
           <Select value={classFilter} onValueChange={setClassFilter}>
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[160px]">
               <SelectValue placeholder="All Classes" />
             </SelectTrigger>
             <SelectContent>
@@ -544,7 +544,7 @@ export function AccountingClient({
           </Select>
 
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[160px]">
               <SelectValue placeholder="All Types" />
             </SelectTrigger>
             <SelectContent>
@@ -559,7 +559,7 @@ export function AccountingClient({
           </Select>
 
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[140px]">
               <SelectValue placeholder="All Status" />
             </SelectTrigger>
             <SelectContent>
@@ -573,7 +573,7 @@ export function AccountingClient({
           <div className="flex items-center gap-2">
             <Input
               type="date"
-              className="w-[150px]"
+              className="w-[130px] sm:w-[150px]"
               value={dateFromFilter}
               onChange={(e) => setDateFromFilter(e.target.value)}
               placeholder="From"
@@ -581,7 +581,7 @@ export function AccountingClient({
             <span className="text-sm text-muted-foreground">to</span>
             <Input
               type="date"
-              className="w-[150px]"
+              className="w-[130px] sm:w-[150px]"
               value={dateToFilter}
               onChange={(e) => setDateToFilter(e.target.value)}
               placeholder="To"
@@ -629,7 +629,7 @@ export function AccountingClient({
       <PaymentDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        children={children}
+        childrenList={childrenList}
         editData={editPayment}
       />
 

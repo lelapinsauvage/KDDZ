@@ -34,7 +34,7 @@ export default async function NewDailyReportPage() {
           { label: "New Report" },
         ]}
       />
-      <DailyReportForm children={children} foods={foods} />
+      <DailyReportForm childrenList={children} foods={foods} />
     </>
   );
 }

@@ -5,6 +5,8 @@ import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { hash } from "bcryptjs";
 
+const MIN_PASSWORD_LENGTH = 6;
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -65,7 +67,13 @@ export async function getParentUsers(
     const [parentUsers, total] = await Promise.all([
       db.parentUser.findMany({
         where,
-        include: {
+        select: {
+          id: true,
+          username: true,
+          childId: true,
+          isActive: true,
+          createdAt: true,
+          updatedAt: true,
           child: {
             include: { branch: true },
           },
@@ -101,7 +109,13 @@ export async function getParentUser(id: string): Promise<ActionResult> {
   try {
     const parentUser = await db.parentUser.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        username: true,
+        childId: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
         child: {
           include: { branch: true, class: true },
         },
@@ -132,6 +146,13 @@ export async function createParentUser(
       return { success: false, error: "Unauthorized" };
     }
 
+    if (!data.password || data.password.length < MIN_PASSWORD_LENGTH) {
+      return {
+        success: false,
+        error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,
+      };
+    }
+
     const passwordHash = await hash(data.password, 12);
 
     const parentUser = await db.parentUser.create({
@@ -140,6 +161,14 @@ export async function createParentUser(
         passwordHash,
         childId: data.childId,
         isActive: data.isActive ?? true,
+      },
+      select: {
+        id: true,
+        username: true,
+        childId: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
 
@@ -183,6 +212,14 @@ export async function updateParentUser(
     const parentUser = await db.parentUser.update({
       where: { id },
       data: updateData,
+      select: {
+        id: true,
+        username: true,
+        childId: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
 
     revalidatePath("/settings/parent-users");
@@ -212,6 +249,13 @@ export async function resetParentPassword(
     const session = await auth();
     if (!session?.user) {
       return { success: false, error: "Unauthorized" };
+    }
+
+    if (!newPassword || newPassword.length < MIN_PASSWORD_LENGTH) {
+      return {
+        success: false,
+        error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,
+      };
     }
 
     const passwordHash = await hash(newPassword, 12);
@@ -255,6 +299,14 @@ export async function toggleParentUserStatus(
     const updated = await db.parentUser.update({
       where: { id },
       data: { isActive: !parentUser.isActive },
+      select: {
+        id: true,
+        username: true,
+        childId: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
 
     revalidatePath("/settings/parent-users");

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition, useRef } from "react";
+import { useCallback, useMemo, useState, useTransition, useRef } from "react";
 import { type ColumnDef } from "@tanstack/react-table";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
@@ -32,7 +32,6 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { bulkCreateAttendanceLogs } from "@/lib/actions/employee-events";
-import { useRouter } from "next/navigation";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -85,7 +84,6 @@ export function AttendanceClient({
   employees,
   branches,
 }: AttendanceClientProps) {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -116,26 +114,39 @@ export function AttendanceClient({
   }, [branchFilter, employees]);
 
   // Get or create entry
-  function getEntry(employeeId: string): AttendanceEntry {
-    return (
-      entries.get(employeeId) ?? {
-        employeeId,
-        status: "present",
-        timeIn: "",
-        timeOut: "",
-        note: "",
-      }
-    );
-  }
+  const getEntry = useCallback(
+    (employeeId: string): AttendanceEntry => {
+      return (
+        entries.get(employeeId) ?? {
+          employeeId,
+          status: "present",
+          timeIn: "",
+          timeOut: "",
+          note: "",
+        }
+      );
+    },
+    [entries]
+  );
 
-  function updateEntry(employeeId: string, partial: Partial<AttendanceEntry>) {
-    setEntries((prev) => {
-      const next = new Map(prev);
-      const current = getEntry(employeeId);
-      next.set(employeeId, { ...current, ...partial });
-      return next;
-    });
-  }
+  const updateEntry = useCallback(
+    (employeeId: string, partial: Partial<AttendanceEntry>) => {
+      setEntries((prev) => {
+        const next = new Map(prev);
+        const current =
+          prev.get(employeeId) ?? {
+            employeeId,
+            status: "present",
+            timeIn: "",
+            timeOut: "",
+            note: "",
+          };
+        next.set(employeeId, { ...current, ...partial });
+        return next;
+      });
+    },
+    []
+  );
 
   // Submit manual attendance
   function handleSubmitAttendance() {
@@ -398,7 +409,7 @@ export function AttendanceClient({
         },
       },
     ],
-    [entries, employees],
+    [getEntry, updateEntry],
   );
 
   return (
@@ -410,7 +421,7 @@ export function AttendanceClient({
           { label: "Attendance" },
         ]}
       />
-      <div className="space-y-4 p-6">
+      <div className="space-y-4 p-4 md:p-6">
         {/* Result message */}
         {resultMessage && (
           <div
@@ -475,21 +486,20 @@ export function AttendanceClient({
         </div>
 
         {/* Filters + actions */}
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <div className="flex items-center gap-2">
               <Label className="text-sm text-muted-foreground whitespace-nowrap">
                 Date
               </Label>
               <Input
                 type="date"
-                className="w-[180px]"
+                className="w-[calc(50%-0.25rem)] sm:w-[180px]"
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
               />
             </div>
             <Select value={branchFilter} onValueChange={setBranchFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[180px]">
                 <SelectValue placeholder="All Branches" />
               </SelectTrigger>
               <SelectContent>
@@ -501,7 +511,6 @@ export function AttendanceClient({
                 ))}
               </SelectContent>
             </Select>
-          </div>
 
           <Button
             className="bg-[#1caf9a] hover:bg-[#18a08d] text-white"

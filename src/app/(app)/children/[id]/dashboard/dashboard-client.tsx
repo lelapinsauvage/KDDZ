@@ -112,7 +112,7 @@ export function DashboardClient({ child, stats, recentReports, upcomingAlarms, u
         ]}
       />
 
-      <div className="space-y-6 p-6">
+      <div className="space-y-6 p-4 md:p-6">
         {/* Child Info Card */}
         <Card>
           <CardContent className="flex items-start gap-6 pt-6">

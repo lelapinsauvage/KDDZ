@@ -46,7 +46,7 @@ export default async function AccidentReportDetailPage({ params }: PageProps) {
           followUpNotes: "",
           status: "DRAFT",
         }}
-        children={childOptions}
+        childrenList={childOptions}
       />
     );
   }
@@ -89,7 +89,7 @@ export default async function AccidentReportDetailPage({ params }: PageProps) {
       childId={form.childId}
       childName={childName}
       formData={formData}
-      children={childOptions}
+      childrenList={childOptions}
     />
   );
 }

@@ -50,7 +50,7 @@ export function AlarmsOverviewClient({
         title="Alarms & Notifications"
         breadcrumbs={[{ label: "Alarms" }]}
       />
-      <div className="space-y-6 p-6">
+      <div className="space-y-6 p-4 md:p-6">
         {/* Total summary */}
         <Card className="py-4">
           <CardContent className="flex items-center gap-4">

@@ -49,7 +49,7 @@ interface EditData {
 interface PaymentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  children: ChildOption[];
+  childrenList: ChildOption[];
   editData?: EditData | null;
 }
 
@@ -71,7 +71,7 @@ const monthOptions = [
 export function PaymentDialog({
   open,
   onOpenChange,
-  children,
+  childrenList,
   editData,
 }: PaymentDialogProps) {
   const isEditing = !!editData;
@@ -93,7 +93,26 @@ export function PaymentDialog({
   const [notes, setNotes] = useState("");
   const [childSearch, setChildSearch] = useState("");
 
-  // Populate form when editing
+  function resetForm() {
+    setChildId("");
+    setAmount("");
+    setCurrency("USD");
+    setDate(new Date().toISOString().split("T")[0]);
+    setDateFrom("");
+    setDateTo("");
+    setMonth("NONE");
+    setMethod("CASH");
+    setCategory("MONTHLY");
+    setStatus("PAID");
+    setReference("");
+    setNotes("");
+    setError(null);
+    setChildSearch("");
+  }
+
+  // Populate form when editing — syncing dialog state from props is a
+  // legitimate pattern that requires setting state inside an effect.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (editData) {
       setChildId(editData.childId);
@@ -112,23 +131,7 @@ export function PaymentDialog({
       resetForm();
     }
   }, [editData, open]);
-
-  function resetForm() {
-    setChildId("");
-    setAmount("");
-    setCurrency("USD");
-    setDate(new Date().toISOString().split("T")[0]);
-    setDateFrom("");
-    setDateTo("");
-    setMonth("NONE");
-    setMethod("CASH");
-    setCategory("MONTHLY");
-    setStatus("PAID");
-    setReference("");
-    setNotes("");
-    setError(null);
-    setChildSearch("");
-  }
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   function handleSubmit() {
     setError(null);
@@ -179,13 +182,13 @@ export function PaymentDialog({
   }
 
   const filteredChildren = childSearch
-    ? children.filter(
+    ? childrenList.filter(
         (c) =>
           `${c.firstName} ${c.lastName}`.toLowerCase().includes(childSearch.toLowerCase()),
       )
-    : children;
+    : childrenList;
 
-  const selectedChild = children.find((c) => c.id === childId);
+  const selectedChild = childrenList.find((c) => c.id === childId);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

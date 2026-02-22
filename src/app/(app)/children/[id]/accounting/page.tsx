@@ -98,7 +98,7 @@ export default async function ChildAccountingPage({ params }: Props) {
       entries={entries}
       payments={payments}
       paymentSummary={paymentsData.summary}
-      children={children}
+      childrenList={children}
     />
   );
 }

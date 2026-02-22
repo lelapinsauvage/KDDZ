@@ -5,7 +5,7 @@ import NurseryClient from "./nursery-client";
 
 export default async function NurseryInfoPage() {
   const session = await auth();
-  const userBranchId = (session?.user as any)?.branchId as string | null;
+  const userBranchId = session?.user?.branchId ?? null;
 
   // If user has no branch, try to get first branch
   let branchId = userBranchId;

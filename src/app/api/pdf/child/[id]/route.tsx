@@ -11,7 +11,6 @@ import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import {
   pdfStyles as s,
-  colors,
   formatDate,
   getAge,
   val,

@@ -229,7 +229,7 @@ async function main() {
     // ─────────────────────────────────────────────
     console.log("Creating users...");
 
-    const adminUser = await tx.user.create({
+    const _adminUser = await tx.user.create({
       data: {
         email: "admin@garderie.com",
         passwordHash,

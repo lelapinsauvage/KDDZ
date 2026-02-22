@@ -76,7 +76,7 @@ export function NurseDetailClient({ nurse, recentActivities }: NurseDetailClient
         ]}
       />
 
-      <div className="space-y-6 p-6">
+      <div className="space-y-6 p-4 md:p-6">
         <Card>
           <CardContent className="flex items-start gap-6 pt-6">
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-red-100 text-2xl font-bold text-red-600">

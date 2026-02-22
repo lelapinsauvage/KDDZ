@@ -36,7 +36,7 @@ export default async function ConditionDetailPage({ params }: PageProps) {
           treatmentPlan: "",
           doctorNotes: "",
         }}
-        children={childOptions}
+        childrenList={childOptions}
       />
     );
   }
@@ -66,7 +66,7 @@ export default async function ConditionDetailPage({ params }: PageProps) {
       isNew={false}
       formId={form.id}
       formData={formData}
-      children={childOptions}
+      childrenList={childOptions}
     />
   );
 }

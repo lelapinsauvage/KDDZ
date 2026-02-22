@@ -144,7 +144,7 @@ export default async function ChildDetailsPage({ params }: ChildDetailsPageProps
           { label: "Child Details" },
         ]}
       />
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         <ChildForm childId={id} defaultValues={defaultValues} />
       </div>
     </>

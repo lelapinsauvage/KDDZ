@@ -61,24 +61,24 @@ export function Header({
 
   return (
     <header className="header-bar fixed top-0 left-0 right-0 z-50 flex items-center">
-      {/* Logo area — matches sidebar width */}
-      <div className="flex h-[46px] w-[270px] shrink-0 items-center px-5">
+      {/* Logo area — matches sidebar width on desktop, compact on mobile */}
+      <div className="flex h-[46px] w-auto shrink-0 items-center px-3 md:w-[270px] md:px-5">
         <Link href="/dashboard" className="text-lg font-bold text-white tracking-wide">
           KiddzOnline
         </Link>
       </div>
 
       {/* Right side: sidebar trigger + notifications + user menu */}
-      <div className="flex flex-1 items-center justify-between px-4">
+      <div className="flex flex-1 items-center justify-between px-2 md:px-4">
         <SidebarTrigger className="text-[#b4bcc8] hover:text-white hover:bg-white/10" />
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 sm:gap-1">
           {/* Navigation icon links */}
           {navIcons.map((item) => (
             <Link
               key={item.label}
               href={item.href}
-              className="relative flex h-[46px] w-10 items-center justify-center text-[#b4bcc8] transition-colors hover:text-white"
+              className="relative flex h-[46px] w-8 items-center justify-center text-[#b4bcc8] transition-colors hover:text-white sm:w-10"
             >
               <item.icon className="size-[18px]" />
               {item.count > 0 && (

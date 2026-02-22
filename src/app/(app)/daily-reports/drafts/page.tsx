@@ -3,7 +3,7 @@ import { getBranches } from "@/lib/actions/branches";
 import { DraftDailyReportsClient } from "./draft-daily-reports-client";
 
 export default async function DraftDailyReportsPage() {
-  const [{ reports, total }, branchesResult] = await Promise.all([
+  const [{ reports }, branchesResult] = await Promise.all([
     getDraftReports(),
     getBranches(),
   ]);

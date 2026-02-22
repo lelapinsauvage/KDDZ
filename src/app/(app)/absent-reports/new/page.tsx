@@ -21,7 +21,7 @@ export default async function NewAbsenceReportPage() {
           { label: "New Report" },
         ]}
       />
-      <AbsenceReportForm children={children} />
+      <AbsenceReportForm childrenList={children} />
     </>
   );
 }

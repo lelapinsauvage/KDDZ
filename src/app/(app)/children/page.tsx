@@ -52,7 +52,7 @@ export default async function ChildrenListingPage({ searchParams }: PageProps) {
 
   return (
     <ChildrenPageClient
-      children={children}
+      childrenList={children}
       total={total}
       branches={branches}
       classes={classes}

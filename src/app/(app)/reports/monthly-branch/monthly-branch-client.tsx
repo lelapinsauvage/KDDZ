@@ -88,11 +88,11 @@ export default function MonthlyBranchClient({
         ]}
       />
 
-      <div className="space-y-6 p-6">
+      <div className="space-y-6 p-4 md:p-6">
         {/* Filters */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
           <Select value={selectedBranchId} onValueChange={setSelectedBranchId}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[200px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

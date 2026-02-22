@@ -275,7 +275,6 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
         enableSorting: false,
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
@@ -289,11 +288,11 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
         ]}
       />
 
-      <div className="space-y-4 p-6">
+      <div className="space-y-4 p-4 md:p-6">
         {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-3">
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="All Categories" />
             </SelectTrigger>
             <SelectContent>

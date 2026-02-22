@@ -84,7 +84,7 @@ export function DirectMessageClient({ recipients }: DirectMessageClientProps) {
         ]}
       />
 
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">New Direct Message</CardTitle>

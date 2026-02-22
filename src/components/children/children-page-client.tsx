@@ -76,7 +76,7 @@ interface Filters {
 }
 
 interface ChildrenPageClientProps {
-  children: ChildRow[];
+  childrenList: ChildRow[];
   total: number;
   branches: BranchItem[];
   classes: ClassItem[];
@@ -119,7 +119,7 @@ const childrenExportColumns: ExportColumn[] = [
 ];
 
 export function ChildrenPageClient({
-  children,
+  childrenList,
   total,
   branches,
   classes,
@@ -218,9 +218,12 @@ export function ChildrenPageClient({
 
   // ── Sorting ────────────────────────────────────
 
-  const sorting: SortingState = filters.sort
-    ? [{ id: filters.sort, desc: filters.order === "desc" }]
-    : [];
+  const sorting: SortingState = useMemo(
+    () => filters.sort
+      ? [{ id: filters.sort, desc: filters.order === "desc" }]
+      : [],
+    [filters.sort, filters.order]
+  );
 
   const handleSortingChange = useCallback(
     (updaterOrValue: SortingState | ((prev: SortingState) => SortingState)) => {
@@ -269,7 +272,7 @@ export function ChildrenPageClient({
   );
 
   const table = useReactTable({
-    data: children,
+    data: childrenList,
     columns,
     getCoreRowModel: getCoreRowModel(),
     manualSorting: true,
@@ -295,12 +298,12 @@ export function ChildrenPageClient({
         ]}
       />
 
-      <div className="space-y-4 p-6">
+      <div className="space-y-4 p-4 md:p-6">
         {/* ── Toolbar ─────────────────────────────── */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {/* Search */}
           <form
-            className="relative w-full max-w-xs"
+            className="relative w-full sm:max-w-xs"
             onSubmit={(e) => {
               e.preventDefault();
               handleSearchSubmit();
@@ -318,7 +321,7 @@ export function ChildrenPageClient({
 
           {/* Branch filter */}
           <Select value={filters.branch} onValueChange={handleBranchChange}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[180px]">
               <SelectValue placeholder="All Branches" />
             </SelectTrigger>
             <SelectContent>
@@ -333,7 +336,7 @@ export function ChildrenPageClient({
 
           {/* Class filter */}
           <Select value={filters.class} onValueChange={handleClassChange}>
-            <SelectTrigger className="w-[170px]">
+            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[170px]">
               <SelectValue placeholder="All Classes" />
             </SelectTrigger>
             <SelectContent>
@@ -348,7 +351,7 @@ export function ChildrenPageClient({
 
           {/* Gender filter */}
           <Select value={filters.gender} onValueChange={handleGenderChange}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[140px]">
               <SelectValue placeholder="All Genders" />
             </SelectTrigger>
             <SelectContent>
@@ -360,7 +363,7 @@ export function ChildrenPageClient({
 
           {/* Status filter */}
           <Select value={filters.status} onValueChange={handleStatusChange}>
-            <SelectTrigger className="w-[150px]">
+            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[150px]">
               <SelectValue placeholder="All Statuses" />
             </SelectTrigger>
             <SelectContent>
@@ -379,7 +382,7 @@ export function ChildrenPageClient({
             filename="children"
             sheetName="Children"
             columns={childrenExportColumns}
-            data={children as unknown as Record<string, unknown>[]}
+            data={childrenList as unknown as Record<string, unknown>[]}
           />
 
           {/* Add Child button */}
@@ -396,8 +399,8 @@ export function ChildrenPageClient({
 
         {/* ── Data Table ──────────────────────────── */}
         <div className="space-y-4">
-          <div className="rounded-md border bg-card">
-            <Table>
+          <div className="overflow-x-auto rounded-md border bg-card">
+            <Table className="min-w-[700px]">
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
@@ -455,7 +458,7 @@ export function ChildrenPageClient({
           </div>
 
           {/* ── Pagination ──────────────────────────── */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-muted-foreground">
               {total} total row(s)
             </p>

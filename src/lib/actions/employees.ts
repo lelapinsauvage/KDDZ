@@ -104,8 +104,8 @@ export async function getEmployees(
 
     const skip = (page - 1) * pageSize;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [employees, total] = await Promise.all([
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (model as any).findMany({
         where,
         include: { branch: true },
@@ -113,6 +113,7 @@ export async function getEmployees(
         skip,
         take: pageSize,
       }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (model as any).count({ where }),
     ]);
 

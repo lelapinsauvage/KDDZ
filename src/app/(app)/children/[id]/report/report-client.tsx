@@ -12,8 +12,6 @@ import {
   Moon,
   Droplets,
   SmilePlus,
-  Thermometer,
-  Baby,
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
@@ -182,7 +180,7 @@ export function ReportClient({ child, reports, total }: Props) {
         ]}
       />
 
-      <div className="space-y-6 p-6">
+      <div className="space-y-4 p-4 md:space-y-6 md:p-6">
         <div className="text-sm text-muted-foreground">
           {total} daily report(s) on record
         </div>

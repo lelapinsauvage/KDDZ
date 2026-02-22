@@ -63,7 +63,7 @@ interface FoodOption {
 }
 
 interface DailyReportFormProps {
-  children: ChildOption[];
+  childrenList: ChildOption[];
   foods: {
     breakfast: FoodOption[];
     lunch: FoodOption[];
@@ -74,7 +74,7 @@ interface DailyReportFormProps {
 }
 
 export function DailyReportForm({
-  children: childrenList,
+  childrenList,
   foods,
   defaultValues,
   reportId,
@@ -180,7 +180,7 @@ export function DailyReportForm({
   return (
     <form
       onSubmit={handleSubmit((data) => submitReport(data, "SUBMITTED"))}
-      className="space-y-6 p-6"
+      className="space-y-6 p-4 md:p-6"
     >
       {error && (
         <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">
@@ -433,7 +433,7 @@ export function DailyReportForm({
             <h4 className="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">
               Bathroom
             </h4>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
               <div className="space-y-2">
                 <Label>Urine (Potty)</Label>
                 <Input type="number" min="0" {...register("urinePotty")} />
@@ -459,7 +459,7 @@ export function DailyReportForm({
             <h4 className="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">
               Symptoms
             </h4>
-            <div className="flex flex-wrap gap-6">
+            <div className="flex flex-wrap gap-3 sm:gap-6">
               {[
                 { key: "diarrhea" as const, label: "Diarrhea" },
                 { key: "cough" as const, label: "Cough" },
@@ -640,7 +640,7 @@ export function DailyReportForm({
       </Card>
 
       {/* Action Bar */}
-      <div className="sticky bottom-0 flex items-center justify-end gap-3 border-t bg-card px-6 py-4">
+      <div className="sticky bottom-0 flex items-center justify-end gap-3 border-t bg-card px-4 py-3 md:px-6 md:py-4">
         <Button
           type="button"
           variant="outline"

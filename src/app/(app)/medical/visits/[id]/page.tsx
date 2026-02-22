@@ -38,7 +38,7 @@ export default async function VisitDetailPage({ params }: PageProps) {
           notes: "",
         }}
         status="DRAFT"
-        children={childOptions}
+        childrenList={childOptions}
       />
     );
   }
@@ -68,7 +68,7 @@ export default async function VisitDetailPage({ params }: PageProps) {
         notes: (data.notes as string) ?? "",
       }}
       status={form.status as "DRAFT" | "SUBMITTED" | "REVIEWED"}
-      children={childOptions}
+      childrenList={childOptions}
     />
   );
 }

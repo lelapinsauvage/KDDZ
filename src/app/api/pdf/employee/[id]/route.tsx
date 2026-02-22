@@ -184,7 +184,7 @@ export async function GET(
     };
 
     let employee: EmployeeResult | null = null;
-    let employeeType = type;
+    const employeeType = type;
 
     if (type === "teacher") {
       employee = await db.teacher.findUnique({

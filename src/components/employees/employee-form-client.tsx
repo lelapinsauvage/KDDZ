@@ -159,7 +159,7 @@ export function EmployeeFormClient({
         ]}
       />
 
-      <form onSubmit={handleSubmit(onSubmit)} className="p-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="p-4 md:p-6">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
           {/* ── Left sidebar: profile photo + save button ── */}
           <div className="space-y-4">

@@ -27,6 +27,57 @@ import { getDailyReports } from "@/lib/actions/daily-reports";
 import { getPayments } from "@/lib/actions/payments";
 import { getMedicalForms } from "@/lib/actions/medical";
 
+// ── Export-specific row types ────────────────────
+interface ExportChild {
+  id: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: Date | string | null;
+  gender: string | null;
+  branch?: { name: string } | null;
+  class?: { name: string } | null;
+  isActive: boolean;
+  enrollmentDate: Date | string | null;
+}
+
+interface ExportEmployee {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  phone: string | null;
+  branch?: { name: string } | null;
+  isActive: boolean;
+  type?: string;
+}
+
+interface ExportDailyReport {
+  id: string;
+  child?: { firstName: string; lastName: string } | null;
+  reportDate: Date | string | null;
+  status: string | null;
+  mood: string | null;
+  remarks: string | null;
+}
+
+interface ExportMedicalForm {
+  id: string;
+  child?: { firstName: string; lastName: string } | null;
+  formType: string | null;
+  status: string | null;
+  createdAt: Date | string | null;
+}
+
+interface ExportPayment {
+  id: string;
+  child?: { firstName: string; lastName: string } | null;
+  amount: number | null;
+  date: Date | string | null;
+  method: string | null;
+  reference: string | null;
+  notes: string | null;
+}
+
 interface ExportCard {
   id: string;
   title: string;
@@ -121,7 +172,7 @@ export default function ExportDatabasePage() {
           const result = await getChildren({ pageSize: 10000 });
           const children = result.children ?? [];
           const headers = ["ID", "First Name", "Last Name", "Date of Birth", "Gender", "Branch", "Class", "Active", "Enrollment Date"];
-          const rows = children.map((c: any) => [
+          const rows = children.map((c: ExportChild) => [
             escapeCSV(c.id),
             escapeCSV(c.firstName),
             escapeCSV(c.lastName),
@@ -138,11 +189,11 @@ export default function ExportDatabasePage() {
         }
         case "employees": {
           const types = ["teacher", "nurse", "doctor", "manager"] as const;
-          const allEmployees: any[] = [];
+          const allEmployees: ExportEmployee[] = [];
           for (const type of types) {
             const result = await getEmployees(type, { pageSize: 10000 });
-            const data = result.data as any;
-            const employees = data?.employees ?? [];
+            const data = result.data as Record<string, unknown> | undefined;
+            const employees = (data?.employees ?? []) as ExportEmployee[];
             for (const emp of employees) {
               allEmployees.push({ ...emp, type });
             }
@@ -171,7 +222,7 @@ export default function ExportDatabasePage() {
           });
           const reports = result.reports ?? [];
           const headers = ["ID", "Child", "Date", "Status", "Mood", "Remarks"];
-          const rows = reports.map((r: any) => [
+          const rows = reports.map((r: ExportDailyReport) => [
             escapeCSV(r.id),
             escapeCSV(`${r.child?.firstName ?? ""} ${r.child?.lastName ?? ""}`),
             escapeCSV(r.reportDate ? new Date(r.reportDate).toISOString().split("T")[0] : ""),
@@ -187,7 +238,7 @@ export default function ExportDatabasePage() {
           const result = await getMedicalForms({ pageSize: 10000 });
           const forms = result.forms ?? [];
           const headers = ["ID", "Child", "Form Type", "Status", "Created At"];
-          const rows = forms.map((f: any) => [
+          const rows = forms.map((f: ExportMedicalForm) => [
             escapeCSV(f.id),
             escapeCSV(`${f.child?.firstName ?? ""} ${f.child?.lastName ?? ""}`),
             escapeCSV(f.formType),
@@ -205,10 +256,10 @@ export default function ExportDatabasePage() {
             dateTo: range?.to,
             pageSize: 10000,
           });
-          const data = result.data as any;
-          const payments = data?.payments ?? [];
+          const data = result.data as Record<string, unknown> | undefined;
+          const payments = (data?.payments ?? []) as ExportPayment[];
           const headers = ["ID", "Child", "Amount", "Date", "Method", "Reference", "Notes"];
-          const rows = payments.map((p: any) => [
+          const rows = payments.map((p: ExportPayment) => [
             escapeCSV(p.id),
             escapeCSV(`${p.child?.firstName ?? ""} ${p.child?.lastName ?? ""}`),
             escapeCSV(p.amount),
@@ -239,7 +290,7 @@ export default function ExportDatabasePage() {
         ]}
       />
 
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {exportCards.map((card) => (
             <Card key={card.id}>

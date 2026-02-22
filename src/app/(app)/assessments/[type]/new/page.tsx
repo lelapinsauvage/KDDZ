@@ -44,7 +44,7 @@ export default async function NewAssessmentPage({ params }: PageProps) {
       <AssessmentForm
         assessmentType={typeNum}
         typeConfig={typeConfig}
-        children={children}
+        childrenList={children}
       />
     </>
   );

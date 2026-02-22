@@ -237,10 +237,10 @@ export function AbsentReportsClient({ reports, branches }: Props) {
         ]}
       />
 
-      <div className="space-y-4 p-6">
+      <div className="space-y-4 p-4 md:p-6">
         <div className="flex flex-wrap items-center gap-3">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[160px]">
               <SelectValue placeholder="All Statuses" />
             </SelectTrigger>
             <SelectContent>
@@ -252,7 +252,7 @@ export function AbsentReportsClient({ reports, branches }: Props) {
           </Select>
 
           <Select value={branchFilter} onValueChange={setBranchFilter}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[180px]">
               <SelectValue placeholder="All Branches" />
             </SelectTrigger>
             <SelectContent>
