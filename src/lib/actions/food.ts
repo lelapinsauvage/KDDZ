@@ -32,6 +32,12 @@ interface GetFoodCalendarParams {
   weekStart: string; // ISO date of Monday
 }
 
+interface GetFoodCalendarMonthParams {
+  branchId: string;
+  year: number;
+  month: number; // 1-12
+}
+
 interface SetFoodCalendarEntryData {
   branchId: string;
   date: string; // ISO date
@@ -255,6 +261,60 @@ export async function getFoodCalendar(params: GetFoodCalendarParams) {
     return { calendar };
   } catch (error) {
     console.error("getFoodCalendar error:", error);
+    return { error: "Failed to load food calendar" };
+  }
+}
+
+// ─────────────────────────────────────────────
+// getFoodCalendarMonth — Get food calendar for full month
+// ─────────────────────────────────────────────
+
+export async function getFoodCalendarMonth(params: GetFoodCalendarMonthParams) {
+  try {
+    const { branchId, year, month } = params;
+
+    if (!branchId || !year || !month) {
+      return { error: "branchId, year, and month are required" };
+    }
+
+    const firstDay = new Date(year, month - 1, 1);
+    const lastDay = new Date(year, month, 0);
+
+    const entries = await db.foodCalendar.findMany({
+      where: {
+        branchId,
+        date: {
+          gte: firstDay,
+          lte: lastDay,
+        },
+      },
+      include: {
+        food: true,
+      },
+    });
+
+    const calendar: FoodCalendarResult = {};
+
+    for (const entry of entries) {
+      const dateKey = entry.date.toISOString().split("T")[0];
+      if (!calendar[dateKey]) {
+        calendar[dateKey] = {};
+      }
+      calendar[dateKey][entry.mealType as MealType] = {
+        id: entry.id,
+        foodId: entry.foodId,
+        food: {
+          id: entry.food.id,
+          name: entry.food.name,
+          category: entry.food.category,
+          isActive: entry.food.isActive,
+        },
+      };
+    }
+
+    return { calendar };
+  } catch (error) {
+    console.error("getFoodCalendarMonth error:", error);
     return { error: "Failed to load food calendar" };
   }
 }

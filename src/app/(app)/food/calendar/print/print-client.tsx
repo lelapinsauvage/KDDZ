@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useCallback, useTransition, useEffect } from "react";
+import { useState, useMemo, useCallback, useTransition, useEffect } from "react";
 import {
   ChevronLeft,
   ChevronRight,
   Printer,
-  Calendar as CalendarIcon,
 } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
@@ -17,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getFoodCalendar } from "@/lib/actions/food";
+import { getFoodCalendarMonth } from "@/lib/actions/food";
 
 // Types
 type MealTypeKey = "BREAKFAST" | "LUNCH" | "DESSERT" | "SNACK";
@@ -41,93 +40,113 @@ interface FoodCalendarEntry {
 type CalendarData = Record<string, Partial<Record<MealTypeKey, FoodCalendarEntry>>>;
 
 // Constants
-const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"] as const;
-const MEALS: { type: MealTypeKey; label: string }[] = [
-  { type: "BREAKFAST", label: "Breakfast" },
-  { type: "LUNCH", label: "Lunch" },
-  { type: "DESSERT", label: "Dessert" },
-  { type: "SNACK", label: "Snack" },
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
 ];
 
-// Helpers
-function getMonday(date: Date): Date {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  d.setDate(diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
+const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+const MEALS: { type: MealTypeKey; label: string }[] = [
+  { type: "BREAKFAST", label: "B" },
+  { type: "LUNCH", label: "L" },
+  { type: "DESSERT", label: "D" },
+  { type: "SNACK", label: "S" },
+];
+
+function getDaysInMonth(year: number, month: number): number {
+  return new Date(year, month, 0).getDate();
 }
 
-function formatShortDate(date: Date): string {
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+function getFirstDayOfWeek(year: number, month: number): number {
+  return new Date(year, month - 1, 1).getDay();
 }
 
-function formatDateRange(monday: Date): string {
-  const friday = new Date(monday);
-  friday.setDate(monday.getDate() + 4);
-  return `${formatShortDate(monday)} - ${formatShortDate(friday)}, ${monday.getFullYear()}`;
-}
-
-function toISODate(date: Date): string {
-  return date.toISOString().split("T")[0];
+function toISODate(year: number, month: number, day: number): string {
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
 interface PrintClientProps {
   branches: BranchOption[];
   initialCalendar: CalendarData;
   initialBranchId: string;
+  initialYear: number;
+  initialMonth: number;
 }
 
 export default function PrintClient({
   branches,
   initialCalendar,
   initialBranchId,
+  initialYear,
+  initialMonth,
 }: PrintClientProps) {
-  const [weekStart, setWeekStart] = useState(() => getMonday(new Date()));
+  const [year, setYear] = useState(initialYear);
+  const [month, setMonth] = useState(initialMonth);
   const [branch, setBranch] = useState(initialBranchId);
   const [calendar, setCalendar] = useState<CalendarData>(initialCalendar);
   const [isPending, startTransition] = useTransition();
 
   const branchName = branches.find((b) => b.id === branch)?.name ?? "Branch";
 
-  // Fetch calendar data when branch or week changes
+  // Fetch when branch or month changes
   useEffect(() => {
+    if (!branch) return;
     startTransition(async () => {
-      const result = await getFoodCalendar({
-        branchId: branch,
-        weekStart: toISODate(weekStart),
-      });
-      if (result.calendar) {
+      const result = await getFoodCalendarMonth({ branchId: branch, year, month });
+      if ("calendar" in result && result.calendar) {
         setCalendar(result.calendar as CalendarData);
       }
     });
-  }, [branch, weekStart]);
+  }, [branch, year, month]);
 
-  const prevWeek = useCallback(() => {
-    setWeekStart((prev) => {
-      const d = new Date(prev);
-      d.setDate(d.getDate() - 7);
-      return d;
-    });
-  }, []);
+  const prevMonth = useCallback(() => {
+    if (month <= 1) {
+      setMonth(12);
+      setYear((y) => y - 1);
+    } else {
+      setMonth((m) => m - 1);
+    }
+  }, [month]);
 
-  const nextWeek = useCallback(() => {
-    setWeekStart((prev) => {
-      const d = new Date(prev);
-      d.setDate(d.getDate() + 7);
-      return d;
-    });
-  }, []);
+  const nextMonth = useCallback(() => {
+    if (month >= 12) {
+      setMonth(1);
+      setYear((y) => y + 1);
+    } else {
+      setMonth((m) => m + 1);
+    }
+  }, [month]);
 
-  const getDayDate = useCallback(
-    (dayIndex: number) => {
-      const d = new Date(weekStart);
-      d.setDate(d.getDate() + dayIndex);
-      return d;
-    },
-    [weekStart]
-  );
+  // Build calendar grid
+  const daysInMonth = getDaysInMonth(year, month);
+  const firstDayOfWeek = getFirstDayOfWeek(year, month);
+
+  const calendarWeeks = useMemo(() => {
+    const weeks: (number | null)[][] = [];
+    let currentWeek: (number | null)[] = [];
+
+    for (let i = 0; i < firstDayOfWeek; i++) {
+      currentWeek.push(null);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      currentWeek.push(day);
+      if (currentWeek.length === 7) {
+        weeks.push(currentWeek);
+        currentWeek = [];
+      }
+    }
+
+    if (currentWeek.length > 0) {
+      while (currentWeek.length < 7) {
+        currentWeek.push(null);
+      }
+      weeks.push(currentWeek);
+    }
+
+    return weeks;
+  }, [daysInMonth, firstDayOfWeek]);
 
   return (
     <>
@@ -162,15 +181,18 @@ export default function PrintClient({
           <div className="flex-1" />
 
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={prevWeek}>
+            <Button variant="outline" size="icon" onClick={prevMonth}>
               <ChevronLeft className="size-4" />
             </Button>
-            <div className="flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm font-medium text-[#333]">
-              <CalendarIcon className="size-4 text-muted-foreground" />
-              {formatDateRange(weekStart)}
-              {isPending && <span className="text-xs text-muted-foreground ml-1">Loading...</span>}
+            <div className="flex items-center gap-2 rounded-md border px-4 py-1.5 text-sm font-medium text-[#333] min-w-[180px] justify-center">
+              {MONTH_NAMES[month - 1]} {year}
+              {isPending && (
+                <span className="text-xs text-muted-foreground ml-1">
+                  Loading...
+                </span>
+              )}
             </div>
-            <Button variant="outline" size="icon" onClick={nextWeek}>
+            <Button variant="outline" size="icon" onClick={nextMonth}>
               <ChevronRight className="size-4" />
             </Button>
           </div>
@@ -188,51 +210,70 @@ export default function PrintClient({
       {/* Printable area */}
       <div className="p-6 print:p-0">
         {/* Print-only title */}
-        <div className="mb-6 hidden text-center print:block">
+        <div className="mb-4 hidden text-center print:block">
           <h1 className="text-2xl font-bold text-[#333]">
-            Weekly Food Calendar
+            Monthly Food Calendar
           </h1>
           <p className="mt-1 text-base text-[#555]">
-            {branchName} &mdash; {formatDateRange(weekStart)}
+            {branchName} &mdash; {MONTH_NAMES[month - 1]} {year}
           </p>
         </div>
 
-        {/* Table */}
+        {/* Calendar Table */}
         <table className="w-full border-collapse border border-gray-300">
           <thead>
             <tr>
-              <th className="border border-gray-300 bg-[#f1f3f6] px-4 py-3 text-left text-xs font-semibold uppercase text-[#6f7b8a] print:bg-gray-100 print:text-[10px]">
-                Meal
-              </th>
-              {DAYS.map((day, i) => (
+              {DAY_NAMES.map((day) => (
                 <th
                   key={day}
-                  className="border border-gray-300 bg-[#f1f3f6] px-4 py-3 text-center text-xs font-semibold uppercase text-[#6f7b8a] print:bg-gray-100 print:text-[10px]"
+                  className="border border-gray-300 bg-[#f1f3f6] px-2 py-2 text-center text-xs font-semibold uppercase text-[#6f7b8a] print:bg-gray-100 print:text-[9px]"
                 >
-                  <div>{day}</div>
-                  <div className="mt-0.5 text-[10px] font-normal normal-case text-muted-foreground print:text-[9px]">
-                    {formatShortDate(getDayDate(i))}
-                  </div>
+                  {day}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {MEALS.map((meal) => (
-              <tr key={meal.type}>
-                <td className="border border-gray-300 px-4 py-3 text-sm font-medium text-[#333] print:text-xs">
-                  {meal.label}
-                </td>
-                {DAYS.map((_, dayIdx) => {
-                  const dateKey = toISODate(getDayDate(dayIdx));
-                  const entry = calendar[dateKey]?.[meal.type];
-                  const food = entry?.food?.name ?? "";
+            {calendarWeeks.map((week, weekIdx) => (
+              <tr key={weekIdx}>
+                {week.map((day, dayIdx) => {
+                  if (day === null) {
+                    return (
+                      <td
+                        key={dayIdx}
+                        className="border border-gray-300 bg-gray-50 p-1 align-top h-[90px] print:h-[70px]"
+                      />
+                    );
+                  }
+
+                  const dateKey = toISODate(year, month, day);
+                  const dayData = calendar[dateKey] ?? {};
+
                   return (
                     <td
                       key={dayIdx}
-                      className="border border-gray-300 px-4 py-3 text-center text-sm text-[#555] print:text-xs"
+                      className="border border-gray-300 p-1.5 align-top h-[90px] print:h-[70px] print:p-1"
                     >
-                      {food || <span className="text-gray-300">&mdash;</span>}
+                      <div className="text-xs font-semibold text-[#333] mb-0.5 print:text-[9px]">
+                        {day}
+                      </div>
+                      <div className="space-y-0.5">
+                        {MEALS.map((meal) => {
+                          const entry = dayData[meal.type];
+                          if (!entry) return null;
+                          return (
+                            <div
+                              key={meal.type}
+                              className="truncate text-[10px] leading-tight text-[#555] print:text-[8px]"
+                            >
+                              <span className="font-semibold">
+                                {meal.label}:
+                              </span>{" "}
+                              {entry.food?.name ?? ""}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </td>
                   );
                 })}
@@ -240,6 +281,14 @@ export default function PrintClient({
             ))}
           </tbody>
         </table>
+
+        {/* Print legend */}
+        <div className="mt-2 flex gap-4 text-[10px] text-[#888] print:text-[8px]">
+          <span>B = Breakfast</span>
+          <span>L = Lunch</span>
+          <span>D = Dessert</span>
+          <span>S = Snack</span>
+        </div>
       </div>
 
       {/* Print styles */}
@@ -261,6 +310,11 @@ export default function PrintClient({
           main {
             margin: 0 !important;
             padding: 0 !important;
+          }
+
+          @page {
+            size: landscape;
+            margin: 1cm;
           }
         }
       `}</style>

@@ -4,12 +4,20 @@ import { useState, useMemo, useCallback, useTransition } from "react";
 import {
   ChevronLeft,
   ChevronRight,
-  Calendar as CalendarIcon,
+  Printer,
 } from "lucide-react";
+import Link from "next/link";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -17,7 +25,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getFoodCalendar, setFoodCalendarEntry } from "@/lib/actions/food";
+import {
+  getFoodCalendarMonth,
+  setFoodCalendarEntry,
+  deleteFoodCalendarEntry,
+} from "@/lib/actions/food";
 
 // ── Types ───────────────────────────────────────
 type MealType = "BREAKFAST" | "LUNCH" | "DESSERT" | "SNACK";
@@ -37,42 +49,38 @@ interface CalendarEntryData {
 type CalendarData = Record<string, Record<string, CalendarEntryData>>;
 
 // ── Helpers ─────────────────────────────────────
-const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"] as const;
-const MEALS: { type: MealType; label: string; bg: string }[] = [
-  { type: "BREAKFAST", label: "Breakfast", bg: "bg-blue-50" },
-  { type: "LUNCH", label: "Lunch", bg: "bg-green-50" },
-  { type: "DESSERT", label: "Dessert", bg: "bg-pink-50" },
-  { type: "SNACK", label: "Snack", bg: "bg-yellow-50" },
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
 ];
 
-function getMonday(date: Date): Date {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  d.setDate(diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
+const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+const MEALS: { type: MealType; label: string; color: string }[] = [
+  { type: "BREAKFAST", label: "Breakfast", color: "text-blue-600" },
+  { type: "LUNCH", label: "Lunch", color: "text-green-600" },
+  { type: "DESSERT", label: "Dessert", color: "text-pink-600" },
+  { type: "SNACK", label: "Snack", color: "text-yellow-600" },
+];
+
+function toISODate(year: number, month: number, day: number): string {
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
-function formatShortDate(date: Date): string {
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+function getDaysInMonth(year: number, month: number): number {
+  return new Date(year, month, 0).getDate();
 }
 
-function formatDateRange(monday: Date): string {
-  const friday = new Date(monday);
-  friday.setDate(monday.getDate() + 4);
-  return `${formatShortDate(monday)} - ${formatShortDate(friday)}, ${monday.getFullYear()}`;
-}
-
-function toISODate(date: Date): string {
-  return date.toISOString().split("T")[0];
+function getFirstDayOfWeek(year: number, month: number): number {
+  return new Date(year, month - 1, 1).getDay();
 }
 
 // ── Props ───────────────────────────────────────
 interface FoodCalendarClientProps {
   branches: Array<{ id: string; name: string }>;
   initialBranchId: string;
-  initialWeekStart: string;
+  initialYear: number;
+  initialMonth: number;
   initialCalendar: CalendarData;
   foods: FoodOption[];
 }
@@ -81,29 +89,38 @@ interface FoodCalendarClientProps {
 export function FoodCalendarClient({
   branches,
   initialBranchId,
-  initialWeekStart,
+  initialYear,
+  initialMonth,
   initialCalendar,
   foods,
 }: FoodCalendarClientProps) {
-  const [weekStart, setWeekStart] = useState(() => new Date(initialWeekStart + "T00:00:00"));
+  const [year, setYear] = useState(initialYear);
+  const [month, setMonth] = useState(initialMonth);
   const [branch, setBranch] = useState(initialBranchId);
   const [calendar, setCalendar] = useState<CalendarData>(initialCalendar);
   const [isPending, startTransition] = useTransition();
 
-  // Fetch calendar data when branch or week changes
+  // Day assignment dialog
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState("");
+  const [dialogBreakfast, setDialogBreakfast] = useState("NONE");
+  const [dialogLunch, setDialogLunch] = useState("NONE");
+  const [dialogDessert, setDialogDessert] = useState("NONE");
+  const [dialogSnack, setDialogSnack] = useState("NONE");
+
   const fetchCalendar = useCallback(
-    async (branchId: string, monday: Date) => {
+    async (branchId: string, y: number, m: number) => {
       if (!branchId) return;
-      const result = await getFoodCalendar({
-        branchId,
-        weekStart: toISODate(monday),
-      });
+      const result = await getFoodCalendarMonth({ branchId, year: y, month: m });
       if ("calendar" in result && result.calendar) {
         const newCalendar: CalendarData = {};
         for (const [dateKey, meals] of Object.entries(result.calendar)) {
           newCalendar[dateKey] = {};
           for (const [mealType, entry] of Object.entries(
-            meals as Record<string, { id: string; foodId: string; food: { name: string } }>
+            meals as Record<
+              string,
+              { id: string; foodId: string; food: { name: string } }
+            >
           )) {
             if (entry) {
               newCalendar[dateKey][mealType] = {
@@ -120,100 +137,108 @@ export function FoodCalendarClient({
     []
   );
 
-  const prevWeek = useCallback(() => {
-    setWeekStart((prev) => {
-      const d = new Date(prev);
-      d.setDate(d.getDate() - 7);
-      startTransition(() => {
-        fetchCalendar(branch, d);
-      });
-      return d;
+  const prevMonth = useCallback(() => {
+    let newMonth = month - 1;
+    let newYear = year;
+    if (newMonth < 1) {
+      newMonth = 12;
+      newYear -= 1;
+    }
+    setMonth(newMonth);
+    setYear(newYear);
+    startTransition(() => {
+      fetchCalendar(branch, newYear, newMonth);
     });
-  }, [branch, fetchCalendar, startTransition]);
+  }, [branch, month, year, fetchCalendar, startTransition]);
 
-  const nextWeek = useCallback(() => {
-    setWeekStart((prev) => {
-      const d = new Date(prev);
-      d.setDate(d.getDate() + 7);
-      startTransition(() => {
-        fetchCalendar(branch, d);
-      });
-      return d;
+  const nextMonth = useCallback(() => {
+    let newMonth = month + 1;
+    let newYear = year;
+    if (newMonth > 12) {
+      newMonth = 1;
+      newYear += 1;
+    }
+    setMonth(newMonth);
+    setYear(newYear);
+    startTransition(() => {
+      fetchCalendar(branch, newYear, newMonth);
     });
-  }, [branch, fetchCalendar, startTransition]);
+  }, [branch, month, year, fetchCalendar, startTransition]);
 
   const handleBranchChange = useCallback(
     (newBranch: string) => {
       setBranch(newBranch);
       startTransition(() => {
-        fetchCalendar(newBranch, weekStart);
+        fetchCalendar(newBranch, year, month);
       });
     },
-    [weekStart, fetchCalendar, startTransition]
+    [year, month, fetchCalendar, startTransition]
   );
 
-  // Get date for a given day column
-  const getDayDate = useCallback(
-    (dayIndex: number) => {
-      const d = new Date(weekStart);
-      d.setDate(d.getDate() + dayIndex);
-      return d;
+  // Open day assignment dialog
+  const openDayDialog = useCallback(
+    (day: number) => {
+      const dateKey = toISODate(year, month, day);
+      setSelectedDate(dateKey);
+      const dayData = calendar[dateKey] ?? {};
+      setDialogBreakfast(dayData["BREAKFAST"]?.foodId ?? "NONE");
+      setDialogLunch(dayData["LUNCH"]?.foodId ?? "NONE");
+      setDialogDessert(dayData["DESSERT"]?.foodId ?? "NONE");
+      setDialogSnack(dayData["SNACK"]?.foodId ?? "NONE");
+      setDialogOpen(true);
     },
-    [weekStart]
+    [year, month, calendar]
   );
 
-  // Get food for a cell
-  const getFood = useCallback(
-    (dayIndex: number, mealType: MealType): string | null => {
-      const dateKey = toISODate(getDayDate(dayIndex));
-      return calendar[dateKey]?.[mealType]?.foodId ?? null;
-    },
-    [calendar, getDayDate]
-  );
+  // Save day assignment
+  const handleSaveDay = useCallback(() => {
+    if (!branch || !selectedDate) return;
 
-  // Get food name for a cell
-  const getFoodName = useCallback(
-    (foodId: string | null): string => {
-      if (!foodId) return "";
-      return foods.find((f) => f.id === foodId)?.name ?? "";
-    },
-    [foods]
-  );
+    startTransition(async () => {
+      const mealSelections: { type: MealType; foodId: string }[] = [
+        { type: "BREAKFAST", foodId: dialogBreakfast },
+        { type: "LUNCH", foodId: dialogLunch },
+        { type: "DESSERT", foodId: dialogDessert },
+        { type: "SNACK", foodId: dialogSnack },
+      ];
 
-  // Set food for a cell
-  const handleSetFood = useCallback(
-    async (dayIndex: number, mealType: MealType, foodId: string | null) => {
-      if (!foodId || !branch) return;
-      const dateStr = toISODate(getDayDate(dayIndex));
-
-      // Optimistic update
-      setCalendar((prev) => {
-        const updated = { ...prev };
-        if (!updated[dateStr]) updated[dateStr] = {};
-        updated[dateStr] = {
-          ...updated[dateStr],
-          [mealType]: {
-            id: "",
+      for (const { type, foodId } of mealSelections) {
+        const existing = calendar[selectedDate]?.[type];
+        if (foodId === "NONE") {
+          // Remove if existed
+          if (existing?.id) {
+            await deleteFoodCalendarEntry(existing.id);
+          }
+        } else {
+          await setFoodCalendarEntry({
+            branchId: branch,
+            date: selectedDate,
+            mealType: type,
             foodId,
-            foodName: getFoodName(foodId),
-          },
-        };
-        return updated;
-      });
+          });
+        }
+      }
 
-      // Persist
-      await setFoodCalendarEntry({
-        branchId: branch,
-        date: dateStr,
-        mealType,
-        foodId,
-      });
-    },
-    [branch, getDayDate, getFoodName]
-  );
+      // Refresh
+      await fetchCalendar(branch, year, month);
+      setDialogOpen(false);
+    });
+  }, [
+    branch,
+    selectedDate,
+    dialogBreakfast,
+    dialogLunch,
+    dialogDessert,
+    dialogSnack,
+    calendar,
+    year,
+    month,
+    fetchCalendar,
+    startTransition,
+  ]);
 
-  // Foods filtered by meal type for the selector
-  const getFoodOptionsForMeal = useMemo(() => {
+  // Foods filtered by category
+  const foodsByCategory = useMemo(() => {
     const map: Record<MealType, FoodOption[]> = {
       BREAKFAST: foods.filter((f) => f.category === "BREAKFAST"),
       LUNCH: foods.filter((f) => f.category === "LUNCH"),
@@ -222,6 +247,46 @@ export function FoodCalendarClient({
     };
     return map;
   }, [foods]);
+
+  // Build calendar grid
+  const daysInMonth = getDaysInMonth(year, month);
+  const firstDayOfWeek = getFirstDayOfWeek(year, month);
+
+  const calendarWeeks = useMemo(() => {
+    const weeks: (number | null)[][] = [];
+    let currentWeek: (number | null)[] = [];
+
+    // Fill leading blanks
+    for (let i = 0; i < firstDayOfWeek; i++) {
+      currentWeek.push(null);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      currentWeek.push(day);
+      if (currentWeek.length === 7) {
+        weeks.push(currentWeek);
+        currentWeek = [];
+      }
+    }
+
+    // Fill trailing blanks
+    if (currentWeek.length > 0) {
+      while (currentWeek.length < 7) {
+        currentWeek.push(null);
+      }
+      weeks.push(currentWeek);
+    }
+
+    return weeks;
+  }, [daysInMonth, firstDayOfWeek]);
+
+  const getFoodName = useCallback(
+    (foodId: string | null): string => {
+      if (!foodId) return "";
+      return foods.find((f) => f.id === foodId)?.name ?? "";
+    },
+    [foods]
+  );
 
   return (
     <>
@@ -252,95 +317,123 @@ export function FoodCalendarClient({
 
           <div className="flex-1" />
 
-          {/* Week navigation */}
+          {/* Month navigation */}
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={prevWeek} disabled={isPending}>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={prevMonth}
+              disabled={isPending}
+            >
               <ChevronLeft className="size-4" />
             </Button>
-            <div className="flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm font-medium text-[#333]">
-              <CalendarIcon className="size-4 text-muted-foreground" />
-              {formatDateRange(weekStart)}
+            <div className="flex items-center gap-2 rounded-md border px-4 py-1.5 text-sm font-medium text-[#333] min-w-[180px] justify-center">
+              {MONTH_NAMES[month - 1]} {year}
+              {isPending && (
+                <span className="ml-2 text-xs text-muted-foreground">
+                  Loading...
+                </span>
+              )}
             </div>
-            <Button variant="outline" size="icon" onClick={nextWeek} disabled={isPending}>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={nextMonth}
+              disabled={isPending}
+            >
               <ChevronRight className="size-4" />
             </Button>
           </div>
+
+          <Link href="/food/calendar/print">
+            <Button variant="outline">
+              <Printer className="mr-1 size-4" />
+              Print
+            </Button>
+          </Link>
         </div>
 
         {/* Calendar Grid */}
         {branches.length === 0 ? (
           <div className="flex items-center justify-center rounded-lg border border-dashed p-12">
-            <p className="text-sm text-muted-foreground">No branches available. Create a branch first.</p>
+            <p className="text-sm text-muted-foreground">
+              No branches available. Create a branch first.
+            </p>
           </div>
         ) : (
           <Card className="overflow-hidden">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[800px] border-collapse">
+                <table className="w-full border-collapse">
                   <thead>
                     <tr>
-                      <th className="w-[120px] border-b border-r bg-[#f1f3f6] px-4 py-3 text-left text-xs font-semibold uppercase text-[#6f7b8a]">
-                        Meal
-                      </th>
-                      {DAYS.map((day, i) => (
+                      {DAY_NAMES.map((day) => (
                         <th
                           key={day}
-                          className="border-b border-r last:border-r-0 bg-[#f1f3f6] px-4 py-3 text-center text-xs font-semibold uppercase text-[#6f7b8a]"
+                          className="border-b bg-[#f1f3f6] px-2 py-2.5 text-center text-xs font-semibold uppercase text-[#6f7b8a] w-[14.28%]"
                         >
-                          <div>{day}</div>
-                          <div className="mt-0.5 text-[10px] font-normal normal-case text-muted-foreground">
-                            {formatShortDate(getDayDate(i))}
-                          </div>
+                          {day}
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {MEALS.map((meal) => (
-                      <tr key={meal.type}>
-                        <td
-                          className={`border-b border-r px-4 py-3 text-sm font-medium text-[#333] ${meal.bg}`}
-                        >
-                          {meal.label}
-                        </td>
-                        {DAYS.map((_, dayIdx) => {
-                          const currentFoodId = getFood(dayIdx, meal.type);
-                          const options = getFoodOptionsForMeal[meal.type];
+                    {calendarWeeks.map((week, weekIdx) => (
+                      <tr key={weekIdx}>
+                        {week.map((day, dayIdx) => {
+                          if (day === null) {
+                            return (
+                              <td
+                                key={dayIdx}
+                                className="border-b border-r last:border-r-0 bg-gray-50/50 p-2 align-top h-[120px]"
+                              />
+                            );
+                          }
+
+                          const dateKey = toISODate(year, month, day);
+                          const dayData = calendar[dateKey] ?? {};
+                          const hasMeals = Object.keys(dayData).length > 0;
+                          const isWeekend = dayIdx === 0 || dayIdx === 6;
+
                           return (
                             <td
                               key={dayIdx}
-                              className={`border-b border-r last:border-r-0 px-2 py-2 ${meal.bg}`}
+                              className={`border-b border-r last:border-r-0 p-2 align-top h-[120px] cursor-pointer transition-colors hover:bg-[#1caf9a]/5 ${
+                                isWeekend ? "bg-gray-50/70" : "bg-white"
+                              }`}
+                              onClick={() => openDayDialog(day)}
                             >
-                              <Select
-                                value={currentFoodId ?? "NONE"}
-                                onValueChange={(v) =>
-                                  handleSetFood(
-                                    dayIdx,
-                                    meal.type,
-                                    v === "NONE" ? null : v
-                                  )
-                                }
-                              >
-                                <SelectTrigger className="h-8 w-full border-transparent bg-white/70 text-xs shadow-none hover:border-[#1caf9a]/30">
-                                  <SelectValue placeholder="Select...">
-                                    {currentFoodId
-                                      ? getFoodName(currentFoodId)
-                                      : "Select..."}
-                                  </SelectValue>
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="NONE">
-                                    <span className="text-muted-foreground">
-                                      -- None --
-                                    </span>
-                                  </SelectItem>
-                                  {options.map((f) => (
-                                    <SelectItem key={f.id} value={f.id}>
-                                      {f.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                              <div className="flex items-start justify-between mb-1">
+                                <span
+                                  className={`text-sm font-medium ${
+                                    hasMeals
+                                      ? "text-[#1caf9a]"
+                                      : "text-[#333]"
+                                  }`}
+                                >
+                                  {day}
+                                </span>
+                              </div>
+                              <div className="space-y-0.5">
+                                {MEALS.map((meal) => {
+                                  const entry = dayData[meal.type];
+                                  if (!entry) return null;
+                                  return (
+                                    <div
+                                      key={meal.type}
+                                      className="truncate text-[11px] leading-tight"
+                                      title={`${meal.label}: ${entry.foodName}`}
+                                    >
+                                      <span className={`font-medium ${meal.color}`}>
+                                        {meal.label[0]}:
+                                      </span>{" "}
+                                      <span className="text-[#555]">
+                                        {entry.foodName}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
                             </td>
                           );
                         })}
@@ -352,7 +445,150 @@ export function FoodCalendarClient({
             </CardContent>
           </Card>
         )}
+
+        {/* Legend */}
+        <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+          {MEALS.map((meal) => (
+            <span key={meal.type} className="flex items-center gap-1">
+              <span className={`font-semibold ${meal.color}`}>
+                {meal.label[0]}
+              </span>
+              = {meal.label}
+            </span>
+          ))}
+          <span className="ml-4 text-[#999]">
+            Click a day to assign meals
+          </span>
+        </div>
       </div>
+
+      {/* Day Assignment Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle>
+              Assign Meals &mdash;{" "}
+              {selectedDate &&
+                new Date(selectedDate + "T00:00:00").toLocaleDateString(
+                  "en-US",
+                  {
+                    weekday: "long",
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  }
+                )}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {/* Breakfast */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-blue-600">
+                Breakfast
+              </label>
+              <Select
+                value={dialogBreakfast}
+                onValueChange={setDialogBreakfast}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select breakfast..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="NONE">
+                    <span className="text-muted-foreground">-- None --</span>
+                  </SelectItem>
+                  {foodsByCategory.BREAKFAST.map((f) => (
+                    <SelectItem key={f.id} value={f.id}>
+                      {f.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Lunch */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-green-600">
+                Lunch
+              </label>
+              <Select value={dialogLunch} onValueChange={setDialogLunch}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select lunch..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="NONE">
+                    <span className="text-muted-foreground">-- None --</span>
+                  </SelectItem>
+                  {foodsByCategory.LUNCH.map((f) => (
+                    <SelectItem key={f.id} value={f.id}>
+                      {f.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Dessert */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-pink-600">
+                Dessert
+              </label>
+              <Select value={dialogDessert} onValueChange={setDialogDessert}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select dessert..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="NONE">
+                    <span className="text-muted-foreground">-- None --</span>
+                  </SelectItem>
+                  {foodsByCategory.DESSERT.map((f) => (
+                    <SelectItem key={f.id} value={f.id}>
+                      {f.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Snack */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-yellow-600">
+                Snack
+              </label>
+              <Select value={dialogSnack} onValueChange={setDialogSnack}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select snack..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="NONE">
+                    <span className="text-muted-foreground">-- None --</span>
+                  </SelectItem>
+                  {foodsByCategory.SNACK.map((f) => (
+                    <SelectItem key={f.id} value={f.id}>
+                      {f.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              style={{ background: "#1caf9a" }}
+              className="text-white"
+              onClick={handleSaveDay}
+              disabled={isPending}
+            >
+              {isPending ? "Saving..." : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

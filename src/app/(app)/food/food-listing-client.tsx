@@ -9,6 +9,7 @@ import {
   Trash2,
   MoreHorizontal,
   ArrowUpDown,
+  Loader2,
 } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
@@ -39,7 +40,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createFood } from "@/lib/actions/food";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { createFood, updateFood, deleteFood } from "@/lib/actions/food";
 
 // ── Types ───────────────────────────────────────
 type FoodCategory = "BREAKFAST" | "LUNCH" | "DESSERT" | "SNACK";
@@ -66,118 +77,6 @@ const categoryLabels: Record<FoodCategory, string> = {
   SNACK: "Snack",
 };
 
-// ── Column definitions ──────────────────────────
-const foodColumns: ColumnDef<FoodItem>[] = [
-  {
-    accessorKey: "name",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8 text-xs font-semibold uppercase"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Name
-        <ArrowUpDown className="ml-1 size-3" />
-      </Button>
-    ),
-    cell: ({ row }) => (
-      <span className="font-medium text-[#333]">{row.original.name}</span>
-    ),
-  },
-  {
-    accessorKey: "category",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8 text-xs font-semibold uppercase"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Category
-        <ArrowUpDown className="ml-1 size-3" />
-      </Button>
-    ),
-    cell: ({ row }) => {
-      const cat = row.original.category;
-      return (
-        <Badge className={categoryColors[cat]}>
-          {categoryLabels[cat]}
-        </Badge>
-      );
-    },
-    filterFn: (row, _columnId, filterValue) => {
-      if (!filterValue || filterValue === "ALL") return true;
-      return row.original.category === filterValue;
-    },
-  },
-  {
-    accessorKey: "isActive",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8 text-xs font-semibold uppercase"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Status
-        <ArrowUpDown className="ml-1 size-3" />
-      </Button>
-    ),
-    cell: ({ row }) => {
-      const active = row.original.isActive;
-      return (
-        <Badge
-          className={
-            active
-              ? "bg-emerald-100 text-emerald-700 border-emerald-200"
-              : "bg-gray-100 text-gray-600 border-gray-200"
-          }
-        >
-          {active ? "Active" : "Inactive"}
-        </Badge>
-      );
-    },
-  },
-  {
-    id: "actions",
-    header: "",
-    cell: ({ row }) => {
-      const food = row.original;
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon-sm">
-              <MoreHorizontal className="size-4" />
-              <span className="sr-only">Actions</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() => {
-                console.log("Edit food:", food.id);
-              }}
-            >
-              <Pencil className="mr-2 size-4" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              variant="destructive"
-              onClick={() => {
-                console.log("Delete food:", food.id);
-              }}
-            >
-              <Trash2 className="mr-2 size-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-    enableSorting: false,
-  },
-];
-
 // ── Props ───────────────────────────────────────
 interface FoodListingClientProps {
   initialFoods: FoodItem[];
@@ -188,37 +87,197 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [categoryFilter, setCategoryFilter] = useState("ALL");
-  const [dialogOpen, setDialogOpen] = useState(false);
 
-  // Add-food form state
-  const [newName, setNewName] = useState("");
-  const [newCategory, setNewCategory] = useState<FoodCategory>("BREAKFAST");
-  const [newActive, setNewActive] = useState(true);
+  // Dialog state
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formName, setFormName] = useState("");
+  const [formCategory, setFormCategory] = useState<FoodCategory>("BREAKFAST");
+  const [formActive, setFormActive] = useState(true);
+
+  // Delete confirmation
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingItem, setDeletingItem] = useState<FoodItem | null>(null);
 
   const filteredItems = useMemo(() => {
     if (categoryFilter === "ALL") return initialFoods;
     return initialFoods.filter((f) => f.category === categoryFilter);
   }, [initialFoods, categoryFilter]);
 
-  async function handleAdd() {
-    if (!newName.trim()) return;
-
-    const result = await createFood({
-      name: newName.trim(),
-      category: newCategory,
-      isActive: newActive,
-    });
-
-    if (result.success) {
-      setNewName("");
-      setNewCategory("BREAKFAST");
-      setNewActive(true);
-      setDialogOpen(false);
-      startTransition(() => {
-        router.refresh();
-      });
-    }
+  function openAdd() {
+    setDialogMode("add");
+    setEditingId(null);
+    setFormName("");
+    setFormCategory("BREAKFAST");
+    setFormActive(true);
+    setDialogOpen(true);
   }
+
+  function openEdit(food: FoodItem) {
+    setDialogMode("edit");
+    setEditingId(food.id);
+    setFormName(food.name);
+    setFormCategory(food.category);
+    setFormActive(food.isActive);
+    setDialogOpen(true);
+  }
+
+  function openDelete(food: FoodItem) {
+    setDeletingItem(food);
+    setDeleteDialogOpen(true);
+  }
+
+  function handleSave() {
+    if (!formName.trim()) return;
+
+    startTransition(async () => {
+      if (dialogMode === "add") {
+        const result = await createFood({
+          name: formName.trim(),
+          category: formCategory,
+          isActive: formActive,
+        });
+        if (result.success) {
+          setDialogOpen(false);
+          router.refresh();
+        }
+      } else if (editingId) {
+        const result = await updateFood(editingId, {
+          name: formName.trim(),
+          category: formCategory,
+          isActive: formActive,
+        });
+        if (result.success) {
+          setDialogOpen(false);
+          router.refresh();
+        }
+      }
+    });
+  }
+
+  function handleDelete() {
+    if (!deletingItem) return;
+
+    startTransition(async () => {
+      const result = await deleteFood(deletingItem.id);
+      if (result.success) {
+        setDeleteDialogOpen(false);
+        setDeletingItem(null);
+        router.refresh();
+      }
+    });
+  }
+
+  // ── Column definitions (inside component for handler access) ──
+  const foodColumns: ColumnDef<FoodItem>[] = useMemo(
+    () => [
+      {
+        accessorKey: "name",
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-3 h-8 text-xs font-semibold uppercase"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Name
+            <ArrowUpDown className="ml-1 size-3" />
+          </Button>
+        ),
+        cell: ({ row }) => (
+          <span className="font-medium text-[#333]">{row.original.name}</span>
+        ),
+      },
+      {
+        accessorKey: "category",
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-3 h-8 text-xs font-semibold uppercase"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Category
+            <ArrowUpDown className="ml-1 size-3" />
+          </Button>
+        ),
+        cell: ({ row }) => {
+          const cat = row.original.category;
+          return (
+            <Badge className={categoryColors[cat]}>
+              {categoryLabels[cat]}
+            </Badge>
+          );
+        },
+        filterFn: (row, _columnId, filterValue) => {
+          if (!filterValue || filterValue === "ALL") return true;
+          return row.original.category === filterValue;
+        },
+      },
+      {
+        accessorKey: "isActive",
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-3 h-8 text-xs font-semibold uppercase"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Status
+            <ArrowUpDown className="ml-1 size-3" />
+          </Button>
+        ),
+        cell: ({ row }) => {
+          const active = row.original.isActive;
+          return (
+            <Badge
+              className={
+                active
+                  ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+                  : "bg-gray-100 text-gray-600 border-gray-200"
+              }
+            >
+              {active ? "Active" : "Inactive"}
+            </Badge>
+          );
+        },
+      },
+      {
+        id: "actions",
+        header: "",
+        cell: ({ row }) => {
+          const food = row.original;
+          return (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon-sm">
+                  <MoreHorizontal className="size-4" />
+                  <span className="sr-only">Actions</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => openEdit(food)}>
+                  <Pencil className="mr-2 size-4" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => openDelete(food)}
+                >
+                  <Trash2 className="mr-2 size-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
+        },
+        enableSorting: false,
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
 
   return (
     <>
@@ -233,7 +292,6 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
       <div className="space-y-4 p-6">
         {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-3">
-          {/* Category filter */}
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="All Categories" />
@@ -249,17 +307,15 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
 
           <div className="flex-1" />
 
-          {/* Add Food button */}
           <Button
             className="bg-[#1caf9a] text-white hover:bg-[#18a08d]"
-            onClick={() => setDialogOpen(true)}
+            onClick={openAdd}
           >
             <Plus className="mr-1 size-4" />
             Add Food
           </Button>
         </div>
 
-        {/* Data Table */}
         {filteredItems.length === 0 ? (
           <div className="flex items-center justify-center rounded-lg border border-dashed p-12">
             <p className="text-sm text-muted-foreground">No food items found.</p>
@@ -269,13 +325,17 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
         )}
       </div>
 
-      {/* Add Food Dialog */}
+      {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Food Item</DialogTitle>
+            <DialogTitle>
+              {dialogMode === "add" ? "Add Food Item" : "Edit Food Item"}
+            </DialogTitle>
             <DialogDescription>
-              Add a new food item to the menu.
+              {dialogMode === "add"
+                ? "Add a new food item to the menu."
+                : "Update this food item."}
             </DialogDescription>
           </DialogHeader>
 
@@ -285,16 +345,16 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
               <Input
                 id="food-name"
                 placeholder="e.g. Labne"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
               />
             </div>
 
             <div className="space-y-2">
               <Label>Category</Label>
               <Select
-                value={newCategory}
-                onValueChange={(v) => setNewCategory(v as FoodCategory)}
+                value={formCategory}
+                onValueChange={(v) => setFormCategory(v as FoodCategory)}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue />
@@ -311,8 +371,8 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
             <div className="flex items-center gap-2">
               <Checkbox
                 id="food-active"
-                checked={newActive}
-                onCheckedChange={(checked) => setNewActive(checked === true)}
+                checked={formActive}
+                onCheckedChange={(checked) => setFormActive(checked === true)}
               />
               <Label htmlFor="food-active">Active</Label>
             </div>
@@ -325,14 +385,39 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
             <Button
               style={{ background: "#1caf9a" }}
               className="text-white"
-              onClick={handleAdd}
-              disabled={!newName.trim() || isPending}
+              onClick={handleSave}
+              disabled={!formName.trim() || isPending}
             >
-              {isPending ? "Adding..." : "Add Food"}
+              {isPending && <Loader2 className="mr-1 size-4 animate-spin" />}
+              {dialogMode === "add" ? "Add Food" : "Save Changes"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Food Item</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete &quot;{deletingItem?.name}&quot;?
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-white hover:bg-destructive/90"
+              onClick={handleDelete}
+              disabled={isPending}
+            >
+              {isPending && <Loader2 className="mr-1 size-4 animate-spin" />}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

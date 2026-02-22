@@ -1,14 +1,6 @@
-import { getFoodCalendar, getFoods } from "@/lib/actions/food";
+import { getFoodCalendarMonth, getFoods } from "@/lib/actions/food";
 import { getBranches } from "@/lib/actions/branches";
 import { FoodCalendarClient } from "./food-calendar-client";
-
-function getMonday(date: Date): string {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  d.setDate(diff);
-  return d.toISOString().split("T")[0];
-}
 
 export default async function FoodCalendarPage() {
   const branchesResult = await getBranches();
@@ -18,16 +10,19 @@ export default async function FoodCalendarPage() {
   }>;
 
   const defaultBranchId = branches[0]?.id ?? "";
-  const weekStart = getMonday(new Date());
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
 
   const [calendarResult, { foods }] = await Promise.all([
     defaultBranchId
-      ? getFoodCalendar({ branchId: defaultBranchId, weekStart })
+      ? getFoodCalendarMonth({ branchId: defaultBranchId, year, month })
       : Promise.resolve({ calendar: {} }),
     getFoods({ isActive: true }),
   ]);
 
-  const calendar = ("calendar" in calendarResult ? calendarResult.calendar : {}) ?? {};
+  const calendar =
+    ("calendar" in calendarResult ? calendarResult.calendar : {}) ?? {};
 
   const serializedFoods = foods.map((f) => ({
     id: f.id,
@@ -35,14 +30,19 @@ export default async function FoodCalendarPage() {
     category: f.category as "BREAKFAST" | "LUNCH" | "DESSERT" | "SNACK",
   }));
 
-  // Serialize calendar: { [date]: { BREAKFAST?: { id, foodId, food }, ... } }
+  // Serialize calendar entries
   const serializedCalendar: Record<
     string,
     Record<string, { id: string; foodId: string; foodName: string }>
   > = {};
   for (const [dateKey, meals] of Object.entries(calendar)) {
     serializedCalendar[dateKey] = {};
-    for (const [mealType, entry] of Object.entries(meals as Record<string, { id: string; foodId: string; food: { name: string } }>)) {
+    for (const [mealType, entry] of Object.entries(
+      meals as Record<
+        string,
+        { id: string; foodId: string; food: { name: string } }
+      >
+    )) {
       if (entry) {
         serializedCalendar[dateKey][mealType] = {
           id: entry.id,
@@ -57,7 +57,8 @@ export default async function FoodCalendarPage() {
     <FoodCalendarClient
       branches={branches}
       initialBranchId={defaultBranchId}
-      initialWeekStart={weekStart}
+      initialYear={year}
+      initialMonth={month}
       initialCalendar={serializedCalendar}
       foods={serializedFoods}
     />

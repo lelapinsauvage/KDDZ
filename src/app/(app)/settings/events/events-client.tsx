@@ -1,11 +1,22 @@
 "use client";
 
-import { useState, useMemo, useTransition } from "react";
+import { useState, useMemo, useTransition, useCallback } from "react";
 import { type ColumnDef } from "@tanstack/react-table";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -13,80 +24,211 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import {
-  createEventType,
-  updateEventType,
-  deleteEventType,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+} from "lucide-react";
+import {
+  createEvent,
+  updateEvent,
+  deleteEvent,
 } from "@/lib/actions/settings";
 
-interface EventType {
+// ── Types ──────────────────────────────────
+interface EventItem {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  endDate: string | null;
+  eventTypeId: string | null;
+  eventTypeColor: string;
+  eventTypeName: string;
+  branchId: string | null;
+  branchName: string;
+  isActive: boolean;
+}
+
+interface EventTypeOption {
   id: string;
   name: string;
   color: string;
-  eventCount: number;
+}
+
+interface BranchOption {
+  id: string;
+  name: string;
 }
 
 interface EventsClientProps {
-  eventTypes: EventType[];
+  events: EventItem[];
+  eventTypes: EventTypeOption[];
+  branches: BranchOption[];
 }
 
-const colorOptions = [
-  { label: "Pink", value: "#ec4899" },
-  { label: "Green", value: "#22c55e" },
-  { label: "Blue", value: "#3b82f6" },
-  { label: "Red", value: "#ef4444" },
-  { label: "Teal", value: "#1caf9a" },
-  { label: "Orange", value: "#f97316" },
-  { label: "Purple", value: "#a855f7" },
-  { label: "Yellow", value: "#eab308" },
+// ── Calendar helpers ────────────────────────
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
 ];
 
-export function EventsClient({ eventTypes: initialEventTypes }: EventsClientProps) {
-  const [eventTypes, setEventTypes] = useState(initialEventTypes);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
-  const [etName, setEtName] = useState("");
-  const [etColor, setEtColor] = useState("#1caf9a");
-  const [editingId, setEditingId] = useState<string | null>(null);
+const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+function getDaysInMonth(year: number, month: number): number {
+  return new Date(year, month, 0).getDate();
+}
+
+function getFirstDayOfWeek(year: number, month: number): number {
+  return new Date(year, month - 1, 1).getDay();
+}
+
+function toISODate(year: number, month: number, day: number): string {
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+// ── Component ───────────────────────────────
+export function EventsClient({ events: initialEvents, eventTypes, branches }: EventsClientProps) {
+  const [events, setEvents] = useState(initialEvents);
   const [isPending, startTransition] = useTransition();
 
-  function openAdd() {
+  // Dialog state
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
+  const [evTitle, setEvTitle] = useState("");
+  const [evDescription, setEvDescription] = useState("");
+  const [evDate, setEvDate] = useState("");
+  const [evEndDate, setEvEndDate] = useState("");
+  const [evTypeId, setEvTypeId] = useState("NONE");
+  const [evBranchId, setEvBranchId] = useState("ALL");
+  const [evIsActive, setEvIsActive] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  // Delete confirmation
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingItem, setDeletingItem] = useState<EventItem | null>(null);
+
+  // Calendar state
+  const now = new Date();
+  const [calYear, setCalYear] = useState(now.getFullYear());
+  const [calMonth, setCalMonth] = useState(now.getMonth() + 1);
+
+  // ── Dialog handlers ─────────────────────────
+  function openAdd(presetDate?: string) {
     setDialogMode("add");
-    setEtName("");
-    setEtColor("#1caf9a");
+    setEvTitle("");
+    setEvDescription("");
+    setEvDate(presetDate ?? "");
+    setEvEndDate("");
+    setEvTypeId("NONE");
+    setEvBranchId("ALL");
+    setEvIsActive(true);
     setEditingId(null);
     setDialogOpen(true);
   }
 
-  function openEdit(et: EventType) {
+  function openEdit(ev: EventItem) {
     setDialogMode("edit");
-    setEtName(et.name);
-    setEtColor(et.color);
-    setEditingId(et.id);
+    setEvTitle(ev.title);
+    setEvDescription(ev.description);
+    setEvDate(ev.date);
+    setEvEndDate(ev.endDate ?? "");
+    setEvTypeId(ev.eventTypeId ?? "NONE");
+    setEvBranchId(ev.branchId ?? "ALL");
+    setEvIsActive(ev.isActive);
+    setEditingId(ev.id);
     setDialogOpen(true);
   }
 
+  function openDelete(ev: EventItem) {
+    setDeletingItem(ev);
+    setDeleteDialogOpen(true);
+  }
+
   function handleSave() {
-    if (!etName.trim()) return;
+    if (!evTitle.trim() || !evDate) return;
 
     startTransition(async () => {
+      const eventTypeId = evTypeId === "NONE" ? null : evTypeId;
+      const branchId = evBranchId === "ALL" ? null : evBranchId;
+      const branchName = branchId
+        ? (branches.find((b) => b.id === branchId)?.name ?? "—")
+        : "All Branches";
+      const eventType = eventTypeId
+        ? eventTypes.find((et) => et.id === eventTypeId)
+        : null;
+
       if (dialogMode === "add") {
-        const result = await createEventType({ name: etName.trim(), color: etColor });
+        const result = await createEvent({
+          title: evTitle.trim(),
+          description: evDescription.trim() || null,
+          date: evDate,
+          endDate: evEndDate || null,
+          eventTypeId,
+          branchId,
+          isActive: evIsActive,
+        });
         if (result.success && result.data) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const newEt = result.data as any;
-          setEventTypes([
-            ...eventTypes,
-            { id: newEt.id, name: etName.trim(), color: etColor, eventCount: 0 },
+          const newEv = result.data as any;
+          setEvents([
+            ...events,
+            {
+              id: newEv.id,
+              title: evTitle.trim(),
+              description: evDescription.trim(),
+              date: evDate,
+              endDate: evEndDate || null,
+              eventTypeId,
+              eventTypeColor: eventType?.color ?? "#1caf9a",
+              eventTypeName: eventType?.name ?? "—",
+              branchId,
+              branchName,
+              isActive: evIsActive,
+            },
           ]);
         }
       } else if (editingId) {
-        const result = await updateEventType(editingId, { name: etName.trim(), color: etColor });
+        const result = await updateEvent(editingId, {
+          title: evTitle.trim(),
+          description: evDescription.trim() || null,
+          date: evDate,
+          endDate: evEndDate || null,
+          eventTypeId,
+          branchId,
+          isActive: evIsActive,
+        });
         if (result.success) {
-          setEventTypes(
-            eventTypes.map((e) =>
-              e.id === editingId ? { ...e, name: etName.trim(), color: etColor } : e
+          setEvents(
+            events.map((e) =>
+              e.id === editingId
+                ? {
+                    ...e,
+                    title: evTitle.trim(),
+                    description: evDescription.trim(),
+                    date: evDate,
+                    endDate: evEndDate || null,
+                    eventTypeId,
+                    eventTypeColor: eventType?.color ?? "#1caf9a",
+                    eventTypeName: eventType?.name ?? "—",
+                    branchId,
+                    branchName,
+                    isActive: evIsActive,
+                  }
+                : e
             )
           );
         }
@@ -95,38 +237,135 @@ export function EventsClient({ eventTypes: initialEventTypes }: EventsClientProp
     });
   }
 
-  function handleDelete(id: string) {
+  function handleDelete() {
+    if (!deletingItem) return;
     startTransition(async () => {
-      const result = await deleteEventType(id);
+      const result = await deleteEvent(deletingItem.id);
       if (result.success) {
-        setEventTypes(eventTypes.filter((e) => e.id !== id));
+        setEvents(events.filter((e) => e.id !== deletingItem.id));
+        setDeleteDialogOpen(false);
+        setDeletingItem(null);
       }
     });
   }
 
-  const columns: ColumnDef<EventType>[] = useMemo(
+  // ── Calendar navigation ─────────────────────
+  const prevMonth = useCallback(() => {
+    if (calMonth <= 1) {
+      setCalMonth(12);
+      setCalYear((y) => y - 1);
+    } else {
+      setCalMonth((m) => m - 1);
+    }
+  }, [calMonth]);
+
+  const nextMonth = useCallback(() => {
+    if (calMonth >= 12) {
+      setCalMonth(1);
+      setCalYear((y) => y + 1);
+    } else {
+      setCalMonth((m) => m + 1);
+    }
+  }, [calMonth]);
+
+  // Build calendar grid
+  const daysInMonth = getDaysInMonth(calYear, calMonth);
+  const firstDayOfWeek = getFirstDayOfWeek(calYear, calMonth);
+
+  const calendarWeeks = useMemo(() => {
+    const weeks: (number | null)[][] = [];
+    let currentWeek: (number | null)[] = [];
+
+    for (let i = 0; i < firstDayOfWeek; i++) {
+      currentWeek.push(null);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      currentWeek.push(day);
+      if (currentWeek.length === 7) {
+        weeks.push(currentWeek);
+        currentWeek = [];
+      }
+    }
+
+    if (currentWeek.length > 0) {
+      while (currentWeek.length < 7) {
+        currentWeek.push(null);
+      }
+      weeks.push(currentWeek);
+    }
+
+    return weeks;
+  }, [daysInMonth, firstDayOfWeek]);
+
+  // Map events by date for calendar
+  const eventsByDate = useMemo(() => {
+    const map: Record<string, EventItem[]> = {};
+    for (const ev of events) {
+      if (!map[ev.date]) {
+        map[ev.date] = [];
+      }
+      map[ev.date].push(ev);
+    }
+    return map;
+  }, [events]);
+
+  // ── Table columns ───────────────────────────
+  const columns: ColumnDef<EventItem>[] = useMemo(
     () => [
       {
-        accessorKey: "name",
-        header: "Event Type Name",
-        cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
-      },
-      {
-        accessorKey: "color",
-        header: "Color",
+        accessorKey: "title",
+        header: "Title",
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
             <div
-              className="size-4 rounded-full"
-              style={{ backgroundColor: row.original.color }}
+              className="size-3 shrink-0 rounded-full"
+              style={{ backgroundColor: row.original.eventTypeColor }}
             />
-            <span className="text-xs text-muted-foreground">{row.original.color}</span>
+            <span className="font-medium">{row.original.title}</span>
           </div>
         ),
       },
       {
-        accessorKey: "eventCount",
-        header: "Event Count",
+        accessorKey: "date",
+        header: "Date",
+        cell: ({ row }) =>
+          new Date(row.original.date + "T00:00:00").toLocaleDateString("en-GB", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          }),
+      },
+      {
+        accessorKey: "eventTypeName",
+        header: "Type",
+        cell: ({ row }) => (
+          <Badge variant="secondary" className="font-normal">
+            {row.original.eventTypeName}
+          </Badge>
+        ),
+      },
+      {
+        accessorKey: "branchName",
+        header: "Branch",
+        cell: ({ row }) => (
+          <span className="text-muted-foreground">{row.original.branchName}</span>
+        ),
+      },
+      {
+        accessorKey: "isActive",
+        header: "Status",
+        cell: ({ row }) => (
+          <Badge
+            className={
+              row.original.isActive
+                ? "bg-emerald-100 text-emerald-700"
+                : "bg-gray-100 text-gray-600"
+            }
+          >
+            {row.original.isActive ? "Active" : "Inactive"}
+          </Badge>
+        ),
       },
       {
         id: "actions",
@@ -146,7 +385,7 @@ export function EventsClient({ eventTypes: initialEventTypes }: EventsClientProp
               variant="ghost"
               size="icon"
               className="size-8 text-destructive"
-              onClick={() => handleDelete(row.original.id)}
+              onClick={() => openDelete(row.original)}
               disabled={isPending}
             >
               <Trash2 className="size-4" />
@@ -156,69 +395,233 @@ export function EventsClient({ eventTypes: initialEventTypes }: EventsClientProp
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [eventTypes, isPending]
+    [events, isPending]
   );
 
   return (
     <>
       <PageHeader
-        title="Event Types"
+        title="Events Calendar"
         breadcrumbs={[
           { label: "Settings", href: "/settings/events" },
-          { label: "Event Types" },
+          { label: "Events Calendar" },
         ]}
       />
 
-      <div className="space-y-4 p-6">
-        <div className="flex items-center justify-between">
-          <div />
-          <Button className="bg-[#1caf9a] text-white hover:bg-[#18a08d]" onClick={openAdd} disabled={isPending}>
-            <Plus className="mr-1 size-4" />
-            Add Event Type
-          </Button>
-        </div>
+      <div className="space-y-6 p-6">
+        {/* Calendar View */}
+        <Card className="overflow-hidden">
+          <CardContent className="p-4">
+            {/* Calendar header */}
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="icon" onClick={prevMonth}>
+                  <ChevronLeft className="size-4" />
+                </Button>
+                <h3 className="min-w-[160px] text-center text-base font-semibold text-[#333]">
+                  {MONTH_NAMES[calMonth - 1]} {calYear}
+                </h3>
+                <Button variant="outline" size="icon" onClick={nextMonth}>
+                  <ChevronRight className="size-4" />
+                </Button>
+              </div>
+              <Button
+                className="bg-[#1caf9a] text-white hover:bg-[#18a08d]"
+                onClick={() => openAdd()}
+                disabled={isPending}
+              >
+                <Plus className="mr-1 size-4" />
+                Add Event
+              </Button>
+            </div>
 
+            {/* Calendar grid */}
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr>
+                    {DAY_NAMES.map((day) => (
+                      <th
+                        key={day}
+                        className="w-[14.28%] border-b bg-[#f1f3f6] px-2 py-2 text-center text-xs font-semibold uppercase text-[#6f7b8a]"
+                      >
+                        {day}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {calendarWeeks.map((week, weekIdx) => (
+                    <tr key={weekIdx}>
+                      {week.map((day, dayIdx) => {
+                        if (day === null) {
+                          return (
+                            <td
+                              key={dayIdx}
+                              className="h-[80px] border-b border-r bg-gray-50/50 p-2 align-top last:border-r-0"
+                            />
+                          );
+                        }
+
+                        const dateKey = toISODate(calYear, calMonth, day);
+                        const dayEvents = eventsByDate[dateKey] ?? [];
+                        const hasEvents = dayEvents.length > 0;
+                        const isToday =
+                          calYear === now.getFullYear() &&
+                          calMonth === now.getMonth() + 1 &&
+                          day === now.getDate();
+
+                        return (
+                          <td
+                            key={dayIdx}
+                            className={`h-[80px] cursor-pointer border-b border-r p-2 align-top transition-colors last:border-r-0 hover:bg-[#1caf9a]/5 ${
+                              hasEvents ? "bg-blue-50/40" : "bg-white"
+                            }`}
+                            onClick={() => openAdd(dateKey)}
+                          >
+                            <div className="mb-1 flex items-start justify-between">
+                              <span
+                                className={`text-sm font-medium ${
+                                  isToday
+                                    ? "flex size-6 items-center justify-center rounded-full bg-[#1caf9a] text-white"
+                                    : "text-[#333]"
+                                }`}
+                              >
+                                {day}
+                              </span>
+                            </div>
+                            <div className="space-y-0.5">
+                              {dayEvents.slice(0, 2).map((ev) => (
+                                <div
+                                  key={ev.id}
+                                  className="cursor-pointer truncate rounded px-1 py-0.5 text-[10px] font-medium leading-tight text-white"
+                                  style={{ backgroundColor: ev.eventTypeColor }}
+                                  title={`${ev.title} (${ev.eventTypeName})`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openEdit(ev);
+                                  }}
+                                >
+                                  {ev.title}
+                                </div>
+                              ))}
+                              {dayEvents.length > 2 && (
+                                <div className="px-1 text-[10px] text-muted-foreground">
+                                  +{dayEvents.length - 2} more
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Data Table */}
         <DataTable
           columns={columns}
-          data={eventTypes}
-          searchKey="name"
-          searchPlaceholder="Search event types..."
+          data={events}
+          searchKey="title"
+          searchPlaceholder="Search events..."
         />
       </div>
 
+      {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>
-              {dialogMode === "add" ? "Add Event Type" : "Edit Event Type"}
+              {dialogMode === "add" ? "Add Event" : "Edit Event"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label className="mb-1.5 block text-sm font-medium">Event Type Name</label>
+              <label className="mb-1.5 block text-sm font-medium">Title</label>
               <Input
-                placeholder="e.g. Field Trip"
-                value={etName}
-                onChange={(e) => setEtName(e.target.value)}
+                placeholder="e.g. Parent-Teacher Meeting"
+                value={evTitle}
+                onChange={(e) => setEvTitle(e.target.value)}
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium">Color</label>
-              <div className="flex flex-wrap gap-2">
-                {colorOptions.map((c) => (
-                  <button
-                    key={c.value}
-                    type="button"
-                    className={`size-8 rounded-full border-2 transition-all ${
-                      etColor === c.value ? "border-[#333] scale-110" : "border-transparent"
-                    }`}
-                    style={{ backgroundColor: c.value }}
-                    onClick={() => setEtColor(c.value)}
-                    title={c.label}
-                  />
-                ))}
+              <label className="mb-1.5 block text-sm font-medium">Description</label>
+              <Textarea
+                placeholder="Event description (optional)"
+                value={evDescription}
+                onChange={(e) => setEvDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">Start Date</label>
+                <Input
+                  type="date"
+                  value={evDate}
+                  onChange={(e) => setEvDate(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">End Date</label>
+                <Input
+                  type="date"
+                  value={evEndDate}
+                  onChange={(e) => setEvEndDate(e.target.value)}
+                />
               </div>
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">Event Type</label>
+                <Select value={evTypeId} onValueChange={setEvTypeId}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NONE">No Type</SelectItem>
+                    {eventTypes.map((et) => (
+                      <SelectItem key={et.id} value={et.id}>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="size-3 rounded-full"
+                            style={{ backgroundColor: et.color }}
+                          />
+                          {et.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">Branch</label>
+                <Select value={evBranchId} onValueChange={setEvBranchId}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">All Branches</SelectItem>
+                    {branches.map((b) => (
+                      <SelectItem key={b.id} value={b.id}>
+                        {b.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <label className="flex items-center gap-3 text-sm">
+              <Checkbox
+                checked={evIsActive}
+                onCheckedChange={(v) => setEvIsActive(!!v)}
+              />
+              Active
+            </label>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
@@ -228,7 +631,7 @@ export function EventsClient({ eventTypes: initialEventTypes }: EventsClientProp
               style={{ background: "#1caf9a" }}
               className="text-white"
               onClick={handleSave}
-              disabled={!etName.trim() || isPending}
+              disabled={!evTitle.trim() || !evDate || isPending}
             >
               {isPending && <Loader2 className="mr-1 size-4 animate-spin" />}
               {dialogMode === "add" ? "Add" : "Save"}
@@ -236,6 +639,30 @@ export function EventsClient({ eventTypes: initialEventTypes }: EventsClientProp
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Event</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete &quot;{deletingItem?.title}&quot;?
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-white hover:bg-destructive/90"
+              onClick={handleDelete}
+              disabled={isPending}
+            >
+              {isPending && <Loader2 className="mr-1 size-4 animate-spin" />}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
