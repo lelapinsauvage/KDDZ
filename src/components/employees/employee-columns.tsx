@@ -2,7 +2,7 @@
 
 import { type ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
-import { MoreHorizontal, Eye, Pencil, Trash2, ArrowUpDown } from "lucide-react";
+import { MoreHorizontal, Eye, Pencil, Trash2, ArrowUpDown, Mail, Phone } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,26 +43,32 @@ function getDetailPath(type: EmployeeType, id: string): string {
   return `/employees/${typeMap[type]}/${id}`;
 }
 
+export const roleColors: Record<EmployeeType, string> = {
+  teacher: "bg-teal-100 text-teal-700 border-teal-200",
+  nurse: "bg-rose-100 text-rose-700 border-rose-200",
+  doctor: "bg-blue-100 text-blue-700 border-blue-200",
+  manager: "bg-purple-100 text-purple-700 border-purple-200",
+};
+
+export const avatarColors: Record<EmployeeType, string> = {
+  teacher: "bg-teal-100 text-teal-700",
+  nurse: "bg-rose-100 text-rose-700",
+  doctor: "bg-blue-100 text-blue-700",
+  manager: "bg-purple-100 text-purple-700",
+};
+
 export function createEmployeeColumns(
   type: EmployeeType
 ): ColumnDef<Employee>[] {
-  const _typePlural =
-    type === "nurse"
-      ? "Nurses"
-      : type === "teacher"
-        ? "Teachers"
-        : type === "doctor"
-          ? "Doctors"
-          : "Managers";
-
   const columns: ColumnDef<Employee>[] = [
     {
       id: "avatar",
       header: "",
       cell: ({ row }) => {
         const employee = row.original;
+        const colorClass = avatarColors[employee.type] || avatarColors.teacher;
         return (
-          <div className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+          <div className={`flex size-9 items-center justify-center rounded-full text-xs font-semibold ${colorClass}`}>
             {getInitials(employee.firstName, employee.lastName)}
           </div>
         );
@@ -110,14 +116,20 @@ export function createEmployeeColumns(
         </Button>
       ),
       cell: ({ row }) => (
-        <span className="text-muted-foreground">{row.original.email}</span>
+        <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+          <Mail className="size-3.5 text-muted-foreground/60" />
+          {row.original.email}
+        </span>
       ),
     },
     {
       accessorKey: "phone",
       header: "Phone",
       cell: ({ row }) => (
-        <span className="text-muted-foreground">{row.original.phone}</span>
+        <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+          <Phone className="size-3.5 text-muted-foreground/60" />
+          {row.original.phone}
+        </span>
       ),
     },
     {
@@ -170,15 +182,22 @@ export function createEmployeeColumns(
       cell: ({ row }) => {
         const status = row.original.status;
         return (
-          <Badge
-            className={
-              status === "Active"
-                ? "bg-primary/10 text-primary border-primary/20"
-                : "bg-red-50 text-red-600 border-red-200"
-            }
-          >
-            {status}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <span
+              className={`inline-block size-2 rounded-full ${
+                status === "Active" ? "bg-emerald-500" : "bg-red-400"
+              }`}
+            />
+            <Badge
+              className={
+                status === "Active"
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  : "bg-red-50 text-red-600 border-red-200"
+              }
+            >
+              {status}
+            </Badge>
+          </div>
         );
       },
     },

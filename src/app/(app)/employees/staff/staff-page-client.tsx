@@ -6,9 +6,12 @@ import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
 import {
   createEmployeeColumns,
+  roleColors,
+  avatarColors,
   type Employee,
   type EmployeeType,
 } from "@/components/employees/employee-columns";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -18,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Users } from "lucide-react";
 import { ExportButton } from "@/components/shared/export-button";
 import type { ExportColumn } from "@/lib/export";
 
@@ -43,14 +46,6 @@ const employeeExportColumns: ExportColumn[] = [
     key: "status",
   },
 ];
-
-const roleLabels: Record<string, string> = {
-  all: "All Roles",
-  teacher: "Teachers",
-  nurse: "Nurses",
-  doctor: "Doctors",
-  manager: "Managers",
-};
 
 const newEmployeeLinks: Record<EmployeeType, string> = {
   teacher: "/employees/teachers/new",
@@ -87,6 +82,13 @@ export function StaffPageClient({ employees }: StaffPageClientProps) {
     return data;
   }, [employees, search, roleFilter]);
 
+  // Role counts for the toolbar
+  const roleCounts = useMemo(() => {
+    const counts: Record<string, number> = { teacher: 0, nurse: 0, doctor: 0, manager: 0 };
+    for (const e of employees) counts[e.type] = (counts[e.type] || 0) + 1;
+    return counts;
+  }, [employees]);
+
   // Use a generic column set that includes the role badge
   const columns = useMemo(() => {
     // Use "teacher" columns as base since they include specialization
@@ -98,10 +100,11 @@ export function StaffPageClient({ employees }: StaffPageClientProps) {
       cell: ({ row }: { row: { original: Employee } }) => {
         const type = row.original.type;
         const label = type.charAt(0).toUpperCase() + type.slice(1);
+        const color = roleColors[type] || "bg-muted text-muted-foreground";
         return (
-          <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground">
+          <Badge className={color}>
             {label}
-          </span>
+          </Badge>
         );
       },
     };
@@ -123,6 +126,23 @@ export function StaffPageClient({ employees }: StaffPageClientProps) {
         breadcrumbs={[{ label: "Staff" }]}
       />
       <div className="p-4 md:p-6 space-y-4">
+        {/* Role summary chips */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="secondary" className="text-sm py-1 px-3">
+            <Users className="mr-1.5 size-3.5" />
+            {employees.length} Total
+          </Badge>
+          {(["teacher", "nurse", "doctor", "manager"] as EmployeeType[]).map((role) => (
+            <Badge
+              key={role}
+              className={`text-sm py-1 px-3 cursor-pointer transition-opacity ${avatarColors[role]} ${roleFilter !== "all" && roleFilter !== role ? "opacity-50" : ""}`}
+              onClick={() => setRoleFilter(roleFilter === role ? "all" : role)}
+            >
+              {roleCounts[role]} {role.charAt(0).toUpperCase() + role.slice(1)}{roleCounts[role] !== 1 ? "s" : ""}
+            </Badge>
+          ))}
+        </div>
+
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <div className="relative w-full sm:max-w-xs">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

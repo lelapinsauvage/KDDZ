@@ -14,6 +14,12 @@ import {
   AlertTriangle,
   TrendingUp,
   X,
+  Banknote,
+  CreditCard,
+  Building2,
+  ArrowLeftRight,
+  Receipt,
+  CheckCircle2,
 } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
@@ -117,6 +123,30 @@ function formatDate(iso: string) {
   return `${day}/${month}/${year}`;
 }
 
+function getInitials(name: string) {
+  const parts = name.split(" ");
+  return parts.length >= 2
+    ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+    : name.slice(0, 2).toUpperCase();
+}
+
+const childAvatarColors = [
+  "bg-violet-100 text-violet-700",
+  "bg-sky-100 text-sky-700",
+  "bg-amber-100 text-amber-700",
+  "bg-rose-100 text-rose-700",
+  "bg-emerald-100 text-emerald-700",
+  "bg-fuchsia-100 text-fuchsia-700",
+  "bg-teal-100 text-teal-700",
+  "bg-orange-100 text-orange-700",
+];
+
+function getAvatarColor(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return childAvatarColors[Math.abs(hash) % childAvatarColors.length];
+}
+
 const categoryLabels: Record<string, string> = {
   REGISTRATION: "Registration",
   MONTHLY: "Monthly",
@@ -141,11 +171,24 @@ const statusBadgeStyles: Record<string, string> = {
   OVERDUE: "bg-red-100 text-red-700 border-red-200",
 };
 
+const statusIcons: Record<string, typeof CheckCircle2> = {
+  PAID: CheckCircle2,
+  PENDING: Clock,
+  OVERDUE: AlertTriangle,
+};
+
 const methodLabels: Record<string, string> = {
   CASH: "Cash",
   CHECK: "Cheque",
   TRANSFER: "Bank Transfer",
   CREDIT_CARD: "Credit Card",
+};
+
+const methodIcons: Record<string, typeof Banknote> = {
+  CASH: Banknote,
+  CHECK: Receipt,
+  TRANSFER: ArrowLeftRight,
+  CREDIT_CARD: CreditCard,
 };
 
 const monthNames = [
@@ -263,14 +306,20 @@ export function AccountingClient({
           <ArrowUpDown className="ml-1 size-3" />
         </Button>
       ),
-      cell: ({ row }) => (
-        <a
-          href={`/children/${row.original.childId}/accounting`}
-          className="font-medium text-foreground hover:text-primary hover:underline"
-        >
-          {row.original.childName}
-        </a>
-      ),
+      cell: ({ row }) => {
+        const name = row.original.childName;
+        return (
+          <a
+            href={`/children/${row.original.childId}/accounting`}
+            className="flex items-center gap-2.5 font-medium text-foreground hover:text-primary transition-colors"
+          >
+            <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${getAvatarColor(name)}`}>
+              {getInitials(name)}
+            </div>
+            {name}
+          </a>
+        );
+      },
     },
     {
       accessorKey: "branchName",
@@ -285,7 +334,12 @@ export function AccountingClient({
           <ArrowUpDown className="ml-1 size-3" />
         </Button>
       ),
-      cell: ({ row }) => <span className="text-[#555]">{row.original.branchName}</span>,
+      cell: ({ row }) => (
+        <Badge variant="secondary" className="bg-muted/50 text-muted-foreground font-normal">
+          <Building2 className="mr-1 size-3" />
+          {row.original.branchName}
+        </Badge>
+      ),
     },
     {
       accessorKey: "amount",
@@ -301,7 +355,7 @@ export function AccountingClient({
         </Button>
       ),
       cell: ({ row }) => (
-        <span className="font-medium text-foreground">
+        <span className="font-semibold tabular-nums text-foreground">
           {formatCurrency(row.original.amount)}
         </span>
       ),
@@ -319,7 +373,7 @@ export function AccountingClient({
           <ArrowUpDown className="ml-1 size-3" />
         </Button>
       ),
-      cell: ({ row }) => <span className="text-[#555]">{formatDate(row.original.date)}</span>,
+      cell: ({ row }) => <span className="text-muted-foreground">{formatDate(row.original.date)}</span>,
     },
     {
       accessorKey: "category",
@@ -358,8 +412,10 @@ export function AccountingClient({
       ),
       cell: ({ row }) => {
         const status = row.original.status;
+        const Icon = statusIcons[status];
         return (
-          <Badge className={statusBadgeStyles[status] ?? "bg-gray-100 text-gray-600"}>
+          <Badge className={`gap-1 ${statusBadgeStyles[status] ?? "bg-gray-100 text-gray-600"}`}>
+            {Icon && <Icon className="size-3" />}
             {status}
           </Badge>
         );
@@ -368,17 +424,22 @@ export function AccountingClient({
     {
       accessorKey: "method",
       header: "Method",
-      cell: ({ row }) => (
-        <span className="text-[#555]">
-          {methodLabels[row.original.method] ?? row.original.method}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const method = row.original.method;
+        const Icon = methodIcons[method];
+        return (
+          <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+            {Icon && <Icon className="size-3.5" />}
+            {methodLabels[method] ?? method}
+          </span>
+        );
+      },
     },
     {
       accessorKey: "reference",
       header: "Receipt #",
       cell: ({ row }) => (
-        <span className="text-[#555] font-mono text-xs">
+        <span className="text-muted-foreground font-mono text-xs">
           {row.original.reference ?? "\u2014"}
         </span>
       ),
@@ -387,7 +448,7 @@ export function AccountingClient({
       accessorKey: "month",
       header: "For Month",
       cell: ({ row }) => (
-        <span className="text-[#555]">
+        <span className="text-muted-foreground">
           {row.original.month ? monthNames[row.original.month] : "\u2014"}
         </span>
       ),
@@ -444,14 +505,15 @@ export function AccountingClient({
       <div className="space-y-6 p-4 md:p-6">
         {/* Summary Cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Card className="py-4">
+          <Card className="relative overflow-hidden py-4 border-emerald-200/60">
+            <div className="absolute inset-y-0 left-0 w-1 bg-emerald-500" />
             <CardContent className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-emerald-100">
+              <div className="flex size-11 items-center justify-center rounded-xl bg-emerald-100">
                 <DollarSign className="size-5 text-emerald-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total Revenue</p>
-                <p className="text-xl font-semibold text-foreground">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Revenue</p>
+                <p className="text-2xl font-bold tabular-nums text-emerald-700">
                   {formatCurrency(summary.totalRevenue)}
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -461,14 +523,15 @@ export function AccountingClient({
             </CardContent>
           </Card>
 
-          <Card className="py-4">
+          <Card className="relative overflow-hidden py-4 border-amber-200/60">
+            <div className="absolute inset-y-0 left-0 w-1 bg-amber-500" />
             <CardContent className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-amber-100">
+              <div className="flex size-11 items-center justify-center rounded-xl bg-amber-100">
                 <Clock className="size-5 text-amber-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Pending</p>
-                <p className="text-xl font-semibold text-amber-600">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Pending</p>
+                <p className="text-2xl font-bold tabular-nums text-amber-700">
                   {formatCurrency(summary.totalPending)}
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -478,14 +541,15 @@ export function AccountingClient({
             </CardContent>
           </Card>
 
-          <Card className="py-4">
+          <Card className="relative overflow-hidden py-4 border-red-200/60">
+            <div className="absolute inset-y-0 left-0 w-1 bg-red-500" />
             <CardContent className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-red-100">
+              <div className="flex size-11 items-center justify-center rounded-xl bg-red-100">
                 <AlertTriangle className="size-5 text-red-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Overdue</p>
-                <p className="text-xl font-semibold text-red-600">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Overdue</p>
+                <p className="text-2xl font-bold tabular-nums text-red-700">
                   {formatCurrency(summary.totalOverdue)}
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -495,14 +559,15 @@ export function AccountingClient({
             </CardContent>
           </Card>
 
-          <Card className="py-4">
+          <Card className="relative overflow-hidden py-4 border-blue-200/60">
+            <div className="absolute inset-y-0 left-0 w-1 bg-blue-500" />
             <CardContent className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-blue-100">
+              <div className="flex size-11 items-center justify-center rounded-xl bg-blue-100">
                 <TrendingUp className="size-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">This Month</p>
-                <p className="text-xl font-semibold text-foreground">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">This Month</p>
+                <p className="text-2xl font-bold tabular-nums text-blue-700">
                   {formatCurrency(summary.thisMonthCollections)}
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -605,7 +670,7 @@ export function AccountingClient({
           />
 
           <Button
-           
+
             onClick={() => {
               setEditPayment(null);
               setDialogOpen(true);

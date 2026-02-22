@@ -40,6 +40,13 @@ import {
   Eye,
   Pencil,
   Trash2,
+  Heart,
+  ShieldCheck,
+  ShieldAlert,
+  AlertTriangle,
+  FileCheck,
+  FileClock,
+  FileEdit,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -61,25 +68,54 @@ interface MedicalConditionRow {
   branchName: string;
 }
 
+// --- Avatar helpers ---
+
+const avatarColors = [
+  "bg-violet-100 text-violet-700",
+  "bg-sky-100 text-sky-700",
+  "bg-amber-100 text-amber-700",
+  "bg-rose-100 text-rose-700",
+  "bg-emerald-100 text-emerald-700",
+  "bg-fuchsia-100 text-fuchsia-700",
+  "bg-teal-100 text-teal-700",
+  "bg-orange-100 text-orange-700",
+];
+
+function getInitials(name: string) {
+  const parts = name.split(" ");
+  return parts.length >= 2
+    ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+    : name.slice(0, 2).toUpperCase();
+}
+
+function getAvatarColor(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return avatarColors[Math.abs(hash) % avatarColors.length];
+}
+
 // --- Badge Helpers ---
 
 function getSeverityBadge(severity: string) {
   switch (severity) {
     case "Mild":
       return (
-        <Badge className="bg-green-50 text-green-700 border-green-200">
+        <Badge className="gap-1 bg-green-50 text-green-700 border-green-200">
+          <ShieldCheck className="size-3" />
           Mild
         </Badge>
       );
     case "Moderate":
       return (
-        <Badge className="bg-orange-50 text-orange-700 border-orange-200">
+        <Badge className="gap-1 bg-orange-50 text-orange-700 border-orange-200">
+          <ShieldAlert className="size-3" />
           Moderate
         </Badge>
       );
     case "Severe":
       return (
-        <Badge className="bg-red-50 text-red-700 border-red-200">
+        <Badge className="gap-1 bg-red-50 text-red-700 border-red-200">
+          <AlertTriangle className="size-3" />
           Severe
         </Badge>
       );
@@ -96,19 +132,22 @@ function getStatusBadge(status: FormStatus) {
   switch (status) {
     case "DRAFT":
       return (
-        <Badge variant="outline" className="border-gray-300 text-gray-600">
+        <Badge className="gap-1 bg-slate-100 text-slate-600 border-slate-200">
+          <FileEdit className="size-3" />
           Draft
         </Badge>
       );
     case "SUBMITTED":
       return (
-        <Badge className="bg-blue-50 text-blue-700 border-blue-200">
+        <Badge className="gap-1 bg-blue-50 text-blue-700 border-blue-200">
+          <FileClock className="size-3" />
           Submitted
         </Badge>
       );
     case "REVIEWED":
       return (
-        <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
+        <Badge className="gap-1 bg-emerald-50 text-emerald-700 border-emerald-200">
+          <FileCheck className="size-3" />
           Reviewed
         </Badge>
       );
@@ -179,15 +218,26 @@ export function MedicalConditionsClient({
     {
       accessorKey: "childName",
       header: "Child Name",
-      cell: ({ row }) => (
-        <span className="font-medium text-foreground">{row.original.childName}</span>
-      ),
+      cell: ({ row }) => {
+        const name = row.original.childName;
+        return (
+          <div className="flex items-center gap-2.5">
+            <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${getAvatarColor(name)}`}>
+              {getInitials(name)}
+            </div>
+            <span className="font-medium text-foreground">{name}</span>
+          </div>
+        );
+      },
     },
     {
       accessorKey: "conditionType",
       header: "Condition Type",
       cell: ({ row }) => (
-        <span className="text-sm text-foreground">{row.original.conditionType || "\u2014"}</span>
+        <Badge className="gap-1 bg-violet-50 text-violet-700 border-violet-200">
+          <Heart className="size-3" />
+          {row.original.conditionType || "\u2014"}
+        </Badge>
       ),
     },
     {
@@ -319,7 +369,8 @@ export function MedicalConditionsClient({
         </div>
 
         {filteredData.length === 0 ? (
-          <div className="flex items-center justify-center rounded-lg border border-dashed p-12">
+          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12">
+            <Heart className="size-10 text-muted-foreground/40 mb-3" />
             <p className="text-sm text-muted-foreground">No medical conditions found.</p>
           </div>
         ) : (

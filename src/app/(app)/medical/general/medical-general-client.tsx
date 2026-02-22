@@ -41,6 +41,11 @@ import {
   Pencil,
   Trash2,
   Loader2,
+  Stethoscope,
+  FileCheck,
+  FileClock,
+  FileEdit,
+  Droplets,
 } from "lucide-react";
 import { format } from "date-fns";
 import { deleteMedicalForm } from "@/lib/actions/medical";
@@ -63,32 +68,54 @@ interface GeneralMedicalFormRow {
   hasAllergies: boolean;
 }
 
-// --- Status helpers ---
+// --- Avatar helpers ---
 
-function getStatusDot(status: FormStatus) {
-  if (status === "REVIEWED" || status === "SUBMITTED") {
-    return <span className="inline-block size-2 rounded-full bg-emerald-500" />;
-  }
-  return <span className="inline-block size-2 rounded-full bg-orange-400" />;
+const avatarColors = [
+  "bg-violet-100 text-violet-700",
+  "bg-sky-100 text-sky-700",
+  "bg-amber-100 text-amber-700",
+  "bg-rose-100 text-rose-700",
+  "bg-emerald-100 text-emerald-700",
+  "bg-fuchsia-100 text-fuchsia-700",
+  "bg-teal-100 text-teal-700",
+  "bg-orange-100 text-orange-700",
+];
+
+function getInitials(name: string) {
+  const parts = name.split(" ");
+  return parts.length >= 2
+    ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+    : name.slice(0, 2).toUpperCase();
 }
+
+function getAvatarColor(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return avatarColors[Math.abs(hash) % avatarColors.length];
+}
+
+// --- Status helpers ---
 
 function getStatusBadge(status: FormStatus) {
   switch (status) {
     case "DRAFT":
       return (
-        <Badge variant="outline" className="border-gray-300 text-gray-600">
+        <Badge className="gap-1 bg-slate-100 text-slate-600 border-slate-200">
+          <FileEdit className="size-3" />
           Draft
         </Badge>
       );
     case "SUBMITTED":
       return (
-        <Badge className="bg-blue-50 text-blue-700 border-blue-200">
+        <Badge className="gap-1 bg-blue-50 text-blue-700 border-blue-200">
+          <FileClock className="size-3" />
           Submitted
         </Badge>
       );
     case "REVIEWED":
       return (
-        <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
+        <Badge className="gap-1 bg-emerald-50 text-emerald-700 border-emerald-200">
+          <FileCheck className="size-3" />
           Reviewed
         </Badge>
       );
@@ -164,26 +191,42 @@ export function MedicalGeneralClient({
     {
       accessorKey: "childName",
       header: "Child Name",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          {getStatusDot(row.original.status)}
-          <span className="font-medium text-foreground">{row.original.childName}</span>
-        </div>
-      ),
+      cell: ({ row }) => {
+        const name = row.original.childName;
+        return (
+          <div className="flex items-center gap-2.5">
+            <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${getAvatarColor(name)}`}>
+              {getInitials(name)}
+            </div>
+            <span className="font-medium text-foreground">{name}</span>
+          </div>
+        );
+      },
     },
     {
       accessorKey: "doctor",
       header: "Doctor",
       cell: ({ row }) => (
-        <span className="text-sm text-foreground">{row.original.doctor || "\u2014"}</span>
+        <span className="inline-flex items-center gap-1.5 text-sm text-foreground">
+          <Stethoscope className="size-3.5 text-blue-500" />
+          {row.original.doctor || "\u2014"}
+        </span>
       ),
     },
     {
       accessorKey: "bloodType",
       header: "Blood Type",
-      cell: ({ row }) => (
-        <span className="text-sm text-foreground">{row.original.bloodType || "\u2014"}</span>
-      ),
+      cell: ({ row }) => {
+        const bt = row.original.bloodType;
+        return bt ? (
+          <Badge className="gap-1 bg-red-50 text-red-700 border-red-200">
+            <Droplets className="size-3" />
+            {bt}
+          </Badge>
+        ) : (
+          <span className="text-sm text-muted-foreground">{"\u2014"}</span>
+        );
+      },
     },
     {
       accessorKey: "status",
@@ -203,7 +246,7 @@ export function MedicalGeneralClient({
       accessorKey: "date",
       header: "Date",
       cell: ({ row }) => (
-        <span className="text-sm text-foreground">
+        <span className="text-sm text-muted-foreground">
           {format(new Date(row.original.date), "MMM d, yyyy")}
         </span>
       ),
@@ -307,7 +350,8 @@ export function MedicalGeneralClient({
         </div>
 
         {filteredData.length === 0 ? (
-          <div className="flex items-center justify-center rounded-lg border border-dashed p-12">
+          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12">
+            <Stethoscope className="size-10 text-muted-foreground/40 mb-3" />
             <p className="text-sm text-muted-foreground">No general medical forms found.</p>
           </div>
         ) : (
