@@ -22,6 +22,16 @@ export interface HeaderMessage {
   createdAt: string;
 }
 
+export interface HeaderAlarm {
+  id: string;
+  type: string;
+  message: string;
+  dueDate: string | null;
+  isOverdue: boolean;
+  createdAt: string;
+  isCritical: boolean;
+}
+
 export interface HeaderData {
   alarmCounts: {
     birthdays: number;
@@ -33,16 +43,40 @@ export interface HeaderData {
   unreadNotificationCount: number;
   unreadMessageCount: number;
   recentMessages: HeaderMessage[];
+  recentAlarms: HeaderAlarm[];
+  hasCriticalAlarms: boolean;
 }
 
+const CRITICAL_TYPES = new Set(["VACCINATION", "MEDICAL", "MEDICINE", "PAYMENT"]);
+
 export async function getHeaderData(): Promise<HeaderData> {
-  const [alarmCountsResult, notificationsResult, messageCountResult, session] =
+  const [alarmCountsResult, notificationsResult, messageCountResult, session, recentDbAlarms] =
     await Promise.all([
       getHeaderAlarmCounts(),
       getNotifications({ limit: 8 }),
       getUnreadMessageCount().catch(() => ({ success: true, data: 0 })),
       auth(),
+      db.alarm.findMany({
+        where: { isActive: true },
+        orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
+        take: 5,
+      }),
     ]);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const recentAlarms: HeaderAlarm[] = recentDbAlarms.map((a) => ({
+    id: a.id,
+    type: a.type,
+    message: a.message ?? a.type,
+    dueDate: a.dueDate?.toISOString().slice(0, 10) ?? null,
+    isOverdue: a.dueDate ? a.dueDate < today : false,
+    createdAt: a.createdAt instanceof Date ? a.createdAt.toISOString() : String(a.createdAt),
+    isCritical: CRITICAL_TYPES.has(a.type),
+  }));
+
+  const hasCriticalAlarms = recentAlarms.some((a) => a.isCritical);
 
   const alarmCounts = (alarmCountsResult.data as {
     birthdays: number;
@@ -128,5 +162,7 @@ export async function getHeaderData(): Promise<HeaderData> {
     unreadNotificationCount: notificationData.unreadCount,
     unreadMessageCount: messageCount,
     recentMessages,
+    recentAlarms,
+    hasCriticalAlarms,
   };
 }

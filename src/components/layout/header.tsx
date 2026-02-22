@@ -23,7 +23,7 @@ import { ContextSwitcher } from "./context-switcher"
 import { InboxTray } from "./inbox-tray"
 import { GlobalSearch } from "./global-search"
 import { getHeaderData } from "@/lib/actions/header"
-import type { HeaderNotification, HeaderMessage } from "@/lib/actions/header"
+import type { HeaderNotification, HeaderMessage, HeaderAlarm } from "@/lib/actions/header"
 
 export function Header() {
   const { data: session } = useSession()
@@ -36,6 +36,8 @@ export function Header() {
   const [unreadMessageCount, setUnreadMessageCount] = useState(0)
   const [recentMessages, setRecentMessages] = useState<HeaderMessage[]>([])
   const [alarmCounts, setAlarmCounts] = useState({ birthdays: 0, assessments: 0, medical: 0, totalAlarms: 0 })
+  const [recentAlarms, setRecentAlarms] = useState<HeaderAlarm[]>([])
+  const [hasCriticalAlarms, setHasCriticalAlarms] = useState(false)
 
   useEffect(() => {
     getHeaderData().then((data) => {
@@ -44,6 +46,8 @@ export function Header() {
       setUnreadNotificationCount(data.unreadNotificationCount)
       setUnreadMessageCount(data.unreadMessageCount)
       setRecentMessages(data.recentMessages)
+      setRecentAlarms(data.recentAlarms)
+      setHasCriticalAlarms(data.hasCriticalAlarms)
     })
   }, [])
 
@@ -99,6 +103,8 @@ export function Header() {
             unreadMessageCount={unreadMessageCount}
             recentMessages={recentMessages}
             alarmCounts={alarmCounts}
+            recentAlarms={recentAlarms}
+            hasCriticalAlarms={hasCriticalAlarms}
           />
 
           {/* User dropdown */}
