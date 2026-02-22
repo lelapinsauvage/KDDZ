@@ -40,11 +40,11 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 
+import { recordPayment } from "@/lib/actions/payments";
 import {
-  recordPayment,
   quickPaymentSchema,
   type QuickPaymentInput,
-} from "@/lib/actions/payments";
+} from "@/lib/validations/payments";
 
 // ── Types ──
 

@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import type {
@@ -9,6 +8,7 @@ import type {
   PaymentCategory,
   PaymentStatus,
 } from "@/generated/prisma/client";
+import { quickPaymentSchema, type QuickPaymentInput } from "@/lib/validations/payments";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -519,16 +519,6 @@ export async function getChildrenForPayment(): Promise<ActionResult> {
 // ---------------------------------------------------------------------------
 // recordPayment — Quick payment recording (zod-validated)
 // ---------------------------------------------------------------------------
-
-export const quickPaymentSchema = z.object({
-  childId: z.string().uuid("Please select a child"),
-  amount: z.number().positive("Amount must be greater than 0"),
-  method: z.enum(["CASH", "CHECK", "TRANSFER", "CREDIT_CARD"]),
-  category: z.enum(["MONTHLY", "REGISTRATION", "BUS", "FOOD", "XTRA_TIME", "OTHER"]),
-  notes: z.string().optional(),
-});
-
-export type QuickPaymentInput = z.infer<typeof quickPaymentSchema>;
 
 export async function recordPayment(
   input: QuickPaymentInput,
