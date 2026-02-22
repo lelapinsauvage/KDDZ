@@ -13,6 +13,8 @@ import {
   Baby,
   LayoutGrid,
   TableIcon,
+  X,
+  Sparkles,
 } from "lucide-react";
 import { ExportButton } from "@/components/shared/export-button";
 import type { ExportColumn } from "@/lib/export";
@@ -21,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 
 import { PageHeader } from "@/components/layout/page-header";
-import { getChildrenColumns, type ChildRow } from "@/components/children/children-columns";
+import { getChildrenColumns, getInitials, getAvatarColor, type ChildRow } from "@/components/children/children-columns";
 import { deleteChild } from "@/lib/actions/children";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -191,6 +193,42 @@ export function ChildrenPageClient({
     if (filters.branch === "ALL") return classes;
     return classes.filter((c) => c.branchId === filters.branch);
   }, [filters.branch, classes]);
+
+  // ── Active filter pills ────────────────────────
+  const activeFilters = useMemo(() => {
+    const pills: { key: string; label: string; value: string }[] = [];
+    if (filters.search) pills.push({ key: "search", label: "Search", value: filters.search });
+    if (filters.branch !== "ALL") {
+      const b = branches.find((b) => b.id === filters.branch);
+      pills.push({ key: "branch", label: "Branch", value: b?.name ?? filters.branch });
+    }
+    if (filters.class !== "ALL") {
+      const c = classes.find((c) => c.id === filters.class);
+      pills.push({ key: "class", label: "Class", value: c?.name ?? filters.class });
+    }
+    if (filters.gender !== "ALL") {
+      pills.push({ key: "gender", label: "Gender", value: filters.gender === "MALE" ? "Boy" : "Girl" });
+    }
+    if (filters.status !== "ALL") {
+      pills.push({ key: "status", label: "Status", value: filters.status.charAt(0) + filters.status.slice(1).toLowerCase() });
+    }
+    return pills;
+  }, [filters, branches, classes]);
+
+  const clearFilter = useCallback(
+    (key: string) => {
+      if (key === "search") {
+        setSearchValue("");
+      }
+      updateParams({ [key]: "" });
+    },
+    [updateParams]
+  );
+
+  const clearAllFilters = useCallback(() => {
+    setSearchValue("");
+    updateParams({ search: "", branch: "", class: "", gender: "", status: "" });
+  }, [updateParams]);
 
   // ── Handlers ───────────────────────────────────
 
@@ -380,8 +418,8 @@ export function ChildrenPageClient({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">All Genders</SelectItem>
-              <SelectItem value="MALE">Male</SelectItem>
-              <SelectItem value="FEMALE">Female</SelectItem>
+              <SelectItem value="MALE">Boy</SelectItem>
+              <SelectItem value="FEMALE">Girl</SelectItem>
             </SelectContent>
           </Select>
 
@@ -402,7 +440,7 @@ export function ChildrenPageClient({
           <div className="flex-1" />
 
           {/* View toggle */}
-          <div className="flex items-center rounded-md border bg-muted/30 p-0.5">
+          <div className="flex items-center rounded-lg border bg-muted/30 p-0.5">
             <Button
               variant={viewMode === "table" ? "secondary" : "ghost"}
               size="icon-sm"
@@ -441,24 +479,40 @@ export function ChildrenPageClient({
           </Button>
         </div>
 
+        {/* ── Active Filter Pills ──────────────────── */}
+        {activeFilters.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-xs font-medium text-muted-foreground mr-1">Filters:</span>
+            {activeFilters.map((f) => (
+              <Badge
+                key={f.key}
+                variant="secondary"
+                className="gap-1 pl-2 pr-1 py-0.5 text-xs bg-primary/10 text-primary border-primary/20 hover:bg-primary/15"
+              >
+                <span className="font-medium">{f.label}:</span> {f.value}
+                <button
+                  onClick={() => clearFilter(f.key)}
+                  className="ml-0.5 rounded-full p-0.5 hover:bg-primary/20 transition-colors"
+                >
+                  <X className="size-3" />
+                </button>
+              </Badge>
+            ))}
+            <button
+              onClick={clearAllFilters}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors ml-1"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
+
         {/* ── Data View ──────────────────────────── */}
         <div className="space-y-4">
           {viewMode === "cards" ? (
             /* Cards Grid */
             childrenList.length === 0 ? (
-              <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-                <Baby className="size-10 text-muted-foreground/40 mb-3" />
-                <p className="text-sm font-medium text-muted-foreground">No children found</p>
-                <p className="mt-1 text-xs text-muted-foreground/70">
-                  Try adjusting your search or filters, or register a new child.
-                </p>
-                <Button asChild size="sm" className="mt-3">
-                  <Link href="/children/new">
-                    <Plus className="mr-1 size-3.5" />
-                    Register Child
-                  </Link>
-                </Button>
-              </div>
+              <EmptyState />
             ) : (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {childrenList.map((child) => {
@@ -469,22 +523,25 @@ export function ChildrenPageClient({
                     : "INACTIVE";
                   const statusColor =
                     status === "ACTIVE"
-                      ? "bg-emerald-100 text-emerald-700"
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                       : status === "DRAFT"
-                      ? "bg-amber-100 text-amber-700"
-                      : "bg-gray-100 text-gray-700";
+                      ? "bg-amber-50 text-amber-700 border-amber-200"
+                      : "bg-gray-100 text-gray-600 border-gray-200";
                   const age = child.dateOfBirth ? getChildAge(child.dateOfBirth) : null;
+                  const initials = getInitials(child.firstName, child.lastName);
+                  const avatarBg = getAvatarColor(`${child.firstName} ${child.lastName}`);
 
                   return (
                     <Link key={child.id} href={`/children/${child.id}/dashboard`}>
-                      <Card className="transition-colors hover:border-primary/40 hover:bg-muted/30">
-                        <CardContent className="flex items-start gap-3 py-4">
-                          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                            {child.firstName.charAt(0)}
-                            {child.lastName.charAt(0)}
+                      <Card className="group transition-all hover:border-primary/40 hover:shadow-md">
+                        <CardContent className="flex items-start gap-3.5 py-4">
+                          <div
+                            className={`flex size-11 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white shadow-sm ${avatarBg}`}
+                          >
+                            {initials}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">
+                            <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
                               {child.firstName} {child.lastName}
                             </p>
                             <p className="text-xs text-muted-foreground truncate">
@@ -492,12 +549,17 @@ export function ChildrenPageClient({
                               {child.branch?.name ? ` · ${child.branch.name}` : ""}
                             </p>
                             <div className="mt-2 flex flex-wrap gap-1.5">
-                              <Badge className={`text-[10px] px-1.5 py-0 ${statusColor}`}>
+                              <Badge className={`text-[10px] px-1.5 py-0 border ${statusColor}`}>
                                 {status === "ACTIVE" ? "Active" : status === "DRAFT" ? "Draft" : "Inactive"}
                               </Badge>
                               {child.gender && (
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                  {child.gender === "MALE" ? "M" : "F"}
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-1">
+                                  <span
+                                    className={`inline-block size-1.5 rounded-full ${
+                                      child.gender === "MALE" ? "bg-sky-400" : "bg-pink-400"
+                                    }`}
+                                  />
+                                  {child.gender === "MALE" ? "Boy" : "Girl"}
                                 </Badge>
                               )}
                               {age && (
@@ -516,7 +578,7 @@ export function ChildrenPageClient({
             )
           ) : (
             /* Table View */
-            <div className="overflow-x-auto rounded-md border bg-card">
+            <div className="overflow-x-auto rounded-lg border bg-card">
               <Table className="min-w-[700px]">
                 <TableHeader>
                   {table.getHeaderGroups().map((headerGroup) => (
@@ -549,7 +611,7 @@ export function ChildrenPageClient({
                     </TableRow>
                   ) : table.getRowModel().rows?.length ? (
                     table.getRowModel().rows.map((row) => (
-                      <TableRow key={row.id}>
+                      <TableRow key={row.id} className="group">
                         {row.getVisibleCells().map((cell) => (
                           <TableCell key={cell.id} className="text-sm">
                             {flexRender(
@@ -566,19 +628,7 @@ export function ChildrenPageClient({
                         colSpan={columns.length}
                         className="h-40 text-center"
                       >
-                        <div className="flex flex-col items-center justify-center">
-                          <Baby className="size-10 text-muted-foreground/40 mb-3" />
-                          <p className="text-sm font-medium text-muted-foreground">No children found</p>
-                          <p className="mt-1 text-xs text-muted-foreground/70">
-                            Try adjusting your search or filters, or register a new child.
-                          </p>
-                          <Button asChild size="sm" className="mt-3">
-                            <Link href="/children/new">
-                              <Plus className="mr-1 size-3.5" />
-                              Register Child
-                            </Link>
-                          </Button>
-                        </div>
+                        <EmptyState />
                       </TableCell>
                     </TableRow>
                   )}
@@ -588,70 +638,82 @@ export function ChildrenPageClient({
           )}
 
           {/* ── Pagination ──────────────────────────── */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-muted-foreground">
-              {total} total row(s)
-            </p>
-            <div className="flex items-center gap-2">
-              <Select
-                value={String(filters.pageSize)}
-                onValueChange={handlePageSizeChange}
-              >
-                <SelectTrigger className="h-8 w-[70px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent side="top">
-                  {[10, 20, 30, 50, 100].map((size) => (
-                    <SelectItem key={size} value={String(size)}>
-                      {size}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => handlePageChange(1)}
-                  disabled={!canPreviousPage}
-                >
-                  <ChevronsLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => handlePageChange(filters.page - 1)}
-                  disabled={!canPreviousPage}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="text-sm text-muted-foreground">
-                  Page {filters.page} of {pageCount || 1}
+          {total > 0 && (
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-lg border bg-card/50 px-4 py-3">
+              <p className="text-sm text-muted-foreground">
+                Showing{" "}
+                <span className="font-medium text-foreground">
+                  {Math.min((filters.page - 1) * filters.pageSize + 1, total)}
                 </span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => handlePageChange(filters.page + 1)}
-                  disabled={!canNextPage}
+                {" "}&ndash;{" "}
+                <span className="font-medium text-foreground">
+                  {Math.min(filters.page * filters.pageSize, total)}
+                </span>
+                {" "}of{" "}
+                <span className="font-medium text-foreground">{total}</span> children
+              </p>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Rows:</span>
+                <Select
+                  value={String(filters.pageSize)}
+                  onValueChange={handlePageSizeChange}
                 >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => handlePageChange(pageCount)}
-                  disabled={!canNextPage}
-                >
-                  <ChevronsRight className="h-4 w-4" />
-                </Button>
+                  <SelectTrigger className="h-8 w-[70px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent side="top">
+                    {[10, 20, 30, 50, 100].map((size) => (
+                      <SelectItem key={size} value={String(size)}>
+                        {size}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handlePageChange(1)}
+                    disabled={!canPreviousPage}
+                  >
+                    <ChevronsLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handlePageChange(filters.page - 1)}
+                    disabled={!canPreviousPage}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="min-w-[5rem] text-center text-sm text-muted-foreground">
+                    <span className="font-medium text-foreground">{filters.page}</span> / {pageCount || 1}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handlePageChange(filters.page + 1)}
+                    disabled={!canNextPage}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handlePageChange(pageCount)}
+                    disabled={!canNextPage}
+                  >
+                    <ChevronsRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -686,5 +748,27 @@ export function ChildrenPageClient({
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+// ── Warm Empty State ─────────────────────────
+
+function EmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-primary/20 bg-primary/[0.02] p-12 text-center">
+      <div className="flex size-16 items-center justify-center rounded-full bg-primary/10 mb-4">
+        <Sparkles className="size-7 text-primary" />
+      </div>
+      <h3 className="text-base font-semibold text-foreground">No children found</h3>
+      <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+        Try adjusting your search or filters. Or start by enrolling a new child to the nursery.
+      </p>
+      <Button asChild size="sm" className="mt-4 bg-primary text-white hover:bg-primary/90">
+        <Link href="/children/new">
+          <Plus className="mr-1 size-3.5" />
+          Enroll a Child
+        </Link>
+      </Button>
+    </div>
   );
 }

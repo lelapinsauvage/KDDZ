@@ -2,7 +2,7 @@
 
 import { type ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
-import { ArrowUpDown, Eye, Pencil, Trash2, MoreHorizontal } from "lucide-react";
+import { ArrowUpDown, Eye, Pencil, Trash2, MoreHorizontal, CircleCheck, CircleDashed, CircleOff } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -41,8 +41,30 @@ function getStatus(row: ChildRow): "ACTIVE" | "DRAFT" | "INACTIVE" {
 }
 
 /** Get initials from first + last name */
-function getInitials(firstName: string, lastName: string) {
+export function getInitials(firstName: string, lastName: string) {
   return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+}
+
+/** Deterministic color from a name string — warm, kid-friendly palette */
+const AVATAR_COLORS = [
+  "bg-teal-500",
+  "bg-rose-400",
+  "bg-violet-500",
+  "bg-sky-500",
+  "bg-amber-500",
+  "bg-emerald-500",
+  "bg-pink-500",
+  "bg-indigo-500",
+  "bg-orange-500",
+  "bg-cyan-500",
+] as const;
+
+export function getAvatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
 /** Format date to dd/MM/yyyy */
@@ -74,6 +96,26 @@ function getAge(date: Date | string | null) {
   return `${months}m`;
 }
 
+// ── Class pill color palette ──
+const CLASS_COLORS = [
+  "bg-teal-50 text-teal-700 border-teal-200",
+  "bg-violet-50 text-violet-700 border-violet-200",
+  "bg-sky-50 text-sky-700 border-sky-200",
+  "bg-amber-50 text-amber-700 border-amber-200",
+  "bg-rose-50 text-rose-700 border-rose-200",
+  "bg-emerald-50 text-emerald-700 border-emerald-200",
+  "bg-indigo-50 text-indigo-700 border-indigo-200",
+  "bg-orange-50 text-orange-700 border-orange-200",
+] as const;
+
+function getClassColor(className: string): string {
+  let hash = 0;
+  for (let i = 0; i < className.length; i++) {
+    hash = className.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return CLASS_COLORS[Math.abs(hash) % CLASS_COLORS.length];
+}
+
 // ── Column Definitions ──────────────────────
 
 interface ChildrenColumnsOptions {
@@ -91,10 +133,10 @@ export function getChildrenColumns(
       cell: ({ row }) => {
         const child = row.original;
         const initials = getInitials(child.firstName, child.lastName);
-        const bg = child.gender === "MALE" ? "bg-blue-500" : "bg-pink-500";
+        const bg = getAvatarColor(`${child.firstName} ${child.lastName}`);
         return (
           <div
-            className={`flex size-9 items-center justify-center rounded-full text-xs font-semibold text-white ${bg}`}
+            className={`flex size-9 items-center justify-center rounded-full text-xs font-bold text-white shadow-sm ${bg}`}
           >
             {initials}
           </div>
@@ -123,7 +165,7 @@ export function getChildrenColumns(
         return (
           <Link
             href={`/children/${child.id}`}
-            className="font-medium text-[#337ab7] hover:text-[#23527c] hover:underline"
+            className="font-medium text-foreground hover:text-primary hover:underline"
           >
             {child.firstName} {child.lastName}
           </Link>
@@ -146,11 +188,15 @@ export function getChildrenColumns(
           <ArrowUpDown className="ml-1 size-3" />
         </Button>
       ),
-      cell: ({ row }) => (
-        <Badge variant="secondary" className="bg-[#e8ecf1] text-[#555] font-normal">
-          {row.original.class?.name ?? "-"}
-        </Badge>
-      ),
+      cell: ({ row }) => {
+        const name = row.original.class?.name;
+        if (!name) return <span className="text-muted-foreground">-</span>;
+        return (
+          <Badge className={`font-medium border ${getClassColor(name)}`}>
+            {name}
+          </Badge>
+        );
+      },
     },
 
     // Branch
@@ -169,7 +215,7 @@ export function getChildrenColumns(
         </Button>
       ),
       cell: ({ row }) => (
-        <span className="text-[#555]">{row.original.branch?.name ?? "-"}</span>
+        <span className="text-muted-foreground">{row.original.branch?.name ?? "-"}</span>
       ),
     },
 
@@ -189,17 +235,18 @@ export function getChildrenColumns(
       ),
       cell: ({ row }) => {
         const gender = row.original.gender;
-        if (!gender) return <span className="text-[#555]">-</span>;
+        if (!gender) return <span className="text-muted-foreground">-</span>;
         return (
-          <Badge
-            className={
-              gender === "MALE"
-                ? "bg-blue-100 text-blue-700 border-blue-200"
-                : "bg-pink-100 text-pink-700 border-pink-200"
-            }
-          >
-            {gender === "MALE" ? "Male" : "Female"}
-          </Badge>
+          <div className="flex items-center gap-1.5">
+            <span
+              className={`inline-block size-2 rounded-full ${
+                gender === "MALE" ? "bg-sky-400" : "bg-pink-400"
+              }`}
+            />
+            <span className="text-sm">
+              {gender === "MALE" ? "Boy" : "Girl"}
+            </span>
+          </div>
         );
       },
     },
@@ -222,8 +269,8 @@ export function getChildrenColumns(
         const dob = row.original.dateOfBirth;
         const age = getAge(dob);
         return (
-          <div className="text-[#555]">
-            <div>{formatDate(dob)}</div>
+          <div>
+            <div className="text-sm">{formatDate(dob)}</div>
             {age && <div className="text-xs text-muted-foreground">{age}</div>}
           </div>
         );
@@ -247,19 +294,16 @@ export function getChildrenColumns(
       ),
       cell: ({ row }) => {
         const status = getStatus(row.original);
-        const variants: Record<string, string> = {
-          ACTIVE: "bg-emerald-100 text-emerald-700 border-emerald-200",
-          INACTIVE: "bg-gray-100 text-gray-600 border-gray-200",
-          DRAFT: "bg-amber-100 text-amber-700 border-amber-200",
+        const config: Record<string, { className: string; icon: typeof CircleCheck; label: string }> = {
+          ACTIVE: { className: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: CircleCheck, label: "Active" },
+          INACTIVE: { className: "bg-gray-100 text-gray-600 border-gray-200", icon: CircleOff, label: "Inactive" },
+          DRAFT: { className: "bg-amber-50 text-amber-700 border-amber-200", icon: CircleDashed, label: "Draft" },
         };
-        const labels: Record<string, string> = {
-          ACTIVE: "Active",
-          INACTIVE: "Inactive",
-          DRAFT: "Draft",
-        };
+        const { className, icon: Icon, label } = config[status] ?? config.INACTIVE;
         return (
-          <Badge className={variants[status] ?? variants.INACTIVE}>
-            {labels[status] ?? status}
+          <Badge className={`gap-1 border ${className}`}>
+            <Icon className="size-3" />
+            {label}
           </Badge>
         );
       },
