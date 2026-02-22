@@ -32,8 +32,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Mail,
-  MailOpen,
   PenSquare,
   MoreHorizontal,
   Trash2,
@@ -69,6 +67,27 @@ interface InboxMessage {
 interface InboxClientProps {
   messages: InboxMessage[];
   total: number;
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+const AVATAR_COLORS = [
+  "bg-blue-500", "bg-emerald-500", "bg-amber-500", "bg-rose-500",
+  "bg-violet-500", "bg-cyan-500", "bg-pink-500", "bg-teal-500",
+];
+
+function avatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
 }
 
 // ---------------------------------------------------------------------------
@@ -124,17 +143,6 @@ export function InboxClient({ messages, total }: InboxClientProps) {
   // Column definitions
   const columns: ColumnDef<InboxMessage>[] = [
     {
-      accessorKey: "isRead",
-      header: "",
-      size: 40,
-      cell: ({ row }) =>
-        row.original.isRead ? (
-          <MailOpen className="size-4 text-muted-foreground" />
-        ) : (
-          <Mail className="size-4 text-primary" />
-        ),
-    },
-    {
       accessorKey: "senderName",
       header: ({ column }) => (
         <Button
@@ -152,15 +160,25 @@ export function InboxClient({ messages, total }: InboxClientProps) {
       cell: ({ row }) => {
         const msg = row.original;
         return (
-          <div className="flex items-center gap-2">
-            <span
-              className={`text-sm ${!msg.isRead ? "font-semibold text-foreground" : "text-muted-foreground"}`}
-            >
-              {msg.senderName}
-            </span>
-            <Badge variant="outline" className="text-[10px]">
-              {msg.senderType}
-            </Badge>
+          <div className="flex items-center gap-2.5">
+            <div className="relative shrink-0">
+              <div className={`flex size-8 items-center justify-center rounded-full text-xs font-semibold text-white ${avatarColor(msg.senderName)}`}>
+                {initials(msg.senderName)}
+              </div>
+              {!msg.isRead && (
+                <span className="absolute -right-0.5 -top-0.5 size-2.5 rounded-full bg-primary ring-2 ring-background" />
+              )}
+            </div>
+            <div>
+              <span
+                className={`text-sm ${!msg.isRead ? "font-semibold text-foreground" : "text-muted-foreground"}`}
+              >
+                {msg.senderName}
+              </span>
+              <Badge variant="outline" className="ml-1.5 text-[10px]">
+                {msg.senderType}
+              </Badge>
+            </div>
           </div>
         );
       },

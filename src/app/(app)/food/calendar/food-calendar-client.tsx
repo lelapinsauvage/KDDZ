@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Printer,
+  Plus,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -56,11 +57,11 @@ const MONTH_NAMES = [
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-const MEALS: { type: MealType; label: string; color: string }[] = [
-  { type: "BREAKFAST", label: "Breakfast", color: "text-blue-600" },
-  { type: "LUNCH", label: "Lunch", color: "text-green-600" },
-  { type: "DESSERT", label: "Dessert", color: "text-pink-600" },
-  { type: "SNACK", label: "Snack", color: "text-yellow-600" },
+const MEALS: { type: MealType; label: string; color: string; bg: string; abbr: string }[] = [
+  { type: "BREAKFAST", label: "Breakfast", color: "text-blue-700", bg: "bg-blue-100", abbr: "B" },
+  { type: "LUNCH", label: "Lunch", color: "text-green-700", bg: "bg-green-100", abbr: "L" },
+  { type: "DESSERT", label: "Dessert", color: "text-pink-700", bg: "bg-pink-100", abbr: "D" },
+  { type: "SNACK", label: "Snack", color: "text-amber-700", bg: "bg-amber-100", abbr: "S" },
 ];
 
 function toISODate(year: number, month: number, day: number): string {
@@ -391,7 +392,7 @@ export function FoodCalendarClient({
                           return (
                             <td
                               key={dayIdx}
-                              className={`border-b border-r last:border-r-0 p-2 align-top h-[120px] cursor-pointer transition-colors hover:bg-primary/5 ${
+                              className={`border-b border-r last:border-r-0 p-1.5 align-top h-[120px] cursor-pointer transition-colors hover:bg-primary/5 group ${
                                 isWeekend ? "bg-gray-50/70" : "bg-white"
                               }`}
                               onClick={() => openDayDialog(day)}
@@ -406,6 +407,11 @@ export function FoodCalendarClient({
                                 >
                                   {day}
                                 </span>
+                                {!hasMeals && (
+                                  <span className="flex size-5 items-center justify-center rounded-full border border-dashed border-muted-foreground/30 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Plus className="size-3" />
+                                  </span>
+                                )}
                               </div>
                               <div className="space-y-0.5">
                                 {MEALS.map((meal) => {
@@ -414,15 +420,13 @@ export function FoodCalendarClient({
                                   return (
                                     <div
                                       key={meal.type}
-                                      className="truncate text-[11px] leading-tight"
+                                      className={`truncate rounded px-1 py-0.5 text-[10px] leading-tight ${meal.bg} ${meal.color}`}
                                       title={`${meal.label}: ${entry.foodName}`}
                                     >
-                                      <span className={`font-medium ${meal.color}`}>
-                                        {meal.label[0]}:
+                                      <span className="font-semibold">
+                                        {meal.abbr}
                                       </span>{" "}
-                                      <span className="text-[#555]">
-                                        {entry.foodName}
-                                      </span>
+                                      {entry.foodName}
                                     </div>
                                   );
                                 })}
@@ -440,16 +444,14 @@ export function FoodCalendarClient({
         )}
 
         {/* Legend */}
-        <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
           {MEALS.map((meal) => (
-            <span key={meal.type} className="flex items-center gap-1">
-              <span className={`font-semibold ${meal.color}`}>
-                {meal.label[0]}
-              </span>
-              = {meal.label}
+            <span key={meal.type} className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 ${meal.bg} ${meal.color}`}>
+              <span className="font-bold">{meal.abbr}</span>
+              {meal.label}
             </span>
           ))}
-          <span className="ml-4 text-[#999]">
+          <span className="ml-2 text-muted-foreground">
             Click a day to assign meals
           </span>
         </div>

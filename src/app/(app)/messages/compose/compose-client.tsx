@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Send, UserRound, Users } from "lucide-react";
+import { Send, UserRound, Users, Loader2 } from "lucide-react";
 import { sendMessage, sendClassMessage } from "@/lib/actions/messages";
 import type { RecipientType } from "@/generated/prisma/enums";
 
@@ -270,8 +270,13 @@ export function ComposeClient({ recipients, classes }: ComposeClientProps) {
               <Button
                 onClick={handleSend}
                 disabled={!canSend}
+                className="text-white"
               >
-                <Send className="mr-1 size-3.5" />
+                {isPending ? (
+                  <Loader2 className="mr-1 size-3.5 animate-spin" />
+                ) : (
+                  <Send className="mr-1 size-3.5" />
+                )}
                 {isPending
                   ? "Sending..."
                   : mode === "class"

@@ -6,11 +6,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Save, Upload } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Save,
+  Upload,
+  Building2,
+  Clock,
+  Settings2,
+  Bell,
+  CheckCircle2,
+} from "lucide-react";
 import { setSetting } from "@/lib/actions/settings";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const DAY_SHORT: Record<string, string> = {
+  Monday: "Mon", Tuesday: "Tue", Wednesday: "Wed", Thursday: "Thu",
+  Friday: "Fri", Saturday: "Sat", Sunday: "Sun",
+};
 
 interface NurseryClientProps {
   branchId: string;
@@ -103,24 +115,32 @@ export default function NurseryClient({ branchId, initialSettings }: NurseryClie
         {/* General Info */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">General Information</CardTitle>
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                <Building2 className="size-5" />
+              </div>
+              <div>
+                <CardTitle className="text-base">General Information</CardTitle>
+                <CardDescription>Basic details about your nursery</CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label>Nursery Name</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} />
+              <Label htmlFor="nursery-name">Nursery Name</Label>
+              <Input id="nursery-name" placeholder="e.g. Happy Kids Nursery" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>Email</Label>
-              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Label htmlFor="nursery-email">Email Address</Label>
+              <Input id="nursery-email" type="email" placeholder="contact@nursery.com" value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>Address</Label>
-              <Input value={address} onChange={(e) => setAddress(e.target.value)} />
+              <Label htmlFor="nursery-address">Address</Label>
+              <Input id="nursery-address" placeholder="123 Main St, City" value={address} onChange={(e) => setAddress(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>Phone</Label>
-              <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
+              <Label htmlFor="nursery-phone">Phone Number</Label>
+              <Input id="nursery-phone" placeholder="+1 234 567 890" value={phone} onChange={(e) => setPhone(e.target.value)} />
             </div>
             <div className="space-y-1.5 sm:col-span-2">
               <Label>Logo</Label>
@@ -139,31 +159,47 @@ export default function NurseryClient({ branchId, initialSettings }: NurseryClie
         {/* Working Hours */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Working Hours</CardTitle>
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                <Clock className="size-5" />
+              </div>
+              <div>
+                <CardTitle className="text-base">Working Hours</CardTitle>
+                <CardDescription>Set your nursery&apos;s operating schedule</CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label>Opening Time</Label>
-                <Input type="time" value={openTime} onChange={(e) => setOpenTime(e.target.value)} />
+                <Label htmlFor="open-time">Opening Time</Label>
+                <Input id="open-time" type="time" value={openTime} onChange={(e) => setOpenTime(e.target.value)} />
               </div>
               <div className="space-y-1.5">
-                <Label>Closing Time</Label>
-                <Input type="time" value={closeTime} onChange={(e) => setCloseTime(e.target.value)} />
+                <Label htmlFor="close-time">Closing Time</Label>
+                <Input id="close-time" type="time" value={closeTime} onChange={(e) => setCloseTime(e.target.value)} />
               </div>
             </div>
             <div>
-              <Label className="mb-2">Working Days</Label>
-              <div className="flex flex-wrap gap-3">
-                {DAYS.map((day) => (
-                  <label key={day} className="flex items-center gap-2 text-sm">
-                    <Checkbox
-                      checked={workingDays.includes(day)}
-                      onCheckedChange={() => toggleDay(day)}
-                    />
-                    {day}
-                  </label>
-                ))}
+              <Label className="mb-3 block">Working Days</Label>
+              <div className="flex flex-wrap gap-2">
+                {DAYS.map((day) => {
+                  const active = workingDays.includes(day);
+                  return (
+                    <button
+                      key={day}
+                      type="button"
+                      onClick={() => toggleDay(day)}
+                      className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors ${
+                        active
+                          ? "border-primary bg-primary text-white"
+                          : "border-border bg-muted/50 text-muted-foreground hover:bg-muted"
+                      }`}
+                    >
+                      {DAY_SHORT[day]}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </CardContent>
@@ -172,35 +208,51 @@ export default function NurseryClient({ branchId, initialSettings }: NurseryClie
         {/* Defaults */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Defaults</CardTitle>
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
+                <Settings2 className="size-5" />
+              </div>
+              <div>
+                <CardTitle className="text-base">Defaults &amp; Preferences</CardTitle>
+                <CardDescription>Default values for daily care tracking</CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label>Default Milk Type</Label>
-                <Input value={defaultMilk} onChange={(e) => setDefaultMilk(e.target.value)} />
+                <Label htmlFor="default-milk">Default Milk Type</Label>
+                <Input id="default-milk" placeholder="e.g. Formula, Breast milk" value={defaultMilk} onChange={(e) => setDefaultMilk(e.target.value)} />
               </div>
               <div className="space-y-1.5">
-                <Label>Default Diaper Type</Label>
-                <Input value={defaultDiaper} onChange={(e) => setDefaultDiaper(e.target.value)} />
+                <Label htmlFor="default-diaper">Default Diaper Type</Label>
+                <Input id="default-diaper" placeholder="e.g. Size 3, Pampers" value={defaultDiaper} onChange={(e) => setDefaultDiaper(e.target.value)} />
               </div>
             </div>
             <div>
-              <Label className="mb-2">Assessment Types Enabled</Label>
-              <div className="flex flex-wrap gap-3">
-                {["Developmental", "Behavioral", "Cognitive", "Social", "Language"].map((t) => (
-                  <label key={t} className="flex items-center gap-2 text-sm">
-                    <Checkbox
-                      checked={assessmentTypes.includes(t)}
-                      onCheckedChange={(checked) => {
+              <Label className="mb-3 block">Assessment Types Enabled</Label>
+              <div className="flex flex-wrap gap-2">
+                {["Developmental", "Behavioral", "Cognitive", "Social", "Language"].map((t) => {
+                  const active = assessmentTypes.includes(t);
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => {
                         setAssessmentTypes((prev) =>
-                          checked ? [...prev, t] : prev.filter((x) => x !== t)
+                          active ? prev.filter((x) => x !== t) : [...prev, t]
                         );
                       }}
-                    />
-                    {t}
-                  </label>
-                ))}
+                      className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors ${
+                        active
+                          ? "border-violet-300 bg-violet-100 text-violet-700"
+                          : "border-border bg-muted/50 text-muted-foreground hover:bg-muted"
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </CardContent>
@@ -209,45 +261,71 @@ export default function NurseryClient({ branchId, initialSettings }: NurseryClie
         {/* Notifications */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Notifications</CardTitle>
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
+                <Bell className="size-5" />
+              </div>
+              <div>
+                <CardTitle className="text-base">Notifications</CardTitle>
+                <CardDescription>Choose how parents and staff receive alerts</CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-3">
-            <label className="flex items-center gap-3 text-sm">
+            <label className="flex items-center gap-3 rounded-lg border px-4 py-3 transition-colors hover:bg-muted/50 cursor-pointer">
               <Checkbox
                 checked={emailNotifications}
                 onCheckedChange={(v) => setEmailNotifications(!!v)}
               />
-              Email Notifications
+              <div>
+                <p className="text-sm font-medium">Email Notifications</p>
+                <p className="text-xs text-muted-foreground">Send alerts via email</p>
+              </div>
             </label>
-            <label className="flex items-center gap-3 text-sm">
+            <label className="flex items-center gap-3 rounded-lg border px-4 py-3 transition-colors hover:bg-muted/50 cursor-pointer">
               <Checkbox
                 checked={smsNotifications}
                 onCheckedChange={(v) => setSmsNotifications(!!v)}
               />
-              SMS Notifications
+              <div>
+                <p className="text-sm font-medium">SMS Notifications</p>
+                <p className="text-xs text-muted-foreground">Send text message alerts</p>
+              </div>
             </label>
-            <label className="flex items-center gap-3 text-sm">
+            <label className="flex items-center gap-3 rounded-lg border px-4 py-3 transition-colors hover:bg-muted/50 cursor-pointer">
               <Checkbox
                 checked={pushNotifications}
                 onCheckedChange={(v) => setPushNotifications(!!v)}
               />
-              Push Notifications
+              <div>
+                <p className="text-sm font-medium">Push Notifications</p>
+                <p className="text-xs text-muted-foreground">In-app push notifications</p>
+              </div>
             </label>
           </CardContent>
         </Card>
 
-        {/* Save Button */}
-        <div className="flex flex-wrap items-center gap-3">
-          <Button
-           
-            className="text-white"
-            onClick={handleSave}
-            disabled={isPending}
-          >
-            <Save className="mr-1 size-4" />
-            {isPending ? "Saving..." : "Save Settings"}
-          </Button>
-          {saved && <span className="text-sm text-primary font-medium">Settings saved successfully!</span>}
+        {/* Save Button — sticky bar */}
+        <div className="sticky bottom-4 z-10">
+          <div className="flex items-center justify-between rounded-xl border bg-card px-5 py-3 shadow-lg">
+            <div className="flex items-center gap-2">
+              {saved && (
+                <>
+                  <CheckCircle2 className="size-4 text-emerald-600" />
+                  <span className="text-sm font-medium text-emerald-600">Settings saved successfully!</span>
+                </>
+              )}
+            </div>
+            <Button
+              size="lg"
+              className="text-white px-8"
+              onClick={handleSave}
+              disabled={isPending}
+            >
+              <Save className="mr-2 size-4" />
+              {isPending ? "Saving..." : "Save Settings"}
+            </Button>
+          </div>
         </div>
       </div>
     </>

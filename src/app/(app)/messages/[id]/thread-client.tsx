@@ -26,7 +26,6 @@ import {
   Mail,
   MailOpen,
   Clock,
-  User,
 } from "lucide-react";
 import {
   replyToMessage,
@@ -58,6 +57,27 @@ interface ThreadClientProps {
   message: ThreadMessage;
   threadMessages: ThreadMessage[];
   currentUserId: string;
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+const AVATAR_COLORS = [
+  "bg-blue-500", "bg-emerald-500", "bg-amber-500", "bg-rose-500",
+  "bg-violet-500", "bg-cyan-500", "bg-pink-500", "bg-teal-500",
+];
+
+function avatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
 }
 
 // ---------------------------------------------------------------------------
@@ -184,19 +204,23 @@ export function ThreadClient({
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
-              <div>
-                <h2 className="text-lg font-semibold text-foreground">
-                  {message.subject ?? "(No subject)"}
-                </h2>
-                <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                  <User className="size-3.5" />
-                  <span>
-                    From: <strong>{message.senderName}</strong>
-                  </span>
-                  <span className="mx-1">|</span>
-                  <span>
-                    To: <strong>{message.recipientName}</strong>
-                  </span>
+              <div className="flex items-center gap-3">
+                <div className={`flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white ${avatarColor(message.senderName)}`}>
+                  {initials(message.senderName)}
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-foreground">
+                    {message.subject ?? "(No subject)"}
+                  </h2>
+                  <div className="mt-0.5 flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>
+                      From: <strong>{message.senderName}</strong>
+                    </span>
+                    <span className="mx-1">|</span>
+                    <span>
+                      To: <strong>{message.recipientName}</strong>
+                    </span>
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -241,10 +265,10 @@ export function ThreadClient({
                     <div className="flex items-center gap-2">
                       <div
                         className={`flex size-8 items-center justify-center rounded-full text-xs font-semibold text-white ${
-                          isOwn ? "bg-primary" : "bg-card"
+                          isOwn ? "bg-primary" : avatarColor(msg.senderName)
                         }`}
                       >
-                        {msg.senderName.charAt(0).toUpperCase()}
+                        {initials(msg.senderName)}
                       </div>
                       <div>
                         <p className="text-sm font-medium text-foreground">

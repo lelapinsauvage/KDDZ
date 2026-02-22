@@ -31,7 +31,6 @@ import {
   Eye,
   Inbox,
   ArrowUpDown,
-  SendHorizonal,
 } from "lucide-react";
 import { deleteMessage } from "@/lib/actions/messages";
 
@@ -59,6 +58,27 @@ interface SentClientProps {
 }
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+const AVATAR_COLORS = [
+  "bg-blue-500", "bg-emerald-500", "bg-amber-500", "bg-rose-500",
+  "bg-violet-500", "bg-cyan-500", "bg-pink-500", "bg-teal-500",
+];
+
+function avatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+}
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
@@ -81,14 +101,6 @@ export function SentClient({ messages, total }: SentClientProps) {
   // Column definitions
   const columns: ColumnDef<SentMessage>[] = [
     {
-      id: "icon",
-      header: "",
-      size: 40,
-      cell: () => (
-        <SendHorizonal className="size-4 text-muted-foreground" />
-      ),
-    },
-    {
       accessorKey: "recipientName",
       header: ({ column }) => (
         <Button
@@ -107,18 +119,23 @@ export function SentClient({ messages, total }: SentClientProps) {
         const msg = row.original;
         const isGroup = msg.threadId !== null;
         return (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-foreground">
-              {msg.recipientName}
-            </span>
-            <Badge
-              variant="outline"
-              className={`text-[10px] ${
-                isGroup ? "border-primary text-primary" : ""
-              }`}
-            >
-              {isGroup ? "Group" : msg.recipientType}
-            </Badge>
+          <div className="flex items-center gap-2.5">
+            <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white ${avatarColor(msg.recipientName)}`}>
+              {initials(msg.recipientName)}
+            </div>
+            <div>
+              <span className="text-sm text-foreground">
+                {msg.recipientName}
+              </span>
+              <Badge
+                variant="outline"
+                className={`ml-1.5 text-[10px] ${
+                  isGroup ? "border-primary text-primary" : ""
+                }`}
+              >
+                {isGroup ? "Group" : msg.recipientType}
+              </Badge>
+            </div>
           </div>
         );
       },

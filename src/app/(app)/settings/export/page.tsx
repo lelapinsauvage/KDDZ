@@ -83,6 +83,7 @@ interface ExportCard {
   title: string;
   description: string;
   icon: React.ReactNode;
+  iconBg: string;
   formats: string[];
   hasDateRange: boolean;
 }
@@ -91,40 +92,45 @@ const exportCards: ExportCard[] = [
   {
     id: "children",
     title: "Children Data",
-    description: "Export all children records including personal info, classes, and parent contacts.",
+    description: "All children records including personal info, classes, and parent contacts.",
     icon: <Users className="size-5 text-primary" />,
+    iconBg: "bg-primary/10",
     formats: ["CSV", "Excel"],
     hasDateRange: false,
   },
   {
     id: "daily-reports",
     title: "Daily Reports",
-    description: "Export daily activity reports with meals, naps, and activities.",
-    icon: <FileText className="size-5 text-blue-500" />,
+    description: "Daily activity reports with meals, naps, and activities.",
+    icon: <FileText className="size-5 text-blue-600" />,
+    iconBg: "bg-blue-50",
     formats: ["CSV", "Excel"],
     hasDateRange: true,
   },
   {
     id: "medical",
     title: "Medical Records",
-    description: "Export medical records including vaccinations, conditions, and visit history.",
-    icon: <HeartPulse className="size-5 text-red-500" />,
+    description: "Medical records including vaccinations, conditions, and visit history.",
+    icon: <HeartPulse className="size-5 text-rose-600" />,
+    iconBg: "bg-rose-50",
     formats: ["CSV"],
     hasDateRange: false,
   },
   {
     id: "financial",
     title: "Financial Reports",
-    description: "Export payment records, invoices, and financial summaries.",
-    icon: <DollarSign className="size-5 text-amber-500" />,
+    description: "Payment records, invoices, and financial summaries.",
+    icon: <DollarSign className="size-5 text-amber-600" />,
+    iconBg: "bg-amber-50",
     formats: ["CSV", "Excel"],
     hasDateRange: true,
   },
   {
     id: "employees",
     title: "Employee Records",
-    description: "Export all employee records (teachers, nurses, doctors, managers).",
-    icon: <CalendarCheck className="size-5 text-purple-500" />,
+    description: "All employee records (teachers, nurses, doctors, managers).",
+    icon: <CalendarCheck className="size-5 text-violet-600" />,
+    iconBg: "bg-violet-50",
     formats: ["CSV"],
     hasDateRange: false,
   },
@@ -296,7 +302,9 @@ export default function ExportDatabasePage() {
             <Card key={card.id}>
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  {card.icon}
+                  <div className={`flex size-10 items-center justify-center rounded-lg ${card.iconBg}`}>
+                    {card.icon}
+                  </div>
                   <div>
                     <CardTitle className="text-base">{card.title}</CardTitle>
                     <CardDescription className="mt-1">{card.description}</CardDescription>
