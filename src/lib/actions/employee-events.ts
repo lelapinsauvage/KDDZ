@@ -1,0 +1,337 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { db } from "@/lib/db";
+import { auth } from "@/lib/auth";
+import type { EmployeeEventStatus, AttendanceLogStatus } from "@/generated/prisma/enums";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+type ActionResult<T = unknown> = {
+  success: boolean;
+  error?: string;
+  data?: T;
+};
+
+// ---------------------------------------------------------------------------
+// Calendar Events (EmployeeEvent)
+// ---------------------------------------------------------------------------
+
+export async function getEmployeeEvents(params: {
+  employeeId?: string;
+  employeeType?: string;
+  month?: number; // 0-based
+  year?: number;
+  dateFrom?: string;
+  dateTo?: string;
+}): Promise<ActionResult> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = {};
+
+    if (params.employeeId) {
+      where.employeeId = params.employeeId;
+    }
+    if (params.employeeType) {
+      where.employeeType = params.employeeType;
+    }
+
+    // Date range filtering
+    if (params.month !== undefined && params.year !== undefined) {
+      const startDate = new Date(params.year, params.month, 1);
+      const endDate = new Date(params.year, params.month + 1, 0);
+      where.date = { gte: startDate, lte: endDate };
+    } else if (params.dateFrom || params.dateTo) {
+      where.date = {};
+      if (params.dateFrom) where.date.gte = new Date(params.dateFrom);
+      if (params.dateTo) where.date.lte = new Date(params.dateTo);
+    }
+
+    const events = await db.employeeEvent.findMany({
+      where,
+      orderBy: { date: "asc" },
+    });
+
+    return { success: true, data: events };
+  } catch (error) {
+    console.error("Failed to fetch employee events:", error);
+    return { success: false, error: "Failed to fetch employee events" };
+  }
+}
+
+export async function createEmployeeEvent(data: {
+  employeeId: string;
+  employeeType: string;
+  status: EmployeeEventStatus;
+  date: string;
+  referenceNumber?: string;
+  notes?: string;
+}): Promise<ActionResult> {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const event = await db.employeeEvent.create({
+      data: {
+        employeeId: data.employeeId,
+        employeeType: data.employeeType,
+        status: data.status,
+        date: new Date(data.date),
+        referenceNumber: data.referenceNumber ?? null,
+        notes: data.notes ?? null,
+      },
+    });
+
+    revalidatePath("/employees/calendar");
+    return { success: true, data: event };
+  } catch (error) {
+    console.error("Failed to create employee event:", error);
+    return { success: false, error: "Failed to create event. An event may already exist for this date." };
+  }
+}
+
+export async function updateEmployeeEvent(
+  id: string,
+  data: {
+    status?: EmployeeEventStatus;
+    referenceNumber?: string | null;
+    notes?: string | null;
+  },
+): Promise<ActionResult> {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updateData: any = {};
+    if (data.status !== undefined) updateData.status = data.status;
+    if (data.referenceNumber !== undefined) updateData.referenceNumber = data.referenceNumber;
+    if (data.notes !== undefined) updateData.notes = data.notes;
+
+    const event = await db.employeeEvent.update({
+      where: { id },
+      data: updateData,
+    });
+
+    revalidatePath("/employees/calendar");
+    return { success: true, data: event };
+  } catch (error) {
+    console.error("Failed to update employee event:", error);
+    return { success: false, error: "Failed to update event" };
+  }
+}
+
+export async function deleteEmployeeEvent(id: string): Promise<ActionResult> {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    await db.employeeEvent.delete({ where: { id } });
+
+    revalidatePath("/employees/calendar");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete employee event:", error);
+    return { success: false, error: "Failed to delete event" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Attendance Logs (TeacherAttendance)
+// ---------------------------------------------------------------------------
+
+export async function getAttendanceLogs(params: {
+  employeeId?: string;
+  employeeType?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+}): Promise<ActionResult> {
+  try {
+    const { page = 1, pageSize = 50 } = params;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = {};
+
+    if (params.employeeId) {
+      where.employeeId = params.employeeId;
+    }
+    if (params.employeeType) {
+      where.employeeType = params.employeeType;
+    }
+
+    if (params.dateFrom || params.dateTo) {
+      where.date = {};
+      if (params.dateFrom) where.date.gte = new Date(params.dateFrom);
+      if (params.dateTo) where.date.lte = new Date(params.dateTo);
+    }
+
+    if (params.search) {
+      where.OR = [
+        { readerName: { contains: params.search, mode: "insensitive" } },
+        { note: { contains: params.search, mode: "insensitive" } },
+        { cardId: { contains: params.search, mode: "insensitive" } },
+      ];
+    }
+
+    const skip = (page - 1) * pageSize;
+
+    const [logs, total] = await Promise.all([
+      db.teacherAttendance.findMany({
+        where,
+        orderBy: [{ date: "desc" }, { createdAt: "desc" }],
+        skip,
+        take: pageSize,
+      }),
+      db.teacherAttendance.count({ where }),
+    ]);
+
+    return {
+      success: true,
+      data: {
+        logs,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize),
+      },
+    };
+  } catch (error) {
+    console.error("Failed to fetch attendance logs:", error);
+    return { success: false, error: "Failed to fetch attendance logs" };
+  }
+}
+
+export async function createAttendanceLog(data: {
+  employeeId: string;
+  employeeType?: string;
+  date: string;
+  timeIn?: string;
+  timeOut?: string;
+  status?: AttendanceLogStatus;
+  readerId?: string;
+  readerName?: string;
+  cardId?: string;
+  note?: string;
+}): Promise<ActionResult> {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const log = await db.teacherAttendance.create({
+      data: {
+        employeeId: data.employeeId,
+        employeeType: data.employeeType ?? "teacher",
+        date: new Date(data.date),
+        timeIn: data.timeIn ? new Date(`1970-01-01T${data.timeIn}`) : null,
+        timeOut: data.timeOut ? new Date(`1970-01-01T${data.timeOut}`) : null,
+        status: data.status ?? null,
+        readerId: data.readerId ?? null,
+        readerName: data.readerName ?? null,
+        cardId: data.cardId ?? null,
+        note: data.note ?? null,
+      },
+    });
+
+    revalidatePath("/employees/attendance-logs");
+    return { success: true, data: log };
+  } catch (error) {
+    console.error("Failed to create attendance log:", error);
+    return { success: false, error: "Failed to create attendance log" };
+  }
+}
+
+export async function bulkCreateAttendanceLogs(
+  logs: Array<{
+    employeeId: string;
+    employeeType?: string;
+    date: string;
+    timeIn?: string;
+    timeOut?: string;
+    status?: AttendanceLogStatus;
+    readerId?: string;
+    readerName?: string;
+    cardId?: string;
+    note?: string;
+  }>,
+): Promise<ActionResult> {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const created = await db.teacherAttendance.createMany({
+      data: logs.map((log) => ({
+        employeeId: log.employeeId,
+        employeeType: log.employeeType ?? "teacher",
+        date: new Date(log.date),
+        timeIn: log.timeIn ? new Date(`1970-01-01T${log.timeIn}`) : null,
+        timeOut: log.timeOut ? new Date(`1970-01-01T${log.timeOut}`) : null,
+        status: log.status ?? null,
+        readerId: log.readerId ?? null,
+        readerName: log.readerName ?? null,
+        cardId: log.cardId ?? null,
+        note: log.note ?? null,
+      })),
+    });
+
+    revalidatePath("/employees/attendance");
+    revalidatePath("/employees/attendance-logs");
+    return { success: true, data: { count: created.count } };
+  } catch (error) {
+    console.error("Failed to bulk create attendance logs:", error);
+    return { success: false, error: "Failed to upload attendance data" };
+  }
+}
+
+export async function updateAttendanceLog(
+  id: string,
+  data: {
+    timeIn?: string | null;
+    timeOut?: string | null;
+    status?: AttendanceLogStatus | null;
+    note?: string | null;
+  },
+): Promise<ActionResult> {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updateData: any = {};
+    if (data.timeIn !== undefined) {
+      updateData.timeIn = data.timeIn ? new Date(`1970-01-01T${data.timeIn}`) : null;
+    }
+    if (data.timeOut !== undefined) {
+      updateData.timeOut = data.timeOut ? new Date(`1970-01-01T${data.timeOut}`) : null;
+    }
+    if (data.status !== undefined) updateData.status = data.status;
+    if (data.note !== undefined) updateData.note = data.note;
+
+    const log = await db.teacherAttendance.update({
+      where: { id },
+      data: updateData,
+    });
+
+    revalidatePath("/employees/attendance-logs");
+    return { success: true, data: log };
+  } catch (error) {
+    console.error("Failed to update attendance log:", error);
+    return { success: false, error: "Failed to update attendance log" };
+  }
+}

@@ -113,6 +113,20 @@ enum PushPlatform {
   WEB
 }
 
+enum EmployeeEventStatus {
+  SICK
+  ABSENT
+  DAY_OFF
+  WARNING
+}
+
+enum AttendanceLogStatus {
+  CHECK_IN
+  CHECK_OUT
+  LATE
+  EARLY_LEAVE
+}
+
 enum AssessmentStatus {
   DRAFT
   SUBMITTED
@@ -724,6 +738,49 @@ model ManagerAttachment {
 
   @@index([managerId])
   @@map("manager_attachments")
+}
+
+// ─────────────────────────────────────────────
+// EMPLOYEE EVENTS & ATTENDANCE
+// ─────────────────────────────────────────────
+
+model EmployeeEvent {
+  id              String              @id @default(uuid()) @db.Uuid
+  employeeId      String              @db.Uuid
+  employeeType    String
+  status          EmployeeEventStatus
+  date            DateTime            @db.Date
+  referenceNumber String?
+  notes           String?             @db.Text
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@unique([employeeId, employeeType, date])
+  @@index([employeeId, employeeType])
+  @@index([date])
+  @@index([status])
+  @@map("employee_events")
+}
+
+model TeacherAttendance {
+  id           String                @id @default(uuid()) @db.Uuid
+  employeeId   String                @db.Uuid
+  employeeType String                @default("teacher")
+  date         DateTime              @db.Date
+  timeIn       DateTime?             @db.Time(6)
+  timeOut      DateTime?             @db.Time(6)
+  status       AttendanceLogStatus?
+  readerId     String?
+  readerName   String?
+  cardId       String?
+  note         String?               @db.Text
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  @@index([employeeId, employeeType])
+  @@index([date])
+  @@index([status])
+  @@map("teacher_attendance")
 }
 
 // ─────────────────────────────────────────────

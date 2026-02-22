@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -80,8 +81,10 @@ export function ManagerDetailClient({ manager, branchStats }: ManagerDetailClien
                 <span className="flex items-center gap-1"><Building2 className="h-4 w-4" />{manager.branch.name}</span>
               </div>
             </div>
-            <Button variant="outline" size="sm">
-              <Pencil className="mr-1 h-4 w-4" /> Edit
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/employees/managers/${manager.id}/edit`}>
+                <Pencil className="mr-1 h-4 w-4" /> Edit
+              </Link>
             </Button>
           </CardContent>
         </Card>

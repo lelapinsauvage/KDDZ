@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -120,9 +121,11 @@ export function TeacherDetailClient({ teacher }: TeacherDetailClientProps) {
               </div>
 
               {/* Edit Button */}
-              <Button variant="outline" size="sm" className="shrink-0">
-                <Pencil className="size-4" />
-                Edit Profile
+              <Button asChild variant="outline" size="sm" className="shrink-0">
+                <Link href={`/employees/teachers/${teacher.id}/edit`}>
+                  <Pencil className="size-4" />
+                  Edit Profile
+                </Link>
               </Button>
             </div>
           </CardContent>

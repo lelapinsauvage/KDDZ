@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
 import {
@@ -64,9 +65,11 @@ export function EmployeeListingClient({
               className="pl-9"
             />
           </div>
-          <Button className="bg-[#1caf9a] hover:bg-[#18a08d] text-white">
-            <Plus className="size-4" />
-            Add {singular}
+          <Button asChild className="bg-[#1caf9a] hover:bg-[#18a08d] text-white">
+            <Link href={`/employees/${plural.toLowerCase()}/new`}>
+              <Plus className="size-4" />
+              Add {singular}
+            </Link>
           </Button>
         </div>
 

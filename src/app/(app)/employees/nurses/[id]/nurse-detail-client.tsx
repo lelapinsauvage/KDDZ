@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -99,8 +100,10 @@ export function NurseDetailClient({ nurse, recentActivities }: NurseDetailClient
                 <span className="flex items-center gap-1"><Building2 className="h-4 w-4" />{nurse.branch.name}</span>
               </div>
             </div>
-            <Button variant="outline" size="sm">
-              <Pencil className="mr-1 h-4 w-4" /> Edit
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/employees/nurses/${nurse.id}/edit`}>
+                <Pencil className="mr-1 h-4 w-4" /> Edit
+              </Link>
             </Button>
           </CardContent>
         </Card>
