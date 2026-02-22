@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { UtensilsCrossed } from "lucide-react";
+import {
+  UtensilsCrossed,
+  Coffee,
+  Cake,
+  Cookie,
+  Pencil,
+} from "lucide-react";
 
 interface TodayMenuWidgetProps {
   breakfast: string | null;
@@ -9,44 +15,96 @@ interface TodayMenuWidgetProps {
   snack?: string | null;
 }
 
+const mealConfig = [
+  { key: "breakfast" as const, label: "Breakfast", icon: Coffee, iconColor: "text-amber-600", iconBg: "bg-amber-50" },
+  { key: "lunch" as const, label: "Lunch", icon: UtensilsCrossed, iconColor: "text-teal-600", iconBg: "bg-teal-50" },
+  { key: "dessert" as const, label: "Dessert", icon: Cake, iconColor: "text-pink-600", iconBg: "bg-pink-50" },
+  { key: "snack" as const, label: "Snack", icon: Cookie, iconColor: "text-violet-600", iconBg: "bg-violet-50" },
+] as const;
+
 export function TodayMenuWidget({ breakfast, lunch, dessert, snack }: TodayMenuWidgetProps) {
+  const meals = { breakfast, lunch, dessert, snack } as Record<string, string | null | undefined>;
   const hasMenu = breakfast || lunch || dessert;
 
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <UtensilsCrossed className="size-4 text-primary" />
-          Today&apos;s Menu
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <UtensilsCrossed className="size-4 text-primary" />
+            Today&apos;s Menu
+          </CardTitle>
+          <Link
+            href="/food/calendar"
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Pencil className="size-3" />
+            Edit
+          </Link>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="space-y-1.5">
         {hasMenu ? (
           <>
-            <MenuRow label="Breakfast" value={breakfast} />
-            <MenuRow label="Lunch" value={lunch} />
-            <MenuRow label="Dessert" value={dessert} />
-            {snack && <MenuRow label="Snack" value={snack} />}
+            {mealConfig.map((meal) => {
+              const value = meals[meal.key];
+              if (meal.key === "snack" && !value) return null;
+              return (
+                <MealRow
+                  key={meal.key}
+                  label={meal.label}
+                  value={value ?? null}
+                  icon={meal.icon}
+                  iconColor={meal.iconColor}
+                  iconBg={meal.iconBg}
+                />
+              );
+            })}
           </>
         ) : (
-          <p className="text-sm text-muted-foreground">
-            No menu set for today.{" "}
-            <Link href="/food/calendar" className="text-primary hover:underline">
-              Set menu
-            </Link>
-          </p>
+          <div className="flex flex-col items-center gap-2 py-4 text-center">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-muted">
+              <UtensilsCrossed className="size-5 text-muted-foreground/50" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
+                No menu set for today
+              </p>
+              <Link
+                href="/food/calendar"
+                className="text-xs text-primary hover:underline"
+              >
+                Add today&apos;s menu
+              </Link>
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>
   );
 }
 
-function MenuRow({ label, value }: { label: string; value: string | null }) {
+function MealRow({
+  label,
+  value,
+  icon: Icon,
+  iconColor,
+  iconBg,
+}: {
+  label: string;
+  value: string | null;
+  icon: React.ComponentType<{ className?: string }>;
+  iconColor: string;
+  iconBg: string;
+}) {
   return (
-    <div className="flex items-center justify-between py-1">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="text-sm font-medium">
-        {value ?? <span className="text-muted-foreground/50">Not set</span>}
+    <div className="flex items-center gap-3 rounded-lg px-2 py-1.5">
+      <div className={`flex size-7 items-center justify-center rounded-lg ${iconBg}`}>
+        <Icon className={`size-3.5 ${iconColor}`} />
+      </div>
+      <span className="text-xs font-medium text-muted-foreground w-16">{label}</span>
+      <span className="flex-1 text-sm font-medium text-right">
+        {value ?? <span className="text-muted-foreground/40 italic">Not set</span>}
       </span>
     </div>
   );
