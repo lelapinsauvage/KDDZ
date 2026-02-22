@@ -54,6 +54,7 @@ import {
 
 import { deletePayment } from "@/lib/actions/payments";
 import { PaymentDialog } from "./payment-dialog";
+import { QuickPaymentDialog } from "@/components/accounting/quick-payment-dialog";
 import { ExportButton } from "@/components/shared/export-button";
 import type { ExportColumn } from "@/lib/export";
 
@@ -215,6 +216,7 @@ export function AccountingClient({
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [quickDialogOpen, setQuickDialogOpen] = useState(false);
   const [editPayment, setEditPayment] = useState<PaymentRow | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -498,15 +500,22 @@ export function AccountingClient({
         title="Accounting"
         breadcrumbs={[{ label: "Accounting" }]}
         actions={
-          <Button
-            onClick={() => {
-              setEditPayment(null);
-              setDialogOpen(true);
-            }}
-          >
-            <Plus className="mr-1 size-4" />
-            New Payment
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setEditPayment(null);
+                setDialogOpen(true);
+              }}
+            >
+              <Plus className="mr-1 size-4" />
+              New Payment
+            </Button>
+            <Button onClick={() => setQuickDialogOpen(true)}>
+              <Banknote className="mr-1 size-4" />
+              Record Payment
+            </Button>
+          </div>
         }
       />
 
@@ -693,6 +702,13 @@ export function AccountingClient({
         onOpenChange={setDialogOpen}
         childrenList={childrenList}
         editData={editPayment}
+      />
+
+      {/* Quick Payment Dialog */}
+      <QuickPaymentDialog
+        open={quickDialogOpen}
+        onOpenChange={setQuickDialogOpen}
+        childrenList={childrenList}
       />
 
       {/* Delete Confirmation */}

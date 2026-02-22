@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import type {
@@ -512,5 +513,74 @@ export async function getChildrenForPayment(): Promise<ActionResult> {
   } catch (error) {
     console.error("Failed to fetch children for payment:", error);
     return { success: false, error: "Failed to fetch children" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// recordPayment — Quick payment recording (zod-validated)
+// ---------------------------------------------------------------------------
+
+export const quickPaymentSchema = z.object({
+  childId: z.string().uuid("Please select a child"),
+  amount: z.number().positive("Amount must be greater than 0"),
+  method: z.enum(["CASH", "CHECK", "TRANSFER", "CREDIT_CARD"]),
+  category: z.enum(["MONTHLY", "REGISTRATION", "BUS", "FOOD", "XTRA_TIME", "OTHER"]),
+  notes: z.string().optional(),
+});
+
+export type QuickPaymentInput = z.infer<typeof quickPaymentSchema>;
+
+export async function recordPayment(
+  input: QuickPaymentInput,
+): Promise<ActionResult<{ id: string; childName: string }>> {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const parsed = quickPaymentSchema.safeParse(input);
+    if (!parsed.success) {
+      const firstError = parsed.error.issues[0]?.message ?? "Invalid input";
+      return { success: false, error: firstError };
+    }
+
+    const { childId, amount, method, category, notes } = parsed.data;
+
+    const child = await db.child.findUnique({
+      where: { id: childId },
+      select: { id: true, firstName: true, lastName: true },
+    });
+    if (!child) {
+      return { success: false, error: "Child not found" };
+    }
+
+    const payment = await db.payment.create({
+      data: {
+        childId,
+        amount,
+        currency: "USD",
+        date: new Date(),
+        method,
+        category,
+        status: "PAID",
+        notes: notes || null,
+        createdById: session.user.id,
+      },
+    });
+
+    revalidatePath("/accounting");
+    revalidatePath(`/children/${childId}/accounting`);
+
+    return {
+      success: true,
+      data: {
+        id: payment.id,
+        childName: `${child.firstName} ${child.lastName}`,
+      },
+    };
+  } catch (error) {
+    console.error("Failed to record payment:", error);
+    return { success: false, error: "Failed to record payment" };
   }
 }
