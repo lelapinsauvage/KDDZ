@@ -1,43 +1,32 @@
-import { db } from "@/lib/db";
+import { notFound } from "next/navigation";
+import { getAssessments } from "@/lib/actions/assessments";
 import { getClasses } from "@/lib/actions/classes";
+import { ASSESSMENT_TYPE_NAMES, VALID_ASSESSMENT_TYPES } from "@/lib/assessment-types";
 import AssessmentsClient from "./assessments-client";
 
 interface PageProps {
   params: Promise<{ type: string }>;
 }
 
-export default async function AssessmentFormPage({ params }: PageProps) {
+export default async function AssessmentListingPage({ params }: PageProps) {
   const { type: typeParam } = await params;
   const typeNum = parseInt(typeParam, 10);
 
-  // Fetch assessments from DB filtered by assessmentType
-  const assessments = await db.assessment.findMany({
-    where: { assessmentType: typeNum },
-    include: {
-      child: {
-        include: {
-          class: true,
-        },
-      },
-      createdBy: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  if (!VALID_ASSESSMENT_TYPES.includes(typeNum as (typeof VALID_ASSESSMENT_TYPES)[number])) {
+    notFound();
+  }
 
-  // Fetch all classes for the filter dropdown
-  const classesResult = await getClasses();
+  const [{ assessments }, classesResult] = await Promise.all([
+    getAssessments({ assessmentType: typeNum, pageSize: 500 }),
+    getClasses(),
+  ]);
+
   const classesData = Array.isArray(classesResult.data) ? classesResult.data : [];
   const classes = classesData.map((c: { id: string; name: string }) => ({
     id: c.id,
     name: c.name,
   }));
 
-  // Serialize assessment data for client component
   const serializedAssessments = assessments.map((a) => ({
     id: a.id,
     childId: a.childId,
@@ -49,9 +38,12 @@ export default async function AssessmentFormPage({ params }: PageProps) {
     assessor: a.createdBy?.name ?? "Unknown",
   }));
 
+  const typeName = ASSESSMENT_TYPE_NAMES[typeNum] ?? "Assessment";
+
   return (
     <AssessmentsClient
       typeParam={typeParam}
+      typeName={typeName}
       assessments={serializedAssessments}
       classes={classes}
     />

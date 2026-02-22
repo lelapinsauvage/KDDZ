@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { type ColumnDef } from "@tanstack/react-table";
 import { Plus, ArrowUpDown, MoreHorizontal, Eye, Pencil, Trash2 } from "lucide-react";
 
@@ -21,15 +23,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-// Assessment type mapping
-const assessmentTypeNames: Record<string, string> = {
-  "1": "Social Development",
-  "2": "Motor Skills",
-  "3": "Language Development",
-  "4": "Cognitive Skills",
-  "5": "Self-Care Skills",
-};
+import { deleteAssessment } from "@/lib/actions/assessments";
 
 type AssessmentStatus = "DRAFT" | "SUBMITTED" | "REVIEWED";
 
@@ -65,19 +59,30 @@ function formatDate(iso: string) {
 
 interface AssessmentsClientProps {
   typeParam: string;
+  typeName: string;
   assessments: AssessmentEntry[];
   classes: ClassOption[];
 }
 
 export default function AssessmentsClient({
   typeParam,
+  typeName,
   assessments,
   classes,
 }: AssessmentsClientProps) {
-  const typeName = assessmentTypeNames[typeParam] ?? "Assessment";
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
   const [classFilter, setClassFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
+
+  function handleDelete(id: string) {
+    if (!confirm("Are you sure you want to delete this assessment?")) return;
+    startTransition(async () => {
+      await deleteAssessment(id);
+      router.refresh();
+    });
+  }
 
   const filteredEntries = useMemo(() => {
     return assessments.filter((entry) => {
@@ -103,7 +108,12 @@ export default function AssessmentsClient({
           </Button>
         ),
         cell: ({ row }) => (
-          <span className="font-medium text-[#333]">{row.original.childName}</span>
+          <Link
+            href={`/assessments/${typeParam}/${row.original.id}`}
+            className="font-medium text-[#1caf9a] hover:underline"
+          >
+            {row.original.childName}
+          </Link>
         ),
       },
       {
@@ -199,17 +209,21 @@ export default function AssessmentsClient({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => console.log("View assessment:", entry.id)}>
-                  <Eye className="mr-2 size-4" />
-                  View
+                <DropdownMenuItem asChild>
+                  <Link href={`/assessments/${typeParam}/${entry.id}`}>
+                    <Eye className="mr-2 size-4" />
+                    View
+                  </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => console.log("Edit assessment:", entry.id)}>
-                  <Pencil className="mr-2 size-4" />
-                  Edit
+                <DropdownMenuItem asChild>
+                  <Link href={`/assessments/${typeParam}/${entry.id}`}>
+                    <Pencil className="mr-2 size-4" />
+                    Edit
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   variant="destructive"
-                  onClick={() => console.log("Delete assessment:", entry.id)}
+                  onClick={() => handleDelete(entry.id)}
                 >
                   <Trash2 className="mr-2 size-4" />
                   Delete
@@ -221,7 +235,7 @@ export default function AssessmentsClient({
         enableSorting: false,
       },
     ],
-    []
+    [typeParam]
   );
 
   return (
@@ -266,9 +280,11 @@ export default function AssessmentsClient({
 
           <div className="flex-1" />
 
-          <Button style={{ background: "#1caf9a" }}>
-            <Plus className="mr-1 size-4" />
-            New Assessment
+          <Button asChild style={{ background: "#1caf9a" }}>
+            <Link href={`/assessments/${typeParam}/new`}>
+              <Plus className="mr-1 size-4" />
+              New Assessment
+            </Link>
           </Button>
         </div>
 
@@ -279,6 +295,10 @@ export default function AssessmentsClient({
           searchKey="childName"
           searchPlaceholder="Search by child name..."
         />
+
+        {isPending && (
+          <div className="text-sm text-muted-foreground">Processing...</div>
+        )}
       </div>
     </>
   );

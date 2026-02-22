@@ -10,6 +10,7 @@ import {
   Users,
   UtensilsCrossed,
   GraduationCap,
+  ClipboardList,
   Settings,
 } from "lucide-react"
 import {
@@ -116,6 +117,20 @@ const navItems: NavItem[] = [
       { title: "Teachers Calendar", href: "/employees/calendar" },
       { title: "Upload Attendance", href: "/employees/attendance" },
       { title: "Attendance Logs", href: "/employees/attendance-logs" },
+    ],
+  },
+  {
+    title: "Assessments",
+    icon: ClipboardList,
+    items: [
+      { title: "1-3 Months", href: "/assessments/1" },
+      { title: "4-7 Months", href: "/assessments/2" },
+      { title: "8-12 Months", href: "/assessments/3" },
+      { title: "12-24 Months", href: "/assessments/4" },
+      { title: "24-36 Months", href: "/assessments/5" },
+      { title: "36-48 Months", href: "/assessments/6" },
+      { title: "48-60 Months", href: "/assessments/7" },
+      { title: "Assessment Dates", href: "/assessments/dates" },
     ],
   },
   {
