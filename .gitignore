@@ -49,3 +49,7 @@ next-env.d.ts
 # Overnight build logs
 overnight-logs/
 overnight-full.log
+
+# serwist service worker build output
+public/sw.js
+public/sw.js.map

@@ -48,9 +48,11 @@ import {
   createHoliday,
   updateHoliday,
   deleteHoliday,
+} from "@/lib/actions/settings";
+import {
   holidaySchema,
   type HolidayFormValues,
-} from "@/lib/actions/settings";
+} from "@/lib/validations/settings";
 
 interface Holiday {
   id: string;

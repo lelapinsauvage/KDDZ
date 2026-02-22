@@ -20,11 +20,11 @@ import {
   Bell,
   Loader2,
 } from "lucide-react";
+import { updateNurserySettings } from "@/lib/actions/settings";
 import {
-  updateNurserySettings,
   nurserySettingsSchema,
   type NurserySettingsValues,
-} from "@/lib/actions/settings";
+} from "@/lib/validations/settings";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const DAY_SHORT: Record<string, string> = {

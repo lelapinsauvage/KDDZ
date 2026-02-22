@@ -49,9 +49,11 @@ import {
   createEvent,
   updateEvent,
   deleteEvent,
+} from "@/lib/actions/settings";
+import {
   eventSchema,
   type EventFormValues,
-} from "@/lib/actions/settings";
+} from "@/lib/validations/settings";
 
 // ── Types ──────────────────────────────────
 interface EventItem {
