@@ -79,7 +79,7 @@ export function MedicineAlarmsClient({ alarms, branches }: MedicineAlarmsClientP
       <PageHeader
         title="Medicine Alarms"
         breadcrumbs={[
-          { label: "Alarms", href: "/alarms/medicine" },
+          { label: "Alarms", href: "/alarms" },
           { label: "Medicine" },
         ]}
       />

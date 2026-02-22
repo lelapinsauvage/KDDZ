@@ -155,7 +155,7 @@ export function PaymentAlarmsClient({
       <PageHeader
         title="Payment Alarms"
         breadcrumbs={[
-          { label: "Alarms", href: "/alarms/payments" },
+          { label: "Alarms", href: "/alarms" },
           { label: "Payments" },
         ]}
       />

@@ -79,7 +79,7 @@ export function RequestAlarmsClient({ alarms, branches }: RequestAlarmsClientPro
       <PageHeader
         title="Request Alarms"
         breadcrumbs={[
-          { label: "Alarms", href: "/alarms/requests" },
+          { label: "Alarms", href: "/alarms" },
           { label: "Requests" },
         ]}
       />

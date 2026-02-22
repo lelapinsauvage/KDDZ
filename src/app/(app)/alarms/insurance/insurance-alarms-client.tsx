@@ -91,7 +91,7 @@ export function InsuranceAlarmsClient({ alarms, branches }: InsuranceAlarmsClien
       <PageHeader
         title="Insurance Alarms"
         breadcrumbs={[
-          { label: "Alarms", href: "/alarms/insurance" },
+          { label: "Alarms", href: "/alarms" },
           { label: "Insurance" },
         ]}
       />

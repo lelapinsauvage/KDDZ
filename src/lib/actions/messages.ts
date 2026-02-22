@@ -114,6 +114,31 @@ async function resolveNames(
 }
 
 // ---------------------------------------------------------------------------
+// getUnreadMessageCount — lightweight count for header badge
+// ---------------------------------------------------------------------------
+
+export async function getUnreadMessageCount(): Promise<ActionResult> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: true, data: 0 };
+    }
+
+    const count = await db.message.count({
+      where: {
+        recipientId: session.user.id,
+        isRead: false,
+      },
+    });
+
+    return { success: true, data: count };
+  } catch (error) {
+    console.error("Failed to fetch unread message count:", error);
+    return { success: true, data: 0 };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // getInbox
 // ---------------------------------------------------------------------------
 

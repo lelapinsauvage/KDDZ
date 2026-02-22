@@ -145,6 +145,7 @@ const navItems: NavItem[] = [
       {
         title: "Alarms",
         items: [
+          { title: "Overview", href: "/alarms" },
           { title: "Birthday", href: "/alarms/birthdays" },
           { title: "Assessment", href: "/alarms/assessments" },
           { title: "Vaccinations", href: "/alarms/vaccinations" },
@@ -156,6 +157,7 @@ const navItems: NavItem[] = [
           { title: "Requests", href: "/alarms/requests" },
           { title: "Others", href: "/alarms/others" },
           { title: "Contracts", href: "/alarms/contracts" },
+          { title: "Settings", href: "/alarms/settings" },
         ],
       },
     ],

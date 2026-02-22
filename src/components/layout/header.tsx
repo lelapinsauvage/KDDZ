@@ -7,7 +7,6 @@ import {
   Heart,
   Cake,
   ClipboardCheck,
-  Bell,
   User,
   LogOut,
   Settings,
@@ -23,19 +22,42 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import { NotificationDropdown } from "./notification-dropdown"
 
-const notifications = [
-  { icon: Mail, label: "Messages", count: 5, href: "/messages/inbox" },
-  { icon: Heart, label: "Medical", count: 2, href: "/medical/general" },
-  { icon: Cake, label: "Birthdays", count: 3, href: "/alarms/birthdays" },
-  { icon: ClipboardCheck, label: "Assessment", count: 1, href: "/alarms/assessments" },
-  { icon: Bell, label: "Alarms", count: 8, href: "/alarms/others" },
-]
+interface HeaderProps {
+  alarmCounts?: {
+    birthdays: number
+    assessments: number
+    medical: number
+    totalAlarms: number
+  }
+  notifications?: Array<{
+    id: string
+    title: string
+    body: string | null
+    isRead: boolean
+    createdAt: string
+  }>
+  unreadNotificationCount?: number
+  unreadMessageCount?: number
+}
 
-export function Header() {
+export function Header({
+  alarmCounts = { birthdays: 0, assessments: 0, medical: 0, totalAlarms: 0 },
+  notifications = [],
+  unreadNotificationCount = 0,
+  unreadMessageCount = 0,
+}: HeaderProps) {
   const { data: session } = useSession()
   const userName = session?.user?.name || "User"
   const userInitial = userName.charAt(0).toUpperCase()
+
+  const navIcons = [
+    { icon: Mail, label: "Messages", count: unreadMessageCount, href: "/messages/inbox" },
+    { icon: Heart, label: "Medical", count: alarmCounts.medical, href: "/alarms/medical" },
+    { icon: Cake, label: "Birthdays", count: alarmCounts.birthdays, href: "/alarms/birthdays" },
+    { icon: ClipboardCheck, label: "Assessment", count: alarmCounts.assessments, href: "/alarms/assessments" },
+  ]
 
   return (
     <header className="header-bar fixed top-0 left-0 right-0 z-50 flex items-center">
@@ -51,8 +73,8 @@ export function Header() {
         <SidebarTrigger className="text-[#b4bcc8] hover:text-white hover:bg-white/10" />
 
         <div className="flex items-center gap-1">
-          {/* Notification icons */}
-          {notifications.map((item) => (
+          {/* Navigation icon links */}
+          {navIcons.map((item) => (
             <Link
               key={item.label}
               href={item.href}
@@ -64,11 +86,17 @@ export function Header() {
                   variant="destructive"
                   className="absolute top-1.5 right-0.5 flex size-[18px] items-center justify-center p-0 text-[10px] leading-none"
                 >
-                  {item.count}
+                  {item.count > 99 ? "99+" : item.count}
                 </Badge>
               )}
             </Link>
           ))}
+
+          {/* Notification bell dropdown */}
+          <NotificationDropdown
+            notifications={notifications}
+            unreadCount={unreadNotificationCount}
+          />
 
           {/* User dropdown */}
           <DropdownMenu>

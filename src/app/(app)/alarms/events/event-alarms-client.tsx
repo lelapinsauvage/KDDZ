@@ -89,7 +89,7 @@ export function EventAlarmsClient({ events, branches }: EventAlarmsClientProps) 
       <PageHeader
         title="Event Alarms"
         breadcrumbs={[
-          { label: "Alarms", href: "/alarms/events" },
+          { label: "Alarms", href: "/alarms" },
           { label: "Events" },
         ]}
       />

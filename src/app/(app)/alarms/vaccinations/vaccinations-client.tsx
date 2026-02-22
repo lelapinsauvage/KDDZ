@@ -83,7 +83,7 @@ export function VaccinationsClient({ vaccinations, branches }: VaccinationsClien
       <PageHeader
         title="Vaccination Alarms"
         breadcrumbs={[
-          { label: "Alarms", href: "/alarms/vaccinations" },
+          { label: "Alarms", href: "/alarms" },
           { label: "Vaccinations" },
         ]}
       />

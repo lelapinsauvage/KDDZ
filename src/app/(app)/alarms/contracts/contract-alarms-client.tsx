@@ -95,7 +95,7 @@ export function ContractAlarmsClient({ alarms, branches }: ContractAlarmsClientP
       <PageHeader
         title="Contract Alarms"
         breadcrumbs={[
-          { label: "Alarms", href: "/alarms/contracts" },
+          { label: "Alarms", href: "/alarms" },
           { label: "Contracts" },
         ]}
       />

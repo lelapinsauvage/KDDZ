@@ -83,7 +83,7 @@ export function OtherAlarmsClient({ alarms, branches }: OtherAlarmsClientProps) 
       <PageHeader
         title="Other Alarms"
         breadcrumbs={[
-          { label: "Alarms", href: "/alarms/others" },
+          { label: "Alarms", href: "/alarms" },
           { label: "Others" },
         ]}
       />

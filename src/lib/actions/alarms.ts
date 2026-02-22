@@ -343,3 +343,293 @@ export async function getUpcomingAssessments(
     return { success: false, error: "Failed to fetch upcoming assessments" };
   }
 }
+
+// ---------------------------------------------------------------------------
+// getAlarmOverviewCounts — counts per alarm type for overview page
+// ---------------------------------------------------------------------------
+
+export interface AlarmCountItem {
+  type: string;
+  label: string;
+  count: number;
+  href: string;
+  color: string;
+  icon: string;
+}
+
+export async function getAlarmOverviewCounts(): Promise<ActionResult> {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const thirtyDaysFromNow = new Date(today);
+    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+
+    const [
+      birthdayCount,
+      assessmentCount,
+      vaccinationCount,
+      medicalCount,
+      medicineCount,
+      eventCount,
+      insuranceCount,
+      paymentCount,
+      requestCount,
+      contractCount,
+      otherCount,
+    ] = await Promise.all([
+      // Birthdays: children with birthday in the next 30 days
+      db.child.findMany({
+        where: { isActive: true, dateOfBirth: { not: null } },
+        select: { dateOfBirth: true },
+      }).then((children) => {
+        return children.filter((c) => {
+          const dob = c.dateOfBirth!;
+          const next = new Date(today.getFullYear(), dob.getMonth(), dob.getDate());
+          if (next < today) next.setFullYear(today.getFullYear() + 1);
+          return next <= thirtyDaysFromNow;
+        }).length;
+      }),
+      // Assessments: upcoming assessment dates
+      db.assessmentDate.count({
+        where: { scheduledDate: { gte: today } },
+      }),
+      // Vaccinations: overdue
+      db.vaccination.count({
+        where: { nextDueDate: { lt: today } },
+      }),
+      // Medical: active alarms
+      db.alarm.count({
+        where: { type: "MEDICAL", isActive: true },
+      }),
+      // Medicine: active alarms
+      db.alarm.count({
+        where: { type: "MEDICINE", isActive: true },
+      }),
+      // Events: upcoming active events
+      db.event.count({
+        where: { isActive: true, date: { gte: today } },
+      }),
+      // Insurance: active alarms
+      db.alarm.count({
+        where: { type: "INSURANCE", isActive: true },
+      }),
+      // Payments: overdue
+      db.payment.count({
+        where: { status: "OVERDUE" },
+      }),
+      // Requests: active alarms
+      db.alarm.count({
+        where: { type: "REQUEST", isActive: true },
+      }),
+      // Contracts: active alarms
+      db.alarm.count({
+        where: { type: "CONTRACT", isActive: true },
+      }),
+      // Other: active alarms
+      db.alarm.count({
+        where: { type: "OTHER", isActive: true },
+      }),
+    ]);
+
+    const counts: AlarmCountItem[] = [
+      { type: "BIRTHDAY", label: "Birthdays", count: birthdayCount, href: "/alarms/birthdays", color: "bg-pink-100 text-pink-600", icon: "Cake" },
+      { type: "ASSESSMENT", label: "Assessments", count: assessmentCount, href: "/alarms/assessments", color: "bg-teal-100 text-teal-600", icon: "ClipboardCheck" },
+      { type: "VACCINATION", label: "Vaccinations", count: vaccinationCount, href: "/alarms/vaccinations", color: "bg-blue-100 text-blue-600", icon: "Syringe" },
+      { type: "MEDICAL", label: "Medical", count: medicalCount, href: "/alarms/medical", color: "bg-red-100 text-red-600", icon: "Stethoscope" },
+      { type: "MEDICINE", label: "Medicine", count: medicineCount, href: "/alarms/medicine", color: "bg-purple-100 text-purple-600", icon: "Pill" },
+      { type: "EVENT", label: "Events", count: eventCount, href: "/alarms/events", color: "bg-teal-100 text-teal-600", icon: "CalendarDays" },
+      { type: "INSURANCE", label: "Insurance", count: insuranceCount, href: "/alarms/insurance", color: "bg-blue-100 text-blue-600", icon: "Shield" },
+      { type: "PAYMENT", label: "Payments", count: paymentCount, href: "/alarms/payments", color: "bg-amber-100 text-amber-600", icon: "DollarSign" },
+      { type: "REQUEST", label: "Requests", count: requestCount, href: "/alarms/requests", color: "bg-blue-100 text-blue-600", icon: "MessageSquare" },
+      { type: "CONTRACT", label: "Contracts", count: contractCount, href: "/alarms/contracts", color: "bg-teal-100 text-teal-600", icon: "FileText" },
+      { type: "OTHER", label: "Others", count: otherCount, href: "/alarms/others", color: "bg-orange-100 text-orange-600", icon: "Bell" },
+    ];
+
+    const totalActive = counts.reduce((sum, c) => sum + c.count, 0);
+
+    return { success: true, data: { counts, totalActive } };
+  } catch (error) {
+    console.error("Failed to fetch alarm overview counts:", error);
+    return { success: false, error: "Failed to fetch alarm overview counts" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// getNotifications — for a specific user
+// ---------------------------------------------------------------------------
+
+export async function getNotifications(params: {
+  userId?: string;
+  isRead?: boolean;
+  limit?: number;
+} = {}): Promise<ActionResult> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const userId = params.userId ?? session.user.id;
+    const limit = params.limit ?? 20;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = { userId };
+    if (typeof params.isRead === "boolean") where.isRead = params.isRead;
+
+    const [notifications, unreadCount] = await Promise.all([
+      db.notification.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        take: limit,
+      }),
+      db.notification.count({
+        where: { userId, isRead: false },
+      }),
+    ]);
+
+    return { success: true, data: { notifications, unreadCount } };
+  } catch (error) {
+    console.error("Failed to fetch notifications:", error);
+    return { success: false, error: "Failed to fetch notifications" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// getUnreadNotificationCount — lightweight count for header badge
+// ---------------------------------------------------------------------------
+
+export async function getUnreadNotificationCount(): Promise<ActionResult> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: true, data: 0 };
+    }
+
+    const count = await db.notification.count({
+      where: { userId: session.user.id, isRead: false },
+    });
+
+    return { success: true, data: count };
+  } catch (error) {
+    console.error("Failed to fetch notification count:", error);
+    return { success: true, data: 0 };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// markNotificationRead
+// ---------------------------------------------------------------------------
+
+export async function markNotificationRead(id: string): Promise<ActionResult> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    await db.notification.update({
+      where: { id },
+      data: { isRead: true },
+    });
+
+    revalidatePath("/");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to mark notification as read:", error);
+    return { success: false, error: "Failed to mark notification as read" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// markAllNotificationsRead
+// ---------------------------------------------------------------------------
+
+export async function markAllNotificationsRead(): Promise<ActionResult> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    await db.notification.updateMany({
+      where: { userId: session.user.id, isRead: false },
+      data: { isRead: true },
+    });
+
+    revalidatePath("/");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to mark all notifications as read:", error);
+    return {
+      success: false,
+      error: "Failed to mark all notifications as read",
+    };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// getHeaderAlarmCounts — lightweight counts for header notification badges
+// ---------------------------------------------------------------------------
+
+export async function getHeaderAlarmCounts(): Promise<ActionResult> {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const sevenDaysFromNow = new Date(today);
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+
+    const [birthdayCount, assessmentCount, medicalCount, totalAlarmCount] =
+      await Promise.all([
+        // Birthdays in next 7 days
+        db.child
+          .findMany({
+            where: { isActive: true, dateOfBirth: { not: null } },
+            select: { dateOfBirth: true },
+          })
+          .then((children) => {
+            return children.filter((c) => {
+              const dob = c.dateOfBirth!;
+              const next = new Date(
+                today.getFullYear(),
+                dob.getMonth(),
+                dob.getDate(),
+              );
+              if (next < today) next.setFullYear(today.getFullYear() + 1);
+              return next <= sevenDaysFromNow;
+            }).length;
+          }),
+        // Upcoming assessments
+        db.assessmentDate.count({
+          where: { scheduledDate: { gte: today } },
+        }),
+        // Active medical alarms
+        db.alarm.count({
+          where: { type: "MEDICAL", isActive: true },
+        }),
+        // Total active alarms across all types
+        db.alarm.count({
+          where: { isActive: true },
+        }),
+      ]);
+
+    return {
+      success: true,
+      data: {
+        birthdays: birthdayCount,
+        assessments: assessmentCount,
+        medical: medicalCount,
+        totalAlarms: totalAlarmCount,
+      },
+    };
+  } catch (error) {
+    console.error("Failed to fetch header alarm counts:", error);
+    return {
+      success: true,
+      data: { birthdays: 0, assessments: 0, medical: 0, totalAlarms: 0 },
+    };
+  }
+}

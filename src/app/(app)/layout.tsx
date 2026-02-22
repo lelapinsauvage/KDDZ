@@ -5,6 +5,8 @@ import { Footer } from "@/components/layout/footer"
 import { AppContextProvider } from "@/components/providers/app-context-provider"
 import { db } from "@/lib/db"
 import { auth } from "@/lib/auth"
+import { getHeaderAlarmCounts, getNotifications } from "@/lib/actions/alarms"
+import { getUnreadMessageCount } from "@/lib/actions/messages"
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const [session, branches, years] = await Promise.all([
@@ -14,6 +16,45 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   ])
 
   const defaultBranchId = session?.user?.branchId ?? null
+
+  // Fetch header notification data in parallel
+  const [alarmCountsResult, notificationsResult, messageCountResult] =
+    await Promise.all([
+      getHeaderAlarmCounts(),
+      getNotifications({ limit: 8 }),
+      getUnreadMessageCount().catch(() => ({ success: true, data: 0 })),
+    ]);
+
+  const alarmCounts = (alarmCountsResult.data as {
+    birthdays: number;
+    assessments: number;
+    medical: number;
+    totalAlarms: number;
+  }) ?? { birthdays: 0, assessments: 0, medical: 0, totalAlarms: 0 };
+
+  const notificationData = (notificationsResult.success
+    ? notificationsResult.data
+    : { notifications: [], unreadCount: 0 }) as {
+    notifications: Array<{
+      id: string;
+      title: string;
+      body: string | null;
+      isRead: boolean;
+      createdAt: Date;
+    }>;
+    unreadCount: number;
+  };
+
+  const messageCount =
+    typeof messageCountResult.data === "number" ? messageCountResult.data : 0;
+
+  const serializedNotifications = notificationData.notifications.map((n) => ({
+    id: n.id,
+    title: n.title,
+    body: n.body,
+    isRead: n.isRead,
+    createdAt: n.createdAt instanceof Date ? n.createdAt.toISOString() : String(n.createdAt),
+  }));
 
   return (
     <AppContextProvider
@@ -30,7 +71,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         }
       >
         {/* Fixed header spanning full width */}
-        <Header />
+        <Header
+          alarmCounts={alarmCounts}
+          notifications={serializedNotifications}
+          unreadNotificationCount={notificationData.unreadCount}
+          unreadMessageCount={messageCount}
+        />
 
         {/* Sidebar + main content area below header */}
         <AppSidebar />

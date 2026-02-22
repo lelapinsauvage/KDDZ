@@ -97,7 +97,7 @@ export function AssessmentsClient({ assessments, branches }: AssessmentsClientPr
       <PageHeader
         title="Assessment Alarms"
         breadcrumbs={[
-          { label: "Alarms", href: "/alarms/assessments" },
+          { label: "Alarms", href: "/alarms" },
           { label: "Assessments" },
         ]}
       />

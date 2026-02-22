@@ -101,7 +101,7 @@ export function BirthdaysClient({ birthdays, branches }: BirthdaysClientProps) {
       <PageHeader
         title="Birthday Alarms"
         breadcrumbs={[
-          { label: "Alarms", href: "/alarms/birthdays" },
+          { label: "Alarms", href: "/alarms" },
           { label: "Birthdays" },
         ]}
       />
