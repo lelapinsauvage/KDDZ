@@ -1,0 +1,546 @@
+/**
+ * Migration: t_teacher, t_nurse, t_doctor, t_manager → Teacher, Nurse, Doctor, Manager
+ *            + address and attachment sub-tables
+ *
+ * === Teacher (t_teacher → Teacher) ===
+ *   teacher_id   → (old ID, mapped to UUID)
+ *   f_name       → firstName
+ *   l_name       → lastName
+ *   tel          → phone
+ *   mobile       → mobile
+ *   email        → email
+ *   nationality  → nationality
+ *   dob          → dateOfBirth
+ *   sel_branch   → branchId (FK via mapping)
+ *   active       → isActive
+ *   datetime     → createdAt
+ *   Not migrated: m_name, regnum, martial, noc, sel_gender, has_medcase,
+ *     medcase, cnss, cnssnum, sec_degree, sec_degree_y, uni_degree,
+ *     uni_degree_y, language skills (eng/fr/ar), remarks, classid,
+ *     contract, medtest, firstaid, image, t_user_id, uby
+ *
+ * === Nurse (t_nurse → Nurse) ===
+ *   teacher_id   → (old ID, mapped to UUID)
+ *   f_name       → firstName
+ *   l_name       → lastName
+ *   mobile       → mobile
+ *   email        → email
+ *   nationality  → nationality
+ *   dob          → dateOfBirth
+ *   sel_branch   → branchId (FK via mapping)
+ *   active       → isActive
+ *
+ * === Doctor (t_doctor → Doctor) ===
+ *   did          → (old ID, mapped to UUID)
+ *   dfname       → firstName
+ *   dlname       → lastName
+ *   tel          → phone
+ *   (no mobile)  → mobile = null
+ *   (no email)   → email = null
+ *   active       → isActive
+ *   Note: Doctors in old schema have no branch_id — assign to first branch.
+ *
+ * === Manager (t_manager → Manager) ===
+ *   teacher_id   → (old ID, mapped to UUID)
+ *   f_name       → firstName
+ *   l_name       → lastName
+ *   mobile       → mobile
+ *   email        → email
+ *   nationality  → nationality
+ *   dob          → dateOfBirth
+ *   sel_branch   → branchId (FK via mapping)
+ *   active       → isActive
+ *
+ * Sub-tables:
+ *   t_teacher_address → TeacherAddress
+ *   t_teacher_attachments → TeacherAttachment
+ *   t_nurse_attachments → NurseAttachment
+ *   t_manager_address → ManagerAddress
+ *
+ * Prerequisites: Branches must be migrated first.
+ */
+
+import type { PrismaClient } from "@/generated/prisma/client";
+import { createPrismaClient } from "./lib/prisma-client";
+import { queryMysql, closeMysqlPool } from "./lib/mysql-client";
+import {
+  generateUUID,
+  setMapping,
+  getMapping,
+  isDryRun,
+  parseDate,
+  cleanString,
+  toBool,
+  log,
+  logError,
+  logProgress,
+} from "./lib/utils";
+
+// ---------------------------------------------------------------------------
+// Teachers
+// ---------------------------------------------------------------------------
+interface OldTeacher {
+  teacher_id: number;
+  f_name: string;
+  l_name: string;
+  m_name: string;
+  dob: string;
+  pob: string;
+  nationality: string;
+  sel_gender: string;
+  tel: string;
+  mobile: string;
+  email: string;
+  sel_branch: number;
+  active: number;
+  deleted: number;
+  datetime: string;
+  t_user_id: number;
+}
+
+async function migrateTeachers(prisma: PrismaClient, dryRun: boolean) {
+  const rows = await queryMysql<OldTeacher>(
+    "SELECT * FROM t_teacher WHERE deleted = 0 ORDER BY teacher_id"
+  );
+  log(`Found ${rows.length} teachers in t_teacher`);
+
+  let migrated = 0;
+  let skipped = 0;
+
+  for (const row of rows) {
+    const branchId = getMapping("branch", row.sel_branch);
+    if (!branchId) {
+      logError(`Teacher ${row.teacher_id} — branch ${row.sel_branch} not found`);
+      continue;
+    }
+
+    const existing = await prisma.teacher.findFirst({
+      where: { firstName: row.f_name, lastName: row.l_name, branchId },
+    });
+    if (existing) {
+      setMapping("teacher", row.teacher_id, existing.id);
+      skipped++;
+      continue;
+    }
+
+    const newId = generateUUID();
+    if (!dryRun) {
+      await prisma.teacher.create({
+        data: {
+          id: newId,
+          firstName: row.f_name || "",
+          lastName: row.l_name || "",
+          phone: cleanString(row.tel),
+          mobile: cleanString(row.mobile),
+          email: cleanString(row.email),
+          nationality: cleanString(row.nationality),
+          dateOfBirth: parseDate(row.dob),
+          branchId,
+          isActive: toBool(row.active),
+          createdAt: row.datetime ? new Date(row.datetime) : new Date(),
+        },
+      });
+    }
+    setMapping("teacher", row.teacher_id, newId);
+    migrated++;
+    logProgress(migrated, rows.length, "Teachers");
+  }
+  log(`Teachers: ${migrated} migrated, ${skipped} skipped`);
+
+  // Teacher addresses
+  await migrateTeacherAddresses(prisma, dryRun);
+  // Teacher attachments
+  await migrateTeacherAttachments(prisma, dryRun);
+}
+
+interface OldTeacherAddress {
+  taid: number;
+  teacher_id: string;
+  muhafaza: string;
+  quadaa: string;
+  region: string;
+  city: string;
+  street: string;
+  building: string;
+  active: number;
+}
+
+async function migrateTeacherAddresses(prisma: PrismaClient, dryRun: boolean) {
+  const rows = await queryMysql<OldTeacherAddress>(
+    "SELECT * FROM t_teacher_address WHERE active = 1"
+  );
+  let count = 0;
+  for (const row of rows) {
+    const teacherId = getMapping("teacher", row.teacher_id);
+    if (!teacherId) continue;
+
+    const existing = await prisma.teacherAddress.findFirst({
+      where: { teacherId },
+    });
+    if (existing) continue;
+
+    if (!dryRun) {
+      await prisma.teacherAddress.create({
+        data: {
+          id: generateUUID(),
+          teacherId,
+          street: cleanString(row.street),
+          city: cleanString(row.city),
+          region: cleanString(row.region),
+        },
+      });
+    }
+    count++;
+  }
+  log(`Teacher addresses: ${count} migrated`);
+}
+
+interface OldTeacherAttachment {
+  tattid: number;
+  att_title: string;
+  url: string;
+  teacher_id: string;
+  type: string;
+  exp_date: string;
+  active: number;
+}
+
+async function migrateTeacherAttachments(
+  prisma: PrismaClient,
+  dryRun: boolean
+) {
+  const rows = await queryMysql<OldTeacherAttachment>(
+    "SELECT * FROM t_teacher_attachments WHERE active = 1"
+  );
+  let count = 0;
+  for (const row of rows) {
+    const teacherId = getMapping("teacher", row.teacher_id);
+    if (!teacherId) continue;
+
+    if (!dryRun) {
+      await prisma.teacherAttachment.create({
+        data: {
+          id: generateUUID(),
+          teacherId,
+          filename: row.att_title || row.url,
+          fileUrl: row.url,
+          type: cleanString(row.type),
+        },
+      });
+    }
+    count++;
+  }
+  log(`Teacher attachments: ${count} migrated`);
+}
+
+// ---------------------------------------------------------------------------
+// Nurses
+// ---------------------------------------------------------------------------
+interface OldNurse {
+  teacher_id: number;
+  f_name: string;
+  l_name: string;
+  m_name: string;
+  dob: string;
+  pob: string;
+  nationality: string;
+  sel_gender: string;
+  mobile: string;
+  email: string;
+  sel_branch: number;
+  active: number;
+  deleted: number;
+  datetime: string;
+}
+
+async function migrateNurses(prisma: PrismaClient, dryRun: boolean) {
+  const rows = await queryMysql<OldNurse>(
+    "SELECT * FROM t_nurse WHERE deleted = 0 ORDER BY teacher_id"
+  );
+  log(`Found ${rows.length} nurses in t_nurse`);
+
+  let migrated = 0;
+  let skipped = 0;
+
+  for (const row of rows) {
+    const branchId = getMapping("branch", row.sel_branch);
+    if (!branchId) {
+      logError(`Nurse ${row.teacher_id} — branch ${row.sel_branch} not found`);
+      continue;
+    }
+
+    const existing = await prisma.nurse.findFirst({
+      where: { firstName: row.f_name, lastName: row.l_name, branchId },
+    });
+    if (existing) {
+      setMapping("nurse", row.teacher_id, existing.id);
+      skipped++;
+      continue;
+    }
+
+    const newId = generateUUID();
+    if (!dryRun) {
+      await prisma.nurse.create({
+        data: {
+          id: newId,
+          firstName: row.f_name || "",
+          lastName: row.l_name || "",
+          mobile: cleanString(row.mobile),
+          email: cleanString(row.email),
+          nationality: cleanString(row.nationality),
+          dateOfBirth: parseDate(row.dob),
+          branchId,
+          isActive: toBool(row.active),
+          createdAt: row.datetime ? new Date(row.datetime) : new Date(),
+        },
+      });
+    }
+    setMapping("nurse", row.teacher_id, newId);
+    migrated++;
+  }
+  log(`Nurses: ${migrated} migrated, ${skipped} skipped`);
+
+  // Nurse attachments
+  const attachments = await queryMysql<OldTeacherAttachment>(
+    "SELECT * FROM t_nurse_attachments WHERE active = 1"
+  );
+  let attCount = 0;
+  for (const row of attachments) {
+    const nurseId = getMapping("nurse", row.teacher_id);
+    if (!nurseId) continue;
+    if (!dryRun) {
+      await prisma.nurseAttachment.create({
+        data: {
+          id: generateUUID(),
+          nurseId,
+          filename: row.att_title || row.url,
+          fileUrl: row.url,
+          type: cleanString(row.type),
+        },
+      });
+    }
+    attCount++;
+  }
+  log(`Nurse attachments: ${attCount} migrated`);
+}
+
+// ---------------------------------------------------------------------------
+// Doctors
+// ---------------------------------------------------------------------------
+interface OldDoctor {
+  did: number;
+  dfname: string;
+  dlname: string;
+  muhafaza: string;
+  country: string;
+  quadaa: string;
+  region: string;
+  city: string;
+  street: string;
+  building: string;
+  tel: string;
+  remarks: string;
+  active: number;
+  datetime: string;
+}
+
+async function migrateDoctors(
+  prisma: PrismaClient,
+  dryRun: boolean,
+  defaultBranchId: string
+) {
+  const rows = await queryMysql<OldDoctor>(
+    "SELECT * FROM t_doctor WHERE active = 1 ORDER BY did"
+  );
+  log(`Found ${rows.length} doctors in t_doctor`);
+
+  let migrated = 0;
+  let skipped = 0;
+
+  for (const row of rows) {
+    const existing = await prisma.doctor.findFirst({
+      where: { firstName: row.dfname, lastName: row.dlname },
+    });
+    if (existing) {
+      setMapping("doctor", row.did, existing.id);
+      skipped++;
+      continue;
+    }
+
+    const newId = generateUUID();
+    if (!dryRun) {
+      await prisma.doctor.create({
+        data: {
+          id: newId,
+          firstName: row.dfname || "",
+          lastName: row.dlname || "",
+          phone: cleanString(row.tel),
+          branchId: defaultBranchId,
+          isActive: toBool(row.active),
+          createdAt: row.datetime ? new Date(row.datetime) : new Date(),
+        },
+      });
+
+      // Doctor address
+      if (row.street || row.city || row.region) {
+        await prisma.doctorAddress.create({
+          data: {
+            id: generateUUID(),
+            doctorId: newId,
+            street: cleanString(row.street),
+            city: cleanString(row.city),
+            region: cleanString(row.region),
+          },
+        });
+      }
+    }
+    setMapping("doctor", row.did, newId);
+    migrated++;
+  }
+  log(`Doctors: ${migrated} migrated, ${skipped} skipped`);
+}
+
+// ---------------------------------------------------------------------------
+// Managers
+// ---------------------------------------------------------------------------
+interface OldManager {
+  teacher_id: number;
+  f_name: string;
+  l_name: string;
+  m_name: string;
+  f_name_ar: string;
+  m_name_ar: string;
+  l_name_ar: string;
+  dob: string;
+  pob: string;
+  nationality: string;
+  sel_gender: string;
+  mobile: string;
+  email: string;
+  sel_branch: number;
+  active: number;
+  deleted: number;
+  datetime: string;
+}
+
+async function migrateManagers(prisma: PrismaClient, dryRun: boolean) {
+  const rows = await queryMysql<OldManager>(
+    "SELECT * FROM t_manager WHERE deleted = 0 ORDER BY teacher_id"
+  );
+  log(`Found ${rows.length} managers in t_manager`);
+
+  let migrated = 0;
+  let skipped = 0;
+
+  for (const row of rows) {
+    const branchId = getMapping("branch", row.sel_branch);
+    if (!branchId) {
+      logError(
+        `Manager ${row.teacher_id} — branch ${row.sel_branch} not found`
+      );
+      continue;
+    }
+
+    const existing = await prisma.manager.findFirst({
+      where: { firstName: row.f_name, lastName: row.l_name, branchId },
+    });
+    if (existing) {
+      setMapping("manager", row.teacher_id, existing.id);
+      skipped++;
+      continue;
+    }
+
+    const newId = generateUUID();
+    if (!dryRun) {
+      await prisma.manager.create({
+        data: {
+          id: newId,
+          firstName: row.f_name || "",
+          lastName: row.l_name || "",
+          mobile: cleanString(row.mobile),
+          email: cleanString(row.email),
+          nationality: cleanString(row.nationality),
+          dateOfBirth: parseDate(row.dob),
+          branchId,
+          isActive: toBool(row.active),
+          createdAt: row.datetime ? new Date(row.datetime) : new Date(),
+        },
+      });
+    }
+    setMapping("manager", row.teacher_id, newId);
+    migrated++;
+  }
+  log(`Managers: ${migrated} migrated, ${skipped} skipped`);
+
+  // Manager addresses
+  const addrs = await queryMysql<OldTeacherAddress>(
+    "SELECT * FROM t_manager_address WHERE active = 1"
+  );
+  let addrCount = 0;
+  for (const row of addrs) {
+    const managerId = getMapping("manager", row.teacher_id);
+    if (!managerId) continue;
+
+    const existing = await prisma.managerAddress.findFirst({
+      where: { managerId },
+    });
+    if (existing) continue;
+
+    if (!dryRun) {
+      await prisma.managerAddress.create({
+        data: {
+          id: generateUUID(),
+          managerId,
+          street: cleanString(row.street),
+          city: cleanString(row.city),
+          region: cleanString(row.region),
+        },
+      });
+    }
+    addrCount++;
+  }
+  log(`Manager addresses: ${addrCount} migrated`);
+}
+
+// ---------------------------------------------------------------------------
+// Main export
+// ---------------------------------------------------------------------------
+export async function migrateEmployees(prisma: PrismaClient) {
+  log("=== Migrating Employees ===");
+  const dryRun = isDryRun();
+
+  // Get a default branch for doctors (they have no branch_id in old schema)
+  const firstBranch = await prisma.branch.findFirst({
+    orderBy: { createdAt: "asc" },
+  });
+  const defaultBranchId = firstBranch?.id;
+  if (!defaultBranchId) {
+    logError("No branches found — cannot migrate employees");
+    return;
+  }
+
+  await migrateTeachers(prisma, dryRun);
+  await migrateNurses(prisma, dryRun);
+  await migrateDoctors(prisma, dryRun, defaultBranchId);
+  await migrateManagers(prisma, dryRun);
+
+  log(`=== Employee migration complete ===${dryRun ? " [DRY RUN]" : ""}`);
+}
+
+// ---------------------------------------------------------------------------
+// Standalone execution
+// ---------------------------------------------------------------------------
+if (require.main === module) {
+  (async () => {
+    const prisma = createPrismaClient();
+    try {
+      await migrateEmployees(prisma);
+    } catch (err) {
+      logError("Employee migration failed", err);
+      process.exit(1);
+    } finally {
+      await closeMysqlPool();
+      await prisma.$disconnect();
+    }
+  })();
+}
