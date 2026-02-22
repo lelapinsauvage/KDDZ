@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useTransition } from "react";
 import { type ColumnDef } from "@tanstack/react-table";
 import {
   Plus,
@@ -10,9 +10,11 @@ import {
   Pencil,
   Trash2,
   DollarSign,
-  CreditCard,
-  Tag,
-  AlertCircle,
+  Clock,
+  AlertTriangle,
+  TrendingUp,
+  Download,
+  X,
 } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
@@ -20,6 +22,7 @@ import { DataTable } from "@/components/shared/data-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -33,36 +36,76 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+import { deletePayment } from "@/lib/actions/payments";
+import { PaymentDialog } from "./payment-dialog";
 
 // ── Types ──
-type EntryType = "FEE" | "PAYMENT" | "DISCOUNT" | "ADJUSTMENT";
 
-interface AccountingEntry {
+interface PaymentRow {
   id: string;
   childId: string;
   childName: string;
-  type: EntryType;
-  description: string;
+  branchName: string;
+  branchId: string;
+  className: string;
+  classId: string;
   amount: number;
+  currency: string;
   date: string;
+  dateFrom: string | null;
+  dateTo: string | null;
+  month: number | null;
+  method: string;
+  category: string;
+  status: string;
+  reference: string | null;
+  notes: string | null;
+  createdBy: string | null;
+  createdAt: string;
 }
 
-interface AccountingSummaryData {
-  totalFees: number;
-  totalPayments: number;
-  totalDiscounts: number;
-  totalAdjustments: number;
-  balance: number;
+interface SummaryData {
+  totalRevenue: number;
+  revenueCount: number;
+  totalPending: number;
+  pendingCount: number;
+  totalOverdue: number;
+  overdueCount: number;
+  thisMonthCollections: number;
+  thisMonthCount: number;
+}
+
+interface ChildOption {
+  id: string;
+  firstName: string;
+  lastName: string;
+  branch: { name: string } | null;
+  class: { name: string } | null;
 }
 
 interface AccountingClientProps {
-  entries: AccountingEntry[];
-  summary: AccountingSummaryData;
+  payments: PaymentRow[];
+  summary: SummaryData;
+  branches: Array<{ id: string; name: string }>;
+  classes: Array<{ id: string; name: string }>;
+  children: ChildOption[];
 }
 
 // ── Helpers ──
+
 function formatCurrency(amount: number) {
-  return `$${amount.toFixed(2)}`;
+  return `$${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function formatDate(iso: string) {
@@ -73,170 +116,338 @@ function formatDate(iso: string) {
   return `${day}/${month}/${year}`;
 }
 
-const typeBadgeStyles: Record<EntryType, string> = {
-  FEE: "bg-blue-100 text-blue-700 border-blue-200",
-  PAYMENT: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  DISCOUNT: "bg-orange-100 text-orange-700 border-orange-200",
-  ADJUSTMENT: "bg-gray-100 text-gray-600 border-gray-200",
+const categoryLabels: Record<string, string> = {
+  REGISTRATION: "Registration",
+  MONTHLY: "Monthly",
+  BUS: "Bus",
+  XTRA_TIME: "Xtra-Time",
+  FOOD: "Food",
+  OTHER: "Other",
 };
 
-// ── Column definitions ──
-const accountingColumns: ColumnDef<AccountingEntry>[] = [
-  {
-    accessorKey: "childName",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8 text-xs font-semibold uppercase"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Child Name
-        <ArrowUpDown className="ml-1 size-3" />
-      </Button>
-    ),
-    cell: ({ row }) => (
-      <span className="font-medium text-[#333]">{row.original.childName}</span>
-    ),
-  },
-  {
-    accessorKey: "type",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8 text-xs font-semibold uppercase"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Type
-        <ArrowUpDown className="ml-1 size-3" />
-      </Button>
-    ),
-    cell: ({ row }) => {
-      const type = row.original.type;
-      return (
-        <Badge className={typeBadgeStyles[type]}>
-          {type}
-        </Badge>
-      );
-    },
-    filterFn: (row, _columnId, filterValue) => {
-      if (!filterValue || filterValue === "ALL") return true;
-      return row.original.type === filterValue;
-    },
-  },
-  {
-    accessorKey: "description",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8 text-xs font-semibold uppercase"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Description
-        <ArrowUpDown className="ml-1 size-3" />
-      </Button>
-    ),
-    cell: ({ row }) => (
-      <span className="text-[#555]">{row.original.description}</span>
-    ),
-  },
-  {
-    accessorKey: "amount",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8 text-xs font-semibold uppercase"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Amount
-        <ArrowUpDown className="ml-1 size-3" />
-      </Button>
-    ),
-    cell: ({ row }) => {
-      const { type, amount } = row.original;
-      const isCredit = type === "PAYMENT" || type === "DISCOUNT";
-      return (
-        <span className={isCredit ? "text-emerald-600 font-medium" : "text-[#333] font-medium"}>
-          {isCredit ? "-" : "+"}{formatCurrency(amount)}
-        </span>
-      );
-    },
-  },
-  {
-    accessorKey: "date",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8 text-xs font-semibold uppercase"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Date
-        <ArrowUpDown className="ml-1 size-3" />
-      </Button>
-    ),
-    cell: ({ row }) => (
-      <span className="text-[#555]">{formatDate(row.original.date)}</span>
-    ),
-  },
-  {
-    id: "actions",
-    header: "",
-    cell: ({ row }) => {
-      const entry = row.original;
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon-sm">
-              <MoreHorizontal className="size-4" />
-              <span className="sr-only">Actions</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => console.log("View entry:", entry.id)}>
-              <Eye className="mr-2 size-4" />
-              View
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => console.log("Edit entry:", entry.id)}>
-              <Pencil className="mr-2 size-4" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              variant="destructive"
-              onClick={() => console.log("Delete entry:", entry.id)}
-            >
-              <Trash2 className="mr-2 size-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-    enableSorting: false,
-  },
+const categoryBadgeStyles: Record<string, string> = {
+  REGISTRATION: "bg-blue-100 text-blue-700 border-blue-200",
+  MONTHLY: "bg-purple-100 text-purple-700 border-purple-200",
+  BUS: "bg-red-100 text-red-700 border-red-200",
+  XTRA_TIME: "bg-cyan-100 text-cyan-700 border-cyan-200",
+  FOOD: "bg-amber-100 text-amber-700 border-amber-200",
+  OTHER: "bg-gray-100 text-gray-600 border-gray-200",
+};
+
+const statusBadgeStyles: Record<string, string> = {
+  PAID: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  PENDING: "bg-amber-100 text-amber-700 border-amber-200",
+  OVERDUE: "bg-red-100 text-red-700 border-red-200",
+};
+
+const methodLabels: Record<string, string> = {
+  CASH: "Cash",
+  CHECK: "Cheque",
+  TRANSFER: "Bank Transfer",
+  CREDIT_CARD: "Credit Card",
+};
+
+const monthNames = [
+  "", "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
 ];
 
-export function AccountingClient({ entries, summary }: AccountingClientProps) {
-  const [typeFilter, setTypeFilter] = useState("ALL");
+// ── Component ──
 
-  const filteredEntries = useMemo(() => {
-    if (typeFilter === "ALL") return entries;
-    return entries.filter((e) => e.type === typeFilter);
-  }, [typeFilter, entries]);
+export function AccountingClient({
+  payments,
+  summary,
+  branches,
+  classes,
+  children,
+}: AccountingClientProps) {
+  // Filters
+  const [branchFilter, setBranchFilter] = useState("ALL");
+  const [classFilter, setClassFilter] = useState("ALL");
+  const [categoryFilter, setCategoryFilter] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [dateFromFilter, setDateFromFilter] = useState("");
+  const [dateToFilter, setDateToFilter] = useState("");
 
-  // Outstanding balance = fees + adjustments - payments - discounts
-  const outstanding = summary.totalFees + summary.totalAdjustments - summary.totalPayments - summary.totalDiscounts;
+  // Dialog state
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editPayment, setEditPayment] = useState<PaymentRow | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  // Filter logic
+  const filteredPayments = useMemo(() => {
+    return payments.filter((p) => {
+      if (branchFilter !== "ALL" && p.branchId !== branchFilter) return false;
+      if (classFilter !== "ALL" && p.classId !== classFilter) return false;
+      if (categoryFilter !== "ALL" && p.category !== categoryFilter) return false;
+      if (statusFilter !== "ALL" && p.status !== statusFilter) return false;
+      if (dateFromFilter && p.date < dateFromFilter) return false;
+      if (dateToFilter && p.date > dateToFilter) return false;
+      return true;
+    });
+  }, [payments, branchFilter, classFilter, categoryFilter, statusFilter, dateFromFilter, dateToFilter]);
+
+  const hasActiveFilters =
+    branchFilter !== "ALL" ||
+    classFilter !== "ALL" ||
+    categoryFilter !== "ALL" ||
+    statusFilter !== "ALL" ||
+    dateFromFilter !== "" ||
+    dateToFilter !== "";
+
+  function clearFilters() {
+    setBranchFilter("ALL");
+    setClassFilter("ALL");
+    setCategoryFilter("ALL");
+    setStatusFilter("ALL");
+    setDateFromFilter("");
+    setDateToFilter("");
+  }
+
+  function handleDelete(id: string) {
+    setDeletingId(id);
+    setDeleteDialogOpen(true);
+  }
+
+  function confirmDelete() {
+    if (!deletingId) return;
+    startTransition(async () => {
+      await deletePayment(deletingId);
+      setDeleteDialogOpen(false);
+      setDeletingId(null);
+    });
+  }
+
+  function handleEdit(row: PaymentRow) {
+    setEditPayment(row);
+    setDialogOpen(true);
+  }
+
+  function handleExportExcel() {
+    const headers = [
+      "Child Name", "Branch", "Class", "Amount", "Currency", "Date",
+      "Category", "Status", "Method", "Receipt #", "Notes",
+    ];
+    const rows = filteredPayments.map((p) => [
+      p.childName,
+      p.branchName,
+      p.className,
+      p.amount.toFixed(2),
+      p.currency,
+      formatDate(p.date),
+      categoryLabels[p.category] ?? p.category,
+      p.status,
+      methodLabels[p.method] ?? p.method,
+      p.reference ?? "",
+      p.notes ?? "",
+    ]);
+
+    const csv = [
+      headers.join(","),
+      ...rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(",")),
+    ].join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `accounting_export_${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ── Column definitions ──
+  const columns: ColumnDef<PaymentRow>[] = [
+    {
+      accessorKey: "childName",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-3 h-8 text-xs font-semibold uppercase"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Child Name
+          <ArrowUpDown className="ml-1 size-3" />
+        </Button>
+      ),
+      cell: ({ row }) => (
+        <a
+          href={`/children/${row.original.childId}/accounting`}
+          className="font-medium text-[#333] hover:text-[#1caf9a] hover:underline"
+        >
+          {row.original.childName}
+        </a>
+      ),
+    },
+    {
+      accessorKey: "branchName",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-3 h-8 text-xs font-semibold uppercase"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Branch
+          <ArrowUpDown className="ml-1 size-3" />
+        </Button>
+      ),
+      cell: ({ row }) => <span className="text-[#555]">{row.original.branchName}</span>,
+    },
+    {
+      accessorKey: "amount",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-3 h-8 text-xs font-semibold uppercase"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Amount
+          <ArrowUpDown className="ml-1 size-3" />
+        </Button>
+      ),
+      cell: ({ row }) => (
+        <span className="font-medium text-[#333]">
+          {formatCurrency(row.original.amount)}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "date",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-3 h-8 text-xs font-semibold uppercase"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Date
+          <ArrowUpDown className="ml-1 size-3" />
+        </Button>
+      ),
+      cell: ({ row }) => <span className="text-[#555]">{formatDate(row.original.date)}</span>,
+    },
+    {
+      accessorKey: "category",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-3 h-8 text-xs font-semibold uppercase"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Type
+          <ArrowUpDown className="ml-1 size-3" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        const cat = row.original.category;
+        return (
+          <Badge className={categoryBadgeStyles[cat] ?? "bg-gray-100 text-gray-600"}>
+            {categoryLabels[cat] ?? cat}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: "status",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-3 h-8 text-xs font-semibold uppercase"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Status
+          <ArrowUpDown className="ml-1 size-3" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        const status = row.original.status;
+        return (
+          <Badge className={statusBadgeStyles[status] ?? "bg-gray-100 text-gray-600"}>
+            {status}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: "method",
+      header: "Method",
+      cell: ({ row }) => (
+        <span className="text-[#555]">
+          {methodLabels[row.original.method] ?? row.original.method}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "reference",
+      header: "Receipt #",
+      cell: ({ row }) => (
+        <span className="text-[#555] font-mono text-xs">
+          {row.original.reference ?? "\u2014"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "month",
+      header: "For Month",
+      cell: ({ row }) => (
+        <span className="text-[#555]">
+          {row.original.month ? monthNames[row.original.month] : "\u2014"}
+        </span>
+      ),
+    },
+    {
+      id: "actions",
+      header: "",
+      cell: ({ row }) => {
+        const p = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon-sm">
+                <MoreHorizontal className="size-4" />
+                <span className="sr-only">Actions</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <a href={`/children/${p.childId}/accounting`}>
+                  <Eye className="mr-2 size-4" />
+                  View Child
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleEdit(p)}>
+                <Pencil className="mr-2 size-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => handleDelete(p.id)}
+              >
+                <Trash2 className="mr-2 size-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+      enableSorting: false,
+    },
+  ];
 
   return (
     <>
       <PageHeader
-        title="Accounting Management"
+        title="Invoice - Receipt"
         breadcrumbs={[
           { label: "Home", href: "/dashboard" },
-          { label: "Accounting Management" },
+          { label: "Invoice - Receipt" },
         ]}
       />
 
@@ -245,81 +456,212 @@ export function AccountingClient({ entries, summary }: AccountingClientProps) {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card className="py-4">
             <CardContent className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-blue-100">
-                <DollarSign className="size-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Fees</p>
-                <p className="text-xl font-semibold text-[#333]">{formatCurrency(summary.totalFees + summary.totalAdjustments)}</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="py-4">
-            <CardContent className="flex items-center gap-4">
               <div className="flex size-10 items-center justify-center rounded-lg bg-emerald-100">
-                <CreditCard className="size-5 text-emerald-600" />
+                <DollarSign className="size-5 text-emerald-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total Payments</p>
-                <p className="text-xl font-semibold text-[#333]">{formatCurrency(summary.totalPayments)}</p>
+                <p className="text-sm text-muted-foreground">Total Revenue</p>
+                <p className="text-xl font-semibold text-[#333]">
+                  {formatCurrency(summary.totalRevenue)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {summary.revenueCount} payment{summary.revenueCount !== 1 ? "s" : ""}
+                </p>
               </div>
             </CardContent>
           </Card>
+
           <Card className="py-4">
             <CardContent className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-orange-100">
-                <Tag className="size-5 text-orange-600" />
+              <div className="flex size-10 items-center justify-center rounded-lg bg-amber-100">
+                <Clock className="size-5 text-amber-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total Discounts</p>
-                <p className="text-xl font-semibold text-[#333]">{formatCurrency(summary.totalDiscounts)}</p>
+                <p className="text-sm text-muted-foreground">Pending</p>
+                <p className="text-xl font-semibold text-amber-600">
+                  {formatCurrency(summary.totalPending)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {summary.pendingCount} payment{summary.pendingCount !== 1 ? "s" : ""}
+                </p>
               </div>
             </CardContent>
           </Card>
+
           <Card className="py-4">
             <CardContent className="flex items-center gap-4">
               <div className="flex size-10 items-center justify-center rounded-lg bg-red-100">
-                <AlertCircle className="size-5 text-red-600" />
+                <AlertTriangle className="size-5 text-red-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Outstanding Balance</p>
-                <p className="text-xl font-semibold text-red-600">{formatCurrency(outstanding)}</p>
+                <p className="text-sm text-muted-foreground">Overdue</p>
+                <p className="text-xl font-semibold text-red-600">
+                  {formatCurrency(summary.totalOverdue)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {summary.overdueCount} payment{summary.overdueCount !== 1 ? "s" : ""}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="py-4">
+            <CardContent className="flex items-center gap-4">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-blue-100">
+                <TrendingUp className="size-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">This Month</p>
+                <p className="text-xl font-semibold text-[#333]">
+                  {formatCurrency(summary.thisMonthCollections)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {summary.thisMonthCount} payment{summary.thisMonthCount !== 1 ? "s" : ""}
+                </p>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Toolbar */}
+        {/* Filters Toolbar */}
         <div className="flex flex-wrap items-center gap-3">
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[180px]">
+          <Select value={branchFilter} onValueChange={setBranchFilter}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="All Branches" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All Branches</SelectItem>
+              {branches.map((b) => (
+                <SelectItem key={b.id} value={b.id}>
+                  {b.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={classFilter} onValueChange={setClassFilter}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="All Classes" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All Classes</SelectItem>
+              {classes.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-[160px]">
               <SelectValue placeholder="All Types" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">All Types</SelectItem>
-              <SelectItem value="FEE">Fee</SelectItem>
-              <SelectItem value="PAYMENT">Payment</SelectItem>
-              <SelectItem value="DISCOUNT">Discount</SelectItem>
-              <SelectItem value="ADJUSTMENT">Adjustment</SelectItem>
+              <SelectItem value="REGISTRATION">Registration</SelectItem>
+              <SelectItem value="MONTHLY">Monthly</SelectItem>
+              <SelectItem value="BUS">Bus</SelectItem>
+              <SelectItem value="XTRA_TIME">Xtra-Time</SelectItem>
+              <SelectItem value="FOOD">Food</SelectItem>
+              <SelectItem value="OTHER">Other</SelectItem>
             </SelectContent>
           </Select>
 
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="All Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All Status</SelectItem>
+              <SelectItem value="PAID">Paid</SelectItem>
+              <SelectItem value="PENDING">Pending</SelectItem>
+              <SelectItem value="OVERDUE">Overdue</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <div className="flex items-center gap-2">
+            <Input
+              type="date"
+              className="w-[150px]"
+              value={dateFromFilter}
+              onChange={(e) => setDateFromFilter(e.target.value)}
+              placeholder="From"
+            />
+            <span className="text-sm text-muted-foreground">to</span>
+            <Input
+              type="date"
+              className="w-[150px]"
+              value={dateToFilter}
+              onChange={(e) => setDateToFilter(e.target.value)}
+              placeholder="To"
+            />
+          </div>
+
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" onClick={clearFilters}>
+              <X className="mr-1 size-3" />
+              Clear
+            </Button>
+          )}
+
           <div className="flex-1" />
 
-          <Button style={{ background: "#1caf9a" }}>
+          <Button variant="outline" onClick={handleExportExcel}>
+            <Download className="mr-1 size-4" />
+            Export CSV
+          </Button>
+
+          <Button
+            style={{ background: "#1caf9a" }}
+            onClick={() => {
+              setEditPayment(null);
+              setDialogOpen(true);
+            }}
+          >
             <Plus className="mr-1 size-4" />
-            Add Entry
+            New Payment
           </Button>
         </div>
 
         {/* Data Table */}
         <DataTable
-          columns={accountingColumns}
-          data={filteredEntries}
+          columns={columns}
+          data={filteredPayments}
           searchKey="childName"
           searchPlaceholder="Search by child name..."
         />
       </div>
+
+      {/* Payment Dialog */}
+      <PaymentDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        children={children}
+        editData={editPayment}
+      />
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Payment</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this payment? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={isPending}
+            >
+              {isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

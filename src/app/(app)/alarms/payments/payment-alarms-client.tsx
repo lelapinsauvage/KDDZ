@@ -5,6 +5,7 @@ import { type ColumnDef } from "@tanstack/react-table";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -12,7 +13,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DollarSign } from "lucide-react";
+import { DollarSign, AlertTriangle, Users } from "lucide-react";
+
+// ── Types ──
 
 interface PaymentAlarm {
   id: string;
@@ -23,9 +26,22 @@ interface PaymentAlarm {
   branch: string;
 }
 
+interface OverdueChild {
+  childId: string;
+  childName: string;
+  branchName: string;
+  className: string;
+  totalOverdue: number;
+  paymentCount: number;
+  oldestDate: string;
+}
+
 interface PaymentAlarmsClientProps {
   alarms: PaymentAlarm[];
   branches: { id: string; name: string }[];
+  overdueChildren: OverdueChild[];
+  totalOverdue: number;
+  totalOverdueCount: number;
 }
 
 const statusColors: Record<string, string> = {
@@ -34,15 +50,35 @@ const statusColors: Record<string, string> = {
   Active: "bg-emerald-100 text-emerald-700",
 };
 
-export function PaymentAlarmsClient({ alarms, branches }: PaymentAlarmsClientProps) {
+function formatDate(iso: string) {
+  if (!iso) return "\u2014";
+  const d = new Date(iso + "T00:00:00");
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
+
+export function PaymentAlarmsClient({
+  alarms,
+  branches,
+  overdueChildren,
+  totalOverdue,
+  totalOverdueCount,
+}: PaymentAlarmsClientProps) {
   const [branchFilter, setBranchFilter] = useState("ALL");
 
-  const filtered = useMemo(() => {
+  const filteredAlarms = useMemo(() => {
     if (branchFilter === "ALL") return alarms;
     return alarms.filter((p) => p.branch === branchFilter);
   }, [branchFilter, alarms]);
 
-  const columns: ColumnDef<PaymentAlarm>[] = useMemo(
+  const filteredOverdue = useMemo(() => {
+    if (branchFilter === "ALL") return overdueChildren;
+    return overdueChildren.filter(
+      (c) => branches.some((b) => b.name === c.branchName && b.id === branchFilter) ||
+             c.branchName === branchFilter,
+    );
+  }, [branchFilter, overdueChildren, branches]);
+
+  const alarmColumns: ColumnDef<PaymentAlarm>[] = useMemo(
     () => [
       {
         accessorKey: "message",
@@ -50,21 +86,14 @@ export function PaymentAlarmsClient({ alarms, branches }: PaymentAlarmsClientPro
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
             <DollarSign className="size-4 text-amber-500" />
-            <span className="font-medium">{row.original.message || "—"}</span>
+            <span className="font-medium">{row.original.message || "\u2014"}</span>
           </div>
         ),
       },
       {
         accessorKey: "dueDate",
         header: "Due Date",
-        cell: ({ row }) => {
-          if (!row.original.dueDate) return "—";
-          return new Date(row.original.dueDate + "T00:00:00").toLocaleDateString("en-GB", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-          });
-        },
+        cell: ({ row }) => formatDate(row.original.dueDate),
       },
       {
         accessorKey: "status",
@@ -75,7 +104,50 @@ export function PaymentAlarmsClient({ alarms, branches }: PaymentAlarmsClientPro
       },
       { accessorKey: "branch", header: "Branch" },
     ],
-    []
+    [],
+  );
+
+  const overdueColumns: ColumnDef<OverdueChild>[] = useMemo(
+    () => [
+      {
+        accessorKey: "childName",
+        header: "Child Name",
+        cell: ({ row }) => (
+          <a
+            href={`/children/${row.original.childId}/accounting`}
+            className="font-medium text-[#333] hover:text-[#1caf9a] hover:underline"
+          >
+            {row.original.childName}
+          </a>
+        ),
+      },
+      { accessorKey: "branchName", header: "Branch" },
+      { accessorKey: "className", header: "Class" },
+      {
+        accessorKey: "totalOverdue",
+        header: () => <div className="text-right">Overdue Amount</div>,
+        cell: ({ row }) => (
+          <div className="text-right font-semibold text-red-600">
+            ${row.original.totalOverdue.toFixed(2)}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "paymentCount",
+        header: "Overdue Payments",
+        cell: ({ row }) => (
+          <Badge className="bg-red-100 text-red-700">
+            {row.original.paymentCount}
+          </Badge>
+        ),
+      },
+      {
+        accessorKey: "oldestDate",
+        header: "Since",
+        cell: ({ row }) => formatDate(row.original.oldestDate),
+      },
+    ],
+    [],
   );
 
   return (
@@ -87,7 +159,51 @@ export function PaymentAlarmsClient({ alarms, branches }: PaymentAlarmsClientPro
           { label: "Payments" },
         ]}
       />
-      <div className="space-y-4 p-6">
+      <div className="space-y-6 p-6">
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <Card className="py-4">
+            <CardContent className="flex items-center gap-4">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-red-100">
+                <AlertTriangle className="size-5 text-red-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Total Overdue</p>
+                <p className="text-xl font-semibold text-red-600">
+                  ${totalOverdue.toFixed(2)}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="py-4">
+            <CardContent className="flex items-center gap-4">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-amber-100">
+                <DollarSign className="size-5 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Overdue Payments</p>
+                <p className="text-xl font-semibold text-[#333]">
+                  {totalOverdueCount}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="py-4">
+            <CardContent className="flex items-center gap-4">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-blue-100">
+                <Users className="size-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Children with Overdue</p>
+                <p className="text-xl font-semibold text-[#333]">
+                  {overdueChildren.length}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Filters */}
         <div className="flex items-center gap-3">
           <Select value={branchFilter} onValueChange={setBranchFilter}>
             <SelectTrigger className="w-[180px]">
@@ -96,20 +212,54 @@ export function PaymentAlarmsClient({ alarms, branches }: PaymentAlarmsClientPro
             <SelectContent>
               <SelectItem value="ALL">All Branches</SelectItem>
               {branches.map((b) => (
-                <SelectItem key={b.id} value={b.name}>
+                <SelectItem key={b.id} value={b.id}>
                   {b.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-        {filtered.length > 0 ? (
-          <DataTable columns={columns} data={filtered} searchKey="message" searchPlaceholder="Search alarms..." />
-        ) : (
+
+        {/* Overdue Payments by Child */}
+        {filteredOverdue.length > 0 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <AlertTriangle className="size-4 text-red-500" />
+                Children with Overdue Payments
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DataTable
+                columns={overdueColumns}
+                data={filteredOverdue}
+                searchKey="childName"
+                searchPlaceholder="Search children..."
+              />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* General Alarms */}
+        {filteredAlarms.length > 0 ? (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Payment Alarms</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DataTable
+                columns={alarmColumns}
+                data={filteredAlarms}
+                searchKey="message"
+                searchPlaceholder="Search alarms..."
+              />
+            </CardContent>
+          </Card>
+        ) : filteredOverdue.length === 0 ? (
           <div className="rounded-lg border bg-card p-8 text-center text-sm text-muted-foreground">
             No payment alarms found.
           </div>
-        )}
+        ) : null}
       </div>
     </>
   );

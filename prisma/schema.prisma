@@ -72,6 +72,22 @@ enum PaymentMethod {
   CASH
   CHECK
   TRANSFER
+  CREDIT_CARD
+}
+
+enum PaymentCategory {
+  REGISTRATION
+  MONTHLY
+  BUS
+  XTRA_TIME
+  FOOD
+  OTHER
+}
+
+enum PaymentStatus {
+  PAID
+  PENDING
+  OVERDUE
 }
 
 enum AccountingEntryType {
@@ -1054,16 +1070,22 @@ model AssessmentDate {
 // ─────────────────────────────────────────────
 
 model Payment {
-  id          String        @id @default(uuid()) @db.Uuid
-  childId     String        @db.Uuid
-  amount      Decimal       @db.Decimal(10, 2)
-  date        DateTime      @db.Date
+  id          String          @id @default(uuid()) @db.Uuid
+  childId     String          @db.Uuid
+  amount      Decimal         @db.Decimal(10, 2)
+  currency    String          @default("USD")
+  date        DateTime        @db.Date
+  dateFrom    DateTime?       @db.Date
+  dateTo      DateTime?       @db.Date
+  month       Int?
   method      PaymentMethod
+  category    PaymentCategory @default(OTHER)
+  status      PaymentStatus   @default(PAID)
   reference   String?
-  notes       String?       @db.Text
-  createdById String?       @db.Uuid
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  notes       String?         @db.Text
+  createdById String?         @db.Uuid
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 
   child     Child @relation(fields: [childId], references: [id], onDelete: Cascade)
   createdBy User? @relation("PaymentCreator", fields: [createdById], references: [id], onDelete: SetNull)
@@ -1071,6 +1093,8 @@ model Payment {
   @@index([childId])
   @@index([date])
   @@index([method])
+  @@index([category])
+  @@index([status])
   @@index([createdById])
   @@map("payments")
 }

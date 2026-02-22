@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getChild } from "@/lib/actions/children";
 import { getChildAccounting } from "@/lib/actions/accounting";
+import { getChildPayments, getChildrenForPayment } from "@/lib/actions/payments";
 import { AccountingClient } from "./accounting-client";
 
 interface Props {
@@ -15,7 +16,11 @@ export default async function ChildAccountingPage({ params }: Props) {
     notFound();
   }
 
-  const entriesRaw = await getChildAccounting(id);
+  const [entriesRaw, paymentsResult, childrenResult] = await Promise.all([
+    getChildAccounting(id),
+    getChildPayments(id),
+    getChildrenForPayment(),
+  ]);
 
   const childData = {
     id: child.id,
@@ -23,7 +28,7 @@ export default async function ChildAccountingPage({ params }: Props) {
     lastName: child.lastName,
   };
 
-  // Serialize dates and convert Decimal amounts to numbers
+  // Serialize accounting entries
   const entries = entriesRaw.map((entry) => ({
     id: entry.id,
     date: entry.date.toISOString().slice(0, 10),
@@ -32,10 +37,68 @@ export default async function ChildAccountingPage({ params }: Props) {
     amount: Number(entry.amount),
   }));
 
+  // Serialize payments
+  const paymentsData =
+    paymentsResult.success && paymentsResult.data
+      ? (paymentsResult.data as {
+          payments: Array<{
+            id: string;
+            amount: { toString(): string };
+            currency: string;
+            date: Date;
+            dateFrom: Date | null;
+            dateTo: Date | null;
+            month: number | null;
+            method: string;
+            category: string;
+            status: string;
+            reference: string | null;
+            notes: string | null;
+            createdBy: { name: string | null } | null;
+          }>;
+          summary: {
+            totalPaid: number;
+            totalPending: number;
+            totalOverdue: number;
+            byCategory: Record<string, number>;
+          };
+        })
+      : { payments: [], summary: { totalPaid: 0, totalPending: 0, totalOverdue: 0, byCategory: {} } };
+
+  const payments = paymentsData.payments.map((p) => ({
+    id: p.id,
+    amount: Number(p.amount),
+    currency: p.currency,
+    date: p.date.toISOString().split("T")[0],
+    dateFrom: p.dateFrom?.toISOString().split("T")[0] ?? null,
+    dateTo: p.dateTo?.toISOString().split("T")[0] ?? null,
+    month: p.month,
+    method: p.method,
+    category: p.category,
+    status: p.status,
+    reference: p.reference,
+    notes: p.notes,
+    createdBy: p.createdBy?.name ?? null,
+  }));
+
+  const children =
+    childrenResult.success && childrenResult.data
+      ? (childrenResult.data as Array<{
+          id: string;
+          firstName: string;
+          lastName: string;
+          branch: { name: string } | null;
+          class: { name: string } | null;
+        }>)
+      : [];
+
   return (
     <AccountingClient
       child={childData}
       entries={entries}
+      payments={payments}
+      paymentSummary={paymentsData.summary}
+      children={children}
     />
   );
 }
