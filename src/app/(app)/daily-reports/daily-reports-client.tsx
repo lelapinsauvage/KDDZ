@@ -43,6 +43,21 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { deleteDailyReport } from "@/lib/actions/daily-reports";
+import { ExportButton } from "@/components/shared/export-button";
+import type { ExportColumn } from "@/lib/export";
+
+const dailyReportsExportColumns: ExportColumn[] = [
+  { header: "Date", key: "date" },
+  { header: "Child Name", key: "childName" },
+  { header: "Class", key: "className" },
+  { header: "Branch", key: "branchName" },
+  { header: "Breakfast", key: "breakfast", transform: (v) => v ? String(v) : "N/A" },
+  { header: "Lunch", key: "lunch", transform: (v) => v ? String(v) : "N/A" },
+  { header: "Sleep", key: "sleep", transform: (v) => v ? "Yes" : "No" },
+  { header: "Mood", key: "mood", transform: (v) => v ? String(v) : "" },
+  { header: "Status", key: "status" },
+  { header: "Created By", key: "createdBy" },
+];
 
 // --- Types ---
 
@@ -412,12 +427,20 @@ export function DailyReportsClient({
             </SelectContent>
           </Select>
 
-          <Button asChild className="bg-[#1caf9a] hover:bg-[#18a08d] text-white ml-auto">
-            <Link href="/daily-reports/new">
-              <Plus className="size-4" />
-              New Report
-            </Link>
-          </Button>
+          <div className="ml-auto flex items-center gap-2">
+            <ExportButton
+              filename="daily-reports"
+              sheetName="Daily Reports"
+              columns={dailyReportsExportColumns}
+              data={filteredData as unknown as Record<string, unknown>[]}
+            />
+            <Button asChild className="bg-[#1caf9a] hover:bg-[#18a08d] text-white">
+              <Link href="/daily-reports/new">
+                <Plus className="size-4" />
+                New Report
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {filteredData.length === 0 ? (

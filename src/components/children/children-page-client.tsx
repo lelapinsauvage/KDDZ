@@ -11,6 +11,8 @@ import {
   ChevronsLeft,
   ChevronsRight,
 } from "lucide-react";
+import { ExportButton } from "@/components/shared/export-button";
+import type { ExportColumn } from "@/lib/export";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/layout/page-header";
@@ -80,6 +82,41 @@ interface ChildrenPageClientProps {
   classes: ClassItem[];
   filters: Filters;
 }
+
+const childrenExportColumns: ExportColumn[] = [
+  { header: "First Name", key: "firstName" },
+  { header: "Last Name", key: "lastName" },
+  {
+    header: "Date of Birth",
+    key: "dateOfBirth",
+    transform: (v) => {
+      if (!v) return "";
+      const d = new Date(v as string);
+      return isNaN(d.getTime()) ? "" : d.toLocaleDateString("en-GB");
+    },
+  },
+  { header: "Gender", key: "gender" },
+  { header: "Nationality", key: "nationality" },
+  { header: "Blood Type", key: "bloodType" },
+  {
+    header: "Branch",
+    key: "branch",
+    transform: (v) => (v as { name: string } | null)?.name ?? "",
+  },
+  {
+    header: "Class",
+    key: "class",
+    transform: (v) => (v as { name: string } | null)?.name ?? "",
+  },
+  {
+    header: "Status",
+    key: "isActive",
+    transform: (v, row) => {
+      if (row.isDraft) return "Draft";
+      return v ? "Active" : "Inactive";
+    },
+  },
+];
 
 export function ChildrenPageClient({
   children,
@@ -336,6 +373,14 @@ export function ChildrenPageClient({
 
           {/* Spacer */}
           <div className="flex-1" />
+
+          {/* Export */}
+          <ExportButton
+            filename="children"
+            sheetName="Children"
+            columns={childrenExportColumns}
+            data={children as unknown as Record<string, unknown>[]}
+          />
 
           {/* Add Child button */}
           <Button

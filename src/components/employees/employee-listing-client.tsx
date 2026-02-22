@@ -12,6 +12,42 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Search } from "lucide-react";
 import { useState, useMemo } from "react";
+import { ExportButton } from "@/components/shared/export-button";
+import type { ExportColumn } from "@/lib/export";
+
+const employeeExportColumns: ExportColumn[] = [
+  { header: "First Name", key: "firstName" },
+  { header: "Last Name", key: "lastName" },
+  { header: "Email", key: "email" },
+  { header: "Phone", key: "phone" },
+  { header: "Mobile", key: "mobile" },
+  { header: "Nationality", key: "nationality" },
+  {
+    header: "Date of Birth",
+    key: "dateOfBirth",
+    transform: (v) => {
+      if (!v) return "";
+      const d = new Date(v as string);
+      return isNaN(d.getTime()) ? "" : d.toLocaleDateString("en-GB");
+    },
+  },
+  {
+    header: "Hire Date",
+    key: "hireDate",
+    transform: (v) => {
+      if (!v) return "";
+      const d = new Date(v as string);
+      return isNaN(d.getTime()) ? "" : d.toLocaleDateString("en-GB");
+    },
+  },
+  { header: "Specialization", key: "specialization" },
+  { header: "Branch", key: "branchName" },
+  {
+    header: "Status",
+    key: "isActive",
+    transform: (v) => (v ? "Active" : "Inactive"),
+  },
+];
 
 interface EmployeeListingClientProps {
   type: EmployeeType;
@@ -65,6 +101,12 @@ export function EmployeeListingClient({
               className="pl-9"
             />
           </div>
+          <ExportButton
+            filename={plural.toLowerCase()}
+            sheetName={plural}
+            columns={employeeExportColumns}
+            data={filteredData as unknown as Record<string, unknown>[]}
+          />
           <Button asChild className="bg-[#1caf9a] hover:bg-[#18a08d] text-white">
             <Link href={`/employees/${plural.toLowerCase()}/new`}>
               <Plus className="size-4" />

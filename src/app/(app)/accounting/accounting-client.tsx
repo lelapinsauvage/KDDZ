@@ -13,7 +13,6 @@ import {
   Clock,
   AlertTriangle,
   TrendingUp,
-  Download,
   X,
 } from "lucide-react";
 
@@ -49,6 +48,8 @@ import {
 
 import { deletePayment } from "@/lib/actions/payments";
 import { PaymentDialog } from "./payment-dialog";
+import { ExportButton } from "@/components/shared/export-button";
+import type { ExportColumn } from "@/lib/export";
 
 // ── Types ──
 
@@ -225,38 +226,27 @@ export function AccountingClient({
     setDialogOpen(true);
   }
 
-  function handleExportExcel() {
-    const headers = [
-      "Child Name", "Branch", "Class", "Amount", "Currency", "Date",
-      "Category", "Status", "Method", "Receipt #", "Notes",
-    ];
-    const rows = filteredPayments.map((p) => [
-      p.childName,
-      p.branchName,
-      p.className,
-      p.amount.toFixed(2),
-      p.currency,
-      formatDate(p.date),
-      categoryLabels[p.category] ?? p.category,
-      p.status,
-      methodLabels[p.method] ?? p.method,
-      p.reference ?? "",
-      p.notes ?? "",
-    ]);
-
-    const csv = [
-      headers.join(","),
-      ...rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(",")),
-    ].join("\n");
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `accounting_export_${new Date().toISOString().split("T")[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
+  const paymentsExportColumns: ExportColumn[] = [
+    { header: "Child Name", key: "childName" },
+    { header: "Branch", key: "branchName" },
+    { header: "Class", key: "className" },
+    { header: "Amount", key: "amount", transform: (v) => Number(v).toFixed(2) },
+    { header: "Currency", key: "currency" },
+    { header: "Date", key: "date", transform: (v) => formatDate(v as string) },
+    {
+      header: "Category",
+      key: "category",
+      transform: (v) => categoryLabels[v as string] ?? String(v),
+    },
+    { header: "Status", key: "status" },
+    {
+      header: "Method",
+      key: "method",
+      transform: (v) => methodLabels[v as string] ?? String(v),
+    },
+    { header: "Receipt #", key: "reference" },
+    { header: "Notes", key: "notes" },
+  ];
 
   // ── Column definitions ──
   const columns: ColumnDef<PaymentRow>[] = [
@@ -607,10 +597,12 @@ export function AccountingClient({
 
           <div className="flex-1" />
 
-          <Button variant="outline" onClick={handleExportExcel}>
-            <Download className="mr-1 size-4" />
-            Export CSV
-          </Button>
+          <ExportButton
+            filename="accounting"
+            sheetName="Payments"
+            columns={paymentsExportColumns}
+            data={filteredPayments as unknown as Record<string, unknown>[]}
+          />
 
           <Button
             style={{ background: "#1caf9a" }}
