@@ -3,7 +3,7 @@
 import { useState, useMemo, useTransition, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -25,6 +25,7 @@ import {
   ChevronUp,
   Save,
   Loader2,
+  Users,
 } from "lucide-react";
 import { createDailyReport } from "@/lib/actions/daily-reports";
 import { toast } from "sonner";
@@ -74,6 +75,28 @@ interface BatchReportClientProps {
   };
 }
 
+// -- Avatar helpers --
+const classColors = [
+  { bg: "bg-teal-50", border: "border-teal-200", text: "text-teal-700", badge: "bg-teal-100 text-teal-700", avatar: "bg-teal-100 text-teal-700" },
+  { bg: "bg-violet-50", border: "border-violet-200", text: "text-violet-700", badge: "bg-violet-100 text-violet-700", avatar: "bg-violet-100 text-violet-700" },
+  { bg: "bg-rose-50", border: "border-rose-200", text: "text-rose-700", badge: "bg-rose-100 text-rose-700", avatar: "bg-rose-100 text-rose-700" },
+  { bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-700", badge: "bg-amber-100 text-amber-700", avatar: "bg-amber-100 text-amber-700" },
+  { bg: "bg-sky-50", border: "border-sky-200", text: "text-sky-700", badge: "bg-sky-100 text-sky-700", avatar: "bg-sky-100 text-sky-700" },
+  { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", badge: "bg-emerald-100 text-emerald-700", avatar: "bg-emerald-100 text-emerald-700" },
+  { bg: "bg-fuchsia-50", border: "border-fuchsia-200", text: "text-fuchsia-700", badge: "bg-fuchsia-100 text-fuchsia-700", avatar: "bg-fuchsia-100 text-fuchsia-700" },
+];
+
+function getClassColor(className: string) {
+  let hash = 0;
+  for (let i = 0; i < className.length; i++) hash = className.charCodeAt(i) + ((hash << 5) - hash);
+  return classColors[Math.abs(hash) % classColors.length];
+}
+
+function getInitials(name: string) {
+  const parts = name.split(" ");
+  return (parts[0]?.charAt(0) ?? "") + (parts[1]?.charAt(0) ?? "");
+}
+
 export function BatchReportClient({
   children,
   classes,
@@ -98,6 +121,17 @@ export function BatchReportClient({
     return { total, done, remaining: total - done };
   }, [filteredChildren, completedChildren]);
 
+  // Group children by class
+  const groupedChildren = useMemo(() => {
+    const groups = new Map<string, ChildData[]>();
+    for (const child of filteredChildren) {
+      const key = child.className || "Unassigned";
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(child);
+    }
+    return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
+  }, [filteredChildren]);
+
   const handleSaved = useCallback(
     (childId: string) => {
       setCompletedChildren((prev) => new Set([...prev, childId]));
@@ -112,119 +146,149 @@ export function BatchReportClient({
     [filteredChildren, completedChildren, router]
   );
 
+  const progressPercent = stats.total > 0 ? (stats.done / stats.total) * 100 : 0;
+
   return (
     <div className="space-y-4 p-4 md:p-6">
       {/* Header with filter and progress */}
-      <div className="flex flex-wrap items-center gap-3">
-        <Select value={classFilter} onValueChange={setClassFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="All Classes" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Classes</SelectItem>
-            {classes.map((cls) => (
-              <SelectItem key={cls.id} value={cls.id}>
-                {cls.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <Card className="border-border/60 shadow-sm">
+        <CardContent className="p-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <Select value={classFilter} onValueChange={setClassFilter}>
+              <SelectTrigger className="w-[180px] h-9">
+                <SelectValue placeholder="All Classes" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Classes</SelectItem>
+                {classes.map((cls) => (
+                  <SelectItem key={cls.id} value={cls.id}>
+                    {cls.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-        <div className="flex-1" />
+            <div className="flex-1" />
 
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">
-            {stats.done} of {stats.total} done
-          </span>
-          <div className="h-2 w-32 rounded-full bg-muted">
-            <div
-              className="h-2 rounded-full bg-primary transition-all"
-              style={{
-                width: `${stats.total > 0 ? (stats.done / stats.total) * 100 : 0}%`,
-              }}
-            />
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <p className="text-sm font-semibold text-foreground">
+                  {stats.done} <span className="text-muted-foreground font-normal">of</span> {stats.total}
+                </p>
+                <p className="text-[11px] text-muted-foreground">reports done</p>
+              </div>
+              <div className="h-10 w-36 rounded-full bg-muted p-1">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${
+                    progressPercent === 100
+                      ? "bg-emerald-500"
+                      : progressPercent > 50
+                      ? "bg-primary"
+                      : "bg-amber-500"
+                  }`}
+                  style={{ width: `${Math.max(progressPercent, 2)}%` }}
+                />
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      {/* Child list */}
-      <div className="space-y-2">
-        {filteredChildren.map((child) => {
-          const isCompleted = completedChildren.has(child.id);
-          const isExpanded = expandedChild === child.id;
+      {/* Child list grouped by class */}
+      <div className="space-y-6">
+        {groupedChildren.map(([className, classChildren]) => {
+          const colorSet = getClassColor(className);
+          const classDone = classChildren.filter((c) => completedChildren.has(c.id)).length;
 
           return (
-            <Card key={child.id} className={isCompleted ? "opacity-60" : ""}>
-              <button
-                type="button"
-                className="w-full"
-                onClick={() =>
-                  setExpandedChild(isExpanded ? null : child.id)
-                }
-              >
-                <CardContent className="flex items-center gap-3 py-3">
-                  <div className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                    {child.name.charAt(0)}
-                    {child.name.split(" ")[1]?.charAt(0) ?? ""}
-                  </div>
-                  <div className="flex-1 text-left">
-                    <p className="text-sm font-medium">{child.name}</p>
-                    {child.className && (
-                      <p className="text-xs text-muted-foreground">{child.className}</p>
-                    )}
-                  </div>
-                  {isCompleted ? (
-                    <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
-                      <CheckCircle2 className="mr-1 size-3" />
-                      Done
-                    </Badge>
-                  ) : child.reportStatus === "DRAFT" ? (
-                    <Badge className="bg-amber-100 text-amber-700 border-amber-200">
-                      <Clock className="mr-1 size-3" />
-                      Draft
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-muted-foreground">
-                      <CircleDot className="mr-1 size-3" />
-                      Pending
-                    </Badge>
-                  )}
-                  {isExpanded ? (
-                    <ChevronUp className="size-4 text-muted-foreground" />
-                  ) : (
-                    <ChevronDown className="size-4 text-muted-foreground" />
-                  )}
-                </CardContent>
-              </button>
+            <div key={className}>
+              {/* Class group header */}
+              <div className={`flex items-center gap-2 rounded-t-lg border ${colorSet.border} ${colorSet.bg} px-4 py-2.5`}>
+                <Users className={`size-4 ${colorSet.text}`} />
+                <h3 className={`text-sm font-semibold ${colorSet.text}`}>{className}</h3>
+                <Badge className={`${colorSet.badge} ml-auto`}>
+                  {classDone}/{classChildren.length} done
+                </Badge>
+              </div>
 
-              {isExpanded && !isCompleted && (
-                <div className="border-t">
-                  <InlineReportForm
-                    childId={child.id}
-                    childName={child.name}
-                    foods={foods}
-                    todayMenu={todayMenu}
-                    onSaved={() => handleSaved(child.id)}
-                  />
-                </div>
-              )}
+              {/* Children in this class */}
+              <div className="space-y-0 rounded-b-lg border border-t-0 border-border/60 overflow-hidden">
+                {classChildren.map((child, idx) => {
+                  const isCompleted = completedChildren.has(child.id);
+                  const isExpanded = expandedChild === child.id;
 
-              {isExpanded && isCompleted && (
-                <div className="border-t px-6 py-4">
-                  <p className="text-sm text-muted-foreground">
-                    Report already submitted.{" "}
-                    {child.reportId && (
-                      <Link
-                        href={`/daily-reports/${child.reportId}`}
-                        className="text-primary hover:underline"
+                  return (
+                    <div key={child.id} className={idx > 0 ? "border-t border-border/40" : ""}>
+                      <button
+                        type="button"
+                        className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50 ${
+                          isCompleted ? "opacity-60" : ""
+                        }`}
+                        onClick={() =>
+                          setExpandedChild(isExpanded ? null : child.id)
+                        }
                       >
-                        View report
-                      </Link>
-                    )}
-                  </p>
-                </div>
-              )}
-            </Card>
+                        <div className={`flex size-9 items-center justify-center rounded-full text-xs font-bold ${colorSet.avatar}`}>
+                          {getInitials(child.name)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-foreground truncate">{child.name}</p>
+                        </div>
+                        {isCompleted ? (
+                          <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 gap-1">
+                            <CheckCircle2 className="size-3" />
+                            Done
+                          </Badge>
+                        ) : child.reportStatus === "DRAFT" ? (
+                          <Badge className="bg-amber-50 text-amber-700 border-amber-200 gap-1">
+                            <Clock className="size-3" />
+                            Draft
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-muted-foreground gap-1">
+                            <CircleDot className="size-3" />
+                            Pending
+                          </Badge>
+                        )}
+                        {isExpanded ? (
+                          <ChevronUp className="size-4 text-muted-foreground shrink-0" />
+                        ) : (
+                          <ChevronDown className="size-4 text-muted-foreground shrink-0" />
+                        )}
+                      </button>
+
+                      {isExpanded && !isCompleted && (
+                        <div className="border-t border-border/40 bg-muted/20">
+                          <InlineReportForm
+                            childId={child.id}
+                            childName={child.name}
+                            foods={foods}
+                            todayMenu={todayMenu}
+                            onSaved={() => handleSaved(child.id)}
+                          />
+                        </div>
+                      )}
+
+                      {isExpanded && isCompleted && (
+                        <div className="border-t border-border/40 bg-muted/20 px-6 py-4">
+                          <p className="text-sm text-muted-foreground">
+                            Report already submitted.{" "}
+                            {child.reportId && (
+                              <Link
+                                href={`/daily-reports/${child.reportId}`}
+                                className="text-primary hover:underline font-medium"
+                              >
+                                View report
+                              </Link>
+                            )}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           );
         })}
       </div>
@@ -301,7 +365,7 @@ function InlineReportForm({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {/* Breakfast */}
         <div className="space-y-1.5">
-          <Label className="text-xs">Breakfast</Label>
+          <Label className="text-xs font-medium">Breakfast</Label>
           <Select value={breakfastFoodId} onValueChange={setBreakfastFoodId}>
             <SelectTrigger className="h-8 text-xs">
               <SelectValue placeholder="Select food..." />
@@ -330,7 +394,7 @@ function InlineReportForm({
 
         {/* Lunch */}
         <div className="space-y-1.5">
-          <Label className="text-xs">Lunch</Label>
+          <Label className="text-xs font-medium">Lunch</Label>
           <Select value={lunchFoodId} onValueChange={setLunchFoodId}>
             <SelectTrigger className="h-8 text-xs">
               <SelectValue placeholder="Select food..." />
@@ -359,7 +423,7 @@ function InlineReportForm({
 
         {/* Mood */}
         <div className="space-y-1.5">
-          <Label className="text-xs">Mood</Label>
+          <Label className="text-xs font-medium">Mood</Label>
           <Select value={mood} onValueChange={setMood}>
             <SelectTrigger className="h-8 text-xs">
               <SelectValue />

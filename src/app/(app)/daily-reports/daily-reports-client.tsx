@@ -9,6 +9,7 @@ import { DataTable } from "@/components/shared/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -43,6 +44,18 @@ import {
   FileText,
   Send,
   Loader2,
+  CheckCircle2,
+  FileEdit,
+  Smile,
+  Meh,
+  Frown,
+  Moon,
+  CloudMoon,
+  Utensils,
+  UtensilsCrossed,
+  BedDouble,
+  SunMedium,
+  Filter,
 } from "lucide-react";
 import { format } from "date-fns";
 import { deleteDailyReport, submitDailyReport } from "@/lib/actions/daily-reports";
@@ -82,76 +95,65 @@ interface DailyReportRow {
   createdBy: string;
 }
 
+// --- Avatar colors ---
+
+const avatarColors = [
+  "bg-teal-100 text-teal-700",
+  "bg-violet-100 text-violet-700",
+  "bg-rose-100 text-rose-700",
+  "bg-amber-100 text-amber-700",
+  "bg-sky-100 text-sky-700",
+  "bg-emerald-100 text-emerald-700",
+  "bg-fuchsia-100 text-fuchsia-700",
+  "bg-orange-100 text-orange-700",
+];
+
+function getAvatarColor(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return avatarColors[Math.abs(hash) % avatarColors.length];
+}
+
+function getInitials(name: string) {
+  const parts = name.split(" ");
+  return (parts[0]?.charAt(0) ?? "") + (parts[1]?.charAt(0) ?? "");
+}
+
 // --- Helpers ---
 
-function getMoodColor(mood: string): string {
+function getMoodConfig(mood: string): { color: string; icon: typeof Smile; label: string } {
   switch (mood) {
     case "HAPPY":
-      return "bg-emerald-50 text-emerald-700 border-emerald-200";
+      return { color: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: Smile, label: "Happy" };
     case "CALM":
-      return "bg-blue-50 text-blue-700 border-blue-200";
+      return { color: "bg-blue-50 text-blue-700 border-blue-200", icon: Meh, label: "Calm" };
     case "FUSSY":
-      return "bg-orange-50 text-orange-700 border-orange-200";
+      return { color: "bg-orange-50 text-orange-700 border-orange-200", icon: Frown, label: "Fussy" };
     case "SLEEPY":
-      return "bg-purple-50 text-purple-700 border-purple-200";
+      return { color: "bg-purple-50 text-purple-700 border-purple-200", icon: Moon, label: "Sleepy" };
     case "CRYING":
-      return "bg-yellow-50 text-yellow-700 border-yellow-200";
+      return { color: "bg-red-50 text-red-700 border-red-200", icon: CloudMoon, label: "Crying" };
     default:
-      return "bg-gray-50 text-gray-700 border-gray-200";
+      return { color: "bg-gray-50 text-gray-700 border-gray-200", icon: Meh, label: mood };
   }
 }
 
-function getMoodLabel(mood: string): string {
-  const map: Record<string, string> = {
-    HAPPY: "Happy",
-    CALM: "Calm",
-    FUSSY: "Fussy",
-    CRYING: "Crying",
-    SLEEPY: "Sleepy",
-  };
-  return map[mood] ?? mood;
-}
-
-function getPortionLabel(portion: string | null): string {
-  if (!portion) return "N/A";
+function getPortionConfig(portion: string | null): { label: string; color: string; dots: number } {
+  if (!portion) return { label: "N/A", color: "text-muted-foreground", dots: 0 };
   switch (portion) {
     case "ALL":
-      return "Ate Well";
+      return { label: "All", color: "text-emerald-600", dots: 5 };
     case "MOST":
-      return "Ate Most";
+      return { label: "Most", color: "text-emerald-600", dots: 4 };
     case "HALF":
-      return "Ate Some";
+      return { label: "Half", color: "text-amber-600", dots: 3 };
     case "LITTLE":
-      return "Ate Little";
+      return { label: "Little", color: "text-orange-600", dots: 2 };
     case "NONE":
-      return "Refused";
+      return { label: "None", color: "text-red-600", dots: 0 };
     default:
-      return portion;
+      return { label: portion, color: "text-muted-foreground", dots: 0 };
   }
-}
-
-function getMealColor(portion: string | null): string {
-  if (!portion) return "text-[#a0a8b4]";
-  switch (portion) {
-    case "ALL":
-    case "MOST":
-      return "text-emerald-700";
-    case "HALF":
-      return "text-amber-600";
-    case "LITTLE":
-    case "NONE":
-      return "text-red-600";
-    default:
-      return "text-muted-foreground";
-  }
-}
-
-function getSleepLabel(sleep: boolean): string {
-  return sleep ? "Slept" : "No Nap";
-}
-
-function getSleepColor(sleep: boolean): string {
-  return sleep ? "text-emerald-700" : "text-red-600";
 }
 
 // --- Props ---
@@ -161,6 +163,34 @@ interface DailyReportsClientProps {
   total: number;
   branches: Array<{ id: string; name: string }>;
   initialStatusFilter?: string;
+}
+
+// --- Meal Dots ---
+
+function MealDots({ portion }: { portion: string | null }) {
+  const config = getPortionConfig(portion);
+  if (!portion) return <span className="text-xs text-muted-foreground">--</span>;
+  return (
+    <div className="flex items-center gap-1.5">
+      <div className="flex gap-0.5">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div
+            key={i}
+            className={`size-1.5 rounded-full ${
+              i <= config.dots
+                ? portion === "ALL" || portion === "MOST"
+                  ? "bg-emerald-500"
+                  : portion === "HALF"
+                  ? "bg-amber-500"
+                  : "bg-orange-500"
+                : "bg-muted-foreground/20"
+            }`}
+          />
+        ))}
+      </div>
+      <span className={`text-xs font-medium ${config.color}`}>{config.label}</span>
+    </div>
+  );
 }
 
 // --- Page Component ---
@@ -216,6 +246,14 @@ export function DailyReportsClient({
     [reports]
   );
 
+  const activeFilterCount = [
+    dateFrom,
+    dateTo,
+    branchFilter !== "all" ? branchFilter : "",
+    classFilter !== "all" ? classFilter : "",
+    statusFilter !== "all" ? statusFilter : "",
+  ].filter(Boolean).length;
+
   function handleDelete() {
     if (!deleteId) return;
     startTransition(async () => {
@@ -242,63 +280,92 @@ export function DailyReportsClient({
       accessorKey: "date",
       header: "Date",
       cell: ({ row }) => (
-        <span className="text-sm font-medium text-foreground">
+        <span className="text-sm font-medium text-foreground whitespace-nowrap">
           {format(new Date(row.original.date), "MMM d, yyyy")}
         </span>
       ),
     },
     {
       accessorKey: "childName",
-      header: "Child Name",
-      cell: ({ row }) => (
-        <span className="font-medium text-foreground">{row.original.childName}</span>
-      ),
-    },
-    {
-      accessorKey: "className",
-      header: "Class",
-      cell: ({ row }) => (
-        <Badge variant="secondary" className="bg-muted/50 text-muted-foreground font-normal">
-          {row.original.className}
-        </Badge>
-      ),
+      header: "Child",
+      cell: ({ row }) => {
+        const name = row.original.childName;
+        return (
+          <div className="flex items-center gap-2.5">
+            <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${getAvatarColor(name)}`}>
+              {getInitials(name)}
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground truncate">{name}</p>
+              <p className="text-[11px] text-muted-foreground">{row.original.className}</p>
+            </div>
+          </div>
+        );
+      },
     },
     {
       accessorKey: "breakfast",
-      header: "Breakfast",
-      cell: ({ row }) => (
-        <span className={`text-sm font-medium ${getMealColor(row.original.breakfast)}`}>
-          {getPortionLabel(row.original.breakfast)}
-        </span>
+      header: () => (
+        <div className="flex items-center gap-1">
+          <Utensils className="size-3.5 text-amber-500" />
+          <span>Breakfast</span>
+        </div>
       ),
+      cell: ({ row }) => <MealDots portion={row.original.breakfast} />,
     },
     {
       accessorKey: "lunch",
-      header: "Lunch",
-      cell: ({ row }) => (
-        <span className={`text-sm font-medium ${getMealColor(row.original.lunch)}`}>
-          {getPortionLabel(row.original.lunch)}
-        </span>
+      header: () => (
+        <div className="flex items-center gap-1">
+          <UtensilsCrossed className="size-3.5 text-orange-500" />
+          <span>Lunch</span>
+        </div>
       ),
+      cell: ({ row }) => <MealDots portion={row.original.lunch} />,
     },
     {
       accessorKey: "sleep",
-      header: "Sleep",
-      cell: ({ row }) => (
-        <span className={`text-sm font-medium ${getSleepColor(row.original.sleep)}`}>
-          {getSleepLabel(row.original.sleep)}
-        </span>
+      header: () => (
+        <div className="flex items-center gap-1">
+          <BedDouble className="size-3.5 text-indigo-500" />
+          <span>Sleep</span>
+        </div>
       ),
+      cell: ({ row }) => {
+        const slept = row.original.sleep;
+        return (
+          <div className="flex items-center gap-1.5">
+            {slept ? (
+              <>
+                <div className="flex size-5 items-center justify-center rounded-full bg-indigo-100">
+                  <BedDouble className="size-3 text-indigo-600" />
+                </div>
+                <span className="text-xs font-medium text-indigo-700">Slept</span>
+              </>
+            ) : (
+              <>
+                <div className="flex size-5 items-center justify-center rounded-full bg-slate-100">
+                  <SunMedium className="size-3 text-slate-500" />
+                </div>
+                <span className="text-xs font-medium text-slate-500">No Nap</span>
+              </>
+            )}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "mood",
       header: "Mood",
       cell: ({ row }) => {
         const mood = row.original.mood;
-        if (!mood) return <span className="text-sm text-[#a0a8b4]">—</span>;
+        if (!mood) return <span className="text-xs text-muted-foreground">--</span>;
+        const config = getMoodConfig(mood);
+        const Icon = config.icon;
         return (
-          <Badge className={getMoodColor(mood)}>
-            {getMoodLabel(mood)}
+          <Badge className={`${config.color} gap-1`}>
+            <Icon className="size-3" />
+            {config.label}
           </Badge>
         );
       },
@@ -308,24 +375,24 @@ export function DailyReportsClient({
       header: "Status",
       cell: ({ row }) => {
         const status = row.original.status;
-        return (
-          <Badge
-            className={
-              status === "SUBMITTED"
-                ? "bg-primary/10 text-primary border-primary/20"
-                : "bg-amber-50 text-amber-700 border-amber-200"
-            }
-          >
-            {status === "SUBMITTED" ? "Submitted" : "Draft"}
+        return status === "SUBMITTED" ? (
+          <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 gap-1">
+            <CheckCircle2 className="size-3" />
+            Submitted
+          </Badge>
+        ) : (
+          <Badge className="bg-amber-50 text-amber-700 border-amber-200 gap-1">
+            <FileEdit className="size-3" />
+            Draft
           </Badge>
         );
       },
     },
     {
       accessorKey: "createdBy",
-      header: "Created By",
+      header: "By",
       cell: ({ row }) => (
-        <span className="text-sm text-[#555]">{row.original.createdBy}</span>
+        <span className="text-xs text-muted-foreground">{row.original.createdBy}</span>
       ),
     },
     {
@@ -392,98 +459,111 @@ export function DailyReportsClient({
       />
       <div className="p-4 space-y-4 md:p-6">
         {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <div className="relative w-full sm:max-w-sm sm:flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search by child name..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
-          </div>
+        <Card className="border-border/60 shadow-sm">
+          <CardContent className="p-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <div className="relative w-full sm:max-w-xs sm:flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search by child name..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9 h-9"
+                />
+              </div>
 
-          <div className="flex items-center gap-1.5">
-            <label className="text-xs font-medium text-muted-foreground whitespace-nowrap">From</label>
-            <Input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              className="w-[130px] sm:w-[150px]"
-            />
-          </div>
+              <div className="flex items-center gap-1.5">
+                <label className="text-xs font-medium text-muted-foreground whitespace-nowrap">From</label>
+                <Input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="w-[130px] sm:w-[150px] h-9"
+                />
+              </div>
 
-          <div className="flex items-center gap-1.5">
-            <label className="text-xs font-medium text-muted-foreground whitespace-nowrap">To</label>
-            <Input
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              className="w-[130px] sm:w-[150px]"
-            />
-          </div>
+              <div className="flex items-center gap-1.5">
+                <label className="text-xs font-medium text-muted-foreground whitespace-nowrap">To</label>
+                <Input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="w-[130px] sm:w-[150px] h-9"
+                />
+              </div>
 
-          <Select value={branchFilter} onValueChange={setBranchFilter}>
-            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[160px]">
-              <SelectValue placeholder="All Branches" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Branches</SelectItem>
-              {branches.map((b) => (
-                <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+              <Select value={branchFilter} onValueChange={setBranchFilter}>
+                <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[150px] h-9">
+                  <SelectValue placeholder="All Branches" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Branches</SelectItem>
+                  {branches.map((b) => (
+                    <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-          <Select value={classFilter} onValueChange={setClassFilter}>
-            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[160px]">
-              <SelectValue placeholder="All Classes" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Classes</SelectItem>
-              {uniqueClasses.map((cls) => (
-                <SelectItem key={cls} value={cls}>{cls}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+              <Select value={classFilter} onValueChange={setClassFilter}>
+                <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[150px] h-9">
+                  <SelectValue placeholder="All Classes" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Classes</SelectItem>
+                  {uniqueClasses.map((cls) => (
+                    <SelectItem key={cls} value={cls}>{cls}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[150px]">
-              <SelectValue placeholder="All Statuses" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="DRAFT">Draft</SelectItem>
-              <SelectItem value="SUBMITTED">Submitted</SelectItem>
-            </SelectContent>
-          </Select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[140px] h-9">
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="DRAFT">Draft</SelectItem>
+                  <SelectItem value="SUBMITTED">Submitted</SelectItem>
+                </SelectContent>
+              </Select>
 
-          <div className="ml-auto flex items-center gap-2">
-            <ExportButton
-              filename="daily-reports"
-              sheetName="Daily Reports"
-              columns={dailyReportsExportColumns}
-              data={filteredData as unknown as Record<string, unknown>[]}
-            />
-            <Button asChild className="bg-primary hover:bg-primary/90 text-white">
-              <Link href="/daily-reports/new">
-                <Plus className="size-4" />
-                New Report
-              </Link>
-            </Button>
-          </div>
-        </div>
+              {activeFilterCount > 0 && (
+                <Badge variant="secondary" className="bg-primary/10 text-primary gap-1 h-7">
+                  <Filter className="size-3" />
+                  {activeFilterCount} filter{activeFilterCount > 1 ? "s" : ""}
+                </Badge>
+              )}
+
+              <div className="ml-auto flex items-center gap-2">
+                <ExportButton
+                  filename="daily-reports"
+                  sheetName="Daily Reports"
+                  columns={dailyReportsExportColumns}
+                  data={filteredData as unknown as Record<string, unknown>[]}
+                />
+                <Button asChild className="bg-primary hover:bg-primary/90 text-white">
+                  <Link href="/daily-reports/new">
+                    <Plus className="size-4" />
+                    New Report
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {filteredData.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-            <FileText className="size-10 text-muted-foreground/40 mb-3" />
-            <p className="text-sm font-medium text-muted-foreground">No daily reports found</p>
-            <p className="mt-1 text-xs text-muted-foreground/70">
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/30 p-16 text-center">
+            <div className="flex size-14 items-center justify-center rounded-full bg-primary/10 mb-4">
+              <FileText className="size-7 text-primary/60" />
+            </div>
+            <p className="text-sm font-semibold text-foreground">No daily reports found</p>
+            <p className="mt-1.5 text-xs text-muted-foreground max-w-sm">
               {search || dateFrom || dateTo || branchFilter !== "all" || classFilter !== "all" || statusFilter !== "all"
                 ? "Try adjusting your filters to see more results."
                 : "No reports have been submitted yet. Start filling out daily reports for your class."}
             </p>
-            <div className="mt-4 flex gap-2">
+            <div className="mt-5 flex gap-2">
               <Button asChild size="sm">
                 <Link href="/daily-reports/new">
                   <Plus className="mr-1 size-3.5" />

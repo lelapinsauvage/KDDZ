@@ -10,12 +10,18 @@ import {
   Trash2,
   MoreHorizontal,
   ArrowUpDown,
+  Clock,
+  Search,
+  Filter,
+  MessageSquareText,
 } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,8 +46,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { deleteAbsenceReport } from "@/lib/actions/absent-reports";
+import { format } from "date-fns";
 
-// ── Types ───────────────────────────────────────
+// -- Types --
 interface DraftAbsenceReport {
   id: string;
   childName: string;
@@ -63,26 +70,50 @@ interface Props {
   branches: BranchOption[];
 }
 
-// ── Helpers ─────────────────────────────────────
-function formatDate(iso: string) {
-  const d = new Date(iso);
-  const day = String(d.getDate()).padStart(2, "0");
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const year = d.getFullYear();
-  return `${day}/${month}/${year}`;
+// -- Avatar helpers --
+const avatarColors = [
+  "bg-teal-100 text-teal-700",
+  "bg-violet-100 text-violet-700",
+  "bg-rose-100 text-rose-700",
+  "bg-amber-100 text-amber-700",
+  "bg-sky-100 text-sky-700",
+  "bg-emerald-100 text-emerald-700",
+  "bg-fuchsia-100 text-fuchsia-700",
+  "bg-orange-100 text-orange-700",
+];
+
+function getAvatarColor(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return avatarColors[Math.abs(hash) % avatarColors.length];
 }
 
-// ── Component ──────────────────────────────
+function getInitials(name: string) {
+  const parts = name.split(" ");
+  return (parts[0]?.charAt(0) ?? "") + (parts[1]?.charAt(0) ?? "");
+}
+
+// -- Component --
 export function DraftsClient({ drafts, branches }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [branchFilter, setBranchFilter] = useState("ALL");
+  const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const filteredDrafts = useMemo(() => {
-    if (branchFilter === "ALL") return drafts;
-    return drafts.filter((r) => r.branchId === branchFilter);
-  }, [drafts, branchFilter]);
+    let data = drafts;
+    if (branchFilter !== "ALL") data = data.filter((r) => r.branchId === branchFilter);
+    if (search) {
+      const lower = search.toLowerCase();
+      data = data.filter((r) => r.childName.toLowerCase().includes(lower));
+    }
+    return data;
+  }, [drafts, branchFilter, search]);
+
+  const activeFilterCount = [
+    branchFilter !== "ALL" ? branchFilter : "",
+  ].filter(Boolean).length;
 
   function handleDelete() {
     if (!deleteId) return;
@@ -93,7 +124,6 @@ export function DraftsClient({ drafts, branches }: Props) {
     });
   }
 
-  // ── Column definitions ──────────────────────────
   const draftColumns: ColumnDef<DraftAbsenceReport>[] = [
     {
       accessorKey: "childName",
@@ -104,13 +134,21 @@ export function DraftsClient({ drafts, branches }: Props) {
           className="-ml-3 h-8 text-xs font-semibold uppercase"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Child Name
+          Child
           <ArrowUpDown className="ml-1 size-3" />
         </Button>
       ),
-      cell: ({ row }) => (
-        <span className="font-medium text-foreground">{row.original.childName}</span>
-      ),
+      cell: ({ row }) => {
+        const name = row.original.childName;
+        return (
+          <div className="flex items-center gap-2.5">
+            <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${getAvatarColor(name)}`}>
+              {getInitials(name)}
+            </div>
+            <span className="text-sm font-semibold text-foreground">{name}</span>
+          </div>
+        );
+      },
     },
     {
       accessorKey: "date",
@@ -126,21 +164,31 @@ export function DraftsClient({ drafts, branches }: Props) {
         </Button>
       ),
       cell: ({ row }) => (
-        <span className="text-[#555]">{formatDate(row.original.date)}</span>
+        <span className="text-sm text-foreground whitespace-nowrap">
+          {format(new Date(row.original.date), "MMM d, yyyy")}
+        </span>
       ),
     },
     {
       accessorKey: "reason",
       header: "Reason",
-      cell: ({ row }) => (
-        <span className="text-[#555] max-w-[200px] truncate block">{row.original.reason || "—"}</span>
-      ),
+      cell: ({ row }) => {
+        const reason = row.original.reason;
+        if (!reason) return <span className="text-xs text-muted-foreground">--</span>;
+        return (
+          <div className="flex items-start gap-1.5 max-w-[200px]">
+            <MessageSquareText className="size-3.5 text-muted-foreground shrink-0 mt-0.5" />
+            <span className="text-sm text-foreground line-clamp-2">{reason}</span>
+          </div>
+        );
+      },
     },
     {
       accessorKey: "status",
       header: "Status",
       cell: () => (
-        <Badge className="bg-amber-100 text-amber-700 border-amber-200">
+        <Badge className="bg-amber-50 text-amber-700 border-amber-200 gap-1">
+          <Clock className="size-3" />
           Draft
         </Badge>
       ),
@@ -149,14 +197,16 @@ export function DraftsClient({ drafts, branches }: Props) {
       accessorKey: "createdBy",
       header: "Created By",
       cell: ({ row }) => (
-        <span className="text-[#555]">{row.original.createdBy}</span>
+        <span className="text-xs text-muted-foreground">{row.original.createdBy}</span>
       ),
     },
     {
       accessorKey: "branchName",
       header: "Branch",
       cell: ({ row }) => (
-        <span className="text-[#555]">{row.original.branchName}</span>
+        <Badge variant="secondary" className="bg-muted/50 text-muted-foreground font-normal">
+          {row.original.branchName}
+        </Badge>
       ),
     },
     {
@@ -205,35 +255,66 @@ export function DraftsClient({ drafts, branches }: Props) {
       />
 
       <div className="space-y-4 p-4 md:p-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <Select value={branchFilter} onValueChange={setBranchFilter}>
-            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[180px]">
-              <SelectValue placeholder="All Branches" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All Branches</SelectItem>
-              {branches.map((b) => (
-                <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <Card className="border-border/60 shadow-sm">
+          <CardContent className="p-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <div className="relative w-full sm:max-w-xs sm:flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search by child name..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9 h-9"
+                />
+              </div>
 
-          <div className="flex-1" />
+              <Select value={branchFilter} onValueChange={setBranchFilter}>
+                <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[170px] h-9">
+                  <SelectValue placeholder="All Branches" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Branches</SelectItem>
+                  {branches.map((b) => (
+                    <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-          <Button asChild className="bg-primary text-white hover:bg-primary/90">
-            <Link href="/absent-reports/new">
-              <Plus className="mr-1 size-4" />
-              Create Absence Report
-            </Link>
-          </Button>
-        </div>
+              {activeFilterCount > 0 && (
+                <Badge variant="secondary" className="bg-primary/10 text-primary gap-1 h-7">
+                  <Filter className="size-3" />
+                  {activeFilterCount} filter{activeFilterCount > 1 ? "s" : ""}
+                </Badge>
+              )}
 
-        <DataTable
-          columns={draftColumns}
-          data={filteredDrafts}
-          searchKey="childName"
-          searchPlaceholder="Search by child name..."
-        />
+              <div className="flex-1" />
+
+              <Button asChild className="bg-primary text-white hover:bg-primary/90">
+                <Link href="/absent-reports/new">
+                  <Plus className="mr-1 size-4" />
+                  Report Absence
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {filteredDrafts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/30 p-16 text-center">
+            <div className="flex size-14 items-center justify-center rounded-full bg-amber-100 mb-4">
+              <Clock className="size-7 text-amber-600" />
+            </div>
+            <p className="text-sm font-semibold text-foreground">No draft absence reports</p>
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              All absence reports have been processed or no drafts match your filters.
+            </p>
+          </div>
+        ) : (
+          <DataTable
+            columns={draftColumns}
+            data={filteredDrafts}
+          />
+        )}
       </div>
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
