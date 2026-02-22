@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useMemo, useTransition, useCallback } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
 import { type ColumnDef } from "@tanstack/react-table";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
@@ -45,6 +48,8 @@ import {
   createHoliday,
   updateHoliday,
   deleteHoliday,
+  holidaySchema,
+  type HolidayFormValues,
 } from "@/lib/actions/settings";
 
 interface Holiday {
@@ -89,9 +94,6 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
   const [holidays, setHolidays] = useState(initialHolidays);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
-  const [holName, setHolName] = useState("");
-  const [holDate, setHolDate] = useState("");
-  const [holBranchId, setHolBranchId] = useState("ALL");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -104,21 +106,23 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
   const [calYear, setCalYear] = useState(now.getFullYear());
   const [calMonth, setCalMonth] = useState(now.getMonth() + 1);
 
+  // Form
+  const form = useForm<HolidayFormValues>({
+    resolver: zodResolver(holidaySchema),
+    defaultValues: { name: "", date: "", branchId: null },
+  });
+
   function openAdd(presetDate?: string) {
     setDialogMode("add");
-    setHolName("");
-    setHolDate(presetDate ?? "");
-    setHolBranchId("ALL");
     setEditingId(null);
+    form.reset({ name: "", date: presetDate ?? "", branchId: null });
     setDialogOpen(true);
   }
 
   function openEdit(h: Holiday) {
     setDialogMode("edit");
-    setHolName(h.name);
-    setHolDate(h.date);
-    setHolBranchId(h.branchId ?? "ALL");
     setEditingId(h.id);
+    form.reset({ name: h.name, date: h.date, branchId: h.branchId });
     setDialogOpen(true);
   }
 
@@ -127,19 +131,17 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
     setDeleteDialogOpen(true);
   }
 
-  function handleSave() {
-    if (!holName.trim() || !holDate) return;
-
+  function onSubmit(values: HolidayFormValues) {
     startTransition(async () => {
-      const branchId = holBranchId === "ALL" ? null : holBranchId;
+      const branchId = values.branchId || null;
       const branchName = branchId
         ? (branches.find((b) => b.id === branchId)?.name ?? "—")
         : "All Branches";
 
       if (dialogMode === "add") {
         const result = await createHoliday({
-          name: holName.trim(),
-          date: holDate,
+          name: values.name,
+          date: values.date,
           branchId,
         });
         if (result.success && result.data) {
@@ -149,27 +151,33 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
             ...holidays,
             {
               id: newHol.id,
-              name: holName.trim(),
-              date: holDate,
+              name: values.name,
+              date: values.date,
               branch: branchName,
               branchId,
             },
           ]);
+          toast.success("Holiday added successfully");
+        } else {
+          toast.error(result.error ?? "Failed to add holiday");
         }
       } else if (editingId) {
         const result = await updateHoliday(editingId, {
-          name: holName.trim(),
-          date: holDate,
+          name: values.name,
+          date: values.date,
           branchId,
         });
         if (result.success) {
           setHolidays(
             holidays.map((h) =>
               h.id === editingId
-                ? { ...h, name: holName.trim(), date: holDate, branch: branchName, branchId }
+                ? { ...h, name: values.name, date: values.date, branch: branchName, branchId }
                 : h
             )
           );
+          toast.success("Holiday updated successfully");
+        } else {
+          toast.error(result.error ?? "Failed to update holiday");
         }
       }
       setDialogOpen(false);
@@ -184,6 +192,9 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
         setHolidays(holidays.filter((h) => h.id !== deletingItem.id));
         setDeleteDialogOpen(false);
         setDeletingItem(null);
+        toast.success("Holiday deleted");
+      } else {
+        toast.error(result.error ?? "Failed to delete holiday");
       }
     });
   }
@@ -441,18 +452,27 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
           <DialogHeader>
             <DialogTitle>{dialogMode === "add" ? "Add Holiday" : "Edit Holiday"}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
             <div>
               <label className="mb-1.5 block text-sm font-medium">Holiday Name</label>
-              <Input placeholder="e.g. Independence Day" value={holName} onChange={(e) => setHolName(e.target.value)} />
+              <Input placeholder="e.g. Independence Day" {...form.register("name")} />
+              {form.formState.errors.name && (
+                <p className="mt-1 text-xs text-destructive">{form.formState.errors.name.message}</p>
+              )}
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium">Date</label>
-              <Input type="date" value={holDate} onChange={(e) => setHolDate(e.target.value)} />
+              <Input type="date" {...form.register("date")} />
+              {form.formState.errors.date && (
+                <p className="mt-1 text-xs text-destructive">{form.formState.errors.date.message}</p>
+              )}
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium">Branch</label>
-              <Select value={holBranchId} onValueChange={setHolBranchId}>
+              <Select
+                value={form.watch("branchId") ?? "ALL"}
+                onValueChange={(v) => form.setValue("branchId", v === "ALL" ? null : v)}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -466,21 +486,20 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                 </SelectContent>
               </Select>
             </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-             
-              className="text-white"
-              onClick={handleSave}
-              disabled={!holName.trim() || !holDate || isPending}
-            >
-              {isPending && <Loader2 className="mr-1 size-4 animate-spin" />}
-              {dialogMode === "add" ? "Add" : "Save"}
-            </Button>
-          </DialogFooter>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="text-white"
+                disabled={isPending}
+              >
+                {isPending && <Loader2 className="mr-1 size-4 animate-spin" />}
+                {dialogMode === "add" ? "Add" : "Save"}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 

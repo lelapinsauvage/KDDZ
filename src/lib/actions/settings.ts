@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { z } from "zod";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -42,6 +43,48 @@ type ActionResult<T = unknown> = {
   error?: string;
   data?: T;
 };
+
+// ---------------------------------------------------------------------------
+// Zod Schemas
+// ---------------------------------------------------------------------------
+
+export const nurserySettingsSchema = z.object({
+  nursery_name: z.string().min(1, "Nursery name is required"),
+  nursery_address: z.string(),
+  nursery_phone: z.string(),
+  nursery_email: z.string().email("Invalid email address").or(z.literal("")),
+  open_time: z.string().regex(/^\d{2}:\d{2}$/, "Invalid time format"),
+  close_time: z.string().regex(/^\d{2}:\d{2}$/, "Invalid time format"),
+  working_days: z.string(),
+  default_milk: z.string(),
+  default_diaper: z.string(),
+  assessment_types: z.string(),
+  email_notifications: z.string(),
+  sms_notifications: z.string(),
+  push_notifications: z.string(),
+});
+
+export type NurserySettingsValues = z.infer<typeof nurserySettingsSchema>;
+
+export const holidaySchema = z.object({
+  name: z.string().min(1, "Holiday name is required"),
+  date: z.string().min(1, "Date is required"),
+  branchId: z.string().nullable(),
+});
+
+export type HolidayFormValues = z.infer<typeof holidaySchema>;
+
+export const eventSchema = z.object({
+  title: z.string().min(1, "Event title is required"),
+  description: z.string(),
+  date: z.string().min(1, "Start date is required"),
+  endDate: z.string(),
+  eventTypeId: z.string().nullable(),
+  branchId: z.string().nullable(),
+  isActive: z.boolean(),
+});
+
+export type EventFormValues = z.infer<typeof eventSchema>;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -106,6 +149,48 @@ export async function setSetting(
   } catch (error) {
     console.error("Failed to set setting:", error);
     return { success: false, error: "Failed to set setting" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// updateNurserySettings (bulk upsert with validation)
+// ---------------------------------------------------------------------------
+
+export async function updateNurserySettings(
+  branchId: string,
+  values: NurserySettingsValues,
+): Promise<ActionResult> {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const parsed = nurserySettingsSchema.safeParse(values);
+    if (!parsed.success) {
+      return {
+        success: false,
+        error: parsed.error.issues.map((e) => e.message).join(", "),
+      };
+    }
+
+    const entries = Object.entries(parsed.data) as [string, string][];
+    await db.$transaction(
+      entries.map(([key, value]) =>
+        db.settings.upsert({
+          where: { branchId_key: { branchId, key } },
+          update: { value },
+          create: { branchId, key, value },
+        })
+      )
+    );
+
+    revalidatePath("/settings");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to update nursery settings:", error);
+    return { success: false, error: "Failed to save settings" };
   }
 }
 

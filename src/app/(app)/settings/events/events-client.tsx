@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useMemo, useTransition, useCallback } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
 import { type ColumnDef } from "@tanstack/react-table";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
@@ -46,6 +49,8 @@ import {
   createEvent,
   updateEvent,
   deleteEvent,
+  eventSchema,
+  type EventFormValues,
 } from "@/lib/actions/settings";
 
 // ── Types ──────────────────────────────────
@@ -108,13 +113,6 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
-  const [evTitle, setEvTitle] = useState("");
-  const [evDescription, setEvDescription] = useState("");
-  const [evDate, setEvDate] = useState("");
-  const [evEndDate, setEvEndDate] = useState("");
-  const [evTypeId, setEvTypeId] = useState("NONE");
-  const [evBranchId, setEvBranchId] = useState("ALL");
-  const [evIsActive, setEvIsActive] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   // Delete confirmation
@@ -126,30 +124,48 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
   const [calYear, setCalYear] = useState(now.getFullYear());
   const [calMonth, setCalMonth] = useState(now.getMonth() + 1);
 
+  // Form
+  const form = useForm<EventFormValues>({
+    resolver: zodResolver(eventSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      date: "",
+      endDate: "",
+      eventTypeId: null,
+      branchId: null,
+      isActive: true,
+    },
+  });
+
   // ── Dialog handlers ─────────────────────────
   function openAdd(presetDate?: string) {
     setDialogMode("add");
-    setEvTitle("");
-    setEvDescription("");
-    setEvDate(presetDate ?? "");
-    setEvEndDate("");
-    setEvTypeId("NONE");
-    setEvBranchId("ALL");
-    setEvIsActive(true);
     setEditingId(null);
+    form.reset({
+      title: "",
+      description: "",
+      date: presetDate ?? "",
+      endDate: "",
+      eventTypeId: null,
+      branchId: null,
+      isActive: true,
+    });
     setDialogOpen(true);
   }
 
   function openEdit(ev: EventItem) {
     setDialogMode("edit");
-    setEvTitle(ev.title);
-    setEvDescription(ev.description);
-    setEvDate(ev.date);
-    setEvEndDate(ev.endDate ?? "");
-    setEvTypeId(ev.eventTypeId ?? "NONE");
-    setEvBranchId(ev.branchId ?? "ALL");
-    setEvIsActive(ev.isActive);
     setEditingId(ev.id);
+    form.reset({
+      title: ev.title,
+      description: ev.description,
+      date: ev.date,
+      endDate: ev.endDate ?? "",
+      eventTypeId: ev.eventTypeId,
+      branchId: ev.branchId,
+      isActive: ev.isActive,
+    });
     setDialogOpen(true);
   }
 
@@ -158,12 +174,10 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
     setDeleteDialogOpen(true);
   }
 
-  function handleSave() {
-    if (!evTitle.trim() || !evDate) return;
-
+  function onSubmit(values: EventFormValues) {
     startTransition(async () => {
-      const eventTypeId = evTypeId === "NONE" ? null : evTypeId;
-      const branchId = evBranchId === "ALL" ? null : evBranchId;
+      const eventTypeId = values.eventTypeId || null;
+      const branchId = values.branchId || null;
       const branchName = branchId
         ? (branches.find((b) => b.id === branchId)?.name ?? "—")
         : "All Branches";
@@ -173,13 +187,13 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
 
       if (dialogMode === "add") {
         const result = await createEvent({
-          title: evTitle.trim(),
-          description: evDescription.trim() || null,
-          date: evDate,
-          endDate: evEndDate || null,
+          title: values.title,
+          description: values.description || null,
+          date: values.date,
+          endDate: values.endDate || null,
           eventTypeId,
           branchId,
-          isActive: evIsActive,
+          isActive: values.isActive,
         });
         if (result.success && result.data) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -188,28 +202,31 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
             ...events,
             {
               id: newEv.id,
-              title: evTitle.trim(),
-              description: evDescription.trim(),
-              date: evDate,
-              endDate: evEndDate || null,
+              title: values.title,
+              description: values.description || "",
+              date: values.date,
+              endDate: values.endDate || null,
               eventTypeId,
               eventTypeColor: eventType?.color ?? "#14B8A6",
               eventTypeName: eventType?.name ?? "—",
               branchId,
               branchName,
-              isActive: evIsActive,
+              isActive: values.isActive,
             },
           ]);
+          toast.success("Event created successfully");
+        } else {
+          toast.error(result.error ?? "Failed to create event");
         }
       } else if (editingId) {
         const result = await updateEvent(editingId, {
-          title: evTitle.trim(),
-          description: evDescription.trim() || null,
-          date: evDate,
-          endDate: evEndDate || null,
+          title: values.title,
+          description: values.description || null,
+          date: values.date,
+          endDate: values.endDate || null,
           eventTypeId,
           branchId,
-          isActive: evIsActive,
+          isActive: values.isActive,
         });
         if (result.success) {
           setEvents(
@@ -217,20 +234,23 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
               e.id === editingId
                 ? {
                     ...e,
-                    title: evTitle.trim(),
-                    description: evDescription.trim(),
-                    date: evDate,
-                    endDate: evEndDate || null,
+                    title: values.title,
+                    description: values.description || "",
+                    date: values.date,
+                    endDate: values.endDate || null,
                     eventTypeId,
                     eventTypeColor: eventType?.color ?? "#14B8A6",
                     eventTypeName: eventType?.name ?? "—",
                     branchId,
                     branchName,
-                    isActive: evIsActive,
+                    isActive: values.isActive,
                   }
                 : e
             )
           );
+          toast.success("Event updated successfully");
+        } else {
+          toast.error(result.error ?? "Failed to update event");
         }
       }
       setDialogOpen(false);
@@ -245,6 +265,9 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
         setEvents(events.filter((e) => e.id !== deletingItem.id));
         setDeleteDialogOpen(false);
         setDeletingItem(null);
+        toast.success("Event deleted");
+      } else {
+        toast.error(result.error ?? "Failed to delete event");
       }
     });
   }
@@ -539,46 +562,45 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
               {dialogMode === "add" ? "Add Event" : "Edit Event"}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
             <div>
               <label className="mb-1.5 block text-sm font-medium">Title</label>
               <Input
                 placeholder="e.g. Parent-Teacher Meeting"
-                value={evTitle}
-                onChange={(e) => setEvTitle(e.target.value)}
+                {...form.register("title")}
               />
+              {form.formState.errors.title && (
+                <p className="mt-1 text-xs text-destructive">{form.formState.errors.title.message}</p>
+              )}
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium">Description</label>
               <Textarea
                 placeholder="Event description (optional)"
-                value={evDescription}
-                onChange={(e) => setEvDescription(e.target.value)}
+                {...form.register("description")}
                 rows={3}
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-1.5 block text-sm font-medium">Start Date</label>
-                <Input
-                  type="date"
-                  value={evDate}
-                  onChange={(e) => setEvDate(e.target.value)}
-                />
+                <Input type="date" {...form.register("date")} />
+                {form.formState.errors.date && (
+                  <p className="mt-1 text-xs text-destructive">{form.formState.errors.date.message}</p>
+                )}
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium">End Date</label>
-                <Input
-                  type="date"
-                  value={evEndDate}
-                  onChange={(e) => setEvEndDate(e.target.value)}
-                />
+                <Input type="date" {...form.register("endDate")} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-1.5 block text-sm font-medium">Event Type</label>
-                <Select value={evTypeId} onValueChange={setEvTypeId}>
+                <Select
+                  value={form.watch("eventTypeId") ?? "NONE"}
+                  onValueChange={(v) => form.setValue("eventTypeId", v === "NONE" ? null : v)}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -600,7 +622,10 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium">Branch</label>
-                <Select value={evBranchId} onValueChange={setEvBranchId}>
+                <Select
+                  value={form.watch("branchId") ?? "ALL"}
+                  onValueChange={(v) => form.setValue("branchId", v === "ALL" ? null : v)}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -617,26 +642,25 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
             </div>
             <label className="flex items-center gap-3 text-sm">
               <Checkbox
-                checked={evIsActive}
-                onCheckedChange={(v) => setEvIsActive(!!v)}
+                checked={form.watch("isActive")}
+                onCheckedChange={(v) => form.setValue("isActive", !!v)}
               />
               Active
             </label>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-             
-              className="text-white"
-              onClick={handleSave}
-              disabled={!evTitle.trim() || !evDate || isPending}
-            >
-              {isPending && <Loader2 className="mr-1 size-4 animate-spin" />}
-              {dialogMode === "add" ? "Add" : "Save"}
-            </Button>
-          </DialogFooter>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="text-white"
+                disabled={isPending}
+              >
+                {isPending && <Loader2 className="mr-1 size-4 animate-spin" />}
+                {dialogMode === "add" ? "Add" : "Save"}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 
