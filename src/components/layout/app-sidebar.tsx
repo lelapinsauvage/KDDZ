@@ -123,7 +123,7 @@ const adminNav: NavSection[] = [
       { title: "Assessments", icon: ClipboardList, href: "/assessments" },
       { title: "Messages", icon: Inbox, href: "/messages/inbox", badgeKey: "unreadMessages" },
       { title: "Notifications", icon: Bell, href: "/alarms", badgeKey: "activeAlarms" },
-      { title: "Settings", icon: Settings, href: "/settings/nursery" },
+      { title: "Settings", icon: Settings, href: "/settings" },
     ],
   },
 ]
