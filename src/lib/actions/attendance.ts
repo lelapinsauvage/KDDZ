@@ -181,3 +181,59 @@ export async function createAbsenceReport(
     return { success: false, error: message };
   }
 }
+
+// ── markBulkAttendance ───────────────────────────
+
+export async function markBulkAttendance(data: {
+  date: string;
+  absentChildIds: string[];
+}): Promise<{ success: boolean; created: number; error?: string }> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { success: false, created: 0, error: "Unauthorized" };
+  }
+
+  try {
+    const dateObj = new Date(data.date);
+    const nextDay = new Date(dateObj);
+    nextDay.setDate(nextDay.getDate() + 1);
+
+    // Find existing absence reports for today to avoid duplicates
+    const existing = await db.absenceReport.findMany({
+      where: {
+        date: { gte: dateObj, lt: nextDay },
+        childId: { in: data.absentChildIds },
+      },
+      select: { childId: true },
+    });
+
+    const existingSet = new Set(existing.map((e) => e.childId));
+    const toCreate = data.absentChildIds.filter((id) => !existingSet.has(id));
+
+    if (toCreate.length > 0) {
+      await db.$transaction(
+        toCreate.map((childId) =>
+          db.absenceReport.create({
+            data: {
+              childId,
+              date: dateObj,
+              reason: "Marked absent during attendance",
+              status: "PENDING",
+              createdById: session.user!.id!,
+            },
+          })
+        )
+      );
+    }
+
+    revalidatePath("/today");
+    revalidatePath("/absent-reports");
+
+    return { success: true, created: toCreate.length };
+  } catch (error) {
+    console.error("markBulkAttendance error:", error);
+    const message =
+      error instanceof Error ? error.message : "Failed to mark attendance";
+    return { success: false, created: 0, error: message };
+  }
+}

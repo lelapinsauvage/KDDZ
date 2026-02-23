@@ -1,17 +1,8 @@
-import { getAlarmOverviewCounts, type AlarmCountItem } from "@/lib/actions/alarms";
-import { AlarmsOverviewClient } from "./alarms-overview-client";
+import { getActionableAlarms } from "@/lib/actions/notification-center";
+import { NotificationCenter } from "@/components/alarms/notification-center";
 
 export default async function AlarmsOverviewPage() {
-  const result = await getAlarmOverviewCounts();
+  const data = await getActionableAlarms();
 
-  const data = result.success
-    ? (result.data as { counts: AlarmCountItem[]; totalActive: number })
-    : { counts: [], totalActive: 0 };
-
-  return (
-    <AlarmsOverviewClient
-      counts={data.counts}
-      totalActive={data.totalActive}
-    />
-  );
+  return <NotificationCenter data={data} />;
 }
