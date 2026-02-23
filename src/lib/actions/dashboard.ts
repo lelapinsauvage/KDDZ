@@ -296,7 +296,7 @@ export async function getMorningBriefing(): Promise<MorningBriefing> {
       const diff = completionRate - lastWeekRate;
       if (Math.abs(diff) >= 3) {
         insights.push({
-          text: `Report completion: ${completionRate}% (${diff > 0 ? "was" : "was"} ${lastWeekRate}% last week)`,
+          text: `Report completion: ${completionRate}% (${diff > 0 ? "up from" : "down from"} ${lastWeekRate}% last week)`,
           type: diff >= 0 ? "positive" : "warning",
         });
       } else {
