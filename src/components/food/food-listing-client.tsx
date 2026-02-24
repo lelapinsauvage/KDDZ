@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { type ColumnDef } from "@tanstack/react-table";
 import {
   Plus,
@@ -11,6 +12,11 @@ import {
   ArrowUpDown,
   Loader2,
   UtensilsCrossed,
+  CalendarDays,
+  Coffee,
+  Soup,
+  Cake,
+  Cookie,
 } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
@@ -20,6 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -53,11 +60,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { createFood, updateFood, deleteFood } from "@/lib/actions/food";
+import { toast } from "sonner";
 
 // ── Types ───────────────────────────────────────
 type FoodCategory = "BREAKFAST" | "LUNCH" | "DESSERT" | "SNACK";
 
-interface FoodItem {
+export interface FoodItem {
   id: string;
   name: string;
   category: FoodCategory;
@@ -77,6 +85,13 @@ const categoryLabels: Record<FoodCategory, string> = {
   LUNCH: "Lunch",
   DESSERT: "Dessert",
   SNACK: "Snack",
+};
+
+const categoryIcons: Record<FoodCategory, { icon: typeof Coffee; color: string; bg: string }> = {
+  BREAKFAST: { icon: Coffee, color: "text-blue-600", bg: "bg-blue-100" },
+  LUNCH: { icon: Soup, color: "text-green-600", bg: "bg-green-100" },
+  DESSERT: { icon: Cake, color: "text-pink-600", bg: "bg-pink-100" },
+  SNACK: { icon: Cookie, color: "text-amber-600", bg: "bg-amber-100" },
 };
 
 // ── Props ───────────────────────────────────────
@@ -101,6 +116,21 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
   // Delete confirmation
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingItem, setDeletingItem] = useState<FoodItem | null>(null);
+
+  // Stats
+  const totalItems = initialFoods.length;
+  const categoryCounts = useMemo(() => {
+    const counts: Record<FoodCategory, number> = {
+      BREAKFAST: 0,
+      LUNCH: 0,
+      DESSERT: 0,
+      SNACK: 0,
+    };
+    for (const f of initialFoods) {
+      counts[f.category]++;
+    }
+    return counts;
+  }, [initialFoods]);
 
   const filteredItems = useMemo(() => {
     if (categoryFilter === "ALL") return initialFoods;
@@ -141,8 +171,11 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
           isActive: formActive,
         });
         if (result.success) {
+          toast.success(`"${formName.trim()}" has been added`);
           setDialogOpen(false);
           router.refresh();
+        } else {
+          toast.error(result.error ?? "Failed to create food item");
         }
       } else if (editingId) {
         const result = await updateFood(editingId, {
@@ -151,8 +184,11 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
           isActive: formActive,
         });
         if (result.success) {
+          toast.success(`"${formName.trim()}" has been updated`);
           setDialogOpen(false);
           router.refresh();
+        } else {
+          toast.error(result.error ?? "Failed to update food item");
         }
       }
     });
@@ -164,14 +200,17 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
     startTransition(async () => {
       const result = await deleteFood(deletingItem.id);
       if (result.success) {
+        toast.success(`"${deletingItem.name}" has been deleted`);
         setDeleteDialogOpen(false);
         setDeletingItem(null);
         router.refresh();
+      } else {
+        toast.error(result.error ?? "Failed to delete food item");
       }
     });
   }
 
-  // ── Column definitions (inside component for handler access) ──
+  // ── Column definitions ──
   const foodColumns: ColumnDef<FoodItem>[] = useMemo(
     () => [
       {
@@ -188,7 +227,9 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
           </Button>
         ),
         cell: ({ row }) => (
-          <span className="font-medium text-foreground">{row.original.name}</span>
+          <span className="font-medium text-foreground">
+            {row.original.name}
+          </span>
         ),
       },
       {
@@ -277,6 +318,7 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
         enableSorting: false,
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
@@ -289,14 +331,59 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
           { label: "Items" },
         ]}
         actions={
-          <Button className="bg-primary text-white hover:bg-primary/90" onClick={openAdd}>
-            <Plus className="mr-1 size-4" />
-            Add Food
-          </Button>
+          <div className="flex items-center gap-2">
+            <Link href="/food/calendar">
+              <Button variant="outline">
+                <CalendarDays className="mr-1 size-4" />
+                Calendar
+              </Button>
+            </Link>
+            <Button onClick={openAdd}>
+              <Plus className="mr-1 size-4" />
+              Add Food
+            </Button>
+          </div>
         }
       />
 
-      <div className="space-y-4 p-4 md:p-6">
+      <div className="space-y-6 p-4 md:p-6">
+        {/* Stats Row */}
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {(
+            [
+              { cat: "BREAKFAST" as FoodCategory, label: "Breakfast" },
+              { cat: "LUNCH" as FoodCategory, label: "Lunch" },
+              { cat: "DESSERT" as FoodCategory, label: "Dessert" },
+              { cat: "SNACK" as FoodCategory, label: "Snack" },
+            ] as const
+          ).map(({ cat, label }) => {
+            const { icon: Icon, color, bg } = categoryIcons[cat];
+            return (
+              <Card
+                key={cat}
+                className="rounded-2xl py-4 transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
+                onClick={() =>
+                  setCategoryFilter(categoryFilter === cat ? "ALL" : cat)
+                }
+              >
+                <CardContent className="flex items-center gap-4">
+                  <div
+                    className={`flex size-10 items-center justify-center rounded-xl ${bg}`}
+                  >
+                    <Icon className={`size-5 ${color}`} />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">{label}</p>
+                    <p className="text-2xl font-semibold text-foreground">
+                      {categoryCounts[cat]}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
         {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-3">
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -312,6 +399,9 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
             </SelectContent>
           </Select>
 
+          <div className="ml-auto text-sm text-muted-foreground">
+            {filteredItems.length} of {totalItems} items
+          </div>
         </div>
 
         {filteredItems.length === 0 ? (
@@ -321,7 +411,12 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
             description="Add food items to build your nursery menu and track meals."
           />
         ) : (
-          <DataTable columns={foodColumns} data={filteredItems} searchKey="name" searchPlaceholder="Search food items..." />
+          <DataTable
+            columns={foodColumns}
+            data={filteredItems}
+            searchKey="name"
+            searchPlaceholder="Search food items..."
+          />
         )}
       </div>
 
@@ -383,8 +478,6 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
               Cancel
             </Button>
             <Button
-             
-              className="text-white"
               onClick={handleSave}
               disabled={!formName.trim() || isPending}
             >
@@ -406,7 +499,7 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-white hover:bg-destructive/90"
               onClick={handleDelete}
