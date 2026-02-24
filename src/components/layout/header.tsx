@@ -21,6 +21,7 @@ import {
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { ContextSwitcher } from "./context-switcher"
 import { InboxTray } from "./inbox-tray"
+import { NotificationDropdown } from "./notification-dropdown"
 import { GlobalSearch } from "./global-search"
 import { getHeaderData } from "@/lib/actions/header"
 import type { HeaderNotification, HeaderMessage, HeaderAlarm } from "@/lib/actions/header"
@@ -96,6 +97,12 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-1">
+          {/* Notification bell dropdown */}
+          <NotificationDropdown
+            notifications={notifications}
+            unreadCount={unreadNotificationCount}
+          />
+
           {/* Inbox tray — unified notifications + messages + alerts */}
           <InboxTray
             notifications={notifications}

@@ -2,33 +2,123 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { Bell, CheckCheck } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Bell,
+  CheckCheck,
+  Cake,
+  ClipboardCheck,
+  Syringe,
+  Pill,
+  DollarSign,
+  Shield,
+  FileText,
+  CalendarDays,
+  Heart,
+  MessageSquare,
+  CheckCircle2,
+  type LucideIcon,
+} from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   markNotificationRead,
   markAllNotificationsRead,
 } from "@/lib/actions/alarms";
 
-interface Notification {
-  id: string;
-  title: string;
-  body: string | null;
-  isRead: boolean;
-  createdAt: string;
-}
+// --- Type-to-style mapping for colored left borders & icons ---
+const typeConfig: Record<
+  string,
+  { icon: LucideIcon; color: string; bg: string; border: string }
+> = {
+  BIRTHDAY: {
+    icon: Cake,
+    color: "text-pink-600",
+    bg: "bg-pink-50",
+    border: "border-l-pink-500",
+  },
+  ASSESSMENT: {
+    icon: ClipboardCheck,
+    color: "text-teal-600",
+    bg: "bg-teal-50",
+    border: "border-l-teal-500",
+  },
+  VACCINATION: {
+    icon: Syringe,
+    color: "text-blue-600",
+    bg: "bg-blue-50",
+    border: "border-l-blue-500",
+  },
+  MEDICAL: {
+    icon: Heart,
+    color: "text-red-600",
+    bg: "bg-red-50",
+    border: "border-l-red-500",
+  },
+  MEDICINE: {
+    icon: Pill,
+    color: "text-purple-600",
+    bg: "bg-purple-50",
+    border: "border-l-purple-500",
+  },
+  INSURANCE: {
+    icon: Shield,
+    color: "text-orange-600",
+    bg: "bg-orange-50",
+    border: "border-l-orange-500",
+  },
+  PAYMENT: {
+    icon: DollarSign,
+    color: "text-amber-600",
+    bg: "bg-amber-50",
+    border: "border-l-amber-500",
+  },
+  CONTRACT: {
+    icon: FileText,
+    color: "text-indigo-600",
+    bg: "bg-indigo-50",
+    border: "border-l-indigo-500",
+  },
+  EVENT: {
+    icon: CalendarDays,
+    color: "text-emerald-600",
+    bg: "bg-emerald-50",
+    border: "border-l-emerald-500",
+  },
+  REQUEST: {
+    icon: MessageSquare,
+    color: "text-sky-600",
+    bg: "bg-sky-50",
+    border: "border-l-sky-500",
+  },
+};
 
-interface NotificationDropdownProps {
-  notifications: Notification[];
-  unreadCount: number;
+const defaultTypeConfig = {
+  icon: Bell,
+  color: "text-gray-600",
+  bg: "bg-gray-50",
+  border: "border-l-gray-400",
+};
+
+function getTypeConfig(title: string) {
+  // Try to infer notification type from title keywords
+  const t = title.toUpperCase();
+  if (t.includes("BIRTHDAY")) return typeConfig.BIRTHDAY;
+  if (t.includes("ASSESSMENT")) return typeConfig.ASSESSMENT;
+  if (t.includes("VACCINATION")) return typeConfig.VACCINATION;
+  if (t.includes("MEDICAL")) return typeConfig.MEDICAL;
+  if (t.includes("MEDICINE") || t.includes("MEDICATION"))
+    return typeConfig.MEDICINE;
+  if (t.includes("INSURANCE")) return typeConfig.INSURANCE;
+  if (t.includes("PAYMENT") || t.includes("OVERDUE"))
+    return typeConfig.PAYMENT;
+  if (t.includes("CONTRACT")) return typeConfig.CONTRACT;
+  if (t.includes("EVENT") || t.includes("HOLIDAY")) return typeConfig.EVENT;
+  if (t.includes("REQUEST") || t.includes("MESSAGE"))
+    return typeConfig.REQUEST;
+  return defaultTypeConfig;
 }
 
 function timeAgo(dateStr: string) {
@@ -52,6 +142,19 @@ function timeAgo(dateStr: string) {
   });
 }
 
+interface Notification {
+  id: string;
+  title: string;
+  body: string | null;
+  isRead: boolean;
+  createdAt: string;
+}
+
+interface NotificationDropdownProps {
+  notifications: Notification[];
+  unreadCount: number;
+}
+
 export function NotificationDropdown({
   notifications: initialNotifications,
   unreadCount: initialUnreadCount,
@@ -59,6 +162,7 @@ export function NotificationDropdown({
   const [notifications, setNotifications] = useState(initialNotifications);
   const [unreadCount, setUnreadCount] = useState(initialUnreadCount);
   const [isPending, startTransition] = useTransition();
+  const [open, setOpen] = useState(false);
 
   function handleMarkRead(id: string) {
     startTransition(async () => {
@@ -83,83 +187,117 @@ export function NotificationDropdown({
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button className="relative flex h-10 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none sm:w-10">
-          <Bell className={`size-[18px] ${unreadCount > 0 ? "text-amber-500" : ""}`} />
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button className="relative flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none">
+          <Bell
+            className={`size-[18px] ${unreadCount > 0 ? "text-amber-500" : ""}`}
+          />
           {unreadCount > 0 && (
-            <Badge
-              variant="destructive"
-              className="absolute -top-0.5 -right-0.5 flex size-[18px] items-center justify-center rounded-full p-0 text-[10px] leading-none"
-            >
+            <span className="absolute -top-0.5 -right-0.5 flex size-[18px] items-center justify-center rounded-full bg-red-500 text-[10px] font-bold leading-none text-white">
               {unreadCount > 99 ? "99+" : unreadCount}
-            </Badge>
+            </span>
           )}
         </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80 rounded-xl">
-        <DropdownMenuLabel className="flex items-center justify-between">
-          <span>Notifications</span>
+      </PopoverTrigger>
+      <PopoverContent
+        align="end"
+        sideOffset={8}
+        className="w-[380px] rounded-2xl p-0 shadow-lg"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between border-b px-4 py-3">
+          <h3 className="text-sm font-semibold text-foreground">
+            Notifications
+          </h3>
           {unreadCount > 0 && (
             <button
               onClick={handleMarkAllRead}
               disabled={isPending}
-              className="flex items-center gap-1 text-xs font-normal text-primary hover:underline disabled:opacity-50"
+              className="flex items-center gap-1 text-xs font-medium text-primary hover:underline disabled:opacity-50"
             >
               <CheckCheck className="size-3" />
               Mark all read
             </button>
           )}
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
+        </div>
+
+        {/* Notification list */}
+        <div className="max-h-[400px] overflow-y-auto">
           {notifications.length > 0 ? (
-            notifications.slice(0, 8).map((n) => (
-              <DropdownMenuItem
-                key={n.id}
-                className="flex cursor-pointer flex-col items-start gap-1 py-2.5"
-                onClick={() => !n.isRead && handleMarkRead(n.id)}
-              >
-                <div className="flex w-full items-start justify-between gap-2">
-                  <span
-                    className={`text-sm leading-tight ${n.isRead ? "text-muted-foreground" : "font-medium text-foreground"}`}
+            <div className="divide-y divide-border/40">
+              {notifications.slice(0, 10).map((n) => {
+                const config = getTypeConfig(n.title);
+                const Icon = config.icon;
+                return (
+                  <button
+                    key={n.id}
+                    onClick={() => !n.isRead && handleMarkRead(n.id)}
+                    className={`flex w-full items-start gap-3 border-l-[3px] px-4 py-3 text-left transition-colors hover:bg-muted/40 ${
+                      config.border
+                    } ${!n.isRead ? "bg-muted/20" : ""}`}
                   >
-                    {n.title}
-                  </span>
-                  {!n.isRead && (
-                    <span className="mt-0.5 size-2 shrink-0 rounded-full bg-primary" />
-                  )}
-                </div>
-                {n.body && (
-                  <span className="line-clamp-1 text-xs text-muted-foreground">
-                    {n.body}
-                  </span>
-                )}
-                <span className="text-xs text-muted-foreground/70">
-                  {timeAgo(n.createdAt)}
-                </span>
-              </DropdownMenuItem>
-            ))
+                    <div
+                      className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg ${config.bg}`}
+                    >
+                      <Icon className={`size-4 ${config.color}`} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <p
+                          className={`text-sm leading-tight ${
+                            n.isRead
+                              ? "text-muted-foreground"
+                              : "font-medium text-foreground"
+                          }`}
+                        >
+                          {n.title}
+                        </p>
+                        {!n.isRead && (
+                          <span className="mt-1 size-2 shrink-0 rounded-full bg-primary" />
+                        )}
+                      </div>
+                      {n.body && (
+                        <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+                          {n.body}
+                        </p>
+                      )}
+                      <p className="mt-0.5 text-[11px] text-muted-foreground/60">
+                        {timeAgo(n.createdAt)}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           ) : (
-            <div className="px-3 py-6 text-center text-sm text-muted-foreground">
-              No notifications
+            <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
+              <div className="flex size-12 items-center justify-center rounded-full bg-emerald-50">
+                <CheckCircle2 className="size-6 text-emerald-500" />
+              </div>
+              <p className="text-sm font-medium text-foreground">
+                All caught up!
+              </p>
+              <p className="text-xs text-muted-foreground">
+                No new notifications right now.
+              </p>
             </div>
           )}
-        </DropdownMenuGroup>
+        </div>
+
+        {/* Footer */}
         {notifications.length > 0 && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link
-                href="/alarms"
-                className="flex justify-center text-xs font-medium text-primary"
-              >
-                View all notifications
-              </Link>
-            </DropdownMenuItem>
-          </>
+          <div className="border-t px-4 py-2.5">
+            <Link
+              href="/alarms"
+              onClick={() => setOpen(false)}
+              className="flex justify-center text-xs font-medium text-primary hover:underline"
+            >
+              View all notifications
+            </Link>
+          </div>
         )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </PopoverContent>
+    </Popover>
   );
 }

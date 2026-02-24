@@ -11,6 +11,7 @@ import {
   LayoutGrid,
   Users,
   Bell,
+  BellRing,
 } from "lucide-react";
 
 const sections = [
@@ -85,6 +86,14 @@ const sections = [
     icon: Bell,
     iconBg: "bg-pink-100",
     iconColor: "text-pink-600",
+  },
+  {
+    title: "Notification Settings",
+    description: "Auto-notifications, templates & scheduling",
+    href: "/settings/notifications",
+    icon: BellRing,
+    iconBg: "bg-violet-100",
+    iconColor: "text-violet-600",
   },
 ];
 
