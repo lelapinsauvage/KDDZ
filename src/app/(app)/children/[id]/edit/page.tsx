@@ -118,13 +118,48 @@ export default async function ChildEditPage({ params }: ChildDetailsPageProps) {
     previousGarderie: child.previousGarderie,
     previousGarderieName: child.previousGarderieName ?? "",
 
+    // Addresses
+    addresses: (child.addresses ?? []).map((a) => ({
+      addressType: a.addressType ?? "",
+      country: a.country ?? "Lebanon",
+      street: a.street ?? "",
+      building: a.building ?? "",
+      floor: a.floor ?? "",
+      city: a.city ?? "",
+      telephone: a.telephone ?? "",
+    })),
+
+    // Siblings
+    siblings: (child.siblings ?? []).map((s) => ({
+      relation: s.relation ?? "",
+      firstName: s.firstName ?? "",
+      dateOfBirth: toDateString(s.dateOfBirth),
+      medicalCase: s.medicalCase ?? "",
+      canPickUp: s.canPickUp,
+    })),
+
     // Relatives
     relatives: (child.relatives ?? []).map((r) => ({
       name: r.name,
+      lastName: r.lastName ?? "",
       relation: r.relation ?? "",
       phone: r.phone ?? "",
+      mobile: r.mobile ?? "",
       isAuthorized: r.isAuthorized,
+      isEmergencyContact: r.isEmergencyContact,
     })),
+
+    // Financial
+    childNumber: child.childNumber ?? "",
+    garderieFees: child.garderieFees ? Number(child.garderieFees) : 0,
+    extraFees: child.extraFees ? Number(child.extraFees) : 0,
+    busFees: child.busFees ? Number(child.busFees) : 0,
+    apronFees: child.apronFees ? Number(child.apronFees) : 0,
+    registrationFees: child.registrationFees ? Number(child.registrationFees) : 0,
+    activitiesFees: child.activitiesFees ? Number(child.activitiesFees) : 0,
+    discount: child.discount ? Number(child.discount) : 0,
+    tva: child.tva ? Number(child.tva) : 0,
+    financialRemarks: child.financialRemarks ?? "",
 
     // Accounting entries
     accountingEntries: (child.accountingEntries ?? []).map((entry) => ({

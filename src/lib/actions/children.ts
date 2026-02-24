@@ -36,6 +36,8 @@ function parseParentData(raw: Record<string, unknown>) {
     ...raw,
     mother: raw.mother ? JSON.parse(raw.mother as string) : undefined,
     father: raw.father ? JSON.parse(raw.father as string) : undefined,
+    addresses: raw.addresses ? JSON.parse(raw.addresses as string) : [],
+    siblings: raw.siblings ? JSON.parse(raw.siblings as string) : [],
     relatives: raw.relatives ? JSON.parse(raw.relatives as string) : [],
     accountingEntries: raw.accountingEntries
       ? JSON.parse(raw.accountingEntries as string)
@@ -47,6 +49,14 @@ function parseParentData(raw: Record<string, unknown>) {
     previousGarderie: raw.previousGarderie === "true",
     milkPortions: raw.milkPortions ? Number(raw.milkPortions) : 0,
     milkScoop: raw.milkScoop ? Number(raw.milkScoop) : 0,
+    garderieFees: raw.garderieFees ? Number(raw.garderieFees) : 0,
+    extraFees: raw.extraFees ? Number(raw.extraFees) : 0,
+    busFees: raw.busFees ? Number(raw.busFees) : 0,
+    apronFees: raw.apronFees ? Number(raw.apronFees) : 0,
+    registrationFees: raw.registrationFees ? Number(raw.registrationFees) : 0,
+    activitiesFees: raw.activitiesFees ? Number(raw.activitiesFees) : 0,
+    discount: raw.discount ? Number(raw.discount) : 0,
+    tva: raw.tva ? Number(raw.tva) : 0,
   };
 }
 
@@ -134,6 +144,7 @@ export async function getChild(id: string) {
       include: {
         parents: true,
         relatives: true,
+        siblings: true,
         class: true,
         branch: true,
         schoolYear: true,
@@ -215,6 +226,18 @@ export async function createChild(formData: FormData): Promise<ActionResult> {
         language: data.language || null,
         previousGarderie: data.previousGarderie,
         previousGarderieName: data.previousGarderieName || null,
+        childNumber: data.childNumber || null,
+
+        // Financial
+        garderieFees: data.garderieFees || null,
+        extraFees: data.extraFees || null,
+        busFees: data.busFees || null,
+        apronFees: data.apronFees || null,
+        registrationFees: data.registrationFees || null,
+        activitiesFees: data.activitiesFees || null,
+        discount: data.discount || null,
+        tva: data.tva || null,
+        financialRemarks: data.financialRemarks || null,
 
         // Nested create for parents
         parents: {
@@ -264,15 +287,50 @@ export async function createChild(formData: FormData): Promise<ActionResult> {
           ],
         },
 
+        // Nested create for addresses
+        ...(data.addresses.length > 0
+          ? {
+              addresses: {
+                create: data.addresses.map((a) => ({
+                  addressType: a.addressType || null,
+                  country: a.country || null,
+                  street: a.street || null,
+                  building: a.building || null,
+                  floor: a.floor || null,
+                  city: a.city || null,
+                  telephone: a.telephone || null,
+                })),
+              },
+            }
+          : {}),
+
+        // Nested create for siblings
+        ...(data.siblings.length > 0
+          ? {
+              siblings: {
+                create: data.siblings.map((s) => ({
+                  relation: s.relation || null,
+                  firstName: s.firstName || null,
+                  dateOfBirth: s.dateOfBirth ? new Date(s.dateOfBirth) : null,
+                  medicalCase: s.medicalCase || null,
+                  canPickUp: s.canPickUp,
+                })),
+              },
+            }
+          : {}),
+
         // Nested create for relatives
         ...(data.relatives.length > 0
           ? {
               relatives: {
                 create: data.relatives.map((r) => ({
                   name: r.name,
+                  lastName: r.lastName || null,
                   relation: r.relation || null,
                   phone: r.phone || null,
+                  mobile: r.mobile || null,
                   isAuthorized: r.isAuthorized,
+                  isEmergencyContact: r.isEmergencyContact,
                 })),
               },
             }
@@ -394,6 +452,18 @@ export async function updateChild(
         language: data.language || null,
         previousGarderie: data.previousGarderie,
         previousGarderieName: data.previousGarderieName || null,
+        childNumber: data.childNumber || null,
+
+        // Financial
+        garderieFees: data.garderieFees || null,
+        extraFees: data.extraFees || null,
+        busFees: data.busFees || null,
+        apronFees: data.apronFees || null,
+        registrationFees: data.registrationFees || null,
+        activitiesFees: data.activitiesFees || null,
+        discount: data.discount || null,
+        tva: data.tva || null,
+        financialRemarks: data.financialRemarks || null,
       },
     });
 
@@ -447,6 +517,38 @@ export async function updateChild(
       }
     }
 
+    // Sync addresses: delete all then recreate
+    await db.childAddress.deleteMany({ where: { childId: id } });
+    if (data.addresses.length > 0) {
+      await db.childAddress.createMany({
+        data: data.addresses.map((a) => ({
+          childId: id,
+          addressType: a.addressType || null,
+          country: a.country || null,
+          street: a.street || null,
+          building: a.building || null,
+          floor: a.floor || null,
+          city: a.city || null,
+          telephone: a.telephone || null,
+        })),
+      });
+    }
+
+    // Sync siblings: delete all then recreate
+    await db.childSibling.deleteMany({ where: { childId: id } });
+    if (data.siblings.length > 0) {
+      await db.childSibling.createMany({
+        data: data.siblings.map((s) => ({
+          childId: id,
+          relation: s.relation || null,
+          firstName: s.firstName || null,
+          dateOfBirth: s.dateOfBirth ? new Date(s.dateOfBirth) : null,
+          medicalCase: s.medicalCase || null,
+          canPickUp: s.canPickUp,
+        })),
+      });
+    }
+
     // Sync relatives: delete all then recreate
     await db.relative.deleteMany({ where: { childId: id } });
     if (data.relatives.length > 0) {
@@ -454,9 +556,12 @@ export async function updateChild(
         data: data.relatives.map((r) => ({
           childId: id,
           name: r.name,
+          lastName: r.lastName || null,
           relation: r.relation || null,
           phone: r.phone || null,
+          mobile: r.mobile || null,
           isAuthorized: r.isAuthorized,
+          isEmergencyContact: r.isEmergencyContact,
         })),
       });
     }

@@ -1,5 +1,16 @@
 import { z } from "zod";
 
+// ── Address sub-schema ──
+const addressSchema = z.object({
+  addressType: z.string().default(""),
+  country: z.string().default("Lebanon"),
+  street: z.string().default(""),
+  building: z.string().default(""),
+  floor: z.string().default(""),
+  city: z.string().default(""),
+  telephone: z.string().default(""),
+});
+
 // ── Guardian sub-schema ──
 const guardianSchema = z.object({
   firstName: z.string().default(""),
@@ -18,12 +29,24 @@ const guardianSchema = z.object({
   idNumber: z.string().default(""),
 });
 
+// ── Sibling sub-schema ──
+const siblingSchema = z.object({
+  relation: z.string().default(""),
+  firstName: z.string().default(""),
+  dateOfBirth: z.string().default(""),
+  medicalCase: z.string().default(""),
+  canPickUp: z.boolean().default(false),
+});
+
 // ── Relative sub-schema ──
 const relativeSchema = z.object({
   name: z.string().min(1, "Name is required"),
+  lastName: z.string().default(""),
   relation: z.string().min(1, "Relation is required"),
   phone: z.string().min(1, "Phone is required"),
+  mobile: z.string().default(""),
   isAuthorized: z.boolean().default(false),
+  isEmergencyContact: z.boolean().default(false),
 });
 
 // ── Accounting entry sub-schema ──
@@ -32,6 +55,23 @@ const accountingEntrySchema = z.object({
   amount: z.coerce.number().min(0, "Amount must be positive"),
   type: z.enum(["FEE", "DISCOUNT", "PAYMENT", "ADJUSTMENT"]),
 });
+
+const guardianDefaults = {
+  firstName: "",
+  lastName: "",
+  nationality: "",
+  phone: "",
+  mobile: "",
+  email: "",
+  profession: "",
+  workplace: "",
+  workPhone: "",
+  maritalStatus: "",
+  divorceSituation: "",
+  medicalCase: "",
+  canPickUp: true,
+  idNumber: "",
+};
 
 // ── Main child form schema ──
 export const childFormSchema = z.object({
@@ -53,41 +93,17 @@ export const childFormSchema = z.object({
   allergies: z.string().default(""),
   photo: z.string().default(""),
 
+  // Addresses
+  addresses: z.array(addressSchema).default([]),
+
   // Mother
-  mother: guardianSchema.default({
-    firstName: "",
-    lastName: "",
-    nationality: "",
-    phone: "",
-    mobile: "",
-    email: "",
-    profession: "",
-    workplace: "",
-    workPhone: "",
-    maritalStatus: "",
-    divorceSituation: "",
-    medicalCase: "",
-    canPickUp: true,
-    idNumber: "",
-  }),
+  mother: guardianSchema.default(guardianDefaults),
 
   // Father
-  father: guardianSchema.default({
-    firstName: "",
-    lastName: "",
-    nationality: "",
-    phone: "",
-    mobile: "",
-    email: "",
-    profession: "",
-    workplace: "",
-    workPhone: "",
-    maritalStatus: "",
-    divorceSituation: "",
-    medicalCase: "",
-    canPickUp: true,
-    idNumber: "",
-  }),
+  father: guardianSchema.default(guardianDefaults),
+
+  // Siblings
+  siblings: z.array(siblingSchema).default([]),
 
   // Enrollment
   branchId: z.string().min(1, "Branch is required"),
@@ -96,6 +112,7 @@ export const childFormSchema = z.object({
   enrollmentDate: z.string().default(""),
   isActive: z.boolean().default(true),
   isDraft: z.boolean().default(false),
+  childNumber: z.string().default(""),
 
   // Care preferences
   busAttendance: z.boolean().default(false),
@@ -116,6 +133,17 @@ export const childFormSchema = z.object({
 
   // Relatives
   relatives: z.array(relativeSchema).default([]),
+
+  // Financial
+  garderieFees: z.coerce.number().default(0),
+  extraFees: z.coerce.number().default(0),
+  busFees: z.coerce.number().default(0),
+  apronFees: z.coerce.number().default(0),
+  registrationFees: z.coerce.number().default(0),
+  activitiesFees: z.coerce.number().default(0),
+  discount: z.coerce.number().default(0),
+  tva: z.coerce.number().default(0),
+  financialRemarks: z.string().default(""),
 
   // Accounting
   accountingEntries: z.array(accountingEntrySchema).default([]),
