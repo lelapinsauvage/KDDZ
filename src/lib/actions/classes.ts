@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import type { AgeUnit, Prisma } from "@/generated/prisma/client";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -17,27 +18,24 @@ interface ClassListParams {
 interface ClassData {
   name: string;
   branchId: string;
-  capacity?: number;
-  ageGroup?: string | null;
+  language?: string | null;
+  ageFrom?: number | null;
+  ageTo?: number | null;
+  ageFromUnit?: AgeUnit | null;
+  ageToUnit?: AgeUnit | null;
+  cameraNumber?: number | null;
+  maxStudents?: number;
+  imageUrl?: string | null;
   isActive?: boolean;
 }
-
-type ActionResult<T = unknown> = {
-  success: boolean;
-  error?: string;
-  data?: T;
-};
 
 // ---------------------------------------------------------------------------
 // getClasses
 // ---------------------------------------------------------------------------
 
-export async function getClasses(
-  params: ClassListParams = {},
-): Promise<ActionResult> {
+export async function getClasses(params: ClassListParams = {}) {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: any = {};
+    const where: Prisma.ClassWhereInput = {};
 
     if (params.branchId) {
       where.branchId = params.branchId;
@@ -60,10 +58,35 @@ export async function getClasses(
       orderBy: { name: "asc" },
     });
 
-    return { success: true, data: classes };
+    return { success: true as const, data: classes };
   } catch (error) {
     console.error("Failed to fetch classes:", error);
-    return { success: false, error: "Failed to fetch classes" };
+    return { success: false as const, error: "Failed to fetch classes" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// getClass
+// ---------------------------------------------------------------------------
+
+export async function getClass(id: string) {
+  try {
+    const cls = await db.class.findUnique({
+      where: { id },
+      include: {
+        branch: true,
+        _count: { select: { children: true } },
+      },
+    });
+
+    if (!cls) {
+      return { success: false as const, error: "Class not found" };
+    }
+
+    return { success: true as const, data: cls };
+  } catch (error) {
+    console.error("Failed to fetch class:", error);
+    return { success: false as const, error: "Failed to fetch class" };
   }
 }
 
@@ -71,29 +94,35 @@ export async function getClasses(
 // createClass
 // ---------------------------------------------------------------------------
 
-export async function createClass(data: ClassData): Promise<ActionResult> {
+export async function createClass(data: ClassData) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+      return { success: false as const, error: "Unauthorized" };
     }
 
     const created = await db.class.create({
       data: {
         name: data.name,
         branchId: data.branchId,
-        capacity: data.capacity ?? 0,
-        ageGroup: data.ageGroup ?? null,
+        language: data.language ?? null,
+        ageFrom: data.ageFrom ?? null,
+        ageTo: data.ageTo ?? null,
+        ageFromUnit: data.ageFromUnit ?? null,
+        ageToUnit: data.ageToUnit ?? null,
+        cameraNumber: data.cameraNumber ?? null,
+        maxStudents: data.maxStudents ?? 0,
+        imageUrl: data.imageUrl ?? null,
         isActive: data.isActive ?? true,
       },
     });
 
     revalidatePath("/classes");
 
-    return { success: true, data: created };
+    return { success: true as const, data: created };
   } catch (error) {
     console.error("Failed to create class:", error);
-    return { success: false, error: "Failed to create class" };
+    return { success: false as const, error: "Failed to create class" };
   }
 }
 
@@ -101,24 +130,33 @@ export async function createClass(data: ClassData): Promise<ActionResult> {
 // updateClass
 // ---------------------------------------------------------------------------
 
-export async function updateClass(
-  id: string,
-  data: Partial<ClassData>,
-): Promise<ActionResult> {
+export async function updateClass(id: string, data: Partial<ClassData>) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+      return { success: false as const, error: "Unauthorized" };
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updateData: any = {};
+    const existing = await db.class.findUnique({ where: { id } });
+    if (!existing) {
+      return { success: false as const, error: "Class not found" };
+    }
+
+    const updateData: Prisma.ClassUpdateInput = {};
 
     if (data.name !== undefined) updateData.name = data.name;
-    if (data.branchId !== undefined) updateData.branchId = data.branchId;
-    if (data.capacity !== undefined) updateData.capacity = data.capacity;
-    if (data.ageGroup !== undefined) updateData.ageGroup = data.ageGroup;
+    if (data.language !== undefined) updateData.language = data.language;
+    if (data.ageFrom !== undefined) updateData.ageFrom = data.ageFrom;
+    if (data.ageTo !== undefined) updateData.ageTo = data.ageTo;
+    if (data.ageFromUnit !== undefined) updateData.ageFromUnit = data.ageFromUnit;
+    if (data.ageToUnit !== undefined) updateData.ageToUnit = data.ageToUnit;
+    if (data.cameraNumber !== undefined) updateData.cameraNumber = data.cameraNumber;
+    if (data.maxStudents !== undefined) updateData.maxStudents = data.maxStudents;
+    if (data.imageUrl !== undefined) updateData.imageUrl = data.imageUrl;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
+    if (data.branchId !== undefined) {
+      updateData.branch = { connect: { id: data.branchId } };
+    }
 
     const updated = await db.class.update({
       where: { id },
@@ -127,10 +165,10 @@ export async function updateClass(
 
     revalidatePath("/classes");
 
-    return { success: true, data: updated };
+    return { success: true as const, data: updated };
   } catch (error) {
     console.error("Failed to update class:", error);
-    return { success: false, error: "Failed to update class" };
+    return { success: false as const, error: "Failed to update class" };
   }
 }
 
@@ -138,20 +176,25 @@ export async function updateClass(
 // deleteClass
 // ---------------------------------------------------------------------------
 
-export async function deleteClass(id: string): Promise<ActionResult> {
+export async function deleteClass(id: string) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+      return { success: false as const, error: "Unauthorized" };
+    }
+
+    const existing = await db.class.findUnique({ where: { id } });
+    if (!existing) {
+      return { success: false as const, error: "Class not found" };
     }
 
     await db.class.delete({ where: { id } });
 
     revalidatePath("/classes");
 
-    return { success: true };
+    return { success: true as const };
   } catch (error) {
     console.error("Failed to delete class:", error);
-    return { success: false, error: "Failed to delete class" };
+    return { success: false as const, error: "Failed to delete class" };
   }
 }

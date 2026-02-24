@@ -163,6 +163,11 @@ enum PortionSize {
   ALL
 }
 
+enum AgeUnit {
+  YEARS
+  MONTHS
+}
+
 enum DocumentType {
   COMMERCIAL_REGISTER
   CIVIL_STATUS
@@ -361,14 +366,22 @@ model SchoolYear {
 }
 
 model Class {
-  id        String   @id @default(uuid()) @db.Uuid
-  branchId  String   @db.Uuid
-  name      String
-  capacity  Int      @default(0)
-  ageGroup  String?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(uuid()) @db.Uuid
+  branchId     String   @db.Uuid
+  name         String
+  language     String?
+  ageFrom      Int?
+  ageTo        Int?
+  ageFromUnit  AgeUnit?
+  ageToUnit    AgeUnit?
+  cameraNumber Int?
+  maxStudents  Int      @default(0)
+  imageUrl     String?
+  capacity     Int      @default(0)
+  ageGroup     String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   branch   Branch  @relation(fields: [branchId], references: [id], onDelete: Cascade)
   children Child[]
