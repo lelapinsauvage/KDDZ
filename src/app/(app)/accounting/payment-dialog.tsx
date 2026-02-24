@@ -400,7 +400,7 @@ export function PaymentDialog({
               Close
             </Button>
             <Button
-             
+              variant="default"
               onClick={handleSubmit}
               disabled={isPending}
             >

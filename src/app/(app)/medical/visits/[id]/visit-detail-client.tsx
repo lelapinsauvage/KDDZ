@@ -204,7 +204,7 @@ export function VisitDetailClient({
               Save Draft
             </Button>
             <Button
-             
+              variant="default"
               className="text-white"
               onClick={handleSubmit(onSubmitForm)}
               disabled={busy}

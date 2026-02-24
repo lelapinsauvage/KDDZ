@@ -242,7 +242,7 @@ export function ConditionDetailClient({
               Save Draft
             </Button>
             <Button
-             
+              variant="default"
               className="text-white"
               onClick={handleSubmit(onSubmit)}
               disabled={isLoading}

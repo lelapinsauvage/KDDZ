@@ -257,7 +257,7 @@ export function GeneralDetailClient({
               Save Draft
             </Button>
             <Button
-             
+              variant="default"
               className="text-white"
               onClick={handleSubmit(onSubmitForm)}
               disabled={isLoading}

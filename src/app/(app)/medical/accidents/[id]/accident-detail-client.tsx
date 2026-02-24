@@ -290,7 +290,7 @@ export function AccidentDetailClient({
               Save Draft
             </Button>
             <Button
-             
+              variant="default"
               className="text-white"
               onClick={handleSubmit(onSubmit)}
               disabled={busy}
