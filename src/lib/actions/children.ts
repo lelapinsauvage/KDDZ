@@ -637,3 +637,73 @@ export async function deleteChild(
 export async function getDrafts(params: Omit<GetChildrenParams, "status"> = {}) {
   return getChildren({ ...params, status: "DRAFT" });
 }
+
+// ── getChildDashboardStats ────────────────────────
+// Aggregated counts for the child dashboard overview
+
+export async function getChildDashboardStats(childId: string) {
+  try {
+    const [
+      incomingCalls,
+      outgoingCalls,
+      accidentReports,
+      totalPayments,
+      totalAttendance,
+      totalAbsence,
+      totalDailyReports,
+      totalAbsenceReports,
+      assessments,
+    ] = await Promise.all([
+      db.callLog.count({ where: { childId, direction: "INCOMING" } }),
+      db.callLog.count({ where: { childId, direction: "OUTGOING" } }),
+      db.medicalForm.count({ where: { childId, formType: "ACCIDENTS" } }),
+      db.payment.aggregate({
+        where: { childId },
+        _sum: { amount: true },
+      }),
+      db.dailyReport.count({
+        where: { childId, status: "SUBMITTED" },
+      }),
+      db.absenceReport.count({ where: { childId } }),
+      db.dailyReport.count({ where: { childId } }),
+      db.absenceReport.count({ where: { childId } }),
+      db.assessment.findMany({
+        where: { childId },
+        select: {
+          id: true,
+          assessmentType: true,
+          status: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+    ]);
+
+    return {
+      incomingCalls,
+      outgoingCalls,
+      accidentReports,
+      totalPayments: totalPayments._sum.amount
+        ? Number(totalPayments._sum.amount)
+        : 0,
+      totalAttendance,
+      totalAbsence,
+      totalDailyReports,
+      totalAbsenceReports,
+      assessments,
+    };
+  } catch (error) {
+    console.error("getChildDashboardStats error:", error);
+    return {
+      incomingCalls: 0,
+      outgoingCalls: 0,
+      accidentReports: 0,
+      totalPayments: 0,
+      totalAttendance: 0,
+      totalAbsence: 0,
+      totalDailyReports: 0,
+      totalAbsenceReports: 0,
+      assessments: [],
+    };
+  }
+}

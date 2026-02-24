@@ -1,12 +1,10 @@
 import { notFound } from "next/navigation";
-import { getChild } from "@/lib/actions/children";
+import { getChild, getChildDashboardStats } from "@/lib/actions/children";
 import { getDailyReports } from "@/lib/actions/daily-reports";
-import { getAlarms } from "@/lib/actions/alarms";
 import { getChildAttendance, getChildAbsences } from "@/lib/actions/attendance";
 import { getMedicalForms } from "@/lib/actions/medical";
 import { getVaccinations } from "@/lib/actions/medical";
 import { getAccountingSummary } from "@/lib/actions/accounting";
-import { getChildTimeline } from "@/lib/actions/timeline";
 import { DashboardClient } from "./dashboard-client";
 
 interface Props {
@@ -23,29 +21,28 @@ export default async function ChildDashboardPage({ params }: Props) {
 
   // Fetch data in parallel
   const [
-    { reports: recentReportsRaw },
-    alarmsResult,
+    { reports: allReportsRaw, total: totalReportsCount },
     attendanceRecords,
     absences,
     { forms: medicalForms },
     { vaccinations },
     accountingSummary,
-    timeline,
+    dashboardStats,
   ] = await Promise.all([
-    getDailyReports({ childId: id, pageSize: 5 }),
-    getAlarms({ isActive: true, pageSize: 10 }),
+    getDailyReports({ childId: id, pageSize: 100 }),
     getChildAttendance(id),
     getChildAbsences(id),
-    getMedicalForms({ childId: id }),
+    getMedicalForms({ childId: id, pageSize: 100 }),
     getVaccinations({ childId: id }),
     getAccountingSummary(id),
-    getChildTimeline(id),
+    getChildDashboardStats(id),
   ]);
 
-  // Compute attendance rate
+  // Compute attendance stats
   const totalDays = attendanceRecords.length;
   const presentDays = attendanceRecords.filter((r) => r.status === "PRESENT").length;
-  const attendanceRate = totalDays > 0 ? `${Math.round((presentDays / totalDays) * 100)}%` : "N/A";
+  const absentDays = attendanceRecords.filter((r) => r.status === "ABSENT").length;
+  const noReportDays = totalDays - presentDays - absentDays;
 
   // Compute outstanding balance
   const balanceStr = accountingSummary.balance > 0
@@ -62,109 +59,111 @@ export default async function ChildDashboardPage({ params }: Props) {
     email: p.email ?? null,
   }));
 
-  // Map child to serializable shape
+  // Mother/father phone numbers
+  const motherParent = (child.parents ?? []).find((p) => p.type === "MOTHER");
+  const fatherParent = (child.parents ?? []).find((p) => p.type === "FATHER");
+
+  // Map child to serializable shape with all fields needed
   const childData = {
     id: child.id,
     firstName: child.firstName,
+    firstNameAr: child.firstNameAr ?? null,
     lastName: child.lastName,
+    lastNameAr: child.lastNameAr ?? null,
     photo: child.photo ?? null,
+    childNumber: child.childNumber ?? null,
     className: child.class?.name ?? null,
     branchName: child.branch?.name ?? null,
     dateOfBirth: child.dateOfBirth ? child.dateOfBirth.toISOString().slice(0, 10) : null,
+    enrollmentDate: child.enrollmentDate ? child.enrollmentDate.toISOString().slice(0, 10) : null,
     bloodType: child.bloodType ?? null,
     isActive: child.isActive,
     gender: child.gender ?? null,
     nationality: child.nationality ?? null,
+    language: child.language ?? null,
     allergies: child.allergies ?? null,
     busAttendance: child.busAttendance,
     lunchIncluded: child.lunchIncluded,
+    diaperType: child.diaperType ?? null,
+    milkType: child.milkType ?? null,
+    milkPortions: child.milkPortions ?? null,
     parents,
+    motherPhone: motherParent?.phone ?? motherParent?.mobile ?? null,
+    fatherPhone: fatherParent?.phone ?? fatherParent?.mobile ?? null,
+    relatives: (child.relatives ?? []).map((r) => ({
+      name: [r.name, r.lastName].filter(Boolean).join(" "),
+      relation: r.relation ?? null,
+      phone: r.phone ?? r.mobile ?? null,
+      isAuthorized: r.isAuthorized,
+      isEmergencyContact: r.isEmergencyContact,
+    })),
   };
 
-  // Map recent reports
-  const recentReports = recentReportsRaw.map((r) => {
-    const meals = [
-      r.breakfastPortion ? `Breakfast: ${r.breakfastPortion}` : null,
-      r.lunchPortion ? `Lunch: ${r.lunchPortion}` : null,
-      r.dessertPortion ? `Dessert: ${r.dessertPortion}` : null,
-    ]
-      .filter(Boolean)
-      .join(", ") || "No meal data";
+  // Map recent reports for table (first 10)
+  const recentReports = allReportsRaw.slice(0, 10).map((r) => ({
+    id: r.id,
+    date: r.reportDate.toISOString().slice(0, 10),
+    breakfastPortion: r.breakfastPortion ?? null,
+    lunchPortion: r.lunchPortion ?? null,
+    dessertPortion: r.dessertPortion ?? null,
+    status: r.status,
+    mood: r.mood ?? null,
+  }));
 
-    let sleep = "N/A";
-    if (r.isSleep && r.sleepFrom && r.sleepTo) {
-      const fromMs = r.sleepFrom.getTime();
-      const toMs = r.sleepTo.getTime();
-      const diffHours = Math.abs(toMs - fromMs) / (1000 * 60 * 60);
-      sleep = `${diffHours.toFixed(1)} hrs`;
-    }
+  // Map absence reports for table
+  const absenceList = absences.slice(0, 10).map((a) => ({
+    id: a.id,
+    date: a.date.toISOString().slice(0, 10),
+    reason: a.reason ?? null,
+    status: a.status,
+  }));
 
-    return {
-      date: r.reportDate.toISOString().slice(0, 10),
-      mood: r.mood ?? null,
-      meals,
-      sleep,
-    };
-  });
+  // Map medical forms for table
+  const medicalList = medicalForms.map((m) => ({
+    id: m.id,
+    formType: m.formType,
+    status: m.status,
+    date: m.createdAt.toISOString().slice(0, 10),
+  }));
 
-  // Map alarms — filter to those relevant to this child or general
-  const alarmsData = alarmsResult.success && alarmsResult.data
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ? (alarmsResult.data as any).alarms ?? []
-    : [];
-
-  const upcomingAlarms = alarmsData
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .filter((a: any) => !a.referenceId || a.referenceId === id)
-    .slice(0, 5)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .map((a: any) => {
-      const colorMap: Record<string, string> = {
-        VACCINATION: "text-red-500",
-        ASSESSMENT: "text-blue-500",
-        BIRTHDAY: "text-pink-500",
-        MEDICAL: "text-red-500",
-        MEDICINE: "text-orange-500",
-        EVENT: "text-purple-500",
-        INSURANCE: "text-yellow-500",
-        PAYMENT: "text-green-500",
-        REQUEST: "text-blue-500",
-        CONTRACT: "text-gray-500",
-        OTHER: "text-gray-500",
-      };
-      return {
-        type: a.type as string,
-        message: a.message as string | null,
-        date: a.dueDate ? new Date(a.dueDate).toISOString().slice(0, 10) : null,
-        color: colorMap[a.type] ?? "text-gray-500",
-      };
-    });
-
-  // Map vaccinations
-  const upcomingVaccinations = vaccinations
-    .filter((v) => v.nextDueDate && v.nextDueDate >= new Date())
-    .slice(0, 5)
-    .map((v) => ({
-      name: v.vaccineName,
-      dueDate: v.nextDueDate!.toISOString().slice(0, 10),
-    }));
+  // Map assessments for table
+  const assessmentList = dashboardStats.assessments.map((a) => ({
+    id: a.id,
+    assessmentType: a.assessmentType,
+    status: a.status,
+    date: a.createdAt.toISOString().slice(0, 10),
+  }));
 
   const stats = {
-    attendanceRate,
-    totalReports: recentReportsRaw.length > 0 ? recentReportsRaw.length : 0,
-    totalAbsences: absences.length,
-    medicalRecords: medicalForms.length,
+    incomingCalls: dashboardStats.incomingCalls,
+    outgoingCalls: dashboardStats.outgoingCalls,
+    accidentReports: dashboardStats.accidentReports,
+    totalPayments: `$${dashboardStats.totalPayments.toFixed(2)}`,
+    totalAttendance: dashboardStats.totalAttendance,
+    totalAbsence: dashboardStats.totalAbsence,
+    missingDailyReports: totalDays > 0 ? Math.max(0, totalDays - dashboardStats.totalDailyReports) : 0,
+    missingAbsentReports: absentDays > 0 ? Math.max(0, absentDays - dashboardStats.totalAbsenceReports) : 0,
     outstandingBalance: balanceStr,
+    attendanceRate: totalDays > 0 ? `${Math.round((presentDays / totalDays) * 100)}%` : "N/A",
+    totalReports: totalReportsCount,
+    medicalRecords: medicalForms.length,
+  };
+
+  const attendanceChart = {
+    present: presentDays,
+    absent: absentDays,
+    noReport: noReportDays,
   };
 
   return (
     <DashboardClient
       child={childData}
       stats={stats}
+      attendanceChart={attendanceChart}
       recentReports={recentReports}
-      upcomingAlarms={upcomingAlarms}
-      upcomingVaccinations={upcomingVaccinations}
-      timeline={timeline}
+      absenceList={absenceList}
+      medicalList={medicalList}
+      assessmentList={assessmentList}
     />
   );
 }
