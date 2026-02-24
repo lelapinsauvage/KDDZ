@@ -8,6 +8,7 @@ import {
   Pencil,
   ShieldCheck,
   FileText,
+  GraduationCap,
 } from "lucide-react";
 
 interface Props {
@@ -18,6 +19,7 @@ interface Props {
 
 const navItems = [
   { label: "Dashboard", href: "dashboard", icon: LayoutDashboard },
+  { label: "Classes", href: "classes", icon: GraduationCap },
   { label: "Edit", href: "edit", icon: Pencil },
   { label: "Compliance", href: "compliance", icon: ShieldCheck },
   { label: "Documents", href: "compliance/documents", icon: FileText },

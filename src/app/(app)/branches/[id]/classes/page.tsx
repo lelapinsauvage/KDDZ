@@ -6,9 +6,15 @@ import {
   type BranchOption,
 } from "@/components/classes/classes-client";
 
-export default async function ClassesManagementPage() {
+interface Props {
+  params: Promise<{ id: string }>;
+}
+
+export default async function BranchClassesPage({ params }: Props) {
+  const { id } = await params;
+
   const [classesResult, branchesResult] = await Promise.all([
-    getClasses(),
+    getClasses({ branchId: id }),
     getBranches(),
   ]);
 
@@ -38,5 +44,5 @@ export default async function ClassesManagementPage() {
     name: b.name,
   }));
 
-  return <ClassesClient classes={classes} branches={branches} />;
+  return <ClassesClient classes={classes} branches={branches} branchId={id} />;
 }
