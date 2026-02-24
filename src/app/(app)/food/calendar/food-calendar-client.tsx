@@ -6,6 +6,8 @@ import {
   ChevronRight,
   Printer,
   Plus,
+  CalendarDays,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -176,6 +178,17 @@ export function FoodCalendarClient({
     [year, month, fetchCalendar, startTransition]
   );
 
+  const goToToday = useCallback(() => {
+    const now = new Date();
+    const todayYear = now.getFullYear();
+    const todayMonth = now.getMonth() + 1;
+    setYear(todayYear);
+    setMonth(todayMonth);
+    startTransition(() => {
+      fetchCalendar(branch, todayYear, todayMonth);
+    });
+  }, [branch, fetchCalendar, startTransition]);
+
   // Open day assignment dialog
   const openDayDialog = useCallback(
     (day: number) => {
@@ -237,6 +250,22 @@ export function FoodCalendarClient({
     fetchCalendar,
     startTransition,
   ]);
+
+  // Remove all meals for the selected day
+  const handleRemoveAll = useCallback(() => {
+    if (!branch || !selectedDate) return;
+
+    startTransition(async () => {
+      const dayData = calendar[selectedDate] ?? {};
+      for (const entry of Object.values(dayData)) {
+        if (entry?.id) {
+          await deleteFoodCalendarEntry(entry.id);
+        }
+      }
+      await fetchCalendar(branch, year, month);
+      setDialogOpen(false);
+    });
+  }, [branch, selectedDate, calendar, year, month, fetchCalendar, startTransition]);
 
   // Foods filtered by category
   const foodsByCategory = useMemo(() => {
@@ -323,6 +352,16 @@ export function FoodCalendarClient({
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
+              size="sm"
+              onClick={goToToday}
+              disabled={isPending}
+              className="gap-1.5"
+            >
+              <CalendarDays className="size-4" />
+              Today
+            </Button>
+            <Button
+              variant="outline"
               size="icon"
               onClick={prevMonth}
               disabled={isPending}
@@ -390,21 +429,32 @@ export function FoodCalendarClient({
                           const dayData = calendar[dateKey] ?? {};
                           const hasMeals = Object.keys(dayData).length > 0;
                           const isWeekend = dayIdx === 0 || dayIdx === 6;
+                          const now = new Date();
+                          const isToday =
+                            day === now.getDate() &&
+                            month === now.getMonth() + 1 &&
+                            year === now.getFullYear();
 
                           return (
                             <td
                               key={dayIdx}
                               className={`border-b border-r last:border-r-0 p-1.5 align-top h-[120px] cursor-pointer transition-colors hover:bg-primary/5 group ${
-                                isWeekend ? "bg-gray-50/70" : "bg-white"
-                              }`}
+                                hasMeals
+                                  ? "bg-emerald-50/80"
+                                  : isWeekend
+                                    ? "bg-gray-50/70"
+                                    : "bg-white"
+                              } ${isToday ? "ring-2 ring-inset ring-primary/40" : ""}`}
                               onClick={() => openDayDialog(day)}
                             >
                               <div className="flex items-start justify-between mb-1">
                                 <span
-                                  className={`text-sm font-medium ${
-                                    hasMeals
-                                      ? "text-primary"
-                                      : "text-foreground"
+                                  className={`inline-flex size-6 items-center justify-center rounded-full text-sm font-medium ${
+                                    isToday
+                                      ? "bg-primary text-primary-foreground"
+                                      : hasMeals
+                                        ? "text-emerald-700"
+                                        : "text-foreground"
                                   }`}
                                 >
                                   {day}
@@ -461,7 +511,7 @@ export function FoodCalendarClient({
 
       {/* Day Assignment Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-[480px]">
+        <DialogContent className="sm:max-w-[480px] rounded-2xl">
           <DialogHeader>
             <DialogTitle>
               Assign Meals &mdash;{" "}
@@ -571,18 +621,31 @@ export function FoodCalendarClient({
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-             
-              className="text-white"
-              onClick={handleSaveDay}
-              disabled={isPending}
-            >
-              {isPending ? "Saving..." : "Save"}
-            </Button>
+          <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">
+            {selectedDate && Object.keys(calendar[selectedDate] ?? {}).length > 0 && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleRemoveAll}
+                disabled={isPending}
+                className="gap-1.5 sm:mr-auto"
+              >
+                <Trash2 className="size-3.5" />
+                Remove All
+              </Button>
+            )}
+            <div className="flex gap-2 sm:ml-auto">
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                Close
+              </Button>
+              <Button
+                className="text-white"
+                onClick={handleSaveDay}
+                disabled={isPending}
+              >
+                {isPending ? "Saving..." : "Update"}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
