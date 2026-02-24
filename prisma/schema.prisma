@@ -546,6 +546,19 @@ model Child {
   language       String?
   previousGarderie     Boolean @default(false)
   previousGarderieName String?
+  childNumber    String?
+
+  // Financial
+  garderieFees     Decimal? @db.Decimal(10, 2)
+  extraFees        Decimal? @db.Decimal(10, 2)
+  busFees          Decimal? @db.Decimal(10, 2)
+  apronFees        Decimal? @db.Decimal(10, 2)
+  registrationFees Decimal? @db.Decimal(10, 2)
+  activitiesFees   Decimal? @db.Decimal(10, 2)
+  discount         Decimal? @db.Decimal(10, 2)
+  tva              Decimal? @db.Decimal(5, 2)
+  financialRemarks String?  @db.Text
+
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
@@ -556,6 +569,7 @@ model Child {
   addresses        ChildAddress[]
   parents          Parent[]
   relatives        Relative[]
+  siblings         ChildSibling[]
   attachments      ChildAttachment[]
   history          ChildHistory[]
   parentUsers      ParentUser[]
@@ -577,15 +591,18 @@ model Child {
 }
 
 model ChildAddress {
-  id        String   @id @default(uuid()) @db.Uuid
-  childId   String   @db.Uuid
-  street    String?
-  building  String?
-  floor     String?
-  city      String?
-  regionId  String?  @db.Uuid
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(uuid()) @db.Uuid
+  childId     String   @db.Uuid
+  addressType String?
+  country     String?  @default("Lebanon")
+  street      String?
+  building    String?
+  floor       String?
+  city        String?
+  telephone   String?
+  regionId    String?  @db.Uuid
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   child  Child   @relation(fields: [childId], references: [id], onDelete: Cascade)
   region Region? @relation(fields: [regionId], references: [id], onDelete: SetNull)
@@ -624,14 +641,17 @@ model Parent {
 }
 
 model Relative {
-  id           String   @id @default(uuid()) @db.Uuid
-  childId      String   @db.Uuid
-  name         String
-  relation     String?
-  phone        String?
-  isAuthorized Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                 String   @id @default(uuid()) @db.Uuid
+  childId            String   @db.Uuid
+  name               String
+  lastName           String?
+  relation           String?
+  phone              String?
+  mobile             String?
+  isAuthorized       Boolean  @default(false)
+  isEmergencyContact Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   child Child @relation(fields: [childId], references: [id], onDelete: Cascade)
 
@@ -639,9 +659,27 @@ model Relative {
   @@map("relatives")
 }
 
+model ChildSibling {
+  id          String    @id @default(uuid()) @db.Uuid
+  childId     String    @db.Uuid
+  relation    String?
+  firstName   String?
+  dateOfBirth DateTime? @db.Date
+  medicalCase String?
+  canPickUp   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  child Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@index([childId])
+  @@map("child_siblings")
+}
+
 model ChildAttachment {
   id        String   @id @default(uuid()) @db.Uuid
   childId   String   @db.Uuid
+  title     String?
   filename  String
   fileUrl   String
   type      String?
