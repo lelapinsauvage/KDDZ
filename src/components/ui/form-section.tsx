@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 interface FormSectionProps {
   id?: string;
   title: string;
+  subtitle?: string;
   color?: "blue" | "green" | "yellow" | "purple" | "teal" | "red";
   collapsible?: boolean;
   defaultOpen?: boolean;
@@ -26,6 +27,7 @@ const colorMap: Record<string, string> = {
 export function FormSection({
   id,
   title,
+  subtitle,
   color = "blue",
   collapsible = false,
   defaultOpen = true,
@@ -53,7 +55,12 @@ export function FormSection({
         tabIndex={collapsible ? 0 : -1}
       >
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+            {subtitle && (
+              <p className="text-xs text-muted-foreground" dir="rtl">{subtitle}</p>
+            )}
+          </div>
           {badge}
         </div>
         {collapsible && (

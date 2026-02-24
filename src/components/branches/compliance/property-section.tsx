@@ -23,7 +23,7 @@ const OWNERSHIP_TYPES = ["OWNED", "RENTED", "LEASED"];
 
 export function PropertySection({ register, watch, setValue }: Props) {
   return (
-    <FormSection id="property" title="Property / Lease" color="yellow" collapsible defaultOpen>
+    <FormSection id="property" title="Property / Lease" subtitle="الملكية او سند الايجار" color="yellow" collapsible defaultOpen>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div>
           <Label>Owner Name</Label>

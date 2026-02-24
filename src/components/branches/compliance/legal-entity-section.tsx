@@ -28,7 +28,7 @@ export function LegalEntitySection({ register, watch, setValue }: Props) {
   const entityType = watch("entityType");
 
   return (
-    <FormSection id="legal-entity" title="Legal Entity" color="blue" collapsible defaultOpen>
+    <FormSection id="legal-entity" title="Legal Entity" subtitle="الشخصية القانونية" color="blue" collapsible defaultOpen>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div>
           <Label>Entity Type</Label>

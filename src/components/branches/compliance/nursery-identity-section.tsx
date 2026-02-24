@@ -12,7 +12,7 @@ interface Props {
 
 export function NurseryIdentitySection({ register }: Props) {
   return (
-    <FormSection id="nursery-identity" title="Nursery Identity" color="teal" collapsible defaultOpen>
+    <FormSection id="nursery-identity" title="Nursery Identity" subtitle="هوية الحضانة" color="teal" collapsible defaultOpen>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <Label>Name (Arabic)</Label>

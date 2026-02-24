@@ -12,7 +12,7 @@ interface Props {
 
 export function CapacitySection({ register }: Props) {
   return (
-    <FormSection id="capacity" title="Capacity" color="green" collapsible defaultOpen>
+    <FormSection id="capacity" title="Capacity" subtitle="السعة" color="green" collapsible defaultOpen>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <Label>Total Children</Label>

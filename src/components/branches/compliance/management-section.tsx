@@ -12,7 +12,7 @@ interface Props {
 
 export function ManagementSection({ register }: Props) {
   return (
-    <FormSection id="management" title="Management" color="purple" collapsible defaultOpen>
+    <FormSection id="management" title="Management" subtitle="الادارة" color="purple" collapsible defaultOpen>
       <div className="space-y-4">
         <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Director

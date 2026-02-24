@@ -12,7 +12,7 @@ interface Props {
 
 export function SignatorySection({ register }: Props) {
   return (
-    <FormSection id="signatory" title="Authorized Signatory" color="green" collapsible defaultOpen>
+    <FormSection id="signatory" title="Authorized Signatory" subtitle="المفوض بالتوقيع" color="green" collapsible defaultOpen>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <Label>Full Name</Label>

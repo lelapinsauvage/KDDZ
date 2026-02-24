@@ -12,7 +12,7 @@ interface Props {
 
 export function AddressSection({ register }: Props) {
   return (
-    <FormSection id="address" title="Address" color="yellow" collapsible defaultOpen>
+    <FormSection id="address" title="Address" subtitle="عنوان الحضانة" color="yellow" collapsible defaultOpen>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div>
           <Label>Country</Label>

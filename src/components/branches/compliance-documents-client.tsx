@@ -13,18 +13,18 @@ import {
 
 // ── Required document types for Lebanese Ministry of Health ──
 const REQUIRED_DOCUMENTS = [
-  { type: "COMMERCIAL_REGISTER", label: "Commercial Register Extract" },
-  { type: "CIVIL_STATUS", label: "Civil Status Record" },
-  { type: "CRIMINAL_RECORD", label: "Criminal Record Certificate" },
-  { type: "LEASE_CONTRACT", label: "Lease Contract / Rental Agreement" },
-  { type: "PROPERTY_DEED", label: "Property Deed" },
-  { type: "HEALTH_LICENSE", label: "Ministry of Health License" },
-  { type: "FIRE_SAFETY", label: "Fire Safety Certificate" },
-  { type: "INSURANCE_CERTIFICATE", label: "Insurance Certificate" },
-  { type: "DIRECTOR_DIPLOMA", label: "Director Diploma / Credential" },
-  { type: "DOCTOR_LICENSE", label: "Doctor License / Syndicate Card" },
-  { type: "FLOOR_PLAN", label: "Floor Plan / Layout Drawing" },
-  { type: "OTHER", label: "Other Supporting Documents" },
+  { type: "COMMERCIAL_REGISTER", label: "Commercial Register Extract", arabicLabel: "السجل التجاري" },
+  { type: "CIVIL_STATUS", label: "Civil Status Record", arabicLabel: "صورة عن تذكرة الهوية او اخراج قيد" },
+  { type: "CRIMINAL_RECORD", label: "Criminal Record Certificate", arabicLabel: "سجل عدلي" },
+  { type: "LEASE_CONTRACT", label: "Lease Contract / Rental Agreement", arabicLabel: "سند ملكية أو إيجار أو عقد إستثمار" },
+  { type: "PROPERTY_DEED", label: "Property Deed", arabicLabel: "سند ملكية" },
+  { type: "HEALTH_LICENSE", label: "Ministry of Health License", arabicLabel: "الملف الصحي الصادر عن وزارة الصحة العامة" },
+  { type: "FIRE_SAFETY", label: "Fire Safety Certificate", arabicLabel: "شهادة السلامة من الحريق" },
+  { type: "INSURANCE_CERTIFICATE", label: "Insurance Certificate", arabicLabel: "عقد ضمان لسلامة الأطفال" },
+  { type: "DIRECTOR_DIPLOMA", label: "Director Diploma / Credential", arabicLabel: "شهادات المديرة المسؤولة" },
+  { type: "DOCTOR_LICENSE", label: "Doctor License / Syndicate Card", arabicLabel: "اجازة ممارسة مهنة الطب" },
+  { type: "FLOOR_PLAN", label: "Floor Plan / Layout Drawing", arabicLabel: "خريطة البناء (لا تقل عن 200 م²)" },
+  { type: "OTHER", label: "Other Supporting Documents", arabicLabel: "مستندات أخرى" },
 ];
 
 interface Document {
@@ -146,6 +146,9 @@ export function ComplianceDocumentsClient({
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-foreground">
                     {reqDoc.label}
+                  </p>
+                  <p className="text-xs text-muted-foreground" dir="rtl">
+                    {reqDoc.arabicLabel}
                   </p>
                   {doc ? (
                     <div className="mt-1 space-y-1">
