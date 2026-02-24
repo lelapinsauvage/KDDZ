@@ -49,7 +49,7 @@ export default async function DashboardPage() {
       label: "Staff",
       metric: `${briefing.staff.present}/${briefing.staff.total}`,
       status: briefing.staff.status,
-      href: "/teachers",
+      href: "/employees/teachers",
     },
     {
       label: "Finance",
