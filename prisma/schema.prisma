@@ -190,6 +190,40 @@ enum DocumentStatus {
   EXPIRED
 }
 
+enum MaritalStatus {
+  SINGLE
+  MARRIED
+  DIVORCED
+  WIDOWED
+}
+
+enum ExperienceType {
+  WORK
+  STAGE
+  WORKSHOP
+}
+
+enum EmployeeDocumentType {
+  CONTRACT
+  MEDICAL_TEST
+  CERTIFICATE
+  ATTACHMENT
+}
+
+enum LanguageName {
+  ENGLISH
+  FRENCH
+  ARABIC
+}
+
+enum LanguageProficiency {
+  NONE
+  BASIC
+  INTERMEDIATE
+  ADVANCED
+  FLUENT
+}
+
 // ─────────────────────────────────────────────
 // ORGANIZATION & STRUCTURE
 // ─────────────────────────────────────────────
@@ -383,8 +417,9 @@ model Class {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  branch   Branch  @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  branch   Branch    @relation(fields: [branchId], references: [id], onDelete: Cascade)
   children Child[]
+  teachers Teacher[]
 
   @@index([branchId])
   @@map("classes")
@@ -712,40 +747,67 @@ model ChildHistory {
 // ─────────────────────────────────────────────
 
 model Teacher {
-  id             String    @id @default(uuid()) @db.Uuid
-  userId         String?   @db.Uuid
-  firstName      String
-  lastName       String
-  phone          String?
-  mobile         String?
-  email          String?
-  nationality    String?
-  dateOfBirth    DateTime? @db.Date
-  hireDate       DateTime? @db.Date
-  branchId       String    @db.Uuid
-  specialization String?
-  isActive       Boolean   @default(true)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id                    String         @id @default(uuid()) @db.Uuid
+  userId                String?        @db.Uuid
+  username              String?
+  firstName             String
+  middleName            String?
+  lastName              String
+  dateOfBirth           DateTime?      @db.Date
+  placeOfBirth          String?
+  registerNumber        String?
+  nationality           String?
+  maritalStatus         MaritalStatus?
+  numberOfChildren      Int?
+  gender                Gender?
+  medicalCase           Boolean?       @default(false)
+  medicalCaseDescription String?       @db.Text
+  phone                 String?
+  telephone             String?
+  mobile                String?
+  email                 String?
+  cnss                  String?
+  cnssNo                String?
+  secondaryDegree       String?
+  secondaryDegreeYear   String?
+  universityDegree      String?
+  universityDegreeYear  String?
+  remarks               String?        @db.Text
+  imageUrl              String?
+  hireDate              DateTime?      @db.Date
+  branchId              String         @db.Uuid
+  classId               String?        @db.Uuid
+  specialization        String?
+  isActive              Boolean        @default(true)
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
 
   branch      Branch              @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  class       Class?              @relation(fields: [classId], references: [id], onDelete: SetNull)
   addresses   TeacherAddress[]
   attachments TeacherAttachment[]
+  languages   TeacherLanguage[]
+  experiences TeacherExperience[]
+  documents   TeacherDocument[]
 
   @@index([branchId])
   @@index([userId])
+  @@index([classId])
   @@index([isActive])
   @@map("teachers")
 }
 
 model TeacherAddress {
-  id        String   @id @default(uuid()) @db.Uuid
-  teacherId String   @db.Uuid
-  street    String?
-  city      String?
-  region    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(uuid()) @db.Uuid
+  teacherId   String   @db.Uuid
+  governorate String?
+  district    String?
+  region      String?
+  city        String?
+  street      String?
+  building    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 
@@ -768,26 +830,100 @@ model TeacherAttachment {
   @@map("teacher_attachments")
 }
 
+model TeacherLanguage {
+  id        String              @id @default(uuid()) @db.Uuid
+  teacherId String              @db.Uuid
+  language  LanguageName
+  canRead   LanguageProficiency @default(NONE)
+  canWrite  LanguageProficiency @default(NONE)
+  canSpeak  LanguageProficiency @default(NONE)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, language])
+  @@index([teacherId])
+  @@map("teacher_languages")
+}
+
+model TeacherExperience {
+  id          String         @id @default(uuid()) @db.Uuid
+  teacherId   String         @db.Uuid
+  type        ExperienceType
+  company     String?
+  position    String?
+  fromDate    DateTime?      @db.Date
+  toDate      DateTime?      @db.Date
+  description String?        @db.Text
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([teacherId])
+  @@map("teacher_experiences")
+}
+
+model TeacherDocument {
+  id         String               @id @default(uuid()) @db.Uuid
+  teacherId  String               @db.Uuid
+  type       EmployeeDocumentType
+  title      String?
+  fileUrl    String
+  date       DateTime?            @db.Date
+  expiryDate DateTime?            @db.Date
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([teacherId])
+  @@index([type])
+  @@map("teacher_documents")
+}
+
 model Nurse {
-  id             String    @id @default(uuid()) @db.Uuid
-  userId         String?   @db.Uuid
-  firstName      String
-  lastName       String
-  phone          String?
-  mobile         String?
-  email          String?
-  nationality    String?
-  dateOfBirth    DateTime? @db.Date
-  hireDate       DateTime? @db.Date
-  branchId       String    @db.Uuid
-  specialization String?
-  isActive       Boolean   @default(true)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id                     String         @id @default(uuid()) @db.Uuid
+  userId                 String?        @db.Uuid
+  username               String?
+  firstName              String
+  middleName             String?
+  lastName               String
+  dateOfBirth            DateTime?      @db.Date
+  placeOfBirth           String?
+  registerNumber         String?
+  nationality            String?
+  maritalStatus          MaritalStatus?
+  numberOfChildren       Int?
+  gender                 Gender?
+  medicalCase            Boolean?       @default(false)
+  medicalCaseDescription String?        @db.Text
+  phone                  String?
+  telephone              String?
+  mobile                 String?
+  email                  String?
+  cnss                   String?
+  cnssNo                 String?
+  secondaryDegree        String?
+  secondaryDegreeYear    String?
+  universityDegree       String?
+  universityDegreeYear   String?
+  remarks                String?        @db.Text
+  imageUrl               String?
+  hireDate               DateTime?      @db.Date
+  branchId               String         @db.Uuid
+  specialization         String?
+  isActive               Boolean        @default(true)
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
 
   branch      Branch            @relation(fields: [branchId], references: [id], onDelete: Cascade)
   addresses   NurseAddress[]
   attachments NurseAttachment[]
+  languages   NurseLanguage[]
+  experiences NurseExperience[]
+  documents   NurseDocument[]
 
   @@index([branchId])
   @@index([userId])
@@ -796,13 +932,16 @@ model Nurse {
 }
 
 model NurseAddress {
-  id        String   @id @default(uuid()) @db.Uuid
-  nurseId   String   @db.Uuid
-  street    String?
-  city      String?
-  region    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(uuid()) @db.Uuid
+  nurseId     String   @db.Uuid
+  governorate String?
+  district    String?
+  region      String?
+  city        String?
+  street      String?
+  building    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   nurse Nurse @relation(fields: [nurseId], references: [id], onDelete: Cascade)
 
@@ -825,27 +964,101 @@ model NurseAttachment {
   @@map("nurse_attachments")
 }
 
+model NurseLanguage {
+  id        String              @id @default(uuid()) @db.Uuid
+  nurseId   String              @db.Uuid
+  language  LanguageName
+  canRead   LanguageProficiency @default(NONE)
+  canWrite  LanguageProficiency @default(NONE)
+  canSpeak  LanguageProficiency @default(NONE)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  nurse Nurse @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+
+  @@unique([nurseId, language])
+  @@index([nurseId])
+  @@map("nurse_languages")
+}
+
+model NurseExperience {
+  id          String         @id @default(uuid()) @db.Uuid
+  nurseId     String         @db.Uuid
+  type        ExperienceType
+  company     String?
+  position    String?
+  fromDate    DateTime?      @db.Date
+  toDate      DateTime?      @db.Date
+  description String?        @db.Text
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  nurse Nurse @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+
+  @@index([nurseId])
+  @@map("nurse_experiences")
+}
+
+model NurseDocument {
+  id         String               @id @default(uuid()) @db.Uuid
+  nurseId    String               @db.Uuid
+  type       EmployeeDocumentType
+  title      String?
+  fileUrl    String
+  date       DateTime?            @db.Date
+  expiryDate DateTime?            @db.Date
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+
+  nurse Nurse @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+
+  @@index([nurseId])
+  @@index([type])
+  @@map("nurse_documents")
+}
+
 model Doctor {
-  id             String    @id @default(uuid()) @db.Uuid
-  userId         String?   @db.Uuid
-  firstName      String
-  lastName       String
-  phone          String?
-  mobile         String?
-  email          String?
-  nationality    String?
-  dateOfBirth    DateTime? @db.Date
-  hireDate       DateTime? @db.Date
-  branchId       String    @db.Uuid
-  specialization String?
-  licenseNumber  String?
-  isActive       Boolean   @default(true)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id                     String         @id @default(uuid()) @db.Uuid
+  userId                 String?        @db.Uuid
+  username               String?
+  firstName              String
+  middleName             String?
+  lastName               String
+  dateOfBirth            DateTime?      @db.Date
+  placeOfBirth           String?
+  registerNumber         String?
+  nationality            String?
+  maritalStatus          MaritalStatus?
+  numberOfChildren       Int?
+  gender                 Gender?
+  medicalCase            Boolean?       @default(false)
+  medicalCaseDescription String?        @db.Text
+  phone                  String?
+  telephone              String?
+  mobile                 String?
+  email                  String?
+  cnss                   String?
+  cnssNo                 String?
+  secondaryDegree        String?
+  secondaryDegreeYear    String?
+  universityDegree       String?
+  universityDegreeYear   String?
+  remarks                String?        @db.Text
+  imageUrl               String?
+  hireDate               DateTime?      @db.Date
+  branchId               String         @db.Uuid
+  specialization         String?
+  licenseNumber          String?
+  isActive               Boolean        @default(true)
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
 
   branch      Branch              @relation(fields: [branchId], references: [id], onDelete: Cascade)
   addresses   DoctorAddress[]
   attachments DoctorAttachment[]
+  languages   DoctorLanguage[]
+  experiences DoctorExperience[]
+  documents   DoctorDocument[]
 
   @@index([branchId])
   @@index([userId])
@@ -854,13 +1067,16 @@ model Doctor {
 }
 
 model DoctorAddress {
-  id        String   @id @default(uuid()) @db.Uuid
-  doctorId  String   @db.Uuid
-  street    String?
-  city      String?
-  region    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(uuid()) @db.Uuid
+  doctorId    String   @db.Uuid
+  governorate String?
+  district    String?
+  region      String?
+  city        String?
+  street      String?
+  building    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
 
@@ -881,6 +1097,59 @@ model DoctorAttachment {
 
   @@index([doctorId])
   @@map("doctor_attachments")
+}
+
+model DoctorLanguage {
+  id        String              @id @default(uuid()) @db.Uuid
+  doctorId  String              @db.Uuid
+  language  LanguageName
+  canRead   LanguageProficiency @default(NONE)
+  canWrite  LanguageProficiency @default(NONE)
+  canSpeak  LanguageProficiency @default(NONE)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@unique([doctorId, language])
+  @@index([doctorId])
+  @@map("doctor_languages")
+}
+
+model DoctorExperience {
+  id          String         @id @default(uuid()) @db.Uuid
+  doctorId    String         @db.Uuid
+  type        ExperienceType
+  company     String?
+  position    String?
+  fromDate    DateTime?      @db.Date
+  toDate      DateTime?      @db.Date
+  description String?        @db.Text
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@index([doctorId])
+  @@map("doctor_experiences")
+}
+
+model DoctorDocument {
+  id         String               @id @default(uuid()) @db.Uuid
+  doctorId   String               @db.Uuid
+  type       EmployeeDocumentType
+  title      String?
+  fileUrl    String
+  date       DateTime?            @db.Date
+  expiryDate DateTime?            @db.Date
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+
+  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@index([doctorId])
+  @@index([type])
+  @@map("doctor_documents")
 }
 
 model Manager {

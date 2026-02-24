@@ -1,0 +1,473 @@
+=== OVERNIGHT BUILD — Started Sun Feb 22 23:13:02 CET 2026 ===
+
+=== PHASE 1: Dashboard visual polish — Sun Feb 22 23:13:02 CET 2026 ===
+All done. Here's a summary of every change:
+
+**1. Health pillar fix** (`dashboard.ts`): Medical form count now filters to `createdAt >= 30 days ago` with `status: "DRAFT"`, so you'll see a small meaningful number instead of 237.
+
+**2. Status pillars** (`status-board.tsx`): Each pillar has a unique color family and prominent icon:
+- Attendance → teal/cyan + Users icon
+- Reports → violet/purple + FileText icon
+- Staff → sky/blue + Briefcase icon
+- Finance → amber/orange + DollarSign icon
+- Health → rose/pink + Heart icon
+- Status (green/amber/red) is a small corner dot, not the dominant color
+- Cards have gradient backgrounds and a subtle lift-on-hover effect
+
+**3. Action center** (`action-center.tsx`): Each row is a mini-card with a colored icon badge:
+- Overdue payments → DollarSign in rose
+- Missing reports → FileWarning in amber
+- Pending absences → UserX in violet
+- Draft registrations → FileEdit in sky
+- Rows highlight on hover
+
+**4. Insights panel** (`insights-panel.tsx`): Lightbulb icon in header, each insight is a pill/badge with TrendingUp/TrendingDown/Minus icons and color-coded backgrounds.
+
+**5. Today's menu** (`today-menu-widget.tsx`): Meal type icons (Coffee, UtensilsCrossed, Cake, Cookie), a Pencil edit link in the header, and a warmer centered empty state.
+
+**6. Weekly attendance chart** (`weekly-attendance-chart.tsx`): Consistent teal bars, tooltip on hover showing "X/Y present", and a friendly empty state with BarChart3 icon when all data is zeros.
+
+**7. Greeting** (`page.tsx`): Sunrise/Sun/Moon icon based on time of day, more conversational attention summary ("Just 1 thing needs a quick look" vs the old "1 thing needs your attention").
+
+**8. Loading skeleton** (`loading.tsx`): Updated heights to match the taller pillar cards (h-32) and adjusted other section heights.
+
+TypeScript check passed clean — 0 errors.
+PHASE 1 COMPLETE — Sun Feb 22 23:16:27 CET 2026
+
+=== PHASE 2: Teacher Today page polish — Sun Feb 22 23:16:27 CET 2026 ===
+All done. Here's a summary of everything that was polished:
+
+**Stats Cards** — Each card now has a distinct colored left border (teal/purple/amber/rose), larger icon in a soft-colored circle, and bold 3xl numbers with the label smaller below.
+
+**Progress Bar** — Taller (h-3), amber-to-green gradient that goes full green at 100%. Percentage shown prominently with color that shifts from muted to amber to green. Encouraging messages: "X more to go — you're making progress!" and "All reports done — great work!" with sparkle icon.
+
+**Child Roster** — Each child gets a deterministic colored avatar circle (8 color options based on name hash). Status badges all have icons (UserX for absent, CheckCircle2 for done, etc.). Action buttons ("Write"/"Edit") appear on hover with accent-colored borders.
+
+**Today's Menu** — Each meal has a themed icon: Coffee (amber) for breakfast, Salad (emerald) for lunch, IceCreamCone (pink) for dessert, Cookie (orange) for snack. Rows have icon containers and hover state. Empty state shows a friendly centered message.
+
+**Alerts Card** — Always visible (not hidden when empty). Colorful icon backgrounds per type (sky/pink/red/amber). Alert count badge in the header. Cards lift slightly on hover. Empty state shows a heart with "All clear today!".
+
+**Quick Actions** — Four distinct accent-colored buttons (teal, purple, rose, sky) with new icons (ClipboardList, Send).
+
+**Empty States** — Friendly centered messages with icons for no children, no menu, and no alerts.
+
+**Loading Skeleton** — New `loading.tsx` with animated pulse skeletons matching the page layout: quick actions, stat cards with colored left borders, progress bar, child rows, menu rows, and alert cards.
+PHASE 2 COMPLETE — Sun Feb 22 23:18:53 CET 2026
+
+=== PHASE 3: Children pages polish — Sun Feb 22 23:18:53 CET 2026 ===
+All done. Here's a summary of everything that was polished:
+
+**Children List (`children-columns.tsx` + `children-page-client.tsx`)**
+- **Avatars**: Deterministic colors based on name hash (10-color kid-friendly palette instead of just blue/pink)
+- **Class column**: Colored pill badges with per-class-name colors (teal, violet, sky, amber, etc.)
+- **Gender column**: Dot indicator + "Boy"/"Girl" labels instead of "Male"/"Female" badges
+- **Status badges**: Now have icons (CircleCheck, CircleDashed, CircleOff) + softer background colors
+- **Name links**: Changed from hardcoded blue to `text-foreground hover:text-primary`
+- **Dismissible filter pills**: Active filters shown as teal pills with X buttons + "Clear all" link
+- **Pagination**: Shows "Showing 1–20 of 150 children" range + "Rows:" label + cleaner layout
+- **Empty state**: Sparkles icon in a teal circle, warmer messaging, "Enroll a Child" CTA
+- **Card view**: Upgraded with colorful avatars, hover shadow, gender dots
+
+**Child Sub-Nav (`child-sub-nav.tsx`)**
+- Added breadcrumb trail (Children / Child Name) above the tab bar
+- Active tab gets `bg-primary/5` tinted background + `rounded-t-md`
+- Hover state has subtle muted background
+
+**Child Dashboard (`dashboard-client.tsx`)**
+- **Header card**: Gradient top bar (teal → sky → violet), large avatar circle with ring + shadow, class shown as teal pill badge, blood type as red badge
+- **Stat cards**: Each has a colored icon container (teal, sky, rose, violet, amber) with matching text colors
+- **Layout**: 2-column responsive grid for stats, cleaner spacing
+- Removed unused `PageHeader` import (breadcrumb now lives in sub-nav)
+
+**Loading Skeletons**
+- Added `loading.tsx` for dashboard, attendance, and absence routes (previously missing)
+PHASE 3 COMPLETE — Sun Feb 22 23:30:08 CET 2026
+
+=== PHASE 4: Reports & absence pages polish — Sun Feb 22 23:30:08 CET 2026 ===
+All done. Here's a summary of what was polished:
+
+### Daily Reports List
+- **Child avatars** with colorful pastel initials (hashed per name)
+- **Meal dot indicators** — 5-dot visual scale (green for good, amber for half, orange for little)
+- **Mood badges with icons** — Smile, Meh, Frown, Moon, CloudMoon per mood type
+- **Sleep indicator** — BedDouble/SunMedium icons with indigo/slate coloring
+- **Status badges with icons** — CheckCircle2 for Submitted, FileEdit for Draft
+- **Card-wrapped filter toolbar** with active filter count badge
+
+### Batch Reports
+- **Children grouped by class** with colored section headers (teal, violet, rose, etc.)
+- **Per-class progress badge** showing "3/5 done"
+- **Enhanced progress bar** — color shifts from amber → primary → emerald as completion increases
+- **Consistent avatars** matching class color scheme
+
+### Absence Reports
+- **Status workflow pills** at top — clickable PENDING (amber), APPROVED (green), REJECTED (red) with count badges
+- **Prominent approve/reject buttons** — solid green Approve, outlined red Reject
+- **Reason display** with MessageSquareText icon and line-clamp
+- **Child avatars** and card-wrapped search + filters
+
+### Draft Pages (both daily & absence)
+- Consistent avatars, search bars, card-wrapped filters, polished empty states
+
+### Loading Skeletons
+- `daily-reports/batch/loading.tsx` — batch-specific skeleton with class groups
+- `daily-reports/drafts/loading.tsx` — table skeleton
+- `absent-reports/drafts/loading.tsx` — table skeleton
+PHASE 4 COMPLETE — Sun Feb 22 23:39:25 CET 2026
+
+=== PHASE 5: Accounting, medical & staff polish — Sun Feb 22 23:39:25 CET 2026 ===
+All done. Here's a summary of everything that was polished:
+
+**Accounting** (1 file modified)
+- Summary cards now have colored left borders and larger icons (green/amber/red/blue)
+- Child avatars with hashed color initials in the table
+- Payment method icons (banknote, credit card, transfer, receipt)
+- Status badges with inline icons (checkmark for paid, clock for pending, triangle for overdue)
+- Branch badges with building icon
+- Bold tabular-nums for amounts
+
+**Medical** (5 files modified)
+- All 5 sections (general, accidents, visits, conditions, vaccinations) get child avatars
+- Status badges now show file-state icons (Draft=FileEdit, Submitted=FileClock, Reviewed=FileCheck)
+- Severity badges with shield icons (ShieldCheck/ShieldAlert/AlertTriangle)
+- Type-specific contextual icons: stethoscope for doctors, syringe for vaccines, heart for conditions, map-pin for accident locations, calendar icons for visits/follow-ups
+- Condition type shown as violet badge with heart icon
+- Blood type shown as red badge with droplets icon
+- Friendly empty states with contextual icons instead of plain text
+
+**Staff/Employees** (2 files modified)
+- Role-colored avatar initials (teal=teacher, rose=nurse, blue=doctor, purple=manager)
+- Contact info with mail/phone icons
+- Active/Inactive status now shows colored dot + colored badge
+- Staff directory gets role summary chips with counts (clickable to filter)
+- Role column uses colored badges matching the avatar colors
+
+**Loading Skeletons** (17 new files)
+- Added missing `loading.tsx` for: conditions, conditions/[id], visits, visits/[id], nurses/*, doctors/*, managers/*, staff, attendance, attendance-logs, calendar
+
+TypeScript check passes clean. Committed as `e819bf0`.
+PHASE 5 COMPLETE — Sun Feb 22 23:47:20 CET 2026
+
+=== PHASE 6: Shell & navigation polish — Sun Feb 22 23:47:20 CET 2026 ===
+All done. Here's a summary of all changes:
+
+**SIDEBAR** (`app-sidebar.tsx`):
+- Color-coded section headers — teal for Overview/My Day, sky for Daily Ops/Reports, violet for Children, rose for Health, amber for Finance, blue for Communication
+- Accent-colored badges — rose for active alarms (urgent), amber for missing reports (warnings), blue for unread messages (info)
+- Improved active state with `border-l-[3px]`, tinted background, and semibold text
+- Added `hover:translate-x-0.5` subtle slide animation on inactive items
+- Better padding/spacing with `px-2` container and `space-y-0.5` between items
+- Polished Quick Actions footer with bordered kbd shortcut indicator
+
+**HEADER** (`header.tsx`, `context-switcher.tsx`):
+- Lighter header background (92% opacity, blur(16px)) with softer border
+- Logo area wrapped in a single `<Link>` with group hover shadow effect
+- Search button with focus ring state (`focus:ring-2 focus:ring-primary/20`)
+- User avatar bumped to `size-8` with white ring outline
+- Dropdown now shows user name + subtitle "Manage your account"
+- Context switcher restyled with branch/calendar icons, bordered pill, cleaner popover with colored labels
+
+**MOBILE NAV** (`mobile-nav.tsx`, `mobile-more-sheet.tsx`):
+- Icons increased from `size-5` to `size-[22px]`
+- Colored active indicator bar (3px teal pill under active icon)
+- Labels bumped to `text-[11px]` with `font-semibold` when active
+- Subtle upward shadow (`shadow-[0_-1px_3px_...]`)
+- More sheet: added left border active indicator, colored icons
+
+**FOOTER** (`footer.tsx`):
+- Minimal centered copyright with dynamic year
+- Transparent background, lighter border
+
+**CSS** (`globals.css`):
+- Header: more translucent, softer blur, semi-transparent border
+- Footer: transparent bg, faded border
+
+TypeScript passes cleanly. Committed as `54fd09a`.
+PHASE 6 COMPLETE — Sun Feb 22 23:50:56 CET 2026
+
+=== PHASE 7: Settings, food & messaging polish — Sun Feb 22 23:50:56 CET 2026 ===
+All done. Here's a summary of what was polished:
+
+**Settings pages:**
+- **Nursery config**: Each section now has a colored icon + description (Building for General Info, Clock for Working Hours, Settings for Defaults, Bell for Notifications). Working days use pill-toggle buttons instead of checkboxes. Assessment types use colored pill toggles. Notification items are styled as bordered cards with sub-descriptions. Save button is a sticky bottom bar with success indicator.
+- **Export page**: Each export card now has a colored icon background (blue, rose, amber, violet) matching its category.
+
+**Food calendar:**
+- Each meal type (Breakfast, Lunch, Dessert, Snack) now shows with its own colored background in the calendar cells (`bg-blue-100`, `bg-green-100`, `bg-pink-100`, `bg-amber-100`).
+- Empty day slots show a `+` indicator on hover inviting users to add meals.
+- Legend uses matching colored pill badges.
+
+**Messaging:**
+- **Inbox**: Sender avatars with colored initials (deterministic color from name). Unread messages show a small primary-colored dot on the avatar.
+- **Sent**: Recipient avatars with colored initials.
+- **Thread view**: Sender avatars with proper colors (was using `bg-card` which had no contrast). Header card includes a larger avatar.
+- **Compose**: Send button now shows a loading spinner while sending.
+
+**Loading skeletons**: Added 11 new `loading.tsx` files for settings (holidays, events, regions, zones, areas, parent-users, export), food (listing, calendar), and messages (sent, thread).
+
+TypeScript passes cleanly (`npx tsc --noEmit`). Committed as `polish: settings, food calendar & messaging — visual refinements`.
+PHASE 7 COMPLETE — Sun Feb 22 23:59:23 CET 2026
+
+=== PHASE 8: Make settings editable — Sun Feb 22 23:59:23 CET 2026 ===
+All done. Here's a summary of what was implemented:
+
+**Nursery Settings Page** (`nursery-client.tsx`):
+- Converted from manual `useState` per field to `react-hook-form` with `zodResolver`
+- Address field upgraded from `Input` to `Textarea` for multi-line addresses
+- Form wraps all cards in a `<form>` tag with proper `onSubmit`
+- Validation errors show beneath fields (e.g. nursery name required, email format)
+- Save button triggers `updateNurserySettings` server action
+- Success/error shown via `sonner` toasts instead of temporary inline message
+
+**Server Action** (`settings.ts`):
+- Added `updateNurserySettings` — validates with `nurserySettingsSchema`, then does a transactional batch upsert of all settings at once (instead of sequential individual calls)
+- Exported 3 zod schemas: `nurserySettingsSchema`, `holidaySchema`, `eventSchema` — shared between client and server
+- Zod v4 compatible error handling (`.issues` not `.errors`)
+
+**Holidays** (`holidays-client.tsx`):
+- Dialog form upgraded to `react-hook-form` with `holidaySchema` validation
+- Field errors shown inline (name required, date required)
+- All CRUD operations (add/edit/delete) show `toast.success`/`toast.error`
+
+**Events** (`events-client.tsx`):
+- Dialog form upgraded to `react-hook-form` with `eventSchema` validation
+- Field errors shown inline (title required, date required)
+- All CRUD operations show toast notifications
+
+TypeScript passes cleanly (`npx tsc --noEmit`). Committed as `f2c1552`.
+PHASE 8 COMPLETE — Mon Feb 23 00:09:44 CET 2026
+
+=== PHASE 9: PWA setup — Mon Feb 23 00:09:44 CET 2026 ===
+PWA setup is complete. Here's a summary of what was done:
+
+**Files created:**
+- `public/manifest.json` — Web app manifest with KiddzOnline branding, teal theme
+- `public/icon-192.svg` / `public/icon-512.svg` — Teal rounded square with "K" letter
+- `src/app/sw.ts` — Service worker with precaching, runtime caching, and offline fallback
+- `src/app/offline/page.tsx` — Friendly offline page with retry button
+- `src/lib/validations/settings.ts` — Extracted Zod schemas (fix for build error)
+
+**Files modified:**
+- `next.config.ts` — Wrapped with `withSerwist()` for service worker bundling
+- `src/app/layout.tsx` — Added manifest link, theme-color, and apple-mobile-web-app meta tags
+- `package.json` — Added `@serwist/next` + `serwist`, updated build script to `--webpack`
+- `.gitignore` — Added `public/sw.js` build artifact
+- `src/lib/actions/settings.ts` — Removed non-async exports (schemas moved to validations)
+- 3 client components updated to import schemas from `@/lib/validations/settings`
+
+**Note:** The build script uses `next build --webpack` because serwist's webpack plugins aren't compatible with Next.js 16's default Turbopack. The service worker is disabled in development mode.
+PHASE 9 COMPLETE — Mon Feb 23 00:18:20 CET 2026
+
+=== PHASE 10: Page headers & breadcrumbs — Mon Feb 23 00:18:20 CET 2026 ===
+Done. Here's a summary of everything completed:
+
+**PageHeader component enhanced** (`src/components/layout/page-header.tsx`):
+- Added `description` prop (optional text below title)
+- Added `actions` prop (ReactNode for right-side buttons)
+- Improved layout with flex alignment, breadcrumbs moved to right alongside actions
+- Breadcrumbs now show on `lg:` breakpoint to avoid collision with actions on smaller screens
+
+**25 files updated across all page groups:**
+
+| Page | Title | Actions Moved | Breadcrumbs |
+|------|-------|---------------|-------------|
+| `/children` | Children | Add Child | Home > Children |
+| `/children/[id]/dashboard` | {child name} | (kept in card) | Home > Children > {name} |
+| `/daily-reports` | Daily Reports | New Report | Home > Daily Reports |
+| `/absent-reports` | Absence Reports | Report Absence | Home > Absence Reports |
+| `/accounting` | Accounting | New Payment | Home > Accounting |
+| `/employees/staff` | Staff | Add Staff | Home > Employees > Staff |
+| `/medical/general` | General Medical Forms | Add New | Home > Health > General |
+| `/medical/accidents` | Accident Reports | Add New | Home > Health > Accidents |
+| `/medical/visits` | Doctor Visits | Add New | Home > Health > Visits |
+| `/medical/conditions` | Medical Conditions | Add New | Home > Health > Conditions |
+| `/medical/vaccinations` | Vaccination Records | Add New | Home > Health > Vaccinations |
+| `/messages/inbox` | Message Inbox | Compose | Home > Messages > Inbox |
+| `/messages/sent` | Sent Messages | Compose | Home > Messages > Sent |
+| `/messages/compose` | Compose Message | — | Home > Messages > Compose |
+| `/settings/*` (8 pages) | varies | Add Holiday/Event/Zone/Area/Parent | Home > Settings > {section} |
+| `/food/calendar` | Food Calendar | Print | Home > Food > Calendar |
+| `/food` | Food Items | Add Food | Home > Food > Items |
+
+TypeScript check passed with no errors. Committed as `24c0c2a`.
+PHASE 10 COMPLETE — Mon Feb 23 00:24:42 CET 2026
+
+=== PHASE 11: Quick payment recording — Mon Feb 23 00:24:42 CET 2026 ===
+All done. Here's a summary of what was built:
+
+**Server Action** (`src/lib/actions/payments.ts`):
+- Added `recordPayment` action with full zod validation via `quickPaymentSchema`
+- Validates childId (uuid), amount (positive number), method, category, and optional notes
+- Creates a Payment record with status `PAID`, current date, USD currency
+- Returns the payment ID and child name for the success toast
+- Revalidates both `/accounting` and the child's accounting page
+
+**QuickPaymentDialog** (`src/components/accounting/quick-payment-dialog.tsx`):
+- Sheet sliding in from the right for fast access
+- **Child selector**: Combobox using Popover + Command (searchable, type-to-filter)
+- **Amount input**: Number field with `$` prefix, large font for easy reading
+- **Payment method**: 4 icon buttons (Cash, Check, Transfer, Card) — tap to select
+- **Category**: 6 quick-select pills (Monthly, Registration, Bus, Food, Extra Time, Other)
+- **Notes**: Collapsed by default, expandable via "Add a note" link
+- Uses react-hook-form + zod resolver for validation
+- After recording, shows a success toast and resets the form (stays open for batch recording)
+- Auto-focuses the child selector on open, then moves focus to amount after child selection
+- Accepts `preselectedChildId` prop for use from a child's profile
+
+**Accounting Page** (`accounting-client.tsx`):
+- Added "Record Payment" primary button (with Banknote icon) next to existing "New Payment" button
+- Existing "New Payment" button kept as outline variant for the full payment form
+PHASE 11 COMPLETE — Mon Feb 23 00:27:54 CET 2026
+
+=== PHASE 12: Notifications & alarms — Mon Feb 23 00:27:54 CET 2026 ===
+All done. Here's a summary of the changes:
+
+**1. Notification Bell Dropdown (Popover)**
+- Bell icon now opens a **popover dropdown** (not a page navigation) showing the 5 most recent active alarms
+- Each alarm shows: typed icon, message, due date/time ago, type badge, and dismiss (X) button
+- Badge **pulses** when there are critical alarms (vaccination, medical, medicine, payment)
+- "View All" link at bottom navigates to `/alarms`
+- "Inbox" link opens the original sheet for notifications/messages
+
+**2. Alarm Type Icons & Colors**
+- BIRTHDAY → Cake / pink
+- VACCINATION → Syringe / blue
+- MEDICAL → Heart / red
+- MEDICINE → Pill / purple
+- PAYMENT → DollarSign / amber
+- EVENT → Calendar / teal
+- INSURANCE → Shield / orange
+- CONTRACT → FileText / indigo
+- REQUEST → MessageSquare / sky
+
+**3. Alarms Page (`/alarms`)**
+- Alarms now grouped **by type** (not by urgency level)
+- Each section has a colored header with the type icon, name, count badge, and "overdue" badge when applicable
+- Overdue alarms have red-accented cards
+- Each card has resolve and snooze actions
+
+**4. Server Actions**
+- `dismissAlarm` already existed in `alarms.ts` — now used from the popover
+- `getHeaderData` now returns `recentAlarms` and `hasCriticalAlarms` for the bell dropdown
+- TypeScript check passes clean
+PHASE 12 COMPLETE — Mon Feb 23 00:32:23 CET 2026
+
+=== PHASE 13: Parent user management — Mon Feb 23 00:32:23 CET 2026 ===
+All done. Here's a summary of what was implemented:
+
+### Changes Made
+
+**1. Parent Users List** (`parent-users-client.tsx` + `page.tsx`):
+- **Parent/Guardian column** — shows parent name from child's parent records, username underneath, phone & email
+- **Linked Child column** — shows child name with a colored avatar (initials), links to child dashboard
+- **Quick Contact column** — phone (tel: link), WhatsApp (wa.me link, green icon), email (mailto: link) buttons
+- **Status column** — badge with colored dot indicator (active/inactive)
+- **Search** — filters by parent name, username, or child name (client-side)
+- **Count display** — shows "X accounts" next to search
+
+**2. Parent User Detail** (`parent-user-detail-client.tsx` + `[id]/page.tsx`):
+- **Linked Child card** — avatar + name + class/branch, clickable link to child dashboard
+- **Contact Information card** — each parent (MOTHER/FATHER) with name, phone, email, and action buttons for call, WhatsApp, email
+- **Relatives & Emergency Contacts card** — lists relatives with relation, authorized pickup badge, phone with call/WhatsApp buttons
+- **Account Info** — now includes "Last Updated" date alongside created and status
+
+**3. WhatsApp Quick Links** (`formatWhatsAppUrl` helper):
+- Generates `https://wa.me/[cleaned phone]` links, stripping spaces, dashes, dots, parens, and `+`
+- Green MessageCircle icon used consistently across all pages
+
+**4. Child Dashboard** (`dashboard-client.tsx` + `dashboard/page.tsx`):
+- Parent contacts section now shows **call** (blue phone icon) and **WhatsApp** (green message icon) buttons next to each parent's phone number
+- Server page now passes `email` field alongside phone for parents
+
+**5. Server Actions** (`parent-users.ts`):
+- `getParentUsers` now fetches child's `parents` (type, name, phone, mobile, email)
+- `getParentUser` now fetches child's `parents` and `relatives` for the detail page
+PHASE 13 COMPLETE — Mon Feb 23 00:37:55 CET 2026
+
+=== PHASE 14: Print-friendly views — Mon Feb 23 00:37:55 CET 2026 ===
+All done. Here's a summary of what was implemented:
+
+**1. Daily Report Print View** (`/daily-reports/[id]/print`)
+- Server page fetches full report data via `getDailyReport`
+- Clean printable layout with: child name, date, class, branch, meals table (breakfast/lunch/dessert with portions), milk feedings, sleep times, health & mood, potty/diaper tracking, fever readings, teacher remarks
+- "KiddzOnline" branding at top, generation timestamp at bottom
+
+**2. Child Profile Print View** (`/children/[id]/print`)
+- Server page fetches child data + vaccinations
+- Printable layout with: name, DOB, gender, blood type, nationality, class/branch, allergies (highlighted), parent/guardian contacts table, emergency contacts (relatives) table, vaccination records table
+
+**3. Global Print Styles** (in `globals.css`)
+- `@media print` block that hides sidebar, header, footer, nav, buttons
+- Full-width white background with black text
+- Shows URLs after links for printed output
+- 1.5cm page margins
+
+**4. Print Buttons Added**
+- **Daily reports list**: Printer icon + "Print" option in each row's dropdown menu
+- **Child dashboard**: "Print" button alongside existing action buttons
+- **Food calendar**: Already had a Print button (confirmed)
+
+TypeScript check passes clean (`npx tsc --noEmit`). Committed as `db3360e`.
+PHASE 14 COMPLETE — Mon Feb 23 00:42:13 CET 2026
+
+=== PHASE 15: Empty states & error handling — Mon Feb 23 00:42:13 CET 2026 ===
+All done. Here's a summary of what was implemented:
+
+**New files created (5):**
+- `src/components/ui/empty-state.tsx` — Reusable component with `icon`, `title`, `description`, `action`, and `secondaryAction` props
+- `src/app/(app)/error.tsx` — App-level error boundary with "Try Again" + "Go Home" buttons
+- `src/app/(app)/not-found.tsx` — App-level 404 page with "Back to Dashboard" button
+- `src/app/error.tsx` — Global error boundary (inline styles since it replaces the root layout)
+- `src/app/not-found.tsx` — Global 404 page
+
+**Pages updated with EmptyState component (12):**
+- **Children** — Replaced local `EmptyState` with reusable component (Sparkles icon + "Enroll a Child" CTA)
+- **Daily Reports** — Replaced inline markup (FileText icon + filter-aware description + 2 CTAs)
+- **Absent Reports** — Replaced inline markup (CalendarDays icon + "Report Absence" CTA)
+- **Accounting** — Added `emptyState` prop to DataTable (DollarSign icon)
+- **Staff** — Added `emptyState` prop to DataTable (Users icon + "Add Staff" CTA)
+- **Inbox** — Added `emptyState` prop to DataTable (Inbox icon)
+- **Food** — Replaced bare text with component (UtensilsCrossed icon)
+- **Medical Accidents** — Replaced inline markup (AlertTriangle icon)
+- **Medical Conditions** — Replaced inline markup (Heart icon)
+- **Medical Visits** — Replaced inline markup (CalendarCheck icon)
+- **Medical Vaccinations** — Replaced inline markup (Syringe icon)
+- **Medical General** — Replaced inline markup (Stethoscope icon)
+
+TypeScript check passes cleanly. Committed as `b34e5ca`.
+PHASE 15 COMPLETE — Mon Feb 23 00:48:33 CET 2026
+
+=== PHASE 16: Final consistency pass — Mon Feb 23 00:48:33 CET 2026 ===
+All tasks complete. Here's the summary:
+
+## Phase 16: Final Consistency Pass — Complete
+
+### What was done:
+
+1. **TypeScript check** — `tsc --noEmit` passes cleanly, zero type errors
+
+2. **Dev server check** — Found and fixed a **critical CSS parsing error** in `globals.css` (`.print\\:hidden` had double-escaped backslash). All pages now return 200.
+
+3. **Git log** — Reviewed all 22 commits on the `ux-improvements` branch
+
+4. **globals.css colors** — All colors properly use CSS custom properties. The few hardcoded values (borders, scrollbar) are intentional structural styles.
+
+5. **Loading.tsx files** — All 60+ loading files already exist for every route. Nothing missing.
+
+6. **PWA manifest.json** — Valid JSON, referenced in root layout at line 26.
+
+7. **OVERNIGHT-SUMMARY.md** — Comprehensive summary written covering all 21 phases, commits, new files, known issues, and recommendations.
+
+8. **Production build** — Two additional fixes were needed:
+   - Added `turbopack: {}` to `next.config.ts` (Next.js 16 requires explicit turbopack config when webpack config exists)
+   - Moved `quickPaymentSchema` from `"use server"` file to `src/lib/validations/payments.ts` (server action files can only export async functions)
+   - **Build now passes successfully** — 78 pages generated
+
+### Commits made:
+- `94b7521` — `chore: final consistency pass — type fixes, missing skeletons, cleanup`
+- `1f363ff` — `fix: production build — turbopack config, server action exports`
+PHASE 16 COMPLETE — Mon Feb 23 00:55:03 CET 2026
+
+=== ALL 16 PHASES COMPLETE — Mon Feb 23 00:55:03 CET 2026 ===
+Check OVERNIGHT-SUMMARY.md for details
+Check git log --oneline -20 for all commits

@@ -1,0 +1,313 @@
+=== OVERNIGHT SCRIPT STARTED — Tue Feb 24 22:52:13 CET 2026 ===
+
+========================================
+PHASE: 0-inventory
+STARTED: Tue Feb 24 22:52:13 CET 2026
+========================================
+Done. The inventory has been written to `/tmp/garderie-inventory.md`. Here's a quick summary of the findings:
+
+**Schema:** 42 Prisma models, 18 enums across organization, children, staff, daily reports, medical, food, assessments, financial, messaging, alarms/notifications, and location domains.
+
+**Key model highlights:**
+- **Child** — 37 fields including Arabic name variants, milk/diaper/sleep preferences, draft support
+- **Teacher/Nurse/Doctor/Manager** — parallel structures with addresses & attachments; Doctor adds `licenseNumber`
+- **Class** — simple: name, capacity, ageGroup, branchId
+- **Food + FoodCalendar** — food items by category, calendar maps food to branch+date+mealType
+- **Alarm** — polymorphic (referenceId+referenceType), 11 alarm types; **Notification** — per-user with read tracking; **PushToken** — supports User and ParentUser
+
+**Routes:** 103 page.tsx files across 15+ feature areas (children, employees, daily-reports, medical, food, alarms, assessments, messages, branches, settings, etc.)
+
+**Server actions:** 28 action files covering all CRUD and data-fetching needs.
+
+**Components:** 91 .tsx files — 27 shadcn/ui primitives, 5 skeleton types, 11 layout components, and feature components for each domain.
+PHASE 0-inventory COMPLETE — Tue Feb 24 22:53:26 CET 2026
+
+========================================
+PHASE: 1-fix-404s
+STARTED: Tue Feb 24 22:53:26 CET 2026
+========================================
+All done. Here's a summary of what was fixed:
+
+## Fixed 404s / Broken Links
+
+### New pages created (6 files):
+1. **`/daily-reports/[id]/page.tsx`** + `detail-client.tsx` — Full detail view showing meals, sleep, health symptoms, mood, milk feedings, potty/diaper, and remarks
+2. **`/daily-reports/[id]/edit/page.tsx`** — Edit page that pre-populates the existing `DailyReportForm` with the report's data
+3. **`/absent-reports/[id]/page.tsx`** + `detail-client.tsx` — Detail view showing child info, reason, status, and attachments
+4. **`/absent-reports/[id]/edit/page.tsx`** — Edit page that pre-populates the existing `AbsenceReportForm`
+5. **`/profile/page.tsx`** + `profile-client.tsx` — User profile page showing name, email, and role
+
+### Link fixes (1 file):
+6. **`/dashboard/page.tsx`** — Fixed `/teachers` → `/employees/teachers` (Staff pillar link was pointing to a non-existent route)
+
+### Not broken (verified):
+- `/medical/*/new` routes — All handled by existing `[id]` pages that check `id === "new"`
+- All other sidebar, search, and navigation links — Cross-referenced and confirmed working
+
+`npx tsc --noEmit` passes cleanly.
+PHASE 1-fix-404s COMPLETE — Tue Feb 24 23:01:46 CET 2026
+
+========================================
+PHASE: 2-fix-buttons
+STARTED: Tue Feb 24 23:01:46 CET 2026
+========================================
+Done. All 5 Button components fixed:
+
+| File | Fix |
+|---|---|
+| `medical/general/[id]/general-detail-client.tsx` | Added `variant="default"` to Submit button |
+| `medical/conditions/[id]/condition-detail-client.tsx` | Added `variant="default"` to Submit button |
+| `medical/visits/[id]/visit-detail-client.tsx` | Added `variant="default"` to Submit button |
+| `medical/accidents/[id]/accident-detail-client.tsx` | Added `variant="default"` to Submit button |
+| `accounting/payment-dialog.tsx` | Added `variant="default"` to Proceed/Update button |
+
+Each had an empty line where `variant="default"` should have been. TypeScript check passed clean and the commit is done.
+PHASE 2-fix-buttons COMPLETE — Tue Feb 24 23:03:12 CET 2026
+
+========================================
+PHASE: 3a-food-crud-backend
+STARTED: Tue Feb 24 23:03:12 CET 2026
+========================================
+Done. Here's the summary:
+
+**Food Item CRUD — already complete:**
+
+- **Model**: `Food` already exists in `prisma/schema.prisma:1123` with `id`, `name`, `category` (FoodCategory enum: BREAKFAST/LUNCH/DESSERT/SNACK), `isActive`, `createdAt`, `updatedAt`
+- **Server actions** in `src/lib/actions/food.ts` already had all four CRUD operations:
+  - `getFoods()` — list with optional category/search/isActive filters
+  - `createFood()` — create with auth check
+  - `updateFood()` — partial update with auth check
+  - `deleteFood()` — hard delete with auth check
+  - Plus food calendar actions (`getFoodCalendar`, `setFoodCalendarEntry`, etc.)
+
+**New file created:**
+- `src/lib/validations/food.ts` — Zod schema (`foodItemSchema`) with `name` (required, max 100), `category` (enum), `isActive` (boolean, defaults true), plus exported `FOOD_CATEGORIES` constant and `FoodItemFormValues` type
+
+`tsc --noEmit` passes cleanly. Committed as `a0dde8e`.
+PHASE 3a-food-crud-backend COMPLETE — Tue Feb 24 23:04:13 CET 2026
+
+========================================
+PHASE: 3b-food-crud-frontend
+STARTED: Tue Feb 24 23:04:13 CET 2026
+========================================
+Done. Here's what was done:
+
+**Changes made:**
+
+1. **Moved** `src/app/(app)/food/food-listing-client.tsx` to `src/components/food/food-listing-client.tsx` (matching the project's component organization pattern)
+
+2. **Enhanced the food listing with:**
+   - **Stats cards row** — 4 clickable cards (Breakfast, Lunch, Dessert, Snack) showing counts per category with `rounded-2xl`, `hover:-translate-y-0.5`, `hover:shadow-md` transitions. Clicking a card filters by that category.
+   - **Toast notifications** — success/error toasts via `sonner` for create, update, and delete operations
+   - **Calendar link** — "Calendar" button in the header linking to `/food/calendar`
+   - **Item count display** — "X of Y items" indicator in the toolbar
+   - **Exported `FoodItem` type** for the server page to use
+
+3. **Updated server page** (`src/app/(app)/food/page.tsx`) to import from the new `@/components/food/food-listing-client` path
+
+4. **Food calendar** — already uses `FoodItem` records from the database (via `getFoods({ isActive: true })`), so no changes needed there
+
+**TypeScript:** `npx tsc --noEmit` passes clean.
+PHASE 3b-food-crud-frontend COMPLETE — Tue Feb 24 23:06:45 CET 2026
+
+========================================
+PHASE: 4a-classes-backend
+STARTED: Tue Feb 24 23:06:45 CET 2026
+========================================
+Done. Here's a summary of what was built:
+
+**Prisma schema** (`prisma/schema.prisma`):
+- Added `AgeUnit` enum (`YEARS` / `MONTHS`)
+- Added fields to `Class` model: `language`, `ageFrom`, `ageTo`, `ageFromUnit`, `ageToUnit`, `cameraNumber`, `maxStudents`, `imageUrl`
+- Kept existing `capacity`, `ageGroup`, `isActive` fields for backward compatibility
+- Branch already had the `classes Class[]` relation
+
+**Server actions** (`src/lib/actions/classes.ts`):
+- `getClasses(params?)` — list with optional `branchId`, `isActive`, `search` filters
+- `getClass(id)` — single class with branch info and child count (new)
+- `createClass(data)` — create with all new fields
+- `updateClass(id, data)` — partial update with existence check
+- `deleteClass(id)` — delete with existence check
+- All mutations check auth and revalidate `/classes`
+
+**Zod validation** (`src/lib/validations/class.ts`):
+- `classSchema` with all fields, coerced numbers, nullable optionals
+- Exported `ClassFormValues` type
+PHASE 4a-classes-backend COMPLETE — Tue Feb 24 23:08:58 CET 2026
+
+========================================
+PHASE: 4b-classes-frontend
+STARTED: Tue Feb 24 23:08:58 CET 2026
+========================================
+All done. Here's a summary of what was built:
+
+### Files changed/created
+
+**Modified:**
+- `src/components/classes/classes-client.tsx` — Complete rewrite from data-table to card grid with:
+  - Stat cards row (Total Classes, Total Students, Total Capacity)
+  - Card grid with playful colored letter avatars (hash-based color from 10 colors)
+  - Each card shows: name, branch name, language, age range (yr/mo), camera number, student count vs capacity
+  - **Add Class** dialog with full form: branch dropdown, name, language, age from/to with Yr/Mo toggle buttons, camera number, max students, image upload placeholder
+  - **Edit Class** dialog reusing the same form, pre-populated
+  - **Delete Class** confirmation via AlertDialog
+  - Branch filter dropdown (hidden when embedded in branch detail)
+  - Empty state with CTA
+- `src/app/(app)/classes/page.tsx` — Updated data mapping to pass all Class model fields (`ClassItem` type)
+- `src/components/branches/branch-sub-nav.tsx` — Added "Classes" tab with GraduationCap icon
+
+**Created:**
+- `src/app/(app)/branches/[id]/classes/page.tsx` — Branch-scoped classes page, reuses `ClassesClient` with `branchId` prop (hides PageHeader and branch filter)
+
+### Design
+- `rounded-2xl` cards with `hover:shadow-md hover:-translate-y-0.5` lift effect
+- Letter avatars with hash-based color assignment from a palette of 10 playful colors
+- Consistent with the `branches-client.tsx` pattern (stats row, card grid, dropdown actions, alert dialog)
+- TypeScript clean (`tsc --noEmit` passes)
+PHASE 4b-classes-frontend COMPLETE — Tue Feb 24 23:14:10 CET 2026
+
+========================================
+PHASE: 5a-child-schema
+STARTED: Tue Feb 24 23:14:10 CET 2026
+========================================
+Done. Here's a summary of all changes made to `prisma/schema.prisma`:
+
+**Child model — 10 new fields:**
+- `childNumber` (String?)
+- `garderieFees`, `extraFees`, `busFees`, `apronFees`, `registrationFees`, `activitiesFees`, `discount` (Decimal?)
+- `tva` (Decimal? 5,2)
+- `financialRemarks` (String? Text)
+- `siblings` relation to new ChildSibling model
+
+**New model — ChildSibling:**
+- `relation`, `firstName`, `dateOfBirth`, `medicalCase`, `canPickUp`, `childId`
+
+**ChildAddress — 3 new fields:**
+- `addressType`, `country` (default "Lebanon"), `telephone`
+
+**Relative — 3 new fields:**
+- `lastName`, `mobile`, `isEmergencyContact`
+
+**ChildAttachment — 1 new field:**
+- `title`
+
+**Not duplicated** (already covered by existing schema):
+- Mother/Father info → `Parent` model with `type` MOTHER/FATHER
+- `joiningDate` → existing `enrollmentDate`
+- `scholasticYear` → existing `schoolYearId` FK
+- `allergy` → existing `allergies`
+- `bus` → existing `busAttendance`
+- `imageUrl` → existing `photo`
+- `wasInGarderieBefore` → existing `previousGarderie`
+- `feedingTimes` → existing `milkTime1/2/3`
+PHASE 5a-child-schema COMPLETE — Tue Feb 24 23:16:32 CET 2026
+
+========================================
+PHASE: 5b-child-form-update
+STARTED: Tue Feb 24 23:16:32 CET 2026
+========================================
+All done. Here's a summary of the changes:
+
+**Validation Schema** (`src/lib/validations/child.ts`):
+- Added `addressSchema` (addressType, country, street, building, floor, city, telephone)
+- Added `siblingSchema` (relation, firstName, dateOfBirth, medicalCase, canPickUp)
+- Updated `relativeSchema` with new fields: `lastName`, `mobile`, `isEmergencyContact`
+- Added `addresses`, `siblings` arrays to main schema
+- Added `childNumber` field
+- Added 9 financial fields: `garderieFees`, `extraFees`, `busFees`, `apronFees`, `registrationFees`, `activitiesFees`, `discount`, `tva`, `financialRemarks`
+
+**Child Form** (`src/components/children/child-form.tsx`):
+- Replaced Tabs layout with 8 collapsible `FormSection` components:
+  1. **Child Information** (blue) - existing basic fields
+  2. **Addresses** (green, collapsed) - dynamic add/remove list with badge count
+  3. **Parents** (purple) - father & mother sub-sections
+  4. **Brothers & Sisters** (teal, collapsed) - dynamic list with relation, name, DOB, medical case, can-pick-up
+  5. **Authorized Persons** (yellow) - updated relatives with lastName, mobile, emergency contact checkbox
+  6. **General Information** (blue) - merged enrollment + care preferences + child number
+  7. **Financial Information** (red, collapsed) - fee schedule with live subtotal/discount/TVA/net calculation + accounting entries
+  8. **Attachments** (green, collapsed) - "Coming soon" placeholder
+
+**Server Actions** (`src/lib/actions/children.ts`):
+- `parseParentData`: handles addresses, siblings, financial number parsing
+- `getChild`: includes `siblings` in query
+- `createChild`: nested creates for addresses, siblings; updated relatives with new fields; financial fields + childNumber
+- `updateChild`: sync (delete+recreate) for addresses, siblings; updated relative fields; financial fields + childNumber
+
+**Edit Page**: Maps all new fields (addresses, siblings, financial, updated relatives) from DB to form defaults.
+PHASE 5b-child-form-update COMPLETE — Tue Feb 24 23:24:43 CET 2026
+
+========================================
+PHASE: 6-child-dashboard
+STARTED: Tue Feb 24 23:24:43 CET 2026
+========================================
+All done. Here's a summary of what was implemented:
+
+**3 files changed** (957 insertions, 352 deletions):
+
+### `src/lib/actions/children.ts`
+- Added `getChildDashboardStats()` — aggregates counts for incoming/outgoing calls, accident reports, total payments, attendance, absences, daily reports, absence reports, and assessments in a single parallel query
+
+### `src/app/(app)/children/[id]/dashboard/page.tsx`
+- Expanded data fetching to pull all needed data in parallel (reports, attendance, absences, medical forms, vaccinations, accounting, dashboard stats)
+- Computes attendance chart data (present/absent/noReport)
+- Serializes comprehensive child data including child number, language, enrollment date, milk/diaper details, authorized persons (relatives), mother/father phones
+- Passes report/absence/medical/assessment lists for paginated tables
+
+### `src/app/(app)/children/[id]/dashboard/dashboard-client.tsx`
+Complete rewrite with all 8 sections:
+
+- **A) Child Info Summary Card** — photo/avatar, name (with Arabic), child number, active status, gender, language, nationality, branch, class, blood type, joining date, current age, joining age, DOB, mother/father phones with call/WhatsApp buttons, milk/diaper/bus/lunch/allergy badges, authorized persons list with emergency contact flags
+- **B) Quick Action Buttons** — New Call Report, New Accident Report, Child Calendar, + Daily Report, + Absence, Edit Profile
+- **C) Stat Cards (2 rows of 4)** — Incoming Calls, Outgoing Calls, Accident Reports, Total Payments, Total Attendance, Total Absence, Missing Daily Reports, Missing Absent Reports (all clickable, linking to relevant pages)
+- **D) Attendance Statistics** — Recharts pie chart (Present/Absent/No Report) with donut style and legend
+- **E) Reports Summary** — Paginated table (Date, Breakfast, Lunch, Dessert, Status, View link)
+- **F) Absence Reports** — Paginated table (Date, Reason, Status, View link)
+- **G) Medical Reports** — Paginated table with year filter dropdown (Type, Status, Date, Action)
+- **H) Assessments Summary** — Paginated table (Type name from config, Status, Date, Action)
+PHASE 6-child-dashboard COMPLETE — Tue Feb 24 23:30:53 CET 2026
+
+========================================
+PHASE: 7-arabic-compliance
+STARTED: Tue Feb 24 23:30:53 CET 2026
+========================================
+Done. Here's a summary of what was changed across 11 files:
+
+1. **`src/components/ui/form-section.tsx`** — Added optional `subtitle` prop to `FormSection`. When provided, it renders as a small RTL line (`text-xs text-muted-foreground`) under the English title.
+
+2. **`src/components/branches/compliance-documents-client.tsx`** — Added `arabicLabel` to all 12 entries in `REQUIRED_DOCUMENTS`, and rendered it as a small RTL line under the English label on each document card.
+
+3. **9 compliance section files** — Added `subtitle` with the Arabic translation to each `<FormSection>`:
+   - Legal Entity → الشخصية القانونية
+   - Registration → التسجيل
+   - Authorized Signatory → المفوض بالتوقيع
+   - Nursery Identity → هوية الحضانة
+   - Address → عنوان الحضانة
+   - Property / Lease → الملكية او سند الايجار
+   - Management → الادارة
+   - Capacity → السعة
+   - Insurance → الضمان
+
+TypeScript compiles cleanly and the commit is on `ux-improvements`.
+PHASE 7-arabic-compliance COMPLETE — Tue Feb 24 23:33:02 CET 2026
+
+========================================
+PHASE: 8-food-calendar
+STARTED: Tue Feb 24 23:33:02 CET 2026
+========================================
+Done. Here's a summary of the enhancements made to `food-calendar-client.tsx`:
+
+**New features:**
+- **Today button** - CalendarDays icon + "Today" label in the toolbar for quick navigation to the current month
+- **Green-tinted cells** - Days with assigned meals get `bg-emerald-50/80` background and emerald day numbers
+- **Today highlighting** - Current day gets a `ring-2 ring-primary/40` border and a filled primary-color circle around the day number
+- **Remove All button** - Red destructive button with Trash2 icon in the dialog footer, only shown when meals exist for that day
+- **Rounded dialog** - `rounded-2xl` on DialogContent
+- **Clearer button labels** - "Save" → "Update", "Cancel" → "Close"
+
+The existing click-to-edit dialog with Breakfast/Lunch/Dessert/Snack dropdowns (populated from FoodItem records by category) was already well-implemented. TypeScript passes cleanly with zero errors.
+PHASE 8-food-calendar COMPLETE — Tue Feb 24 23:35:56 CET 2026
+
+========================================
+PHASE: 9a-employee-schema
+STARTED: Tue Feb 24 23:35:56 CET 2026
+========================================
