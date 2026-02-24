@@ -18,20 +18,75 @@ interface EmployeeListParams {
   pageSize?: number;
 }
 
+interface AddressData {
+  governorate?: string;
+  district?: string;
+  region?: string;
+  city?: string;
+  street?: string;
+  building?: string;
+}
+
+interface LanguageData {
+  language: "ENGLISH" | "FRENCH" | "ARABIC";
+  canRead: string;
+  canWrite: string;
+  canSpeak: string;
+}
+
+interface ExperienceData {
+  type: "WORK" | "STAGE" | "WORKSHOP";
+  company?: string;
+  position?: string;
+  fromDate?: string;
+  toDate?: string;
+  description?: string;
+}
+
+interface DocumentData {
+  type: "CONTRACT" | "MEDICAL_TEST" | "CERTIFICATE" | "ATTACHMENT";
+  title?: string;
+  date?: string;
+  expiryDate?: string;
+  fileUrl?: string;
+}
+
 interface EmployeeData {
+  username?: string | null;
   firstName: string;
   lastName: string;
   email?: string | null;
   phone?: string | null;
+  telephone?: string | null;
   mobile?: string | null;
   nationality?: string | null;
   dateOfBirth?: Date | string | null;
+  placeOfBirth?: string | null;
+  registerNumber?: string | null;
+  maritalStatus?: string | null;
+  numberOfChildren?: number | null;
+  gender?: string | null;
+  medicalCase?: boolean | null;
+  medicalCaseDescription?: string | null;
+  cnss?: string | null;
+  cnssNo?: string | null;
+  secondaryDegree?: string | null;
+  secondaryDegreeYear?: string | null;
+  universityDegree?: string | null;
+  universityDegreeYear?: string | null;
   hireDate?: Date | string | null;
   branchId: string;
+  classId?: string | null;
   specialization?: string | null;
   isActive?: boolean;
+  remarks?: string | null;
   // Doctor-specific
   licenseNumber?: string | null;
+  // Nested
+  address?: AddressData;
+  languages?: LanguageData[];
+  experiences?: ExperienceData[];
+  documents?: DocumentData[];
 }
 
 type ActionResult<T = unknown> = {
@@ -151,6 +206,10 @@ export async function getEmployee(
         branch: true,
         addresses: true,
         attachments: true,
+        languages: true,
+        experiences: true,
+        documents: true,
+        ...(type === "teacher" ? { class: true } : {}),
       },
     });
 
@@ -186,20 +245,98 @@ export async function createEmployee(
     const createData: any = {
       firstName: data.firstName,
       lastName: data.lastName,
+      username: data.username ?? null,
       email: data.email ?? null,
       phone: data.phone ?? null,
+      telephone: data.telephone ?? null,
       mobile: data.mobile ?? null,
       nationality: data.nationality ?? null,
       dateOfBirth: toDate(data.dateOfBirth) ?? null,
+      placeOfBirth: data.placeOfBirth ?? null,
+      registerNumber: data.registerNumber ?? null,
+      maritalStatus: data.maritalStatus || null,
+      numberOfChildren: data.numberOfChildren ?? null,
+      gender: data.gender || null,
+      medicalCase: data.medicalCase ?? false,
+      medicalCaseDescription: data.medicalCaseDescription ?? null,
+      cnss: data.cnss ?? null,
+      cnssNo: data.cnssNo ?? null,
+      secondaryDegree: data.secondaryDegree ?? null,
+      secondaryDegreeYear: data.secondaryDegreeYear ?? null,
+      universityDegree: data.universityDegree ?? null,
+      universityDegreeYear: data.universityDegreeYear ?? null,
       hireDate: toDate(data.hireDate) ?? null,
       branchId: data.branchId,
       specialization: data.specialization ?? null,
       isActive: data.isActive ?? true,
+      remarks: data.remarks ?? null,
     };
 
     // Type-specific fields
     if (type === "doctor" && data.licenseNumber !== undefined) {
       createData.licenseNumber = data.licenseNumber;
+    }
+    if (type === "teacher" && data.classId) {
+      createData.classId = data.classId;
+    }
+
+    // Nested address
+    if (data.address) {
+      const a = data.address;
+      const hasAddress = a.governorate || a.district || a.region || a.city || a.street || a.building;
+      if (hasAddress) {
+        createData.addresses = {
+          create: [{
+            governorate: a.governorate ?? null,
+            district: a.district ?? null,
+            region: a.region ?? null,
+            city: a.city ?? null,
+            street: a.street ?? null,
+            building: a.building ?? null,
+          }],
+        };
+      }
+    }
+
+    // Nested languages
+    if (data.languages?.length) {
+      createData.languages = {
+        create: data.languages.map((l) => ({
+          language: l.language,
+          canRead: l.canRead || "NONE",
+          canWrite: l.canWrite || "NONE",
+          canSpeak: l.canSpeak || "NONE",
+        })),
+      };
+    }
+
+    // Nested experiences
+    if (data.experiences?.length) {
+      createData.experiences = {
+        create: data.experiences.map((e) => ({
+          type: e.type,
+          company: e.company ?? null,
+          position: e.position ?? null,
+          fromDate: toDate(e.fromDate) ?? null,
+          toDate: toDate(e.toDate) ?? null,
+          description: e.description ?? null,
+        })),
+      };
+    }
+
+    // Nested documents
+    if (data.documents?.length) {
+      createData.documents = {
+        create: data.documents
+          .filter((d) => d.title || d.fileUrl)
+          .map((d) => ({
+            type: d.type,
+            title: d.title ?? null,
+            fileUrl: d.fileUrl || "pending",
+            date: toDate(d.date) ?? null,
+            expiryDate: toDate(d.expiryDate) ?? null,
+          })),
+      };
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -230,26 +367,121 @@ export async function updateEmployee(
     }
 
     const { model, path } = getDelegate(type);
-
     // Build update payload — only include provided fields
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {};
 
     if (data.firstName !== undefined) updateData.firstName = data.firstName;
     if (data.lastName !== undefined) updateData.lastName = data.lastName;
-    if (data.email !== undefined) updateData.email = data.email;
-    if (data.phone !== undefined) updateData.phone = data.phone;
-    if (data.mobile !== undefined) updateData.mobile = data.mobile;
-    if (data.nationality !== undefined) updateData.nationality = data.nationality;
+    if (data.username !== undefined) updateData.username = data.username || null;
+    if (data.email !== undefined) updateData.email = data.email || null;
+    if (data.phone !== undefined) updateData.phone = data.phone || null;
+    if (data.telephone !== undefined) updateData.telephone = data.telephone || null;
+    if (data.mobile !== undefined) updateData.mobile = data.mobile || null;
+    if (data.nationality !== undefined) updateData.nationality = data.nationality || null;
     if (data.dateOfBirth !== undefined) updateData.dateOfBirth = toDate(data.dateOfBirth) ?? null;
+    if (data.placeOfBirth !== undefined) updateData.placeOfBirth = data.placeOfBirth || null;
+    if (data.registerNumber !== undefined) updateData.registerNumber = data.registerNumber || null;
+    if (data.maritalStatus !== undefined) updateData.maritalStatus = data.maritalStatus || null;
+    if (data.numberOfChildren !== undefined) updateData.numberOfChildren = data.numberOfChildren ?? null;
+    if (data.gender !== undefined) updateData.gender = data.gender || null;
+    if (data.medicalCase !== undefined) updateData.medicalCase = data.medicalCase ?? false;
+    if (data.medicalCaseDescription !== undefined) updateData.medicalCaseDescription = data.medicalCaseDescription || null;
+    if (data.cnss !== undefined) updateData.cnss = data.cnss || null;
+    if (data.cnssNo !== undefined) updateData.cnssNo = data.cnssNo || null;
+    if (data.secondaryDegree !== undefined) updateData.secondaryDegree = data.secondaryDegree || null;
+    if (data.secondaryDegreeYear !== undefined) updateData.secondaryDegreeYear = data.secondaryDegreeYear || null;
+    if (data.universityDegree !== undefined) updateData.universityDegree = data.universityDegree || null;
+    if (data.universityDegreeYear !== undefined) updateData.universityDegreeYear = data.universityDegreeYear || null;
     if (data.hireDate !== undefined) updateData.hireDate = toDate(data.hireDate) ?? null;
     if (data.branchId !== undefined) updateData.branchId = data.branchId;
-    if (data.specialization !== undefined) updateData.specialization = data.specialization;
+    if (data.specialization !== undefined) updateData.specialization = data.specialization || null;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
+    if (data.remarks !== undefined) updateData.remarks = data.remarks || null;
 
     // Type-specific fields
     if (type === "doctor" && data.licenseNumber !== undefined) {
       updateData.licenseNumber = data.licenseNumber;
+    }
+    if (type === "teacher" && data.classId !== undefined) {
+      updateData.classId = data.classId || null;
+    }
+
+    // Address: delete all + recreate
+    if (data.address) {
+      const a = data.address;
+      const hasAddress = a.governorate || a.district || a.region || a.city || a.street || a.building;
+      updateData.addresses = {
+        deleteMany: {},
+        ...(hasAddress
+          ? {
+              create: [{
+                governorate: a.governorate ?? null,
+                district: a.district ?? null,
+                region: a.region ?? null,
+                city: a.city ?? null,
+                street: a.street ?? null,
+                building: a.building ?? null,
+              }],
+            }
+          : {}),
+      };
+    }
+
+    // Languages: delete all + recreate
+    if (data.languages !== undefined) {
+      updateData.languages = {
+        deleteMany: {},
+        ...(data.languages.length
+          ? {
+              create: data.languages.map((l) => ({
+                language: l.language,
+                canRead: l.canRead || "NONE",
+                canWrite: l.canWrite || "NONE",
+                canSpeak: l.canSpeak || "NONE",
+              })),
+            }
+          : {}),
+      };
+    }
+
+    // Experiences: delete all + recreate
+    if (data.experiences !== undefined) {
+      updateData.experiences = {
+        deleteMany: {},
+        ...(data.experiences.length
+          ? {
+              create: data.experiences.map((e) => ({
+                type: e.type,
+                company: e.company ?? null,
+                position: e.position ?? null,
+                fromDate: toDate(e.fromDate) ?? null,
+                toDate: toDate(e.toDate) ?? null,
+                description: e.description ?? null,
+              })),
+            }
+          : {}),
+      };
+    }
+
+    // Documents: delete all + recreate
+    if (data.documents !== undefined) {
+      updateData.documents = {
+        deleteMany: {},
+        ...(data.documents.length
+          ? {
+              create: data.documents
+                .filter((d) => d.title || d.fileUrl)
+                .map((d) => ({
+                  type: d.type,
+                  title: d.title ?? null,
+                  fileUrl: d.fileUrl || "pending",
+                  date: toDate(d.date) ?? null,
+                  expiryDate: toDate(d.expiryDate) ?? null,
+                })),
+            }
+          : {}),
+      };
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

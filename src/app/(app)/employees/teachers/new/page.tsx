@@ -1,8 +1,12 @@
 import { getBranches } from "@/lib/actions/branches";
+import { getClasses } from "@/lib/actions/classes";
 import { EmployeeFormClient } from "@/components/employees/employee-form-client";
 
 export default async function NewTeacherPage() {
-  const branchResult = await getBranches();
+  const [branchResult, classResult] = await Promise.all([
+    getBranches(),
+    getClasses(),
+  ]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const branches = ((branchResult.data as any[]) ?? []).map((b: any) => ({
@@ -10,5 +14,11 @@ export default async function NewTeacherPage() {
     name: b.name as string,
   }));
 
-  return <EmployeeFormClient type="teacher" branches={branches} />;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const classes = ((classResult.data as any[]) ?? []).map((c: any) => ({
+    id: c.id as string,
+    name: c.name as string,
+  }));
+
+  return <EmployeeFormClient type="teacher" branches={branches} classes={classes} />;
 }
