@@ -20,7 +20,15 @@ export type NurserySettingsValues = z.infer<typeof nurserySettingsSchema>;
 
 export const holidaySchema = z.object({
   name: z.string().min(1, "Holiday name is required"),
-  date: z.string().min(1, "Date is required"),
+  description: z.string(),
+  date: z.string().min(1, "Start date is required"),
+  endDate: z.string(),
+  repeated: z.boolean(),
+  type: z.string(),
+  isActive: z.boolean(),
+  notificationTitle: z.string(),
+  notificationMessage: z.string(),
+  daysBefore: z.number().int().min(0),
   branchId: z.string().nullable(),
 });
 

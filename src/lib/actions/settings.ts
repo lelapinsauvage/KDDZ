@@ -14,7 +14,15 @@ import {
 
 interface HolidayData {
   name: string;
+  description?: string | null;
   date: Date | string;
+  endDate?: Date | string | null;
+  repeated?: boolean;
+  type?: string;
+  isActive?: boolean;
+  notificationTitle?: string | null;
+  notificationMessage?: string | null;
+  daysBefore?: number;
   branchId?: string | null;
 }
 
@@ -436,7 +444,15 @@ export async function createHoliday(data: HolidayData): Promise<ActionResult> {
     const holiday = await db.holiday.create({
       data: {
         name: data.name,
+        description: data.description ?? null,
         date: toDate(data.date),
+        endDate: data.endDate ? toDate(data.endDate) : null,
+        repeated: data.repeated ?? false,
+        type: data.type ?? "HOLIDAY",
+        isActive: data.isActive ?? true,
+        notificationTitle: data.notificationTitle ?? null,
+        notificationMessage: data.notificationMessage ?? null,
+        daysBefore: data.daysBefore ?? 0,
         branchId: data.branchId ?? null,
       },
     });
@@ -468,7 +484,15 @@ export async function updateHoliday(
     const updateData: any = {};
 
     if (data.name !== undefined) updateData.name = data.name;
+    if (data.description !== undefined) updateData.description = data.description;
     if (data.date !== undefined) updateData.date = toDate(data.date);
+    if (data.endDate !== undefined) updateData.endDate = data.endDate ? toDate(data.endDate) : null;
+    if (data.repeated !== undefined) updateData.repeated = data.repeated;
+    if (data.type !== undefined) updateData.type = data.type;
+    if (data.isActive !== undefined) updateData.isActive = data.isActive;
+    if (data.notificationTitle !== undefined) updateData.notificationTitle = data.notificationTitle;
+    if (data.notificationMessage !== undefined) updateData.notificationMessage = data.notificationMessage;
+    if (data.daysBefore !== undefined) updateData.daysBefore = data.daysBefore;
     if (data.branchId !== undefined) updateData.branchId = data.branchId;
 
     const holiday = await db.holiday.update({
