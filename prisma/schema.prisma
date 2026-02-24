@@ -163,6 +163,28 @@ enum PortionSize {
   ALL
 }
 
+enum DocumentType {
+  COMMERCIAL_REGISTER
+  CIVIL_STATUS
+  CRIMINAL_RECORD
+  LEASE_CONTRACT
+  PROPERTY_DEED
+  HEALTH_LICENSE
+  FIRE_SAFETY
+  INSURANCE_CERTIFICATE
+  DIRECTOR_DIPLOMA
+  DOCTOR_LICENSE
+  FLOOR_PLAN
+  OTHER
+}
+
+enum DocumentStatus {
+  PENDING
+  UPLOADED
+  VERIFIED
+  EXPIRED
+}
+
 // ─────────────────────────────────────────────
 // ORGANIZATION & STRUCTURE
 // ─────────────────────────────────────────────
@@ -184,9 +206,13 @@ model Branch {
   id             String       @id @default(uuid()) @db.Uuid
   organizationId String       @db.Uuid
   name           String
+  prefix         String?
   address        String?
   phone          String?
+  telephone      String?
   email          String?
+  imageUrl       String?
+  themeColor     String?      @default("#1caf9a")
   isActive       Boolean      @default(true)
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
@@ -206,9 +232,116 @@ model Branch {
   holidays         Holiday[]
   alarms           Alarm[]
   assessmentDates  AssessmentDate[]
+  compliance       BranchCompliance?
+  documents        BranchDocument[]
 
   @@index([organizationId])
   @@map("branches")
+}
+
+model BranchCompliance {
+  id       String @id @default(uuid()) @db.Uuid
+  branchId String @unique @db.Uuid
+
+  // Legal Entity
+  entityType        String?
+  legalName         String?
+  organizationType  String?
+  companySubType    String?
+  purpose           String? @db.Text
+
+  // Registration
+  registrationNumber String?
+  registrationPlace  String?
+  registrationDate   DateTime? @db.Date
+
+  // Authorized Signatory
+  signatoryName        String?
+  signatoryRole        String?
+  signatoryNationality String?
+  signatoryPhone       String?
+
+  // Nursery Identity
+  nameArabic String?
+  nameLatin  String?
+
+  // Address
+  country     String?  @default("Lebanon")
+  governorate String?
+  district    String?
+  town        String?
+  floor       String?
+  building    String?
+  street      String?
+  landmark    String?
+  poBox       String?
+  postalCode  String?
+  addrPhone   String?
+  addrMobile  String?
+  addrFax     String?
+  addrEmail   String?
+  addrWebsite String?
+
+  // Property / Lease
+  ownerName          String?
+  propertyNumber     String?
+  propertyGovernorate String?
+  propertyDistrict   String?
+  propertyRegion     String?
+  ownershipType      String?
+
+  // Management
+  directorFirstName  String?
+  directorLastName   String?
+  directorSpecialty  String?
+  doctorFirstName    String?
+  doctorFatherName   String?
+  doctorLastName     String?
+  doctorSyndicateNo  String?
+  doctorSpecialty    String?
+
+  // Capacity
+  totalChildren Int?
+  walkers       Int?
+  nonWalkers    Int?
+  workingHours  String?
+
+  // Insurance
+  insuranceCompany      String?
+  insuranceContractType String?
+
+  // Progress
+  completionPercentage Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@index([branchId])
+  @@map("branch_compliance")
+}
+
+model BranchDocument {
+  id           String         @id @default(uuid()) @db.Uuid
+  branchId     String         @db.Uuid
+  documentType DocumentType
+  label        String?
+  filename     String?
+  fileUrl      String?
+  issueDate    DateTime?      @db.Date
+  expiryDate   DateTime?      @db.Date
+  status       DocumentStatus @default(PENDING)
+  notes        String?        @db.Text
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@index([branchId])
+  @@index([documentType])
+  @@index([status])
+  @@map("branch_documents")
 }
 
 model SchoolYear {

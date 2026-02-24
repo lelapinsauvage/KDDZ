@@ -16,9 +16,11 @@ export default async function BranchesManagementPage() {
     phone: b.phone ?? null,
     email: b.email ?? null,
     isActive: b.isActive ?? true,
+    themeColor: b.themeColor ?? null,
     classCount: b._count?.classes ?? 0,
     childrenCount: b._count?.children ?? 0,
     teacherCount: b._count?.teachers ?? 0,
+    compliancePercentage: b.compliance?.completionPercentage ?? null,
   }));
 
   return <BranchesClient branches={branches} />;

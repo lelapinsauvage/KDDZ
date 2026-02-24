@@ -10,9 +10,13 @@ import { auth } from "@/lib/auth";
 
 interface BranchData {
   name: string;
+  prefix?: string | null;
   address?: string | null;
   phone?: string | null;
+  telephone?: string | null;
   email?: string | null;
+  themeColor?: string | null;
+  isActive?: boolean;
   organizationId: string;
 }
 
@@ -30,6 +34,9 @@ export async function getBranches(): Promise<ActionResult> {
   try {
     const branches = await db.branch.findMany({
       include: {
+        compliance: {
+          select: { completionPercentage: true },
+        },
         _count: {
           select: {
             classes: true,
@@ -58,11 +65,7 @@ export async function getBranch(id: string): Promise<ActionResult> {
       where: { id },
       include: {
         organization: true,
-        classes: true,
-        teachers: true,
-        nurses: true,
-        doctors: true,
-        managers: true,
+        compliance: true,
         _count: {
           select: {
             classes: true,
@@ -71,6 +74,7 @@ export async function getBranch(id: string): Promise<ActionResult> {
             nurses: true,
             doctors: true,
             managers: true,
+            documents: true,
           },
         },
       },
@@ -88,23 +92,44 @@ export async function getBranch(id: string): Promise<ActionResult> {
 }
 
 // ---------------------------------------------------------------------------
+// getOrganizationId — helper to resolve the default organization
+// ---------------------------------------------------------------------------
+
+async function getDefaultOrganizationId(): Promise<string | null> {
+  const org = await db.organization.findFirst({ select: { id: true } });
+  return org?.id ?? null;
+}
+
+// ---------------------------------------------------------------------------
 // createBranch
 // ---------------------------------------------------------------------------
 
-export async function createBranch(data: BranchData): Promise<ActionResult> {
+export async function createBranch(
+  data: Omit<BranchData, "organizationId"> & { organizationId?: string },
+): Promise<ActionResult> {
   try {
     const session = await auth();
     if (!session?.user) {
       return { success: false, error: "Unauthorized" };
     }
 
+    const organizationId =
+      data.organizationId ?? (await getDefaultOrganizationId());
+    if (!organizationId) {
+      return { success: false, error: "No organization found" };
+    }
+
     const branch = await db.branch.create({
       data: {
         name: data.name,
+        prefix: data.prefix ?? null,
         address: data.address ?? null,
         phone: data.phone ?? null,
+        telephone: data.telephone ?? null,
         email: data.email ?? null,
-        organizationId: data.organizationId,
+        themeColor: data.themeColor ?? "#1caf9a",
+        isActive: data.isActive ?? true,
+        organizationId,
       },
     });
 
@@ -135,9 +160,13 @@ export async function updateBranch(
     const updateData: any = {};
 
     if (data.name !== undefined) updateData.name = data.name;
+    if (data.prefix !== undefined) updateData.prefix = data.prefix;
     if (data.address !== undefined) updateData.address = data.address;
     if (data.phone !== undefined) updateData.phone = data.phone;
+    if (data.telephone !== undefined) updateData.telephone = data.telephone;
     if (data.email !== undefined) updateData.email = data.email;
+    if (data.themeColor !== undefined) updateData.themeColor = data.themeColor;
+    if (data.isActive !== undefined) updateData.isActive = data.isActive;
     if (data.organizationId !== undefined)
       updateData.organizationId = data.organizationId;
 
@@ -147,6 +176,7 @@ export async function updateBranch(
     });
 
     revalidatePath("/branches");
+    revalidatePath(`/branches/${id}`);
 
     return { success: true, data: branch };
   } catch (error) {
