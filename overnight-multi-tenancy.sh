@@ -1676,6 +1676,365 @@ git add -A && git commit -m "design: final QA pass — remove remaining old-them
 ```
 '
 
+# ═══════════════════════════════════════════════
+# FEATURE & PRODUCTION READINESS PHASES
+# ═══════════════════════════════════════════════
+# From PRODUCT.md and INFRASTRUCTURE.md:
+# - Onboarding flow (signup + setup wizard)
+# - Role-based page guards
+# - Class assignment filtered by branch
+# - Prisma migrate setup
+# - Global search wiring
+# ═══════════════════════════════════════════════
+
+# ─────────────────────────────────────────────
+# PHASE 31: Signup Page + Organization Creation
+# ROLE: Senior Full-Stack Engineer
+# ─────────────────────────────────────────────
+run_phase "Phase 31 — Admin Organization Management" '
+You are a Senior Full-Stack Engineer building an admin-only organization management panel. The app uses Next.js 16 App Router, Prisma, Auth.js v5, Tailwind v4, shadcn/ui. The design system is warm Claude-inspired: cream bg (#F5F0E8), terracotta primary (#C35A2C), white cards, warm shadows.
+
+Multi-tenancy is already implemented — Organizations, Branches, and Users have organizationId. The session includes organizationId.
+
+IMPORTANT CONTEXT: There is NO self-service signup. The platform owner (super admin) manually onboards every nursery. New organizations are created from an admin panel, NOT from a public signup page.
+
+Read these files to understand the current patterns:
+- prisma/schema.prisma (Organization, Branch, User, SchoolYear models)
+- src/lib/require-org.ts
+- src/lib/actions/branches.ts (for the pattern of CRUD actions)
+- src/app/(app)/settings/page.tsx (to understand settings page structure)
+
+Create server actions in src/lib/actions/organizations.ts:
+```typescript
+"use server"
+```
+
+Actions to create:
+1. getOrganizations() — ADMIN only. List all organizations with branch count, user count, plan, isActive.
+2. getOrganization(id) — ADMIN only. Get full org details with branches and users.
+3. createOrganization(data) — ADMIN only. Takes: name, slug (auto-generate from name if empty), plan (default "free"), logo (optional). Creates the org, a default "Main Branch", a default SchoolYear (current academic year Sep 2025 - Jul 2026 with isActive=true), and the first admin user (name, email, temporary password — hash with bcryptjs). Returns the org and the generated temp password.
+4. updateOrganization(id, data) — ADMIN only. Update name, slug, plan, isActive, logo.
+5. toggleOrganizationStatus(id) — ADMIN only. Toggle isActive (soft disable/enable).
+
+For all actions, verify the caller is ADMIN role using requireOrg(). Only the platform super admin should access this — for now ADMIN role is sufficient.
+
+Create the admin page at src/app/(app)/settings/organizations/page.tsx:
+- Server component that calls getOrganizations()
+- Shows a table/card list of all organizations: name, slug, plan, branches count, users count, active status, created date
+- "New Organization" button opens a dialog/sheet with the creation form
+- Each org row has: Edit button, Toggle active button
+- Use the same UI patterns as existing settings pages
+
+Create the organization detail/edit page at src/app/(app)/settings/organizations/[id]/page.tsx:
+- Show org details with edit form (name, slug, plan)
+- List branches in this org
+- List users in this org with their roles
+- "Add User" button: form with name, email, role dropdown (ADMIN, TEACHER, NURSE, DOCTOR, MANAGER), branchId dropdown (branches in this org), generates a temp password
+- "Add Branch" button: creates a new branch in this org
+
+Create the "Add User to Org" server action in the same file:
+```typescript
+export async function createOrgUser(orgId: string, data: { name: string; email: string; role: UserRole; branchId: string; }) {
+  // verify caller is ADMIN
+  // hash a random temp password
+  // create user with organizationId, branchId, role
+  // return { user, tempPassword } so admin can share it manually
+}
+```
+
+Add a nav link in the settings sidebar/page to "Organizations" (only visible for ADMIN users).
+
+Run: npx tsc --noEmit
+Commit:
+```
+git add -A && git commit -m "feat: add admin organization management panel (no self-service signup)"
+```
+'
+
+# ─────────────────────────────────────────────
+# PHASE 32: Setup Wizard (post-signup)
+# ROLE: Senior Full-Stack Engineer
+# ─────────────────────────────────────────────
+run_phase "Phase 32 — Admin User Management Actions" '
+You are a Senior Full-Stack Engineer. The organization management panel from Phase 31 needs supporting user management actions. The design system is warm Claude-inspired: cream bg, terracotta accents, white cards.
+
+Read these files:
+- src/lib/actions/organizations.ts (just created in Phase 31)
+- src/lib/actions/branches.ts (for pattern reference)
+- prisma/schema.prisma (User model)
+
+Add these server actions to src/lib/actions/organizations.ts (or create src/lib/actions/admin-users.ts if the file is getting too large):
+
+1. getOrgUsers(orgId) — List all users in an org with their branch name and role. ADMIN only.
+2. updateOrgUser(userId, data) — Update a users name, email, role, branchId, isActive. ADMIN only. Verify the user belongs to the callers org.
+3. resetUserPassword(userId) — Generate a new random temp password, hash it, update the user. ADMIN only. Return the temp password so admin can share it. Verify user belongs to org.
+4. toggleUserStatus(userId) — Toggle isActive on a user. ADMIN only. Verify user belongs to org.
+5. deleteOrgUser(userId) — Soft delete or hard delete a user. ADMIN only. Verify user belongs to org. Cannot delete yourself.
+
+Also add to the org detail page (src/app/(app)/settings/organizations/[id]/page.tsx):
+- A users table showing: name, email, role badge, branch name, active status, last login (if available)
+- Each row has: Edit, Reset Password, Toggle Status actions
+- Edit opens a dialog with the user form (name, email, role dropdown, branch dropdown)
+- Reset Password shows a confirmation dialog, then displays the new temp password in a copyable field
+- Use shadcn/ui Table, Dialog, Badge, Button components
+
+The key UX flow: Admin creates org → creates first admin user with temp password → shares credentials over phone/WhatsApp → user logs in and changes password (password change flow already exists or can be added later).
+
+Run: npx tsc --noEmit
+Commit:
+```
+git add -A && git commit -m "feat: add admin user management for organizations"
+```
+'
+
+# ─────────────────────────────────────────────
+# PHASE 33: Role-Based Page Guards
+# ROLE: Senior Security Engineer
+# ─────────────────────────────────────────────
+run_phase "Phase 33 — Role-Based Page Guards" '
+You are a Senior Security Engineer. The app has 5 user roles (ADMIN, TEACHER, NURSE, DOCTOR, MANAGER) but pages dont enforce role checks. A teacher could visit /settings or /accounting by typing the URL. Fix this.
+
+Read these files:
+- src/lib/auth.config.ts (middleware)
+- src/lib/require-org.ts
+- src/app/(app)/layout.tsx
+
+Create a role guard utility at src/lib/require-role.ts:
+```typescript
+import { requireOrg, type OrgContext } from "./require-org";
+
+type Role = OrgContext["role"];
+
+export async function requireRole(...allowedRoles: Role[]): Promise<OrgContext> {
+  const ctx = await requireOrg();
+  if (!allowedRoles.includes(ctx.role)) {
+    throw new Error("Forbidden: insufficient permissions");
+  }
+  return ctx;
+}
+
+/** Check if a role has admin-level access */
+export function isAdminRole(role: Role): boolean {
+  return role === "ADMIN" || role === "MANAGER";
+}
+```
+
+Now add role checks to these page files (read each one first). For pages that should be admin/manager only, add at the top of the server component:
+
+```typescript
+import { requireRole } from "@/lib/require-role";
+// At the top of the component:
+await requireRole("ADMIN", "MANAGER");
+```
+
+Pages that should be ADMIN + MANAGER only:
+- src/app/(app)/settings/page.tsx and all settings sub-pages
+- src/app/(app)/accounting/page.tsx
+- src/app/(app)/branches/**/page.tsx (all branch management pages)
+- src/app/(app)/employees/**/page.tsx (staff management — viewing is OK for all, but the listing pages)
+- src/app/(app)/settings/parent-users/page.tsx
+
+Pages that should be ADMIN + MANAGER + NURSE + DOCTOR:
+- src/app/(app)/medical/**/page.tsx
+
+Pages accessible to ALL roles:
+- src/app/(app)/dashboard/page.tsx
+- src/app/(app)/today/page.tsx
+- src/app/(app)/children/**/page.tsx
+- src/app/(app)/daily-reports/**/page.tsx
+- src/app/(app)/absent-reports/**/page.tsx
+- src/app/(app)/messages/**/page.tsx
+- src/app/(app)/alarms/**/page.tsx
+
+For each restricted page, read the file first, then add the requireRole call at the very beginning of the async server component function. If the page is a client component ("use client"), check if it has a parent server component (layout or page that wraps it) where the guard should go instead.
+
+If a page is purely a client component with no server wrapper, create a small server component wrapper that does the role check and renders the client component.
+
+Run: npx tsc --noEmit
+Commit:
+```
+git add -A && git commit -m "feat: add role-based page guards to restrict admin pages"
+```
+'
+
+# ─────────────────────────────────────────────
+# PHASE 34: Class Assignment Filtered by Branch
+# ROLE: Senior Full-Stack Engineer
+# ─────────────────────────────────────────────
+run_phase "Phase 34 — Class Dropdown Filtered by Branch" '
+You are a Senior Full-Stack Engineer. From PRODUCT.md: "Class assignment filtered by branch — Dropdown currently shows all classes across all branches." Fix this.
+
+Read these files:
+- src/components/children/child-form.tsx (find the class dropdown/select)
+- src/lib/actions/classes.ts (getClasses function)
+- src/lib/actions/children.ts (createChild, updateChild — where classId is set)
+
+The problem: When creating/editing a child, the class dropdown shows ALL classes from all branches. It should only show classes from the selected branch.
+
+Fix:
+1. In the child form, the class dropdown should be filtered by the currently selected branchId. When the user changes the branch, the class options should update.
+2. If the child form already has a branchId field/selector, use that value to filter classes.
+3. If branchId comes from context (AppContextProvider), use that.
+
+Implementation approach:
+- The getClasses action already has org scoping (from Phase 6). It likely accepts a branchId filter.
+- In the child form component, when branchId changes, fetch classes for that branch.
+- Use a useEffect or similar to refetch classes when branchId changes.
+- If currently using a static list of classes passed as props, change to dynamic fetching.
+- Clear the selected classId when branchId changes (the old class might not exist in the new branch).
+
+Also check if this same issue exists in:
+- src/components/daily-reports/daily-report-form.tsx (class filter)
+- src/components/employees/employee-form-client.tsx (class assignment for teachers)
+
+Fix those too if applicable.
+
+Run: npx tsc --noEmit
+Commit:
+```
+git add -A && git commit -m "fix: filter class dropdown by selected branch in child and employee forms"
+```
+'
+
+# ─────────────────────────────────────────────
+# PHASE 35: Wire Global Search (cmdk)
+# ROLE: Senior Full-Stack Engineer
+# ─────────────────────────────────────────────
+run_phase "Phase 35 — Wire Global Search" '
+You are a Senior Full-Stack Engineer. The app has a command palette (cmdk) in src/components/layout/global-search.tsx but from PRODUCT.md: "Global search — Command palette exists (cmdk) but not wired to real search."
+
+Read these files:
+- src/components/layout/global-search.tsx
+- src/lib/actions/search.ts (globalSearch function — already has org scoping)
+
+The globalSearch server action already exists and searches children, teachers, nurses, doctors, managers with org scoping. Wire it into the command palette.
+
+Changes to global-search.tsx:
+1. Import the globalSearch action
+2. Add a debounced search input handler (300ms debounce)
+3. When the user types, call globalSearch with the query
+4. Display results grouped by type:
+   - Children: show name, class, branch — link to /children/[id]
+   - Teachers: show name, branch — link to /employees/staff (or employee detail if exists)
+   - Nurses: show name — link to /employees/staff
+   - Doctors: show name — link to /employees/staff
+   - Managers: show name — link to /employees/staff
+5. Each result should have an icon (Baby for children, Users for staff)
+6. Clicking a result navigates to that page and closes the palette
+7. Show "No results found" when empty
+8. Show a loading spinner while searching
+9. Keep the existing keyboard shortcut (Cmd+K) and quick action items
+10. Quick actions (navigate to pages) should still work without a search query
+
+Use warm Claude styling:
+- Result items: hover:bg-accent
+- Icons: text-muted-foreground
+- Selected/active item: bg-accent text-accent-foreground
+- Group labels: text-muted-foreground text-xs uppercase tracking-wider
+
+Run: npx tsc --noEmit
+Commit:
+```
+git add src/components/layout/global-search.tsx && git commit -m "feat: wire global search command palette to real search action"
+```
+'
+
+# ─────────────────────────────────────────────
+# PHASE 36: Switch from prisma db push to prisma migrate
+# ROLE: Senior DevOps Engineer
+# ─────────────────────────────────────────────
+run_phase "Phase 36 — Prisma Migrate Setup" '
+You are a Senior DevOps Engineer. The app currently uses `prisma db push` for schema changes (dev only). For production, we need versioned migration files.
+
+Read: prisma/schema.prisma
+
+Run these commands:
+
+1. Create the initial migration baseline from the current schema:
+```
+mkdir -p prisma/migrations
+pnpm exec prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/0_init/migration.sql
+```
+
+Actually, the proper way with an existing database is:
+```
+pnpm exec prisma migrate dev --name init --create-only
+```
+This creates the migration file without applying it (since the DB already has the tables).
+
+2. Then mark it as already applied:
+```
+pnpm exec prisma migrate resolve --applied 0_init
+```
+
+If that doesnt work (exact migration name may differ), try:
+```
+pnpm exec prisma migrate resolve --applied init
+```
+
+Or if the migration was created with a timestamp prefix, use that name.
+
+3. Verify the migration state:
+```
+pnpm exec prisma migrate status
+```
+
+If any of these commands fail, try the alternative approach:
+```
+pnpm exec prisma migrate dev --name baseline --create-only
+pnpm exec prisma migrate resolve --applied <the-migration-name-from-above>
+```
+
+The goal is to have a prisma/migrations/ directory with at least one baseline migration, and the _prisma_migrations table in the DB showing it as applied.
+
+4. Update the README or add a note: future schema changes should use `pnpm exec prisma migrate dev --name describe_change` instead of `prisma db push`.
+
+Run: npx tsc --noEmit
+Commit:
+```
+git add prisma/migrations/ -A && git commit -m "chore: initialize prisma migrate with baseline migration"
+```
+'
+
+# ─────────────────────────────────────────────
+# PHASE 37: Final Build + Smoke Test
+# ROLE: QA Lead
+# ─────────────────────────────────────────────
+run_phase "Phase 37 — Final Build + Smoke Test" '
+You are a QA Lead doing the final verification of the entire overnight run.
+
+1. Run: npx tsc --noEmit
+   Fix any TypeScript errors.
+
+2. Run: pnpm exec next build
+   Fix any build errors. Common issues:
+   - Missing imports
+   - Unused variables from refactoring
+   - Type mismatches from auth changes
+
+3. If build passes, verify key files are correct:
+   - Read src/lib/require-org.ts — should export requireOrg and requireOrgSafe
+   - Read src/lib/verify-org-access.ts — should export verifyBranchAccess, verifyChildAccess, getOrgBranchIds
+   - Read src/types/next-auth.d.ts — should have organizationId on all interfaces
+   - Check that prisma/schema.prisma has organizationId on User, SchoolYear, Food, EventType, MessageThread, Message
+
+4. Run a quick grep to verify no data leaks:
+   ```
+   grep -rn "findMany\|findFirst\|count\|aggregate" src/lib/actions/ --include="*.ts" | grep -v "organizationId\|orgId\|requireOrg\|getOrgBranch\|userId\|// global\|// user-scoped" | head -20
+   ```
+   Any result from this should be investigated — it might be a query missing org scoping.
+
+5. If everything looks good, commit any final fixes:
+```
+git add -A && git commit -m "chore: final build verification and cleanup"
+```
+
+6. Do one final push:
+```
+git push origin ux-improvements
+```
+'
+
 echo "" | tee -a "$LOG_FILE"
 echo "=============================================" | tee -a "$LOG_FILE"
 echo "=== ALL PHASES COMPLETE — $(date) ===" | tee -a "$LOG_FILE"
