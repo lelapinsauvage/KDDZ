@@ -47,25 +47,25 @@ interface FlatNavItem {
 
 /** Color accent per section label for visual grouping */
 const sectionColors: Record<string, string> = {
-  "Overview":       "text-teal-600",
-  "My Day":         "text-teal-600",
-  "Daily Ops":      "text-sky-600",
-  "Reports":        "text-sky-600",
-  "Children":       "text-violet-600",
-  "My Class":       "text-violet-600",
-  "Health":         "text-rose-600",
-  "Health Center":  "text-rose-600",
-  "Finance":        "text-amber-600",
-  "Staff & Setup":  "text-stone-500",
-  "Communication":  "text-blue-600",
-  "Reference":      "text-stone-500",
+  "Overview":       "text-sidebar-primary",
+  "My Day":         "text-sidebar-primary",
+  "Daily Ops":      "text-[#C9B99A]",
+  "Reports":        "text-[#C9B99A]",
+  "Children":       "text-[#D4A574]",
+  "My Class":       "text-[#D4A574]",
+  "Health":         "text-[#C4887A]",
+  "Health Center":  "text-[#C4887A]",
+  "Finance":        "text-[#C9B280]",
+  "Staff & Setup":  "text-[#A89B8C]",
+  "Communication":  "text-[#9BB0A0]",
+  "Reference":      "text-[#A89B8C]",
 }
 
-/** Badge color per badge key — rose for urgent, amber for warnings, blue for info */
+/** Badge color per badge key — warm tones that pop on dark sidebar */
 const badgeColors: Record<keyof SidebarBadges, string> = {
-  activeAlarms:   "bg-rose-100 text-rose-700",
-  missingReports: "bg-amber-100 text-amber-700",
-  unreadMessages: "bg-blue-100 text-blue-700",
+  activeAlarms:   "bg-[#C35A2C]/20 text-[#E8A87C]",
+  missingReports: "bg-[#C9B280]/20 text-[#E8D5A8]",
+  unreadMessages: "bg-[#6B8F71]/20 text-[#9BB0A0]",
 }
 
 interface NavSection {
@@ -226,7 +226,7 @@ export function AppSidebar({ userRole, badges }: AppSidebarProps) {
   return (
     <Sidebar
       collapsible="icon"
-      className="top-[52px] h-[calc(100svh-52px)] border-r border-border"
+      className="top-[56px] h-[calc(100svh-56px)]"
     >
       <SidebarContent className="pt-3 px-2">
         {sections.map((section) => (
@@ -249,12 +249,12 @@ export function AppSidebar({ userRole, badges }: AppSidebarProps) {
                       tooltip={item.title}
                       className={
                         isActive
-                          ? "border-l-[3px] border-primary bg-primary/8 text-primary font-semibold hover:bg-primary/12 hover:text-primary rounded-none rounded-r-lg transition-all duration-150"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all duration-150 hover:translate-x-0.5"
+                          ? "border-l-[3px] border-sidebar-primary bg-sidebar-accent text-sidebar-primary font-semibold hover:bg-sidebar-accent hover:text-sidebar-primary rounded-none rounded-r-lg transition-all duration-200"
+                          : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-all duration-200 hover:translate-x-0.5"
                       }
                     >
                       <Link href={item.href}>
-                        <item.icon className={`size-4 ${isActive ? "text-primary" : ""}`} />
+                        <item.icon className={`size-4 ${isActive ? "text-sidebar-primary" : ""}`} />
                         <span className="flex-1 truncate">{item.title}</span>
                         {badgeCount > 0 && (
                           <Badge
@@ -274,12 +274,12 @@ export function AppSidebar({ userRole, badges }: AppSidebarProps) {
         ))}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-border/60 p-3">
+      <SidebarFooter className="border-t border-sidebar-border p-3">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               tooltip="Quick Actions ⌘K"
-              className="text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all duration-150"
+              className="text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-all duration-200"
               onClick={() => {
                 document.dispatchEvent(
                   new KeyboardEvent("keydown", { key: "k", metaKey: true })
@@ -288,7 +288,7 @@ export function AppSidebar({ userRole, badges }: AppSidebarProps) {
             >
               <Search className="size-4" />
               <span>Quick Actions</span>
-              <kbd className="ml-auto rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground border border-border/50">
+              <kbd className="ml-auto rounded-md bg-sidebar-accent px-1.5 py-0.5 text-[10px] font-medium text-sidebar-foreground/60 border border-sidebar-border">
                 ⌘K
               </kbd>
             </SidebarMenuButton>
