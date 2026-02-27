@@ -245,7 +245,7 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
               value={`workflow ${shortcut.name} ${shortcut.keywords}`}
               onSelect={() => handleSelect(shortcut.href, shortcut.name)}
             >
-              <shortcut.icon className="size-4 text-amber-500" />
+              <shortcut.icon className="size-4 text-primary/70" />
               <span>{shortcut.name}</span>
             </CommandItem>
           ))}

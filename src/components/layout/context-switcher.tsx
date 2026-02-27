@@ -34,10 +34,10 @@ export function ContextSwitcher() {
           <ChevronDown className="ml-0.5 size-3 text-muted-foreground" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-64 space-y-4 p-4 rounded-xl">
+      <PopoverContent align="start" className="w-64 space-y-4 rounded-2xl border-border/60 bg-popover p-4">
         {/* Branch selector */}
         <div>
-          <label className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-teal-600">
+          <label className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-primary">
             <Building2 className="size-3" />
             Branch
           </label>
@@ -68,7 +68,7 @@ export function ContextSwitcher() {
 
         {/* School year selector */}
         <div>
-          <label className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-600">
+          <label className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
             <CalendarDays className="size-3" />
             School Year
           </label>

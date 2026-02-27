@@ -50,22 +50,24 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-teal-50 via-white to-amber-50 p-4">
-      {/* Decorative blobs */}
+    <div className="flex min-h-screen items-center justify-center bg-[#F5F0E8] p-4">
+      {/* Warm radial gradient overlay */}
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(232,168,124,0.15)_0%,_transparent_60%)]" />
+      {/* Decorative warm blobs */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -top-32 -left-32 h-80 w-80 rounded-full bg-teal-200/30 blur-3xl" />
-        <div className="absolute -bottom-32 -right-32 h-80 w-80 rounded-full bg-amber-200/30 blur-3xl" />
-        <div className="absolute top-1/3 right-1/4 h-60 w-60 rounded-full bg-rose-200/20 blur-3xl" />
+        <div className="absolute -top-32 -left-32 h-80 w-80 rounded-full bg-[#E8A87C]/20 blur-3xl" />
+        <div className="absolute -bottom-32 -right-32 h-80 w-80 rounded-full bg-[#D4A574]/20 blur-3xl" />
+        <div className="absolute top-1/3 right-1/4 h-60 w-60 rounded-full bg-[#C35A2C]/10 blur-3xl" />
       </div>
 
       <div className="relative w-full max-w-md">
         {/* Logo */}
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-400 to-teal-600 text-white shadow-lg shadow-teal-200">
+          <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#E8A87C] to-[#C35A2C] text-white shadow-lg shadow-[#C35A2C]/20">
             <span className="text-2xl font-bold">K</span>
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Kidd<span className="text-teal-500">z</span>Online
+            Kidd<span className="text-primary">z</span>Online
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Daycare Management Platform
@@ -111,7 +113,7 @@ function LoginForm() {
             </div>
             <Button
               type="submit"
-              className="h-11 w-full rounded-xl bg-gradient-to-r from-teal-500 to-teal-600 text-white font-medium shadow-md shadow-teal-200 transition-all hover:shadow-lg hover:shadow-teal-200 hover:from-teal-600 hover:to-teal-700"
+              className="h-11 w-full rounded-xl bg-gradient-to-r from-primary to-[#C35A2C] text-white font-medium shadow-md shadow-primary/20 transition-all hover:shadow-lg hover:shadow-primary/25 hover:brightness-110"
               disabled={loading}
             >
               {loading ? "Signing in..." : "Sign In"}
@@ -119,7 +121,7 @@ function LoginForm() {
             <div className="text-center">
               <a
                 href="/forgot"
-                className="text-sm text-teal-600 hover:text-teal-700 hover:underline"
+                className="text-sm text-primary hover:text-primary/80 hover:underline"
               >
                 Forgot password?
               </a>
