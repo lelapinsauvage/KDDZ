@@ -70,20 +70,20 @@ function ComplianceBadge({ percentage }: { percentage: number | null }) {
   }
   if (percentage >= 80) {
     return (
-      <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[10px]">
+      <Badge className="bg-[#6B8F71]/15 text-[#567352] border-[#6B8F71]/25 text-[10px]">
         {percentage}% compliant
       </Badge>
     );
   }
   if (percentage >= 50) {
     return (
-      <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[10px]">
+      <Badge className="bg-[#A0784C]/15 text-[#8B6537] border-[#A0784C]/25 text-[10px]">
         {percentage}% compliant
       </Badge>
     );
   }
   return (
-    <Badge className="bg-red-100 text-red-700 border-red-200 text-[10px]">
+    <Badge className="bg-[#C17C5A]/15 text-[#A0613E] border-[#C17C5A]/25 text-[10px]">
       {percentage}% compliant
     </Badge>
   );
@@ -127,8 +127,8 @@ export function BranchesClient({ branches }: BranchesClientProps) {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Card className="rounded-2xl py-4 transition-all hover:shadow-md hover:-translate-y-0.5">
             <CardContent className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-teal-100">
-                <GitBranch className="size-5 text-teal-600" />
+              <div className="flex size-10 items-center justify-center rounded-xl bg-[#A0784C]/10">
+                <GitBranch className="size-5 text-[#A0784C]" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Branches</p>
@@ -140,8 +140,8 @@ export function BranchesClient({ branches }: BranchesClientProps) {
           </Card>
           <Card className="rounded-2xl py-4 transition-all hover:shadow-md hover:-translate-y-0.5">
             <CardContent className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-blue-100">
-                <GraduationCap className="size-5 text-blue-600" />
+              <div className="flex size-10 items-center justify-center rounded-xl bg-[#C17C5A]/10">
+                <GraduationCap className="size-5 text-[#C17C5A]" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Classes</p>
@@ -153,8 +153,8 @@ export function BranchesClient({ branches }: BranchesClientProps) {
           </Card>
           <Card className="rounded-2xl py-4 transition-all hover:shadow-md hover:-translate-y-0.5">
             <CardContent className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-amber-100">
-                <Users className="size-5 text-amber-600" />
+              <div className="flex size-10 items-center justify-center rounded-xl bg-[#6B8F71]/10">
+                <Users className="size-5 text-[#6B8F71]" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Students</p>
@@ -179,7 +179,7 @@ export function BranchesClient({ branches }: BranchesClientProps) {
         {/* Branch Cards */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
           {branches.map((branch) => {
-            const color = branch.themeColor || "#1caf9a";
+            const color = branch.themeColor || "#A0784C";
             return (
               <Card key={branch.id} className="relative overflow-hidden rounded-2xl transition-all hover:shadow-md hover:-translate-y-0.5">
                 {/* Color stripe */}
@@ -206,7 +206,7 @@ export function BranchesClient({ branches }: BranchesClientProps) {
                     <Badge
                       className={
                         branch.isActive
-                          ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+                          ? "bg-[#6B8F71]/15 text-[#567352] border-[#6B8F71]/25"
                           : "bg-muted text-muted-foreground border-border"
                       }
                     >

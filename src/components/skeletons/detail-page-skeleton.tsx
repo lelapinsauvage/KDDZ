@@ -28,7 +28,7 @@ export function DetailPageSkeleton() {
 
       <div className="space-y-6 p-4 md:p-6">
         {/* Content card with form-like fields */}
-        <div className="overflow-hidden rounded-lg border border-border bg-card">
+        <div className="overflow-hidden rounded-2xl border border-border/40 bg-card">
           <div className="border-b border-border px-6 py-4">
             <Skeleton className="h-4 w-32" />
           </div>

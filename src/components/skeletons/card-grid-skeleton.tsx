@@ -26,8 +26,8 @@ export function CardGridSkeleton({
       <div className="space-y-6 p-4 md:p-6">
         {/* Summary card — matches: alarm summary */}
         {showSummary && (
-          <div className="flex items-center gap-4 rounded-lg border border-border bg-card px-5 py-4">
-            <Skeleton className="size-12 shrink-0 rounded-lg" />
+          <div className="flex items-center gap-4 rounded-2xl border border-border/40 bg-card px-5 py-4">
+            <Skeleton className="size-12 shrink-0 rounded-xl" />
             <div className="space-y-1.5">
               <Skeleton className="h-4 w-36" />
               <Skeleton className="h-3 w-52 rounded-sm" />
@@ -40,7 +40,7 @@ export function CardGridSkeleton({
           {Array.from({ length: cards }).map((_, i) => (
             <div
               key={i}
-              className="flex items-center gap-4 rounded-lg border border-border bg-card px-5 py-4"
+              className="flex items-center gap-4 rounded-2xl border border-border/40 bg-card px-5 py-4"
             >
               <Skeleton className="size-10 shrink-0 rounded-lg" />
               <div className="flex-1 space-y-1.5">

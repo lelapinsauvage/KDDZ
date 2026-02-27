@@ -39,7 +39,7 @@ export function FormPageSkeleton({
         {Array.from({ length: sections }).map((_, section) => (
           <div
             key={section}
-            className="mb-6 overflow-hidden rounded-lg border border-border bg-card"
+            className="mb-6 overflow-hidden rounded-2xl border border-border/40 bg-card"
           >
             {/* Card header */}
             <div className="border-b border-border px-6 py-4">

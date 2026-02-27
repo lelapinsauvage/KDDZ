@@ -89,16 +89,16 @@ interface ClassesClientProps {
 // ── Avatar colors ──────────────────────────────────────────────────────────
 
 const AVATAR_COLORS = [
-  { bg: "bg-rose-100", text: "text-rose-600" },
-  { bg: "bg-sky-100", text: "text-sky-600" },
-  { bg: "bg-amber-100", text: "text-amber-600" },
-  { bg: "bg-emerald-100", text: "text-emerald-600" },
-  { bg: "bg-violet-100", text: "text-violet-600" },
-  { bg: "bg-teal-100", text: "text-teal-600" },
-  { bg: "bg-pink-100", text: "text-pink-600" },
-  { bg: "bg-indigo-100", text: "text-indigo-600" },
-  { bg: "bg-orange-100", text: "text-orange-600" },
-  { bg: "bg-cyan-100", text: "text-cyan-600" },
+  { bg: "bg-[#C17C5A]/15", text: "text-[#A0613E]" },
+  { bg: "bg-[#A0784C]/15", text: "text-[#8B6537]" },
+  { bg: "bg-[#6B8F71]/15", text: "text-[#567352]" },
+  { bg: "bg-[#B07D62]/15", text: "text-[#9A664A]" },
+  { bg: "bg-[#8B7355]/15", text: "text-[#755F45]" },
+  { bg: "bg-[#9B8579]/15", text: "text-[#7D6A5E]" },
+  { bg: "bg-[#7A8B6E]/15", text: "text-[#636F58]" },
+  { bg: "bg-[#C4956A]/15", text: "text-[#A07A52]" },
+  { bg: "bg-[#8E7B6D]/15", text: "text-[#756457]" },
+  { bg: "bg-[#A89080]/15", text: "text-[#8A7466]" },
 ];
 
 function getAvatarColor(name: string) {
@@ -500,8 +500,8 @@ export function ClassesClient({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Card className="rounded-2xl py-4 transition-all hover:shadow-md hover:-translate-y-0.5">
             <CardContent className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-blue-100">
-                <GraduationCap className="size-5 text-blue-600" />
+              <div className="flex size-10 items-center justify-center rounded-xl bg-[#A0784C]/10">
+                <GraduationCap className="size-5 text-[#A0784C]" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Classes</p>
@@ -513,8 +513,8 @@ export function ClassesClient({
           </Card>
           <Card className="rounded-2xl py-4 transition-all hover:shadow-md hover:-translate-y-0.5">
             <CardContent className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-amber-100">
-                <Users className="size-5 text-amber-600" />
+              <div className="flex size-10 items-center justify-center rounded-xl bg-[#C17C5A]/10">
+                <Users className="size-5 text-[#C17C5A]" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Students</p>
@@ -526,8 +526,8 @@ export function ClassesClient({
           </Card>
           <Card className="rounded-2xl py-4 transition-all hover:shadow-md hover:-translate-y-0.5">
             <CardContent className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-emerald-100">
-                <Users className="size-5 text-emerald-600" />
+              <div className="flex size-10 items-center justify-center rounded-xl bg-[#6B8F71]/10">
+                <Users className="size-5 text-[#6B8F71]" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Capacity</p>
@@ -612,7 +612,7 @@ export function ClassesClient({
                       <Badge
                         className={
                           cls.isActive
-                            ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+                            ? "bg-[#6B8F71]/15 text-[#567352] border-[#6B8F71]/25"
                             : "bg-muted text-muted-foreground border-border"
                         }
                       >

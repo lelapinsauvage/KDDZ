@@ -183,15 +183,15 @@ export function AssessmentForm({
           {/* Progress bar */}
           <div className="flex items-center gap-4 text-sm text-[#555]">
             <div className="flex items-center gap-1.5">
-              <CheckCircle className="size-4 text-emerald-500" />
+              <CheckCircle className="size-4 text-[#6B8F71]" />
               <span>
                 {answeredCriteria}/{totalCriteria} evaluated
               </span>
             </div>
             {redFlagCount > 0 && (
               <div className="flex items-center gap-1.5">
-                <AlertTriangle className="size-4 text-red-500" />
-                <span className="text-red-600">
+                <AlertTriangle className="size-4 text-[#C17C5A]" />
+                <span className="text-[#C17C5A]">
                   {redFlagCount} red flag{redFlagCount !== 1 ? "s" : ""}
                 </span>
               </div>
@@ -206,7 +206,7 @@ export function AssessmentForm({
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               {category.isRedFlags && (
-                <AlertTriangle className="size-4 text-red-500" />
+                <AlertTriangle className="size-4 text-[#C17C5A]" />
               )}
               {category.name}
             </CardTitle>
@@ -314,7 +314,7 @@ function CriteriaSection({
                   variant={value === 1 ? "default" : "outline"}
                   className={
                     value === 1
-                      ? "bg-emerald-500 hover:bg-emerald-600 text-white h-8 px-3"
+                      ? "bg-[#6B8F71] hover:bg-[#5A7A60] text-white h-8 px-3"
                       : "h-8 px-3"
                   }
                   onClick={() => onChange(criterion.key, value === 1 ? 0 : 1)}
@@ -327,7 +327,7 @@ function CriteriaSection({
                   variant={value === -1 ? "default" : "outline"}
                   className={
                     value === -1
-                      ? "bg-red-500 hover:bg-red-600 text-white h-8 px-3"
+                      ? "bg-[#C17C5A] hover:bg-[#A8684A] text-white h-8 px-3"
                       : "h-8 px-3"
                   }
                   onClick={() =>
@@ -376,7 +376,7 @@ function RedFlagSection({
                 htmlFor={criterion.key}
                 className="text-sm leading-5 font-normal text-foreground cursor-pointer"
               >
-                <span className="font-semibold text-red-500 mr-1.5">
+                <span className="font-semibold text-[#C17C5A] mr-1.5">
                   {criterion.key.toUpperCase()}
                 </span>
                 {criterion.label}
