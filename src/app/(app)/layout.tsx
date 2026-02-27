@@ -9,10 +9,24 @@ import { auth } from "@/lib/auth"
 import { getSidebarBadges } from "@/lib/actions/sidebar"
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const [session, branches, years, badges] = await Promise.all([
-    auth(),
-    db.branch.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
-    db.schoolYear.findMany({ select: { id: true, label: true }, orderBy: { startDate: "desc" } }),
+  const session = await auth()
+  const orgId = session?.user?.organizationId
+
+  const [branches, years, badges] = await Promise.all([
+    orgId
+      ? db.branch.findMany({
+          where: { organizationId: orgId },
+          select: { id: true, name: true },
+          orderBy: { name: "asc" },
+        })
+      : [],
+    orgId
+      ? db.schoolYear.findMany({
+          where: { organizationId: orgId },
+          select: { id: true, label: true },
+          orderBy: { startDate: "desc" },
+        })
+      : [],
     getSidebarBadges(),
   ])
 
