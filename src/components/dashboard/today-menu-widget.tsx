@@ -16,10 +16,10 @@ interface TodayMenuWidgetProps {
 }
 
 const mealConfig = [
-  { key: "breakfast" as const, label: "Breakfast", icon: Coffee, iconColor: "text-amber-600", iconBg: "bg-amber-50" },
-  { key: "lunch" as const, label: "Lunch", icon: UtensilsCrossed, iconColor: "text-teal-600", iconBg: "bg-teal-50" },
-  { key: "dessert" as const, label: "Dessert", icon: Cake, iconColor: "text-pink-600", iconBg: "bg-pink-50" },
-  { key: "snack" as const, label: "Snack", icon: Cookie, iconColor: "text-violet-600", iconBg: "bg-violet-50" },
+  { key: "breakfast" as const, label: "Breakfast", icon: Coffee, iconColor: "text-[#B08968]", iconBg: "bg-[#B08968]/10" },
+  { key: "lunch" as const, label: "Lunch", icon: UtensilsCrossed, iconColor: "text-[#C35A2C]", iconBg: "bg-[#C35A2C]/10" },
+  { key: "dessert" as const, label: "Dessert", icon: Cake, iconColor: "text-[#B07070]", iconBg: "bg-[#B07070]/10" },
+  { key: "snack" as const, label: "Snack", icon: Cookie, iconColor: "text-[#6B8F71]", iconBg: "bg-[#6B8F71]/10" },
 ] as const;
 
 export function TodayMenuWidget({ breakfast, lunch, dessert, snack }: TodayMenuWidgetProps) {

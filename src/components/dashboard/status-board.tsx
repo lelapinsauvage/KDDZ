@@ -31,43 +31,43 @@ const pillarThemes: Record<
 > = {
   Attendance: {
     icon: Users,
-    iconBg: "bg-teal-100",
-    iconColor: "text-teal-600",
-    cardBg: "bg-gradient-to-br from-teal-50/80 to-cyan-50/40",
-    cardBorder: "border-teal-200/50",
-    metricColor: "text-teal-700",
+    iconBg: "bg-[#C35A2C]/10",
+    iconColor: "text-[#C35A2C]",
+    cardBg: "bg-card",
+    cardBorder: "border-border/40",
+    metricColor: "text-[#C35A2C]",
   },
   Reports: {
     icon: FileText,
-    iconBg: "bg-violet-100",
-    iconColor: "text-violet-600",
-    cardBg: "bg-gradient-to-br from-violet-50/80 to-purple-50/40",
-    cardBorder: "border-violet-200/50",
-    metricColor: "text-violet-700",
+    iconBg: "bg-[#8B7355]/10",
+    iconColor: "text-[#8B7355]",
+    cardBg: "bg-card",
+    cardBorder: "border-border/40",
+    metricColor: "text-[#8B7355]",
   },
   Staff: {
     icon: Briefcase,
-    iconBg: "bg-sky-100",
-    iconColor: "text-sky-600",
-    cardBg: "bg-gradient-to-br from-sky-50/80 to-blue-50/40",
-    cardBorder: "border-sky-200/50",
-    metricColor: "text-sky-700",
+    iconBg: "bg-[#6B8F71]/10",
+    iconColor: "text-[#6B8F71]",
+    cardBg: "bg-card",
+    cardBorder: "border-border/40",
+    metricColor: "text-[#6B8F71]",
   },
   Finance: {
     icon: DollarSign,
-    iconBg: "bg-amber-100",
-    iconColor: "text-amber-600",
-    cardBg: "bg-gradient-to-br from-amber-50/80 to-orange-50/40",
-    cardBorder: "border-amber-200/50",
-    metricColor: "text-amber-700",
+    iconBg: "bg-[#B08968]/10",
+    iconColor: "text-[#B08968]",
+    cardBg: "bg-card",
+    cardBorder: "border-border/40",
+    metricColor: "text-[#B08968]",
   },
   Health: {
     icon: Heart,
-    iconBg: "bg-rose-100",
-    iconColor: "text-rose-600",
-    cardBg: "bg-gradient-to-br from-rose-50/80 to-pink-50/40",
-    cardBorder: "border-rose-200/50",
-    metricColor: "text-rose-700",
+    iconBg: "bg-[#B07070]/10",
+    iconColor: "text-[#B07070]",
+    cardBg: "bg-card",
+    cardBorder: "border-border/40",
+    metricColor: "text-[#B07070]",
   },
 };
 
@@ -86,7 +86,7 @@ export function StatusBoard({ pillars }: StatusBoardProps) {
           <Link
             key={pillar.label}
             href={pillar.href}
-            className={`relative flex min-w-[120px] flex-col items-center gap-2.5 rounded-2xl border px-4 py-5 transition-all hover:shadow-md hover:-translate-y-0.5 ${theme.cardBg} ${theme.cardBorder}`}
+            className={`relative flex min-w-[120px] flex-col items-center gap-2.5 rounded-2xl border px-4 py-5 transition-all hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] hover:-translate-y-0.5 ${theme.cardBg} ${theme.cardBorder}`}
           >
             {/* Status indicator dot — top-right corner */}
             <div className="absolute top-2.5 right-2.5">
