@@ -231,12 +231,19 @@ enum LanguageProficiency {
 model Organization {
   id        String   @id @default(uuid()) @db.Uuid
   name      String
+  slug      String   @unique
   logo      String?
+  plan      String   @default("free")
+  isActive  Boolean  @default(true)
   settings  Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  branches Branch[]
+  branches    Branch[]
+  users       User[]
+  schoolYears SchoolYear[]
+  foods       Food[]
+  eventTypes  EventType[]
 
   @@map("organizations")
 }
@@ -384,18 +391,21 @@ model BranchDocument {
 }
 
 model SchoolYear {
-  id        String   @id @default(uuid()) @db.Uuid
-  label     String
-  startDate DateTime @db.Date
-  endDate   DateTime @db.Date
-  isActive  Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(uuid()) @db.Uuid
+  label          String
+  startDate      DateTime @db.Date
+  endDate        DateTime @db.Date
+  isActive       Boolean  @default(false)
+  organizationId String?  @db.Uuid
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
+  organization      Organization?    @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   children          Child[]
   assessments       Assessment[]
   accountingEntries AccountingEntry[]
 
+  @@index([organizationId])
   @@map("school_years")
 }
 
@@ -454,10 +464,12 @@ model User {
   role          UserRole  @default(TEACHER)
   isActive      Boolean   @default(true)
   branchId      String?   @db.Uuid
+  organizationId String?  @db.Uuid
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  branch Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  branch       Branch?       @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
 
   accounts      Account[]
   sessions      Session[]
@@ -470,6 +482,7 @@ model User {
   pushTokens    PushToken[]     @relation("UserPushTokens")
 
   @@index([branchId])
+  @@index([organizationId])
   @@index([email])
   @@index([role])
   @@map("users")
@@ -1224,10 +1237,13 @@ model EmployeeEvent {
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
 
+  branchId        String?             @db.Uuid
+
   @@unique([employeeId, employeeType, date])
   @@index([employeeId, employeeType])
   @@index([date])
   @@index([status])
+  @@index([branchId])
   @@map("employee_events")
 }
 
@@ -1246,9 +1262,12 @@ model TeacherAttendance {
   createdAt    DateTime              @default(now())
   updatedAt    DateTime              @updatedAt
 
+  branchId     String?               @db.Uuid
+
   @@index([employeeId, employeeType])
   @@index([date])
   @@index([status])
+  @@index([branchId])
   @@map("teacher_attendance")
 }
 
@@ -1441,17 +1460,20 @@ model Vaccination {
 // ─────────────────────────────────────────────
 
 model Food {
-  id        String       @id @default(uuid()) @db.Uuid
-  name      String
-  category  FoodCategory
-  isActive  Boolean      @default(true)
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  id             String       @id @default(uuid()) @db.Uuid
+  name           String
+  category       FoodCategory
+  isActive       Boolean      @default(true)
+  organizationId String?      @db.Uuid
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
+  organization     Organization?  @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   breakfastReports DailyReport[]  @relation("BreakfastFood")
   lunchReports     DailyReport[]  @relation("LunchFood")
   foodCalendars    FoodCalendar[]
 
+  @@index([organizationId])
   @@index([category])
   @@index([isActive])
   @@map("foods")
@@ -1608,29 +1630,33 @@ model CallLog {
 // ─────────────────────────────────────────────
 
 model MessageThread {
-  id        String   @id @default(uuid()) @db.Uuid
-  subject   String?
-  createdAt DateTime @default(now())
+  id             String   @id @default(uuid()) @db.Uuid
+  subject        String?
+  organizationId String?  @db.Uuid
+  createdAt      DateTime @default(now())
 
   messages Message[]
 
+  @@index([organizationId])
   @@map("message_threads")
 }
 
 model Message {
-  id            String        @id @default(uuid()) @db.Uuid
-  senderId      String        @db.Uuid
-  senderType    SenderType
-  recipientId   String        @db.Uuid
-  recipientType RecipientType
-  subject       String?
-  body          String        @db.Text
-  threadId      String?       @db.Uuid
-  isRead        Boolean       @default(false)
-  createdAt     DateTime      @default(now())
+  id             String        @id @default(uuid()) @db.Uuid
+  senderId       String        @db.Uuid
+  senderType     SenderType
+  recipientId    String        @db.Uuid
+  recipientType  RecipientType
+  subject        String?
+  body           String        @db.Text
+  threadId       String?       @db.Uuid
+  organizationId String?       @db.Uuid
+  isRead         Boolean       @default(false)
+  createdAt      DateTime      @default(now())
 
   thread MessageThread? @relation(fields: [threadId], references: [id], onDelete: SetNull)
 
+  @@index([organizationId])
   @@index([senderId, senderType])
   @@index([recipientId, recipientType])
   @@index([threadId])
@@ -1644,14 +1670,17 @@ model Message {
 // ─────────────────────────────────────────────
 
 model EventType {
-  id        String   @id @default(uuid()) @db.Uuid
-  name      String
-  color     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(uuid()) @db.Uuid
+  name           String
+  color          String?
+  organizationId String?  @db.Uuid
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  events Event[]
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  events       Event[]
 
+  @@index([organizationId])
   @@map("event_types")
 }
 
