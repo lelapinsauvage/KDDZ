@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
+import { requireOrg, requireOrgSafe } from "@/lib/require-org";
+import { verifyBranchAccess } from "@/lib/verify-org-access";
 import type { SenderType, RecipientType } from "@/generated/prisma/enums";
 
 // ---------------------------------------------------------------------------
@@ -119,14 +120,12 @@ async function resolveNames(
 
 export async function getUnreadMessageCount(): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { success: true, data: 0 };
-    }
+    const { userId, organizationId: orgId } = await requireOrg();
 
     const count = await db.message.count({
       where: {
-        recipientId: session.user.id,
+        recipientId: userId,
+        organizationId: orgId,
         isRead: false,
       },
     });
@@ -146,16 +145,14 @@ export async function getInbox(
   params: MessageListParams = {},
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const { userId, organizationId: orgId } = await requireOrg();
 
     const { search, readStatus = "all", page = 1, pageSize = 50 } = params;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {
-      recipientId: session.user.id,
+      recipientId: userId,
+      organizationId: orgId,
     };
 
     if (readStatus === "read") {
@@ -231,16 +228,14 @@ export async function getSentMessages(
   params: MessageListParams = {},
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const { userId, organizationId: orgId } = await requireOrg();
 
     const { search, page = 1, pageSize = 50 } = params;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {
-      senderId: session.user.id,
+      senderId: userId,
+      organizationId: orgId,
     };
 
     if (search) {
@@ -308,16 +303,13 @@ export async function getSentMessages(
 
 export async function getMessageById(id: string): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const { userId, organizationId: orgId } = await requireOrg();
 
     const message = await db.message.findUnique({
       where: { id },
     });
 
-    if (!message) {
+    if (!message || message.organizationId !== orgId) {
       return { success: false, error: "Message not found" };
     }
 
@@ -342,7 +334,7 @@ export async function getMessageById(id: string): Promise<ActionResult> {
 
     // Mark as read if recipient is the current user
     if (
-      message.recipientId === session.user.id &&
+      message.recipientId === userId &&
       !message.isRead
     ) {
       await db.message.update({
@@ -390,33 +382,31 @@ export async function sendMessage(
   data: SendMessageData,
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const res = await requireOrgSafe();
+    if (!res.ok) return { success: false, error: res.error };
+    const { ctx } = res;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const userRole = (session.user as any).role as string;
-    const senderType = roleToSenderType(userRole);
+    const senderType = roleToSenderType(ctx.role);
 
     // Create or reuse a thread
     let threadId = data.threadId ?? null;
     if (!threadId) {
       const thread = await db.messageThread.create({
-        data: { subject: data.subject ?? null },
+        data: { subject: data.subject ?? null, organizationId: ctx.organizationId },
       });
       threadId = thread.id;
     }
 
     const message = await db.message.create({
       data: {
-        senderId: session.user.id,
+        senderId: ctx.userId,
         senderType,
         recipientId: data.recipientId,
         recipientType: data.recipientType,
         subject: data.subject ?? null,
         body: data.body,
         threadId,
+        organizationId: ctx.organizationId,
       },
     });
 
@@ -438,22 +428,19 @@ export async function replyToMessage(
   body: string,
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const res = await requireOrgSafe();
+    if (!res.ok) return { success: false, error: res.error };
+    const { ctx } = res;
 
     const original = await db.message.findUnique({
       where: { id: originalMessageId },
     });
 
-    if (!original) {
+    if (!original || original.organizationId !== ctx.organizationId) {
       return { success: false, error: "Original message not found" };
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const userRole = (session.user as any).role as string;
-    const senderType = roleToSenderType(userRole);
+    const senderType = roleToSenderType(ctx.role);
 
     // Create thread if none exists
     let threadId = original.threadId;
@@ -471,13 +458,14 @@ export async function replyToMessage(
 
     const reply = await db.message.create({
       data: {
-        senderId: session.user.id,
+        senderId: ctx.userId,
         senderType,
         recipientId: original.senderId,
         recipientType: original.senderType as RecipientType,
         subject: original.subject ? `Re: ${original.subject}` : null,
         body,
         threadId,
+        organizationId: ctx.organizationId,
       },
     });
 
@@ -496,9 +484,13 @@ export async function replyToMessage(
 
 export async function markAsRead(id: string): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const res = await requireOrgSafe();
+    if (!res.ok) return { success: false, error: res.error };
+    const { ctx } = res;
+
+    const message = await db.message.findUnique({ where: { id } });
+    if (!message || message.organizationId !== ctx.organizationId) {
+      return { success: false, error: "Message not found" };
     }
 
     await db.message.update({
@@ -516,9 +508,13 @@ export async function markAsRead(id: string): Promise<ActionResult> {
 
 export async function markAsUnread(id: string): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const res = await requireOrgSafe();
+    if (!res.ok) return { success: false, error: res.error };
+    const { ctx } = res;
+
+    const message = await db.message.findUnique({ where: { id } });
+    if (!message || message.organizationId !== ctx.organizationId) {
+      return { success: false, error: "Message not found" };
     }
 
     await db.message.update({
@@ -540,13 +536,12 @@ export async function markAsUnread(id: string): Promise<ActionResult> {
 
 export async function bulkMarkAsRead(ids: string[]): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const res = await requireOrgSafe();
+    if (!res.ok) return { success: false, error: res.error };
+    const { ctx } = res;
 
     await db.message.updateMany({
-      where: { id: { in: ids }, recipientId: session.user.id },
+      where: { id: { in: ids }, recipientId: ctx.userId, organizationId: ctx.organizationId },
       data: { isRead: true },
     });
 
@@ -564,9 +559,13 @@ export async function bulkMarkAsRead(ids: string[]): Promise<ActionResult> {
 
 export async function deleteMessage(id: string): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const res = await requireOrgSafe();
+    if (!res.ok) return { success: false, error: res.error };
+    const { ctx } = res;
+
+    const message = await db.message.findUnique({ where: { id } });
+    if (!message || message.organizationId !== ctx.organizationId) {
+      return { success: false, error: "Message not found" };
     }
 
     await db.message.delete({ where: { id } });
@@ -583,17 +582,17 @@ export async function bulkDeleteMessages(
   ids: string[],
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const res = await requireOrgSafe();
+    if (!res.ok) return { success: false, error: res.error };
+    const { ctx } = res;
 
     await db.message.deleteMany({
       where: {
         id: { in: ids },
+        organizationId: ctx.organizationId,
         OR: [
-          { recipientId: session.user.id },
-          { senderId: session.user.id },
+          { recipientId: ctx.userId },
+          { senderId: ctx.userId },
         ],
       },
     });
@@ -614,14 +613,20 @@ export async function sendClassMessage(
   data: SendClassMessageData,
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const res = await requireOrgSafe();
+    if (!res.ok) return { success: false, error: res.error };
+    const { ctx } = res;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const userRole = (session.user as any).role as string;
-    const senderType = roleToSenderType(userRole);
+    const senderType = roleToSenderType(ctx.role);
+
+    // Verify class belongs to org
+    const classRecord = await db.class.findUnique({
+      where: { id: data.classId },
+      include: { branch: { select: { organizationId: true } } },
+    });
+    if (!classRecord || classRecord.branch.organizationId !== ctx.organizationId) {
+      return { success: false, error: "Class not found" };
+    }
 
     // 1. Find all active children in the class
     const children = await db.child.findMany({
@@ -653,18 +658,20 @@ export async function sendClassMessage(
     const thread = await db.messageThread.create({
       data: {
         subject: data.subject ?? null,
+        organizationId: ctx.organizationId,
       },
     });
 
     // 4. Create individual messages for each parent
     const messageCreateData = Array.from(parentUserIds).map((parentId) => ({
-      senderId: session.user!.id,
+      senderId: ctx.userId,
       senderType,
       recipientId: parentId,
       recipientType: "PARENT" as RecipientType,
       subject: data.subject ?? null,
       body: data.body,
       threadId: thread.id,
+      organizationId: ctx.organizationId,
     }));
 
     await db.message.createMany({
