@@ -1,8 +1,9 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { requireOrg, requireOrgSafe } from "@/lib/require-org";
+import { verifyChildAccess } from "@/lib/verify-org-access";
 import type { AccountingEntryType } from "@/generated/prisma/client";
 
 // ── Types ─────────────────────────────────────────
@@ -32,6 +33,12 @@ type ActionResult =
 
 export async function getChildAccounting(childId: string) {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
+    if (!(await verifyChildAccess(childId, orgId))) {
+      return [];
+    }
+
     const entries = await db.accountingEntry.findMany({
       where: { childId },
       orderBy: { date: "desc" },
@@ -49,10 +56,9 @@ export async function getChildAccounting(childId: string) {
 export async function createAccountingEntry(
   data: CreateAccountingEntryData
 ): Promise<ActionResult> {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return { success: false, error: "Unauthorized" };
-  }
+  const result = await requireOrgSafe();
+  if (!result.ok) return { success: false, error: result.error };
+  const { ctx } = result;
 
   try {
     // Validate required fields
@@ -80,11 +86,8 @@ export async function createAccountingEntry(
       };
     }
 
-    // Verify child exists
-    const child = await db.child.findUnique({
-      where: { id: data.childId },
-    });
-    if (!child) {
+    // Verify child exists and belongs to org
+    if (!(await verifyChildAccess(data.childId, ctx.organizationId))) {
       return { success: false, error: "Child not found" };
     }
 
@@ -119,7 +122,13 @@ export async function getAccountingSummary(
   childId?: string
 ): Promise<AccountingSummary> {
   try {
-    const where = childId ? { childId } : {};
+    const { organizationId: orgId } = await requireOrg();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = {
+      child: { branch: { organizationId: orgId } },
+    };
+    if (childId) where.childId = childId;
 
     const entries = await db.accountingEntry.findMany({
       where,

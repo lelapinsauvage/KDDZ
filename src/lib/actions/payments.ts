@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
+import { requireOrg, requireOrgSafe } from "@/lib/require-org";
+import { verifyChildAccess } from "@/lib/verify-org-access";
 import type {
   PaymentMethod,
   PaymentCategory,
@@ -72,6 +73,8 @@ export async function getPayments(
   params: PaymentListParams = {},
 ): Promise<ActionResult> {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     const {
       childId,
       branchId,
@@ -87,7 +90,9 @@ export async function getPayments(
     } = params;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: any = {};
+    const where: any = {
+      child: { branch: { organizationId: orgId } },
+    };
 
     if (childId) where.childId = childId;
     if (method) where.method = method;
@@ -95,16 +100,13 @@ export async function getPayments(
     if (status) where.status = status;
 
     // Branch/class filter via child relation
-    if (branchId || classId || search) {
-      where.child = {};
-      if (branchId) where.child.branchId = branchId;
-      if (classId) where.child.classId = classId;
-      if (search) {
-        where.child.OR = [
-          { firstName: { contains: search, mode: "insensitive" } },
-          { lastName: { contains: search, mode: "insensitive" } },
-        ];
-      }
+    if (branchId) where.child.branchId = branchId;
+    if (classId) where.child.classId = classId;
+    if (search) {
+      where.child.OR = [
+        { firstName: { contains: search, mode: "insensitive" } },
+        { lastName: { contains: search, mode: "insensitive" } },
+      ];
     }
 
     // Date range filter
@@ -161,10 +163,14 @@ export async function getPaymentsSummary(
   params: { branchId?: string; dateFrom?: string; dateTo?: string } = {},
 ): Promise<ActionResult> {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: any = {};
+    const where: any = {
+      child: { branch: { organizationId: orgId } },
+    };
     if (params.branchId) {
-      where.child = { branchId: params.branchId };
+      where.child.branchId = params.branchId;
     }
     if (params.dateFrom || params.dateTo) {
       where.date = {};
@@ -264,14 +270,12 @@ export async function createPayment(
   data: CreatePaymentData,
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
 
-    // Validate child exists
-    const child = await db.child.findUnique({ where: { id: data.childId } });
-    if (!child) {
+    // Validate child exists and belongs to org
+    if (!(await verifyChildAccess(data.childId, ctx.organizationId))) {
       return { success: false, error: "Child not found" };
     }
 
@@ -289,7 +293,7 @@ export async function createPayment(
         status: data.status ?? "PAID",
         reference: data.reference ?? null,
         notes: data.notes ?? null,
-        createdById: session.user.id,
+        createdById: ctx.userId,
       },
     });
 
@@ -312,9 +316,17 @@ export async function updatePayment(
   data: UpdatePaymentData,
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
+
+    // Verify payment belongs to org
+    const existing = await db.payment.findUnique({
+      where: { id },
+      include: { child: { include: { branch: { select: { organizationId: true } } } } },
+    });
+    if (!existing || existing.child.branch.organizationId !== ctx.organizationId) {
+      return { success: false, error: "Payment not found" };
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -355,13 +367,15 @@ export async function updatePayment(
 
 export async function deletePayment(id: string): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
 
-    const payment = await db.payment.findUnique({ where: { id } });
-    if (!payment) {
+    const payment = await db.payment.findUnique({
+      where: { id },
+      include: { child: { include: { branch: { select: { organizationId: true } } } } },
+    });
+    if (!payment || payment.child.branch.organizationId !== ctx.organizationId) {
       return { success: false, error: "Payment not found" };
     }
 
@@ -383,6 +397,12 @@ export async function deletePayment(id: string): Promise<ActionResult> {
 
 export async function getChildPayments(childId: string): Promise<ActionResult> {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
+    if (!(await verifyChildAccess(childId, orgId))) {
+      return { success: false, error: "Child not found" };
+    }
+
     const payments = await db.payment.findMany({
       where: { childId },
       include: {
@@ -434,8 +454,10 @@ export async function getChildPayments(childId: string): Promise<ActionResult> {
 
 export async function getOverduePayments(): Promise<ActionResult> {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     const overduePayments = await db.payment.findMany({
-      where: { status: "OVERDUE" },
+      where: { status: "OVERDUE", child: { branch: { organizationId: orgId } } },
       include: {
         child: {
           include: {
@@ -496,8 +518,10 @@ export async function getOverduePayments(): Promise<ActionResult> {
 
 export async function getChildrenForPayment(): Promise<ActionResult> {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     const children = await db.child.findMany({
-      where: { isActive: true, isDraft: false },
+      where: { isActive: true, isDraft: false, branch: { organizationId: orgId } },
       select: {
         id: true,
         firstName: true,
@@ -524,10 +548,9 @@ export async function recordPayment(
   input: QuickPaymentInput,
 ): Promise<ActionResult<{ id: string; childName: string }>> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
 
     const parsed = quickPaymentSchema.safeParse(input);
     if (!parsed.success) {
@@ -536,6 +559,11 @@ export async function recordPayment(
     }
 
     const { childId, amount, method, category, notes } = parsed.data;
+
+    // Verify child belongs to org
+    if (!(await verifyChildAccess(childId, ctx.organizationId))) {
+      return { success: false, error: "Child not found" };
+    }
 
     const child = await db.child.findUnique({
       where: { id: childId },
@@ -555,7 +583,7 @@ export async function recordPayment(
         category,
         status: "PAID",
         notes: notes || null,
-        createdById: session.user.id,
+        createdById: ctx.userId,
       },
     });
 
