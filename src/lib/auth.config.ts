@@ -17,6 +17,7 @@ export const authConfig = {
         token.id = user.id;
         token.role = user.role;
         token.branchId = user.branchId;
+        token.organizationId = user.organizationId;
       }
       return token;
     },
@@ -25,6 +26,7 @@ export const authConfig = {
         session.user.id = token.id as string;
         session.user.role = token.role as typeof session.user.role;
         session.user.branchId = token.branchId as string | null;
+        session.user.organizationId = token.organizationId as string | null;
       }
       return session;
     },

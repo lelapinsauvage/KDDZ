@@ -6,12 +6,14 @@ declare module "next-auth" {
       id: string;
       role: "ADMIN" | "TEACHER" | "NURSE" | "DOCTOR" | "MANAGER";
       branchId: string | null;
+      organizationId: string | null;
     } & DefaultSession["user"];
   }
 
   interface User {
     role: "ADMIN" | "TEACHER" | "NURSE" | "DOCTOR" | "MANAGER";
     branchId: string | null;
+    organizationId: string | null;
   }
 }
 
@@ -20,5 +22,6 @@ declare module "next-auth/jwt" {
     id: string;
     role: "ADMIN" | "TEACHER" | "NURSE" | "DOCTOR" | "MANAGER";
     branchId: string | null;
+    organizationId: string | null;
   }
 }

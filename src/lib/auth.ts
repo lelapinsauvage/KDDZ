@@ -29,6 +29,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           const { db } = await import("./db");
           const user = await db.user.findUnique({
             where: { email },
+            include: { branch: { select: { organizationId: true } } },
           });
 
           if (!user || !user.isActive || !user.passwordHash) {
@@ -47,6 +48,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             name: user.name,
             role: user.role,
             branchId: user.branchId,
+            organizationId: user.organizationId ?? user.branch?.organizationId ?? null,
           };
         } catch {
           return null;
