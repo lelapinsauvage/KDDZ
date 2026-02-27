@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
+import { requireOrg } from "@/lib/require-org";
 
 export interface SearchResult {
   type: "child" | "teacher" | "nurse" | "doctor" | "manager";
@@ -17,10 +17,7 @@ export interface GlobalSearchResult {
 }
 
 export async function globalSearch(query: string): Promise<GlobalSearchResult> {
-  const session = await auth();
-  if (!session?.user) {
-    return { children: [], employees: [] };
-  }
+  const { organizationId: orgId } = await requireOrg();
 
   const trimmed = query.trim();
   if (trimmed.length < 2) {
@@ -36,7 +33,7 @@ export async function globalSearch(query: string): Promise<GlobalSearchResult> {
 
   const [children, teachers, nurses, doctors, managers] = await Promise.all([
     db.child.findMany({
-      where: nameFilter,
+      where: { ...nameFilter, branch: { organizationId: orgId } },
       select: {
         id: true,
         firstName: true,
@@ -46,22 +43,22 @@ export async function globalSearch(query: string): Promise<GlobalSearchResult> {
       take: 5,
     }),
     db.teacher.findMany({
-      where: nameFilter,
+      where: { ...nameFilter, branch: { organizationId: orgId } },
       select: { id: true, firstName: true, lastName: true },
       take: 3,
     }),
     db.nurse.findMany({
-      where: nameFilter,
+      where: { ...nameFilter, branch: { organizationId: orgId } },
       select: { id: true, firstName: true, lastName: true },
       take: 3,
     }),
     db.doctor.findMany({
-      where: nameFilter,
+      where: { ...nameFilter, branch: { organizationId: orgId } },
       select: { id: true, firstName: true, lastName: true },
       take: 3,
     }),
     db.manager.findMany({
-      where: nameFilter,
+      where: { ...nameFilter, branch: { organizationId: orgId } },
       select: { id: true, firstName: true, lastName: true },
       take: 3,
     }),

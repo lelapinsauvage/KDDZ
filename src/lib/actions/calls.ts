@@ -1,7 +1,8 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
+import { requireOrg, requireOrgSafe } from "@/lib/require-org";
+import { verifyChildAccess } from "@/lib/verify-org-access";
 import { revalidatePath } from "next/cache";
 import type { CallDirection, Prisma } from "@/generated/prisma/client";
 
@@ -37,6 +38,12 @@ type ActionResult =
 
 export async function getChildCallLogs(childId: string) {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
+    if (!(await verifyChildAccess(childId, orgId))) {
+      return [];
+    }
+
     const calls = await db.callLog.findMany({
       where: { childId },
       include: {
@@ -58,6 +65,8 @@ export async function getChildCallLogs(childId: string) {
 
 export async function getCallLogs(params: GetCallLogsParams = {}) {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     const {
       childId,
       direction,
@@ -68,7 +77,9 @@ export async function getCallLogs(params: GetCallLogsParams = {}) {
       pageSize = 20,
     } = params;
 
-    const where: Prisma.CallLogWhereInput = {};
+    const where: Prisma.CallLogWhereInput = {
+      child: { branch: { organizationId: orgId } },
+    };
 
     if (childId) where.childId = childId;
     if (direction) where.direction = direction;
@@ -119,10 +130,9 @@ export async function getCallLogs(params: GetCallLogsParams = {}) {
 export async function createCallLog(
   data: CreateCallLogData
 ): Promise<ActionResult> {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return { success: false, error: "Unauthorized" };
-  }
+  const result = await requireOrgSafe();
+  if (!result.ok) return { success: false, error: result.error };
+  const { ctx } = result;
 
   try {
     if (!data.childId) {
@@ -135,10 +145,7 @@ export async function createCallLog(
       return { success: false, error: "Date is required" };
     }
 
-    const child = await db.child.findUnique({
-      where: { id: data.childId },
-    });
-    if (!child) {
+    if (!(await verifyChildAccess(data.childId, ctx.organizationId))) {
       return { success: false, error: "Child not found" };
     }
 
@@ -153,7 +160,7 @@ export async function createCallLog(
         subject: data.subject || null,
         reason: data.reason || null,
         remarks: data.remarks || null,
-        createdById: session.user.id,
+        createdById: ctx.userId,
       },
     });
 
@@ -171,14 +178,16 @@ export async function createCallLog(
 // ── deleteCallLog ─────────────────────────────────
 
 export async function deleteCallLog(id: string): Promise<ActionResult> {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return { success: false, error: "Unauthorized" };
-  }
+  const result = await requireOrgSafe();
+  if (!result.ok) return { success: false, error: result.error };
+  const { ctx } = result;
 
   try {
-    const existing = await db.callLog.findUnique({ where: { id } });
-    if (!existing) {
+    const existing = await db.callLog.findUnique({
+      where: { id },
+      include: { child: { include: { branch: { select: { organizationId: true } } } } },
+    });
+    if (!existing || existing.child.branch.organizationId !== ctx.organizationId) {
       return { success: false, error: "Call log not found" };
     }
 

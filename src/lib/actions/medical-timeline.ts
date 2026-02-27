@@ -1,6 +1,8 @@
 "use server";
 
 import { db } from "@/lib/db";
+import { requireOrg } from "@/lib/require-org";
+import { verifyChildAccess } from "@/lib/verify-org-access";
 
 export interface MedicalEvent {
   id: string;
@@ -34,6 +36,12 @@ export interface MedicalTimelineData {
 export async function getChildMedicalTimeline(
   childId: string
 ): Promise<MedicalTimelineData> {
+  const { organizationId: orgId } = await requireOrg();
+
+  if (!(await verifyChildAccess(childId, orgId))) {
+    return { events: [], vaccinations: [], summary: { general: 0, conditions: 0, visits: 0, vaccinations: 0, accidents: 0 } };
+  }
+
   const [forms, vaccinations] = await Promise.all([
     db.medicalForm.findMany({
       where: { childId },

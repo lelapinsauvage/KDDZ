@@ -1,6 +1,8 @@
 "use server";
 
 import { db } from "@/lib/db";
+import { requireOrg } from "@/lib/require-org";
+import { verifyChildAccess } from "@/lib/verify-org-access";
 
 export interface TimelineEvent {
   id: string;
@@ -23,6 +25,12 @@ export async function getChildTimeline(
   childId: string,
   limit = 30
 ): Promise<TimelineEvent[]> {
+  const { organizationId: orgId } = await requireOrg();
+
+  if (!(await verifyChildAccess(childId, orgId))) {
+    return [];
+  }
+
   const [reports, absences, medicalForms, vaccinations, payments, callLogs] =
     await Promise.all([
       db.dailyReport.findMany({
