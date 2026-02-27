@@ -34,17 +34,17 @@ interface AlarmActionCardProps {
 }
 
 const typeConfig: Record<string, { icon: LucideIcon; color: string; bg: string; border: string }> = {
-  BIRTHDAY:    { icon: Cake,          color: "text-pink-600",   bg: "bg-pink-50",   border: "border-pink-200" },
-  VACCINATION: { icon: Syringe,       color: "text-blue-600",   bg: "bg-blue-50",   border: "border-blue-200" },
-  MEDICAL:     { icon: Heart,         color: "text-red-600",    bg: "bg-red-50",    border: "border-red-200" },
-  MEDICINE:    { icon: Pill,          color: "text-purple-600", bg: "bg-purple-50", border: "border-purple-200" },
-  PAYMENT:     { icon: DollarSign,    color: "text-amber-600",  bg: "bg-amber-50",  border: "border-amber-200" },
-  EVENT:       { icon: Calendar,      color: "text-teal-600",   bg: "bg-teal-50",   border: "border-teal-200" },
-  INSURANCE:   { icon: Shield,        color: "text-orange-600", bg: "bg-orange-50", border: "border-orange-200" },
-  CONTRACT:    { icon: FileText,      color: "text-indigo-600", bg: "bg-indigo-50", border: "border-indigo-200" },
-  REQUEST:     { icon: MessageSquare, color: "text-sky-600",    bg: "bg-sky-50",    border: "border-sky-200" },
-  ASSESSMENT:  { icon: FileText,      color: "text-violet-600", bg: "bg-violet-50", border: "border-violet-200" },
-  OTHER:       { icon: Bell,          color: "text-gray-600",   bg: "bg-gray-50",   border: "border-gray-200" },
+  BIRTHDAY:    { icon: Cake,          color: "text-[#B07070]",  bg: "bg-[#B07070]/10",  border: "border-[#B07070]/30" },
+  VACCINATION: { icon: Syringe,       color: "text-[#6B8F71]",  bg: "bg-[#6B8F71]/10",  border: "border-[#6B8F71]/30" },
+  MEDICAL:     { icon: Heart,         color: "text-[#C35A2C]",  bg: "bg-[#C35A2C]/10",  border: "border-[#C35A2C]/30" },
+  MEDICINE:    { icon: Pill,          color: "text-[#8B7355]",  bg: "bg-[#8B7355]/10",  border: "border-[#8B7355]/30" },
+  PAYMENT:     { icon: DollarSign,    color: "text-[#B08968]",  bg: "bg-[#B08968]/10",  border: "border-[#B08968]/30" },
+  EVENT:       { icon: Calendar,      color: "text-[#6B8F71]",  bg: "bg-[#6B8F71]/10",  border: "border-[#6B8F71]/30" },
+  INSURANCE:   { icon: Shield,        color: "text-[#C35A2C]",  bg: "bg-[#C35A2C]/10",  border: "border-[#C35A2C]/30" },
+  CONTRACT:    { icon: FileText,      color: "text-[#8B7355]",  bg: "bg-[#8B7355]/10",  border: "border-[#8B7355]/30" },
+  REQUEST:     { icon: MessageSquare, color: "text-[#6B8F71]",  bg: "bg-[#6B8F71]/10",  border: "border-[#6B8F71]/30" },
+  ASSESSMENT:  { icon: FileText,      color: "text-[#8B7355]",  bg: "bg-[#8B7355]/10",  border: "border-[#8B7355]/30" },
+  OTHER:       { icon: Bell,          color: "text-[#8B8178]",  bg: "bg-[#8B8178]/10",  border: "border-[#8B8178]/30" },
 };
 
 function getConfig(type: string) {
@@ -79,15 +79,15 @@ export function AlarmActionCard({ alarm }: AlarmActionCardProps) {
 
   return (
     <div
-      className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-colors ${
+      className={`flex items-center gap-3 rounded-2xl border px-3 py-2.5 transition-all ${
         alarm.isOverdue
-          ? "border-red-200 bg-red-50/60"
-          : `${config.bg}/40 border-border/40`
+          ? "border-[#C35A2C]/30 bg-[#C35A2C]/5"
+          : "border-border/40 bg-card hover:shadow-[0_2px_12px_rgba(176,137,104,0.08)]"
       }`}
     >
-      <div className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${alarm.isOverdue ? "bg-red-100" : config.bg}`}>
+      <div className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${alarm.isOverdue ? "bg-[#C35A2C]/10" : config.bg}`}>
         <Icon
-          className={`size-4 ${alarm.isOverdue ? "text-red-600" : config.color}`}
+          className={`size-4 ${alarm.isOverdue ? "text-[#C35A2C]" : config.color}`}
         />
       </div>
       <div className="min-w-0 flex-1">
@@ -97,13 +97,13 @@ export function AlarmActionCard({ alarm }: AlarmActionCardProps) {
         <div className="flex items-center gap-2">
           {alarm.dueDate && (
             <span
-              className={`text-[11px] ${alarm.isOverdue ? "font-medium text-red-600" : "text-muted-foreground"}`}
+              className={`text-[11px] ${alarm.isOverdue ? "font-medium text-[#C35A2C]" : "text-muted-foreground"}`}
             >
               {alarm.isOverdue ? "Overdue" : "Due"}: {alarm.dueDate}
             </span>
           )}
           {alarm.amount != null && (
-            <span className="text-[11px] font-semibold text-amber-700">
+            <span className="text-[11px] font-semibold text-[#B08968]">
               ${alarm.amount.toFixed(0)}
             </span>
           )}
@@ -122,7 +122,7 @@ export function AlarmActionCard({ alarm }: AlarmActionCardProps) {
             <Button
               size="sm"
               variant="ghost"
-              className="size-7 rounded-lg p-0 text-emerald-600 hover:bg-emerald-100"
+              className="size-7 rounded-lg p-0 text-[#6B8F71] hover:bg-[#6B8F71]/10"
               onClick={handleResolve}
               disabled={isPending}
               title="Resolve"
@@ -134,7 +134,7 @@ export function AlarmActionCard({ alarm }: AlarmActionCardProps) {
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="size-7 rounded-lg p-0 text-amber-600 hover:bg-amber-100"
+                  className="size-7 rounded-lg p-0 text-[#B08968] hover:bg-[#B08968]/10"
                   disabled={isPending}
                   title="Snooze"
                 >

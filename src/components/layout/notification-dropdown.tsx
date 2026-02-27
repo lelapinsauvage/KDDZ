@@ -35,71 +35,71 @@ const typeConfig: Record<
 > = {
   BIRTHDAY: {
     icon: Cake,
-    color: "text-pink-600",
-    bg: "bg-pink-50",
-    border: "border-l-pink-500",
+    color: "text-[#B07070]",
+    bg: "bg-[#B07070]/10",
+    border: "border-l-[#B07070]",
   },
   ASSESSMENT: {
     icon: ClipboardCheck,
-    color: "text-teal-600",
-    bg: "bg-teal-50",
-    border: "border-l-teal-500",
+    color: "text-[#8B7355]",
+    bg: "bg-[#8B7355]/10",
+    border: "border-l-[#8B7355]",
   },
   VACCINATION: {
     icon: Syringe,
-    color: "text-blue-600",
-    bg: "bg-blue-50",
-    border: "border-l-blue-500",
+    color: "text-[#6B8F71]",
+    bg: "bg-[#6B8F71]/10",
+    border: "border-l-[#6B8F71]",
   },
   MEDICAL: {
     icon: Heart,
-    color: "text-red-600",
-    bg: "bg-red-50",
-    border: "border-l-red-500",
+    color: "text-[#C35A2C]",
+    bg: "bg-[#C35A2C]/10",
+    border: "border-l-[#C35A2C]",
   },
   MEDICINE: {
     icon: Pill,
-    color: "text-purple-600",
-    bg: "bg-purple-50",
-    border: "border-l-purple-500",
+    color: "text-[#8B7355]",
+    bg: "bg-[#8B7355]/10",
+    border: "border-l-[#8B7355]",
   },
   INSURANCE: {
     icon: Shield,
-    color: "text-orange-600",
-    bg: "bg-orange-50",
-    border: "border-l-orange-500",
+    color: "text-[#C35A2C]",
+    bg: "bg-[#C35A2C]/10",
+    border: "border-l-[#C35A2C]",
   },
   PAYMENT: {
     icon: DollarSign,
-    color: "text-amber-600",
-    bg: "bg-amber-50",
-    border: "border-l-amber-500",
+    color: "text-[#B08968]",
+    bg: "bg-[#B08968]/10",
+    border: "border-l-[#B08968]",
   },
   CONTRACT: {
     icon: FileText,
-    color: "text-indigo-600",
-    bg: "bg-indigo-50",
-    border: "border-l-indigo-500",
+    color: "text-[#8B7355]",
+    bg: "bg-[#8B7355]/10",
+    border: "border-l-[#8B7355]",
   },
   EVENT: {
     icon: CalendarDays,
-    color: "text-emerald-600",
-    bg: "bg-emerald-50",
-    border: "border-l-emerald-500",
+    color: "text-[#6B8F71]",
+    bg: "bg-[#6B8F71]/10",
+    border: "border-l-[#6B8F71]",
   },
   REQUEST: {
     icon: MessageSquare,
-    color: "text-sky-600",
-    bg: "bg-sky-50",
-    border: "border-l-sky-500",
+    color: "text-[#6B8F71]",
+    bg: "bg-[#6B8F71]/10",
+    border: "border-l-[#6B8F71]",
   },
 };
 
 const defaultTypeConfig = {
   icon: Bell,
-  color: "text-gray-600",
-  bg: "bg-gray-50",
-  border: "border-l-gray-400",
+  color: "text-[#8B8178]",
+  bg: "bg-[#8B8178]/10",
+  border: "border-l-[#8B8178]",
 };
 
 function getTypeConfig(title: string) {
@@ -191,10 +191,10 @@ export function NotificationDropdown({
       <PopoverTrigger asChild>
         <button className="relative flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none">
           <Bell
-            className={`size-[18px] ${unreadCount > 0 ? "text-amber-500" : ""}`}
+            className={`size-[18px] ${unreadCount > 0 ? "text-primary" : ""}`}
           />
           {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 flex size-[18px] items-center justify-center rounded-full bg-red-500 text-[10px] font-bold leading-none text-white">
+            <span className="absolute -top-0.5 -right-0.5 flex size-[18px] items-center justify-center rounded-full bg-primary text-[10px] font-bold leading-none text-primary-foreground">
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           )}
@@ -272,8 +272,8 @@ export function NotificationDropdown({
             </div>
           ) : (
             <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
-              <div className="flex size-12 items-center justify-center rounded-full bg-emerald-50">
-                <CheckCircle2 className="size-6 text-emerald-500" />
+              <div className="flex size-12 items-center justify-center rounded-full bg-[#6B8F71]/10">
+                <CheckCircle2 className="size-6 text-[#6B8F71]" />
               </div>
               <p className="text-sm font-medium text-foreground">
                 All caught up!

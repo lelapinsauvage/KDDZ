@@ -38,42 +38,42 @@ const typeConfig: Record<
 > = {
   general: {
     icon: Stethoscope,
-    iconBg: "bg-blue-100",
-    iconColor: "text-blue-600",
+    iconBg: "bg-[#8B7355]/10",
+    iconColor: "text-[#8B7355]",
     label: "General",
   },
   conditions: {
     icon: Heart,
-    iconBg: "bg-violet-100",
-    iconColor: "text-violet-600",
+    iconBg: "bg-[#B07070]/10",
+    iconColor: "text-[#B07070]",
     label: "Conditions",
   },
   visits: {
     icon: CalendarCheck,
-    iconBg: "bg-emerald-100",
-    iconColor: "text-emerald-600",
+    iconBg: "bg-[#6B8F71]/10",
+    iconColor: "text-[#6B8F71]",
     label: "Visits",
   },
   vaccinations: {
     icon: Syringe,
-    iconBg: "bg-teal-100",
-    iconColor: "text-teal-600",
+    iconBg: "bg-[#B08968]/10",
+    iconColor: "text-[#B08968]",
     label: "Vaccinations",
   },
   accidents: {
     icon: AlertTriangle,
-    iconBg: "bg-orange-100",
-    iconColor: "text-orange-600",
+    iconBg: "bg-[#C35A2C]/10",
+    iconColor: "text-[#C35A2C]",
     label: "Accidents",
   },
 };
 
 const statusColors: Record<string, string> = {
-  DRAFT: "bg-amber-100/60 text-amber-700 border-amber-200/60",
-  SUBMITTED: "bg-blue-100/60 text-blue-700 border-blue-200/60",
-  REVIEWED: "bg-emerald-100/60 text-emerald-700 border-emerald-200/60",
-  GIVEN: "bg-emerald-100/60 text-emerald-700 border-emerald-200/60",
-  PENDING: "bg-amber-100/60 text-amber-700 border-amber-200/60",
+  DRAFT: "bg-[#B08968]/10 text-[#B08968] border-[#B08968]/20",
+  SUBMITTED: "bg-[#8B7355]/10 text-[#8B7355] border-[#8B7355]/20",
+  REVIEWED: "bg-[#6B8F71]/10 text-[#6B8F71] border-[#6B8F71]/20",
+  GIVEN: "bg-[#6B8F71]/10 text-[#6B8F71] border-[#6B8F71]/20",
+  PENDING: "bg-[#B08968]/10 text-[#B08968] border-[#B08968]/20",
 };
 
 export function MedicalHub({ data, childId }: MedicalHubProps) {
@@ -151,7 +151,7 @@ export function MedicalHub({ data, childId }: MedicalHubProps) {
       </div>
 
       {/* Medical Timeline */}
-      <div className="rounded-2xl border border-border/50 bg-white shadow-sm">
+      <div className="rounded-2xl border border-border/40 bg-card shadow-sm">
         <div className="px-5 py-4">
           <p className="text-sm font-semibold text-foreground">
             Medical History
@@ -202,10 +202,10 @@ export function MedicalHub({ data, childId }: MedicalHubProps) {
       </div>
 
       {/* Vaccination Schedule */}
-      <div className="rounded-2xl border border-border/50 bg-white shadow-sm">
+      <div className="rounded-2xl border border-border/40 bg-card shadow-sm">
         <div className="flex items-center gap-2 px-5 py-4">
-          <div className="flex size-7 items-center justify-center rounded-lg bg-teal-100">
-            <Syringe className="size-3.5 text-teal-600" />
+          <div className="flex size-7 items-center justify-center rounded-lg bg-[#B08968]/10">
+            <Syringe className="size-3.5 text-[#B08968]" />
           </div>
           <p className="text-sm font-semibold text-foreground">
             Vaccination Schedule
@@ -225,7 +225,7 @@ export function MedicalHub({ data, childId }: MedicalHubProps) {
                   <div
                     key={v.id}
                     className={`flex items-center gap-3 rounded-xl px-3 py-2.5 ${
-                      isOverdue ? "bg-rose-50 ring-1 ring-rose-200" : "bg-muted/40"
+                      isOverdue ? "bg-[#C35A2C]/5 ring-1 ring-[#C35A2C]/20" : "bg-muted/40"
                     }`}
                   >
                     <div className="min-w-0 flex-1">
@@ -239,14 +239,14 @@ export function MedicalHub({ data, childId }: MedicalHubProps) {
                       )}
                     </div>
                     {v.dateGiven && (
-                      <span className="text-[11px] text-emerald-600 font-medium">
+                      <span className="text-[11px] text-[#6B8F71] font-medium">
                         Given {v.dateGiven}
                       </span>
                     )}
                     {v.nextDueDate && (
                       <span
                         className={`text-[11px] font-medium ${
-                          isOverdue ? "text-rose-600" : "text-muted-foreground"
+                          isOverdue ? "text-[#C35A2C]" : "text-muted-foreground"
                         }`}
                       >
                         {isOverdue ? "Overdue" : "Due"}: {v.nextDueDate}

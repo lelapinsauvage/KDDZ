@@ -64,17 +64,17 @@ function timeAgo(dateStr: string) {
 
 // --- Alarm type config ---
 const alarmTypeConfig: Record<string, { icon: LucideIcon; color: string; bg: string }> = {
-  BIRTHDAY:    { icon: Cake,          color: "text-pink-600",   bg: "bg-pink-100" },
-  VACCINATION: { icon: Syringe,       color: "text-blue-600",   bg: "bg-blue-100" },
-  MEDICAL:     { icon: Heart,         color: "text-red-600",    bg: "bg-red-100" },
-  MEDICINE:    { icon: Pill,          color: "text-purple-600", bg: "bg-purple-100" },
-  PAYMENT:     { icon: DollarSign,    color: "text-amber-600",  bg: "bg-amber-100" },
-  EVENT:       { icon: Calendar,      color: "text-teal-600",   bg: "bg-teal-100" },
-  INSURANCE:   { icon: Shield,        color: "text-orange-600", bg: "bg-orange-100" },
-  CONTRACT:    { icon: FileText,      color: "text-indigo-600", bg: "bg-indigo-100" },
-  REQUEST:     { icon: MessageSquare, color: "text-sky-600",    bg: "bg-sky-100" },
-  ASSESSMENT:  { icon: FileText,      color: "text-violet-600", bg: "bg-violet-100" },
-  OTHER:       { icon: Bell,          color: "text-gray-600",   bg: "bg-gray-100" },
+  BIRTHDAY:    { icon: Cake,          color: "text-[#B07070]",  bg: "bg-[#B07070]/10" },
+  VACCINATION: { icon: Syringe,       color: "text-[#6B8F71]",  bg: "bg-[#6B8F71]/10" },
+  MEDICAL:     { icon: Heart,         color: "text-[#C35A2C]",  bg: "bg-[#C35A2C]/10" },
+  MEDICINE:    { icon: Pill,          color: "text-[#8B7355]",  bg: "bg-[#8B7355]/10" },
+  PAYMENT:     { icon: DollarSign,    color: "text-[#B08968]",  bg: "bg-[#B08968]/10" },
+  EVENT:       { icon: Calendar,      color: "text-[#6B8F71]",  bg: "bg-[#6B8F71]/10" },
+  INSURANCE:   { icon: Shield,        color: "text-[#C35A2C]",  bg: "bg-[#C35A2C]/10" },
+  CONTRACT:    { icon: FileText,      color: "text-[#8B7355]",  bg: "bg-[#8B7355]/10" },
+  REQUEST:     { icon: MessageSquare, color: "text-[#6B8F71]",  bg: "bg-[#6B8F71]/10" },
+  ASSESSMENT:  { icon: FileText,      color: "text-[#8B7355]",  bg: "bg-[#8B7355]/10" },
+  OTHER:       { icon: Bell,          color: "text-[#8B8178]",  bg: "bg-[#8B8178]/10" },
 }
 
 function getAlarmConfig(type: string) {
@@ -150,11 +150,10 @@ export function InboxTray({
       <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
         <PopoverTrigger asChild>
           <button className="relative flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none">
-            <Bell className={`size-[18px] ${totalBadge > 0 ? "text-amber-500" : ""}`} />
+            <Bell className={`size-[18px] ${totalBadge > 0 ? "text-primary" : ""}`} />
             {totalBadge > 0 && (
               <Badge
-                variant="destructive"
-                className={`absolute -top-0.5 -right-0.5 flex size-[18px] items-center justify-center rounded-full p-0 text-[10px] leading-none ${
+                className={`absolute -top-0.5 -right-0.5 flex size-[18px] items-center justify-center rounded-full border-0 bg-primary p-0 text-[10px] leading-none text-primary-foreground ${
                   hasCriticalAlarms ? "animate-pulse" : ""
                 }`}
               >
@@ -163,7 +162,7 @@ export function InboxTray({
             )}
           </button>
         </PopoverTrigger>
-        <PopoverContent align="end" className="w-[360px] p-0 rounded-xl shadow-lg" sideOffset={8}>
+        <PopoverContent align="end" className="w-[360px] p-0 rounded-2xl border-border/40 shadow-lg" sideOffset={8}>
           <div className="flex items-center justify-between border-b px-4 py-3">
             <h3 className="text-sm font-semibold text-foreground">Alerts</h3>
             <span className="text-xs text-muted-foreground">
@@ -191,7 +190,7 @@ export function InboxTray({
                         </p>
                         <div className="mt-0.5 flex items-center gap-2">
                           {alarm.dueDate && (
-                            <span className={`text-[11px] ${alarm.isOverdue ? "font-medium text-red-600" : "text-muted-foreground"}`}>
+                            <span className={`text-[11px] ${alarm.isOverdue ? "font-medium text-[#C35A2C]" : "text-muted-foreground"}`}>
                               {alarm.isOverdue ? "Overdue" : `Due ${alarm.dueDate}`}
                             </span>
                           )}
@@ -242,13 +241,13 @@ export function InboxTray({
                   <Mail className="size-3" />
                   Inbox
                   {(unreadCount + unreadMessageCount) > 0 && (
-                    <span className="inline-flex size-4 items-center justify-center rounded-full bg-destructive text-[9px] text-white">
+                    <span className="inline-flex size-4 items-center justify-center rounded-full bg-primary text-[9px] text-primary-foreground">
                       {unreadCount + unreadMessageCount > 9 ? "9+" : unreadCount + unreadMessageCount}
                     </span>
                   )}
                 </button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[400px] p-0 sm:max-w-[400px]">
+              <SheetContent side="right" className="w-[400px] rounded-l-2xl border-border/40 p-0 sm:max-w-[400px]">
                 <SheetHeader className="border-b px-4 py-3">
                   <SheetTitle className="text-base font-semibold">Inbox</SheetTitle>
                 </SheetHeader>
@@ -258,7 +257,7 @@ export function InboxTray({
                     <TabsTrigger value="notifications" className="relative text-xs">
                       Notifications
                       {unreadCount > 0 && (
-                        <span className="ml-1 inline-flex size-4 items-center justify-center rounded-full bg-destructive text-[9px] text-white">
+                        <span className="ml-1 inline-flex size-4 items-center justify-center rounded-full bg-primary text-[9px] text-primary-foreground">
                           {unreadCount > 9 ? "9+" : unreadCount}
                         </span>
                       )}
@@ -266,7 +265,7 @@ export function InboxTray({
                     <TabsTrigger value="messages" className="relative text-xs">
                       Messages
                       {unreadMessageCount > 0 && (
-                        <span className="ml-1 inline-flex size-4 items-center justify-center rounded-full bg-destructive text-[9px] text-white">
+                        <span className="ml-1 inline-flex size-4 items-center justify-center rounded-full bg-primary text-[9px] text-primary-foreground">
                           {unreadMessageCount > 9 ? "9+" : unreadMessageCount}
                         </span>
                       )}
@@ -354,7 +353,7 @@ export function InboxTray({
                                   </span>
                                 </div>
                                 {!m.isRead && (
-                                  <span className="mt-1 size-2 shrink-0 rounded-full bg-blue-500" />
+                                  <span className="mt-1 size-2 shrink-0 rounded-full bg-primary" />
                                 )}
                               </div>
                               {m.subject && (
