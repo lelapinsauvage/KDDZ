@@ -94,7 +94,7 @@ export function DataTable<TData, TValue>({
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} className="bg-muted/50 text-xs font-semibold uppercase text-muted-foreground">
+                  <TableHead key={header.id} className="bg-secondary/40 text-xs font-medium uppercase tracking-wide text-muted-foreground px-4 py-3">
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -109,9 +109,9 @@ export function DataTable<TData, TValue>({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow key={row.id} className="transition-colors hover:bg-accent/50 even:bg-secondary/30">
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="text-sm">
+                    <TableCell key={cell.id} className="px-4 py-3 text-sm">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}

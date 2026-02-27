@@ -24,7 +24,7 @@ export function PageHeader({ title, description, breadcrumbs, actions, showMobil
   const shouldShowBack = showMobileBack ?? breadcrumbs.length > 0
 
   return (
-    <div className="flex flex-col gap-2 border-b border-border bg-white px-4 py-3 sm:px-6 sm:py-4">
+    <div className="flex flex-col gap-2 border-b border-border/60 bg-card/50 backdrop-blur-sm px-4 py-4 sm:px-6 sm:py-5">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-2 min-w-0">
           {/* Mobile back button */}
@@ -37,7 +37,7 @@ export function PageHeader({ title, description, breadcrumbs, actions, showMobil
             </button>
           )}
           <div className="min-w-0">
-            <h1 className="truncate text-lg font-bold tracking-tight text-foreground sm:text-xl">{title}</h1>
+            <h1 className="truncate text-xl font-semibold tracking-tight text-foreground sm:text-2xl">{title}</h1>
             {description && (
               <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
             )}
@@ -46,7 +46,7 @@ export function PageHeader({ title, description, breadcrumbs, actions, showMobil
         <div className="flex items-center gap-2 shrink-0">
           {actions}
           <nav className="hidden items-center gap-1 text-sm text-muted-foreground lg:flex">
-            <Link href="/dashboard" className="transition-colors hover:text-foreground">
+            <Link href="/dashboard" className="transition-colors hover:text-primary">
               Home
             </Link>
             {breadcrumbs.map((crumb, index) => (
@@ -55,7 +55,7 @@ export function PageHeader({ title, description, breadcrumbs, actions, showMobil
                 {crumb.href ? (
                   <Link
                     href={crumb.href}
-                    className="transition-colors hover:text-foreground"
+                    className="transition-colors hover:text-primary"
                   >
                     {crumb.label}
                   </Link>

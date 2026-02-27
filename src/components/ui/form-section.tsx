@@ -16,12 +16,12 @@ interface FormSectionProps {
 }
 
 const colorMap: Record<string, string> = {
-  blue: "border-t-blue-400",
-  green: "border-t-emerald-400",
-  yellow: "border-t-amber-400",
-  purple: "border-t-violet-400",
-  teal: "border-t-teal-400",
-  red: "border-t-rose-400",
+  blue: "border-t-primary/60",
+  green: "border-t-emerald-400/60",
+  yellow: "border-t-amber-400/60",
+  purple: "border-t-violet-400/60",
+  teal: "border-t-primary/40",
+  red: "border-t-rose-400/60",
 };
 
 export function FormSection({
@@ -40,7 +40,7 @@ export function FormSection({
     <div
       id={id}
       className={cn(
-        "rounded-2xl border bg-card border-t-4 shadow-sm",
+        "rounded-2xl border border-border/60 bg-card border-t-4 shadow-sm",
         colorMap[color],
       )}
     >
@@ -55,7 +55,7 @@ export function FormSection({
         tabIndex={collapsible ? 0 : -1}
       >
         <div className="flex items-center gap-2">
-          <div>
+          <div className="border-l-2 border-primary/30 pl-3">
             <h3 className="text-sm font-semibold text-foreground">{title}</h3>
             {subtitle && (
               <p className="text-xs text-muted-foreground" dir="rtl">{subtitle}</p>
