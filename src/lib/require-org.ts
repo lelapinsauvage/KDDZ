@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
 
 export interface OrgContext {
   userId: string;
@@ -11,6 +12,22 @@ export interface OrgContext {
 export async function requireOrg(): Promise<OrgContext> {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
+
+  if (!session.user.organizationId && session.user.branchId) {
+    const branch = await db.branch.findUnique({
+      where: { id: session.user.branchId },
+      select: { organizationId: true },
+    });
+    if (branch?.organizationId) {
+      return {
+        userId: session.user.id,
+        organizationId: branch.organizationId,
+        branchId: session.user.branchId,
+        role: session.user.role,
+      };
+    }
+  }
+
   if (!session.user.organizationId) throw new Error("No organization context");
   return {
     userId: session.user.id,
@@ -27,6 +44,25 @@ export async function requireOrgSafe(): Promise<
 > {
   const session = await auth();
   if (!session?.user?.id) return { ok: false, error: "Unauthorized" };
+
+  if (!session.user.organizationId && session.user.branchId) {
+    const branch = await db.branch.findUnique({
+      where: { id: session.user.branchId },
+      select: { organizationId: true },
+    });
+    if (branch?.organizationId) {
+      return {
+        ok: true,
+        ctx: {
+          userId: session.user.id,
+          organizationId: branch.organizationId,
+          branchId: session.user.branchId,
+          role: session.user.role,
+        },
+      };
+    }
+  }
+
   if (!session.user.organizationId) return { ok: false, error: "No organization context" };
   return {
     ok: true,

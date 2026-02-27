@@ -31,12 +31,42 @@ async function main() {
 
   const orgId = org.id;
 
-  // Step 2: Bulk-update all models with organizationId = NULL
-  const userResult = await db.user.updateMany({
+  // Step 2: Backfill users — use branch org when available, default org otherwise
+  const usersWithoutOrg = await db.user.findMany({
     where: { organizationId: null },
-    data: { organizationId: orgId },
+    select: { id: true, branchId: true },
   });
-  console.log(`Users updated: ${userResult.count}`);
+  console.log(`Users without organizationId: ${usersWithoutOrg.length}`);
+
+  let userUpdated = 0;
+  for (const u of usersWithoutOrg) {
+    let assignedOrgId = orgId;
+
+    if (u.branchId) {
+      const branch = await db.branch.findUnique({
+        where: { id: u.branchId },
+        select: { organizationId: true },
+      });
+
+      if (branch?.organizationId) {
+        assignedOrgId = branch.organizationId;
+      } else if (branch) {
+        // Branch has no org either — set both
+        await db.branch.update({
+          where: { id: u.branchId },
+          data: { organizationId: orgId },
+        });
+        console.log(`  Branch ${u.branchId} assigned orgId ${orgId}`);
+      }
+    }
+
+    await db.user.update({
+      where: { id: u.id },
+      data: { organizationId: assignedOrgId },
+    });
+    userUpdated++;
+  }
+  console.log(`Users updated: ${userUpdated}`);
 
   const schoolYearResult = await db.schoolYear.updateMany({
     where: { organizationId: null },
