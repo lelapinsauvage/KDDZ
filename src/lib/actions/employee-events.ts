@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
+import { requireOrg, requireOrgSafe } from "@/lib/require-org";
+import { verifyBranchAccess, getOrgBranchIds } from "@/lib/verify-org-access";
 import type { EmployeeEventStatus, AttendanceLogStatus } from "@/generated/prisma/enums";
 
 // ---------------------------------------------------------------------------
@@ -14,6 +15,33 @@ type ActionResult<T = unknown> = {
   error?: string;
   data?: T;
 };
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Look up an employee's branchId from the appropriate model. */
+async function getEmployeeBranchId(
+  employeeId: string,
+  employeeType: string,
+): Promise<string | null> {
+  let employee: { branchId: string } | null = null;
+  switch (employeeType) {
+    case "teacher":
+      employee = await db.teacher.findUnique({ where: { id: employeeId }, select: { branchId: true } });
+      break;
+    case "nurse":
+      employee = await db.nurse.findUnique({ where: { id: employeeId }, select: { branchId: true } });
+      break;
+    case "doctor":
+      employee = await db.doctor.findUnique({ where: { id: employeeId }, select: { branchId: true } });
+      break;
+    case "manager":
+      employee = await db.manager.findUnique({ where: { id: employeeId }, select: { branchId: true } });
+      break;
+  }
+  return employee?.branchId ?? null;
+}
 
 // ---------------------------------------------------------------------------
 // Calendar Events (EmployeeEvent)
@@ -28,8 +56,11 @@ export async function getEmployeeEvents(params: {
   dateTo?: string;
 }): Promise<ActionResult> {
   try {
+    const { organizationId: orgId } = await requireOrg();
+    const orgBranchIds = await getOrgBranchIds(orgId);
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: any = {};
+    const where: any = { branchId: { in: orgBranchIds } };
 
     if (params.employeeId) {
       where.employeeId = params.employeeId;
@@ -70,9 +101,14 @@ export async function createEmployeeEvent(data: {
   notes?: string;
 }): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { organizationId: orgId } = result.ctx;
+
+    // Look up employee's branch and verify it belongs to org
+    const branchId = await getEmployeeBranchId(data.employeeId, data.employeeType);
+    if (!branchId || !(await verifyBranchAccess(branchId, orgId))) {
+      return { success: false, error: "Employee not found in your organization" };
     }
 
     const event = await db.employeeEvent.create({
@@ -83,6 +119,7 @@ export async function createEmployeeEvent(data: {
         date: new Date(data.date),
         referenceNumber: data.referenceNumber ?? null,
         notes: data.notes ?? null,
+        branchId,
       },
     });
 
@@ -103,9 +140,14 @@ export async function updateEmployeeEvent(
   },
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { organizationId: orgId } = result.ctx;
+
+    // Fetch event and verify it belongs to org
+    const existing = await db.employeeEvent.findUnique({ where: { id } });
+    if (!existing || !existing.branchId || !(await verifyBranchAccess(existing.branchId, orgId))) {
+      return { success: false, error: "Event not found" };
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -129,9 +171,14 @@ export async function updateEmployeeEvent(
 
 export async function deleteEmployeeEvent(id: string): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { organizationId: orgId } = result.ctx;
+
+    // Fetch event and verify it belongs to org
+    const existing = await db.employeeEvent.findUnique({ where: { id } });
+    if (!existing || !existing.branchId || !(await verifyBranchAccess(existing.branchId, orgId))) {
+      return { success: false, error: "Event not found" };
     }
 
     await db.employeeEvent.delete({ where: { id } });
@@ -158,10 +205,13 @@ export async function getAttendanceLogs(params: {
   pageSize?: number;
 }): Promise<ActionResult> {
   try {
+    const { organizationId: orgId } = await requireOrg();
+    const orgBranchIds = await getOrgBranchIds(orgId);
+
     const { page = 1, pageSize = 50 } = params;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: any = {};
+    const where: any = { branchId: { in: orgBranchIds } };
 
     if (params.employeeId) {
       where.employeeId = params.employeeId;
@@ -225,9 +275,14 @@ export async function createAttendanceLog(data: {
   note?: string;
 }): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { organizationId: orgId } = result.ctx;
+
+    // Look up employee's branch and verify it belongs to org
+    const branchId = await getEmployeeBranchId(data.employeeId, data.employeeType ?? "teacher");
+    if (!branchId || !(await verifyBranchAccess(branchId, orgId))) {
+      return { success: false, error: "Employee not found in your organization" };
     }
 
     const log = await db.teacherAttendance.create({
@@ -242,6 +297,7 @@ export async function createAttendanceLog(data: {
         readerName: data.readerName ?? null,
         cardId: data.cardId ?? null,
         note: data.note ?? null,
+        branchId,
       },
     });
 
@@ -268,9 +324,23 @@ export async function bulkCreateAttendanceLogs(
   }>,
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { organizationId: orgId } = result.ctx;
+
+    // Verify all employees belong to org by looking up their branches
+    const uniqueEmployees = [
+      ...new Map(
+        logs.map((l) => [`${l.employeeId}:${l.employeeType ?? "teacher"}`, l]),
+      ).values(),
+    ];
+    const branchMap = new Map<string, string>();
+    for (const emp of uniqueEmployees) {
+      const branchId = await getEmployeeBranchId(emp.employeeId, emp.employeeType ?? "teacher");
+      if (!branchId || !(await verifyBranchAccess(branchId, orgId))) {
+        return { success: false, error: "Some employees do not belong to your organization" };
+      }
+      branchMap.set(emp.employeeId, branchId);
     }
 
     const created = await db.teacherAttendance.createMany({
@@ -285,6 +355,7 @@ export async function bulkCreateAttendanceLogs(
         readerName: log.readerName ?? null,
         cardId: log.cardId ?? null,
         note: log.note ?? null,
+        branchId: branchMap.get(log.employeeId) ?? null,
       })),
     });
 
@@ -307,9 +378,14 @@ export async function updateAttendanceLog(
   },
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { organizationId: orgId } = result.ctx;
+
+    // Fetch log and verify it belongs to org
+    const existing = await db.teacherAttendance.findUnique({ where: { id } });
+    if (!existing || !existing.branchId || !(await verifyBranchAccess(existing.branchId, orgId))) {
+      return { success: false, error: "Attendance log not found" };
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

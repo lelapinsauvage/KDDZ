@@ -1,7 +1,8 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
+import { requireOrg, requireOrgSafe } from "@/lib/require-org";
+import { verifyChildAccess } from "@/lib/verify-org-access";
 import { revalidatePath } from "next/cache";
 
 // ── Types ─────────────────────────────────────────
@@ -30,6 +31,13 @@ export async function getChildAttendance(
   month?: string
 ): Promise<AttendanceRecord[]> {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
+    // Verify child belongs to org
+    if (!(await verifyChildAccess(childId, orgId))) {
+      return [];
+    }
+
     // Build date range filter for the month
     const where: { childId: string; reportDate?: { gte: Date; lt: Date } } = {
       childId,
@@ -111,6 +119,13 @@ export async function getChildAttendance(
 
 export async function getChildAbsences(childId: string) {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
+    // Verify child belongs to org
+    if (!(await verifyChildAccess(childId, orgId))) {
+      return [];
+    }
+
     const absences = await db.absenceReport.findMany({
       where: { childId },
       include: {
@@ -137,10 +152,9 @@ export async function getChildAbsences(childId: string) {
 export async function createAbsenceReport(
   data: CreateAbsenceData
 ): Promise<ActionResult> {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return { success: false, error: "Unauthorized" };
-  }
+  const result = await requireOrgSafe();
+  if (!result.ok) return { success: false, error: result.error };
+  const { userId, organizationId: orgId } = result.ctx;
 
   try {
     // Validate required fields
@@ -151,9 +165,9 @@ export async function createAbsenceReport(
       return { success: false, error: "Date is required" };
     }
 
-    // Verify child exists
-    const child = await db.child.findUnique({
-      where: { id: data.childId },
+    // Verify child exists and belongs to org
+    const child = await db.child.findFirst({
+      where: { id: data.childId, branch: { organizationId: orgId } },
     });
     if (!child) {
       return { success: false, error: "Child not found" };
@@ -165,7 +179,7 @@ export async function createAbsenceReport(
         date: new Date(data.date),
         reason: data.reason || null,
         status: "PENDING",
-        createdById: session.user.id,
+        createdById: userId,
       },
     });
 
@@ -188,12 +202,22 @@ export async function markBulkAttendance(data: {
   date: string;
   absentChildIds: string[];
 }): Promise<{ success: boolean; created: number; error?: string }> {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return { success: false, created: 0, error: "Unauthorized" };
-  }
+  const result = await requireOrgSafe();
+  if (!result.ok) return { success: false, created: 0, error: result.error };
+  const { userId, organizationId: orgId } = result.ctx;
 
   try {
+    // Verify all children belong to org
+    if (data.absentChildIds.length > 0) {
+      const uniqueIds = [...new Set(data.absentChildIds)];
+      const validCount = await db.child.count({
+        where: { id: { in: uniqueIds }, branch: { organizationId: orgId } },
+      });
+      if (validCount !== uniqueIds.length) {
+        return { success: false, created: 0, error: "Some children do not belong to your organization" };
+      }
+    }
+
     const dateObj = new Date(data.date);
     const nextDay = new Date(dateObj);
     nextDay.setDate(nextDay.getDate() + 1);
@@ -219,7 +243,7 @@ export async function markBulkAttendance(data: {
               date: dateObj,
               reason: "Marked absent during attendance",
               status: "PENDING",
-              createdById: session.user!.id!,
+              createdById: userId,
             },
           })
         )
