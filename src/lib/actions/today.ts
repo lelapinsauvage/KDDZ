@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
+import { requireOrg } from "@/lib/require-org";
 
 export interface TodayChild {
   id: string;
@@ -46,12 +46,7 @@ export interface TodayData {
 }
 
 export async function getTodayData(): Promise<TodayData> {
-  const session = await auth();
-  if (!session?.user) {
-    return emptyData();
-  }
-
-  const branchId = session.user.branchId;
+  const { organizationId: orgId, branchId, userId } = await requireOrg();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date(today);
@@ -65,6 +60,7 @@ export async function getTodayData(): Promise<TodayData> {
         where: {
           isActive: true,
           isDraft: false,
+          branch: { organizationId: orgId },
           ...(branchId ? { branchId } : {}),
         },
         select: {
@@ -83,7 +79,7 @@ export async function getTodayData(): Promise<TodayData> {
       db.dailyReport.findMany({
         where: {
           reportDate: { gte: today, lt: tomorrow },
-          ...(branchId ? { child: { branchId } } : {}),
+          child: { branch: { organizationId: orgId }, ...(branchId ? { branchId } : {}) },
         },
         select: {
           id: true,
@@ -96,7 +92,7 @@ export async function getTodayData(): Promise<TodayData> {
       db.absenceReport.findMany({
         where: {
           date: { gte: today, lt: tomorrow },
-          ...(branchId ? { child: { branchId } } : {}),
+          child: { branch: { organizationId: orgId }, ...(branchId ? { branchId } : {}) },
         },
         select: {
           childId: true,
@@ -107,6 +103,7 @@ export async function getTodayData(): Promise<TodayData> {
       db.foodCalendar.findMany({
         where: {
           date: { gte: today, lt: tomorrow },
+          branch: { organizationId: orgId },
           ...(branchId ? { branchId } : {}),
         },
         include: {
@@ -117,14 +114,14 @@ export async function getTodayData(): Promise<TodayData> {
       // Unread messages count
       db.message.count({
         where: {
-          recipientId: session.user.id,
+          recipientId: userId,
           isRead: false,
         },
       }),
 
       // Classes for filter
       db.class.findMany({
-        where: branchId ? { branchId } : {},
+        where: { branch: { organizationId: orgId }, ...(branchId ? { branchId } : {}) },
         select: { id: true, name: true },
         orderBy: { name: "asc" },
       }),

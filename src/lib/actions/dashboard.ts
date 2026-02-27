@@ -1,6 +1,8 @@
 "use server";
 
 import { db } from "@/lib/db";
+import { requireOrg } from "@/lib/require-org";
+import { getOrgBranchIds } from "@/lib/verify-org-access";
 
 // ── Types ──────────────────────────────────────────
 
@@ -55,6 +57,9 @@ export interface MorningBriefing {
 // ── Main briefing function ─────────────────────────
 
 export async function getMorningBriefing(): Promise<MorningBriefing> {
+  const { organizationId: orgId } = await requireOrg();
+  const orgBranchIds = await getOrgBranchIds(orgId);
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date(today);
@@ -105,34 +110,35 @@ export async function getMorningBriefing(): Promise<MorningBriefing> {
     actionItems,
   ] = await Promise.all([
     // 1. Active children
-    db.child.count({ where: { isActive: true, isDraft: false } }),
+    db.child.count({ where: { isActive: true, isDraft: false, branch: { organizationId: orgId } } }),
 
     // 2. Today's daily reports
     db.dailyReport.count({
-      where: { reportDate: { gte: today, lt: tomorrow } },
+      where: { reportDate: { gte: today, lt: tomorrow }, child: { branch: { organizationId: orgId } } },
     }),
 
     // 3. Today's absences
     db.absenceReport.count({
-      where: { date: { gte: today, lt: tomorrow } },
+      where: { date: { gte: today, lt: tomorrow }, child: { branch: { organizationId: orgId } } },
     }),
 
     // 4-5. Staff counts
-    db.teacher.count({ where: { isActive: true } }),
-    db.nurse.count({ where: { isActive: true } }),
-    db.doctor.count({ where: { isActive: true } }),
+    db.teacher.count({ where: { isActive: true, branch: { organizationId: orgId } } }),
+    db.nurse.count({ where: { isActive: true, branch: { organizationId: orgId } } }),
+    db.doctor.count({ where: { isActive: true, branch: { organizationId: orgId } } }),
 
     // 6. Staff absent today
     db.employeeEvent.count({
       where: {
         date: { gte: today, lt: tomorrow },
         status: { in: ["SICK", "ABSENT", "DAY_OFF"] },
+        branchId: { in: orgBranchIds },
       },
     }),
 
     // 7. Health issues — draft medical forms created in the last 30 days
     db.medicalForm.count({
-      where: { status: "DRAFT", createdAt: { gte: thirtyDaysAgo } },
+      where: { status: "DRAFT", createdAt: { gte: thirtyDaysAgo }, child: { branch: { organizationId: orgId } } },
     }),
 
     // 7b. Active health-related alarms
@@ -140,44 +146,51 @@ export async function getMorningBriefing(): Promise<MorningBriefing> {
       where: {
         isActive: true,
         type: { in: ["MEDICAL", "MEDICINE", "VACCINATION"] },
+        branch: { organizationId: orgId },
       },
     }),
 
     // 8. Food calendar for today
     db.foodCalendar.findMany({
-      where: { date: { gte: today, lt: tomorrow } },
+      where: { date: { gte: today, lt: tomorrow }, branch: { organizationId: orgId } },
       include: { food: { select: { name: true } } },
     }),
 
     // 9. Weekly attendance — report counts per day for last 5 working days
     db.$queryRaw<Array<{ report_date: Date; count: bigint }>>`
-      SELECT "reportDate" as report_date, COUNT(*) as count
-      FROM daily_reports
-      WHERE "reportDate" >= ${weekStart} AND "reportDate" < ${weekEnd}
-      GROUP BY "reportDate"
-      ORDER BY "reportDate"
+      SELECT dr."reportDate" as report_date, COUNT(*) as count
+      FROM daily_reports dr
+      JOIN children c ON dr."childId" = c.id
+      JOIN branches b ON c."branchId" = b.id
+      WHERE dr."reportDate" >= ${weekStart} AND dr."reportDate" < ${weekEnd}
+        AND b."organizationId" = cast(${orgId} as uuid)
+      GROUP BY dr."reportDate"
+      ORDER BY dr."reportDate"
     `,
 
     // 10. Last week data for comparisons
     db.dailyReport.count({
-      where: { reportDate: { gte: lastWeekStart, lt: lastWeekEnd } },
+      where: { reportDate: { gte: lastWeekStart, lt: lastWeekEnd }, child: { branch: { organizationId: orgId } } },
     }),
 
     db.absenceReport.count({
-      where: { date: { gte: lastWeekStart, lt: lastWeekEnd } },
+      where: { date: { gte: lastWeekStart, lt: lastWeekEnd }, child: { branch: { organizationId: orgId } } },
     }),
 
     // This week absences (for comparison)
     db.absenceReport.count({
-      where: { date: { gte: weekStart, lt: weekEnd } },
+      where: { date: { gte: weekStart, lt: weekEnd }, child: { branch: { organizationId: orgId } } },
     }),
 
     // Chronic absences (3+ days this week)
     db.$queryRaw<Array<{ child_id: string; absence_count: bigint }>>`
-      SELECT "childId" as child_id, COUNT(*) as absence_count
-      FROM absence_reports
-      WHERE "date" >= ${weekStart} AND "date" < ${weekEnd}
-      GROUP BY "childId"
+      SELECT ar."childId" as child_id, COUNT(*) as absence_count
+      FROM absence_reports ar
+      JOIN children c ON ar."childId" = c.id
+      JOIN branches b ON c."branchId" = b.id
+      WHERE ar."date" >= ${weekStart} AND ar."date" < ${weekEnd}
+        AND b."organizationId" = cast(${orgId} as uuid)
+      GROUP BY ar."childId"
       HAVING COUNT(*) >= 3
     `,
 
@@ -186,6 +199,7 @@ export async function getMorningBriefing(): Promise<MorningBriefing> {
       where: {
         date: { gte: weekStart, lt: weekEnd },
         reason: { contains: "sick", mode: "insensitive" },
+        child: { branch: { organizationId: orgId } },
       },
     }),
 
@@ -198,7 +212,7 @@ export async function getMorningBriefing(): Promise<MorningBriefing> {
   let overdueAmount = 0;
   try {
     const overduePayments = await db.payment.findMany({
-      where: { status: "OVERDUE" },
+      where: { status: "OVERDUE", child: { branch: { organizationId: orgId } } },
       select: { amount: true },
     });
     overdueCount = overduePayments.length;
@@ -382,6 +396,8 @@ function statusFromPct(pct: number, greenThreshold: number, amberThreshold: numb
 // ── Action items (internal helper, also exported for reuse) ──
 
 export async function getActionItems(): Promise<ActionItems> {
+  const { organizationId: orgId } = await requireOrg();
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date(today);
@@ -390,24 +406,24 @@ export async function getActionItems(): Promise<ActionItems> {
   const [pendingAbsencesRaw, activeChildren, todayReports, draftChildrenRaw] =
     await Promise.all([
       db.absenceReport.findMany({
-        where: { status: "PENDING" },
+        where: { status: "PENDING", child: { branch: { organizationId: orgId } } },
         include: { child: true },
         take: 5,
         orderBy: { date: "desc" },
       }),
 
       db.child.findMany({
-        where: { isActive: true, isDraft: false },
+        where: { isActive: true, isDraft: false, branch: { organizationId: orgId } },
         select: { id: true, class: { select: { name: true } } },
       }),
 
       db.dailyReport.findMany({
-        where: { reportDate: { gte: today, lt: tomorrow } },
+        where: { reportDate: { gte: today, lt: tomorrow }, child: { branch: { organizationId: orgId } } },
         select: { childId: true },
       }),
 
       db.child.findMany({
-        where: { isDraft: true },
+        where: { isDraft: true, branch: { organizationId: orgId } },
         select: { id: true, firstName: true, lastName: true, createdAt: true },
         take: 5,
         orderBy: { createdAt: "desc" },
@@ -423,7 +439,7 @@ export async function getActionItems(): Promise<ActionItems> {
   }> = [];
   try {
     const raw = await db.payment.findMany({
-      where: { status: "OVERDUE" },
+      where: { status: "OVERDUE", child: { branch: { organizationId: orgId } } },
       include: { child: true },
       take: 20,
     });

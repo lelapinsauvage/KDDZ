@@ -1,7 +1,7 @@
 "use server"
 
 import { db } from "@/lib/db"
-import { auth } from "@/lib/auth"
+import { requireOrg } from "@/lib/require-org"
 
 export interface SidebarBadges {
   missingReports: number
@@ -11,10 +11,7 @@ export interface SidebarBadges {
 
 export async function getSidebarBadges(): Promise<SidebarBadges> {
   try {
-    const session = await auth()
-    if (!session?.user?.id) {
-      return { missingReports: 0, unreadMessages: 0, activeAlarms: 0 }
-    }
+    const { organizationId: orgId, userId } = await requireOrg()
 
     const today = new Date()
     today.setHours(0, 0, 0, 0)
@@ -26,20 +23,21 @@ export async function getSidebarBadges(): Promise<SidebarBadges> {
     // Count active alarms
     const [totalActiveChildren, reportsToday, unreadMessages, activeAlarms] =
       await Promise.all([
-        db.child.count({ where: { isActive: true } }),
+        db.child.count({ where: { isActive: true, branch: { organizationId: orgId } } }),
         db.dailyReport.count({
           where: {
             reportDate: { gte: today, lt: tomorrow },
+            child: { branch: { organizationId: orgId } },
           },
         }),
         db.message.count({
           where: {
-            recipientId: session.user.id,
+            recipientId: userId,
             isRead: false,
           },
         }),
         db.alarm.count({
-          where: { isActive: true },
+          where: { isActive: true, branch: { organizationId: orgId } },
         }),
       ])
 
