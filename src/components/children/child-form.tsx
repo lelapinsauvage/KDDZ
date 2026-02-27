@@ -130,7 +130,7 @@ function FormField({
     <div className={className}>
       <Label className="mb-1.5 text-foreground">
         {label}
-        {required && <span className="ml-0.5 text-destructive">*</span>}
+        {required && <span className="ml-0.5 text-primary">*</span>}
       </Label>
       {children}
       {error && (
@@ -740,7 +740,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
         defaultOpen={false}
         badge={
           addressFields.length > 0 ? (
-            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
+            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
               {addressFields.length}
             </span>
           ) : undefined
@@ -875,7 +875,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
           control={control}
           errors={errors}
         />
-        <Separator className="my-8" />
+        <Separator className="my-8 bg-border/40" />
         <GuardianFields
           type="mother"
           register={register}
@@ -892,7 +892,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
         defaultOpen={false}
         badge={
           siblingFields.length > 0 ? (
-            <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-700">
+            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
               {siblingFields.length}
             </span>
           ) : undefined
@@ -1036,7 +1036,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
         collapsible
         badge={
           relativeFields.length > 0 ? (
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
               {relativeFields.length}
             </span>
           ) : undefined
@@ -1727,7 +1727,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
       </FormSection>
 
       {/* ── Sticky Action Bar ── */}
-      <div className="sticky bottom-0 z-10 -mx-6 -mb-6 border-t border-border bg-white px-6 py-4">
+      <div className="sticky bottom-0 z-10 -mx-6 -mb-6 border-t border-border/40 bg-card px-6 py-4">
         <div className="flex items-center justify-end gap-3">
           <Button
             type="button"
@@ -1744,7 +1744,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
           </Button>
           <Button
             type="submit"
-            className="bg-primary text-white hover:bg-[#18a08c]"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
             disabled={isSubmitting}
           >
             {isSubmitting ? (

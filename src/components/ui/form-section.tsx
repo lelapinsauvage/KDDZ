@@ -17,11 +17,11 @@ interface FormSectionProps {
 
 const colorMap: Record<string, string> = {
   blue: "border-t-primary/60",
-  green: "border-t-emerald-400/60",
-  yellow: "border-t-amber-400/60",
-  purple: "border-t-violet-400/60",
+  green: "border-t-primary/40",
+  yellow: "border-t-[#C4A882]/60",
+  purple: "border-t-primary/50",
   teal: "border-t-primary/40",
-  red: "border-t-rose-400/60",
+  red: "border-t-[#B07070]/60",
 };
 
 export function FormSection({
@@ -47,7 +47,7 @@ export function FormSection({
       <button
         type="button"
         className={cn(
-          "flex w-full items-center justify-between border-b bg-muted/50 px-4 py-3 rounded-t-2xl",
+          "flex w-full items-center justify-between border-b border-border/40 bg-muted/50 px-4 py-3 rounded-t-2xl",
           collapsible && "cursor-pointer hover:bg-muted/80",
           !collapsible && "cursor-default",
         )}

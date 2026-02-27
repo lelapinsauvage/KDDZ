@@ -41,7 +41,7 @@ export function ChildSubNav({ childId, childName }: Props) {
   const activeSegment = segments[3] ?? "";
 
   return (
-    <div className="border-b bg-white">
+    <div className="border-b border-border/40 bg-card">
       {/* Child name breadcrumb */}
       <div className="flex items-center gap-2 px-6 pt-3 pb-1">
         <Link href="/children" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
@@ -63,7 +63,7 @@ export function ChildSubNav({ childId, childName }: Props) {
                 "flex items-center gap-1.5 whitespace-nowrap rounded-t-md border-b-2 px-3 py-2.5 text-sm font-medium transition-colors",
                 isActive
                   ? "border-primary bg-primary/5 text-primary"
-                  : "border-transparent text-muted-foreground hover:border-gray-300 hover:text-foreground hover:bg-muted/50"
+                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground hover:bg-accent"
               )}
             >
               <item.icon className={cn("h-4 w-4", isActive && "text-primary")} />

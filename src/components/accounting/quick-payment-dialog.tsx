@@ -230,7 +230,7 @@ export function QuickPaymentDialog({
               </PopoverContent>
             </Popover>
             {errors.childId && (
-              <p className="text-xs text-red-600">{errors.childId.message}</p>
+              <p className="text-xs text-destructive">{errors.childId.message}</p>
             )}
           </div>
 
@@ -238,7 +238,7 @@ export function QuickPaymentDialog({
           <div className="space-y-2">
             <Label>Amount</Label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-primary/70 font-semibold">
                 $
               </span>
               <Input
@@ -246,7 +246,7 @@ export function QuickPaymentDialog({
                 step="0.01"
                 min="0"
                 placeholder="0.00"
-                className="pl-7 text-lg font-semibold tabular-nums"
+                className="pl-7 text-lg font-semibold tabular-nums text-foreground"
                 {...register("amount", { valueAsNumber: true })}
                 ref={(e) => {
                   register("amount", { valueAsNumber: true }).ref(e);
@@ -255,7 +255,7 @@ export function QuickPaymentDialog({
               />
             </div>
             {errors.amount && (
-              <p className="text-xs text-red-600">{errors.amount.message}</p>
+              <p className="text-xs text-destructive">{errors.amount.message}</p>
             )}
           </div>
 

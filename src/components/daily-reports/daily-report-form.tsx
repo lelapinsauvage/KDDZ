@@ -183,7 +183,7 @@ export function DailyReportForm({
       className="space-y-6 p-4 md:p-6"
     >
       {error && (
-        <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+        <div className="rounded-md bg-[#B07070]/10 border border-[#B07070]/30 p-3 text-sm text-[#B07070]">
           {error}
         </div>
       )}
@@ -517,7 +517,7 @@ export function DailyReportForm({
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Thermometer className="size-4 text-destructive" />
+              <Thermometer className="size-4 text-[#B07070]" />
               Fever Log
             </CardTitle>
             <Button
@@ -574,7 +574,7 @@ export function DailyReportForm({
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Baby className="size-4 text-sky-500" />
+              <Baby className="size-4 text-muted-foreground" />
               Milk Intake
             </CardTitle>
             <Button
@@ -640,7 +640,7 @@ export function DailyReportForm({
       </Card>
 
       {/* Action Bar */}
-      <div className="sticky bottom-0 flex items-center justify-end gap-3 border-t bg-card px-4 py-3 md:px-6 md:py-4">
+      <div className="sticky bottom-0 flex items-center justify-end gap-3 border-t border-border/40 bg-card px-4 py-3 md:px-6 md:py-4">
         <Button
           type="button"
           variant="outline"
