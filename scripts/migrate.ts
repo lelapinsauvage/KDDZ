@@ -341,6 +341,7 @@ async function createOrganization(prisma: PrismaClient): Promise<string> {
   const org = await prisma.organization.create({
     data: {
       name: "KiddzOnline",
+      slug: "kiddzonline",
       settings: { timezone: "Asia/Beirut", currency: "USD", language: "en" },
       createdAt: NOW,
       updatedAt: NOW,

@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
 import { requireOrg, requireOrgSafe } from "@/lib/require-org";
 import { verifyBranchAccess } from "@/lib/verify-org-access";
 import {
@@ -218,10 +217,8 @@ export async function getRegions(): Promise<ActionResult> {
 
 export async function createProvince(name: string): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
 
     const province = await db.province.create({ data: { name } });
 
@@ -239,10 +236,8 @@ export async function updateProvince(
   name: string,
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
 
     const province = await db.province.update({
       where: { id },
@@ -260,10 +255,8 @@ export async function updateProvince(
 
 export async function deleteProvince(id: string): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
 
     await db.province.delete({ where: { id } });
 
@@ -285,10 +278,8 @@ export async function createDistrict(
   provinceId: string,
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
 
     const district = await db.district.create({
       data: { name, provinceId },
@@ -308,10 +299,8 @@ export async function updateDistrict(
   name: string,
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
 
     const district = await db.district.update({
       where: { id },
@@ -329,10 +318,8 @@ export async function updateDistrict(
 
 export async function deleteDistrict(id: string): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
 
     await db.district.delete({ where: { id } });
 
@@ -354,10 +341,8 @@ export async function createRegion(
   districtId: string,
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
 
     const region = await db.region.create({
       data: { name, districtId },
@@ -377,10 +362,8 @@ export async function updateRegion(
   name: string,
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
 
     const region = await db.region.update({
       where: { id },
@@ -398,10 +381,8 @@ export async function updateRegion(
 
 export async function deleteRegion(id: string): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
 
     await db.region.delete({ where: { id } });
 

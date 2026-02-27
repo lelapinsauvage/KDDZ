@@ -87,6 +87,7 @@ async function main() {
     const org = await tx.organization.create({
       data: {
         name: "KiddzOnline Nursery",
+        slug: "kiddzonline-nursery",
         settings: {
           timezone: "Asia/Beirut",
           currency: "USD",

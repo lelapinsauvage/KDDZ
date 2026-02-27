@@ -107,7 +107,7 @@ if (require.main === module) {
         log("No organization found. Creating default organization...");
         if (!isDryRun()) {
           org = await prisma.organization.create({
-            data: { name: "Kiddz Online" },
+            data: { name: "Kiddz Online", slug: "kiddz-online" },
           });
         } else {
           log("[DRY RUN] Would create default organization");
