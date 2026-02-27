@@ -3,7 +3,7 @@
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { childFormSchema } from "@/lib/validations/child";
+import { childFormSchema, childDraftSchema } from "@/lib/validations/child";
 import type { Prisma } from "@/generated/prisma/client";
 
 // ── Types ─────────────────────────────────────────
@@ -42,7 +42,7 @@ function parseParentData(raw: Record<string, unknown>) {
     accountingEntries: raw.accountingEntries
       ? JSON.parse(raw.accountingEntries as string)
       : [],
-    busAttendance: raw.busAttendance === "true",
+    busAttendance: (raw.busAttendance as string) || "false",
     isActive: raw.isActive === "true" || raw.isActive === undefined,
     isDraft: raw.isDraft === "true",
     lunchIncluded: raw.lunchIncluded === "true" || raw.lunchIncluded === undefined,
@@ -176,7 +176,8 @@ export async function createChild(formData: FormData): Promise<ActionResult> {
     const raw = Object.fromEntries(formData.entries()) as Record<string, unknown>;
     const parsed = parseParentData(raw);
 
-    const validation = childFormSchema.safeParse(parsed);
+    const schema = parsed.isDraft ? childDraftSchema : childFormSchema;
+    const validation = schema.safeParse(parsed);
     if (!validation.success) {
       const firstIssue = validation.error.issues[0];
       return {
@@ -388,7 +389,8 @@ export async function updateChild(
     const raw = Object.fromEntries(formData.entries()) as Record<string, unknown>;
     const parsed = parseParentData(raw);
 
-    const validation = childFormSchema.safeParse(parsed);
+    const schema = parsed.isDraft ? childDraftSchema : childFormSchema;
+    const validation = schema.safeParse(parsed);
     if (!validation.success) {
       const firstIssue = validation.error.issues[0];
       return {

@@ -90,6 +90,7 @@ const adminNav: NavSection[] = [
       { title: "Daily Reports", icon: FileText, href: "/daily-reports", badgeKey: "missingReports" },
       { title: "Attendance & Absences", icon: CalendarDays, href: "/absent-reports" },
       { title: "Food Calendar", icon: UtensilsCrossed, href: "/food/calendar" },
+      { title: "Food Items", icon: UtensilsCrossed, href: "/food" },
     ],
   },
   {
@@ -158,7 +159,6 @@ const teacherNav: NavSection[] = [
   {
     label: "Reference",
     items: [
-      { title: "Food Calendar", icon: UtensilsCrossed, href: "/food/calendar" },
       { title: "Notifications", icon: Bell, href: "/alarms", badgeKey: "activeAlarms" },
     ],
   },

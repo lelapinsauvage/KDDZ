@@ -566,7 +566,7 @@ model Child {
   isActive       Boolean   @default(true)
   isDraft        Boolean   @default(false)
   enrollmentDate DateTime? @db.Date
-  busAttendance  Boolean   @default(false)
+  busAttendance  String?   @default("false")
   diaperType     String?
   milkType       String?
   milkPortions   Int?

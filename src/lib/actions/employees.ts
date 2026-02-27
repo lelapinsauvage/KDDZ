@@ -199,18 +199,25 @@ export async function getEmployee(
   try {
     const { model } = getDelegate(type);
 
+    // Manager model has fewer relations — no languages, experiences, documents
+    const include: Record<string, boolean> = {
+      branch: true,
+      addresses: true,
+      attachments: true,
+    };
+    if (type !== "manager") {
+      include.languages = true;
+      include.experiences = true;
+      include.documents = true;
+    }
+    if (type === "teacher") {
+      include.class = true;
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const employee = await (model as any).findUnique({
       where: { id },
-      include: {
-        branch: true,
-        addresses: true,
-        attachments: true,
-        languages: true,
-        experiences: true,
-        documents: true,
-        ...(type === "teacher" ? { class: true } : {}),
-      },
+      include,
     });
 
     if (!employee) {
@@ -240,37 +247,41 @@ export async function createEmployee(
 
     const { model, path } = getDelegate(type);
 
-    // Build create payload with common fields
+    // Build create payload — Manager has fewer columns than Teacher/Nurse/Doctor
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const createData: any = {
       firstName: data.firstName,
       lastName: data.lastName,
-      username: data.username ?? null,
       email: data.email ?? null,
       phone: data.phone ?? null,
-      telephone: data.telephone ?? null,
       mobile: data.mobile ?? null,
       nationality: data.nationality ?? null,
       dateOfBirth: toDate(data.dateOfBirth) ?? null,
-      placeOfBirth: data.placeOfBirth ?? null,
-      registerNumber: data.registerNumber ?? null,
-      maritalStatus: data.maritalStatus || null,
-      numberOfChildren: data.numberOfChildren ?? null,
-      gender: data.gender || null,
-      medicalCase: data.medicalCase ?? false,
-      medicalCaseDescription: data.medicalCaseDescription ?? null,
-      cnss: data.cnss ?? null,
-      cnssNo: data.cnssNo ?? null,
-      secondaryDegree: data.secondaryDegree ?? null,
-      secondaryDegreeYear: data.secondaryDegreeYear ?? null,
-      universityDegree: data.universityDegree ?? null,
-      universityDegreeYear: data.universityDegreeYear ?? null,
       hireDate: toDate(data.hireDate) ?? null,
       branchId: data.branchId,
       specialization: data.specialization ?? null,
       isActive: data.isActive ?? true,
-      remarks: data.remarks ?? null,
     };
+
+    // Extended fields — only on Teacher/Nurse/Doctor (not Manager)
+    if (type !== "manager") {
+      createData.username = data.username ?? null;
+      createData.telephone = data.telephone ?? null;
+      createData.placeOfBirth = data.placeOfBirth ?? null;
+      createData.registerNumber = data.registerNumber ?? null;
+      createData.maritalStatus = data.maritalStatus || null;
+      createData.numberOfChildren = data.numberOfChildren ?? null;
+      createData.gender = data.gender || null;
+      createData.medicalCase = data.medicalCase ?? false;
+      createData.medicalCaseDescription = data.medicalCaseDescription ?? null;
+      createData.cnss = data.cnss ?? null;
+      createData.cnssNo = data.cnssNo ?? null;
+      createData.secondaryDegree = data.secondaryDegree ?? null;
+      createData.secondaryDegreeYear = data.secondaryDegreeYear ?? null;
+      createData.universityDegree = data.universityDegree ?? null;
+      createData.universityDegreeYear = data.universityDegreeYear ?? null;
+      createData.remarks = data.remarks ?? null;
+    }
 
     // Type-specific fields
     if (type === "doctor" && data.licenseNumber !== undefined) {
@@ -280,63 +291,76 @@ export async function createEmployee(
       createData.classId = data.classId;
     }
 
-    // Nested address
+    // Nested address — ManagerAddress has fewer fields (street, city, region only)
     if (data.address) {
       const a = data.address;
-      const hasAddress = a.governorate || a.district || a.region || a.city || a.street || a.building;
-      if (hasAddress) {
-        createData.addresses = {
-          create: [{
-            governorate: a.governorate ?? null,
-            district: a.district ?? null,
-            region: a.region ?? null,
-            city: a.city ?? null,
-            street: a.street ?? null,
-            building: a.building ?? null,
-          }],
-        };
+      if (type === "manager") {
+        const hasAddress = a.region || a.city || a.street;
+        if (hasAddress) {
+          createData.addresses = {
+            create: [{
+              street: a.street ?? null,
+              city: a.city ?? null,
+              region: a.region ?? null,
+            }],
+          };
+        }
+      } else {
+        const hasAddress = a.governorate || a.district || a.region || a.city || a.street || a.building;
+        if (hasAddress) {
+          createData.addresses = {
+            create: [{
+              governorate: a.governorate ?? null,
+              district: a.district ?? null,
+              region: a.region ?? null,
+              city: a.city ?? null,
+              street: a.street ?? null,
+              building: a.building ?? null,
+            }],
+          };
+        }
       }
     }
 
-    // Nested languages
-    if (data.languages?.length) {
-      createData.languages = {
-        create: data.languages.map((l) => ({
-          language: l.language,
-          canRead: l.canRead || "NONE",
-          canWrite: l.canWrite || "NONE",
-          canSpeak: l.canSpeak || "NONE",
-        })),
-      };
-    }
-
-    // Nested experiences
-    if (data.experiences?.length) {
-      createData.experiences = {
-        create: data.experiences.map((e) => ({
-          type: e.type,
-          company: e.company ?? null,
-          position: e.position ?? null,
-          fromDate: toDate(e.fromDate) ?? null,
-          toDate: toDate(e.toDate) ?? null,
-          description: e.description ?? null,
-        })),
-      };
-    }
-
-    // Nested documents
-    if (data.documents?.length) {
-      createData.documents = {
-        create: data.documents
-          .filter((d) => d.title || d.fileUrl)
-          .map((d) => ({
-            type: d.type,
-            title: d.title ?? null,
-            fileUrl: d.fileUrl || "pending",
-            date: toDate(d.date) ?? null,
-            expiryDate: toDate(d.expiryDate) ?? null,
+    // Nested languages, experiences, documents — only on Teacher/Nurse/Doctor
+    if (type !== "manager") {
+      if (data.languages?.length) {
+        createData.languages = {
+          create: data.languages.map((l) => ({
+            language: l.language,
+            canRead: l.canRead || "NONE",
+            canWrite: l.canWrite || "NONE",
+            canSpeak: l.canSpeak || "NONE",
           })),
-      };
+        };
+      }
+
+      if (data.experiences?.length) {
+        createData.experiences = {
+          create: data.experiences.map((e) => ({
+            type: e.type,
+            company: e.company ?? null,
+            position: e.position ?? null,
+            fromDate: toDate(e.fromDate) ?? null,
+            toDate: toDate(e.toDate) ?? null,
+            description: e.description ?? null,
+          })),
+        };
+      }
+
+      if (data.documents?.length) {
+        createData.documents = {
+          create: data.documents
+            .filter((d) => d.title || d.fileUrl)
+            .map((d) => ({
+              type: d.type,
+              title: d.title ?? null,
+              fileUrl: d.fileUrl || "pending",
+              date: toDate(d.date) ?? null,
+              expiryDate: toDate(d.expiryDate) ?? null,
+            })),
+        };
+      }
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -371,33 +395,38 @@ export async function updateEmployee(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {};
 
+    // Common fields (exist on all employee models including Manager)
     if (data.firstName !== undefined) updateData.firstName = data.firstName;
     if (data.lastName !== undefined) updateData.lastName = data.lastName;
-    if (data.username !== undefined) updateData.username = data.username || null;
     if (data.email !== undefined) updateData.email = data.email || null;
     if (data.phone !== undefined) updateData.phone = data.phone || null;
-    if (data.telephone !== undefined) updateData.telephone = data.telephone || null;
     if (data.mobile !== undefined) updateData.mobile = data.mobile || null;
     if (data.nationality !== undefined) updateData.nationality = data.nationality || null;
     if (data.dateOfBirth !== undefined) updateData.dateOfBirth = toDate(data.dateOfBirth) ?? null;
-    if (data.placeOfBirth !== undefined) updateData.placeOfBirth = data.placeOfBirth || null;
-    if (data.registerNumber !== undefined) updateData.registerNumber = data.registerNumber || null;
-    if (data.maritalStatus !== undefined) updateData.maritalStatus = data.maritalStatus || null;
-    if (data.numberOfChildren !== undefined) updateData.numberOfChildren = data.numberOfChildren ?? null;
-    if (data.gender !== undefined) updateData.gender = data.gender || null;
-    if (data.medicalCase !== undefined) updateData.medicalCase = data.medicalCase ?? false;
-    if (data.medicalCaseDescription !== undefined) updateData.medicalCaseDescription = data.medicalCaseDescription || null;
-    if (data.cnss !== undefined) updateData.cnss = data.cnss || null;
-    if (data.cnssNo !== undefined) updateData.cnssNo = data.cnssNo || null;
-    if (data.secondaryDegree !== undefined) updateData.secondaryDegree = data.secondaryDegree || null;
-    if (data.secondaryDegreeYear !== undefined) updateData.secondaryDegreeYear = data.secondaryDegreeYear || null;
-    if (data.universityDegree !== undefined) updateData.universityDegree = data.universityDegree || null;
-    if (data.universityDegreeYear !== undefined) updateData.universityDegreeYear = data.universityDegreeYear || null;
     if (data.hireDate !== undefined) updateData.hireDate = toDate(data.hireDate) ?? null;
     if (data.branchId !== undefined) updateData.branchId = data.branchId;
     if (data.specialization !== undefined) updateData.specialization = data.specialization || null;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
-    if (data.remarks !== undefined) updateData.remarks = data.remarks || null;
+
+    // Extended fields — only on Teacher/Nurse/Doctor (not Manager)
+    if (type !== "manager") {
+      if (data.username !== undefined) updateData.username = data.username || null;
+      if (data.telephone !== undefined) updateData.telephone = data.telephone || null;
+      if (data.placeOfBirth !== undefined) updateData.placeOfBirth = data.placeOfBirth || null;
+      if (data.registerNumber !== undefined) updateData.registerNumber = data.registerNumber || null;
+      if (data.maritalStatus !== undefined) updateData.maritalStatus = data.maritalStatus || null;
+      if (data.numberOfChildren !== undefined) updateData.numberOfChildren = data.numberOfChildren ?? null;
+      if (data.gender !== undefined) updateData.gender = data.gender || null;
+      if (data.medicalCase !== undefined) updateData.medicalCase = data.medicalCase ?? false;
+      if (data.medicalCaseDescription !== undefined) updateData.medicalCaseDescription = data.medicalCaseDescription || null;
+      if (data.cnss !== undefined) updateData.cnss = data.cnss || null;
+      if (data.cnssNo !== undefined) updateData.cnssNo = data.cnssNo || null;
+      if (data.secondaryDegree !== undefined) updateData.secondaryDegree = data.secondaryDegree || null;
+      if (data.secondaryDegreeYear !== undefined) updateData.secondaryDegreeYear = data.secondaryDegreeYear || null;
+      if (data.universityDegree !== undefined) updateData.universityDegree = data.universityDegree || null;
+      if (data.universityDegreeYear !== undefined) updateData.universityDegreeYear = data.universityDegreeYear || null;
+      if (data.remarks !== undefined) updateData.remarks = data.remarks || null;
+    }
 
     // Type-specific fields
     if (type === "doctor" && data.licenseNumber !== undefined) {
@@ -407,81 +436,97 @@ export async function updateEmployee(
       updateData.classId = data.classId || null;
     }
 
-    // Address: delete all + recreate
+    // Address: delete all + recreate — ManagerAddress has fewer fields
     if (data.address) {
       const a = data.address;
-      const hasAddress = a.governorate || a.district || a.region || a.city || a.street || a.building;
-      updateData.addresses = {
-        deleteMany: {},
-        ...(hasAddress
-          ? {
-              create: [{
-                governorate: a.governorate ?? null,
-                district: a.district ?? null,
-                region: a.region ?? null,
-                city: a.city ?? null,
-                street: a.street ?? null,
-                building: a.building ?? null,
-              }],
-            }
-          : {}),
-      };
+      if (type === "manager") {
+        const hasAddress = a.region || a.city || a.street;
+        updateData.addresses = {
+          deleteMany: {},
+          ...(hasAddress
+            ? {
+                create: [{
+                  street: a.street ?? null,
+                  city: a.city ?? null,
+                  region: a.region ?? null,
+                }],
+              }
+            : {}),
+        };
+      } else {
+        const hasAddress = a.governorate || a.district || a.region || a.city || a.street || a.building;
+        updateData.addresses = {
+          deleteMany: {},
+          ...(hasAddress
+            ? {
+                create: [{
+                  governorate: a.governorate ?? null,
+                  district: a.district ?? null,
+                  region: a.region ?? null,
+                  city: a.city ?? null,
+                  street: a.street ?? null,
+                  building: a.building ?? null,
+                }],
+              }
+            : {}),
+        };
+      }
     }
 
-    // Languages: delete all + recreate
-    if (data.languages !== undefined) {
-      updateData.languages = {
-        deleteMany: {},
-        ...(data.languages.length
-          ? {
-              create: data.languages.map((l) => ({
-                language: l.language,
-                canRead: l.canRead || "NONE",
-                canWrite: l.canWrite || "NONE",
-                canSpeak: l.canSpeak || "NONE",
-              })),
-            }
-          : {}),
-      };
-    }
-
-    // Experiences: delete all + recreate
-    if (data.experiences !== undefined) {
-      updateData.experiences = {
-        deleteMany: {},
-        ...(data.experiences.length
-          ? {
-              create: data.experiences.map((e) => ({
-                type: e.type,
-                company: e.company ?? null,
-                position: e.position ?? null,
-                fromDate: toDate(e.fromDate) ?? null,
-                toDate: toDate(e.toDate) ?? null,
-                description: e.description ?? null,
-              })),
-            }
-          : {}),
-      };
-    }
-
-    // Documents: delete all + recreate
-    if (data.documents !== undefined) {
-      updateData.documents = {
-        deleteMany: {},
-        ...(data.documents.length
-          ? {
-              create: data.documents
-                .filter((d) => d.title || d.fileUrl)
-                .map((d) => ({
-                  type: d.type,
-                  title: d.title ?? null,
-                  fileUrl: d.fileUrl || "pending",
-                  date: toDate(d.date) ?? null,
-                  expiryDate: toDate(d.expiryDate) ?? null,
+    // Languages, experiences, documents — only on Teacher/Nurse/Doctor
+    if (type !== "manager") {
+      if (data.languages !== undefined) {
+        updateData.languages = {
+          deleteMany: {},
+          ...(data.languages.length
+            ? {
+                create: data.languages.map((l) => ({
+                  language: l.language,
+                  canRead: l.canRead || "NONE",
+                  canWrite: l.canWrite || "NONE",
+                  canSpeak: l.canSpeak || "NONE",
                 })),
-            }
-          : {}),
-      };
+              }
+            : {}),
+        };
+      }
+
+      if (data.experiences !== undefined) {
+        updateData.experiences = {
+          deleteMany: {},
+          ...(data.experiences.length
+            ? {
+                create: data.experiences.map((e) => ({
+                  type: e.type,
+                  company: e.company ?? null,
+                  position: e.position ?? null,
+                  fromDate: toDate(e.fromDate) ?? null,
+                  toDate: toDate(e.toDate) ?? null,
+                  description: e.description ?? null,
+                })),
+              }
+            : {}),
+        };
+      }
+
+      if (data.documents !== undefined) {
+        updateData.documents = {
+          deleteMany: {},
+          ...(data.documents.length
+            ? {
+                create: data.documents
+                  .filter((d) => d.title || d.fileUrl)
+                  .map((d) => ({
+                    type: d.type,
+                    title: d.title ?? null,
+                    fileUrl: d.fileUrl || "pending",
+                    date: toDate(d.date) ?? null,
+                    expiryDate: toDate(d.expiryDate) ?? null,
+                  })),
+              }
+            : {}),
+        };
+      }
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -119,7 +119,7 @@ interface ChildData {
   nationality: string | null;
   language: string | null;
   allergies: string | null;
-  busAttendance: boolean;
+  busAttendance: string | null;
   lunchIncluded: boolean;
   diaperType: string | null;
   milkType: string | null;
@@ -179,6 +179,7 @@ interface Stats {
 interface AttendanceChart {
   present: number;
   absent: number;
+  draft: number;
   noReport: number;
 }
 
@@ -279,7 +280,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 // ── PIE CHART COLORS ─────────────────────────────
-const CHART_COLORS = ["#14b8a6", "#f43f5e", "#94a3b8"]; // teal-500, rose-500, slate-400
+const CHART_COLORS = ["#14b8a6", "#f43f5e", "#f59e0b", "#94a3b8"]; // teal-500, rose-500, amber-500, slate-400
 
 // ── Main Dashboard Component ─────────────────────
 
@@ -300,6 +301,7 @@ export function DashboardClient({
   const pieData = [
     { name: "Present", value: attendanceChart.present },
     { name: "Absent", value: attendanceChart.absent },
+    { name: "Draft", value: attendanceChart.draft },
     { name: "No Report", value: attendanceChart.noReport },
   ].filter((d) => d.value > 0);
 
@@ -573,12 +575,12 @@ export function DashboardClient({
                       Diapers: {child.diaperType}
                     </Badge>
                   )}
-                  {child.busAttendance && (
+                  {child.busAttendance && child.busAttendance !== "false" && (
                     <Badge
                       variant="outline"
                       className="gap-1 text-xs bg-orange-50 text-orange-600 border-orange-200"
                     >
-                      <Bus className="size-3" /> Bus
+                      <Bus className="size-3" /> Bus ({child.busAttendance})
                     </Badge>
                   )}
                   {child.lunchIncluded && (
@@ -768,7 +770,7 @@ export function DashboardClient({
                   </PieChart>
                 </ResponsiveContainer>
               )}
-              <div className="mt-2 flex justify-center gap-4 text-xs text-muted-foreground">
+              <div className="mt-2 flex flex-wrap justify-center gap-3 text-xs text-muted-foreground">
                 <span>
                   <span className="inline-block size-2 rounded-full bg-teal-500 mr-1" />
                   Present: {attendanceChart.present}
@@ -777,6 +779,12 @@ export function DashboardClient({
                   <span className="inline-block size-2 rounded-full bg-rose-500 mr-1" />
                   Absent: {attendanceChart.absent}
                 </span>
+                {attendanceChart.draft > 0 && (
+                  <span>
+                    <span className="inline-block size-2 rounded-full bg-amber-500 mr-1" />
+                    Draft: {attendanceChart.draft}
+                  </span>
+                )}
                 <span>
                   <span className="inline-block size-2 rounded-full bg-slate-400 mr-1" />
                   No Report: {attendanceChart.noReport}
@@ -839,7 +847,7 @@ export function DashboardClient({
                   </td>
                   <td className="px-3 py-2">
                     <Button variant="ghost" size="icon-xs" asChild>
-                      <Link href={`/absent-reports`}>
+                      <Link href={`/absent-reports/${a.id}`}>
                         <Eye className="size-3.5" />
                       </Link>
                     </Button>

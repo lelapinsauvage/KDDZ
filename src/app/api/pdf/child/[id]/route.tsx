@@ -89,7 +89,7 @@ interface ChildPdfProps {
     bloodType?: string | null;
     allergies?: string | null;
     enrollmentDate?: Date | null;
-    busAttendance: boolean;
+    busAttendance: string | null;
     diaperType?: string | null;
     milkType?: string | null;
     milkPortions?: number | null;
@@ -220,7 +220,7 @@ function ChildApplicationPdf({ child }: ChildPdfProps) {
           <View style={s.col}>
             <FieldRow
               label="Bus Attendance"
-              value={child.busAttendance ? "Yes" : "No"}
+              value={child.busAttendance && child.busAttendance !== "false" ? child.busAttendance : "No"}
             />
             <FieldRow
               label="Lunch Included"

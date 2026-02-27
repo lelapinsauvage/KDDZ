@@ -205,7 +205,7 @@ export async function migrateChildren(prisma: PrismaClient) {
           branchId,
           classId,
           enrollmentDate: parseDate(row.joining_date),
-          busAttendance: row.bus?.toLowerCase() === "yes",
+          busAttendance: row.bus?.toLowerCase() === "yes" ? "morning" : "false",
           diaperType: cleanString(row.diapers),
           milkType: cleanString(row.milk_name),
           milkPortions: toInt(row.milk_portion, 0) || null,

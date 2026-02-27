@@ -52,6 +52,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { createClass, updateClass, deleteClass } from "@/lib/actions/classes";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -127,6 +128,7 @@ interface ClassFormState {
   cameraNumber: string;
   maxStudents: string;
   imageUrl: string;
+  isActive: boolean;
 }
 
 function emptyForm(branchId?: string): ClassFormState {
@@ -141,6 +143,7 @@ function emptyForm(branchId?: string): ClassFormState {
     cameraNumber: "",
     maxStudents: "",
     imageUrl: "",
+    isActive: true,
   };
 }
 
@@ -156,6 +159,7 @@ function classToForm(cls: ClassItem): ClassFormState {
     cameraNumber: cls.cameraNumber?.toString() ?? "",
     maxStudents: cls.maxStudents.toString(),
     imageUrl: cls.imageUrl ?? "",
+    isActive: cls.isActive,
   };
 }
 
@@ -342,6 +346,19 @@ function ClassForm({
           </div>
         </div>
       </div>
+
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id="class-active"
+          checked={form.isActive}
+          onCheckedChange={(checked) =>
+            setForm((f) => ({ ...f, isActive: checked === true }))
+          }
+        />
+        <Label htmlFor="class-active" className="cursor-pointer">
+          Active
+        </Label>
+      </div>
     </div>
   );
 }
@@ -408,6 +425,7 @@ export function ClassesClient({
         cameraNumber: form.cameraNumber ? parseInt(form.cameraNumber) : null,
         maxStudents: form.maxStudents ? parseInt(form.maxStudents) : 0,
         imageUrl: form.imageUrl || null,
+        isActive: form.isActive,
       });
       if (result.success) {
         toast.success(`"${form.name}" created`);
@@ -437,6 +455,7 @@ export function ClassesClient({
         cameraNumber: form.cameraNumber ? parseInt(form.cameraNumber) : null,
         maxStudents: form.maxStudents ? parseInt(form.maxStudents) : 0,
         imageUrl: form.imageUrl || null,
+        isActive: form.isActive,
       });
       if (result.success) {
         toast.success(`"${form.name}" updated`);

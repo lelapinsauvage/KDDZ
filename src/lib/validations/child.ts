@@ -115,7 +115,7 @@ export const childFormSchema = z.object({
   childNumber: z.string().default(""),
 
   // Care preferences
-  busAttendance: z.boolean().default(false),
+  busAttendance: z.string().default("false"),
   diaperType: z.string().default(""),
   milkType: z.string().default(""),
   milkPortions: z.coerce.number().default(0),
@@ -150,3 +150,14 @@ export const childFormSchema = z.object({
 });
 
 export type ChildFormValues = z.input<typeof childFormSchema>;
+
+/** Relaxed schema for draft saves — required fields become optional */
+export const childDraftSchema = childFormSchema.extend({
+  firstName: z.string().default(""),
+  lastName: z.string().default(""),
+  dateOfBirth: z.string().default(""),
+  gender: z.enum(["MALE", "FEMALE"]).optional(),
+  branchId: z.string().default(""),
+  classId: z.string().default(""),
+  schoolYearId: z.string().default(""),
+});

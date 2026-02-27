@@ -36,7 +36,7 @@ interface ChildData {
   className: string | null;
   branchName: string | null;
   isActive: boolean;
-  busAttendance: boolean;
+  busAttendance: string | null;
   lunchIncluded: boolean;
   parents: ParentInfo[];
   relatives: RelativeInfo[];
@@ -147,7 +147,7 @@ export function ChildPrintClient({ child }: { child: ChildData }) {
             </div>
             <div>
               <span className="font-semibold">Bus:</span>{" "}
-              {child.busAttendance ? "Yes" : "No"}
+              {child.busAttendance && child.busAttendance !== "false" ? child.busAttendance : "No"}
             </div>
           </div>
         </div>

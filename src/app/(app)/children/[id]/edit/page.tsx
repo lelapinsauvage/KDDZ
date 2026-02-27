@@ -102,7 +102,7 @@ export default async function ChildEditPage({ params }: ChildDetailsPageProps) {
     isDraft: child.isDraft,
 
     // Care preferences
-    busAttendance: child.busAttendance,
+    busAttendance: child.busAttendance ?? "false",
     diaperType: child.diaperType ?? "",
     milkType: child.milkType ?? "",
     milkPortions: child.milkPortions ?? 0,

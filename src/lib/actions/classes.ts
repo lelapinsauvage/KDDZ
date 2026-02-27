@@ -118,6 +118,7 @@ export async function createClass(data: ClassData) {
     });
 
     revalidatePath("/classes");
+    revalidatePath("/branches", "layout");
 
     return { success: true as const, data: created };
   } catch (error) {
@@ -164,6 +165,7 @@ export async function updateClass(id: string, data: Partial<ClassData>) {
     });
 
     revalidatePath("/classes");
+    revalidatePath("/branches", "layout");
 
     return { success: true as const, data: updated };
   } catch (error) {
@@ -191,6 +193,7 @@ export async function deleteClass(id: string) {
     await db.class.delete({ where: { id } });
 
     revalidatePath("/classes");
+    revalidatePath("/branches", "layout");
 
     return { success: true as const };
   } catch (error) {

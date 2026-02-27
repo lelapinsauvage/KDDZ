@@ -311,3 +311,169 @@ PHASE 8-food-calendar COMPLETE — Tue Feb 24 23:35:56 CET 2026
 PHASE: 9a-employee-schema
 STARTED: Tue Feb 24 23:35:56 CET 2026
 ========================================
+All done. Here's a summary of what was added:
+
+**New enums:**
+- `MaritalStatus` (SINGLE, MARRIED, DIVORCED, WIDOWED)
+- `ExperienceType` (WORK, STAGE, WORKSHOP)
+- `EmployeeDocumentType` (CONTRACT, MEDICAL_TEST, CERTIFICATE, ATTACHMENT)
+- `LanguageName` (ENGLISH, FRENCH, ARABIC)
+- `LanguageProficiency` (NONE, BASIC, INTERMEDIATE, ADVANCED, FLUENT)
+
+**Fields added to Teacher, Nurse, Doctor:**
+- `username`, `middleName`, `placeOfBirth`, `registerNumber`
+- `maritalStatus`, `numberOfChildren`, `gender`
+- `medicalCase`, `medicalCaseDescription`
+- `telephone`, `cnss`, `cnssNo`
+- `secondaryDegree`, `secondaryDegreeYear`, `universityDegree`, `universityDegreeYear`
+- `remarks`, `imageUrl`
+- Teacher also got `classId` with relation to `Class`
+
+**Address models enhanced** (Teacher/Nurse/Doctor) with: `governorate`, `district`, `building`
+
+**New related models** (for all 3 employee types):
+- `*Language` — per-language proficiency (canRead, canWrite, canSpeak)
+- `*Experience` — work/stage/workshop history
+- `*Document` — typed documents with expiry dates
+
+Database synced via `prisma db push`, Prisma client generated, `tsc --noEmit` passes clean, committed as `3754819`.
+PHASE 9a-employee-schema COMPLETE — Tue Feb 24 23:40:34 CET 2026
+
+========================================
+PHASE: 9b-employee-form
+STARTED: Tue Feb 24 23:40:34 CET 2026
+========================================
+Done. Here's a summary of all changes:
+
+**Validation schema** (`src/lib/validations/employee.ts`):
+- Added sub-schemas: `employeeAddressSchema` (6 fields: governorate, district, region, city, street, building), `employeeLanguageSchema`, `employeeExperienceSchema`, `employeeDocumentSchema`
+- Main schema now includes: username, placeOfBirth, registerNumber, maritalStatus, numberOfChildren, gender, medicalCase/description, telephone, cnss/cnssNo, secondary/university degree+year, classId, remarks
+- Array fields: `languages[]`, `experiences[]`, `documents[]`
+
+**Server actions** (`src/lib/actions/employees.ts`):
+- `EmployeeData` interface expanded with all new fields + nested types
+- `getEmployee` now includes `languages`, `experiences`, `documents`, and `class` relations
+- `createEmployee` / `updateEmployee` handle nested create/delete-and-recreate for address, languages, experiences, documents
+
+**Employee form** (`src/components/employees/employee-form-client.tsx`):
+- Uses shared `FormSection` from `@/components/ui/form-section` (collapsible, rounded-2xl)
+- 13 sections: System Username, Employee Info, Address (6 fields), General Info (contact + education), Languages (dynamic add/remove with Read/Write/Speak dropdowns), Work Experience, Stage Experience, Workshop (all dynamic), Garderie Info (with class dropdown for teachers, remarks textarea), Contract Documents, Medical Test Documents, Certificates, Attachments (all dynamic with "Coming soon" file upload placeholder)
+
+**New helper** (`src/components/employees/map-employee-to-form.ts`):
+- Shared mapper from DB data to form values, used by all 4 edit pages
+
+**Edit/new pages** — All 4 employee type edit pages updated to use `mapEmployeeToForm`, teacher pages now fetch and pass classes.
+PHASE 9b-employee-form COMPLETE — Tue Feb 24 23:47:18 CET 2026
+
+========================================
+PHASE: 10-notifications
+STARTED: Tue Feb 24 23:47:18 CET 2026
+========================================
+All done. Here's what was built:
+
+**A) Notification Settings Page** (`/settings/notifications`):
+- **Server page** at `src/app/(app)/settings/notifications/page.tsx` — fetches branch/settings data
+- **Client component** at `notification-settings-client.tsx` with all 10 notification types:
+  - Birthday Greetings, Missing Daily Reports, Missing Absence Reports, Assessment Due, Medicine Reminders, Insurance Expiring, Contract Expiring, Vaccination Due, Holiday Announcements, Payment Overdue
+- Each type has: **active toggle**, **days before** number input, **expandable template editor** with shortcode hints (`{{child_name}}`, `{{parent_name}}`, `{{date}}`, `{{branch_name}}`, `{{amount}}`)
+- Cards styled with colored left borders per type, collapsible template sections
+- Shortcode reference card at the top
+- Saves all settings via existing `setSetting()` action
+- Added "Notification Settings" card to the Settings hub page
+
+**B) Notification Bell in Header**:
+- Enhanced `NotificationDropdown` component with:
+  - Bell icon with **red badge** (`bg-red-500 text-white text-xs rounded-full`)
+  - **Popover dropdown** (`rounded-2xl shadow-lg max-h-[400px]` with scroll)
+  - Notifications grouped by type with **colored left borders** and type-specific icons
+  - Each item: icon, title, description, time ago, unread indicator
+  - **"Mark all read"** button
+  - **"View all notifications"** link
+  - **"All caught up!"** empty state with green checkmark
+- Added to header alongside existing InboxTray
+
+TypeScript check passes clean. Committed as `653f93c`.
+PHASE 10-notifications COMPLETE — Tue Feb 24 23:51:40 CET 2026
+
+========================================
+PHASE: 11-holiday-calendar
+STARTED: Tue Feb 24 23:51:40 CET 2026
+========================================
+All done. Here's a summary of all changes made:
+
+### Prisma Schema (`prisma/schema.prisma`)
+Added 8 new fields to the `Holiday` model:
+- `description` (String?) - optional description
+- `endDate` (DateTime?) - for date ranges
+- `repeated` (Boolean, default false) - one-time vs yearly
+- `type` (String, default "HOLIDAY") - Holiday or Event
+- `isActive` (Boolean, default true) - active toggle
+- `notificationTitle` (String?) - parent notification title
+- `notificationMessage` (String?) - parent notification message
+- `daysBefore` (Int, default 0) - when to send notification
+
+### Server Actions (`src/lib/actions/settings.ts`)
+- Extended `HolidayData` interface with all new fields
+- Updated `createHoliday` and `updateHoliday` to handle all new fields
+
+### Validation Schema (`src/lib/validations/settings.ts`)
+- Extended `holidaySchema` with all new form fields
+
+### Page (`src/app/(app)/settings/holidays/page.tsx`)
+- Serializes all new fields from server to client
+
+### Client Component (`holidays-client.tsx`)
+- **Calendar/List toggle** - buttons in header to switch between views
+- **Calendar view** - monthly grid with emerald-500 bars for holidays, blue-500 for events, spanning date ranges across cells
+- **List view** - DataTable with type and active status columns
+- **Edit dialog** (rounded-2xl) with:
+  - Name, Description, Type dropdown (Holiday/Event), Active checkbox
+  - Recurrence radio (One Time / Repeated Yearly)
+  - Start Date + End Date pickers
+  - Branch selector
+  - Notification section: title, message textarea, days before
+  - Update / Remove / Close buttons
+- **Create dialog** - same form, triggered by "Add Holiday" button or clicking empty calendar cell
+PHASE 11-holiday-calendar COMPLETE — Tue Feb 24 23:56:05 CET 2026
+
+========================================
+PHASE: 12-final-verify
+STARTED: Tue Feb 24 23:56:05 CET 2026
+========================================
+Here's the final status:
+
+**TypeScript:** `tsc --noEmit` — **zero errors**
+**Dev server:** Running on `localhost:3333` — **HTTP 307** (healthy redirect)
+**Git:** 20 commits on `ux-improvements`, 15 ahead of remote
+
+No type errors to fix, so no fix commit needed.
+
+### Tonight's work (20 commits across 12 phases):
+
+| Phase | What |
+|-------|------|
+| 0 | Codebase inventory (42 models, 103 pages, 91 components) |
+| 1 | Fixed 6 missing route pages + 1 broken link |
+| 2 | Fixed 5 Button components missing `variant` prop |
+| 3 | Food items CRUD with stats cards and validation |
+| 4 | Classes management — schema, CRUD, card grid UI |
+| 5 | Child form expansion — addresses, siblings, financials (live calc) |
+| 6 | Child dashboard rewrite — 8 sections, stats, charts, tables |
+| 7 | Arabic compliance labels on all branch form sections |
+| 8 | Food calendar enhancements — today button, cell highlighting |
+| 9 | Employee form expansion — languages, experience, documents |
+| 10 | Notification center — settings page + header bell dropdown |
+| 11 | Holiday calendar — calendar/list view, edit dialog, date ranges |
+
+### Still needs doing:
+- **File uploads** (child/employee/class/compliance documents)
+- **Notification sending logic** (cron jobs, push/email transport)
+- **Proper Prisma migrations** (currently `db push` only)
+- **Testing, i18n, mobile responsiveness, parent portal**
+
+Summary written to `/tmp/overnight-feb24-summary.md`.
+PHASE 12-final-verify COMPLETE — Tue Feb 24 23:57:16 CET 2026
+
+========================================
+OVERNIGHT SCRIPT FINISHED — Tue Feb 24 23:57:16 CET 2026
+========================================

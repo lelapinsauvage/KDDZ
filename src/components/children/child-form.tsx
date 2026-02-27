@@ -360,7 +360,7 @@ function toFormData(data: ChildFormValues, isDraft = false): FormData {
   fd.set("isActive", isDraft ? "false" : String(data.isActive ?? true));
   fd.set("isDraft", isDraft ? "true" : String(data.isDraft ?? false));
   fd.set("childNumber", data.childNumber ?? "");
-  fd.set("busAttendance", String(data.busAttendance ?? false));
+  fd.set("busAttendance", data.busAttendance || "false");
   fd.set("diaperType", data.diaperType ?? "");
   fd.set("milkType", data.milkType ?? "");
   fd.set("milkPortions", String(data.milkPortions ?? 0));
@@ -493,7 +493,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
       isActive: true,
       isDraft: false,
       childNumber: "",
-      busAttendance: false,
+      busAttendance: "false",
       diaperType: "",
       milkType: "",
       milkPortions: 0,
@@ -1327,8 +1327,8 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
               control={control}
               render={({ field }) => (
                 <Select
-                  value={field.value ? "true" : "false"}
-                  onValueChange={(v) => field.onChange(v !== "false")}
+                  value={field.value || "false"}
+                  onValueChange={(v) => field.onChange(v)}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Bus service" />

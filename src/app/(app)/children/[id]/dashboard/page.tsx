@@ -42,7 +42,8 @@ export default async function ChildDashboardPage({ params }: Props) {
   const totalDays = attendanceRecords.length;
   const presentDays = attendanceRecords.filter((r) => r.status === "PRESENT").length;
   const absentDays = attendanceRecords.filter((r) => r.status === "ABSENT").length;
-  const noReportDays = totalDays - presentDays - absentDays;
+  const draftDays = attendanceRecords.filter((r) => r.status === "DRAFT").length;
+  const noReportDays = totalDays - presentDays - absentDays - draftDays;
 
   // Compute outstanding balance
   const balanceStr = accountingSummary.balance > 0
@@ -152,6 +153,7 @@ export default async function ChildDashboardPage({ params }: Props) {
   const attendanceChart = {
     present: presentDays,
     absent: absentDays,
+    draft: draftDays,
     noReport: noReportDays,
   };
 

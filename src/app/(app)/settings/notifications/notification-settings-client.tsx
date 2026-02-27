@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,7 +30,7 @@ import {
   Info,
   type LucideIcon,
 } from "lucide-react";
-import { setSetting } from "@/lib/actions/settings";
+import { getSettings, setSetting } from "@/lib/actions/settings";
 
 interface NotificationConfig {
   type: string;
@@ -224,6 +224,17 @@ export function NotificationSettingsClient({
   const [expandedType, setExpandedType] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  // Refetch settings when branch changes
+  useEffect(() => {
+    if (branchId === initialBranchId) return;
+    startTransition(async () => {
+      const result = await getSettings(branchId);
+      if (result.success && result.data) {
+        setSettings(result.data);
+      }
+    });
+  }, [branchId, initialBranchId]);
 
   function getEnabled(config: NotificationConfig): boolean {
     const val = settings[config.settingKeyEnabled];
