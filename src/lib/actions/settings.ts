@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { requireOrg, requireOrgSafe } from "@/lib/require-org";
+import { verifyBranchAccess } from "@/lib/verify-org-access";
 import {
   nurserySettingsSchema,
   type NurserySettingsValues,
@@ -75,6 +77,12 @@ export async function getSettings(
   branchId: string,
 ): Promise<ActionResult<Record<string, string>>> {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
+    if (!(await verifyBranchAccess(branchId, orgId))) {
+      return { success: false, error: "Branch not found in your organization" };
+    }
+
     const rows = await db.settings.findMany({
       where: { branchId },
     });
@@ -101,9 +109,12 @@ export async function setSetting(
   value: string,
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
+
+    if (!(await verifyBranchAccess(branchId, ctx.organizationId))) {
+      return { success: false, error: "Branch not found in your organization" };
     }
 
     const setting = await db.settings.upsert({
@@ -130,9 +141,12 @@ export async function updateNurserySettings(
   values: NurserySettingsValues,
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
+
+    if (!(await verifyBranchAccess(branchId, ctx.organizationId))) {
+      return { success: false, error: "Branch not found in your organization" };
     }
 
     const parsed = nurserySettingsSchema.safeParse(values);
@@ -410,8 +424,10 @@ export async function deleteRegion(id: string): Promise<ActionResult> {
 
 export async function getHolidays(branchId?: string): Promise<ActionResult> {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: any = {};
+    const where: any = { branch: { organizationId: orgId } };
 
     if (branchId) {
       where.branchId = branchId;
@@ -436,9 +452,12 @@ export async function getHolidays(branchId?: string): Promise<ActionResult> {
 
 export async function createHoliday(data: HolidayData): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
+
+    if (data.branchId && !(await verifyBranchAccess(data.branchId, ctx.organizationId))) {
+      return { success: false, error: "Branch not found in your organization" };
     }
 
     const holiday = await db.holiday.create({
@@ -475,9 +494,20 @@ export async function updateHoliday(
   data: Partial<HolidayData>,
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
+
+    const existing = await db.holiday.findFirst({
+      where: { id, branch: { organizationId: ctx.organizationId } },
+      select: { id: true },
+    });
+    if (!existing) {
+      return { success: false, error: "Holiday not found in your organization" };
+    }
+
+    if (data.branchId && !(await verifyBranchAccess(data.branchId, ctx.organizationId))) {
+      return { success: false, error: "Branch not found in your organization" };
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -515,9 +545,16 @@ export async function updateHoliday(
 
 export async function deleteHoliday(id: string): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
+
+    const existing = await db.holiday.findFirst({
+      where: { id, branch: { organizationId: ctx.organizationId } },
+      select: { id: true },
+    });
+    if (!existing) {
+      return { success: false, error: "Holiday not found in your organization" };
     }
 
     await db.holiday.delete({ where: { id } });
@@ -541,7 +578,10 @@ export async function deleteHoliday(id: string): Promise<ActionResult> {
 
 export async function getEventTypes(): Promise<ActionResult> {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     const eventTypes = await db.eventType.findMany({
+      where: { organizationId: orgId },
       include: {
         _count: { select: { events: true } },
       },
@@ -563,15 +603,15 @@ export async function createEventType(
   data: EventTypeData,
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
 
     const eventType = await db.eventType.create({
       data: {
         name: data.name,
         color: data.color ?? null,
+        organizationId: ctx.organizationId,
       },
     });
 
@@ -593,9 +633,16 @@ export async function updateEventType(
   data: Partial<EventTypeData>,
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
+
+    const existing = await db.eventType.findFirst({
+      where: { id, organizationId: ctx.organizationId },
+      select: { id: true },
+    });
+    if (!existing) {
+      return { success: false, error: "Event type not found in your organization" };
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -624,9 +671,16 @@ export async function updateEventType(
 
 export async function deleteEventType(id: string): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
+
+    const existing = await db.eventType.findFirst({
+      where: { id, organizationId: ctx.organizationId },
+      select: { id: true },
+    });
+    if (!existing) {
+      return { success: false, error: "Event type not found in your organization" };
     }
 
     await db.eventType.delete({ where: { id } });
@@ -652,8 +706,10 @@ export async function getEvents(
   params: EventListParams = {},
 ): Promise<ActionResult> {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: any = {};
+    const where: any = { branch: { organizationId: orgId } };
 
     if (params.branchId) {
       where.branchId = params.branchId;
@@ -695,9 +751,12 @@ export async function getEvents(
 
 export async function createEvent(data: EventData): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
+
+    if (data.branchId && !(await verifyBranchAccess(data.branchId, ctx.organizationId))) {
+      return { success: false, error: "Branch not found in your organization" };
     }
 
     const event = await db.event.create({
@@ -730,9 +789,20 @@ export async function updateEvent(
   data: Partial<EventData>,
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
+
+    const existing = await db.event.findFirst({
+      where: { id, branch: { organizationId: ctx.organizationId } },
+      select: { id: true },
+    });
+    if (!existing) {
+      return { success: false, error: "Event not found in your organization" };
+    }
+
+    if (data.branchId && !(await verifyBranchAccess(data.branchId, ctx.organizationId))) {
+      return { success: false, error: "Branch not found in your organization" };
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -769,9 +839,16 @@ export async function updateEvent(
 
 export async function deleteEvent(id: string): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
+
+    const existing = await db.event.findFirst({
+      where: { id, branch: { organizationId: ctx.organizationId } },
+      select: { id: true },
+    });
+    if (!existing) {
+      return { success: false, error: "Event not found in your organization" };
     }
 
     await db.event.delete({ where: { id } });
