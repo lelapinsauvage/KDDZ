@@ -1,7 +1,8 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
+import { requireOrg, requireOrgSafe } from "@/lib/require-org";
+import { verifyBranchAccess, verifyChildAccess } from "@/lib/verify-org-access";
 import { revalidatePath } from "next/cache";
 import { childFormSchema, childDraftSchema } from "@/lib/validations/child";
 import type { Prisma } from "@/generated/prisma/client";
@@ -76,7 +77,11 @@ export async function getChildren(params: GetChildrenParams = {}) {
   } = params;
 
   try {
-    const where: Prisma.ChildWhereInput = {};
+    const { organizationId: orgId } = await requireOrg();
+
+    const where: Prisma.ChildWhereInput = {
+      branch: { organizationId: orgId },
+    };
 
     if (branchId) where.branchId = branchId;
     if (classId) where.classId = classId;
@@ -139,6 +144,8 @@ export async function getChildren(params: GetChildrenParams = {}) {
 
 export async function getChild(id: string) {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     const child = await db.child.findUnique({
       where: { id },
       include: {
@@ -157,6 +164,9 @@ export async function getChild(id: string) {
       },
     });
 
+    if (!child) return null;
+    if (child.branch?.organizationId !== orgId) return null;
+
     return child;
   } catch (error) {
     console.error("getChild error:", error);
@@ -167,10 +177,9 @@ export async function getChild(id: string) {
 // ── createChild ───────────────────────────────────
 
 export async function createChild(formData: FormData): Promise<ActionResult> {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return { success: false, error: "Unauthorized" };
-  }
+  const result = await requireOrgSafe();
+  if (!result.ok) return { success: false, error: result.error };
+  const { ctx } = result;
 
   try {
     const raw = Object.fromEntries(formData.entries()) as Record<string, unknown>;
@@ -187,6 +196,10 @@ export async function createChild(formData: FormData): Promise<ActionResult> {
     }
 
     const data = validation.data;
+
+    // Verify the target branch belongs to this org
+    const branchOk = await verifyBranchAccess(data.branchId, ctx.organizationId);
+    if (!branchOk) return { success: false, error: "Invalid branch" };
 
     const child = await db.child.create({
       data: {
@@ -358,7 +371,7 @@ export async function createChild(formData: FormData): Promise<ActionResult> {
       data: {
         childId: child.id,
         snapshot: JSON.parse(JSON.stringify(child)),
-        changedBy: session.user.id,
+        changedBy: ctx.userId,
         changeNote: "Child created",
       },
     });
@@ -380,12 +393,14 @@ export async function updateChild(
   id: string,
   formData: FormData
 ): Promise<ActionResult> {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return { success: false, error: "Unauthorized" };
-  }
+  const result = await requireOrgSafe();
+  if (!result.ok) return { success: false, error: result.error };
+  const { ctx } = result;
 
   try {
+    // Verify child belongs to this org
+    const childOk = await verifyChildAccess(id, ctx.organizationId);
+    if (!childOk) return { success: false, error: "Child not found" };
     const raw = Object.fromEntries(formData.entries()) as Record<string, unknown>;
     const parsed = parseParentData(raw);
 
@@ -587,7 +602,7 @@ export async function updateChild(
       data: {
         childId: child.id,
         snapshot: JSON.parse(JSON.stringify(child)),
-        changedBy: session.user.id,
+        changedBy: ctx.userId,
         changeNote: "Child updated",
       },
     });
@@ -609,12 +624,14 @@ export async function updateChild(
 export async function deleteChild(
   id: string
 ): Promise<ActionResult> {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return { success: false, error: "Unauthorized" };
-  }
+  const result = await requireOrgSafe();
+  if (!result.ok) return { success: false, error: result.error };
+  const { ctx } = result;
 
   try {
+    const childOk = await verifyChildAccess(id, ctx.organizationId);
+    if (!childOk) return { success: false, error: "Child not found" };
+
     await db.child.update({
       where: { id },
       data: {
@@ -645,6 +662,12 @@ export async function getDrafts(params: Omit<GetChildrenParams, "status"> = {}) 
 
 export async function getChildDashboardStats(childId: string) {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
+    // Verify child belongs to this org
+    const childOk = await verifyChildAccess(childId, orgId);
+    if (!childOk) throw new Error("Child not found");
+
     const [
       incomingCalls,
       outgoingCalls,

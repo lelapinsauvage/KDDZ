@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
+import { requireOrg, requireOrgSafe } from "@/lib/require-org";
+import { verifyBranchAccess } from "@/lib/verify-org-access";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -32,7 +33,10 @@ type ActionResult<T = unknown> = {
 
 export async function getBranches(): Promise<ActionResult> {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     const branches = await db.branch.findMany({
+      where: { organizationId: orgId },
       include: {
         compliance: {
           select: { completionPercentage: true },
@@ -61,6 +65,8 @@ export async function getBranches(): Promise<ActionResult> {
 
 export async function getBranch(id: string): Promise<ActionResult> {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     const branch = await db.branch.findUnique({
       where: { id },
       include: {
@@ -84,6 +90,10 @@ export async function getBranch(id: string): Promise<ActionResult> {
       return { success: false, error: "Branch not found" };
     }
 
+    if (branch.organizationId !== orgId) {
+      return { success: false, error: "Branch not found" };
+    }
+
     return { success: true, data: branch };
   } catch (error) {
     console.error("Failed to fetch branch:", error);
@@ -92,33 +102,17 @@ export async function getBranch(id: string): Promise<ActionResult> {
 }
 
 // ---------------------------------------------------------------------------
-// getOrganizationId — helper to resolve the default organization
-// ---------------------------------------------------------------------------
-
-async function getDefaultOrganizationId(): Promise<string | null> {
-  const org = await db.organization.findFirst({ select: { id: true } });
-  return org?.id ?? null;
-}
-
-// ---------------------------------------------------------------------------
 // createBranch
 // ---------------------------------------------------------------------------
 
 export async function createBranch(
-  data: Omit<BranchData, "organizationId"> & { organizationId?: string },
+  data: Omit<BranchData, "organizationId">,
 ): Promise<ActionResult> {
+  const result = await requireOrgSafe();
+  if (!result.ok) return { success: false, error: result.error };
+  const { ctx } = result;
+
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
-
-    const organizationId =
-      data.organizationId ?? (await getDefaultOrganizationId());
-    if (!organizationId) {
-      return { success: false, error: "No organization found" };
-    }
-
     const branch = await db.branch.create({
       data: {
         name: data.name,
@@ -129,7 +123,7 @@ export async function createBranch(
         email: data.email ?? null,
         themeColor: data.themeColor ?? "#1caf9a",
         isActive: data.isActive ?? true,
-        organizationId,
+        organizationId: ctx.organizationId,
       },
     });
 
@@ -150,11 +144,13 @@ export async function updateBranch(
   id: string,
   data: Partial<BranchData>,
 ): Promise<ActionResult> {
+  const result = await requireOrgSafe();
+  if (!result.ok) return { success: false, error: result.error };
+  const { ctx } = result;
+
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const hasAccess = await verifyBranchAccess(id, ctx.organizationId);
+    if (!hasAccess) return { success: false, error: "Branch not found" };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {};
@@ -167,8 +163,7 @@ export async function updateBranch(
     if (data.email !== undefined) updateData.email = data.email;
     if (data.themeColor !== undefined) updateData.themeColor = data.themeColor;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
-    if (data.organizationId !== undefined)
-      updateData.organizationId = data.organizationId;
+    // Never allow changing organizationId
 
     const branch = await db.branch.update({
       where: { id },
@@ -190,11 +185,13 @@ export async function updateBranch(
 // ---------------------------------------------------------------------------
 
 export async function deleteBranch(id: string): Promise<ActionResult> {
+  const result = await requireOrgSafe();
+  if (!result.ok) return { success: false, error: result.error };
+  const { ctx } = result;
+
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const hasAccess = await verifyBranchAccess(id, ctx.organizationId);
+    if (!hasAccess) return { success: false, error: "Branch not found" };
 
     await db.branch.update({
       where: { id },
