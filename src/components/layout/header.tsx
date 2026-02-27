@@ -55,10 +55,10 @@ export function Header() {
   return (
     <header className="header-bar fixed top-0 left-0 right-0 z-50 flex items-center">
       {/* Logo area */}
-      <div className="flex h-[52px] w-auto shrink-0 items-center gap-2.5 px-3 md:w-[270px] md:px-4">
+      <div className="flex h-[56px] w-auto shrink-0 items-center gap-2.5 px-3 md:w-[270px] md:px-4">
         <SidebarTrigger className="text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors" />
         <Link href="/dashboard" className="flex items-center gap-2 group">
-          <div className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-teal-400 to-teal-600 text-white text-xs font-bold shadow-sm group-hover:shadow-md transition-shadow">
+          <div className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-[#E8A87C] to-[#C35A2C] text-white text-xs font-bold shadow-sm group-hover:shadow-md transition-shadow">
             K
           </div>
           <span className="hidden text-[15px] font-bold text-foreground tracking-tight sm:block">
@@ -76,7 +76,7 @@ export function Header() {
           {/* Search hint */}
           <button
             onClick={() => setSearchOpen(true)}
-            className="hidden items-center gap-2 rounded-lg border border-border/60 bg-muted/40 px-3 py-1.5 text-sm text-muted-foreground transition-all hover:bg-muted/70 hover:border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 lg:flex"
+            className="hidden items-center gap-2 rounded-xl border border-border/50 bg-secondary/50 px-3 py-1.5 text-sm text-muted-foreground transition-all hover:bg-secondary hover:border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 lg:flex"
           >
             <Search className="size-3.5 text-muted-foreground/70" />
             <span className="text-muted-foreground/70">Search...</span>
@@ -118,13 +118,13 @@ export function Header() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="ml-1 flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-muted/80 focus:outline-none focus:ring-2 focus:ring-primary/20">
-                <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-teal-400 to-emerald-500 text-white text-xs font-bold shadow-sm ring-2 ring-white">
+                <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-[#E8A87C] to-[#C35A2C] text-white text-xs font-bold shadow-sm ring-2 ring-background">
                   {userInitial}
                 </div>
                 <span className="hidden font-medium sm:inline">{userName}</span>
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 rounded-xl">
+            <DropdownMenuContent align="end" className="w-48 rounded-2xl">
               <DropdownMenuLabel className="font-normal">
                 <p className="text-sm font-semibold">{userName}</p>
                 <p className="text-xs text-muted-foreground">Manage your account</p>

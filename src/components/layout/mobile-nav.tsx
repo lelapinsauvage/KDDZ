@@ -66,7 +66,7 @@ export function MobileNav({ userRole }: MobileNavProps) {
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 z-50 flex h-16 items-stretch border-t border-border/60 bg-white/90 backdrop-blur-xl shadow-[0_-1px_3px_rgba(0,0,0,0.05)] md:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+      <nav className="fixed bottom-0 left-0 right-0 z-50 flex h-16 items-stretch border-t border-border/40 bg-[#F5F0E8]/90 backdrop-blur-xl shadow-[0_-1px_3px_rgba(0,0,0,0.04)] md:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         {tabs.map((tab) => {
           const isActive = pathname === tab.href || pathname.startsWith(tab.href + "/")
           return (
