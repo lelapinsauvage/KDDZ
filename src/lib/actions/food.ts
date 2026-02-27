@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
+import { requireOrg, requireOrgSafe } from "@/lib/require-org";
+import { verifyBranchAccess } from "@/lib/verify-org-access";
 import type { FoodCategory, MealType, Prisma } from "@/generated/prisma/client";
 
 // ─────────────────────────────────────────────
@@ -71,9 +72,13 @@ interface FoodCalendarEntry {
 
 export async function getFoods(params: GetFoodsParams = {}) {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     const { category, isActive, search } = params;
 
-    const where: Prisma.FoodWhereInput = {};
+    const where: Prisma.FoodWhereInput = {
+      organizationId: orgId,
+    };
 
     if (category) {
       where.category = category;
@@ -105,10 +110,9 @@ export async function getFoods(params: GetFoodsParams = {}) {
 
 export async function createFood(input: CreateFoodData) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { error: result.error };
+    const { ctx } = result;
 
     if (!input.name || !input.category) {
       return { error: "name and category are required" };
@@ -119,6 +123,7 @@ export async function createFood(input: CreateFoodData) {
         name: input.name,
         category: input.category,
         isActive: input.isActive ?? true,
+        organizationId: ctx.organizationId,
       },
     });
 
@@ -136,13 +141,15 @@ export async function createFood(input: CreateFoodData) {
 
 export async function updateFood(id: string, input: UpdateFoodData) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { error: result.error };
+    const { ctx } = result;
 
     const existing = await db.food.findUnique({ where: { id } });
     if (!existing) {
+      return { error: "Food item not found" };
+    }
+    if (existing.organizationId !== ctx.organizationId) {
       return { error: "Food item not found" };
     }
 
@@ -177,13 +184,15 @@ export async function updateFood(id: string, input: UpdateFoodData) {
 
 export async function deleteFood(id: string) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { error: result.error };
+    const { ctx } = result;
 
     const existing = await db.food.findUnique({ where: { id } });
     if (!existing) {
+      return { error: "Food item not found" };
+    }
+    if (existing.organizationId !== ctx.organizationId) {
       return { error: "Food item not found" };
     }
 
@@ -203,10 +212,16 @@ export async function deleteFood(id: string) {
 
 export async function getFoodCalendar(params: GetFoodCalendarParams) {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     const { branchId, weekStart } = params;
 
     if (!branchId || !weekStart) {
       return { error: "branchId and weekStart are required" };
+    }
+
+    if (!(await verifyBranchAccess(branchId, orgId))) {
+      return { error: "Branch not found" };
     }
 
     const monday = new Date(weekStart);
@@ -271,10 +286,16 @@ export async function getFoodCalendar(params: GetFoodCalendarParams) {
 
 export async function getFoodCalendarMonth(params: GetFoodCalendarMonthParams) {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     const { branchId, year, month } = params;
 
     if (!branchId || !year || !month) {
       return { error: "branchId, year, and month are required" };
+    }
+
+    if (!(await verifyBranchAccess(branchId, orgId))) {
+      return { error: "Branch not found" };
     }
 
     const firstDay = new Date(year, month - 1, 1);
@@ -325,13 +346,21 @@ export async function getFoodCalendarMonth(params: GetFoodCalendarMonthParams) {
 
 export async function setFoodCalendarEntry(input: SetFoodCalendarEntryData) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { error: result.error };
+    const { ctx } = result;
 
     if (!input.branchId || !input.date || !input.mealType || !input.foodId) {
       return { error: "branchId, date, mealType, and foodId are required" };
+    }
+
+    if (!(await verifyBranchAccess(input.branchId, ctx.organizationId))) {
+      return { error: "Branch not found" };
+    }
+
+    const food = await db.food.findUnique({ where: { id: input.foodId } });
+    if (!food || food.organizationId !== ctx.organizationId) {
+      return { error: "Food item not found" };
     }
 
     const dateObj = new Date(input.date);
@@ -369,13 +398,18 @@ export async function setFoodCalendarEntry(input: SetFoodCalendarEntryData) {
 
 export async function deleteFoodCalendarEntry(id: string) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { error: result.error };
+    const { ctx } = result;
 
-    const existing = await db.foodCalendar.findUnique({ where: { id } });
+    const existing = await db.foodCalendar.findUnique({
+      where: { id },
+      include: { branch: true },
+    });
     if (!existing) {
+      return { error: "Food calendar entry not found" };
+    }
+    if (existing.branch.organizationId !== ctx.organizationId) {
       return { error: "Food calendar entry not found" };
     }
 

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
+import { requireOrg, requireOrgSafe } from "@/lib/require-org";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -35,7 +35,10 @@ function toDate(value: Date | string): Date {
 
 export async function getSchoolYears(): Promise<ActionResult> {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     const schoolYears = await db.schoolYear.findMany({
+      where: { organizationId: orgId },
       orderBy: { startDate: "desc" },
       include: {
         _count: {
@@ -62,10 +65,9 @@ export async function createSchoolYear(
   data: SchoolYearData,
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
 
     const schoolYear = await db.schoolYear.create({
       data: {
@@ -73,6 +75,7 @@ export async function createSchoolYear(
         startDate: toDate(data.startDate),
         endDate: toDate(data.endDate),
         isActive: data.isActive ?? false,
+        organizationId: ctx.organizationId,
       },
     });
 
@@ -94,9 +97,16 @@ export async function updateSchoolYear(
   data: Partial<SchoolYearData>,
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
+
+    const existing = await db.schoolYear.findUnique({ where: { id } });
+    if (!existing) {
+      return { success: false, error: "School year not found" };
+    }
+    if (existing.organizationId !== ctx.organizationId) {
+      return { success: false, error: "School year not found" };
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -130,15 +140,22 @@ export async function setActiveSchoolYear(
   id: string,
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
+
+    const target = await db.schoolYear.findUnique({ where: { id } });
+    if (!target) {
+      return { success: false, error: "School year not found" };
+    }
+    if (target.organizationId !== ctx.organizationId) {
+      return { success: false, error: "School year not found" };
     }
 
-    // Use a transaction to deactivate all, then activate the chosen one
+    // Use a transaction to deactivate all within org, then activate the chosen one
     await db.$transaction([
       db.schoolYear.updateMany({
-        where: { isActive: true },
+        where: { isActive: true, organizationId: ctx.organizationId },
         data: { isActive: false },
       }),
       db.schoolYear.update({

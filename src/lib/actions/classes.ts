@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
+import { requireOrg, requireOrgSafe } from "@/lib/require-org";
+import { verifyBranchAccess } from "@/lib/verify-org-access";
 import type { AgeUnit, Prisma } from "@/generated/prisma/client";
 
 // ---------------------------------------------------------------------------
@@ -35,7 +36,11 @@ interface ClassData {
 
 export async function getClasses(params: ClassListParams = {}) {
   try {
-    const where: Prisma.ClassWhereInput = {};
+    const { organizationId: orgId } = await requireOrg();
+
+    const where: Prisma.ClassWhereInput = {
+      branch: { organizationId: orgId },
+    };
 
     if (params.branchId) {
       where.branchId = params.branchId;
@@ -71,6 +76,8 @@ export async function getClasses(params: ClassListParams = {}) {
 
 export async function getClass(id: string) {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     const cls = await db.class.findUnique({
       where: { id },
       include: {
@@ -80,6 +87,10 @@ export async function getClass(id: string) {
     });
 
     if (!cls) {
+      return { success: false as const, error: "Class not found" };
+    }
+
+    if (cls.branch.organizationId !== orgId) {
       return { success: false as const, error: "Class not found" };
     }
 
@@ -96,9 +107,12 @@ export async function getClass(id: string) {
 
 export async function createClass(data: ClassData) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false as const, error: "Unauthorized" };
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false as const, error: result.error };
+    const { ctx } = result;
+
+    if (!(await verifyBranchAccess(data.branchId, ctx.organizationId))) {
+      return { success: false as const, error: "Branch not found" };
     }
 
     const created = await db.class.create({
@@ -133,14 +147,25 @@ export async function createClass(data: ClassData) {
 
 export async function updateClass(id: string, data: Partial<ClassData>) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false as const, error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false as const, error: result.error };
+    const { ctx } = result;
 
-    const existing = await db.class.findUnique({ where: { id } });
+    const existing = await db.class.findUnique({
+      where: { id },
+      include: { branch: true },
+    });
     if (!existing) {
       return { success: false as const, error: "Class not found" };
+    }
+    if (existing.branch.organizationId !== ctx.organizationId) {
+      return { success: false as const, error: "Class not found" };
+    }
+
+    if (data.branchId && data.branchId !== existing.branchId) {
+      if (!(await verifyBranchAccess(data.branchId, ctx.organizationId))) {
+        return { success: false as const, error: "Branch not found" };
+      }
     }
 
     const updateData: Prisma.ClassUpdateInput = {};
@@ -180,13 +205,18 @@ export async function updateClass(id: string, data: Partial<ClassData>) {
 
 export async function deleteClass(id: string) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false as const, error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false as const, error: result.error };
+    const { ctx } = result;
 
-    const existing = await db.class.findUnique({ where: { id } });
+    const existing = await db.class.findUnique({
+      where: { id },
+      include: { branch: true },
+    });
     if (!existing) {
+      return { success: false as const, error: "Class not found" };
+    }
+    if (existing.branch.organizationId !== ctx.organizationId) {
       return { success: false as const, error: "Class not found" };
     }
 
