@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { requireOrg, requireOrgSafe } from "@/lib/require-org";
+import { verifyBranchAccess, getOrgBranchIds } from "@/lib/verify-org-access";
 import type { AlarmType } from "@/generated/prisma/enums";
 
 // ---------------------------------------------------------------------------
@@ -52,10 +54,13 @@ export async function getAlarms(
   params: AlarmListParams = {},
 ): Promise<ActionResult> {
   try {
+    const { organizationId: orgId } = await requireOrg();
     const { type, branchId, isActive, page = 1, pageSize = 20 } = params;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: any = {};
+    const where: any = {
+      branch: { organizationId: orgId },
+    };
 
     if (type) where.type = type;
     if (branchId) where.branchId = branchId;
@@ -96,9 +101,13 @@ export async function getAlarms(
 
 export async function createAlarm(data: AlarmData): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { organizationId: orgId } = result.ctx;
+
+    if (data.branchId) {
+      const hasAccess = await verifyBranchAccess(data.branchId, orgId);
+      if (!hasAccess) return { success: false, error: "Branch not found in your organization" };
     }
 
     const alarm = await db.alarm.create({
@@ -131,9 +140,16 @@ export async function updateAlarm(
   data: Partial<AlarmData>,
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { organizationId: orgId } = result.ctx;
+
+    const existing = await db.alarm.findUnique({
+      where: { id },
+      include: { branch: true },
+    });
+    if (!existing || existing.branch?.organizationId !== orgId) {
+      return { success: false, error: "Alarm not found" };
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -170,9 +186,16 @@ export async function updateAlarm(
 
 export async function dismissAlarm(id: string): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { organizationId: orgId } = result.ctx;
+
+    const existing = await db.alarm.findUnique({
+      where: { id },
+      include: { branch: true },
+    });
+    if (!existing || existing.branch?.organizationId !== orgId) {
+      return { success: false, error: "Alarm not found" };
     }
 
     await db.alarm.update({
@@ -195,9 +218,16 @@ export async function dismissAlarm(id: string): Promise<ActionResult> {
 
 export async function deleteAlarm(id: string): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { organizationId: orgId } = result.ctx;
+
+    const existing = await db.alarm.findUnique({
+      where: { id },
+      include: { branch: true },
+    });
+    if (!existing || existing.branch?.organizationId !== orgId) {
+      return { success: false, error: "Alarm not found" };
     }
 
     await db.alarm.delete({ where: { id } });
@@ -219,10 +249,13 @@ export async function getUpcomingBirthdays(
   branchId?: string,
 ): Promise<ActionResult> {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {
       isActive: true,
       dateOfBirth: { not: null },
+      branch: { organizationId: orgId },
     };
 
     if (branchId) {
@@ -282,16 +315,19 @@ export async function getOverdueVaccinations(
   branchId?: string,
 ): Promise<ActionResult> {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {
       nextDueDate: { lt: today },
+      child: { branch: { organizationId: orgId } },
     };
 
     if (branchId) {
-      where.child = { branchId };
+      where.child = { ...where.child, branchId };
     }
 
     const vaccinations = await db.vaccination.findMany({
@@ -319,12 +355,15 @@ export async function getUpcomingAssessments(
   branchId?: string,
 ): Promise<ActionResult> {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {
       scheduledDate: { gte: today },
+      branch: { organizationId: orgId },
     };
 
     if (branchId) {
@@ -359,6 +398,8 @@ export interface AlarmCountItem {
 
 export async function getAlarmOverviewCounts(): Promise<ActionResult> {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -380,7 +421,7 @@ export async function getAlarmOverviewCounts(): Promise<ActionResult> {
     ] = await Promise.all([
       // Birthdays: children with birthday in the next 30 days
       db.child.findMany({
-        where: { isActive: true, dateOfBirth: { not: null } },
+        where: { isActive: true, dateOfBirth: { not: null }, branch: { organizationId: orgId } },
         select: { dateOfBirth: true },
       }).then((children) => {
         return children.filter((c) => {
@@ -392,43 +433,43 @@ export async function getAlarmOverviewCounts(): Promise<ActionResult> {
       }),
       // Assessments: upcoming assessment dates
       db.assessmentDate.count({
-        where: { scheduledDate: { gte: today } },
+        where: { scheduledDate: { gte: today }, branch: { organizationId: orgId } },
       }),
       // Vaccinations: overdue
       db.vaccination.count({
-        where: { nextDueDate: { lt: today } },
+        where: { nextDueDate: { lt: today }, child: { branch: { organizationId: orgId } } },
       }),
       // Medical: active alarms
       db.alarm.count({
-        where: { type: "MEDICAL", isActive: true },
+        where: { type: "MEDICAL", isActive: true, branch: { organizationId: orgId } },
       }),
       // Medicine: active alarms
       db.alarm.count({
-        where: { type: "MEDICINE", isActive: true },
+        where: { type: "MEDICINE", isActive: true, branch: { organizationId: orgId } },
       }),
       // Events: upcoming active events
       db.event.count({
-        where: { isActive: true, date: { gte: today } },
+        where: { isActive: true, date: { gte: today }, branch: { organizationId: orgId } },
       }),
       // Insurance: active alarms
       db.alarm.count({
-        where: { type: "INSURANCE", isActive: true },
+        where: { type: "INSURANCE", isActive: true, branch: { organizationId: orgId } },
       }),
       // Payments: overdue
       db.payment.count({
-        where: { status: "OVERDUE" },
+        where: { status: "OVERDUE", child: { branch: { organizationId: orgId } } },
       }),
       // Requests: active alarms
       db.alarm.count({
-        where: { type: "REQUEST", isActive: true },
+        where: { type: "REQUEST", isActive: true, branch: { organizationId: orgId } },
       }),
       // Contracts: active alarms
       db.alarm.count({
-        where: { type: "CONTRACT", isActive: true },
+        where: { type: "CONTRACT", isActive: true, branch: { organizationId: orgId } },
       }),
       // Other: active alarms
       db.alarm.count({
-        where: { type: "OTHER", isActive: true },
+        where: { type: "OTHER", isActive: true, branch: { organizationId: orgId } },
       }),
     ]);
 
@@ -576,6 +617,8 @@ export async function markAllNotificationsRead(): Promise<ActionResult> {
 
 export async function getHeaderAlarmCounts(): Promise<ActionResult> {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -584,10 +627,11 @@ export async function getHeaderAlarmCounts(): Promise<ActionResult> {
 
     const [birthdayResult, assessmentCount, medicalCount, totalAlarmCount] =
       await Promise.all([
-        // Birthdays in next 7 days — single DB count instead of fetching all children
+        // Birthdays in next 7 days — single DB count with org filter
         db.$queryRaw<[{ count: bigint }]>`
           SELECT COUNT(*) as count FROM children
           WHERE "isActive" = true AND "dateOfBirth" IS NOT NULL
+          AND "branchId" IN (SELECT id FROM branches WHERE "organizationId" = cast(${orgId} as uuid))
           AND (EXTRACT(MONTH FROM "dateOfBirth") * 100 + EXTRACT(DAY FROM "dateOfBirth"))
           IN (
             SELECT EXTRACT(MONTH FROM d) * 100 + EXTRACT(DAY FROM d)
@@ -596,15 +640,15 @@ export async function getHeaderAlarmCounts(): Promise<ActionResult> {
         `,
         // Upcoming assessments
         db.assessmentDate.count({
-          where: { scheduledDate: { gte: today } },
+          where: { scheduledDate: { gte: today }, branch: { organizationId: orgId } },
         }),
         // Active medical alarms
         db.alarm.count({
-          where: { type: "MEDICAL", isActive: true },
+          where: { type: "MEDICAL", isActive: true, branch: { organizationId: orgId } },
         }),
         // Total active alarms across all types
         db.alarm.count({
-          where: { isActive: true },
+          where: { isActive: true, branch: { organizationId: orgId } },
         }),
       ]);
 
