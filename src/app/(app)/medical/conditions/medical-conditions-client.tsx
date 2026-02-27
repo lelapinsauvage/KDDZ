@@ -72,13 +72,13 @@ interface MedicalConditionRow {
 // --- Avatar helpers ---
 
 const avatarColors = [
-  "bg-violet-100 text-violet-700",
+  "bg-[#8B7355]/15 text-[#8B7355]",
   "bg-sky-100 text-sky-700",
   "bg-amber-100 text-amber-700",
   "bg-rose-100 text-rose-700",
-  "bg-emerald-100 text-emerald-700",
+  "bg-[#6B8F71]/15 text-[#6B8F71]",
   "bg-fuchsia-100 text-fuchsia-700",
-  "bg-teal-100 text-teal-700",
+  "bg-[#C35A2C]/10 text-[#C35A2C]",
   "bg-orange-100 text-orange-700",
 ];
 
@@ -147,7 +147,7 @@ function getStatusBadge(status: FormStatus) {
       );
     case "REVIEWED":
       return (
-        <Badge className="gap-1 bg-emerald-50 text-emerald-700 border-emerald-200">
+        <Badge className="gap-1 bg-[#6B8F71]/10 text-[#6B8F71] border-[#6B8F71]/20">
           <FileCheck className="size-3" />
           Reviewed
         </Badge>
@@ -235,7 +235,7 @@ export function MedicalConditionsClient({
       accessorKey: "conditionType",
       header: "Condition Type",
       cell: ({ row }) => (
-        <Badge className="gap-1 bg-violet-50 text-violet-700 border-violet-200">
+        <Badge className="gap-1 bg-[#8B7355]/10 text-[#8B7355] border-[#8B7355]/20">
           <Heart className="size-3" />
           {row.original.conditionType || "\u2014"}
         </Badge>

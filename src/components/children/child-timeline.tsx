@@ -37,20 +37,20 @@ const typeConfig: Record<
   },
   medical: {
     icon: Stethoscope,
-    iconBg: "bg-violet-100",
-    iconColor: "text-violet-600",
+    iconBg: "bg-[#8B7355]/15",
+    iconColor: "text-[#8B7355]",
     label: "Medical",
   },
   vaccination: {
     icon: Syringe,
-    iconBg: "bg-teal-100",
-    iconColor: "text-teal-600",
+    iconBg: "bg-[#C35A2C]/10",
+    iconColor: "text-[#C35A2C]",
     label: "Vaccinations",
   },
   payment: {
     icon: DollarSign,
-    iconBg: "bg-emerald-100",
-    iconColor: "text-emerald-600",
+    iconBg: "bg-[#6B8F71]/15",
+    iconColor: "text-[#6B8F71]",
     label: "Payments",
   },
   accident: {

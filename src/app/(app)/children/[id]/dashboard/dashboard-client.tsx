@@ -265,11 +265,11 @@ function PaginatedTable<T>({
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
-    SUBMITTED: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    SUBMITTED: "bg-[#6B8F71]/10 text-[#6B8F71] border-[#6B8F71]/20",
     DRAFT: "bg-amber-50 text-amber-700 border-amber-200",
     REVIEWED: "bg-sky-50 text-sky-700 border-sky-200",
     PENDING: "bg-amber-50 text-amber-700 border-amber-200",
-    APPROVED: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    APPROVED: "bg-[#6B8F71]/10 text-[#6B8F71] border-[#6B8F71]/20",
     REJECTED: "bg-red-50 text-red-600 border-red-200",
   };
   return (
@@ -280,7 +280,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 // ── PIE CHART COLORS ─────────────────────────────
-const CHART_COLORS = ["#14b8a6", "#f43f5e", "#f59e0b", "#94a3b8"]; // teal-500, rose-500, amber-500, slate-400
+const CHART_COLORS = ["#C35A2C", "#B07070", "#B08968", "#94a3b8"]; // terracotta, dusty rose, sienna, slate
 
 // ── Main Dashboard Component ─────────────────────
 
@@ -318,9 +318,9 @@ export function DashboardClient({
       label: "Incoming Calls",
       value: String(stats.incomingCalls),
       icon: PhoneIncoming,
-      bg: "bg-teal-50",
-      iconColor: "text-teal-600",
-      valueColor: "text-teal-700",
+      bg: "bg-[#C35A2C]/5",
+      iconColor: "text-[#C35A2C]",
+      valueColor: "text-[#C35A2C]",
       href: `/children/${id}/calls`,
     },
     {
@@ -345,9 +345,9 @@ export function DashboardClient({
       label: "Total Payments",
       value: stats.totalPayments,
       icon: DollarSign,
-      bg: "bg-emerald-50",
-      iconColor: "text-emerald-600",
-      valueColor: "text-emerald-700",
+      bg: "bg-[#6B8F71]/10",
+      iconColor: "text-[#6B8F71]",
+      valueColor: "text-[#6B8F71]",
       href: `/children/${id}/accounting`,
     },
   ];
@@ -357,9 +357,9 @@ export function DashboardClient({
       label: "Total Attendance",
       value: String(stats.totalAttendance),
       icon: Calendar,
-      bg: "bg-teal-50",
-      iconColor: "text-teal-600",
-      valueColor: "text-teal-700",
+      bg: "bg-[#C35A2C]/5",
+      iconColor: "text-[#C35A2C]",
+      valueColor: "text-[#C35A2C]",
       href: `/children/${id}/attendance`,
     },
     {
@@ -403,7 +403,7 @@ export function DashboardClient({
       <div className="space-y-6 p-4 md:p-6">
         {/* ─── A) Child Info Summary Card ─────────────── */}
         <Card className="overflow-hidden">
-          <div className="h-1.5 bg-gradient-to-r from-teal-400 via-sky-400 to-violet-400" />
+          <div className="h-1.5 bg-gradient-to-r from-[#C35A2C] via-[#B08968] to-[#8B7355]" />
           <CardContent className="pt-6">
             <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
               {/* Avatar + status */}
@@ -421,7 +421,7 @@ export function DashboardClient({
                 <Badge
                   className={
                     child.isActive
-                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      ? "bg-[#6B8F71]/10 text-[#6B8F71] border-[#6B8F71]/20"
                       : "bg-gray-100 text-gray-600 border-gray-200"
                   }
                 >
@@ -625,7 +625,7 @@ export function DashboardClient({
                           {r.isAuthorized && (
                             <Badge
                               variant="outline"
-                              className="text-[9px] bg-emerald-50 text-emerald-600 border-emerald-200 px-1"
+                              className="text-[9px] bg-[#6B8F71]/10 text-[#6B8F71] border-[#6B8F71]/20 px-1"
                             >
                               Authorized
                             </Badge>
@@ -772,7 +772,7 @@ export function DashboardClient({
               )}
               <div className="mt-2 flex flex-wrap justify-center gap-3 text-xs text-muted-foreground">
                 <span>
-                  <span className="inline-block size-2 rounded-full bg-teal-500 mr-1" />
+                  <span className="inline-block size-2 rounded-full bg-[#C35A2C] mr-1" />
                   Present: {attendanceChart.present}
                 </span>
                 <span>

@@ -182,7 +182,7 @@ export default function MonthlyClient({
                         className="absolute bottom-0 w-full rounded-t-md"
                         style={{
                           height: `${(w.pct / maxAtt) * 100}%`,
-                          background: "linear-gradient(to top, #14B8A6, #14B8A690)",
+                          background: "linear-gradient(to top, #C35A2C, #C35A2C90)",
                         }}
                       />
                     </div>

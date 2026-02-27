@@ -77,12 +77,12 @@ interface BatchReportClientProps {
 
 // -- Avatar helpers --
 const classColors = [
-  { bg: "bg-teal-50", border: "border-teal-200", text: "text-teal-700", badge: "bg-teal-100 text-teal-700", avatar: "bg-teal-100 text-teal-700" },
-  { bg: "bg-violet-50", border: "border-violet-200", text: "text-violet-700", badge: "bg-violet-100 text-violet-700", avatar: "bg-violet-100 text-violet-700" },
+  { bg: "bg-[#C35A2C]/5", border: "border-[#C35A2C]/20", text: "text-[#C35A2C]", badge: "bg-[#C35A2C]/10 text-[#C35A2C]", avatar: "bg-[#C35A2C]/10 text-[#C35A2C]" },
+  { bg: "bg-[#8B7355]/10", border: "border-[#8B7355]/20", text: "text-[#8B7355]", badge: "bg-[#8B7355]/15 text-[#8B7355]", avatar: "bg-[#8B7355]/15 text-[#8B7355]" },
   { bg: "bg-rose-50", border: "border-rose-200", text: "text-rose-700", badge: "bg-rose-100 text-rose-700", avatar: "bg-rose-100 text-rose-700" },
   { bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-700", badge: "bg-amber-100 text-amber-700", avatar: "bg-amber-100 text-amber-700" },
   { bg: "bg-sky-50", border: "border-sky-200", text: "text-sky-700", badge: "bg-sky-100 text-sky-700", avatar: "bg-sky-100 text-sky-700" },
-  { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", badge: "bg-emerald-100 text-emerald-700", avatar: "bg-emerald-100 text-emerald-700" },
+  { bg: "bg-[#6B8F71]/10", border: "border-[#6B8F71]/20", text: "text-[#6B8F71]", badge: "bg-[#6B8F71]/15 text-[#6B8F71]", avatar: "bg-[#6B8F71]/15 text-[#6B8F71]" },
   { bg: "bg-fuchsia-50", border: "border-fuchsia-200", text: "text-fuchsia-700", badge: "bg-fuchsia-100 text-fuchsia-700", avatar: "bg-fuchsia-100 text-fuchsia-700" },
 ];
 
@@ -181,7 +181,7 @@ export function BatchReportClient({
                 <div
                   className={`h-full rounded-full transition-all duration-500 ${
                     progressPercent === 100
-                      ? "bg-emerald-500"
+                      ? "bg-[#6B8F71]"
                       : progressPercent > 50
                       ? "bg-primary"
                       : "bg-amber-500"
@@ -235,7 +235,7 @@ export function BatchReportClient({
                           <p className="text-sm font-semibold text-foreground truncate">{child.name}</p>
                         </div>
                         {isCompleted ? (
-                          <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 gap-1">
+                          <Badge className="bg-[#6B8F71]/10 text-[#6B8F71] border-[#6B8F71]/20 gap-1">
                             <CheckCircle2 className="size-3" />
                             Done
                           </Badge>

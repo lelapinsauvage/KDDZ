@@ -100,12 +100,12 @@ interface DailyReportRow {
 // --- Avatar colors ---
 
 const avatarColors = [
-  "bg-teal-100 text-teal-700",
-  "bg-violet-100 text-violet-700",
+  "bg-[#C35A2C]/10 text-[#C35A2C]",
+  "bg-[#8B7355]/15 text-[#8B7355]",
   "bg-rose-100 text-rose-700",
   "bg-amber-100 text-amber-700",
   "bg-sky-100 text-sky-700",
-  "bg-emerald-100 text-emerald-700",
+  "bg-[#6B8F71]/15 text-[#6B8F71]",
   "bg-fuchsia-100 text-fuchsia-700",
   "bg-orange-100 text-orange-700",
 ];
@@ -126,7 +126,7 @@ function getInitials(name: string) {
 function getMoodConfig(mood: string): { color: string; icon: typeof Smile; label: string } {
   switch (mood) {
     case "HAPPY":
-      return { color: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: Smile, label: "Happy" };
+      return { color: "bg-[#6B8F71]/10 text-[#6B8F71] border-[#6B8F71]/20", icon: Smile, label: "Happy" };
     case "CALM":
       return { color: "bg-blue-50 text-blue-700 border-blue-200", icon: Meh, label: "Calm" };
     case "FUSSY":
@@ -144,9 +144,9 @@ function getPortionConfig(portion: string | null): { label: string; color: strin
   if (!portion) return { label: "N/A", color: "text-muted-foreground", dots: 0 };
   switch (portion) {
     case "ALL":
-      return { label: "All", color: "text-emerald-600", dots: 5 };
+      return { label: "All", color: "text-[#6B8F71]", dots: 5 };
     case "MOST":
-      return { label: "Most", color: "text-emerald-600", dots: 4 };
+      return { label: "Most", color: "text-[#6B8F71]", dots: 4 };
     case "HALF":
       return { label: "Half", color: "text-amber-600", dots: 3 };
     case "LITTLE":
@@ -181,7 +181,7 @@ function MealDots({ portion }: { portion: string | null }) {
             className={`size-1.5 rounded-full ${
               i <= config.dots
                 ? portion === "ALL" || portion === "MOST"
-                  ? "bg-emerald-500"
+                  ? "bg-[#6B8F71]"
                   : portion === "HALF"
                   ? "bg-amber-500"
                   : "bg-orange-500"
@@ -378,7 +378,7 @@ export function DailyReportsClient({
       cell: ({ row }) => {
         const status = row.original.status;
         return status === "SUBMITTED" ? (
-          <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 gap-1">
+          <Badge className="bg-[#6B8F71]/10 text-[#6B8F71] border-[#6B8F71]/20 gap-1">
             <CheckCircle2 className="size-3" />
             Submitted
           </Badge>

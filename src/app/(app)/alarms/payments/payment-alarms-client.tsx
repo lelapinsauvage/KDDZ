@@ -47,7 +47,7 @@ interface PaymentAlarmsClientProps {
 const statusColors: Record<string, string> = {
   Overdue: "bg-red-100 text-red-700",
   Upcoming: "bg-amber-100 text-amber-700",
-  Active: "bg-emerald-100 text-emerald-700",
+  Active: "bg-[#6B8F71]/15 text-[#6B8F71]",
 };
 
 function formatDate(iso: string) {

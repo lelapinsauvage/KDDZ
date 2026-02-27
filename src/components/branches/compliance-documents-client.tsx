@@ -70,7 +70,7 @@ function getStatusConfig(status: string, expiryDate: string | null) {
     return {
       icon: CheckCircle2,
       label: "Verified",
-      className: "bg-emerald-100 text-emerald-700 border-emerald-200",
+      className: "bg-[#6B8F71]/15 text-[#6B8F71] border-[#6B8F71]/20",
     };
   }
   if (status === "UPLOADED") {

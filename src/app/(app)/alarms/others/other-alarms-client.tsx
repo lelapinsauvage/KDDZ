@@ -29,7 +29,7 @@ interface OtherAlarmsClientProps {
 
 const statusColors: Record<string, string> = {
   Active: "bg-amber-100 text-amber-700",
-  Resolved: "bg-emerald-100 text-emerald-700",
+  Resolved: "bg-[#6B8F71]/15 text-[#6B8F71]",
 };
 
 export function OtherAlarmsClient({ alarms, branches }: OtherAlarmsClientProps) {

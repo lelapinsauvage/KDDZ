@@ -549,7 +549,7 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                 </div>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span className="inline-flex items-center gap-1.5">
-                    <span className="inline-block size-3 rounded bg-emerald-500" />
+                    <span className="inline-block size-3 rounded bg-[#6B8F71]" />
                     Holiday
                   </span>
                   <span className="inline-flex items-center gap-1.5">
@@ -609,7 +609,7 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                                     isToday
                                       ? "bg-primary text-primary-foreground"
                                       : hasHolidays
-                                        ? "text-emerald-700 font-semibold"
+                                        ? "text-[#6B8F71] font-semibold"
                                         : "text-foreground"
                                   }`}
                                 >
@@ -633,7 +633,7 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                                         className={`truncate rounded-md px-1.5 py-0.5 text-[10px] font-medium leading-tight cursor-pointer transition-colors ${
                                           isEvent
                                             ? "bg-blue-500 text-white hover:bg-blue-600"
-                                            : "bg-emerald-500 text-white hover:bg-emerald-600"
+                                            : "bg-[#6B8F71] text-white hover:bg-[#5A7A5E]"
                                         } ${!bar.holiday.isActive ? "opacity-50" : ""}`}
                                         style={
                                           bar.span > 1

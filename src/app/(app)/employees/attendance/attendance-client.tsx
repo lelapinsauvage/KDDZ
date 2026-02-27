@@ -427,7 +427,7 @@ export function AttendanceClient({
           <div
             className={`flex items-center gap-2 rounded-md border p-3 text-sm ${
               resultMessage.type === "success"
-                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                ? "border-[#6B8F71]/20 bg-[#6B8F71]/10 text-[#6B8F71]"
                 : "border-red-200 bg-red-50 text-red-700"
             }`}
           >

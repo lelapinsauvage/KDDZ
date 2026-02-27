@@ -5,7 +5,7 @@ export default function DashboardLoading() {
     <div className="space-y-6 p-4 md:p-6">
       {/* Child info card skeleton */}
       <div className="overflow-hidden rounded-lg border bg-card">
-        <div className="h-1.5 bg-gradient-to-r from-teal-200 via-sky-200 to-violet-200" />
+        <div className="h-1.5 bg-gradient-to-r from-[#C35A2C]/30 via-[#B08968]/30 to-[#8B7355]/30" />
         <div className="flex flex-col gap-6 p-6 sm:flex-row sm:items-start">
           <div className="flex flex-col items-center gap-2">
             <Skeleton className="h-20 w-20 rounded-full" />

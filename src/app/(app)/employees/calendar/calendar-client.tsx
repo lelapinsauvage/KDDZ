@@ -85,7 +85,7 @@ const STATUS_OPTIONS = [
 const STATUS_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
   SICK: { bg: "bg-blue-100", text: "text-blue-700", dot: "bg-blue-500" },
   ABSENT: { bg: "bg-purple-100", text: "text-purple-700", dot: "bg-purple-500" },
-  DAY_OFF: { bg: "bg-emerald-100", text: "text-emerald-700", dot: "bg-emerald-500" },
+  DAY_OFF: { bg: "bg-[#6B8F71]/15", text: "text-[#6B8F71]", dot: "bg-[#6B8F71]" },
   WARNING: { bg: "bg-red-100", text: "text-red-700", dot: "bg-red-500" },
 };
 

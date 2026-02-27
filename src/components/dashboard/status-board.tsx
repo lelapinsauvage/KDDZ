@@ -20,7 +20,7 @@ interface StatusBoardProps {
 }
 
 const statusDot = {
-  green: "bg-emerald-500",
+  green: "bg-[#6B8F71]",
   amber: "bg-amber-500",
   red: "bg-red-500",
 } as const;

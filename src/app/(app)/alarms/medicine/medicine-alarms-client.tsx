@@ -64,7 +64,7 @@ export function MedicineAlarmsClient({ alarms, branches }: MedicineAlarmsClientP
         accessorKey: "isActive",
         header: "Status",
         cell: ({ row }) => (
-          <Badge className={row.original.isActive ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}>
+          <Badge className={row.original.isActive ? "bg-amber-100 text-amber-700" : "bg-[#6B8F71]/15 text-[#6B8F71]"}>
             {row.original.isActive ? "Active" : "Resolved"}
           </Badge>
         ),

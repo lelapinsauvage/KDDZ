@@ -64,8 +64,8 @@ interface ThreadClientProps {
 // ---------------------------------------------------------------------------
 
 const AVATAR_COLORS = [
-  "bg-blue-500", "bg-emerald-500", "bg-amber-500", "bg-rose-500",
-  "bg-violet-500", "bg-cyan-500", "bg-pink-500", "bg-teal-500",
+  "bg-[#6B8F71]", "bg-[#C35A2C]", "bg-[#B08968]", "bg-[#B07070]",
+  "bg-[#8B7355]", "bg-[#6B8F71]/80", "bg-[#B07070]/80", "bg-[#C35A2C]/80",
 ];
 
 function avatarColor(name: string): string {

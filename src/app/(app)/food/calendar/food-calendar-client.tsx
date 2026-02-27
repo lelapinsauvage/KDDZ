@@ -440,7 +440,7 @@ export function FoodCalendarClient({
                               key={dayIdx}
                               className={`border-b border-r last:border-r-0 p-1.5 align-top h-[120px] cursor-pointer transition-colors hover:bg-primary/5 group ${
                                 hasMeals
-                                  ? "bg-emerald-50/80"
+                                  ? "bg-[#6B8F71]/10"
                                   : isWeekend
                                     ? "bg-gray-50/70"
                                     : "bg-white"
@@ -453,7 +453,7 @@ export function FoodCalendarClient({
                                     isToday
                                       ? "bg-primary text-primary-foreground"
                                       : hasMeals
-                                        ? "text-emerald-700"
+                                        ? "text-[#6B8F71]"
                                         : "text-foreground"
                                   }`}
                                 >

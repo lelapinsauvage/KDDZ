@@ -20,8 +20,8 @@ const sections = [
     description: "Name, contact, working hours, defaults",
     href: "/settings/nursery",
     icon: Building2,
-    iconBg: "bg-teal-100",
-    iconColor: "text-teal-600",
+    iconBg: "bg-[#C35A2C]/10",
+    iconColor: "text-[#C35A2C]",
   },
   {
     title: "Holidays",
@@ -36,8 +36,8 @@ const sections = [
     description: "School events and activities",
     href: "/settings/events",
     icon: CalendarDays,
-    iconBg: "bg-violet-100",
-    iconColor: "text-violet-600",
+    iconBg: "bg-[#8B7355]/15",
+    iconColor: "text-[#8B7355]",
   },
   {
     title: "Regions",
@@ -60,8 +60,8 @@ const sections = [
     description: "Areas within zones",
     href: "/settings/areas",
     icon: LayoutGrid,
-    iconBg: "bg-emerald-100",
-    iconColor: "text-emerald-600",
+    iconBg: "bg-[#6B8F71]/15",
+    iconColor: "text-[#6B8F71]",
   },
   {
     title: "Parent Users",
@@ -92,8 +92,8 @@ const sections = [
     description: "Auto-notifications, templates & scheduling",
     href: "/settings/notifications",
     icon: BellRing,
-    iconBg: "bg-violet-100",
-    iconColor: "text-violet-600",
+    iconBg: "bg-[#8B7355]/15",
+    iconColor: "text-[#8B7355]",
   },
 ];
 

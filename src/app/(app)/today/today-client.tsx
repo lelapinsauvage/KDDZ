@@ -43,13 +43,13 @@ interface TodayClientProps {
 
 // Deterministic avatar color based on child name
 const avatarColors = [
-  { bg: "bg-teal-100", text: "text-teal-700" },
+  { bg: "bg-[#C35A2C]/10", text: "text-[#C35A2C]" },
   { bg: "bg-purple-100", text: "text-purple-700" },
   { bg: "bg-rose-100", text: "text-rose-700" },
   { bg: "bg-amber-100", text: "text-amber-700" },
   { bg: "bg-sky-100", text: "text-sky-700" },
   { bg: "bg-indigo-100", text: "text-indigo-700" },
-  { bg: "bg-emerald-100", text: "text-emerald-700" },
+  { bg: "bg-[#6B8F71]/15", text: "text-[#6B8F71]" },
   { bg: "bg-pink-100", text: "text-pink-700" },
 ];
 
@@ -112,7 +112,7 @@ export function TodayClient({ data }: TodayClientProps) {
       <div className="space-y-6 p-4 md:p-6">
         {/* Quick Actions */}
         <div className="flex flex-wrap gap-2">
-          <Button asChild size="sm" className="bg-teal-600 hover:bg-teal-700 text-white shadow-sm">
+          <Button asChild size="sm" className="bg-[#C35A2C] hover:bg-[#A8471E] text-white shadow-sm">
             <Link href="/daily-reports/batch">
               <ClipboardList className="mr-1.5 size-3.5" />
               Start Daily Reports
@@ -156,13 +156,13 @@ export function TodayClient({ data }: TodayClientProps) {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Card className="py-3 border-l-4 border-l-teal-500">
+          <Card className="py-3 border-l-4 border-l-[#C35A2C]">
             <CardContent className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-teal-50">
-                <Users className="size-5 text-teal-600" />
+              <div className="flex size-10 items-center justify-center rounded-xl bg-[#C35A2C]/5">
+                <Users className="size-5 text-[#C35A2C]" />
               </div>
               <div>
-                <p className="text-3xl font-bold text-teal-700">{filteredStats.totalChildren}</p>
+                <p className="text-3xl font-bold text-[#C35A2C]">{filteredStats.totalChildren}</p>
                 <p className="text-xs font-medium text-muted-foreground">Children</p>
               </div>
             </CardContent>
@@ -251,7 +251,7 @@ export function TodayClient({ data }: TodayClientProps) {
                     />
                   </div>
                   {progressPct === 100 && (
-                    <p className="mt-1.5 text-xs font-medium text-emerald-600 flex items-center gap-1">
+                    <p className="mt-1.5 text-xs font-medium text-[#6B8F71] flex items-center gap-1">
                       <Sparkles className="size-3" />
                       All reports done — great work!
                     </p>
@@ -313,7 +313,7 @@ export function TodayClient({ data }: TodayClientProps) {
                 ) : (
                   <>
                     <MenuRow icon={<Coffee className="size-3.5 text-amber-500" />} label="Breakfast" value={data.menu.breakfast} />
-                    <MenuRow icon={<Salad className="size-3.5 text-emerald-500" />} label="Lunch" value={data.menu.lunch} />
+                    <MenuRow icon={<Salad className="size-3.5 text-[#6B8F71]" />} label="Lunch" value={data.menu.lunch} />
                     <MenuRow icon={<IceCreamCone className="size-3.5 text-pink-500" />} label="Dessert" value={data.menu.dessert} />
                     {data.menu.snack && (
                       <MenuRow icon={<Cookie className="size-3.5 text-orange-500" />} label="Snack" value={data.menu.snack} />
@@ -339,8 +339,8 @@ export function TodayClient({ data }: TodayClientProps) {
               <CardContent className="space-y-2">
                 {data.alerts.length === 0 ? (
                   <div className="py-6 text-center">
-                    <div className="mx-auto mb-2 flex size-10 items-center justify-center rounded-full bg-emerald-50">
-                      <Heart className="size-4 text-emerald-400" />
+                    <div className="mx-auto mb-2 flex size-10 items-center justify-center rounded-full bg-[#6B8F71]/10">
+                      <Heart className="size-4 text-[#6B8F71]" />
                     </div>
                     <p className="text-sm text-muted-foreground">All clear today!</p>
                     <p className="mt-0.5 text-xs text-muted-foreground/70">No alerts to worry about.</p>
@@ -394,7 +394,7 @@ function ChildRow({ child }: { child: TodayChild }) {
       Absent
     </Badge>
   ) : child.reportStatus === "SUBMITTED" ? (
-    <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 font-medium">
+    <Badge className="bg-[#6B8F71]/15 text-[#6B8F71] border-[#6B8F71]/20 font-medium">
       <CheckCircle2 className="mr-1 size-3" />
       Done
     </Badge>
@@ -430,7 +430,7 @@ function ChildRow({ child }: { child: TodayChild }) {
       <div className="flex items-center gap-2">
         {statusBadge}
         {!child.isAbsent && !child.reportId && (
-          <Button asChild size="sm" variant="outline" className="h-7 px-2.5 text-xs opacity-0 group-hover:opacity-100 transition-opacity border-teal-200 text-teal-700 hover:bg-teal-50">
+          <Button asChild size="sm" variant="outline" className="h-7 px-2.5 text-xs opacity-0 group-hover:opacity-100 transition-opacity border-[#C35A2C]/20 text-[#C35A2C] hover:bg-[#C35A2C]/5">
             <Link href={`/daily-reports/new?childId=${child.id}`}>
               <FileText className="mr-1 size-3" />
               Write

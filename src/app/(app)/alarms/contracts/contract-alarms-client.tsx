@@ -31,7 +31,7 @@ interface ContractAlarmsClientProps {
 const statusColors: Record<string, string> = {
   Expired: "bg-red-100 text-red-700",
   "Expiring Soon": "bg-amber-100 text-amber-700",
-  Active: "bg-emerald-100 text-emerald-700",
+  Active: "bg-[#6B8F71]/15 text-[#6B8F71]",
 };
 
 export function ContractAlarmsClient({ alarms }: ContractAlarmsClientProps) {

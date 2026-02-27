@@ -46,7 +46,7 @@ interface ClassOption {
 const statusBadgeStyles: Record<AssessmentStatus, string> = {
   DRAFT: "bg-amber-100 text-amber-700 border-amber-200",
   SUBMITTED: "bg-blue-100 text-blue-700 border-blue-200",
-  REVIEWED: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  REVIEWED: "bg-[#6B8F71]/15 text-[#6B8F71] border-[#6B8F71]/20",
 };
 
 function formatDate(iso: string) {

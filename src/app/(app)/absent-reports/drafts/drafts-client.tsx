@@ -72,12 +72,12 @@ interface Props {
 
 // -- Avatar helpers --
 const avatarColors = [
-  "bg-teal-100 text-teal-700",
-  "bg-violet-100 text-violet-700",
+  "bg-[#C35A2C]/10 text-[#C35A2C]",
+  "bg-[#8B7355]/15 text-[#8B7355]",
   "bg-rose-100 text-rose-700",
   "bg-amber-100 text-amber-700",
   "bg-sky-100 text-sky-700",
-  "bg-emerald-100 text-emerald-700",
+  "bg-[#6B8F71]/15 text-[#6B8F71]",
   "bg-fuchsia-100 text-fuchsia-700",
   "bg-orange-100 text-orange-700",
 ];

@@ -98,9 +98,9 @@ const NOTIFICATION_CONFIGS: NotificationConfig[] = [
     label: "Assessment Due",
     description: "Reminder when assessments are approaching",
     icon: ClipboardCheck,
-    iconColor: "text-teal-600",
-    iconBg: "bg-teal-50",
-    borderColor: "border-l-teal-500",
+    iconColor: "text-[#C35A2C]",
+    iconBg: "bg-[#C35A2C]/5",
+    borderColor: "border-l-[#C35A2C]",
     settingKeyEnabled: "notif.assessmentDue.enabled",
     settingKeyDaysBefore: "notif.assessmentDue.daysBefore",
     settingKeyTemplate: "notif.assessmentDue.template",
@@ -173,9 +173,9 @@ const NOTIFICATION_CONFIGS: NotificationConfig[] = [
     label: "Holiday Announcements",
     description: "Notify about upcoming holidays and closures",
     icon: CalendarDays,
-    iconColor: "text-emerald-600",
-    iconBg: "bg-emerald-50",
-    borderColor: "border-l-emerald-500",
+    iconColor: "text-[#6B8F71]",
+    iconBg: "bg-[#6B8F71]/10",
+    borderColor: "border-l-[#6B8F71]",
     settingKeyEnabled: "notif.holiday.enabled",
     settingKeyDaysBefore: "notif.holiday.daysBefore",
     settingKeyTemplate: "notif.holiday.template",
@@ -465,7 +465,7 @@ export function NotificationSettingsClient({
             {isPending ? "Saving..." : "Save Settings"}
           </Button>
           {saved && (
-            <span className="text-sm text-emerald-600">
+            <span className="text-sm text-[#6B8F71]">
               Settings saved successfully!
             </span>
           )}

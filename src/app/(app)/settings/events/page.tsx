@@ -22,7 +22,7 @@ export default async function EventsCalendarPage() {
     date: (ev.date as Date).toISOString().split("T")[0],
     endDate: ev.endDate ? (ev.endDate as Date).toISOString().split("T")[0] : null,
     eventTypeId: (ev.eventTypeId ?? null) as string | null,
-    eventTypeColor: (ev.eventType?.color ?? "#14B8A6") as string,
+    eventTypeColor: (ev.eventType?.color ?? "#C35A2C") as string,
     eventTypeName: (ev.eventType?.name ?? "—") as string,
     branchId: (ev.branchId ?? null) as string | null,
     branchName: ev.branch ? (ev.branch.name as string) : "All Branches",
@@ -32,7 +32,7 @@ export default async function EventsCalendarPage() {
   const serializedEventTypes = rawEventTypes.map((et) => ({
     id: et.id as string,
     name: et.name as string,
-    color: (et.color ?? "#14B8A6") as string,
+    color: (et.color ?? "#C35A2C") as string,
   }));
 
   return (
