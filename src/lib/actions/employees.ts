@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
+import { requireOrg, requireOrgSafe } from "@/lib/require-org";
+import { verifyBranchAccess } from "@/lib/verify-org-access";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -129,6 +130,7 @@ export async function getEmployees(
   params: EmployeeListParams = {},
 ): Promise<ActionResult> {
   try {
+    const { organizationId: orgId } = await requireOrg();
     const { model } = getDelegate(type);
     const {
       branchId,
@@ -138,9 +140,9 @@ export async function getEmployees(
       pageSize = 20,
     } = params;
 
-    // Build where clause
+    // Build where clause — always scope to org
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: any = {};
+    const where: any = { branch: { organizationId: orgId } };
 
     if (branchId) {
       where.branchId = branchId;
@@ -197,6 +199,7 @@ export async function getEmployee(
   id: string,
 ): Promise<ActionResult> {
   try {
+    const { organizationId: orgId } = await requireOrg();
     const { model } = getDelegate(type);
 
     // Manager model has fewer relations — no languages, experiences, documents
@@ -224,6 +227,10 @@ export async function getEmployee(
       return { success: false, error: `${type} not found` };
     }
 
+    if (employee.branch.organizationId !== orgId) {
+      return { success: false, error: `${type} not found` };
+    }
+
     return { success: true, data: employee };
   } catch (error) {
     console.error(`Failed to fetch ${type}:`, error);
@@ -240,9 +247,12 @@ export async function createEmployee(
   data: EmployeeData,
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { organizationId: orgId } = result.ctx;
+
+    if (!(await verifyBranchAccess(data.branchId, orgId))) {
+      return { success: false, error: "Branch does not belong to your organization" };
     }
 
     const { model, path } = getDelegate(type);
@@ -385,12 +395,22 @@ export async function updateEmployee(
   data: Partial<EmployeeData>,
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { organizationId: orgId } = result.ctx;
 
     const { model, path } = getDelegate(type);
+
+    // Verify employee belongs to this org
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const existing = await (model as any).findUnique({
+      where: { id },
+      include: { branch: true },
+    });
+    if (!existing || existing.branch.organizationId !== orgId) {
+      return { success: false, error: `${type} not found` };
+    }
+
     // Build update payload — only include provided fields
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {};
@@ -553,12 +573,21 @@ export async function deleteEmployee(
   id: string,
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { organizationId: orgId } = result.ctx;
 
     const { model, path } = getDelegate(type);
+
+    // Verify employee belongs to this org
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const existing = await (model as any).findUnique({
+      where: { id },
+      include: { branch: true },
+    });
+    if (!existing || existing.branch.organizationId !== orgId) {
+      return { success: false, error: `${type} not found` };
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (model as any).update({
