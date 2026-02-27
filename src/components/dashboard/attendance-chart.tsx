@@ -18,7 +18,7 @@ interface AttendanceChartProps {
 
 export function AttendanceChart({ data }: AttendanceChartProps) {
   return (
-    <Card className="rounded-2xl border-border/50 shadow-sm">
+    <Card className="rounded-2xl border border-border/40 bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold">
           Attendance & Absence Trends
@@ -30,12 +30,12 @@ export function AttendanceChart({ data }: AttendanceChartProps) {
             <AreaChart data={data}>
               <defs>
                 <linearGradient id="gradAttendance" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#14B8A6" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#14B8A6" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#6B8F71" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#6B8F71" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="gradAbsence" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#FB7185" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#FB7185" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#B07070" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#B07070" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#E7E5E4" vertical={false} />
@@ -63,7 +63,7 @@ export function AttendanceChart({ data }: AttendanceChartProps) {
               <Area
                 type="monotone"
                 dataKey="attendance"
-                stroke="#14B8A6"
+                stroke="#6B8F71"
                 fill="url(#gradAttendance)"
                 strokeWidth={2.5}
                 name="Attendance"
@@ -71,7 +71,7 @@ export function AttendanceChart({ data }: AttendanceChartProps) {
               <Area
                 type="monotone"
                 dataKey="absence"
-                stroke="#FB7185"
+                stroke="#B07070"
                 fill="url(#gradAbsence)"
                 strokeWidth={2.5}
                 name="Absence"

@@ -10,7 +10,7 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-const COLORS = ["#38BDF8", "#F472B6"];
+const COLORS = ["#6B8F71", "#B07070"];
 
 interface GenderStatsChartProps {
   data: { name: string; value: number }[];
@@ -18,7 +18,7 @@ interface GenderStatsChartProps {
 
 export function GenderStatsChart({ data }: GenderStatsChartProps) {
   return (
-    <Card className="rounded-2xl border-border/50 shadow-sm">
+    <Card className="rounded-2xl border border-border/40 bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold">
           Gender Distribution

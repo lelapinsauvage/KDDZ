@@ -12,21 +12,21 @@ interface InsightsPanelProps {
 const insightStyles = {
   positive: {
     icon: TrendingUp,
-    bg: "bg-emerald-50",
-    iconColor: "text-emerald-600",
-    textColor: "text-emerald-800",
+    bg: "bg-[#5B7B5E]/8",
+    iconColor: "text-[#5B7B5E]",
+    textColor: "text-[#5B7B5E]",
   },
   neutral: {
     icon: Minus,
-    bg: "bg-slate-50",
-    iconColor: "text-slate-500",
-    textColor: "text-slate-700",
+    bg: "bg-[#8B7355]/8",
+    iconColor: "text-[#8B7355]",
+    textColor: "text-[#8B7355]",
   },
   warning: {
     icon: TrendingDown,
-    bg: "bg-amber-50",
-    iconColor: "text-amber-600",
-    textColor: "text-amber-800",
+    bg: "bg-[#C35A2C]/8",
+    iconColor: "text-[#C35A2C]",
+    textColor: "text-[#C35A2C]",
   },
 } as const;
 
@@ -34,9 +34,9 @@ export function InsightsPanel({ insights }: InsightsPanelProps) {
   if (insights.length === 0) return null;
 
   return (
-    <div className="rounded-2xl border border-border/50 bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border/40 bg-card p-5 shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
       <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-        <Lightbulb className="size-4 text-amber-500" />
+        <Lightbulb className="size-4 text-[#B08968]" />
         Insights
       </h3>
       <div className="flex flex-wrap gap-2">

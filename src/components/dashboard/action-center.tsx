@@ -50,8 +50,8 @@ export function ActionCenter({ items }: ActionCenterProps) {
       actionLabel: "View",
       href: "/accounting",
       icon: DollarSign,
-      iconBg: "bg-rose-100",
-      iconColor: "text-rose-600",
+      iconBg: "bg-[#C35A2C]/10",
+      iconColor: "text-[#C35A2C]",
     });
   }
 
@@ -65,8 +65,8 @@ export function ActionCenter({ items }: ActionCenterProps) {
       actionLabel: "Remind",
       href: "/daily-reports",
       icon: FileWarning,
-      iconBg: "bg-amber-100",
-      iconColor: "text-amber-600",
+      iconBg: "bg-[#B08968]/10",
+      iconColor: "text-[#B08968]",
     });
   }
 
@@ -79,8 +79,8 @@ export function ActionCenter({ items }: ActionCenterProps) {
       actionLabel: "Review",
       href: `/absent-reports?status=PENDING`,
       icon: UserX,
-      iconBg: "bg-violet-100",
-      iconColor: "text-violet-600",
+      iconBg: "bg-[#8B7355]/10",
+      iconColor: "text-[#8B7355]",
       inlineAction: <AbsenceInlineAction id={absence.id} />,
     });
   }
@@ -94,8 +94,8 @@ export function ActionCenter({ items }: ActionCenterProps) {
       actionLabel: "Complete",
       href: `/children/${draft.id}/edit`,
       icon: FileEdit,
-      iconBg: "bg-sky-100",
-      iconColor: "text-sky-600",
+      iconBg: "bg-[#6B8F71]/10",
+      iconColor: "text-[#6B8F71]",
     });
   }
 
@@ -104,13 +104,13 @@ export function ActionCenter({ items }: ActionCenterProps) {
 
   if (rows.length === 0) {
     return (
-      <div className="flex items-center gap-3 rounded-2xl border border-emerald-200/60 bg-emerald-50/50 px-5 py-4">
-        <div className="flex size-9 items-center justify-center rounded-xl bg-emerald-100">
-          <Sparkles className="size-4 text-emerald-600" />
+      <div className="flex items-center gap-3 rounded-2xl border border-[#5B7B5E]/20 bg-[#5B7B5E]/5 px-5 py-4">
+        <div className="flex size-9 items-center justify-center rounded-xl bg-[#5B7B5E]/10">
+          <Sparkles className="size-4 text-[#5B7B5E]" />
         </div>
         <div>
-          <p className="text-sm font-semibold text-emerald-800">All clear</p>
-          <p className="text-xs text-emerald-600/80">
+          <p className="text-sm font-semibold text-[#5B7B5E]">All clear</p>
+          <p className="text-xs text-[#5B7B5E]/70">
             Nothing needs your attention right now.
           </p>
         </div>
@@ -119,7 +119,7 @@ export function ActionCenter({ items }: ActionCenterProps) {
   }
 
   return (
-    <div className="rounded-2xl border border-border/50 bg-white shadow-sm">
+    <div className="rounded-2xl border border-border/40 bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
       <div className="px-5 py-3 border-b border-border/30">
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           Needs your attention
@@ -171,7 +171,7 @@ function AbsenceInlineAction({ id }: { id: string }) {
       <Button
         size="sm"
         variant="ghost"
-        className="size-7 rounded-lg p-0 text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700"
+        className="size-7 rounded-lg p-0 text-[#5B7B5E] hover:bg-[#5B7B5E]/10 hover:text-[#5B7B5E]"
         onClick={() => handleAction("APPROVED")}
         disabled={isPending}
       >
@@ -180,7 +180,7 @@ function AbsenceInlineAction({ id }: { id: string }) {
       <Button
         size="sm"
         variant="ghost"
-        className="size-7 rounded-lg p-0 text-rose-500 hover:bg-rose-100 hover:text-rose-600"
+        className="size-7 rounded-lg p-0 text-[#C35A2C] hover:bg-[#C35A2C]/10 hover:text-[#C35A2C]"
         onClick={() => handleAction("REJECTED")}
         disabled={isPending}
       >

@@ -17,7 +17,7 @@ interface ChildrenPerClassChartProps {
 
 export function ChildrenPerClassChart({ data }: ChildrenPerClassChartProps) {
   return (
-    <Card className="rounded-2xl border-border/50 shadow-sm">
+    <Card className="rounded-2xl border border-border/40 bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold">
           Children Per Class
@@ -48,7 +48,7 @@ export function ChildrenPerClassChart({ data }: ChildrenPerClassChartProps) {
                   boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
                 }}
               />
-              <Bar dataKey="children" fill="#14B8A6" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="children" fill="#B08968" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
