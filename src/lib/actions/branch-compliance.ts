@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
+import { requireOrg, requireOrgSafe } from "@/lib/require-org";
+import { verifyBranchAccess } from "@/lib/verify-org-access";
 import { calculateCompletionPercentage } from "@/lib/validations/branch";
 
 type ActionResult<T = unknown> = {
@@ -17,6 +18,11 @@ type ActionResult<T = unknown> = {
 
 export async function getCompliance(branchId: string): Promise<ActionResult> {
   try {
+    const { organizationId: orgId } = await requireOrg();
+    if (!(await verifyBranchAccess(branchId, orgId))) {
+      return { success: false, error: "Branch not found in organization" };
+    }
+
     const compliance = await db.branchCompliance.findUnique({
       where: { branchId },
     });
@@ -37,9 +43,12 @@ export async function upsertCompliance(
   data: Record<string, unknown>,
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const res = await requireOrgSafe();
+    if (!res.ok) return { success: false, error: res.error };
+    const { organizationId: orgId } = res.ctx;
+
+    if (!(await verifyBranchAccess(branchId, orgId))) {
+      return { success: false, error: "Branch not found in organization" };
     }
 
     const completionPercentage = calculateCompletionPercentage(data);
@@ -88,6 +97,11 @@ export async function upsertCompliance(
 
 export async function getDocuments(branchId: string): Promise<ActionResult> {
   try {
+    const { organizationId: orgId } = await requireOrg();
+    if (!(await verifyBranchAccess(branchId, orgId))) {
+      return { success: false, error: "Branch not found in organization" };
+    }
+
     const documents = await db.branchDocument.findMany({
       where: { branchId },
       orderBy: { createdAt: "asc" },
@@ -119,9 +133,12 @@ export async function upsertDocument(
   },
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const res = await requireOrgSafe();
+    if (!res.ok) return { success: false, error: res.error };
+    const { organizationId: orgId } = res.ctx;
+
+    if (!(await verifyBranchAccess(branchId, orgId))) {
+      return { success: false, error: "Branch not found in organization" };
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

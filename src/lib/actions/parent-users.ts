@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
+import { requireOrg, requireOrgSafe } from "@/lib/require-org";
+import { verifyChildAccess } from "@/lib/verify-org-access";
 import { hash } from "bcryptjs";
 
 const MIN_PASSWORD_LENGTH = 6;
@@ -39,10 +40,11 @@ export async function getParentUsers(
   params: ParentUserListParams = {},
 ): Promise<ActionResult> {
   try {
+    const { organizationId: orgId } = await requireOrg();
     const { search, isActive, page = 1, pageSize = 20 } = params;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: any = {};
+    const where: any = { child: { branch: { organizationId: orgId } } };
 
     if (typeof isActive === "boolean") {
       where.isActive = isActive;
@@ -119,6 +121,7 @@ export async function getParentUsers(
 
 export async function getParentUser(id: string): Promise<ActionResult> {
   try {
+    const { organizationId: orgId } = await requireOrg();
     const parentUser = await db.parentUser.findUnique({
       where: { id },
       select: {
@@ -159,6 +162,10 @@ export async function getParentUser(id: string): Promise<ActionResult> {
       return { success: false, error: "Parent user not found" };
     }
 
+    if (parentUser.child.branch.organizationId !== orgId) {
+      return { success: false, error: "Parent user not found" };
+    }
+
     return { success: true, data: parentUser };
   } catch (error) {
     console.error("Failed to fetch parent user:", error);
@@ -174,9 +181,12 @@ export async function createParentUser(
   data: ParentUserData,
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const res = await requireOrgSafe();
+    if (!res.ok) return { success: false, error: res.error };
+    const { organizationId: orgId } = res.ctx;
+
+    if (!(await verifyChildAccess(data.childId, orgId))) {
+      return { success: false, error: "Child not found in organization" };
     }
 
     if (!data.password || data.password.length < MIN_PASSWORD_LENGTH) {
@@ -230,9 +240,16 @@ export async function updateParentUser(
   data: Partial<Omit<ParentUserData, "password">>,
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const res = await requireOrgSafe();
+    if (!res.ok) return { success: false, error: res.error };
+    const { organizationId: orgId } = res.ctx;
+
+    const existing = await db.parentUser.findUnique({
+      where: { id },
+      include: { child: { include: { branch: true } } },
+    });
+    if (!existing || existing.child.branch.organizationId !== orgId) {
+      return { success: false, error: "Parent user not found" };
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -279,9 +296,16 @@ export async function resetParentPassword(
   newPassword: string,
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
+    const res = await requireOrgSafe();
+    if (!res.ok) return { success: false, error: res.error };
+    const { organizationId: orgId } = res.ctx;
+
+    const existing = await db.parentUser.findUnique({
+      where: { id },
+      include: { child: { include: { branch: true } } },
+    });
+    if (!existing || existing.child.branch.organizationId !== orgId) {
+      return { success: false, error: "Parent user not found" };
     }
 
     if (!newPassword || newPassword.length < MIN_PASSWORD_LENGTH) {
@@ -315,17 +339,16 @@ export async function toggleParentUserStatus(
   id: string,
 ): Promise<ActionResult> {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const res = await requireOrgSafe();
+    if (!res.ok) return { success: false, error: res.error };
+    const { organizationId: orgId } = res.ctx;
 
     const parentUser = await db.parentUser.findUnique({
       where: { id },
-      select: { isActive: true },
+      include: { child: { include: { branch: true } } },
     });
 
-    if (!parentUser) {
+    if (!parentUser || parentUser.child.branch.organizationId !== orgId) {
       return { success: false, error: "Parent user not found" };
     }
 

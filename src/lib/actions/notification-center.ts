@@ -2,6 +2,8 @@
 
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { requireOrg, requireOrgSafe } from "@/lib/require-org";
+import { verifyBranchAccess, getOrgBranchIds } from "@/lib/verify-org-access";
 
 export interface ActionableAlarm {
   id: string;
@@ -38,6 +40,9 @@ const urgencyMap: Record<string, "critical" | "warning" | "info"> = {
 };
 
 export async function getActionableAlarms(): Promise<ActionableAlarmGroups> {
+  const { organizationId: orgId } = await requireOrg();
+  const branchIds = await getOrgBranchIds(orgId);
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -48,19 +53,19 @@ export async function getActionableAlarms(): Promise<ActionableAlarmGroups> {
   const [activeAlarms, overdueVaccinations, birthdayChildren] =
     await Promise.all([
       db.alarm.findMany({
-        where: { isActive: true },
+        where: { isActive: true, branchId: { in: branchIds } },
         orderBy: { dueDate: "asc" },
         take: 50,
       }),
 
       db.vaccination.findMany({
-        where: { nextDueDate: { lt: today } },
+        where: { nextDueDate: { lt: today }, child: { branchId: { in: branchIds } } },
         include: { child: true },
         take: 20,
       }),
 
       db.child.findMany({
-        where: { isActive: true, dateOfBirth: { not: null } },
+        where: { isActive: true, dateOfBirth: { not: null }, branchId: { in: branchIds } },
         select: { id: true, firstName: true, lastName: true, dateOfBirth: true },
       }),
     ]);
@@ -76,7 +81,7 @@ export async function getActionableAlarms(): Promise<ActionableAlarmGroups> {
   }> = [];
   try {
     const raw = await db.payment.findMany({
-      where: { status: "OVERDUE" },
+      where: { status: "OVERDUE", child: { branchId: { in: branchIds } } },
       include: { child: true },
       take: 20,
     });
@@ -209,6 +214,18 @@ export async function snoozeAlarm(
   days: number
 ): Promise<{ success: boolean }> {
   try {
+    const res = await requireOrgSafe();
+    if (!res.ok) return { success: false };
+    const { organizationId: orgId } = res.ctx;
+
+    const alarm = await db.alarm.findUnique({
+      where: { id },
+      select: { id: true, branchId: true },
+    });
+    if (!alarm?.branchId || !(await verifyBranchAccess(alarm.branchId, orgId))) {
+      return { success: false };
+    }
+
     const newDate = new Date();
     newDate.setDate(newDate.getDate() + days);
 
@@ -228,6 +245,18 @@ export async function resolveAlarm(
   id: string
 ): Promise<{ success: boolean }> {
   try {
+    const res = await requireOrgSafe();
+    if (!res.ok) return { success: false };
+    const { organizationId: orgId } = res.ctx;
+
+    const alarm = await db.alarm.findUnique({
+      where: { id },
+      select: { id: true, branchId: true },
+    });
+    if (!alarm?.branchId || !(await verifyBranchAccess(alarm.branchId, orgId))) {
+      return { success: false };
+    }
+
     await db.alarm.update({
       where: { id },
       data: { isActive: false },
