@@ -521,17 +521,17 @@ export function ChildrenPageClient({
                     : "INACTIVE";
                   const statusColor =
                     status === "ACTIVE"
-                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      ? "bg-[#6B8F71]/10 text-[#6B8F71] border-[#6B8F71]/20"
                       : status === "DRAFT"
-                      ? "bg-amber-50 text-amber-700 border-amber-200"
-                      : "bg-gray-100 text-gray-600 border-gray-200";
+                      ? "bg-[#B08968]/10 text-[#B08968] border-[#B08968]/20"
+                      : "bg-muted text-muted-foreground border-muted";
                   const age = child.dateOfBirth ? getChildAge(child.dateOfBirth) : null;
                   const initials = getInitials(child.firstName, child.lastName);
                   const avatarBg = getAvatarColor(`${child.firstName} ${child.lastName}`);
 
                   return (
                     <Link key={child.id} href={`/children/${child.id}/dashboard`}>
-                      <Card className="group transition-all hover:border-primary/40 hover:shadow-md">
+                      <Card className="group transition-all hover:border-[#C35A2C]/30 hover:shadow-[0_4px_20px_-4px_rgba(195,90,44,0.12)]">
                         <CardContent className="flex items-start gap-3.5 py-4">
                           <div
                             className={`flex size-11 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white shadow-sm ${avatarBg}`}
@@ -554,7 +554,7 @@ export function ChildrenPageClient({
                                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-1">
                                   <span
                                     className={`inline-block size-1.5 rounded-full ${
-                                      child.gender === "MALE" ? "bg-sky-400" : "bg-pink-400"
+                                      child.gender === "MALE" ? "bg-[#8B7355]" : "bg-[#D4956A]"
                                     }`}
                                   />
                                   {child.gender === "MALE" ? "Boy" : "Girl"}

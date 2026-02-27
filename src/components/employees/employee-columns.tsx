@@ -44,17 +44,17 @@ function getDetailPath(type: EmployeeType, id: string): string {
 }
 
 export const roleColors: Record<EmployeeType, string> = {
-  teacher: "bg-teal-100 text-teal-700 border-teal-200",
-  nurse: "bg-rose-100 text-rose-700 border-rose-200",
-  doctor: "bg-blue-100 text-blue-700 border-blue-200",
-  manager: "bg-purple-100 text-purple-700 border-purple-200",
+  teacher: "bg-[#C35A2C]/10 text-[#C35A2C] border-[#C35A2C]/20",
+  nurse: "bg-[#6B8F71]/10 text-[#6B8F71] border-[#6B8F71]/20",
+  doctor: "bg-[#8B7355]/10 text-[#8B7355] border-[#8B7355]/20",
+  manager: "bg-[#B08968]/10 text-[#B08968] border-[#B08968]/20",
 };
 
 export const avatarColors: Record<EmployeeType, string> = {
-  teacher: "bg-teal-100 text-teal-700",
-  nurse: "bg-rose-100 text-rose-700",
-  doctor: "bg-blue-100 text-blue-700",
-  manager: "bg-purple-100 text-purple-700",
+  teacher: "bg-[#C35A2C]/10 text-[#C35A2C]",
+  nurse: "bg-[#6B8F71]/10 text-[#6B8F71]",
+  doctor: "bg-[#8B7355]/10 text-[#8B7355]",
+  manager: "bg-[#B08968]/10 text-[#B08968]",
 };
 
 export function createEmployeeColumns(
@@ -185,14 +185,14 @@ export function createEmployeeColumns(
           <div className="flex items-center gap-2">
             <span
               className={`inline-block size-2 rounded-full ${
-                status === "Active" ? "bg-emerald-500" : "bg-red-400"
+                status === "Active" ? "bg-[#6B8F71]" : "bg-muted-foreground/40"
               }`}
             />
             <Badge
               className={
                 status === "Active"
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                  : "bg-red-50 text-red-600 border-red-200"
+                  ? "bg-[#6B8F71]/10 text-[#6B8F71] border-[#6B8F71]/20"
+                  : "bg-muted text-muted-foreground border-muted"
               }
             >
               {status}
@@ -210,7 +210,7 @@ export function createEmployeeColumns(
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon-sm">
-                <MoreHorizontal className="size-4" />
+                <MoreHorizontal className="size-4 text-muted-foreground hover:text-primary" />
                 <span className="sr-only">Open menu</span>
               </Button>
             </DropdownMenuTrigger>

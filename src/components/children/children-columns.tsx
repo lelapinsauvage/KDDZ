@@ -45,18 +45,18 @@ export function getInitials(firstName: string, lastName: string) {
   return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 }
 
-/** Deterministic color from a name string — warm, kid-friendly palette */
+/** Deterministic color from a name string — warm, earthy palette */
 const AVATAR_COLORS = [
-  "bg-teal-500",
-  "bg-rose-400",
-  "bg-violet-500",
-  "bg-sky-500",
-  "bg-amber-500",
-  "bg-emerald-500",
-  "bg-pink-500",
-  "bg-indigo-500",
-  "bg-orange-500",
-  "bg-cyan-500",
+  "bg-[#C35A2C]",
+  "bg-[#B08968]",
+  "bg-[#8B7355]",
+  "bg-[#6B8F71]",
+  "bg-[#E8A87C]",
+  "bg-[#A0522D]",
+  "bg-[#D4956A]",
+  "bg-[#7A6B5D]",
+  "bg-[#C4A882]",
+  "bg-[#9B6B4A]",
 ] as const;
 
 export function getAvatarColor(name: string): string {
@@ -96,16 +96,16 @@ function getAge(date: Date | string | null) {
   return `${months}m`;
 }
 
-// ── Class pill color palette ──
+// ── Class pill color palette — warm earthy tones ──
 const CLASS_COLORS = [
-  "bg-teal-50 text-teal-700 border-teal-200",
-  "bg-violet-50 text-violet-700 border-violet-200",
-  "bg-sky-50 text-sky-700 border-sky-200",
-  "bg-amber-50 text-amber-700 border-amber-200",
-  "bg-rose-50 text-rose-700 border-rose-200",
-  "bg-emerald-50 text-emerald-700 border-emerald-200",
-  "bg-indigo-50 text-indigo-700 border-indigo-200",
-  "bg-orange-50 text-orange-700 border-orange-200",
+  "bg-[#C35A2C]/10 text-[#C35A2C] border-[#C35A2C]/20",
+  "bg-[#B08968]/10 text-[#B08968] border-[#B08968]/20",
+  "bg-[#6B8F71]/10 text-[#6B8F71] border-[#6B8F71]/20",
+  "bg-[#8B7355]/10 text-[#8B7355] border-[#8B7355]/20",
+  "bg-[#A0522D]/10 text-[#A0522D] border-[#A0522D]/20",
+  "bg-[#D4956A]/10 text-[#D4956A] border-[#D4956A]/20",
+  "bg-[#7A6B5D]/10 text-[#7A6B5D] border-[#7A6B5D]/20",
+  "bg-[#9B6B4A]/10 text-[#9B6B4A] border-[#9B6B4A]/20",
 ] as const;
 
 function getClassColor(className: string): string {
@@ -240,7 +240,7 @@ export function getChildrenColumns(
           <div className="flex items-center gap-1.5">
             <span
               className={`inline-block size-2 rounded-full ${
-                gender === "MALE" ? "bg-sky-400" : "bg-pink-400"
+                gender === "MALE" ? "bg-[#8B7355]" : "bg-[#D4956A]"
               }`}
             />
             <span className="text-sm">
@@ -295,9 +295,9 @@ export function getChildrenColumns(
       cell: ({ row }) => {
         const status = getStatus(row.original);
         const config: Record<string, { className: string; icon: typeof CircleCheck; label: string }> = {
-          ACTIVE: { className: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: CircleCheck, label: "Active" },
-          INACTIVE: { className: "bg-gray-100 text-gray-600 border-gray-200", icon: CircleOff, label: "Inactive" },
-          DRAFT: { className: "bg-amber-50 text-amber-700 border-amber-200", icon: CircleDashed, label: "Draft" },
+          ACTIVE: { className: "bg-[#6B8F71]/10 text-[#6B8F71] border-[#6B8F71]/20", icon: CircleCheck, label: "Active" },
+          INACTIVE: { className: "bg-muted text-muted-foreground border-muted", icon: CircleOff, label: "Inactive" },
+          DRAFT: { className: "bg-[#B08968]/10 text-[#B08968] border-[#B08968]/20", icon: CircleDashed, label: "Draft" },
         };
         const { className, icon: Icon, label } = config[status] ?? config.INACTIVE;
         return (
@@ -323,7 +323,7 @@ export function getChildrenColumns(
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon-sm">
-                <MoreHorizontal className="size-4" />
+                <MoreHorizontal className="size-4 text-muted-foreground hover:text-primary" />
                 <span className="sr-only">Actions</span>
               </Button>
             </DropdownMenuTrigger>
