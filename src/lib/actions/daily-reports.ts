@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
+import { requireOrg, requireOrgSafe } from "@/lib/require-org";
+import { verifyChildAccess } from "@/lib/verify-org-access";
 import { dailyReportSchema } from "@/lib/validations/daily-report";
 import type { DailyReportStatus, Prisma } from "@/generated/prisma/client";
 
@@ -28,6 +29,8 @@ interface GetDailyReportsParams {
 
 export async function getDailyReports(params: GetDailyReportsParams = {}) {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     const {
       branchId,
       classId,
@@ -40,7 +43,9 @@ export async function getDailyReports(params: GetDailyReportsParams = {}) {
       pageSize = 20,
     } = params;
 
-    const where: Prisma.DailyReportWhereInput = {};
+    const where: Prisma.DailyReportWhereInput = {
+      child: { branch: { organizationId: orgId } },
+    };
 
     if (childId) {
       where.childId = childId;
@@ -62,15 +67,15 @@ export async function getDailyReports(params: GetDailyReportsParams = {}) {
 
     // Filter by branch or class through child relation
     if (branchId || classId || search) {
-      where.child = {};
+      const childWhere = where.child as Prisma.ChildWhereInput;
       if (branchId) {
-        where.child.branchId = branchId;
+        childWhere.branchId = branchId;
       }
       if (classId) {
-        where.child.classId = classId;
+        childWhere.classId = classId;
       }
       if (search) {
-        where.child.OR = [
+        childWhere.OR = [
           { firstName: { contains: search, mode: "insensitive" } },
           { lastName: { contains: search, mode: "insensitive" } },
         ];
@@ -116,6 +121,8 @@ export async function getDailyReports(params: GetDailyReportsParams = {}) {
 
 export async function getDailyReport(id: string) {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     const report = await db.dailyReport.findUnique({
       where: { id },
       include: {
@@ -136,6 +143,10 @@ export async function getDailyReport(id: string) {
       return { error: "Daily report not found" };
     }
 
+    if (report.child.branch?.organizationId !== orgId) {
+      return { error: "Daily report not found" };
+    }
+
     return { report };
   } catch (error) {
     console.error("getDailyReport error:", error);
@@ -148,12 +159,11 @@ export async function getDailyReport(id: string) {
 // ─────────────────────────────────────────────
 
 export async function createDailyReport(formData: FormData) {
-  try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { error: "Unauthorized" };
-    }
+  const result = await requireOrgSafe();
+  if (!result.ok) return { error: result.error };
+  const { ctx } = result;
 
+  try {
     // Parse form data into a plain object
     const rawData: Record<string, unknown> = {};
     formData.forEach((value, key) => {
@@ -184,6 +194,10 @@ export async function createDailyReport(formData: FormData) {
     }
 
     const data = parsed.data;
+
+    // Verify child belongs to this org
+    const childOk = await verifyChildAccess(data.childId, ctx.organizationId);
+    if (!childOk) return { error: "Invalid child" };
 
     // Check unique constraint: childId + reportDate
     const existing = await db.dailyReport.findUnique({
@@ -226,7 +240,7 @@ export async function createDailyReport(formData: FormData) {
         runnyNose: data.runnyNose,
         vomit: data.vomit,
         remarks: data.remarks || null,
-        createdById: session.user.id,
+        createdById: ctx.userId,
         fevers: {
           create: data.feverEntries.map((f) => ({
             temperature: parseFloat(f.temperature),
@@ -255,14 +269,19 @@ export async function createDailyReport(formData: FormData) {
 // ─────────────────────────────────────────────
 
 export async function updateDailyReport(id: string, formData: FormData) {
-  try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { error: "Unauthorized" };
-    }
+  const result = await requireOrgSafe();
+  if (!result.ok) return { error: result.error };
+  const { ctx } = result;
 
-    const existing = await db.dailyReport.findUnique({ where: { id } });
+  try {
+    const existing = await db.dailyReport.findUnique({
+      where: { id },
+      include: { child: { include: { branch: true } } },
+    });
     if (!existing) {
+      return { error: "Daily report not found" };
+    }
+    if (existing.child.branch?.organizationId !== ctx.organizationId) {
       return { error: "Daily report not found" };
     }
 
@@ -371,14 +390,19 @@ export async function updateDailyReport(id: string, formData: FormData) {
 // ─────────────────────────────────────────────
 
 export async function submitDailyReport(id: string) {
-  try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { error: "Unauthorized" };
-    }
+  const result = await requireOrgSafe();
+  if (!result.ok) return { error: result.error };
+  const { ctx } = result;
 
-    const existing = await db.dailyReport.findUnique({ where: { id } });
+  try {
+    const existing = await db.dailyReport.findUnique({
+      where: { id },
+      include: { child: { include: { branch: true } } },
+    });
     if (!existing) {
+      return { error: "Daily report not found" };
+    }
+    if (existing.child.branch?.organizationId !== ctx.organizationId) {
       return { error: "Daily report not found" };
     }
 
@@ -404,14 +428,19 @@ export async function submitDailyReport(id: string) {
 // ─────────────────────────────────────────────
 
 export async function deleteDailyReport(id: string) {
-  try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { error: "Unauthorized" };
-    }
+  const result = await requireOrgSafe();
+  if (!result.ok) return { error: result.error };
+  const { ctx } = result;
 
-    const existing = await db.dailyReport.findUnique({ where: { id } });
+  try {
+    const existing = await db.dailyReport.findUnique({
+      where: { id },
+      include: { child: { include: { branch: true } } },
+    });
     if (!existing) {
+      return { error: "Daily report not found" };
+    }
+    if (existing.child.branch?.organizationId !== ctx.organizationId) {
       return { error: "Daily report not found" };
     }
 

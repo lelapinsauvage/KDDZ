@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
+import { requireOrg, requireOrgSafe } from "@/lib/require-org";
+import { verifyChildAccess } from "@/lib/verify-org-access";
 import { absenceReportSchema } from "@/lib/validations/absence-report";
 import type { AbsenceStatus, Prisma } from "@/generated/prisma/client";
 
@@ -27,6 +28,8 @@ interface GetAbsenceReportsParams {
 
 export async function getAbsenceReports(params: GetAbsenceReportsParams = {}) {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     const {
       branchId,
       childId,
@@ -38,7 +41,9 @@ export async function getAbsenceReports(params: GetAbsenceReportsParams = {}) {
       pageSize = 50,
     } = params;
 
-    const where: Prisma.AbsenceReportWhereInput = {};
+    const where: Prisma.AbsenceReportWhereInput = {
+      child: { branch: { organizationId: orgId } },
+    };
 
     if (childId) {
       where.childId = childId;
@@ -59,12 +64,12 @@ export async function getAbsenceReports(params: GetAbsenceReportsParams = {}) {
     }
 
     if (branchId || search) {
-      where.child = {};
+      const childWhere = where.child as Prisma.ChildWhereInput;
       if (branchId) {
-        where.child.branchId = branchId;
+        childWhere.branchId = branchId;
       }
       if (search) {
-        where.child.OR = [
+        childWhere.OR = [
           { firstName: { contains: search, mode: "insensitive" } },
           { lastName: { contains: search, mode: "insensitive" } },
         ];
@@ -111,6 +116,8 @@ export async function getAbsenceReports(params: GetAbsenceReportsParams = {}) {
 
 export async function getAbsenceReport(id: string) {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     const report = await db.absenceReport.findUnique({
       where: { id },
       include: {
@@ -135,6 +142,10 @@ export async function getAbsenceReport(id: string) {
       return { error: "Absence report not found" };
     }
 
+    if (report.child.branch?.organizationId !== orgId) {
+      return { error: "Absence report not found" };
+    }
+
     return { report };
   } catch (error) {
     console.error("getAbsenceReport error:", error);
@@ -147,12 +158,11 @@ export async function getAbsenceReport(id: string) {
 // ─────────────────────────────────────────────
 
 export async function createAbsenceReport(formData: FormData) {
-  try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { error: "Unauthorized" };
-    }
+  const result = await requireOrgSafe();
+  if (!result.ok) return { error: result.error };
+  const { ctx } = result;
 
+  try {
     const rawData: Record<string, unknown> = {};
     formData.forEach((value, key) => {
       rawData[key] = value;
@@ -165,13 +175,17 @@ export async function createAbsenceReport(formData: FormData) {
 
     const data = parsed.data;
 
+    // Verify child belongs to this org
+    const childOk = await verifyChildAccess(data.childId, ctx.organizationId);
+    if (!childOk) return { error: "Invalid child" };
+
     const report = await db.absenceReport.create({
       data: {
         childId: data.childId,
         date: new Date(data.date),
         reason: data.reason || null,
         status: data.status,
-        createdById: session.user.id,
+        createdById: ctx.userId,
       },
     });
 
@@ -188,14 +202,19 @@ export async function createAbsenceReport(formData: FormData) {
 // ─────────────────────────────────────────────
 
 export async function updateAbsenceReport(id: string, formData: FormData) {
-  try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { error: "Unauthorized" };
-    }
+  const result = await requireOrgSafe();
+  if (!result.ok) return { error: result.error };
+  const { ctx } = result;
 
-    const existing = await db.absenceReport.findUnique({ where: { id } });
+  try {
+    const existing = await db.absenceReport.findUnique({
+      where: { id },
+      include: { child: { include: { branch: true } } },
+    });
     if (!existing) {
+      return { error: "Absence report not found" };
+    }
+    if (existing.child.branch?.organizationId !== ctx.organizationId) {
       return { error: "Absence report not found" };
     }
 
@@ -237,14 +256,19 @@ export async function updateAbsenceReportStatus(
   id: string,
   status: "APPROVED" | "REJECTED"
 ) {
-  try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { error: "Unauthorized" };
-    }
+  const result = await requireOrgSafe();
+  if (!result.ok) return { error: result.error };
+  const { ctx } = result;
 
-    const existing = await db.absenceReport.findUnique({ where: { id } });
+  try {
+    const existing = await db.absenceReport.findUnique({
+      where: { id },
+      include: { child: { include: { branch: true } } },
+    });
     if (!existing) {
+      return { error: "Absence report not found" };
+    }
+    if (existing.child.branch?.organizationId !== ctx.organizationId) {
       return { error: "Absence report not found" };
     }
 
@@ -266,14 +290,19 @@ export async function updateAbsenceReportStatus(
 // ─────────────────────────────────────────────
 
 export async function deleteAbsenceReport(id: string) {
-  try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { error: "Unauthorized" };
-    }
+  const result = await requireOrgSafe();
+  if (!result.ok) return { error: result.error };
+  const { ctx } = result;
 
-    const existing = await db.absenceReport.findUnique({ where: { id } });
+  try {
+    const existing = await db.absenceReport.findUnique({
+      where: { id },
+      include: { child: { include: { branch: true } } },
+    });
     if (!existing) {
+      return { error: "Absence report not found" };
+    }
+    if (existing.child.branch?.organizationId !== ctx.organizationId) {
       return { error: "Absence report not found" };
     }
 
