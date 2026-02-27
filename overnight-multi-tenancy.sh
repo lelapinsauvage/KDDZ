@@ -17,6 +17,8 @@ run_phase() {
   if [ $exit_code -ne 0 ]; then
     echo "⚠ $name FAILED (exit $exit_code) — continuing..." | tee -a "$LOG_FILE"
   fi
+  # Push whatever was committed in this phase
+  git push origin ux-improvements 2>&1 | tee -a "$LOG_FILE"
   echo "=== $name COMPLETE — $(date) ===" | tee -a "$LOG_FILE"
 }
 
