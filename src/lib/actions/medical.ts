@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
+import { requireOrg, requireOrgSafe } from "@/lib/require-org";
+import { verifyChildAccess } from "@/lib/verify-org-access";
 import type { InputJsonValue } from "@prisma/client/runtime/client";
 import type {
   MedicalFormType,
@@ -70,6 +71,8 @@ interface UpdateVaccinationData {
 
 export async function getMedicalForms(params: GetMedicalFormsParams = {}) {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     const {
       childId,
       formType,
@@ -80,7 +83,9 @@ export async function getMedicalForms(params: GetMedicalFormsParams = {}) {
       pageSize = 20,
     } = params;
 
-    const where: Prisma.MedicalFormWhereInput = {};
+    const where: Prisma.MedicalFormWhereInput = {
+      child: { branch: { organizationId: orgId } },
+    };
 
     if (childId) {
       where.childId = childId;
@@ -95,12 +100,12 @@ export async function getMedicalForms(params: GetMedicalFormsParams = {}) {
     }
 
     if (branchId || search) {
-      where.child = {};
+      const childWhere = where.child as Prisma.ChildWhereInput;
       if (branchId) {
-        where.child.branchId = branchId;
+        childWhere.branchId = branchId;
       }
       if (search) {
-        where.child.OR = [
+        childWhere.OR = [
           { firstName: { contains: search, mode: "insensitive" } },
           { lastName: { contains: search, mode: "insensitive" } },
         ];
@@ -139,6 +144,8 @@ export async function getMedicalForms(params: GetMedicalFormsParams = {}) {
 
 export async function getMedicalForm(id: string) {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     const form = await db.medicalForm.findUnique({
       where: { id },
       include: {
@@ -155,6 +162,10 @@ export async function getMedicalForm(id: string) {
       return { error: "Medical form not found" };
     }
 
+    if (form.child.branch.organizationId !== orgId) {
+      return { error: "Medical form not found" };
+    }
+
     return { form };
   } catch (error) {
     console.error("getMedicalForm error:", error);
@@ -168,13 +179,16 @@ export async function getMedicalForm(id: string) {
 
 export async function createMedicalForm(input: CreateMedicalFormData) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { error: result.error };
+    const { organizationId: orgId } = result.ctx;
 
     if (!input.childId || !input.formType) {
       return { error: "childId and formType are required" };
+    }
+
+    if (!(await verifyChildAccess(input.childId, orgId))) {
+      return { error: "Access denied" };
     }
 
     const form = await db.medicalForm.create({
@@ -211,14 +225,19 @@ export async function createMedicalForm(input: CreateMedicalFormData) {
 
 export async function updateMedicalForm(id: string, input: UpdateMedicalFormData) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { error: result.error };
+    const { organizationId: orgId } = result.ctx;
 
-    const existing = await db.medicalForm.findUnique({ where: { id } });
+    const existing = await db.medicalForm.findUnique({
+      where: { id },
+      include: { child: { include: { branch: true } } },
+    });
     if (!existing) {
       return { error: "Medical form not found" };
+    }
+    if (existing.child.branch.organizationId !== orgId) {
+      return { error: "Access denied" };
     }
 
     // Build update data
@@ -270,14 +289,19 @@ export async function updateMedicalForm(id: string, input: UpdateMedicalFormData
 
 export async function deleteMedicalForm(id: string) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { error: result.error };
+    const { organizationId: orgId } = result.ctx;
 
-    const existing = await db.medicalForm.findUnique({ where: { id } });
+    const existing = await db.medicalForm.findUnique({
+      where: { id },
+      include: { child: { include: { branch: true } } },
+    });
     if (!existing) {
       return { error: "Medical form not found" };
+    }
+    if (existing.child.branch.organizationId !== orgId) {
+      return { error: "Access denied" };
     }
 
     await db.medicalForm.delete({ where: { id } });
@@ -296,16 +320,21 @@ export async function deleteMedicalForm(id: string) {
 
 export async function getVaccinations(params: GetVaccinationsParams = {}) {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     const { childId, branchId, search, page = 1, pageSize = 20 } = params;
 
-    const where: Prisma.VaccinationWhereInput = {};
+    const where: Prisma.VaccinationWhereInput = {
+      child: { branch: { organizationId: orgId } },
+    };
 
     if (childId) {
       where.childId = childId;
     }
 
     if (branchId) {
-      where.child = { ...((where.child as Prisma.ChildWhereInput) ?? {}), branchId };
+      const childWhere = where.child as Prisma.ChildWhereInput;
+      childWhere.branchId = branchId;
     }
 
     if (search) {
@@ -313,6 +342,7 @@ export async function getVaccinations(params: GetVaccinationsParams = {}) {
         { vaccineName: { contains: search, mode: "insensitive" } },
         {
           child: {
+            branch: { organizationId: orgId },
             OR: [
               { firstName: { contains: search, mode: "insensitive" } },
               { lastName: { contains: search, mode: "insensitive" } },
@@ -354,13 +384,16 @@ export async function getVaccinations(params: GetVaccinationsParams = {}) {
 
 export async function createVaccination(input: CreateVaccinationData) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { error: result.error };
+    const { organizationId: orgId } = result.ctx;
 
     if (!input.childId || !input.vaccineName) {
       return { error: "childId and vaccineName are required" };
+    }
+
+    if (!(await verifyChildAccess(input.childId, orgId))) {
+      return { error: "Access denied" };
     }
 
     const vaccination = await db.vaccination.create({
@@ -387,14 +420,19 @@ export async function createVaccination(input: CreateVaccinationData) {
 
 export async function updateVaccination(id: string, input: UpdateVaccinationData) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { error: result.error };
+    const { organizationId: orgId } = result.ctx;
 
-    const existing = await db.vaccination.findUnique({ where: { id } });
+    const existing = await db.vaccination.findUnique({
+      where: { id },
+      include: { child: { include: { branch: true } } },
+    });
     if (!existing) {
       return { error: "Vaccination not found" };
+    }
+    if (existing.child.branch.organizationId !== orgId) {
+      return { error: "Access denied" };
     }
 
     const updateData: Prisma.VaccinationUpdateInput = {};
@@ -434,6 +472,8 @@ export async function updateVaccination(id: string, input: UpdateVaccinationData
 
 export async function getVaccination(id: string) {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     const vaccination = await db.vaccination.findUnique({
       where: { id },
       include: {
@@ -444,6 +484,10 @@ export async function getVaccination(id: string) {
     });
 
     if (!vaccination) {
+      return { error: "Vaccination not found" };
+    }
+
+    if (vaccination.child.branch.organizationId !== orgId) {
       return { error: "Vaccination not found" };
     }
 
@@ -460,14 +504,19 @@ export async function getVaccination(id: string) {
 
 export async function deleteVaccination(id: string) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { error: result.error };
+    const { organizationId: orgId } = result.ctx;
 
-    const existing = await db.vaccination.findUnique({ where: { id } });
+    const existing = await db.vaccination.findUnique({
+      where: { id },
+      include: { child: { include: { branch: true } } },
+    });
     if (!existing) {
       return { error: "Vaccination not found" };
+    }
+    if (existing.child.branch.organizationId !== orgId) {
+      return { error: "Access denied" };
     }
 
     await db.vaccination.delete({ where: { id } });

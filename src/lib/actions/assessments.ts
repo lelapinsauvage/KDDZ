@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
+import { requireOrg, requireOrgSafe } from "@/lib/require-org";
+import { verifyChildAccess, verifyBranchAccess } from "@/lib/verify-org-access";
 import type { InputJsonValue } from "@prisma/client/runtime/client";
 import type { AssessmentStatus, Prisma } from "@/generated/prisma/client";
 import { VALID_ASSESSMENT_TYPES } from "@/lib/assessment-types";
@@ -54,6 +55,8 @@ interface CreateAssessmentDateData {
 
 export async function getAssessments(params: GetAssessmentsParams) {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     const {
       assessmentType,
       childId,
@@ -70,6 +73,7 @@ export async function getAssessments(params: GetAssessmentsParams) {
 
     const where: Prisma.AssessmentWhereInput = {
       assessmentType,
+      child: { branch: { organizationId: orgId } },
     };
 
     if (childId) {
@@ -81,12 +85,12 @@ export async function getAssessments(params: GetAssessmentsParams) {
     }
 
     if (classId || search) {
-      where.child = {};
+      const childWhere = where.child as Prisma.ChildWhereInput;
       if (classId) {
-        where.child.classId = classId;
+        childWhere.classId = classId;
       }
       if (search) {
-        where.child.OR = [
+        childWhere.OR = [
           { firstName: { contains: search, mode: "insensitive" } },
           { lastName: { contains: search, mode: "insensitive" } },
         ];
@@ -129,11 +133,13 @@ export async function getAssessments(params: GetAssessmentsParams) {
 
 export async function getAssessment(id: string) {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     const assessment = await db.assessment.findUnique({
       where: { id },
       include: {
         child: {
-          include: { class: true },
+          include: { class: true, branch: true },
         },
         createdBy: {
           select: { id: true, name: true },
@@ -145,6 +151,10 @@ export async function getAssessment(id: string) {
     });
 
     if (!assessment) {
+      return { error: "Assessment not found" };
+    }
+
+    if (assessment.child.branch.organizationId !== orgId) {
       return { error: "Assessment not found" };
     }
 
@@ -161,10 +171,9 @@ export async function getAssessment(id: string) {
 
 export async function createAssessment(input: CreateAssessmentData) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { error: result.error };
+    const { organizationId: orgId, userId } = result.ctx;
 
     if (!input.childId || !input.assessmentType) {
       return { error: "childId and assessmentType are required" };
@@ -174,6 +183,10 @@ export async function createAssessment(input: CreateAssessmentData) {
       return { error: "Invalid assessment type" };
     }
 
+    if (!(await verifyChildAccess(input.childId, orgId))) {
+      return { error: "Access denied" };
+    }
+
     const assessment = await db.assessment.create({
       data: {
         childId: input.childId,
@@ -181,7 +194,7 @@ export async function createAssessment(input: CreateAssessmentData) {
         schoolYearId: input.schoolYearId ?? null,
         status: input.status || "DRAFT",
         data: (input.data as InputJsonValue) ?? undefined,
-        createdById: session.user.id,
+        createdById: userId,
       },
     });
 
@@ -199,14 +212,19 @@ export async function createAssessment(input: CreateAssessmentData) {
 
 export async function updateAssessment(id: string, input: UpdateAssessmentData) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { error: result.error };
+    const { organizationId: orgId } = result.ctx;
 
-    const existing = await db.assessment.findUnique({ where: { id } });
+    const existing = await db.assessment.findUnique({
+      where: { id },
+      include: { child: { include: { branch: true } } },
+    });
     if (!existing) {
       return { error: "Assessment not found" };
+    }
+    if (existing.child.branch.organizationId !== orgId) {
+      return { error: "Access denied" };
     }
 
     const updateData: Prisma.AssessmentUpdateInput = {};
@@ -240,14 +258,19 @@ export async function updateAssessment(id: string, input: UpdateAssessmentData) 
 
 export async function deleteAssessment(id: string) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { error: "Unauthorized" };
-    }
+    const result = await requireOrgSafe();
+    if (!result.ok) return { error: result.error };
+    const { organizationId: orgId } = result.ctx;
 
-    const existing = await db.assessment.findUnique({ where: { id } });
+    const existing = await db.assessment.findUnique({
+      where: { id },
+      include: { child: { include: { branch: true } } },
+    });
     if (!existing) {
       return { error: "Assessment not found" };
+    }
+    if (existing.child.branch.organizationId !== orgId) {
+      return { error: "Access denied" };
     }
 
     await db.assessment.delete({ where: { id } });
@@ -266,9 +289,13 @@ export async function deleteAssessment(id: string) {
 
 export async function getAssessmentDates(params: GetAssessmentDatesParams = {}) {
   try {
+    const { organizationId: orgId } = await requireOrg();
+
     const { assessmentType, branchId, page = 1, pageSize = 50 } = params;
 
-    const where: Prisma.AssessmentDateWhereInput = {};
+    const where: Prisma.AssessmentDateWhereInput = {
+      branch: { organizationId: orgId },
+    };
 
     if (assessmentType) {
       where.assessmentType = assessmentType;
@@ -301,9 +328,12 @@ export async function getAssessmentDates(params: GetAssessmentDatesParams = {}) 
 
 export async function createAssessmentDate(input: CreateAssessmentDateData) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { error: "Unauthorized" };
+    const result = await requireOrgSafe();
+    if (!result.ok) return { error: result.error };
+    const { organizationId: orgId } = result.ctx;
+
+    if (!(await verifyBranchAccess(input.branchId, orgId))) {
+      return { error: "Access denied" };
     }
 
     const date = await db.assessmentDate.create({
@@ -324,9 +354,19 @@ export async function createAssessmentDate(input: CreateAssessmentDateData) {
 
 export async function deleteAssessmentDate(id: string) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { error: "Unauthorized" };
+    const result = await requireOrgSafe();
+    if (!result.ok) return { error: result.error };
+    const { organizationId: orgId } = result.ctx;
+
+    const existing = await db.assessmentDate.findUnique({
+      where: { id },
+      include: { branch: true },
+    });
+    if (!existing) {
+      return { error: "Assessment date not found" };
+    }
+    if (existing.branch.organizationId !== orgId) {
+      return { error: "Access denied" };
     }
 
     await db.assessmentDate.delete({ where: { id } });
