@@ -942,3 +942,160 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 35 — Design: Dashboard Page — Sat Feb 28 10:10:38 CET 2026 ===
 =============================================
+All done. Here's what changed across the 8 files:
+
+**Morning greeting** — Nunito h1 at 30px/extrabold, warm amber sunrise icon, attention summary in body-sm, date in muted. Proper `space-y-8` breathing between sections instead of cramped `space-y-6`.
+
+**Stat cards** — Module-accent colors from the design system (teal `#0B9178` for branches, blue `#2563EB` for classes, emerald `#059669` for children). Each card has a subtle 3px colored accent bar at top, warm-tinted `shadow-sm` at rest with `shadow-md` on hover, and tinted icon backgrounds matching their module.
+
+**Status board** — Clear semantic color coding: success green (`#16A34A`) for attendance, warning amber (`#D97706`) for absences, error red (`#DC2626`) for missing reports. Red items with `value > 0` get a pulsing dot and red-tinted background. Section has its own overline label.
+
+**Action center** — Clean 3×3 grid of individual cards (not a monolithic table). Each card has its module accent icon tint (finance indigo, medical green, comms rose, etc.), consistent `shadow-sm` elevation, and hover lift. Removed the category sub-labels for cleaner layout.
+
+**Charts** — All Recharts colors updated to the design system palette: `#0B9178` meadow, `#2563EB` blue, `#7C3AED` violet, `#EA580C` orange, `#4F46E5` indigo. Tooltip borders use `#E2E5E9`, shadows use warm-tinted `rgba(15,23,42,...)`.
+
+**Today's menu** — Meal icons use module accents (breakfast amber, lunch orange, dessert rose, snack emerald).
+
+**Insights** — Semantic pill colors: positive uses success green bg, neutral uses info blue bg, warning uses error red bg.
+To https://github.com/lelapinsauvage/KDDZ.git
+   d291cf1..593f38c  ux-improvements -> ux-improvements
+=== Phase 35 — Design: Dashboard Page COMPLETE — Sat Feb 28 10:14:04 CET 2026 ===
+
+=============================================
+=== Phase 36 — Design: Data Tables & List Pages — Sat Feb 28 10:14:04 CET 2026 ===
+=============================================
+All done. Here's a summary of the changes across 9 files:
+
+**Shared DataTable (`data-table.tsx`)**
+- Rounded `rounded-lg` container with `border-border/60`, `shadow-sm` card elevation
+- Sticky header with `bg-muted/60`, `text-[11px]` uppercase tracking-wider labels
+- Row hover: `hover:bg-accent/40` with `duration-100` transition, subtle `border-border/40` dividers
+- Empty rows no longer highlight on hover
+- Pagination: card-style container with `border-border/40`, "Showing X row(s)" format, "Rows:" label, page indicator as `1 / N`, and `border-border/60` buttons
+
+**PageHeader (`page-header.tsx`)**
+- Breadcrumbs moved **above** the title (left-aligned, `text-[13px]`)
+- Chevron separators with `text-muted-foreground/50` for subtlety
+- Title uses `font-heading` (Nunito) with `font-bold` for proper typography
+- Description at `text-[13px]`
+- Clean actions area on the right, only rendered when present
+
+**Children list page**
+- Inline table matches the exact same header/row/hover styles as DataTable
+- Pagination buttons use `border-border/60`
+- Card view status badges use design system semantic colors (`--color-success-*`, `--color-warning-*`)
+- Children columns: status badges use CSS custom properties
+
+**Employees**
+- Role/avatar colors updated to Tailwind semantic colors (amber/emerald/blue/violet)
+- Status badge uses `--color-success-*` tokens
+- Action buttons use default primary (no redundant explicit color)
+
+**Daily Reports**
+- Mood badges use design system semantic tokens (success/info/warning/error/violet)
+- Meal portion dots and labels use semantic tokens
+- Status badges (Draft/Submitted) use `--color-warning-*` and `--color-success-*`
+
+**Medical (General + Conditions)**
+- Status badges: Draft → `bg-muted`, Submitted → `--color-info-*`, Reviewed → `--color-success-*`
+- Severity badges (Mild/Moderate/Severe) use `--color-success-*`, `--color-warning-*`, `--color-error-*`
+- Condition type badge uses `--color-primary-*` tokens
+To https://github.com/lelapinsauvage/KDDZ.git
+   593f38c..1b01ea1  ux-improvements -> ux-improvements
+=== Phase 36 — Design: Data Tables & List Pages COMPLETE — Sat Feb 28 10:19:52 CET 2026 ===
+
+=============================================
+=== Phase 37 — Design: Forms & Dialogs — Sat Feb 28 10:19:52 CET 2026 ===
+=============================================
+Done. Here's a summary of all the redesign changes:
+
+**FormSection** — Removed the color-coded `border-t-4` accents and left-border pill. Now uses a clean `rounded-lg` card with subtle `border-border`, Nunito section titles (`font-heading text-base font-bold`), proper `px-5 py-3.5` padding, and a border-bottom separator when open. The `color` prop is kept for backward compatibility but is a no-op.
+
+**Input** — Bumped height from `h-9` to `h-10` for better touch targets, consistent `text-sm` sizing, proper disabled state (`bg-muted text-muted-foreground`).
+
+**Textarea** — Added `hover:border-border-strong` transition, increased min height to `min-h-20`, matched input styling for disabled state, consistent `text-sm`.
+
+**Label** — Added `font-semibold text-foreground` for clear, readable form labels.
+
+**Select** — Trigger height bumped to `h-10`, added `hover:border-border-strong` transition, proper disabled styling. Items use `rounded-md py-2` for better touch targets with `transition-colors`. Dropdown shadow upgraded to `shadow-lg`.
+
+**Checkbox** — Enlarged from `size-4` to `size-[18px]` for better touch targets, smoother transitions on background/border.
+
+**Switch** — Enlarged default from `h-[1.15rem] w-8` to `h-5 w-9`, small from `h-3.5 w-6` to `h-4 w-7`.
+
+**Calendar** — Caption label now uses `font-heading font-bold tracking-tight`.
+
+**Dialog & AlertDialog** — Overlay uses `bg-black/40 backdrop-blur-[2px]` for frosted glass effect. Content uses `overflow-hidden rounded-xl`. Header pulls to edges with `-mx-6 -mt-6` + `border-b` separator. Footer pulls to edges with `-mx-6 -mb-6` + `border-t` + subtle `bg-muted/30` tint. Title uses Nunito heading font. Close button is a visible `size-8` rounded-md with hover state.
+
+**Sheet** — Same overlay treatment. Header has `border-b` separator with `px-5 py-4`. Footer has `border-t` + `bg-muted/30` tint. Title uses Nunito. Close button matches dialog's interactive style. Removed the gap from content to let header/footer manage spacing.
+
+**Popover** — Upgraded to `rounded-lg border-border shadow-lg`. Title uses `font-heading font-bold tracking-tight`.
+To https://github.com/lelapinsauvage/KDDZ.git
+   1b01ea1..ca1280a  ux-improvements -> ux-improvements
+=== Phase 37 — Design: Forms & Dialogs COMPLETE — Sat Feb 28 10:26:33 CET 2026 ===
+
+=============================================
+=== Phase 38 — UX Research: Nursery Software Best Practices — Sat Feb 28 10:26:33 CET 2026 ===
+=============================================
+Committed. Here's a summary of what the research document covers:
+
+**`docs/ux-research.md`** — 479 lines organized into 9 sections:
+
+1. **Teacher Daily Workflow** — Maps the 7:30am–4pm rhythm with two critical data-entry windows (morning check-in, post-lunch nap time). Identified 5 key pain points: admin overload (6–9hrs/week), constant interruptions, communication friction, redundant data entry, poor mobile UX.
+
+2. **Multi-Role Navigation** — Validated KiddzOnline's `getNavForRole()` approach. Flagged that teacher nav could merge "Batch Reports" into "Daily Reports" as a tab, and rename the "Settings" section to "Communication."
+
+3. **High-Frequency Form Design** — Covers smart defaults, single-tap selection (segmented controls over dropdowns), batch-first design, auto-save drafts, keyboard avoidance, and "reward early, punish late" validation.
+
+4. **Morning Briefing Dashboard** — Recommends a three-layer hierarchy (Status → Trends → Details). Flagged that the current dashboard puts structural data (branch/class count) above operational data (compliance/actions) — should be flipped.
+
+5. **Mobile-First** — Thumb-zone optimization, 44px+ touch targets, bottom navigation for teachers, swipe gestures for batch operations, offline draft persistence.
+
+6. **Arabic/RTL Accessibility** — CSS logical properties, 20–25% larger font sizes for Arabic, no bold/italic in Arabic body text, icon mirroring strategy.
+
+7. **Core UX Principles** — Reduce clicks, surface what matters, forgive errors, design for interruption, reduce cognitive load.
+
+8. **KiddzOnline-Specific Recommendations** — 10 prioritized improvements across 4 tiers (Critical → Polish), each mapped to specific files in the codebase.
+To https://github.com/lelapinsauvage/KDDZ.git
+   ca1280a..a164f48  ux-improvements -> ux-improvements
+=== Phase 38 — UX Research: Nursery Software Best Practices COMPLETE — Sat Feb 28 10:30:33 CET 2026 ===
+
+=============================================
+=== Phase 39 — UX: Navigation & Information Architecture — Sat Feb 28 10:30:33 CET 2026 ===
+=============================================
+All done. Here's a summary of the changes:
+
+### 1. Sidebar Reorganized by Workflow Priority
+
+**Admin/Manager nav** restructured from 6 flat sections to 8 workflow-oriented sections:
+- **Quick Access** — Dashboard, Today View
+- **Daily Operations** — Daily Reports, Attendance, Food Calendar, Food Items
+- **Children** — All Children, Enrollments, Assessments
+- **Health** — Medical Records, Vaccinations, Accidents, Conditions
+- **Communication** — Messages, Notifications (moved out of "Settings")
+- **Finance** — Accounting
+- **Management** — Branches & Classes, Employees
+- **Settings** — Settings only
+
+**Teacher nav** — Renamed "Settings" to "Communication", removed "Batch Reports" as a separate nav item (per UX research recommendation to merge it as a tab within Daily Reports).
+
+**Nurse/Doctor nav** — Renamed "Settings" to "Communication", reordered Health items to put Vaccinations and Accidents before Conditions.
+
+### 2. Contextual Quick Actions
+Added a dashed-border "New Daily Report" shortcut at the top of the sidebar for Teachers and Admins. Nurses/Doctors get "Log Accident" instead. These are role-aware and always visible.
+
+### 3. Improved Breadcrumb Navigation
+`page-header.tsx` now auto-derives the full breadcrumb trail from the URL pathname. Parent segments are resolved from a `segmentLabels` map and merged with explicit breadcrumbs, so the full path back to Home is always shown — even if the page only passes partial breadcrumbs.
+
+### 4. Recently Visited Section
+Created `src/hooks/use-recently-visited.ts` — a localStorage-backed hook that tracks the last 8 visited pages. The sidebar renders the top 5 with `History` icons under a "Recently Visited" section at the bottom of the nav.
+
+### 5. Tablet Auto-Collapse
+Added a `useEffect` in `AppSidebar` that listens for the tablet breakpoint (768–1024px) and auto-collapses the sidebar to icon-only mode. The existing `collapsible="icon"` infrastructure in the sidebar UI handles the rest — tooltips on hover, hidden labels, square icon buttons.
+To https://github.com/lelapinsauvage/KDDZ.git
+   a164f48..f964259  ux-improvements -> ux-improvements
+=== Phase 39 — UX: Navigation & Information Architecture COMPLETE — Sat Feb 28 10:35:24 CET 2026 ===
+
+=============================================
+=== Phase 40 — UX: Search & Command Palette — Sat Feb 28 10:35:24 CET 2026 ===
+=============================================

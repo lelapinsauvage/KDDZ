@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useTransition } from "react";
+import { useState, useMemo, useCallback, useTransition, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import {
@@ -165,6 +165,7 @@ export function ChildrenPageClient({
 
   // Debounced search state (local, synced to URL on change)
   const [searchValue, setSearchValue] = useState(filters.search);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   // ── URL param helpers ──────────────────────────
 
@@ -236,6 +237,25 @@ export function ChildrenPageClient({
   const handleSearchSubmit = useCallback(() => {
     updateParams({ search: searchValue });
   }, [searchValue, updateParams]);
+
+  // Debounced instant search — triggers on typing
+  useEffect(() => {
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+    }
+    // Skip the initial render where searchValue matches filters.search
+    if (searchValue === filters.search) return;
+
+    searchDebounceRef.current = setTimeout(() => {
+      updateParams({ search: searchValue });
+    }, 350);
+
+    return () => {
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+      }
+    };
+  }, [searchValue]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleBranchChange = useCallback(
     (value: string) => {
@@ -371,23 +391,28 @@ export function ChildrenPageClient({
       <div className="space-y-4 p-4 md:p-6">
         {/* ── Toolbar ─────────────────────────────── */}
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          {/* Search */}
-          <form
-            className="relative w-full sm:max-w-xs"
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSearchSubmit();
-            }}
-          >
+          {/* Search — instant debounced filter */}
+          <div className="relative w-full sm:max-w-xs">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search by name..."
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
-              onBlur={handleSearchSubmit}
-              className="pl-9"
+              className="pl-9 pr-8"
             />
-          </form>
+            {searchValue && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchValue("");
+                  updateParams({ search: "" });
+                }}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X className="size-3.5" />
+              </button>
+            )}
+          </div>
 
           {/* Branch filter */}
           <Select value={filters.branch} onValueChange={handleBranchChange}>

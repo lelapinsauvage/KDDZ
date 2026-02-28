@@ -72,24 +72,25 @@ export function Header() {
       <div className="flex flex-1 items-center gap-2 px-1 md:px-3">
         <ContextSwitcher />
 
-        {/* Search pill — desktop */}
+        {/* Search pill — tablet & desktop */}
         <button
           onClick={() => setSearchOpen(true)}
-          className="hidden items-center gap-2 rounded-full border border-border/40 bg-muted/40 px-3.5 py-1.5 text-[13px] text-muted-foreground transition-all hover:bg-muted/70 hover:border-border/60 focus:outline-none focus:ring-2 focus:ring-ring/20 lg:flex"
+          className="hidden items-center gap-2 rounded-full border border-border/40 bg-muted/40 px-3.5 py-1.5 text-[13px] text-muted-foreground transition-all hover:bg-muted/70 hover:border-border/60 focus:outline-none focus:ring-2 focus:ring-ring/20 md:flex"
         >
           <Search className="size-3.5 text-muted-foreground/60" />
-          <span className="text-muted-foreground/60">Search...</span>
+          <span className="text-muted-foreground/60 min-w-[100px]">Search...</span>
           <kbd className="ml-3 rounded-md border border-border/40 bg-background/80 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground/70">
             ⌘K
           </kbd>
         </button>
 
-        {/* Search icon — mobile */}
+        {/* Search button — mobile */}
         <button
           onClick={() => setSearchOpen(true)}
-          className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground lg:hidden"
+          className="flex items-center gap-1.5 rounded-full bg-muted/40 border border-border/30 px-2.5 py-1.5 text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground md:hidden"
         >
-          <Search className="size-[18px]" />
+          <Search className="size-4" />
+          <span className="text-xs">Search</span>
         </button>
 
         <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
