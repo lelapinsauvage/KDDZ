@@ -383,6 +383,66 @@ export async function getMorningBriefing(): Promise<MorningBriefing> {
   };
 }
 
+// ── Demographics / KPI data ──────────────────────
+
+export interface DashboardDemographics {
+  totalBranches: number;
+  totalClasses: number;
+  totalActiveChildren: number;
+  childrenPerClass: Array<{ name: string; value: number }>;
+  genderStats: Array<{ name: string; value: number }>;
+}
+
+export async function getDashboardDemographics(): Promise<DashboardDemographics> {
+  const { organizationId: orgId } = await requireOrg();
+
+  const [totalBranches, totalClasses, totalActiveChildren, classCounts, genderCounts] =
+    await Promise.all([
+      db.branch.count({ where: { organizationId: orgId } }),
+      db.class.count({ where: { branch: { organizationId: orgId } } }),
+      db.child.count({
+        where: { isActive: true, isDraft: false, branch: { organizationId: orgId } },
+      }),
+      db.child.groupBy({
+        by: ["classId"],
+        where: { isActive: true, isDraft: false, branch: { organizationId: orgId } },
+        _count: true,
+      }),
+      db.child.groupBy({
+        by: ["gender"],
+        where: { isActive: true, isDraft: false, branch: { organizationId: orgId } },
+        _count: true,
+      }),
+    ]);
+
+  // Resolve class names for the grouped data
+  const classIds = classCounts
+    .map((c) => c.classId)
+    .filter((id): id is string => id !== null);
+
+  const classes =
+    classIds.length > 0
+      ? await db.class.findMany({
+          where: { id: { in: classIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+
+  const classNameMap = new Map(classes.map((c) => [c.id, c.name]));
+
+  const childrenPerClass = classCounts.map((c) => ({
+    name: c.classId ? classNameMap.get(c.classId) ?? "Unknown" : "No Class",
+    value: c._count,
+  }));
+
+  const genderStats = genderCounts.map((g) => ({
+    name: g.gender === "MALE" ? "Male" : g.gender === "FEMALE" ? "Female" : g.gender ?? "Unknown",
+    value: g._count,
+  }));
+
+  return { totalBranches, totalClasses, totalActiveChildren, childrenPerClass, genderStats };
+}
+
 // ── Helpers ──────────────────────────────────────
 
 function statusFromPct(pct: number, greenThreshold: number, amberThreshold: number): PillarStatus {

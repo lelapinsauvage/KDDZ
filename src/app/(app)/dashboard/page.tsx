@@ -1,12 +1,15 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { getMorningBriefing } from "@/lib/actions/dashboard";
+import { getMorningBriefing, getDashboardDemographics } from "@/lib/actions/dashboard";
 import { StatusBoard } from "@/components/dashboard/status-board";
 import { ActionCenter } from "@/components/dashboard/action-center";
 import { TodayMenuWidget } from "@/components/dashboard/today-menu-widget";
 import { WeeklyAttendanceChart } from "@/components/dashboard/weekly-attendance-chart";
 import { InsightsPanel } from "@/components/dashboard/insights-panel";
-import { Sun, Moon, Sunrise } from "lucide-react";
+import { DashboardHeader } from "@/components/dashboard/dashboard-header";
+import { DemographicsSection } from "@/components/dashboard/demographics-section";
+import { StatCard } from "@/components/dashboard/stat-card";
+import { Sun, Moon, Sunrise, Building2, BookOpen, Users } from "lucide-react";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -16,8 +19,12 @@ export default async function DashboardPage() {
   }
 
   let briefing: Awaited<ReturnType<typeof getMorningBriefing>>;
+  let demographics: Awaited<ReturnType<typeof getDashboardDemographics>>;
   try {
-    briefing = await getMorningBriefing();
+    [briefing, demographics] = await Promise.all([
+      getMorningBriefing(),
+      getDashboardDemographics(),
+    ]);
   } catch {
     // Missing org context — show empty state
     briefing = {
@@ -37,7 +44,16 @@ export default async function DashboardPage() {
       todayMenu: { breakfast: null, lunch: null, dessert: null, snack: null },
       weeklyAttendance: [],
     };
+    demographics = {
+      totalBranches: 0,
+      totalClasses: 0,
+      totalActiveChildren: 0,
+      childrenPerClass: [],
+      genderStats: [],
+    };
   }
+
+  const isBranchLevel = session?.user?.branchId != null;
   const userName = session?.user?.name?.split(" ")[0] || "there";
 
   const hour = new Date().getHours();
@@ -98,8 +114,8 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6 p-4 md:p-6">
-      {/* Greeting */}
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+      {/* Greeting + Controls */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-foreground">
             <GreetingIcon className="size-6 text-amber-500" />
@@ -108,12 +124,46 @@ export default async function DashboardPage() {
           <p className="text-sm text-muted-foreground mt-0.5">
             {attentionSummary}
           </p>
+          <p className="text-xs text-muted-foreground mt-0.5">{todayFormatted}</p>
         </div>
-        <p className="text-sm text-muted-foreground">{todayFormatted}</p>
+        <DashboardHeader />
+      </div>
+
+      {/* KPI stat cards */}
+      <div className={`grid gap-4 ${isBranchLevel ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1 sm:grid-cols-3"}`}>
+        {!isBranchLevel && (
+          <StatCard
+            title="Total Branches"
+            value={demographics.totalBranches}
+            icon={Building2}
+            color="teal"
+            href="/branches"
+          />
+        )}
+        <StatCard
+          title="Total Classes"
+          value={demographics.totalClasses}
+          icon={BookOpen}
+          color="blue"
+          href="/classes"
+        />
+        <StatCard
+          title="Active Children"
+          value={demographics.totalActiveChildren}
+          icon={Users}
+          color="emerald"
+          href="/children"
+        />
       </div>
 
       {/* Status pillars */}
       <StatusBoard pillars={pillars} />
+
+      {/* Demographics charts */}
+      <DemographicsSection
+        childrenPerClass={demographics.childrenPerClass}
+        genderStats={demographics.genderStats}
+      />
 
       {/* Action items */}
       <ActionCenter items={briefing.actionItems} />
