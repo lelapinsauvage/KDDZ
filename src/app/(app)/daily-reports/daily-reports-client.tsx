@@ -126,17 +126,17 @@ function getInitials(name: string) {
 function getMoodConfig(mood: string): { color: string; icon: typeof Smile; label: string } {
   switch (mood) {
     case "HAPPY":
-      return { color: "bg-[#6B8F71]/10 text-[#6B8F71] border-[#6B8F71]/20", icon: Smile, label: "Happy" };
+      return { color: "bg-[var(--color-success-light)] text-[var(--color-success-dark)] border-[var(--color-success)]/20", icon: Smile, label: "Happy" };
     case "CALM":
-      return { color: "bg-blue-50 text-blue-700 border-blue-200", icon: Meh, label: "Calm" };
+      return { color: "bg-[var(--color-info-light)] text-[var(--color-info-dark)] border-[var(--color-info)]/20", icon: Meh, label: "Calm" };
     case "FUSSY":
-      return { color: "bg-orange-50 text-orange-700 border-orange-200", icon: Frown, label: "Fussy" };
+      return { color: "bg-[var(--color-warning-light)] text-[var(--color-warning-dark)] border-[var(--color-warning)]/20", icon: Frown, label: "Fussy" };
     case "SLEEPY":
-      return { color: "bg-purple-50 text-purple-700 border-purple-200", icon: Moon, label: "Sleepy" };
+      return { color: "bg-violet-50 text-violet-700 border-violet-200", icon: Moon, label: "Sleepy" };
     case "CRYING":
-      return { color: "bg-red-50 text-red-700 border-red-200", icon: CloudMoon, label: "Crying" };
+      return { color: "bg-[var(--color-error-light)] text-[var(--color-error-dark)] border-[var(--color-error)]/20", icon: CloudMoon, label: "Crying" };
     default:
-      return { color: "bg-gray-50 text-gray-700 border-gray-200", icon: Meh, label: mood };
+      return { color: "bg-muted text-muted-foreground border-border", icon: Meh, label: mood };
   }
 }
 
@@ -144,15 +144,15 @@ function getPortionConfig(portion: string | null): { label: string; color: strin
   if (!portion) return { label: "N/A", color: "text-muted-foreground", dots: 0 };
   switch (portion) {
     case "ALL":
-      return { label: "All", color: "text-[#6B8F71]", dots: 5 };
+      return { label: "All", color: "text-[var(--color-success-dark)]", dots: 5 };
     case "MOST":
-      return { label: "Most", color: "text-[#6B8F71]", dots: 4 };
+      return { label: "Most", color: "text-[var(--color-success-dark)]", dots: 4 };
     case "HALF":
-      return { label: "Half", color: "text-amber-600", dots: 3 };
+      return { label: "Half", color: "text-[var(--color-warning-dark)]", dots: 3 };
     case "LITTLE":
-      return { label: "Little", color: "text-orange-600", dots: 2 };
+      return { label: "Little", color: "text-[var(--color-warning)]", dots: 2 };
     case "NONE":
-      return { label: "None", color: "text-red-600", dots: 0 };
+      return { label: "None", color: "text-[var(--color-error)]", dots: 0 };
     default:
       return { label: portion, color: "text-muted-foreground", dots: 0 };
   }
@@ -181,10 +181,10 @@ function MealDots({ portion }: { portion: string | null }) {
             className={`size-1.5 rounded-full ${
               i <= config.dots
                 ? portion === "ALL" || portion === "MOST"
-                  ? "bg-[#6B8F71]"
+                  ? "bg-[var(--color-success)]"
                   : portion === "HALF"
-                  ? "bg-amber-500"
-                  : "bg-orange-500"
+                  ? "bg-[var(--color-warning)]"
+                  : "bg-[var(--color-warning)]"
                 : "bg-muted-foreground/20"
             }`}
           />
@@ -378,12 +378,12 @@ export function DailyReportsClient({
       cell: ({ row }) => {
         const status = row.original.status;
         return status === "SUBMITTED" ? (
-          <Badge className="bg-[#6B8F71]/10 text-[#6B8F71] border-[#6B8F71]/20 gap-1">
+          <Badge className="bg-[var(--color-success-light)] text-[var(--color-success-dark)] border-[var(--color-success)]/20 gap-1">
             <CheckCircle2 className="size-3" />
             Submitted
           </Badge>
         ) : (
-          <Badge className="bg-amber-50 text-amber-700 border-amber-200 gap-1">
+          <Badge className="bg-[var(--color-warning-light)] text-[var(--color-warning-dark)] border-[var(--color-warning)]/20 gap-1">
             <FileEdit className="size-3" />
             Draft
           </Badge>
@@ -465,7 +465,7 @@ export function DailyReportsClient({
         title="Daily Reports"
         breadcrumbs={[{ label: "Daily Reports" }]}
         actions={
-          <Button asChild className="bg-primary hover:bg-primary/90 text-white">
+          <Button asChild>
             <Link href="/daily-reports/new">
               <Plus className="size-4" />
               New Report

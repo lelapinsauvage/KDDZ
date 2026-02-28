@@ -101,21 +101,21 @@ function getSeverityBadge(severity: string) {
   switch (severity) {
     case "Mild":
       return (
-        <Badge className="gap-1 bg-green-50 text-green-700 border-green-200">
+        <Badge className="gap-1 bg-[var(--color-success-light)] text-[var(--color-success-dark)] border-[var(--color-success)]/20">
           <ShieldCheck className="size-3" />
           Mild
         </Badge>
       );
     case "Moderate":
       return (
-        <Badge className="gap-1 bg-orange-50 text-orange-700 border-orange-200">
+        <Badge className="gap-1 bg-[var(--color-warning-light)] text-[var(--color-warning-dark)] border-[var(--color-warning)]/20">
           <ShieldAlert className="size-3" />
           Moderate
         </Badge>
       );
     case "Severe":
       return (
-        <Badge className="gap-1 bg-red-50 text-red-700 border-red-200">
+        <Badge className="gap-1 bg-[var(--color-error-light)] text-[var(--color-error-dark)] border-[var(--color-error)]/20">
           <AlertTriangle className="size-3" />
           Severe
         </Badge>
@@ -133,21 +133,21 @@ function getStatusBadge(status: FormStatus) {
   switch (status) {
     case "DRAFT":
       return (
-        <Badge className="gap-1 bg-slate-100 text-slate-600 border-slate-200">
+        <Badge className="gap-1 bg-muted text-muted-foreground border-border">
           <FileEdit className="size-3" />
           Draft
         </Badge>
       );
     case "SUBMITTED":
       return (
-        <Badge className="gap-1 bg-blue-50 text-blue-700 border-blue-200">
+        <Badge className="gap-1 bg-[var(--color-info-light)] text-[var(--color-info-dark)] border-[var(--color-info)]/20">
           <FileClock className="size-3" />
           Submitted
         </Badge>
       );
     case "REVIEWED":
       return (
-        <Badge className="gap-1 bg-[#6B8F71]/10 text-[#6B8F71] border-[#6B8F71]/20">
+        <Badge className="gap-1 bg-[var(--color-success-light)] text-[var(--color-success-dark)] border-[var(--color-success)]/20">
           <FileCheck className="size-3" />
           Reviewed
         </Badge>
@@ -235,7 +235,7 @@ export function MedicalConditionsClient({
       accessorKey: "conditionType",
       header: "Condition Type",
       cell: ({ row }) => (
-        <Badge className="gap-1 bg-[#8B7355]/10 text-[#8B7355] border-[#8B7355]/20">
+        <Badge className="gap-1 bg-[var(--color-primary-100)] text-[var(--color-primary-700)] border-[var(--color-primary-700)]/20">
           <Heart className="size-3" />
           {row.original.conditionType || "\u2014"}
         </Badge>
@@ -322,7 +322,7 @@ export function MedicalConditionsClient({
           { label: "Conditions" },
         ]}
         actions={
-          <Button asChild className="bg-primary text-white hover:bg-primary/90">
+          <Button asChild>
             <Link href="/medical/conditions/new">
               <Plus className="mr-1 size-4" />
               Add New

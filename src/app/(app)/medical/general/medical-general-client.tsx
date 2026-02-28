@@ -101,21 +101,21 @@ function getStatusBadge(status: FormStatus) {
   switch (status) {
     case "DRAFT":
       return (
-        <Badge className="gap-1 bg-slate-100 text-slate-600 border-slate-200">
+        <Badge className="gap-1 bg-muted text-muted-foreground border-border">
           <FileEdit className="size-3" />
           Draft
         </Badge>
       );
     case "SUBMITTED":
       return (
-        <Badge className="gap-1 bg-blue-50 text-blue-700 border-blue-200">
+        <Badge className="gap-1 bg-[var(--color-info-light)] text-[var(--color-info-dark)] border-[var(--color-info)]/20">
           <FileClock className="size-3" />
           Submitted
         </Badge>
       );
     case "REVIEWED":
       return (
-        <Badge className="gap-1 bg-[#6B8F71]/10 text-[#6B8F71] border-[#6B8F71]/20">
+        <Badge className="gap-1 bg-[var(--color-success-light)] text-[var(--color-success-dark)] border-[var(--color-success)]/20">
           <FileCheck className="size-3" />
           Reviewed
         </Badge>
@@ -303,7 +303,7 @@ export function MedicalGeneralClient({
           { label: "General" },
         ]}
         actions={
-          <Button asChild className="bg-primary text-white hover:bg-primary/90">
+          <Button asChild>
             <Link href="/medical/general/new">
               <Plus className="mr-1 size-4" />
               Add New

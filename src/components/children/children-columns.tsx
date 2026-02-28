@@ -295,9 +295,9 @@ export function getChildrenColumns(
       cell: ({ row }) => {
         const status = getStatus(row.original);
         const config: Record<string, { className: string; icon: typeof CircleCheck; label: string }> = {
-          ACTIVE: { className: "bg-[#6B8F71]/10 text-[#6B8F71] border-[#6B8F71]/20", icon: CircleCheck, label: "Active" },
+          ACTIVE: { className: "bg-[var(--color-success-light)] text-[var(--color-success-dark)] border-[var(--color-success)]/20", icon: CircleCheck, label: "Active" },
           INACTIVE: { className: "bg-muted text-muted-foreground border-muted", icon: CircleOff, label: "Inactive" },
-          DRAFT: { className: "bg-[#B08968]/10 text-[#B08968] border-[#B08968]/20", icon: CircleDashed, label: "Draft" },
+          DRAFT: { className: "bg-[var(--color-warning-light)] text-[var(--color-warning-dark)] border-[var(--color-warning)]/20", icon: CircleDashed, label: "Draft" },
         };
         const { className, icon: Icon, label } = config[status] ?? config.INACTIVE;
         return (

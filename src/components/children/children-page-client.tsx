@@ -359,7 +359,7 @@ export function ChildrenPageClient({
           { label: "Children" },
         ]}
         actions={
-          <Button asChild className="bg-primary text-white hover:bg-primary/90">
+          <Button asChild>
             <Link href="/children/new">
               <Plus className="mr-1 size-4" />
               Add Child
@@ -521,9 +521,9 @@ export function ChildrenPageClient({
                     : "INACTIVE";
                   const statusColor =
                     status === "ACTIVE"
-                      ? "bg-[#6B8F71]/10 text-[#6B8F71] border-[#6B8F71]/20"
+                      ? "bg-[var(--color-success-light)] text-[var(--color-success-dark)] border-[var(--color-success)]/20"
                       : status === "DRAFT"
-                      ? "bg-[#B08968]/10 text-[#B08968] border-[#B08968]/20"
+                      ? "bg-[var(--color-warning-light)] text-[var(--color-warning-dark)] border-[var(--color-warning)]/20"
                       : "bg-muted text-muted-foreground border-muted";
                   const age = child.dateOfBirth ? getChildAge(child.dateOfBirth) : null;
                   const initials = getInitials(child.firstName, child.lastName);
@@ -576,68 +576,70 @@ export function ChildrenPageClient({
             )
           ) : (
             /* Table View */
-            <div className="overflow-x-auto rounded-lg border bg-card">
-              <Table className="min-w-[700px]">
-                <TableHeader>
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <TableRow key={headerGroup.id}>
-                      {headerGroup.headers.map((header) => (
-                        <TableHead
-                          key={header.id}
-                          className="bg-muted/50 text-xs font-semibold uppercase text-muted-foreground"
-                        >
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableHeader>
-                <TableBody>
-                  {isPending ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={columns.length}
-                        className="h-24 text-center text-muted-foreground"
-                      >
-                        Loading...
-                      </TableCell>
-                    </TableRow>
-                  ) : table.getRowModel().rows?.length ? (
-                    table.getRowModel().rows.map((row) => (
-                      <TableRow key={row.id} className="group">
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id} className="text-sm">
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext()
-                            )}
-                          </TableCell>
+            <div className="overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm">
+              <div className="overflow-x-auto">
+                <Table className="min-w-[700px]">
+                  <TableHeader className="sticky top-0 z-10">
+                    {table.getHeaderGroups().map((headerGroup) => (
+                      <TableRow key={headerGroup.id} className="border-border/60 hover:bg-transparent">
+                        {headerGroup.headers.map((header) => (
+                          <TableHead
+                            key={header.id}
+                            className="bg-muted/60 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground px-4 py-3 first:rounded-tl-lg last:rounded-tr-lg"
+                          >
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext()
+                                )}
+                          </TableHead>
                         ))}
                       </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell
-                        colSpan={columns.length}
-                        className="h-40 text-center"
-                      >
-                        <ChildrenEmptyState />
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                    ))}
+                  </TableHeader>
+                  <TableBody>
+                    {isPending ? (
+                      <TableRow className="hover:bg-transparent">
+                        <TableCell
+                          colSpan={columns.length}
+                          className="h-24 text-center text-muted-foreground"
+                        >
+                          Loading...
+                        </TableCell>
+                      </TableRow>
+                    ) : table.getRowModel().rows?.length ? (
+                      table.getRowModel().rows.map((row) => (
+                        <TableRow key={row.id} className="group border-border/40 transition-colors duration-100 hover:bg-accent/40">
+                          {row.getVisibleCells().map((cell) => (
+                            <TableCell key={cell.id} className="px-4 py-3 text-sm">
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext()
+                              )}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow className="hover:bg-transparent">
+                        <TableCell
+                          colSpan={columns.length}
+                          className="h-40 text-center"
+                        >
+                          <ChildrenEmptyState />
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           )}
 
           {/* ── Pagination ──────────────────────────── */}
           {total > 0 && (
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-lg border bg-card/50 px-4 py-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-border/40 bg-card/50 px-4 py-3">
               <p className="text-sm text-muted-foreground">
                 Showing{" "}
                 <span className="font-medium text-foreground">
@@ -672,7 +674,7 @@ export function ChildrenPageClient({
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-8 w-8 border-border/60"
                     onClick={() => handlePageChange(1)}
                     disabled={!canPreviousPage}
                   >
@@ -681,7 +683,7 @@ export function ChildrenPageClient({
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-8 w-8 border-border/60"
                     onClick={() => handlePageChange(filters.page - 1)}
                     disabled={!canPreviousPage}
                   >
@@ -693,7 +695,7 @@ export function ChildrenPageClient({
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-8 w-8 border-border/60"
                     onClick={() => handlePageChange(filters.page + 1)}
                     disabled={!canNextPage}
                   >
@@ -702,7 +704,7 @@ export function ChildrenPageClient({
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-8 w-8 border-border/60"
                     onClick={() => handlePageChange(pageCount)}
                     disabled={!canNextPage}
                   >

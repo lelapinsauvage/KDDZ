@@ -44,17 +44,17 @@ function getDetailPath(type: EmployeeType, id: string): string {
 }
 
 export const roleColors: Record<EmployeeType, string> = {
-  teacher: "bg-[#C35A2C]/10 text-[#C35A2C] border-[#C35A2C]/20",
-  nurse: "bg-[#6B8F71]/10 text-[#6B8F71] border-[#6B8F71]/20",
-  doctor: "bg-[#8B7355]/10 text-[#8B7355] border-[#8B7355]/20",
-  manager: "bg-[#B08968]/10 text-[#B08968] border-[#B08968]/20",
+  teacher: "bg-amber-50 text-amber-700 border-amber-200",
+  nurse: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  doctor: "bg-blue-50 text-blue-700 border-blue-200",
+  manager: "bg-violet-50 text-violet-700 border-violet-200",
 };
 
 export const avatarColors: Record<EmployeeType, string> = {
-  teacher: "bg-[#C35A2C]/10 text-[#C35A2C]",
-  nurse: "bg-[#6B8F71]/10 text-[#6B8F71]",
-  doctor: "bg-[#8B7355]/10 text-[#8B7355]",
-  manager: "bg-[#B08968]/10 text-[#B08968]",
+  teacher: "bg-amber-100 text-amber-700",
+  nurse: "bg-emerald-100 text-emerald-700",
+  doctor: "bg-blue-100 text-blue-700",
+  manager: "bg-violet-100 text-violet-700",
 };
 
 export function createEmployeeColumns(
@@ -185,13 +185,13 @@ export function createEmployeeColumns(
           <div className="flex items-center gap-2">
             <span
               className={`inline-block size-2 rounded-full ${
-                status === "Active" ? "bg-[#6B8F71]" : "bg-muted-foreground/40"
+                status === "Active" ? "bg-[var(--color-success)]" : "bg-muted-foreground/40"
               }`}
             />
             <Badge
               className={
                 status === "Active"
-                  ? "bg-[#6B8F71]/10 text-[#6B8F71] border-[#6B8F71]/20"
+                  ? "bg-[var(--color-success-light)] text-[var(--color-success-dark)] border-[var(--color-success)]/20"
                   : "bg-muted text-muted-foreground border-muted"
               }
             >

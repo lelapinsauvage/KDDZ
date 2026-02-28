@@ -107,7 +107,7 @@ export function EmployeeListingClient({
             columns={employeeExportColumns}
             data={filteredData as unknown as Record<string, unknown>[]}
           />
-          <Button asChild className="bg-primary hover:bg-primary/90 text-white">
+          <Button asChild>
             <Link href={`/employees/${plural.toLowerCase()}/new`}>
               <Plus className="size-4" />
               Add {singular}
