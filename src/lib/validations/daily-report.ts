@@ -52,6 +52,9 @@ export const dailyReportSchema = z.object({
   feverEntries: z.array(feverEntrySchema).default([]),
   milkEntries: z.array(milkEntrySchema).default([]),
 
+  // Batch action
+  applyFoodForAll: z.boolean().default(false),
+
   // Remarks
   remarks: z.string().optional(),
 });

@@ -33,23 +33,32 @@ import {
   Heart,
   Smile,
   Loader2,
+  Check,
+  Droplets,
+  Users,
 } from "lucide-react";
 
-const portionOptions = [
-  { value: "NONE", label: "None" },
-  { value: "LITTLE", label: "A Little" },
+type PortionValue = "NONE" | "LITTLE" | "HALF" | "MOST" | "ALL";
+
+const portionOptions: { value: PortionValue; label: string }[] = [
+  { value: "ALL", label: "Well" },
   { value: "HALF", label: "Half" },
-  { value: "MOST", label: "Most" },
-  { value: "ALL", label: "All" },
+  { value: "LITTLE", label: "Little" },
+  { value: "NONE", label: "None" },
 ];
 
 const moodOptions = [
-  { value: "HAPPY", label: "Happy", emoji: "😊" },
-  { value: "CALM", label: "Calm", emoji: "😌" },
-  { value: "FUSSY", label: "Fussy", emoji: "😤" },
-  { value: "CRYING", label: "Crying", emoji: "😢" },
-  { value: "SLEEPY", label: "Sleepy", emoji: "😴" },
+  { value: "HAPPY", label: "Happy", emoji: "\u{1F60A}" },
+  { value: "CALM", label: "Calm", emoji: "\u{1F60C}" },
+  { value: "FUSSY", label: "Fussy", emoji: "\u{1F624}" },
+  { value: "CRYING", label: "Crying", emoji: "\u{1F622}" },
+  { value: "SLEEPY", label: "Sleepy", emoji: "\u{1F634}" },
 ];
+
+const hygieneRows = [
+  { label: "Diaper", urineKey: "urineDiaper" as const, stoolKey: "stoolDiaper" as const },
+  { label: "Pot", urineKey: "urinePotty" as const, stoolKey: "stoolPotty" as const },
+] as const;
 
 interface ChildOption {
   id: string;
@@ -71,6 +80,72 @@ interface DailyReportFormProps {
   };
   defaultValues?: Partial<DailyReportFormValues>;
   reportId?: string;
+}
+
+/* ── Portion radio pills ── */
+function PortionRadio({
+  value,
+  onChange,
+}: {
+  value?: string;
+  onChange: (val: PortionValue | undefined) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {portionOptions.map((p) => {
+        const isSelected = value === p.value;
+        return (
+          <button
+            key={p.value}
+            type="button"
+            onClick={() => onChange(isSelected ? undefined : p.value)}
+            className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
+              isSelected
+                ? "border-amber-500 bg-amber-500 text-white shadow-sm"
+                : "border-gray-200 bg-white hover:border-amber-300 text-gray-600"
+            }`}
+          >
+            {p.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ── Hygiene tally checkboxes (rounded, rating-style) ── */
+function HygieneCheckRow({
+  count,
+  maxChecks = 5,
+  onChange,
+  activeClass,
+}: {
+  count: number;
+  maxChecks?: number;
+  onChange: (n: number) => void;
+  activeClass: string;
+}) {
+  return (
+    <div className="flex gap-2">
+      {Array.from({ length: maxChecks }, (_, i) => i + 1).map((n) => {
+        const isChecked = n <= count;
+        return (
+          <button
+            key={n}
+            type="button"
+            onClick={() => onChange(n === count ? n - 1 : n)}
+            className={`size-8 rounded-full border-2 flex items-center justify-center transition-all ${
+              isChecked
+                ? `${activeClass} text-white`
+                : "border-gray-200 bg-white hover:border-gray-300"
+            }`}
+          >
+            {isChecked && <Check className="size-3.5" />}
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 export function DailyReportForm({
@@ -96,6 +171,7 @@ export function DailyReportForm({
       stoolPotty: 0,
       urineDiaper: 0,
       stoolDiaper: 0,
+      applyFoodForAll: false,
       feverEntries: [],
       milkEntries: [],
       ...defaultValues,
@@ -112,8 +188,6 @@ export function DailyReportForm({
 
   const feverArray = useFieldArray({ control: form.control, name: "feverEntries" });
   const milkArray = useFieldArray({ control: form.control, name: "milkEntries" });
-
-  const isSleep = watch("isSleep");
 
   function buildFormData(data: DailyReportFormValues, status: "DRAFT" | "SUBMITTED"): FormData {
     const fd = new FormData();
@@ -132,12 +206,16 @@ export function DailyReportForm({
     if (data.dessertPortion) fd.set("dessertPortion", data.dessertPortion);
     if (data.dessertTime) fd.set("dessertTime", data.dessertTime);
 
-    // Sleep
-    fd.set("isSleep", String(data.isSleep));
+    // Batch action
+    fd.set("applyFoodForAll", String(data.applyFoodForAll));
+
+    // Sleep (auto-derive isSleep from time fields)
+    const hasSleep = !!(data.sleepFrom || data.sleepTo);
+    fd.set("isSleep", String(hasSleep));
     if (data.sleepFrom) fd.set("sleepFrom", data.sleepFrom);
     if (data.sleepTo) fd.set("sleepTo", data.sleepTo);
 
-    // Health
+    // Hygiene
     fd.set("diarrhea", String(data.diarrhea));
     fd.set("urinePotty", String(data.urinePotty));
     fd.set("stoolPotty", String(data.stoolPotty));
@@ -188,7 +266,7 @@ export function DailyReportForm({
         </div>
       )}
 
-      {/* Child & Date Selection */}
+      {/* ── Child & Date ── */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
@@ -210,7 +288,7 @@ export function DailyReportForm({
                 <SelectContent>
                   {childrenList.map((child) => (
                     <SelectItem key={child.id} value={child.id}>
-                      {child.name}{child.className ? ` — ${child.className}` : ""}
+                      {child.name}{child.className ? ` \u2014 ${child.className}` : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -235,18 +313,18 @@ export function DailyReportForm({
         </CardContent>
       </Card>
 
-      {/* Meals */}
-      <Card>
+      {/* ── MEALS ISLAND ── */}
+      <Card className="border-amber-200 bg-amber-50/60">
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <UtensilsCrossed className="size-4 text-primary" />
+          <CardTitle className="flex items-center gap-2 text-base text-amber-900">
+            <UtensilsCrossed className="size-4 text-amber-600" />
             Meals
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Breakfast */}
           <div>
-            <h4 className="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            <h4 className="mb-3 text-sm font-semibold text-amber-700 uppercase tracking-wider">
               Breakfast
             </h4>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -268,19 +346,10 @@ export function DailyReportForm({
               </div>
               <div className="space-y-2">
                 <Label>Portion</Label>
-                <Select
-                  value={watch("breakfastPortion") || ""}
-                  onValueChange={(val) => setValue("breakfastPortion", val as "NONE" | "LITTLE" | "HALF" | "MOST" | "ALL")}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {portionOptions.map((p) => (
-                      <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <PortionRadio
+                  value={watch("breakfastPortion")}
+                  onChange={(val) => setValue("breakfastPortion", val)}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Time</Label>
@@ -289,11 +358,11 @@ export function DailyReportForm({
             </div>
           </div>
 
-          <Separator />
+          <Separator className="bg-amber-200" />
 
           {/* Lunch */}
           <div>
-            <h4 className="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            <h4 className="mb-3 text-sm font-semibold text-amber-700 uppercase tracking-wider">
               Lunch
             </h4>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -315,19 +384,10 @@ export function DailyReportForm({
               </div>
               <div className="space-y-2">
                 <Label>Portion</Label>
-                <Select
-                  value={watch("lunchPortion") || ""}
-                  onValueChange={(val) => setValue("lunchPortion", val as "NONE" | "LITTLE" | "HALF" | "MOST" | "ALL")}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {portionOptions.map((p) => (
-                      <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <PortionRadio
+                  value={watch("lunchPortion")}
+                  onChange={(val) => setValue("lunchPortion", val)}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Time</Label>
@@ -336,11 +396,11 @@ export function DailyReportForm({
             </div>
           </div>
 
-          <Separator />
+          <Separator className="bg-amber-200" />
 
           {/* Dessert */}
           <div>
-            <h4 className="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            <h4 className="mb-3 text-sm font-semibold text-amber-700 uppercase tracking-wider">
               Dessert
             </h4>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -362,19 +422,10 @@ export function DailyReportForm({
               </div>
               <div className="space-y-2">
                 <Label>Portion</Label>
-                <Select
-                  value={watch("dessertPortion") || ""}
-                  onValueChange={(val) => setValue("dessertPortion", val as "NONE" | "LITTLE" | "HALF" | "MOST" | "ALL")}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {portionOptions.map((p) => (
-                      <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <PortionRadio
+                  value={watch("dessertPortion")}
+                  onChange={(val) => setValue("dessertPortion", val)}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Time</Label>
@@ -382,105 +433,191 @@ export function DailyReportForm({
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Sleep */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Moon className="size-4 text-primary" />
-            Sleep
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="isSleep"
-                checked={isSleep}
-                onCheckedChange={(checked) => setValue("isSleep", !!checked)}
-              />
-              <Label htmlFor="isSleep">Child slept today</Label>
-            </div>
+          <Separator className="bg-amber-200" />
 
-            {isSleep && (
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>From</Label>
-                  <Input type="time" {...register("sleepFrom")} />
-                </div>
-                <div className="space-y-2">
-                  <Label>To</Label>
-                  <Input type="time" {...register("sleepTo")} />
-                </div>
-              </div>
-            )}
+          {/* ── Batch Action ── */}
+          <div className="rounded-lg border-2 border-dashed border-amber-400 bg-amber-100/80 p-4 flex items-start gap-3">
+            <Checkbox
+              id="applyFoodForAll"
+              checked={watch("applyFoodForAll")}
+              onCheckedChange={(checked) => setValue("applyFoodForAll", !!checked)}
+              className="mt-0.5 border-amber-500 data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500"
+            />
+            <Label htmlFor="applyFoodForAll" className="cursor-pointer">
+              <span className="flex items-center gap-2 text-sm font-semibold text-amber-900">
+                <Users className="size-4" />
+                Apply Food For All Class Members
+              </span>
+              <span className="text-xs text-amber-700 mt-0.5 block">
+                Food type &amp; time should be filled first
+              </span>
+            </Label>
           </div>
         </CardContent>
       </Card>
 
-      {/* Health & Hygiene */}
+      {/* ── MILK ISLAND ── */}
+      <Card className="border-sky-200 bg-sky-50/60">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-base text-sky-900">
+              <Baby className="size-4 text-sky-600" />
+              Milk Intake
+            </CardTitle>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="border-sky-300 text-sky-700 hover:bg-sky-100"
+              onClick={() => milkArray.append({ amountCc: "", time: "" })}
+            >
+              <Plus className="mr-1 size-3.5" />
+              Add Entry
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {milkArray.fields.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No milk entries. Click &ldquo;Add Entry&rdquo; to log milk intake.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {milkArray.fields.map((field, index) => (
+                <div key={field.id} className="flex items-end gap-3">
+                  <div className="flex-1 space-y-2">
+                    <Label>Amount (cc)</Label>
+                    <Input
+                      type="number"
+                      placeholder="120"
+                      {...register(`milkEntries.${index}.amountCc`)}
+                    />
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <Label>Time</Label>
+                    <Input type="time" {...register(`milkEntries.${index}.time`)} />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => milkArray.remove(index)}
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ── SLEEP ISLAND ── */}
+      <Card className="border-indigo-200 bg-indigo-50/60">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base text-indigo-900">
+            <Moon className="size-4 text-indigo-500" />
+            Nap Time
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label>From</Label>
+              <Input type="time" {...register("sleepFrom")} />
+            </div>
+            <div className="space-y-2">
+              <Label>To</Label>
+              <Input type="time" {...register("sleepTo")} />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── HYGIENE ISLAND ── */}
+      <Card className="border-emerald-200 bg-emerald-50/60">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base text-emerald-900">
+            <Droplets className="size-4 text-emerald-600" />
+            Hygiene
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr>
+                  <th className="w-20" />
+                  <th className="text-center px-2 pb-2">
+                    <span className="text-xs font-semibold text-amber-700 uppercase tracking-wider">
+                      Urine
+                    </span>
+                  </th>
+                  <th className="text-center px-2 pb-2">
+                    <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">
+                      Stool
+                    </span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {hygieneRows.map((row) => (
+                  <tr key={row.label} className="border-t border-emerald-100">
+                    <td className="py-3 pr-4 text-sm font-medium">{row.label}</td>
+                    <td className="py-3 px-2">
+                      <HygieneCheckRow
+                        count={Number(watch(row.urineKey)) || 0}
+                        onChange={(n) => setValue(row.urineKey, n)}
+                        activeClass="border-amber-400 bg-amber-400"
+                      />
+                    </td>
+                    <td className="py-3 px-2">
+                      <HygieneCheckRow
+                        count={Number(watch(row.stoolKey)) || 0}
+                        onChange={(n) => setValue(row.stoolKey, n)}
+                        activeClass="border-emerald-500 bg-emerald-500"
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── Health (Symptoms) ── */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <Heart className="size-4 text-primary" />
-            Health &amp; Hygiene
+            Health
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div>
-            <h4 className="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-              Bathroom
-            </h4>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
-              <div className="space-y-2">
-                <Label>Urine (Potty)</Label>
-                <Input type="number" min="0" {...register("urinePotty")} />
+        <CardContent>
+          <div className="flex flex-wrap gap-3 sm:gap-6">
+            {[
+              { key: "diarrhea" as const, label: "Diarrhea" },
+              { key: "cough" as const, label: "Cough" },
+              { key: "runnyNose" as const, label: "Runny Nose" },
+              { key: "vomit" as const, label: "Vomit" },
+            ].map(({ key, label }) => (
+              <div key={key} className="flex items-center gap-2">
+                <Checkbox
+                  id={key}
+                  checked={watch(key)}
+                  onCheckedChange={(checked) => setValue(key, !!checked)}
+                />
+                <Label htmlFor={key}>{label}</Label>
               </div>
-              <div className="space-y-2">
-                <Label>Stool (Potty)</Label>
-                <Input type="number" min="0" {...register("stoolPotty")} />
-              </div>
-              <div className="space-y-2">
-                <Label>Urine (Diaper)</Label>
-                <Input type="number" min="0" {...register("urineDiaper")} />
-              </div>
-              <div className="space-y-2">
-                <Label>Stool (Diaper)</Label>
-                <Input type="number" min="0" {...register("stoolDiaper")} />
-              </div>
-            </div>
-          </div>
-
-          <Separator />
-
-          <div>
-            <h4 className="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-              Symptoms
-            </h4>
-            <div className="flex flex-wrap gap-3 sm:gap-6">
-              {[
-                { key: "diarrhea" as const, label: "Diarrhea" },
-                { key: "cough" as const, label: "Cough" },
-                { key: "runnyNose" as const, label: "Runny Nose" },
-                { key: "vomit" as const, label: "Vomit" },
-              ].map(({ key, label }) => (
-                <div key={key} className="flex items-center gap-2">
-                  <Checkbox
-                    id={key}
-                    checked={watch(key)}
-                    onCheckedChange={(checked) => setValue(key, !!checked)}
-                  />
-                  <Label htmlFor={key}>{label}</Label>
-                </div>
-              ))}
-            </div>
+            ))}
           </div>
         </CardContent>
       </Card>
 
-      {/* Mood */}
+      {/* ── Mood ── */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
@@ -512,7 +649,7 @@ export function DailyReportForm({
         </CardContent>
       </Card>
 
-      {/* Fever Log */}
+      {/* ── Fever Log ── */}
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
@@ -569,63 +706,7 @@ export function DailyReportForm({
         </CardContent>
       </Card>
 
-      {/* Milk Log */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Baby className="size-4 text-muted-foreground" />
-              Milk Intake
-            </CardTitle>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => milkArray.append({ amountCc: "", time: "" })}
-            >
-              <Plus className="mr-1 size-3.5" />
-              Add Entry
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {milkArray.fields.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No milk entries. Click &ldquo;Add Entry&rdquo; to log milk intake.
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {milkArray.fields.map((field, index) => (
-                <div key={field.id} className="flex items-end gap-3">
-                  <div className="flex-1 space-y-2">
-                    <Label>Amount (cc)</Label>
-                    <Input
-                      type="number"
-                      placeholder="120"
-                      {...register(`milkEntries.${index}.amountCc`)}
-                    />
-                  </div>
-                  <div className="flex-1 space-y-2">
-                    <Label>Time</Label>
-                    <Input type="time" {...register(`milkEntries.${index}.time`)} />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="text-destructive hover:text-destructive"
-                    onClick={() => milkArray.remove(index)}
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Remarks */}
+      {/* ── Remarks ── */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Remarks</CardTitle>
@@ -639,7 +720,7 @@ export function DailyReportForm({
         </CardContent>
       </Card>
 
-      {/* Action Bar */}
+      {/* ── Action Bar ── */}
       <div className="sticky bottom-0 flex items-center justify-end gap-3 border-t border-border/40 bg-card px-4 py-3 md:px-6 md:py-4">
         <Button
           type="button"

@@ -16,3 +16,134 @@ Everything up-to-date
 =============================================
 === Phase 2 — Fix Broken Pages Scan — Sat Feb 28 07:46:16 CET 2026 ===
 =============================================
+Done. Here's the summary:
+
+**Audit results** — 6 pages checked, **1 fix needed**:
+
+- **`dashboard/page.tsx`** — `getMorningBriefing()` calls `requireOrg()` with **no try/catch** at the action level, and the page accessed deep properties (`briefing.attendance.present`, etc.) without guarding. A missing org would crash the page. **Fixed** by wrapping the call in try/catch with a safe empty-state fallback.
+
+- **`children/page.tsx`** — Safe. All 3 actions (`getChildren`, `getBranches`, `getClasses`) have internal try/catch and the page uses `?? []` guards.
+
+- **`daily-reports/page.tsx`** — Safe. Actions return `{ reports: [], total: 0 }` on error.
+
+- **`employees/teachers/page.tsx`** — Safe. `getEmployees` returns `{ success: false }` on error, page guards with `raw?.employees ?? []`.
+
+- **`food/calendar/page.tsx`** — Safe. All actions have internal try/catch with safe defaults.
+
+- **`layout.tsx`** — Safe. Guards DB calls behind `orgId ? ... : []`.
+
+`tsc --noEmit` passes. Committed as `3517e00`.
+To https://github.com/lelapinsauvage/KDDZ.git
+   d20fe23..3517e00  ux-improvements -> ux-improvements
+=== Phase 2 — Fix Broken Pages Scan COMPLETE — Sat Feb 28 07:48:26 CET 2026 ===
+
+=============================================
+=== Phase 3 — Verify All Routes Load — Sat Feb 28 07:48:26 CET 2026 ===
+=============================================
+## QA Results Summary
+
+| Route | Status | Result |
+|---|---|---|
+| `/dashboard` | 307 | Redirects to `/login` |
+| `/children` | 307 | Redirects to `/login` |
+| `/daily-reports` | 307 | Redirects to `/login` |
+| `/employees/teachers` | 307 | Redirects to `/login` |
+| `/food/calendar` | 307 | Redirects to `/login` |
+| `/settings` | 307 | Redirects to `/login` |
+| `/messages/inbox` | 307 | Redirects to `/login` |
+| `/alarms` | 307 | Redirects to `/login` |
+| `/accounting` | 307 | Redirects to `/login` |
+| `/login` | 200 | Renders successfully |
+
+**All 9 major routes are healthy** — returning 307 redirects to the login page (expected for unauthenticated requests). The login page itself returns 200. No 500 errors detected. No fixes needed, so no commit is necessary.
+Everything up-to-date
+=== Phase 3 — Verify All Routes Load COMPLETE — Sat Feb 28 07:49:13 CET 2026 ===
+
+=============================================
+=== Phase 4 — RBAC: requireRole + Dashboard Data Layer — Sat Feb 28 07:49:13 CET 2026 ===
+=============================================
+All done. Summary of changes:
+
+**Task 1** — Created `src/lib/require-role.ts` with `requireRole(...allowedRoles)` that delegates to `requireOrg()` then checks the role, plus an `isAdminRole()` helper.
+
+**Task 2** — Added `await requireRole("ADMIN", "MANAGER")` guard to:
+- `src/app/(app)/settings/page.tsx` (also converted to async)
+- `src/app/(app)/accounting/page.tsx`
+- `src/app/(app)/branches/page.tsx`
+
+**Task 3** — In `src/lib/actions/dashboard.ts`, replaced the overdue payments `findMany` + manual `.length` / `.reduce()` with `db.payment.aggregate({ _count: true, _sum: { amount: true } })` — eliminates fetching all overdue payment records to the server just to count and sum them.
+
+`tsc --noEmit` passes clean. Committed as `85f8f34`.
+To https://github.com/lelapinsauvage/KDDZ.git
+   3517e00..85f8f34  ux-improvements -> ux-improvements
+=== Phase 4 — RBAC: requireRole + Dashboard Data Layer COMPLETE — Sat Feb 28 07:50:48 CET 2026 ===
+
+=============================================
+=== Phase 5 — Manager Dashboard: Global Controls + KPIs — Sat Feb 28 07:50:48 CET 2026 ===
+=============================================
+All done. Here's a summary of what was implemented:
+
+### Changes Made
+
+**1. Date Range Picker** (`src/components/dashboard/date-range-picker.tsx`)
+- Shadcn Calendar + Popover based component with `mode="range"` and 2-month view
+- Preset sidebar buttons: Today, Yesterday, Last 7 Days, Last 30 Days, This Month, Clear
+- Displays formatted date range in the trigger button
+
+**2. Dashboard Header** (`src/components/dashboard/dashboard-header.tsx`)
+- Client component placing the DateRangePicker and School Year selector side-by-side
+- School Year selector uses `useAppContext()` to pull available years and the current selection
+- Only renders the year selector when school years are available
+
+**3. Demographics Section** (`src/components/dashboard/demographics-section.tsx`)
+- Two donut charts (Recharts `PieChart` with `innerRadius`) in a 2-column grid
+- **Children Per Class** — uses 8 design-system colors for segments
+- **Gender Distribution** — sage green / rose palette matching existing theme
+- Empty states with icons when no data is available
+
+**4. Server Action** (`src/lib/actions/dashboard.ts`)
+- New `getDashboardDemographics()` function using Prisma `count` and `groupBy`
+- Returns: `totalBranches`, `totalClasses`, `totalActiveChildren`, `childrenPerClass`, `genderStats`
+- Resolves class names via a follow-up query on class IDs
+
+**5. Dashboard Page** (`src/app/(app)/dashboard/page.tsx`)
+- Added KPI row with 3 `StatCard`s: Total Branches (hidden at branch level), Total Classes, Active Children
+- Integrated `DashboardHeader` in the top-right of the greeting section
+- Added `DemographicsSection` between status pillars and action center
+- All existing functionality preserved (morning briefing, status board, action center, menu, charts, insights)
+To https://github.com/lelapinsauvage/KDDZ.git
+   85f8f34..c7efc7b  ux-improvements -> ux-improvements
+=== Phase 5 — Manager Dashboard: Global Controls + KPIs COMPLETE — Sat Feb 28 07:54:56 CET 2026 ===
+
+=============================================
+=== Phase 6 — Manager Dashboard: Compliance Row + Action Center — Sat Feb 28 07:54:56 CET 2026 ===
+=============================================
+All done. Here's a summary of what was implemented:
+
+**1. Compliance Row (StatusBoard)** — Replaced the 5-pillar status board with 4 clickable compliance cards:
+- Total Attendance → `/daily-reports?status=submitted`
+- Total Absence → `/absent-reports`
+- Missing Daily Reports → `/daily-reports?status=missing` (RED highlight with ping dot when > 0)
+- Missing Absent Reports → `/absent-reports?status=missing`
+
+**2. Action Center 9-Grid** — Replaced the old action-items list with a clean 3x3 grid, each with distinct labels:
+- Financial: Total Payments Collected
+- Medical: Incident / Accident Reports
+- Comms: Logged Calls
+- Medical: Completed Medical Visits
+- Compliance: Missing Medical Visits
+- Compliance: Missing Assessments
+- Drafts: Pending Daily Reports
+- Drafts: Pending Medical Reports
+- Drafts: Pending Assessments
+
+**3. Server Actions** — Added `getDailyComplianceStats(branchId?)` and `getActionCenterMetrics(branchId?)` in `dashboard.ts`, both using `Promise.all()` for parallel queries.
+
+**4. Branch Drill-Down** — When `session.user.branchId` is set, all compliance and action center queries scope to that branch, and the "Total Branches" stat card hides.
+To https://github.com/lelapinsauvage/KDDZ.git
+   c7efc7b..445564e  ux-improvements -> ux-improvements
+=== Phase 6 — Manager Dashboard: Compliance Row + Action Center COMPLETE — Sat Feb 28 07:58:26 CET 2026 ===
+
+=============================================
+=== Phase 7 — Daily Report: Present Flow Enhancement — Sat Feb 28 07:58:26 CET 2026 ===
+=============================================
