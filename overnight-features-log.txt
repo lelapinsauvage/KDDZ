@@ -346,3 +346,35 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 15 — Notifications Hub: Templates + Logs — Sat Feb 28 08:33:55 CET 2026 ===
 =============================================
+All done. Here's a summary of what was built:
+
+### Prisma Schema Changes
+- **`NotificationTemplate`** model added with `organizationId`, `category` (unique per org), `enabled`, `subject`, `body`, `createdById` — mapped to `notification_templates` table
+- **`Notification`** model enhanced with `type` and `category` fields + indexes for filtering sent logs
+- Relations added to `Organization` and `User` models
+- `prisma db push` synced the DB
+
+### Server Actions (`src/lib/actions/notification-templates.ts`)
+- **`getNotificationTemplates()`** — fetches all 8 category templates with defaults
+- **`upsertNotificationTemplate()`** — creates or updates a template per category
+- **`getSentNotifications()`** — audit log query with category/date range filters
+- **`resendNotification()`** — duplicates a notification as unread
+
+### Notifications Hub Page (Two Tabs)
+**Tab A — Templates:**
+- 8 categories: Birthday, Missing Reports, Medicine, Insurance, Assessment, Vaccinations, Expiration, Control
+- Each card has: Enable/Disable switch, Subject input, Message Body textarea
+- Clickable variable chips (`[[child_name]]`, `[[parent_name]]`, `[[date]]`, `[[branch_name]]`, `[[class_name]]`) that insert at cursor position
+- "Save All Templates" button persists to DB
+
+**Tab B — Sent Logs:**
+- Category filter dropdown (Calendar, General, Assessment, Reports, Medicine, Birthdays, Events, Insurance, Messages, Contracts)
+- Date range filters (From/To date pickers)
+- Table with columns: ID, Type (badge), Content (snippet), Date, Status (Seen/Unseen badge), Actions (Resend)
+To https://github.com/lelapinsauvage/KDDZ.git
+   c156c9a..4f1a24a  ux-improvements -> ux-improvements
+=== Phase 15 — Notifications Hub: Templates + Logs COMPLETE — Sat Feb 28 08:38:14 CET 2026 ===
+
+=============================================
+=== Phase 16 — Accounting: Sticky DataTable + Payment Modal — Sat Feb 28 08:38:14 CET 2026 ===
+=============================================

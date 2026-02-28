@@ -558,7 +558,7 @@ export async function recordPayment(
       return { success: false, error: firstError };
     }
 
-    const { childId, amount, method, category, notes } = parsed.data;
+    const { childId, amount, currency, method, category, notes, date, coverageFromMonth, coverageToMonth } = parsed.data;
 
     // Verify child belongs to org
     if (!(await verifyChildAccess(childId, ctx.organizationId))) {
@@ -573,12 +573,20 @@ export async function recordPayment(
       return { success: false, error: "Child not found" };
     }
 
+    const currentYear = new Date().getFullYear();
     const payment = await db.payment.create({
       data: {
         childId,
         amount,
-        currency: "USD",
-        date: new Date(),
+        currency: currency ?? "USD",
+        date: date ? new Date(date) : new Date(),
+        dateFrom: coverageFromMonth
+          ? new Date(currentYear, coverageFromMonth - 1, 1)
+          : null,
+        dateTo: coverageToMonth
+          ? new Date(currentYear, coverageToMonth, 0)
+          : null,
+        month: coverageFromMonth ?? null,
         method,
         category,
         status: "PAID",
