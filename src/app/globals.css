@@ -386,11 +386,11 @@
 
 /* ── Header bar (frosted glass) ── */
 .header-bar {
-  background: rgba(247, 248, 250, 0.92);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
   height: 56px;
-  border-bottom: 1px solid rgba(226, 229, 233, 0.6);
+  border-bottom: 1px solid rgba(226, 229, 233, 0.5);
 }
 
 /* ── Footer bar ── */

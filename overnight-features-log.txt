@@ -886,3 +886,27 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 33 — Design: Sidebar Navigation — Sat Feb 28 10:04:49 CET 2026 ===
 =============================================
+Done. Here's what the redesign delivers:
+
+**Brand header** — Logo mark (green `K` square with ring glow) + "KiddzOnline" heading + "Nursery Management" overline. Collapses gracefully in icon mode.
+
+**Clean nav grouping** — Six clear sections matching the brief: Overview, Daily Ops, Children, Health, Finance, Settings. Section labels use the design system overline style (11px, uppercase, `tracking-[0.06em]`, muted 40% opacity).
+
+**Modern active state** — 3px left accent bar in `--sidebar-primary` (#36CCA8) + `--sidebar-accent` background + near-white text + teal icon. Left border clips the rounded corner cleanly (`rounded-l-none`).
+
+**Badge counts** — Pill badges with tinted backgrounds per type: red for alarms, amber for missing reports, teal for unread messages. Each has a subtle matching border for definition on dark surfaces.
+
+**Icon sizing** — Consistent `size-[18px]` icons (bumped from 16px) with `shrink-0` to prevent collapse. Inactive icons at 50% opacity, active icons in teal.
+
+**Smooth transitions** — All items use `transition-all duration-200` for bg, color, and transform changes. No jarring state flips.
+
+**User info footer** — Avatar circle in `--sidebar-primary`, user name + role label, chevron indicator. Opens a dropdown with Profile, Settings, and Log Out. Uses `useSession()` for live data.
+
+**Quick Actions** preserved — ⌘K shortcut trigger remains in footer above the user block, with refined styling.
+To https://github.com/lelapinsauvage/KDDZ.git
+   03b45f6..73ea072  ux-improvements -> ux-improvements
+=== Phase 33 — Design: Sidebar Navigation COMPLETE — Sat Feb 28 10:08:07 CET 2026 ===
+
+=============================================
+=== Phase 34 — Design: Header & Mobile Nav — Sat Feb 28 10:08:07 CET 2026 ===
+=============================================

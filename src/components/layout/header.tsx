@@ -8,6 +8,7 @@ import {
   LogOut,
   Settings,
   Search,
+  ChevronDown,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -53,105 +54,109 @@ export function Header() {
   }, [])
 
   return (
-    <header className="header-bar fixed top-0 left-0 right-0 z-50 flex items-center">
-      {/* Logo area */}
-      <div className="flex h-[56px] w-auto shrink-0 items-center gap-2.5 px-3 md:w-[270px] md:px-4">
-        <SidebarTrigger className="text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors" />
+    <header className="header-bar fixed top-0 left-0 right-0 z-50 flex h-14 items-center">
+      {/* Logo area — anchored left */}
+      <div className="flex h-14 w-auto shrink-0 items-center gap-2 pl-2 pr-3 md:w-[260px] md:pl-3 md:pr-4">
+        <SidebarTrigger className="size-8 text-muted-foreground hover:text-foreground hover:bg-muted/60 rounded-lg transition-colors" />
         <Link href="/dashboard" className="flex items-center gap-2 group">
-          <div className="flex size-7 items-center justify-center rounded-lg bg-[#0B9178] text-white text-xs font-bold shadow-sm group-hover:shadow-md transition-shadow">
+          <div className="flex size-7 items-center justify-center rounded-lg bg-primary text-white text-xs font-bold shadow-sm group-hover:shadow-md transition-shadow">
             K
           </div>
-          <span className="hidden font-heading text-[15px] font-bold text-primary tracking-tight sm:block">
+          <span className="hidden font-heading text-[15px] font-bold text-foreground tracking-tight sm:block">
             KiddzOnline
           </span>
         </Link>
       </div>
 
-      {/* Center area */}
-      <div className="flex flex-1 items-center justify-between px-2 md:px-4">
-        <div className="flex items-center gap-2.5">
-          {/* Context Switcher — Branch + Year pill */}
-          <ContextSwitcher />
+      {/* Center — context switcher + search */}
+      <div className="flex flex-1 items-center gap-2 px-1 md:px-3">
+        <ContextSwitcher />
 
-          {/* Search hint */}
-          <button
-            onClick={() => setSearchOpen(true)}
-            className="hidden items-center gap-2 rounded-xl border border-border/50 bg-secondary/50 px-3 py-1.5 text-sm text-muted-foreground transition-all hover:bg-secondary hover:border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 lg:flex"
-          >
-            <Search className="size-3.5 text-muted-foreground/70" />
-            <span className="text-muted-foreground/70">Search...</span>
-            <kbd className="ml-4 rounded-md bg-background border border-border/50 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-              ⌘K
-            </kbd>
-          </button>
+        {/* Search pill — desktop */}
+        <button
+          onClick={() => setSearchOpen(true)}
+          className="hidden items-center gap-2 rounded-full border border-border/40 bg-muted/40 px-3.5 py-1.5 text-[13px] text-muted-foreground transition-all hover:bg-muted/70 hover:border-border/60 focus:outline-none focus:ring-2 focus:ring-ring/20 lg:flex"
+        >
+          <Search className="size-3.5 text-muted-foreground/60" />
+          <span className="text-muted-foreground/60">Search...</span>
+          <kbd className="ml-3 rounded-md border border-border/40 bg-background/80 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground/70">
+            ⌘K
+          </kbd>
+        </button>
 
-          {/* Mobile search icon */}
-          <button
-            onClick={() => setSearchOpen(true)}
-            className="flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground lg:hidden"
-          >
-            <Search className="size-[18px]" />
-          </button>
+        {/* Search icon — mobile */}
+        <button
+          onClick={() => setSearchOpen(true)}
+          className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground lg:hidden"
+        >
+          <Search className="size-[18px]" />
+        </button>
 
-          <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
-        </div>
+        <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
+      </div>
 
-        <div className="flex items-center gap-1">
-          {/* Notification bell dropdown */}
-          <NotificationDropdown
-            notifications={notifications}
-            unreadCount={unreadNotificationCount}
-          />
+      {/* Right — notifications + inbox + user */}
+      <div className="flex items-center gap-0.5 pr-2 md:pr-4">
+        {/* Notification bell */}
+        <NotificationDropdown
+          notifications={notifications}
+          unreadCount={unreadNotificationCount}
+        />
 
-          {/* Inbox tray — unified notifications + messages + alerts */}
-          <InboxTray
-            notifications={notifications}
-            unreadNotificationCount={unreadNotificationCount}
-            unreadMessageCount={unreadMessageCount}
-            recentMessages={recentMessages}
-            alarmCounts={alarmCounts}
-            recentAlarms={recentAlarms}
-            hasCriticalAlarms={hasCriticalAlarms}
-          />
+        {/* Inbox tray */}
+        <InboxTray
+          notifications={notifications}
+          unreadNotificationCount={unreadNotificationCount}
+          unreadMessageCount={unreadMessageCount}
+          recentMessages={recentMessages}
+          alarmCounts={alarmCounts}
+          recentAlarms={recentAlarms}
+          hasCriticalAlarms={hasCriticalAlarms}
+        />
 
-          {/* User dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="ml-1 flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-muted/80 focus:outline-none focus:ring-2 focus:ring-primary/20">
-                <div className="flex size-8 items-center justify-center rounded-full bg-[#0B9178] text-white text-xs font-bold shadow-sm ring-2 ring-background">
-                  {userInitial}
-                </div>
-                <span className="hidden font-medium sm:inline">{userName}</span>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 rounded-2xl">
-              <DropdownMenuLabel className="font-normal">
-                <p className="text-sm font-semibold">{userName}</p>
-                <p className="text-xs text-muted-foreground">Manage your account</p>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                <DropdownMenuItem asChild>
-                  <Link href="/profile">
-                    <User className="mr-2 size-4" />
-                    Profile
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/settings">
-                    <Settings className="mr-2 size-4" />
-                    Settings
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/login" })}>
-                <LogOut className="mr-2 size-4" />
-                Log Out
+        {/* Divider */}
+        <div className="mx-1.5 hidden h-6 w-px bg-border/50 sm:block" />
+
+        {/* User avatar + dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 text-sm transition-colors hover:bg-muted/60 focus:outline-none focus:ring-2 focus:ring-ring/20">
+              <div className="flex size-7 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground ring-2 ring-background">
+                {userInitial}
+              </div>
+              <span className="hidden max-w-[100px] truncate text-[13px] font-medium text-foreground sm:inline">
+                {userName}
+              </span>
+              <ChevronDown className="hidden size-3 text-muted-foreground sm:block" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-52 rounded-xl">
+            <DropdownMenuLabel className="font-normal">
+              <p className="text-sm font-semibold">{userName}</p>
+              <p className="text-xs text-muted-foreground">Manage your account</p>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem asChild>
+                <Link href="/profile">
+                  <User className="mr-2 size-4" />
+                  Profile
+                </Link>
               </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+              <DropdownMenuItem asChild>
+                <Link href="/settings">
+                  <Settings className="mr-2 size-4" />
+                  Settings
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/login" })}>
+              <LogOut className="mr-2 size-4" />
+              Log Out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   )
