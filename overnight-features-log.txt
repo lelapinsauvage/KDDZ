@@ -275,3 +275,26 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 12 — Developmental Assessment: Age Bracket Tabs — Sat Feb 28 08:25:45 CET 2026 ===
 =============================================
+Done. Here's what was implemented:
+
+**Age Bracket Tabs** — A horizontally scrollable row of 7 pill-shaped tabs at the top: `0-3 mos`, `4-7 mos`, `8-12 mos`, `13-24 mos`, `24-36 mos`, `3-4 yrs`, `4-5 yrs`. The active tab is styled with inverted colors (`bg-foreground text-background`). The tab bar is sticky so it stays visible while scrolling through criteria.
+
+**Large Tappable Yes/No Pill Buttons** — Each criterion has two `min-w-[72px] h-11` rounded-full buttons:
+- **Yes**: emerald-500 green when active, outline when inactive
+- **No**: neutral-500 gray when active, outline when inactive
+- Alternating row backgrounds for readability
+
+**Developmental Red Flags** — Checkboxes with amber highlighting. When checked, the row gets an amber background tint. A "Critical for Ministry" badge appears in the section header.
+
+**Comments** — Textarea at the bottom for teacher notes.
+
+**Progress tracking** — A visual progress bar with percentage, plus per-category completion badges (e.g., `5/7`).
+
+**State management** — Responses are keyed by `{type}_{criterion.key}` so switching between age bracket tabs preserves entered data. On submit, only the active tab's data is saved.
+To https://github.com/lelapinsauvage/KDDZ.git
+   c684e03..d9254ee  ux-improvements -> ux-improvements
+=== Phase 12 — Developmental Assessment: Age Bracket Tabs COMPLETE — Sat Feb 28 08:28:22 CET 2026 ===
+
+=============================================
+=== Phase 13 — Food Calendar: Month View with Pill Tags — Sat Feb 28 08:28:22 CET 2026 ===
+=============================================

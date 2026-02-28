@@ -8,15 +8,21 @@ import {
   Plus,
   CalendarDays,
   Trash2,
+  Check,
+  ChevronsUpDown,
+  X,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 
+import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -29,10 +35,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
   getFoodCalendarMonth,
   setFoodCalendarEntry,
   deleteFoodCalendarEntry,
 } from "@/lib/actions/food";
+import { toast } from "sonner";
 
 // ── Types ───────────────────────────────────────
 type MealType = "BREAKFAST" | "LUNCH" | "DESSERT" | "SNACK";
@@ -59,12 +79,17 @@ const MONTH_NAMES = [
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-const MEALS: { type: MealType; label: string; color: string; bg: string; abbr: string }[] = [
-  { type: "BREAKFAST", label: "Breakfast", color: "text-blue-700", bg: "bg-blue-100", abbr: "B" },
-  { type: "LUNCH", label: "Lunch", color: "text-green-700", bg: "bg-green-100", abbr: "L" },
-  { type: "DESSERT", label: "Dessert", color: "text-pink-700", bg: "bg-pink-100", abbr: "D" },
-  { type: "SNACK", label: "Snack", color: "text-amber-700", bg: "bg-amber-100", abbr: "S" },
+const MEALS: { type: MealType; label: string; pillBg: string; pillText: string }[] = [
+  { type: "BREAKFAST", label: "Breakfast", pillBg: "bg-amber-100", pillText: "text-amber-800" },
+  { type: "LUNCH", label: "Lunch", pillBg: "bg-emerald-100", pillText: "text-emerald-800" },
+  { type: "DESSERT", label: "Dessert", pillBg: "bg-pink-100", pillText: "text-pink-800" },
 ];
+
+const MEAL_LABEL_COLORS: Record<string, string> = {
+  BREAKFAST: "text-amber-600",
+  LUNCH: "text-emerald-600",
+  DESSERT: "text-pink-600",
+};
 
 function toISODate(year: number, month: number, day: number): string {
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -76,6 +101,93 @@ function getDaysInMonth(year: number, month: number): number {
 
 function getFirstDayOfWeek(year: number, month: number): number {
   return new Date(year, month - 1, 1).getDay();
+}
+
+// ── Searchable Combobox ─────────────────────────
+function MealCombobox({
+  value,
+  onValueChange,
+  options,
+  placeholder,
+  showNoneProminent,
+}: {
+  value: string;
+  onValueChange: (val: string) => void;
+  options: FoodOption[];
+  placeholder: string;
+  showNoneProminent?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const selectedFood = options.find((f) => f.id === value);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between font-normal"
+        >
+          {value === "NONE" ? (
+            <span className="text-muted-foreground">None</span>
+          ) : selectedFood ? (
+            selectedFood.name
+          ) : (
+            <span className="text-muted-foreground">{placeholder}</span>
+          )}
+          <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <Command>
+          <CommandInput placeholder={`Search ${placeholder.toLowerCase()}...`} />
+          <CommandList>
+            <CommandEmpty>No items found.</CommandEmpty>
+            <CommandGroup>
+              {showNoneProminent ? (
+                <CommandItem
+                  value="__none__"
+                  onSelect={() => {
+                    onValueChange("NONE");
+                    setOpen(false);
+                  }}
+                  className="font-medium"
+                >
+                  <X className={cn("mr-2 size-4", value === "NONE" ? "opacity-100" : "opacity-0")} />
+                  None (no dessert)
+                </CommandItem>
+              ) : (
+                <CommandItem
+                  value="__none__"
+                  onSelect={() => {
+                    onValueChange("NONE");
+                    setOpen(false);
+                  }}
+                >
+                  <Check className={cn("mr-2 size-4", value === "NONE" ? "opacity-100" : "opacity-0")} />
+                  <span className="text-muted-foreground">None</span>
+                </CommandItem>
+              )}
+              {options.map((food) => (
+                <CommandItem
+                  key={food.id}
+                  value={food.name}
+                  onSelect={() => {
+                    onValueChange(food.id);
+                    setOpen(false);
+                  }}
+                >
+                  <Check className={cn("mr-2 size-4", value === food.id ? "opacity-100" : "opacity-0")} />
+                  {food.name}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 // ── Props ───────────────────────────────────────
@@ -109,7 +221,6 @@ export function FoodCalendarClient({
   const [dialogBreakfast, setDialogBreakfast] = useState("NONE");
   const [dialogLunch, setDialogLunch] = useState("NONE");
   const [dialogDessert, setDialogDessert] = useState("NONE");
-  const [dialogSnack, setDialogSnack] = useState("NONE");
 
   const fetchCalendar = useCallback(
     async (branchId: string, y: number, m: number) => {
@@ -198,7 +309,6 @@ export function FoodCalendarClient({
       setDialogBreakfast(dayData["BREAKFAST"]?.foodId ?? "NONE");
       setDialogLunch(dayData["LUNCH"]?.foodId ?? "NONE");
       setDialogDessert(dayData["DESSERT"]?.foodId ?? "NONE");
-      setDialogSnack(dayData["SNACK"]?.foodId ?? "NONE");
       setDialogOpen(true);
     },
     [year, month, calendar]
@@ -213,13 +323,11 @@ export function FoodCalendarClient({
         { type: "BREAKFAST", foodId: dialogBreakfast },
         { type: "LUNCH", foodId: dialogLunch },
         { type: "DESSERT", foodId: dialogDessert },
-        { type: "SNACK", foodId: dialogSnack },
       ];
 
       for (const { type, foodId } of mealSelections) {
         const existing = calendar[selectedDate]?.[type];
         if (foodId === "NONE") {
-          // Remove if existed
           if (existing?.id) {
             await deleteFoodCalendarEntry(existing.id);
           }
@@ -233,9 +341,9 @@ export function FoodCalendarClient({
         }
       }
 
-      // Refresh
       await fetchCalendar(branch, year, month);
       setDialogOpen(false);
+      toast.success("Meals updated");
     });
   }, [
     branch,
@@ -243,7 +351,6 @@ export function FoodCalendarClient({
     dialogBreakfast,
     dialogLunch,
     dialogDessert,
-    dialogSnack,
     calendar,
     year,
     month,
@@ -251,8 +358,8 @@ export function FoodCalendarClient({
     startTransition,
   ]);
 
-  // Remove all meals for the selected day
-  const handleRemoveAll = useCallback(() => {
+  // Clear all meals for the selected day
+  const handleClearDay = useCallback(() => {
     if (!branch || !selectedDate) return;
 
     startTransition(async () => {
@@ -264,10 +371,11 @@ export function FoodCalendarClient({
       }
       await fetchCalendar(branch, year, month);
       setDialogOpen(false);
+      toast.success("Day cleared");
     });
   }, [branch, selectedDate, calendar, year, month, fetchCalendar, startTransition]);
 
-  // Foods filtered by category
+  // Foods filtered by category for combobox options
   const foodsByCategory = useMemo(() => {
     const map: Record<MealType, FoodOption[]> = {
       BREAKFAST: foods.filter((f) => f.category === "BREAKFAST"),
@@ -286,7 +394,6 @@ export function FoodCalendarClient({
     const weeks: (number | null)[][] = [];
     let currentWeek: (number | null)[] = [];
 
-    // Fill leading blanks
     for (let i = 0; i < firstDayOfWeek; i++) {
       currentWeek.push(null);
     }
@@ -299,7 +406,6 @@ export function FoodCalendarClient({
       }
     }
 
-    // Fill trailing blanks
     if (currentWeek.length > 0) {
       while (currentWeek.length < 7) {
         currentWeek.push(null);
@@ -310,6 +416,8 @@ export function FoodCalendarClient({
     return weeks;
   }, [daysInMonth, firstDayOfWeek]);
 
+  const selectedDateHasMeals =
+    selectedDate && Object.keys(calendar[selectedDate] ?? {}).length > 0;
 
   return (
     <>
@@ -371,9 +479,7 @@ export function FoodCalendarClient({
             <div className="flex items-center gap-2 rounded-md border px-4 py-1.5 text-sm font-medium text-foreground min-w-[180px] justify-center">
               {MONTH_NAMES[month - 1]} {year}
               {isPending && (
-                <span className="ml-2 text-xs text-muted-foreground">
-                  Loading...
-                </span>
+                <Loader2 className="ml-2 size-3.5 animate-spin text-muted-foreground" />
               )}
             </div>
             <Button
@@ -385,7 +491,6 @@ export function FoodCalendarClient({
               <ChevronRight className="size-4" />
             </Button>
           </div>
-
         </div>
 
         {/* Calendar Grid */}
@@ -396,7 +501,7 @@ export function FoodCalendarClient({
             </p>
           </div>
         ) : (
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden rounded-2xl">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
@@ -405,7 +510,7 @@ export function FoodCalendarClient({
                       {DAY_NAMES.map((day) => (
                         <th
                           key={day}
-                          className="border-b bg-muted/50 px-2 py-2.5 text-center text-xs font-semibold uppercase text-muted-foreground w-[14.28%]"
+                          className="border-b bg-muted/50 px-2 py-3 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground w-[14.28%]"
                         >
                           {day}
                         </th>
@@ -420,7 +525,7 @@ export function FoodCalendarClient({
                             return (
                               <td
                                 key={dayIdx}
-                                className="border-b border-r last:border-r-0 bg-gray-50/50 p-2 align-top h-[120px]"
+                                className="border-b border-r last:border-r-0 bg-muted/20 p-2 align-top h-[120px]"
                               />
                             );
                           }
@@ -438,24 +543,21 @@ export function FoodCalendarClient({
                           return (
                             <td
                               key={dayIdx}
-                              className={`border-b border-r last:border-r-0 p-1.5 align-top h-[120px] cursor-pointer transition-colors hover:bg-primary/5 group ${
-                                hasMeals
-                                  ? "bg-[#6B8F71]/10"
-                                  : isWeekend
-                                    ? "bg-gray-50/70"
-                                    : "bg-white"
-                              } ${isToday ? "ring-2 ring-inset ring-primary/40" : ""}`}
+                              className={cn(
+                                "border-b border-r last:border-r-0 p-1.5 align-top h-[120px] cursor-pointer transition-colors hover:bg-primary/5 group",
+                                isWeekend && !hasMeals && "bg-muted/10",
+                                isToday && "ring-2 ring-inset ring-primary/40"
+                              )}
                               onClick={() => openDayDialog(day)}
                             >
-                              <div className="flex items-start justify-between mb-1">
+                              <div className="flex items-start justify-between mb-1.5">
                                 <span
-                                  className={`inline-flex size-6 items-center justify-center rounded-full text-sm font-medium ${
+                                  className={cn(
+                                    "inline-flex size-7 items-center justify-center rounded-full text-sm font-medium",
                                     isToday
                                       ? "bg-primary text-primary-foreground"
-                                      : hasMeals
-                                        ? "text-[#6B8F71]"
-                                        : "text-foreground"
-                                  }`}
+                                      : "text-foreground"
+                                  )}
                                 >
                                   {day}
                                 </span>
@@ -465,21 +567,22 @@ export function FoodCalendarClient({
                                   </span>
                                 )}
                               </div>
-                              <div className="space-y-0.5">
+                              <div className="flex flex-col gap-1">
                                 {MEALS.map((meal) => {
                                   const entry = dayData[meal.type];
                                   if (!entry) return null;
                                   return (
-                                    <div
+                                    <span
                                       key={meal.type}
-                                      className={`truncate rounded px-1 py-0.5 text-[10px] leading-tight ${meal.bg} ${meal.color}`}
+                                      className={cn(
+                                        "inline-block truncate rounded-full px-2 py-0.5 text-[10px] font-medium leading-tight",
+                                        meal.pillBg,
+                                        meal.pillText
+                                      )}
                                       title={`${meal.label}: ${entry.foodName}`}
                                     >
-                                      <span className="font-semibold">
-                                        {meal.abbr}
-                                      </span>{" "}
                                       {entry.foodName}
-                                    </div>
+                                    </span>
                                   );
                                 })}
                               </div>
@@ -498,8 +601,14 @@ export function FoodCalendarClient({
         {/* Legend */}
         <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
           {MEALS.map((meal) => (
-            <span key={meal.type} className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 ${meal.bg} ${meal.color}`}>
-              <span className="font-bold">{meal.abbr}</span>
+            <span
+              key={meal.type}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-medium",
+                meal.pillBg,
+                meal.pillText
+              )}
+            >
               {meal.label}
             </span>
           ))}
@@ -526,124 +635,75 @@ export function FoodCalendarClient({
                   }
                 )}
             </DialogTitle>
+            <DialogDescription>
+              Choose meals for this day. Use search to find food items.
+            </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
+          <div className="space-y-5 py-2">
             {/* Breakfast */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-blue-600">
+              <label className={cn("text-sm font-medium", MEAL_LABEL_COLORS.BREAKFAST)}>
                 Breakfast
               </label>
-              <Select
+              <MealCombobox
                 value={dialogBreakfast}
                 onValueChange={setDialogBreakfast}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select breakfast..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="NONE">
-                    <span className="text-muted-foreground">-- None --</span>
-                  </SelectItem>
-                  {foodsByCategory.BREAKFAST.map((f) => (
-                    <SelectItem key={f.id} value={f.id}>
-                      {f.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                options={foodsByCategory.BREAKFAST}
+                placeholder="Select breakfast"
+              />
             </div>
 
             {/* Lunch */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-green-600">
+              <label className={cn("text-sm font-medium", MEAL_LABEL_COLORS.LUNCH)}>
                 Lunch
               </label>
-              <Select value={dialogLunch} onValueChange={setDialogLunch}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select lunch..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="NONE">
-                    <span className="text-muted-foreground">-- None --</span>
-                  </SelectItem>
-                  {foodsByCategory.LUNCH.map((f) => (
-                    <SelectItem key={f.id} value={f.id}>
-                      {f.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <MealCombobox
+                value={dialogLunch}
+                onValueChange={setDialogLunch}
+                options={foodsByCategory.LUNCH}
+                placeholder="Select lunch"
+              />
             </div>
 
             {/* Dessert */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-pink-600">
+              <label className={cn("text-sm font-medium", MEAL_LABEL_COLORS.DESSERT)}>
                 Dessert
               </label>
-              <Select value={dialogDessert} onValueChange={setDialogDessert}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select dessert..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="NONE">
-                    <span className="text-muted-foreground">-- None --</span>
-                  </SelectItem>
-                  {foodsByCategory.DESSERT.map((f) => (
-                    <SelectItem key={f.id} value={f.id}>
-                      {f.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Snack */}
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-yellow-600">
-                Snack
-              </label>
-              <Select value={dialogSnack} onValueChange={setDialogSnack}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select snack..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="NONE">
-                    <span className="text-muted-foreground">-- None --</span>
-                  </SelectItem>
-                  {foodsByCategory.SNACK.map((f) => (
-                    <SelectItem key={f.id} value={f.id}>
-                      {f.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <MealCombobox
+                value={dialogDessert}
+                onValueChange={setDialogDessert}
+                options={foodsByCategory.DESSERT}
+                placeholder="Select dessert"
+                showNoneProminent
+              />
             </div>
           </div>
 
           <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">
-            {selectedDate && Object.keys(calendar[selectedDate] ?? {}).length > 0 && (
+            {selectedDateHasMeals && (
               <Button
                 variant="destructive"
-                size="sm"
-                onClick={handleRemoveAll}
+                onClick={handleClearDay}
                 disabled={isPending}
                 className="gap-1.5 sm:mr-auto"
               >
                 <Trash2 className="size-3.5" />
-                Remove All
+                Clear Day
               </Button>
             )}
             <div className="flex gap-2 sm:ml-auto">
               <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                Close
+                Cancel
               </Button>
               <Button
-                className="text-white"
                 onClick={handleSaveDay}
                 disabled={isPending}
               >
-                {isPending ? "Saving..." : "Update"}
+                {isPending && <Loader2 className="mr-1 size-4 animate-spin" />}
+                Save
               </Button>
             </div>
           </DialogFooter>
