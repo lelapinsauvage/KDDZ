@@ -50,24 +50,24 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#F5F0E8] p-4">
-      {/* Warm radial gradient overlay */}
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(232,168,124,0.15)_0%,_transparent_60%)]" />
-      {/* Decorative warm blobs */}
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      {/* Meadow radial gradient overlay */}
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(11,145,120,0.10)_0%,_transparent_60%)]" />
+      {/* Decorative brand blobs */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -top-32 -left-32 h-80 w-80 rounded-full bg-[#E8A87C]/20 blur-3xl" />
-        <div className="absolute -bottom-32 -right-32 h-80 w-80 rounded-full bg-[#D4A574]/20 blur-3xl" />
-        <div className="absolute top-1/3 right-1/4 h-60 w-60 rounded-full bg-[#C35A2C]/10 blur-3xl" />
+        <div className="absolute -top-32 -left-32 h-80 w-80 rounded-full bg-[#0B9178]/15 blur-3xl" />
+        <div className="absolute -bottom-32 -right-32 h-80 w-80 rounded-full bg-[#36CCA8]/15 blur-3xl" />
+        <div className="absolute top-1/3 right-1/4 h-60 w-60 rounded-full bg-[#0B7464]/10 blur-3xl" />
       </div>
 
       <div className="relative w-full max-w-md">
         {/* Logo */}
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#E8A87C] to-[#C35A2C] text-white shadow-lg shadow-[#C35A2C]/20">
+          <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-[#0B9178] text-white shadow-lg shadow-[#0B9178]/20">
             <span className="text-2xl font-bold">K</span>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Kidd<span className="text-primary">z</span>Online
+          <h1 className="font-heading text-3xl font-bold tracking-tight text-primary">
+            KiddzOnline
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Daycare Management Platform
@@ -113,7 +113,7 @@ function LoginForm() {
             </div>
             <Button
               type="submit"
-              className="h-11 w-full rounded-xl bg-gradient-to-r from-primary to-[#C35A2C] text-white font-medium shadow-md shadow-primary/20 transition-all hover:shadow-lg hover:shadow-primary/25 hover:brightness-110"
+              className="h-11 w-full rounded-xl bg-primary text-white font-medium shadow-md shadow-primary/20 transition-all hover:bg-[#0D5C50] hover:shadow-lg hover:shadow-primary/25"
               disabled={loading}
             >
               {loading ? "Signing in..." : "Sign In"}

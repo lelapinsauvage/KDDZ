@@ -58,11 +58,11 @@ export function Header() {
       <div className="flex h-[56px] w-auto shrink-0 items-center gap-2.5 px-3 md:w-[270px] md:px-4">
         <SidebarTrigger className="text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors" />
         <Link href="/dashboard" className="flex items-center gap-2 group">
-          <div className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-[#E8A87C] to-[#C35A2C] text-white text-xs font-bold shadow-sm group-hover:shadow-md transition-shadow">
+          <div className="flex size-7 items-center justify-center rounded-lg bg-[#0B9178] text-white text-xs font-bold shadow-sm group-hover:shadow-md transition-shadow">
             K
           </div>
-          <span className="hidden text-[15px] font-bold text-foreground tracking-tight sm:block">
-            Kidd<span className="text-primary">z</span>Online
+          <span className="hidden font-heading text-[15px] font-bold text-primary tracking-tight sm:block">
+            KiddzOnline
           </span>
         </Link>
       </div>
@@ -118,7 +118,7 @@ export function Header() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="ml-1 flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-muted/80 focus:outline-none focus:ring-2 focus:ring-primary/20">
-                <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-[#E8A87C] to-[#C35A2C] text-white text-xs font-bold shadow-sm ring-2 ring-background">
+                <div className="flex size-8 items-center justify-center rounded-full bg-[#0B9178] text-white text-xs font-bold shadow-sm ring-2 ring-background">
                   {userInitial}
                 </div>
                 <span className="hidden font-medium sm:inline">{userName}</span>

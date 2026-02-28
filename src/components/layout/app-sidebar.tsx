@@ -45,27 +45,27 @@ interface FlatNavItem {
   badgeKey?: keyof SidebarBadges
 }
 
-/** Color accent per section label for visual grouping */
+/** Color accent per section label for visual grouping — uses design system module accents */
 const sectionColors: Record<string, string> = {
   "Overview":       "text-sidebar-primary",
   "My Day":         "text-sidebar-primary",
-  "Daily Ops":      "text-[#C9B99A]",
-  "Reports":        "text-[#C9B99A]",
-  "Children":       "text-[#D4A574]",
-  "My Class":       "text-[#D4A574]",
-  "Health":         "text-[#C4887A]",
-  "Health Center":  "text-[#C4887A]",
-  "Finance":        "text-[#C9B280]",
-  "Staff & Setup":  "text-[#A89B8C]",
-  "Communication":  "text-[#9BB0A0]",
-  "Reference":      "text-[#A89B8C]",
+  "Daily Ops":      "text-[#36CCA8]",
+  "Reports":        "text-[#36CCA8]",
+  "Children":       "text-[#6DE1C3]",
+  "My Class":       "text-[#6DE1C3]",
+  "Health":         "text-[#A6EFDB]",
+  "Health Center":  "text-[#A6EFDB]",
+  "Finance":        "text-[#94A3B8]",
+  "Staff & Setup":  "text-[#94A3B8]",
+  "Communication":  "text-[#94A3B8]",
+  "Reference":      "text-[#94A3B8]",
 }
 
-/** Badge color per badge key — warm tones that pop on dark sidebar */
+/** Badge color per badge key — brand tones that pop on dark sidebar */
 const badgeColors: Record<keyof SidebarBadges, string> = {
-  activeAlarms:   "bg-[#C35A2C]/20 text-[#E8A87C]",
-  missingReports: "bg-[#C9B280]/20 text-[#E8D5A8]",
-  unreadMessages: "bg-[#6B8F71]/20 text-[#9BB0A0]",
+  activeAlarms:   "bg-[#DC2626]/20 text-[#FCA5A5]",
+  missingReports: "bg-[#D97706]/20 text-[#FCD34D]",
+  unreadMessages: "bg-[#36CCA8]/20 text-[#6DE1C3]",
 }
 
 interface NavSection {
