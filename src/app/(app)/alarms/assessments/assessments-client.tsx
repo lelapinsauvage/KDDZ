@@ -79,7 +79,7 @@ export function AssessmentsClient({ assessments, branches }: AssessmentsClientPr
                   ? "bg-red-100 text-red-700"
                   : d <= 30
                   ? "bg-amber-100 text-amber-700"
-                  : "bg-[#6B8F71]/15 text-[#6B8F71]"
+                  : "bg-[#059669]/15 text-[#059669]"
               }
             >
               {d === 0 ? "Today" : `${d} days`}

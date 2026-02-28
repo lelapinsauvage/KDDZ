@@ -1349,3 +1349,44 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 48 — UX: Print Views — Sat Feb 28 11:17:52 CET 2026 ===
 =============================================
+All done. Here's a summary of what was fixed and polished:
+
+### Global print styles (`globals.css`)
+- **Hide**: sidebar, header, footer, mobile nav, toasts, dialogs
+- **Full-width**: sidebar layout constraints removed so content fills the page
+- **Colors**: `print-color-adjust: exact` preserves background colors (heatmap dots, etc.)
+- **Page breaks**: `break-inside: avoid` on cards, sections, table rows; `break-after: avoid` on headings
+- **Clean output**: all shadows removed, 1.5cm page margins
+
+### Daily report print
+- Added `break-inside: avoid` on every section (meals, sleep, health, potty, remarks)
+- Added missing status field to child info block
+- Ensured `print:text-black` on the printable container
+
+### Food calendar print
+- Removed duplicate inline `<style jsx global>` — global rules now in `globals.css`
+- Kept landscape `@page` directive via a minimal `<style>` tag
+- Added `print:text-black` and `print:text-gray-700` for header cells
+
+### Child profile / medical records print
+- Added `break-inside: avoid` on all sections (basic info, medical, contacts, vaccinations)
+- Added `lunchIncluded` field to printed info
+- Added `print:text-black` and `print:rounded-none` for clean output
+
+### Children list (new print support)
+- Hidden: toolbar, filters, active filter pills, pagination, action column, avatar column
+- Added: print-only header showing "Children List" with count and date
+- Table gets `print:text-[11px]`, full-width, visible borders, no overflow scroll
+
+### Attendance heatmap (new print support)
+- Hidden: filter dropdowns, "click purple dots" hint
+- Added: print-only title with month/year and stat counts
+- Legend preserved with `print:text-black`
+- Grid: compact sizing, static positioning (no sticky), gray borders, preserved color dots
+To https://github.com/lelapinsauvage/KDDZ.git
+   26cc5a4..d92e677  ux-improvements -> ux-improvements
+=== Phase 48 — UX: Print Views COMPLETE — Sat Feb 28 11:24:21 CET 2026 ===
+
+=============================================
+=== Phase 49 — UX: Final Polish Pass — Sat Feb 28 11:24:21 CET 2026 ===
+=============================================

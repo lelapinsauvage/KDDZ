@@ -30,12 +30,12 @@ export function AttendanceChart({ data }: AttendanceChartProps) {
             <AreaChart data={data}>
               <defs>
                 <linearGradient id="gradAttendance" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#6B8F71" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#6B8F71" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#059669" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#059669" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="gradAbsence" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#B07070" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#B07070" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#EC4899" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#EC4899" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#E7E5E4" vertical={false} />
@@ -63,7 +63,7 @@ export function AttendanceChart({ data }: AttendanceChartProps) {
               <Area
                 type="monotone"
                 dataKey="attendance"
-                stroke="#6B8F71"
+                stroke="#059669"
                 fill="url(#gradAttendance)"
                 strokeWidth={2.5}
                 name="Attendance"
@@ -71,7 +71,7 @@ export function AttendanceChart({ data }: AttendanceChartProps) {
               <Area
                 type="monotone"
                 dataKey="absence"
-                stroke="#B07070"
+                stroke="#EC4899"
                 fill="url(#gradAbsence)"
                 strokeWidth={2.5}
                 name="Absence"

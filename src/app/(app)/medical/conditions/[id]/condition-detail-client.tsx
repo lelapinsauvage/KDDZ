@@ -78,7 +78,7 @@ function getStatusBadge(status: string) {
       );
     case "REVIEWED":
       return (
-        <Badge className="bg-[#6B8F71]/10 text-[#6B8F71] border-[#6B8F71]/20">
+        <Badge className="bg-[#059669]/10 text-[#059669] border-[#059669]/20">
           Reviewed
         </Badge>
       );

@@ -246,7 +246,7 @@ export function ParentUsersClient({ users: initialUsers, childrenList }: ParentU
                 <a
                   href={`mailto:${email}`}
                   title={`Email ${email}`}
-                  className="inline-flex size-7 items-center justify-center rounded-md text-[#8B7355] hover:bg-[#8B7355]/10 transition-colors"
+                  className="inline-flex size-7 items-center justify-center rounded-md text-[#4F46E5] hover:bg-[#4F46E5]/10 transition-colors"
                 >
                   <Mail className="size-3.5" />
                 </a>
@@ -262,11 +262,11 @@ export function ParentUsersClient({ users: initialUsers, childrenList }: ParentU
           <Badge
             className={
               row.original.status === "Active"
-                ? "bg-[#6B8F71]/15 text-[#6B8F71]"
+                ? "bg-[#059669]/15 text-[#059669]"
                 : "bg-gray-100 text-gray-600"
             }
           >
-            <span className={`mr-1.5 inline-block size-1.5 rounded-full ${row.original.status === "Active" ? "bg-[#6B8F71]" : "bg-gray-400"}`} />
+            <span className={`mr-1.5 inline-block size-1.5 rounded-full ${row.original.status === "Active" ? "bg-[#059669]" : "bg-gray-400"}`} />
             {row.original.status}
           </Badge>
         ),

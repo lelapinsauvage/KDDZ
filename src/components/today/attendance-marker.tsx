@@ -177,7 +177,7 @@ export function AttendanceMarker({
         {/* Footer */}
         <div className="mt-4 flex items-center justify-between border-t border-border/30 pt-4">
           <div className="flex items-center gap-4 text-xs font-medium">
-            <span className="flex items-center gap-1.5 text-[#6B8F71]">
+            <span className="flex items-center gap-1.5 text-[#059669]">
               <Users className="size-3.5" />
               {presentCount} present
             </span>

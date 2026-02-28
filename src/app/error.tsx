@@ -103,7 +103,7 @@ export default function GlobalError({
                 fontWeight: 500,
                 border: "none",
                 borderRadius: 8,
-                backgroundColor: "#C35A2C",
+                backgroundColor: "#0B9178",
                 color: "white",
                 cursor: "pointer",
               }}

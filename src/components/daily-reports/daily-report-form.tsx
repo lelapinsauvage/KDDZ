@@ -339,7 +339,7 @@ export function DailyReportForm({
       className="space-y-6 p-4 md:p-6"
     >
       {error && (
-        <div className="rounded-md bg-[#B07070]/10 border border-[#B07070]/30 p-3 text-sm text-[#B07070]">
+        <div className="rounded-md bg-[#EC4899]/10 border border-[#EC4899]/30 p-3 text-sm text-[#EC4899]">
           {error}
         </div>
       )}

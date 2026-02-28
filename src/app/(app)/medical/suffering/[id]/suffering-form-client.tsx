@@ -190,7 +190,7 @@ export function SufferingFormClient({
       case "SUBMITTED":
         return <Badge className="bg-blue-50 text-blue-700 border-blue-200">Submitted</Badge>;
       case "REVIEWED":
-        return <Badge className="bg-[#6B8F71]/10 text-[#6B8F71] border-[#6B8F71]/20">Reviewed</Badge>;
+        return <Badge className="bg-[#059669]/10 text-[#059669] border-[#059669]/20">Reviewed</Badge>;
       default:
         return <Badge variant="outline">{s}</Badge>;
     }

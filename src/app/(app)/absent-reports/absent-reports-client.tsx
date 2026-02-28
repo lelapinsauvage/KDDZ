@@ -85,12 +85,12 @@ interface Props {
 
 // -- Avatar helpers --
 const avatarColors = [
-  "bg-[#C35A2C]/10 text-[#C35A2C]",
-  "bg-[#8B7355]/15 text-[#8B7355]",
+  "bg-[#0B9178]/10 text-[#0B9178]",
+  "bg-[#4F46E5]/15 text-[#4F46E5]",
   "bg-rose-100 text-rose-700",
   "bg-amber-100 text-amber-700",
   "bg-sky-100 text-sky-700",
-  "bg-[#6B8F71]/15 text-[#6B8F71]",
+  "bg-[#059669]/15 text-[#059669]",
   "bg-fuchsia-100 text-fuchsia-700",
   "bg-orange-100 text-orange-700",
 ];
@@ -114,7 +114,7 @@ const statusConfig: Record<AbsenceStatus, { color: string; icon: typeof Clock; l
     label: "Pending",
   },
   APPROVED: {
-    color: "bg-[#6B8F71]/10 text-[#6B8F71] border-[#6B8F71]/20",
+    color: "bg-[#059669]/10 text-[#059669] border-[#059669]/20",
     icon: CheckCircle2,
     label: "Approved",
   },
@@ -282,7 +282,7 @@ export function AbsentReportsClient({ reports, branches, initialStatusFilter = "
               <>
                 <Button
                   size="sm"
-                  className="h-7 gap-1 bg-[#6B8F71] text-white hover:bg-[#5A7A5E]"
+                  className="h-7 gap-1 bg-[#059669] text-white hover:bg-[#5A7A5E]"
                   onClick={() => handleStatusUpdate(report.id, "APPROVED")}
                   disabled={isPending}
                 >

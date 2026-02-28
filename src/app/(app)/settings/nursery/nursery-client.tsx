@@ -219,7 +219,7 @@ export default function NurseryClient({ branchId, initialSettings }: NurseryClie
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-[#8B7355]/10 text-[#8B7355]">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-[#4F46E5]/10 text-[#4F46E5]">
                 <Settings2 className="size-5" />
               </div>
               <div>
@@ -251,7 +251,7 @@ export default function NurseryClient({ branchId, initialSettings }: NurseryClie
                       onClick={() => toggleAssessment(t)}
                       className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors ${
                         active
-                          ? "border-[#8B7355]/30 bg-[#8B7355]/15 text-[#8B7355]"
+                          ? "border-[#4F46E5]/30 bg-[#4F46E5]/15 text-[#4F46E5]"
                           : "border-border bg-muted/50 text-muted-foreground hover:bg-muted"
                       }`}
                     >

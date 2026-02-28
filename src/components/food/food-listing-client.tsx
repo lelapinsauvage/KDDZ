@@ -77,7 +77,7 @@ const categoryColors: Record<FoodCategory, string> = {
   BREAKFAST: "bg-[#A0784C]/15 text-[#8B6537] border-[#A0784C]/25",
   LUNCH: "bg-[#C17C5A]/15 text-[#A0613E] border-[#C17C5A]/25",
   DESSERT: "bg-[#B07D62]/15 text-[#9A664A] border-[#B07D62]/25",
-  SNACK: "bg-[#6B8F71]/15 text-[#567352] border-[#6B8F71]/25",
+  SNACK: "bg-[#059669]/15 text-[#047857] border-[#059669]/25",
 };
 
 const categoryLabels: Record<FoodCategory, string> = {
@@ -91,7 +91,7 @@ const categoryIcons: Record<FoodCategory, { icon: typeof Coffee; color: string; 
   BREAKFAST: { icon: Coffee, color: "text-[#A0784C]", bg: "bg-[#A0784C]/10" },
   LUNCH: { icon: Soup, color: "text-[#C17C5A]", bg: "bg-[#C17C5A]/10" },
   DESSERT: { icon: Cake, color: "text-[#B07D62]", bg: "bg-[#B07D62]/10" },
-  SNACK: { icon: Cookie, color: "text-[#6B8F71]", bg: "bg-[#6B8F71]/10" },
+  SNACK: { icon: Cookie, color: "text-[#059669]", bg: "bg-[#059669]/10" },
 };
 
 // ── Props ───────────────────────────────────────
@@ -277,7 +277,7 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
             <Badge
               className={
                 active
-                  ? "bg-[#6B8F71]/15 text-[#567352] border-[#6B8F71]/25"
+                  ? "bg-[#059669]/15 text-[#047857] border-[#059669]/25"
                   : "bg-secondary text-muted-foreground border-border"
               }
             >

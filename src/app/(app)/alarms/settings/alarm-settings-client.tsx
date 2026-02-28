@@ -57,7 +57,7 @@ const ALARM_CONFIGS: AlarmConfig[] = [
     type: "ASSESSMENT",
     label: "Assessments",
     icon: ClipboardCheck,
-    iconColor: "text-[#C35A2C]",
+    iconColor: "text-[#0B9178]",
     settingKeyEnabled: "alarm.assessment.enabled",
     settingKeyThreshold: "alarm.assessment.threshold",
     defaultThreshold: "7",
@@ -97,7 +97,7 @@ const ALARM_CONFIGS: AlarmConfig[] = [
     type: "EVENT",
     label: "Events",
     icon: CalendarDays,
-    iconColor: "text-[#C35A2C]",
+    iconColor: "text-[#0B9178]",
     settingKeyEnabled: "alarm.event.enabled",
     settingKeyThreshold: "alarm.event.threshold",
     defaultThreshold: "3",
@@ -137,7 +137,7 @@ const ALARM_CONFIGS: AlarmConfig[] = [
     type: "CONTRACT",
     label: "Contracts",
     icon: FileText,
-    iconColor: "text-[#C35A2C]",
+    iconColor: "text-[#0B9178]",
     settingKeyEnabled: "alarm.contract.enabled",
     settingKeyThreshold: "alarm.contract.threshold",
     defaultThreshold: "30",
@@ -311,7 +311,7 @@ export function AlarmSettingsClient({
             {isPending ? "Saving..." : "Save Settings"}
           </Button>
           {saved && (
-            <span className="text-sm text-[#6B8F71]">
+            <span className="text-sm text-[#059669]">
               Settings saved successfully!
             </span>
           )}

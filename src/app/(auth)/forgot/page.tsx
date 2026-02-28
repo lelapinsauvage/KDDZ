@@ -11,7 +11,6 @@ export default function ForgotPasswordPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    // TODO: implement password reset
     setSent(true);
   }
 

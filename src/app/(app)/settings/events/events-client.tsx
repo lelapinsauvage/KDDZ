@@ -209,7 +209,7 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
               date: values.date,
               endDate: values.endDate || null,
               eventTypeId,
-              eventTypeColor: eventType?.color ?? "#C35A2C",
+              eventTypeColor: eventType?.color ?? "#0B9178",
               eventTypeName: eventType?.name ?? "—",
               branchId,
               branchName,
@@ -241,7 +241,7 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
                     date: values.date,
                     endDate: values.endDate || null,
                     eventTypeId,
-                    eventTypeColor: eventType?.color ?? "#C35A2C",
+                    eventTypeColor: eventType?.color ?? "#0B9178",
                     eventTypeName: eventType?.name ?? "—",
                     branchId,
                     branchName,
@@ -384,7 +384,7 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
           <Badge
             className={
               row.original.isActive
-                ? "bg-[#6B8F71]/15 text-[#6B8F71]"
+                ? "bg-[#059669]/15 text-[#059669]"
                 : "bg-gray-100 text-gray-600"
             }
           >

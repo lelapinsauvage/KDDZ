@@ -16,7 +16,7 @@ export default function OfflinePage() {
         </p>
         <a
           href="/"
-          className="inline-flex items-center gap-2 rounded-lg bg-[#C35A2C] px-6 py-3 font-medium text-white transition hover:bg-[#A8471E]"
+          className="inline-flex items-center gap-2 rounded-lg bg-[#0B9178] px-6 py-3 font-medium text-white transition hover:bg-[#0B7464]"
         >
           <RefreshCw className="h-4 w-4" />
           Try again

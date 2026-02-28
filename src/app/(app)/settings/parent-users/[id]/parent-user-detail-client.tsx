@@ -186,7 +186,7 @@ export function ParentUserDetailClient({ parentUser, childrenList }: ParentUserD
                     {p.email && (
                       <a
                         href={`mailto:${p.email}`}
-                        className="inline-flex size-8 items-center justify-center rounded-md text-[#8B7355] hover:bg-[#8B7355]/10 transition-colors"
+                        className="inline-flex size-8 items-center justify-center rounded-md text-[#4F46E5] hover:bg-[#4F46E5]/10 transition-colors"
                         title="Email"
                       >
                         <Mail className="size-4" />
@@ -215,7 +215,7 @@ export function ParentUserDetailClient({ parentUser, childrenList }: ParentUserD
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">{r.name}</span>
                       {r.relation && <Badge variant="outline" className="text-[10px] px-1.5 py-0">{r.relation}</Badge>}
-                      {r.isAuthorized && <Badge className="bg-[#6B8F71]/15 text-[#6B8F71] text-[10px] px-1.5 py-0">Authorized Pickup</Badge>}
+                      {r.isAuthorized && <Badge className="bg-[#059669]/15 text-[#059669] text-[10px] px-1.5 py-0">Authorized Pickup</Badge>}
                     </div>
                   </div>
                   {r.phone && (
@@ -335,11 +335,11 @@ export function ParentUserDetailClient({ parentUser, childrenList }: ParentUserD
                 <Badge
                   className={
                     parentUser.isActive
-                      ? "bg-[#6B8F71]/15 text-[#6B8F71]"
+                      ? "bg-[#059669]/15 text-[#059669]"
                       : "bg-gray-100 text-gray-600"
                   }
                 >
-                  <span className={`mr-1.5 inline-block size-1.5 rounded-full ${parentUser.isActive ? "bg-[#6B8F71]" : "bg-gray-400"}`} />
+                  <span className={`mr-1.5 inline-block size-1.5 rounded-full ${parentUser.isActive ? "bg-[#059669]" : "bg-gray-400"}`} />
                   {parentUser.isActive ? "Active" : "Inactive"}
                 </Badge>
               </div>

@@ -10,7 +10,7 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-const COLORS = ["#6B8F71", "#B07070"];
+const COLORS = ["#059669", "#EC4899"];
 
 interface GenderStatsChartProps {
   data: { name: string; value: number }[];

@@ -61,7 +61,7 @@ interface AttendanceLogsClientProps {
 // ---------------------------------------------------------------------------
 
 const statusColors: Record<string, string> = {
-  CHECK_IN: "bg-[#6B8F71]/15 text-[#6B8F71]",
+  CHECK_IN: "bg-[#059669]/15 text-[#059669]",
   CHECK_OUT: "bg-blue-100 text-blue-700",
   LATE: "bg-amber-100 text-amber-700",
   EARLY_LEAVE: "bg-red-100 text-red-700",

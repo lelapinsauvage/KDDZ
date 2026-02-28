@@ -135,7 +135,7 @@ const methodLabels: Record<string, string> = {
 };
 
 const statusBadgeStyles: Record<string, string> = {
-  PAID: "bg-[#6B8F71]/15 text-[#6B8F71]",
+  PAID: "bg-[#059669]/15 text-[#059669]",
   PENDING: "bg-amber-100 text-amber-700",
   OVERDUE: "bg-red-100 text-red-700",
 };

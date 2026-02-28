@@ -35,63 +35,63 @@ const typeConfig: Record<
 > = {
   BIRTHDAY: {
     icon: Cake,
-    color: "text-[#B07070]",
-    bg: "bg-[#B07070]/10",
-    border: "border-l-[#B07070]",
+    color: "text-[#EC4899]",
+    bg: "bg-[#EC4899]/10",
+    border: "border-l-[#EC4899]",
   },
   ASSESSMENT: {
     icon: ClipboardCheck,
-    color: "text-[#8B7355]",
-    bg: "bg-[#8B7355]/10",
-    border: "border-l-[#8B7355]",
+    color: "text-[#4F46E5]",
+    bg: "bg-[#4F46E5]/10",
+    border: "border-l-[#4F46E5]",
   },
   VACCINATION: {
     icon: Syringe,
-    color: "text-[#6B8F71]",
-    bg: "bg-[#6B8F71]/10",
-    border: "border-l-[#6B8F71]",
+    color: "text-[#059669]",
+    bg: "bg-[#059669]/10",
+    border: "border-l-[#059669]",
   },
   MEDICAL: {
     icon: Heart,
-    color: "text-[#C35A2C]",
-    bg: "bg-[#C35A2C]/10",
-    border: "border-l-[#C35A2C]",
+    color: "text-[#0B9178]",
+    bg: "bg-[#0B9178]/10",
+    border: "border-l-[#0B9178]",
   },
   MEDICINE: {
     icon: Pill,
-    color: "text-[#8B7355]",
-    bg: "bg-[#8B7355]/10",
-    border: "border-l-[#8B7355]",
+    color: "text-[#4F46E5]",
+    bg: "bg-[#4F46E5]/10",
+    border: "border-l-[#4F46E5]",
   },
   INSURANCE: {
     icon: Shield,
-    color: "text-[#C35A2C]",
-    bg: "bg-[#C35A2C]/10",
-    border: "border-l-[#C35A2C]",
+    color: "text-[#0B9178]",
+    bg: "bg-[#0B9178]/10",
+    border: "border-l-[#0B9178]",
   },
   PAYMENT: {
     icon: DollarSign,
-    color: "text-[#B08968]",
-    bg: "bg-[#B08968]/10",
-    border: "border-l-[#B08968]",
+    color: "text-[#D97706]",
+    bg: "bg-[#D97706]/10",
+    border: "border-l-[#D97706]",
   },
   CONTRACT: {
     icon: FileText,
-    color: "text-[#8B7355]",
-    bg: "bg-[#8B7355]/10",
-    border: "border-l-[#8B7355]",
+    color: "text-[#4F46E5]",
+    bg: "bg-[#4F46E5]/10",
+    border: "border-l-[#4F46E5]",
   },
   EVENT: {
     icon: CalendarDays,
-    color: "text-[#6B8F71]",
-    bg: "bg-[#6B8F71]/10",
-    border: "border-l-[#6B8F71]",
+    color: "text-[#059669]",
+    bg: "bg-[#059669]/10",
+    border: "border-l-[#059669]",
   },
   REQUEST: {
     icon: MessageSquare,
-    color: "text-[#6B8F71]",
-    bg: "bg-[#6B8F71]/10",
-    border: "border-l-[#6B8F71]",
+    color: "text-[#059669]",
+    bg: "bg-[#059669]/10",
+    border: "border-l-[#059669]",
   },
 };
 
@@ -272,8 +272,8 @@ export function NotificationDropdown({
             </div>
           ) : (
             <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
-              <div className="flex size-12 items-center justify-center rounded-full bg-[#6B8F71]/10">
-                <CheckCircle2 className="size-6 text-[#6B8F71]" />
+              <div className="flex size-12 items-center justify-center rounded-full bg-[#059669]/10">
+                <CheckCircle2 className="size-6 text-[#059669]" />
               </div>
               <p className="text-sm font-medium text-foreground">
                 All caught up!

@@ -52,18 +52,18 @@ export function getInitials(firstName: string, lastName: string) {
   return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 }
 
-/** Deterministic color from a name string — warm, earthy palette */
+/** Deterministic color from a name string — design-system accent palette */
 const AVATAR_COLORS = [
-  "bg-[#C35A2C]",
-  "bg-[#B08968]",
-  "bg-[#8B7355]",
-  "bg-[#6B8F71]",
-  "bg-[#E8A87C]",
-  "bg-[#A0522D]",
-  "bg-[#D4956A]",
-  "bg-[#7A6B5D]",
-  "bg-[#C4A882]",
-  "bg-[#9B6B4A]",
+  "bg-[#0B9178]",
+  "bg-[#D97706]",
+  "bg-[#4F46E5]",
+  "bg-[#059669]",
+  "bg-[#EA580C]",
+  "bg-[#0284C7]",
+  "bg-[#E11D48]",
+  "bg-[#7C3AED]",
+  "bg-[#2563EB]",
+  "bg-[#9333EA]",
 ] as const;
 
 export function getAvatarColor(name: string): string {
@@ -103,16 +103,16 @@ function getAge(date: Date | string | null) {
   return `${months}m`;
 }
 
-// ── Class pill color palette — warm earthy tones ──
+// ── Class pill color palette — design-system accents ──
 const CLASS_COLORS = [
-  "bg-[#C35A2C]/10 text-[#C35A2C] border-[#C35A2C]/20",
-  "bg-[#B08968]/10 text-[#B08968] border-[#B08968]/20",
-  "bg-[#6B8F71]/10 text-[#6B8F71] border-[#6B8F71]/20",
-  "bg-[#8B7355]/10 text-[#8B7355] border-[#8B7355]/20",
-  "bg-[#A0522D]/10 text-[#A0522D] border-[#A0522D]/20",
-  "bg-[#D4956A]/10 text-[#D4956A] border-[#D4956A]/20",
-  "bg-[#7A6B5D]/10 text-[#7A6B5D] border-[#7A6B5D]/20",
-  "bg-[#9B6B4A]/10 text-[#9B6B4A] border-[#9B6B4A]/20",
+  "bg-[#0B9178]/10 text-[#0B9178] border-[#0B9178]/20",
+  "bg-[#D97706]/10 text-[#D97706] border-[#D97706]/20",
+  "bg-[#059669]/10 text-[#059669] border-[#059669]/20",
+  "bg-[#4F46E5]/10 text-[#4F46E5] border-[#4F46E5]/20",
+  "bg-[#0284C7]/10 text-[#0284C7] border-[#0284C7]/20",
+  "bg-[#E11D48]/10 text-[#E11D48] border-[#E11D48]/20",
+  "bg-[#7C3AED]/10 text-[#7C3AED] border-[#7C3AED]/20",
+  "bg-[#9333EA]/10 text-[#9333EA] border-[#9333EA]/20",
 ] as const;
 
 function getClassColor(className: string): string {
@@ -265,7 +265,7 @@ export function getChildrenColumns(
           <div className="flex items-center gap-1.5">
             <span
               className={`inline-block size-2 rounded-full ${
-                gender === "MALE" ? "bg-[#8B7355]" : "bg-[#D4956A]"
+                gender === "MALE" ? "bg-[#4F46E5]" : "bg-[#E11D48]"
               }`}
             />
             <span className="text-sm">

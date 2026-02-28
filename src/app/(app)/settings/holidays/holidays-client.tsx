@@ -549,7 +549,7 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                 </div>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span className="inline-flex items-center gap-1.5">
-                    <span className="inline-block size-3 rounded bg-[#6B8F71]" />
+                    <span className="inline-block size-3 rounded bg-[#059669]" />
                     Holiday
                   </span>
                   <span className="inline-flex items-center gap-1.5">
@@ -609,7 +609,7 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                                     isToday
                                       ? "bg-primary text-primary-foreground"
                                       : hasHolidays
-                                        ? "text-[#6B8F71] font-semibold"
+                                        ? "text-[#059669] font-semibold"
                                         : "text-foreground"
                                   }`}
                                 >
@@ -636,7 +636,7 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                                         } ${
                                           isEvent
                                             ? "bg-blue-500 text-white hover:bg-blue-600 shadow-sm shadow-blue-500/25"
-                                            : "bg-[#6B8F71] text-white hover:bg-[#5A7A5E] shadow-sm shadow-[#6B8F71]/25"
+                                            : "bg-[#059669] text-white hover:bg-[#5A7A5E] shadow-sm shadow-[#059669]/25"
                                         } ${!bar.holiday.isActive ? "opacity-40 line-through" : ""}`}
                                         style={
                                           isMultiDay

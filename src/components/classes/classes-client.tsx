@@ -91,9 +91,9 @@ interface ClassesClientProps {
 const AVATAR_COLORS = [
   { bg: "bg-[#C17C5A]/15", text: "text-[#A0613E]" },
   { bg: "bg-[#A0784C]/15", text: "text-[#8B6537]" },
-  { bg: "bg-[#6B8F71]/15", text: "text-[#567352]" },
+  { bg: "bg-[#059669]/15", text: "text-[#047857]" },
   { bg: "bg-[#B07D62]/15", text: "text-[#9A664A]" },
-  { bg: "bg-[#8B7355]/15", text: "text-[#755F45]" },
+  { bg: "bg-[#4F46E5]/15", text: "text-[#755F45]" },
   { bg: "bg-[#9B8579]/15", text: "text-[#7D6A5E]" },
   { bg: "bg-[#7A8B6E]/15", text: "text-[#636F58]" },
   { bg: "bg-[#C4956A]/15", text: "text-[#A07A52]" },
@@ -611,8 +611,8 @@ export function ClassesClient({
           </Card>
           <Card className="rounded-2xl py-4 transition-all hover:shadow-md hover:-translate-y-0.5">
             <CardContent className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-[#6B8F71]/10">
-                <Users className="size-5 text-[#6B8F71]" />
+              <div className="flex size-10 items-center justify-center rounded-xl bg-[#059669]/10">
+                <Users className="size-5 text-[#059669]" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Capacity</p>
@@ -697,7 +697,7 @@ export function ClassesClient({
                       <Badge
                         className={
                           cls.isActive
-                            ? "bg-[#6B8F71]/15 text-[#567352] border-[#6B8F71]/25"
+                            ? "bg-[#059669]/15 text-[#047857] border-[#059669]/25"
                             : "bg-muted text-muted-foreground border-border"
                         }
                       >

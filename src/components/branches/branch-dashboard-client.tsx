@@ -44,8 +44,8 @@ export function BranchDashboardClient({ stats }: { stats: BranchStats }) {
       label: "Teachers",
       value: stats.teacherCount,
       icon: Users,
-      bg: "bg-[#8B7355]/15",
-      fg: "text-[#8B7355]",
+      bg: "bg-[#4F46E5]/15",
+      fg: "text-[#4F46E5]",
     },
     {
       label: "Nurses",

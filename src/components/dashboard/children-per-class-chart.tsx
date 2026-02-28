@@ -48,7 +48,7 @@ export function ChildrenPerClassChart({ data }: ChildrenPerClassChartProps) {
                   boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
                 }}
               />
-              <Bar dataKey="children" fill="#B08968" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="children" fill="#D97706" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

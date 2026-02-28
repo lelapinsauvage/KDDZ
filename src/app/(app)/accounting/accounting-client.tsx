@@ -97,13 +97,13 @@ function getInitials(name: string) {
 }
 
 const childAvatarColors = [
-  "bg-[#8B7355]/15 text-[#8B7355]",
+  "bg-[#4F46E5]/15 text-[#4F46E5]",
   "bg-sky-100 text-sky-700",
   "bg-amber-100 text-amber-700",
   "bg-rose-100 text-rose-700",
-  "bg-[#6B8F71]/15 text-[#6B8F71]",
+  "bg-[#059669]/15 text-[#059669]",
   "bg-fuchsia-100 text-fuchsia-700",
-  "bg-[#C35A2C]/10 text-[#C35A2C]",
+  "bg-[#0B9178]/10 text-[#0B9178]",
   "bg-orange-100 text-orange-700",
 ];
 
@@ -200,15 +200,15 @@ export function AccountingClient({
       <div className="space-y-6 p-4 md:p-6">
         {/* ── Summary Cards ── */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Card className="relative overflow-hidden py-4 border-[#6B8F71]/15">
-            <div className="absolute inset-y-0 left-0 w-1 bg-[#6B8F71]" />
+          <Card className="relative overflow-hidden py-4 border-[#059669]/15">
+            <div className="absolute inset-y-0 left-0 w-1 bg-[#059669]" />
             <CardContent className="flex items-center gap-4">
-              <div className="flex size-11 items-center justify-center rounded-xl bg-[#6B8F71]/15">
-                <DollarSign className="size-5 text-[#6B8F71]" />
+              <div className="flex size-11 items-center justify-center rounded-xl bg-[#059669]/15">
+                <DollarSign className="size-5 text-[#059669]" />
               </div>
               <div>
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Revenue</p>
-                <p className="text-2xl font-bold tabular-nums text-[#6B8F71]">
+                <p className="text-2xl font-bold tabular-nums text-[#059669]">
                   {formatCurrency(summary.totalRevenue)}
                 </p>
                 <p className="text-xs text-muted-foreground">

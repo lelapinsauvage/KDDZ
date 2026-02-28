@@ -430,7 +430,7 @@ export function AttendanceClient({
           <div
             className={`flex items-center gap-2 rounded-md border p-3 text-sm ${
               resultMessage.type === "success"
-                ? "border-[#6B8F71]/20 bg-[#6B8F71]/10 text-[#6B8F71]"
+                ? "border-[#059669]/20 bg-[#059669]/10 text-[#059669]"
                 : "border-red-200 bg-red-50 text-red-700"
             }`}
           >

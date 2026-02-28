@@ -64,16 +64,16 @@ function timeAgo(dateStr: string) {
 
 // --- Alarm type config ---
 const alarmTypeConfig: Record<string, { icon: LucideIcon; color: string; bg: string }> = {
-  BIRTHDAY:    { icon: Cake,          color: "text-[#B07070]",  bg: "bg-[#B07070]/10" },
-  VACCINATION: { icon: Syringe,       color: "text-[#6B8F71]",  bg: "bg-[#6B8F71]/10" },
-  MEDICAL:     { icon: Heart,         color: "text-[#C35A2C]",  bg: "bg-[#C35A2C]/10" },
-  MEDICINE:    { icon: Pill,          color: "text-[#8B7355]",  bg: "bg-[#8B7355]/10" },
-  PAYMENT:     { icon: DollarSign,    color: "text-[#B08968]",  bg: "bg-[#B08968]/10" },
-  EVENT:       { icon: Calendar,      color: "text-[#6B8F71]",  bg: "bg-[#6B8F71]/10" },
-  INSURANCE:   { icon: Shield,        color: "text-[#C35A2C]",  bg: "bg-[#C35A2C]/10" },
-  CONTRACT:    { icon: FileText,      color: "text-[#8B7355]",  bg: "bg-[#8B7355]/10" },
-  REQUEST:     { icon: MessageSquare, color: "text-[#6B8F71]",  bg: "bg-[#6B8F71]/10" },
-  ASSESSMENT:  { icon: FileText,      color: "text-[#8B7355]",  bg: "bg-[#8B7355]/10" },
+  BIRTHDAY:    { icon: Cake,          color: "text-[#EC4899]",  bg: "bg-[#EC4899]/10" },
+  VACCINATION: { icon: Syringe,       color: "text-[#059669]",  bg: "bg-[#059669]/10" },
+  MEDICAL:     { icon: Heart,         color: "text-[#0B9178]",  bg: "bg-[#0B9178]/10" },
+  MEDICINE:    { icon: Pill,          color: "text-[#4F46E5]",  bg: "bg-[#4F46E5]/10" },
+  PAYMENT:     { icon: DollarSign,    color: "text-[#D97706]",  bg: "bg-[#D97706]/10" },
+  EVENT:       { icon: Calendar,      color: "text-[#059669]",  bg: "bg-[#059669]/10" },
+  INSURANCE:   { icon: Shield,        color: "text-[#0B9178]",  bg: "bg-[#0B9178]/10" },
+  CONTRACT:    { icon: FileText,      color: "text-[#4F46E5]",  bg: "bg-[#4F46E5]/10" },
+  REQUEST:     { icon: MessageSquare, color: "text-[#059669]",  bg: "bg-[#059669]/10" },
+  ASSESSMENT:  { icon: FileText,      color: "text-[#4F46E5]",  bg: "bg-[#4F46E5]/10" },
   OTHER:       { icon: Bell,          color: "text-[#8B8178]",  bg: "bg-[#8B8178]/10" },
 }
 
@@ -190,7 +190,7 @@ export function InboxTray({
                         </p>
                         <div className="mt-0.5 flex items-center gap-2">
                           {alarm.dueDate && (
-                            <span className={`text-[11px] ${alarm.isOverdue ? "font-medium text-[#C35A2C]" : "text-muted-foreground"}`}>
+                            <span className={`text-[11px] ${alarm.isOverdue ? "font-medium text-[#0B9178]" : "text-muted-foreground"}`}>
                               {alarm.isOverdue ? "Overdue" : `Due ${alarm.dueDate}`}
                             </span>
                           )}

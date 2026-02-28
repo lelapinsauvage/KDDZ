@@ -58,12 +58,12 @@ interface DraftDailyReport {
 
 // -- Avatar helpers --
 const avatarColors = [
-  "bg-[#C35A2C]/10 text-[#C35A2C]",
-  "bg-[#8B7355]/15 text-[#8B7355]",
+  "bg-[#0B9178]/10 text-[#0B9178]",
+  "bg-[#4F46E5]/15 text-[#4F46E5]",
   "bg-rose-100 text-rose-700",
   "bg-amber-100 text-amber-700",
   "bg-sky-100 text-sky-700",
-  "bg-[#6B8F71]/15 text-[#6B8F71]",
+  "bg-[#059669]/15 text-[#059669]",
   "bg-fuchsia-100 text-fuchsia-700",
   "bg-orange-100 text-orange-700",
 ];

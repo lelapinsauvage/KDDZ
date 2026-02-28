@@ -38,42 +38,42 @@ const typeConfig: Record<
 > = {
   general: {
     icon: Stethoscope,
-    iconBg: "bg-[#8B7355]/10",
-    iconColor: "text-[#8B7355]",
+    iconBg: "bg-[#4F46E5]/10",
+    iconColor: "text-[#4F46E5]",
     label: "General",
   },
   conditions: {
     icon: Heart,
-    iconBg: "bg-[#B07070]/10",
-    iconColor: "text-[#B07070]",
+    iconBg: "bg-[#EC4899]/10",
+    iconColor: "text-[#EC4899]",
     label: "Conditions",
   },
   visits: {
     icon: CalendarCheck,
-    iconBg: "bg-[#6B8F71]/10",
-    iconColor: "text-[#6B8F71]",
+    iconBg: "bg-[#059669]/10",
+    iconColor: "text-[#059669]",
     label: "Visits",
   },
   vaccinations: {
     icon: Syringe,
-    iconBg: "bg-[#B08968]/10",
-    iconColor: "text-[#B08968]",
+    iconBg: "bg-[#D97706]/10",
+    iconColor: "text-[#D97706]",
     label: "Vaccinations",
   },
   accidents: {
     icon: AlertTriangle,
-    iconBg: "bg-[#C35A2C]/10",
-    iconColor: "text-[#C35A2C]",
+    iconBg: "bg-[#0B9178]/10",
+    iconColor: "text-[#0B9178]",
     label: "Accidents",
   },
 };
 
 const statusColors: Record<string, string> = {
-  DRAFT: "bg-[#B08968]/10 text-[#B08968] border-[#B08968]/20",
-  SUBMITTED: "bg-[#8B7355]/10 text-[#8B7355] border-[#8B7355]/20",
-  REVIEWED: "bg-[#6B8F71]/10 text-[#6B8F71] border-[#6B8F71]/20",
-  GIVEN: "bg-[#6B8F71]/10 text-[#6B8F71] border-[#6B8F71]/20",
-  PENDING: "bg-[#B08968]/10 text-[#B08968] border-[#B08968]/20",
+  DRAFT: "bg-[#D97706]/10 text-[#D97706] border-[#D97706]/20",
+  SUBMITTED: "bg-[#4F46E5]/10 text-[#4F46E5] border-[#4F46E5]/20",
+  REVIEWED: "bg-[#059669]/10 text-[#059669] border-[#059669]/20",
+  GIVEN: "bg-[#059669]/10 text-[#059669] border-[#059669]/20",
+  PENDING: "bg-[#D97706]/10 text-[#D97706] border-[#D97706]/20",
 };
 
 export function MedicalHub({ data, childId }: MedicalHubProps) {
@@ -204,8 +204,8 @@ export function MedicalHub({ data, childId }: MedicalHubProps) {
       {/* Vaccination Schedule */}
       <div className="rounded-2xl border border-border/40 bg-card shadow-sm">
         <div className="flex items-center gap-2 px-5 py-4">
-          <div className="flex size-7 items-center justify-center rounded-lg bg-[#B08968]/10">
-            <Syringe className="size-3.5 text-[#B08968]" />
+          <div className="flex size-7 items-center justify-center rounded-lg bg-[#D97706]/10">
+            <Syringe className="size-3.5 text-[#D97706]" />
           </div>
           <p className="text-sm font-semibold text-foreground">
             Vaccination Schedule
@@ -225,7 +225,7 @@ export function MedicalHub({ data, childId }: MedicalHubProps) {
                   <div
                     key={v.id}
                     className={`flex items-center gap-3 rounded-xl px-3 py-2.5 ${
-                      isOverdue ? "bg-[#C35A2C]/5 ring-1 ring-[#C35A2C]/20" : "bg-muted/40"
+                      isOverdue ? "bg-[#0B9178]/5 ring-1 ring-[#0B9178]/20" : "bg-muted/40"
                     }`}
                   >
                     <div className="min-w-0 flex-1">
@@ -239,14 +239,14 @@ export function MedicalHub({ data, childId }: MedicalHubProps) {
                       )}
                     </div>
                     {v.dateGiven && (
-                      <span className="text-[11px] text-[#6B8F71] font-medium">
+                      <span className="text-[11px] text-[#059669] font-medium">
                         Given {v.dateGiven}
                       </span>
                     )}
                     {v.nextDueDate && (
                       <span
                         className={`text-[11px] font-medium ${
-                          isOverdue ? "text-[#C35A2C]" : "text-muted-foreground"
+                          isOverdue ? "text-[#0B9178]" : "text-muted-foreground"
                         }`}
                       >
                         {isOverdue ? "Overdue" : "Due"}: {v.nextDueDate}

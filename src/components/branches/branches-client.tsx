@@ -70,7 +70,7 @@ function ComplianceBadge({ percentage }: { percentage: number | null }) {
   }
   if (percentage >= 80) {
     return (
-      <Badge className="bg-[#6B8F71]/15 text-[#567352] border-[#6B8F71]/25 text-[10px]">
+      <Badge className="bg-[#059669]/15 text-[#047857] border-[#059669]/25 text-[10px]">
         {percentage}% compliant
       </Badge>
     );
@@ -153,8 +153,8 @@ export function BranchesClient({ branches }: BranchesClientProps) {
           </Card>
           <Card className="rounded-2xl py-4 transition-all hover:shadow-md hover:-translate-y-0.5">
             <CardContent className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-[#6B8F71]/10">
-                <Users className="size-5 text-[#6B8F71]" />
+              <div className="flex size-10 items-center justify-center rounded-xl bg-[#059669]/10">
+                <Users className="size-5 text-[#059669]" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Students</p>
@@ -206,7 +206,7 @@ export function BranchesClient({ branches }: BranchesClientProps) {
                     <Badge
                       className={
                         branch.isActive
-                          ? "bg-[#6B8F71]/15 text-[#567352] border-[#6B8F71]/25"
+                          ? "bg-[#059669]/15 text-[#047857] border-[#059669]/25"
                           : "bg-muted text-muted-foreground border-border"
                       }
                     >

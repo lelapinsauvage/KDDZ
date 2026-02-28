@@ -566,7 +566,7 @@ export function ChildrenPageClient({
 
                   return (
                     <Link key={child.id} href={`/children/${child.id}/dashboard`}>
-                      <Card className="group transition-all hover:border-[#C35A2C]/30 hover:shadow-[0_4px_20px_-4px_rgba(195,90,44,0.12)]">
+                      <Card className="group transition-all hover:border-[#0B9178]/30 hover:shadow-[0_4px_20px_-4px_rgba(195,90,44,0.12)]">
                         <CardContent className="flex items-start gap-3.5 py-4">
                           <div
                             className={`flex size-11 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white shadow-sm ${avatarBg}`}
@@ -589,7 +589,7 @@ export function ChildrenPageClient({
                                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-1">
                                   <span
                                     className={`inline-block size-1.5 rounded-full ${
-                                      child.gender === "MALE" ? "bg-[#8B7355]" : "bg-[#D4956A]"
+                                      child.gender === "MALE" ? "bg-[#4F46E5]" : "bg-[#E11D48]"
                                     }`}
                                   />
                                   {child.gender === "MALE" ? "Boy" : "Girl"}
