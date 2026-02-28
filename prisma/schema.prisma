@@ -180,6 +180,12 @@ enum DocumentType {
   DIRECTOR_DIPLOMA
   DOCTOR_LICENSE
   FLOOR_PLAN
+  CERTIFIED_PHOTO
+  ID_COPY
+  BUILDING_MAP
+  CHILD_SAFETY_INSURANCE
+  INTERNAL_REGULATIONS
+  HEALTH_FILE
   OTHER
 }
 
@@ -291,54 +297,67 @@ model BranchCompliance {
   id       String @id @default(uuid()) @db.Uuid
   branchId String @unique @db.Uuid
 
-  // Legal Entity
+  // Section A: Legal Entity Type
   entityType        String?
   legalName         String?
   organizationType  String?
   companySubType    String?
   purpose           String? @db.Text
 
-  // Registration
+  // Section B: Owner Information (معلومات عن صاحب العلاقة)
+  ownerFirstName      String?
+  ownerFatherName     String?
+  ownerFamilyName     String?
+  ownerMotherName     String?
+  ownerMotherMaidenName String?
+  ownerDob            DateTime? @db.Date
+  ownerPlaceOfBirth   String?
+  ownerNationality    String?
+  ownerRegistryNumber String?
+
+  // Legacy signatory fields (kept for backward compat)
   registrationNumber String?
   registrationPlace  String?
   registrationDate   DateTime? @db.Date
-
-  // Authorized Signatory
   signatoryName        String?
   signatoryRole        String?
   signatoryNationality String?
   signatoryPhone       String?
 
-  // Nursery Identity
+  // Section C: Nursery Identity
   nameArabic String?
   nameLatin  String?
 
-  // Address
-  country     String?  @default("Lebanon")
-  governorate String?
-  district    String?
-  town        String?
-  floor       String?
-  building    String?
-  street      String?
+  // Section D: Nursery Address (عنوان الحضانة)
+  country        String?  @default("Lebanon")
+  governorate    String?
+  district       String?
+  town           String?
+  realEstateArea String?
+  propertyNumber String?
+  addressSection String?
+  street         String?
+  building       String?
+  floor          String?
+  addrPhone      String?
+  addrFax        String?
+  addrEmail      String?
+  postalCode     String?
+
+  // Legacy address fields (kept for backward compat)
   landmark    String?
   poBox       String?
-  postalCode  String?
-  addrPhone   String?
   addrMobile  String?
-  addrFax     String?
-  addrEmail   String?
   addrWebsite String?
 
-  // Property / Lease
+  // Property / Lease (legacy)
   ownerName          String?
-  propertyNumber     String?
   propertyGovernorate String?
   propertyDistrict   String?
   propertyRegion     String?
   ownershipType      String?
 
-  // Management
+  // Management (legacy)
   directorFirstName  String?
   directorLastName   String?
   directorSpecialty  String?
@@ -348,13 +367,13 @@ model BranchCompliance {
   doctorSyndicateNo  String?
   doctorSpecialty    String?
 
-  // Capacity
+  // Capacity (legacy)
   totalChildren Int?
   walkers       Int?
   nonWalkers    Int?
   workingHours  String?
 
-  // Insurance
+  // Insurance (legacy)
   insuranceCompany      String?
   insuranceContractType String?
 

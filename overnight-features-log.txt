@@ -523,3 +523,32 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 21 — Classes + Teacher Profile Form — Sat Feb 28 09:09:20 CET 2026 ===
 =============================================
+All done. Here's a summary of what was changed:
+
+**Task 1 — Class Form Enhancement** (`classes-client.tsx`):
+- Added **drag-drop image upload zone** with file selection, drag-over highlight, preview display, and remove button (replaces "coming soon" placeholder)
+- Changed **Class Language** from text input to Select dropdown (English/French/Arabic)
+- Changed **Age From/To** from single number + Yr/Mo toggle to **dual inputs** (Years + Months side-by-side), stored as total months in the database
+- Added `decomposeAge`/`formAgeToStorage` helpers for clean conversion between form state and DB storage
+- Updated `formatAge` display to decompose months into "Xyr Ymo" format on class cards
+
+**Task 2 — Employee Form 6-Section Tabbed Layout** (`employee-form-client.tsx`):
+- Reorganized from 13 stacked collapsible sections into **6 vertical tabs** (A–F)
+  - **A: Account & Core Info** — username, personal details, medical case
+  - **B: Contact & Address** — address fields, phone/email
+  - **C: Education & Languages** — degrees, CNSS, language proficiency matrix
+  - **D: Experience** — work, stage/internship, workshop (useFieldArray)
+  - **E: Placement** — remarks, active status, branch, class, hire date
+  - **F: Compliance Documents** — contract, medical test, **first aid** (new), certificates, attachments
+- **Vertical tabs on desktop** (hidden lg:flex), **horizontal tabs on mobile** (lg:hidden)
+- Split the old "General Info" section into separate Contact (tab B) and Education (tab C)
+- Added **FIRST_AID** document type to Prisma enum, Zod schema, and actions type
+
+**TypeScript**: `npx tsc --noEmit` passes cleanly.
+To https://github.com/lelapinsauvage/KDDZ.git
+   87d50e8..bb7443f  ux-improvements -> ux-improvements
+=== Phase 21 — Classes + Teacher Profile Form COMPLETE — Sat Feb 28 09:16:57 CET 2026 ===
+
+=============================================
+=== Phase 22 — Branch Compliance: Ministry Form — Sat Feb 28 09:16:57 CET 2026 ===
+=============================================

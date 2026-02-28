@@ -16,72 +16,38 @@ export type BranchFormValues = z.input<typeof branchFormSchema>;
 
 // ── Compliance form schema ──
 export const branchComplianceSchema = z.object({
-  // Legal Entity
+  // Section A: Legal Entity Type
   entityType: z.string().default(""),
-  legalName: z.string().default(""),
-  organizationType: z.string().default(""),
-  companySubType: z.string().default(""),
-  purpose: z.string().default(""),
 
-  // Registration
-  registrationNumber: z.string().default(""),
-  registrationPlace: z.string().default(""),
-  registrationDate: z.string().default(""),
+  // Section B: Owner Info
+  ownerFirstName: z.string().default(""),
+  ownerFatherName: z.string().default(""),
+  ownerFamilyName: z.string().default(""),
+  ownerMotherName: z.string().default(""),
+  ownerMotherMaidenName: z.string().default(""),
+  ownerDob: z.string().default(""),
+  ownerPlaceOfBirth: z.string().default(""),
+  ownerNationality: z.string().default(""),
+  ownerRegistryNumber: z.string().default(""),
 
-  // Authorized Signatory
-  signatoryName: z.string().default(""),
-  signatoryRole: z.string().default(""),
-  signatoryNationality: z.string().default(""),
-  signatoryPhone: z.string().default(""),
-
-  // Nursery Identity
+  // Section C: Nursery Identity
   nameArabic: z.string().default(""),
   nameLatin: z.string().default(""),
 
-  // Address
-  country: z.string().default("Lebanon"),
+  // Section D: Nursery Address
   governorate: z.string().default(""),
   district: z.string().default(""),
   town: z.string().default(""),
-  floor: z.string().default(""),
-  building: z.string().default(""),
+  realEstateArea: z.string().default(""),
+  propertyNumber: z.string().default(""),
+  addressSection: z.string().default(""),
   street: z.string().default(""),
-  landmark: z.string().default(""),
-  poBox: z.string().default(""),
-  postalCode: z.string().default(""),
+  building: z.string().default(""),
+  floor: z.string().default(""),
   addrPhone: z.string().default(""),
-  addrMobile: z.string().default(""),
   addrFax: z.string().default(""),
   addrEmail: z.string().email("Invalid email").or(z.literal("")).default(""),
-  addrWebsite: z.string().default(""),
-
-  // Property / Lease
-  ownerName: z.string().default(""),
-  propertyNumber: z.string().default(""),
-  propertyGovernorate: z.string().default(""),
-  propertyDistrict: z.string().default(""),
-  propertyRegion: z.string().default(""),
-  ownershipType: z.string().default(""),
-
-  // Management
-  directorFirstName: z.string().default(""),
-  directorLastName: z.string().default(""),
-  directorSpecialty: z.string().default(""),
-  doctorFirstName: z.string().default(""),
-  doctorFatherName: z.string().default(""),
-  doctorLastName: z.string().default(""),
-  doctorSyndicateNo: z.string().default(""),
-  doctorSpecialty: z.string().default(""),
-
-  // Capacity
-  totalChildren: z.coerce.number().int().min(0).default(0),
-  walkers: z.coerce.number().int().min(0).default(0),
-  nonWalkers: z.coerce.number().int().min(0).default(0),
-  workingHours: z.string().default(""),
-
-  // Insurance
-  insuranceCompany: z.string().default(""),
-  insuranceContractType: z.string().default(""),
+  postalCode: z.string().default(""),
 });
 
 export type BranchComplianceFormValues = z.input<typeof branchComplianceSchema>;
@@ -90,55 +56,41 @@ export type BranchComplianceFormValues = z.input<typeof branchComplianceSchema>;
 export const complianceSections = [
   {
     id: "legal-entity",
-    title: "Legal Entity",
-    fields: ["entityType", "legalName", "organizationType", "companySubType", "purpose"] as const,
+    title: "نوع الشخصية القانونية",
+    fields: ["entityType"] as const,
   },
   {
-    id: "registration",
-    title: "Registration",
-    fields: ["registrationNumber", "registrationPlace", "registrationDate"] as const,
+    id: "owner-info",
+    title: "معلومات عن صاحب العلاقة",
+    fields: [
+      "ownerFirstName", "ownerFatherName", "ownerFamilyName",
+      "ownerMotherName", "ownerMotherMaidenName", "ownerDob",
+      "ownerPlaceOfBirth", "ownerNationality", "ownerRegistryNumber",
+    ] as const,
   },
   {
-    id: "signatory",
-    title: "Authorized Signatory",
-    fields: ["signatoryName", "signatoryRole", "signatoryNationality", "signatoryPhone"] as const,
-  },
-  {
-    id: "nursery-identity",
-    title: "Nursery Identity",
+    id: "nursery-name",
+    title: "اسم الحضانة",
     fields: ["nameArabic", "nameLatin"] as const,
   },
   {
-    id: "address",
-    title: "Address",
+    id: "nursery-address",
+    title: "عنوان الحضانة",
     fields: [
-      "country", "governorate", "district", "town", "floor", "building",
-      "street", "landmark", "poBox", "postalCode", "addrPhone", "addrMobile",
-      "addrFax", "addrEmail", "addrWebsite",
+      "governorate", "district", "town", "realEstateArea",
+      "propertyNumber", "addressSection", "street", "building",
+      "floor", "addrPhone", "addrFax", "addrEmail", "postalCode",
     ] as const,
   },
   {
-    id: "property",
-    title: "Property / Lease",
-    fields: ["ownerName", "propertyNumber", "propertyGovernorate", "propertyDistrict", "propertyRegion", "ownershipType"] as const,
+    id: "staff-compliance",
+    title: "مستندات الموظفين",
+    fields: [] as const,
   },
   {
-    id: "management",
-    title: "Management",
-    fields: [
-      "directorFirstName", "directorLastName", "directorSpecialty",
-      "doctorFirstName", "doctorFatherName", "doctorLastName", "doctorSyndicateNo", "doctorSpecialty",
-    ] as const,
-  },
-  {
-    id: "capacity",
-    title: "Capacity",
-    fields: ["totalChildren", "walkers", "nonWalkers", "workingHours"] as const,
-  },
-  {
-    id: "insurance",
-    title: "Insurance",
-    fields: ["insuranceCompany", "insuranceContractType"] as const,
+    id: "ministry-attachments",
+    title: "المستندات المطلوبة",
+    fields: [] as const,
   },
 ] as const;
 
@@ -147,14 +99,13 @@ export function calculateCompletionPercentage(
   values: Record<string, unknown>,
 ): number {
   const allFields = complianceSections.flatMap((s) => s.fields);
+  if (allFields.length === 0) return 0;
   const filled = allFields.filter((f) => {
     const v = values[f];
     if (typeof v === "number") return v > 0;
     return typeof v === "string" && v.trim().length > 0;
   });
-  return allFields.length === 0
-    ? 0
-    : Math.round((filled.length / allFields.length) * 100);
+  return Math.round((filled.length / allFields.length) * 100);
 }
 
 /** Calculate per-section completion */
@@ -163,6 +114,11 @@ export function calculateSectionCompletion(
 ): Record<string, { filled: number; total: number; percent: number }> {
   const result: Record<string, { filled: number; total: number; percent: number }> = {};
   for (const section of complianceSections) {
+    if (section.fields.length === 0) {
+      // Sections E/F don't have form fields — always show as N/A
+      result[section.id] = { filled: 0, total: 0, percent: 0 };
+      continue;
+    }
     const filled = section.fields.filter((f) => {
       const v = values[f];
       if (typeof v === "number") return v > 0;

@@ -61,11 +61,13 @@ export async function upsertCompliance(
     delete payload.createdAt;
     delete payload.updatedAt;
 
-    // Convert registrationDate string to Date if present
-    if (typeof payload.registrationDate === "string" && payload.registrationDate) {
-      payload.registrationDate = new Date(payload.registrationDate);
-    } else if (!payload.registrationDate) {
-      payload.registrationDate = null;
+    // Convert date fields
+    for (const dateKey of ["registrationDate", "ownerDob"]) {
+      if (typeof payload[dateKey] === "string" && payload[dateKey]) {
+        payload[dateKey] = new Date(payload[dateKey]);
+      } else if (!payload[dateKey]) {
+        payload[dateKey] = null;
+      }
     }
 
     // Convert number fields
@@ -171,5 +173,53 @@ export async function upsertDocument(
   } catch (error) {
     console.error("Failed to save document:", error);
     return { success: false, error: "Failed to save document" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// getStaffForCompliance — returns all employees for a branch with their docs
+// ---------------------------------------------------------------------------
+
+export async function getStaffForCompliance(branchId: string): Promise<ActionResult> {
+  try {
+    const { organizationId: orgId } = await requireOrg();
+    if (!(await verifyBranchAccess(branchId, orgId))) {
+      return { success: false, error: "Branch not found in organization" };
+    }
+
+    const [teachers, nurses] = await Promise.all([
+      db.teacher.findMany({
+        where: { branchId },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          hireDate: true,
+          documents: { select: { type: true, title: true, expiryDate: true } },
+        },
+        orderBy: { lastName: "asc" },
+      }),
+      db.nurse.findMany({
+        where: { branchId },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          hireDate: true,
+          documents: { select: { type: true, title: true, expiryDate: true } },
+        },
+        orderBy: { lastName: "asc" },
+      }),
+    ]);
+
+    const staff = [
+      ...teachers.map((t) => ({ ...t, type: "teacher" })),
+      ...nurses.map((n) => ({ ...n, type: "nurse" })),
+    ];
+
+    return { success: true, data: staff };
+  } catch (error) {
+    console.error("Failed to fetch staff for compliance:", error);
+    return { success: false, error: "Failed to fetch staff" };
   }
 }

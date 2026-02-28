@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getBranch } from "@/lib/actions/branches";
-import { getCompliance } from "@/lib/actions/branch-compliance";
+import { getCompliance, getDocuments, getStaffForCompliance } from "@/lib/actions/branch-compliance";
 import { BranchComplianceForm } from "@/components/branches/branch-compliance-form";
 
 interface Props {
@@ -10,9 +10,11 @@ interface Props {
 export default async function BranchCompliancePage({ params }: Props) {
   const { id } = await params;
 
-  const [branchResult, complianceResult] = await Promise.all([
+  const [branchResult, complianceResult, docsResult, staffResult] = await Promise.all([
     getBranch(id),
     getCompliance(id),
+    getDocuments(id),
+    getStaffForCompliance(id),
   ]);
 
   if (!branchResult.success || !branchResult.data) {
@@ -23,6 +25,10 @@ export default async function BranchCompliancePage({ params }: Props) {
   const branch = branchResult.data as any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const compliance = complianceResult.data as any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const documents = (docsResult.data as any[]) ?? [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const staff = (staffResult.data as any[]) ?? [];
 
   return (
     <BranchComplianceForm
@@ -30,6 +36,8 @@ export default async function BranchCompliancePage({ params }: Props) {
       branchName={branch.name}
       themeColor={branch.themeColor}
       initialData={compliance}
+      staff={staff}
+      documents={documents}
     />
   );
 }
