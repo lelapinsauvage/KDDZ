@@ -408,7 +408,12 @@ export async function getHolidays(branchId?: string): Promise<ActionResult> {
     const { organizationId: orgId } = await requireOrg();
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: any = { branch: { organizationId: orgId } };
+    const where: any = {
+      OR: [
+        { branch: { organizationId: orgId } },
+        { branchId: null },
+      ],
+    };
 
     if (branchId) {
       where.branchId = branchId;
@@ -480,7 +485,13 @@ export async function updateHoliday(
     const { ctx } = result;
 
     const existing = await db.holiday.findFirst({
-      where: { id, branch: { organizationId: ctx.organizationId } },
+      where: {
+        id,
+        OR: [
+          { branch: { organizationId: ctx.organizationId } },
+          { branchId: null },
+        ],
+      },
       select: { id: true },
     });
     if (!existing) {
@@ -531,7 +542,13 @@ export async function deleteHoliday(id: string): Promise<ActionResult> {
     const { ctx } = result;
 
     const existing = await db.holiday.findFirst({
-      where: { id, branch: { organizationId: ctx.organizationId } },
+      where: {
+        id,
+        OR: [
+          { branch: { organizationId: ctx.organizationId } },
+          { branchId: null },
+        ],
+      },
       select: { id: true },
     });
     if (!existing) {
@@ -690,7 +707,12 @@ export async function getEvents(
     const { organizationId: orgId } = await requireOrg();
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: any = { branch: { organizationId: orgId } };
+    const where: any = {
+      OR: [
+        { branch: { organizationId: orgId } },
+        { branchId: null },
+      ],
+    };
 
     if (params.branchId) {
       where.branchId = params.branchId;
@@ -775,7 +797,13 @@ export async function updateEvent(
     const { ctx } = result;
 
     const existing = await db.event.findFirst({
-      where: { id, branch: { organizationId: ctx.organizationId } },
+      where: {
+        id,
+        OR: [
+          { branch: { organizationId: ctx.organizationId } },
+          { branchId: null },
+        ],
+      },
       select: { id: true },
     });
     if (!existing) {
@@ -825,7 +853,13 @@ export async function deleteEvent(id: string): Promise<ActionResult> {
     const { ctx } = result;
 
     const existing = await db.event.findFirst({
-      where: { id, branch: { organizationId: ctx.organizationId } },
+      where: {
+        id,
+        OR: [
+          { branch: { organizationId: ctx.organizationId } },
+          { branchId: null },
+        ],
+      },
       select: { id: true },
     });
     if (!existing) {
