@@ -1,13 +1,23 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition, useRef, useCallback } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
@@ -18,282 +28,227 @@ import {
 import {
   Cake,
   ClipboardList,
-  FileWarning,
-  ClipboardCheck,
   Pill,
   Shield,
-  FileText,
+  ClipboardCheck,
   Syringe,
-  CalendarDays,
-  DollarSign,
+  FileX,
+  ShieldCheck,
+  LayoutTemplate,
+  ScrollText,
   Save,
-  Info,
+  RotateCcw,
+  Eye,
+  EyeOff,
+  Calendar,
   type LucideIcon,
 } from "lucide-react";
-import { getSettings, setSetting } from "@/lib/actions/settings";
+import {
+  type TemplateRow,
+  upsertNotificationTemplate,
+  getSentNotifications,
+  resendNotification,
+  type SentNotificationRow,
+} from "@/lib/actions/notification-templates";
 
-interface NotificationConfig {
-  type: string;
+// ---------------------------------------------------------------------------
+// Category metadata
+// ---------------------------------------------------------------------------
+
+interface CategoryMeta {
   label: string;
-  description: string;
   icon: LucideIcon;
-  iconColor: string;
-  iconBg: string;
-  borderColor: string;
-  settingKeyEnabled: string;
-  settingKeyDaysBefore: string;
-  settingKeyTemplate: string;
-  defaultDaysBefore: string;
-  defaultTemplate: string;
+  color: string;
+  bg: string;
+  border: string;
 }
 
-const NOTIFICATION_CONFIGS: NotificationConfig[] = [
-  {
-    type: "BIRTHDAY",
-    label: "Birthday Greetings",
-    description: "Send birthday wishes to children and their parents",
+const CATEGORY_META: Record<string, CategoryMeta> = {
+  BIRTHDAY: {
+    label: "Birthday",
     icon: Cake,
-    iconColor: "text-pink-600",
-    iconBg: "bg-pink-50",
-    borderColor: "border-l-pink-500",
-    settingKeyEnabled: "notif.birthday.enabled",
-    settingKeyDaysBefore: "notif.birthday.daysBefore",
-    settingKeyTemplate: "notif.birthday.template",
-    defaultDaysBefore: "0",
-    defaultTemplate:
-      "Happy Birthday, {{child_name}}! Wishing you a wonderful day from everyone at {{branch_name}}.",
+    color: "text-pink-600",
+    bg: "bg-pink-50",
+    border: "border-l-pink-500",
   },
-  {
-    type: "MISSING_DAILY_REPORT",
-    label: "Missing Daily Reports",
-    description: "Alert when daily reports are not submitted",
+  MISSING_REPORTS: {
+    label: "Missing Reports",
     icon: ClipboardList,
-    iconColor: "text-orange-600",
-    iconBg: "bg-orange-50",
-    borderColor: "border-l-orange-500",
-    settingKeyEnabled: "notif.missingDailyReport.enabled",
-    settingKeyDaysBefore: "notif.missingDailyReport.daysBefore",
-    settingKeyTemplate: "notif.missingDailyReport.template",
-    defaultDaysBefore: "1",
-    defaultTemplate:
-      "Daily report for {{child_name}} on {{date}} has not been submitted yet.",
+    color: "text-orange-600",
+    bg: "bg-orange-50",
+    border: "border-l-orange-500",
   },
-  {
-    type: "MISSING_ABSENCE_REPORT",
-    label: "Missing Absence Reports",
-    description: "Alert when absences are not reported",
-    icon: FileWarning,
-    iconColor: "text-red-600",
-    iconBg: "bg-red-50",
-    borderColor: "border-l-red-500",
-    settingKeyEnabled: "notif.missingAbsence.enabled",
-    settingKeyDaysBefore: "notif.missingAbsence.daysBefore",
-    settingKeyTemplate: "notif.missingAbsence.template",
-    defaultDaysBefore: "1",
-    defaultTemplate:
-      "{{child_name}} was absent on {{date}} but no absence report was filed.",
-  },
-  {
-    type: "ASSESSMENT_DUE",
-    label: "Assessment Due",
-    description: "Reminder when assessments are approaching",
-    icon: ClipboardCheck,
-    iconColor: "text-[#C35A2C]",
-    iconBg: "bg-[#C35A2C]/5",
-    borderColor: "border-l-[#C35A2C]",
-    settingKeyEnabled: "notif.assessmentDue.enabled",
-    settingKeyDaysBefore: "notif.assessmentDue.daysBefore",
-    settingKeyTemplate: "notif.assessmentDue.template",
-    defaultDaysBefore: "7",
-    defaultTemplate:
-      "Assessment for {{child_name}} is due on {{date}}. Please complete it before the deadline.",
-  },
-  {
-    type: "MEDICINE_REMINDER",
-    label: "Medicine Reminders",
-    description: "Remind staff about medication schedules",
+  MEDICINE: {
+    label: "Medicine",
     icon: Pill,
-    iconColor: "text-purple-600",
-    iconBg: "bg-purple-50",
-    borderColor: "border-l-purple-500",
-    settingKeyEnabled: "notif.medicine.enabled",
-    settingKeyDaysBefore: "notif.medicine.daysBefore",
-    settingKeyTemplate: "notif.medicine.template",
-    defaultDaysBefore: "0",
-    defaultTemplate:
-      "Reminder: {{child_name}} needs medication today. Please check the medical records.",
+    color: "text-purple-600",
+    bg: "bg-purple-50",
+    border: "border-l-purple-500",
   },
-  {
-    type: "INSURANCE_EXPIRING",
-    label: "Insurance Expiring",
-    description: "Warn when a child's insurance is about to expire",
+  INSURANCE: {
+    label: "Insurance",
     icon: Shield,
-    iconColor: "text-blue-600",
-    iconBg: "bg-blue-50",
-    borderColor: "border-l-blue-500",
-    settingKeyEnabled: "notif.insurance.enabled",
-    settingKeyDaysBefore: "notif.insurance.daysBefore",
-    settingKeyTemplate: "notif.insurance.template",
-    defaultDaysBefore: "30",
-    defaultTemplate:
-      "Insurance for {{child_name}} expires on {{date}}. Please notify {{parent_name}} to renew.",
+    color: "text-blue-600",
+    bg: "bg-blue-50",
+    border: "border-l-blue-500",
   },
-  {
-    type: "CONTRACT_EXPIRING",
-    label: "Contract Expiring",
-    description: "Warn when a child's contract is about to expire",
-    icon: FileText,
-    iconColor: "text-indigo-600",
-    iconBg: "bg-indigo-50",
-    borderColor: "border-l-indigo-500",
-    settingKeyEnabled: "notif.contract.enabled",
-    settingKeyDaysBefore: "notif.contract.daysBefore",
-    settingKeyTemplate: "notif.contract.template",
-    defaultDaysBefore: "30",
-    defaultTemplate:
-      "Contract for {{child_name}} at {{branch_name}} expires on {{date}}. Contact {{parent_name}} for renewal.",
+  ASSESSMENT: {
+    label: "Assessment",
+    icon: ClipboardCheck,
+    color: "text-amber-600",
+    bg: "bg-amber-50",
+    border: "border-l-amber-500",
   },
-  {
-    type: "VACCINATION_DUE",
-    label: "Vaccination Due",
-    description: "Remind when vaccinations are coming up",
+  VACCINATIONS: {
+    label: "Vaccinations",
     icon: Syringe,
-    iconColor: "text-sky-600",
-    iconBg: "bg-sky-50",
-    borderColor: "border-l-sky-500",
-    settingKeyEnabled: "notif.vaccination.enabled",
-    settingKeyDaysBefore: "notif.vaccination.daysBefore",
-    settingKeyTemplate: "notif.vaccination.template",
-    defaultDaysBefore: "14",
-    defaultTemplate:
-      "Vaccination for {{child_name}} is due on {{date}}. Please remind {{parent_name}}.",
+    color: "text-sky-600",
+    bg: "bg-sky-50",
+    border: "border-l-sky-500",
   },
-  {
-    type: "HOLIDAY_ANNOUNCEMENT",
-    label: "Holiday Announcements",
-    description: "Notify about upcoming holidays and closures",
-    icon: CalendarDays,
-    iconColor: "text-[#6B8F71]",
-    iconBg: "bg-[#6B8F71]/10",
-    borderColor: "border-l-[#6B8F71]",
-    settingKeyEnabled: "notif.holiday.enabled",
-    settingKeyDaysBefore: "notif.holiday.daysBefore",
-    settingKeyTemplate: "notif.holiday.template",
-    defaultDaysBefore: "3",
-    defaultTemplate:
-      "Reminder: {{branch_name}} will be closed on {{date}} for a holiday.",
+  EXPIRATION: {
+    label: "Expiration",
+    icon: FileX,
+    color: "text-red-600",
+    bg: "bg-red-50",
+    border: "border-l-red-500",
   },
-  {
-    type: "PAYMENT_OVERDUE",
-    label: "Payment Overdue",
-    description: "Alert when payments are past due",
-    icon: DollarSign,
-    iconColor: "text-amber-600",
-    iconBg: "bg-amber-50",
-    borderColor: "border-l-amber-500",
-    settingKeyEnabled: "notif.payment.enabled",
-    settingKeyDaysBefore: "notif.payment.daysBefore",
-    settingKeyTemplate: "notif.payment.template",
-    defaultDaysBefore: "7",
-    defaultTemplate:
-      "Payment of {{amount}} for {{child_name}} is overdue. Please follow up with {{parent_name}}.",
+  CONTROL: {
+    label: "Control",
+    icon: ShieldCheck,
+    color: "text-emerald-600",
+    bg: "bg-emerald-50",
+    border: "border-l-emerald-500",
   },
+};
+
+const VARIABLE_CHIPS = [
+  { code: "[[child_name]]", label: "Child Name" },
+  { code: "[[parent_name]]", label: "Parent Name" },
+  { code: "[[date]]", label: "Date" },
+  { code: "[[branch_name]]", label: "Branch Name" },
+  { code: "[[class_name]]", label: "Class Name" },
 ];
 
-const SHORTCODES = [
-  { code: "{{child_name}}", desc: "Child's full name" },
-  { code: "{{parent_name}}", desc: "Parent's full name" },
-  { code: "{{date}}", desc: "Relevant date" },
-  { code: "{{branch_name}}", desc: "Branch / nursery name" },
-  { code: "{{amount}}", desc: "Amount (for payments)" },
+const LOG_CATEGORIES = [
+  { value: "", label: "All Categories" },
+  { value: "Calendar", label: "Calendar" },
+  { value: "General", label: "General" },
+  { value: "Assessment", label: "Assessment" },
+  { value: "Reports", label: "Reports" },
+  { value: "Medicine", label: "Medicine" },
+  { value: "Birthdays", label: "Birthdays" },
+  { value: "Events", label: "Events" },
+  { value: "Insurance", label: "Insurance" },
+  { value: "Messages", label: "Messages" },
+  { value: "Contracts", label: "Contracts" },
 ];
+
+// ---------------------------------------------------------------------------
+// Props
+// ---------------------------------------------------------------------------
 
 interface NotificationSettingsClientProps {
-  branchId: string;
-  branches: { id: string; name: string }[];
-  initialSettings: Record<string, string>;
+  initialTemplates: TemplateRow[];
+  initialLogs: SentNotificationRow[];
 }
 
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
 export function NotificationSettingsClient({
-  branchId: initialBranchId,
-  branches,
-  initialSettings,
+  initialTemplates,
+  initialLogs,
 }: NotificationSettingsClientProps) {
-  const [branchId, setBranchId] = useState(initialBranchId);
-  const [settings, setSettings] = useState(initialSettings);
-  const [expandedType, setExpandedType] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
+  const [tab, setTab] = useState("templates");
+
+  return (
+    <>
+      <PageHeader
+        title="Notifications Hub"
+        breadcrumbs={[
+          { label: "Settings", href: "/settings" },
+          { label: "Notifications" },
+        ]}
+      />
+      <div className="p-4 md:p-6">
+        <Tabs value={tab} onValueChange={setTab}>
+          <TabsList className="mb-6">
+            <TabsTrigger value="templates" className="gap-1.5">
+              <LayoutTemplate className="size-3.5" />
+              Templates
+            </TabsTrigger>
+            <TabsTrigger value="logs" className="gap-1.5">
+              <ScrollText className="size-3.5" />
+              Sent Logs
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="templates">
+            <TemplatesTab initialTemplates={initialTemplates} />
+          </TabsContent>
+
+          <TabsContent value="logs">
+            <SentLogsTab initialLogs={initialLogs} />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Tab A: Templates
+// ═══════════════════════════════════════════════════════════════════════════
+
+function TemplatesTab({
+  initialTemplates,
+}: {
+  initialTemplates: TemplateRow[];
+}) {
+  const [templates, setTemplates] = useState(initialTemplates);
   const [isPending, startTransition] = useTransition();
+  const [saved, setSaved] = useState(false);
+  const textareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
 
-  // Refetch settings when branch changes
-  useEffect(() => {
-    if (branchId === initialBranchId) return;
-    startTransition(async () => {
-      const result = await getSettings(branchId);
-      if (result.success && result.data) {
-        setSettings(result.data);
-      }
+  const updateField = useCallback(
+    (category: string, field: keyof TemplateRow, value: string | boolean) => {
+      setTemplates((prev) =>
+        prev.map((t) =>
+          t.category === category ? { ...t, [field]: value } : t,
+        ),
+      );
+      setSaved(false);
+    },
+    [],
+  );
+
+  function insertVariable(category: string, code: string) {
+    const textarea = textareaRefs.current[category];
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const currentBody =
+      templates.find((t) => t.category === category)?.body ?? "";
+    const newBody =
+      currentBody.substring(0, start) + code + currentBody.substring(end);
+    updateField(category, "body", newBody);
+    requestAnimationFrame(() => {
+      textarea.focus();
+      const pos = start + code.length;
+      textarea.setSelectionRange(pos, pos);
     });
-  }, [branchId, initialBranchId]);
-
-  function getEnabled(config: NotificationConfig): boolean {
-    const val = settings[config.settingKeyEnabled];
-    return val === undefined ? true : val === "true";
   }
 
-  function getDaysBefore(config: NotificationConfig): string {
-    return settings[config.settingKeyDaysBefore] ?? config.defaultDaysBefore;
-  }
-
-  function getTemplate(config: NotificationConfig): string {
-    return settings[config.settingKeyTemplate] ?? config.defaultTemplate;
-  }
-
-  function toggleEnabled(config: NotificationConfig) {
-    const newVal = !getEnabled(config);
-    setSettings((prev) => ({
-      ...prev,
-      [config.settingKeyEnabled]: String(newVal),
-    }));
-    setSaved(false);
-  }
-
-  function setDaysBefore(config: NotificationConfig, value: string) {
-    setSettings((prev) => ({
-      ...prev,
-      [config.settingKeyDaysBefore]: value,
-    }));
-    setSaved(false);
-  }
-
-  function setTemplate(config: NotificationConfig, value: string) {
-    setSettings((prev) => ({
-      ...prev,
-      [config.settingKeyTemplate]: value,
-    }));
-    setSaved(false);
-  }
-
-  function handleSave() {
-    if (!branchId) return;
-
+  function handleSaveAll() {
     startTransition(async () => {
-      for (const config of NOTIFICATION_CONFIGS) {
-        await setSetting(
-          branchId,
-          config.settingKeyEnabled,
-          String(getEnabled(config)),
-        );
-        await setSetting(
-          branchId,
-          config.settingKeyDaysBefore,
-          getDaysBefore(config),
-        );
-        await setSetting(
-          branchId,
-          config.settingKeyTemplate,
-          getTemplate(config),
-        );
+      for (const t of templates) {
+        await upsertNotificationTemplate(t.category, {
+          enabled: t.enabled,
+          subject: t.subject,
+          body: t.body,
+        });
       }
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
@@ -301,176 +256,331 @@ export function NotificationSettingsClient({
   }
 
   return (
-    <>
-      <PageHeader
-        title="Notification Settings"
-        breadcrumbs={[
-          { label: "Settings", href: "/settings" },
-          { label: "Notifications" },
-        ]}
-      />
-      <div className="space-y-6 p-4 md:p-6">
-        {/* Branch selector */}
-        {branches.length > 1 && (
-          <div className="flex flex-wrap items-center gap-3">
-            <Label className="text-sm text-muted-foreground">Branch:</Label>
-            <Select value={branchId} onValueChange={setBranchId}>
-              <SelectTrigger className="w-full sm:w-[200px]">
-                <SelectValue placeholder="Select branch" />
-              </SelectTrigger>
-              <SelectContent>
-                {branches.map((b) => (
-                  <SelectItem key={b.id} value={b.id}>
-                    {b.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
+    <div className="space-y-4">
+      {templates.map((t) => {
+        const meta = CATEGORY_META[t.category];
+        if (!meta) return null;
+        const Icon = meta.icon;
 
-        {/* Shortcode reference */}
-        <Card className="border-dashed">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-sm font-medium">
-              <Info className="size-4 text-muted-foreground" />
-              Template Shortcodes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {SHORTCODES.map((s) => (
-                <span
-                  key={s.code}
-                  className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-xs"
-                >
-                  <code className="font-mono text-primary">{s.code}</code>
-                  <span className="text-muted-foreground">{s.desc}</span>
-                </span>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Notification type cards */}
-        <div className="space-y-3">
-          {NOTIFICATION_CONFIGS.map((config) => {
-            const Icon = config.icon;
-            const enabled = getEnabled(config);
-            const daysBefore = getDaysBefore(config);
-            const template = getTemplate(config);
-            const isExpanded = expandedType === config.type;
-
-            return (
-              <Card
-                key={config.type}
-                className={`overflow-hidden border-l-4 transition-all ${config.borderColor} ${
-                  !enabled ? "opacity-60" : ""
-                }`}
-              >
-                <CardHeader className="pb-0">
-                  <div className="flex items-center justify-between gap-3">
-                    <button
-                      type="button"
-                      className="flex flex-1 items-center gap-3 text-left"
-                      onClick={() =>
-                        setExpandedType(isExpanded ? null : config.type)
-                      }
-                    >
-                      <div
-                        className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${config.iconBg}`}
-                      >
-                        <Icon className={`size-4 ${config.iconColor}`} />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-foreground">
-                          {config.label}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {config.description}
-                        </p>
-                      </div>
-                    </button>
-                    <Switch
-                      checked={enabled}
-                      onCheckedChange={() => toggleEnabled(config)}
-                    />
-                  </div>
-                </CardHeader>
-
-                {/* Always show days-before row */}
-                <CardContent className="pt-3">
-                  <div className="flex items-center gap-3">
-                    <Label className="shrink-0 text-xs text-muted-foreground">
-                      Days before
-                    </Label>
-                    <Input
-                      type="number"
-                      min={0}
-                      max={365}
-                      value={daysBefore}
-                      onChange={(e) => setDaysBefore(config, e.target.value)}
-                      disabled={!enabled}
-                      className="h-8 w-20 text-sm"
-                    />
-                  </div>
-
-                  {/* Expandable template editor */}
-                  {isExpanded && (
-                    <div className="mt-3 space-y-2">
-                      <Label className="text-xs text-muted-foreground">
-                        Message Template
-                      </Label>
-                      <Textarea
-                        value={template}
-                        onChange={(e) => setTemplate(config, e.target.value)}
-                        disabled={!enabled}
-                        rows={3}
-                        className="resize-none text-sm"
-                        placeholder="Enter notification template..."
-                      />
-                      <p className="text-[11px] text-muted-foreground">
-                        Use shortcodes like{" "}
-                        <code className="font-mono text-primary">
-                          {"{{child_name}}"}
-                        </code>{" "}
-                        to personalize messages.
-                      </p>
-                    </div>
-                  )}
-
-                  {!isExpanded && enabled && (
-                    <button
-                      type="button"
-                      onClick={() => setExpandedType(config.type)}
-                      className="mt-2 text-xs text-primary hover:underline"
-                    >
-                      Edit template...
-                    </button>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        {/* Save button */}
-        <div className="flex items-center gap-3">
-          <Button
-            onClick={handleSave}
-            disabled={isPending || !branchId}
-            className="bg-primary hover:bg-primary/90"
+        return (
+          <Card
+            key={t.category}
+            className={`overflow-hidden border-l-4 transition-all ${meta.border} ${!t.enabled ? "opacity-50" : ""}`}
           >
-            <Save className="mr-2 size-4" />
-            {isPending ? "Saving..." : "Save Settings"}
-          </Button>
-          {saved && (
-            <span className="text-sm text-[#6B8F71]">
-              Settings saved successfully!
-            </span>
-          )}
-        </div>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${meta.bg}`}
+                  >
+                    <Icon className={`size-4 ${meta.color}`} />
+                  </div>
+                  <CardTitle className="text-sm font-semibold">
+                    {meta.label}
+                  </CardTitle>
+                </div>
+                <Switch
+                  checked={t.enabled}
+                  onCheckedChange={(val) =>
+                    updateField(t.category, "enabled", val)
+                  }
+                />
+              </div>
+            </CardHeader>
+
+            <CardContent className="space-y-3">
+              {/* Subject */}
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Subject</Label>
+                <Input
+                  value={t.subject}
+                  onChange={(e) =>
+                    updateField(t.category, "subject", e.target.value)
+                  }
+                  disabled={!t.enabled}
+                  placeholder="Notification subject..."
+                  className="h-9 text-sm"
+                />
+              </div>
+
+              {/* Body */}
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">
+                  Message Body
+                </Label>
+                <Textarea
+                  ref={(el) => {
+                    textareaRefs.current[t.category] = el;
+                  }}
+                  value={t.body}
+                  onChange={(e) =>
+                    updateField(t.category, "body", e.target.value)
+                  }
+                  disabled={!t.enabled}
+                  rows={3}
+                  className="resize-none text-sm"
+                  placeholder="Notification body..."
+                />
+              </div>
+
+              {/* Variable chips */}
+              {t.enabled && (
+                <div className="flex flex-wrap gap-1.5">
+                  {VARIABLE_CHIPS.map((v) => (
+                    <button
+                      key={v.code}
+                      type="button"
+                      onClick={() => insertVariable(t.category, v.code)}
+                      className="inline-flex items-center gap-1 rounded-full border border-dashed border-primary/30 bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+                    >
+                      <code className="font-mono text-[10px]">{v.code}</code>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })}
+
+      {/* Save button */}
+      <div className="flex items-center gap-3 pt-2">
+        <Button onClick={handleSaveAll} disabled={isPending}>
+          <Save className="mr-2 size-4" />
+          {isPending ? "Saving..." : "Save All Templates"}
+        </Button>
+        {saved && (
+          <span className="text-sm text-emerald-600">
+            Templates saved successfully!
+          </span>
+        )}
       </div>
-    </>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Tab B: Sent Logs
+// ═══════════════════════════════════════════════════════════════════════════
+
+function SentLogsTab({
+  initialLogs,
+}: {
+  initialLogs: SentNotificationRow[];
+}) {
+  const [logs, setLogs] = useState(initialLogs);
+  const [category, setCategory] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [isPending, startTransition] = useTransition();
+  const [resendingId, setResendingId] = useState<string | null>(null);
+
+  function handleFilter() {
+    startTransition(async () => {
+      const result = await getSentNotifications({
+        category: category || undefined,
+        from: fromDate || undefined,
+        to: toDate || undefined,
+      });
+      if (result.success && result.data) {
+        setLogs(result.data);
+      }
+    });
+  }
+
+  function handleResend(id: string) {
+    setResendingId(id);
+    startTransition(async () => {
+      await resendNotification(id);
+      setResendingId(null);
+      // Refresh
+      const result = await getSentNotifications({
+        category: category || undefined,
+        from: fromDate || undefined,
+        to: toDate || undefined,
+      });
+      if (result.success && result.data) {
+        setLogs(result.data);
+      }
+    });
+  }
+
+  function formatDate(iso: string) {
+    return new Date(iso).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Filters */}
+      <Card>
+        <CardContent className="pt-4">
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Category</Label>
+              <Select
+                value={category || "_all"}
+                onValueChange={(v) => setCategory(v === "_all" ? "" : v)}
+              >
+                <SelectTrigger className="h-9 w-[180px]">
+                  <SelectValue placeholder="All Categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  {LOG_CATEGORIES.map((c) => (
+                    <SelectItem key={c.value || "_all"} value={c.value || "_all"}>
+                      {c.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">From</Label>
+              <div className="relative">
+                <Calendar className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  className="h-9 w-[160px] pl-8 text-sm"
+                />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">To</Label>
+              <div className="relative">
+                <Calendar className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  className="h-9 w-[160px] pl-8 text-sm"
+                />
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleFilter}
+              disabled={isPending}
+              className="h-9"
+            >
+              {isPending ? "Loading..." : "Filter"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Table */}
+      <div className="overflow-x-auto rounded-md border bg-card">
+        <Table className="min-w-[700px]">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[60px] bg-secondary/40 px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                ID
+              </TableHead>
+              <TableHead className="bg-secondary/40 px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Type
+              </TableHead>
+              <TableHead className="bg-secondary/40 px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Content
+              </TableHead>
+              <TableHead className="bg-secondary/40 px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Date
+              </TableHead>
+              <TableHead className="bg-secondary/40 px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Status
+              </TableHead>
+              <TableHead className="bg-secondary/40 px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Actions
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {logs.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={6}
+                  className="h-24 text-center text-muted-foreground"
+                >
+                  No notifications found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              logs.map((log, idx) => (
+                <TableRow
+                  key={log.id}
+                  className="transition-colors hover:bg-accent/50 even:bg-secondary/30"
+                >
+                  <TableCell className="px-4 py-3 text-xs text-muted-foreground">
+                    {idx + 1}
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Badge
+                      variant="secondary"
+                      className="text-xs font-medium capitalize"
+                    >
+                      {log.type || log.category || "General"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="max-w-[260px] truncate px-4 py-3 text-sm">
+                    <span className="font-medium">{log.title}</span>
+                    {log.body && (
+                      <span className="ml-1 text-muted-foreground">
+                        — {log.body.substring(0, 60)}
+                        {log.body.length > 60 ? "..." : ""}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="px-4 py-3 text-xs text-muted-foreground">
+                    {formatDate(log.createdAt)}
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    {log.isRead ? (
+                      <Badge
+                        variant="outline"
+                        className="gap-1 border-emerald-200 bg-emerald-50 text-emerald-700"
+                      >
+                        <Eye className="size-3" />
+                        Seen
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant="outline"
+                        className="gap-1 border-amber-200 bg-amber-50 text-amber-700"
+                      >
+                        <EyeOff className="size-3" />
+                        Unseen
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleResend(log.id)}
+                      disabled={resendingId === log.id}
+                      className="h-7 gap-1 text-xs"
+                    >
+                      <RotateCcw className="size-3" />
+                      {resendingId === log.id ? "Sending..." : "Resend"}
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      <p className="text-xs text-muted-foreground">
+        Showing {logs.length} notification{logs.length !== 1 ? "s" : ""}
+      </p>
+    </div>
   );
 }

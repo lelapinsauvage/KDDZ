@@ -324,3 +324,25 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 14 — Holiday Calendar + Notification Triggers — Sat Feb 28 08:31:02 CET 2026 ===
 =============================================
+Done. Here's what was implemented:
+
+**No schema changes needed** — the Holiday model already has `notificationMessage` (serves as Notification Body) and `daysBefore` (serves as Notification Trigger).
+
+**Calendar view enhancements:**
+- Event bars now have stronger visual weight with `py-1`, `font-semibold`, `text-[11px]`, and colored `shadow-sm` 
+- Multi-day events get `rounded-lg` for a more prominent block appearance
+- Inactive holidays show as `opacity-40` with `line-through`
+- Cell height increased to `100px`, day number circle increased to `size-7`
+
+**Form dialog redesign:**
+- **Recurrence**: Radio buttons → segmented control with `One Time` / `Repeated` pill buttons (white background + shadow on active)
+- **Status**: Checkbox → `Switch` component with dynamic green "Active" / muted "Inactive" label
+- **Notification Body**: Textarea with improved placeholder text ("Dear Parents, please note...")
+- **Notification Trigger**: Number input → Select dropdown with `None`, `1 Day Before`, `3 Days Before`, `1 Week Before` options
+To https://github.com/lelapinsauvage/KDDZ.git
+   d5cff49..c156c9a  ux-improvements -> ux-improvements
+=== Phase 14 — Holiday Calendar + Notification Triggers COMPLETE — Sat Feb 28 08:33:55 CET 2026 ===
+
+=============================================
+=== Phase 15 — Notifications Hub: Templates + Logs — Sat Feb 28 08:33:55 CET 2026 ===
+=============================================

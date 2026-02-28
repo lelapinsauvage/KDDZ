@@ -243,7 +243,8 @@ model Organization {
   users       User[]
   schoolYears SchoolYear[]
   foods       Food[]
-  eventTypes  EventType[]
+  eventTypes             EventType[]
+  notificationTemplates  NotificationTemplate[]
 
   @@map("organizations")
 }
@@ -479,8 +480,9 @@ model User {
   payments      Payment[]       @relation("PaymentCreator")
   callLogs      CallLog[]       @relation("CallLogCreator")
   medicalForms  MedicalForm[]   @relation("MedicalFormCreator")
-  notifications Notification[]
-  pushTokens    PushToken[]     @relation("UserPushTokens")
+  notifications          Notification[]
+  notificationTemplates  NotificationTemplate[] @relation("TemplateCreator")
+  pushTokens             PushToken[]            @relation("UserPushTokens")
 
   @@index([branchId])
   @@index([organizationId])
@@ -1764,6 +1766,8 @@ model Notification {
   userId    String   @db.Uuid
   title     String
   body      String?  @db.Text
+  type      String?
+  category  String?
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 
@@ -1772,6 +1776,8 @@ model Notification {
   @@index([userId])
   @@index([isRead])
   @@index([createdAt])
+  @@index([type])
+  @@index([category])
   @@map("notifications")
 }
 
@@ -1834,4 +1840,28 @@ model Region {
 
   @@index([districtId])
   @@map("regions")
+}
+
+// ─────────────────────────────────────────────
+// NOTIFICATION TEMPLATES
+// ─────────────────────────────────────────────
+
+model NotificationTemplate {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  category       String
+  enabled        Boolean  @default(true)
+  subject        String   @default("")
+  body           String   @default("") @db.Text
+  createdById    String?  @db.Uuid
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy    User?        @relation("TemplateCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, category])
+  @@index([organizationId])
+  @@index([category])
+  @@map("notification_templates")
 }
