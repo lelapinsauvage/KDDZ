@@ -241,9 +241,11 @@ export function createEmployeeColumns(
                   View
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Pencil className="size-4" />
-                Edit
+              <DropdownMenuItem asChild>
+                <Link href={`${getDetailPath(employee.type, employee.id)}/edit`}>
+                  <Pencil className="size-4" />
+                  Edit
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem variant="destructive">
