@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useTransition } from "react";
+import { useState, useMemo, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Plus,
@@ -111,8 +111,14 @@ function getAvatarColor(name: string) {
 
 function formatAge(value: number | null, unit: "YEARS" | "MONTHS" | null) {
   if (value === null || value === undefined) return null;
-  const label = unit === "MONTHS" ? "mo" : "yr";
-  return `${value}${label}`;
+  if (unit === "MONTHS") {
+    const years = Math.floor(value / 12);
+    const months = value % 12;
+    if (years > 0 && months > 0) return `${years}yr ${months}mo`;
+    if (years > 0) return `${years}yr`;
+    return `${months}mo`;
+  }
+  return `${value}yr`;
 }
 
 // ── Empty form state ───────────────────────────────────────────────────────
@@ -121,10 +127,10 @@ interface ClassFormState {
   name: string;
   branchId: string;
   language: string;
-  ageFrom: string;
-  ageTo: string;
-  ageFromUnit: "YEARS" | "MONTHS";
-  ageToUnit: "YEARS" | "MONTHS";
+  ageFromYears: string;
+  ageFromMonths: string;
+  ageToYears: string;
+  ageToMonths: string;
   cameraNumber: string;
   maxStudents: string;
   imageUrl: string;
@@ -136,10 +142,10 @@ function emptyForm(branchId?: string): ClassFormState {
     name: "",
     branchId: branchId ?? "",
     language: "",
-    ageFrom: "",
-    ageTo: "",
-    ageFromUnit: "YEARS",
-    ageToUnit: "YEARS",
+    ageFromYears: "",
+    ageFromMonths: "",
+    ageToYears: "",
+    ageToMonths: "",
     cameraNumber: "",
     maxStudents: "",
     imageUrl: "",
@@ -147,15 +153,40 @@ function emptyForm(branchId?: string): ClassFormState {
   };
 }
 
+function decomposeAge(
+  value: number | null,
+  unit: "YEARS" | "MONTHS" | null,
+): { years: string; months: string } {
+  if (value === null) return { years: "", months: "" };
+  const totalMonths = unit === "YEARS" ? value * 12 : value;
+  return {
+    years: Math.floor(totalMonths / 12).toString(),
+    months: (totalMonths % 12).toString(),
+  };
+}
+
+function formAgeToStorage(
+  years: string,
+  months: string,
+): { value: number | null; unit: "MONTHS" | null } {
+  const y = years ? parseInt(years) : 0;
+  const m = months ? parseInt(months) : 0;
+  const total = y * 12 + m;
+  if (total === 0 && !years && !months) return { value: null, unit: null };
+  return { value: total, unit: "MONTHS" };
+}
+
 function classToForm(cls: ClassItem): ClassFormState {
+  const from = decomposeAge(cls.ageFrom, cls.ageFromUnit);
+  const to = decomposeAge(cls.ageTo, cls.ageToUnit);
   return {
     name: cls.name,
     branchId: cls.branchId,
     language: cls.language ?? "",
-    ageFrom: cls.ageFrom?.toString() ?? "",
-    ageTo: cls.ageTo?.toString() ?? "",
-    ageFromUnit: cls.ageFromUnit ?? "YEARS",
-    ageToUnit: cls.ageToUnit ?? "YEARS",
+    ageFromYears: from.years,
+    ageFromMonths: from.months,
+    ageToYears: to.years,
+    ageToMonths: to.months,
     cameraNumber: cls.cameraNumber?.toString() ?? "",
     maxStudents: cls.maxStudents.toString(),
     imageUrl: cls.imageUrl ?? "",
@@ -176,8 +207,80 @@ function ClassForm({
   branches: BranchOption[];
   hideBranch?: boolean;
 }) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dragOver, setDragOver] = useState(false);
+
+  function handleImageFile(file: File) {
+    if (!file.type.startsWith("image/")) return;
+    const url = URL.createObjectURL(file);
+    setForm((f) => ({ ...f, imageUrl: url }));
+  }
+
   return (
     <div className="grid gap-4">
+      {/* Class Image — drag-drop upload */}
+      <div className="space-y-2">
+        <Label>Class Image</Label>
+        <div
+          className={`relative flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-6 cursor-pointer transition-colors ${
+            dragOver
+              ? "border-primary bg-primary/5"
+              : "border-border hover:border-primary/40 hover:bg-muted/50"
+          }`}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragOver(true);
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragOver(false);
+            const file = e.dataTransfer.files[0];
+            if (file) handleImageFile(file);
+          }}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          {form.imageUrl ? (
+            <div className="relative">
+              <img
+                src={form.imageUrl}
+                alt="Class"
+                className="size-24 rounded-xl object-cover"
+              />
+              <button
+                type="button"
+                className="absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-full bg-red-500 text-white text-xs hover:bg-red-600"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setForm((f) => ({ ...f, imageUrl: "" }));
+                }}
+              >
+                ×
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
+                <ImageIcon className="size-6 text-muted-foreground" />
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Drop an image or click to browse
+              </p>
+            </>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleImageFile(file);
+            }}
+          />
+        </div>
+      </div>
+
       {!hideBranch && (
         <div className="space-y-2">
           <Label>Branch *</Label>
@@ -209,56 +312,55 @@ function ClassForm({
       </div>
 
       <div className="space-y-2">
-        <Label>Language</Label>
-        <Input
+        <Label>Class Language</Label>
+        <Select
           value={form.language}
-          onChange={(e) => setForm((f) => ({ ...f, language: e.target.value }))}
-          placeholder="e.g. English, French"
-        />
+          onValueChange={(v) => setForm((f) => ({ ...f, language: v }))}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select language" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="English">English</SelectItem>
+            <SelectItem value="French">French</SelectItem>
+            <SelectItem value="Arabic">Arabic</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* Age From / Age To */}
+      {/* Age From — Years + Months */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label>Age From</Label>
           <div className="flex items-center gap-2">
-            <Input
-              type="number"
-              min={0}
-              value={form.ageFrom}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, ageFrom: e.target.value }))
-              }
-              placeholder="0"
-              className="flex-1"
-            />
-            <div className="flex rounded-md border">
-              <button
-                type="button"
-                className={`px-2.5 py-1.5 text-xs font-medium rounded-l-md transition-colors ${
-                  form.ageFromUnit === "YEARS"
-                    ? "bg-primary text-primary-foreground"
-                    : "hover:bg-muted"
-                }`}
-                onClick={() =>
-                  setForm((f) => ({ ...f, ageFromUnit: "YEARS" }))
+            <div className="flex-1">
+              <Input
+                type="number"
+                min={0}
+                value={form.ageFromYears}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, ageFromYears: e.target.value }))
                 }
-              >
-                Yr
-              </button>
-              <button
-                type="button"
-                className={`px-2.5 py-1.5 text-xs font-medium rounded-r-md transition-colors ${
-                  form.ageFromUnit === "MONTHS"
-                    ? "bg-primary text-primary-foreground"
-                    : "hover:bg-muted"
-                }`}
-                onClick={() =>
-                  setForm((f) => ({ ...f, ageFromUnit: "MONTHS" }))
+                placeholder="0"
+              />
+              <span className="text-[11px] text-muted-foreground mt-0.5 block">
+                Years
+              </span>
+            </div>
+            <div className="flex-1">
+              <Input
+                type="number"
+                min={0}
+                max={11}
+                value={form.ageFromMonths}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, ageFromMonths: e.target.value }))
                 }
-              >
-                Mo
-              </button>
+                placeholder="0"
+              />
+              <span className="text-[11px] text-muted-foreground mt-0.5 block">
+                Months
+              </span>
             </div>
           </div>
         </div>
@@ -266,43 +368,34 @@ function ClassForm({
         <div className="space-y-2">
           <Label>Age To</Label>
           <div className="flex items-center gap-2">
-            <Input
-              type="number"
-              min={0}
-              value={form.ageTo}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, ageTo: e.target.value }))
-              }
-              placeholder="0"
-              className="flex-1"
-            />
-            <div className="flex rounded-md border">
-              <button
-                type="button"
-                className={`px-2.5 py-1.5 text-xs font-medium rounded-l-md transition-colors ${
-                  form.ageToUnit === "YEARS"
-                    ? "bg-primary text-primary-foreground"
-                    : "hover:bg-muted"
-                }`}
-                onClick={() =>
-                  setForm((f) => ({ ...f, ageToUnit: "YEARS" }))
+            <div className="flex-1">
+              <Input
+                type="number"
+                min={0}
+                value={form.ageToYears}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, ageToYears: e.target.value }))
                 }
-              >
-                Yr
-              </button>
-              <button
-                type="button"
-                className={`px-2.5 py-1.5 text-xs font-medium rounded-r-md transition-colors ${
-                  form.ageToUnit === "MONTHS"
-                    ? "bg-primary text-primary-foreground"
-                    : "hover:bg-muted"
-                }`}
-                onClick={() =>
-                  setForm((f) => ({ ...f, ageToUnit: "MONTHS" }))
+                placeholder="0"
+              />
+              <span className="text-[11px] text-muted-foreground mt-0.5 block">
+                Years
+              </span>
+            </div>
+            <div className="flex-1">
+              <Input
+                type="number"
+                min={0}
+                max={11}
+                value={form.ageToMonths}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, ageToMonths: e.target.value }))
                 }
-              >
-                Mo
-              </button>
+                placeholder="0"
+              />
+              <span className="text-[11px] text-muted-foreground mt-0.5 block">
+                Months
+              </span>
             </div>
           </div>
         </div>
@@ -332,18 +425,6 @@ function ClassForm({
             }
             placeholder="0"
           />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Image</Label>
-        <div className="flex items-center gap-3 rounded-lg border border-dashed p-4">
-          <div className="flex size-10 items-center justify-center rounded-lg bg-muted">
-            <ImageIcon className="size-5 text-muted-foreground" />
-          </div>
-          <div className="flex-1 text-sm text-muted-foreground">
-            Image upload coming soon
-          </div>
         </div>
       </div>
 
@@ -414,14 +495,16 @@ export function ClassesClient({
       return;
     }
     startTransition(async () => {
+      const ageFrom = formAgeToStorage(form.ageFromYears, form.ageFromMonths);
+      const ageTo = formAgeToStorage(form.ageToYears, form.ageToMonths);
       const result = await createClass({
         name: form.name.trim(),
         branchId: form.branchId,
         language: form.language || null,
-        ageFrom: form.ageFrom ? parseInt(form.ageFrom) : null,
-        ageTo: form.ageTo ? parseInt(form.ageTo) : null,
-        ageFromUnit: form.ageFrom ? form.ageFromUnit : null,
-        ageToUnit: form.ageTo ? form.ageToUnit : null,
+        ageFrom: ageFrom.value,
+        ageTo: ageTo.value,
+        ageFromUnit: ageFrom.unit,
+        ageToUnit: ageTo.unit,
         cameraNumber: form.cameraNumber ? parseInt(form.cameraNumber) : null,
         maxStudents: form.maxStudents ? parseInt(form.maxStudents) : 0,
         imageUrl: form.imageUrl || null,
@@ -444,14 +527,16 @@ export function ClassesClient({
       return;
     }
     startTransition(async () => {
+      const ageFrom = formAgeToStorage(form.ageFromYears, form.ageFromMonths);
+      const ageTo = formAgeToStorage(form.ageToYears, form.ageToMonths);
       const result = await updateClass(editTarget.id, {
         name: form.name.trim(),
         branchId: form.branchId,
         language: form.language || null,
-        ageFrom: form.ageFrom ? parseInt(form.ageFrom) : null,
-        ageTo: form.ageTo ? parseInt(form.ageTo) : null,
-        ageFromUnit: form.ageFrom ? form.ageFromUnit : null,
-        ageToUnit: form.ageTo ? form.ageToUnit : null,
+        ageFrom: ageFrom.value,
+        ageTo: ageTo.value,
+        ageFromUnit: ageFrom.unit,
+        ageToUnit: ageTo.unit,
         cameraNumber: form.cameraNumber ? parseInt(form.cameraNumber) : null,
         maxStudents: form.maxStudents ? parseInt(form.maxStudents) : 0,
         imageUrl: form.imageUrl || null,

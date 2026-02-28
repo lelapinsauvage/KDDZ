@@ -206,6 +206,7 @@ enum ExperienceType {
 enum EmployeeDocumentType {
   CONTRACT
   MEDICAL_TEST
+  FIRST_AID
   CERTIFICATE
   ATTACHMENT
 }

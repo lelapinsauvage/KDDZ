@@ -493,3 +493,33 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 20 — Child Profile: CRM Dashboard — Sat Feb 28 09:06:04 CET 2026 ===
 =============================================
+Done. Here's what was implemented:
+
+**1. Profile Card (Left Sidebar):**
+- Large rounded avatar centered over a gradient header band
+- Active/Inactive status badge + class badge
+- High-density info grid with dividers: Age (calculated), Joining Age, DOB, Blood Type (red badge with icon), Allergies (red destructive badge highlighted row), Gender, Branch, Nationality, Language
+- Parents section with name, phone, call + WhatsApp action buttons
+- Authorized Pickups section with relation, phone, and SOS badges for emergency contacts
+
+**2. Quick Actions Bar:**
+- `[+ New Call Report]`, `[+ New Accident Report]`, `[Child Calendar]`, `[Send Message]` as prominent buttons
+
+**3. Health & Attendance KPIs Row:**
+- 6-column grid: Total Payments, Attendance, Absence, Missing Daily Reports (amber ring highlight when > 0), Missing Absent Reports (red ring highlight when > 0), and a compact donut chart showing Present vs Absent ratio with percentage
+
+**4. Tabbed Historical Data:**
+- Uses shadcn Tabs with line variant and count badges on each tab
+- **Daily Reports** tab with paginated table + quick-add button
+- **Absence Reports** tab with paginated table + quick-add button
+- **Medical Reports** tab with completion badges (checkmark/clock icons per row) and year filter
+- **Assessments** tab with age bracket completion status (Complete/Pending badges)
+
+`npx tsc --noEmit` passed cleanly. Committed as `87d50e8`.
+To https://github.com/lelapinsauvage/KDDZ.git
+   44e0c2d..87d50e8  ux-improvements -> ux-improvements
+=== Phase 20 — Child Profile: CRM Dashboard COMPLETE — Sat Feb 28 09:09:20 CET 2026 ===
+
+=============================================
+=== Phase 21 — Classes + Teacher Profile Form — Sat Feb 28 09:09:20 CET 2026 ===
+=============================================

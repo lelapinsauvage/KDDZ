@@ -30,7 +30,7 @@ export const employeeExperienceSchema = z.object({
 
 // ── Document sub-schema (contract / medical test / certificate / attachment) ──
 export const employeeDocumentSchema = z.object({
-  type: z.enum(["CONTRACT", "MEDICAL_TEST", "CERTIFICATE", "ATTACHMENT"]),
+  type: z.enum(["CONTRACT", "MEDICAL_TEST", "FIRST_AID", "CERTIFICATE", "ATTACHMENT"]),
   title: z.string(),
   date: z.string(),
   expiryDate: z.string(),

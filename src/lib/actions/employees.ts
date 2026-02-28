@@ -45,7 +45,7 @@ interface ExperienceData {
 }
 
 interface DocumentData {
-  type: "CONTRACT" | "MEDICAL_TEST" | "CERTIFICATE" | "ATTACHMENT";
+  type: "CONTRACT" | "MEDICAL_TEST" | "FIRST_AID" | "CERTIFICATE" | "ATTACHMENT";
   title?: string;
   date?: string;
   expiryDate?: string;
