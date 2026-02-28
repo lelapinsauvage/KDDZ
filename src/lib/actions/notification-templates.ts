@@ -10,7 +10,7 @@ type ActionResult<T = unknown> = {
   data?: T;
 };
 
-export const TEMPLATE_CATEGORIES = [
+const TEMPLATE_CATEGORIES = [
   "BIRTHDAY",
   "MISSING_REPORTS",
   "MEDICINE",
@@ -21,7 +21,7 @@ export const TEMPLATE_CATEGORIES = [
   "CONTROL",
 ] as const;
 
-export type TemplateCategory = (typeof TEMPLATE_CATEGORIES)[number];
+type TemplateCategory = (typeof TEMPLATE_CATEGORIES)[number];
 
 const CATEGORY_DEFAULTS: Record<
   TemplateCategory,
