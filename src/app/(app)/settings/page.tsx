@@ -1,3 +1,4 @@
+import { requireRole } from "@/lib/require-role";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -97,7 +98,9 @@ const sections = [
   },
 ];
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  await requireRole("ADMIN", "MANAGER");
+
   return (
     <>
       <PageHeader

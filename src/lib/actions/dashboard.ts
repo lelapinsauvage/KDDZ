@@ -207,19 +207,17 @@ export async function getMorningBriefing(): Promise<MorningBriefing> {
     getActionItems(),
   ]);
 
-  // Overdue payments — separate try/catch since column may not exist
+  // Overdue payments — use aggregate instead of fetching all records
   let overdueCount = 0;
   let overdueAmount = 0;
   try {
-    const overduePayments = await db.payment.findMany({
+    const overdueAgg = await db.payment.aggregate({
       where: { status: "OVERDUE", child: { branch: { organizationId: orgId } } },
-      select: { amount: true },
+      _count: true,
+      _sum: { amount: true },
     });
-    overdueCount = overduePayments.length;
-    overdueAmount = overduePayments.reduce(
-      (sum, p) => sum + (p.amount as unknown as { toNumber(): number }).toNumber(),
-      0
-    );
+    overdueCount = overdueAgg._count;
+    overdueAmount = Number(overdueAgg._sum.amount ?? 0);
   } catch {
     // status column may not exist yet
   }

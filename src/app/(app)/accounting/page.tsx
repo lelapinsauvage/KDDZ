@@ -1,9 +1,11 @@
+import { requireRole } from "@/lib/require-role";
 import { getPayments, getPaymentsSummary, getChildrenForPayment } from "@/lib/actions/payments";
 import { getBranches } from "@/lib/actions/branches";
 import { getClasses } from "@/lib/actions/classes";
 import { AccountingClient } from "./accounting-client";
 
 export default async function AccountingPage() {
+  await requireRole("ADMIN", "MANAGER");
   const [paymentsResult, summaryResult, branchesResult, classesResult, childrenResult] =
     await Promise.all([
       getPayments({ pageSize: 500 }),

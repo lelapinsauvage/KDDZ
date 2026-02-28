@@ -1,3 +1,4 @@
+import { requireRole } from "@/lib/require-role";
 import { getBranches } from "@/lib/actions/branches";
 import {
   BranchesClient,
@@ -5,6 +6,7 @@ import {
 } from "@/components/branches/branches-client";
 
 export default async function BranchesManagementPage() {
+  await requireRole("ADMIN", "MANAGER");
   const result = await getBranches();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
