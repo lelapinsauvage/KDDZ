@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { type ColumnDef } from "@tanstack/react-table";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/shared/data-table";
-import { Plus, Phone, PhoneIncoming, PhoneOutgoing, PhoneMissed } from "lucide-react";
+import { Plus, Phone, PhoneIncoming, PhoneOutgoing } from "lucide-react";
+import { CallReportDialog } from "./call-report-dialog";
 
 interface ChildData {
   id: string;
@@ -26,15 +28,33 @@ interface CallRecord {
   createdBy: string | null;
 }
 
+interface StaffMember {
+  id: string;
+  name: string | null;
+  email: string;
+}
+
 interface Props {
   child: ChildData;
   calls: CallRecord[];
+  staffList: StaffMember[];
 }
+
+const causeLabels: Record<string, string> = {
+  health: "Health Issue",
+  behavior: "Behavior",
+  absence: "Absence",
+  pickup: "Pickup Arrangement",
+  emergency: "Emergency",
+  general_inquiry: "General Inquiry",
+  complaint: "Complaint",
+  follow_up: "Follow Up",
+  other: "Other",
+};
 
 const directionConfig: Record<string, { label: string; icon: typeof Phone; className: string }> = {
   INCOMING: { label: "Incoming", icon: PhoneIncoming, className: "bg-blue-100 text-blue-700" },
   OUTGOING: { label: "Outgoing", icon: PhoneOutgoing, className: "bg-green-100 text-green-700" },
-  MISSED: { label: "Missed", icon: PhoneMissed, className: "bg-red-100 text-red-700" },
 };
 
 const columns: ColumnDef<CallRecord>[] = [
@@ -52,7 +72,7 @@ const columns: ColumnDef<CallRecord>[] = [
   },
   {
     accessorKey: "direction",
-    header: "Direction",
+    header: "Type",
     cell: ({ row }) => {
       const cfg = directionConfig[row.original.direction] ?? directionConfig.OUTGOING;
       const Icon = cfg.icon;
@@ -69,15 +89,12 @@ const columns: ColumnDef<CallRecord>[] = [
     },
   },
   {
-    accessorKey: "contact",
-    header: "Contact",
-  },
-  {
-    accessorKey: "phone",
-    header: "Phone",
-    cell: ({ row }) => (
-      <span className="text-muted-foreground">{row.original.phone || "\u2014"}</span>
-    ),
+    accessorKey: "reason",
+    header: "Cause",
+    cell: ({ row }) => {
+      const val = row.original.reason;
+      return <span>{causeLabels[val] ?? (val || "\u2014")}</span>;
+    },
   },
   {
     accessorKey: "subject",
@@ -85,23 +102,26 @@ const columns: ColumnDef<CallRecord>[] = [
     cell: ({ row }) => row.original.subject || "\u2014",
   },
   {
-    accessorKey: "reason",
-    header: "Reason",
+    accessorKey: "remarks",
+    header: "Remarks",
     cell: ({ row }) => (
-      <span className="line-clamp-2 max-w-[250px]">{row.original.reason || "\u2014"}</span>
+      <span className="line-clamp-2 max-w-[200px] text-muted-foreground">
+        {row.original.remarks || "\u2014"}
+      </span>
     ),
   },
   {
     accessorKey: "createdBy",
-    header: "Staff",
+    header: "Filed By",
     cell: ({ row }) => (
       <span className="text-muted-foreground">{row.original.createdBy ?? "\u2014"}</span>
     ),
   },
 ];
 
-export function CallsClient({ child, calls }: Props) {
+export function CallsClient({ child, calls, staffList }: Props) {
   const id = child.id;
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   return (
     <>
@@ -121,7 +141,7 @@ export function CallsClient({ child, calls }: Props) {
             <Phone className="h-5 w-5" />
             <span className="text-sm">{calls.length} call(s) logged</span>
           </div>
-          <Button size="sm">
+          <Button size="sm" onClick={() => setDialogOpen(true)}>
             <Plus className="mr-1 h-4 w-4" />
             Log Call
           </Button>
@@ -130,10 +150,17 @@ export function CallsClient({ child, calls }: Props) {
         <DataTable
           columns={columns}
           data={calls}
-          searchKey="contact"
-          searchPlaceholder="Search by contact..."
+          searchKey="subject"
+          searchPlaceholder="Search by subject..."
         />
       </div>
+
+      <CallReportDialog
+        childId={id}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        staffList={staffList}
+      />
     </>
   );
 }

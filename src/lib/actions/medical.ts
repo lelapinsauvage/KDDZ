@@ -123,6 +123,9 @@ export async function getMedicalForms(params: GetMedicalFormsParams = {}) {
               branch: true,
             },
           },
+          createdBy: {
+            select: { id: true, name: true, email: true },
+          },
         },
         orderBy: { createdAt: "desc" },
         skip,
@@ -197,6 +200,7 @@ export async function createMedicalForm(input: CreateMedicalFormData) {
         formType: input.formType,
         status: input.status || "DRAFT",
         data: (input.data as InputJsonValue) ?? undefined,
+        createdById: result.ctx.userId,
         entries: input.entries?.length
           ? {
               create: input.entries.map((e) => ({
@@ -526,5 +530,33 @@ export async function deleteVaccination(id: string) {
   } catch (error) {
     console.error("deleteVaccination error:", error);
     return { error: "Failed to delete vaccination" };
+  }
+}
+
+// ─────────────────────────────────────────────
+// getOrgStaffList — Lightweight staff list for dropdowns
+// ─────────────────────────────────────────────
+
+export async function getOrgStaffList() {
+  try {
+    const { organizationId: orgId } = await requireOrg();
+
+    const staff = await db.user.findMany({
+      where: {
+        organizationId: orgId,
+        isActive: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
+      orderBy: { name: "asc" },
+    });
+
+    return staff;
+  } catch (error) {
+    console.error("getOrgStaffList error:", error);
+    return [];
   }
 }

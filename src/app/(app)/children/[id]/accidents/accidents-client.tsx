@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { type ColumnDef } from "@tanstack/react-table";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Plus, MoreHorizontal, FileText, Trash2, AlertTriangle } from "lucide-react";
+import { AccidentReportDialog } from "./accident-report-dialog";
 
 interface ChildData {
   id: string;
@@ -23,22 +25,46 @@ interface AccidentRecord {
   id: string;
   date: string;
   time: string;
+  cause: string;
   location: string;
-  description: string;
-  severity: string;
+  specifyArea: string;
+  cameraNumber: string;
   firstAid: string;
-  parentNotified: boolean;
+  emergencyHospital: string;
+  treatment: string;
+  createdBy: string | null;
+}
+
+interface StaffMember {
+  id: string;
+  name: string | null;
+  email: string;
 }
 
 interface Props {
   child: ChildData;
   accidents: AccidentRecord[];
+  staffList: StaffMember[];
 }
 
-const severityColors: Record<string, string> = {
-  MINOR: "bg-yellow-100 text-yellow-700",
-  MODERATE: "bg-orange-100 text-orange-700",
-  SEVERE: "bg-red-100 text-red-700",
+const locationLabels: Record<string, string> = {
+  playground: "Playground",
+  classroom: "Classroom",
+  bathroom: "Bathroom",
+  hallway: "Hallway",
+  cafeteria: "Cafeteria",
+  outdoor: "Outdoor Area",
+  stairs: "Stairs",
+  other: "Other",
+};
+
+const firstAidLabels: Record<string, string> = {
+  none: "None",
+  bandage: "Bandage",
+  ice_pack: "Ice Pack",
+  antiseptic: "Antiseptic",
+  splint: "Splint",
+  other: "Other",
 };
 
 const columns: ColumnDef<AccidentRecord>[] = [
@@ -55,46 +81,54 @@ const columns: ColumnDef<AccidentRecord>[] = [
     ),
   },
   {
+    accessorKey: "cause",
+    header: "Cause",
+    cell: ({ row }) => (
+      <span className="line-clamp-2 max-w-[200px]">{row.original.cause || "\u2014"}</span>
+    ),
+  },
+  {
     accessorKey: "location",
     header: "Location",
-  },
-  {
-    accessorKey: "description",
-    header: "Description",
-    cell: ({ row }) => (
-      <span className="line-clamp-2 max-w-[250px]">{row.original.description}</span>
-    ),
-  },
-  {
-    accessorKey: "severity",
-    header: "Severity",
-    cell: ({ row }) => (
-      <Badge className={severityColors[row.original.severity] ?? "bg-gray-100 text-gray-700"}>
-        {row.original.severity}
-      </Badge>
-    ),
-    filterFn: (row, _columnId, filterValue) => {
-      if (!filterValue || filterValue === "ALL") return true;
-      return row.original.severity === filterValue;
+    cell: ({ row }) => {
+      const loc = row.original.location;
+      return (
+        <div>
+          <Badge variant="outline">
+            {locationLabels[loc] ?? (loc || "\u2014")}
+          </Badge>
+          {row.original.specifyArea && (
+            <div className="mt-0.5 text-xs text-muted-foreground">
+              {row.original.specifyArea}
+            </div>
+          )}
+        </div>
+      );
     },
   },
   {
     accessorKey: "firstAid",
     header: "First Aid",
     cell: ({ row }) => (
-      <span className="max-w-[200px] text-muted-foreground">{row.original.firstAid || "\u2014"}</span>
+      <span className="text-muted-foreground">
+        {firstAidLabels[row.original.firstAid] ?? (row.original.firstAid || "\u2014")}
+      </span>
     ),
   },
   {
-    id: "parentNotified",
-    header: "Parent",
+    accessorKey: "treatment",
+    header: "Treatment",
     cell: ({ row }) => (
-      <Badge
-        variant={row.original.parentNotified ? "default" : "outline"}
-        className={row.original.parentNotified ? "bg-green-100 text-green-700" : ""}
-      >
-        {row.original.parentNotified ? "Notified" : "Not Notified"}
-      </Badge>
+      <span className="text-muted-foreground">
+        {row.original.treatment ? row.original.treatment.replace(/_/g, " ") : "\u2014"}
+      </span>
+    ),
+  },
+  {
+    accessorKey: "createdBy",
+    header: "Filed By",
+    cell: ({ row }) => (
+      <span className="text-muted-foreground">{row.original.createdBy ?? "\u2014"}</span>
     ),
   },
   {
@@ -121,8 +155,9 @@ const columns: ColumnDef<AccidentRecord>[] = [
   },
 ];
 
-export function AccidentsClient({ child, accidents }: Props) {
+export function AccidentsClient({ child, accidents, staffList }: Props) {
   const id = child.id;
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   return (
     <>
@@ -142,7 +177,7 @@ export function AccidentsClient({ child, accidents }: Props) {
             <AlertTriangle className="h-5 w-5" />
             <span className="text-sm">{accidents.length} accident(s) on record</span>
           </div>
-          <Button size="sm">
+          <Button size="sm" onClick={() => setDialogOpen(true)}>
             <Plus className="mr-1 h-4 w-4" />
             Report Accident
           </Button>
@@ -151,10 +186,17 @@ export function AccidentsClient({ child, accidents }: Props) {
         <DataTable
           columns={columns}
           data={accidents}
-          searchKey="description"
+          searchKey="cause"
           searchPlaceholder="Search accidents..."
         />
       </div>
+
+      <AccidentReportDialog
+        childId={id}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        staffList={staffList}
+      />
     </>
   );
 }

@@ -170,3 +170,27 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 8 — Daily Report: Health + Clothes + Absent Flow — Sat Feb 28 08:07:26 CET 2026 ===
 =============================================
+All done. Here's a summary of what was added:
+
+**Schema (`daily-report.ts`)**
+- `attendanceMode` (PRESENT/ABSENT) field
+- `healthNotes` textarea field
+- `clothesPants/Sweater/Tshirt/Underwear/Socks` boolean toggles
+- `attachments` array with title/fileName entries
+- `absentReason`, `absentFrom`, `absentTo`, `hospitalAttend` for absent flow
+
+**Form (`daily-report-form.tsx`)**
+1. **Attendance Toggle** - Massive Present/Absent segmented control at the very top (emerald/rose colored)
+2. **Health Island** - Consolidated symptoms + fever tracking with [+] dynamic entries + Health Notes textarea, all in one rose-themed card
+3. **Xtra Clothes Island** - Visual toggle buttons (violet-themed) for Pants, Sweater/Long-sleeve, T-shirt, Underwear, Socks
+4. **Attachments Island** - Drag-and-drop zone + manual "Add Attachment" with Title/File fields per entry
+5. **Absent Flow** - When Absent is selected, shows simplified form: Reason textarea, Absent From/To date pickers, Hospital visit Yes/No switch
+
+The Present flow shows all existing islands (meals, milk, sleep, hygiene, health, mood, clothes, attachments, remarks). The Absent flow shows only the absence-specific fields. `tsc --noEmit` passes clean.
+To https://github.com/lelapinsauvage/KDDZ.git
+   78a22f1..974bfd5  ux-improvements -> ux-improvements
+=== Phase 8 — Daily Report: Health + Clothes + Absent Flow COMPLETE — Sat Feb 28 08:11:19 CET 2026 ===
+
+=============================================
+=== Phase 9 — Medical: Accident & Call Reports — Sat Feb 28 08:11:19 CET 2026 ===
+=============================================

@@ -478,6 +478,7 @@ model User {
   assessments   Assessment[]    @relation("AssessmentCreator")
   payments      Payment[]       @relation("PaymentCreator")
   callLogs      CallLog[]       @relation("CallLogCreator")
+  medicalForms  MedicalForm[]   @relation("MedicalFormCreator")
   notifications Notification[]
   pushTokens    PushToken[]     @relation("UserPushTokens")
 
@@ -1406,20 +1407,23 @@ model AbsenceAttachment {
 // ─────────────────────────────────────────────
 
 model MedicalForm {
-  id        String            @id @default(uuid()) @db.Uuid
-  childId   String            @db.Uuid
-  formType  MedicalFormType
-  status    MedicalFormStatus @default(DRAFT)
-  data      Json?
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
+  id          String            @id @default(uuid()) @db.Uuid
+  childId     String            @db.Uuid
+  formType    MedicalFormType
+  status      MedicalFormStatus @default(DRAFT)
+  data        Json?
+  createdById String?           @db.Uuid
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
 
-  child   Child              @relation(fields: [childId], references: [id], onDelete: Cascade)
-  entries MedicalFormEntry[]
+  child     Child              @relation(fields: [childId], references: [id], onDelete: Cascade)
+  createdBy User?              @relation("MedicalFormCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  entries   MedicalFormEntry[]
 
   @@index([childId])
   @@index([formType])
   @@index([status])
+  @@index([createdById])
   @@map("medical_forms")
 }
 

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getChild } from "@/lib/actions/children";
 import { getChildCallLogs } from "@/lib/actions/calls";
+import { getOrgStaffList } from "@/lib/actions/medical";
 import { CallsClient } from "./calls-client";
 
 interface Props {
@@ -18,12 +19,15 @@ function formatTime(date: Date | null): string | null {
 export default async function ChildCallsPage({ params }: Props) {
   const { id } = await params;
 
-  const child = await getChild(id);
+  const [child, callsRaw, staffList] = await Promise.all([
+    getChild(id),
+    getChildCallLogs(id),
+    getOrgStaffList(),
+  ]);
+
   if (!child) {
     notFound();
   }
-
-  const callsRaw = await getChildCallLogs(id);
 
   const childData = {
     id: child.id,
@@ -48,6 +52,7 @@ export default async function ChildCallsPage({ params }: Props) {
     <CallsClient
       child={childData}
       calls={calls}
+      staffList={staffList}
     />
   );
 }
