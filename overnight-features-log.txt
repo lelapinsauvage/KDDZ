@@ -602,3 +602,260 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 24 — Global Search Wiring + Class Filter Fix — Sat Feb 28 09:30:07 CET 2026 ===
 =============================================
+All done. Here's a summary of what was done:
+
+**Task 1 — Global Search**: Already fully wired. The command palette (`global-search.tsx`) was already using the `globalSearch` server action with 300ms debounce, grouped results (Children / Employees), icons per type (Baby/UserCheck), loading spinner, and "No results" state. I enhanced `search.ts` to include branch names in the result descriptions (e.g., "Class A · Main Branch" for children, "Teacher · Main Branch" for staff).
+
+**Task 2 — Child Form class dropdown**: Fixed `child-form.tsx` to:
+- Remove the initial unfiltered `getClasses()` call
+- Watch `branchId` and refetch classes filtered by that branch via `getClasses({ branchId })`
+- Clear `classId` when branch changes (but not on initial mount, to preserve edit mode values)
+
+**Task 3 — Employee Form class dropdown**: Fixed `employee-form-client.tsx` to:
+- Dynamically fetch classes based on selected branch instead of using the static `classes` prop
+- Watch `branchId` and refetch filtered classes (only for teacher type)
+- Clear `classId` when branch changes (preserving initial edit values)
+- Show "Select branch first" placeholder when no branch is selected
+
+TypeScript check (`npx tsc --noEmit`) passes clean. Committed as `85f259c`.
+To https://github.com/lelapinsauvage/KDDZ.git
+   5d0e742..85f259c  ux-improvements -> ux-improvements
+=== Phase 24 — Global Search Wiring + Class Filter Fix COMPLETE — Sat Feb 28 09:33:13 CET 2026 ===
+
+=============================================
+=== Phase 25 — Research: Top Nursery App Designs Worldwide — Sat Feb 28 09:33:13 CET 2026 ===
+=============================================
+Done. Here's a summary of what was researched and documented in `docs/design-research.md`:
+
+**8 nursery/childcare apps analyzed** across 2 tiers:
+- **Tier 1 (Design Leaders):** Brightwheel, Famly, Playground
+- **Tier 2 (Strong Functional):** Lillio/HiMama, Procare, Illumine, DaycareSOS, Nursery Story
+
+**Key findings documented:**
+
+1. **Color Palettes** — Specific hex codes for Brightwheel (`#6476FF`, `#FF5B60`, `#1E2549`), DaycareSOS (`#1E5ADE`, `#FF7664`), and industry-standard childcare palettes. The best apps use muted, warm-shifted colors (teal not blue, coral not red).
+
+2. **Typography** — AvenirNext (Brightwheel), Space Grotesk (DaycareSOS). Recommended: Nunito/Plus Jakarta Sans for headings, Inter for body text. Rounded terminals = warmth without childishness.
+
+3. **Layout Patterns** — Collapsible sidebars dominate desktop, bottom tab navigation on mobile, card-based layouts are universal (12-16px border radius, subtle shadows).
+
+4. **Icon Styles** — Rounded line icons for navigation, filled for active states, duotone for feature highlights. Lucide/Phosphor recommended.
+
+5. **"Apple for Nurseries" philosophy** — Content-first, consistent, clear, delightful, warm. Skeleton loading, friendly empty states, 8px grid, 44px touch targets, smooth 300ms transitions.
+
+6. **Concrete Garderie recommendations** — Full proposed color palette (teal primary + warm accents), typography scale, layout structure, icon system, and 5 key differentiators (Arabic-first bilingual, photo-forward timeline, one-tap quick actions, celebration moments, calm admin).
+To https://github.com/lelapinsauvage/KDDZ.git
+   85f259c..d4023eb  ux-improvements -> ux-improvements
+=== Phase 25 — Research: Top Nursery App Designs Worldwide COMPLETE — Sat Feb 28 09:37:28 CET 2026 ===
+
+=============================================
+=== Phase 26 — Research: Color Psychology for Childcare — Sat Feb 28 09:37:28 CET 2026 ===
+=============================================
+Done. Here's a summary of what was created:
+
+**`docs/color-palette.md`** — A comprehensive color system for Garderie, built on research from 15+ sources.
+
+### Key decisions:
+
+**Primary — "Meadow" (warm teal-green `#0B9178` / `#0B7464` interactive)**
+- Warmer than standard teal, leans toward emerald/green
+- Chosen over basic blue (corporate), terracotta (heavy), and coral (too energetic as primary)
+- Two-tier system: vibrant brand color for decorative use, darker variant for buttons/links that passes WCAG AA at **5.69:1**
+
+**Backgrounds — "Fresh Canvas" (cool-tinted `#F7F8FA`)**
+- Slightly cool-neutral whites, NOT cream/parchment
+- White cards (`#FFFFFF`) on subtle gray page background creates Apple-like layered depth
+
+**8 Module accent colors** — Health (emerald), Attendance (blue), Alerts (amber), Learning (violet), Meals (orange), Finance (indigo), Communication (rose), Sleep (sky)
+
+**Dark sidebar** (`#1A1F2E`) — Research-backed as the 2025-2026 SaaS standard. Warm dark navy, not pure black.
+
+**Full dark mode** mapping with overrides for all tokens
+
+**Accessibility** — Every critical text/background combination verified against WCAG AA (4.5:1 for normal text, 3:1 for large text). Semantic colors include accessible dark variants for text usage.
+To https://github.com/lelapinsauvage/KDDZ.git
+   d4023eb..ef0bf69  ux-improvements -> ux-improvements
+=== Phase 26 — Research: Color Psychology for Childcare COMPLETE — Sat Feb 28 09:45:15 CET 2026 ===
+
+=============================================
+=== Phase 27 — Research: Typography for Nursery Apps — Sat Feb 28 09:45:15 CET 2026 ===
+=============================================
+Committed. Here's a summary of the typography guide:
+
+## Font Selection
+
+| Role | Font | Why |
+|------|------|-----|
+| **Headings** | **Nunito** (600–800) | Rounded terminals give instant warmth. Gold standard for childcare apps — playful without being childish. |
+| **Body + Arabic** | **Cairo** (300–700) | Native bilingual Latin + Arabic in one font. Geometric, modern, 9 weights. Designed by Egyptian foundry TitraShop. Handles compliance forms without script-switching hacks. |
+| **Monospace** | **JetBrains Mono** (400–500) | Clear `0`/`O`/`1`/`l` differentiation for student IDs, invoice numbers, codes. |
+
+## Key Decisions
+
+- **Cairo solves the Arabic requirement** — it's a dual-script typeface where Latin and Arabic share harmonious metrics. When the UI renders ministry compliance forms in Arabic, the visual rhythm doesn't break.
+- **Nunito only for headings** — its rounded terminals reduce body-text readability at 14px. Cairo takes over for everything below h4.
+- **Total font budget: ~205 KB** (all variable fonts via Google Fonts CDN).
+- Arabic text gets +1px size override, 1.7–1.8 line height (for diacritics), and zero letter-spacing (to preserve cursive connections).
+
+The guide includes full type scale (h1–h6, body, caption, code), line-height and tracking specs, responsive mobile adjustments, CSS tokens, font loading strategy, and a table of 10 fonts we evaluated but rejected (with rationale).
+To https://github.com/lelapinsauvage/KDDZ.git
+   ef0bf69..5492220  ux-improvements -> ux-improvements
+=== Phase 27 — Research: Typography for Nursery Apps COMPLETE — Sat Feb 28 09:49:10 CET 2026 ===
+
+=============================================
+=== Phase 28 — Create Design System: Token Architecture — Sat Feb 28 09:49:10 CET 2026 ===
+=============================================
+Committed. Here's what `docs/design-system.md` covers:
+
+**1. Color Tokens** — Maps the Meadow teal-green palette onto every shadcn CSS custom property (`--primary` through `--sidebar-ring`), plus chart colors, 8 module accents with light tints, 4 semantic color trios, and the full primary-50→950 scale.
+
+**2. Typography Tokens** — Nunito (headings), Cairo (body/Arabic), JetBrains Mono (code). Full type scale from h1 (30px) down to code-sm (12px) with line heights, weights, letter spacing, Arabic overrides, and mobile responsive adjustments.
+
+**3. Spacing** — 4px base grid, 16 tokens from 0 to 64px, with common patterns (card padding, stack gaps, touch targets).
+
+**4. Border Radius** — Base 10px, scale from sm (6px) to full (9999px), with usage guidelines per component type.
+
+**5. Shadows** — Warm-tinted (slate-900 base, not pure black), 7 levels from xs to inner, plus a primary-tinted focus ring shadow. Dark mode guidance (borders over shadows).
+
+**6. Transitions** — 4 easing curves (default, in, out, bounce) and 4 durations (100–500ms) with common patterns and `prefers-reduced-motion` guidance.
+
+**7. Component Patterns** — Cards, buttons (6 variants), inputs (5 states), badges (6 variants), status dots, sidebar nav items — all mapped to exact token values.
+
+**8. CSS Custom Properties** — Copy-paste-ready `:root` block, typography properties, and `@theme inline` Tailwind mapping. This is the bridge from spec to implementation.
+To https://github.com/lelapinsauvage/KDDZ.git
+   5492220..80b4395  ux-improvements -> ux-improvements
+=== Phase 28 — Create Design System: Token Architecture COMPLETE — Sat Feb 28 09:52:26 CET 2026 ===
+
+=============================================
+=== Phase 29 — Implement Design System: globals.css — Sat Feb 28 09:52:26 CET 2026 ===
+=============================================
+All done. Here's what was implemented:
+
+### `src/app/globals.css` — Full rewrite
+
+**Color tokens replaced:**
+- Primary: `#C35A2C` (terracotta) → `#0B7464` (Meadow teal)
+- Background: `#F5F0E8` (warm parchment) → `#F7F8FA` (cool-neutral)
+- Sidebar: `#2C2420` (aged leather) → `#1A1F2E` (slate-navy) with `#36CCA8` active indicator
+- Charts: 5 colorblind-safe colors replacing the old warm-muted set
+- Removed old custom accent tokens (`terracotta`, `sage`, `clay`, etc.) — unused by components
+
+**New tokens added:**
+- Module accent colors (health, attendance, finance, etc.) with light tints
+- Semantic colors (success, warning, error, info) with 3-tier variants
+- Full primary scale (50–950) for decorative use
+- Extended neutrals, shadows, transitions
+- Typography tokens (font sizes, line heights, weights, letter spacing)
+
+**Typography:**
+- Headings (h1–h4): Nunito with tight tracking, proper weight scale
+- Body/UI (h5–h6, body): Cairo with native metrics
+- Code: JetBrains Mono
+- Mobile responsive scale at `< 640px`
+
+**Preserved:**
+- All shadcn CSS variable names (components work unchanged)
+- `@layer base` structure, Tailwind `@theme inline`, `@custom-variant dark`
+- `.header-bar`, `.footer-bar`, skeleton animation, scrollbar styles
+- Full print stylesheet (`.print-hide`, `.print-visible`, `print:hidden`)
+- `prefers-reduced-motion` support added
+
+### `src/app/layout.tsx` — Font imports updated
+
+- `Plus_Jakarta_Sans` → `Nunito` + `Cairo` + `JetBrains_Mono` via `next/font/google`
+- Cairo includes `arabic` subset for bilingual support
+- Theme color meta tag updated to `#0B7464`
+
+### Verification
+- `tsc --noEmit` — clean
+- Dev server `/login` — **HTTP 200**
+To https://github.com/lelapinsauvage/KDDZ.git
+   80b4395..d630326  ux-improvements -> ux-improvements
+=== Phase 29 — Implement Design System: globals.css COMPLETE — Sat Feb 28 09:55:45 CET 2026 ===
+
+=============================================
+=== Phase 30 — Implement: shadcn/ui Component Tokens — Sat Feb 28 09:55:45 CET 2026 ===
+=============================================
+All done. Here's a summary of what was updated:
+
+### globals.css `@theme inline`
+- Added all 8 module accent colors + their light tints as Tailwind utilities
+- Added semantic color tokens (success, warning, info + light/dark variants)
+- Added `--color-primary-800` and `--color-border-strong` for hover states
+- Added warm-tinted shadow overrides (`--shadow-xs` through `--shadow-xl`) using `rgba(15, 23, 42, ...)` instead of pure black
+
+### button.tsx
+- Base: `font-medium` → `font-semibold`, added `tracking-wide` (+0.02em letter-spacing per design system)
+- Default: added `shadow-xs`, hover uses `bg-primary-800` (#0D5C50) instead of opacity
+- Outline: now matches design system "Secondary" — white bg, primary border, primary text
+- Added **`playful`** variant: `rounded-full`, `shadow-md`, scale animation on hover/active
+
+### card.tsx
+- `rounded-xl` → `rounded-lg` (10px per design system `--radius-lg`)
+- Added explicit `border-border` and `transition-shadow` for hover-ready cards
+
+### badge.tsx
+- `rounded-full` → `rounded-sm` (6px per design system badge spec)
+- Added **10 new variants**: `success`, `warning`, `info`, `health`, `attendance`, `finance`, `alerts`, `learning`, `meals`, `comms`, `sleep`
+
+### input.tsx
+- Added `hover:border-border-strong` (#C9CED4) for hover state
+- Expanded transition to include `border-color`
+
+### dialog.tsx
+- `rounded-lg` → `rounded-xl` (14px for modals per design system)
+- Added explicit `border-border`
+
+### select.tsx
+- SelectContent: `rounded-md` → `rounded-lg` for dropdown panels
+- Added explicit `border-border`
+
+### tabs.tsx
+- Active line indicator: `after:bg-foreground` → `after:bg-primary` (Meadow teal-green)
+
+### sheet.tsx
+- No changes needed (edge-anchored panels, correct tokens already in use)
+To https://github.com/lelapinsauvage/KDDZ.git
+   d630326..48ec495  ux-improvements -> ux-improvements
+=== Phase 30 — Implement: shadcn/ui Component Tokens COMPLETE — Sat Feb 28 10:00:32 CET 2026 ===
+
+=============================================
+=== Phase 31 — Implement: Logo & Brand Identity — Sat Feb 28 10:00:32 CET 2026 ===
+=============================================
+All done. Here's a summary of every change:
+
+**Header** (`header.tsx`):
+- Logo icon: orange gradient → solid Meadow `#0B9178`
+- Logo text: added `font-heading` (Nunito), full `text-primary` color, removed split-color "z"
+- User avatar: orange gradient → solid Meadow `#0B9178`
+
+**Sidebar** (`app-sidebar.tsx`):
+- Section label colors: old warm/orange tones → Meadow scale (`#36CCA8`, `#6DE1C3`, `#A6EFDB`, `#94A3B8`)
+- Badge colors: old orange/brown → semantic colors (red for alarms, amber for reports, teal for messages)
+
+**Login page** (`login/page.tsx`):
+- Background: `bg-[#F5F0E8]` → `bg-background` (`#F7F8FA`)
+- Decorative blobs: orange tints → Meadow green tints
+- Logo icon: orange gradient → solid `#0B9178`
+- Title: added `font-heading`, full `text-primary`
+- Sign in button: orange gradient → solid primary with proper hover state (`#0D5C50`)
+
+**Favicons**:
+- Created `public/icon.svg` (32×32, Meadow `#0B9178`, Nunito "K")
+- Updated `icon-192.svg` and `icon-512.svg`: `#14B8A6` → `#0B9178`, Nunito font family
+
+**PWA manifest** (`manifest.json`):
+- `short_name`: "KiddzOnline" → "Kiddz"
+- `theme_color`: `#14B8A6` → `#0B7464`
+- `background_color`: `#FAFAF9` → `#F7F8FA`
+- Added `icon.svg` entry
+
+**Footer** (`footer.tsx`):
+- "KiddzOnline" text now uses `font-heading font-semibold text-primary/60`
+To https://github.com/lelapinsauvage/KDDZ.git
+   48ec495..ae25468  ux-improvements -> ux-improvements
+=== Phase 31 — Implement: Logo & Brand Identity COMPLETE — Sat Feb 28 10:03:00 CET 2026 ===
+
+=============================================
+=== Phase 32 — Design: Login & Auth Pages — Sat Feb 28 10:03:00 CET 2026 ===
+=============================================
