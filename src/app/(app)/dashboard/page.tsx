@@ -18,6 +18,7 @@ import { InsightsPanel } from "@/components/dashboard/insights-panel";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { DemographicsSection } from "@/components/dashboard/demographics-section";
 import { StatCard } from "@/components/dashboard/stat-card";
+import { FadeIn } from "@/components/ui/skeleton";
 import { Sun, Moon, Sunrise, Building2, BookOpen, Users } from "lucide-react";
 
 export default async function DashboardPage() {
@@ -109,7 +110,7 @@ export default async function DashboardPage() {
         : `${briefing.totalAttentionItems} things could use your attention today.`;
 
   return (
-    <div className="space-y-8 p-4 md:p-6 lg:p-8">
+    <FadeIn className="space-y-8 p-4 md:p-6 lg:p-8">
       {/* ── Morning greeting ── */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
@@ -174,6 +175,6 @@ export default async function DashboardPage() {
 
       {/* ── Insights ── */}
       <InsightsPanel insights={briefing.insights} />
-    </div>
+    </FadeIn>
   );
 }

@@ -2,6 +2,7 @@ import { getChildren } from "@/lib/actions/children";
 import { getBranches } from "@/lib/actions/branches";
 import { getClasses } from "@/lib/actions/classes";
 import { ChildrenPageClient } from "@/components/children/children-page-client";
+import { FadeIn } from "@/components/ui/skeleton";
 
 interface PageProps {
   searchParams: Promise<{
@@ -51,22 +52,24 @@ export default async function ChildrenListingPage({ searchParams }: PageProps) {
   ) as Array<{ id: string; name: string; branchId: string }>;
 
   return (
-    <ChildrenPageClient
-      childrenList={children}
-      total={total}
-      branches={branches}
-      classes={classes}
-      filters={{
-        search: params.search ?? "",
-        branch: params.branch ?? "ALL",
-        class: params.class ?? "ALL",
-        gender: params.gender ?? "ALL",
-        status: params.status ?? "ALL",
-        page,
-        pageSize,
-        sort: params.sort ?? "",
-        order: (params.order as "asc" | "desc") ?? "asc",
-      }}
-    />
+    <FadeIn>
+      <ChildrenPageClient
+        childrenList={children}
+        total={total}
+        branches={branches}
+        classes={classes}
+        filters={{
+          search: params.search ?? "",
+          branch: params.branch ?? "ALL",
+          class: params.class ?? "ALL",
+          gender: params.gender ?? "ALL",
+          status: params.status ?? "ALL",
+          page,
+          pageSize,
+          sort: params.sort ?? "",
+          order: (params.order as "asc" | "desc") ?? "asc",
+        }}
+      />
+    </FadeIn>
   );
 }

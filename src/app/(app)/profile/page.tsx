@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { FadeIn } from "@/components/ui/skeleton";
 import { ProfileClient } from "./profile-client";
 
 export default async function ProfilePage() {
@@ -15,5 +16,9 @@ export default async function ProfilePage() {
     role: (session.user as { role?: string }).role ?? "",
   };
 
-  return <ProfileClient user={user} />;
+  return (
+    <FadeIn>
+      <ProfileClient user={user} />
+    </FadeIn>
+  );
 }
