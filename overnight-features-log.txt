@@ -469,3 +469,27 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 19 — Children Enrollment: 5-Step Wizard — Sat Feb 28 08:56:38 CET 2026 ===
 =============================================
+Done. Here's a summary of what was enhanced in `child-form.tsx`:
+
+**Wizard Structure (5 steps):**
+- **Step 1 — Core Child Info:** Names (EN/AR), DOB, place of birth, gender, nationality, religion, ID number, photo, branch, language, joining date, child number
+- **Step 2 — Addresses & Family:** Addresses (useFieldArray), Father/Mother (GuardianFields), Siblings (useFieldArray), Authorized Persons (useFieldArray)
+- **Step 3 — General & Medical:** School year, class, active/draft status, blood type, allergies, bus/diaper/lunch, milk tracker (type, portions, scoop, 3 time slots), sleep schedule, previous garderie, remarks
+- **Step 4 — Financial Info:** All 6 fee categories, discount, TVA%, live Net$ calculator (subtotal → after discount → TVA amount → net total), financial remarks, accounting entries (useFieldArray)
+- **Step 5 — Attachments:** Drag-drop zone (coming soon placeholder) with required document checklist (Photo, ID, Vaccination Card, Doctor Assessment, Medical Report)
+
+**Navigation & UX:**
+- Desktop sidebar (left, sticky) with step list showing completion status (check marks for visited steps)
+- Mobile progress bar (5 colored segments) with step label
+- Previous/Next buttons at the bottom with per-step validation (Step 1 validates name/DOB/gender/branch, Step 3 validates class/school year)
+- Save as Draft available on every step
+- Submit button only appears on Step 5
+- On submit validation failure, auto-navigates to the first step with errors
+- All existing fields preserved — zero deletions, only reorganized
+To https://github.com/lelapinsauvage/KDDZ.git
+   190d140..44e0c2d  ux-improvements -> ux-improvements
+=== Phase 19 — Children Enrollment: 5-Step Wizard COMPLETE — Sat Feb 28 09:06:04 CET 2026 ===
+
+=============================================
+=== Phase 20 — Child Profile: CRM Dashboard — Sat Feb 28 09:06:04 CET 2026 ===
+=============================================
