@@ -453,7 +453,7 @@ export async function replyToMessage(
     let threadId = original.threadId;
     if (!threadId) {
       const thread = await db.messageThread.create({
-        data: { subject: original.subject },
+        data: { subject: original.subject, organizationId: ctx.organizationId },
       });
       threadId = thread.id;
       // Link original message to thread
