@@ -577,3 +577,28 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 23 — Admin Organization Management Panel — Sat Feb 28 09:25:50 CET 2026 ===
 =============================================
+Done. Here's what was created:
+
+**Server Actions** (`src/lib/actions/organizations.ts`):
+- `getOrganizations()` — lists all orgs with branch/user counts (ADMIN only)
+- `getOrganization(id)` — full org detail with branches and users
+- `createOrganization(data)` — creates org + default branch + default school year + first admin user with hashed temp password (bcryptjs). Returns org and temp password
+- `updateOrganization(id, data)` — updates name, slug, plan, isActive
+- `toggleOrganizationStatus(id)` — toggles isActive
+- `createOrgUser(orgId, data)` — creates user in org with temp password
+- `resetUserPassword(userId)` — generates new temp password
+
+**Pages**:
+- `/settings/organizations` — table listing all orgs with name, slug, plan, branch count, user count, status, view/toggle actions. Create dialog with auto-slug generation, then credentials reveal dialog with copy button
+- `/settings/organizations/[id]` — detail page with KPI cards (branches, users, school years), org info card, branches table, users table with reset-password action, edit org dialog, add user dialog
+
+**Settings Nav**: "Organizations" card appears first for ADMIN users only, using the `Landmark` icon with violet theme.
+
+`npx tsc --noEmit` passes cleanly.
+To https://github.com/lelapinsauvage/KDDZ.git
+   e7d1215..5d0e742  ux-improvements -> ux-improvements
+=== Phase 23 — Admin Organization Management Panel COMPLETE — Sat Feb 28 09:30:07 CET 2026 ===
+
+=============================================
+=== Phase 24 — Global Search Wiring + Class Filter Fix — Sat Feb 28 09:30:07 CET 2026 ===
+=============================================

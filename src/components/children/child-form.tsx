@@ -2,7 +2,7 @@
 
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { childFormSchema, type ChildFormValues } from "@/lib/validations/child";
 import { createChild, updateChild } from "@/lib/actions/children";
@@ -432,16 +432,12 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
 
   useEffect(() => {
     async function loadOptions() {
-      const [branchesResult, classesResult, schoolYearsResult] = await Promise.all([
+      const [branchesResult, schoolYearsResult] = await Promise.all([
         getBranches(),
-        getClasses(),
         getSchoolYears(),
       ]);
       if (branchesResult.success && branchesResult.data) {
         setBranches(branchesResult.data as Array<{ id: string; name: string }>);
-      }
-      if (classesResult.success && classesResult.data) {
-        setClasses(classesResult.data as Array<{ id: string; name: string }>);
       }
       if (schoolYearsResult.success && schoolYearsResult.data) {
         setSchoolYears(schoolYearsResult.data as Array<{ id: string; label: string }>);
@@ -457,6 +453,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
     formState: { errors, isSubmitting },
     watch,
     trigger,
+    setValue,
   } = useForm<ChildFormValues>({
     resolver: zodResolver(childFormSchema),
     defaultValues: {
@@ -570,6 +567,31 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
   } = useFieldArray({ control, name: "accountingEntries" });
 
   const watchPreviousGarderie = watch("previousGarderie");
+  const watchedBranchId = watch("branchId");
+
+  // Refetch classes when branch changes
+  const branchInitRef = useRef(true);
+  useEffect(() => {
+    if (!watchedBranchId) {
+      setClasses([]);
+      return;
+    }
+    async function loadClasses() {
+      const result = await getClasses({ branchId: watchedBranchId });
+      if (result.success && result.data) {
+        setClasses(result.data as Array<{ id: string; name: string }>);
+      } else {
+        setClasses([]);
+      }
+    }
+    loadClasses();
+    // Clear classId on branch change, but not on initial mount (edit mode)
+    if (branchInitRef.current) {
+      branchInitRef.current = false;
+    } else {
+      setValue("classId", "");
+    }
+  }, [watchedBranchId, setValue]);
 
   // Financial totals
   const watchFees = watch([

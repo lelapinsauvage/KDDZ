@@ -3,13 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import {
   employeeFormSchema,
   type EmployeeFormValues,
 } from "@/lib/validations/employee";
 import type { EmployeeType } from "@/components/employees/employee-columns";
 import { createEmployee, updateEmployee } from "@/lib/actions/employees";
+import { getClasses } from "@/lib/actions/classes";
 import { PageHeader } from "@/components/layout/page-header";
 import { FormSection } from "@/components/ui/form-section";
 import { Button } from "@/components/ui/button";
@@ -169,6 +170,37 @@ export function EmployeeFormClient({
     append: appendDoc,
     remove: removeDoc,
   } = useFieldArray({ control, name: "documents" });
+
+  // Fetch classes filtered by selected branch
+  const [filteredClasses, setFilteredClasses] = useState<ClassOption[]>(classes);
+  const watchedBranchId = watch("branchId");
+  const branchInitRef = useRef(true);
+  useEffect(() => {
+    if (type !== "teacher") return;
+    if (!watchedBranchId) {
+      setFilteredClasses([]);
+      return;
+    }
+    async function loadClasses() {
+      const result = await getClasses({ branchId: watchedBranchId });
+      if (result.success && result.data) {
+        setFilteredClasses(
+          (result.data as Array<{ id: string; name: string }>).map((c) => ({
+            id: c.id,
+            name: c.name,
+          })),
+        );
+      } else {
+        setFilteredClasses([]);
+      }
+    }
+    loadClasses();
+    if (branchInitRef.current) {
+      branchInitRef.current = false;
+    } else {
+      setValue("classId", "");
+    }
+  }, [watchedBranchId, type, setValue]);
 
   // Filtered experience helpers
   const workExps = expFields.map((f, i) => ({ ...f, index: i })).filter((f) => f.type === "WORK");
@@ -704,7 +736,7 @@ export function EmployeeFormClient({
                       <p className="mt-1 text-xs text-red-500">{errors.branchId.message}</p>
                     )}
                   </div>
-                  {type === "teacher" && classes.length > 0 && (
+                  {type === "teacher" && (
                     <div>
                       <Label htmlFor="classId">Class</Label>
                       <Select
@@ -712,10 +744,10 @@ export function EmployeeFormClient({
                         onValueChange={(v) => setValue("classId", v)}
                       >
                         <SelectTrigger id="classId">
-                          <SelectValue placeholder="Select Class" />
+                          <SelectValue placeholder={watchedBranchId ? "Select Class" : "Select branch first"} />
                         </SelectTrigger>
                         <SelectContent>
-                          {classes.map((c) => (
+                          {filteredClasses.map((c) => (
                             <SelectItem key={c.id} value={c.id}>
                               {c.name}
                             </SelectItem>
