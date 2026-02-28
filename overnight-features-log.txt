@@ -298,3 +298,29 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 13 — Food Calendar: Month View with Pill Tags — Sat Feb 28 08:28:22 CET 2026 ===
 =============================================
+Done. Here's what was enhanced in the food calendar:
+
+**Calendar Grid**
+- Meal pills now use spec colors: **Breakfast=Yellow** (`amber-100`), **Lunch=Green** (`emerald-100`), **Dessert=Pink** (`pink-100`)
+- Meals render as **rounded-full pill tags** with truncated food names
+- Removed SNACK from calendar display (not in spec)
+- Added `rounded-2xl` card styling, cleaner empty/weekend cell states
+- Loading spinner replaces "Loading..." text in month display
+
+**Click-to-Edit Dialog**
+- Replaced all 4 `Select` dropdowns with **searchable Comboboxes** using `Popover` + `Command` (cmdk)
+- Each combobox has a search input to filter food items by name
+- Dessert combobox has a **prominent "None (no dessert)"** option at the top
+- Added `DialogDescription` for accessibility
+- **Save** button (renamed from "Update"), **Cancel** button, and distinct red **Clear Day** button
+
+**Navigation** — month/year selector with prev/next arrows was already in place; kept as-is with minor polish.
+
+`tsc --noEmit` passes clean. Committed as `d5cff49`.
+To https://github.com/lelapinsauvage/KDDZ.git
+   d9254ee..d5cff49  ux-improvements -> ux-improvements
+=== Phase 13 — Food Calendar: Month View with Pill Tags COMPLETE — Sat Feb 28 08:31:02 CET 2026 ===
+
+=============================================
+=== Phase 14 — Holiday Calendar + Notification Triggers — Sat Feb 28 08:31:02 CET 2026 ===
+=============================================

@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -598,14 +598,14 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                           return (
                             <td
                               key={dayIdx}
-                              className={`border-b border-r last:border-r-0 p-1.5 align-top h-[90px] cursor-pointer transition-colors hover:bg-primary/5 group ${
+                              className={`border-b border-r last:border-r-0 p-1.5 align-top h-[100px] cursor-pointer transition-colors hover:bg-primary/5 group ${
                                 isToday ? "ring-2 ring-inset ring-primary/40" : ""
                               }`}
                               onClick={() => openAdd(dateKey)}
                             >
                               <div className="flex items-start justify-between mb-1">
                                 <span
-                                  className={`inline-flex size-6 items-center justify-center rounded-full text-sm font-medium ${
+                                  className={`inline-flex size-7 items-center justify-center rounded-full text-sm font-medium ${
                                     isToday
                                       ? "bg-primary text-primary-foreground"
                                       : hasHolidays
@@ -621,26 +621,29 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                                   </span>
                                 )}
                               </div>
-                              {/* Inline bar segments for this cell */}
-                              <div className="space-y-0.5">
+                              {/* Spanning event bar segments */}
+                              <div className="space-y-1">
                                 {barsByWeek[weekIdx]
                                   ?.filter((b) => b.startCol === dayIdx)
                                   .map((bar) => {
                                     const isEvent = bar.holiday.type === "EVENT";
+                                    const isMultiDay = bar.span > 1;
                                     return (
                                       <div
                                         key={bar.holiday.id}
-                                        className={`truncate rounded-md px-1.5 py-0.5 text-[10px] font-medium leading-tight cursor-pointer transition-colors ${
+                                        className={`truncate px-2 py-1 text-[11px] font-semibold leading-tight cursor-pointer transition-colors ${
+                                          isMultiDay ? "rounded-lg" : "rounded-md"
+                                        } ${
                                           isEvent
-                                            ? "bg-blue-500 text-white hover:bg-blue-600"
-                                            : "bg-[#6B8F71] text-white hover:bg-[#5A7A5E]"
-                                        } ${!bar.holiday.isActive ? "opacity-50" : ""}`}
+                                            ? "bg-blue-500 text-white hover:bg-blue-600 shadow-sm shadow-blue-500/25"
+                                            : "bg-[#6B8F71] text-white hover:bg-[#5A7A5E] shadow-sm shadow-[#6B8F71]/25"
+                                        } ${!bar.holiday.isActive ? "opacity-40 line-through" : ""}`}
                                         style={
-                                          bar.span > 1
+                                          isMultiDay
                                             ? {
                                                 position: "relative",
                                                 zIndex: 10,
-                                                width: `calc(${bar.span * 100}% + ${(bar.span - 1) * 0.5}rem)`,
+                                                width: `calc(${bar.span * 100}% + ${(bar.span - 1) * 0.375}rem)`,
                                               }
                                             : undefined
                                         }
@@ -692,7 +695,7 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
               <Input placeholder="Brief description (optional)" {...form.register("description")} />
             </div>
 
-            {/* Type + Active row */}
+            {/* Type + Status row */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-1.5 block text-sm font-medium">Type</label>
@@ -712,48 +715,56 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                   )}
                 />
               </div>
-              <div className="flex items-end pb-2">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">Status</label>
                 <Controller
                   control={form.control}
                   name="isActive"
                   render={({ field }) => (
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                      <span className="text-sm font-medium">Active</span>
-                    </label>
+                    <div className="flex items-center gap-3 pt-1.5">
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                      <span className={`text-sm font-medium ${field.value ? "text-emerald-600" : "text-muted-foreground"}`}>
+                        {field.value ? "Active" : "Inactive"}
+                      </span>
+                    </div>
                   )}
                 />
               </div>
             </div>
 
-            {/* Repeated radio */}
+            {/* Recurrence segmented control */}
             <div>
               <label className="mb-1.5 block text-sm font-medium">Recurrence</label>
               <Controller
                 control={form.control}
                 name="repeated"
                 render={({ field }) => (
-                  <div className="flex items-center gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="repeated"
-                        checked={!field.value}
-                        onChange={() => field.onChange(false)}
-                        className="accent-primary"
-                      />
-                      <span className="text-sm">One Time</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="repeated"
-                        checked={field.value}
-                        onChange={() => field.onChange(true)}
-                        className="accent-primary"
-                      />
-                      <span className="text-sm">Repeated Yearly</span>
-                    </label>
+                  <div className="inline-flex rounded-lg border bg-muted/30 p-0.5">
+                    <button
+                      type="button"
+                      onClick={() => field.onChange(false)}
+                      className={`rounded-md px-4 py-1.5 text-sm font-medium transition-all ${
+                        !field.value
+                          ? "bg-white text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      One Time
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => field.onChange(true)}
+                      className={`rounded-md px-4 py-1.5 text-sm font-medium transition-all ${
+                        field.value
+                          ? "bg-white text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Repeated
+                    </button>
                   </div>
                 )}
               />
@@ -807,24 +818,34 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
 
               <div className="space-y-3">
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium">Notification Title</label>
-                  <Input placeholder="e.g. Upcoming Holiday" {...form.register("notificationTitle")} />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium">Notification Message</label>
+                  <label className="mb-1.5 block text-sm font-medium">Notification Body</label>
                   <Textarea
-                    placeholder="Message to send to parents..."
+                    placeholder="Dear Parents, please note that the nursery will be closed..."
                     rows={3}
                     {...form.register("notificationMessage")}
                   />
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium">Days Before (send notification)</label>
-                  <Input
-                    type="number"
-                    min={0}
-                    {...form.register("daysBefore", { valueAsNumber: true })}
-                    className="w-32"
+                  <label className="mb-1.5 block text-sm font-medium">Notification Trigger</label>
+                  <Controller
+                    control={form.control}
+                    name="daysBefore"
+                    render={({ field }) => (
+                      <Select
+                        value={String(field.value)}
+                        onValueChange={(v) => field.onChange(Number(v))}
+                      >
+                        <SelectTrigger className="w-48">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0">None</SelectItem>
+                          <SelectItem value="1">1 Day Before</SelectItem>
+                          <SelectItem value="3">3 Days Before</SelectItem>
+                          <SelectItem value="7">1 Week Before</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
                   />
                 </div>
               </div>
