@@ -408,3 +408,32 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 17 — Messages: Split-Pane Composer — Sat Feb 28 08:48:15 CET 2026 ===
 =============================================
+All done. Here's a summary of the changes:
+
+**Files modified (5):**
+
+1. **`src/lib/actions/messages.ts`** — Added two new server actions:
+   - `sendBulkChildMessage()` — Sends messages to parents of selected children by child IDs, with nature tag support (prefixed to subject as `[Urgent] Subject`)
+   - `resendMessage()` — Resends an existing message to the same recipient
+
+2. **`src/app/(app)/messages/compose/page.tsx`** — Server component now fetches branches, children (active, up to 500), and classes in parallel to feed the split-pane UI
+
+3. **`src/app/(app)/messages/compose/compose-client.tsx`** — Complete rewrite with:
+   - **Left pane (Recipient Selector):** Branch dropdown filter, Class dropdown filter (cascading from branch), search input, bulk actions (Select All Children / Select All Active / Unselect All), scrollable checklist of children with colored avatars and branch/class labels
+   - **Right pane (Composer):** Nature select (General/Urgent/Legal/Event), Subject input, Message textarea, send button with loading state and success feedback
+
+4. **`src/app/(app)/messages/sent/sent-client.tsx`** — Enhanced sent messages table with:
+   - `#` index column
+   - **Nature** column — Parses `[Nature]` prefix from subject and renders as a colored badge
+   - **Subject** column — Shows cleaned subject without nature prefix
+   - **Thread** column — Link to thread view when threadId exists
+   - **Actions** — View, **Resend** (new), and Delete
+
+No duplicate routes were created — the existing `compose/direct` and `compose/class` sub-routes remain untouched, while the main `/messages/compose` was upgraded in-place.
+To https://github.com/lelapinsauvage/KDDZ.git
+   5993351..1e84027  ux-improvements -> ux-improvements
+=== Phase 17 — Messages: Split-Pane Composer COMPLETE — Sat Feb 28 08:52:34 CET 2026 ===
+
+=============================================
+=== Phase 18 — Monthly Attendance Heatmap — Sat Feb 28 08:52:34 CET 2026 ===
+=============================================

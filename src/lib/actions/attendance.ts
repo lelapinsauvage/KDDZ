@@ -196,6 +196,144 @@ export async function createAbsenceReport(
   }
 }
 
+// ── getMonthlyAttendanceGrid ─────────────────────
+
+export interface HeatmapChild {
+  id: string;
+  firstName: string;
+  lastName: string;
+  className: string | null;
+}
+
+export type CellStatus = "PRESENT" | "ABSENT" | "NO_REPORT";
+
+export interface HeatmapRow {
+  child: HeatmapChild;
+  /** Map of day number (1-31) → status */
+  days: Record<number, CellStatus>;
+}
+
+export interface MonthlyAttendanceGrid {
+  rows: HeatmapRow[];
+  daysInMonth: number;
+  month: number;
+  year: number;
+}
+
+export async function getMonthlyAttendanceGrid(
+  month: number,
+  year: number,
+  branchId?: string,
+  classId?: string
+): Promise<MonthlyAttendanceGrid> {
+  try {
+    const { organizationId: orgId } = await requireOrg();
+
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 1);
+
+    // Fetch active children with optional branch/class filters
+    const childWhere: {
+      branch: { organizationId: string };
+      isActive: boolean;
+      isDraft: boolean;
+      branchId?: string;
+      classId?: string;
+    } = {
+      branch: { organizationId: orgId },
+      isActive: true,
+      isDraft: false,
+    };
+    if (branchId) childWhere.branchId = branchId;
+    if (classId) childWhere.classId = classId;
+
+    const children = await db.child.findMany({
+      where: childWhere,
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        class: { select: { name: true } },
+      },
+      orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
+    });
+
+    if (children.length === 0) {
+      return { rows: [], daysInMonth, month, year };
+    }
+
+    const childIds = children.map((c) => c.id);
+
+    // Fetch daily reports and absence reports in parallel
+    const [dailyReports, absenceReports] = await Promise.all([
+      db.dailyReport.findMany({
+        where: {
+          childId: { in: childIds },
+          reportDate: { gte: startDate, lt: endDate },
+        },
+        select: { childId: true, reportDate: true },
+      }),
+      db.absenceReport.findMany({
+        where: {
+          childId: { in: childIds },
+          date: { gte: startDate, lt: endDate },
+        },
+        select: { childId: true, date: true },
+      }),
+    ]);
+
+    // Build lookup sets: childId → Set of day numbers
+    const reportDays = new Map<string, Set<number>>();
+    for (const r of dailyReports) {
+      const day = r.reportDate.getDate();
+      if (!reportDays.has(r.childId)) reportDays.set(r.childId, new Set());
+      reportDays.get(r.childId)!.add(day);
+    }
+
+    const absenceDays = new Map<string, Set<number>>();
+    for (const a of absenceReports) {
+      const day = a.date.getDate();
+      if (!absenceDays.has(a.childId)) absenceDays.set(a.childId, new Set());
+      absenceDays.get(a.childId)!.add(day);
+    }
+
+    const rows: HeatmapRow[] = children.map((child) => {
+      const childReports = reportDays.get(child.id);
+      const childAbsences = absenceDays.get(child.id);
+      const days: Record<number, CellStatus> = {};
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const hasReport = childReports?.has(d) ?? false;
+        const hasAbsence = childAbsences?.has(d) ?? false;
+
+        if (hasAbsence) {
+          days[d] = "ABSENT";
+        } else if (hasReport) {
+          days[d] = "PRESENT";
+        } else {
+          days[d] = "NO_REPORT";
+        }
+      }
+
+      return {
+        child: {
+          id: child.id,
+          firstName: child.firstName,
+          lastName: child.lastName,
+          className: child.class?.name ?? null,
+        },
+        days,
+      };
+    });
+
+    return { rows, daysInMonth, month, year };
+  } catch (error) {
+    console.error("getMonthlyAttendanceGrid error:", error);
+    return { rows: [], daysInMonth: new Date(year, month, 0).getDate(), month, year };
+  }
+}
+
 // ── markBulkAttendance ───────────────────────────
 
 export async function markBulkAttendance(data: {
