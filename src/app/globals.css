@@ -4,146 +4,364 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* ── KiddzOnline — Claude-inspired Warm Organic Design ── */
+/* ── Garderie — Meadow Design System ──
+   "Apple meets nursery" — clean, premium, warm.
+   See docs/design-system.md for full token reference. */
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Module accent colors */
+  --color-health: var(--color-health);
+  --color-attendance: var(--color-attendance);
+  --color-finance: var(--color-finance);
+  --color-alerts: var(--color-alerts);
+
+  /* Font stacks */
+  --font-sans: var(--font-body);
+  --font-heading: var(--font-heading);
   --font-mono: var(--font-mono);
 
-  /* shadcn semantic tokens */
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
+  /* Radius scale */
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
-
-  /* Claude-inspired warm accent palette */
-  --color-accent-terracotta: #C35A2C;
-  --color-accent-sienna: #B08968;
-  --color-accent-sage: #6B8F71;
-  --color-accent-clay: #9B7653;
-  --color-accent-sand: #D4C5B2;
-  --color-accent-copper: #B87333;
-  --color-accent-moss: #5B7B5E;
-  --color-accent-warmgray: #8A7E74;
 }
 
+/* ── Light Mode (:root) ── */
 :root {
-  --radius: 0.875rem;
+  --radius: 0.625rem;
 
-  /* Warm parchment canvas — the signature Claude feel */
-  --background: #F5F0E8;
-  --foreground: #1A1613;
-
+  /* ── Core surfaces ── */
+  --background: #F7F8FA;
+  --foreground: #1A1D23;
   --card: #FFFFFF;
-  --card-foreground: #1A1613;
+  --card-foreground: #1A1D23;
   --popover: #FFFFFF;
-  --popover-foreground: #1A1613;
+  --popover-foreground: #1A1D23;
 
-  /* Primary = warm terracotta/sienna — Claudes signature warmth */
-  --primary: #C35A2C;
+  /* ── Primary — Meadow teal-green ── */
+  --primary: #0B7464;
   --primary-foreground: #FFFFFF;
 
-  --secondary: #EDE8DF;
-  --secondary-foreground: #3D3530;
+  /* ── Secondary ── */
+  --secondary: #F1F3F5;
+  --secondary-foreground: #4B5262;
 
-  --muted: #EDE8DF;
-  --muted-foreground: #8A7E74;
+  /* ── Muted ── */
+  --muted: #F1F3F5;
+  --muted-foreground: #6B7280;
 
-  --accent: #F7F2EB;
-  --accent-foreground: #C35A2C;
+  /* ── Accent ── */
+  --accent: #EFFCF8;
+  --accent-foreground: #0B7464;
 
-  --destructive: #C53030;
+  /* ── Destructive ── */
+  --destructive: #DC2626;
+  --destructive-foreground: #FFFFFF;
 
-  --border: #DDD6CB;
-  --input: #CFC8BC;
-  --ring: #C35A2C;
+  /* ── Borders & inputs ── */
+  --border: #E2E5E9;
+  --input: #E2E5E9;
+  --ring: #0B7464;
 
-  /* Warm, muted chart palette */
-  --chart-1: #C35A2C;
-  --chart-2: #8B7355;
-  --chart-3: #B08968;
-  --chart-4: #6B8F71;
-  --chart-5: #9B7653;
+  /* ── Charts (colorblind-safe) ── */
+  --chart-1: #0B9178;
+  --chart-2: #2563EB;
+  --chart-3: #7C3AED;
+  --chart-4: #EA580C;
+  --chart-5: #4F46E5;
 
-  /* Sidebar — warm dark surface, like aged leather */
-  --sidebar: #2C2420;
-  --sidebar-foreground: #E8DFD4;
-  --sidebar-primary: #E8A87C;
-  --sidebar-primary-foreground: #1A1613;
-  --sidebar-accent: #3D3530;
-  --sidebar-accent-foreground: #F0E9E0;
-  --sidebar-border: #3D3530;
-  --sidebar-ring: #E8A87C;
+  /* ── Sidebar (always dark) ── */
+  --sidebar: #1A1F2E;
+  --sidebar-foreground: #94A3B8;
+  --sidebar-primary: #36CCA8;
+  --sidebar-primary-foreground: #1A1F2E;
+  --sidebar-accent: #2F3749;
+  --sidebar-accent-foreground: #F1F5F9;
+  --sidebar-border: #2D3548;
+  --sidebar-ring: #36CCA8;
+
+  /* ── Module accents ── */
+  --color-health: #059669;
+  --color-attendance: #2563EB;
+  --color-finance: #4F46E5;
+  --color-alerts: #D97706;
+  --color-learning: #7C3AED;
+  --color-meals: #EA580C;
+  --color-comms: #E11D48;
+  --color-sleep: #0284C7;
+
+  /* ── Module accent tints ── */
+  --color-health-light: #ECFDF5;
+  --color-attendance-light: #EFF6FF;
+  --color-finance-light: #EEF2FF;
+  --color-alerts-light: #FFFBEB;
+  --color-learning-light: #F5F3FF;
+  --color-meals-light: #FFF7ED;
+  --color-comms-light: #FFF1F2;
+  --color-sleep-light: #F0F9FF;
+
+  /* ── Semantic colors ── */
+  --color-success: #16A34A;
+  --color-success-light: #ECFDF5;
+  --color-success-dark: #15803D;
+  --color-warning: #D97706;
+  --color-warning-light: #FFFBEB;
+  --color-warning-dark: #B45309;
+  --color-error: #DC2626;
+  --color-error-light: #FEF2F2;
+  --color-error-dark: #B91C1C;
+  --color-info: #2563EB;
+  --color-info-light: #EFF6FF;
+  --color-info-dark: #1D4ED8;
+
+  /* ── Primary scale (decorative/illustration use) ── */
+  --color-primary-50: #EFFCF8;
+  --color-primary-100: #D1F7EC;
+  --color-primary-200: #A6EFDB;
+  --color-primary-300: #6DE1C3;
+  --color-primary-400: #36CCA8;
+  --color-primary-500: #17B394;
+  --color-primary-600: #0B9178;
+  --color-primary-700: #0B7464;
+  --color-primary-800: #0D5C50;
+  --color-primary-900: #104C44;
+  --color-primary-950: #062D28;
+
+  /* ── Extended neutrals ── */
+  --color-bg-subtle: #F1F3F5;
+  --color-bg-muted: #E8EAED;
+  --color-text-disabled: #9CA3AF;
+  --color-border-subtle: #ECEEF1;
+  --color-border-strong: #C9CED4;
+
+  /* ── Font families ── */
+  --font-heading: 'Nunito', 'Cairo', system-ui, -apple-system, sans-serif;
+  --font-body: 'Cairo', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+  --font-body-ar: 'Cairo', 'Noto Sans Arabic', sans-serif;
+
+  /* ── Font sizes ── */
+  --text-h1: 1.875rem;
+  --text-h2: 1.5rem;
+  --text-h3: 1.25rem;
+  --text-h4: 1.125rem;
+  --text-h5: 1rem;
+  --text-h6: 0.875rem;
+  --text-body-lg: 1rem;
+  --text-body: 0.875rem;
+  --text-body-sm: 0.8125rem;
+  --text-caption: 0.75rem;
+  --text-overline: 0.6875rem;
+  --text-code: 0.8125rem;
+  --text-code-sm: 0.75rem;
+
+  /* ── Line heights ── */
+  --leading-h1: 2.375rem;
+  --leading-h2: 2rem;
+  --leading-h3: 1.75rem;
+  --leading-h4: 1.5rem;
+  --leading-h5: 1.375rem;
+  --leading-h6: 1.25rem;
+  --leading-body-lg: 1.625rem;
+  --leading-body: 1.375rem;
+  --leading-body-sm: 1.25rem;
+  --leading-caption: 1rem;
+
+  /* ── Font weights ── */
+  --weight-light: 300;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-extrabold: 800;
+
+  /* ── Letter spacing ── */
+  --tracking-tight: -0.01em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.02em;
+  --tracking-wider: 0.06em;
+
+  /* ── Shadows (warm-tinted, slate-900 base) ── */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 6px rgba(15, 23, 42, 0.06), 0 2px 4px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 10px 15px rgba(15, 23, 42, 0.08), 0 4px 6px rgba(15, 23, 42, 0.04);
+  --shadow-xl: 0 20px 25px rgba(15, 23, 42, 0.08), 0 8px 10px rgba(15, 23, 42, 0.03);
+  --shadow-inner: inset 0 2px 4px rgba(15, 23, 42, 0.04);
+  --shadow-ring: 0 0 0 3px rgba(11, 116, 100, 0.15);
+
+  /* ── Transitions ── */
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 100ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+  --duration-slower: 500ms;
 }
 
-/* ── Typography ── */
-:root {
-  --font-sans: "Söhne", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", sans-serif;
-  --font-mono: ui-monospace, "Cascadia Code", "Fira Code", monospace;
+/* ── Dark mode — sidebar stays dark, invert content area ── */
+.dark {
+  --background: #111318;
+  --foreground: #F1F5F9;
+  --card: #1A1D23;
+  --card-foreground: #F1F5F9;
+  --popover: #1A1D23;
+  --popover-foreground: #F1F5F9;
+  --primary: #36CCA8;
+  --primary-foreground: #062D28;
+  --secondary: #252A33;
+  --secondary-foreground: #CBD5E1;
+  --muted: #252A33;
+  --muted-foreground: #94A3B8;
+  --accent: #1A2E28;
+  --accent-foreground: #36CCA8;
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
+  --border: #2D3548;
+  --input: #2D3548;
+  --ring: #36CCA8;
+  --chart-1: #36CCA8;
+  --chart-2: #60A5FA;
+  --chart-3: #A78BFA;
+  --chart-4: #FB923C;
+  --chart-5: #818CF8;
+
+  /* Sidebar stays the same in dark mode */
+  --sidebar: #1A1F2E;
+  --sidebar-foreground: #94A3B8;
+  --sidebar-primary: #36CCA8;
+  --sidebar-primary-foreground: #1A1F2E;
+  --sidebar-accent: #2F3749;
+  --sidebar-accent-foreground: #F1F5F9;
+  --sidebar-border: #2D3548;
+  --sidebar-ring: #36CCA8;
 }
 
+/* ── Base styles ── */
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
-    @apply bg-background text-foreground font-sans;
-    font-size: 14.5px;
-    line-height: 1.65;
-    letter-spacing: -0.01em;
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+    font-size: var(--text-body);
+    line-height: var(--leading-body);
+    letter-spacing: var(--tracking-normal);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-heading);
+    letter-spacing: var(--tracking-tight);
+  }
+
+  h1 {
+    font-size: var(--text-h1);
+    line-height: var(--leading-h1);
+    font-weight: var(--weight-extrabold);
+  }
+
+  h2 {
+    font-size: var(--text-h2);
+    line-height: var(--leading-h2);
+    font-weight: var(--weight-bold);
+  }
+
+  h3 {
+    font-size: var(--text-h3);
+    line-height: var(--leading-h3);
+    font-weight: var(--weight-bold);
+  }
+
+  h4 {
+    font-size: var(--text-h4);
+    line-height: var(--leading-h4);
+    font-weight: var(--weight-semibold);
+  }
+
+  h5 {
+    font-family: var(--font-body);
+    font-size: var(--text-h5);
+    line-height: var(--leading-h5);
+    font-weight: var(--weight-semibold);
+  }
+
+  h6 {
+    font-family: var(--font-body);
+    font-size: var(--text-h6);
+    line-height: var(--leading-h6);
+    font-weight: var(--weight-semibold);
+  }
+
+  a {
+    color: var(--primary);
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: var(--color-primary-800);
+  }
+
+  code, kbd, samp, pre {
+    font-family: var(--font-mono);
+    font-size: var(--text-code);
+  }
 }
 
-/* ── Modern header ── */
+/* ── Header bar (frosted glass) ── */
 .header-bar {
-  background: rgba(245, 240, 232, 0.92);
+  background: rgba(247, 248, 250, 0.92);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   height: 56px;
-  border-bottom: 1px solid rgba(221, 214, 203, 0.6);
+  border-bottom: 1px solid rgba(226, 229, 233, 0.6);
 }
 
-/* ── Modern footer ── */
+/* ── Footer bar ── */
 .footer-bar {
   background: transparent;
-  color: #8A7E74;
-  border-top: 1px solid rgba(221, 214, 203, 0.4);
+  color: var(--muted-foreground);
+  border-top: 1px solid rgba(226, 229, 233, 0.4);
 }
 
 /* ── Skeleton shimmer animation ── */
@@ -165,11 +383,28 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #CFC8BC;
+  background: var(--color-border-strong);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #8A7E74;
+  background: var(--muted-foreground);
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Mobile responsive typography ── */
+@media (max-width: 640px) {
+  h1 { font-size: 1.5rem; line-height: 2rem; }
+  h2 { font-size: 1.25rem; line-height: 1.75rem; }
+  h3 { font-size: 1.125rem; line-height: 1.5rem; }
+  h4 { font-size: 1rem; line-height: 1.375rem; }
 }
 
 /* ── Print styles ── */
