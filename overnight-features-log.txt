@@ -859,3 +859,30 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 32 — Design: Login & Auth Pages — Sat Feb 28 10:03:00 CET 2026 ===
 =============================================
+Done. Here's what changed in both auth pages:
+
+**Login page** (`src/app/(auth)/login/page.tsx`):
+- Warm gradient background using Meadow teal tints (`#EFFCF8` → `#D1F7EC/30`) instead of flat white
+- Soft blurred decorative blobs in brand colors for depth
+- Prominent `K` logo mark in `#0B9178` with branded shadow
+- "Kidd**z**Online" with the "z" in Meadow green
+- Clean white card with design-system border (`#E2E5E9`), proper `shadow-md`
+- Inputs with correct hover (`#C9CED4`) and focus (`#0B7464` + ring glow) states
+- Primary button in `#0B7464` with hover to `#0D5C50`, branded shadow, subtle press scale
+- Error state uses semantic error colors (`#FEF2F2` bg, `#B91C1C` text) with icon
+- "Forgot password?" link in primary interactive color
+- Playful sprout SVG illustration below the card
+- Demo credentials in neutral design-system styling
+
+**Forgot password page** (`src/app/(auth)/forgot/page.tsx`):
+- Replaced all terracotta (`#C35A2C`) references with Meadow brand colors
+- Identical background, logo, card, and footer treatment as login
+- Sent-confirmation state with email icon in `#EFFCF8` circle
+- Same sprout illustration and copyright footer
+To https://github.com/lelapinsauvage/KDDZ.git
+   ae25468..03b45f6  ux-improvements -> ux-improvements
+=== Phase 32 — Design: Login & Auth Pages COMPLETE — Sat Feb 28 10:04:49 CET 2026 ===
+
+=============================================
+=== Phase 33 — Design: Sidebar Navigation — Sat Feb 28 10:04:49 CET 2026 ===
+=============================================
