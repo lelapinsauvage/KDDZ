@@ -2,7 +2,7 @@
 
 import { type ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
-import { ArrowUpDown, Eye, Pencil, Trash2, MoreHorizontal, CircleCheck, CircleDashed, CircleOff } from "lucide-react";
+import { Eye, Pencil, Trash2, MoreHorizontal, CircleCheck, CircleDashed, CircleOff } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { SortableHeader } from "@/components/shared/data-table";
 
 // ── Row type that matches what getChildren() returns ──
 
@@ -116,6 +123,31 @@ function getClassColor(className: string): string {
   return CLASS_COLORS[Math.abs(hash) % CLASS_COLORS.length];
 }
 
+// ── Status badge config (shared) ─────────────
+
+const STATUS_CONFIG: Record<
+  string,
+  { className: string; icon: typeof CircleCheck; label: string }
+> = {
+  ACTIVE: {
+    className:
+      "bg-[var(--color-success-light)] text-[var(--color-success-dark)] border-[var(--color-success)]/20",
+    icon: CircleCheck,
+    label: "Active",
+  },
+  INACTIVE: {
+    className: "bg-muted text-muted-foreground border-muted",
+    icon: CircleOff,
+    label: "Inactive",
+  },
+  DRAFT: {
+    className:
+      "bg-[var(--color-warning-light)] text-[var(--color-warning-dark)] border-[var(--color-warning)]/20",
+    icon: CircleDashed,
+    label: "Draft",
+  },
+};
+
 // ── Column Definitions ──────────────────────
 
 interface ChildrenColumnsOptions {
@@ -126,39 +158,52 @@ export function getChildrenColumns(
   options: ChildrenColumnsOptions = {}
 ): ColumnDef<ChildRow>[] {
   return [
-    // Avatar
+    // Avatar — with tooltip showing extra info
     {
       id: "avatar",
       header: "",
       cell: ({ row }) => {
         const child = row.original;
+        const fullName = `${child.firstName} ${child.lastName}`;
         const initials = getInitials(child.firstName, child.lastName);
-        const bg = getAvatarColor(`${child.firstName} ${child.lastName}`);
+        const bg = getAvatarColor(fullName);
+        const age = getAge(child.dateOfBirth);
+        const status = getStatus(child);
+
         return (
-          <div
-            className={`flex size-9 items-center justify-center rounded-full text-xs font-bold text-white shadow-sm ${bg}`}
-          >
-            {initials}
-          </div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  className={`flex size-9 items-center justify-center rounded-full text-xs font-bold text-white shadow-sm ${bg}`}
+                >
+                  {initials}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="max-w-[200px]">
+                <p className="font-medium">{fullName}</p>
+                {age && <p className="text-muted-foreground">Age: {age}</p>}
+                {child.class?.name && (
+                  <p className="text-muted-foreground">Class: {child.class.name}</p>
+                )}
+                {child.branch?.name && (
+                  <p className="text-muted-foreground">Branch: {child.branch.name}</p>
+                )}
+                <p className="text-muted-foreground">Status: {status.charAt(0) + status.slice(1).toLowerCase()}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         );
       },
       enableSorting: false,
     },
 
-    // Full Name
+    // Full Name — with sort indicator
     {
       accessorKey: "fullName",
       accessorFn: (row) => `${row.firstName} ${row.lastName}`,
       header: ({ column }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="-ml-3 h-8 text-xs font-semibold uppercase"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Full Name
-          <ArrowUpDown className="ml-1 size-3" />
-        </Button>
+        <SortableHeader column={column}>Full Name</SortableHeader>
       ),
       cell: ({ row }) => {
         const child = row.original;
@@ -166,6 +211,7 @@ export function getChildrenColumns(
           <Link
             href={`/children/${child.id}`}
             className="font-medium text-foreground hover:text-primary hover:underline"
+            onClick={(e) => e.stopPropagation()}
           >
             {child.firstName} {child.lastName}
           </Link>
@@ -178,15 +224,7 @@ export function getChildrenColumns(
       accessorKey: "className",
       accessorFn: (row) => row.class?.name ?? "-",
       header: ({ column }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="-ml-3 h-8 text-xs font-semibold uppercase"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Class
-          <ArrowUpDown className="ml-1 size-3" />
-        </Button>
+        <SortableHeader column={column}>Class</SortableHeader>
       ),
       cell: ({ row }) => {
         const name = row.original.class?.name;
@@ -204,15 +242,7 @@ export function getChildrenColumns(
       accessorKey: "branchName",
       accessorFn: (row) => row.branch?.name ?? "-",
       header: ({ column }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="-ml-3 h-8 text-xs font-semibold uppercase"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Branch
-          <ArrowUpDown className="ml-1 size-3" />
-        </Button>
+        <SortableHeader column={column}>Branch</SortableHeader>
       ),
       cell: ({ row }) => (
         <span className="text-muted-foreground">{row.original.branch?.name ?? "-"}</span>
@@ -223,15 +253,7 @@ export function getChildrenColumns(
     {
       accessorKey: "gender",
       header: ({ column }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="-ml-3 h-8 text-xs font-semibold uppercase"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Gender
-          <ArrowUpDown className="ml-1 size-3" />
-        </Button>
+        <SortableHeader column={column}>Gender</SortableHeader>
       ),
       cell: ({ row }) => {
         const gender = row.original.gender;
@@ -255,15 +277,7 @@ export function getChildrenColumns(
     {
       accessorKey: "dateOfBirth",
       header: ({ column }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="-ml-3 h-8 text-xs font-semibold uppercase"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Date of Birth
-          <ArrowUpDown className="ml-1 size-3" />
-        </Button>
+        <SortableHeader column={column}>Date of Birth</SortableHeader>
       ),
       cell: ({ row }) => {
         const dob = row.original.dateOfBirth;
@@ -277,29 +291,17 @@ export function getChildrenColumns(
       },
     },
 
-    // Status
+    // Status — colored badge with icon
     {
       accessorKey: "status",
       accessorFn: (row) => getStatus(row),
       header: ({ column }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="-ml-3 h-8 text-xs font-semibold uppercase"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Status
-          <ArrowUpDown className="ml-1 size-3" />
-        </Button>
+        <SortableHeader column={column}>Status</SortableHeader>
       ),
       cell: ({ row }) => {
         const status = getStatus(row.original);
-        const config: Record<string, { className: string; icon: typeof CircleCheck; label: string }> = {
-          ACTIVE: { className: "bg-[var(--color-success-light)] text-[var(--color-success-dark)] border-[var(--color-success)]/20", icon: CircleCheck, label: "Active" },
-          INACTIVE: { className: "bg-muted text-muted-foreground border-muted", icon: CircleOff, label: "Inactive" },
-          DRAFT: { className: "bg-[var(--color-warning-light)] text-[var(--color-warning-dark)] border-[var(--color-warning)]/20", icon: CircleDashed, label: "Draft" },
-        };
-        const { className, icon: Icon, label } = config[status] ?? config.INACTIVE;
+        const { className, icon: Icon, label } =
+          STATUS_CONFIG[status] ?? STATUS_CONFIG.INACTIVE;
         return (
           <Badge className={`gap-1 border ${className}`}>
             <Icon className="size-3" />
@@ -322,7 +324,11 @@ export function getChildrenColumns(
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <MoreHorizontal className="size-4 text-muted-foreground hover:text-primary" />
                 <span className="sr-only">Actions</span>
               </Button>

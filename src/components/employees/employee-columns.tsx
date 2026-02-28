@@ -2,7 +2,7 @@
 
 import { type ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
-import { MoreHorizontal, Eye, Pencil, Trash2, ArrowUpDown, Mail, Phone } from "lucide-react";
+import { MoreHorizontal, Eye, Pencil, Trash2, Mail, Phone, CircleCheck, CircleOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +12,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { format } from "date-fns";
+import { SortableHeader } from "@/components/shared/data-table";
 
 export type EmployeeType = "teacher" | "nurse" | "doctor" | "manager";
 
@@ -57,36 +64,55 @@ export const avatarColors: Record<EmployeeType, string> = {
   manager: "bg-violet-100 text-violet-700",
 };
 
+const ROLE_LABELS: Record<EmployeeType, string> = {
+  teacher: "Teacher",
+  nurse: "Nurse",
+  doctor: "Doctor",
+  manager: "Manager",
+};
+
 export function createEmployeeColumns(
   type: EmployeeType
 ): ColumnDef<Employee>[] {
   const columns: ColumnDef<Employee>[] = [
+    // Avatar — with tooltip showing extra info
     {
       id: "avatar",
       header: "",
       cell: ({ row }) => {
         const employee = row.original;
         const colorClass = avatarColors[employee.type] || avatarColors.teacher;
+        const fullName = `${employee.firstName} ${employee.lastName}`;
         return (
-          <div className={`flex size-9 items-center justify-center rounded-full text-xs font-semibold ${colorClass}`}>
-            {getInitials(employee.firstName, employee.lastName)}
-          </div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  className={`flex size-9 items-center justify-center rounded-full text-xs font-semibold ${colorClass}`}
+                >
+                  {getInitials(employee.firstName, employee.lastName)}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="max-w-[220px]">
+                <p className="font-medium">{fullName}</p>
+                <p className="text-muted-foreground">Role: {ROLE_LABELS[employee.type]}</p>
+                <p className="text-muted-foreground">{employee.email}</p>
+                <p className="text-muted-foreground">{employee.phone}</p>
+                {employee.branch && (
+                  <p className="text-muted-foreground">Branch: {employee.branch}</p>
+                )}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         );
       },
       enableSorting: false,
     },
+    // Full Name — with sort indicator
     {
       accessorKey: "fullName",
       header: ({ column }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="-ml-3 h-8 text-xs font-semibold uppercase"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Full Name
-          <ArrowUpDown className="ml-1 size-3" />
-        </Button>
+        <SortableHeader column={column}>Full Name</SortableHeader>
       ),
       accessorFn: (row) => `${row.firstName} ${row.lastName}`,
       cell: ({ row }) => {
@@ -96,24 +122,18 @@ export function createEmployeeColumns(
           <Link
             href={getDetailPath(employee.type, employee.id)}
             className="font-medium text-foreground hover:text-primary transition-colors"
+            onClick={(e) => e.stopPropagation()}
           >
             {fullName}
           </Link>
         );
       },
     },
+    // Email
     {
       accessorKey: "email",
       header: ({ column }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="-ml-3 h-8 text-xs font-semibold uppercase"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Email
-          <ArrowUpDown className="ml-1 size-3" />
-        </Button>
+        <SortableHeader column={column}>Email</SortableHeader>
       ),
       cell: ({ row }) => (
         <span className="inline-flex items-center gap-1.5 text-muted-foreground">
@@ -122,6 +142,7 @@ export function createEmployeeColumns(
         </span>
       ),
     },
+    // Phone
     {
       accessorKey: "phone",
       header: "Phone",
@@ -132,6 +153,7 @@ export function createEmployeeColumns(
         </span>
       ),
     },
+    // Branch
     {
       accessorKey: "branch",
       header: "Branch",
@@ -157,18 +179,11 @@ export function createEmployeeColumns(
   }
 
   columns.push(
+    // Hire Date — with sort indicator
     {
       accessorKey: "hireDate",
       header: ({ column }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="-ml-3 h-8 text-xs font-semibold uppercase"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Hire Date
-          <ArrowUpDown className="ml-1 size-3" />
-        </Button>
+        <SortableHeader column={column}>Hire Date</SortableHeader>
       ),
       cell: ({ row }) => (
         <span className="text-muted-foreground">
@@ -176,31 +191,32 @@ export function createEmployeeColumns(
         </span>
       ),
     },
+    // Status — colored badge with icon (consistent with children)
     {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => {
         const status = row.original.status;
+        const isActive = status === "Active";
         return (
-          <div className="flex items-center gap-2">
-            <span
-              className={`inline-block size-2 rounded-full ${
-                status === "Active" ? "bg-[var(--color-success)]" : "bg-muted-foreground/40"
-              }`}
-            />
-            <Badge
-              className={
-                status === "Active"
-                  ? "bg-[var(--color-success-light)] text-[var(--color-success-dark)] border-[var(--color-success)]/20"
-                  : "bg-muted text-muted-foreground border-muted"
-              }
-            >
-              {status}
-            </Badge>
-          </div>
+          <Badge
+            className={`gap-1 border ${
+              isActive
+                ? "bg-[var(--color-success-light)] text-[var(--color-success-dark)] border-[var(--color-success)]/20"
+                : "bg-muted text-muted-foreground border-muted"
+            }`}
+          >
+            {isActive ? (
+              <CircleCheck className="size-3" />
+            ) : (
+              <CircleOff className="size-3" />
+            )}
+            {status}
+          </Badge>
         );
       },
     },
+    // Actions
     {
       id: "actions",
       header: "",
@@ -209,7 +225,11 @@ export function createEmployeeColumns(
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <MoreHorizontal className="size-4 text-muted-foreground hover:text-primary" />
                 <span className="sr-only">Open menu</span>
               </Button>
