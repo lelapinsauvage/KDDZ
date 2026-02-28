@@ -1099,3 +1099,34 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 40 — UX: Search & Command Palette — Sat Feb 28 10:35:24 CET 2026 ===
 =============================================
+All done. Here's a summary of the changes across 5 files:
+
+### Command Palette (`global-search.tsx`) — full rewrite
+1. **Recent searches** — search queries are now saved to localStorage and shown when opening with empty query, clicking one re-populates the search input
+2. **Recent pages** — renamed heading to "Recently Visited" for clarity
+3. **Search results with avatars** — Children show colored initials (same palette as the children list), Staff show role-colored avatars (amber=teacher, emerald=nurse, blue=doctor, violet=manager) with name + role/branch on two lines
+4. **Skeleton loading** — 3 child + 2 staff skeleton items with animated pulse circles/bars while results load
+5. **Rich "No results"** — shows search icon, the query that failed, a suggestion line, and quick-link pills to Children/Staff/Daily Reports
+6. **Quick action icons** — wrapped in a subtle `bg-primary/10` badge for visual weight
+7. **Pages** — use `#` icon instead of generic file icon, group label right-aligned and dimmed
+8. **Footer keyboard hints** — `↑↓` navigate, `↵` select, `esc` close
+9. **Wider dialog** — `sm:max-w-[560px]` and `max-h-[400px]` for more breathing room
+10. **"View Calendar"** added as a quick action
+
+### Header (`header.tsx`)
+- Search pill now visible at `md` breakpoint (tablets), not just `lg`
+- Mobile search trigger upgraded from bare icon to a pill with "Search" text
+
+### Children list (`children-page-client.tsx`)
+- **Instant debounced search** — typing triggers a 350ms debounced URL update, no form submit or blur needed
+- **Clear button** — X icon appears inside the search input when there's a value
+
+### Employee list (`employee-listing-client.tsx`)
+- **Clear button** — same X icon pattern for consistency
+To https://github.com/lelapinsauvage/KDDZ.git
+   f964259..9846a0b  ux-improvements -> ux-improvements
+=== Phase 40 — UX: Search & Command Palette COMPLETE — Sat Feb 28 10:39:54 CET 2026 ===
+
+=============================================
+=== Phase 41 — UX: Forms — Child Enrollment & Daily Reports — Sat Feb 28 10:39:54 CET 2026 ===
+=============================================

@@ -40,15 +40,18 @@ import {
   Shirt,
   Paperclip,
   Upload,
+  Copy,
+  X,
+  Clock,
 } from "lucide-react";
 
 type PortionValue = "NONE" | "LITTLE" | "HALF" | "MOST" | "ALL";
 
-const portionOptions: { value: PortionValue; label: string }[] = [
-  { value: "ALL", label: "Well" },
-  { value: "HALF", label: "Half" },
-  { value: "LITTLE", label: "Little" },
-  { value: "NONE", label: "None" },
+const portionOptions: { value: PortionValue; label: string; icon: string }[] = [
+  { value: "ALL", label: "Well", icon: "\uD83C\uDF5D" },
+  { value: "HALF", label: "Half", icon: "\uD83C\uDF7D\uFE0F" },
+  { value: "LITTLE", label: "Little", icon: "\uD83E\uDD44" },
+  { value: "NONE", label: "None", icon: "\u274C" },
 ];
 
 const moodOptions = [
@@ -83,6 +86,17 @@ interface FoodOption {
   name: string;
 }
 
+interface YesterdayData {
+  breakfastFoodId?: string;
+  breakfastPortion?: PortionValue;
+  lunchFoodId?: string;
+  lunchPortion?: PortionValue;
+  dessert?: string;
+  dessertPortion?: PortionValue;
+  sleepFrom?: string;
+  sleepTo?: string;
+}
+
 interface DailyReportFormProps {
   childrenList: ChildOption[];
   foods: {
@@ -92,9 +106,15 @@ interface DailyReportFormProps {
   };
   defaultValues?: Partial<DailyReportFormValues>;
   reportId?: string;
+  yesterdayData?: YesterdayData;
 }
 
-/* ── Portion radio pills ── */
+function currentTimeString() {
+  const now = new Date();
+  return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+}
+
+/* ── Portion radio pills with visual icons ── */
 function PortionRadio({
   value,
   onChange,
@@ -103,7 +123,7 @@ function PortionRadio({
   onChange: (val: PortionValue | undefined) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="flex flex-wrap gap-2">
       {portionOptions.map((p) => {
         const isSelected = value === p.value;
         return (
@@ -111,13 +131,14 @@ function PortionRadio({
             key={p.value}
             type="button"
             onClick={() => onChange(isSelected ? undefined : p.value)}
-            className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
+            className={`flex flex-col items-center gap-1 rounded-xl border-2 px-3 py-2.5 min-w-[60px] min-h-[56px] text-xs font-medium transition-all ${
               isSelected
-                ? "border-amber-500 bg-amber-500 text-white shadow-sm"
+                ? "border-amber-500 bg-amber-500 text-white shadow-md scale-105"
                 : "border-gray-200 bg-white hover:border-amber-300 text-gray-600"
             }`}
           >
-            {p.label}
+            <span className="text-lg leading-none">{p.icon}</span>
+            <span>{p.label}</span>
           </button>
         );
       })}
@@ -125,7 +146,7 @@ function PortionRadio({
   );
 }
 
-/* ── Hygiene tally checkboxes (rounded, rating-style) ── */
+/* ── Hygiene tally checkboxes (rounded, rating-style, touch-friendly 44px+) ── */
 function HygieneCheckRow({
   count,
   maxChecks = 5,
@@ -146,13 +167,13 @@ function HygieneCheckRow({
             key={n}
             type="button"
             onClick={() => onChange(n === count ? n - 1 : n)}
-            className={`size-8 rounded-full border-2 flex items-center justify-center transition-all ${
+            className={`size-11 rounded-full border-2 flex items-center justify-center transition-all ${
               isChecked
-                ? `${activeClass} text-white`
+                ? `${activeClass} text-white shadow-sm`
                 : "border-gray-200 bg-white hover:border-gray-300"
             }`}
           >
-            {isChecked && <Check className="size-3.5" />}
+            {isChecked && <Check className="size-4" />}
           </button>
         );
       })}
@@ -165,6 +186,7 @@ export function DailyReportForm({
   foods,
   defaultValues,
   reportId,
+  yesterdayData,
 }: DailyReportFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -322,36 +344,36 @@ export function DailyReportForm({
         </div>
       )}
 
-      {/* ── ATTENDANCE MODE TOGGLE ── */}
-      <div className="rounded-2xl border-2 border-primary/20 bg-gradient-to-r from-emerald-50 to-rose-50 p-5">
-        <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-          <span className="text-sm font-medium text-muted-foreground">Attendance Status</span>
-          <div className="flex rounded-xl bg-white p-1 shadow-sm border">
-            <button
-              type="button"
-              onClick={() => setValue("attendanceMode", "PRESENT")}
-              className={`flex items-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold transition-all ${
-                attendanceMode === "PRESENT"
-                  ? "bg-emerald-500 text-white shadow-md"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              <Check className="size-4" />
-              Present
-            </button>
-            <button
-              type="button"
-              onClick={() => setValue("attendanceMode", "ABSENT")}
-              className={`flex items-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold transition-all ${
-                attendanceMode === "ABSENT"
-                  ? "bg-rose-500 text-white shadow-md"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              <Trash2 className="size-4" />
-              Absent
-            </button>
-          </div>
+      {/* ── ATTENDANCE MODE TOGGLE (HUGE & obvious) ── */}
+      <div className="rounded-2xl border-2 border-primary/20 bg-gradient-to-r from-emerald-50 to-rose-50 p-6">
+        <p className="mb-3 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Attendance Status
+        </p>
+        <div className="flex gap-4">
+          <button
+            type="button"
+            onClick={() => setValue("attendanceMode", "PRESENT")}
+            className={`flex flex-1 flex-col items-center justify-center gap-2 rounded-2xl border-3 min-h-[100px] py-5 text-lg font-bold transition-all ${
+              attendanceMode === "PRESENT"
+                ? "border-emerald-500 bg-emerald-500 text-white shadow-lg shadow-emerald-200 scale-[1.02]"
+                : "border-gray-200 bg-white text-gray-400 hover:border-emerald-300 hover:text-emerald-600"
+            }`}
+          >
+            <Check className={`size-8 ${attendanceMode === "PRESENT" ? "text-white" : "text-emerald-300"}`} />
+            Present
+          </button>
+          <button
+            type="button"
+            onClick={() => setValue("attendanceMode", "ABSENT")}
+            className={`flex flex-1 flex-col items-center justify-center gap-2 rounded-2xl border-3 min-h-[100px] py-5 text-lg font-bold transition-all ${
+              attendanceMode === "ABSENT"
+                ? "border-rose-500 bg-rose-500 text-white shadow-lg shadow-rose-200 scale-[1.02]"
+                : "border-gray-200 bg-white text-gray-400 hover:border-rose-300 hover:text-rose-600"
+            }`}
+          >
+            <X className={`size-8 ${attendanceMode === "ABSENT" ? "text-white" : "text-rose-300"}`} />
+            Absent
+          </button>
         </div>
       </div>
 
@@ -459,6 +481,27 @@ export function DailyReportForm({
       {/* ══════════════════════════════════════════ */}
       {attendanceMode === "PRESENT" && (
         <>
+          {/* ── Copy from Yesterday Quick Action ── */}
+          {yesterdayData && (
+            <button
+              type="button"
+              onClick={() => {
+                if (yesterdayData.breakfastFoodId) setValue("breakfastFoodId", yesterdayData.breakfastFoodId);
+                if (yesterdayData.breakfastPortion) setValue("breakfastPortion", yesterdayData.breakfastPortion);
+                if (yesterdayData.lunchFoodId) setValue("lunchFoodId", yesterdayData.lunchFoodId);
+                if (yesterdayData.lunchPortion) setValue("lunchPortion", yesterdayData.lunchPortion);
+                if (yesterdayData.dessert) setValue("dessert", yesterdayData.dessert);
+                if (yesterdayData.dessertPortion) setValue("dessertPortion", yesterdayData.dessertPortion);
+                if (yesterdayData.sleepFrom) setValue("sleepFrom", yesterdayData.sleepFrom);
+                if (yesterdayData.sleepTo) setValue("sleepTo", yesterdayData.sleepTo);
+              }}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 px-4 py-3 text-sm font-semibold text-primary transition-colors hover:border-primary/50 hover:bg-primary/10"
+            >
+              <Copy className="size-4" />
+              Copy meals &amp; sleep from yesterday
+            </button>
+          )}
+
           {/* ── MEALS ISLAND ── */}
           <Card className="border-amber-200 bg-amber-50/60">
             <CardHeader className="pb-3">
@@ -499,7 +542,19 @@ export function DailyReportForm({
                   </div>
                   <div className="space-y-2">
                     <Label>Time</Label>
-                    <Input type="time" {...register("breakfastTime")} />
+                    <div className="flex gap-2">
+                      <Input type="time" {...register("breakfastTime")} className="flex-1" />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="shrink-0 size-10 border-amber-300 text-amber-600 hover:bg-amber-100"
+                        onClick={() => setValue("breakfastTime", currentTimeString())}
+                        title="Set to current time"
+                      >
+                        <Clock className="size-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -537,7 +592,19 @@ export function DailyReportForm({
                   </div>
                   <div className="space-y-2">
                     <Label>Time</Label>
-                    <Input type="time" {...register("lunchTime")} />
+                    <div className="flex gap-2">
+                      <Input type="time" {...register("lunchTime")} className="flex-1" />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="shrink-0 size-10 border-amber-300 text-amber-600 hover:bg-amber-100"
+                        onClick={() => setValue("lunchTime", currentTimeString())}
+                        title="Set to current time"
+                      >
+                        <Clock className="size-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -575,7 +642,19 @@ export function DailyReportForm({
                   </div>
                   <div className="space-y-2">
                     <Label>Time</Label>
-                    <Input type="time" {...register("dessertTime")} />
+                    <div className="flex gap-2">
+                      <Input type="time" {...register("dessertTime")} className="flex-1" />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="shrink-0 size-10 border-amber-300 text-amber-600 hover:bg-amber-100"
+                        onClick={() => setValue("dessertTime", currentTimeString())}
+                        title="Set to current time"
+                      >
+                        <Clock className="size-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -638,17 +717,30 @@ export function DailyReportForm({
                           type="number"
                           placeholder="120"
                           {...register(`milkEntries.${index}.amountCc`)}
+                          className="min-h-[44px]"
                         />
                       </div>
                       <div className="flex-1 space-y-2">
                         <Label>Time</Label>
-                        <Input type="time" {...register(`milkEntries.${index}.time`)} />
+                        <div className="flex gap-1.5">
+                          <Input type="time" {...register(`milkEntries.${index}.time`)} className="flex-1 min-h-[44px]" />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            className="shrink-0 size-10 border-sky-300 text-sky-600 hover:bg-sky-100"
+                            onClick={() => setValue(`milkEntries.${index}.time`, currentTimeString())}
+                            title="Set to current time"
+                          >
+                            <Clock className="size-4" />
+                          </Button>
+                        </div>
                       </div>
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="text-destructive hover:text-destructive"
+                        className="text-destructive hover:text-destructive min-h-[44px] min-w-[44px]"
                         onClick={() => milkArray.remove(index)}
                       >
                         <Trash2 className="size-4" />
@@ -660,7 +752,7 @@ export function DailyReportForm({
             </CardContent>
           </Card>
 
-          {/* ── SLEEP ISLAND ── */}
+          {/* ── SLEEP ISLAND (blue) ── */}
           <Card className="border-indigo-200 bg-indigo-50/60">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base text-indigo-900">
@@ -672,11 +764,35 @@ export function DailyReportForm({
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label>From</Label>
-                  <Input type="time" {...register("sleepFrom")} />
+                  <div className="flex gap-2">
+                    <Input type="time" {...register("sleepFrom")} className="flex-1" />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="shrink-0 size-10 border-indigo-300 text-indigo-600 hover:bg-indigo-100"
+                      onClick={() => setValue("sleepFrom", currentTimeString())}
+                      title="Set to current time"
+                    >
+                      <Clock className="size-4" />
+                    </Button>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>To</Label>
-                  <Input type="time" {...register("sleepTo")} />
+                  <div className="flex gap-2">
+                    <Input type="time" {...register("sleepTo")} className="flex-1" />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="shrink-0 size-10 border-indigo-300 text-indigo-600 hover:bg-indigo-100"
+                      onClick={() => setValue("sleepTo", currentTimeString())}
+                      title="Set to current time"
+                    >
+                      <Clock className="size-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -743,23 +859,31 @@ export function DailyReportForm({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-5">
-              {/* Symptom checkboxes */}
-              <div className="flex flex-wrap gap-3 sm:gap-6">
+              {/* Symptom toggle pills (touch-friendly) */}
+              <div className="flex flex-wrap gap-2">
                 {[
                   { key: "diarrhea" as const, label: "Diarrhea" },
                   { key: "cough" as const, label: "Cough" },
                   { key: "runnyNose" as const, label: "Runny Nose" },
                   { key: "vomit" as const, label: "Vomit" },
-                ].map(({ key, label }) => (
-                  <div key={key} className="flex items-center gap-2">
-                    <Checkbox
-                      id={key}
-                      checked={watch(key)}
-                      onCheckedChange={(checked) => setValue(key, !!checked)}
-                    />
-                    <Label htmlFor={key}>{label}</Label>
-                  </div>
-                ))}
+                ].map(({ key, label }) => {
+                  const active = watch(key);
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setValue(key, !active)}
+                      className={`flex items-center gap-2 rounded-xl border-2 px-4 py-2.5 min-h-[44px] text-sm font-medium transition-all ${
+                        active
+                          ? "border-rose-500 bg-rose-500 text-white shadow-sm"
+                          : "border-rose-200 bg-white text-rose-700 hover:border-rose-400"
+                      }`}
+                    >
+                      {active && <Check className="size-3.5" />}
+                      {label}
+                    </button>
+                  );
+                })}
               </div>
 
               <Separator className="bg-rose-200" />
@@ -797,17 +921,30 @@ export function DailyReportForm({
                             step="0.1"
                             placeholder="37.5"
                             {...register(`feverEntries.${index}.temperature`)}
+                            className="min-h-[44px]"
                           />
                         </div>
                         <div className="flex-1 space-y-2">
                           <Label>Time</Label>
-                          <Input type="time" {...register(`feverEntries.${index}.time`)} />
+                          <div className="flex gap-1.5">
+                            <Input type="time" {...register(`feverEntries.${index}.time`)} className="flex-1 min-h-[44px]" />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              className="shrink-0 size-10 border-rose-300 text-rose-600 hover:bg-rose-100"
+                              onClick={() => setValue(`feverEntries.${index}.time`, currentTimeString())}
+                              title="Set to current time"
+                            >
+                              <Clock className="size-4" />
+                            </Button>
+                          </div>
                         </div>
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="text-destructive hover:text-destructive"
+                          className="text-destructive hover:text-destructive min-h-[44px] min-w-[44px]"
                           onClick={() => feverArray.remove(index)}
                         >
                           <Trash2 className="size-4" />
@@ -849,14 +986,14 @@ export function DailyReportForm({
                       key={mood.value}
                       type="button"
                       onClick={() => setValue("mood", mood.value as "HAPPY" | "CALM" | "FUSSY" | "CRYING" | "SLEEPY")}
-                      className={`flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm transition-colors ${
+                      className={`flex flex-col items-center gap-1 rounded-xl border-2 px-4 py-3 min-w-[72px] min-h-[60px] text-sm font-medium transition-all ${
                         isSelected
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border hover:border-primary/50"
+                          ? "border-primary bg-primary/10 text-primary shadow-sm scale-105"
+                          : "border-border bg-white hover:border-primary/50"
                       }`}
                     >
-                      <span className="text-lg">{mood.emoji}</span>
-                      {mood.label}
+                      <span className="text-2xl">{mood.emoji}</span>
+                      <span className="text-xs">{mood.label}</span>
                     </button>
                   );
                 })}
@@ -881,7 +1018,7 @@ export function DailyReportForm({
                       key={key}
                       type="button"
                       onClick={() => setValue(key, !isActive)}
-                      className={`rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition-all ${
+                      className={`rounded-xl border-2 px-4 py-3 min-h-[44px] text-sm font-medium transition-all ${
                         isActive
                           ? "border-violet-500 bg-violet-500 text-white shadow-sm"
                           : "border-violet-200 bg-white text-violet-700 hover:border-violet-400"
@@ -984,18 +1121,19 @@ export function DailyReportForm({
         </>
       )}
 
-      {/* ── Action Bar ── */}
+      {/* ── Action Bar (touch-friendly sizing) ── */}
       <div className="sticky bottom-0 flex items-center justify-end gap-3 border-t border-border/40 bg-card px-4 py-3 md:px-6 md:py-4">
         <Button
           type="button"
           variant="outline"
           disabled={isPending}
           onClick={handleSubmit((data) => submitReport(data, "DRAFT"))}
+          className="min-h-[44px] px-5"
         >
           {isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
           Save as Draft
         </Button>
-        <Button type="submit" disabled={isPending}>
+        <Button type="submit" disabled={isPending} className="min-h-[44px] px-6">
           {isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
           {reportId ? "Update Report" : "Submit Report"}
         </Button>

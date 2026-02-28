@@ -122,7 +122,10 @@ const WIZARD_STEPS = [
   { label: "General & Medical" },
   { label: "Financial Info" },
   { label: "Attachments" },
+  { label: "Review & Submit" },
 ];
+
+const DRAFT_STORAGE_KEY = "child-enrollment-draft";
 
 const ATTACHMENT_TYPES = [
   { key: "photo", label: "Photo" },
@@ -446,16 +449,24 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
     loadOptions();
   }, []);
 
+  // Restore draft from localStorage on mount
+  const [draftRestored, setDraftRestored] = useState(false);
+  const savedDraft = typeof window !== "undefined" && !isEditing
+    ? (() => { try { return JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY) || "null"); } catch { return null; } })()
+    : null;
+
   const {
     register,
     handleSubmit,
     control,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, touchedFields },
     watch,
     trigger,
     setValue,
+    getValues,
   } = useForm<ChildFormValues>({
     resolver: zodResolver(childFormSchema),
+    mode: "onTouched",
     defaultValues: {
       firstName: "",
       firstNameAr: "",
@@ -569,6 +580,39 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
   const watchPreviousGarderie = watch("previousGarderie");
   const watchedBranchId = watch("branchId");
 
+  // Auto-save draft to localStorage on step changes (non-edit mode only)
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const formValues = watch();
+
+  useEffect(() => {
+    if (isEditing) return;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => {
+      try {
+        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(formValues));
+      } catch {
+        // localStorage full or unavailable
+      }
+    }, 1000);
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [formValues, isEditing]);
+
+  // Restore draft on mount
+  useEffect(() => {
+    if (savedDraft && !draftRestored && !isEditing) {
+      const keys = Object.keys(savedDraft) as (keyof ChildFormValues)[];
+      for (const key of keys) {
+        if (savedDraft[key] !== undefined && savedDraft[key] !== "") {
+          setValue(key, savedDraft[key]);
+        }
+      }
+      setDraftRestored(true);
+      toast.info("Draft restored from your previous session");
+    }
+  }, [savedDraft, draftRestored, isEditing, setValue]);
+
   // Refetch classes when branch changes
   const branchInitRef = useRef(true);
   useEffect(() => {
@@ -618,6 +662,9 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
   // ── Wizard Step Management ──
   const [currentStep, setCurrentStep] = useState(0);
 
+  const totalSteps = WIZARD_STEPS.length;
+  const completionPercent = Math.round((currentStep / (totalSteps - 1)) * 100);
+
   async function handleNextStep() {
     let valid = true;
     if (currentStep === 0) {
@@ -626,7 +673,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
       valid = await trigger(["classId", "schoolYearId"]);
     }
     if (!valid) return;
-    setCurrentStep((s) => Math.min(4, s + 1));
+    setCurrentStep((s) => Math.min(totalSteps - 1, s + 1));
   }
 
   function handlePrevStep() {
@@ -646,6 +693,8 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
       result = await createChild(fd);
     }
     if (result.success) {
+      // Clear draft from localStorage on successful submit
+      try { localStorage.removeItem(DRAFT_STORAGE_KEY); } catch {}
       toast.success(isEditing ? "Child updated successfully" : "Child enrolled successfully");
       router.push("/children");
     } else {
@@ -680,31 +729,46 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit, onSubmitError)}>
-      {/* ── Mobile Step Indicator ── */}
+      {/* ── Mobile Step Indicator with labels + completion ── */}
       <div className="mb-6 lg:hidden">
-        <div className="mb-2 flex items-center justify-between">
+        <div className="mb-3 flex items-center justify-between">
           <span className="text-sm font-medium text-foreground">
-            Step {currentStep + 1} of 5
+            Step {currentStep + 1} of {totalSteps}
           </span>
-          <span className="text-sm text-muted-foreground">
-            {WIZARD_STEPS[currentStep].label}
+          <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+            {completionPercent}% complete
           </span>
         </div>
-        <div className="flex gap-1.5">
-          {WIZARD_STEPS.map((_, i) => (
+        {/* Progress bar */}
+        <div className="mb-3 h-2 w-full overflow-hidden rounded-full bg-muted">
+          <div
+            className="h-full rounded-full bg-primary transition-all duration-300"
+            style={{ width: `${completionPercent}%` }}
+          />
+        </div>
+        {/* Step labels (scrollable) */}
+        <div className="flex gap-1 overflow-x-auto pb-1">
+          {WIZARD_STEPS.map((step, i) => (
             <button
               key={i}
               type="button"
               onClick={() => handleGoToStep(i)}
               className={cn(
-                "h-2 flex-1 rounded-full transition-colors",
+                "flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
                 i === currentStep
-                  ? "bg-primary"
+                  ? "border-primary bg-primary text-primary-foreground"
                   : i < currentStep
-                    ? "bg-primary/40"
-                    : "bg-muted",
+                    ? "border-primary/30 bg-primary/10 text-primary"
+                    : "border-border bg-card text-muted-foreground",
               )}
-            />
+            >
+              {i < currentStep ? (
+                <Check className="size-3" />
+              ) : (
+                <span className="flex size-4 items-center justify-center rounded-full bg-current/10 text-[10px]">{i + 1}</span>
+              )}
+              <span className="whitespace-nowrap">{step.label}</span>
+            </button>
           ))}
         </div>
       </div>
@@ -713,6 +777,19 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
         {/* ── Desktop Step Sidebar ── */}
         <aside className="hidden w-56 shrink-0 lg:block">
           <nav className="sticky top-24 flex flex-col gap-1">
+            {/* Completion indicator */}
+            <div className="mb-3 rounded-lg border border-border bg-card p-3">
+              <div className="mb-1.5 flex items-center justify-between text-xs">
+                <span className="font-medium text-foreground">Progress</span>
+                <span className="font-semibold text-primary">{completionPercent}%</span>
+              </div>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary transition-all duration-300"
+                  style={{ width: `${completionPercent}%` }}
+                />
+              </div>
+            </div>
             {WIZARD_STEPS.map((step, i) => (
               <button
                 key={i}
@@ -1929,6 +2006,86 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
               </FormSection>
             )}
 
+            {/* ════════════════════════════════════════════
+                 STEP 6: Review & Submit
+                 ════════════════════════════════════════════ */}
+            {currentStep === 5 && (
+              <FormSection title="Review & Submit">
+                <p className="mb-4 text-sm text-muted-foreground">
+                  Please review the enrollment details below before submitting.
+                </p>
+
+                {/* Child info summary */}
+                <div className="space-y-4">
+                  <div className="rounded-lg border border-border bg-muted/30 p-4">
+                    <div className="mb-2 flex items-center justify-between">
+                      <h4 className="text-sm font-semibold text-foreground">Child Information</h4>
+                      <button type="button" onClick={() => handleGoToStep(0)} className="text-xs font-medium text-primary hover:underline">Edit</button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm md:grid-cols-3">
+                      <div><span className="text-muted-foreground">Name:</span> <span className="font-medium">{watch("firstName")} {watch("middleName")} {watch("lastName")}</span></div>
+                      {watch("firstNameAr") && <div><span className="text-muted-foreground">Arabic:</span> <span className="font-medium">{watch("firstNameAr")} {watch("lastNameAr")}</span></div>}
+                      <div><span className="text-muted-foreground">DOB:</span> <span className="font-medium">{watch("dateOfBirth") || "—"}</span></div>
+                      <div><span className="text-muted-foreground">Gender:</span> <span className="font-medium">{watch("gender") || "—"}</span></div>
+                      <div><span className="text-muted-foreground">Nationality:</span> <span className="font-medium">{watch("nationality") || "—"}</span></div>
+                      <div><span className="text-muted-foreground">Religion:</span> <span className="font-medium">{watch("religion") || "—"}</span></div>
+                    </div>
+                  </div>
+
+                  {/* Family summary */}
+                  <div className="rounded-lg border border-border bg-muted/30 p-4">
+                    <div className="mb-2 flex items-center justify-between">
+                      <h4 className="text-sm font-semibold text-foreground">Family</h4>
+                      <button type="button" onClick={() => handleGoToStep(1)} className="text-xs font-medium text-primary hover:underline">Edit</button>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
+                      <div>
+                        <span className="text-muted-foreground">Mother:</span>{" "}
+                        <span className="font-medium">{watch("mother.firstName")} {watch("mother.lastName")}</span>
+                        {watch("mother.mobile") && <span className="ml-2 text-muted-foreground">({watch("mother.mobile")})</span>}
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Father:</span>{" "}
+                        <span className="font-medium">{watch("father.firstName")} {watch("father.lastName")}</span>
+                        {watch("father.mobile") && <span className="ml-2 text-muted-foreground">({watch("father.mobile")})</span>}
+                      </div>
+                    </div>
+                    <div className="mt-1 text-sm text-muted-foreground">
+                      {(watch("addresses")?.length ?? 0)} address(es), {(watch("siblings")?.length ?? 0)} sibling(s), {(watch("relatives")?.length ?? 0)} relative(s)
+                    </div>
+                  </div>
+
+                  {/* School & Medical summary */}
+                  <div className="rounded-lg border border-border bg-muted/30 p-4">
+                    <div className="mb-2 flex items-center justify-between">
+                      <h4 className="text-sm font-semibold text-foreground">School &amp; Medical</h4>
+                      <button type="button" onClick={() => handleGoToStep(2)} className="text-xs font-medium text-primary hover:underline">Edit</button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm md:grid-cols-3">
+                      <div><span className="text-muted-foreground">Branch:</span> <span className="font-medium">{branches.find(b => b.id === watch("branchId"))?.name || "—"}</span></div>
+                      <div><span className="text-muted-foreground">Class:</span> <span className="font-medium">{classes.find(c => c.id === watch("classId"))?.name || "—"}</span></div>
+                      <div><span className="text-muted-foreground">Blood Type:</span> <span className="font-medium">{watch("bloodType") || "—"}</span></div>
+                      <div><span className="text-muted-foreground">Allergies:</span> <span className="font-medium">{watch("allergies") || "None"}</span></div>
+                      <div><span className="text-muted-foreground">Bus:</span> <span className="font-medium">{BUS_OPTIONS.find(o => o.value === watch("busAttendance"))?.label || "No"}</span></div>
+                    </div>
+                  </div>
+
+                  {/* Financial summary */}
+                  <div className="rounded-lg border border-border bg-muted/30 p-4">
+                    <div className="mb-2 flex items-center justify-between">
+                      <h4 className="text-sm font-semibold text-foreground">Financial</h4>
+                      <button type="button" onClick={() => handleGoToStep(3)} className="text-xs font-medium text-primary hover:underline">Edit</button>
+                    </div>
+                    <div className="flex items-baseline gap-2 text-sm">
+                      <span className="text-muted-foreground">Net Total:</span>
+                      <span className="text-lg font-bold text-primary">${netTotal.toFixed(2)}</span>
+                      <span className="text-muted-foreground">(Subtotal ${subtotal.toFixed(2)} − ${Number(watchFees[6] || 0).toFixed(2)} discount + ${tvaAmount.toFixed(2)} TVA)</span>
+                    </div>
+                  </div>
+                </div>
+              </FormSection>
+            )}
+
             {/* ── Sticky Navigation Bar ── */}
             <div className="sticky bottom-0 z-10 -mx-1 border-t border-border/40 bg-card px-1 py-4">
               <div className="flex items-center justify-between gap-3">
@@ -1957,13 +2114,13 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                     Save as Draft
                   </Button>
 
-                  {currentStep < 4 ? (
+                  {currentStep < totalSteps - 1 ? (
                     <Button
                       type="button"
                       onClick={handleNextStep}
                       className="bg-primary text-primary-foreground hover:bg-primary/90"
                     >
-                      Next
+                      {currentStep === totalSteps - 2 ? "Review" : "Next"}
                       <ChevronRight className="size-4" />
                     </Button>
                   ) : (
