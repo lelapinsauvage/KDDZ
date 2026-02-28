@@ -1,6 +1,15 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { getMorningBriefing, getDashboardDemographics } from "@/lib/actions/dashboard";
+import {
+  getMorningBriefing,
+  getDashboardDemographics,
+  getDailyComplianceStats,
+  getActionCenterMetrics,
+} from "@/lib/actions/dashboard";
+import type {
+  DailyComplianceStats,
+  ActionCenterMetrics as ActionCenterMetricsType,
+} from "@/lib/actions/dashboard";
 import { StatusBoard } from "@/components/dashboard/status-board";
 import { ActionCenter } from "@/components/dashboard/action-center";
 import { TodayMenuWidget } from "@/components/dashboard/today-menu-widget";
@@ -18,12 +27,19 @@ export default async function DashboardPage() {
     redirect("/today");
   }
 
+  const branchId = session?.user?.branchId ?? null;
+  const isBranchLevel = branchId != null;
+
   let briefing: Awaited<ReturnType<typeof getMorningBriefing>>;
   let demographics: Awaited<ReturnType<typeof getDashboardDemographics>>;
+  let compliance: DailyComplianceStats;
+  let actionMetrics: ActionCenterMetricsType;
   try {
-    [briefing, demographics] = await Promise.all([
+    [briefing, demographics, compliance, actionMetrics] = await Promise.all([
       getMorningBriefing(),
       getDashboardDemographics(),
+      getDailyComplianceStats(branchId),
+      getActionCenterMetrics(branchId),
     ]);
   } catch {
     // Missing org context — show empty state
@@ -51,9 +67,25 @@ export default async function DashboardPage() {
       childrenPerClass: [],
       genderStats: [],
     };
+    compliance = {
+      totalAttendance: 0,
+      totalAbsence: 0,
+      missingDailyReports: 0,
+      missingAbsentReports: 0,
+    };
+    actionMetrics = {
+      totalPayments: 0,
+      accidentReports: 0,
+      loggedCalls: 0,
+      completedMedicalVisits: 0,
+      missingMedicalVisits: 0,
+      missingAssessments: 0,
+      pendingDailyReports: 0,
+      pendingMedicalReports: 0,
+      pendingAssessments: 0,
+    };
   }
 
-  const isBranchLevel = session?.user?.branchId != null;
   const userName = session?.user?.name?.split(" ")[0] || "there";
 
   const hour = new Date().getHours();
@@ -69,41 +101,6 @@ export default async function DashboardPage() {
     month: "long",
     day: "numeric",
   });
-
-  const pillars = [
-    {
-      label: "Attendance",
-      metric: `${briefing.attendance.present}/${briefing.attendance.total}`,
-      status: briefing.attendance.status,
-      href: "/daily-reports",
-    },
-    {
-      label: "Reports",
-      metric: `${briefing.reports.submitted}/${briefing.reports.total}`,
-      status: briefing.reports.status,
-      href: "/daily-reports",
-    },
-    {
-      label: "Staff",
-      metric: `${briefing.staff.present}/${briefing.staff.total}`,
-      status: briefing.staff.status,
-      href: "/employees/teachers",
-    },
-    {
-      label: "Finance",
-      metric: briefing.finance.overdueCount === 0
-        ? "OK"
-        : `${briefing.finance.overdueCount} due`,
-      status: briefing.finance.status,
-      href: "/accounting",
-    },
-    {
-      label: "Health",
-      metric: briefing.health.issues === 0 ? "OK" : `${briefing.health.issues} issue${briefing.health.issues > 1 ? "s" : ""}`,
-      status: briefing.health.status,
-      href: "/medical/general",
-    },
-  ];
 
   const attentionSummary =
     briefing.totalAttentionItems === 0
@@ -156,8 +153,8 @@ export default async function DashboardPage() {
         />
       </div>
 
-      {/* Status pillars */}
-      <StatusBoard pillars={pillars} />
+      {/* Compliance row */}
+      <StatusBoard compliance={compliance} />
 
       {/* Demographics charts */}
       <DemographicsSection
@@ -165,8 +162,8 @@ export default async function DashboardPage() {
         genderStats={demographics.genderStats}
       />
 
-      {/* Action items */}
-      <ActionCenter items={briefing.actionItems} />
+      {/* Action Center 9-grid */}
+      <ActionCenter metrics={actionMetrics} />
 
       {/* Menu + Weekly chart */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

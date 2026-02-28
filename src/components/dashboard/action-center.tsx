@@ -1,191 +1,156 @@
-"use client";
-
-import { useTransition } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import {
-  Check,
-  X,
-  ChevronRight,
-  Sparkles,
   DollarSign,
-  FileWarning,
-  UserX,
-  FileEdit,
+  AlertTriangle,
+  Phone,
+  Stethoscope,
+  HeartPulse,
+  ClipboardList,
+  FileText,
+  FilePlus,
+  FileCheck,
 } from "lucide-react";
-import { updateAbsenceReportStatus } from "@/lib/actions/absent-reports";
-import type { ActionItems } from "@/lib/actions/dashboard";
+import type { ActionCenterMetrics } from "@/lib/actions/dashboard";
 
 interface ActionCenterProps {
-  items: ActionItems;
+  metrics: ActionCenterMetrics;
 }
 
-type Severity = "red" | "amber" | "yellow";
-
-interface ActionRow {
-  key: string;
-  severity: Severity;
-  text: string;
-  actionLabel: string;
-  href: string;
+const gridItems: Array<{
+  key: keyof ActionCenterMetrics;
+  category: string;
+  label: string;
   icon: React.ComponentType<{ className?: string }>;
+  href: string;
   iconBg: string;
   iconColor: string;
-  inlineAction?: React.ReactNode;
-}
+  format?: "currency";
+}> = [
+  {
+    key: "totalPayments",
+    category: "Financial",
+    label: "Total Payments Collected",
+    icon: DollarSign,
+    href: "/accounting",
+    iconBg: "bg-emerald-500/10",
+    iconColor: "text-emerald-600",
+    format: "currency",
+  },
+  {
+    key: "accidentReports",
+    category: "Medical",
+    label: "Incident / Accident Reports",
+    icon: AlertTriangle,
+    href: "/medical/general?type=accidents",
+    iconBg: "bg-red-500/10",
+    iconColor: "text-red-600",
+  },
+  {
+    key: "loggedCalls",
+    category: "Comms",
+    label: "Logged Calls",
+    icon: Phone,
+    href: "/medical/general?type=calls",
+    iconBg: "bg-blue-500/10",
+    iconColor: "text-blue-600",
+  },
+  {
+    key: "completedMedicalVisits",
+    category: "Medical",
+    label: "Completed Medical Visits",
+    icon: Stethoscope,
+    href: "/medical/general?type=visits",
+    iconBg: "bg-teal-500/10",
+    iconColor: "text-teal-600",
+  },
+  {
+    key: "missingMedicalVisits",
+    category: "Compliance",
+    label: "Missing Medical Visits",
+    icon: HeartPulse,
+    href: "/medical/general?status=missing",
+    iconBg: "bg-orange-500/10",
+    iconColor: "text-orange-600",
+  },
+  {
+    key: "missingAssessments",
+    category: "Compliance",
+    label: "Missing Assessments",
+    icon: ClipboardList,
+    href: "/assessments?status=missing",
+    iconBg: "bg-orange-500/10",
+    iconColor: "text-orange-600",
+  },
+  {
+    key: "pendingDailyReports",
+    category: "Drafts",
+    label: "Pending Daily Reports",
+    icon: FileText,
+    href: "/daily-reports?status=draft",
+    iconBg: "bg-amber-500/10",
+    iconColor: "text-amber-600",
+  },
+  {
+    key: "pendingMedicalReports",
+    category: "Drafts",
+    label: "Pending Medical Reports",
+    icon: FilePlus,
+    href: "/medical/general?status=draft",
+    iconBg: "bg-amber-500/10",
+    iconColor: "text-amber-600",
+  },
+  {
+    key: "pendingAssessments",
+    category: "Drafts",
+    label: "Pending Assessments",
+    icon: FileCheck,
+    href: "/assessments?status=draft",
+    iconBg: "bg-amber-500/10",
+    iconColor: "text-amber-600",
+  },
+];
 
-const severityOrder: Record<Severity, number> = { red: 0, amber: 1, yellow: 2 };
-
-export function ActionCenter({ items }: ActionCenterProps) {
-  const rows: ActionRow[] = [];
-
-  // Overdue payments → red
-  if (items.overduePayments.length > 0) {
-    const total = items.overduePayments.reduce((s, p) => s + p.totalOverdue, 0);
-    rows.push({
-      key: "overdue-payments",
-      severity: "red",
-      text: `${items.overduePayments.length} overdue invoice${items.overduePayments.length > 1 ? "s" : ""} ($${total.toFixed(0)})`,
-      actionLabel: "View",
-      href: "/accounting",
-      icon: DollarSign,
-      iconBg: "bg-[#C35A2C]/10",
-      iconColor: "text-[#C35A2C]",
-    });
-  }
-
-  // Missing reports → amber
-  const totalMissing = items.missingReportsByClass.reduce((s, c) => s + c.count, 0);
-  if (totalMissing > 0) {
-    rows.push({
-      key: "missing-reports",
-      severity: "amber",
-      text: `${totalMissing} daily report${totalMissing > 1 ? "s" : ""} missing`,
-      actionLabel: "Remind",
-      href: "/daily-reports",
-      icon: FileWarning,
-      iconBg: "bg-[#B08968]/10",
-      iconColor: "text-[#B08968]",
-    });
-  }
-
-  // Pending absences → yellow (inline approve/reject)
-  for (const absence of items.pendingAbsences) {
-    rows.push({
-      key: `absence-${absence.id}`,
-      severity: "yellow",
-      text: `Absence request: ${absence.childName} (${absence.date})`,
-      actionLabel: "Review",
-      href: `/absent-reports?status=PENDING`,
-      icon: UserX,
-      iconBg: "bg-[#8B7355]/10",
-      iconColor: "text-[#8B7355]",
-      inlineAction: <AbsenceInlineAction id={absence.id} />,
-    });
-  }
-
-  // Draft children → yellow
-  for (const draft of items.draftChildren) {
-    rows.push({
-      key: `draft-${draft.id}`,
-      severity: "yellow",
-      text: `Draft registration: ${draft.childName}`,
-      actionLabel: "Complete",
-      href: `/children/${draft.id}/edit`,
-      icon: FileEdit,
-      iconBg: "bg-[#6B8F71]/10",
-      iconColor: "text-[#6B8F71]",
-    });
-  }
-
-  // Sort by severity
-  rows.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
-
-  if (rows.length === 0) {
-    return (
-      <div className="flex items-center gap-3 rounded-2xl border border-[#5B7B5E]/20 bg-[#5B7B5E]/5 px-5 py-4">
-        <div className="flex size-9 items-center justify-center rounded-xl bg-[#5B7B5E]/10">
-          <Sparkles className="size-4 text-[#5B7B5E]" />
-        </div>
-        <div>
-          <p className="text-sm font-semibold text-[#5B7B5E]">All clear</p>
-          <p className="text-xs text-[#5B7B5E]/70">
-            Nothing needs your attention right now.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
+export function ActionCenter({ metrics }: ActionCenterProps) {
   return (
     <div className="rounded-2xl border border-border/40 bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
       <div className="px-5 py-3 border-b border-border/30">
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-          Needs your attention
+          Action Center
         </h3>
       </div>
-      <div className="divide-y divide-border/30">
-        {rows.map((row) => {
-          const Icon = row.icon;
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-border/30">
+        {gridItems.map((item) => {
+          const Icon = item.icon;
+          const value = metrics[item.key];
+          const display =
+            item.format === "currency"
+              ? `$${value.toLocaleString()}`
+              : value.toLocaleString();
+
           return (
-            <div
-              key={row.key}
-              className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-muted/30"
+            <Link
+              key={item.key}
+              href={item.href}
+              className="flex items-center gap-3 bg-card px-5 py-4 transition-colors hover:bg-muted/30"
             >
-              <div className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${row.iconBg}`}>
-                <Icon className={`size-4 ${row.iconColor}`} />
+              <div className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${item.iconBg}`}>
+                <Icon className={`size-5 ${item.iconColor}`} />
               </div>
-              <span className="flex-1 text-sm text-foreground">{row.text}</span>
-              {row.inlineAction}
-              <Link
-                href={row.href}
-                className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {row.actionLabel}
-                <ChevronRight className="size-3" />
-              </Link>
-            </div>
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {item.category}
+                </span>
+                <p className="text-sm font-medium text-foreground truncate">
+                  {item.label}
+                </p>
+              </div>
+              <span className="text-lg font-bold text-foreground tabular-nums">
+                {display}
+              </span>
+            </Link>
           );
         })}
       </div>
-    </div>
-  );
-}
-
-// ── Inline absence approve/reject ────────────────
-
-function AbsenceInlineAction({ id }: { id: string }) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-
-  function handleAction(status: "APPROVED" | "REJECTED") {
-    startTransition(async () => {
-      await updateAbsenceReportStatus(id, status);
-      router.refresh();
-    });
-  }
-
-  return (
-    <div className="flex items-center gap-1">
-      <Button
-        size="sm"
-        variant="ghost"
-        className="size-7 rounded-lg p-0 text-[#5B7B5E] hover:bg-[#5B7B5E]/10 hover:text-[#5B7B5E]"
-        onClick={() => handleAction("APPROVED")}
-        disabled={isPending}
-      >
-        <Check className="size-3.5" />
-      </Button>
-      <Button
-        size="sm"
-        variant="ghost"
-        className="size-7 rounded-lg p-0 text-[#C35A2C] hover:bg-[#C35A2C]/10 hover:text-[#C35A2C]"
-        onClick={() => handleAction("REJECTED")}
-        disabled={isPending}
-      >
-        <X className="size-3.5" />
-      </Button>
     </div>
   );
 }

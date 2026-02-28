@@ -443,6 +443,237 @@ export async function getDashboardDemographics(): Promise<DashboardDemographics>
   return { totalBranches, totalClasses, totalActiveChildren, childrenPerClass, genderStats };
 }
 
+// ── Daily Compliance Stats ────────────────────────
+
+export interface DailyComplianceStats {
+  totalAttendance: number;
+  totalAbsence: number;
+  missingDailyReports: number;
+  missingAbsentReports: number;
+}
+
+export async function getDailyComplianceStats(
+  branchId?: string | null
+): Promise<DailyComplianceStats> {
+  const { organizationId: orgId } = await requireOrg();
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const branchFilter = branchId
+    ? { branchId }
+    : { branch: { organizationId: orgId } };
+
+  const [
+    activeChildren,
+    todayReports,
+    todayAbsences,
+    absentChildIds,
+    absenceReportChildIds,
+  ] = await Promise.all([
+    db.child.findMany({
+      where: { isActive: true, isDraft: false, ...branchFilter },
+      select: { id: true },
+    }),
+    db.dailyReport.findMany({
+      where: {
+        reportDate: { gte: today, lt: tomorrow },
+        child: branchFilter,
+      },
+      select: { childId: true },
+    }),
+    db.absenceReport.count({
+      where: {
+        date: { gte: today, lt: tomorrow },
+        child: branchFilter,
+      },
+    }),
+    // Children marked absent today (via absence reports)
+    db.absenceReport.findMany({
+      where: {
+        date: { gte: today, lt: tomorrow },
+        child: branchFilter,
+      },
+      select: { childId: true, status: true },
+    }),
+    // Absence reports that are submitted (not just pending)
+    db.absenceReport.findMany({
+      where: {
+        date: { gte: today, lt: tomorrow },
+        status: { in: ["APPROVED", "PENDING"] },
+        child: branchFilter,
+      },
+      select: { childId: true },
+    }),
+  ]);
+
+  const activeIds = new Set(activeChildren.map((c) => c.id));
+  const reportedIds = new Set(todayReports.map((r) => r.childId));
+  const absentIds = new Set(absentChildIds.map((a) => a.childId));
+  const absenceReportIds = new Set(absenceReportChildIds.map((a) => a.childId));
+
+  // Present children without a daily report
+  let missingDailyReports = 0;
+  // Absent children without a formal absence report
+  let missingAbsentReports = 0;
+
+  for (const id of activeIds) {
+    if (!reportedIds.has(id) && !absentIds.has(id)) {
+      // Neither daily report nor absence — missing daily report
+      missingDailyReports++;
+    }
+    if (absentIds.has(id) && !absenceReportIds.has(id)) {
+      missingAbsentReports++;
+    }
+  }
+
+  const totalAttendance = reportedIds.size;
+
+  return {
+    totalAttendance,
+    totalAbsence: todayAbsences,
+    missingDailyReports,
+    missingAbsentReports,
+  };
+}
+
+// ── Action Center Metrics (9-Grid) ───────────────
+
+export interface ActionCenterMetrics {
+  totalPayments: number;
+  accidentReports: number;
+  loggedCalls: number;
+  completedMedicalVisits: number;
+  missingMedicalVisits: number;
+  missingAssessments: number;
+  pendingDailyReports: number;
+  pendingMedicalReports: number;
+  pendingAssessments: number;
+}
+
+export async function getActionCenterMetrics(
+  branchId?: string | null
+): Promise<ActionCenterMetrics> {
+  const { organizationId: orgId } = await requireOrg();
+
+  const branchFilter = branchId
+    ? { branchId }
+    : { branch: { organizationId: orgId } };
+
+  const [
+    paymentsAgg,
+    accidentReports,
+    loggedCalls,
+    completedMedicalVisits,
+    missingMedicalVisits,
+    missingAssessments,
+    pendingDailyReports,
+    pendingMedicalReports,
+    pendingAssessments,
+  ] = await Promise.all([
+    // 1. Total payments collected
+    db.payment.aggregate({
+      where: { status: "PAID", child: branchFilter },
+      _sum: { amount: true },
+    }).catch(() => ({ _sum: { amount: null } })),
+
+    // 2. Accident reports
+    db.medicalForm.count({
+      where: { formType: "ACCIDENTS", child: branchFilter },
+    }),
+
+    // 3. Logged calls
+    db.callLog.count({
+      where: { child: branchFilter },
+    }),
+
+    // 4. Completed medical visits
+    db.medicalForm.count({
+      where: { formType: "VISITS", status: "SUBMITTED", child: branchFilter },
+    }),
+
+    // 5. Missing medical visits (active children without a submitted visit)
+    countMissingForType(orgId, branchId, "VISITS"),
+
+    // 6. Missing assessments (active children without a submitted assessment)
+    countMissingAssessments(orgId, branchId),
+
+    // 7. Pending daily reports (DRAFT)
+    db.dailyReport.count({
+      where: { status: "DRAFT", child: branchFilter },
+    }),
+
+    // 8. Pending medical reports (DRAFT)
+    db.medicalForm.count({
+      where: { status: "DRAFT", child: branchFilter },
+    }),
+
+    // 9. Pending assessments (DRAFT)
+    db.assessment.count({
+      where: { status: "DRAFT", child: branchFilter },
+    }),
+  ]);
+
+  return {
+    totalPayments: Number(paymentsAgg._sum.amount ?? 0),
+    accidentReports,
+    loggedCalls,
+    completedMedicalVisits,
+    missingMedicalVisits,
+    missingAssessments,
+    pendingDailyReports,
+    pendingMedicalReports,
+    pendingAssessments,
+  };
+}
+
+async function countMissingForType(
+  orgId: string,
+  branchId: string | null | undefined,
+  formType: string
+): Promise<number> {
+  const branchFilter = branchId
+    ? { branchId }
+    : { branch: { organizationId: orgId } };
+
+  const [activeCount, submittedChildIds] = await Promise.all([
+    db.child.count({
+      where: { isActive: true, isDraft: false, ...branchFilter },
+    }),
+    db.medicalForm.findMany({
+      where: { formType: formType as "VISITS", status: "SUBMITTED", child: branchFilter },
+      select: { childId: true },
+      distinct: ["childId"],
+    }),
+  ]);
+
+  return Math.max(0, activeCount - submittedChildIds.length);
+}
+
+async function countMissingAssessments(
+  orgId: string,
+  branchId: string | null | undefined
+): Promise<number> {
+  const branchFilter = branchId
+    ? { branchId }
+    : { branch: { organizationId: orgId } };
+
+  const [activeCount, assessedChildIds] = await Promise.all([
+    db.child.count({
+      where: { isActive: true, isDraft: false, ...branchFilter },
+    }),
+    db.assessment.findMany({
+      where: { status: "SUBMITTED", child: branchFilter },
+      select: { childId: true },
+      distinct: ["childId"],
+    }),
+  ]);
+
+  return Math.max(0, activeCount - assessedChildIds.length);
+}
+
 // ── Helpers ──────────────────────────────────────
 
 function statusFromPct(pct: number, greenThreshold: number, amberThreshold: number): PillarStatus {
