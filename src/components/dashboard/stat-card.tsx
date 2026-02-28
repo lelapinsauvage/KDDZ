@@ -85,7 +85,7 @@ export function StatCard({
 
   const content = (
     <div
-      className={`group relative overflow-hidden rounded-xl border border-border bg-card p-5 shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:shadow-[0_4px_6px_rgba(15,23,42,0.06),0_2px_4px_rgba(15,23,42,0.04)] hover:-translate-y-0.5 ${href ? "cursor-pointer" : ""}`}
+      className={`group relative overflow-hidden rounded-xl border border-border bg-card p-4 sm:p-5 shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:shadow-[0_4px_6px_rgba(15,23,42,0.06),0_2px_4px_rgba(15,23,42,0.04)] hover:-translate-y-0.5 ${href ? "cursor-pointer" : ""}`}
     >
       {/* Top accent bar */}
       <div
@@ -98,7 +98,7 @@ export function StatCard({
             {title}
           </p>
           <p
-            className={`text-3xl font-bold tracking-tight font-heading ${styles.value}`}
+            className={`text-2xl sm:text-3xl font-bold tracking-tight font-heading ${styles.value}`}
           >
             {value}
           </p>

@@ -607,10 +607,14 @@ export function ChildrenPageClient({
                   <TableHeader className="sticky top-0 z-10">
                     {table.getHeaderGroups().map((headerGroup) => (
                       <TableRow key={headerGroup.id} className="border-border/60 hover:bg-transparent">
-                        {headerGroup.headers.map((header) => (
+                        {headerGroup.headers.map((header, idx) => (
                           <TableHead
                             key={header.id}
-                            className="bg-muted/60 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground px-4 py-3 first:rounded-tl-lg last:rounded-tr-lg"
+                            className={`bg-muted/60 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground px-3 sm:px-4 py-3 first:rounded-tl-lg last:rounded-tr-lg ${
+                              idx === 0
+                                ? "sticky left-0 z-20 bg-muted/95 backdrop-blur-sm after:absolute after:right-0 after:top-0 after:bottom-0 after:w-px after:bg-border/50 md:after:hidden"
+                                : ""
+                            }`}
                           >
                             {header.isPlaceholder
                               ? null
@@ -636,8 +640,15 @@ export function ChildrenPageClient({
                     ) : table.getRowModel().rows?.length ? (
                       table.getRowModel().rows.map((row) => (
                         <TableRow key={row.id} className="group border-border/40 transition-colors duration-100 hover:bg-accent/40">
-                          {row.getVisibleCells().map((cell) => (
-                            <TableCell key={cell.id} className="px-4 py-3 text-sm">
+                          {row.getVisibleCells().map((cell, idx) => (
+                            <TableCell
+                              key={cell.id}
+                              className={`px-3 sm:px-4 py-3 text-sm ${
+                                idx === 0
+                                  ? "sticky left-0 z-10 bg-card group-hover:bg-accent/40 transition-colors duration-100 after:absolute after:right-0 after:top-0 after:bottom-0 after:w-px after:bg-border/30 md:after:hidden"
+                                  : ""
+                              }`}
+                            >
                               {flexRender(
                                 cell.column.columnDef.cell,
                                 cell.getContext()
@@ -699,7 +710,7 @@ export function ChildrenPageClient({
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8 border-border/60"
+                    className="size-9 sm:size-8 border-border/60"
                     onClick={() => handlePageChange(1)}
                     disabled={!canPreviousPage}
                   >
@@ -708,7 +719,7 @@ export function ChildrenPageClient({
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8 border-border/60"
+                    className="size-9 sm:size-8 border-border/60"
                     onClick={() => handlePageChange(filters.page - 1)}
                     disabled={!canPreviousPage}
                   >
@@ -720,7 +731,7 @@ export function ChildrenPageClient({
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8 border-border/60"
+                    className="size-9 sm:size-8 border-border/60"
                     onClick={() => handlePageChange(filters.page + 1)}
                     disabled={!canNextPage}
                   >
@@ -729,7 +740,7 @@ export function ChildrenPageClient({
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8 border-border/60"
+                    className="size-9 sm:size-8 border-border/60"
                     onClick={() => handlePageChange(pageCount)}
                     disabled={!canNextPage}
                   >

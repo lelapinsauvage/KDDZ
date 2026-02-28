@@ -258,7 +258,7 @@ export function DataTable<TData, TValue>({
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2">
         {searchKey && (
-          <div className="relative max-w-sm flex-1">
+          <div className="relative w-full sm:max-w-sm sm:flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder={searchPlaceholder}
@@ -351,7 +351,7 @@ export function DataTable<TData, TValue>({
 
       {/* Bulk actions bar */}
       {hasSelection && bulkActions && bulkActions.length > 0 && (
-        <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-4 py-2 animate-in fade-in-0 slide-in-from-top-1 duration-200">
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 sm:px-4 py-2 animate-in fade-in-0 slide-in-from-top-1 duration-200">
           <span className="text-sm font-medium">
             {selectedRows.length} row{selectedRows.length !== 1 ? "s" : ""}{" "}
             selected
@@ -401,9 +401,9 @@ export function DataTable<TData, TValue>({
                   {headerGroup.headers.map((header, idx) => (
                     <TableHead
                       key={header.id}
-                      className={`bg-muted/60 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground px-4 py-3 first:rounded-tl-lg last:rounded-tr-lg ${
+                      className={`bg-muted/60 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground px-3 sm:px-4 py-3 first:rounded-tl-lg last:rounded-tr-lg ${
                         idx === 0
-                          ? "sticky left-0 z-20 bg-muted/95 backdrop-blur-sm"
+                          ? "sticky left-0 z-20 bg-muted/95 backdrop-blur-sm after:absolute after:right-0 after:top-0 after:bottom-0 after:w-px after:bg-border/50 md:after:hidden"
                           : ""
                       }`}
                     >
@@ -432,9 +432,9 @@ export function DataTable<TData, TValue>({
                     {row.getVisibleCells().map((cell, idx) => (
                       <TableCell
                         key={cell.id}
-                        className={`px-4 py-3 text-sm ${
+                        className={`px-3 sm:px-4 py-3 text-sm ${
                           idx === 0
-                            ? "sticky left-0 z-10 bg-card group-hover:bg-accent/40 group-data-[state=selected]:bg-primary/5 transition-colors duration-100"
+                            ? "sticky left-0 z-10 bg-card group-hover:bg-accent/40 group-data-[state=selected]:bg-primary/5 transition-colors duration-100 after:absolute after:right-0 after:top-0 after:bottom-0 after:w-px after:bg-border/30 md:after:hidden"
                             : ""
                         }`}
                       >
@@ -528,7 +528,7 @@ export function DataTable<TData, TValue>({
             <Button
               variant="outline"
               size="icon"
-              className="h-8 w-8 border-border/60"
+              className="size-9 sm:size-8 border-border/60"
               onClick={() => table.setPageIndex(0)}
               disabled={!table.getCanPreviousPage()}
             >
@@ -537,7 +537,7 @@ export function DataTable<TData, TValue>({
             <Button
               variant="outline"
               size="icon"
-              className="h-8 w-8 border-border/60"
+              className="size-9 sm:size-8 border-border/60"
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
             >
@@ -552,7 +552,7 @@ export function DataTable<TData, TValue>({
             <Button
               variant="outline"
               size="icon"
-              className="h-8 w-8 border-border/60"
+              className="size-9 sm:size-8 border-border/60"
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
             >
@@ -561,7 +561,7 @@ export function DataTable<TData, TValue>({
             <Button
               variant="outline"
               size="icon"
-              className="h-8 w-8 border-border/60"
+              className="size-9 sm:size-8 border-border/60"
               onClick={() => table.setPageIndex(table.getPageCount() - 1)}
               disabled={!table.getCanNextPage()}
             >

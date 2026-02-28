@@ -451,6 +451,9 @@
   h2 { font-size: 1.25rem; line-height: 1.75rem; }
   h3 { font-size: 1.125rem; line-height: 1.5rem; }
   h4 { font-size: 1rem; line-height: 1.375rem; }
+
+  /* Ensure body text is at least 14px on mobile */
+  body { font-size: 0.875rem; }
 }
 
 /* ── Print styles ── */

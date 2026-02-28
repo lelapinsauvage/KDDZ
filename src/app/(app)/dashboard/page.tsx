@@ -110,7 +110,7 @@ export default async function DashboardPage() {
         : `${briefing.totalAttentionItems} things could use your attention today.`;
 
   return (
-    <FadeIn className="space-y-8 p-4 md:p-6 lg:p-8">
+    <FadeIn className="space-y-6 sm:space-y-8 p-4 md:p-6 lg:p-8">
       {/* ── Morning greeting ── */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
@@ -128,7 +128,7 @@ export default async function DashboardPage() {
 
       {/* ── KPI stat cards ── */}
       <div
-        className={`grid gap-4 ${isBranchLevel ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1 sm:grid-cols-3"}`}
+        className={`grid gap-3 sm:gap-4 ${isBranchLevel ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"}`}
       >
         {!isBranchLevel && (
           <StatCard

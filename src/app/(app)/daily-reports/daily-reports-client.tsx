@@ -488,23 +488,20 @@ export function DailyReportsClient({
                 />
               </div>
 
-              <div className="flex items-center gap-1.5">
+              <div className="flex w-full items-center gap-1.5 sm:w-auto">
                 <label className="text-xs font-medium text-muted-foreground whitespace-nowrap">From</label>
                 <Input
                   type="date"
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
-                  className="w-[130px] sm:w-[150px] h-9"
+                  className="flex-1 sm:w-[150px] sm:flex-initial h-9"
                 />
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <label className="text-xs font-medium text-muted-foreground whitespace-nowrap">To</label>
+                <label className="text-xs font-medium text-muted-foreground whitespace-nowrap ml-1">To</label>
                 <Input
                   type="date"
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
-                  className="w-[130px] sm:w-[150px] h-9"
+                  className="flex-1 sm:w-[150px] sm:flex-initial h-9"
                 />
               </div>
 

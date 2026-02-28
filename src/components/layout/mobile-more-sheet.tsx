@@ -43,7 +43,7 @@ export function MobileMoreSheet({ open, onOpenChange, userRole }: MobileMoreShee
                         key={item.href}
                         href={item.href}
                         onClick={() => onOpenChange(false)}
-                        className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                        className={`flex items-center gap-3 rounded-lg px-3 py-2.5 min-h-[44px] text-sm transition-colors ${
                           isActive
                             ? "bg-primary/10 font-semibold text-primary border-l-[3px] border-primary rounded-l-none"
                             : "text-foreground hover:bg-muted"
