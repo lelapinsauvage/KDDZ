@@ -10,7 +10,15 @@ export const milkEntrySchema = z.object({
   time: z.string().min(1, "Required"),
 });
 
+export const attachmentEntrySchema = z.object({
+  title: z.string().optional(),
+  fileName: z.string().optional(),
+});
+
 export const dailyReportSchema = z.object({
+  // Attendance mode
+  attendanceMode: z.enum(["PRESENT", "ABSENT"]).default("PRESENT"),
+
   // Child selection
   childId: z.string().min(1, "Please select a child"),
   reportDate: z.string().min(1, "Date is required"),
@@ -52,11 +60,30 @@ export const dailyReportSchema = z.object({
   feverEntries: z.array(feverEntrySchema).default([]),
   milkEntries: z.array(milkEntrySchema).default([]),
 
+  // Health notes
+  healthNotes: z.string().optional(),
+
+  // Extra clothes
+  clothesPants: z.boolean().default(false),
+  clothesSweater: z.boolean().default(false),
+  clothesTshirt: z.boolean().default(false),
+  clothesUnderwear: z.boolean().default(false),
+  clothesSocks: z.boolean().default(false),
+
+  // Attachments
+  attachments: z.array(attachmentEntrySchema).default([]),
+
   // Batch action
   applyFoodForAll: z.boolean().default(false),
 
   // Remarks
   remarks: z.string().optional(),
+
+  // Absent flow fields
+  absentReason: z.string().optional(),
+  absentFrom: z.string().optional(),
+  absentTo: z.string().optional(),
+  hospitalAttend: z.boolean().default(false),
 });
 
 export type DailyReportFormValues = z.input<typeof dailyReportSchema>;

@@ -147,3 +147,26 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 7 — Daily Report: Present Flow Enhancement — Sat Feb 28 07:58:26 CET 2026 ===
 =============================================
+Done. Committed as `78a22f1`. Here's a summary of what was changed:
+
+**Validation schema** (`src/lib/validations/daily-report.ts`):
+- Added `applyFoodForAll: z.boolean().default(false)` field
+
+**Form component** (`src/components/daily-reports/daily-report-form.tsx`) — 5 enhancements:
+
+1. **Meals Island** (amber bg) — Converted portion dropdowns to radio pill buttons (`Well/Half/Little/None`), kept food item selects and time pickers. Added prominent dashed-border "Apply Food For All Class Members" batch checkbox at the bottom.
+
+2. **Milk Island** (sky blue bg) — Already had Amount(cc), Time, and dynamic `[+] Add Entry`. Just added color-backed card styling.
+
+3. **Sleep Island** (indigo bg) — Removed the `isSleep` toggle checkbox; From/To time pickers are now always visible. `isSleep` is auto-derived in `buildFormData` from whether times are filled.
+
+4. **Hygiene Island** (emerald bg) — Replaced the 4 numeric inputs with a matrix grid table. Rows: Diaper, Pot. Columns: Urine (5 rounded checkboxes), Stool (5 rounded checkboxes). Uses rating-style tally interaction — clicking position N fills all checkboxes up to N.
+
+5. **Health section** — Separated from Hygiene into its own card, keeping the existing symptom checkboxes (Diarrhea, Cough, Runny Nose, Vomit).
+To https://github.com/lelapinsauvage/KDDZ.git
+   445564e..78a22f1  ux-improvements -> ux-improvements
+=== Phase 7 — Daily Report: Present Flow Enhancement COMPLETE — Sat Feb 28 08:07:26 CET 2026 ===
+
+=============================================
+=== Phase 8 — Daily Report: Health + Clothes + Absent Flow — Sat Feb 28 08:07:26 CET 2026 ===
+=============================================
