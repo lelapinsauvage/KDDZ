@@ -16,9 +16,9 @@ interface ActionCenterProps {
   metrics: ActionCenterMetrics;
 }
 
+/* Module-accent color mapping from design system */
 const gridItems: Array<{
   key: keyof ActionCenterMetrics;
-  category: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   href: string;
@@ -28,97 +28,86 @@ const gridItems: Array<{
 }> = [
   {
     key: "totalPayments",
-    category: "Financial",
-    label: "Total Payments Collected",
+    label: "Payments Collected",
     icon: DollarSign,
     href: "/accounting",
-    iconBg: "bg-emerald-500/10",
-    iconColor: "text-emerald-600",
+    iconBg: "bg-[#EEF2FF]",
+    iconColor: "text-[#4F46E5]",
     format: "currency",
   },
   {
     key: "accidentReports",
-    category: "Medical",
-    label: "Incident / Accident Reports",
+    label: "Incident Reports",
     icon: AlertTriangle,
     href: "/medical/general?type=accidents",
-    iconBg: "bg-red-500/10",
-    iconColor: "text-red-600",
+    iconBg: "bg-[#FEF2F2]",
+    iconColor: "text-[#DC2626]",
   },
   {
     key: "loggedCalls",
-    category: "Comms",
     label: "Logged Calls",
     icon: Phone,
     href: "/medical/general?type=calls",
-    iconBg: "bg-blue-500/10",
-    iconColor: "text-blue-600",
+    iconBg: "bg-[#FFF1F2]",
+    iconColor: "text-[#E11D48]",
   },
   {
     key: "completedMedicalVisits",
-    category: "Medical",
-    label: "Completed Medical Visits",
+    label: "Medical Visits",
     icon: Stethoscope,
     href: "/medical/general?type=visits",
-    iconBg: "bg-teal-500/10",
-    iconColor: "text-teal-600",
+    iconBg: "bg-[#ECFDF5]",
+    iconColor: "text-[#059669]",
   },
   {
     key: "missingMedicalVisits",
-    category: "Compliance",
-    label: "Missing Medical Visits",
+    label: "Missing Visits",
     icon: HeartPulse,
     href: "/medical/general?status=missing",
-    iconBg: "bg-orange-500/10",
-    iconColor: "text-orange-600",
+    iconBg: "bg-[#FFFBEB]",
+    iconColor: "text-[#D97706]",
   },
   {
     key: "missingAssessments",
-    category: "Compliance",
     label: "Missing Assessments",
     icon: ClipboardList,
     href: "/assessments?status=missing",
-    iconBg: "bg-orange-500/10",
-    iconColor: "text-orange-600",
+    iconBg: "bg-[#FFFBEB]",
+    iconColor: "text-[#D97706]",
   },
   {
     key: "pendingDailyReports",
-    category: "Drafts",
     label: "Pending Daily Reports",
     icon: FileText,
     href: "/daily-reports?status=draft",
-    iconBg: "bg-amber-500/10",
-    iconColor: "text-amber-600",
+    iconBg: "bg-[#EFF6FF]",
+    iconColor: "text-[#2563EB]",
   },
   {
     key: "pendingMedicalReports",
-    category: "Drafts",
     label: "Pending Medical Reports",
     icon: FilePlus,
     href: "/medical/general?status=draft",
-    iconBg: "bg-amber-500/10",
-    iconColor: "text-amber-600",
+    iconBg: "bg-[#EFF6FF]",
+    iconColor: "text-[#2563EB]",
   },
   {
     key: "pendingAssessments",
-    category: "Drafts",
     label: "Pending Assessments",
     icon: FileCheck,
     href: "/assessments?status=draft",
-    iconBg: "bg-amber-500/10",
-    iconColor: "text-amber-600",
+    iconBg: "bg-[#F5F3FF]",
+    iconColor: "text-[#7C3AED]",
   },
 ];
 
 export function ActionCenter({ metrics }: ActionCenterProps) {
   return (
-    <div className="rounded-2xl border border-border/40 bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
-      <div className="px-5 py-3 border-b border-border/30">
-        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-          Action Center
-        </h3>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-border/30">
+    <div>
+      <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        Action Center
+      </h3>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {gridItems.map((item) => {
           const Icon = item.icon;
           const value = metrics[item.key];
@@ -131,15 +120,14 @@ export function ActionCenter({ metrics }: ActionCenterProps) {
             <Link
               key={item.key}
               href={item.href}
-              className="flex items-center gap-3 bg-card px-5 py-4 transition-colors hover:bg-muted/30"
+              className="group flex items-center gap-3.5 rounded-xl border border-border bg-card px-4 py-4 shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:shadow-[0_4px_6px_rgba(15,23,42,0.06),0_2px_4px_rgba(15,23,42,0.04)] hover:-translate-y-0.5"
             >
-              <div className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${item.iconBg}`}>
+              <div
+                className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${item.iconBg}`}
+              >
                 <Icon className={`size-5 ${item.iconColor}`} />
               </div>
               <div className="min-w-0 flex-1">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  {item.category}
-                </span>
                 <p className="text-sm font-medium text-foreground truncate">
                   {item.label}
                 </p>

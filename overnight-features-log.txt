@@ -910,3 +910,35 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 34 — Design: Header & Mobile Nav — Sat Feb 28 10:08:07 CET 2026 ===
 =============================================
+All done. Here's a summary of the redesign:
+
+**Header (`header.tsx`)**
+- Clean 56px height with frosted glass (`rgba(255,255,255,0.72)` + `blur(20px) saturate(1.4)`)
+- Logo area: sidebar trigger + brand mark + "KiddzOnline" using `font-heading` and `text-foreground`
+- Context switcher: pill-shaped trigger with `rounded-full`, subtle `border-border/40`, primary-tinted building icon
+- Search bar: pill shape (`rounded-full`) with muted background, subtle `⌘K` kbd tag, positioned center
+- Notification bell + inbox tray remain in the right zone with consistent icon sizing
+- Vertical divider separating actions from user avatar
+- User avatar: `rounded-full` with `bg-primary`, ring against background, chevron indicator, clean dropdown
+
+**Context Switcher (`context-switcher.tsx`)**
+- Pill-shaped trigger matching the search bar aesthetic
+- Popover uses `rounded-xl`, lighter borders, `bg-muted/30` select triggers
+- Consistent `text-[10px]` uppercase labels with primary/muted coloring
+
+**Mobile Nav (`mobile-nav.tsx`)**
+- Clean 56px tab bar with `bg-background/92` frosted backdrop
+- Active indicator: 2px horizontal bar above the icon (not below)
+- 5 tabs: Dashboard, Children, Reports, Messages, More
+- `env(safe-area-inset-bottom)` padding for iPhone notch
+- Icon size `size-5`, label `text-[10px]` — compact, not cramped
+
+**Branch/Year Selector (`branch-year-selector.tsx`)**
+- Aligned token usage (`border-border/50`, `bg-muted/30`) with the rest of the header system
+To https://github.com/lelapinsauvage/KDDZ.git
+   73ea072..d291cf1  ux-improvements -> ux-improvements
+=== Phase 34 — Design: Header & Mobile Nav COMPLETE — Sat Feb 28 10:10:38 CET 2026 ===
+
+=============================================
+=== Phase 35 — Design: Dashboard Page — Sat Feb 28 10:10:38 CET 2026 ===
+=============================================

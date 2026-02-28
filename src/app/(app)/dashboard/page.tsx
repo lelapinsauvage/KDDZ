@@ -92,8 +92,7 @@ export default async function DashboardPage() {
   const greeting =
     hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
-  const GreetingIcon =
-    hour < 12 ? Sunrise : hour < 17 ? Sun : Moon;
+  const GreetingIcon = hour < 12 ? Sunrise : hour < 17 ? Sun : Moon;
 
   const todayFormatted = new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -110,24 +109,26 @@ export default async function DashboardPage() {
         : `${briefing.totalAttentionItems} things could use your attention today.`;
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
-      {/* Greeting + Controls */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-foreground">
-            <GreetingIcon className="size-6 text-amber-500" />
+    <div className="space-y-8 p-4 md:p-6 lg:p-8">
+      {/* ── Morning greeting ── */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-1">
+          <h1 className="flex items-center gap-2.5 text-[1.875rem] font-extrabold tracking-[-0.01em] text-foreground font-heading leading-[2.375rem]">
+            <GreetingIcon className="size-7 text-[#D97706]" />
             {greeting}, {userName}
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <p className="text-[13px] text-muted-foreground leading-5">
             {attentionSummary}
           </p>
-          <p className="text-xs text-muted-foreground mt-0.5">{todayFormatted}</p>
+          <p className="text-xs text-muted-foreground/70">{todayFormatted}</p>
         </div>
         <DashboardHeader />
       </div>
 
-      {/* KPI stat cards */}
-      <div className={`grid gap-4 ${isBranchLevel ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1 sm:grid-cols-3"}`}>
+      {/* ── KPI stat cards ── */}
+      <div
+        className={`grid gap-4 ${isBranchLevel ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1 sm:grid-cols-3"}`}
+      >
         {!isBranchLevel && (
           <StatCard
             title="Total Branches"
@@ -153,25 +154,25 @@ export default async function DashboardPage() {
         />
       </div>
 
-      {/* Compliance row */}
+      {/* ── Compliance row ── */}
       <StatusBoard compliance={compliance} />
 
-      {/* Demographics charts */}
+      {/* ── Demographics charts ── */}
       <DemographicsSection
         childrenPerClass={demographics.childrenPerClass}
         genderStats={demographics.genderStats}
       />
 
-      {/* Action Center 9-grid */}
+      {/* ── Action Center 3×3 grid ── */}
       <ActionCenter metrics={actionMetrics} />
 
-      {/* Menu + Weekly chart */}
+      {/* ── Menu + Weekly chart ── */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <TodayMenuWidget {...briefing.todayMenu} />
         <WeeklyAttendanceChart data={briefing.weeklyAttendance} />
       </div>
 
-      {/* Insights */}
+      {/* ── Insights ── */}
       <InsightsPanel insights={briefing.insights} />
     </div>
   );

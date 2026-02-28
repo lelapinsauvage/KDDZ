@@ -9,24 +9,25 @@ interface InsightsPanelProps {
   insights: Insight[];
 }
 
+/* Design system semantic colors */
 const insightStyles = {
   positive: {
     icon: TrendingUp,
-    bg: "bg-[#5B7B5E]/8",
-    iconColor: "text-[#5B7B5E]",
-    textColor: "text-[#5B7B5E]",
+    bg: "bg-[#ECFDF5]",
+    iconColor: "text-[#16A34A]",
+    textColor: "text-[#15803D]",
   },
   neutral: {
     icon: Minus,
-    bg: "bg-[#8B7355]/8",
-    iconColor: "text-[#8B7355]",
-    textColor: "text-[#8B7355]",
+    bg: "bg-[#EFF6FF]",
+    iconColor: "text-[#2563EB]",
+    textColor: "text-[#1D4ED8]",
   },
   warning: {
     icon: TrendingDown,
-    bg: "bg-[#C35A2C]/8",
-    iconColor: "text-[#C35A2C]",
-    textColor: "text-[#C35A2C]",
+    bg: "bg-[#FEF2F2]",
+    iconColor: "text-[#DC2626]",
+    textColor: "text-[#B91C1C]",
   },
 } as const;
 
@@ -34,9 +35,9 @@ export function InsightsPanel({ insights }: InsightsPanelProps) {
   if (insights.length === 0) return null;
 
   return (
-    <div className="rounded-2xl border border-border/40 bg-card p-5 shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
-      <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-        <Lightbulb className="size-4 text-[#B08968]" />
+    <div className="rounded-xl border border-border bg-card p-5 shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]">
+      <h3 className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <Lightbulb className="size-4 text-[#D97706]" />
         Insights
       </h3>
       <div className="flex flex-wrap gap-2">

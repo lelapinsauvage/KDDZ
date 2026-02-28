@@ -15,11 +15,12 @@ interface TodayMenuWidgetProps {
   snack?: string | null;
 }
 
+/* Module-accent colors from design system: meals = #EA580C */
 const mealConfig = [
-  { key: "breakfast" as const, label: "Breakfast", icon: Coffee, iconColor: "text-[#B08968]", iconBg: "bg-[#B08968]/10" },
-  { key: "lunch" as const, label: "Lunch", icon: UtensilsCrossed, iconColor: "text-[#C35A2C]", iconBg: "bg-[#C35A2C]/10" },
-  { key: "dessert" as const, label: "Dessert", icon: Cake, iconColor: "text-[#B07070]", iconBg: "bg-[#B07070]/10" },
-  { key: "snack" as const, label: "Snack", icon: Cookie, iconColor: "text-[#6B8F71]", iconBg: "bg-[#6B8F71]/10" },
+  { key: "breakfast" as const, label: "Breakfast", icon: Coffee, iconColor: "text-[#D97706]", iconBg: "bg-[#FFFBEB]" },
+  { key: "lunch" as const, label: "Lunch", icon: UtensilsCrossed, iconColor: "text-[#EA580C]", iconBg: "bg-[#FFF7ED]" },
+  { key: "dessert" as const, label: "Dessert", icon: Cake, iconColor: "text-[#E11D48]", iconBg: "bg-[#FFF1F2]" },
+  { key: "snack" as const, label: "Snack", icon: Cookie, iconColor: "text-[#059669]", iconBg: "bg-[#ECFDF5]" },
 ] as const;
 
 export function TodayMenuWidget({ breakfast, lunch, dessert, snack }: TodayMenuWidgetProps) {
@@ -27,16 +28,16 @@ export function TodayMenuWidget({ breakfast, lunch, dessert, snack }: TodayMenuW
   const hasMenu = breakfast || lunch || dessert;
 
   return (
-    <Card>
+    <Card className="rounded-xl border border-border bg-card shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <UtensilsCrossed className="size-4 text-primary" />
+          <CardTitle className="flex items-center gap-2 text-base font-heading">
+            <UtensilsCrossed className="size-4 text-[#EA580C]" />
             Today&apos;s Menu
           </CardTitle>
           <Link
             href="/food/calendar"
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors duration-100"
           >
             <Pencil className="size-3" />
             Edit

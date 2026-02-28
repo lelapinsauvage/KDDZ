@@ -11,19 +11,19 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users } from "lucide-react";
 
-// Design-system palette for chart segments
+/* Design-system chart + module accent palette */
 const CLASS_COLORS = [
-  "#C35A2C",
-  "#6B8F71",
-  "#B08968",
-  "#8B7355",
-  "#B07070",
-  "#5B7B5E",
-  "#B87333",
-  "#9B7653",
+  "#0B9178", // Meadow (chart-1)
+  "#2563EB", // Blue (chart-2)
+  "#7C3AED", // Violet (chart-3)
+  "#EA580C", // Orange (chart-4)
+  "#4F46E5", // Indigo (chart-5)
+  "#D97706", // Alerts amber
+  "#E11D48", // Comms rose
+  "#0284C7", // Sleep sky
 ];
 
-const GENDER_COLORS = ["#6B8F71", "#B07070"];
+const GENDER_COLORS = ["#2563EB", "#E11D48"];
 
 interface DemographicsSectionProps {
   childrenPerClass: Array<{ name: string; value: number }>;
@@ -32,10 +32,10 @@ interface DemographicsSectionProps {
 
 const tooltipStyle = {
   background: "#fff",
-  border: "1px solid #E7E5E4",
-  borderRadius: 12,
+  border: "1px solid #E2E5E9",
+  borderRadius: 10,
   fontSize: 13,
-  boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
+  boxShadow: "0 4px 6px rgba(15, 23, 42, 0.06), 0 2px 4px rgba(15, 23, 42, 0.04)",
 };
 
 export function DemographicsSection({
@@ -50,9 +50,9 @@ export function DemographicsSection({
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       {/* Children Per Class donut */}
-      <Card className="rounded-2xl border border-border/40 bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
+      <Card className="rounded-xl border border-border bg-card shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]">
         <CardHeader className="pb-2">
-          <CardTitle className="text-base font-semibold">
+          <CardTitle className="text-base font-semibold font-heading">
             Children Per Class
           </CardTitle>
         </CardHeader>
@@ -98,9 +98,9 @@ export function DemographicsSection({
       </Card>
 
       {/* Gender Stats donut */}
-      <Card className="rounded-2xl border border-border/40 bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
+      <Card className="rounded-xl border border-border bg-card shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]">
         <CardHeader className="pb-2">
-          <CardTitle className="text-base font-semibold">
+          <CardTitle className="text-base font-semibold font-heading">
             Gender Distribution
           </CardTitle>
         </CardHeader>
