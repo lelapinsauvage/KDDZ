@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { getAbsenceReports } from "@/lib/actions/absent-reports";
 import { getBranches } from "@/lib/actions/branches";
 import { AbsentReportsClient } from "./absent-reports-client";
 
@@ -11,34 +11,15 @@ interface PageProps {
 export default async function AbsentReportsPage({ searchParams }: PageProps) {
   const params = await searchParams;
 
-  // Fetch all absence reports with child and branch info
-  const absenceReports = await db.absenceReport.findMany({
-    include: {
-      child: {
-        include: {
-          branch: true,
-        },
-      },
-      createdBy: {
-        select: {
-          name: true,
-          email: true,
-          role: true,
-        },
-      },
-    },
-    orderBy: { date: "desc" },
-  });
+  const [{ reports: absenceReports }, branchesResult] = await Promise.all([
+    getAbsenceReports({ pageSize: 500 }),
+    getBranches(),
+  ]);
 
-  // Fetch branches for the filter
-  const branchesResult = await getBranches();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const branchesRaw = branchesResult.success ? (branchesResult.data as any[]) ?? [] : [];
-
-  const branches = branchesRaw.map((b) => ({
-    id: b.id as string,
-    name: b.name as string,
-  }));
+  const branches = (branchesResult.data ?? []) as Array<{
+    id: string;
+    name: string;
+  }>;
 
   // Serialize to plain objects
   const reports = absenceReports.map((r) => ({
