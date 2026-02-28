@@ -13,6 +13,7 @@ import {
   Users,
   Bell,
   BellRing,
+  Landmark,
 } from "lucide-react";
 
 const sections = [
@@ -98,8 +99,21 @@ const sections = [
   },
 ];
 
+const adminOnlySections = [
+  {
+    title: "Organizations",
+    description: "Manage nursery organizations",
+    href: "/settings/organizations",
+    icon: Landmark,
+    iconBg: "bg-violet-100",
+    iconColor: "text-violet-600",
+  },
+];
+
 export default async function SettingsPage() {
-  await requireRole("ADMIN", "MANAGER");
+  const ctx = await requireRole("ADMIN", "MANAGER");
+  const allSections =
+    ctx.role === "ADMIN" ? [...adminOnlySections, ...sections] : sections;
 
   return (
     <>
@@ -109,7 +123,7 @@ export default async function SettingsPage() {
       />
       <div className="p-4 md:p-6">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {sections.map((section) => {
+          {allSections.map((section) => {
             const Icon = section.icon;
             return (
               <Link key={section.href} href={section.href}>

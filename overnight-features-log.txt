@@ -552,3 +552,28 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 22 — Branch Compliance: Ministry Form — Sat Feb 28 09:16:57 CET 2026 ===
 =============================================
+Done. Here's a summary of what was implemented:
+
+**Prisma Schema Changes:**
+- Added 9 new owner info fields to `BranchCompliance`: `ownerFirstName`, `ownerFatherName`, `ownerFamilyName`, `ownerMotherName`, `ownerMotherMaidenName`, `ownerDob`, `ownerPlaceOfBirth`, `ownerNationality`, `ownerRegistryNumber`
+- Added address fields: `realEstateArea`, `addressSection`
+- Added 6 new `DocumentType` enum values for ministry attachments: `CERTIFIED_PHOTO`, `ID_COPY`, `BUILDING_MAP`, `CHILD_SAFETY_INSURANCE`, `INTERNAL_REGULATIONS`, `HEALTH_FILE`
+
+**Form Redesign (Vertical Tabs Stepper):**
+- **Header**: Static Arabic ministry header (الجمهورية اللبنانية / وزارة الصحة العامة / مديرية الوقاية الطبية / دائرة صحة الأم والولد والمدارس)
+- **Sidebar**: Sticky vertical tab nav with progress ring + section completion indicators + previous/next navigation
+- **Section A**: Legal Entity — radio-style buttons for شخص طبيعي / شخص معنوي
+- **Section B**: Owner Info — 9 Arabic-labeled fields (الاسم, اسم الأب, العائلة, etc.)
+- **Section C**: Nursery Name — بالعربية / باللاتينية
+- **Section D**: Nursery Address — 13 Arabic-labeled fields (المحافظة, القضاء, البلدة, etc.)
+- **Section E**: Staff Compliance — read-only tables pulling from teachers/nurses with document status per employee
+- **Section F**: Ministry Attachments — 7 required documents, each with title input, file upload button, and expiry date
+
+**Server Action**: Added `getStaffForCompliance()` to fetch branch employees with their documents for Section E.
+To https://github.com/lelapinsauvage/KDDZ.git
+   bb7443f..e7d1215  ux-improvements -> ux-improvements
+=== Phase 22 — Branch Compliance: Ministry Form COMPLETE — Sat Feb 28 09:25:50 CET 2026 ===
+
+=============================================
+=== Phase 23 — Admin Organization Management Panel — Sat Feb 28 09:25:50 CET 2026 ===
+=============================================
