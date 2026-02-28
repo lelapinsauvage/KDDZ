@@ -30,7 +30,10 @@ import {
   Save,
   AlertCircle,
   CheckCircle2,
+  ClipboardList,
+  Users,
 } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 import { bulkCreateAttendanceLogs } from "@/lib/actions/employee-events";
 
 // ---------------------------------------------------------------------------
@@ -528,6 +531,22 @@ export function AttendanceClient({
           data={filtered}
           searchKey="employeeName"
           searchPlaceholder="Search employees..."
+          emptyState={
+            employees.length === 0 ? (
+              <EmptyState
+                icon={Users}
+                title="No employees yet"
+                description="Add employees to start tracking attendance. Once you have staff registered, you can record daily attendance here."
+                action={{ label: "Manage Employees", href: "/employees/teachers" }}
+              />
+            ) : (
+              <EmptyState
+                icon={ClipboardList}
+                title="No attendance records for this period"
+                description="No active employees match your current filters. Try adjusting the branch or date filters above."
+              />
+            )
+          }
         />
       </div>
 

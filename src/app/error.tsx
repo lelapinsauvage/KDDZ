@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { AlertTriangle, RotateCcw, Home } from "lucide-react";
+import { CloudOff, RotateCcw, Home, MessageCircle } from "lucide-react";
 
 export default function GlobalError({
   error,
@@ -36,19 +36,22 @@ export default function GlobalError({
             textAlign: "center",
           }}
         >
+          {/* Warm amber icon circle */}
           <div
             style={{
+              position: "relative",
               display: "flex",
               width: 80,
               height: 80,
               alignItems: "center",
               justifyContent: "center",
               borderRadius: "50%",
-              backgroundColor: "rgba(239, 68, 68, 0.1)",
+              backgroundColor: "#fef3c7",
               marginBottom: 24,
+              boxShadow: "0 0 0 12px rgba(254, 243, 199, 0.5), 0 0 0 24px rgba(254, 243, 199, 0.25)",
             }}
           >
-            <AlertTriangle size={40} color="#ef4444" />
+            <CloudOff size={36} color="#d97706" />
           </div>
           <h1
             style={{
@@ -57,7 +60,7 @@ export default function GlobalError({
               margin: 0,
             }}
           >
-            Something went wrong
+            Oops, something went wrong
           </h1>
           <p
             style={{
@@ -65,11 +68,23 @@ export default function GlobalError({
               maxWidth: 400,
               fontSize: 14,
               color: "#737373",
+              lineHeight: 1.6,
             }}
           >
-            An unexpected error occurred. Please try again, or go back to the
-            home page.
+            Don&apos;t worry — this is just a temporary hiccup. You can try
+            again, or head back to the home page.
           </p>
+          {error.digest && (
+            <p
+              style={{
+                marginTop: 8,
+                fontSize: 12,
+                color: "#a3a3a3",
+              }}
+            >
+              Error reference: {error.digest}
+            </p>
+          )}
           <div
             style={{
               display: "flex",
@@ -114,9 +129,24 @@ export default function GlobalError({
               }}
             >
               <Home size={14} />
-              Go Home
+              Go to Dashboard
             </a>
           </div>
+          <a
+            href="mailto:support@example.com?subject=Bug%20Report"
+            style={{
+              marginTop: 16,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: 12,
+              color: "#a3a3a3",
+              textDecoration: "none",
+            }}
+          >
+            <MessageCircle size={12} />
+            Report this issue
+          </a>
         </div>
       </body>
     </html>

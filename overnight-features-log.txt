@@ -1130,3 +1130,66 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 41 — UX: Forms — Child Enrollment & Daily Reports — Sat Feb 28 10:39:54 CET 2026 ===
 =============================================
+All done. Here's a summary of what was implemented:
+
+### Child Enrollment Wizard (`child-form.tsx`)
+
+1. **Labeled step indicator** — Mobile now shows scrollable pill-style step labels with numbers/checkmarks instead of plain dots. Desktop sidebar unchanged (already had labels) but now includes a progress widget.
+2. **Completion percentage** — Both mobile and desktop show a progress bar with `X% complete` badge, calculated from current step position.
+3. **Required fields** — Already had subtle `*` asterisks via the `FormField` component (no change needed).
+4. **Inline validation** — Changed react-hook-form to `mode: "onTouched"` so errors appear as soon as a field loses focus, not only on submit.
+5. **Auto-save draft** — Form state is debounced (1s) to `localStorage` under `child-enrollment-draft`. On revisit, draft is restored with a toast notification. Cleared on successful submit.
+6. **Save as Draft** — Already visible in the sticky bar at all times (no change needed).
+7. **Summary review** — Added a 6th wizard step "Review & Submit" with read-only summaries of child info, family, school/medical, and financial data, each with an "Edit" link back to the relevant step.
+
+### Daily Report Form (`daily-report-form.tsx`)
+
+1. **HUGE attendance toggle** — Replaced small pill buttons with full-width, 100px+ tall cards with large icons (checkmark/X). Active state has color fill, shadow, and scale effect.
+2. **Color-coded islands** — Already existed (amber meals, sky milk, indigo sleep, emerald hygiene, rose health) — kept as-is.
+3. **Visual portion icons** — Added emoji icons to portion selectors: full plate, half plate, spoon, X. Buttons are now card-style with icon above label.
+4. **Time picker defaults** — Added a clock button next to every time input that fills the current time with one tap.
+5. **Copy from yesterday** — Added a prominent dashed button that copies meals and sleep data from an optional `yesterdayData` prop.
+6. **Touch-friendly** — All interactive elements now have `min-h-[44px]` or larger. Hygiene circles bumped from 32px to 44px. Mood/clothes/symptom buttons all enlarged. Delete buttons have 44px min tap targets.
+
+`tsc --noEmit` passed cleanly. Committed as `24f02ad`.
+To https://github.com/lelapinsauvage/KDDZ.git
+   9846a0b..24f02ad  ux-improvements -> ux-improvements
+=== Phase 41 — UX: Forms — Child Enrollment & Daily Reports COMPLETE — Sat Feb 28 10:45:36 CET 2026 ===
+
+=============================================
+=== Phase 42 — UX: Tables & Data Display — Sat Feb 28 10:45:36 CET 2026 ===
+=============================================
+All done. Here's what was implemented across the 3 files:
+
+### `data-table.tsx` — Shared component (all 43+ list pages benefit)
+
+1. **Column visibility toggle** — Popover with checkboxes to show/hide any column (excludes avatar, select, actions)
+2. **Bulk selection** — When `bulkActions` prop is provided, a "Select All" checkbox column is prepended automatically, with a floating action bar showing selection count and action buttons
+3. **Row click navigation** — New `onRowClick` prop makes entire rows clickable with cursor-pointer styling
+4. **Sticky first column** — First column stays fixed on horizontal scroll with matching hover/selected backgrounds via `group` utilities
+5. **Proper empty state** — Icon + contextual message ("adjust filters" vs "no data yet") with a "Clear filters" button when filters are active
+6. **Loading skeleton** — New `isLoading` prop renders shimmer skeletons matching table structure (circles for avatars, rectangles for text)
+7. **Filter chips** — Active column filters shown as removable badges with `[x]` buttons and "Clear all"
+8. **Exported `SortableHeader`** — Reusable component showing `ArrowUp`/`ArrowDown`/`ArrowUpDown` (dimmed) based on current sort state
+9. **Exported `BulkAction<TData>` type** — For consumers to define bulk operations
+
+### `children-columns.tsx` — Sort indicators + avatar tooltips
+
+- All sortable headers now use `SortableHeader` with clear directional arrows
+- Avatar shows a **tooltip on hover** with name, age, class, branch, and status
+- Actions dropdown and name link use `stopPropagation()` so they work correctly with row click
+- Status badge config extracted to a constant for consistency
+
+### `employee-columns.tsx` — Sort indicators + tooltips + consistent badges
+
+- All sortable headers now use `SortableHeader`
+- Avatar shows a **tooltip on hover** with name, role, email, phone, and branch
+- **Status column unified** to use `CircleCheck`/`CircleOff` icon badges (matching children pattern) instead of the old dot + badge
+- Actions and name link use `stopPropagation()` for row click compatibility
+To https://github.com/lelapinsauvage/KDDZ.git
+   24f02ad..7a37c85  ux-improvements -> ux-improvements
+=== Phase 42 — UX: Tables & Data Display COMPLETE — Sat Feb 28 10:51:58 CET 2026 ===
+
+=============================================
+=== Phase 43 — UX: Empty States & Error States — Sat Feb 28 10:51:58 CET 2026 ===
+=============================================
