@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession } from "next-auth/react"
@@ -7,7 +8,6 @@ import {
   LayoutDashboard,
   Building2,
   Inbox,
-  Users,
   UtensilsCrossed,
   ClipboardList,
   Settings,
@@ -24,6 +24,10 @@ import {
   Pill,
   ChevronsUpDown,
   LogOut,
+  Plus,
+  GraduationCap,
+  Sun,
+  History,
 } from "lucide-react"
 import {
   Sidebar,
@@ -35,6 +39,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import {
   DropdownMenu,
@@ -44,6 +49,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
+import { useRecentlyVisited } from "@/hooks/use-recently-visited"
 import type { SidebarBadges } from "@/lib/actions/sidebar"
 
 type UserRole = "ADMIN" | "TEACHER" | "NURSE" | "DOCTOR" | "MANAGER"
@@ -71,18 +77,19 @@ const badgeColors: Record<keyof SidebarBadges, string> = {
 }
 
 // ---------------------------------------------------------------------------
-// Role-specific nav configs — clean workflow-oriented grouping
+// Role-specific nav configs — workflow-oriented grouping by priority
 // ---------------------------------------------------------------------------
 
 const adminNav: NavSection[] = [
   {
-    label: "Overview",
+    label: "Quick Access",
     items: [
       { title: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+      { title: "Today", icon: Sun, href: "/today" },
     ],
   },
   {
-    label: "Daily Ops",
+    label: "Daily Operations",
     items: [
       { title: "Daily Reports", icon: FileText, href: "/daily-reports", badgeKey: "missingReports" },
       { title: "Attendance", icon: CalendarDays, href: "/absent-reports" },
@@ -94,17 +101,24 @@ const adminNav: NavSection[] = [
     label: "Children",
     items: [
       { title: "All Children", icon: Baby, href: "/children" },
-      { title: "Parent Users", icon: Users, href: "/settings/parent-users" },
+      { title: "Enrollments", icon: GraduationCap, href: "/settings/parent-users" },
+      { title: "Assessments", icon: ClipboardList, href: "/assessments" },
     ],
   },
   {
     label: "Health",
     items: [
       { title: "Medical Records", icon: Stethoscope, href: "/medical/general" },
-      { title: "Conditions", icon: Pill, href: "/medical/conditions" },
-      { title: "Visits", icon: Stethoscope, href: "/medical/visits" },
       { title: "Vaccinations", icon: Syringe, href: "/medical/vaccinations" },
       { title: "Accidents", icon: AlertTriangle, href: "/medical/accidents" },
+      { title: "Conditions", icon: Pill, href: "/medical/conditions" },
+    ],
+  },
+  {
+    label: "Communication",
+    items: [
+      { title: "Messages", icon: Inbox, href: "/messages/inbox", badgeKey: "unreadMessages" },
+      { title: "Notifications", icon: Bell, href: "/alarms", badgeKey: "activeAlarms" },
     ],
   },
   {
@@ -114,13 +128,15 @@ const adminNav: NavSection[] = [
     ],
   },
   {
+    label: "Management",
+    items: [
+      { title: "Branches & Classes", icon: Building2, href: "/branches" },
+      { title: "Employees", icon: UserCheck, href: "/employees/staff" },
+    ],
+  },
+  {
     label: "Settings",
     items: [
-      { title: "Staff", icon: UserCheck, href: "/employees/staff" },
-      { title: "Branches & Classes", icon: Building2, href: "/branches" },
-      { title: "Assessments", icon: ClipboardList, href: "/assessments" },
-      { title: "Messages", icon: Inbox, href: "/messages/inbox", badgeKey: "unreadMessages" },
-      { title: "Notifications", icon: Bell, href: "/alarms", badgeKey: "activeAlarms" },
       { title: "Settings", icon: Settings, href: "/settings" },
     ],
   },
@@ -128,16 +144,15 @@ const adminNav: NavSection[] = [
 
 const teacherNav: NavSection[] = [
   {
-    label: "Overview",
+    label: "Quick Access",
     items: [
-      { title: "Today", icon: LayoutDashboard, href: "/today" },
+      { title: "Today", icon: Sun, href: "/today" },
     ],
   },
   {
-    label: "Daily Ops",
+    label: "Daily Operations",
     items: [
       { title: "Daily Reports", icon: FileText, href: "/daily-reports", badgeKey: "missingReports" },
-      { title: "Batch Reports", icon: ClipboardList, href: "/daily-reports/batch" },
       { title: "Absences", icon: CalendarDays, href: "/absent-reports" },
     ],
   },
@@ -148,7 +163,7 @@ const teacherNav: NavSection[] = [
     ],
   },
   {
-    label: "Settings",
+    label: "Communication",
     items: [
       { title: "Messages", icon: Inbox, href: "/messages/inbox", badgeKey: "unreadMessages" },
       { title: "Notifications", icon: Bell, href: "/alarms", badgeKey: "activeAlarms" },
@@ -158,7 +173,7 @@ const teacherNav: NavSection[] = [
 
 const nurseNav: NavSection[] = [
   {
-    label: "Overview",
+    label: "Quick Access",
     items: [
       { title: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
     ],
@@ -167,10 +182,9 @@ const nurseNav: NavSection[] = [
     label: "Health",
     items: [
       { title: "Medical Records", icon: Stethoscope, href: "/medical/general" },
-      { title: "Conditions", icon: Pill, href: "/medical/conditions" },
-      { title: "Visits", icon: Stethoscope, href: "/medical/visits" },
       { title: "Vaccinations", icon: Syringe, href: "/medical/vaccinations" },
       { title: "Accidents", icon: AlertTriangle, href: "/medical/accidents" },
+      { title: "Conditions", icon: Pill, href: "/medical/conditions" },
     ],
   },
   {
@@ -180,7 +194,7 @@ const nurseNav: NavSection[] = [
     ],
   },
   {
-    label: "Settings",
+    label: "Communication",
     items: [
       { title: "Messages", icon: Inbox, href: "/messages/inbox", badgeKey: "unreadMessages" },
       { title: "Notifications", icon: Bell, href: "/alarms", badgeKey: "activeAlarms" },
@@ -215,6 +229,36 @@ const roleLabels: Record<UserRole, string> = {
 }
 
 // ---------------------------------------------------------------------------
+// Quick actions per role (contextual shortcuts)
+// ---------------------------------------------------------------------------
+
+interface QuickAction {
+  title: string
+  icon: React.ComponentType<{ className?: string }>
+  href: string
+}
+
+function getQuickActionsForRole(role: UserRole): QuickAction[] {
+  switch (role) {
+    case "TEACHER":
+      return [
+        { title: "New Daily Report", icon: Plus, href: "/daily-reports/new" },
+      ]
+    case "NURSE":
+    case "DOCTOR":
+      return [
+        { title: "Log Accident", icon: Plus, href: "/medical/accidents" },
+      ]
+    case "ADMIN":
+    case "MANAGER":
+    default:
+      return [
+        { title: "New Daily Report", icon: Plus, href: "/daily-reports/new" },
+      ]
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
@@ -223,13 +267,29 @@ interface AppSidebarProps {
   badges?: SidebarBadges
 }
 
+const TABLET_MAX = 1024
+
 export function AppSidebar({ userRole, badges }: AppSidebarProps) {
   const pathname = usePathname()
   const { data: session } = useSession()
+  const { setOpen } = useSidebar()
   const sections = getNavForRole(userRole)
+  const quickActions = getQuickActionsForRole(userRole)
+  const { recentPages } = useRecentlyVisited()
 
   const userName = session?.user?.name || "User"
   const userInitial = userName.charAt(0).toUpperCase()
+
+  // Auto-collapse sidebar on tablet-width screens (768–1024px)
+  useEffect(() => {
+    const mql = window.matchMedia(`(min-width: 768px) and (max-width: ${TABLET_MAX}px)`)
+    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      if (e.matches) setOpen(false)
+    }
+    handleChange(mql)
+    mql.addEventListener("change", handleChange)
+    return () => mql.removeEventListener("change", handleChange)
+  }, [setOpen])
 
   return (
     <Sidebar
@@ -255,6 +315,29 @@ export function AppSidebar({ userRole, badges }: AppSidebarProps) {
 
       {/* ── Navigation ── */}
       <SidebarContent className="px-3 pt-1">
+        {/* Quick action shortcuts */}
+        {quickActions.length > 0 && (
+          <SidebarGroup className="py-1">
+            <SidebarMenu className="space-y-0.5">
+              {quickActions.map((action) => (
+                <SidebarMenuItem key={action.href}>
+                  <SidebarMenuButton
+                    asChild
+                    tooltip={action.title}
+                    className="text-sidebar-primary hover:bg-sidebar-primary/10 hover:text-sidebar-primary rounded-lg transition-all duration-200 border border-sidebar-primary/20 border-dashed"
+                  >
+                    <Link href={action.href}>
+                      <action.icon className="size-[18px] shrink-0" />
+                      <span className="flex-1 truncate text-[13px] font-medium">{action.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+        )}
+
+        {/* Main nav sections */}
         {sections.map((section) => (
           <SidebarGroup key={section.label} className="py-1">
             <SidebarGroupLabel className="px-3 mb-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-sidebar-foreground/40">
@@ -304,6 +387,38 @@ export function AppSidebar({ userRole, badges }: AppSidebarProps) {
             </SidebarMenu>
           </SidebarGroup>
         ))}
+
+        {/* Recently Visited */}
+        {recentPages.length > 0 && (
+          <SidebarGroup className="py-1">
+            <SidebarGroupLabel className="px-3 mb-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-sidebar-foreground/40">
+              Recently Visited
+            </SidebarGroupLabel>
+            <SidebarMenu className="space-y-0.5">
+              {recentPages.slice(0, 5).map((page) => {
+                const isActive = pathname === page.href
+                return (
+                  <SidebarMenuItem key={page.href}>
+                    <SidebarMenuButton
+                      asChild
+                      tooltip={page.title}
+                      className={
+                        isActive
+                          ? "relative bg-sidebar-accent/50 text-sidebar-accent-foreground font-medium rounded-lg transition-all duration-200"
+                          : "relative text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/30 rounded-lg transition-all duration-200"
+                      }
+                    >
+                      <Link href={page.href}>
+                        <History className="size-[18px] shrink-0 text-sidebar-foreground/30" />
+                        <span className="flex-1 truncate text-[13px]">{page.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
+            </SidebarMenu>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       {/* ── Footer: Quick Actions + User ── */}
