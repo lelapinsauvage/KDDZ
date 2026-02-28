@@ -194,3 +194,53 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 9 — Medical: Accident & Call Reports — Sat Feb 28 08:11:19 CET 2026 ===
 =============================================
+Done. Here's a summary of all changes:
+
+**Schema changes:**
+- Added `createdById` (UUID, nullable) to `MedicalForm` model with a `User` relation (`MedicalFormCreator`)
+- Added corresponding `medicalForms` relation on `User` model
+- Ran `prisma db push` to sync DB
+
+**Accident Report Form** (new dialog + enhanced list):
+- Created `accident-report-dialog.tsx` with all spec fields: Cause (textarea), Date, Time, "The accident happened" (select: playground/classroom/bathroom/hallway/cafeteria/outdoor/stairs/other), Specify Area (text), Camera Number (text), First Aid Applied (select), Emergency Hospital (select), Treatment (select), Teacher who filled report (select from org staff), Attachments (placeholder)
+- Updated `accidents-client.tsx` — wired dialog to "Report Accident" button, updated table columns to show cause, location with area, first aid, treatment, filed-by
+- Updated `page.tsx` — fetches staff list via `getOrgStaffList()`, extracts all new fields from JSON data
+
+**Call Report Form** (new dialog + enhanced list):
+- Created `call-report-dialog.tsx` with all spec fields: Call Type (Incoming/Outgoing select), Date, Time, Cause of Call (select: health/behavior/absence/pickup/emergency/etc), Subject (text), Remarks (textarea), Teacher who filled report (select), Attachments (placeholder)
+- Updated `calls-client.tsx` — wired dialog to "Log Call" button, added Remarks column, renamed direction to "Type", added cause labels
+- Updated `page.tsx` — fetches staff list in parallel
+
+**Server actions:**
+- `createMedicalForm` now auto-sets `createdById` from the authenticated user
+- `getMedicalForms` now includes `createdBy` relation data
+- Added `getOrgStaffList()` utility for teacher dropdowns
+To https://github.com/lelapinsauvage/KDDZ.git
+   974bfd5..7372adc  ux-improvements -> ux-improvements
+=== Phase 9 — Medical: Accident & Call Reports COMPLETE — Sat Feb 28 08:17:16 CET 2026 ===
+
+=============================================
+=== Phase 10 — Medical Visit: Physical Exam Accordion — Sat Feb 28 08:17:16 CET 2026 ===
+=============================================
+Done. Here's what was built:
+
+**New file:** `src/components/ui/accordion.tsx` — shadcn Accordion primitive
+
+**Rewritten:** `src/app/(app)/medical/visits/[id]/visit-detail-client.tsx` — the visit form is now a 5-section accordion:
+
+| # | Section | Fields | Notes textarea |
+|---|---------|--------|----------------|
+| 1 | **Vitals** (Heart icon, rose) | Height cm, Weight kg, Blood Pressure mmHg | Yes |
+| 2 | **Eyes** (Eye icon, blue) | With Glasses checkbox, Left/Right Eye acuity selects, Crooked Eyes Yes/No | Yes |
+| 3 | **Ears** (Ear icon, amber) | Wax L/R, Drum L/R, Hearing L/R — all Normal/Mild/Moderate/Severe selects | Yes |
+| 4 | **Systems** (Activity icon, violet) | 7 Normal/Abnormal selects: Nose/Throat, Thyroid, Lymph Nodes, Heart & Arterial, Respiratory, Motor System, Abdomen-Genitals | Yes |
+| 5 | **Skin/Hair/Nails** (Sparkles icon, pink) | 5 Normal/Abnormal selects: Lice-Lupus, Dermatitis, Skin Allergy, Hair, Nails | Yes |
+
+Each section header shows a green **CheckCircle2** when all its fields are filled. The form stores everything in the `MedicalForm.data` JSON column (formType `VISITS`) — no schema migration needed. `tsc --noEmit` passes clean.
+To https://github.com/lelapinsauvage/KDDZ.git
+   7372adc..51551c6  ux-improvements -> ux-improvements
+=== Phase 10 — Medical Visit: Physical Exam Accordion COMPLETE — Sat Feb 28 08:19:58 CET 2026 ===
+
+=============================================
+=== Phase 11 — Medical: Suffering Form + Vaccinations — Sat Feb 28 08:19:58 CET 2026 ===
+=============================================

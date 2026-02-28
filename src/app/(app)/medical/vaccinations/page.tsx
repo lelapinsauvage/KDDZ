@@ -1,8 +1,12 @@
 import { getVaccinations } from "@/lib/actions/medical";
 import { getBranches } from "@/lib/actions/branches";
-import { VaccinationsClient } from "./vaccinations-client";
+import { db } from "@/lib/db";
+import { requireOrg } from "@/lib/require-org";
+import { VaccinationsPageClient } from "./vaccinations-page-client";
 
 export default async function VaccinationsPage() {
+  const { organizationId: orgId } = await requireOrg();
+
   const [{ vaccinations, total }, branchesResult] = await Promise.all([
     getVaccinations({ pageSize: 500 }),
     getBranches(),
@@ -36,9 +40,38 @@ export default async function VaccinationsPage() {
       notes: v.notes ?? "",
       vacStatus,
       branchId: v.child.branchId,
-      branchName: v.child.branch?.name ?? "—",
+      branchName: v.child.branch?.name ?? "\u2014",
     };
   });
 
-  return <VaccinationsClient vaccinations={serializedVaccinations} total={total} branches={branches} />;
+  // Fetch children with DOB for the timeline view
+  const childrenWithDob = await db.child.findMany({
+    where: { isActive: true, branch: { organizationId: orgId } },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      dateOfBirth: true,
+      branchId: true,
+      branch: { select: { name: true } },
+    },
+    orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+  });
+
+  const childrenForTimeline = childrenWithDob.map((c) => ({
+    id: c.id,
+    name: `${c.firstName} ${c.lastName}`,
+    dob: c.dateOfBirth ? c.dateOfBirth.toISOString().split("T")[0] : null,
+    branchId: c.branchId,
+    branchName: c.branch?.name ?? "\u2014",
+  }));
+
+  return (
+    <VaccinationsPageClient
+      vaccinations={serializedVaccinations}
+      total={total}
+      branches={branches}
+      children={childrenForTimeline}
+    />
+  );
 }
