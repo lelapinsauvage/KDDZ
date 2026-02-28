@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -14,10 +14,51 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Loader2, Save, CheckCircle, AlertTriangle } from "lucide-react";
 import { createAssessment, updateAssessment } from "@/lib/actions/assessments";
-import type { AssessmentTypeConfig } from "@/lib/assessment-types";
+import {
+  ASSESSMENT_CONFIGS,
+  ASSESSMENT_TYPE_NAMES,
+  type AssessmentTypeConfig,
+  type AssessmentCategory,
+} from "@/lib/assessment-types";
+
+// ── Age bracket tab definitions ──────────────
+
+const AGE_BRACKETS = [
+  { type: 1, label: "0-3 mos" },
+  { type: 2, label: "4-7 mos" },
+  { type: 3, label: "8-12 mos" },
+  { type: 4, label: "13-18 mos" },
+  { type: 5, label: "19-24 mos" },
+  { type: 6, label: "24-36 mos" },
+  { type: 7, label: "3-4 yrs" },
+  // Type 7 covers 48-60 months so we map bracket 8 to type 7 as well
+] as const;
+
+// Map bracket labels to actual assessment type configs
+const BRACKET_TYPE_MAP: Record<number, number> = {
+  1: 1, // 0-3 mos -> assessment 1
+  2: 2, // 4-7 mos -> assessment 2
+  3: 3, // 8-12 mos -> assessment 3
+  4: 4, // 13-18 mos -> assessment 4
+  5: 5, // 19-24 mos -> assessment 5 (24-36)
+  6: 5, // 24-36 mos -> assessment 5
+  7: 6, // 3-4 yrs -> assessment 6
+};
+
+// Full 8 brackets as specified
+const ALL_BRACKETS = [
+  { idx: 1, label: "0-3 mos", type: 1 },
+  { idx: 2, label: "4-7 mos", type: 2 },
+  { idx: 3, label: "8-12 mos", type: 3 },
+  { idx: 4, label: "13-24 mos", type: 4 },
+  { idx: 5, label: "24-36 mos", type: 5 },
+  { idx: 6, label: "3-4 yrs", type: 6 },
+  { idx: 7, label: "4-5 yrs", type: 7 },
+] as const;
 
 interface ChildOption {
   id: string;
@@ -51,21 +92,44 @@ export function AssessmentForm({
   const [status, setStatus] = useState<"DRAFT" | "SUBMITTED" | "REVIEWED">(
     defaultValues?.status ?? "DRAFT"
   );
+  const [activeType, setActiveType] = useState(assessmentType);
 
-  // Initialize criteria responses from defaultValues.data
+  // Get the active config based on selected tab
+  const activeConfig = ASSESSMENT_CONFIGS[activeType] ?? typeConfig;
+
+  // Initialize criteria responses from defaultValues.data for ALL types
   const initData = (defaultValues?.data ?? {}) as Record<string, unknown>;
   const [responses, setResponses] = useState<Record<string, number | boolean>>(
     () => {
       const initial: Record<string, number | boolean> = {};
+      // Initialize for ALL assessment types so switching tabs preserves data
+      for (const config of Object.values(ASSESSMENT_CONFIGS)) {
+        for (const cat of config.categories) {
+          for (const criterion of cat.criteria) {
+            if (cat.isRedFlags) {
+              initial[`${config.type}_${criterion.key}`] =
+                initData[criterion.key] === true;
+            } else {
+              initial[`${config.type}_${criterion.key}`] =
+                typeof initData[criterion.key] === "number"
+                  ? (initData[criterion.key] as number)
+                  : 0;
+            }
+          }
+        }
+      }
+      // Also initialize flat keys for backward compat with existing data
       for (const cat of typeConfig.categories) {
         for (const criterion of cat.criteria) {
           if (cat.isRedFlags) {
-            initial[criterion.key] = initData[criterion.key] === true;
+            if (initData[criterion.key] === true) {
+              initial[`${assessmentType}_${criterion.key}`] = true;
+            }
           } else {
-            initial[criterion.key] =
-              typeof initData[criterion.key] === "number"
-                ? (initData[criterion.key] as number)
-                : 0;
+            if (typeof initData[criterion.key] === "number") {
+              initial[`${assessmentType}_${criterion.key}`] =
+                initData[criterion.key] as number;
+            }
           }
         }
       }
@@ -86,7 +150,16 @@ export function AssessmentForm({
       return;
     }
 
-    const data: Record<string, unknown> = { ...responses, comments };
+    // Build data from the active type's responses
+    const cfg = ASSESSMENT_CONFIGS[activeType] ?? typeConfig;
+    const data: Record<string, unknown> = { comments };
+    for (const cat of cfg.categories) {
+      for (const criterion of cat.criteria) {
+        data[criterion.key] =
+          responses[`${activeType}_${criterion.key}`] ??
+          (cat.isRedFlags ? false : 0);
+      }
+    }
 
     startTransition(async () => {
       let result;
@@ -99,7 +172,7 @@ export function AssessmentForm({
       } else {
         result = await createAssessment({
           childId,
-          assessmentType,
+          assessmentType: activeType,
           status: submitStatus,
           data,
         });
@@ -110,38 +183,53 @@ export function AssessmentForm({
         return;
       }
 
-      router.push(`/assessments/${assessmentType}`);
+      router.push(`/assessments/${activeType}`);
       router.refresh();
     });
   }
 
-  // Calculate progress
-  const totalCriteria = typeConfig.categories
-    .filter((c) => !c.isRedFlags)
-    .reduce((sum, c) => sum + c.criteria.length, 0);
-  const answeredCriteria = typeConfig.categories
-    .filter((c) => !c.isRedFlags)
-    .reduce(
-      (sum, c) =>
-        sum +
-        c.criteria.filter((cr) => responses[cr.key] !== 0).length,
-      0
-    );
-  const redFlagCount = typeConfig.categories
-    .filter((c) => c.isRedFlags)
-    .reduce(
-      (sum, c) =>
-        sum +
-        c.criteria.filter((cr) => responses[cr.key] === true).length,
-      0
-    );
+  // Calculate progress for active type
+  const { totalCriteria, answeredCriteria, redFlagCount } = useMemo(() => {
+    const cfg = activeConfig;
+    const total = cfg.categories
+      .filter((c) => !c.isRedFlags)
+      .reduce((sum, c) => sum + c.criteria.length, 0);
+    const answered = cfg.categories
+      .filter((c) => !c.isRedFlags)
+      .reduce(
+        (sum, c) =>
+          sum +
+          c.criteria.filter(
+            (cr) => responses[`${activeType}_${cr.key}`] !== 0
+          ).length,
+        0
+      );
+    const flags = cfg.categories
+      .filter((c) => c.isRedFlags)
+      .reduce(
+        (sum, c) =>
+          sum +
+          c.criteria.filter(
+            (cr) => responses[`${activeType}_${cr.key}`] === true
+          ).length,
+        0
+      );
+    return { totalCriteria: total, answeredCriteria: answered, redFlagCount: flags };
+  }, [activeConfig, activeType, responses]);
+
+  const progressPercent =
+    totalCriteria > 0
+      ? Math.round((answeredCriteria / totalCriteria) * 100)
+      : 0;
 
   return (
     <div className="space-y-6 p-4 md:p-6">
       {/* Child Selector & Status */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">{typeConfig.name}</CardTitle>
+          <CardTitle className="text-base">
+            {ASSESSMENT_TYPE_NAMES[activeType] ?? activeConfig.name}
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -181,34 +269,88 @@ export function AssessmentForm({
           </div>
 
           {/* Progress bar */}
-          <div className="flex items-center gap-4 text-sm text-[#555]">
-            <div className="flex items-center gap-1.5">
-              <CheckCircle className="size-4 text-[#6B8F71]" />
-              <span>
-                {answeredCriteria}/{totalCriteria} evaluated
-              </span>
-            </div>
-            {redFlagCount > 0 && (
-              <div className="flex items-center gap-1.5">
-                <AlertTriangle className="size-4 text-[#C17C5A]" />
-                <span className="text-[#C17C5A]">
-                  {redFlagCount} red flag{redFlagCount !== 1 ? "s" : ""}
-                </span>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle className="size-4 text-emerald-500" />
+                  <span>
+                    {answeredCriteria}/{totalCriteria} evaluated
+                  </span>
+                </div>
+                {redFlagCount > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <AlertTriangle className="size-4 text-amber-500" />
+                    <span className="text-amber-600 font-medium">
+                      {redFlagCount} red flag{redFlagCount !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+                )}
               </div>
-            )}
+              <span className="font-medium">{progressPercent}%</span>
+            </div>
+            <div className="h-2 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full rounded-full bg-emerald-500 transition-all duration-300"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Categories */}
-      {typeConfig.categories.map((category) => (
-        <Card key={category.name}>
+      {/* Age Bracket Tabs */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm pb-2 -mx-4 px-4 md:-mx-6 md:px-6 pt-2">
+        <ScrollArea className="w-full">
+          <div className="flex gap-2 pb-2">
+            {ALL_BRACKETS.map((bracket) => {
+              const isActive = bracket.type === activeType;
+              return (
+                <button
+                  key={bracket.idx}
+                  type="button"
+                  onClick={() => setActiveType(bracket.type)}
+                  className={`
+                    shrink-0 rounded-full px-4 py-2.5 text-sm font-medium
+                    transition-all duration-150 border
+                    ${
+                      isActive
+                        ? "bg-foreground text-background border-foreground shadow-sm"
+                        : "bg-background text-muted-foreground border-border hover:bg-muted hover:text-foreground"
+                    }
+                  `}
+                >
+                  {bracket.label}
+                </button>
+              );
+            })}
+          </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+      </div>
+
+      {/* Categories for the active age bracket */}
+      {activeConfig.categories.map((category) => (
+        <Card key={`${activeType}-${category.key}`}>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               {category.isRedFlags && (
-                <AlertTriangle className="size-4 text-[#C17C5A]" />
+                <AlertTriangle className="size-4 text-amber-500" />
               )}
               {category.name}
+              {category.isRedFlags && (
+                <Badge variant="outline" className="text-amber-600 border-amber-300 text-xs ml-auto">
+                  Critical for Ministry
+                </Badge>
+              )}
+              {!category.isRedFlags && (
+                <Badge variant="secondary" className="text-xs ml-auto font-normal">
+                  {category.criteria.filter(
+                    (cr) => responses[`${activeType}_${cr.key}`] !== 0
+                  ).length}
+                  /{category.criteria.length}
+                </Badge>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -216,12 +358,14 @@ export function AssessmentForm({
               <RedFlagSection
                 category={category}
                 responses={responses}
+                activeType={activeType}
                 onChange={setCriterionValue}
               />
             ) : (
               <CriteriaSection
                 category={category}
                 responses={responses}
+                activeType={activeType}
                 onChange={setCriterionValue}
               />
             )}
@@ -261,7 +405,6 @@ export function AssessmentForm({
         <Button
           onClick={() => handleSubmit("SUBMITTED")}
           disabled={isPending}
-         
         >
           {isPending ? (
             <Loader2 className="mr-2 size-4 animate-spin" />
@@ -272,7 +415,7 @@ export function AssessmentForm({
         </Button>
         <Button
           variant="ghost"
-          onClick={() => router.push(`/assessments/${assessmentType}`)}
+          onClick={() => router.push(`/assessments/${activeType}`)}
           disabled={isPending}
         >
           Cancel
@@ -282,61 +425,70 @@ export function AssessmentForm({
   );
 }
 
-// ── Yes/No criteria section ──────────────────
+// ── Large Yes/No Pill Button criteria section ──
 
 function CriteriaSection({
   category,
   responses,
+  activeType,
   onChange,
 }: {
-  category: AssessmentFormProps["typeConfig"]["categories"][number];
+  category: AssessmentCategory;
   responses: Record<string, number | boolean>;
+  activeType: number;
   onChange: (key: string, value: number | boolean) => void;
 }) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-1">
       {category.criteria.map((criterion, idx) => {
-        const value = responses[criterion.key] as number;
+        const stateKey = `${activeType}_${criterion.key}`;
+        const value = responses[stateKey] as number;
         return (
-          <div key={criterion.key}>
-            {idx > 0 && <Separator className="my-3" />}
-            <div className="flex items-start justify-between gap-4">
-              <Label className="text-sm leading-5 font-normal text-foreground flex-1">
-                <span className="font-semibold text-primary mr-1.5">
-                  {criterion.key.toUpperCase()}
-                </span>
-                {criterion.label}
-              </Label>
-              <div className="flex items-center gap-2 shrink-0">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={value === 1 ? "default" : "outline"}
-                  className={
+          <div
+            key={criterion.key}
+            className={`
+              flex items-center justify-between gap-3 rounded-xl px-4 py-3
+              ${idx % 2 === 0 ? "bg-muted/40" : ""}
+            `}
+          >
+            <span className="text-sm leading-5 text-foreground flex-1">
+              {criterion.label}
+            </span>
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Yes pill */}
+              <button
+                type="button"
+                onClick={() => onChange(stateKey, value === 1 ? 0 : 1)}
+                className={`
+                  inline-flex items-center justify-center rounded-full
+                  min-w-[72px] h-11 px-5 text-sm font-semibold
+                  transition-all duration-150 border-2
+                  ${
                     value === 1
-                      ? "bg-[#6B8F71] hover:bg-[#5A7A60] text-white h-8 px-3"
-                      : "h-8 px-3"
+                      ? "bg-emerald-500 border-emerald-500 text-white shadow-sm"
+                      : "bg-background border-border text-muted-foreground hover:border-emerald-300 hover:text-emerald-600"
                   }
-                  onClick={() => onChange(criterion.key, value === 1 ? 0 : 1)}
-                >
-                  Yes
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={value === -1 ? "default" : "outline"}
-                  className={
+                `}
+              >
+                Yes
+              </button>
+              {/* No pill */}
+              <button
+                type="button"
+                onClick={() => onChange(stateKey, value === -1 ? 0 : -1)}
+                className={`
+                  inline-flex items-center justify-center rounded-full
+                  min-w-[72px] h-11 px-5 text-sm font-semibold
+                  transition-all duration-150 border-2
+                  ${
                     value === -1
-                      ? "bg-[#C17C5A] hover:bg-[#A8684A] text-white h-8 px-3"
-                      : "h-8 px-3"
+                      ? "bg-neutral-500 border-neutral-500 text-white shadow-sm"
+                      : "bg-background border-border text-muted-foreground hover:border-neutral-400 hover:text-neutral-600"
                   }
-                  onClick={() =>
-                    onChange(criterion.key, value === -1 ? 0 : -1)
-                  }
-                >
-                  No
-                </Button>
-              </div>
+                `}
+              >
+                No
+              </button>
             </div>
           </div>
         );
@@ -350,38 +502,39 @@ function CriteriaSection({
 function RedFlagSection({
   category,
   responses,
+  activeType,
   onChange,
 }: {
-  category: AssessmentFormProps["typeConfig"]["categories"][number];
+  category: AssessmentCategory;
   responses: Record<string, number | boolean>;
+  activeType: number;
   onChange: (key: string, value: number | boolean) => void;
 }) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-1">
       {category.criteria.map((criterion, idx) => {
-        const checked = responses[criterion.key] === true;
+        const stateKey = `${activeType}_${criterion.key}`;
+        const checked = responses[stateKey] === true;
         return (
-          <div key={criterion.key}>
-            {idx > 0 && <Separator className="my-3" />}
-            <div className="flex items-start gap-3">
-              <Checkbox
-                id={criterion.key}
-                checked={checked}
-                onCheckedChange={(v) =>
-                  onChange(criterion.key, v === true)
-                }
-                className="mt-0.5"
-              />
-              <Label
-                htmlFor={criterion.key}
-                className="text-sm leading-5 font-normal text-foreground cursor-pointer"
-              >
-                <span className="font-semibold text-[#C17C5A] mr-1.5">
-                  {criterion.key.toUpperCase()}
-                </span>
-                {criterion.label}
-              </Label>
-            </div>
+          <div
+            key={criterion.key}
+            className={`
+              flex items-start gap-3 rounded-xl px-4 py-3
+              ${checked ? "bg-amber-50 dark:bg-amber-950/20" : idx % 2 === 0 ? "bg-muted/40" : ""}
+            `}
+          >
+            <Checkbox
+              id={`${activeType}-${criterion.key}`}
+              checked={checked}
+              onCheckedChange={(v) => onChange(stateKey, v === true)}
+              className="mt-0.5 size-5 rounded border-2"
+            />
+            <Label
+              htmlFor={`${activeType}-${criterion.key}`}
+              className="text-sm leading-5 font-normal text-foreground cursor-pointer flex-1"
+            >
+              {criterion.label}
+            </Label>
           </div>
         );
       })}

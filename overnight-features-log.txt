@@ -244,3 +244,34 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 11 — Medical: Suffering Form + Vaccinations — Sat Feb 28 08:19:58 CET 2026 ===
 =============================================
+Done. Here's a summary of what was implemented:
+
+**Task 1: Suffering Form** (4 new files)
+
+- **`/medical/suffering/page.tsx`** + **`suffering-list-client.tsx`** — List page showing all suffering assessment forms with a progress bar (filled/13 assessments), conclusion, status badges, branch filter, and search
+- **`/medical/suffering/[id]/page.tsx`** + **`suffering-form-client.tsx`** — The assessment form with:
+  - Child selector
+  - 13 assessment rows in a grid layout (Hearing, Speaking, Sight, Respiration, Worms, Heart, Arteries, Urine, Epilepsy, Migraine, Eating Disorder, Chronic Blood Problems, Other Health Problems) — each with a status Select (Normal/Mild/Moderate/Severe/N/A) + remarks Input
+  - Each row has a distinct icon for visual clarity
+  - Conclusion dropdown: "How do you assess General Health of your child?" (Excellent/Very Good/Good/Fair/Poor/Needs Follow-up)
+  - Save Draft / Submit actions, using the existing `MedicalForm` model with `formType: "CONDITIONS"` and `formSubType: "SUFFERING"` stored in the JSON data field
+
+**Task 2: Vaccination Timeline** (2 new files, 2 modified)
+
+- **`vaccination-timeline-client.tsx`** — Visual timeline component showing:
+  - Standard vaccines: Hepatitis B (Birth), IPV (2 mos), OPV (4/6/18 mos, 4/10 yrs), DPT-Hib-HepB, Measles, MMR, DPT, DT
+  - Per-child cards with DOB, age, branch info, and summary badges
+  - Each dose rendered as a pill with status icon (given/overdue/upcoming/not-due) calculated from child's DOB
+  - Tooltips showing date given, administered by, and due date
+  - Filters by branch, child, and search
+  - Legend bar explaining the status indicators
+- **`vaccinations-page-client.tsx`** — Tabbed wrapper with "Records" (existing table) and "Timeline" (new view)
+- Updated **`page.tsx`** to fetch children with DOB for the timeline
+- Updated **`vaccinations-client.tsx`** with `hideHeader` prop for embedding within tabs
+To https://github.com/lelapinsauvage/KDDZ.git
+   51551c6..c684e03  ux-improvements -> ux-improvements
+=== Phase 11 — Medical: Suffering Form + Vaccinations COMPLETE — Sat Feb 28 08:25:45 CET 2026 ===
+
+=============================================
+=== Phase 12 — Developmental Assessment: Age Bracket Tabs — Sat Feb 28 08:25:45 CET 2026 ===
+=============================================
