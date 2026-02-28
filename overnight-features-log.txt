@@ -437,3 +437,35 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 18 — Monthly Attendance Heatmap — Sat Feb 28 08:52:34 CET 2026 ===
 =============================================
+All done. Here's a summary of what was built:
+
+### Server Action — `getMonthlyAttendanceGrid()`
+**`src/lib/actions/attendance.ts`** — Added a new server action that:
+- Takes `month`, `year`, optional `branchId` and `classId`
+- Fetches all active children matching the filters
+- Runs two parallel queries: `dailyReport` and `absenceReport` for the month range
+- Builds lookup maps of `childId → Set<dayNumber>` for both reports and absences
+- Returns a `MonthlyAttendanceGrid` with typed `CellStatus` per day per child: `PRESENT` (daily report exists), `ABSENT` (absence report exists), `NO_REPORT` (neither)
+
+### Heatmap Component
+**`src/components/attendance/attendance-heatmap.tsx`** — Client component with:
+- **Grid**: Rows = children (sticky left column with name + class), Columns = days 1-31 with colored dots
+- **Colors**: Green (Present), Red (Absent), Purple (No Report)
+- **Filters**: Month, Year, Branch, Class dropdowns at top — all use URL search params for server-side re-fetching
+- **Legend + Stats**: Shows counts for each status with a hint about clicking purple dots
+- **Magic Workflow**: Clicking a purple dot opens a shadcn `Sheet` slide-out containing the existing `DailyReportForm`, pre-filled with the child ID and date from the clicked cell
+
+### Page
+**`src/app/(app)/attendance/heatmap/page.tsx`** — Server component that:
+- Reads search params for month/year/branch/class
+- Fetches grid data, branches, classes, children, and food options in parallel via `Promise.all`
+- Passes everything to the heatmap client component
+
+`npx tsc --noEmit` passed clean with zero errors.
+To https://github.com/lelapinsauvage/KDDZ.git
+   1e84027..190d140  ux-improvements -> ux-improvements
+=== Phase 18 — Monthly Attendance Heatmap COMPLETE — Sat Feb 28 08:56:38 CET 2026 ===
+
+=============================================
+=== Phase 19 — Children Enrollment: 5-Step Wizard — Sat Feb 28 08:56:38 CET 2026 ===
+=============================================

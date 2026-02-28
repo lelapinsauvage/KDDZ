@@ -10,6 +10,7 @@ import { getBranches } from "@/lib/actions/branches";
 import { getClasses } from "@/lib/actions/classes";
 import { getSchoolYears } from "@/lib/actions/school-years";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { FormSection } from "@/components/ui/form-section";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,6 +33,10 @@ import {
   Loader2,
   MapPin,
   Paperclip,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Upload,
 } from "lucide-react";
 
 // ── Constants ──
@@ -110,6 +115,22 @@ const MILK_SCOOPS = Array.from({ length: 10 }, (_, i) => i + 1);
 const ADDRESS_TYPES = ["Home", "Work", "Grandparents", "Other"];
 
 const SIBLING_RELATIONS = ["Brother", "Sister", "Half-Brother", "Half-Sister", "Step-Brother", "Step-Sister"];
+
+const WIZARD_STEPS = [
+  { label: "Core Child Info" },
+  { label: "Addresses & Family" },
+  { label: "General & Medical" },
+  { label: "Financial Info" },
+  { label: "Attachments" },
+];
+
+const ATTACHMENT_TYPES = [
+  { key: "photo", label: "Photo" },
+  { key: "id", label: "ID Document" },
+  { key: "vaccination", label: "Vaccination Card" },
+  { key: "doctor", label: "Doctor Assessment" },
+  { key: "medical", label: "Medical Report" },
+];
 
 // ── Helper: form field with label + error ──
 
@@ -435,6 +456,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
     control,
     formState: { errors, isSubmitting },
     watch,
+    trigger,
   } = useForm<ChildFormValues>({
     resolver: zodResolver(childFormSchema),
     defaultValues: {
@@ -571,6 +593,28 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
   const tvaAmount = afterDiscount * (Number(watchFees[7] || 0) / 100);
   const netTotal = afterDiscount + tvaAmount;
 
+  // ── Wizard Step Management ──
+  const [currentStep, setCurrentStep] = useState(0);
+
+  async function handleNextStep() {
+    let valid = true;
+    if (currentStep === 0) {
+      valid = await trigger(["firstName", "lastName", "dateOfBirth", "gender", "branchId"]);
+    } else if (currentStep === 2) {
+      valid = await trigger(["classId", "schoolYearId"]);
+    }
+    if (!valid) return;
+    setCurrentStep((s) => Math.min(4, s + 1));
+  }
+
+  function handlePrevStep() {
+    setCurrentStep((s) => Math.max(0, s - 1));
+  }
+
+  function handleGoToStep(step: number) {
+    setCurrentStep(step);
+  }
+
   async function onSubmit(data: ChildFormValues) {
     const fd = toFormData(data);
     let result;
@@ -584,6 +628,14 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
       router.push("/children");
     } else {
       toast.error(result.error || "Failed to save");
+    }
+  }
+
+  function onSubmitError(fieldErrors: typeof errors) {
+    if (fieldErrors.firstName || fieldErrors.lastName || fieldErrors.dateOfBirth || fieldErrors.gender || fieldErrors.branchId) {
+      setCurrentStep(0);
+    } else if (fieldErrors.classId || fieldErrors.schoolYearId) {
+      setCurrentStep(2);
     }
   }
 
@@ -605,213 +657,140 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
-      {/* ── 1. Child Information ── */}
-      <FormSection title="Child Information" color="blue">
-        <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
-          <FormField label="First Name (EN)" required error={errors.firstName?.message}>
-            <Input {...register("firstName")} placeholder="Enter first name" />
-          </FormField>
-
-          <FormField label="First Name (AR)" error={errors.firstNameAr?.message}>
-            <Input {...register("firstNameAr")} placeholder="الاسم الأول" dir="rtl" />
-          </FormField>
-
-          <FormField label="Middle Name" error={errors.middleName?.message}>
-            <Input {...register("middleName")} placeholder="Enter middle name" />
-          </FormField>
-
-          <FormField label="Last Name (EN)" required error={errors.lastName?.message}>
-            <Input {...register("lastName")} placeholder="Enter last name" />
-          </FormField>
-
-          <FormField label="Last Name (AR)" error={errors.lastNameAr?.message}>
-            <Input {...register("lastNameAr")} placeholder="اسم العائلة" dir="rtl" />
-          </FormField>
-
-          <FormField label="Date of Birth" required error={errors.dateOfBirth?.message}>
-            <Input type="date" {...register("dateOfBirth")} />
-          </FormField>
-
-          <FormField label="Place of Birth" error={errors.placeOfBirth?.message}>
-            <Input {...register("placeOfBirth")} placeholder="Enter place of birth" />
-          </FormField>
-
-          <FormField label="Gender" required error={errors.gender?.message}>
-            <Controller
-              name="gender"
-              control={control}
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select gender" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="MALE">Male</SelectItem>
-                    <SelectItem value="FEMALE">Female</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </FormField>
-
-          <FormField label="Nationality" error={errors.nationality?.message}>
-            <Controller
-              name="nationality"
-              control={control}
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select nationality" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {NATIONALITIES.map((n) => (
-                      <SelectItem key={n} value={n}>{n}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </FormField>
-
-          <FormField label="Religion" error={errors.religion?.message}>
-            <Controller
-              name="religion"
-              control={control}
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select religion" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {RELIGIONS.map((r) => (
-                      <SelectItem key={r} value={r}>{r}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </FormField>
-
-          <FormField label="ID Number" error={errors.idNumber?.message}>
-            <Input {...register("idNumber")} placeholder="National ID or document number" />
-          </FormField>
-
-          <FormField label="Blood Type" error={errors.bloodType?.message}>
-            <Controller
-              name="bloodType"
-              control={control}
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select blood type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {BLOOD_TYPES.map((bt) => (
-                      <SelectItem key={bt} value={bt}>{bt}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </FormField>
-
-          <FormField label="Photo URL" error={errors.photo?.message}>
-            <Input {...register("photo")} placeholder="Photo URL or upload path" />
-          </FormField>
+    <form onSubmit={handleSubmit(onSubmit, onSubmitError)}>
+      {/* ── Mobile Step Indicator ── */}
+      <div className="mb-6 lg:hidden">
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-sm font-medium text-foreground">
+            Step {currentStep + 1} of 5
+          </span>
+          <span className="text-sm text-muted-foreground">
+            {WIZARD_STEPS[currentStep].label}
+          </span>
         </div>
-
-        <div className="mt-4">
-          <FormField label="Allergies" error={errors.allergies?.message}>
-            <Textarea
-              {...register("allergies")}
-              placeholder="List any known allergies, food sensitivities, or medical conditions..."
-              className="min-h-20"
+        <div className="flex gap-1.5">
+          {WIZARD_STEPS.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => handleGoToStep(i)}
+              className={cn(
+                "h-2 flex-1 rounded-full transition-colors",
+                i === currentStep
+                  ? "bg-primary"
+                  : i < currentStep
+                    ? "bg-primary/40"
+                    : "bg-muted",
+              )}
             />
-          </FormField>
+          ))}
         </div>
-      </FormSection>
+      </div>
 
-      {/* ── 2. Addresses ── */}
-      <FormSection
-        title="Addresses"
-        color="green"
-        collapsible
-        defaultOpen={false}
-        badge={
-          addressFields.length > 0 ? (
-            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-              {addressFields.length}
-            </span>
-          ) : undefined
-        }
-      >
-        <div className="mb-4 flex justify-end">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              appendAddress({
-                addressType: "",
-                country: "Lebanon",
-                street: "",
-                building: "",
-                floor: "",
-                city: "",
-                telephone: "",
-              })
-            }
-          >
-            <Plus className="size-4" />
-            Add Address
-          </Button>
-        </div>
-
-        {addressFields.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-12 text-center">
-            <MapPin className="mb-3 size-10 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
-              No addresses added yet.
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Click &quot;Add Address&quot; to add a home or work address.
-            </p>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {addressFields.map((field, index) => (
-              <div
-                key={field.id}
-                className="rounded-lg border border-border bg-muted/30 p-4"
+      <div className="flex gap-8">
+        {/* ── Desktop Step Sidebar ── */}
+        <aside className="hidden w-56 shrink-0 lg:block">
+          <nav className="sticky top-24 flex flex-col gap-1">
+            {WIZARD_STEPS.map((step, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => handleGoToStep(i)}
+                className={cn(
+                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors",
+                  i === currentStep
+                    ? "bg-primary/10 font-medium text-primary"
+                    : i < currentStep
+                      ? "text-foreground hover:bg-muted"
+                      : "text-muted-foreground hover:bg-muted/50",
+                )}
               >
-                <div className="mb-3 flex items-center justify-between">
-                  <span className="text-sm font-medium text-foreground">
-                    Address #{index + 1}
-                  </span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-xs"
-                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    onClick={() => removeAddress(index)}
-                  >
-                    <Trash2 className="size-3.5" />
-                  </Button>
+                <div
+                  className={cn(
+                    "flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-medium transition-colors",
+                    i === currentStep
+                      ? "bg-primary text-primary-foreground"
+                      : i < currentStep
+                        ? "bg-primary/20 text-primary"
+                        : "bg-muted text-muted-foreground",
+                  )}
+                >
+                  {i < currentStep ? <Check className="size-3.5" /> : i + 1}
                 </div>
+                <span className="leading-tight">{step.label}</span>
+              </button>
+            ))}
+          </nav>
+        </aside>
+
+        {/* ── Main Content ── */}
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-col gap-6">
+
+            {/* ════════════════════════════════════════════
+                 STEP 1: Core Child Info
+                 ════════════════════════════════════════════ */}
+            {currentStep === 0 && (
+              <FormSection title="Child Information" color="blue">
                 <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
-                  <FormField label="Type">
+                  <FormField label="First Name (EN)" required error={errors.firstName?.message}>
+                    <Input {...register("firstName")} placeholder="Enter first name" />
+                  </FormField>
+
+                  <FormField label="First Name (AR)" error={errors.firstNameAr?.message}>
+                    <Input {...register("firstNameAr")} placeholder="الاسم الأول" dir="rtl" />
+                  </FormField>
+
+                  <FormField label="Middle Name" error={errors.middleName?.message}>
+                    <Input {...register("middleName")} placeholder="Enter middle name" />
+                  </FormField>
+
+                  <FormField label="Last Name (EN)" required error={errors.lastName?.message}>
+                    <Input {...register("lastName")} placeholder="Enter last name" />
+                  </FormField>
+
+                  <FormField label="Last Name (AR)" error={errors.lastNameAr?.message}>
+                    <Input {...register("lastNameAr")} placeholder="اسم العائلة" dir="rtl" />
+                  </FormField>
+
+                  <FormField label="Date of Birth" required error={errors.dateOfBirth?.message}>
+                    <Input type="date" {...register("dateOfBirth")} />
+                  </FormField>
+
+                  <FormField label="Place of Birth" error={errors.placeOfBirth?.message}>
+                    <Input {...register("placeOfBirth")} placeholder="Enter place of birth" />
+                  </FormField>
+
+                  <FormField label="Gender" required error={errors.gender?.message}>
                     <Controller
-                      name={`addresses.${index}.addressType`}
+                      name="gender"
                       control={control}
-                      render={({ field: f }) => (
-                        <Select value={f.value} onValueChange={f.onChange}>
+                      render={({ field }) => (
+                        <Select value={field.value} onValueChange={field.onChange}>
                           <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select type" />
+                            <SelectValue placeholder="Select gender" />
                           </SelectTrigger>
                           <SelectContent>
-                            {ADDRESS_TYPES.map((t) => (
-                              <SelectItem key={t} value={t}>{t}</SelectItem>
+                            <SelectItem value="MALE">Male</SelectItem>
+                            <SelectItem value="FEMALE">Female</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </FormField>
+
+                  <FormField label="Nationality" error={errors.nationality?.message}>
+                    <Controller
+                      name="nationality"
+                      control={control}
+                      render={({ field }) => (
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select nationality" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {NATIONALITIES.map((n) => (
+                              <SelectItem key={n} value={n}>{n}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -819,147 +798,17 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                     />
                   </FormField>
 
-                  <FormField label="Country">
-                    <Input
-                      {...register(`addresses.${index}.country`)}
-                      placeholder="Lebanon"
-                    />
-                  </FormField>
-
-                  <FormField label="City">
-                    <Input
-                      {...register(`addresses.${index}.city`)}
-                      placeholder="City"
-                    />
-                  </FormField>
-
-                  <FormField label="Street">
-                    <Input
-                      {...register(`addresses.${index}.street`)}
-                      placeholder="Street name"
-                    />
-                  </FormField>
-
-                  <FormField label="Building">
-                    <Input
-                      {...register(`addresses.${index}.building`)}
-                      placeholder="Building name or number"
-                    />
-                  </FormField>
-
-                  <FormField label="Floor">
-                    <Input
-                      {...register(`addresses.${index}.floor`)}
-                      placeholder="Floor"
-                    />
-                  </FormField>
-
-                  <FormField label="Telephone">
-                    <Input
-                      {...register(`addresses.${index}.telephone`)}
-                      placeholder="+961 XX XXX XXX"
-                    />
-                  </FormField>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </FormSection>
-
-      {/* ── 3. Parents ── */}
-      <FormSection title="Parents" color="purple" collapsible>
-        <GuardianFields
-          type="father"
-          register={register}
-          control={control}
-          errors={errors}
-        />
-        <Separator className="my-8 bg-border/40" />
-        <GuardianFields
-          type="mother"
-          register={register}
-          control={control}
-          errors={errors}
-        />
-      </FormSection>
-
-      {/* ── 4. Brothers & Sisters ── */}
-      <FormSection
-        title="Brothers & Sisters"
-        color="teal"
-        collapsible
-        defaultOpen={false}
-        badge={
-          siblingFields.length > 0 ? (
-            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-              {siblingFields.length}
-            </span>
-          ) : undefined
-        }
-      >
-        <div className="mb-4 flex justify-end">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              appendSibling({
-                relation: "",
-                firstName: "",
-                dateOfBirth: "",
-                medicalCase: "",
-                canPickUp: false,
-              })
-            }
-          >
-            <Plus className="size-4" />
-            Add Sibling
-          </Button>
-        </div>
-
-        {siblingFields.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-12 text-center">
-            <p className="text-sm text-muted-foreground">
-              No siblings added yet.
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Click &quot;Add Sibling&quot; to add brothers or sisters.
-            </p>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {siblingFields.map((field, index) => (
-              <div
-                key={field.id}
-                className="rounded-lg border border-border bg-muted/30 p-4"
-              >
-                <div className="mb-3 flex items-center justify-between">
-                  <span className="text-sm font-medium text-foreground">
-                    Sibling #{index + 1}
-                  </span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-xs"
-                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    onClick={() => removeSibling(index)}
-                  >
-                    <Trash2 className="size-3.5" />
-                  </Button>
-                </div>
-                <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 lg:grid-cols-4">
-                  <FormField label="Relation">
+                  <FormField label="Religion" error={errors.religion?.message}>
                     <Controller
-                      name={`siblings.${index}.relation`}
+                      name="religion"
                       control={control}
-                      render={({ field: f }) => (
-                        <Select value={f.value} onValueChange={f.onChange}>
+                      render={({ field }) => (
+                        <Select value={field.value} onValueChange={field.onChange}>
                           <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select relation" />
+                            <SelectValue placeholder="Select religion" />
                           </SelectTrigger>
                           <SelectContent>
-                            {SIBLING_RELATIONS.map((r) => (
+                            {RELIGIONS.map((r) => (
                               <SelectItem key={r} value={r}>{r}</SelectItem>
                             ))}
                           </SelectContent>
@@ -968,32 +817,30 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                     />
                   </FormField>
 
-                  <FormField label="First Name">
-                    <Input
-                      {...register(`siblings.${index}.firstName`)}
-                      placeholder="Sibling's name"
-                    />
+                  <FormField label="ID Number" error={errors.idNumber?.message}>
+                    <Input {...register("idNumber")} placeholder="National ID or document number" />
                   </FormField>
 
-                  <FormField label="Date of Birth">
-                    <Input
-                      type="date"
-                      {...register(`siblings.${index}.dateOfBirth`)}
-                    />
+                  <FormField label="Photo URL" error={errors.photo?.message}>
+                    <Input {...register("photo")} placeholder="Photo URL or upload path" />
                   </FormField>
+                </div>
 
-                  <FormField label="Medical Case">
+                <Separator className="my-6" />
+                <h4 className="mb-4 text-sm font-semibold text-foreground">Enrollment Basics</h4>
+                <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
+                  <FormField label="Branch" required error={errors.branchId?.message}>
                     <Controller
-                      name={`siblings.${index}.medicalCase`}
+                      name="branchId"
                       control={control}
-                      render={({ field: f }) => (
-                        <Select value={f.value} onValueChange={f.onChange}>
+                      render={({ field }) => (
+                        <Select value={field.value} onValueChange={field.onChange}>
                           <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select if applicable" />
+                            <SelectValue placeholder="Select branch" />
                           </SelectTrigger>
                           <SelectContent>
-                            {MEDICAL_CASES.map((mc) => (
-                              <SelectItem key={mc} value={mc}>{mc}</SelectItem>
+                            {branches.map((b) => (
+                              <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -1001,759 +848,1121 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                     />
                   </FormField>
 
-                  <div className="flex items-end pb-1">
-                    <div className="flex items-center gap-3">
-                      <Controller
-                        name={`siblings.${index}.canPickUp`}
-                        control={control}
-                        render={({ field: f }) => (
-                          <Checkbox
-                            id={`sibling-pickup-${index}`}
-                            checked={f.value}
-                            onCheckedChange={f.onChange}
-                          />
-                        )}
-                      />
-                      <Label
-                        htmlFor={`sibling-pickup-${index}`}
-                        className="cursor-pointer text-foreground"
-                      >
-                        Can pick up
-                      </Label>
-                    </div>
+                  <FormField label="Language" error={errors.language?.message}>
+                    <Controller
+                      name="language"
+                      control={control}
+                      render={({ field }) => (
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Preferred language" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {LANGUAGES.map((l) => (
+                              <SelectItem key={l} value={l}>{l}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </FormField>
+
+                  <FormField label="Joining Date" error={errors.enrollmentDate?.message}>
+                    <Input type="date" {...register("enrollmentDate")} />
+                  </FormField>
+
+                  <FormField label="Child Number" error={errors.childNumber?.message}>
+                    <Input {...register("childNumber")} placeholder="Internal ID" />
+                  </FormField>
+                </div>
+              </FormSection>
+            )}
+
+            {/* ════════════════════════════════════════════
+                 STEP 2: Addresses & Family
+                 ════════════════════════════════════════════ */}
+            {currentStep === 1 && (
+              <>
+                {/* Addresses */}
+                <FormSection
+                  title="Addresses"
+                  color="green"
+                  badge={
+                    addressFields.length > 0 ? (
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                        {addressFields.length}
+                      </span>
+                    ) : undefined
+                  }
+                >
+                  <div className="mb-4 flex justify-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        appendAddress({
+                          addressType: "",
+                          country: "Lebanon",
+                          street: "",
+                          building: "",
+                          floor: "",
+                          city: "",
+                          telephone: "",
+                        })
+                      }
+                    >
+                      <Plus className="size-4" />
+                      Add Address
+                    </Button>
                   </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </FormSection>
 
-      {/* ── 5. Authorized Persons ── */}
-      <FormSection
-        title="Authorized Persons"
-        color="yellow"
-        collapsible
-        badge={
-          relativeFields.length > 0 ? (
-            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-              {relativeFields.length}
-            </span>
-          ) : undefined
-        }
-      >
-        <div className="mb-4 flex justify-end">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              appendRelative({
-                name: "",
-                lastName: "",
-                relation: "",
-                phone: "",
-                mobile: "",
-                isAuthorized: false,
-                isEmergencyContact: false,
-              })
-            }
-          >
-            <Plus className="size-4" />
-            Add Person
-          </Button>
-        </div>
-
-        {relativeFields.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-12 text-center">
-            <p className="text-sm text-muted-foreground">
-              No authorized persons added yet.
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Click &quot;Add Person&quot; to add emergency contacts and
-              authorized persons.
-            </p>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {relativeFields.map((field, index) => (
-              <div
-                key={field.id}
-                className="rounded-lg border border-border bg-muted/30 p-4"
-              >
-                <div className="mb-3 flex items-center justify-between">
-                  <span className="text-sm font-medium text-foreground">
-                    Person #{index + 1}
-                  </span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-xs"
-                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    onClick={() => removeRelative(index)}
-                  >
-                    <Trash2 className="size-3.5" />
-                  </Button>
-                </div>
-                <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
-                  <FormField
-                    label="First Name"
-                    required
-                    error={errors.relatives?.[index]?.name?.message}
-                  >
-                    <Input
-                      {...register(`relatives.${index}.name`)}
-                      placeholder="First name"
-                    />
-                  </FormField>
-
-                  <FormField label="Last Name">
-                    <Input
-                      {...register(`relatives.${index}.lastName`)}
-                      placeholder="Last name"
-                    />
-                  </FormField>
-
-                  <FormField
-                    label="Relation"
-                    required
-                    error={errors.relatives?.[index]?.relation?.message}
-                  >
-                    <Input
-                      {...register(`relatives.${index}.relation`)}
-                      placeholder="e.g. Grandmother, Uncle"
-                    />
-                  </FormField>
-
-                  <FormField
-                    label="Phone"
-                    required
-                    error={errors.relatives?.[index]?.phone?.message}
-                  >
-                    <Input
-                      {...register(`relatives.${index}.phone`)}
-                      placeholder="+961 XX XXX XXX"
-                    />
-                  </FormField>
-
-                  <FormField label="Mobile">
-                    <Input
-                      {...register(`relatives.${index}.mobile`)}
-                      placeholder="+961 XX XXX XXX"
-                    />
-                  </FormField>
-
-                  <div className="flex items-end gap-6 pb-1">
-                    <div className="flex items-center gap-3">
-                      <Controller
-                        name={`relatives.${index}.isAuthorized`}
-                        control={control}
-                        render={({ field: f }) => (
-                          <Checkbox
-                            id={`relative-auth-${index}`}
-                            checked={f.value}
-                            onCheckedChange={f.onChange}
-                          />
-                        )}
-                      />
-                      <Label
-                        htmlFor={`relative-auth-${index}`}
-                        className="cursor-pointer text-foreground"
-                      >
-                        Authorized
-                      </Label>
+                  {addressFields.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-12 text-center">
+                      <MapPin className="mb-3 size-10 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">
+                        No addresses added yet.
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Click &quot;Add Address&quot; to add a home or work address.
+                      </p>
                     </div>
+                  ) : (
+                    <div className="flex flex-col gap-4">
+                      {addressFields.map((field, index) => (
+                        <div
+                          key={field.id}
+                          className="rounded-lg border border-border bg-muted/30 p-4"
+                        >
+                          <div className="mb-3 flex items-center justify-between">
+                            <span className="text-sm font-medium text-foreground">
+                              Address #{index + 1}
+                            </span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon-xs"
+                              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                              onClick={() => removeAddress(index)}
+                            >
+                              <Trash2 className="size-3.5" />
+                            </Button>
+                          </div>
+                          <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
+                            <FormField label="Type">
+                              <Controller
+                                name={`addresses.${index}.addressType`}
+                                control={control}
+                                render={({ field: f }) => (
+                                  <Select value={f.value} onValueChange={f.onChange}>
+                                    <SelectTrigger className="w-full">
+                                      <SelectValue placeholder="Select type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {ADDRESS_TYPES.map((t) => (
+                                        <SelectItem key={t} value={t}>{t}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                              />
+                            </FormField>
 
-                    <div className="flex items-center gap-3">
-                      <Controller
-                        name={`relatives.${index}.isEmergencyContact`}
-                        control={control}
-                        render={({ field: f }) => (
-                          <Checkbox
-                            id={`relative-emergency-${index}`}
-                            checked={f.value}
-                            onCheckedChange={f.onChange}
-                          />
-                        )}
-                      />
-                      <Label
-                        htmlFor={`relative-emergency-${index}`}
-                        className="cursor-pointer text-foreground"
-                      >
-                        Emergency Contact
-                      </Label>
+                            <FormField label="Country">
+                              <Input
+                                {...register(`addresses.${index}.country`)}
+                                placeholder="Lebanon"
+                              />
+                            </FormField>
+
+                            <FormField label="City">
+                              <Input
+                                {...register(`addresses.${index}.city`)}
+                                placeholder="City"
+                              />
+                            </FormField>
+
+                            <FormField label="Street">
+                              <Input
+                                {...register(`addresses.${index}.street`)}
+                                placeholder="Street name"
+                              />
+                            </FormField>
+
+                            <FormField label="Building">
+                              <Input
+                                {...register(`addresses.${index}.building`)}
+                                placeholder="Building name or number"
+                              />
+                            </FormField>
+
+                            <FormField label="Floor">
+                              <Input
+                                {...register(`addresses.${index}.floor`)}
+                                placeholder="Floor"
+                              />
+                            </FormField>
+
+                            <FormField label="Telephone">
+                              <Input
+                                {...register(`addresses.${index}.telephone`)}
+                                placeholder="+961 XX XXX XXX"
+                              />
+                            </FormField>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </FormSection>
+                  )}
+                </FormSection>
 
-      {/* ── 6. General Information ── */}
-      <FormSection title="General Information" color="blue" collapsible>
-        {/* Enrollment */}
-        <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
-          <FormField label="Branch" required error={errors.branchId?.message}>
-            <Controller
-              name="branchId"
-              control={control}
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select branch" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {branches.map((b) => (
-                      <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </FormField>
-
-          <FormField label="Class" required error={errors.classId?.message}>
-            <Controller
-              name="classId"
-              control={control}
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select class" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {classes.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </FormField>
-
-          <FormField label="School Year" required error={errors.schoolYearId?.message}>
-            <Controller
-              name="schoolYearId"
-              control={control}
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select school year" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {schoolYears.map((y) => (
-                      <SelectItem key={y.id} value={y.id}>{y.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </FormField>
-
-          <FormField label="Enrollment Date" error={errors.enrollmentDate?.message}>
-            <Input type="date" {...register("enrollmentDate")} />
-          </FormField>
-
-          <FormField label="Child Number" error={errors.childNumber?.message}>
-            <Input {...register("childNumber")} placeholder="Internal ID" />
-          </FormField>
-        </div>
-
-        <div className="mt-4 flex flex-wrap gap-8">
-          <div className="flex items-center gap-3">
-            <Controller
-              name="isActive"
-              control={control}
-              render={({ field }) => (
-                <Checkbox
-                  id="isActive"
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              )}
-            />
-            <Label htmlFor="isActive" className="cursor-pointer text-foreground">
-              Active enrollment
-            </Label>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Controller
-              name="isDraft"
-              control={control}
-              render={({ field }) => (
-                <Checkbox
-                  id="isDraft"
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              )}
-            />
-            <Label htmlFor="isDraft" className="cursor-pointer text-foreground">
-              Save as draft (incomplete enrollment)
-            </Label>
-          </div>
-        </div>
-
-        <Separator className="my-6" />
-
-        {/* Care Preferences */}
-        <h4 className="mb-4 text-sm font-semibold text-foreground">Care Preferences</h4>
-        <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
-          <FormField label="Language" error={errors.language?.message}>
-            <Controller
-              name="language"
-              control={control}
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Preferred language" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {LANGUAGES.map((l) => (
-                      <SelectItem key={l} value={l}>{l}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </FormField>
-
-          <FormField label="Bus Service" error={errors.busAttendance?.message}>
-            <Controller
-              name="busAttendance"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  value={field.value || "false"}
-                  onValueChange={(v) => field.onChange(v)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Bus service" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {BUS_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </FormField>
-
-          <FormField label="Lunch Included" error={errors.lunchIncluded?.message}>
-            <Controller
-              name="lunchIncluded"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  value={field.value ? "yes" : "no"}
-                  onValueChange={(v) => field.onChange(v === "yes")}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Lunch included?" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="yes">Yes</SelectItem>
-                    <SelectItem value="no">No</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </FormField>
-
-          <FormField label="Diaper Type" error={errors.diaperType?.message}>
-            <Controller
-              name="diaperType"
-              control={control}
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select diaper type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DIAPER_TYPES.map((d) => (
-                      <SelectItem key={d} value={d}>{d}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </FormField>
-
-          <FormField label="Milk Type" error={errors.milkType?.message}>
-            <Controller
-              name="milkType"
-              control={control}
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select milk type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {MILK_TYPES.map((m) => (
-                      <SelectItem key={m} value={m}>{m}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </FormField>
-
-          <FormField label="Milk Portions (ML)" error={errors.milkPortions?.message}>
-            <Input
-              type="number"
-              min={0}
-              {...register("milkPortions")}
-              placeholder="0"
-            />
-          </FormField>
-
-          <FormField label="Milk Scoop" error={errors.milkScoop?.message}>
-            <Controller
-              name="milkScoop"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  value={field.value ? String(field.value) : ""}
-                  onValueChange={(v) => field.onChange(Number(v))}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Number of scoops" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {MILK_SCOOPS.map((s) => (
-                      <SelectItem key={s} value={String(s)}>{s}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </FormField>
-
-          <FormField label="Milk Time 1" error={errors.milkTime1?.message}>
-            <Input type="time" {...register("milkTime1")} />
-          </FormField>
-
-          <FormField label="Milk Time 2" error={errors.milkTime2?.message}>
-            <Input type="time" {...register("milkTime2")} />
-          </FormField>
-
-          <FormField label="Milk Time 3" error={errors.milkTime3?.message}>
-            <Input type="time" {...register("milkTime3")} />
-          </FormField>
-
-          <FormField label="Sleep From" error={errors.sleepFrom?.message}>
-            <Input type="time" {...register("sleepFrom")} />
-          </FormField>
-
-          <FormField label="Sleep To" error={errors.sleepTo?.message}>
-            <Input type="time" {...register("sleepTo")} />
-          </FormField>
-        </div>
-
-        <Separator className="my-6" />
-
-        <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
-          <div className="flex items-center gap-3">
-            <Controller
-              name="previousGarderie"
-              control={control}
-              render={({ field }) => (
-                <Checkbox
-                  id="previousGarderie"
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              )}
-            />
-            <Label htmlFor="previousGarderie" className="cursor-pointer text-foreground">
-              Child attended another garderie before
-            </Label>
-          </div>
-
-          {watchPreviousGarderie && (
-            <FormField label="Previous Garderie Name" error={errors.previousGarderieName?.message}>
-              <Input
-                {...register("previousGarderieName")}
-                placeholder="Name of previous garderie"
-              />
-            </FormField>
-          )}
-        </div>
-
-        <div className="mt-6">
-          <FormField label="Remarks / Special Needs" error={errors.remarks?.message}>
-            <Textarea
-              {...register("remarks")}
-              placeholder="Any additional notes about care preferences, habits, or special instructions..."
-              className="min-h-24"
-            />
-          </FormField>
-        </div>
-      </FormSection>
-
-      {/* ── 7. Financial Information ── */}
-      <FormSection title="Financial Information" color="red" collapsible defaultOpen={false}>
-        <h4 className="mb-4 text-sm font-semibold text-foreground">Fee Schedule</h4>
-        <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
-          <FormField label="Garderie Fees" error={errors.garderieFees?.message}>
-            <Input
-              type="number"
-              step="0.01"
-              min="0"
-              {...register("garderieFees")}
-              placeholder="0.00"
-            />
-          </FormField>
-
-          <FormField label="Extra Fees" error={errors.extraFees?.message}>
-            <Input
-              type="number"
-              step="0.01"
-              min="0"
-              {...register("extraFees")}
-              placeholder="0.00"
-            />
-          </FormField>
-
-          <FormField label="Bus Fees" error={errors.busFees?.message}>
-            <Input
-              type="number"
-              step="0.01"
-              min="0"
-              {...register("busFees")}
-              placeholder="0.00"
-            />
-          </FormField>
-
-          <FormField label="Apron Fees" error={errors.apronFees?.message}>
-            <Input
-              type="number"
-              step="0.01"
-              min="0"
-              {...register("apronFees")}
-              placeholder="0.00"
-            />
-          </FormField>
-
-          <FormField label="Registration Fees" error={errors.registrationFees?.message}>
-            <Input
-              type="number"
-              step="0.01"
-              min="0"
-              {...register("registrationFees")}
-              placeholder="0.00"
-            />
-          </FormField>
-
-          <FormField label="Activities Fees" error={errors.activitiesFees?.message}>
-            <Input
-              type="number"
-              step="0.01"
-              min="0"
-              {...register("activitiesFees")}
-              placeholder="0.00"
-            />
-          </FormField>
-
-          <FormField label="Discount" error={errors.discount?.message}>
-            <Input
-              type="number"
-              step="0.01"
-              min="0"
-              {...register("discount")}
-              placeholder="0.00"
-            />
-          </FormField>
-
-          <FormField label="TVA (%)" error={errors.tva?.message}>
-            <Input
-              type="number"
-              step="0.01"
-              min="0"
-              max="100"
-              {...register("tva")}
-              placeholder="0"
-            />
-          </FormField>
-        </div>
-
-        {/* Computed totals */}
-        <div className="mt-4 rounded-lg border border-border bg-muted/30 p-4">
-          <div className="grid grid-cols-2 gap-y-2 text-sm md:grid-cols-4">
-            <div>
-              <span className="text-muted-foreground">Subtotal</span>
-              <p className="font-medium">${subtotal.toFixed(2)}</p>
-            </div>
-            <div>
-              <span className="text-muted-foreground">After Discount</span>
-              <p className="font-medium">${afterDiscount.toFixed(2)}</p>
-            </div>
-            <div>
-              <span className="text-muted-foreground">TVA Amount</span>
-              <p className="font-medium">${tvaAmount.toFixed(2)}</p>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Net Total</span>
-              <p className="text-base font-bold text-primary">${netTotal.toFixed(2)}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-4">
-          <FormField label="Financial Remarks" error={errors.financialRemarks?.message}>
-            <Textarea
-              {...register("financialRemarks")}
-              placeholder="Any notes about payment arrangements, special discounts, etc."
-              className="min-h-20"
-            />
-          </FormField>
-        </div>
-
-        <Separator className="my-6" />
-
-        {/* Accounting Entries */}
-        <div className="flex items-center justify-between">
-          <h4 className="text-sm font-semibold text-foreground">Accounting Entries</h4>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              appendAccounting({
-                description: "",
-                amount: 0,
-                type: "FEE",
-              })
-            }
-          >
-            <Plus className="size-4" />
-            Add Entry
-          </Button>
-        </div>
-
-        {accountingFields.length === 0 ? (
-          <div className="mt-4 flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-8 text-center">
-            <p className="text-sm text-muted-foreground">
-              No accounting entries yet.
-            </p>
-          </div>
-        ) : (
-          <div className="mt-4 flex flex-col gap-3">
-            {accountingFields.map((field, index) => (
-              <div
-                key={field.id}
-                className="grid grid-cols-1 gap-4 rounded-lg border border-border bg-muted/30 p-4 md:grid-cols-[1fr_150px_180px_40px] md:items-start"
-              >
-                <FormField
-                  label="Description"
-                  error={errors.accountingEntries?.[index]?.description?.message}
-                >
-                  <Input
-                    {...register(`accountingEntries.${index}.description`)}
-                    placeholder="e.g. Monthly tuition"
-                  />
-                </FormField>
-
-                <FormField
-                  label="Amount"
-                  error={errors.accountingEntries?.[index]?.amount?.message}
-                >
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    {...register(`accountingEntries.${index}.amount`)}
-                    placeholder="0.00"
-                  />
-                </FormField>
-
-                <FormField
-                  label="Type"
-                  error={errors.accountingEntries?.[index]?.type?.message}
-                >
-                  <Controller
-                    name={`accountingEntries.${index}.type`}
+                {/* Parents */}
+                <FormSection title="Parents" color="purple">
+                  <GuardianFields
+                    type="father"
+                    register={register}
                     control={control}
-                    render={({ field: f }) => (
-                      <Select value={f.value} onValueChange={f.onChange}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="FEE">Fee</SelectItem>
-                          <SelectItem value="DISCOUNT">Discount</SelectItem>
-                          <SelectItem value="PAYMENT">Payment</SelectItem>
-                          <SelectItem value="ADJUSTMENT">Adjustment</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
+                    errors={errors}
                   />
-                </FormField>
+                  <Separator className="my-8 bg-border/40" />
+                  <GuardianFields
+                    type="mother"
+                    register={register}
+                    control={control}
+                    errors={errors}
+                  />
+                </FormSection>
 
-                <div className="flex justify-end md:pt-6">
+                {/* Brothers & Sisters */}
+                <FormSection
+                  title="Brothers & Sisters"
+                  color="teal"
+                  collapsible
+                  defaultOpen={false}
+                  badge={
+                    siblingFields.length > 0 ? (
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                        {siblingFields.length}
+                      </span>
+                    ) : undefined
+                  }
+                >
+                  <div className="mb-4 flex justify-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        appendSibling({
+                          relation: "",
+                          firstName: "",
+                          dateOfBirth: "",
+                          medicalCase: "",
+                          canPickUp: false,
+                        })
+                      }
+                    >
+                      <Plus className="size-4" />
+                      Add Sibling
+                    </Button>
+                  </div>
+
+                  {siblingFields.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-12 text-center">
+                      <p className="text-sm text-muted-foreground">
+                        No siblings added yet.
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Click &quot;Add Sibling&quot; to add brothers or sisters.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-4">
+                      {siblingFields.map((field, index) => (
+                        <div
+                          key={field.id}
+                          className="rounded-lg border border-border bg-muted/30 p-4"
+                        >
+                          <div className="mb-3 flex items-center justify-between">
+                            <span className="text-sm font-medium text-foreground">
+                              Sibling #{index + 1}
+                            </span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon-xs"
+                              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                              onClick={() => removeSibling(index)}
+                            >
+                              <Trash2 className="size-3.5" />
+                            </Button>
+                          </div>
+                          <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 lg:grid-cols-4">
+                            <FormField label="Relation">
+                              <Controller
+                                name={`siblings.${index}.relation`}
+                                control={control}
+                                render={({ field: f }) => (
+                                  <Select value={f.value} onValueChange={f.onChange}>
+                                    <SelectTrigger className="w-full">
+                                      <SelectValue placeholder="Select relation" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {SIBLING_RELATIONS.map((r) => (
+                                        <SelectItem key={r} value={r}>{r}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                              />
+                            </FormField>
+
+                            <FormField label="First Name">
+                              <Input
+                                {...register(`siblings.${index}.firstName`)}
+                                placeholder="Sibling's name"
+                              />
+                            </FormField>
+
+                            <FormField label="Date of Birth">
+                              <Input
+                                type="date"
+                                {...register(`siblings.${index}.dateOfBirth`)}
+                              />
+                            </FormField>
+
+                            <FormField label="Medical Case">
+                              <Controller
+                                name={`siblings.${index}.medicalCase`}
+                                control={control}
+                                render={({ field: f }) => (
+                                  <Select value={f.value} onValueChange={f.onChange}>
+                                    <SelectTrigger className="w-full">
+                                      <SelectValue placeholder="Select if applicable" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {MEDICAL_CASES.map((mc) => (
+                                        <SelectItem key={mc} value={mc}>{mc}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                              />
+                            </FormField>
+
+                            <div className="flex items-end pb-1">
+                              <div className="flex items-center gap-3">
+                                <Controller
+                                  name={`siblings.${index}.canPickUp`}
+                                  control={control}
+                                  render={({ field: f }) => (
+                                    <Checkbox
+                                      id={`sibling-pickup-${index}`}
+                                      checked={f.value}
+                                      onCheckedChange={f.onChange}
+                                    />
+                                  )}
+                                />
+                                <Label
+                                  htmlFor={`sibling-pickup-${index}`}
+                                  className="cursor-pointer text-foreground"
+                                >
+                                  Can pick up
+                                </Label>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </FormSection>
+
+                {/* Authorized Persons */}
+                <FormSection
+                  title="Authorized Persons"
+                  color="yellow"
+                  collapsible
+                  badge={
+                    relativeFields.length > 0 ? (
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                        {relativeFields.length}
+                      </span>
+                    ) : undefined
+                  }
+                >
+                  <div className="mb-4 flex justify-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        appendRelative({
+                          name: "",
+                          lastName: "",
+                          relation: "",
+                          phone: "",
+                          mobile: "",
+                          isAuthorized: false,
+                          isEmergencyContact: false,
+                        })
+                      }
+                    >
+                      <Plus className="size-4" />
+                      Add Person
+                    </Button>
+                  </div>
+
+                  {relativeFields.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-12 text-center">
+                      <p className="text-sm text-muted-foreground">
+                        No authorized persons added yet.
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Click &quot;Add Person&quot; to add emergency contacts and
+                        authorized persons.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-4">
+                      {relativeFields.map((field, index) => (
+                        <div
+                          key={field.id}
+                          className="rounded-lg border border-border bg-muted/30 p-4"
+                        >
+                          <div className="mb-3 flex items-center justify-between">
+                            <span className="text-sm font-medium text-foreground">
+                              Person #{index + 1}
+                            </span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon-xs"
+                              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                              onClick={() => removeRelative(index)}
+                            >
+                              <Trash2 className="size-3.5" />
+                            </Button>
+                          </div>
+                          <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
+                            <FormField
+                              label="First Name"
+                              required
+                              error={errors.relatives?.[index]?.name?.message}
+                            >
+                              <Input
+                                {...register(`relatives.${index}.name`)}
+                                placeholder="First name"
+                              />
+                            </FormField>
+
+                            <FormField label="Last Name">
+                              <Input
+                                {...register(`relatives.${index}.lastName`)}
+                                placeholder="Last name"
+                              />
+                            </FormField>
+
+                            <FormField
+                              label="Relation"
+                              required
+                              error={errors.relatives?.[index]?.relation?.message}
+                            >
+                              <Input
+                                {...register(`relatives.${index}.relation`)}
+                                placeholder="e.g. Grandmother, Uncle"
+                              />
+                            </FormField>
+
+                            <FormField
+                              label="Phone"
+                              required
+                              error={errors.relatives?.[index]?.phone?.message}
+                            >
+                              <Input
+                                {...register(`relatives.${index}.phone`)}
+                                placeholder="+961 XX XXX XXX"
+                              />
+                            </FormField>
+
+                            <FormField label="Mobile">
+                              <Input
+                                {...register(`relatives.${index}.mobile`)}
+                                placeholder="+961 XX XXX XXX"
+                              />
+                            </FormField>
+
+                            <div className="flex items-end gap-6 pb-1">
+                              <div className="flex items-center gap-3">
+                                <Controller
+                                  name={`relatives.${index}.isAuthorized`}
+                                  control={control}
+                                  render={({ field: f }) => (
+                                    <Checkbox
+                                      id={`relative-auth-${index}`}
+                                      checked={f.value}
+                                      onCheckedChange={f.onChange}
+                                    />
+                                  )}
+                                />
+                                <Label
+                                  htmlFor={`relative-auth-${index}`}
+                                  className="cursor-pointer text-foreground"
+                                >
+                                  Authorized
+                                </Label>
+                              </div>
+
+                              <div className="flex items-center gap-3">
+                                <Controller
+                                  name={`relatives.${index}.isEmergencyContact`}
+                                  control={control}
+                                  render={({ field: f }) => (
+                                    <Checkbox
+                                      id={`relative-emergency-${index}`}
+                                      checked={f.value}
+                                      onCheckedChange={f.onChange}
+                                    />
+                                  )}
+                                />
+                                <Label
+                                  htmlFor={`relative-emergency-${index}`}
+                                  className="cursor-pointer text-foreground"
+                                >
+                                  Emergency Contact
+                                </Label>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </FormSection>
+              </>
+            )}
+
+            {/* ════════════════════════════════════════════
+                 STEP 3: General & Medical Info
+                 ════════════════════════════════════════════ */}
+            {currentStep === 2 && (
+              <>
+                {/* School Context */}
+                <FormSection title="School Context" color="blue">
+                  <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
+                    <FormField label="School Year" required error={errors.schoolYearId?.message}>
+                      <Controller
+                        name="schoolYearId"
+                        control={control}
+                        render={({ field }) => (
+                          <Select value={field.value} onValueChange={field.onChange}>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select school year" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {schoolYears.map((y) => (
+                                <SelectItem key={y.id} value={y.id}>{y.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </FormField>
+
+                    <FormField label="Class" required error={errors.classId?.message}>
+                      <Controller
+                        name="classId"
+                        control={control}
+                        render={({ field }) => (
+                          <Select value={field.value} onValueChange={field.onChange}>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select class" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {classes.map((c) => (
+                                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </FormField>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap gap-8">
+                    <div className="flex items-center gap-3">
+                      <Controller
+                        name="isActive"
+                        control={control}
+                        render={({ field }) => (
+                          <Checkbox
+                            id="isActive"
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        )}
+                      />
+                      <Label htmlFor="isActive" className="cursor-pointer text-foreground">
+                        Active enrollment
+                      </Label>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <Controller
+                        name="isDraft"
+                        control={control}
+                        render={({ field }) => (
+                          <Checkbox
+                            id="isDraft"
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        )}
+                      />
+                      <Label htmlFor="isDraft" className="cursor-pointer text-foreground">
+                        Save as draft (incomplete enrollment)
+                      </Label>
+                    </div>
+                  </div>
+                </FormSection>
+
+                {/* Health */}
+                <FormSection title="Health & Allergies" color="red">
+                  <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
+                    <FormField label="Blood Type" error={errors.bloodType?.message}>
+                      <Controller
+                        name="bloodType"
+                        control={control}
+                        render={({ field }) => (
+                          <Select value={field.value} onValueChange={field.onChange}>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select blood type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {BLOOD_TYPES.map((bt) => (
+                                <SelectItem key={bt} value={bt}>{bt}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </FormField>
+                  </div>
+
+                  <div className="mt-4">
+                    <FormField label="Allergies" error={errors.allergies?.message}>
+                      <Textarea
+                        {...register("allergies")}
+                        placeholder="List any known allergies, food sensitivities, or medical conditions..."
+                        className="min-h-20"
+                      />
+                    </FormField>
+                  </div>
+                </FormSection>
+
+                {/* Logistics & Care */}
+                <FormSection title="Logistics & Care" color="green">
+                  <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
+                    <FormField label="Bus Service" error={errors.busAttendance?.message}>
+                      <Controller
+                        name="busAttendance"
+                        control={control}
+                        render={({ field }) => (
+                          <Select
+                            value={field.value || "false"}
+                            onValueChange={(v) => field.onChange(v)}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Bus service" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {BUS_OPTIONS.map((opt) => (
+                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </FormField>
+
+                    <FormField label="Diaper Type" error={errors.diaperType?.message}>
+                      <Controller
+                        name="diaperType"
+                        control={control}
+                        render={({ field }) => (
+                          <Select value={field.value} onValueChange={field.onChange}>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select diaper type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {DIAPER_TYPES.map((d) => (
+                                <SelectItem key={d} value={d}>{d}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </FormField>
+
+                    <FormField label="Lunch Included" error={errors.lunchIncluded?.message}>
+                      <Controller
+                        name="lunchIncluded"
+                        control={control}
+                        render={({ field }) => (
+                          <Select
+                            value={field.value ? "yes" : "no"}
+                            onValueChange={(v) => field.onChange(v === "yes")}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Lunch included?" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="yes">Yes</SelectItem>
+                              <SelectItem value="no">No</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </FormField>
+                  </div>
+
+                  <Separator className="my-6" />
+
+                  {/* Milk Tracker */}
+                  <h4 className="mb-4 text-sm font-semibold text-foreground">Milk Tracker</h4>
+                  <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
+                    <FormField label="Milk Type" error={errors.milkType?.message}>
+                      <Controller
+                        name="milkType"
+                        control={control}
+                        render={({ field }) => (
+                          <Select value={field.value} onValueChange={field.onChange}>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select milk type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {MILK_TYPES.map((m) => (
+                                <SelectItem key={m} value={m}>{m}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </FormField>
+
+                    <FormField label="Milk Portions (ML)" error={errors.milkPortions?.message}>
+                      <Input
+                        type="number"
+                        min={0}
+                        {...register("milkPortions")}
+                        placeholder="0"
+                      />
+                    </FormField>
+
+                    <FormField label="Milk Scoop" error={errors.milkScoop?.message}>
+                      <Controller
+                        name="milkScoop"
+                        control={control}
+                        render={({ field }) => (
+                          <Select
+                            value={field.value ? String(field.value) : ""}
+                            onValueChange={(v) => field.onChange(Number(v))}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Number of scoops" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {MILK_SCOOPS.map((s) => (
+                                <SelectItem key={s} value={String(s)}>{s}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </FormField>
+
+                    <FormField label="Milk Time 1" error={errors.milkTime1?.message}>
+                      <Input type="time" {...register("milkTime1")} />
+                    </FormField>
+
+                    <FormField label="Milk Time 2" error={errors.milkTime2?.message}>
+                      <Input type="time" {...register("milkTime2")} />
+                    </FormField>
+
+                    <FormField label="Milk Time 3" error={errors.milkTime3?.message}>
+                      <Input type="time" {...register("milkTime3")} />
+                    </FormField>
+                  </div>
+
+                  <Separator className="my-6" />
+
+                  {/* Routines */}
+                  <h4 className="mb-4 text-sm font-semibold text-foreground">Routines</h4>
+                  <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
+                    <FormField label="Sleep From" error={errors.sleepFrom?.message}>
+                      <Input type="time" {...register("sleepFrom")} />
+                    </FormField>
+
+                    <FormField label="Sleep To" error={errors.sleepTo?.message}>
+                      <Input type="time" {...register("sleepTo")} />
+                    </FormField>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
+                    <div className="flex items-center gap-3">
+                      <Controller
+                        name="previousGarderie"
+                        control={control}
+                        render={({ field }) => (
+                          <Checkbox
+                            id="previousGarderie"
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        )}
+                      />
+                      <Label htmlFor="previousGarderie" className="cursor-pointer text-foreground">
+                        Child attended another garderie before
+                      </Label>
+                    </div>
+
+                    {watchPreviousGarderie && (
+                      <FormField label="Previous Garderie Name" error={errors.previousGarderieName?.message}>
+                        <Input
+                          {...register("previousGarderieName")}
+                          placeholder="Name of previous garderie"
+                        />
+                      </FormField>
+                    )}
+                  </div>
+
+                  <div className="mt-6">
+                    <FormField label="Remarks / Special Needs" error={errors.remarks?.message}>
+                      <Textarea
+                        {...register("remarks")}
+                        placeholder="Any additional notes about care preferences, habits, or special instructions..."
+                        className="min-h-24"
+                      />
+                    </FormField>
+                  </div>
+                </FormSection>
+              </>
+            )}
+
+            {/* ════════════════════════════════════════════
+                 STEP 4: Financial Info
+                 ════════════════════════════════════════════ */}
+            {currentStep === 3 && (
+              <FormSection title="Financial Information" color="red">
+                <h4 className="mb-4 text-sm font-semibold text-foreground">Fee Schedule</h4>
+                <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
+                  <FormField label="Garderie Fees" error={errors.garderieFees?.message}>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      {...register("garderieFees")}
+                      placeholder="0.00"
+                    />
+                  </FormField>
+
+                  <FormField label="Extra Fees" error={errors.extraFees?.message}>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      {...register("extraFees")}
+                      placeholder="0.00"
+                    />
+                  </FormField>
+
+                  <FormField label="Bus Fees" error={errors.busFees?.message}>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      {...register("busFees")}
+                      placeholder="0.00"
+                    />
+                  </FormField>
+
+                  <FormField label="Apron Fees" error={errors.apronFees?.message}>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      {...register("apronFees")}
+                      placeholder="0.00"
+                    />
+                  </FormField>
+
+                  <FormField label="Registration Fees" error={errors.registrationFees?.message}>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      {...register("registrationFees")}
+                      placeholder="0.00"
+                    />
+                  </FormField>
+
+                  <FormField label="Activities Fees" error={errors.activitiesFees?.message}>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      {...register("activitiesFees")}
+                      placeholder="0.00"
+                    />
+                  </FormField>
+
+                  <FormField label="Discount ($)" error={errors.discount?.message}>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      {...register("discount")}
+                      placeholder="0.00"
+                    />
+                  </FormField>
+
+                  <FormField label="TVA (%)" error={errors.tva?.message}>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      {...register("tva")}
+                      placeholder="0"
+                    />
+                  </FormField>
+                </div>
+
+                {/* Live Net$ Calculator */}
+                <div className="mt-6 rounded-xl border-2 border-primary/20 bg-primary/5 p-5">
+                  <h4 className="mb-3 text-sm font-semibold text-foreground">Live Fee Calculator</h4>
+                  <div className="grid grid-cols-2 gap-y-3 text-sm md:grid-cols-4">
+                    <div>
+                      <span className="text-muted-foreground">Subtotal</span>
+                      <p className="text-lg font-medium">${subtotal.toFixed(2)}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">After Discount</span>
+                      <p className="text-lg font-medium">${afterDiscount.toFixed(2)}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">TVA Amount</span>
+                      <p className="text-lg font-medium">${tvaAmount.toFixed(2)}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Net Total</span>
+                      <p className="text-2xl font-bold text-primary">${netTotal.toFixed(2)}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <FormField label="Financial Remarks" error={errors.financialRemarks?.message}>
+                    <Textarea
+                      {...register("financialRemarks")}
+                      placeholder="Any notes about payment arrangements, special discounts, etc."
+                      className="min-h-20"
+                    />
+                  </FormField>
+                </div>
+
+                <Separator className="my-6" />
+
+                {/* Accounting Entries */}
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-foreground">Accounting Entries</h4>
                   <Button
                     type="button"
-                    variant="ghost"
-                    size="icon-xs"
-                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    onClick={() => removeAccounting(index)}
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      appendAccounting({
+                        description: "",
+                        amount: 0,
+                        type: "FEE",
+                      })
+                    }
                   >
-                    <Trash2 className="size-3.5" />
+                    <Plus className="size-4" />
+                    Add Entry
                   </Button>
                 </div>
+
+                {accountingFields.length === 0 ? (
+                  <div className="mt-4 flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-8 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      No accounting entries yet.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="mt-4 flex flex-col gap-3">
+                    {accountingFields.map((field, index) => (
+                      <div
+                        key={field.id}
+                        className="grid grid-cols-1 gap-4 rounded-lg border border-border bg-muted/30 p-4 md:grid-cols-[1fr_150px_180px_40px] md:items-start"
+                      >
+                        <FormField
+                          label="Description"
+                          error={errors.accountingEntries?.[index]?.description?.message}
+                        >
+                          <Input
+                            {...register(`accountingEntries.${index}.description`)}
+                            placeholder="e.g. Monthly tuition"
+                          />
+                        </FormField>
+
+                        <FormField
+                          label="Amount"
+                          error={errors.accountingEntries?.[index]?.amount?.message}
+                        >
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            {...register(`accountingEntries.${index}.amount`)}
+                            placeholder="0.00"
+                          />
+                        </FormField>
+
+                        <FormField
+                          label="Type"
+                          error={errors.accountingEntries?.[index]?.type?.message}
+                        >
+                          <Controller
+                            name={`accountingEntries.${index}.type`}
+                            control={control}
+                            render={({ field: f }) => (
+                              <Select value={f.value} onValueChange={f.onChange}>
+                                <SelectTrigger className="w-full">
+                                  <SelectValue placeholder="Type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="FEE">Fee</SelectItem>
+                                  <SelectItem value="DISCOUNT">Discount</SelectItem>
+                                  <SelectItem value="PAYMENT">Payment</SelectItem>
+                                  <SelectItem value="ADJUSTMENT">Adjustment</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
+                        </FormField>
+
+                        <div className="flex justify-end md:pt-6">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-xs"
+                            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            onClick={() => removeAccounting(index)}
+                          >
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </FormSection>
+            )}
+
+            {/* ════════════════════════════════════════════
+                 STEP 5: Attachments
+                 ════════════════════════════════════════════ */}
+            {currentStep === 4 && (
+              <FormSection title="Attachments" color="green">
+                <div className="rounded-xl border-2 border-dashed border-border bg-muted/20 p-8 text-center transition-colors hover:border-primary/40 hover:bg-muted/30">
+                  <Upload className="mx-auto mb-4 size-12 text-muted-foreground" />
+                  <p className="text-sm font-medium text-foreground">
+                    Drag and drop files here, or click to browse
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Coming soon &mdash; file upload will be available in a future update
+                  </p>
+                </div>
+
+                <div className="mt-6">
+                  <h4 className="mb-3 text-sm font-semibold text-foreground">Required Documents</h4>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {ATTACHMENT_TYPES.map((doc) => (
+                      <div
+                        key={doc.key}
+                        className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3"
+                      >
+                        <div className="flex size-8 items-center justify-center rounded-full bg-muted">
+                          <Paperclip className="size-4 text-muted-foreground" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-foreground">{doc.label}</p>
+                          <p className="text-xs text-muted-foreground">Not uploaded</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </FormSection>
+            )}
+
+            {/* ── Sticky Navigation Bar ── */}
+            <div className="sticky bottom-0 z-10 -mx-1 border-t border-border/40 bg-card px-1 py-4">
+              <div className="flex items-center justify-between gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePrevStep}
+                  disabled={currentStep === 0}
+                >
+                  <ChevronLeft className="size-4" />
+                  Previous
+                </Button>
+
+                <div className="flex items-center gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onSaveDraft}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Save className="size-4" />
+                    )}
+                    Save as Draft
+                  </Button>
+
+                  {currentStep < 4 ? (
+                    <Button
+                      type="button"
+                      onClick={handleNextStep}
+                      className="bg-primary text-primary-foreground hover:bg-primary/90"
+                    >
+                      Next
+                      <ChevronRight className="size-4" />
+                    </Button>
+                  ) : (
+                    <Button
+                      type="submit"
+                      className="bg-primary text-primary-foreground hover:bg-primary/90"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Send className="size-4" />
+                      )}
+                      {isEditing ? "Update Child" : "Submit Enrollment"}
+                    </Button>
+                  )}
+                </div>
               </div>
-            ))}
+            </div>
+
           </div>
-        )}
-      </FormSection>
-
-      {/* ── 8. Attachments ── */}
-      <FormSection title="Attachments" color="green" collapsible defaultOpen={false}>
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-12 text-center">
-          <Paperclip className="mb-3 size-10 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">
-            {isEditing
-              ? "Attachment management will be available after saving."
-              : "Save the enrollment first, then add attachments."}
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Coming soon &mdash; Photo, ID, Vaccination Card, Doctor Assessment, Medical Report
-          </p>
-        </div>
-      </FormSection>
-
-      {/* ── Sticky Action Bar ── */}
-      <div className="sticky bottom-0 z-10 -mx-6 -mb-6 border-t border-border/40 bg-card px-6 py-4">
-        <div className="flex items-center justify-end gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onSaveDraft}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Save className="size-4" />
-            )}
-            Save as Draft
-          </Button>
-          <Button
-            type="submit"
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Send className="size-4" />
-            )}
-            {isEditing ? "Update Child" : "Submit Enrollment"}
-          </Button>
         </div>
       </div>
     </form>
