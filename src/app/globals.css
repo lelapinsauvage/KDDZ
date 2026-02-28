@@ -47,6 +47,42 @@
   --color-attendance: var(--color-attendance);
   --color-finance: var(--color-finance);
   --color-alerts: var(--color-alerts);
+  --color-learning: var(--color-learning);
+  --color-meals: var(--color-meals);
+  --color-comms: var(--color-comms);
+  --color-sleep: var(--color-sleep);
+
+  /* Module accent tints */
+  --color-health-light: var(--color-health-light);
+  --color-attendance-light: var(--color-attendance-light);
+  --color-finance-light: var(--color-finance-light);
+  --color-alerts-light: var(--color-alerts-light);
+  --color-learning-light: var(--color-learning-light);
+  --color-meals-light: var(--color-meals-light);
+  --color-comms-light: var(--color-comms-light);
+  --color-sleep-light: var(--color-sleep-light);
+
+  /* Semantic colors */
+  --color-success: var(--color-success);
+  --color-success-light: var(--color-success-light);
+  --color-success-dark: var(--color-success-dark);
+  --color-warning: var(--color-warning);
+  --color-warning-light: var(--color-warning-light);
+  --color-warning-dark: var(--color-warning-dark);
+  --color-info: var(--color-info);
+  --color-info-light: var(--color-info-light);
+  --color-info-dark: var(--color-info-dark);
+
+  /* Primary scale */
+  --color-primary-800: var(--color-primary-800);
+  --color-border-strong: var(--color-border-strong);
+
+  /* Warm-tinted shadows (slate-900 base, not pure black) */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 6px rgba(15, 23, 42, 0.06), 0 2px 4px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 10px 15px rgba(15, 23, 42, 0.08), 0 4px 6px rgba(15, 23, 42, 0.04);
+  --shadow-xl: 0 20px 25px rgba(15, 23, 42, 0.08), 0 8px 10px rgba(15, 23, 42, 0.03);
 
   /* Font stacks */
   --font-sans: var(--font-body);
