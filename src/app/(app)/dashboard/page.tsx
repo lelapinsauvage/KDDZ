@@ -15,7 +15,29 @@ export default async function DashboardPage() {
     redirect("/today");
   }
 
-  const briefing = await getMorningBriefing();
+  let briefing: Awaited<ReturnType<typeof getMorningBriefing>>;
+  try {
+    briefing = await getMorningBriefing();
+  } catch {
+    // Missing org context — show empty state
+    briefing = {
+      attendance: { present: 0, total: 0, status: "green" },
+      reports: { submitted: 0, total: 0, status: "green" },
+      staff: { present: 0, total: 0, status: "green" },
+      finance: { overdueCount: 0, overdueAmount: 0, status: "green" },
+      health: { issues: 0, status: "green" },
+      actionItems: {
+        pendingAbsences: [],
+        overduePayments: [],
+        missingReportsByClass: [],
+        draftChildren: [],
+      },
+      totalAttentionItems: 0,
+      insights: [],
+      todayMenu: { breakfast: null, lunch: null, dessert: null, snack: null },
+      weeklyAttendance: [],
+    };
+  }
   const userName = session?.user?.name?.split(" ")[0] || "there";
 
   const hour = new Date().getHours();

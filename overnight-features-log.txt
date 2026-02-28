@@ -1,0 +1,18 @@
+=== OVERNIGHT FEATURES START — Sat Feb 28 07:45:38 CET 2026 ===
+
+=============================================
+=== Phase 1 — Fix Org Backfill & Dashboard Crash — Sat Feb 28 07:45:38 CET 2026 ===
+=============================================
+Everything is confirmed:
+
+- **TypeScript**: compiles cleanly, no errors
+- **Backfill script**: reports **0 users without organizationId** — all users already have orgId set
+- All other entities (SchoolYears, Foods, EventTypes, Messages, etc.) also have 0 records needing backfill
+
+The fix is already committed as `d20fe23 fix: backfill org IDs and make requireOrg fallback to branch org`. No further changes needed.
+Everything up-to-date
+=== Phase 1 — Fix Org Backfill & Dashboard Crash COMPLETE — Sat Feb 28 07:46:16 CET 2026 ===
+
+=============================================
+=== Phase 2 — Fix Broken Pages Scan — Sat Feb 28 07:46:16 CET 2026 ===
+=============================================

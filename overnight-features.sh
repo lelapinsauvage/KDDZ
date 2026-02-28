@@ -3,22 +3,22 @@
 # NO set -e — we want to continue on failure
 cd /Users/karimsaab/Desktop/garderie
 LOG_FILE="./overnight-features-log.txt"
-echo "=== OVERNIGHT FEATURES START — $(date) ===" | tee "$LOG_FILE"
+echo "=== OVERNIGHT FEATURES START — $(date) ===" > "$LOG_FILE"
 
 run_phase() {
   local name="$1"
   local prompt="$2"
-  echo "" | tee -a "$LOG_FILE"
-  echo "=============================================" | tee -a "$LOG_FILE"
-  echo "=== $name — $(date) ===" | tee -a "$LOG_FILE"
-  echo "=============================================" | tee -a "$LOG_FILE"
-  claude --dangerously-skip-permissions -p "$prompt" 2>&1 | tee -a "$LOG_FILE"
+  echo "" >> "$LOG_FILE"
+  echo "=============================================" >> "$LOG_FILE"
+  echo "=== $name — $(date) ===" >> "$LOG_FILE"
+  echo "=============================================" >> "$LOG_FILE"
+  claude --dangerously-skip-permissions -p "$prompt" >> "$LOG_FILE" 2>&1
   local exit_code=$?
   if [ $exit_code -ne 0 ]; then
-    echo "⚠ $name FAILED (exit $exit_code) — continuing..." | tee -a "$LOG_FILE"
+    echo "⚠ $name FAILED (exit $exit_code) — continuing..." >> "$LOG_FILE"
   fi
-  git push origin ux-improvements 2>&1 | tee -a "$LOG_FILE"
-  echo "=== $name COMPLETE — $(date) ===" | tee -a "$LOG_FILE"
+  git push origin ux-improvements >> "$LOG_FILE" 2>&1
+  echo "=== $name COMPLETE — $(date) ===" >> "$LOG_FILE"
 }
 
 # ═══════════════════════════════════════════════
@@ -1954,7 +1954,7 @@ git push origin ux-improvements
 ```
 '
 
-echo "" | tee -a "$LOG_FILE"
-echo "=============================================" | tee -a "$LOG_FILE"
-echo "=== ALL 58 PHASES COMPLETE — $(date) ===" | tee -a "$LOG_FILE"
-echo "=============================================" | tee -a "$LOG_FILE"
+echo "" >> "$LOG_FILE"
+echo "=============================================" >> "$LOG_FILE"
+echo "=== ALL 58 PHASES COMPLETE — $(date) ===" >> "$LOG_FILE"
+echo "=============================================" >> "$LOG_FILE"

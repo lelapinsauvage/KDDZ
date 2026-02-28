@@ -1,0 +1,665 @@
+=== MULTI-TENANCY OVERNIGHT START — Fri Feb 27 21:20:18 CET 2026 ===
+
+=============================================
+=== Phase 1 — Schema Changes — Fri Feb 27 21:20:18 CET 2026 ===
+=============================================
+All done. Here's a summary of the changes:
+
+**Organization** — Added `slug` (unique), `plan` (default "free"), `isActive` (default true), and relations to `users`, `schoolYears`, `foods`, `eventTypes`.
+
+**Models with `organizationId`** (all nullable `@db.Uuid` with `@@index`):
+- **User** — field + `Organization?` relation, after `branchId`
+- **SchoolYear** — field + relation, before `children`
+- **Food** — field + relation, before `breakfastReports`
+- **EventType** — field + relation, before `events`
+- **MessageThread** — field only (no relation), with index
+- **Message** — field only (no relation), with index
+
+**Models with `branchId`** (nullable `@db.Uuid` with `@@index`):
+- **EmployeeEvent**
+- **TeacherAttendance**
+
+`prisma db push` and `prisma generate` both succeeded. Committed as `64170db`.
+To https://github.com/lelapinsauvage/KDDZ.git
+   d04123f..64170db  ux-improvements -> ux-improvements
+=== Phase 1 — Schema Changes COMPLETE — Fri Feb 27 21:22:36 CET 2026 ===
+
+=============================================
+=== Phase 2 — Backfill Script — Fri Feb 27 21:22:36 CET 2026 ===
+=============================================
+Done. Here's what the backfill script did:
+
+**Results from first run:**
+- Found existing org "KiddzOnline" (`eac96074-...`)
+- **15 Users** assigned to org
+- **2 SchoolYears** assigned to org
+- **48 Foods** assigned to org
+- **1 EventType** assigned to org
+- 0 Messages/MessageThreads (none existed without org)
+- 0 EmployeeEvents/TeacherAttendance needed branchId backfill (already set)
+
+**Second run confirmed idempotency** — all counts were 0.
+
+Committed as `3a94c1d` on `ux-improvements`.
+To https://github.com/lelapinsauvage/KDDZ.git
+   64170db..3a94c1d  ux-improvements -> ux-improvements
+=== Phase 2 — Backfill Script COMPLETE — Fri Feb 27 21:24:37 CET 2026 ===
+
+=============================================
+=== Phase 3 — Auth Changes — Fri Feb 27 21:24:37 CET 2026 ===
+=============================================
+Done. All three files updated and committed (`1f57bed`):
+
+- **`src/types/next-auth.d.ts`** — Added `organizationId: string | null` to `Session.user`, `User`, and `JWT` interfaces
+- **`src/lib/auth.config.ts`** — Propagates `organizationId` through JWT and session callbacks
+- **`src/lib/auth.ts`** — Queries `branch.organizationId` via include, returns it with fallback chain: `user.organizationId ?? user.branch?.organizationId ?? null`
+
+The type errors in the output are pre-existing (missing `slug` on Organization in seed/migration scripts) — unrelated to these changes.
+To https://github.com/lelapinsauvage/KDDZ.git
+   3a94c1d..1f57bed  ux-improvements -> ux-improvements
+=== Phase 3 — Auth Changes COMPLETE — Fri Feb 27 21:25:12 CET 2026 ===
+
+=============================================
+=== Phase 4 — Helpers + Layout — Fri Feb 27 21:25:12 CET 2026 ===
+=============================================
+Done. Here's what was committed (`7433f1d`):
+
+1. **`src/lib/require-org.ts`** — `requireOrg()` (throws on missing org, for read paths) and `requireOrgSafe()` (returns `{ok, error}` for write paths), both returning an `OrgContext` with `userId`, `organizationId`, `branchId`, and `role`.
+
+2. **`src/lib/verify-org-access.ts`** — `verifyBranchAccess()`, `verifyChildAccess()`, and `getOrgBranchIds()` for confirming resources belong to the user's org.
+
+3. **`src/app/(app)/layout.tsx`** — The `Promise.all` now fetches `auth()` first, then filters `branch.findMany` and `schoolYear.findMany` by `organizationId` (returning `[]` if no org is set).
+To https://github.com/lelapinsauvage/KDDZ.git
+   1f57bed..7433f1d  ux-improvements -> ux-improvements
+=== Phase 4 — Helpers + Layout COMPLETE — Fri Feb 27 21:25:51 CET 2026 ===
+
+=============================================
+=== Phase 5 — branches.ts + children.ts — Fri Feb 27 21:25:51 CET 2026 ===
+=============================================
+Done. Here's a summary of all changes:
+
+**`src/lib/actions/branches.ts`:**
+- Replaced `auth` import with `requireOrg`/`requireOrgSafe` + `verifyBranchAccess`
+- `getBranches()` — uses `requireOrg()`, filters by `where: { organizationId: orgId }`
+- `getBranch(id)` — uses `requireOrg()`, verifies `branch.organizationId === orgId`
+- Deleted `getDefaultOrganizationId()` helper entirely
+- `createBranch()` — uses `requireOrgSafe()`, always sets `organizationId` from `ctx` (removed client-supplied `organizationId` from param type)
+- `updateBranch()` — uses `requireOrgSafe()`, verifies branch via `verifyBranchAccess`, removed the line that allowed changing `organizationId`
+- `deleteBranch()` — uses `requireOrgSafe()`, verifies branch via `verifyBranchAccess`
+
+**`src/lib/actions/children.ts`:**
+- Replaced `auth` import with `requireOrg`/`requireOrgSafe` + `verifyBranchAccess`/`verifyChildAccess`
+- `getChildren()` — uses `requireOrg()`, adds `branch: { organizationId: orgId }` to where clause
+- `getChild(id)` — uses `requireOrg()`, checks `child.branch?.organizationId !== orgId`
+- `createChild()` — uses `requireOrgSafe()`, verifies `data.branchId` via `verifyBranchAccess`, uses `ctx.userId` for history
+- `updateChild()` — uses `requireOrgSafe()`, verifies child via `verifyChildAccess`, uses `ctx.userId` for history
+- `deleteChild()` — uses `requireOrgSafe()`, verifies child via `verifyChildAccess`
+- `getDrafts()` — delegates to `getChildren`, no change needed
+- `getChildDashboardStats()` — uses `requireOrg()`, verifies child via `verifyChildAccess`
+
+Type check passes (only pre-existing errors in seed/migration scripts). Committed as `abd0aba`.
+To https://github.com/lelapinsauvage/KDDZ.git
+   7433f1d..abd0aba  ux-improvements -> ux-improvements
+=== Phase 5 — branches.ts + children.ts COMPLETE — Fri Feb 27 21:28:52 CET 2026 ===
+
+=============================================
+=== Phase 6 — classes.ts + school-years.ts + food.ts — Fri Feb 27 21:28:52 CET 2026 ===
+=============================================
+Done. Committed `d573ed0` with org scoping applied to all three files:
+
+**classes.ts:**
+- `getClasses()` — filters by `branch: { organizationId: orgId }`
+- `getClass()` — verifies `branch.organizationId === orgId`
+- `createClass()` — uses `requireOrgSafe()` + `verifyBranchAccess()`
+- `updateClass()` — fetches with branch, verifies org; also checks new branchId if changed
+- `deleteClass()` — fetches with branch, verifies org
+
+**school-years.ts:**
+- `getSchoolYears()` — filters by `organizationId: orgId`
+- `createSchoolYear()` — adds `organizationId` to create data
+- `updateSchoolYear()` — fetches first, verifies `organizationId`
+- `setActiveSchoolYear()` — verifies target year belongs to org, scopes `updateMany` to org
+
+**food.ts:**
+- `getFoods()` — filters by `organizationId: orgId`
+- `createFood()` — adds `organizationId` to create data
+- `updateFood()` / `deleteFood()` — verify `food.organizationId`
+- `getFoodCalendar()` / `getFoodCalendarMonth()` — verify branchId belongs to org
+- `setFoodCalendarEntry()` — verifies both branchId and foodId belong to org
+- `deleteFoodCalendarEntry()` — fetches with branch, verifies org
+To https://github.com/lelapinsauvage/KDDZ.git
+   f1e6a9d..d573ed0  ux-improvements -> ux-improvements
+=== Phase 6 — classes.ts + school-years.ts + food.ts COMPLETE — Fri Feb 27 21:30:48 CET 2026 ===
+
+=============================================
+=== Phase 7 — employees.ts — Fri Feb 27 21:30:48 CET 2026 ===
+=============================================
+Done. Committed `72d922f` on `ux-improvements`. Summary of changes to `src/lib/actions/employees.ts`:
+
+- **Imports**: Replaced `auth` with `requireOrg`, `requireOrgSafe`, and `verifyBranchAccess`
+- **`getEmployees()`**: Calls `requireOrg()`, scopes every query with `branch: { organizationId: orgId }`
+- **`getEmployee()`**: Calls `requireOrg()`, verifies `employee.branch.organizationId === orgId` after fetch
+- **`createEmployee()`**: Calls `requireOrgSafe()`, verifies `data.branchId` belongs to org via `verifyBranchAccess`
+- **`updateEmployee()`**: Calls `requireOrgSafe()`, fetches existing employee with branch and verifies org ownership before updating
+- **`deleteEmployee()`**: Calls `requireOrgSafe()`, fetches existing employee with branch and verifies org ownership before soft-deleting
+To https://github.com/lelapinsauvage/KDDZ.git
+   d573ed0..72d922f  ux-improvements -> ux-improvements
+=== Phase 7 — employees.ts COMPLETE — Fri Feb 27 21:31:52 CET 2026 ===
+
+=============================================
+=== Phase 8 — employee-events.ts + attendance.ts — Fri Feb 27 21:31:52 CET 2026 ===
+=============================================
+Done. Committed as `7c0b01e`. Here's a summary of the changes:
+
+**employee-events.ts:**
+- Replaced `auth` import with `requireOrg`/`requireOrgSafe` + `verifyBranchAccess`/`getOrgBranchIds`
+- Added `getEmployeeBranchId()` helper that looks up branchId from the correct model (teacher/nurse/doctor/manager)
+- `getEmployeeEvents()` / `getAttendanceLogs()` — filter by `branchId: { in: orgBranchIds }`
+- `createEmployeeEvent()` / `createAttendanceLog()` — look up employee's branch, verify org access, set `branchId` on the record
+- `updateEmployeeEvent()` / `deleteEmployeeEvent()` / `updateAttendanceLog()` — fetch existing record, verify its `branchId` belongs to org
+- `bulkCreateAttendanceLogs()` — verify all unique employees belong to org, set `branchId` on each record
+
+**attendance.ts:**
+- Replaced `auth` import with `requireOrg`/`requireOrgSafe` + `verifyChildAccess`
+- `getChildAttendance()` / `getChildAbsences()` — call `requireOrg()`, verify child belongs to org via `verifyChildAccess`
+- `createAbsenceReport()` — use `requireOrgSafe()`, verify child via `db.child.findFirst` with org scope, use `userId` from context
+- `markBulkAttendance()` — use `requireOrgSafe()`, bulk-verify all children belong to org before processing
+To https://github.com/lelapinsauvage/KDDZ.git
+   72d922f..7c0b01e  ux-improvements -> ux-improvements
+=== Phase 8 — employee-events.ts + attendance.ts COMPLETE — Fri Feb 27 21:36:22 CET 2026 ===
+
+=============================================
+=== Phase 9 — daily-reports.ts + absent-reports.ts — Fri Feb 27 21:36:22 CET 2026 ===
+=============================================
+Done. Here's a summary of all changes:
+
+**`daily-reports.ts`:**
+- Replaced `auth` import with `requireOrg`, `requireOrgSafe`, and `verifyChildAccess`
+- `getDailyReports()` — added `requireOrg()` + org filter `child: { branch: { organizationId: orgId } }` to where clause
+- `getDailyReport()` — added `requireOrg()` + verifies `child.branch.organizationId === orgId`
+- `createDailyReport()` — switched to `requireOrgSafe()` + `verifyChildAccess()` before creating
+- `updateDailyReport()` — switched to `requireOrgSafe()` + fetches with `child→branch`, verifies org
+- `submitDailyReport()` — switched to `requireOrgSafe()` + fetches with `child→branch`, verifies org
+- `deleteDailyReport()` — switched to `requireOrgSafe()` + fetches with `child→branch`, verifies org
+- `getDraftReports()` — already secured (delegates to `getDailyReports`)
+
+**`absent-reports.ts`:**
+- Same import changes
+- `getAbsenceReports()` — added `requireOrg()` + org filter on child→branch
+- `getAbsenceReport()` — added `requireOrg()` + org verification
+- `createAbsenceReport()` — switched to `requireOrgSafe()` + `verifyChildAccess()`
+- `updateAbsenceReport()` — switched to `requireOrgSafe()` + fetches with child→branch, verifies org
+- `updateAbsenceReportStatus()` — switched to `requireOrgSafe()` + fetches with child→branch, verifies org
+- `deleteAbsenceReport()` — switched to `requireOrgSafe()` + fetches with child→branch, verifies org
+- `getPendingAbsenceReports()` — already secured (delegates to `getAbsenceReports`)
+To https://github.com/lelapinsauvage/KDDZ.git
+   7c0b01e..526301e  ux-improvements -> ux-improvements
+=== Phase 9 — daily-reports.ts + absent-reports.ts COMPLETE — Fri Feb 27 21:40:02 CET 2026 ===
+
+=============================================
+=== Phase 10 — assessments.ts + medical.ts — Fri Feb 27 21:40:02 CET 2026 ===
+=============================================
+Done. Committed as `f3910d4`. Here's a summary of the changes:
+
+**assessments.ts** (9 functions updated):
+- `getAssessments` — org filter via `child: { branch: { organizationId: orgId } }`
+- `getAssessment` — includes `branch`, verifies org after fetch
+- `createAssessment` — `requireOrgSafe` + `verifyChildAccess`
+- `updateAssessment` — `requireOrgSafe` + fetch with branch, verify org
+- `deleteAssessment` — same pattern
+- `getAssessmentDates` — org filter via `branch: { organizationId: orgId }`
+- `createAssessmentDate` — `requireOrgSafe` + `verifyBranchAccess`
+- `deleteAssessmentDate` — `requireOrgSafe` + fetch with branch, verify org
+
+**medical.ts** (11 functions updated):
+- `getMedicalForms` — org filter via `child: { branch: { organizationId: orgId } }`
+- `getMedicalForm` — includes branch, verifies org
+- `createMedicalForm` — `requireOrgSafe` + `verifyChildAccess`
+- `updateMedicalForm` / `deleteMedicalForm` — fetch with branch, verify org
+- `getVaccinations` — org filter on `child.branch`, also scoped in search `OR` clause
+- `createVaccination` — `requireOrgSafe` + `verifyChildAccess`
+- `getVaccination` — includes branch, verifies org
+- `updateVaccination` / `deleteVaccination` — fetch with branch, verify org
+To https://github.com/lelapinsauvage/KDDZ.git
+   526301e..f3910d4  ux-improvements -> ux-improvements
+=== Phase 10 — assessments.ts + medical.ts COMPLETE — Fri Feb 27 21:43:33 CET 2026 ===
+
+=============================================
+=== Phase 11 — payments.ts + accounting.ts — Fri Feb 27 21:43:33 CET 2026 ===
+=============================================
+Done. Committed `146d119`. Summary of changes:
+
+**payments.ts** — replaced `auth()` with `requireOrg`/`requireOrgSafe`, removed `auth` import:
+- `getPayments`: filters via `child.branch.organizationId`
+- `getPaymentsSummary`: same org filter on all aggregate queries
+- `createPayment`: `requireOrgSafe` + `verifyChildAccess`, uses `ctx.userId`
+- `updatePayment`: `requireOrgSafe` + fetches payment with `child.branch.organizationId` check
+- `deletePayment`: same pattern as update
+- `getChildPayments`: `requireOrg` + `verifyChildAccess`
+- `getOverduePayments`: org filter in where clause
+- `getChildrenForPayment`: `branch.organizationId` filter
+- `recordPayment`: `requireOrgSafe` + `verifyChildAccess`, uses `ctx.userId`
+
+**accounting.ts** — replaced `auth()` with `requireOrg`/`requireOrgSafe`, removed `auth` import:
+- `getChildAccounting`: `requireOrg` + `verifyChildAccess`
+- `createAccountingEntry`: `requireOrgSafe` + `verifyChildAccess` (replaces raw `findUnique`)
+- `getAccountingSummary`: org filter via `child.branch.organizationId` on all queries
+To https://github.com/lelapinsauvage/KDDZ.git
+   f3910d4..146d119  ux-improvements -> ux-improvements
+=== Phase 11 — payments.ts + accounting.ts COMPLETE — Fri Feb 27 21:47:13 CET 2026 ===
+
+=============================================
+=== Phase 12 — messages.ts — Fri Feb 27 21:47:13 CET 2026 ===
+=============================================
+Done. Committed `e7c894b` — all 12 functions in `messages.ts` now have org scoping:
+
+- **Read functions** (`getUnreadMessageCount`, `getInbox`, `getSentMessages`, `getMessageById`): use `requireOrg()`, add `organizationId: orgId` to where clauses
+- **Write functions** (`sendMessage`, `replyToMessage`): use `requireOrgSafe()`, add `organizationId` to message and thread creates, verify original message belongs to org on reply
+- **Mark/delete functions** (`markAsRead`, `markAsUnread`, `deleteMessage`): verify `message.organizationId === orgId` before mutating
+- **Bulk operations** (`bulkMarkAsRead`, `bulkDeleteMessages`): add `organizationId` to updateMany/deleteMany where clauses
+- **`sendClassMessage`**: verifies class belongs to org via `branch.organizationId`, adds `organizationId` to thread and all message creates
+To https://github.com/lelapinsauvage/KDDZ.git
+   146d119..e7c894b  ux-improvements -> ux-improvements
+=== Phase 12 — messages.ts COMPLETE — Fri Feb 27 21:51:18 CET 2026 ===
+
+=============================================
+=== Phase 13 — settings.ts — Fri Feb 27 21:51:18 CET 2026 ===
+=============================================
+Done. Committed `e1a25d0`. Summary of changes to `settings.ts`:
+
+- **Imports**: Added `requireOrg`, `requireOrgSafe`, `verifyBranchAccess`
+- **Settings** (`getSettings`, `setSetting`, `updateNurserySettings`): Verify `branchId` belongs to org via `verifyBranchAccess`
+- **Holidays** (`getHolidays`): Scoped with `branch: { organizationId: orgId }`; (`createHoliday`): Verify branch if provided; (`updateHoliday`, `deleteHoliday`): Verify holiday belongs to org before mutating
+- **EventTypes** (`getEventTypes`): Filtered by `organizationId`; (`createEventType`): Sets `organizationId`; (`updateEventType`, `deleteEventType`): Verify ownership before mutating
+- **Events** (`getEvents`): Scoped with `branch: { organizationId: orgId }`; (`createEvent`): Verify branch if provided; (`updateEvent`, `deleteEvent`): Verify event belongs to org before mutating
+- **Regions/Provinces/Districts**: No changes (global reference data)
+To https://github.com/lelapinsauvage/KDDZ.git
+   e7c894b..e1a25d0  ux-improvements -> ux-improvements
+=== Phase 13 — settings.ts COMPLETE — Fri Feb 27 21:53:39 CET 2026 ===
+
+=============================================
+=== Phase 14 — alarms.ts — Fri Feb 27 21:53:39 CET 2026 ===
+=============================================
+Committed successfully. Here's a summary of all changes made to `alarms.ts`:
+
+**Imports added:** `requireOrg`, `requireOrgSafe` from `@/lib/require-org`; `verifyBranchAccess`, `getOrgBranchIds` from `@/lib/verify-org-access`
+
+**Alarm CRUD (5 functions):**
+- `getAlarms()` — added `branch: { organizationId: orgId }` to where clause via `requireOrg()`
+- `createAlarm()` — switched to `requireOrgSafe()`, added `verifyBranchAccess()` check on branchId
+- `updateAlarm()` — switched to `requireOrgSafe()`, fetches alarm with branch, verifies `branch.organizationId === orgId`
+- `dismissAlarm()` — same fetch-and-verify pattern
+- `deleteAlarm()` — same fetch-and-verify pattern
+
+**Dashboard queries (4 functions):**
+- `getUpcomingBirthdays()` — added `branch: { organizationId: orgId }` to child where
+- `getOverdueVaccinations()` — added `child: { branch: { organizationId: orgId } }` to where
+- `getUpcomingAssessments()` — added `branch: { organizationId: orgId }` to where
+- `getAlarmOverviewCounts()` — org filter on all 11 sub-queries (children, assessments, vaccinations, alarms×6, events, payments via `child.branch`)
+
+**`getHeaderAlarmCounts()`** — org filter on all 4 sub-queries; raw SQL birthday query uses `WHERE "branchId" IN (SELECT id FROM branches WHERE "organizationId" = cast(${orgId} as uuid))`
+
+**Notifications (4 functions):** No changes — already user-scoped.
+To https://github.com/lelapinsauvage/KDDZ.git
+   e1a25d0..adb5107  ux-improvements -> ux-improvements
+=== Phase 14 — alarms.ts COMPLETE — Fri Feb 27 21:56:52 CET 2026 ===
+
+=============================================
+=== Phase 15 — calls + medical-timeline + timeline + search — Fri Feb 27 21:56:52 CET 2026 ===
+=============================================
+Done. All four files have been org-scoped and committed as `2bf8da8`:
+
+**calls.ts:**
+- `getChildCallLogs()` — uses `requireOrg()` + `verifyChildAccess()` guard
+- `getCallLogs()` — uses `requireOrg()` + adds `child: { branch: { organizationId: orgId } }` to where clause
+- `createCallLog()` — uses `requireOrgSafe()` + `verifyChildAccess()` (replaces `auth()`)
+- `deleteCallLog()` — uses `requireOrgSafe()` + fetches with `child→branch→organizationId` and verifies match
+
+**medical-timeline.ts:**
+- `getChildMedicalTimeline()` — uses `requireOrg()` + `verifyChildAccess()` guard
+
+**timeline.ts:**
+- `getChildTimeline()` — uses `requireOrg()` + `verifyChildAccess()` guard
+
+**search.ts:**
+- `globalSearch()` — uses `requireOrg()` (replaces `auth()`) + adds `branch: { organizationId: orgId }` to all 5 findMany queries (children, teachers, nurses, doctors, managers)
+
+Type check passed (no errors in changed files; pre-existing errors in seed/migration scripts only).
+To https://github.com/lelapinsauvage/KDDZ.git
+   adb5107..2bf8da8  ux-improvements -> ux-improvements
+=== Phase 15 — calls + medical-timeline + timeline + search COMPLETE — Fri Feb 27 21:59:48 CET 2026 ===
+
+=============================================
+=== Phase 16 — notification-center + parent-users + branch-compliance — Fri Feb 27 21:59:48 CET 2026 ===
+=============================================
+Done. Committed as `93c7ca0`. Here's a summary of the changes:
+
+**notification-center.ts:**
+- `getActionableAlarms()`: Gets org branch IDs via `getOrgBranchIds`, then filters all 4 sub-queries — alarms by `branchId: { in: branchIds }`, vaccinations/payments through `child.branchId`, and birthday children by `branchId`
+- `snoozeAlarm()`: Uses `requireOrgSafe`, fetches alarm's branchId, verifies via `verifyBranchAccess`
+- `resolveAlarm()`: Same pattern — fetch alarm, verify branch belongs to org
+
+**parent-users.ts:**
+- `getParentUsers()`: Adds `child: { branch: { organizationId: orgId } }` to the where clause
+- `getParentUser()`: Verifies `parentUser.child.branch.organizationId === orgId` after fetch
+- `createParentUser()`: Uses `verifyChildAccess` to confirm child's branch belongs to org
+- `updateParentUser()`, `resetParentPassword()`, `toggleParentUserStatus()`: Fetch with `child.branch` included, verify org match
+
+**branch-compliance.ts:**
+- All 4 functions (`getCompliance`, `upsertCompliance`, `getDocuments`, `upsertDocument`): Verify `branchId` belongs to org via `verifyBranchAccess` before proceeding
+To https://github.com/lelapinsauvage/KDDZ.git
+   2bf8da8..93c7ca0  ux-improvements -> ux-improvements
+=== Phase 16 — notification-center + parent-users + branch-compliance COMPLETE — Fri Feb 27 22:03:40 CET 2026 ===
+
+=============================================
+=== Phase 17 — dashboard + today + sidebar + header — Fri Feb 27 22:03:40 CET 2026 ===
+=============================================
+All done. Committed as `ccf35da`. Here's a summary of what was changed:
+
+**dashboard.ts** (most complex):
+- Imported `requireOrg` and `getOrgBranchIds`
+- `getMorningBriefing()`: Added `requireOrg()` + `getOrgBranchIds()` at top. Applied org filters to all 16+ queries:
+  - Prisma queries: `branch: { organizationId: orgId }` or `child: { branch: { organizationId: orgId } }` patterns
+  - `employeeEvent`: `branchId: { in: orgBranchIds }` 
+  - Raw SQL (weekly reports, chronic absences): Added JOINs through `children → branches` with `b."organizationId" = cast(${orgId} as uuid)`
+  - Payment queries: `child: { branch: { organizationId: orgId } }`
+- `getActionItems()`: Added `requireOrg()` and org filters to all 5 sub-queries + overdue payments
+
+**today.ts**: Replaced `auth()` with `requireOrg()`, added `branch: { organizationId: orgId }` to children/reports/absences/food/classes queries, merged with existing branchId filters
+
+**sidebar.ts**: Replaced `auth()` with `requireOrg()`, added org filters to child count, report count, and alarm count
+
+**header.ts**: Replaced `auth()` with `requireOrg()`, added org filter to inline alarm query, removed `session` from `Promise.all`, simplified message block by removing the `if (session?.user?.id)` guard
+To https://github.com/lelapinsauvage/KDDZ.git
+   93c7ca0..ccf35da  ux-improvements -> ux-improvements
+=== Phase 17 — dashboard + today + sidebar + header COMPLETE — Fri Feb 27 22:09:48 CET 2026 ===
+
+=============================================
+=== Phase 18 — Final Verification — Fri Feb 27 22:09:48 CET 2026 ===
+=============================================
+All checks pass. Here's a summary of what was found and fixed:
+
+**TypeScript errors fixed (4 files):**
+- `prisma/seed.ts`, `scripts/migrate.ts`, `src/scripts/migration/migrate-all.ts`, `src/scripts/migration/migrate-branches.ts` — all were missing the required `slug` field when creating an Organization
+
+**Auth migration fixed (1 file):**
+- `src/lib/actions/settings.ts` — 9 Province/District/Region CRUD functions were still using `auth()` instead of `requireOrgSafe()`. Migrated all 9 and removed the unused `auth` import.
+
+**Intentionally kept as-is:**
+- `src/lib/actions/alarms.ts` — 4 notification functions (`getNotifications`, `getUnreadNotificationCount`, `markNotificationRead`, `markAllNotificationsRead`) correctly use `auth()` because they are user-scoped (operating on userId), not org-scoped.
+
+**Verification:**
+- `npx tsc --noEmit` — passes clean
+- `pnpm exec next build` — builds successfully
+To https://github.com/lelapinsauvage/KDDZ.git
+   ccf35da..5ede593  ux-improvements -> ux-improvements
+=== Phase 18 — Final Verification COMPLETE — Fri Feb 27 22:12:30 CET 2026 ===
+
+=============================================
+=== Phase 19 — Design System: globals.css — Fri Feb 27 22:12:30 CET 2026 ===
+=============================================
+Done. Here's what changed:
+
+- **`:root` palette** — Replaced teal (#14B8A6) with warm terracotta (#C35A2C), parchment background (#F5F0E8), and warm neutral tones throughout
+- **Sidebar** — Switched from white/clean to a rich dark leather surface (#2C2420) with warm copper highlights
+- **Accent palette** — Removed playful coral/purple/sky/lime colors, replaced with terracotta, sienna, sage, clay, sand, copper, moss, warmgray
+- **Font stack** — Swapped "Plus Jakarta Sans" for "Söhne" + system font fallbacks (more editorial feel)
+- **Body typography** — Bumped to 14.5px, line-height 1.65, added -0.01em letter-spacing
+- **Header/footer** — Updated to match the warm parchment tones with softer border opacity
+- **Scrollbar** — Warm neutral thumb colors
+- **TypeScript** — Clean compile, no errors
+To https://github.com/lelapinsauvage/KDDZ.git
+   5ede593..2686199  ux-improvements -> ux-improvements
+=== Phase 19 — Design System: globals.css COMPLETE — Fri Feb 27 22:13:51 CET 2026 ===
+
+=============================================
+=== Phase 20 — Sidebar Redesign — Fri Feb 27 22:13:51 CET 2026 ===
+=============================================
+All done. Here's what changed:
+
+1. **Section colors** — replaced teal/sky/violet/rose/amber with warm muted tones (`#C9B99A` parchment, `#D4A574` copper, `#C4887A` terracotta, `#C9B280` wheat, `#9BB0A0` sage, `#A89B8C` stone) that read naturally on the dark `#2C2420` sidebar
+2. **Badge colors** — swapped light-bg badges for translucent warm-toned badges that glow on dark surface
+3. **Sidebar frame** — removed `border-r border-border`, updated offset to 56px for new header height
+4. **Active state** — now uses `sidebar-primary`/`sidebar-accent` tokens instead of generic `primary` — warm terracotta glow with left accent border
+5. **Inactive state** — uses `sidebar-foreground/70` with hover lift animation
+6. **Footer & kbd** — updated to `sidebar-border`/`sidebar-accent`/`sidebar-foreground` tokens so everything lives in the same dark warm palette
+To https://github.com/lelapinsauvage/KDDZ.git
+   2686199..16603ba  ux-improvements -> ux-improvements
+=== Phase 20 — Sidebar Redesign COMPLETE — Fri Feb 27 22:14:56 CET 2026 ===
+
+=============================================
+=== Phase 21 — Header + Mobile Nav + Footer Redesign — Fri Feb 27 22:14:56 CET 2026 ===
+=============================================
+Done. Here's a summary of the changes:
+
+**header.tsx** — 5 updates:
+- Header height bumped from 52px to 56px
+- Logo box gradient: `from-teal-400 to-teal-600` → `from-[#E8A87C] to-[#C35A2C]` (warm terracotta)
+- Search bar: rounder corners (`rounded-xl`), warmer `bg-secondary/50` background
+- User avatar: `from-teal-400 to-emerald-500` → `from-[#E8A87C] to-[#C35A2C]`, ring uses `ring-background` instead of `ring-white`
+- Dropdown menu: `rounded-xl` → `rounded-2xl`
+
+**mobile-nav.tsx** — 1 update:
+- Nav background: `bg-white/90` → `bg-[#F5F0E8]/90` (cream tint), softer border and shadow
+
+**footer.tsx** — No changes needed (already uses semantic classes with no teal/emerald references).
+To https://github.com/lelapinsauvage/KDDZ.git
+   16603ba..6cbbce8  ux-improvements -> ux-improvements
+=== Phase 21 — Header + Mobile Nav + Footer Redesign COMPLETE — Fri Feb 27 22:15:38 CET 2026 ===
+
+=============================================
+=== Phase 22 — Page Header + Data Table + Shared — Fri Feb 27 22:15:38 CET 2026 ===
+=============================================
+Committed `e3d0439`. Here's a summary of the changes:
+
+**page-header.tsx** — Removed hard `bg-white`, replaced with `bg-card/50 backdrop-blur-sm` and softer `border-border/60`. Title bumped to `text-xl`/`text-2xl` with `font-semibold`. Breadcrumb links now hover to `text-primary` (terracotta).
+
+**data-table.tsx** — Table headers use `font-medium` (not semibold), `bg-secondary/40`, and added `tracking-wide` + generous padding. Rows now have `hover:bg-accent/50` and `even:bg-secondary/30` for warm alternating stripes.
+
+**empty-state.tsx** — Already aligned with the warm design system (uses `text-muted-foreground`, `text-primary`, `bg-primary/10`). No changes needed.
+
+**form-section.tsx** — Color map updated to use `primary/60` tones instead of raw blue/teal. Added left accent line (`border-l-2 border-primary/30 pl-3`) on section headers. Border softened to `border-border/60`.
+To https://github.com/lelapinsauvage/KDDZ.git
+   6cbbce8..e3d0439  ux-improvements -> ux-improvements
+=== Phase 22 — Page Header + Data Table + Shared COMPLETE — Fri Feb 27 22:16:30 CET 2026 ===
+
+=============================================
+=== Phase 23 — Dashboard Cards Redesign — Fri Feb 27 22:16:30 CET 2026 ===
+=============================================
+Done. All three dashboard components are now using the warm Claude palette:
+
+- **stat-card.tsx** — Replaced Tailwind color utilities with earthy hex tones (terracotta, sage, sienna, etc.), switched to `bg-card` backgrounds, refined shadows, and `font-semibold` for values
+- **status-board.tsx** — Removed gradient backgrounds (`bg-gradient-to-br`), replaced with clean `bg-card` + warm accent colors for icons/metrics, softer hover shadows
+- **today-menu-widget.tsx** — Swapped teal/pink/violet/amber meal icons with warm palette: sienna for breakfast, terracotta for lunch, dusty rose for dessert, sage for snack
+To https://github.com/lelapinsauvage/KDDZ.git
+   e3d0439..4b75709  ux-improvements -> ux-improvements
+=== Phase 23 — Dashboard Cards Redesign COMPLETE — Fri Feb 27 22:17:22 CET 2026 ===
+
+=============================================
+=== Phase 24 — Dashboard Charts + Panels Redesign — Fri Feb 27 22:17:22 CET 2026 ===
+=============================================
+All done. Here's a summary of the changes across all 6 files:
+
+**action-center.tsx**
+- Overdue payments: `bg-rose-100/text-rose-600` → `bg-[#C35A2C]/10` / `text-[#C35A2C]` (terracotta)
+- Missing reports: `bg-amber-100/text-amber-600` → `bg-[#B08968]/10` / `text-[#B08968]` (sienna)
+- Pending absences: `bg-violet-100/text-violet-600` → `bg-[#8B7355]/10` / `text-[#8B7355]` (warm brown)
+- Draft children: `bg-sky-100/text-sky-600` → `bg-[#6B8F71]/10` / `text-[#6B8F71]` (sage)
+- "All clear" state: emerald → `#5B7B5E` (moss)
+- Inline approve/reject buttons: emerald/rose → moss/terracotta
+- Card container → `bg-card border-border/40 shadow-[0_1px_3px_rgba(0,0,0,0.03)]`
+
+**insights-panel.tsx**
+- Positive: emerald → `#5B7B5E` (moss)
+- Neutral: slate → `#8B7355` (warm brown)
+- Warning: amber → `#C35A2C` (terracotta)
+- Lightbulb icon: `text-amber-500` → `text-[#B08968]` (sienna)
+- Card → warm `bg-card` with muted border
+
+**attendance-chart.tsx**
+- Attendance line/gradient: `#14B8A6` (teal) → `#6B8F71` (sage green)
+- Absence line/gradient: `#FB7185` (rose) → `#B07070` (dusty rose)
+- Card container updated to warm styling
+
+**weekly-attendance-chart.tsx**
+- Bar fill: `#14B8A6` (teal) → `#6B8F71` (sage green)
+- Tooltip cursor: teal → sage
+- Card container updated
+
+**children-per-class-chart.tsx**
+- Bar fill: `#14B8A6` (teal) → `#B08968` (sienna)
+- Card container updated
+
+**gender-stats-chart.tsx**
+- Colors: `["#38BDF8", "#F472B6"]` (sky/pink) → `["#6B8F71", "#B07070"]` (sage/dusty rose)
+- Card container updated
+To https://github.com/lelapinsauvage/KDDZ.git
+   4b75709..c2d8f2d  ux-improvements -> ux-improvements
+=== Phase 24 — Dashboard Charts + Panels Redesign COMPLETE — Fri Feb 27 22:19:46 CET 2026 ===
+
+=============================================
+=== Phase 25 — Children + Employees Lists Redesign — Fri Feb 27 22:19:46 CET 2026 ===
+=============================================
+All done. Here's a summary of the changes committed as `91e96bc`:
+
+**children-columns.tsx**
+- Avatar colors: replaced teal/emerald/violet/sky/pink/indigo/cyan with warm earthy tones (#C35A2C, #B08968, #8B7355, #6B8F71, #E8A87C, etc.)
+- Class pill colors: replaced teal/violet/sky/amber/rose/emerald/indigo/orange with warm opacity-based palette
+- Status badges: Active → sage green `#6B8F71`, Draft → sienna `#B08968`, Inactive → `bg-muted`
+- Gender dots: replaced sky-400/pink-400 with warm brown `#8B7355` / peach `#D4956A`
+- Action button icon: added `text-muted-foreground hover:text-primary`
+
+**children-page-client.tsx**
+- Card status badges: same warm palette as columns (sage/sienna/muted)
+- Card hover: warm terracotta shadow `rgba(195,90,44,0.12)` with `border-[#C35A2C]/30`
+- Gender dots: warm brown/peach to match columns
+
+**employee-columns.tsx**
+- Role colors: Teacher → `#C35A2C` (terracotta), Nurse → `#6B8F71` (sage), Doctor → `#8B7355` (warm brown), Manager → `#B08968` (sienna)
+- Avatar colors: same warm role-based mapping
+- Status: Active → sage green, Inactive → muted foreground
+- Action button icon: added `text-muted-foreground hover:text-primary`
+To https://github.com/lelapinsauvage/KDDZ.git
+   c2d8f2d..91e96bc  ux-improvements -> ux-improvements
+=== Phase 25 — Children + Employees Lists Redesign COMPLETE — Fri Feb 27 22:21:50 CET 2026 ===
+
+=============================================
+=== Phase 26 — Forms + Dialogs Redesign — Fri Feb 27 22:21:50 CET 2026 ===
+=============================================
+All done. Here's a summary of changes across 5 files:
+
+**`form-section.tsx`** — Replaced emerald/violet/rose border-top accents with warm primary/sand/dusty-rose tones; softened section header border to `border-border/40`
+
+**`child-form.tsx`** — Required asterisks now use `text-primary` (terracotta) instead of destructive red; replaced emerald/teal/amber count badges with unified `bg-primary/10 text-primary`; submit button hover changed from teal `#18a08c` to `primary/90`; sticky bar uses `bg-card` with soft border
+
+**`daily-report-form.tsx`** — Milk icon changed from `text-sky-500` to `text-muted-foreground`; Fever icon uses warm `#B07070` instead of destructive; error banner uses warm dusty-rose tones; sticky bar border softened
+
+**`quick-payment-dialog.tsx`** — Error text `text-red-600` → `text-destructive`; currency `$` symbol uses warm `text-primary/70`
+
+**`child-sub-nav.tsx`** — Background `bg-white` → `bg-card`; border softened to `border-border/40`; hover states use `hover:bg-accent` (warm cream) and `hover:border-border`
+To https://github.com/lelapinsauvage/KDDZ.git
+   91e96bc..3cc0272  ux-improvements -> ux-improvements
+=== Phase 26 — Forms + Dialogs Redesign COMPLETE — Fri Feb 27 22:25:30 CET 2026 ===
+
+=============================================
+=== Phase 27 — Alarms + Notifications + Medical Redesign — Fri Feb 27 22:25:30 CET 2026 ===
+=============================================
+All done. Here's a summary of the changes across all 5 files:
+
+**alarm-action-card.tsx** — Replaced all vivid Tailwind color classes with warm hex palette. Cards now use `rounded-2xl border-border/40 bg-card` with a warm sand-toned hover shadow. Overdue states use `#C35A2C` (terracotta). Resolve button uses sage green `#6B8F71`, snooze uses warm tan `#B08968`.
+
+**notification-center.tsx** — Updated all type config colors to warm palette. Summary bell icon uses `text-primary`. "All clear" empty state uses sage green `#6B8F71`. Overdue badges use terracotta `#C35A2C`. "View all" links use `text-primary`.
+
+**medical-hub.tsx** — Replaced category colors exactly as specified: General `#8B7355`, Conditions `#B07070`, Visits `#6B8F71`, Vaccinations `#B08968`, Accidents `#C35A2C`. Status badges updated to warm tones. Vaccination schedule header uses warm tan instead of teal.
+
+**notification-dropdown.tsx** — All type config colors replaced with warm palette. Badge count uses `bg-primary text-primary-foreground` (terracotta). Bell icon highlight uses `text-primary`. Empty state uses sage green. Left-border colors use warm hex values.
+
+**inbox-tray.tsx** — Alarm type config updated to warm palette. Badge counts use `bg-primary text-primary-foreground` everywhere (popover badge, tab badges, inbox count). Sheet has `rounded-l-2xl border-border/40`. Popover uses `rounded-2xl`. Overdue text uses terracotta. Unread message dot uses `bg-primary`.
+To https://github.com/lelapinsauvage/KDDZ.git
+   3cc0272..eff9149  ux-improvements -> ux-improvements
+=== Phase 27 — Alarms + Notifications + Medical Redesign COMPLETE — Fri Feb 27 22:28:47 CET 2026 ===
+
+=============================================
+=== Phase 28 — Skeletons + Remaining Components — Fri Feb 27 22:28:47 CET 2026 ===
+=============================================
+All done. Here's what was updated across 8 files:
+
+**Skeleton files** (5 files) — Card wrappers upgraded from `rounded-lg border border-border` to `rounded-2xl border border-border/40` matching the warm card aesthetic.
+
+**food-listing-client.tsx** — Category badges and icons replaced with warm palette:
+- Breakfast → sienna (`#A0784C`)
+- Lunch → terracotta (`#C17C5A`)
+- Dessert → clay (`#B07D62`)
+- Snack → sage (`#6B8F71`)
+- Active/inactive status badges use sage/muted tones
+
+**classes-client.tsx** — Avatar colors swapped from vivid rainbow to warm earth tones. Stats card icons use sienna/terracotta/sage. Active badge uses sage green.
+
+**branches-client.tsx** — Stats icons use sienna/terracotta/sage. Default branch theme color changed from teal `#1caf9a` to warm sienna `#A0784C`. Active badge and compliance badges all use warm palette.
+
+**assessment-form.tsx** — Yes/No buttons use sage green (`#6B8F71`) and terracotta (`#C17C5A`). Progress checkmark uses sage. Red flag indicators use terracotta instead of vivid red.
+To https://github.com/lelapinsauvage/KDDZ.git
+   eff9149..2fe70a3  ux-improvements -> ux-improvements
+=== Phase 28 — Skeletons + Remaining Components COMPLETE — Fri Feb 27 22:31:23 CET 2026 ===
+
+=============================================
+=== Phase 29 — Login + Search + Context Switcher — Fri Feb 27 22:31:23 CET 2026 ===
+=============================================
+All done. Here's a summary of the changes:
+
+**Login page** (`src/app/(auth)/login/page.tsx`):
+- Background: warm cream `#F5F0E8` with a subtle warm radial gradient overlay
+- Decorative blobs: replaced teal with warm terracotta/sienna tones (`#E8A87C`, `#D4A574`, `#C35A2C`)
+- Logo badge: `bg-gradient-to-br from-[#E8A87C] to-[#C35A2C]` with warm shadow
+- Brand accent: `text-primary` instead of `text-teal-500`
+- Submit button: warm gradient `from-primary to-[#C35A2C]` with primary shadow
+- Forgot password link: `text-primary` instead of teal
+
+**Command palette** (`src/components/ui/command.tsx`):
+- Dialog content: `rounded-2xl border-border/60` for warmer, softer border
+- Search icon: `text-muted-foreground` instead of raw opacity
+- Selected items: `bg-primary/10` (warm terracotta highlight) with `rounded-lg`
+
+**Global search** (`src/components/layout/global-search.tsx`):
+- Workflow shortcut icons: `text-primary/70` instead of `text-amber-500`
+
+**Context switcher** (`src/components/layout/context-switcher.tsx`):
+- Popover: `rounded-2xl border-border/60 bg-popover`
+- Branch label: `text-primary` replacing `text-teal-600`
+- Year label: `text-muted-foreground` replacing `text-amber-600`
+To https://github.com/lelapinsauvage/KDDZ.git
+   2fe70a3..b3e778b  ux-improvements -> ux-improvements
+=== Phase 29 — Login + Search + Context Switcher COMPLETE — Fri Feb 27 22:33:31 CET 2026 ===
+
+=============================================
+=== Phase 30 — Final Visual QA + Build — Fri Feb 27 22:33:31 CET 2026 ===
+=============================================
+Final QA pass complete. Here's the summary:
+
+**Verification results:**
+- `teal-` in .tsx files: **0 matches**
+- `emerald-` in .tsx files: **0 matches**
+- `violet-` in .tsx files: **0 matches**
+- `#14B8A6` / `#0D9488`: **0 matches**
+- `from-teal`: **0 matches**
+- `npx tsc --noEmit`: **clean**
+- `pnpm exec next build`: **clean**
+
+**What was replaced across 58 files (178 line swaps):**
+| Old color | New color | Role |
+|---|---|---|
+| teal-* / #14B8A6 / #0D9488 | `#C35A2C` (terracotta) | Primary |
+| emerald-* | `#6B8F71` (sage) | Success/positive |
+| violet-* | `#8B7355` (warm brown) | Secondary/info |
+| blue/cyan/sky | `#6B8F71` / `#B08968` | Sage/sienna |
+| rose/pink | `#B07070` (dusty rose) | Soft accent |
+| amber | `#B08968` (sienna) | Warm accent |
+
+Committed as `9b969e5` on `ux-improvements`.
+To https://github.com/lelapinsauvage/KDDZ.git
+   b3e778b..9b969e5  ux-improvements -> ux-improvements
+=== Phase 30 — Final Visual QA + Build COMPLETE — Fri Feb 27 22:39:54 CET 2026 ===
+
+=============================================
+=== ALL PHASES COMPLETE — Fri Feb 27 22:39:54 CET 2026 ===
+=============================================
