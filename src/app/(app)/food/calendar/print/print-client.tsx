@@ -292,7 +292,7 @@ export default function PrintClient({
       </div>
 
       {/* Landscape orientation for food calendar print */}
-      {/* eslint-disable-next-line react/no-unknown-property */}
+      { }
       <style>{`
         @media print {
           @page {

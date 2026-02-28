@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { WifiOff, RefreshCw } from "lucide-react"
 
 export default function OfflinePage() {
@@ -14,13 +15,13 @@ export default function OfflinePage() {
           Please check your internet connection and try again. Some features may
           not be available while you&apos;re offline.
         </p>
-        <a
+        <Link
           href="/"
           className="inline-flex items-center gap-2 rounded-lg bg-[#0B9178] px-6 py-3 font-medium text-white transition hover:bg-[#0B7464]"
         >
           <RefreshCw className="h-4 w-4" />
           Try again
-        </a>
+        </Link>
       </div>
     </div>
   )

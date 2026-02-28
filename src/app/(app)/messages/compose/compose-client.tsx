@@ -57,7 +57,7 @@ interface ClassItem {
 
 interface ComposeClientProps {
   branches: Branch[];
-  children: ChildItem[];
+  childrenList: ChildItem[];
   classes: ClassItem[];
 }
 
@@ -106,7 +106,7 @@ const NATURES = [
 
 export function ComposeClient({
   branches,
-  children,
+  childrenList: children,
   classes,
 }: ComposeClientProps) {
   const router = useRouter();

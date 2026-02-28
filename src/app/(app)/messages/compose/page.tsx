@@ -10,7 +10,7 @@ export default async function ComposeMessagePage() {
     getClasses({ isActive: true }),
   ]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const rawBranches = (branchesRes.data ?? []) as Array<{
     id: string;
     name: string;
@@ -56,6 +56,6 @@ export default async function ComposeMessagePage() {
   }));
 
   return (
-    <ComposeClient branches={branches} children={children} classes={classes} />
+    <ComposeClient branches={branches} childrenList={children} classes={classes} />
   );
 }

@@ -23,14 +23,14 @@ interface AttendanceChild {
 }
 
 interface AttendanceMarkerProps {
-  children: AttendanceChild[];
+  childrenList: AttendanceChild[];
   classes: Array<{ id: string; name: string }>;
   date: string;
   onComplete: () => void;
 }
 
 export function AttendanceMarker({
-  children,
+  childrenList: children,
   classes,
   date,
   onComplete,

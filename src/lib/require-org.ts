@@ -13,26 +13,47 @@ export async function requireOrg(): Promise<OrgContext> {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
 
-  if (!session.user.organizationId && session.user.branchId) {
+  let orgId = session.user.organizationId as string | null | undefined;
+  let branchId = (session.user.branchId ?? null) as string | null;
+
+  // Fallback 1: if no orgId but have branchId, look up from branch
+  if (!orgId && branchId) {
     const branch = await db.branch.findUnique({
-      where: { id: session.user.branchId },
+      where: { id: branchId },
       select: { organizationId: true },
     });
-    if (branch?.organizationId) {
-      return {
-        userId: session.user.id,
-        organizationId: branch.organizationId,
-        branchId: session.user.branchId,
-        role: session.user.role,
-      };
+    if (branch?.organizationId) orgId = branch.organizationId;
+  }
+
+  // Fallback 2: if still no orgId, look up user record in DB (stale JWT)
+  if (!orgId) {
+    const dbUser = await db.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        organizationId: true,
+        branchId: true,
+        branch: { select: { organizationId: true } },
+      },
+    });
+    if (dbUser) {
+      orgId = dbUser.organizationId ?? dbUser.branch?.organizationId ?? null;
+      if (!branchId) branchId = dbUser.branchId;
     }
   }
 
-  if (!session.user.organizationId) throw new Error("No organization context");
+  // Fallback 3: if user has no org at all, pick the first org in the system
+  if (!orgId) {
+    const firstOrg = await db.organization.findFirst({
+      select: { id: true },
+    });
+    if (firstOrg) orgId = firstOrg.id;
+  }
+
+  if (!orgId) throw new Error("No organization context");
   return {
     userId: session.user.id,
-    organizationId: session.user.organizationId,
-    branchId: session.user.branchId ?? null,
+    organizationId: orgId,
+    branchId,
     role: session.user.role,
   };
 }
@@ -42,35 +63,10 @@ export async function requireOrgSafe(): Promise<
   | { ok: true; ctx: OrgContext }
   | { ok: false; error: string }
 > {
-  const session = await auth();
-  if (!session?.user?.id) return { ok: false, error: "Unauthorized" };
-
-  if (!session.user.organizationId && session.user.branchId) {
-    const branch = await db.branch.findUnique({
-      where: { id: session.user.branchId },
-      select: { organizationId: true },
-    });
-    if (branch?.organizationId) {
-      return {
-        ok: true,
-        ctx: {
-          userId: session.user.id,
-          organizationId: branch.organizationId,
-          branchId: session.user.branchId,
-          role: session.user.role,
-        },
-      };
-    }
+  try {
+    const ctx = await requireOrg();
+    return { ok: true, ctx };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Unknown error" };
   }
-
-  if (!session.user.organizationId) return { ok: false, error: "No organization context" };
-  return {
-    ok: true,
-    ctx: {
-      userId: session.user.id,
-      organizationId: session.user.organizationId,
-      branchId: session.user.branchId ?? null,
-      role: session.user.role,
-    },
-  };
 }

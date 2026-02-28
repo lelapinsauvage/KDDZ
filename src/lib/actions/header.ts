@@ -49,8 +49,26 @@ export interface HeaderData {
 
 const CRITICAL_TYPES = new Set(["VACCINATION", "MEDICAL", "MEDICINE", "PAYMENT"]);
 
+const EMPTY_HEADER: HeaderData = {
+  alarmCounts: { birthdays: 0, assessments: 0, medical: 0, totalAlarms: 0 },
+  notifications: [],
+  unreadNotificationCount: 0,
+  unreadMessageCount: 0,
+  recentMessages: [],
+  recentAlarms: [],
+  hasCriticalAlarms: false,
+};
+
 export async function getHeaderData(): Promise<HeaderData> {
-  const { userId, organizationId: orgId } = await requireOrg();
+  let userId: string;
+  let orgId: string;
+  try {
+    const ctx = await requireOrg();
+    userId = ctx.userId;
+    orgId = ctx.organizationId;
+  } catch {
+    return EMPTY_HEADER;
+  }
 
   const [alarmCountsResult, notificationsResult, messageCountResult, recentDbAlarms] =
     await Promise.all([

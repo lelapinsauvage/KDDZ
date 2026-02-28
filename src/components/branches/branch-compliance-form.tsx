@@ -21,6 +21,10 @@ import { LegalEntitySection } from "./compliance/legal-entity-section";
 import { OwnerInfoSection } from "./compliance/owner-info-section";
 import { NurseryNameSection } from "./compliance/nursery-name-section";
 import { NurseryAddressSection } from "./compliance/nursery-address-section";
+import { PropertyLeaseSection } from "./compliance/property-lease-section";
+import { ManagementSection } from "./compliance/management-section";
+import { CapacitySection } from "./compliance/capacity-section";
+import { InsuranceSection } from "./compliance/insurance-section";
 import { StaffComplianceSection } from "./compliance/staff-compliance-section";
 import { MinistryAttachmentsSection } from "./compliance/ministry-attachments-section";
 
@@ -94,6 +98,29 @@ export function BranchComplianceForm({
       addrFax: "",
       addrEmail: "",
       postalCode: "",
+      // Property / Lease
+      ownershipType: "",
+      ownerName: "",
+      propertyGovernorate: "",
+      propertyDistrict: "",
+      propertyRegion: "",
+      // Management
+      directorFirstName: "",
+      directorLastName: "",
+      directorSpecialty: "",
+      doctorFirstName: "",
+      doctorFatherName: "",
+      doctorLastName: "",
+      doctorSyndicateNo: "",
+      doctorSpecialty: "",
+      // Capacity
+      totalChildren: 0,
+      walkers: 0,
+      nonWalkers: 0,
+      workingHours: "",
+      // Insurance
+      insuranceCompany: "",
+      insuranceContractType: "",
       ...normalizeInitialData(initialData),
     },
   });
@@ -230,6 +257,18 @@ export function BranchComplianceForm({
           )}
           {activeTab === "nursery-address" && (
             <NurseryAddressSection register={register} />
+          )}
+          {activeTab === "property-lease" && (
+            <PropertyLeaseSection register={register} watch={watch} setValue={setValue} />
+          )}
+          {activeTab === "management" && (
+            <ManagementSection register={register} />
+          )}
+          {activeTab === "capacity" && (
+            <CapacitySection register={register} />
+          )}
+          {activeTab === "insurance" && (
+            <InsuranceSection register={register} />
           )}
           {activeTab === "staff-compliance" && (
             <StaffComplianceSection staff={staff} />

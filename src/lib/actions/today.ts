@@ -209,7 +209,7 @@ export async function getTodayData(): Promise<TodayData> {
   };
 }
 
-function emptyData(): TodayData {
+function _emptyData(): TodayData {
   return {
     children: [],
     classes: [],

@@ -71,7 +71,7 @@ export default async function VaccinationsPage() {
       vaccinations={serializedVaccinations}
       total={total}
       branches={branches}
-      children={childrenForTimeline}
+      childrenList={childrenForTimeline}
     />
   );
 }

@@ -10,7 +10,6 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  Baby,
   LayoutGrid,
   TableIcon,
   X,
@@ -233,10 +232,6 @@ export function ChildrenPageClient({
   }, [updateParams]);
 
   // ── Handlers ───────────────────────────────────
-
-  const handleSearchSubmit = useCallback(() => {
-    updateParams({ search: searchValue });
-  }, [searchValue, updateParams]);
 
   // Debounced instant search — triggers on typing
   useEffect(() => {

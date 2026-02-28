@@ -25,7 +25,7 @@ export default async function ChildDashboardPage({ params }: Props) {
     attendanceRecords,
     absences,
     { forms: medicalForms },
-    { vaccinations },
+    { vaccinations: _vaccinations },
     accountingSummary,
     dashboardStats,
   ] = await Promise.all([

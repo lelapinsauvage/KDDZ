@@ -34,14 +34,14 @@ interface VaccinationsPageClientProps {
   vaccinations: VaccinationRow[];
   total: number;
   branches: Array<{ id: string; name: string }>;
-  children: ChildInfo[];
+  childrenList: ChildInfo[];
 }
 
 export function VaccinationsPageClient({
   vaccinations,
   total,
   branches,
-  children,
+  childrenList: children,
 }: VaccinationsPageClientProps) {
   const [tab, setTab] = useState("records");
 
@@ -86,7 +86,7 @@ export function VaccinationsPageClient({
           <TabsContent value="timeline" className="mt-4">
             <VaccinationTimelineClient
               vaccinations={vaccinations}
-              children={children}
+              childrenList={children}
               branches={branches}
             />
           </TabsContent>

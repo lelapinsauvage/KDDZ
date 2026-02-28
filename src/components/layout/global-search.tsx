@@ -233,8 +233,6 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
   const hasEntityResults = results.children.length > 0 || results.employees.length > 0
   const isEmptyQuery = query.trim().length === 0
   const isSearching = query.trim().length >= 2
-  const showRecent = isEmptyQuery && (recentSearches.length > 0 || recentPages.length > 0)
-
   return (
     <CommandDialog
       open={open}

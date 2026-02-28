@@ -48,6 +48,33 @@ export const branchComplianceSchema = z.object({
   addrFax: z.string().default(""),
   addrEmail: z.string().email("Invalid email").or(z.literal("")).default(""),
   postalCode: z.string().default(""),
+
+  // Section E: Property / Lease
+  ownershipType: z.string().default(""),
+  ownerName: z.string().default(""),
+  propertyGovernorate: z.string().default(""),
+  propertyDistrict: z.string().default(""),
+  propertyRegion: z.string().default(""),
+
+  // Section F: Management
+  directorFirstName: z.string().default(""),
+  directorLastName: z.string().default(""),
+  directorSpecialty: z.string().default(""),
+  doctorFirstName: z.string().default(""),
+  doctorFatherName: z.string().default(""),
+  doctorLastName: z.string().default(""),
+  doctorSyndicateNo: z.string().default(""),
+  doctorSpecialty: z.string().default(""),
+
+  // Section G: Capacity
+  totalChildren: z.coerce.number().default(0),
+  walkers: z.coerce.number().default(0),
+  nonWalkers: z.coerce.number().default(0),
+  workingHours: z.string().default(""),
+
+  // Section H: Insurance
+  insuranceCompany: z.string().default(""),
+  insuranceContractType: z.string().default(""),
 });
 
 export type BranchComplianceFormValues = z.input<typeof branchComplianceSchema>;
@@ -80,6 +107,37 @@ export const complianceSections = [
       "governorate", "district", "town", "realEstateArea",
       "propertyNumber", "addressSection", "street", "building",
       "floor", "addrPhone", "addrFax", "addrEmail", "postalCode",
+    ] as const,
+  },
+  {
+    id: "property-lease",
+    title: "الملكية أو سند الإيجار المصدق",
+    fields: [
+      "ownershipType", "ownerName", "propertyGovernorate",
+      "propertyDistrict", "propertyRegion",
+    ] as const,
+  },
+  {
+    id: "management",
+    title: "الإدارة",
+    fields: [
+      "directorFirstName", "directorLastName", "directorSpecialty",
+      "doctorFirstName", "doctorFatherName", "doctorLastName",
+      "doctorSyndicateNo", "doctorSpecialty",
+    ] as const,
+  },
+  {
+    id: "capacity",
+    title: "السعة",
+    fields: [
+      "totalChildren", "walkers", "nonWalkers", "workingHours",
+    ] as const,
+  },
+  {
+    id: "insurance",
+    title: "الضمان",
+    fields: [
+      "insuranceCompany", "insuranceContractType",
     ] as const,
   },
   {

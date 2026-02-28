@@ -11,7 +11,20 @@ import { getSidebarBadges } from "@/lib/actions/sidebar"
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
-  const orgId = session?.user?.organizationId
+  let orgId = session?.user?.organizationId ?? null
+
+  // Fallback: if JWT is stale and missing orgId, look up from DB
+  if (!orgId && session?.user?.id) {
+    const dbUser = await db.user.findUnique({
+      where: { id: session.user.id },
+      select: { organizationId: true, branch: { select: { organizationId: true } } },
+    })
+    orgId = dbUser?.organizationId ?? dbUser?.branch?.organizationId ?? null
+  }
+  if (!orgId) {
+    const firstOrg = await db.organization.findFirst({ select: { id: true } })
+    orgId = firstOrg?.id ?? null
+  }
 
   const [branches, years, badges] = await Promise.all([
     orgId

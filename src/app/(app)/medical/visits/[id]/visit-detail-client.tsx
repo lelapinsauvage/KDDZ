@@ -108,14 +108,6 @@ type VisitFormValues = z.infer<typeof visitFormSchema>;
 // Helpers
 // ---------------------------------------------------------------------------
 
-const SECTION_ICONS = {
-  vitals: Heart,
-  eyes: Eye,
-  ears: Ear,
-  systems: Activity,
-  skin: Sparkles,
-} as const;
-
 const SECTIONS = [
   {
     id: "vitals",

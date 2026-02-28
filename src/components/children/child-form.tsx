@@ -459,11 +459,10 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
     register,
     handleSubmit,
     control,
-    formState: { errors, isSubmitting, touchedFields },
+    formState: { errors, isSubmitting },
     watch,
     trigger,
     setValue,
-    getValues,
   } = useForm<ChildFormValues>({
     resolver: zodResolver(childFormSchema),
     mode: "onTouched",

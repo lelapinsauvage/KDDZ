@@ -966,7 +966,7 @@ function DocumentRow({
   index,
   register,
   showExpiry = false,
-  showTitle = false,
+  showTitle: _showTitle = false,
   onRemove,
 }: {
   index: number;

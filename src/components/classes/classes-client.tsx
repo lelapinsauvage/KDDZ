@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   Plus,
   GraduationCap,
@@ -242,10 +243,13 @@ function ClassForm({
         >
           {form.imageUrl ? (
             <div className="relative">
-              <img
+              <Image
                 src={form.imageUrl}
                 alt="Class"
+                width={96}
+                height={96}
                 className="size-24 rounded-xl object-cover"
+                unoptimized
               />
               <button
                 type="button"

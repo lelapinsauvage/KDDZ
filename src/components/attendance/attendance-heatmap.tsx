@@ -154,7 +154,7 @@ export function AttendanceHeatmap({
   // Filter classes by selected branch
   const filteredClasses =
     branchId !== "all"
-      ? classes.filter((c) => {
+      ? classes.filter((_c) => {
           // classes might not have branchId in this simplified list
           // so we rely on the server filtering; show all when filtering client-side
           return true;

@@ -93,7 +93,7 @@ export default async function BatchDailyReportPage() {
         ]}
       />
       <BatchReportClient
-        children={childrenData}
+        childrenList={childrenData}
         classes={classes}
         foods={foods}
         todayMenu={todayMenu}

@@ -62,7 +62,7 @@ interface FoodOption {
 }
 
 interface BatchReportClientProps {
-  children: ChildData[];
+  childrenList: ChildData[];
   classes: Array<{ id: string; name: string }>;
   foods: {
     breakfast: FoodOption[];
@@ -98,7 +98,7 @@ function getInitials(name: string) {
 }
 
 export function BatchReportClient({
-  children,
+  childrenList: children,
   classes,
   foods,
   todayMenu,

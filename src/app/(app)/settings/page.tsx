@@ -1,4 +1,5 @@
 import { requireRole } from "@/lib/require-role";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -111,7 +112,12 @@ const adminOnlySections = [
 ];
 
 export default async function SettingsPage() {
-  const ctx = await requireRole("ADMIN", "MANAGER");
+  let ctx;
+  try {
+    ctx = await requireRole("ADMIN", "MANAGER");
+  } catch {
+    redirect("/dashboard");
+  }
   const allSections =
     ctx.role === "ADMIN" ? [...adminOnlySections, ...sections] : sections;
 

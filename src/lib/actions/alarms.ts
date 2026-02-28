@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { requireOrg, requireOrgSafe } from "@/lib/require-org";
-import { verifyBranchAccess, getOrgBranchIds } from "@/lib/verify-org-access";
+import { verifyBranchAccess } from "@/lib/verify-org-access";
 import type { AlarmType } from "@/generated/prisma/enums";
 
 // ---------------------------------------------------------------------------

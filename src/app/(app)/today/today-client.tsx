@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -66,13 +66,11 @@ export function TodayClient({ data }: TodayClientProps) {
   const todayISO = new Date().toISOString().split("T")[0];
 
   // Attendance step: show by default, hidden once marked (localStorage)
-  const [showAttendance, setShowAttendance] = useState(false);
-  useEffect(() => {
+  const [showAttendance, setShowAttendance] = useState(() => {
+    if (typeof window === "undefined") return false;
     const marked = localStorage.getItem(`attendance-marked-${todayISO}`);
-    if (!marked) {
-      setShowAttendance(true);
-    }
-  }, [todayISO]);
+    return !marked;
+  });
 
   const filteredChildren = useMemo(() => {
     if (classFilter === "all") return data.children;
@@ -141,7 +139,7 @@ export function TodayClient({ data }: TodayClientProps) {
         {/* Attendance Marker */}
         {showAttendance && (
           <AttendanceMarker
-            children={data.children.map((c) => ({
+            childrenList={data.children.map((c) => ({
               id: c.id,
               firstName: c.firstName,
               lastName: c.lastName,

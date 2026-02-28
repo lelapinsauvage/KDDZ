@@ -25,30 +25,6 @@ import {
   type AssessmentCategory,
 } from "@/lib/assessment-types";
 
-// ── Age bracket tab definitions ──────────────
-
-const AGE_BRACKETS = [
-  { type: 1, label: "0-3 mos" },
-  { type: 2, label: "4-7 mos" },
-  { type: 3, label: "8-12 mos" },
-  { type: 4, label: "13-18 mos" },
-  { type: 5, label: "19-24 mos" },
-  { type: 6, label: "24-36 mos" },
-  { type: 7, label: "3-4 yrs" },
-  // Type 7 covers 48-60 months so we map bracket 8 to type 7 as well
-] as const;
-
-// Map bracket labels to actual assessment type configs
-const BRACKET_TYPE_MAP: Record<number, number> = {
-  1: 1, // 0-3 mos -> assessment 1
-  2: 2, // 4-7 mos -> assessment 2
-  3: 3, // 8-12 mos -> assessment 3
-  4: 4, // 13-18 mos -> assessment 4
-  5: 5, // 19-24 mos -> assessment 5 (24-36)
-  6: 5, // 24-36 mos -> assessment 5
-  7: 6, // 3-4 yrs -> assessment 6
-};
-
 // Full 8 brackets as specified
 const ALL_BRACKETS = [
   { idx: 1, label: "0-3 mos", type: 1 },

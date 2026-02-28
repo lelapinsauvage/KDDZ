@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireOrg, requireOrgSafe } from "@/lib/require-org";
-import { verifyBranchAccess } from "@/lib/verify-org-access";
+
 import type { SenderType, RecipientType } from "@/generated/prisma/enums";
 
 // ---------------------------------------------------------------------------

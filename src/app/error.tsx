@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 import { CloudOff, RotateCcw, Home, MessageCircle } from "lucide-react";
 
 export default function GlobalError({
@@ -111,7 +112,7 @@ export default function GlobalError({
               <RotateCcw size={14} />
               Try Again
             </button>
-            <a
+            <Link
               href="/"
               style={{
                 display: "inline-flex",
@@ -130,7 +131,7 @@ export default function GlobalError({
             >
               <Home size={14} />
               Go to Dashboard
-            </a>
+            </Link>
           </div>
           <a
             href="mailto:support@example.com?subject=Bug%20Report"

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useCallback, useEffect, useRef, useSyncExternalStore } from "react"
 import { usePathname } from "next/navigation"
 
 interface RecentPage {
@@ -69,7 +69,37 @@ function pathToTitle(pathname: string): string | null {
     .replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
-function loadFromStorage(): RecentPage[] {
+// --- External store for recent pages ---
+
+let listeners: Array<() => void> = []
+let cachedPages: RecentPage[] | null = null
+
+function getSnapshot(): RecentPage[] {
+  if (cachedPages === null) {
+    cachedPages = loadFromStorageRaw()
+  }
+  return cachedPages
+}
+
+const SERVER_SNAPSHOT: RecentPage[] = []
+function getServerSnapshot(): RecentPage[] {
+  return SERVER_SNAPSHOT
+}
+
+function subscribe(listener: () => void): () => void {
+  listeners.push(listener)
+  return () => {
+    listeners = listeners.filter((l) => l !== listener)
+  }
+}
+
+function emitChange() {
+  for (const listener of listeners) {
+    listener()
+  }
+}
+
+function loadFromStorageRaw(): RecentPage[] {
   if (typeof window === "undefined") return []
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
@@ -79,39 +109,39 @@ function loadFromStorage(): RecentPage[] {
   }
 }
 
-function saveToStorage(pages: RecentPage[]) {
+function updatePages(updater: (prev: RecentPage[]) => RecentPage[]) {
+  const current = getSnapshot()
+  const updated = updater(current)
+  cachedPages = updated
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(pages))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
   } catch {
     // Storage full or unavailable — silently ignore
   }
+  emitChange()
 }
 
 export function useRecentlyVisited() {
   const pathname = usePathname()
-  const [recentPages, setRecentPages] = useState<RecentPage[]>([])
-
-  // Load on mount
-  useEffect(() => {
-    setRecentPages(loadFromStorage())
-  }, [])
+  const recentPages = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
+  const prevPathnameRef = useRef<string | null>(null)
 
   // Track page visits
   useEffect(() => {
+    if (prevPathnameRef.current === pathname) return
+    prevPathnameRef.current = pathname
+
     const title = pathToTitle(pathname)
     if (!title) return
 
-    setRecentPages((prev) => {
+    updatePages((prev) => {
       const filtered = prev.filter((p) => p.href !== pathname)
-      const updated = [{ href: pathname, title, visitedAt: Date.now() }, ...filtered].slice(0, MAX_PAGES)
-      saveToStorage(updated)
-      return updated
+      return [{ href: pathname, title, visitedAt: Date.now() }, ...filtered].slice(0, MAX_PAGES)
     })
   }, [pathname])
 
   const clearRecent = useCallback(() => {
-    setRecentPages([])
-    saveToStorage([])
+    updatePages(() => [])
   }, [])
 
   return { recentPages, clearRecent }

@@ -19,30 +19,57 @@ const REQUIRED_DOCS = [
   {
     type: "CERTIFIED_PHOTO",
     label: "صورة شمسية لصاحب الطلب مصدقة من مختار المحلة",
+    color: "border-l-purple-500",
   },
   {
     type: "ID_COPY",
     label: "صورة عن تذكرة الهوية أو إخراج قيد",
+    color: "border-l-purple-500",
   },
   {
     type: "BUILDING_MAP",
     label: "خريطة للبناء المنوي اتخاذه دار حضانة (لا تقل مساحته عن 200 م٢)",
+    color: "border-l-orange-500",
   },
   {
     type: "PROPERTY_DEED",
     label: "سند ملكية أو إيجار أو عقد إستثمار",
+    color: "border-l-purple-500",
   },
   {
     type: "CHILD_SAFETY_INSURANCE",
     label: "صورة عن عقد ضمان لسلامة الأطفال",
+    color: "border-l-green-500",
   },
   {
     type: "INTERNAL_REGULATIONS",
     label: "النظام الداخلي لدار الحضانة",
+    color: "border-l-green-500",
   },
   {
     type: "HEALTH_FILE",
     label: "الملف الصحي الصادر عن وزارة الصحة العامة",
+    color: "border-l-green-500",
+  },
+  {
+    type: "DIRECTOR_DIPLOMA",
+    label: "صورة عن شهادة المديرة",
+    color: "border-l-purple-500",
+  },
+  {
+    type: "DOCTOR_LICENSE",
+    label: "صورة عن رخصة الطبيب المسؤول",
+    color: "border-l-purple-500",
+  },
+  {
+    type: "DOCTOR_PLEDGE",
+    label: "تعهد الطبيب المسؤول",
+    color: "border-l-teal-500",
+  },
+  {
+    type: "NURSE_LICENSE",
+    label: "صورة عن رخصة الممرضة",
+    color: "border-l-teal-500",
   },
 ] as const;
 
@@ -53,7 +80,7 @@ export function MinistryAttachmentsSection({ branchId, documents }: Props) {
         المستندات المطلوبة
       </h3>
       <p className="mb-6 text-sm text-muted-foreground">
-        المستندات المطلوبة من وزارة الصحة — ٧ وثائق
+        المستندات المطلوبة من وزارة الصحة — ١١ وثيقة
       </p>
 
       <div className="space-y-4">
@@ -65,6 +92,7 @@ export function MinistryAttachmentsSection({ branchId, documents }: Props) {
               branchId={branchId}
               docType={req.type}
               label={req.label}
+              color={req.color}
               existing={existing}
             />
           );
@@ -78,11 +106,13 @@ function AttachmentRow({
   branchId,
   docType,
   label,
+  color,
   existing,
 }: {
   branchId: string;
   docType: string;
   label: string;
+  color: string;
   existing?: ComplianceDocument;
 }) {
   const [isPending, startTransition] = useTransition();
@@ -117,7 +147,8 @@ function AttachmentRow({
   return (
     <div
       className={cn(
-        "rounded-xl border p-4 transition-colors",
+        "rounded-xl border border-l-4 p-4 transition-colors",
+        color,
         isUploaded ? "border-green-200 bg-green-50/50 dark:border-green-900 dark:bg-green-950/20" : "border-border",
       )}
     >

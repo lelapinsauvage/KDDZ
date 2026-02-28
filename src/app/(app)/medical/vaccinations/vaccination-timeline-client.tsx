@@ -137,7 +137,7 @@ interface DoseWithStatus {
 
 interface VaccinationTimelineClientProps {
   vaccinations: VaccinationRecord[];
-  children: ChildInfo[];
+  childrenList: ChildInfo[];
   branches: Array<{ id: string; name: string }>;
 }
 
@@ -255,7 +255,7 @@ const statusBg: Record<DoseStatus, string> = {
 
 export function VaccinationTimelineClient({
   vaccinations,
-  children,
+  childrenList: children,
   branches,
 }: VaccinationTimelineClientProps) {
   const [selectedChild, setSelectedChild] = useState<string>("all");
@@ -373,9 +373,8 @@ function ChildVaccinationTimeline({
   child: ChildInfo;
   records: VaccinationRecord[];
 }) {
-  const dob = child.dob ? new Date(child.dob) : null;
-
   const vaccineRows = useMemo(() => {
+    const dob = child.dob ? new Date(child.dob) : null;
     return STANDARD_VACCINES.map((vaccine) => {
       const doses: DoseWithStatus[] = vaccine.doses.map((doseSchedule) => {
         const record = matchVaccineRecord(records, vaccine.name, doseSchedule.label);
@@ -394,7 +393,7 @@ function ChildVaccinationTimeline({
 
       return { vaccine, doses };
     });
-  }, [records, dob]);
+  }, [records, child.dob]);
 
   const stats = useMemo(() => {
     let given = 0;
