@@ -3,6 +3,7 @@ import { AppSidebar } from "@/components/layout/app-sidebar"
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import { MobileNav } from "@/components/layout/mobile-nav"
+import { PageTransition } from "@/components/layout/page-transition"
 import { AppContextProvider } from "@/components/providers/app-context-provider"
 import { db } from "@/lib/db"
 import { auth } from "@/lib/auth"
@@ -55,7 +56,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <SidebarInset className="mt-[52px] flex min-h-[calc(100svh-52px)] flex-col">
           {/* Scrollable content area */}
           <div className="flex-1 bg-background pb-16 md:pb-0">
-            {children}
+            <PageTransition>{children}</PageTransition>
           </div>
 
           {/* Footer — hidden on mobile (tab bar takes that space) */}
