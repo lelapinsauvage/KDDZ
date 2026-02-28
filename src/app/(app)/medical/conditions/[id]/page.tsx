@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getMedicalForm } from "@/lib/actions/medical";
 import { db } from "@/lib/db";
+import { requireOrg } from "@/lib/require-org";
 import { ConditionDetailClient } from "./condition-detail-client";
 
 interface PageProps {
@@ -10,9 +11,10 @@ interface PageProps {
 export default async function ConditionDetailPage({ params }: PageProps) {
   const { id } = await params;
   const isNew = id === "new";
+  const { organizationId: orgId } = await requireOrg();
 
   const children = await db.child.findMany({
-    where: { isActive: true },
+    where: { isActive: true, branch: { organizationId: orgId } },
     select: { id: true, firstName: true, lastName: true },
     orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
   });

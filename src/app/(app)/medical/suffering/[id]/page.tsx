@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { requireOrg } from "@/lib/require-org";
 import { getMedicalForm } from "@/lib/actions/medical";
 import { SufferingFormClient } from "./suffering-form-client";
 
@@ -26,9 +27,10 @@ const EMPTY_ASSESSMENTS: Record<string, { status: string; remarks: string }> = {
 export default async function SufferingFormPage({ params }: PageProps) {
   const { id } = await params;
   const isNew = id === "new";
+  const { organizationId: orgId } = await requireOrg();
 
   const children = await db.child.findMany({
-    where: { isActive: true },
+    where: { isActive: true, branch: { organizationId: orgId } },
     select: { id: true, firstName: true, lastName: true },
     orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
   });

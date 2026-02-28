@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { requireOrg } from "@/lib/require-org";
+import { getVaccination } from "@/lib/actions/medical";
 import { VaccinationDetailClient } from "./vaccination-detail-client";
 
 interface PageProps {
@@ -9,9 +11,10 @@ interface PageProps {
 export default async function VaccinationDetailPage({ params }: PageProps) {
   const { id } = await params;
   const isNew = id === "new";
+  const { organizationId: orgId } = await requireOrg();
 
   const children = await db.child.findMany({
-    where: { isActive: true },
+    where: { isActive: true, branch: { organizationId: orgId } },
     select: { id: true, firstName: true, lastName: true },
     orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
   });
@@ -38,15 +41,14 @@ export default async function VaccinationDetailPage({ params }: PageProps) {
     );
   }
 
-  // Load existing vaccination record
-  const vaccination = await db.vaccination.findUnique({
-    where: { id },
-    include: { child: true },
-  });
+  // Load existing vaccination record (org-scoped)
+  const result = await getVaccination(id);
 
-  if (!vaccination) {
+  if ("error" in result || !result.vaccination) {
     notFound();
   }
+
+  const vaccination = result.vaccination;
 
   // Parse dose number and administered by from vaccineName and notes
   let vaccineName = vaccination.vaccineName;
