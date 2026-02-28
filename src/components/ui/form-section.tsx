@@ -8,27 +8,18 @@ interface FormSectionProps {
   id?: string;
   title: string;
   subtitle?: string;
-  color?: "blue" | "green" | "yellow" | "purple" | "teal" | "red";
+  /** @deprecated Color accents removed in redesign. Prop kept for compatibility. */
+  color?: string;
   collapsible?: boolean;
   defaultOpen?: boolean;
   badge?: React.ReactNode;
   children: React.ReactNode;
 }
 
-const colorMap: Record<string, string> = {
-  blue: "border-t-primary/60",
-  green: "border-t-primary/40",
-  yellow: "border-t-[#C4A882]/60",
-  purple: "border-t-primary/50",
-  teal: "border-t-primary/40",
-  red: "border-t-[#B07070]/60",
-};
-
 export function FormSection({
   id,
   title,
   subtitle,
-  color = "blue",
   collapsible = false,
   defaultOpen = true,
   badge,
@@ -39,26 +30,28 @@ export function FormSection({
   return (
     <div
       id={id}
-      className={cn(
-        "rounded-2xl border border-border/60 bg-card border-t-4 shadow-sm",
-        colorMap[color],
-      )}
+      className="rounded-lg border border-border bg-card shadow-sm"
     >
       <button
         type="button"
         className={cn(
-          "flex w-full items-center justify-between border-b border-border/40 bg-muted/50 px-4 py-3 rounded-t-2xl",
-          collapsible && "cursor-pointer hover:bg-muted/80",
+          "flex w-full items-center justify-between px-5 py-3.5 rounded-t-lg",
+          isOpen && "border-b border-border",
+          collapsible && "cursor-pointer hover:bg-muted/50 transition-colors",
           !collapsible && "cursor-default",
         )}
         onClick={() => collapsible && setIsOpen(!isOpen)}
         tabIndex={collapsible ? 0 : -1}
       >
-        <div className="flex items-center gap-2">
-          <div className="border-l-2 border-primary/30 pl-3">
-            <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        <div className="flex items-center gap-3">
+          <div>
+            <h3 className="font-heading text-base font-bold tracking-tight text-foreground">
+              {title}
+            </h3>
             {subtitle && (
-              <p className="text-xs text-muted-foreground" dir="rtl">{subtitle}</p>
+              <p className="mt-0.5 text-[0.8125rem] leading-5 text-muted-foreground" dir="rtl">
+                {subtitle}
+              </p>
             )}
           </div>
           {badge}
@@ -66,13 +59,13 @@ export function FormSection({
         {collapsible && (
           <ChevronDown
             className={cn(
-              "size-4 text-muted-foreground transition-transform",
+              "size-4 text-muted-foreground transition-transform duration-200",
               !isOpen && "-rotate-90",
             )}
           />
         )}
       </button>
-      {isOpen && <div className="p-4">{children}</div>}
+      {isOpen && <div className="p-5">{children}</div>}
     </div>
   );
 }
