@@ -1193,3 +1193,159 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 43 — UX: Empty States & Error States — Sat Feb 28 10:51:58 CET 2026 ===
 =============================================
+All done. Here's a summary of the changes:
+
+**1. Enhanced `EmptyState` component** (`src/components/ui/empty-state.tsx`)
+- Added decorative concentric rings behind the icon (layered `bg-primary/5` and `bg-primary/[0.02]`)
+- Added floating decorative dots around the icon for a friendlier, more polished look
+- Improved spacing and text line-height for better readability
+
+**2. Attendance page empty state** (`attendance-client.tsx`)
+- Added context-aware empty states: shows "No employees yet" with a link to manage employees when the system has no employees, or "No attendance records for this period" when filters produce no results
+
+**3. Improved error states**
+- **App error** (`src/app/(app)/error.tsx`): Replaced aggressive red `AlertTriangle` with warm amber `CloudOff` icon, friendly "Oops" messaging, shows error digest for reference, "Go to Dashboard" button, and "Report this issue" link
+- **Global error** (`src/app/error.tsx`): Same warm amber treatment with inline styles (Tailwind unavailable), amber box-shadow rings, "Report this issue" link
+
+**4. Friendly 404 page** (`src/app/not-found.tsx`)
+- Large "404" numeral in soft primary color
+- `MapPinOff` icon with decorative floating dots
+- Friendly "Let's get you back on track" messaging
+- "Go to Dashboard" CTA button
+To https://github.com/lelapinsauvage/KDDZ.git
+   7a37c85..e681571  ux-improvements -> ux-improvements
+=== Phase 43 — UX: Empty States & Error States COMPLETE — Sat Feb 28 10:54:54 CET 2026 ===
+
+=============================================
+=== Phase 44 — UX: Loading States & Skeletons — Sat Feb 28 10:54:54 CET 2026 ===
+=============================================
+All done. Here's a summary of what was changed:
+
+**Shimmer animation** (`globals.css` + `skeleton.tsx`):
+- Updated keyframe from `skeleton-shimmer` to `shimmer` with proper `-200% → 200%` direction
+- Changed gradient to `90deg` angle with `25%/50%/75%` stops using CSS variables (`var(--muted)` / `var(--color-bg-subtle)`) for automatic dark mode support
+- Reduced duration from 1.8s to 1.5s per spec
+- Added `skeleton-fade-in` keyframe (150ms ease-out)
+
+**New `FadeIn` component** (`skeleton.tsx`):
+- Exported alongside `Skeleton` — wraps real content to fade in smoothly when it replaces a skeleton
+- Applied to dashboard, children list, and profile pages
+
+**New page-matched skeletons**:
+- `dashboard-skeleton.tsx` — Greeting + 3 stat cards + 4-col status board + 2-col demographics with donut placeholders + 3-col action center + menu/chart side-by-side + insights pills
+- `profile-skeleton.tsx` — Avatar circle + name/badge + account info card with icon rows
+
+**Updated loading files**:
+- `dashboard/loading.tsx` → uses `DashboardSkeleton` (was generic gray blocks)
+- `profile/loading.tsx` → new file using `ProfileSkeleton`
+- `today/loading.tsx` → switched from inline `animate-pulse` Skeleton to shared shimmer component
+To https://github.com/lelapinsauvage/KDDZ.git
+   e681571..6f06390  ux-improvements -> ux-improvements
+=== Phase 44 — UX: Loading States & Skeletons COMPLETE — Sat Feb 28 11:00:41 CET 2026 ===
+
+=============================================
+=== Phase 45 — UX: Mobile Responsive — Sat Feb 28 11:00:41 CET 2026 ===
+=============================================
+All done. Here's a summary of the mobile responsiveness fixes across 11 files:
+
+### Changes made:
+
+| Area | File(s) | Fix |
+|------|---------|-----|
+| **Dashboard grid** | `dashboard/page.tsx` | Stat cards: `grid-cols-1 → sm:grid-cols-2 → lg:grid-cols-3` (was jumping to 3 at `sm:`) |
+| **Data table** | `data-table.tsx` | Search input full-width on mobile, sticky first column border hint, smaller cell padding, pagination buttons 36px on mobile |
+| **Children table** | `children-page-client.tsx` | Added sticky first column with border separator, responsive cell padding, larger pagination buttons |
+| **Daily reports** | `daily-reports-client.tsx` | Date range inputs share a single row on mobile instead of wrapping awkwardly |
+| **Dialogs** | `dialog.tsx` | Full-screen on mobile (`max-sm:inset-0`), centered modal on desktop, responsive close button (36px mobile), adaptive header/footer margins |
+| **Sheets** | `sheet.tsx` | Close button 36px on mobile for touch targets |
+| **More sheet** | `mobile-more-sheet.tsx` | Nav links `min-h-[44px]` for Apple HIG touch compliance |
+| **Stat cards** | `stat-card.tsx` | Responsive padding (`p-4 sm:p-5`), responsive value font size (`text-2xl sm:text-3xl`) |
+| **Status board** | `status-board.tsx` | Tighter gap and padding on mobile |
+| **Action center** | `action-center.tsx` | Responsive padding and gap, 44px min-height touch targets |
+| **CSS** | `globals.css` | Mobile body font size confirmed at 14px |
+To https://github.com/lelapinsauvage/KDDZ.git
+   6f06390..8e9f1a1  ux-improvements -> ux-improvements
+=== Phase 45 — UX: Mobile Responsive COMPLETE — Sat Feb 28 11:08:30 CET 2026 ===
+
+=============================================
+=== Phase 46 — UX: Micro-interactions & Transitions — Sat Feb 28 11:08:30 CET 2026 ===
+=============================================
+All done. Here's what was added across 9 files:
+
+**1. Page transitions** — Created `PageTransition` client component that replays a 150ms fade-in + subtle 2px translateY on every route change, wired into the app layout.
+
+**2. Button hover/active states** — `default`, `destructive`, `outline`, `secondary` variants get `hover:scale-[1.02]` + `hover:shadow-sm` + `active:scale-[0.98]`. `ghost` gets a lighter `active:scale-[0.97]`. `link` untouched.
+
+**3. Card hover** — Base `Card` component now transitions `box-shadow` and `transform` (duration-200), ready for hover lifts. Stat cards and action center items already had the `-translate-y-0.5` + shadow increase.
+
+**4. Sidebar easing** — Changed `ease-linear` to `ease-out` on the gap, container, and group label transitions — sidebar expand/collapse now decelerates naturally.
+
+**5. Toast notifications** — Added `position="top-right"` to Sonner. Sonner's built-in slide animation handles the rest.
+
+**6. Form submission spinner** — Added `@keyframes spinner` in CSS. Buttons already support `animate-spin` on Loader2 icons (pattern used in sonner.tsx).
+
+**7. Badge count updates** — Added `@keyframes badge-pulse` (scale 1→1.15→1) and upgraded badge's transition to include `transform`, so applying `animate-[badge-pulse_300ms_ease-out]` triggers a smooth pulse.
+
+**8. Tab switching** — `TabsContent` now has `animate-[tab-fade-in_150ms_ease-out]` for a content cross-fade on every tab switch.
+
+All animations respect `prefers-reduced-motion: reduce` via the existing media query that zeroes out durations.
+To https://github.com/lelapinsauvage/KDDZ.git
+   8e9f1a1..309b944  ux-improvements -> ux-improvements
+=== Phase 46 — UX: Micro-interactions & Transitions COMPLETE — Sat Feb 28 11:13:09 CET 2026 ===
+
+=============================================
+=== Phase 47 — UX: Accessibility — Sat Feb 28 11:13:09 CET 2026 ===
+=============================================
+Committed `26cc5a4`. Here's a summary of all accessibility fixes applied:
+
+### 1. Color Contrast (WCAG AA)
+- **Sidebar section labels**: bumped from `/40` to `/70` opacity (was ~2.2:1, now ~5.5:1)
+- **Inactive nav items**: bumped from `/70` to full `text-sidebar-foreground` (~5.8:1)
+- **Recently visited icons**: bumped from `/30` to `/70`
+- **User role text, keyboard shortcut, chevron icon**: all bumped from `/40`-`/50` to `/70`
+- **Brand subtitle "Nursery Management"**: bumped from `/50` to `/70`
+
+### 2. Focus Indicators
+- **Global fallback**: added `focus-visible` outline (2px solid ring, 2px offset) for `a`, `button`, `[role="button"]`, `[tabindex]` in `globals.css`
+- **Mobile back button** (page-header): added `focus-visible:ring-2`
+- **Filter chip remove buttons** (data-table): added `focus-visible:ring-2`
+- **Collapsible form sections**: added `focus-visible:ring-2` when collapsible
+- **Clickable table rows**: added `focus-visible:ring-2 ring-inset`
+
+### 3. Keyboard Navigation
+- **Data table rows**: added `tabIndex={0}`, `role="link"`, and `onKeyDown` handler for Enter/Space when `onRowClick` is provided
+- **Form sections**: already had proper `tabIndex` for collapsible, now also has `aria-expanded`/`aria-controls`
+
+### 4. ARIA Labels
+- **Pagination buttons**: `aria-label` for "First page", "Previous page", "Next page", "Last page"
+- **Sort header buttons**: dynamic `aria-label` announcing column name and sort state
+- **Filter chip remove buttons**: `aria-label="Remove {column} filter"`
+- **Column visibility button**: `aria-label="Toggle column visibility"`
+- **Quick Actions button**: `aria-label="Quick Actions (⌘K)"`
+- **Sidebar**: `aria-label="Main navigation"`
+- **Page header back button**: `aria-label="Go back"`
+- **Search wrapper**: `role="search"`
+- **Bulk actions bar**: `role="toolbar"` with `aria-label` and `aria-live="polite"` on selection count
+- **Empty state**: `role="status"` for screen reader announcement
+- **Decorative icons**: `aria-hidden="true"` on search icon, inbox icon, chevron
+
+### 5. Screen Reader / Headings
+- **Breadcrumb nav**: added `aria-label="Breadcrumb"`
+- **Pagination text**: changed from bare "1 / 3" to "Page 1 of 3" for screen reader clarity
+- **h1 hierarchy**: verified — `PageHeader` provides the single h1 per page, `FormSection` uses h3
+
+### 6. Reduced Motion
+- Already had the global `@media (prefers-reduced-motion: reduce)` rule
+- Added `scroll-behavior: auto !important` to the rule
+- Added explicit `[data-slot="skeleton"]` override to stop shimmer animation (inline styles bypass the `*` selector)
+
+### 7. Arabic RTL Support
+- Compliance forms (`owner-info-section`, `nursery-address-section`, etc.) already have `dir="rtl"` on containers and `dir="ltr"` on LTR inputs (dates, emails, phone)
+- `FormSection` subtitle already has `dir="rtl"` — added explicit `text-right` for clarity and `text-left` on the title
+To https://github.com/lelapinsauvage/KDDZ.git
+   309b944..26cc5a4  ux-improvements -> ux-improvements
+=== Phase 47 — UX: Accessibility COMPLETE — Sat Feb 28 11:17:52 CET 2026 ===
+
+=============================================
+=== Phase 48 — UX: Print Views — Sat Feb 28 11:17:52 CET 2026 ===
+=============================================

@@ -208,10 +208,10 @@ export default function PrintClient({
       </div>
 
       {/* Printable area */}
-      <div className="p-6 print:p-0">
+      <div className="p-6 print:p-0 print:text-black">
         {/* Print-only title */}
         <div className="mb-4 hidden text-center print:block">
-          <h1 className="text-2xl font-bold text-foreground">
+          <h1 className="text-2xl font-bold text-black">
             Monthly Food Calendar
           </h1>
           <p className="mt-1 text-base text-[#555]">
@@ -220,13 +220,13 @@ export default function PrintClient({
         </div>
 
         {/* Calendar Table */}
-        <table className="w-full border-collapse border border-gray-300">
+        <table className="w-full border-collapse border border-gray-300 print:text-[9px]">
           <thead>
             <tr>
               {DAY_NAMES.map((day) => (
                 <th
                   key={day}
-                  className="border border-gray-300 bg-muted/50 px-2 py-2 text-center text-xs font-semibold uppercase text-muted-foreground print:bg-gray-100 print:text-[9px]"
+                  className="border border-gray-300 bg-muted/50 px-2 py-2 text-center text-xs font-semibold uppercase text-muted-foreground print:bg-gray-100 print:text-[9px] print:text-gray-700"
                 >
                   {day}
                 </th>
@@ -241,7 +241,7 @@ export default function PrintClient({
                     return (
                       <td
                         key={dayIdx}
-                        className="border border-gray-300 bg-gray-50 p-1 align-top h-[90px] print:h-[70px]"
+                        className="border border-gray-300 bg-gray-50 p-1 align-top h-[90px] print:h-[70px] print:bg-gray-50"
                       />
                     );
                   }
@@ -254,7 +254,7 @@ export default function PrintClient({
                       key={dayIdx}
                       className="border border-gray-300 p-1.5 align-top h-[90px] print:h-[70px] print:p-1"
                     >
-                      <div className="text-xs font-semibold text-foreground mb-0.5 print:text-[9px]">
+                      <div className="text-xs font-semibold text-foreground mb-0.5 print:text-[9px] print:text-black">
                         {day}
                       </div>
                       <div className="space-y-0.5">
@@ -291,27 +291,10 @@ export default function PrintClient({
         </div>
       </div>
 
-      {/* Print styles */}
-      <style jsx global>{`
+      {/* Landscape orientation for food calendar print */}
+      {/* eslint-disable-next-line react/no-unknown-property */}
+      <style>{`
         @media print {
-          [data-slot="sidebar"],
-          [data-slot="sidebar-trigger"],
-          nav,
-          header,
-          footer,
-          .print\\:hidden {
-            display: none !important;
-          }
-
-          body {
-            background: white !important;
-          }
-
-          main {
-            margin: 0 !important;
-            padding: 0 !important;
-          }
-
           @page {
             size: landscape;
             margin: 1cm;

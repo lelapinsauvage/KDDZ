@@ -173,9 +173,19 @@ export function AttendanceHeatmap({
   }, 0);
 
   return (
-    <div className="space-y-6">
-      {/* ── Filters ── */}
-      <div className="flex flex-wrap items-center gap-3">
+    <div className="space-y-6 print:space-y-3">
+      {/* Print-only title */}
+      <div className="hidden print:block print:text-center print:mb-2">
+        <h1 className="text-xl font-bold text-black">
+          Attendance Heatmap &mdash; {MONTHS[month - 1]} {year}
+        </h1>
+        <p className="text-sm text-gray-500">
+          Present: {totalPresent} &bull; Absent: {totalAbsent} &bull; No Report: {totalNoReport}
+        </p>
+      </div>
+
+      {/* ── Filters (hidden in print) ── */}
+      <div className="flex flex-wrap items-center gap-3 print:hidden">
         <Select value={String(month)} onValueChange={handleMonthChange}>
           <SelectTrigger className="w-[140px]">
             <SelectValue />
@@ -236,21 +246,21 @@ export function AttendanceHeatmap({
       </div>
 
       {/* ── Legend + Stats ── */}
-      <div className="flex flex-wrap items-center gap-6 text-sm">
+      <div className="flex flex-wrap items-center gap-6 text-sm print:gap-4 print:text-xs">
         <div className="flex items-center gap-2">
-          <span className="inline-block size-3 rounded-full bg-emerald-500" />
-          <span className="text-muted-foreground">Present ({totalPresent})</span>
+          <span className="inline-block size-3 rounded-full bg-emerald-500 print:size-2.5" />
+          <span className="text-muted-foreground print:text-black">Present ({totalPresent})</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="inline-block size-3 rounded-full bg-rose-500" />
-          <span className="text-muted-foreground">Absent ({totalAbsent})</span>
+          <span className="inline-block size-3 rounded-full bg-rose-500 print:size-2.5" />
+          <span className="text-muted-foreground print:text-black">Absent ({totalAbsent})</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="inline-block size-3 rounded-full bg-violet-500" />
-          <span className="text-muted-foreground">No Report ({totalNoReport})</span>
+          <span className="inline-block size-3 rounded-full bg-violet-500 print:size-2.5" />
+          <span className="text-muted-foreground print:text-black">No Report ({totalNoReport})</span>
         </div>
         {totalNoReport > 0 && (
-          <span className="text-xs text-violet-600 font-medium">
+          <span className="text-xs text-violet-600 font-medium print:hidden">
             Click purple dots to fill missing reports
           </span>
         )}
@@ -264,18 +274,18 @@ export function AttendanceHeatmap({
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border bg-card">
-          <table className="w-full border-collapse">
+        <div className="overflow-x-auto rounded-lg border bg-card print:overflow-visible print:rounded-none print:border-gray-300">
+          <table className="w-full border-collapse print:text-[9px]">
             <thead>
               <tr>
-                <th className="sticky left-0 z-10 min-w-[180px] border-b border-r bg-secondary/60 px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <th className="sticky left-0 z-10 min-w-[180px] border-b border-r bg-secondary/60 px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground print:static print:min-w-[120px] print:bg-gray-100 print:text-black print:text-[9px] print:px-2 print:py-1 print:border-gray-300">
                   Child
                 </th>
                 {Array.from({ length: grid.daysInMonth }, (_, i) => i + 1).map(
                   (day) => (
                     <th
                       key={day}
-                      className="border-b bg-secondary/40 px-1 py-2 text-center text-xs font-medium text-muted-foreground"
+                      className="border-b bg-secondary/40 px-1 py-2 text-center text-xs font-medium text-muted-foreground print:bg-gray-100 print:text-black print:text-[9px] print:px-0.5 print:py-1 print:border-gray-300"
                       style={{ minWidth: 28 }}
                     >
                       {day}
@@ -288,15 +298,15 @@ export function AttendanceHeatmap({
               {grid.rows.map((row) => (
                 <tr
                   key={row.child.id}
-                  className="transition-colors hover:bg-accent/30"
+                  className="transition-colors hover:bg-accent/30 print:hover:bg-transparent"
                 >
-                  <td className="sticky left-0 z-10 border-r bg-card px-3 py-2">
+                  <td className="sticky left-0 z-10 border-r bg-card px-3 py-2 print:static print:bg-white print:px-2 print:py-1 print:border-gray-300">
                     <div className="flex flex-col">
-                      <span className="text-sm font-medium truncate max-w-[170px]">
+                      <span className="text-sm font-medium truncate max-w-[170px] print:text-[9px] print:text-black">
                         {row.child.firstName} {row.child.lastName}
                       </span>
                       {row.child.className && (
-                        <span className="text-xs text-muted-foreground truncate max-w-[170px]">
+                        <span className="text-xs text-muted-foreground truncate max-w-[170px] print:text-[8px] print:text-gray-600">
                           {row.child.className}
                         </span>
                       )}
@@ -311,7 +321,7 @@ export function AttendanceHeatmap({
                     return (
                       <td
                         key={day}
-                        className="px-1 py-2 text-center"
+                        className="px-1 py-2 text-center print:px-0.5 print:py-1"
                       >
                         <button
                           type="button"
@@ -319,7 +329,7 @@ export function AttendanceHeatmap({
                           onClick={() =>
                             handleCellClick(row.child.id, day, status)
                           }
-                          className={`inline-block size-3.5 rounded-full transition-all ${STATUS_COLORS[status]} ${STATUS_HOVER[status]} ${
+                          className={`inline-block size-3.5 rounded-full transition-all print:size-2.5 print:transition-none ${STATUS_COLORS[status]} ${STATUS_HOVER[status]} ${
                             isClickable
                               ? "ring-offset-2 hover:ring-2 hover:ring-violet-300"
                               : ""

@@ -506,9 +506,12 @@
 
 /* ── Print styles ── */
 @media print {
-  /* Hide navigation, sidebar, header, footer */
+  /* Hide navigation, sidebar, header, footer, mobile nav, toasts, dialogs */
   [data-slot="sidebar"],
   [data-slot="sidebar-trigger"],
+  [data-slot="mobile-nav"],
+  [data-sonner-toaster],
+  [role="dialog"],
   nav,
   header,
   footer,
@@ -523,9 +526,23 @@
     background: white !important;
     color: black !important;
     font-size: 12px !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
-  main {
+  /* Remove sidebar layout constraints so content fills the page */
+  [data-slot="sidebar-provider"],
+  [data-slot="sidebar-inset"] {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    transform: none !important;
+    --sidebar-width: 0px !important;
+  }
+
+  main,
+  [data-slot="sidebar-inset"] {
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
@@ -538,16 +555,38 @@
     display: none !important;
   }
 
-  /* Show URLs after links */
-  a[href^="http"]::after,
-  a[href^="tel"]::after {
-    content: " (" attr(href) ")";
-    font-size: 0.75em;
-    color: #666;
+  /* No shadows or box-shadows in print */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Page break control — avoid breaking inside cards, sections, table rows */
+  .card,
+  [data-slot="card"],
+  section,
+  tr {
+    break-inside: avoid;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    break-after: avoid;
+  }
+
+  img, svg, table, figure {
+    break-inside: avoid;
   }
 
   /* Default page settings */
   @page {
     margin: 1.5cm;
+  }
+
+  /* Landscape page variant */
+  .print-landscape {
+    @page {
+      size: landscape;
+      margin: 1cm;
+    }
   }
 }

@@ -158,10 +158,11 @@ export function getChildrenColumns(
   options: ChildrenColumnsOptions = {}
 ): ColumnDef<ChildRow>[] {
   return [
-    // Avatar — with tooltip showing extra info
+    // Avatar — with tooltip showing extra info (hidden in print)
     {
       id: "avatar",
       header: "",
+      meta: { className: "print:hidden" },
       cell: ({ row }) => {
         const child = row.original;
         const fullName = `${child.firstName} ${child.lastName}`;
@@ -171,28 +172,30 @@ export function getChildrenColumns(
         const status = getStatus(child);
 
         return (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div
-                  className={`flex size-9 items-center justify-center rounded-full text-xs font-bold text-white shadow-sm ${bg}`}
-                >
-                  {initials}
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="right" className="max-w-[200px]">
-                <p className="font-medium">{fullName}</p>
-                {age && <p className="text-muted-foreground">Age: {age}</p>}
-                {child.class?.name && (
-                  <p className="text-muted-foreground">Class: {child.class.name}</p>
-                )}
-                {child.branch?.name && (
-                  <p className="text-muted-foreground">Branch: {child.branch.name}</p>
-                )}
-                <p className="text-muted-foreground">Status: {status.charAt(0) + status.slice(1).toLowerCase()}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <div className="print:hidden">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div
+                    className={`flex size-9 items-center justify-center rounded-full text-xs font-bold text-white shadow-sm ${bg}`}
+                  >
+                    {initials}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="max-w-[200px]">
+                  <p className="font-medium">{fullName}</p>
+                  {age && <p className="text-muted-foreground">Age: {age}</p>}
+                  {child.class?.name && (
+                    <p className="text-muted-foreground">Class: {child.class.name}</p>
+                  )}
+                  {child.branch?.name && (
+                    <p className="text-muted-foreground">Branch: {child.branch.name}</p>
+                  )}
+                  <p className="text-muted-foreground">Status: {status.charAt(0) + status.slice(1).toLowerCase()}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         );
       },
       enableSorting: false,
@@ -315,51 +318,54 @@ export function getChildrenColumns(
       },
     },
 
-    // Actions
+    // Actions (hidden in print)
     {
       id: "actions",
       header: "",
+      meta: { className: "print:hidden" },
       cell: ({ row }) => {
         const child = row.original;
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <MoreHorizontal className="size-4 text-muted-foreground hover:text-primary" />
-                <span className="sr-only">Actions</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href={`/children/${child.id}`}>
-                  <Eye className="mr-2 size-4" />
-                  View
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href={`/children/${child.id}?edit=true`}>
-                  <Pencil className="mr-2 size-4" />
-                  Edit
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                variant="destructive"
-                onClick={() => {
-                  options.onDelete?.(
-                    child.id,
-                    `${child.firstName} ${child.lastName}`
-                  );
-                }}
-              >
-                <Trash2 className="mr-2 size-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="print:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MoreHorizontal className="size-4 text-muted-foreground hover:text-primary" />
+                  <span className="sr-only">Actions</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link href={`/children/${child.id}`}>
+                    <Eye className="mr-2 size-4" />
+                    View
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={`/children/${child.id}?edit=true`}>
+                    <Pencil className="mr-2 size-4" />
+                    Edit
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => {
+                    options.onDelete?.(
+                      child.id,
+                      `${child.firstName} ${child.lastName}`
+                    );
+                  }}
+                >
+                  <Trash2 className="mr-2 size-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         );
       },
       enableSorting: false,

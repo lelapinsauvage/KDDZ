@@ -90,7 +90,7 @@ export function ChildPrintClient({ child }: { child: ChildData }) {
       </div>
 
       {/* Printable content */}
-      <div className="mx-auto max-w-2xl p-6 print:max-w-none print:p-0">
+      <div className="mx-auto max-w-2xl p-6 print:max-w-none print:p-0 print:text-black">
         {/* Nursery branding */}
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-bold text-foreground print:text-black">
@@ -102,7 +102,7 @@ export function ChildPrintClient({ child }: { child: ChildData }) {
         </div>
 
         {/* Basic Info */}
-        <div className="mb-6 rounded-lg border border-border p-4 print:border-gray-300">
+        <div className="mb-6 rounded-lg border border-border p-4 print:border-gray-300 print:rounded-none" style={{ breakInside: "avoid" }}>
           <h2 className="mb-3 text-lg font-bold">{fullName}</h2>
           <div className="grid grid-cols-2 gap-y-2 text-sm">
             {child.dateOfBirth && (
@@ -149,11 +149,15 @@ export function ChildPrintClient({ child }: { child: ChildData }) {
               <span className="font-semibold">Bus:</span>{" "}
               {child.busAttendance && child.busAttendance !== "false" ? child.busAttendance : "No"}
             </div>
+            <div>
+              <span className="font-semibold">Lunch Included:</span>{" "}
+              {child.lunchIncluded ? "Yes" : "No"}
+            </div>
           </div>
         </div>
 
         {/* Allergies / Medical */}
-        <div className="mb-5">
+        <div className="mb-5" style={{ breakInside: "avoid" }}>
           <h2 className="mb-2 border-b border-border pb-1 text-base font-bold print:border-gray-300">
             Medical Information
           </h2>
@@ -171,7 +175,7 @@ export function ChildPrintClient({ child }: { child: ChildData }) {
 
         {/* Parent / Guardian Contacts */}
         {child.parents.length > 0 && (
-          <div className="mb-5">
+          <div className="mb-5" style={{ breakInside: "avoid" }}>
             <h2 className="mb-2 border-b border-border pb-1 text-base font-bold print:border-gray-300">
               Parent / Guardian Contacts
             </h2>
@@ -200,7 +204,7 @@ export function ChildPrintClient({ child }: { child: ChildData }) {
 
         {/* Emergency Contacts (relatives) */}
         {child.relatives.length > 0 && (
-          <div className="mb-5">
+          <div className="mb-5" style={{ breakInside: "avoid" }}>
             <h2 className="mb-2 border-b border-border pb-1 text-base font-bold print:border-gray-300">
               Emergency Contacts
             </h2>
@@ -236,7 +240,7 @@ export function ChildPrintClient({ child }: { child: ChildData }) {
         )}
 
         {/* Vaccinations */}
-        <div className="mb-5">
+        <div className="mb-5" style={{ breakInside: "avoid" }}>
           <h2 className="mb-2 border-b border-border pb-1 text-base font-bold print:border-gray-300">
             Vaccination Records
           </h2>

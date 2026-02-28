@@ -373,24 +373,34 @@ export function ChildrenPageClient({
 
   return (
     <>
-      <PageHeader
-        title="Children"
-        breadcrumbs={[
-          { label: "Children" },
-        ]}
-        actions={
-          <Button asChild>
-            <Link href="/children/new">
-              <Plus className="mr-1 size-4" />
-              Add Child
-            </Link>
-          </Button>
-        }
-      />
+      <div className="print:hidden">
+        <PageHeader
+          title="Children"
+          breadcrumbs={[
+            { label: "Children" },
+          ]}
+          actions={
+            <Button asChild>
+              <Link href="/children/new">
+                <Plus className="mr-1 size-4" />
+                Add Child
+              </Link>
+            </Button>
+          }
+        />
+      </div>
 
-      <div className="space-y-4 p-4 md:p-6">
+      {/* Print-only header */}
+      <div className="hidden print:block print:mb-4 print:text-center">
+        <h1 className="text-2xl font-bold text-black">Children List</h1>
+        <p className="text-sm text-gray-500">
+          {total} children &mdash; Printed on {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+        </p>
+      </div>
+
+      <div className="space-y-4 p-4 md:p-6 print:p-0 print:space-y-0">
         {/* ── Toolbar ─────────────────────────────── */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 print:hidden">
           {/* Search — instant debounced filter */}
           <div className="relative w-full sm:max-w-xs">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -504,7 +514,7 @@ export function ChildrenPageClient({
 
         {/* ── Active Filter Pills ──────────────────── */}
         {activeFilters.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5 print:hidden">
             <span className="text-xs font-medium text-muted-foreground mr-1">Filters:</span>
             {activeFilters.map((f) => (
               <Badge
@@ -601,9 +611,9 @@ export function ChildrenPageClient({
             )
           ) : (
             /* Table View */
-            <div className="overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm">
-              <div className="overflow-x-auto">
-                <Table className="min-w-[700px]">
+            <div className="overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm print:rounded-none print:border-gray-300 print:shadow-none">
+              <div className="overflow-x-auto print:overflow-visible">
+                <Table className="min-w-[700px] print:min-w-0 print:w-full print:text-[11px]">
                   <TableHeader className="sticky top-0 z-10">
                     {table.getHeaderGroups().map((headerGroup) => (
                       <TableRow key={headerGroup.id} className="border-border/60 hover:bg-transparent">
@@ -675,7 +685,7 @@ export function ChildrenPageClient({
 
           {/* ── Pagination ──────────────────────────── */}
           {total > 0 && (
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-border/40 bg-card/50 px-4 py-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-border/40 bg-card/50 px-4 py-3 print:hidden">
               <p className="text-sm text-muted-foreground">
                 Showing{" "}
                 <span className="font-medium text-foreground">

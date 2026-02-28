@@ -61,15 +61,17 @@ export default async function AttendanceHeatmapPage({ searchParams }: Props) {
 
   return (
     <>
-      <PageHeader
-        title="Attendance Heatmap"
-        description="Monthly attendance overview — click purple dots to fill missing reports"
-        breadcrumbs={[
-          { label: "Home", href: "/dashboard" },
-          { label: "Attendance Heatmap" },
-        ]}
-      />
-      <div className="p-4 sm:p-6">
+      <div className="print:hidden">
+        <PageHeader
+          title="Attendance Heatmap"
+          description="Monthly attendance overview — click purple dots to fill missing reports"
+          breadcrumbs={[
+            { label: "Home", href: "/dashboard" },
+            { label: "Attendance Heatmap" },
+          ]}
+        />
+      </div>
+      <div className="p-4 sm:p-6 print:p-0">
         <AttendanceHeatmap
           grid={grid}
           branches={branches}

@@ -107,7 +107,7 @@ export function DailyReportPrintClient({ report }: { report: ReportData }) {
       </div>
 
       {/* Printable content */}
-      <div className="mx-auto max-w-2xl p-6 print:max-w-none print:p-0">
+      <div className="mx-auto max-w-2xl p-6 print:max-w-none print:p-0 print:text-black">
         {/* Nursery branding */}
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-bold text-foreground print:text-black">
@@ -119,7 +119,7 @@ export function DailyReportPrintClient({ report }: { report: ReportData }) {
         </div>
 
         {/* Child & Date info */}
-        <div className="mb-6 rounded-lg border border-border p-4 print:border-gray-300">
+        <div className="mb-6 rounded-lg border border-border p-4 print:border-gray-300 print:rounded-none" style={{ breakInside: "avoid" }}>
           <div className="grid grid-cols-2 gap-y-2 text-sm">
             <div>
               <span className="font-semibold">Child:</span>{" "}
@@ -141,11 +141,15 @@ export function DailyReportPrintClient({ report }: { report: ReportData }) {
                 {report.branchName}
               </div>
             )}
+            <div>
+              <span className="font-semibold">Status:</span>{" "}
+              {report.status}
+            </div>
           </div>
         </div>
 
         {/* Meals */}
-        <div className="mb-5">
+        <div className="mb-5" style={{ breakInside: "avoid" }}>
           <h2 className="mb-2 border-b border-border pb-1 text-base font-bold print:border-gray-300">
             Meals
           </h2>
@@ -179,7 +183,7 @@ export function DailyReportPrintClient({ report }: { report: ReportData }) {
 
         {/* Milk feedings */}
         {report.milks.length > 0 && (
-          <div className="mb-5">
+          <div className="mb-5" style={{ breakInside: "avoid" }}>
             <h2 className="mb-2 border-b border-border pb-1 text-base font-bold print:border-gray-300">
               Milk Feedings
             </h2>
@@ -195,7 +199,7 @@ export function DailyReportPrintClient({ report }: { report: ReportData }) {
         )}
 
         {/* Sleep */}
-        <div className="mb-5">
+        <div className="mb-5" style={{ breakInside: "avoid" }}>
           <h2 className="mb-2 border-b border-border pb-1 text-base font-bold print:border-gray-300">
             Sleep
           </h2>
@@ -214,7 +218,7 @@ export function DailyReportPrintClient({ report }: { report: ReportData }) {
         </div>
 
         {/* Health / Mood */}
-        <div className="mb-5">
+        <div className="mb-5" style={{ breakInside: "avoid" }}>
           <h2 className="mb-2 border-b border-border pb-1 text-base font-bold print:border-gray-300">
             Health &amp; Mood
           </h2>
@@ -251,7 +255,7 @@ export function DailyReportPrintClient({ report }: { report: ReportData }) {
 
         {/* Potty / Diaper */}
         {(report.urinePotty > 0 || report.stoolPotty > 0 || report.urineDiaper > 0 || report.stoolDiaper > 0) && (
-          <div className="mb-5">
+          <div className="mb-5" style={{ breakInside: "avoid" }}>
             <h2 className="mb-2 border-b border-border pb-1 text-base font-bold print:border-gray-300">
               Potty / Diaper
             </h2>
@@ -266,7 +270,7 @@ export function DailyReportPrintClient({ report }: { report: ReportData }) {
 
         {/* Remarks */}
         {report.remarks && (
-          <div className="mb-5">
+          <div className="mb-5" style={{ breakInside: "avoid" }}>
             <h2 className="mb-2 border-b border-border pb-1 text-base font-bold print:border-gray-300">
               Teacher Remarks
             </h2>
