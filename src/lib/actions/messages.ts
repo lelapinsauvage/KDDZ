@@ -31,6 +31,13 @@ interface SendClassMessageData {
   body: string;
 }
 
+interface SendBulkChildMessageData {
+  childIds: string[];
+  subject?: string | null;
+  body: string;
+  nature?: string | null;
+}
+
 type ActionResult<T = unknown> = {
   success: boolean;
   error?: string;
@@ -690,5 +697,127 @@ export async function sendClassMessage(
   } catch (error) {
     console.error("Failed to send class message:", error);
     return { success: false, error: "Failed to send class message" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// sendBulkChildMessage — send to parents of selected children
+// ---------------------------------------------------------------------------
+
+export async function sendBulkChildMessage(
+  data: SendBulkChildMessageData,
+): Promise<ActionResult> {
+  try {
+    const res = await requireOrgSafe();
+    if (!res.ok) return { success: false, error: res.error };
+    const { ctx } = res;
+
+    if (data.childIds.length === 0) {
+      return { success: false, error: "No children selected" };
+    }
+
+    const senderType = roleToSenderType(ctx.role);
+
+    // Find all parent users for the selected children within the org
+    const children = await db.child.findMany({
+      where: {
+        id: { in: data.childIds },
+        branch: { organizationId: ctx.organizationId },
+      },
+      include: {
+        parentUsers: {
+          where: { isActive: true },
+          select: { id: true },
+        },
+      },
+    });
+
+    const parentUserIds = new Set<string>();
+    for (const child of children) {
+      for (const pu of child.parentUsers) {
+        parentUserIds.add(pu.id);
+      }
+    }
+
+    if (parentUserIds.size === 0) {
+      return { success: false, error: "No parent users found for the selected children" };
+    }
+
+    // Prefix subject with nature tag if provided
+    const subjectLine = data.nature && data.subject
+      ? `[${data.nature}] ${data.subject}`
+      : data.subject ?? null;
+
+    const thread = await db.messageThread.create({
+      data: {
+        subject: subjectLine,
+        organizationId: ctx.organizationId,
+      },
+    });
+
+    const messageCreateData = Array.from(parentUserIds).map((parentId) => ({
+      senderId: ctx.userId,
+      senderType,
+      recipientId: parentId,
+      recipientType: "PARENT" as RecipientType,
+      subject: subjectLine,
+      body: data.body,
+      threadId: thread.id,
+      organizationId: ctx.organizationId,
+    }));
+
+    await db.message.createMany({ data: messageCreateData });
+
+    revalidatePath("/messages");
+
+    return {
+      success: true,
+      data: {
+        threadId: thread.id,
+        recipientCount: parentUserIds.size,
+        childCount: children.length,
+      },
+    };
+  } catch (error) {
+    console.error("Failed to send bulk child message:", error);
+    return { success: false, error: "Failed to send bulk message" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// resendMessage — resend an existing message
+// ---------------------------------------------------------------------------
+
+export async function resendMessage(id: string): Promise<ActionResult> {
+  try {
+    const res = await requireOrgSafe();
+    if (!res.ok) return { success: false, error: res.error };
+    const { ctx } = res;
+
+    const original = await db.message.findUnique({ where: { id } });
+    if (!original || original.organizationId !== ctx.organizationId) {
+      return { success: false, error: "Message not found" };
+    }
+
+    const senderType = roleToSenderType(ctx.role);
+
+    const resent = await db.message.create({
+      data: {
+        senderId: ctx.userId,
+        senderType,
+        recipientId: original.recipientId,
+        recipientType: original.recipientType,
+        subject: original.subject,
+        body: original.body,
+        threadId: original.threadId,
+        organizationId: ctx.organizationId,
+      },
+    });
+
+    revalidatePath("/messages");
+    return { success: true, data: resent };
+  } catch (error) {
+    console.error("Failed to resend message:", error);
+    return { success: false, error: "Failed to resend message" };
   }
 }

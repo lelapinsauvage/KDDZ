@@ -31,8 +31,10 @@ import {
   Eye,
   Inbox,
   ArrowUpDown,
+  RefreshCw,
+  MessageSquare,
 } from "lucide-react";
-import { deleteMessage } from "@/lib/actions/messages";
+import { deleteMessage, resendMessage } from "@/lib/actions/messages";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -62,21 +64,51 @@ interface SentClientProps {
 // ---------------------------------------------------------------------------
 
 const AVATAR_COLORS = [
-  "bg-[#6B8F71]", "bg-[#C35A2C]", "bg-[#B08968]", "bg-[#B07070]",
-  "bg-[#8B7355]", "bg-[#6B8F71]/80", "bg-[#B07070]/80", "bg-[#C35A2C]/80",
+  "bg-violet-500",
+  "bg-sky-500",
+  "bg-emerald-500",
+  "bg-amber-500",
+  "bg-rose-500",
+  "bg-cyan-500",
+  "bg-indigo-500",
+  "bg-teal-500",
+  "bg-pink-500",
+  "bg-orange-500",
 ];
 
 function avatarColor(name: string): string {
   let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  for (let i = 0; i < name.length; i++)
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/);
-  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  if (parts.length >= 2)
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   return name.slice(0, 2).toUpperCase();
 }
+
+/** Parse nature tag from subject like "[Urgent] Hello" */
+function parseNature(subject: string | null): {
+  nature: string | null;
+  cleanSubject: string | null;
+} {
+  if (!subject) return { nature: null, cleanSubject: null };
+  const match = subject.match(/^\[(General|Urgent|Legal|Event)\]\s*(.*)/i);
+  if (match) {
+    return { nature: match[1], cleanSubject: match[2] || null };
+  }
+  return { nature: null, cleanSubject: subject };
+}
+
+const NATURE_STYLES: Record<string, string> = {
+  General: "bg-gray-100 text-gray-700",
+  Urgent: "bg-red-100 text-red-700",
+  Legal: "bg-amber-100 text-amber-700",
+  Event: "bg-blue-100 text-blue-700",
+};
 
 // ---------------------------------------------------------------------------
 // Component
@@ -98,8 +130,23 @@ export function SentClient({ messages, total }: SentClientProps) {
     });
   }
 
+  function handleResend(id: string) {
+    startTransition(async () => {
+      await resendMessage(id);
+      router.refresh();
+    });
+  }
+
   // Column definitions
   const columns: ColumnDef<SentMessage>[] = [
+    {
+      id: "index",
+      header: "#",
+      size: 50,
+      cell: ({ row }) => (
+        <span className="text-xs text-muted-foreground">{row.index + 1}</span>
+      ),
+    },
     {
       accessorKey: "recipientName",
       header: ({ column }) => (
@@ -117,57 +164,14 @@ export function SentClient({ messages, total }: SentClientProps) {
       ),
       cell: ({ row }) => {
         const msg = row.original;
-        const isGroup = msg.threadId !== null;
         return (
           <div className="flex items-center gap-2.5">
-            <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white ${avatarColor(msg.recipientName)}`}>
+            <div
+              className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white ${avatarColor(msg.recipientName)}`}
+            >
               {initials(msg.recipientName)}
             </div>
-            <div>
-              <span className="text-sm text-foreground">
-                {msg.recipientName}
-              </span>
-              <Badge
-                variant="outline"
-                className={`ml-1.5 text-[10px] ${
-                  isGroup ? "border-primary text-primary" : ""
-                }`}
-              >
-                {isGroup ? "Group" : msg.recipientType}
-              </Badge>
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "subject",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="px-0"
-          onClick={() =>
-            column.toggleSorting(column.getIsSorted() === "asc")
-          }
-        >
-          Subject
-          <ArrowUpDown className="ml-1 size-3" />
-        </Button>
-      ),
-      cell: ({ row }) => {
-        const msg = row.original;
-        return (
-          <div>
-            <Link
-              href={`/messages/${msg.id}`}
-              className="text-sm text-foreground hover:underline"
-            >
-              {msg.subject ?? "(No subject)"}
-            </Link>
-            <p className="max-w-md truncate text-xs text-muted-foreground">
-              {msg.body}
-            </p>
+            <span className="text-sm">{msg.recipientName}</span>
           </div>
         );
       },
@@ -190,7 +194,7 @@ export function SentClient({ messages, total }: SentClientProps) {
       cell: ({ row }) => {
         const date = new Date(row.original.createdAt);
         return (
-          <div className="text-right">
+          <div>
             <p className="text-sm text-muted-foreground">
               {date.toLocaleDateString("en-GB", {
                 day: "numeric",
@@ -215,24 +219,71 @@ export function SentClient({ messages, total }: SentClientProps) {
       },
     },
     {
-      id: "deliveryStatus",
-      header: "Status",
+      id: "nature",
+      header: "Nature",
+      cell: ({ row }) => {
+        const { nature } = parseNature(row.original.subject);
+        if (!nature)
+          return <span className="text-xs text-muted-foreground">-</span>;
+        return (
+          <Badge
+            variant="secondary"
+            className={`text-xs font-normal ${NATURE_STYLES[nature] ?? ""}`}
+          >
+            {nature}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: "subject",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="px-0"
+          onClick={() =>
+            column.toggleSorting(column.getIsSorted() === "asc")
+          }
+        >
+          Subject
+          <ArrowUpDown className="ml-1 size-3" />
+        </Button>
+      ),
       cell: ({ row }) => {
         const msg = row.original;
-        return msg.isRead ? (
-          <Badge
-            variant="secondary"
-            className="bg-green-50 text-green-700 font-normal"
+        const { cleanSubject } = parseNature(msg.subject);
+        return (
+          <div>
+            <Link
+              href={`/messages/${msg.id}`}
+              className="text-sm text-foreground hover:underline"
+            >
+              {cleanSubject ?? "(No subject)"}
+            </Link>
+            <p className="max-w-xs truncate text-xs text-muted-foreground">
+              {msg.body}
+            </p>
+          </div>
+        );
+      },
+    },
+    {
+      id: "thread",
+      header: "Thread",
+      cell: ({ row }) => {
+        const msg = row.original;
+        if (!msg.threadId) {
+          return <span className="text-xs text-muted-foreground">-</span>;
+        }
+        return (
+          <Link
+            href={`/messages/${msg.id}`}
+            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
           >
-            Read
-          </Badge>
-        ) : (
-          <Badge
-            variant="secondary"
-            className="bg-gray-100 text-gray-600 font-normal"
-          >
-            Delivered
-          </Badge>
+            <MessageSquare className="size-3" />
+            View
+          </Link>
         );
       },
     },
@@ -253,8 +304,12 @@ export function SentClient({ messages, total }: SentClientProps) {
               <DropdownMenuItem asChild>
                 <Link href={`/messages/${msg.id}`}>
                   <Eye className="mr-2 size-4" />
-                  View Message
+                  View
                 </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleResend(msg.id)}>
+                <RefreshCw className="mr-2 size-4" />
+                Resend
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="text-red-600"

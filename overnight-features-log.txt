@@ -378,3 +378,33 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 16 — Accounting: Sticky DataTable + Payment Modal — Sat Feb 28 08:38:14 CET 2026 ===
 =============================================
+All done. Here's what was implemented:
+
+**1. Fee Category Tabs** — 6 tabs at the top: Total Payments, Registration, Monthly, Bus, Xtra-time, Other. Each tab filters the grid to show only that fee category's payments.
+
+**2. Sticky DataTable** — Custom monthly pivot grid with:
+- Sticky first column (Child Name with colored avatars) that stays visible during horizontal scroll, with a subtle shadow separator
+- 12 month columns (Jan–Dec) showing aggregated payment amounts per child
+- Grand Total column and footer row
+- Clickable cells that open the payment dialog prefilled with that child/month
+- Child names link to their individual accounting page
+
+**3. Enhanced Payment Modal** (QuickPaymentDialog) with all spec fields:
+- **Child Info**: Read-only badge when preselected, searchable combobox otherwise
+- **Amount**: Number input with Zod validation + currency prefix symbol
+- **Currency**: USD/LBP dropdown
+- **Fee Type**: Pill buttons prefilled by active tab
+- **Payment Method**: 4-icon radio group (Cash, Cheque, Credit Card, Bank Transfer)
+- **Payment Date**: Calendar popover date picker
+- **Coverage Period**: From/To month select dropdowns
+- **Notes**: Textarea
+- **Attachment**: Dropzone placeholder for receipt uploads (S3/R2 ready)
+
+**4. Updated validation schema** (`quickPaymentSchema`) with currency, date, coverageFromMonth, coverageToMonth fields, and updated `recordPayment` server action to persist coverage period as `dateFrom`/`dateTo`/`month`.
+To https://github.com/lelapinsauvage/KDDZ.git
+   4f1a24a..5993351  ux-improvements -> ux-improvements
+=== Phase 16 — Accounting: Sticky DataTable + Payment Modal COMPLETE — Sat Feb 28 08:48:15 CET 2026 ===
+
+=============================================
+=== Phase 17 — Messages: Split-Pane Composer — Sat Feb 28 08:48:15 CET 2026 ===
+=============================================
