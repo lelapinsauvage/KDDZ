@@ -81,6 +81,7 @@ export function SortableHeader<TData, TValue>({
       size="sm"
       className="-ml-3 h-8 text-xs font-semibold uppercase"
       onClick={() => column.toggleSorting(sorted === "asc")}
+      aria-label={`Sort by ${typeof children === "string" ? children : column.id}, currently ${sorted ? `sorted ${sorted}ending` : "unsorted"}`}
     >
       {children}
       {sorted === "asc" ? (
@@ -258,8 +259,8 @@ export function DataTable<TData, TValue>({
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2">
         {searchKey && (
-          <div className="relative w-full sm:max-w-sm sm:flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <div role="search" className="relative w-full sm:max-w-sm sm:flex-1">
+            <Search aria-hidden="true" className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder={searchPlaceholder}
               value={
@@ -279,6 +280,7 @@ export function DataTable<TData, TValue>({
             <Button
               variant="outline"
               size="sm"
+              aria-label="Toggle column visibility"
               className="ml-auto h-9 gap-1.5 border-border/60"
             >
               <SlidersHorizontal className="size-3.5" />
@@ -331,7 +333,8 @@ export function DataTable<TData, TValue>({
                 {label}: <span className="font-medium">{String(filter.value)}</span>
                 <button
                   onClick={() => removeFilter(filter.id)}
-                  className="ml-0.5 rounded-full p-0.5 hover:bg-muted-foreground/20"
+                  aria-label={`Remove ${label} filter`}
+                  className="ml-0.5 rounded-full p-0.5 hover:bg-muted-foreground/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
                 >
                   <X className="size-3" />
                 </button>
@@ -351,8 +354,8 @@ export function DataTable<TData, TValue>({
 
       {/* Bulk actions bar */}
       {hasSelection && bulkActions && bulkActions.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 sm:px-4 py-2 animate-in fade-in-0 slide-in-from-top-1 duration-200">
-          <span className="text-sm font-medium">
+        <div role="toolbar" aria-label="Bulk actions" className="flex flex-wrap items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 sm:px-4 py-2 animate-in fade-in-0 slide-in-from-top-1 duration-200">
+          <span className="text-sm font-medium" aria-live="polite">
             {selectedRows.length} row{selectedRows.length !== 1 ? "s" : ""}{" "}
             selected
           </span>
@@ -424,10 +427,22 @@ export function DataTable<TData, TValue>({
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() ? "selected" : undefined}
+                    tabIndex={onRowClick ? 0 : undefined}
+                    role={onRowClick ? "link" : undefined}
                     className={`group border-border/40 transition-colors duration-100 hover:bg-accent/40 ${
-                      onRowClick ? "cursor-pointer" : ""
+                      onRowClick ? "cursor-pointer focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring" : ""
                     } ${row.getIsSelected() ? "bg-primary/5" : ""}`}
                     onClick={() => onRowClick?.(row.original)}
+                    onKeyDown={
+                      onRowClick
+                        ? (e: React.KeyboardEvent) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              onRowClick(row.original);
+                            }
+                          }
+                        : undefined
+                    }
                   >
                     {row.getVisibleCells().map((cell, idx) => (
                       <TableCell
@@ -453,9 +468,9 @@ export function DataTable<TData, TValue>({
                     className="h-48"
                   >
                     {emptyState ?? (
-                      <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
+                      <div role="status" className="flex flex-col items-center justify-center gap-2 py-8 text-center">
                         <div className="rounded-full bg-muted p-3">
-                          <Inbox className="size-6 text-muted-foreground" />
+                          <Inbox aria-hidden="true" className="size-6 text-muted-foreground" />
                         </div>
                         <div>
                           <p className="text-sm font-medium text-foreground">
@@ -528,6 +543,7 @@ export function DataTable<TData, TValue>({
             <Button
               variant="outline"
               size="icon"
+              aria-label="First page"
               className="size-9 sm:size-8 border-border/60"
               onClick={() => table.setPageIndex(0)}
               disabled={!table.getCanPreviousPage()}
@@ -537,6 +553,7 @@ export function DataTable<TData, TValue>({
             <Button
               variant="outline"
               size="icon"
+              aria-label="Previous page"
               className="size-9 sm:size-8 border-border/60"
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
@@ -544,14 +561,16 @@ export function DataTable<TData, TValue>({
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <span className="min-w-[5rem] text-center text-sm text-muted-foreground">
+              Page{" "}
               <span className="font-medium text-foreground">
                 {table.getState().pagination.pageIndex + 1}
               </span>{" "}
-              / {table.getPageCount() || 1}
+              of {table.getPageCount() || 1}
             </span>
             <Button
               variant="outline"
               size="icon"
+              aria-label="Next page"
               className="size-9 sm:size-8 border-border/60"
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
@@ -561,6 +580,7 @@ export function DataTable<TData, TValue>({
             <Button
               variant="outline"
               size="icon"
+              aria-label="Last page"
               className="size-9 sm:size-8 border-border/60"
               onClick={() => table.setPageIndex(table.getPageCount() - 1)}
               disabled={!table.getCanNextPage()}

@@ -295,6 +295,7 @@ export function AppSidebar({ userRole, badges }: AppSidebarProps) {
     <Sidebar
       collapsible="icon"
       className="top-[56px] h-[calc(100svh-56px)]"
+      aria-label="Main navigation"
     >
       {/* ── Brand header ── */}
       <SidebarHeader className="px-4 py-4">
@@ -306,7 +307,7 @@ export function AppSidebar({ userRole, badges }: AppSidebarProps) {
             <span className="font-heading text-[15px] font-bold leading-tight text-sidebar-accent-foreground tracking-tight">
               KiddzOnline
             </span>
-            <span className="text-[10px] font-medium leading-none text-sidebar-foreground/50 tracking-wider uppercase">
+            <span className="text-[10px] font-medium leading-none text-sidebar-foreground/70 tracking-wider uppercase">
               Nursery Management
             </span>
           </div>
@@ -340,7 +341,7 @@ export function AppSidebar({ userRole, badges }: AppSidebarProps) {
         {/* Main nav sections */}
         {sections.map((section) => (
           <SidebarGroup key={section.label} className="py-1">
-            <SidebarGroupLabel className="px-3 mb-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-sidebar-foreground/40">
+            <SidebarGroupLabel className="px-3 mb-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-sidebar-foreground/70">
               {section.label}
             </SidebarGroupLabel>
             <SidebarMenu className="space-y-0.5">
@@ -359,7 +360,7 @@ export function AppSidebar({ userRole, badges }: AppSidebarProps) {
                       className={
                         isActive
                           ? "relative bg-sidebar-accent text-sidebar-accent-foreground font-medium rounded-lg border-l-[3px] border-l-sidebar-primary rounded-l-none pl-[9px] transition-all duration-200"
-                          : "relative text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 rounded-lg transition-all duration-200"
+                          : "relative text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50 rounded-lg transition-all duration-200"
                       }
                     >
                       <Link href={item.href}>
@@ -367,7 +368,7 @@ export function AppSidebar({ userRole, badges }: AppSidebarProps) {
                           className={`size-[18px] shrink-0 ${
                             isActive
                               ? "text-sidebar-primary"
-                              : "text-sidebar-foreground/50"
+                              : "text-sidebar-foreground/70"
                           }`}
                         />
                         <span className="flex-1 truncate text-[13px]">{item.title}</span>
@@ -391,7 +392,7 @@ export function AppSidebar({ userRole, badges }: AppSidebarProps) {
         {/* Recently Visited */}
         {recentPages.length > 0 && (
           <SidebarGroup className="py-1">
-            <SidebarGroupLabel className="px-3 mb-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-sidebar-foreground/40">
+            <SidebarGroupLabel className="px-3 mb-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-sidebar-foreground/70">
               Recently Visited
             </SidebarGroupLabel>
             <SidebarMenu className="space-y-0.5">
@@ -405,11 +406,11 @@ export function AppSidebar({ userRole, badges }: AppSidebarProps) {
                       className={
                         isActive
                           ? "relative bg-sidebar-accent/50 text-sidebar-accent-foreground font-medium rounded-lg transition-all duration-200"
-                          : "relative text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/30 rounded-lg transition-all duration-200"
+                          : "relative text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/30 rounded-lg transition-all duration-200"
                       }
                     >
                       <Link href={page.href}>
-                        <History className="size-[18px] shrink-0 text-sidebar-foreground/30" />
+                        <History className="size-[18px] shrink-0 text-sidebar-foreground/70" />
                         <span className="flex-1 truncate text-[13px]">{page.title}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -428,7 +429,8 @@ export function AppSidebar({ userRole, badges }: AppSidebarProps) {
           <SidebarMenuItem>
             <SidebarMenuButton
               tooltip="Quick Actions ⌘K"
-              className="text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 rounded-lg transition-all duration-200"
+              aria-label="Quick Actions (⌘K)"
+              className="text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50 rounded-lg transition-all duration-200"
               onClick={() => {
                 document.dispatchEvent(
                   new KeyboardEvent("keydown", { key: "k", metaKey: true })
@@ -437,7 +439,7 @@ export function AppSidebar({ userRole, badges }: AppSidebarProps) {
             >
               <Search className="size-[18px] shrink-0" />
               <span className="text-[13px]">Quick Actions</span>
-              <kbd className="ml-auto rounded-md bg-sidebar-accent px-1.5 py-0.5 text-[10px] font-medium text-sidebar-foreground/40 border border-sidebar-border">
+              <kbd className="ml-auto rounded-md bg-sidebar-accent px-1.5 py-0.5 text-[10px] font-medium text-sidebar-foreground/70 border border-sidebar-border">
                 ⌘K
               </kbd>
             </SidebarMenuButton>
@@ -460,11 +462,11 @@ export function AppSidebar({ userRole, badges }: AppSidebarProps) {
                     <span className="text-[13px] font-medium text-sidebar-accent-foreground truncate">
                       {userName}
                     </span>
-                    <span className="text-[11px] text-sidebar-foreground/50 truncate">
+                    <span className="text-[11px] text-sidebar-foreground/70 truncate">
                       {roleLabels[userRole]}
                     </span>
                   </div>
-                  <ChevronsUpDown className="ml-auto size-4 text-sidebar-foreground/40" />
+                  <ChevronsUpDown className="ml-auto size-4 text-sidebar-foreground/70" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
