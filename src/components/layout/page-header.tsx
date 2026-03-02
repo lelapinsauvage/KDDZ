@@ -60,6 +60,7 @@ const segmentLabels: Record<string, string> = {
   "parent-users": "Parent Users",
   export: "Export",
   holidays: "Holidays",
+  "new-year": "New Academic Year",
   events: "Events",
   nursery: "Nursery",
   organizations: "Organizations",

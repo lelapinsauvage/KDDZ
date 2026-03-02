@@ -230,6 +230,7 @@ const adminNav: NavSection[] = [
         ],
       },
       { title: "Notifications", href: "/alarms", icon: Bell, badgeKey: "activeAlarms" },
+      { title: "New Academic Year", href: "/settings/new-year", icon: GraduationCap },
     ],
   },
 ]
