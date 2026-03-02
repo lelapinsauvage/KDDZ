@@ -28,6 +28,7 @@ interface CreateCallLogData {
   subject?: string;
   reason?: string;
   remarks?: string;
+  staffId?: string;
 }
 
 type ActionResult =
@@ -160,6 +161,7 @@ export async function createCallLog(
         subject: data.subject || null,
         reason: data.reason || null,
         remarks: data.remarks || null,
+        staffId: data.staffId || null,
         createdById: ctx.userId,
       },
     });

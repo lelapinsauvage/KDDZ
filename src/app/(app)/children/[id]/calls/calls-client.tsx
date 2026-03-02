@@ -1,13 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { type ColumnDef } from "@tanstack/react-table";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/shared/data-table";
-import { Plus, Phone, PhoneIncoming, PhoneOutgoing } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Plus, Phone, PhoneIncoming, PhoneOutgoing, MoreHorizontal, Trash2 } from "lucide-react";
 import { CallReportDialog } from "./call-report-dialog";
+import { deleteCallLog } from "@/lib/actions/calls";
 
 interface ChildData {
   id: string;
@@ -117,7 +125,41 @@ const columns: ColumnDef<CallRecord>[] = [
       <span className="text-muted-foreground">{row.original.createdBy ?? "\u2014"}</span>
     ),
   },
+  {
+    id: "actions",
+    header: "",
+    cell: ({ row }) => <CallActions callId={row.original.id} />,
+    enableSorting: false,
+  },
 ];
+
+function CallActions({ callId }: { callId: string }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  function handleDelete() {
+    if (!confirm("Are you sure you want to delete this call log?")) return;
+    startTransition(async () => {
+      await deleteCallLog(callId);
+      router.refresh();
+    });
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isPending}>
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem className="text-red-600" onClick={handleDelete}>
+          <Trash2 className="mr-2 h-4 w-4" /> Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 export function CallsClient({ child, calls, staffList }: Props) {
   const id = child.id;

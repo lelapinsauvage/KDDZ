@@ -88,6 +88,7 @@ export function CallReportDialog({
         reason: causeOfCall || undefined,
         subject: subject || undefined,
         remarks: remarks || undefined,
+        staffId: teacherId || undefined,
       });
 
       if (!result.success) {
