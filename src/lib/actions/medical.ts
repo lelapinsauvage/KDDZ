@@ -367,6 +367,7 @@ export async function getVaccinations(params: GetVaccinationsParams = {}) {
           child: {
             include: {
               branch: true,
+              class: true,
             },
           },
         },

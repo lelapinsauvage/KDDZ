@@ -13,6 +13,11 @@ interface VaccinationRow {
   id: string;
   childId: string;
   childName: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string | null;
+  nationality: string;
+  gender: string | null;
   vaccine: string;
   dateGiven: string | null;
   nextDue: string | null;
@@ -20,6 +25,7 @@ interface VaccinationRow {
   vacStatus: "Up to date" | "Overdue" | "Upcoming";
   branchId: string;
   branchName: string;
+  className: string;
 }
 
 interface ChildInfo {

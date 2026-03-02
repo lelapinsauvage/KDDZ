@@ -34,6 +34,11 @@ export default async function VaccinationsPage() {
       id: v.id,
       childId: v.childId,
       childName: `${v.child.firstName} ${v.child.lastName}`,
+      firstName: v.child.firstName,
+      lastName: v.child.lastName,
+      dateOfBirth: v.child.dateOfBirth?.toISOString().split("T")[0] ?? null,
+      nationality: v.child.nationality ?? "",
+      gender: v.child.gender as string | null,
       vaccine: v.vaccineName,
       dateGiven: v.dateGiven ? v.dateGiven.toISOString().split("T")[0] : null,
       nextDue: v.nextDueDate ? v.nextDueDate.toISOString().split("T")[0] : null,
@@ -41,6 +46,7 @@ export default async function VaccinationsPage() {
       vacStatus,
       branchId: v.child.branchId,
       branchName: v.child.branch?.name ?? "\u2014",
+      className: v.child.class?.name ?? "",
     };
   });
 

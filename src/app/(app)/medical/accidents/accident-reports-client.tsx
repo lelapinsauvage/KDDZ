@@ -44,14 +44,7 @@ import {
   Trash2,
   Loader2,
   AlertTriangle,
-  ShieldAlert,
-  ShieldCheck,
-  FileCheck,
-  FileClock,
-  FileEdit,
-  MapPin,
 } from "lucide-react";
-import { format } from "date-fns";
 import { deleteMedicalForm } from "@/lib/actions/medical";
 
 // --- Types ---
@@ -62,6 +55,9 @@ interface AccidentReportRow {
   id: string;
   childId: string;
   childName: string;
+  firstName: string;
+  lastName: string;
+  accidentCause: string;
   date: string;
   time: string;
   location: string;
@@ -73,6 +69,7 @@ interface AccidentReportRow {
   status: AccidentStatus;
   branchId: string;
   branchName: string;
+  className: string;
 }
 
 // --- Avatar helpers ---
@@ -88,77 +85,23 @@ const avatarColors = [
   "bg-orange-100 text-orange-700",
 ];
 
-function getInitials(name: string) {
-  const parts = name.split(" ");
-  return parts.length >= 2
-    ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
-    : name.slice(0, 2).toUpperCase();
+function getInitials(firstName: string, lastName: string) {
+  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+}
+
+function formatDate(date: string | null) {
+  if (!date) return "-";
+  const d = new Date(date);
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
 }
 
 function getAvatarColor(name: string) {
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
   return avatarColors[Math.abs(hash) % avatarColors.length];
-}
-
-// --- Badge Helpers ---
-
-function getSeverityBadge(severity: string) {
-  switch (severity) {
-    case "Minor":
-      return (
-        <Badge className="gap-1 bg-yellow-50 text-yellow-700 border-yellow-200">
-          <ShieldCheck className="size-3" />
-          Minor
-        </Badge>
-      );
-    case "Moderate":
-      return (
-        <Badge className="gap-1 bg-orange-50 text-orange-700 border-orange-200">
-          <ShieldAlert className="size-3" />
-          Moderate
-        </Badge>
-      );
-    case "Severe":
-      return (
-        <Badge className="gap-1 bg-red-50 text-red-700 border-red-200">
-          <AlertTriangle className="size-3" />
-          Severe
-        </Badge>
-      );
-    default:
-      return (
-        <Badge variant="secondary">
-          {severity || "\u2014"}
-        </Badge>
-      );
-  }
-}
-
-function getStatusBadge(status: AccidentStatus) {
-  switch (status) {
-    case "DRAFT":
-      return (
-        <Badge className="gap-1 bg-slate-100 text-slate-600 border-slate-200">
-          <FileEdit className="size-3" />
-          Draft
-        </Badge>
-      );
-    case "SUBMITTED":
-      return (
-        <Badge className="gap-1 bg-blue-50 text-blue-700 border-blue-200">
-          <FileClock className="size-3" />
-          Submitted
-        </Badge>
-      );
-    case "REVIEWED":
-      return (
-        <Badge className="gap-1 bg-[#059669]/10 text-[#059669] border-[#059669]/20">
-          <FileCheck className="size-3" />
-          Reviewed
-        </Badge>
-      );
-  }
 }
 
 // --- Props ---
@@ -203,83 +146,97 @@ export function AccidentReportsClient({
     }
   }
 
-  // --- Column Definitions ---
+  // --- Columns (matching old PHP: Image, F Name, L Name, Cause, Branch, Class, Place, First Aid, Date, Action) ---
 
   const columns: ColumnDef<AccidentReportRow>[] = [
     {
-      accessorKey: "childName",
-      header: "Child Name",
+      id: "avatar",
+      header: "Image",
       cell: ({ row }) => {
-        const name = row.original.childName;
+        const { firstName, lastName } = row.original;
+        const fullName = `${firstName} ${lastName}`;
         return (
-          <div className="flex items-center gap-2.5">
-            <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${getAvatarColor(name)}`}>
-              {getInitials(name)}
-            </div>
-            <span className="font-medium text-foreground">{name}</span>
+          <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${getAvatarColor(fullName)}`}>
+            {getInitials(firstName, lastName)}
           </div>
         );
       },
+      enableSorting: false,
     },
     {
-      accessorKey: "date",
-      header: "Date",
+      accessorKey: "firstName",
+      header: "F Name",
       cell: ({ row }) => (
-        <span className="text-sm text-foreground">
-          {format(new Date(row.original.date), "MMM d, yyyy")}
+        <Link
+          href={`/medical/accidents/${row.original.id}`}
+          className="font-medium text-foreground hover:text-primary hover:underline"
+        >
+          {row.original.firstName}
+        </Link>
+      ),
+    },
+    {
+      accessorKey: "lastName",
+      header: "L Name",
+      cell: ({ row }) => (
+        <span className="text-foreground">{row.original.lastName}</span>
+      ),
+    },
+    {
+      accessorKey: "accidentCause",
+      header: "Cause",
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground line-clamp-1 max-w-[200px]">
+          {row.original.accidentCause || "-"}
         </span>
       ),
+    },
+    {
+      accessorKey: "branchName",
+      header: "Branch",
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">{row.original.branchName || "-"}</span>
+      ),
+    },
+    {
+      accessorKey: "className",
+      header: "Class",
+      cell: ({ row }) => {
+        const name = row.original.className;
+        if (!name) return <span className="text-muted-foreground">-</span>;
+        return <Badge variant="secondary" className="font-normal">{name}</Badge>;
+      },
     },
     {
       accessorKey: "location",
-      header: "Location",
-      cell: ({ row }) => (
-        <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-          <MapPin className="size-3.5 text-orange-400" />
-          {row.original.location || "\u2014"}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "injuryType",
-      header: "Injury Type",
+      header: "Place",
       cell: ({ row }) => (
         <span className="text-sm text-muted-foreground">
-          {row.original.injuryType || "\u2014"}
+          {row.original.location || "-"}
         </span>
       ),
-    },
-    {
-      accessorKey: "severity",
-      header: "Severity",
-      cell: ({ row }) => getSeverityBadge(row.original.severity),
     },
     {
       accessorKey: "firstAidGiven",
       header: "First Aid",
       cell: ({ row }) => (
         <span className="text-sm text-muted-foreground line-clamp-1 max-w-[200px]">
-          {row.original.firstAidGiven || "\u2014"}
+          {row.original.firstAidGiven || "-"}
         </span>
       ),
     },
     {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }) => getStatusBadge(row.original.status),
-    },
-    {
-      accessorKey: "branchName",
-      header: "Branch",
+      accessorKey: "date",
+      header: "Date",
       cell: ({ row }) => (
-        <Badge variant="secondary" className="bg-muted/50 text-muted-foreground font-normal">
-          {row.original.branchName}
-        </Badge>
+        <span className="text-sm text-muted-foreground">
+          {formatDate(row.original.date)}
+        </span>
       ),
     },
     {
       id: "actions",
-      header: "",
+      header: "Action",
       cell: ({ row }) => {
         const report = row.original;
         return (

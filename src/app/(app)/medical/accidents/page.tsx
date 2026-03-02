@@ -16,6 +16,9 @@ export default async function AccidentReportsPage() {
       id: form.id,
       childId: form.childId,
       childName: `${form.child.firstName} ${form.child.lastName}`,
+      firstName: form.child.firstName,
+      lastName: form.child.lastName,
+      accidentCause: (d.accidentCause as string) ?? (d.cause as string) ?? "",
       date: (d.date as string) ?? form.createdAt.toISOString().split("T")[0],
       time: (d.time as string) ?? "",
       location: (d.location as string) ?? "",
@@ -27,6 +30,7 @@ export default async function AccidentReportsPage() {
       status: form.status as "DRAFT" | "SUBMITTED" | "REVIEWED",
       branchId: form.child.branchId,
       branchName: form.child.branch?.name ?? "—",
+      className: form.child.class?.name ?? "",
     };
   });
 

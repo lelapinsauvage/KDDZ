@@ -42,11 +42,7 @@ import {
   Pencil,
   Trash2,
   Syringe,
-  CheckCircle2,
-  Clock,
-  AlertTriangle,
 } from "lucide-react";
-import { format } from "date-fns";
 import { deleteVaccination } from "@/lib/actions/medical";
 import { toast } from "sonner";
 
@@ -58,6 +54,11 @@ interface VaccinationRow {
   id: string;
   childId: string;
   childName: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string | null;
+  nationality: string;
+  gender: string | null;
   vaccine: string;
   dateGiven: string | null;
   nextDue: string | null;
@@ -65,6 +66,7 @@ interface VaccinationRow {
   vacStatus: VaccinationStatus;
   branchId: string;
   branchName: string;
+  className: string;
 }
 
 // --- Avatar helpers ---
@@ -80,45 +82,23 @@ const avatarColors = [
   "bg-orange-100 text-orange-700",
 ];
 
-function getInitials(name: string) {
-  const parts = name.split(" ");
-  return parts.length >= 2
-    ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
-    : name.slice(0, 2).toUpperCase();
+function getInitials(firstName: string, lastName: string) {
+  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+}
+
+function formatDate(date: string | null) {
+  if (!date) return "-";
+  const d = new Date(date);
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
 }
 
 function getAvatarColor(name: string) {
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
   return avatarColors[Math.abs(hash) % avatarColors.length];
-}
-
-// --- Badge Helpers ---
-
-function getVaccinationStatusBadge(status: VaccinationStatus) {
-  switch (status) {
-    case "Up to date":
-      return (
-        <Badge className="gap-1 bg-[#059669]/10 text-[#059669] border-[#059669]/20">
-          <CheckCircle2 className="size-3" />
-          Up to date
-        </Badge>
-      );
-    case "Upcoming":
-      return (
-        <Badge className="gap-1 bg-orange-50 text-orange-700 border-orange-200">
-          <Clock className="size-3" />
-          Upcoming
-        </Badge>
-      );
-    case "Overdue":
-      return (
-        <Badge className="gap-1 bg-red-50 text-red-700 border-red-200">
-          <AlertTriangle className="size-3" />
-          Overdue
-        </Badge>
-      );
-  }
 }
 
 // --- Props ---
@@ -181,71 +161,106 @@ export function VaccinationsClient({
     });
   }
 
+  // --- Columns (matching old PHP: Image, F Name, L Name, DOB, Branch, Class, Nationality, Gender, Date, Action) ---
+
   const columns: ColumnDef<VaccinationRow>[] = [
     {
-      accessorKey: "childName",
-      header: "Child Name",
+      id: "avatar",
+      header: "Image",
       cell: ({ row }) => {
-        const name = row.original.childName;
+        const { firstName, lastName } = row.original;
+        const fullName = `${firstName} ${lastName}`;
         return (
-          <div className="flex items-center gap-2.5">
-            <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${getAvatarColor(name)}`}>
-              {getInitials(name)}
-            </div>
-            <span className="font-medium text-foreground">{name}</span>
+          <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${getAvatarColor(fullName)}`}>
+            {getInitials(firstName, lastName)}
           </div>
         );
       },
+      enableSorting: false,
     },
     {
-      accessorKey: "vaccine",
-      header: "Vaccine",
+      accessorKey: "firstName",
+      header: "F Name",
       cell: ({ row }) => (
-        <span className="inline-flex items-center gap-1.5 text-sm text-foreground">
-          <Syringe className="size-3.5 text-[#0B9178]" />
-          {row.original.vaccine}
-        </span>
+        <Link
+          href={`/medical/vaccinations/${row.original.id}`}
+          className="font-medium text-foreground hover:text-primary hover:underline"
+        >
+          {row.original.firstName}
+        </Link>
       ),
     },
     {
-      accessorKey: "dateGiven",
-      header: "Date Given",
+      accessorKey: "lastName",
+      header: "L Name",
+      cell: ({ row }) => (
+        <span className="text-foreground">{row.original.lastName}</span>
+      ),
+    },
+    {
+      accessorKey: "dateOfBirth",
+      header: "DOB",
       cell: ({ row }) => (
         <span className="text-sm text-muted-foreground">
-          {row.original.dateGiven
-            ? format(new Date(row.original.dateGiven), "MMM d, yyyy")
-            : "\u2014"}
+          {formatDate(row.original.dateOfBirth)}
         </span>
       ),
-    },
-    {
-      accessorKey: "nextDue",
-      header: "Next Due",
-      cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">
-          {row.original.nextDue
-            ? format(new Date(row.original.nextDue), "MMM d, yyyy")
-            : "N/A"}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "vacStatus",
-      header: "Status",
-      cell: ({ row }) => getVaccinationStatusBadge(row.original.vacStatus),
     },
     {
       accessorKey: "branchName",
       header: "Branch",
       cell: ({ row }) => (
-        <Badge variant="secondary" className="bg-muted/50 text-muted-foreground font-normal">
-          {row.original.branchName}
-        </Badge>
+        <span className="text-muted-foreground">{row.original.branchName || "-"}</span>
+      ),
+    },
+    {
+      accessorKey: "className",
+      header: "Class",
+      cell: ({ row }) => {
+        const name = row.original.className;
+        if (!name) return <span className="text-muted-foreground">-</span>;
+        return <Badge variant="secondary" className="font-normal">{name}</Badge>;
+      },
+    },
+    {
+      accessorKey: "nationality",
+      header: "Nationality",
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground">
+          {row.original.nationality || "-"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "gender",
+      header: "Gender",
+      cell: ({ row }) => {
+        const gender = row.original.gender;
+        if (!gender) return <span className="text-muted-foreground">-</span>;
+        return (
+          <div className="flex items-center gap-1.5">
+            <span
+              className={`inline-block size-2 rounded-full ${
+                gender === "MALE" ? "bg-[#4F46E5]" : "bg-[#E11D48]"
+              }`}
+            />
+            <span className="text-sm">{gender === "MALE" ? "Boy" : "Girl"}</span>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "dateGiven",
+      header: "Date",
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground">
+          {formatDate(row.original.dateGiven)}
+        </span>
       ),
     },
     {
       id: "actions",
-      header: "",
+      header: "Action",
       cell: ({ row }) => {
         const record = row.original;
         return (
