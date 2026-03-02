@@ -66,6 +66,37 @@ type ActionResult<T = unknown> = {
 };
 
 // ---------------------------------------------------------------------------
+// getPayment — Single payment by ID
+// ---------------------------------------------------------------------------
+
+export async function getPayment(id: string) {
+  try {
+    const { organizationId: orgId } = await requireOrg();
+
+    const payment = await db.payment.findUnique({
+      where: { id },
+      include: {
+        child: {
+          include: {
+            branch: { select: { id: true, name: true, address: true, phone: true, email: true, organizationId: true } },
+            class: { select: { id: true, name: true } },
+          },
+        },
+        createdBy: { select: { id: true, name: true } },
+      },
+    });
+
+    if (!payment || payment.child.branch.organizationId !== orgId) {
+      return null;
+    }
+
+    return payment;
+  } catch {
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // getPayments — Full listing with filters
 // ---------------------------------------------------------------------------
 
