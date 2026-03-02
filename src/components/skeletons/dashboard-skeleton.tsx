@@ -40,47 +40,7 @@ export function DashboardSkeleton() {
         </div>
       </div>
 
-      {/* ── Row 2: Compliance (4 cards) ── */}
-      <div>
-        <Skeleton className="mb-3 h-3 w-24 rounded-sm" />
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <StatCardSkeleton key={i} />
-          ))}
-        </div>
-      </div>
-
-      {/* ── Row 3: Operations (3 cards) ── */}
-      <div>
-        <Skeleton className="mb-3 h-3 w-20 rounded-sm" />
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <StatCardSkeleton key={i} />
-          ))}
-        </div>
-      </div>
-
-      {/* ── Row 4: Medical (3 cards) ── */}
-      <div>
-        <Skeleton className="mb-3 h-3 w-24 rounded-sm" />
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <StatCardSkeleton key={i} />
-          ))}
-        </div>
-      </div>
-
-      {/* ── Row 5: Assessments (3 cards) ── */}
-      <div>
-        <Skeleton className="mb-3 h-3 w-20 rounded-sm" />
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <StatCardSkeleton key={i} />
-          ))}
-        </div>
-      </div>
-
-      {/* ── Charts (3-col) ── */}
+      {/* ── Row 2: Charts (3-col) ── */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {Array.from({ length: 3 }).map((_, i) => (
           <div
@@ -103,6 +63,46 @@ export function DashboardSkeleton() {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* ── Row 3: Compliance (4 cards) ── */}
+      <div>
+        <Skeleton className="mb-3 h-3 w-24 rounded-sm" />
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <StatCardSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+
+      {/* ── Row 4: Operations (3 cards) ── */}
+      <div>
+        <Skeleton className="mb-3 h-3 w-20 rounded-sm" />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <StatCardSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+
+      {/* ── Row 5: Medical (3 cards) ── */}
+      <div>
+        <Skeleton className="mb-3 h-3 w-24 rounded-sm" />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <StatCardSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+
+      {/* ── Row 6: Assessments (3 cards) ── */}
+      <div>
+        <Skeleton className="mb-3 h-3 w-20 rounded-sm" />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <StatCardSkeleton key={i} />
+          ))}
+        </div>
       </div>
     </div>
   )

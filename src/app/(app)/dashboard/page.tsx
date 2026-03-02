@@ -151,7 +151,14 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Row 2: Daily Compliance (Attendance, Absence, Missing Reports) ── */}
+      {/* ── Row 2: Charts (Attendance, Children per Class, Gender) ── */}
+      <DemographicsSection
+        attendanceBreakdown={attendanceBreakdown}
+        childrenPerClass={demographics.childrenPerClass}
+        genderStats={demographics.genderStats}
+      />
+
+      {/* ── Row 3: Daily Compliance (Attendance, Absence, Missing Reports) ── */}
       <div>
         <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
           Daily Compliance
@@ -188,18 +195,18 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Row 3: Operations (Calls, Accidents, Accounting) ── */}
+      {/* ── Row 4: Operations (Accounting, Accidents, Calls) ── */}
       <div>
         <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
           Operations
         </h3>
         <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-3">
           <StatCard
-            title="Phone Calls"
-            value={metrics.loggedCalls}
-            icon={Phone}
-            color="sky"
-            href="/children?tab=calls"
+            title="Accounting"
+            value={`$${metrics.totalPayments.toLocaleString()}`}
+            icon={DollarSign}
+            color="emerald"
+            href="/accounting"
           />
           <StatCard
             title="Accidents"
@@ -209,16 +216,16 @@ export default async function DashboardPage() {
             href="/medical/accidents"
           />
           <StatCard
-            title="Accounting"
-            value={`$${metrics.totalPayments.toLocaleString()}`}
-            icon={DollarSign}
-            color="emerald"
-            href="/accounting"
+            title="Phone Calls"
+            value={metrics.loggedCalls}
+            icon={Phone}
+            color="sky"
+            href="/children?tab=calls"
           />
         </div>
       </div>
 
-      {/* ── Row 4: Medical Reports (Published, Missing, Drafts) ── */}
+      {/* ── Row 5: Medical Reports (Published, Missing, Drafts) ── */}
       <div>
         <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
           Medical Reports
@@ -248,7 +255,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Row 5: Assessments (Published, Missing, Drafts) ── */}
+      {/* ── Row 6: Assessments (Published, Missing, Drafts) ── */}
       <div>
         <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
           Assessments
@@ -277,13 +284,6 @@ export default async function DashboardPage() {
           />
         </div>
       </div>
-
-      {/* ── Charts: Attendance breakdown, Children per class, Gender ── */}
-      <DemographicsSection
-        attendanceBreakdown={attendanceBreakdown}
-        childrenPerClass={demographics.childrenPerClass}
-        genderStats={demographics.genderStats}
-      />
     </FadeIn>
   );
 }
