@@ -41,6 +41,8 @@ import {
   School,
   Phone,
   FileEdit,
+  Cake,
+  Shield,
 } from "lucide-react"
 import {
   Sidebar,
@@ -157,12 +159,19 @@ const adminNav: NavSection[] = [
       { title: "Classes Management", href: "/classes", icon: School },
       { title: "Accounting Management", href: "/accounting", icon: DollarSign },
       { title: "Monthly Attendance", href: "/attendance/heatmap", icon: CalendarDays },
-      { title: "Messages Portal", href: "/messages/inbox", icon: Inbox, badgeKey: "unreadMessages" },
-      { title: "Single Messaging", href: "/messages/compose", icon: PenLine },
-      { title: "Sent Messages", href: "/messages/sent", icon: Send },
     ],
   },
   // "Classes" dynamic section inserted at runtime by getNavForRole
+  {
+    label: "Messages",
+    icon: Inbox,
+    children: [
+      { title: "Inbox", href: "/messages/inbox", icon: Inbox, badgeKey: "unreadMessages" },
+      { title: "Messages Portal", href: "/messages/compose", icon: Send },
+      { title: "Single Messaging", href: "/messages/compose/direct", icon: PenLine },
+      { title: "Sent Messages", href: "/messages/sent", icon: Send },
+    ],
+  },
   {
     label: "Children Management",
     icon: Baby,
@@ -220,6 +229,7 @@ const adminNav: NavSection[] = [
     icon: Settings,
     children: [
       { title: "Holiday Calendar", href: "/settings/holidays", icon: Calendar },
+      { title: "Events Calendar", href: "/settings/events", icon: CalendarDays },
       {
         title: "Address Management",
         icon: MapPin,
@@ -229,7 +239,24 @@ const adminNav: NavSection[] = [
           { title: "Region", href: "/settings/areas", icon: MapPin },
         ],
       },
-      { title: "Notifications", href: "/alarms", icon: Bell, badgeKey: "activeAlarms" },
+      {
+        title: "Notifications",
+        icon: Bell,
+        children: [
+          { title: "Overview", href: "/alarms", icon: Bell, badgeKey: "activeAlarms" },
+          { title: "Birthdays", href: "/alarms/birthdays", icon: Cake },
+          { title: "Assessments", href: "/alarms/assessments", icon: ClipboardList },
+          { title: "Vaccinations", href: "/alarms/vaccinations", icon: Syringe },
+          { title: "Medical", href: "/alarms/medical", icon: Stethoscope },
+          { title: "Medicine", href: "/alarms/medicine", icon: Pill },
+          { title: "Events", href: "/alarms/events", icon: CalendarDays },
+          { title: "Insurance", href: "/alarms/insurance", icon: Shield },
+          { title: "Payments", href: "/alarms/payments", icon: DollarSign },
+          { title: "Requests", href: "/alarms/requests", icon: Send },
+          { title: "Others", href: "/alarms/others", icon: AlertTriangle },
+          { title: "Contracts", href: "/alarms/contracts", icon: FileText },
+        ],
+      },
       { title: "New Academic Year", href: "/settings/new-year", icon: GraduationCap },
     ],
   },
