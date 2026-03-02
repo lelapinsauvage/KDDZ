@@ -2,6 +2,8 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { Printer } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -72,12 +74,16 @@ const STATUS_COLORS: Record<CellStatus, string> = {
   PRESENT: "bg-emerald-500",
   ABSENT: "bg-rose-500",
   NO_REPORT: "bg-violet-500",
+  WEEKEND: "bg-gray-400",
+  HOLIDAY: "bg-amber-400",
 };
 
 const STATUS_HOVER: Record<CellStatus, string> = {
   PRESENT: "hover:bg-emerald-400",
   ABSENT: "hover:bg-rose-400",
   NO_REPORT: "hover:bg-violet-400 cursor-pointer",
+  WEEKEND: "",
+  HOLIDAY: "",
 };
 
 // ── Component ────────────────────────────────────
@@ -162,22 +168,21 @@ export function AttendanceHeatmap({
       : classes;
 
   // Stats
-  const totalPresent = grid.rows.reduce((acc, row) => {
-    return acc + Object.values(row.days).filter((s) => s === "PRESENT").length;
-  }, 0);
-  const totalAbsent = grid.rows.reduce((acc, row) => {
-    return acc + Object.values(row.days).filter((s) => s === "ABSENT").length;
-  }, 0);
-  const totalNoReport = grid.rows.reduce((acc, row) => {
-    return acc + Object.values(row.days).filter((s) => s === "NO_REPORT").length;
-  }, 0);
+  const countStatus = (status: CellStatus) =>
+    grid.rows.reduce(
+      (acc, row) => acc + Object.values(row.days).filter((s) => s === status).length,
+      0
+    );
+  const totalPresent = countStatus("PRESENT");
+  const totalAbsent = countStatus("ABSENT");
+  const totalNoReport = countStatus("NO_REPORT");
 
   return (
     <div className="space-y-6 print:space-y-3">
       {/* Print-only title */}
       <div className="hidden print:block print:text-center print:mb-2">
         <h1 className="text-xl font-bold text-black">
-          Attendance Heatmap &mdash; {MONTHS[month - 1]} {year}
+          Monthly Attendance Report &mdash; {MONTHS[month - 1]} {year}
         </h1>
         <p className="text-sm text-gray-500">
           Present: {totalPresent} &bull; Absent: {totalAbsent} &bull; No Report: {totalNoReport}
@@ -259,11 +264,30 @@ export function AttendanceHeatmap({
           <span className="inline-block size-3 rounded-full bg-violet-500 print:size-2.5" />
           <span className="text-muted-foreground print:text-black">No Report ({totalNoReport})</span>
         </div>
+        <div className="flex items-center gap-2">
+          <span className="inline-block size-3 rounded-full bg-gray-400 print:size-2.5" />
+          <span className="text-muted-foreground print:text-black">Weekend</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="inline-block size-3 rounded-full bg-amber-400 print:size-2.5" />
+          <span className="text-muted-foreground print:text-black">Holiday</span>
+        </div>
         {totalNoReport > 0 && (
           <span className="text-xs text-violet-600 font-medium print:hidden">
             Click purple dots to fill missing reports
           </span>
         )}
+
+        {/* Print button */}
+        <Button
+          variant="outline"
+          size="sm"
+          className="ml-auto print:hidden"
+          onClick={() => window.print()}
+        >
+          <Printer className="mr-2 size-4" />
+          Print
+        </Button>
       </div>
 
       {/* ── Heatmap Grid ── */}
@@ -337,7 +361,7 @@ export function AttendanceHeatmap({
                           title={
                             isClickable
                               ? `Fill report: ${row.child.firstName} ${row.child.lastName} — ${MONTHS[month - 1]} ${day}`
-                              : `${status === "PRESENT" ? "Present" : "Absent"}: ${row.child.firstName} ${row.child.lastName} — ${MONTHS[month - 1]} ${day}`
+                              : `${status === "PRESENT" ? "Present" : status === "ABSENT" ? "Absent" : status === "WEEKEND" ? "Weekend" : status === "HOLIDAY" ? "Holiday" : "No Report"}: ${row.child.firstName} ${row.child.lastName} — ${MONTHS[month - 1]} ${day}`
                           }
                         />
                       </td>

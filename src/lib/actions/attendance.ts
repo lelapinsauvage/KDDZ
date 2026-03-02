@@ -205,7 +205,7 @@ export interface HeatmapChild {
   className: string | null;
 }
 
-export type CellStatus = "PRESENT" | "ABSENT" | "NO_REPORT";
+export type CellStatus = "PRESENT" | "ABSENT" | "NO_REPORT" | "WEEKEND" | "HOLIDAY";
 
 export interface HeatmapRow {
   child: HeatmapChild;
@@ -265,8 +265,8 @@ export async function getMonthlyAttendanceGrid(
 
     const childIds = children.map((c) => c.id);
 
-    // Fetch daily reports and absence reports in parallel
-    const [dailyReports, absenceReports] = await Promise.all([
+    // Fetch daily reports, absence reports, and holidays in parallel
+    const [dailyReports, absenceReports, holidays] = await Promise.all([
       db.dailyReport.findMany({
         where: {
           childId: { in: childIds },
@@ -281,7 +281,48 @@ export async function getMonthlyAttendanceGrid(
         },
         select: { childId: true, date: true },
       }),
+      db.holiday.findMany({
+        where: {
+          isActive: true,
+          OR: [
+            { date: { gte: startDate, lt: endDate } },
+            { endDate: { gte: startDate } },
+          ],
+          AND: [
+            {
+              OR: [
+                { branchId: null },
+                { branch: { organizationId: orgId } },
+              ],
+            },
+            ...(branchId
+              ? [{ OR: [{ branchId: null }, { branchId }] }]
+              : []),
+          ],
+        },
+        select: { date: true, endDate: true },
+      }),
     ]);
+
+    // Build set of holiday day numbers
+    const holidayDays = new Set<number>();
+    for (const h of holidays) {
+      const hStart = h.date;
+      const hEnd = h.endDate ?? h.date;
+      for (let d = 1; d <= daysInMonth; d++) {
+        const current = new Date(year, month - 1, d);
+        if (current >= hStart && current <= hEnd) {
+          holidayDays.add(d);
+        }
+      }
+    }
+
+    // Build set of weekend day numbers (Saturday=6, Sunday=0)
+    const weekendDays = new Set<number>();
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dow = new Date(year, month - 1, d).getDay();
+      if (dow === 0 || dow === 6) weekendDays.add(d);
+    }
 
     // Build lookup sets: childId → Set of day numbers
     const reportDays = new Map<string, Set<number>>();
@@ -304,15 +345,21 @@ export async function getMonthlyAttendanceGrid(
       const days: Record<number, CellStatus> = {};
 
       for (let d = 1; d <= daysInMonth; d++) {
-        const hasReport = childReports?.has(d) ?? false;
-        const hasAbsence = childAbsences?.has(d) ?? false;
-
-        if (hasAbsence) {
-          days[d] = "ABSENT";
-        } else if (hasReport) {
-          days[d] = "PRESENT";
+        // Weekends and holidays override — daycare is closed
+        if (weekendDays.has(d)) {
+          days[d] = "WEEKEND";
+        } else if (holidayDays.has(d)) {
+          days[d] = "HOLIDAY";
         } else {
-          days[d] = "NO_REPORT";
+          const hasAbsence = childAbsences?.has(d) ?? false;
+          const hasReport = childReports?.has(d) ?? false;
+          if (hasAbsence) {
+            days[d] = "ABSENT";
+          } else if (hasReport) {
+            days[d] = "PRESENT";
+          } else {
+            days[d] = "NO_REPORT";
+          }
         }
       }
 
