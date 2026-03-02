@@ -47,17 +47,9 @@ import {
   Loader2,
   CheckCircle2,
   FileEdit,
-  Smile,
-  Meh,
-  Frown,
-  Moon,
-  CloudMoon,
-  Utensils,
-  UtensilsCrossed,
-  BedDouble,
-  SunMedium,
   Filter,
   Printer,
+  User,
 } from "lucide-react";
 import { format } from "date-fns";
 import { deleteDailyReport, submitDailyReport } from "@/lib/actions/daily-reports";
@@ -66,97 +58,33 @@ import { ExportButton } from "@/components/shared/export-button";
 import type { ExportColumn } from "@/lib/export";
 
 const dailyReportsExportColumns: ExportColumn[] = [
-  { header: "Date", key: "date" },
-  { header: "Child Name", key: "childName" },
-  { header: "Class", key: "className" },
-  { header: "Branch", key: "branchName" },
-  { header: "Breakfast", key: "breakfast", transform: (v) => v ? String(v) : "N/A" },
-  { header: "Lunch", key: "lunch", transform: (v) => v ? String(v) : "N/A" },
-  { header: "Sleep", key: "sleep", transform: (v) => v ? "Yes" : "No" },
-  { header: "Mood", key: "mood", transform: (v) => v ? String(v) : "" },
+  { header: "First Name", key: "firstName" },
+  { header: "Last Name", key: "lastName" },
   { header: "Status", key: "status" },
-  { header: "Created By", key: "createdBy" },
+  { header: "Branch", key: "branchName" },
+  { header: "Class", key: "className" },
+  { header: "Report Date", key: "reportDate" },
+  { header: "Created Date", key: "createdAt" },
 ];
 
 // --- Types ---
 
 interface DailyReportRow {
   id: string;
-  date: string;
+  photo: string | null;
+  firstName: string;
+  lastName: string;
   childName: string;
   className: string;
   branchId: string;
   branchName: string;
-  breakfast: string | null;
-  lunch: string | null;
-  sleep: boolean;
-  sleepFrom: string | null;
-  sleepTo: string | null;
-  mood: string | null;
+  reportDate: string;
+  createdAt: string;
   status: "DRAFT" | "SUBMITTED";
   createdBy: string;
 }
 
-// --- Avatar colors ---
-
-const avatarColors = [
-  "bg-[#0B9178]/10 text-[#0B9178]",
-  "bg-[#4F46E5]/15 text-[#4F46E5]",
-  "bg-rose-100 text-rose-700",
-  "bg-amber-100 text-amber-700",
-  "bg-sky-100 text-sky-700",
-  "bg-[#059669]/15 text-[#059669]",
-  "bg-fuchsia-100 text-fuchsia-700",
-  "bg-orange-100 text-orange-700",
-];
-
-function getAvatarColor(name: string) {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return avatarColors[Math.abs(hash) % avatarColors.length];
-}
-
-function getInitials(name: string) {
-  const parts = name.split(" ");
-  return (parts[0]?.charAt(0) ?? "") + (parts[1]?.charAt(0) ?? "");
-}
-
 // --- Helpers ---
-
-function getMoodConfig(mood: string): { color: string; icon: typeof Smile; label: string } {
-  switch (mood) {
-    case "HAPPY":
-      return { color: "bg-[var(--color-success-light)] text-[var(--color-success-dark)] border-[var(--color-success)]/20", icon: Smile, label: "Happy" };
-    case "CALM":
-      return { color: "bg-[var(--color-info-light)] text-[var(--color-info-dark)] border-[var(--color-info)]/20", icon: Meh, label: "Calm" };
-    case "FUSSY":
-      return { color: "bg-[var(--color-warning-light)] text-[var(--color-warning-dark)] border-[var(--color-warning)]/20", icon: Frown, label: "Fussy" };
-    case "SLEEPY":
-      return { color: "bg-violet-50 text-violet-700 border-violet-200", icon: Moon, label: "Sleepy" };
-    case "CRYING":
-      return { color: "bg-[var(--color-error-light)] text-[var(--color-error-dark)] border-[var(--color-error)]/20", icon: CloudMoon, label: "Crying" };
-    default:
-      return { color: "bg-muted text-muted-foreground border-border", icon: Meh, label: mood };
-  }
-}
-
-function getPortionConfig(portion: string | null): { label: string; color: string; dots: number } {
-  if (!portion) return { label: "N/A", color: "text-muted-foreground", dots: 0 };
-  switch (portion) {
-    case "ALL":
-      return { label: "All", color: "text-[var(--color-success-dark)]", dots: 5 };
-    case "MOST":
-      return { label: "Most", color: "text-[var(--color-success-dark)]", dots: 4 };
-    case "HALF":
-      return { label: "Half", color: "text-[var(--color-warning-dark)]", dots: 3 };
-    case "LITTLE":
-      return { label: "Little", color: "text-[var(--color-warning)]", dots: 2 };
-    case "NONE":
-      return { label: "None", color: "text-[var(--color-error)]", dots: 0 };
-    default:
-      return { label: portion, color: "text-muted-foreground", dots: 0 };
-  }
-}
 
 // --- Props ---
 
@@ -165,34 +93,6 @@ interface DailyReportsClientProps {
   total: number;
   branches: Array<{ id: string; name: string }>;
   initialStatusFilter?: string;
-}
-
-// --- Meal Dots ---
-
-function MealDots({ portion }: { portion: string | null }) {
-  const config = getPortionConfig(portion);
-  if (!portion) return <span className="text-xs text-muted-foreground">--</span>;
-  return (
-    <div className="flex items-center gap-1.5">
-      <div className="flex gap-0.5">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div
-            key={i}
-            className={`size-1.5 rounded-full ${
-              i <= config.dots
-                ? portion === "ALL" || portion === "MOST"
-                  ? "bg-[var(--color-success)]"
-                  : portion === "HALF"
-                  ? "bg-[var(--color-warning)]"
-                  : "bg-[var(--color-warning)]"
-                : "bg-muted-foreground/20"
-            }`}
-          />
-        ))}
-      </div>
-      <span className={`text-xs font-medium ${config.color}`}>{config.label}</span>
-    </div>
-  );
 }
 
 // --- Page Component ---
@@ -221,11 +121,11 @@ export function DailyReportsClient({
     }
 
     if (dateFrom) {
-      data = data.filter((r) => r.date >= dateFrom);
+      data = data.filter((r) => r.reportDate >= dateFrom);
     }
 
     if (dateTo) {
-      data = data.filter((r) => r.date <= dateTo);
+      data = data.filter((r) => r.reportDate <= dateTo);
     }
 
     if (branchFilter && branchFilter !== "all") {
@@ -277,100 +177,40 @@ export function DailyReportsClient({
     });
   }
 
+  // Columns match old PHP app order: Image, F Name, L Name, Status, Branch, Class, Report Date, Created Date, Action
   const dailyReportColumns: ColumnDef<DailyReportRow>[] = [
     {
-      accessorKey: "date",
-      header: "Date",
+      accessorKey: "photo",
+      header: "Image",
+      cell: ({ row }) => {
+        const photo = row.original.photo;
+        return photo ? (
+          <img
+            src={photo}
+            alt={row.original.childName}
+            className="size-8 rounded-full object-cover"
+          />
+        ) : (
+          <div className="flex size-8 items-center justify-center rounded-full bg-muted">
+            <User className="size-4 text-muted-foreground" />
+          </div>
+        );
+      },
+      enableSorting: false,
+    },
+    {
+      accessorKey: "firstName",
+      header: "F Name",
       cell: ({ row }) => (
-        <span className="text-sm font-medium text-foreground whitespace-nowrap">
-          {format(new Date(row.original.date), "MMM d, yyyy")}
-        </span>
+        <span className="text-sm font-medium text-foreground">{row.original.firstName}</span>
       ),
     },
     {
-      accessorKey: "childName",
-      header: "Child",
-      cell: ({ row }) => {
-        const name = row.original.childName;
-        return (
-          <div className="flex items-center gap-2.5">
-            <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${getAvatarColor(name)}`}>
-              {getInitials(name)}
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground truncate">{name}</p>
-              <p className="text-[11px] text-muted-foreground">{row.original.className}</p>
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "breakfast",
-      header: () => (
-        <div className="flex items-center gap-1">
-          <Utensils className="size-3.5 text-amber-500" />
-          <span>Breakfast</span>
-        </div>
+      accessorKey: "lastName",
+      header: "L Name",
+      cell: ({ row }) => (
+        <span className="text-sm font-medium text-foreground">{row.original.lastName}</span>
       ),
-      cell: ({ row }) => <MealDots portion={row.original.breakfast} />,
-    },
-    {
-      accessorKey: "lunch",
-      header: () => (
-        <div className="flex items-center gap-1">
-          <UtensilsCrossed className="size-3.5 text-orange-500" />
-          <span>Lunch</span>
-        </div>
-      ),
-      cell: ({ row }) => <MealDots portion={row.original.lunch} />,
-    },
-    {
-      accessorKey: "sleep",
-      header: () => (
-        <div className="flex items-center gap-1">
-          <BedDouble className="size-3.5 text-indigo-500" />
-          <span>Sleep</span>
-        </div>
-      ),
-      cell: ({ row }) => {
-        const slept = row.original.sleep;
-        return (
-          <div className="flex items-center gap-1.5">
-            {slept ? (
-              <>
-                <div className="flex size-5 items-center justify-center rounded-full bg-indigo-100">
-                  <BedDouble className="size-3 text-indigo-600" />
-                </div>
-                <span className="text-xs font-medium text-indigo-700">Slept</span>
-              </>
-            ) : (
-              <>
-                <div className="flex size-5 items-center justify-center rounded-full bg-slate-100">
-                  <SunMedium className="size-3 text-slate-500" />
-                </div>
-                <span className="text-xs font-medium text-slate-500">No Nap</span>
-              </>
-            )}
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "mood",
-      header: "Mood",
-      cell: ({ row }) => {
-        const mood = row.original.mood;
-        if (!mood) return <span className="text-xs text-muted-foreground">--</span>;
-        const config = getMoodConfig(mood);
-        const Icon = config.icon;
-        return (
-          <Badge className={`${config.color} gap-1`}>
-            <Icon className="size-3" />
-            {config.label}
-          </Badge>
-        );
-      },
     },
     {
       accessorKey: "status",
@@ -391,15 +231,40 @@ export function DailyReportsClient({
       },
     },
     {
-      accessorKey: "createdBy",
-      header: "By",
+      accessorKey: "branchName",
+      header: "Branch",
       cell: ({ row }) => (
-        <span className="text-xs text-muted-foreground">{row.original.createdBy}</span>
+        <span className="text-sm text-foreground">{row.original.branchName}</span>
+      ),
+    },
+    {
+      accessorKey: "className",
+      header: "Class",
+      cell: ({ row }) => (
+        <span className="text-sm text-foreground">{row.original.className}</span>
+      ),
+    },
+    {
+      accessorKey: "reportDate",
+      header: "Report Date",
+      cell: ({ row }) => (
+        <span className="text-sm text-foreground whitespace-nowrap">
+          {format(new Date(row.original.reportDate), "MMM d, yyyy")}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Created Date",
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground whitespace-nowrap">
+          {format(new Date(row.original.createdAt), "MMM d, yyyy HH:mm")}
+        </span>
       ),
     },
     {
       id: "actions",
-      header: "",
+      header: "Action",
       cell: ({ row }) => {
         const report = row.original;
         return (

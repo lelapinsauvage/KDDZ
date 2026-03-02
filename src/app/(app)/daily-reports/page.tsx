@@ -24,21 +24,15 @@ export default async function DailyReportsPage({ searchParams }: PageProps) {
   // Serialize dates for client component
   const serializedReports = reports.map((report) => ({
     id: report.id,
-    date: report.reportDate.toISOString().split("T")[0],
+    photo: report.child.photo ?? null,
+    firstName: report.child.firstName,
+    lastName: report.child.lastName,
     childName: `${report.child.firstName} ${report.child.lastName}`,
     className: report.child.class?.name ?? "—",
     branchId: report.child.branchId,
     branchName: report.child.branch?.name ?? "—",
-    breakfast: report.breakfastPortion ?? null,
-    lunch: report.lunchPortion ?? null,
-    sleep: report.isSleep,
-    sleepFrom: report.sleepFrom
-      ? report.sleepFrom.toISOString()
-      : null,
-    sleepTo: report.sleepTo
-      ? report.sleepTo.toISOString()
-      : null,
-    mood: report.mood ?? null,
+    reportDate: report.reportDate.toISOString().split("T")[0],
+    createdAt: report.createdAt.toISOString(),
     status: report.status,
     createdBy: report.createdBy?.name ?? report.createdBy?.email ?? "—",
   }));
