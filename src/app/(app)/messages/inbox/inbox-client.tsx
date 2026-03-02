@@ -92,6 +92,26 @@ function initials(name: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
+/** Parse nature tag from subject like "[Urgent] Hello" */
+function parseNature(subject: string | null): {
+  nature: string | null;
+  cleanSubject: string | null;
+} {
+  if (!subject) return { nature: null, cleanSubject: null };
+  const match = subject.match(/^\[(General|Urgent|Legal|Event)\]\s*(.*)/i);
+  if (match) {
+    return { nature: match[1], cleanSubject: match[2] || null };
+  }
+  return { nature: null, cleanSubject: subject };
+}
+
+const NATURE_STYLES: Record<string, string> = {
+  General: "bg-gray-100 text-gray-700",
+  Urgent: "bg-red-100 text-red-700",
+  Legal: "bg-amber-100 text-amber-700",
+  Event: "bg-blue-100 text-blue-700",
+};
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -186,6 +206,23 @@ export function InboxClient({ messages, total }: InboxClientProps) {
       },
     },
     {
+      id: "nature",
+      header: "Nature",
+      cell: ({ row }) => {
+        const { nature } = parseNature(row.original.subject);
+        if (!nature)
+          return <span className="text-xs text-muted-foreground">-</span>;
+        return (
+          <Badge
+            variant="secondary"
+            className={`text-xs font-normal ${NATURE_STYLES[nature] ?? ""}`}
+          >
+            {nature}
+          </Badge>
+        );
+      },
+    },
+    {
       accessorKey: "subject",
       header: ({ column }) => (
         <Button
@@ -202,13 +239,14 @@ export function InboxClient({ messages, total }: InboxClientProps) {
       ),
       cell: ({ row }) => {
         const msg = row.original;
+        const { cleanSubject } = parseNature(msg.subject);
         return (
           <div>
             <Link
               href={`/messages/${msg.id}`}
               className={`text-sm hover:underline ${!msg.isRead ? "font-medium text-foreground" : "text-muted-foreground"}`}
             >
-              {msg.subject ?? "(No subject)"}
+              {cleanSubject ?? "(No subject)"}
             </Link>
             <p className="max-w-md truncate text-xs text-muted-foreground">
               {msg.body}

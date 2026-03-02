@@ -33,6 +33,7 @@ interface ClassMessageClientProps {
 export function ClassMessageClient({ classes }: ClassMessageClientProps) {
   const router = useRouter();
   const [selectedClass, setSelectedClass] = useState("");
+  const [nature, setNature] = useState("General");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -54,6 +55,7 @@ export function ClassMessageClient({ classes }: ClassMessageClientProps) {
         classId: selectedClass,
         subject: subject || null,
         body,
+        nature,
       });
 
       if (result.success) {
@@ -121,6 +123,21 @@ export function ClassMessageClient({ classes }: ClassMessageClientProps) {
                   </Badge>
                 </div>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Nature</Label>
+              <Select value={nature} onValueChange={setNature}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="General">General</SelectItem>
+                  <SelectItem value="Urgent">Urgent</SelectItem>
+                  <SelectItem value="Legal">Legal</SelectItem>
+                  <SelectItem value="Event">Event</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">

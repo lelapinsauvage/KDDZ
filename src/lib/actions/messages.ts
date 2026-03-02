@@ -23,12 +23,14 @@ interface SendMessageData {
   subject?: string | null;
   body: string;
   threadId?: string | null;
+  nature?: string | null;
 }
 
 interface SendClassMessageData {
   classId: string;
   subject?: string | null;
   body: string;
+  nature?: string | null;
 }
 
 interface SendBulkChildMessageData {
@@ -395,11 +397,16 @@ export async function sendMessage(
 
     const senderType = roleToSenderType(ctx.role);
 
+    // Prefix subject with nature tag if provided
+    const subjectLine = data.nature && data.subject
+      ? `[${data.nature}] ${data.subject}`
+      : data.subject ?? null;
+
     // Create or reuse a thread
     let threadId = data.threadId ?? null;
     if (!threadId) {
       const thread = await db.messageThread.create({
-        data: { subject: data.subject ?? null, organizationId: ctx.organizationId },
+        data: { subject: subjectLine, organizationId: ctx.organizationId },
       });
       threadId = thread.id;
     }
@@ -410,7 +417,7 @@ export async function sendMessage(
         senderType,
         recipientId: data.recipientId,
         recipientType: data.recipientType,
-        subject: data.subject ?? null,
+        subject: subjectLine,
         body: data.body,
         threadId,
         organizationId: ctx.organizationId,
@@ -626,6 +633,11 @@ export async function sendClassMessage(
 
     const senderType = roleToSenderType(ctx.role);
 
+    // Prefix subject with nature tag if provided
+    const subjectLine = data.nature && data.subject
+      ? `[${data.nature}] ${data.subject}`
+      : data.subject ?? null;
+
     // Verify class belongs to org
     const classRecord = await db.class.findUnique({
       where: { id: data.classId },
@@ -664,7 +676,7 @@ export async function sendClassMessage(
     // 3. Create a thread to group all messages
     const thread = await db.messageThread.create({
       data: {
-        subject: data.subject ?? null,
+        subject: subjectLine,
         organizationId: ctx.organizationId,
       },
     });
@@ -675,7 +687,7 @@ export async function sendClassMessage(
       senderType,
       recipientId: parentId,
       recipientType: "PARENT" as RecipientType,
-      subject: data.subject ?? null,
+      subject: subjectLine,
       body: data.body,
       threadId: thread.id,
       organizationId: ctx.organizationId,

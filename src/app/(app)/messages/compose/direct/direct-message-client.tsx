@@ -34,6 +34,7 @@ export function DirectMessageClient({ recipients }: DirectMessageClientProps) {
   const router = useRouter();
   const [recipient, setRecipient] = useState("");
   const [recipientSearch, setRecipientSearch] = useState("");
+  const [nature, setNature] = useState("General");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -61,6 +62,7 @@ export function DirectMessageClient({ recipients }: DirectMessageClientProps) {
         recipientType: selected.recipientType,
         subject: subject || null,
         body,
+        nature,
       });
 
       if (result.success) {
@@ -114,6 +116,21 @@ export function DirectMessageClient({ recipients }: DirectMessageClientProps) {
                       No recipients found
                     </div>
                   )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Nature</Label>
+              <Select value={nature} onValueChange={setNature}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="General">General</SelectItem>
+                  <SelectItem value="Urgent">Urgent</SelectItem>
+                  <SelectItem value="Legal">Legal</SelectItem>
+                  <SelectItem value="Event">Event</SelectItem>
                 </SelectContent>
               </Select>
             </div>
