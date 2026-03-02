@@ -135,19 +135,35 @@ export default async function ChildDashboardPage({ params }: Props) {
     date: a.createdAt.toISOString().slice(0, 10),
   }));
 
+  // Compute medical stat breakdowns (MedicalFormStatus: DRAFT | SUBMITTED | REVIEWED)
+  const medicalPublished = medicalForms.filter((m) => m.status === "SUBMITTED" || m.status === "REVIEWED").length;
+  const medicalDrafts = medicalForms.filter((m) => m.status === "DRAFT").length;
+  const medicalMissing = medicalForms.length - medicalPublished - medicalDrafts;
+
+  // Compute assessment stat breakdowns (AssessmentStatus: DRAFT | SUBMITTED | REVIEWED)
+  const allAssessments = dashboardStats.assessments;
+  const assessmentsCompleted = allAssessments.filter((a) => a.status === "SUBMITTED" || a.status === "REVIEWED").length;
+  const assessmentsDrafts = allAssessments.filter((a) => a.status === "DRAFT").length;
+  const assessmentsIncomplete = 0; // All non-completed, non-draft are counted as missing
+  const assessmentsMissing = allAssessments.length - assessmentsCompleted - assessmentsDrafts;
+
   const stats = {
-    incomingCalls: dashboardStats.incomingCalls,
-    outgoingCalls: dashboardStats.outgoingCalls,
+    callsInOut: dashboardStats.incomingCalls + dashboardStats.outgoingCalls,
     accidentReports: dashboardStats.accidentReports,
     totalPayments: `$${dashboardStats.totalPayments.toFixed(2)}`,
     totalAttendance: dashboardStats.totalAttendance,
     totalAbsence: dashboardStats.totalAbsence,
     missingDailyReports: totalDays > 0 ? Math.max(0, totalDays - dashboardStats.totalDailyReports) : 0,
     missingAbsentReports: absentDays > 0 ? Math.max(0, absentDays - dashboardStats.totalAbsenceReports) : 0,
-    outstandingBalance: balanceStr,
     attendanceRate: totalDays > 0 ? `${Math.round((presentDays / totalDays) * 100)}%` : "N/A",
     totalReports: totalReportsCount,
-    medicalRecords: medicalForms.length,
+    medicalPublished,
+    medicalMissing,
+    medicalDrafts,
+    assessmentsCompleted,
+    assessmentsMissing,
+    assessmentsIncomplete,
+    assessmentsDrafts,
   };
 
   const attendanceChart = {

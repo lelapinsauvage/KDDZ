@@ -26,6 +26,10 @@ import {
   ClipboardList,
   CheckCircle2,
   Clock,
+  Stethoscope,
+  FilePenLine,
+  GraduationCap,
+  CircleDashed,
 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { getAvatarColor, getInitials } from "@/components/children/children-columns";
@@ -118,7 +122,7 @@ interface ChildData {
   nationality: string | null;
   language: string | null;
   allergies: string | null;
-  busAttendance: string | null;
+  busAttendance: string | null | boolean;
   lunchIncluded: boolean;
   diaperType: string | null;
   milkType: string | null;
@@ -161,18 +165,22 @@ interface AssessmentRow {
 }
 
 interface Stats {
-  incomingCalls: number;
-  outgoingCalls: number;
+  callsInOut: number;
   accidentReports: number;
   totalPayments: string;
   totalAttendance: number;
   totalAbsence: number;
   missingDailyReports: number;
   missingAbsentReports: number;
-  outstandingBalance: string;
   attendanceRate: string;
   totalReports: number;
-  medicalRecords: number;
+  medicalPublished: number;
+  medicalMissing: number;
+  medicalDrafts: number;
+  assessmentsCompleted: number;
+  assessmentsMissing: number;
+  assessmentsIncomplete: number;
+  assessmentsDrafts: number;
 }
 
 interface AttendanceChart {
@@ -438,6 +446,35 @@ export function DashboardClient({
                 {child.language && (
                   <InfoRow label="Language" value={child.language} />
                 )}
+                {child.busAttendance != null && (
+                  <InfoRow
+                    label="Bus"
+                    value={
+                      String(child.busAttendance) === "true" || String(child.busAttendance) === "1"
+                        ? "Yes"
+                        : String(child.busAttendance) === "false" || String(child.busAttendance) === "0"
+                          ? "No"
+                          : String(child.busAttendance)
+                    }
+                  />
+                )}
+                {child.milkType && (
+                  <InfoRow
+                    label="Milk"
+                    value={
+                      <span>
+                        {child.milkType}
+                        {child.milkPortions != null && (
+                          <span className="text-muted-foreground ml-1">({child.milkPortions} portions)</span>
+                        )}
+                      </span>
+                    }
+                  />
+                )}
+                <InfoRow label="Lunch" value={child.lunchIncluded ? "Yes" : "No"} />
+                {child.diaperType && (
+                  <InfoRow label="Diapers" value={child.diaperType} />
+                )}
               </div>
 
               {/* Parents */}
@@ -558,10 +595,33 @@ export function DashboardClient({
             </Button>
           </div>
 
-          {/* ─── Health & Attendance KPIs ──────────── */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-            {/* Total Payments */}
-            <Card className="overflow-hidden">
+          {/* ─── Row 1: Calls, Accidents, Payments ── */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <Card className="overflow-hidden border-l-4 border-l-purple-500">
+              <CardContent className="flex items-center gap-3 py-3 px-4">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-purple-50">
+                  <Phone className="size-4.5 text-purple-600" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-lg font-bold leading-none text-purple-700">{stats.callsInOut}</p>
+                  <p className="mt-0.5 text-[10px] text-muted-foreground">Calls In/Out</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="overflow-hidden border-l-4 border-l-red-500">
+              <CardContent className="flex items-center gap-3 py-3 px-4">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-red-50">
+                  <ShieldAlert className="size-4.5 text-red-600" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-lg font-bold leading-none text-red-700">{stats.accidentReports}</p>
+                  <p className="mt-0.5 text-[10px] text-muted-foreground">Accident Reports</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="overflow-hidden border-l-4 border-l-emerald-500">
               <CardContent className="flex items-center gap-3 py-3 px-4">
                 <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50">
                   <DollarSign className="size-4.5 text-emerald-600" />
@@ -572,93 +632,182 @@ export function DashboardClient({
                 </div>
               </CardContent>
             </Card>
+          </div>
 
-            {/* Attendance */}
-            <Card className="overflow-hidden">
+          {/* ─── Row 2: Attendance Stats ───────────── */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Card className="overflow-hidden border-l-4 border-l-emerald-500">
               <CardContent className="flex items-center gap-3 py-3 px-4">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-blue-50">
-                  <Calendar className="size-4.5 text-blue-600" />
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50">
+                  <Calendar className="size-4.5 text-emerald-600" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-lg font-bold leading-none text-blue-700">{stats.totalAttendance}</p>
+                  <p className="text-lg font-bold leading-none text-emerald-700">{stats.totalAttendance}</p>
                   <p className="mt-0.5 text-[10px] text-muted-foreground">Attendance</p>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Absence */}
-            <Card className="overflow-hidden">
+            <Card className="overflow-hidden border-l-4 border-l-red-500">
               <CardContent className="flex items-center gap-3 py-3 px-4">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-pink-50">
-                  <UserX className="size-4.5 text-pink-600" />
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-red-50">
+                  <UserX className="size-4.5 text-red-600" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-lg font-bold leading-none text-pink-700">{stats.totalAbsence}</p>
+                  <p className="text-lg font-bold leading-none text-red-700">{stats.totalAbsence}</p>
                   <p className="mt-0.5 text-[10px] text-muted-foreground">Absence</p>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Missing Daily Reports */}
-            <Card className={`overflow-hidden ${stats.missingDailyReports > 0 ? "ring-1 ring-amber-300" : ""}`}>
+            <Card className={`overflow-hidden border-l-4 border-l-slate-400 ${stats.missingDailyReports > 0 ? "ring-1 ring-amber-300" : ""}`}>
               <CardContent className="flex items-center gap-3 py-3 px-4">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-amber-50">
-                  <FileQuestion className="size-4.5 text-amber-600" />
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-slate-50">
+                  <FileQuestion className="size-4.5 text-slate-600" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-lg font-bold leading-none text-amber-700">{stats.missingDailyReports}</p>
-                  <p className="mt-0.5 text-[10px] text-muted-foreground">Missing Reports</p>
+                  <p className="text-lg font-bold leading-none text-slate-700">{stats.missingDailyReports}</p>
+                  <p className="mt-0.5 text-[10px] text-muted-foreground">Missing Daily Rpt</p>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Missing Absent Reports */}
-            <Card className={`overflow-hidden ${stats.missingAbsentReports > 0 ? "ring-1 ring-red-300" : ""}`}>
+            <Card className={`overflow-hidden border-l-4 border-l-slate-400 ${stats.missingAbsentReports > 0 ? "ring-1 ring-red-300" : ""}`}>
               <CardContent className="flex items-center gap-3 py-3 px-4">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-red-50">
-                  <AlertTriangle className="size-4.5 text-red-500" />
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-slate-50">
+                  <AlertTriangle className="size-4.5 text-slate-600" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-lg font-bold leading-none text-red-600">{stats.missingAbsentReports}</p>
+                  <p className="text-lg font-bold leading-none text-slate-700">{stats.missingAbsentReports}</p>
                   <p className="mt-0.5 text-[10px] text-muted-foreground">Missing Absent Rpt</p>
                 </div>
               </CardContent>
             </Card>
+          </div>
 
-            {/* Donut Chart */}
-            <Card className="overflow-hidden">
-              <CardContent className="flex items-center gap-2 py-2 px-3">
-                <div className="size-14 shrink-0">
-                  {donutData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={donutData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={16}
-                          outerRadius={26}
-                          paddingAngle={2}
-                          dataKey="value"
-                          strokeWidth={0}
-                        >
-                          {donutData.map((_, idx) => (
-                            <Cell key={idx} fill={DONUT_COLORS[idx % DONUT_COLORS.length]} />
-                          ))}
-                        </Pie>
-                      </PieChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="flex size-full items-center justify-center text-xs text-muted-foreground">N/A</div>
-                  )}
+          {/* ─── Attendance Pie Chart ──────────────── */}
+          <Card className="overflow-hidden">
+            <CardContent className="flex items-center gap-4 py-3 px-4">
+              <div className="size-16 shrink-0">
+                {donutData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={donutData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={18}
+                        outerRadius={30}
+                        paddingAngle={2}
+                        dataKey="value"
+                        strokeWidth={0}
+                      >
+                        {donutData.map((_, idx) => (
+                          <Cell key={idx} fill={DONUT_COLORS[idx % DONUT_COLORS.length]} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex size-full items-center justify-center text-xs text-muted-foreground">N/A</div>
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold leading-none">Attendance: {stats.attendanceRate}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {totalAttendanceEntries > 0
+                    ? `${attendanceChart.present} Present / ${attendanceChart.absent} Absent`
+                    : "No data"}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* ─── Row 3: Medical Stats ──────────────── */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <Card className="overflow-hidden border-l-4 border-l-emerald-500">
+              <CardContent className="flex items-center gap-3 py-3 px-4">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50">
+                  <Stethoscope className="size-4.5 text-emerald-600" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-bold leading-none">{stats.attendanceRate}</p>
-                  <p className="mt-0.5 text-[10px] text-muted-foreground">
-                    {totalAttendanceEntries > 0
-                      ? `${attendanceChart.present}P / ${attendanceChart.absent}A`
-                      : "No data"}
-                  </p>
+                  <p className="text-lg font-bold leading-none text-emerald-700">{stats.medicalPublished}</p>
+                  <p className="mt-0.5 text-[10px] text-muted-foreground">Medical Published</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="overflow-hidden border-l-4 border-l-pink-500">
+              <CardContent className="flex items-center gap-3 py-3 px-4">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-pink-50">
+                  <Stethoscope className="size-4.5 text-pink-600" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-lg font-bold leading-none text-pink-700">{stats.medicalMissing}</p>
+                  <p className="mt-0.5 text-[10px] text-muted-foreground">Medical Missing</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="overflow-hidden border-l-4 border-l-slate-400">
+              <CardContent className="flex items-center gap-3 py-3 px-4">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-slate-50">
+                  <FilePenLine className="size-4.5 text-slate-600" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-lg font-bold leading-none text-slate-700">{stats.medicalDrafts}</p>
+                  <p className="mt-0.5 text-[10px] text-muted-foreground">Medical Drafts</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* ─── Row 4: Assessment Stats ───────────── */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Card className="overflow-hidden border-l-4 border-l-emerald-500">
+              <CardContent className="flex items-center gap-3 py-3 px-4">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50">
+                  <GraduationCap className="size-4.5 text-emerald-600" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-lg font-bold leading-none text-emerald-700">{stats.assessmentsCompleted}</p>
+                  <p className="mt-0.5 text-[10px] text-muted-foreground">Assessments Done</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="overflow-hidden border-l-4 border-l-pink-500">
+              <CardContent className="flex items-center gap-3 py-3 px-4">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-pink-50">
+                  <GraduationCap className="size-4.5 text-pink-600" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-lg font-bold leading-none text-pink-700">{stats.assessmentsMissing}</p>
+                  <p className="mt-0.5 text-[10px] text-muted-foreground">Assessments Missing</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="overflow-hidden border-l-4 border-l-red-500">
+              <CardContent className="flex items-center gap-3 py-3 px-4">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-red-50">
+                  <CircleDashed className="size-4.5 text-red-600" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-lg font-bold leading-none text-red-700">{stats.assessmentsIncomplete}</p>
+                  <p className="mt-0.5 text-[10px] text-muted-foreground">Assessments Incomplete</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="overflow-hidden border-l-4 border-l-slate-400">
+              <CardContent className="flex items-center gap-3 py-3 px-4">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-slate-50">
+                  <FilePenLine className="size-4.5 text-slate-600" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-lg font-bold leading-none text-slate-700">{stats.assessmentsDrafts}</p>
+                  <p className="mt-0.5 text-[10px] text-muted-foreground">Assessment Drafts</p>
                 </div>
               </CardContent>
             </Card>
