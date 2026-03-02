@@ -11,7 +11,9 @@ interface FeverEntry {
 }
 
 interface MilkEntry {
+  milkType: string | null;
   amountCc: number;
+  scoops: number | null;
   time: string;
 }
 
@@ -28,9 +30,14 @@ interface ReportData {
   lunchPortion: string | null;
   dessert: string | null;
   dessertPortion: string | null;
+  checkInTime: string | null;
+  checkOutTime: string | null;
   isSleep: boolean;
   sleepFrom: string | null;
   sleepTo: string | null;
+  sleepQuality: string | null;
+  activities: string | null;
+  medicine: string | null;
   mood: string | null;
   diarrhea: boolean;
   cough: boolean;
@@ -145,6 +152,18 @@ export function DailyReportPrintClient({ report }: { report: ReportData }) {
               <span className="font-semibold">Status:</span>{" "}
               {report.status}
             </div>
+            {report.checkInTime && (
+              <div>
+                <span className="font-semibold">Check-in:</span>{" "}
+                {formatTime(report.checkInTime)}
+              </div>
+            )}
+            {report.checkOutTime && (
+              <div>
+                <span className="font-semibold">Check-out:</span>{" "}
+                {formatTime(report.checkOutTime)}
+              </div>
+            )}
           </div>
         </div>
 
@@ -191,7 +210,9 @@ export function DailyReportPrintClient({ report }: { report: ReportData }) {
               {report.milks.map((m, i) => (
                 <div key={i} className="flex gap-4">
                   <span>{formatTime(m.time)}</span>
+                  {m.milkType && <span>{m.milkType}</span>}
                   <span>{m.amountCc} cc</span>
+                  {m.scoops != null && m.scoops > 0 && <span>{m.scoops} scoops</span>}
                 </div>
               ))}
             </div>
@@ -209,6 +230,9 @@ export function DailyReportPrintClient({ report }: { report: ReportData }) {
                 Slept
                 {report.sleepFrom && report.sleepTo && (
                   <> from {formatTime(report.sleepFrom)} to {formatTime(report.sleepTo)}</>
+                )}
+                {report.sleepQuality && (
+                  <> &middot; Quality: {report.sleepQuality}</>
                 )}
               </>
             ) : (
@@ -250,6 +274,12 @@ export function DailyReportPrintClient({ report }: { report: ReportData }) {
                 ))}
               </div>
             )}
+            {report.medicine && (
+              <div>
+                <span className="font-semibold">Medicine:</span>{" "}
+                {report.medicine}
+              </div>
+            )}
           </div>
         </div>
 
@@ -265,6 +295,16 @@ export function DailyReportPrintClient({ report }: { report: ReportData }) {
               {report.urineDiaper > 0 && <div>Urine (diaper): {report.urineDiaper}x</div>}
               {report.stoolDiaper > 0 && <div>Stool (diaper): {report.stoolDiaper}x</div>}
             </div>
+          </div>
+        )}
+
+        {/* Activities */}
+        {report.activities && (
+          <div className="mb-5" style={{ breakInside: "avoid" }}>
+            <h2 className="mb-2 border-b border-border pb-1 text-base font-bold print:border-gray-300">
+              Activities
+            </h2>
+            <p className="whitespace-pre-wrap text-sm">{report.activities}</p>
           </div>
         )}
 

@@ -218,6 +218,8 @@ export async function createDailyReport(formData: FormData) {
         childId: data.childId,
         reportDate: new Date(data.reportDate),
         status: (rawData.status === "SUBMITTED" ? "SUBMITTED" : "DRAFT") as DailyReportStatus,
+        checkInTime: data.checkInTime ? new Date(`1970-01-01T${data.checkInTime}`) : null,
+        checkOutTime: data.checkOutTime ? new Date(`1970-01-01T${data.checkOutTime}`) : null,
         breakfastFoodId: data.breakfastFoodId || null,
         breakfastPortion: data.breakfastPortion || null,
         breakfastTime: data.breakfastTime ? new Date(`1970-01-01T${data.breakfastTime}`) : null,
@@ -230,6 +232,9 @@ export async function createDailyReport(formData: FormData) {
         isSleep: data.isSleep,
         sleepFrom: data.sleepFrom ? new Date(`1970-01-01T${data.sleepFrom}`) : null,
         sleepTo: data.sleepTo ? new Date(`1970-01-01T${data.sleepTo}`) : null,
+        sleepQuality: data.sleepQuality || null,
+        activities: data.activities || null,
+        medicine: data.medicine || null,
         diarrhea: data.diarrhea,
         urinePotty: data.urinePotty,
         stoolPotty: data.stoolPotty,
@@ -249,7 +254,9 @@ export async function createDailyReport(formData: FormData) {
         },
         milks: {
           create: data.milkEntries.map((m) => ({
+            milkType: m.milkType || null,
             amountCc: parseInt(m.amountCc, 10),
+            scoops: m.scoops ? parseInt(m.scoops, 10) : null,
             time: new Date(`1970-01-01T${m.time}`),
           })),
         },
@@ -340,6 +347,8 @@ export async function updateDailyReport(id: string, formData: FormData) {
       data: {
         childId: data.childId,
         reportDate: new Date(data.reportDate),
+        checkInTime: data.checkInTime ? new Date(`1970-01-01T${data.checkInTime}`) : null,
+        checkOutTime: data.checkOutTime ? new Date(`1970-01-01T${data.checkOutTime}`) : null,
         breakfastFoodId: data.breakfastFoodId || null,
         breakfastPortion: data.breakfastPortion || null,
         breakfastTime: data.breakfastTime ? new Date(`1970-01-01T${data.breakfastTime}`) : null,
@@ -352,6 +361,9 @@ export async function updateDailyReport(id: string, formData: FormData) {
         isSleep: data.isSleep,
         sleepFrom: data.sleepFrom ? new Date(`1970-01-01T${data.sleepFrom}`) : null,
         sleepTo: data.sleepTo ? new Date(`1970-01-01T${data.sleepTo}`) : null,
+        sleepQuality: data.sleepQuality || null,
+        activities: data.activities || null,
+        medicine: data.medicine || null,
         diarrhea: data.diarrhea,
         urinePotty: data.urinePotty,
         stoolPotty: data.stoolPotty,
@@ -370,7 +382,9 @@ export async function updateDailyReport(id: string, formData: FormData) {
         },
         milks: {
           create: data.milkEntries.map((m) => ({
+            milkType: m.milkType || null,
             amountCc: parseInt(m.amountCc, 10),
+            scoops: m.scoops ? parseInt(m.scoops, 10) : null,
             time: new Date(`1970-01-01T${m.time}`),
           })),
         },

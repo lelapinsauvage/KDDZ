@@ -6,7 +6,9 @@ export const feverEntrySchema = z.object({
 });
 
 export const milkEntrySchema = z.object({
+  milkType: z.string().optional(),
   amountCc: z.string().min(1, "Required"),
+  scoops: z.string().optional(),
   time: z.string().min(1, "Required"),
 });
 
@@ -38,10 +40,21 @@ export const dailyReportSchema = z.object({
   dessertPortion: z.enum(["NONE", "LITTLE", "HALF", "MOST", "ALL"]).optional(),
   dessertTime: z.string().optional(),
 
+  // Attendance times
+  checkInTime: z.string().optional(),
+  checkOutTime: z.string().optional(),
+
   // Sleep
   isSleep: z.boolean().default(false),
   sleepFrom: z.string().optional(),
   sleepTo: z.string().optional(),
+  sleepQuality: z.enum(["GOOD", "FAIR", "POOR"]).optional(),
+
+  // Activities
+  activities: z.string().optional(),
+
+  // Medicine
+  medicine: z.string().optional(),
 
   // Health indicators
   diarrhea: z.boolean().default(false),

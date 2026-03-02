@@ -43,6 +43,8 @@ import {
   Copy,
   X,
   Clock,
+  Pill,
+  Palette,
 } from "lucide-react";
 
 type PortionValue = "NONE" | "LITTLE" | "HALF" | "MOST" | "ALL";
@@ -213,6 +215,11 @@ export function DailyReportForm({
       clothesSweater: false,
       clothesTshirt: false,
       clothesUnderwear: false,
+      checkInTime: undefined,
+      checkOutTime: undefined,
+      sleepQuality: undefined,
+      activities: undefined,
+      medicine: undefined,
       clothesSocks: false,
       attachments: [],
       hospitalAttend: false,
@@ -260,6 +267,10 @@ export function DailyReportForm({
       return fd;
     }
 
+    // Attendance times
+    if (data.checkInTime) fd.set("checkInTime", data.checkInTime);
+    if (data.checkOutTime) fd.set("checkOutTime", data.checkOutTime);
+
     // Meals
     if (data.breakfastFoodId) fd.set("breakfastFoodId", data.breakfastFoodId);
     if (data.breakfastPortion) fd.set("breakfastPortion", data.breakfastPortion);
@@ -279,6 +290,7 @@ export function DailyReportForm({
     fd.set("isSleep", String(hasSleep));
     if (data.sleepFrom) fd.set("sleepFrom", data.sleepFrom);
     if (data.sleepTo) fd.set("sleepTo", data.sleepTo);
+    if (data.sleepQuality) fd.set("sleepQuality", data.sleepQuality);
 
     // Hygiene
     fd.set("diarrhea", String(data.diarrhea));
@@ -297,8 +309,12 @@ export function DailyReportForm({
     fd.set("feverEntries", JSON.stringify(data.feverEntries));
     fd.set("milkEntries", JSON.stringify(data.milkEntries));
 
-    // Health notes
+    // Health notes & medicine
     if (data.healthNotes) fd.set("healthNotes", data.healthNotes);
+    if (data.medicine) fd.set("medicine", data.medicine);
+
+    // Activities
+    if (data.activities) fd.set("activities", data.activities);
 
     // Extra clothes
     fd.set("clothesPants", String(data.clothesPants));
@@ -474,6 +490,54 @@ export function DailyReportForm({
             </CardContent>
           </Card>
         </>
+      )}
+
+      {/* ── Check-in / Check-out Times ── */}
+      {attendanceMode === "PRESENT" && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Clock className="size-4 text-primary" />
+              Attendance Times
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Check-in Time</Label>
+                <div className="flex gap-2">
+                  <Input type="time" {...register("checkInTime")} className="flex-1" />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0 size-10"
+                    onClick={() => setValue("checkInTime", currentTimeString())}
+                    title="Set to current time"
+                  >
+                    <Clock className="size-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Check-out Time</Label>
+                <div className="flex gap-2">
+                  <Input type="time" {...register("checkOutTime")} className="flex-1" />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0 size-10"
+                    onClick={() => setValue("checkOutTime", currentTimeString())}
+                    title="Set to current time"
+                  >
+                    <Clock className="size-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* ══════════════════════════════════════════ */}
@@ -695,7 +759,7 @@ export function DailyReportForm({
                   variant="outline"
                   size="sm"
                   className="border-sky-300 text-sky-700 hover:bg-sky-100"
-                  onClick={() => milkArray.append({ amountCc: "", time: "" })}
+                  onClick={() => milkArray.append({ milkType: "", amountCc: "", scoops: "", time: "" })}
                 >
                   <Plus className="mr-1 size-3.5" />
                   Add Entry
@@ -710,17 +774,54 @@ export function DailyReportForm({
               ) : (
                 <div className="space-y-3">
                   {milkArray.fields.map((field, index) => (
-                    <div key={field.id} className="flex items-end gap-3">
-                      <div className="flex-1 space-y-2">
-                        <Label>Amount (cc)</Label>
-                        <Input
-                          type="number"
-                          placeholder="120"
-                          {...register(`milkEntries.${index}.amountCc`)}
-                          className="min-h-[44px]"
-                        />
+                    <div key={field.id} className="space-y-3 rounded-lg border border-sky-200 bg-white p-3">
+                      <div className="flex items-end gap-3">
+                        <div className="flex-1 space-y-2">
+                          <Label>Type</Label>
+                          <Select
+                            value={watch(`milkEntries.${index}.milkType`) || ""}
+                            onValueChange={(val) => setValue(`milkEntries.${index}.milkType`, val)}
+                          >
+                            <SelectTrigger className="min-h-[44px]">
+                              <SelectValue placeholder="Select type..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="FORMULA">Formula</SelectItem>
+                              <SelectItem value="BREAST">Breast</SelectItem>
+                              <SelectItem value="COW">Cow</SelectItem>
+                              <SelectItem value="OTHER">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex-1 space-y-2">
+                          <Label>Amount (cc)</Label>
+                          <Input
+                            type="number"
+                            placeholder="120"
+                            {...register(`milkEntries.${index}.amountCc`)}
+                            className="min-h-[44px]"
+                          />
+                        </div>
+                        <div className="w-20 space-y-2">
+                          <Label>Scoops</Label>
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            {...register(`milkEntries.${index}.scoops`)}
+                            className="min-h-[44px]"
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive min-h-[44px] min-w-[44px]"
+                          onClick={() => milkArray.remove(index)}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
                       </div>
-                      <div className="flex-1 space-y-2">
+                      <div className="space-y-2">
                         <Label>Time</Label>
                         <div className="flex gap-1.5">
                           <Input type="time" {...register(`milkEntries.${index}.time`)} className="flex-1 min-h-[44px]" />
@@ -736,15 +837,6 @@ export function DailyReportForm({
                           </Button>
                         </div>
                       </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive hover:text-destructive min-h-[44px] min-w-[44px]"
-                        onClick={() => milkArray.remove(index)}
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
                     </div>
                   ))}
                 </div>
@@ -761,7 +853,7 @@ export function DailyReportForm({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div className="space-y-2">
                   <Label>From</Label>
                   <div className="flex gap-2">
@@ -793,6 +885,22 @@ export function DailyReportForm({
                       <Clock className="size-4" />
                     </Button>
                   </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Quality</Label>
+                  <Select
+                    value={watch("sleepQuality") || ""}
+                    onValueChange={(val) => setValue("sleepQuality", val as "GOOD" | "FAIR" | "POOR")}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select quality..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="GOOD">Good</SelectItem>
+                      <SelectItem value="FAIR">Fair</SelectItem>
+                      <SelectItem value="POOR">Poor</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </CardContent>
@@ -957,6 +1065,21 @@ export function DailyReportForm({
 
               <Separator className="bg-rose-200" />
 
+              {/* Medicine */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Pill className="size-4 text-rose-500" />
+                  Medicine
+                </Label>
+                <Textarea
+                  placeholder="Medicine name, dosage, time given..."
+                  rows={2}
+                  {...register("medicine")}
+                />
+              </div>
+
+              <Separator className="bg-rose-200" />
+
               {/* Health Notes */}
               <div className="space-y-2">
                 <Label>Health Notes</Label>
@@ -998,6 +1121,23 @@ export function DailyReportForm({
                   );
                 })}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* ── ACTIVITIES ISLAND ── */}
+          <Card className="border-teal-200 bg-teal-50/60">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base text-teal-900">
+                <Palette className="size-4 text-teal-500" />
+                Activities
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                placeholder="Activities the child participated in today..."
+                rows={3}
+                {...register("activities")}
+              />
             </CardContent>
           </Card>
 

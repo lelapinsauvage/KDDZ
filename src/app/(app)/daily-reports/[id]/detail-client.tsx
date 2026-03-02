@@ -23,7 +23,9 @@ interface FeverEntry {
 }
 
 interface MilkEntry {
+  milkType: string | null;
   amountCc: number;
+  scoops: number | null;
   time: string;
 }
 
@@ -40,9 +42,14 @@ interface ReportData {
   lunchPortion: string | null;
   dessert: string | null;
   dessertPortion: string | null;
+  checkInTime: string | null;
+  checkOutTime: string | null;
   isSleep: boolean;
   sleepFrom: string | null;
   sleepTo: string | null;
+  sleepQuality: string | null;
+  activities: string | null;
+  medicine: string | null;
   mood: string | null;
   diarrhea: boolean;
   cough: boolean;
@@ -147,6 +154,14 @@ export function DailyReportDetailClient({ report }: { report: ReportData }) {
               &middot; {report.branchName}
             </span>
           )}
+          {(report.checkInTime || report.checkOutTime) && (
+            <span className="text-sm text-muted-foreground">
+              &middot;{" "}
+              {report.checkInTime && <>In: {formatTime(report.checkInTime)}</>}
+              {report.checkInTime && report.checkOutTime && " / "}
+              {report.checkOutTime && <>Out: {formatTime(report.checkOutTime)}</>}
+            </span>
+          )}
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -198,6 +213,9 @@ export function DailyReportDetailClient({ report }: { report: ReportData }) {
                     {report.sleepFrom && report.sleepTo && (
                       <> from {formatTime(report.sleepFrom)} to {formatTime(report.sleepTo)}</>
                     )}
+                    {report.sleepQuality && (
+                      <> &middot; Quality: {report.sleepQuality}</>
+                    )}
                   </>
                 ) : (
                   "No nap today"
@@ -240,6 +258,12 @@ export function DailyReportDetailClient({ report }: { report: ReportData }) {
                     ))}
                   </div>
                 )}
+                {report.medicine && (
+                  <div className="mt-2">
+                    <span className="text-xs font-medium uppercase text-muted-foreground">Medicine</span>
+                    <p className="text-muted-foreground">{report.medicine}</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -274,7 +298,9 @@ export function DailyReportDetailClient({ report }: { report: ReportData }) {
                 {report.milks.map((m, i) => (
                   <div key={i} className="flex gap-4 text-muted-foreground">
                     <span>{formatTime(m.time)}</span>
+                    {m.milkType && <span>{m.milkType}</span>}
                     <span>{m.amountCc} cc</span>
+                    {m.scoops != null && m.scoops > 0 && <span>{m.scoops} scoops</span>}
                   </div>
                 ))}
               </div>
@@ -298,6 +324,20 @@ export function DailyReportDetailClient({ report }: { report: ReportData }) {
                 {report.urineDiaper > 0 && <div>Urine (diaper): {report.urineDiaper}x</div>}
                 {report.stoolDiaper > 0 && <div>Stool (diaper): {report.stoolDiaper}x</div>}
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Activities */}
+        {report.activities && (
+          <Card className="rounded-2xl">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Activities</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+                {report.activities}
+              </p>
             </CardContent>
           </Card>
         )}

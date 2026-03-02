@@ -1314,9 +1314,14 @@ model DailyReport {
   dessert          String?
   dessertPortion   PortionSize?
   dessertTime      DateTime?         @db.Time(6)
+  checkInTime      DateTime?         @db.Time(6)
+  checkOutTime     DateTime?         @db.Time(6)
   isSleep          Boolean           @default(false)
   sleepFrom        DateTime?         @db.Time(6)
   sleepTo          DateTime?         @db.Time(6)
+  sleepQuality     String?
+  activities       String?           @db.Text
+  medicine         String?           @db.Text
   diarrhea         Boolean           @default(false)
   urinePotty       Int               @default(0)
   stoolPotty       Int               @default(0)
@@ -1365,7 +1370,9 @@ model DailyReportFever {
 model DailyReportMilk {
   id            String   @id @default(uuid()) @db.Uuid
   dailyReportId String   @db.Uuid
+  milkType      String?
   amountCc      Int
+  scoops        Int?
   time          DateTime @db.Time(6)
   createdAt     DateTime @default(now())
 
