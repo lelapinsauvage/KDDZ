@@ -34,6 +34,7 @@ export interface ChildRow {
   classId: string | null;
   isActive: boolean;
   isDraft: boolean;
+  createdAt: Date | string;
   branch: { id: string; name: string } | null;
   class: { id: string; name: string; branchId: string; ageGroup?: string | null } | null;
 }
@@ -201,12 +202,11 @@ export function getChildrenColumns(
       enableSorting: false,
     },
 
-    // Full Name — with sort indicator
+    // First Name
     {
-      accessorKey: "fullName",
-      accessorFn: (row) => `${row.firstName} ${row.lastName}`,
+      accessorKey: "firstName",
       header: ({ column }) => (
-        <SortableHeader column={column}>Full Name</SortableHeader>
+        <SortableHeader column={column}>First Name</SortableHeader>
       ),
       cell: ({ row }) => {
         const child = row.original;
@@ -216,10 +216,60 @@ export function getChildrenColumns(
             className="font-medium text-foreground hover:text-primary hover:underline"
             onClick={(e) => e.stopPropagation()}
           >
-            {child.firstName} {child.lastName}
+            {child.firstName}
           </Link>
         );
       },
+    },
+
+    // Last Name
+    {
+      accessorKey: "lastName",
+      header: ({ column }) => (
+        <SortableHeader column={column}>Last Name</SortableHeader>
+      ),
+      cell: ({ row }) => {
+        const child = row.original;
+        return (
+          <Link
+            href={`/children/${child.id}`}
+            className="text-foreground hover:text-primary hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {child.lastName}
+          </Link>
+        );
+      },
+    },
+
+    // Date of Birth
+    {
+      accessorKey: "dateOfBirth",
+      header: ({ column }) => (
+        <SortableHeader column={column}>DOB</SortableHeader>
+      ),
+      cell: ({ row }) => {
+        const dob = row.original.dateOfBirth;
+        const age = getAge(dob);
+        return (
+          <div>
+            <div className="text-sm">{formatDate(dob)}</div>
+            {age && <div className="text-xs text-muted-foreground">{age}</div>}
+          </div>
+        );
+      },
+    },
+
+    // Branch
+    {
+      accessorKey: "branchName",
+      accessorFn: (row) => row.branch?.name ?? "-",
+      header: ({ column }) => (
+        <SortableHeader column={column}>Branch</SortableHeader>
+      ),
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">{row.original.branch?.name ?? "-"}</span>
+      ),
     },
 
     // Class
@@ -240,16 +290,17 @@ export function getChildrenColumns(
       },
     },
 
-    // Branch
+    // Nationality
     {
-      accessorKey: "branchName",
-      accessorFn: (row) => row.branch?.name ?? "-",
+      accessorKey: "nationality",
       header: ({ column }) => (
-        <SortableHeader column={column}>Branch</SortableHeader>
+        <SortableHeader column={column}>Nationality</SortableHeader>
       ),
-      cell: ({ row }) => (
-        <span className="text-muted-foreground">{row.original.branch?.name ?? "-"}</span>
-      ),
+      cell: ({ row }) => {
+        const nat = row.original.nationality;
+        if (!nat) return <span className="text-muted-foreground">-</span>;
+        return <span className="text-sm">{nat}</span>;
+      },
     },
 
     // Gender
@@ -276,21 +327,14 @@ export function getChildrenColumns(
       },
     },
 
-    // Date of Birth
+    // Created Date
     {
-      accessorKey: "dateOfBirth",
+      accessorKey: "createdAt",
       header: ({ column }) => (
-        <SortableHeader column={column}>Date of Birth</SortableHeader>
+        <SortableHeader column={column}>Created</SortableHeader>
       ),
       cell: ({ row }) => {
-        const dob = row.original.dateOfBirth;
-        const age = getAge(dob);
-        return (
-          <div>
-            <div className="text-sm">{formatDate(dob)}</div>
-            {age && <div className="text-xs text-muted-foreground">{age}</div>}
-          </div>
-        );
+        return <span className="text-sm">{formatDate(row.original.createdAt)}</span>;
       },
     },
 

@@ -107,13 +107,20 @@ export async function getChildren(params: GetChildrenParams = {}) {
     const skip = (page - 1) * pageSize;
 
     const orderBy: Prisma.ChildOrderByWithRelationInput[] = [];
-    if (sortBy === "fullName") {
-      orderBy.push({ lastName: sortOrder }, { firstName: sortOrder });
+    if (sortBy === "firstName") {
+      orderBy.push({ firstName: sortOrder });
+    } else if (sortBy === "lastName") {
+      orderBy.push({ lastName: sortOrder });
     } else if (sortBy === "branchName") {
       orderBy.push({ branch: { name: sortOrder } });
     } else if (sortBy === "className") {
       orderBy.push({ class: { name: sortOrder } });
-    } else if (sortBy === "gender" || sortBy === "dateOfBirth") {
+    } else if (
+      sortBy === "gender" ||
+      sortBy === "dateOfBirth" ||
+      sortBy === "nationality" ||
+      sortBy === "createdAt"
+    ) {
       orderBy.push({ [sortBy]: sortOrder });
     } else {
       orderBy.push({ lastName: "asc" }, { firstName: "asc" });

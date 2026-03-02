@@ -119,9 +119,6 @@ const childrenExportColumns: ExportColumn[] = [
       return isNaN(d.getTime()) ? "" : d.toLocaleDateString("en-GB");
     },
   },
-  { header: "Gender", key: "gender" },
-  { header: "Nationality", key: "nationality" },
-  { header: "Blood Type", key: "bloodType" },
   {
     header: "Branch",
     key: "branch",
@@ -132,6 +129,17 @@ const childrenExportColumns: ExportColumn[] = [
     key: "class",
     transform: (v) => (v as { name: string } | null)?.name ?? "",
   },
+  { header: "Nationality", key: "nationality" },
+  { header: "Gender", key: "gender" },
+  {
+    header: "Created Date",
+    key: "createdAt",
+    transform: (v) => {
+      if (!v) return "";
+      const d = new Date(v as string);
+      return isNaN(d.getTime()) ? "" : d.toLocaleDateString("en-GB");
+    },
+  },
   {
     header: "Status",
     key: "isActive",
@@ -140,6 +148,7 @@ const childrenExportColumns: ExportColumn[] = [
       return v ? "Active" : "Inactive";
     },
   },
+  { header: "Blood Type", key: "bloodType" },
 ];
 
 export function ChildrenPageClient({
