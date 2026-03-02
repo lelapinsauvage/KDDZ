@@ -1,16 +1,20 @@
 import { getMedicalForms } from "@/lib/actions/medical";
 import { getBranches } from "@/lib/actions/branches";
+import { getClasses } from "@/lib/actions/classes";
+import { getSchoolYears } from "@/lib/actions/school-years";
 import { SufferingListClient } from "./suffering-list-client";
 
-const TOTAL_ASSESSMENTS = 13;
-
 export default async function SufferingListPage() {
-  const [{ forms, total }, branchesResult] = await Promise.all([
+  const [{ forms, total }, branchesResult, classesResult, yearsResult] = await Promise.all([
     getMedicalForms({ formType: "CONDITIONS", pageSize: 500 }),
     getBranches(),
+    getClasses(),
+    getSchoolYears(),
   ]);
 
   const branches = (branchesResult.data ?? []) as Array<{ id: string; name: string }>;
+  const classes = (classesResult.data ?? []) as Array<{ id: string; name: string; branchId: string }>;
+  const schoolYears = (yearsResult.data ?? []) as Array<{ id: string; label: string }>;
 
   // Filter to only forms with formSubType "SUFFERING"
   const sufferingForms = forms
@@ -18,35 +22,29 @@ export default async function SufferingListPage() {
       const d = (form.data ?? {}) as Record<string, unknown>;
       return d.formSubType === "SUFFERING";
     })
-    .map((form) => {
-      const d = (form.data ?? {}) as Record<string, unknown>;
-      const assessments = (d.assessments ?? {}) as Record<
-        string,
-        { status: string; remarks: string }
-      >;
-      const filledCount = Object.values(assessments).filter(
-        (a) => a.status && a.status.length > 0
-      ).length;
-
-      return {
-        id: form.id,
-        childId: form.childId,
-        childName: `${form.child.firstName} ${form.child.lastName}`,
-        conclusion: (d.conclusion as string) ?? "",
-        filledCount,
-        totalCount: TOTAL_ASSESSMENTS,
-        status: form.status as "DRAFT" | "SUBMITTED" | "REVIEWED",
-        createdAt: form.createdAt.toISOString(),
-        branchId: form.child.branchId,
-        branchName: form.child.branch?.name ?? "\u2014",
-      };
-    });
+    .map((form) => ({
+      id: form.id,
+      childId: form.childId,
+      firstName: form.child.firstName,
+      lastName: form.child.lastName,
+      dateOfBirth: form.child.dateOfBirth?.toISOString().split("T")[0] ?? null,
+      gender: form.child.gender as string | null,
+      branchId: form.child.branchId,
+      branchName: form.child.branch?.name ?? "",
+      classId: form.child.classId ?? null,
+      className: form.child.class?.name ?? "",
+      schoolYearId: form.child.schoolYearId ?? null,
+      yearLabel: form.child.schoolYear?.label ?? "",
+      createdAt: form.createdAt.toISOString().split("T")[0],
+    }));
 
   return (
     <SufferingListClient
       forms={sufferingForms}
       total={total}
       branches={branches}
+      classes={classes}
+      schoolYears={schoolYears}
     />
   );
 }

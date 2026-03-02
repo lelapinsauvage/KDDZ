@@ -121,6 +121,8 @@ export async function getMedicalForms(params: GetMedicalFormsParams = {}) {
           child: {
             include: {
               branch: true,
+              class: true,
+              schoolYear: true,
             },
           },
           createdBy: {

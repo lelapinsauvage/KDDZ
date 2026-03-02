@@ -44,30 +44,25 @@ import {
   Trash2,
   Loader2,
   CalendarCheck,
-  Stethoscope,
-  CalendarClock,
-  FileCheck,
-  FileClock,
-  FileEdit,
 } from "lucide-react";
-import { format } from "date-fns";
 import { deleteMedicalForm } from "@/lib/actions/medical";
 
 // --- Types ---
 
-type VisitStatus = "DRAFT" | "SUBMITTED" | "REVIEWED";
-
-interface DoctorVisitRow {
+interface VisitRow {
   id: string;
   childId: string;
-  childName: string;
-  visitDate: string;
-  doctor: string;
-  reason: string;
-  followUpDate: string | null;
-  status: VisitStatus;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string | null;
+  gender: string | null;
   branchId: string;
   branchName: string;
+  classId: string | null;
+  className: string;
+  schoolYearId: string | null;
+  yearLabel: string;
+  createdAt: string;
 }
 
 // --- Avatar helpers ---
@@ -83,11 +78,8 @@ const avatarColors = [
   "bg-orange-100 text-orange-700",
 ];
 
-function getInitials(name: string) {
-  const parts = name.split(" ");
-  return parts.length >= 2
-    ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
-    : name.slice(0, 2).toUpperCase();
+function getInitials(firstName: string, lastName: string) {
+  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 }
 
 function getAvatarColor(name: string) {
@@ -96,40 +88,23 @@ function getAvatarColor(name: string) {
   return avatarColors[Math.abs(hash) % avatarColors.length];
 }
 
-// --- Badge Helpers ---
-
-function getStatusBadge(status: VisitStatus) {
-  switch (status) {
-    case "DRAFT":
-      return (
-        <Badge className="gap-1 bg-slate-100 text-slate-600 border-slate-200">
-          <FileEdit className="size-3" />
-          Draft
-        </Badge>
-      );
-    case "SUBMITTED":
-      return (
-        <Badge className="gap-1 bg-blue-50 text-blue-700 border-blue-200">
-          <FileClock className="size-3" />
-          Submitted
-        </Badge>
-      );
-    case "REVIEWED":
-      return (
-        <Badge className="gap-1 bg-[#059669]/10 text-[#059669] border-[#059669]/20">
-          <FileCheck className="size-3" />
-          Reviewed
-        </Badge>
-      );
-  }
+function formatDate(date: string | null) {
+  if (!date) return "-";
+  const d = new Date(date);
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
 }
 
 // --- Props ---
 
 interface MedicalVisitsClientProps {
-  visits: DoctorVisitRow[];
+  visits: VisitRow[];
   total: number;
   branches: Array<{ id: string; name: string }>;
+  classes: Array<{ id: string; name: string; branchId: string }>;
+  schoolYears: Array<{ id: string; label: string }>;
 }
 
 // --- Page Component ---
@@ -137,11 +112,15 @@ interface MedicalVisitsClientProps {
 export function MedicalVisitsClient({
   visits,
   branches,
+  classes,
+  schoolYears,
 }: MedicalVisitsClientProps) {
   const router = useRouter();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
   const [branchFilter, setBranchFilter] = useState("all");
+  const [classFilter, setClassFilter] = useState("all");
+  const [yearFilter, setYearFilter] = useState("all");
+  const [genderFilter, setGenderFilter] = useState("all");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -164,88 +143,106 @@ export function MedicalVisitsClient({
     }
   };
 
-  // --- Column Definitions ---
+  // --- Columns (matching old PHP: Image, F Name, L Name, DOB, Branch, Class, Year, Gender, Created Date, Action) ---
 
-  const columns: ColumnDef<DoctorVisitRow>[] = [
+  const columns: ColumnDef<VisitRow>[] = [
     {
-      accessorKey: "childName",
-      header: "Child Name",
+      id: "avatar",
+      header: "Image",
       cell: ({ row }) => {
-        const name = row.original.childName;
+        const { firstName, lastName } = row.original;
+        const fullName = `${firstName} ${lastName}`;
         return (
-          <div className="flex items-center gap-2.5">
-            <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${getAvatarColor(name)}`}>
-              {getInitials(name)}
-            </div>
-            <span className="font-medium text-foreground">{name}</span>
+          <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${getAvatarColor(fullName)}`}>
+            {getInitials(firstName, lastName)}
           </div>
         );
       },
+      enableSorting: false,
     },
     {
-      accessorKey: "visitDate",
-      header: "Visit Date",
+      accessorKey: "firstName",
+      header: "F Name",
       cell: ({ row }) => (
-        <span className="inline-flex items-center gap-1.5 text-sm text-foreground">
-          <CalendarCheck className="size-3.5 text-[#059669]" />
-          {row.original.visitDate
-            ? format(new Date(row.original.visitDate), "MMM d, yyyy")
-            : "\u2014"}
-        </span>
+        <Link
+          href={`/medical/visits/${row.original.id}`}
+          className="font-medium text-foreground hover:text-primary hover:underline"
+        >
+          {row.original.firstName}
+        </Link>
       ),
     },
     {
-      accessorKey: "doctor",
-      header: "Doctor",
+      accessorKey: "lastName",
+      header: "L Name",
       cell: ({ row }) => (
-        <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-          <Stethoscope className="size-3.5 text-blue-500" />
-          {row.original.doctor || "\u2014"}
-        </span>
+        <span className="text-foreground">{row.original.lastName}</span>
       ),
     },
     {
-      accessorKey: "reason",
-      header: "Reason",
+      accessorKey: "dateOfBirth",
+      header: "DOB",
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground line-clamp-1 max-w-[200px]">
-          {row.original.reason || "\u2014"}
+        <span className="text-sm text-muted-foreground">
+          {formatDate(row.original.dateOfBirth)}
         </span>
       ),
-    },
-    {
-      accessorKey: "followUpDate",
-      header: "Follow-up Date",
-      cell: ({ row }) => (
-        <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-          {row.original.followUpDate ? (
-            <>
-              <CalendarClock className="size-3.5 text-amber-500" />
-              {format(new Date(row.original.followUpDate), "MMM d, yyyy")}
-            </>
-          ) : (
-            "\u2014"
-          )}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }) => getStatusBadge(row.original.status),
     },
     {
       accessorKey: "branchName",
       header: "Branch",
       cell: ({ row }) => (
-        <Badge variant="secondary" className="bg-muted/50 text-muted-foreground font-normal">
-          {row.original.branchName}
-        </Badge>
+        <span className="text-muted-foreground">{row.original.branchName || "-"}</span>
+      ),
+    },
+    {
+      accessorKey: "className",
+      header: "Class",
+      cell: ({ row }) => {
+        const name = row.original.className;
+        if (!name) return <span className="text-muted-foreground">-</span>;
+        return <Badge variant="secondary" className="font-normal">{name}</Badge>;
+      },
+    },
+    {
+      accessorKey: "yearLabel",
+      header: "Year",
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground">
+          {row.original.yearLabel || "-"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "gender",
+      header: "Gender",
+      cell: ({ row }) => {
+        const gender = row.original.gender;
+        if (!gender) return <span className="text-muted-foreground">-</span>;
+        return (
+          <div className="flex items-center gap-1.5">
+            <span
+              className={`inline-block size-2 rounded-full ${
+                gender === "MALE" ? "bg-[#4F46E5]" : "bg-[#E11D48]"
+              }`}
+            />
+            <span className="text-sm">{gender === "MALE" ? "Boy" : "Girl"}</span>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Created Date",
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground">
+          {formatDate(row.original.createdAt)}
+        </span>
       ),
     },
     {
       id: "actions",
-      header: "",
+      header: "Action",
       cell: ({ row }) => {
         const visit = row.original;
         return (
@@ -292,22 +289,29 @@ export function MedicalVisitsClient({
       const lower = search.toLowerCase();
       data = data.filter(
         (v) =>
-          v.childName.toLowerCase().includes(lower) ||
-          v.doctor.toLowerCase().includes(lower) ||
-          v.reason.toLowerCase().includes(lower)
+          v.firstName.toLowerCase().includes(lower) ||
+          v.lastName.toLowerCase().includes(lower)
       );
     }
 
-    if (statusFilter && statusFilter !== "all") {
-      data = data.filter((v) => v.status === statusFilter);
-    }
-
-    if (branchFilter && branchFilter !== "all") {
+    if (branchFilter !== "all") {
       data = data.filter((v) => v.branchId === branchFilter);
     }
 
+    if (classFilter !== "all") {
+      data = data.filter((v) => v.classId === classFilter);
+    }
+
+    if (yearFilter !== "all") {
+      data = data.filter((v) => v.schoolYearId === yearFilter);
+    }
+
+    if (genderFilter !== "all") {
+      data = data.filter((v) => v.gender === genderFilter);
+    }
+
     return data;
-  }, [visits, search, statusFilter, branchFilter]);
+  }, [visits, search, branchFilter, classFilter, yearFilter, genderFilter]);
 
   return (
     <>
@@ -332,7 +336,7 @@ export function MedicalVisitsClient({
           <div className="relative max-w-sm flex-1 min-w-0">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search by child, doctor or reason..."
+              placeholder="Search by name..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -340,31 +344,51 @@ export function MedicalVisitsClient({
           </div>
 
           <Select value={branchFilter} onValueChange={setBranchFilter}>
-            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[160px]">
+            <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="All Branches" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Branches</SelectItem>
               {branches.map((b) => (
-                <SelectItem key={b.id} value={b.id}>
-                  {b.name}
-                </SelectItem>
+                <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
 
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[160px]">
-              <SelectValue placeholder="All Statuses" />
+          <Select value={classFilter} onValueChange={setClassFilter}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="All Classes" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="DRAFT">Draft</SelectItem>
-              <SelectItem value="SUBMITTED">Submitted</SelectItem>
-              <SelectItem value="REVIEWED">Reviewed</SelectItem>
+              <SelectItem value="all">All Classes</SelectItem>
+              {classes.map((c) => (
+                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
+          <Select value={yearFilter} onValueChange={setYearFilter}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="All Years" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Years</SelectItem>
+              {schoolYears.map((y) => (
+                <SelectItem key={y.id} value={y.id}>{y.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={genderFilter} onValueChange={setGenderFilter}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="All Genders" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Genders</SelectItem>
+              <SelectItem value="MALE">Boy</SelectItem>
+              <SelectItem value="FEMALE">Girl</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {filteredData.length === 0 ? (
@@ -391,8 +415,8 @@ export function MedicalVisitsClient({
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              variant="destructive"
               onClick={handleDelete}
+              className="bg-destructive text-white hover:bg-destructive/90"
               disabled={isDeleting}
             >
               {isDeleting && <Loader2 className="size-4 animate-spin" />}

@@ -43,30 +43,26 @@ import {
   Trash2,
   Loader2,
   Stethoscope,
-  FileCheck,
-  FileClock,
-  FileEdit,
-  Droplets,
 } from "lucide-react";
-import { format } from "date-fns";
 import { deleteMedicalForm } from "@/lib/actions/medical";
 import { toast } from "sonner";
 
 // --- Types ---
 
-type FormStatus = "DRAFT" | "SUBMITTED" | "REVIEWED";
-
-interface GeneralMedicalFormRow {
+interface GeneralFormRow {
   id: string;
   childId: string;
-  childName: string;
-  date: string;
-  status: FormStatus;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string | null;
+  gender: string | null;
   branchId: string;
   branchName: string;
-  doctor: string;
-  bloodType: string;
-  hasAllergies: boolean;
+  classId: string | null;
+  className: string;
+  schoolYearId: string | null;
+  yearLabel: string;
+  createdAt: string;
 }
 
 // --- Avatar helpers ---
@@ -82,11 +78,8 @@ const avatarColors = [
   "bg-orange-100 text-orange-700",
 ];
 
-function getInitials(name: string) {
-  const parts = name.split(" ");
-  return parts.length >= 2
-    ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
-    : name.slice(0, 2).toUpperCase();
+function getInitials(firstName: string, lastName: string) {
+  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 }
 
 function getAvatarColor(name: string) {
@@ -95,40 +88,23 @@ function getAvatarColor(name: string) {
   return avatarColors[Math.abs(hash) % avatarColors.length];
 }
 
-// --- Status helpers ---
-
-function getStatusBadge(status: FormStatus) {
-  switch (status) {
-    case "DRAFT":
-      return (
-        <Badge className="gap-1 bg-muted text-muted-foreground border-border">
-          <FileEdit className="size-3" />
-          Draft
-        </Badge>
-      );
-    case "SUBMITTED":
-      return (
-        <Badge className="gap-1 bg-[var(--color-info-light)] text-[var(--color-info-dark)] border-[var(--color-info)]/20">
-          <FileClock className="size-3" />
-          Submitted
-        </Badge>
-      );
-    case "REVIEWED":
-      return (
-        <Badge className="gap-1 bg-[var(--color-success-light)] text-[var(--color-success-dark)] border-[var(--color-success)]/20">
-          <FileCheck className="size-3" />
-          Reviewed
-        </Badge>
-      );
-  }
+function formatDate(date: string | null) {
+  if (!date) return "-";
+  const d = new Date(date);
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
 }
 
 // --- Props ---
 
 interface MedicalGeneralClientProps {
-  forms: GeneralMedicalFormRow[];
+  forms: GeneralFormRow[];
   total: number;
   branches: Array<{ id: string; name: string }>;
+  classes: Array<{ id: string; name: string; branchId: string }>;
+  schoolYears: Array<{ id: string; label: string }>;
 }
 
 // --- Page Component ---
@@ -136,12 +112,16 @@ interface MedicalGeneralClientProps {
 export function MedicalGeneralClient({
   forms,
   branches,
+  classes,
+  schoolYears,
 }: MedicalGeneralClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
   const [branchFilter, setBranchFilter] = useState("all");
+  const [classFilter, setClassFilter] = useState("all");
+  const [yearFilter, setYearFilter] = useState("all");
+  const [genderFilter, setGenderFilter] = useState("all");
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   // --- Filtering ---
@@ -153,21 +133,29 @@ export function MedicalGeneralClient({
       const lower = search.toLowerCase();
       data = data.filter(
         (f) =>
-          f.childName.toLowerCase().includes(lower) ||
-          f.doctor.toLowerCase().includes(lower)
+          f.firstName.toLowerCase().includes(lower) ||
+          f.lastName.toLowerCase().includes(lower)
       );
     }
 
-    if (statusFilter && statusFilter !== "all") {
-      data = data.filter((f) => f.status === statusFilter);
-    }
-
-    if (branchFilter && branchFilter !== "all") {
+    if (branchFilter !== "all") {
       data = data.filter((f) => f.branchId === branchFilter);
     }
 
+    if (classFilter !== "all") {
+      data = data.filter((f) => f.classId === classFilter);
+    }
+
+    if (yearFilter !== "all") {
+      data = data.filter((f) => f.schoolYearId === yearFilter);
+    }
+
+    if (genderFilter !== "all") {
+      data = data.filter((f) => f.gender === genderFilter);
+    }
+
     return data;
-  }, [forms, search, statusFilter, branchFilter]);
+  }, [forms, search, branchFilter, classFilter, yearFilter, genderFilter]);
 
   // --- Delete handler ---
 
@@ -186,75 +174,106 @@ export function MedicalGeneralClient({
     });
   }
 
-  // --- Columns ---
+  // --- Columns (matching old PHP: Image, F Name, L Name, DOB, Branch, Class, Year, Gender, Created Date, Action) ---
 
-  const columns: ColumnDef<GeneralMedicalFormRow>[] = [
+  const columns: ColumnDef<GeneralFormRow>[] = [
     {
-      accessorKey: "childName",
-      header: "Child Name",
+      id: "avatar",
+      header: "Image",
       cell: ({ row }) => {
-        const name = row.original.childName;
+        const { firstName, lastName } = row.original;
+        const fullName = `${firstName} ${lastName}`;
         return (
-          <div className="flex items-center gap-2.5">
-            <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${getAvatarColor(name)}`}>
-              {getInitials(name)}
-            </div>
-            <span className="font-medium text-foreground">{name}</span>
+          <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${getAvatarColor(fullName)}`}>
+            {getInitials(firstName, lastName)}
           </div>
         );
       },
+      enableSorting: false,
     },
     {
-      accessorKey: "doctor",
-      header: "Doctor",
+      accessorKey: "firstName",
+      header: "F Name",
       cell: ({ row }) => (
-        <span className="inline-flex items-center gap-1.5 text-sm text-foreground">
-          <Stethoscope className="size-3.5 text-blue-500" />
-          {row.original.doctor || "\u2014"}
-        </span>
+        <Link
+          href={`/medical/general/${row.original.id}`}
+          className="font-medium text-foreground hover:text-primary hover:underline"
+        >
+          {row.original.firstName}
+        </Link>
       ),
     },
     {
-      accessorKey: "bloodType",
-      header: "Blood Type",
-      cell: ({ row }) => {
-        const bt = row.original.bloodType;
-        return bt ? (
-          <Badge className="gap-1 bg-red-50 text-red-700 border-red-200">
-            <Droplets className="size-3" />
-            {bt}
-          </Badge>
-        ) : (
-          <span className="text-sm text-muted-foreground">{"\u2014"}</span>
-        );
-      },
+      accessorKey: "lastName",
+      header: "L Name",
+      cell: ({ row }) => (
+        <span className="text-foreground">{row.original.lastName}</span>
+      ),
     },
     {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }) => getStatusBadge(row.original.status),
+      accessorKey: "dateOfBirth",
+      header: "DOB",
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground">
+          {formatDate(row.original.dateOfBirth)}
+        </span>
+      ),
     },
     {
       accessorKey: "branchName",
       header: "Branch",
       cell: ({ row }) => (
-        <Badge variant="secondary" className="bg-muted/50 text-muted-foreground font-normal">
-          {row.original.branchName || "\u2014"}
-        </Badge>
+        <span className="text-muted-foreground">{row.original.branchName || "-"}</span>
       ),
     },
     {
-      accessorKey: "date",
-      header: "Date",
+      accessorKey: "className",
+      header: "Class",
+      cell: ({ row }) => {
+        const name = row.original.className;
+        if (!name) return <span className="text-muted-foreground">-</span>;
+        return <Badge variant="secondary" className="font-normal">{name}</Badge>;
+      },
+    },
+    {
+      accessorKey: "yearLabel",
+      header: "Year",
       cell: ({ row }) => (
         <span className="text-sm text-muted-foreground">
-          {format(new Date(row.original.date), "MMM d, yyyy")}
+          {row.original.yearLabel || "-"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "gender",
+      header: "Gender",
+      cell: ({ row }) => {
+        const gender = row.original.gender;
+        if (!gender) return <span className="text-muted-foreground">-</span>;
+        return (
+          <div className="flex items-center gap-1.5">
+            <span
+              className={`inline-block size-2 rounded-full ${
+                gender === "MALE" ? "bg-[#4F46E5]" : "bg-[#E11D48]"
+              }`}
+            />
+            <span className="text-sm">{gender === "MALE" ? "Boy" : "Girl"}</span>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Created Date",
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground">
+          {formatDate(row.original.createdAt)}
         </span>
       ),
     },
     {
       id: "actions",
-      header: "",
+      header: "Action",
       cell: ({ row }) => {
         const form = row.original;
         return (
@@ -317,7 +336,7 @@ export function MedicalGeneralClient({
           <div className="relative max-w-sm flex-1 min-w-0">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search by child name or doctor..."
+              placeholder="Search by name..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -325,31 +344,51 @@ export function MedicalGeneralClient({
           </div>
 
           <Select value={branchFilter} onValueChange={setBranchFilter}>
-            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[160px]">
+            <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="All Branches" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Branches</SelectItem>
               {branches.map((b) => (
-                <SelectItem key={b.id} value={b.id}>
-                  {b.name}
-                </SelectItem>
+                <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
 
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[160px]">
-              <SelectValue placeholder="All Statuses" />
+          <Select value={classFilter} onValueChange={setClassFilter}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="All Classes" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="DRAFT">Draft</SelectItem>
-              <SelectItem value="SUBMITTED">Submitted</SelectItem>
-              <SelectItem value="REVIEWED">Reviewed</SelectItem>
+              <SelectItem value="all">All Classes</SelectItem>
+              {classes.map((c) => (
+                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
+          <Select value={yearFilter} onValueChange={setYearFilter}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="All Years" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Years</SelectItem>
+              {schoolYears.map((y) => (
+                <SelectItem key={y.id} value={y.id}>{y.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={genderFilter} onValueChange={setGenderFilter}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="All Genders" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Genders</SelectItem>
+              <SelectItem value="MALE">Boy</SelectItem>
+              <SelectItem value="FEMALE">Girl</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {filteredData.length === 0 ? (
