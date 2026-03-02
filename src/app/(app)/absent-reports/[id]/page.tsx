@@ -23,6 +23,11 @@ export default async function AbsenceReportDetailPage({ params }: Props) {
     branchName: r.child.branch?.name ?? null,
     date: r.date.toISOString().slice(0, 10),
     reason: r.reason ?? null,
+    absentFrom: r.absentFrom?.toISOString().slice(0, 10) ?? null,
+    absentTo: r.absentTo?.toISOString().slice(0, 10) ?? null,
+    hospitalized: r.hospitalized,
+    hospitalName: r.hospitalName ?? null,
+    doctorName: r.doctorName ?? null,
     status: r.status as "PENDING" | "APPROVED" | "REJECTED",
     createdBy: r.createdBy?.name ?? r.createdBy?.email ?? null,
     attachments: (r.attachments ?? []).map((a) => ({

@@ -33,6 +33,11 @@ export default async function EditAbsenceReportPage({ params }: Props) {
     childId: r.childId,
     date: r.date.toISOString().slice(0, 10),
     reason: r.reason ?? "",
+    absentFrom: r.absentFrom?.toISOString().slice(0, 10) ?? "",
+    absentTo: r.absentTo?.toISOString().slice(0, 10) ?? "",
+    hospitalized: r.hospitalized,
+    hospitalName: r.hospitalName ?? "",
+    doctorName: r.doctorName ?? "",
     status: r.status as AbsenceReportFormValues["status"],
   };
 

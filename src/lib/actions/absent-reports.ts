@@ -167,6 +167,9 @@ export async function createAbsenceReport(formData: FormData) {
     formData.forEach((value, key) => {
       rawData[key] = value;
     });
+    if (typeof rawData.hospitalized === "string") {
+      rawData.hospitalized = rawData.hospitalized === "true";
+    }
 
     const parsed = absenceReportSchema.safeParse(rawData);
     if (!parsed.success) {
@@ -184,6 +187,11 @@ export async function createAbsenceReport(formData: FormData) {
         childId: data.childId,
         date: new Date(data.date),
         reason: data.reason || null,
+        absentFrom: data.absentFrom ? new Date(data.absentFrom) : null,
+        absentTo: data.absentTo ? new Date(data.absentTo) : null,
+        hospitalized: data.hospitalized ?? false,
+        hospitalName: data.hospitalized ? (data.hospitalName || null) : null,
+        doctorName: data.hospitalized ? (data.doctorName || null) : null,
         status: data.status,
         createdById: ctx.userId,
       },
@@ -222,6 +230,9 @@ export async function updateAbsenceReport(id: string, formData: FormData) {
     formData.forEach((value, key) => {
       rawData[key] = value;
     });
+    if (typeof rawData.hospitalized === "string") {
+      rawData.hospitalized = rawData.hospitalized === "true";
+    }
 
     const parsed = absenceReportSchema.safeParse(rawData);
     if (!parsed.success) {
@@ -236,6 +247,11 @@ export async function updateAbsenceReport(id: string, formData: FormData) {
         childId: data.childId,
         date: new Date(data.date),
         reason: data.reason || null,
+        absentFrom: data.absentFrom ? new Date(data.absentFrom) : null,
+        absentTo: data.absentTo ? new Date(data.absentTo) : null,
+        hospitalized: data.hospitalized ?? false,
+        hospitalName: data.hospitalized ? (data.hospitalName || null) : null,
+        doctorName: data.hospitalized ? (data.doctorName || null) : null,
         status: data.status,
       },
     });

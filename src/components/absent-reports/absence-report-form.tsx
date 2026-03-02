@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -24,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UserX, Loader2 } from "lucide-react";
+import { UserX, Loader2, Building2, Paperclip, Upload } from "lucide-react";
 
 interface ChildOption {
   id: string;
@@ -68,6 +69,11 @@ export function AbsenceReportForm({
     fd.set("childId", data.childId);
     fd.set("date", data.date);
     if (data.reason) fd.set("reason", data.reason);
+    if (data.absentFrom) fd.set("absentFrom", data.absentFrom);
+    if (data.absentTo) fd.set("absentTo", data.absentTo);
+    fd.set("hospitalized", String(data.hospitalized ?? false));
+    if (data.hospitalName) fd.set("hospitalName", data.hospitalName);
+    if (data.doctorName) fd.set("doctorName", data.doctorName);
     fd.set("status", data.status ?? "PENDING");
 
     startTransition(async () => {
@@ -163,6 +169,84 @@ export function AbsenceReportForm({
               {...register("reason")}
             />
           </div>
+
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="absentFrom">Absent From</Label>
+              <Input
+                type="date"
+                {...register("absentFrom")}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="absentTo">Absent To</Label>
+              <Input
+                type="date"
+                {...register("absentTo")}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Hospital Information */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Building2 className="size-4 text-primary" />
+            Hospital Information
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-3">
+            <Switch
+              id="hospitalized"
+              checked={watch("hospitalized") ?? false}
+              onCheckedChange={(checked) => setValue("hospitalized", checked)}
+            />
+            <Label htmlFor="hospitalized">Child attended hospital</Label>
+          </div>
+
+          {watch("hospitalized") && (
+            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="hospitalName">Hospital Name</Label>
+                <Input
+                  placeholder="Hospital name..."
+                  {...register("hospitalName")}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="doctorName">Doctor Name</Label>
+                <Input
+                  placeholder="Doctor name..."
+                  {...register("doctorName")}
+                />
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Attachments */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Paperclip className="size-4 text-primary" />
+            Attachments
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/50 p-8 text-center transition-colors hover:border-primary/50 hover:bg-muted">
+            <Upload className="size-8 text-muted-foreground" />
+            <span className="text-sm font-medium text-muted-foreground">
+              Click to upload files
+            </span>
+            <span className="text-xs text-muted-foreground/70">
+              Medical documents, doctor notes, etc.
+            </span>
+            <input type="file" multiple className="hidden" />
+          </label>
         </CardContent>
       </Card>
 

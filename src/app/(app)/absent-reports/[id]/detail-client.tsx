@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
-import { Pencil, UserX, Paperclip } from "lucide-react";
+import { Pencil, UserX, Paperclip, Building2 } from "lucide-react";
 
 interface Attachment {
   id: string;
@@ -21,6 +21,11 @@ interface ReportData {
   branchName: string | null;
   date: string;
   reason: string | null;
+  absentFrom: string | null;
+  absentTo: string | null;
+  hospitalized: boolean;
+  hospitalName: string | null;
+  doctorName: string | null;
   status: "PENDING" | "APPROVED" | "REJECTED";
   createdBy: string | null;
   attachments: Attachment[];
@@ -89,6 +94,16 @@ export function AbsenceReportDetailClient({ report }: { report: ReportData }) {
                     <dd className="text-muted-foreground">{report.branchName}</dd>
                   </div>
                 )}
+                {(report.absentFrom || report.absentTo) && (
+                  <div className="flex justify-between">
+                    <dt className="font-medium">Absence Period</dt>
+                    <dd className="text-muted-foreground">
+                      {report.absentFrom ? format(new Date(report.absentFrom), "MMM d, yyyy") : "—"}
+                      {" — "}
+                      {report.absentTo ? format(new Date(report.absentTo), "MMM d, yyyy") : "—"}
+                    </dd>
+                  </div>
+                )}
                 {report.createdBy && (
                   <div className="flex justify-between">
                     <dt className="font-medium">Reported by</dt>
@@ -111,6 +126,34 @@ export function AbsenceReportDetailClient({ report }: { report: ReportData }) {
             </CardContent>
           </Card>
         </div>
+
+        {/* Hospital Information */}
+        {report.hospitalized && (
+          <Card className="rounded-2xl">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Building2 className="size-4 text-primary" />
+                Hospital Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <dl className="space-y-3 text-sm">
+                {report.hospitalName && (
+                  <div className="flex justify-between">
+                    <dt className="font-medium">Hospital Name</dt>
+                    <dd className="text-muted-foreground">{report.hospitalName}</dd>
+                  </div>
+                )}
+                {report.doctorName && (
+                  <div className="flex justify-between">
+                    <dt className="font-medium">Doctor Name</dt>
+                    <dd className="text-muted-foreground">{report.doctorName}</dd>
+                  </div>
+                )}
+              </dl>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Attachments */}
         {report.attachments.length > 0 && (
