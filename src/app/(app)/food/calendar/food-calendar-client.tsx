@@ -82,12 +82,14 @@ const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MEALS: { type: MealType; label: string; pillBg: string; pillText: string }[] = [
   { type: "BREAKFAST", label: "Breakfast", pillBg: "bg-amber-100", pillText: "text-amber-800" },
   { type: "LUNCH", label: "Lunch", pillBg: "bg-emerald-100", pillText: "text-emerald-800" },
+  { type: "SNACK", label: "Snack", pillBg: "bg-orange-100", pillText: "text-orange-800" },
   { type: "DESSERT", label: "Dessert", pillBg: "bg-pink-100", pillText: "text-pink-800" },
 ];
 
 const MEAL_LABEL_COLORS: Record<string, string> = {
   BREAKFAST: "text-amber-600",
   LUNCH: "text-emerald-600",
+  SNACK: "text-orange-600",
   DESSERT: "text-pink-600",
 };
 
@@ -220,6 +222,7 @@ export function FoodCalendarClient({
   const [selectedDate, setSelectedDate] = useState("");
   const [dialogBreakfast, setDialogBreakfast] = useState("NONE");
   const [dialogLunch, setDialogLunch] = useState("NONE");
+  const [dialogSnack, setDialogSnack] = useState("NONE");
   const [dialogDessert, setDialogDessert] = useState("NONE");
 
   const fetchCalendar = useCallback(
@@ -308,6 +311,7 @@ export function FoodCalendarClient({
       const dayData = calendar[dateKey] ?? {};
       setDialogBreakfast(dayData["BREAKFAST"]?.foodId ?? "NONE");
       setDialogLunch(dayData["LUNCH"]?.foodId ?? "NONE");
+      setDialogSnack(dayData["SNACK"]?.foodId ?? "NONE");
       setDialogDessert(dayData["DESSERT"]?.foodId ?? "NONE");
       setDialogOpen(true);
     },
@@ -322,6 +326,7 @@ export function FoodCalendarClient({
       const mealSelections: { type: MealType; foodId: string }[] = [
         { type: "BREAKFAST", foodId: dialogBreakfast },
         { type: "LUNCH", foodId: dialogLunch },
+        { type: "SNACK", foodId: dialogSnack },
         { type: "DESSERT", foodId: dialogDessert },
       ];
 
@@ -350,6 +355,7 @@ export function FoodCalendarClient({
     selectedDate,
     dialogBreakfast,
     dialogLunch,
+    dialogSnack,
     dialogDessert,
     calendar,
     year,
@@ -636,7 +642,7 @@ export function FoodCalendarClient({
                 )}
             </DialogTitle>
             <DialogDescription>
-              Choose meals for this day. Use search to find food items.
+              Choose breakfast, lunch, snack, and dessert for this day.
             </DialogDescription>
           </DialogHeader>
 
@@ -664,6 +670,19 @@ export function FoodCalendarClient({
                 onValueChange={setDialogLunch}
                 options={foodsByCategory.LUNCH}
                 placeholder="Select lunch"
+              />
+            </div>
+
+            {/* Snack */}
+            <div className="space-y-1.5">
+              <label className={cn("text-sm font-medium", MEAL_LABEL_COLORS.SNACK)}>
+                Snack
+              </label>
+              <MealCombobox
+                value={dialogSnack}
+                onValueChange={setDialogSnack}
+                options={foodsByCategory.SNACK}
+                placeholder="Select snack"
               />
             </div>
 

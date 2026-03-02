@@ -70,6 +70,7 @@ export interface FoodItem {
   name: string;
   category: FoodCategory;
   isActive: boolean;
+  createdAt: string;
 }
 
 // ── Category helpers ────────────────────────────
@@ -214,6 +215,32 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
   const foodColumns: ColumnDef<FoodItem>[] = useMemo(
     () => [
       {
+        accessorKey: "category",
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-3 h-8 text-xs font-semibold uppercase"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Type
+            <ArrowUpDown className="ml-1 size-3" />
+          </Button>
+        ),
+        cell: ({ row }) => {
+          const cat = row.original.category;
+          return (
+            <Badge className={categoryColors[cat]}>
+              {categoryLabels[cat]}
+            </Badge>
+          );
+        },
+        filterFn: (row, _columnId, filterValue) => {
+          if (!filterValue || filterValue === "ALL") return true;
+          return row.original.category === filterValue;
+        },
+      },
+      {
         accessorKey: "name",
         header: ({ column }) => (
           <Button
@@ -233,32 +260,6 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
         ),
       },
       {
-        accessorKey: "category",
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="-ml-3 h-8 text-xs font-semibold uppercase"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Category
-            <ArrowUpDown className="ml-1 size-3" />
-          </Button>
-        ),
-        cell: ({ row }) => {
-          const cat = row.original.category;
-          return (
-            <Badge className={categoryColors[cat]}>
-              {categoryLabels[cat]}
-            </Badge>
-          );
-        },
-        filterFn: (row, _columnId, filterValue) => {
-          if (!filterValue || filterValue === "ALL") return true;
-          return row.original.category === filterValue;
-        },
-      },
-      {
         accessorKey: "isActive",
         header: ({ column }) => (
           <Button
@@ -267,7 +268,7 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
             className="-ml-3 h-8 text-xs font-semibold uppercase"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            Status
+            Active
             <ArrowUpDown className="ml-1 size-3" />
           </Button>
         ),
@@ -287,8 +288,32 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
         },
       },
       {
+        accessorKey: "createdAt",
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-3 h-8 text-xs font-semibold uppercase"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Created Date
+            <ArrowUpDown className="ml-1 size-3" />
+          </Button>
+        ),
+        cell: ({ row }) => {
+          const val = row.original.createdAt;
+          if (!val) return <span className="text-muted-foreground">—</span>;
+          const d = new Date(val);
+          return (
+            <span className="text-sm text-muted-foreground">
+              {isNaN(d.getTime()) ? "—" : d.toLocaleDateString("en-GB")}
+            </span>
+          );
+        },
+      },
+      {
         id: "actions",
-        header: "",
+        header: "Action",
         cell: ({ row }) => {
           const food = row.original;
           return (
@@ -318,7 +343,7 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
         enableSorting: false,
       },
     ],
-     
+
     []
   );
 

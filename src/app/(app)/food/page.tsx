@@ -12,6 +12,7 @@ export default async function FoodListingPage() {
     name: food.name,
     category: food.category as FoodItem["category"],
     isActive: food.isActive,
+    createdAt: food.createdAt.toISOString(),
   }));
 
   return <FoodListingClient initialFoods={serializedFoods} />;
