@@ -4,39 +4,13 @@ import { useState, useMemo, useTransition } from "react";
 import { type ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  Plus,
-  Eye,
-  Pencil,
-  Trash2,
-  MoreHorizontal,
-  ArrowUpDown,
-  CalendarDays,
-  Check,
-  X,
-  Loader2,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  Search,
-  MessageSquareText,
-  Filter,
-} from "lucide-react";
-
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
-import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Select,
   SelectContent,
@@ -44,6 +18,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,22 +35,43 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Plus,
+  Search,
+  MoreHorizontal,
+  Eye,
+  Pencil,
+  Trash2,
+  CalendarDays,
+  Check,
+  X,
+  Loader2,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Filter,
+  User,
+} from "lucide-react";
+import { format } from "date-fns";
 import { deleteAbsenceReport, updateAbsenceReportStatus } from "@/lib/actions/absent-reports";
 import { toast } from "sonner";
-import { format } from "date-fns";
 
 // -- Types --
 type AbsenceStatus = "PENDING" | "APPROVED" | "REJECTED";
 
-interface AbsenceReport {
+interface AbsenceReportRow {
   id: string;
+  photo: string | null;
+  firstName: string;
+  lastName: string;
   childName: string;
-  date: string;
-  reason: string;
   status: AbsenceStatus;
-  createdBy: string;
   branchId: string;
   branchName: string;
+  className: string;
+  reportDate: string;
+  createdAt: string;
+  reason: string;
 }
 
 interface BranchOption {
@@ -78,43 +80,20 @@ interface BranchOption {
 }
 
 interface Props {
-  reports: AbsenceReport[];
+  reports: AbsenceReportRow[];
   branches: BranchOption[];
   initialStatusFilter?: string;
-}
-
-// -- Avatar helpers --
-const avatarColors = [
-  "bg-[#0B9178]/10 text-[#0B9178]",
-  "bg-[#4F46E5]/15 text-[#4F46E5]",
-  "bg-rose-100 text-rose-700",
-  "bg-amber-100 text-amber-700",
-  "bg-sky-100 text-sky-700",
-  "bg-[#059669]/15 text-[#059669]",
-  "bg-fuchsia-100 text-fuchsia-700",
-  "bg-orange-100 text-orange-700",
-];
-
-function getAvatarColor(name: string) {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return avatarColors[Math.abs(hash) % avatarColors.length];
-}
-
-function getInitials(name: string) {
-  const parts = name.split(" ");
-  return (parts[0]?.charAt(0) ?? "") + (parts[1]?.charAt(0) ?? "");
 }
 
 // -- Status config --
 const statusConfig: Record<AbsenceStatus, { color: string; icon: typeof Clock; label: string }> = {
   PENDING: {
-    color: "bg-amber-50 text-amber-700 border-amber-200",
+    color: "bg-[var(--color-warning-light)] text-[var(--color-warning-dark)] border-[var(--color-warning)]/20",
     icon: Clock,
     label: "Pending",
   },
   APPROVED: {
-    color: "bg-[#059669]/10 text-[#059669] border-[#059669]/20",
+    color: "bg-[var(--color-success-light)] text-[var(--color-success-dark)] border-[var(--color-success)]/20",
     icon: CheckCircle2,
     label: "Approved",
   },
@@ -126,37 +105,60 @@ const statusConfig: Record<AbsenceStatus, { color: string; icon: typeof Clock; l
 };
 
 // -- Component --
-export function AbsentReportsClient({ reports, branches, initialStatusFilter = "ALL" }: Props) {
+export function AbsentReportsClient({ reports, branches, initialStatusFilter = "all" }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [statusFilter, setStatusFilter] = useState(initialStatusFilter);
-  const [branchFilter, setBranchFilter] = useState("ALL");
   const [search, setSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [branchFilter, setBranchFilter] = useState("all");
+  const [classFilter, setClassFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState(initialStatusFilter);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const filteredReports = useMemo(() => {
-    return reports.filter((r) => {
-      if (statusFilter !== "ALL" && r.status !== statusFilter) return false;
-      if (branchFilter !== "ALL" && r.branchId !== branchFilter) return false;
-      if (search) {
-        const lower = search.toLowerCase();
-        if (!r.childName.toLowerCase().includes(lower)) return false;
-      }
-      return true;
-    });
-  }, [reports, statusFilter, branchFilter, search]);
+    let data = reports;
+
+    if (search) {
+      const lower = search.toLowerCase();
+      data = data.filter((r) => r.childName.toLowerCase().includes(lower));
+    }
+
+    if (dateFrom) {
+      data = data.filter((r) => r.reportDate >= dateFrom);
+    }
+
+    if (dateTo) {
+      data = data.filter((r) => r.reportDate <= dateTo);
+    }
+
+    if (branchFilter && branchFilter !== "all") {
+      data = data.filter((r) => r.branchId === branchFilter);
+    }
+
+    if (classFilter && classFilter !== "all") {
+      data = data.filter((r) => r.className === classFilter);
+    }
+
+    if (statusFilter && statusFilter !== "all") {
+      data = data.filter((r) => r.status === statusFilter);
+    }
+
+    return data;
+  }, [reports, search, dateFrom, dateTo, branchFilter, classFilter, statusFilter]);
+
+  const uniqueClasses = useMemo(
+    () => [...new Set(reports.map((r) => r.className))].filter((c) => c !== "—"),
+    [reports]
+  );
 
   const activeFilterCount = [
-    statusFilter !== "ALL" ? statusFilter : "",
-    branchFilter !== "ALL" ? branchFilter : "",
+    dateFrom,
+    dateTo,
+    branchFilter !== "all" ? branchFilter : "",
+    classFilter !== "all" ? classFilter : "",
+    statusFilter !== "all" ? statusFilter : "",
   ].filter(Boolean).length;
-
-  // Status summary counts
-  const counts = useMemo(() => {
-    const c = { PENDING: 0, APPROVED: 0, REJECTED: 0 };
-    for (const r of reports) c[r.status]++;
-    return c;
-  }, [reports]);
 
   function handleDelete() {
     if (!deleteId) return;
@@ -179,79 +181,44 @@ export function AbsentReportsClient({ reports, branches, initialStatusFilter = "
     });
   }
 
-  // -- Column definitions --
-  const absenceColumns: ColumnDef<AbsenceReport>[] = [
+  // Columns match old PHP app order: Image, F Name, L Name, Status, Branch, Class, Report Date, Created Date, Action
+  const absenceColumns: ColumnDef<AbsenceReportRow>[] = [
     {
-      accessorKey: "childName",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="-ml-3 h-8 text-xs font-semibold uppercase"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Child
-          <ArrowUpDown className="ml-1 size-3" />
-        </Button>
-      ),
+      accessorKey: "photo",
+      header: "Image",
       cell: ({ row }) => {
-        const name = row.original.childName;
-        return (
-          <div className="flex items-center gap-2.5">
-            <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${getAvatarColor(name)}`}>
-              {getInitials(name)}
-            </div>
-            <span className="text-sm font-semibold text-foreground">{name}</span>
+        const photo = row.original.photo;
+        return photo ? (
+          <img
+            src={photo}
+            alt={row.original.childName}
+            className="size-8 rounded-full object-cover"
+          />
+        ) : (
+          <div className="flex size-8 items-center justify-center rounded-full bg-muted">
+            <User className="size-4 text-muted-foreground" />
           </div>
         );
       },
+      enableSorting: false,
     },
     {
-      accessorKey: "date",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="-ml-3 h-8 text-xs font-semibold uppercase"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Date
-          <ArrowUpDown className="ml-1 size-3" />
-        </Button>
-      ),
+      accessorKey: "firstName",
+      header: "F Name",
       cell: ({ row }) => (
-        <span className="text-sm text-foreground whitespace-nowrap">
-          {format(new Date(row.original.date), "MMM d, yyyy")}
-        </span>
+        <span className="text-sm font-medium text-foreground">{row.original.firstName}</span>
       ),
     },
     {
-      accessorKey: "reason",
-      header: "Reason",
-      cell: ({ row }) => {
-        const reason = row.original.reason;
-        if (!reason) return <span className="text-xs text-muted-foreground">--</span>;
-        return (
-          <div className="flex items-start gap-1.5 max-w-[250px]">
-            <MessageSquareText className="size-3.5 text-muted-foreground shrink-0 mt-0.5" />
-            <span className="text-sm text-foreground line-clamp-2">{reason}</span>
-          </div>
-        );
-      },
+      accessorKey: "lastName",
+      header: "L Name",
+      cell: ({ row }) => (
+        <span className="text-sm font-medium text-foreground">{row.original.lastName}</span>
+      ),
     },
     {
       accessorKey: "status",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="-ml-3 h-8 text-xs font-semibold uppercase"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Status
-          <ArrowUpDown className="ml-1 size-3" />
-        </Button>
-      ),
+      header: "Status",
       cell: ({ row }) => {
         const status = row.original.status;
         const config = statusConfig[status];
@@ -265,39 +232,65 @@ export function AbsentReportsClient({ reports, branches, initialStatusFilter = "
       },
     },
     {
-      accessorKey: "createdBy",
-      header: "Reported By",
+      accessorKey: "branchName",
+      header: "Branch",
       cell: ({ row }) => (
-        <span className="text-xs text-muted-foreground">{row.original.createdBy}</span>
+        <span className="text-sm text-foreground">{row.original.branchName}</span>
+      ),
+    },
+    {
+      accessorKey: "className",
+      header: "Class",
+      cell: ({ row }) => (
+        <span className="text-sm text-foreground">{row.original.className}</span>
+      ),
+    },
+    {
+      accessorKey: "reportDate",
+      header: "Report Date",
+      cell: ({ row }) => (
+        <span className="text-sm text-foreground whitespace-nowrap">
+          {format(new Date(row.original.reportDate), "MMM d, yyyy")}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Created Date",
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground whitespace-nowrap">
+          {format(new Date(row.original.createdAt), "MMM d, yyyy HH:mm")}
+        </span>
       ),
     },
     {
       id: "actions",
-      header: "",
+      header: "Action",
       cell: ({ row }) => {
         const report = row.original;
         return (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             {report.status === "PENDING" && (
               <>
                 <Button
+                  variant="ghost"
                   size="sm"
-                  className="h-7 gap-1 bg-[#059669] text-white hover:bg-[#5A7A5E]"
+                  className="h-7 px-2 text-[var(--color-success-dark)] hover:text-[var(--color-success-dark)] hover:bg-[var(--color-success-light)]"
                   onClick={() => handleStatusUpdate(report.id, "APPROVED")}
                   disabled={isPending}
                 >
                   {isPending ? <Loader2 className="size-3 animate-spin" /> : <Check className="size-3.5" />}
-                  <span className="text-xs">Approve</span>
+                  <span className="ml-1 text-xs">Approve</span>
                 </Button>
                 <Button
+                  variant="ghost"
                   size="sm"
-                  variant="outline"
-                  className="h-7 gap-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                  className="h-7 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
                   onClick={() => handleStatusUpdate(report.id, "REJECTED")}
                   disabled={isPending}
                 >
                   {isPending ? <Loader2 className="size-3 animate-spin" /> : <X className="size-3.5" />}
-                  <span className="text-xs">Reject</span>
+                  <span className="ml-1 text-xs">Reject</span>
                 </Button>
               </>
             )}
@@ -305,19 +298,19 @@ export function AbsentReportsClient({ reports, branches, initialStatusFilter = "
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon-sm">
                   <MoreHorizontal className="size-4" />
-                  <span className="sr-only">Actions</span>
+                  <span className="sr-only">Open menu</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
                   <Link href={`/absent-reports/${report.id}`}>
-                    <Eye className="mr-2 size-4" />
+                    <Eye className="size-4" />
                     View
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href={`/absent-reports/${report.id}/edit`}>
-                    <Pencil className="mr-2 size-4" />
+                    <Pencil className="size-4" />
                     Edit
                   </Link>
                 </DropdownMenuItem>
@@ -326,7 +319,7 @@ export function AbsentReportsClient({ reports, branches, initialStatusFilter = "
                   variant="destructive"
                   onClick={() => setDeleteId(report.id)}
                 >
-                  <Trash2 className="mr-2 size-4" />
+                  <Trash2 className="size-4" />
                   Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -344,46 +337,17 @@ export function AbsentReportsClient({ reports, branches, initialStatusFilter = "
         title="Absence Reports"
         breadcrumbs={[{ label: "Absence Reports" }]}
         actions={
-          <Button asChild className="bg-primary text-white hover:bg-primary/90">
+          <Button asChild>
             <Link href="/absent-reports/new">
-              <Plus className="mr-1 size-4" />
+              <Plus className="size-4" />
               Report Absence
             </Link>
           </Button>
         }
       />
 
-      <div className="space-y-4 p-4 md:p-6">
-        {/* Status summary pills */}
-        <div className="flex flex-wrap gap-2">
-          {(["PENDING", "APPROVED", "REJECTED"] as const).map((s) => {
-            const config = statusConfig[s];
-            const Icon = config.icon;
-            const isActive = statusFilter === s;
-            return (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setStatusFilter(isActive ? "ALL" : s)}
-                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
-                  isActive
-                    ? config.color + " ring-2 ring-offset-1 ring-current/20"
-                    : "border-border bg-card text-muted-foreground hover:bg-muted"
-                }`}
-              >
-                <Icon className="size-3.5" />
-                {config.label}
-                <span className={`ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                  isActive ? "bg-white/60" : "bg-muted"
-                }`}>
-                  {counts[s]}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Filters */}
+      <div className="p-4 space-y-4 md:p-6">
+        {/* Toolbar — matches daily reports filter bar */}
         <Card className="border-border/60 shadow-sm">
           <CardContent className="p-3">
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -397,15 +361,56 @@ export function AbsentReportsClient({ reports, branches, initialStatusFilter = "
                 />
               </div>
 
+              <div className="flex w-full items-center gap-1.5 sm:w-auto">
+                <label className="text-xs font-medium text-muted-foreground whitespace-nowrap">From</label>
+                <Input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="flex-1 sm:w-[150px] sm:flex-initial h-9"
+                />
+                <label className="text-xs font-medium text-muted-foreground whitespace-nowrap ml-1">To</label>
+                <Input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="flex-1 sm:w-[150px] sm:flex-initial h-9"
+                />
+              </div>
+
               <Select value={branchFilter} onValueChange={setBranchFilter}>
-                <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[170px] h-9">
+                <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[150px] h-9">
                   <SelectValue placeholder="All Branches" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ALL">All Branches</SelectItem>
+                  <SelectItem value="all">All Branches</SelectItem>
                   {branches.map((b) => (
                     <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={classFilter} onValueChange={setClassFilter}>
+                <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[150px] h-9">
+                  <SelectValue placeholder="All Classes" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Classes</SelectItem>
+                  {uniqueClasses.map((cls) => (
+                    <SelectItem key={cls} value={cls}>{cls}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[140px] h-9">
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="PENDING">Pending</SelectItem>
+                  <SelectItem value="APPROVED">Approved</SelectItem>
+                  <SelectItem value="REJECTED">Rejected</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -425,14 +430,15 @@ export function AbsentReportsClient({ reports, branches, initialStatusFilter = "
           <EmptyState
             icon={CalendarDays}
             title="No absence reports found"
-            description="No absence reports match your current filters."
+            description={
+              search || dateFrom || dateTo || branchFilter !== "all" || classFilter !== "all" || statusFilter !== "all"
+                ? "Try adjusting your filters to see more results."
+                : "No absence reports have been submitted yet."
+            }
             action={{ label: "Report Absence", href: "/absent-reports/new", icon: Plus }}
           />
         ) : (
-          <DataTable
-            columns={absenceColumns}
-            data={filteredReports}
-          />
+          <DataTable columns={absenceColumns} data={filteredReports} />
         )}
       </div>
 

@@ -21,23 +21,27 @@ export default async function AbsentReportsPage({ searchParams }: PageProps) {
     name: string;
   }>;
 
-  // Serialize to plain objects
+  // Serialize to plain objects — match daily reports structure
   const reports = absenceReports.map((r) => ({
     id: r.id,
+    photo: r.child.photo ?? null,
+    firstName: r.child.firstName,
+    lastName: r.child.lastName,
     childName: `${r.child.firstName} ${r.child.lastName}`,
-    date: r.date.toISOString().slice(0, 10),
-    reason: r.reason ?? "",
     status: r.status as "PENDING" | "APPROVED" | "REJECTED",
-    createdBy: r.createdBy?.name ?? r.createdBy?.email ?? "Unknown",
     branchId: r.child.branchId,
-    branchName: r.child.branch?.name ?? "Unknown",
+    branchName: r.child.branch?.name ?? "—",
+    className: r.child.class?.name ?? "—",
+    reportDate: r.date.toISOString().split("T")[0],
+    createdAt: r.createdAt.toISOString(),
+    reason: r.reason ?? "",
   }));
 
   return (
     <AbsentReportsClient
       reports={reports}
       branches={branches}
-      initialStatusFilter={params.status ?? "ALL"}
+      initialStatusFilter={params.status ?? "all"}
     />
   );
 }
