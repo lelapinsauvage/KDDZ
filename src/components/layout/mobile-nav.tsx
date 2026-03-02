@@ -13,6 +13,7 @@ import {
 } from "lucide-react"
 import { MobileMoreSheet } from "./mobile-more-sheet"
 import type { UserRole, SidebarClassInfo } from "./app-sidebar"
+import type { SidebarBadges } from "@/lib/actions/sidebar"
 
 interface TabItem {
   label: string
@@ -58,9 +59,10 @@ function getTabsForRole(role: UserRole): TabItem[] {
 interface MobileNavProps {
   userRole: UserRole
   classes?: SidebarClassInfo[]
+  badges?: SidebarBadges
 }
 
-export function MobileNav({ userRole, classes }: MobileNavProps) {
+export function MobileNav({ userRole, classes, badges }: MobileNavProps) {
   const pathname = usePathname()
   const tabs = getTabsForRole(userRole)
   const [moreOpen, setMoreOpen] = useState(false)
@@ -113,6 +115,7 @@ export function MobileNav({ userRole, classes }: MobileNavProps) {
         onOpenChange={setMoreOpen}
         userRole={userRole}
         classes={classes}
+        badges={badges}
       />
     </>
   )

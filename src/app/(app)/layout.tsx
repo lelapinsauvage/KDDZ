@@ -86,7 +86,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </SidebarInset>
 
         {/* Mobile bottom tab bar */}
-        <MobileNav userRole={userRole} classes={classes} />
+        <MobileNav userRole={userRole} classes={classes} badges={badges} />
       </SidebarProvider>
     </AppContextProvider>
   )
