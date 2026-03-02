@@ -547,6 +547,7 @@ export interface ActionCenterMetrics {
   loggedCalls: number;
   completedMedicalVisits: number;
   missingMedicalVisits: number;
+  completedAssessments: number;
   missingAssessments: number;
   pendingDailyReports: number;
   pendingMedicalReports: number;
@@ -568,6 +569,7 @@ export async function getActionCenterMetrics(
     loggedCalls,
     completedMedicalVisits,
     missingMedicalVisits,
+    completedAssessments,
     missingAssessments,
     pendingDailyReports,
     pendingMedicalReports,
@@ -597,20 +599,25 @@ export async function getActionCenterMetrics(
     // 5. Missing medical visits (active children without a submitted visit)
     countMissingForType(orgId, branchId, "VISITS"),
 
-    // 6. Missing assessments (active children without a submitted assessment)
+    // 6. Completed assessments (SUBMITTED)
+    db.assessment.count({
+      where: { status: "SUBMITTED", child: branchFilter },
+    }),
+
+    // 7. Missing assessments (active children without a submitted assessment)
     countMissingAssessments(orgId, branchId),
 
-    // 7. Pending daily reports (DRAFT)
+    // 8. Pending daily reports (DRAFT)
     db.dailyReport.count({
       where: { status: "DRAFT", child: branchFilter },
     }),
 
-    // 8. Pending medical reports (DRAFT)
+    // 9. Pending medical reports (DRAFT)
     db.medicalForm.count({
       where: { status: "DRAFT", child: branchFilter },
     }),
 
-    // 9. Pending assessments (DRAFT)
+    // 10. Pending assessments (DRAFT)
     db.assessment.count({
       where: { status: "DRAFT", child: branchFilter },
     }),
@@ -622,6 +629,7 @@ export async function getActionCenterMetrics(
     loggedCalls,
     completedMedicalVisits,
     missingMedicalVisits,
+    completedAssessments,
     missingAssessments,
     pendingDailyReports,
     pendingMedicalReports,

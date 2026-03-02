@@ -12,7 +12,7 @@ import {
   Inbox,
 } from "lucide-react"
 import { MobileMoreSheet } from "./mobile-more-sheet"
-import type { UserRole } from "./app-sidebar"
+import type { UserRole, SidebarClassInfo } from "./app-sidebar"
 
 interface TabItem {
   label: string
@@ -57,9 +57,10 @@ function getTabsForRole(role: UserRole): TabItem[] {
 
 interface MobileNavProps {
   userRole: UserRole
+  classes?: SidebarClassInfo[]
 }
 
-export function MobileNav({ userRole }: MobileNavProps) {
+export function MobileNav({ userRole, classes }: MobileNavProps) {
   const pathname = usePathname()
   const tabs = getTabsForRole(userRole)
   const [moreOpen, setMoreOpen] = useState(false)
@@ -111,6 +112,7 @@ export function MobileNav({ userRole }: MobileNavProps) {
         open={moreOpen}
         onOpenChange={setMoreOpen}
         userRole={userRole}
+        classes={classes}
       />
     </>
   )

@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import {
-  getMorningBriefing,
   getDashboardDemographics,
   getDailyComplianceStats,
   getActionCenterMetrics,
@@ -10,16 +9,31 @@ import type {
   DailyComplianceStats,
   ActionCenterMetrics as ActionCenterMetricsType,
 } from "@/lib/actions/dashboard";
-import { StatusBoard } from "@/components/dashboard/status-board";
-import { ActionCenter } from "@/components/dashboard/action-center";
-import { TodayMenuWidget } from "@/components/dashboard/today-menu-widget";
-import { WeeklyAttendanceChart } from "@/components/dashboard/weekly-attendance-chart";
-import { InsightsPanel } from "@/components/dashboard/insights-panel";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { DemographicsSection } from "@/components/dashboard/demographics-section";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { FadeIn } from "@/components/ui/skeleton";
-import { Sun, Moon, Sunrise, Building2, BookOpen, Users } from "lucide-react";
+import {
+  Sun,
+  Moon,
+  Sunrise,
+  Building2,
+  BookOpen,
+  Users,
+  UserCheck,
+  UserX,
+  FileWarning,
+  AlertTriangle,
+  Phone,
+  Ambulance,
+  DollarSign,
+  Stethoscope,
+  HeartPulse,
+  FileEdit,
+  ClipboardCheck,
+  ClipboardList,
+  FileText,
+} from "lucide-react";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -31,36 +45,16 @@ export default async function DashboardPage() {
   const branchId = session?.user?.branchId ?? null;
   const isBranchLevel = branchId != null;
 
-  let briefing: Awaited<ReturnType<typeof getMorningBriefing>>;
   let demographics: Awaited<ReturnType<typeof getDashboardDemographics>>;
   let compliance: DailyComplianceStats;
-  let actionMetrics: ActionCenterMetricsType;
+  let metrics: ActionCenterMetricsType;
   try {
-    [briefing, demographics, compliance, actionMetrics] = await Promise.all([
-      getMorningBriefing(),
+    [demographics, compliance, metrics] = await Promise.all([
       getDashboardDemographics(),
       getDailyComplianceStats(branchId),
       getActionCenterMetrics(branchId),
     ]);
   } catch {
-    // Missing org context — show empty state
-    briefing = {
-      attendance: { present: 0, total: 0, status: "green" },
-      reports: { submitted: 0, total: 0, status: "green" },
-      staff: { present: 0, total: 0, status: "green" },
-      finance: { overdueCount: 0, overdueAmount: 0, status: "green" },
-      health: { issues: 0, status: "green" },
-      actionItems: {
-        pendingAbsences: [],
-        overduePayments: [],
-        missingReportsByClass: [],
-        draftChildren: [],
-      },
-      totalAttentionItems: 0,
-      insights: [],
-      todayMenu: { breakfast: null, lunch: null, dessert: null, snack: null },
-      weeklyAttendance: [],
-    };
     demographics = {
       totalBranches: 0,
       totalClasses: 0,
@@ -74,12 +68,13 @@ export default async function DashboardPage() {
       missingDailyReports: 0,
       missingAbsentReports: 0,
     };
-    actionMetrics = {
+    metrics = {
       totalPayments: 0,
       accidentReports: 0,
       loggedCalls: 0,
       completedMedicalVisits: 0,
       missingMedicalVisits: 0,
+      completedAssessments: 0,
       missingAssessments: 0,
       pendingDailyReports: 0,
       pendingMedicalReports: 0,
@@ -92,7 +87,6 @@ export default async function DashboardPage() {
   const hour = new Date().getHours();
   const greeting =
     hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
-
   const GreetingIcon = hour < 12 ? Sunrise : hour < 17 ? Sun : Moon;
 
   const todayFormatted = new Date().toLocaleDateString("en-US", {
@@ -102,79 +96,194 @@ export default async function DashboardPage() {
     day: "numeric",
   });
 
-  const attentionSummary =
-    briefing.totalAttentionItems === 0
-      ? "Everything looks good today — no items need your attention."
-      : briefing.totalAttentionItems === 1
-        ? "Just 1 thing needs a quick look."
-        : `${briefing.totalAttentionItems} things could use your attention today.`;
+  // Attendance breakdown for pie chart
+  const attendanceBreakdown = [
+    { name: "Present", value: compliance.totalAttendance },
+    { name: "Absent", value: compliance.totalAbsence },
+    { name: "Missing Report", value: compliance.missingDailyReports },
+  ];
 
   return (
     <FadeIn className="space-y-6 sm:space-y-8 p-4 md:p-6">
-      {/* ── Morning greeting ── */}
+      {/* ── Greeting ── */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <h1 className="flex items-center gap-2.5 text-[1.875rem] font-extrabold tracking-[-0.01em] text-foreground font-heading leading-[2.375rem]">
             <GreetingIcon className="size-7 text-[#D97706]" />
             {greeting}, {userName}
           </h1>
-          <p className="text-[13px] text-muted-foreground leading-5">
-            {attentionSummary}
-          </p>
           <p className="text-xs text-muted-foreground/70">{todayFormatted}</p>
         </div>
         <DashboardHeader />
       </div>
 
-      {/* ── KPI stat cards ── */}
-      <div
-        className={`grid gap-3 sm:gap-4 ${isBranchLevel ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"}`}
-      >
-        {!isBranchLevel && (
+      {/* ── Row 1: Overview (Branches, Classes, Children) ── */}
+      <div>
+        <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          Overview
+        </h3>
+        <div
+          className={`grid gap-3 sm:gap-4 ${isBranchLevel ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"}`}
+        >
+          {!isBranchLevel && (
+            <StatCard
+              title="Total Branches"
+              value={demographics.totalBranches}
+              icon={Building2}
+              color="blue"
+              href="/branches"
+            />
+          )}
           <StatCard
-            title="Total Branches"
-            value={demographics.totalBranches}
-            icon={Building2}
-            color="teal"
-            href="/branches"
+            title="Total Classes"
+            value={demographics.totalClasses}
+            icon={BookOpen}
+            color="sky"
+            href="/classes"
           />
-        )}
-        <StatCard
-          title="Total Classes"
-          value={demographics.totalClasses}
-          icon={BookOpen}
-          color="blue"
-          href="/classes"
-        />
-        <StatCard
-          title="Active Children"
-          value={demographics.totalActiveChildren}
-          icon={Users}
-          color="emerald"
-          href="/children"
-        />
+          <StatCard
+            title="Total Children"
+            value={demographics.totalActiveChildren}
+            icon={Users}
+            color="emerald"
+            href="/children"
+          />
+        </div>
       </div>
 
-      {/* ── Compliance row ── */}
-      <StatusBoard compliance={compliance} />
+      {/* ── Row 2: Daily Compliance (Attendance, Absence, Missing Reports) ── */}
+      <div>
+        <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          Daily Compliance
+        </h3>
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          <StatCard
+            title="Total Attendance"
+            value={compliance.totalAttendance}
+            icon={UserCheck}
+            color="emerald"
+            href="/daily-reports?status=submitted"
+          />
+          <StatCard
+            title="Total Absences"
+            value={compliance.totalAbsence}
+            icon={UserX}
+            color="rose"
+            href="/absent-reports"
+          />
+          <StatCard
+            title="Missing Reports"
+            value={compliance.missingDailyReports}
+            icon={FileWarning}
+            color="amber"
+            href="/daily-reports?status=missing"
+          />
+          <StatCard
+            title="Missing Absence Reports"
+            value={compliance.missingAbsentReports}
+            icon={AlertTriangle}
+            color="amber"
+            href="/absent-reports?status=missing"
+          />
+        </div>
+      </div>
 
-      {/* ── Demographics charts ── */}
+      {/* ── Row 3: Operations (Calls, Accidents, Accounting) ── */}
+      <div>
+        <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          Operations
+        </h3>
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-3">
+          <StatCard
+            title="Phone Calls"
+            value={metrics.loggedCalls}
+            icon={Phone}
+            color="sky"
+            href="/children?tab=calls"
+          />
+          <StatCard
+            title="Accidents"
+            value={metrics.accidentReports}
+            icon={Ambulance}
+            color="rose"
+            href="/medical/accidents"
+          />
+          <StatCard
+            title="Accounting"
+            value={`$${metrics.totalPayments.toLocaleString()}`}
+            icon={DollarSign}
+            color="emerald"
+            href="/accounting"
+          />
+        </div>
+      </div>
+
+      {/* ── Row 4: Medical Reports (Published, Missing, Drafts) ── */}
+      <div>
+        <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          Medical Reports
+        </h3>
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-3">
+          <StatCard
+            title="Medical Published"
+            value={metrics.completedMedicalVisits}
+            icon={Stethoscope}
+            color="emerald"
+            href="/medical/general"
+          />
+          <StatCard
+            title="Medical Missing"
+            value={metrics.missingMedicalVisits}
+            icon={HeartPulse}
+            color="rose"
+            href="/medical/general?status=missing"
+          />
+          <StatCard
+            title="Medical Drafts"
+            value={metrics.pendingMedicalReports}
+            icon={FileEdit}
+            color="sky"
+            href="/medical/general?status=draft"
+          />
+        </div>
+      </div>
+
+      {/* ── Row 5: Assessments (Published, Missing, Drafts) ── */}
+      <div>
+        <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          Assessments
+        </h3>
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-3">
+          <StatCard
+            title="Assessments Published"
+            value={metrics.completedAssessments}
+            icon={ClipboardCheck}
+            color="emerald"
+            href="/assessments"
+          />
+          <StatCard
+            title="Assessments Missing"
+            value={metrics.missingAssessments}
+            icon={ClipboardList}
+            color="rose"
+            href="/assessments?status=missing"
+          />
+          <StatCard
+            title="Assessments Drafts"
+            value={metrics.pendingAssessments}
+            icon={FileText}
+            color="sky"
+            href="/assessments?status=draft"
+          />
+        </div>
+      </div>
+
+      {/* ── Charts: Attendance breakdown, Children per class, Gender ── */}
       <DemographicsSection
+        attendanceBreakdown={attendanceBreakdown}
         childrenPerClass={demographics.childrenPerClass}
         genderStats={demographics.genderStats}
       />
-
-      {/* ── Action Center 3×3 grid ── */}
-      <ActionCenter metrics={actionMetrics} />
-
-      {/* ── Menu + Weekly chart ── */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <TodayMenuWidget {...briefing.todayMenu} />
-        <WeeklyAttendanceChart data={briefing.weeklyAttendance} />
-      </div>
-
-      {/* ── Insights ── */}
-      <InsightsPanel insights={briefing.insights} />
     </FadeIn>
   );
 }

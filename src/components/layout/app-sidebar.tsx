@@ -27,20 +27,40 @@ import {
   Plus,
   GraduationCap,
   Sun,
-  History,
+  ChevronRight,
+  Send,
+  PenLine,
+  MapPin,
+  Map as MapIcon,
+  Globe,
+  Users,
+  Calendar,
+  Upload,
+  Clock,
+  Heart,
+  School,
+  Phone,
+  FileEdit,
 } from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar"
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from "@/components/ui/collapsible"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,171 +69,288 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
-import { useRecentlyVisited } from "@/hooks/use-recently-visited"
 import type { SidebarBadges } from "@/lib/actions/sidebar"
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 type UserRole = "ADMIN" | "TEACHER" | "NURSE" | "DOCTOR" | "MANAGER"
 
-interface FlatNavItem {
+interface NavLeaf {
   title: string
-  icon: React.ComponentType<{ className?: string }>
   href: string
+  icon?: React.ComponentType<{ className?: string }>
   badgeKey?: keyof SidebarBadges
 }
 
-interface NavSection {
-  label: string
-  items: FlatNavItem[]
+interface NavAccordionItem {
+  title: string
+  icon?: React.ComponentType<{ className?: string }>
+  children: NavItem[]
+}
+
+type NavItem = NavLeaf | NavAccordionItem
+
+/** Top-level section: either a flat link or an accordion with children */
+type NavSection =
+  | { label: string; icon: React.ComponentType<{ className?: string }>; href: string; badgeKey?: keyof SidebarBadges }
+  | { label: string; icon: React.ComponentType<{ className?: string }>; children: NavItem[] }
+
+function isAccordion(item: NavItem): item is NavAccordionItem {
+  return "children" in item
+}
+
+function isSectionAccordion(
+  section: NavSection
+): section is Extract<NavSection, { children: NavItem[] }> {
+  return "children" in section
+}
+
+export interface SidebarClassInfo {
+  id: string
+  name: string
+  branch: { id: string; name: string }
 }
 
 // ---------------------------------------------------------------------------
-// Badge styling — accent-tinted pills that pop on dark sidebar
+// Badge styling
 // ---------------------------------------------------------------------------
 
 const badgeColors: Record<keyof SidebarBadges, string> = {
-  activeAlarms:   "bg-red-500/15 text-red-300 border-red-500/20",
+  activeAlarms: "bg-red-500/15 text-red-300 border-red-500/20",
   missingReports: "bg-amber-500/15 text-amber-300 border-amber-500/20",
   unreadMessages: "bg-[#36CCA8]/15 text-[#6DE1C3] border-[#36CCA8]/20",
 }
 
 // ---------------------------------------------------------------------------
-// Role-specific nav configs — workflow-oriented grouping by priority
+// Active-state detection
+// ---------------------------------------------------------------------------
+
+function isLeafActive(href: string, pathname: string): boolean {
+  return pathname === href || pathname.startsWith(href + "/")
+}
+
+function hasActiveChild(items: NavItem[], pathname: string): boolean {
+  return items.some((item) => {
+    if (isAccordion(item)) return hasActiveChild(item.children, pathname)
+    return isLeafActive(item.href, pathname)
+  })
+}
+
+function sectionHasActiveChild(section: NavSection, pathname: string): boolean {
+  if (isSectionAccordion(section)) return hasActiveChild(section.children, pathname)
+  return isLeafActive(section.href, pathname)
+}
+
+// ---------------------------------------------------------------------------
+// Nav configs
 // ---------------------------------------------------------------------------
 
 const adminNav: NavSection[] = [
+  { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
   {
-    label: "Quick Access",
-    items: [
-      { title: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-      { title: "Today", icon: Sun, href: "/today" },
+    label: "Garderie Management",
+    icon: Building2,
+    children: [
+      { title: "Branches Management", href: "/branches", icon: Building2 },
+      { title: "Classes Management", href: "/classes", icon: School },
+      { title: "Accounting Management", href: "/accounting", icon: DollarSign },
+      { title: "Monthly Attendance", href: "/attendance/heatmap", icon: CalendarDays },
+      { title: "Messages Portal", href: "/messages/inbox", icon: Inbox, badgeKey: "unreadMessages" },
+      { title: "Single Messaging", href: "/messages/compose", icon: PenLine },
+      { title: "Sent Messages", href: "/messages/sent", icon: Send },
+    ],
+  },
+  // "Classes" dynamic section inserted at runtime by getNavForRole
+  {
+    label: "Children Management",
+    icon: Baby,
+    children: [
+      { title: "Children Listing", href: "/children", icon: Baby },
+      { title: "Children Drafts", href: "/children/drafts", icon: FileEdit },
+      { title: "Calls Management", href: "/children?tab=calls", icon: Phone },
+      {
+        title: "Daily Reports",
+        icon: FileText,
+        children: [
+          { title: "Daily Reports", href: "/daily-reports", icon: FileText, badgeKey: "missingReports" },
+          { title: "Drafts", href: "/daily-reports/drafts", icon: FileEdit },
+          { title: "Absent Reports", href: "/absent-reports", icon: CalendarDays },
+          { title: "Absent Drafts", href: "/absent-reports/drafts", icon: FileEdit },
+        ],
+      },
+      {
+        title: "Medical Reports",
+        icon: Stethoscope,
+        children: [
+          { title: "General Info", href: "/medical/general", icon: Stethoscope },
+          { title: "Suffering Form", href: "/medical/suffering", icon: Heart },
+          { title: "Medical Visits", href: "/medical/visits", icon: Stethoscope },
+          { title: "Vaccinations", href: "/medical/vaccinations", icon: Syringe },
+          { title: "Accident Report", href: "/medical/accidents", icon: AlertTriangle },
+        ],
+      },
+      { title: "Parent Users", href: "/settings/parent-users", icon: Users },
     ],
   },
   {
-    label: "Daily Operations",
-    items: [
-      { title: "Daily Reports", icon: FileText, href: "/daily-reports", badgeKey: "missingReports" },
-      { title: "Attendance", icon: CalendarDays, href: "/absent-reports" },
-      { title: "Food Calendar", icon: UtensilsCrossed, href: "/food/calendar" },
-      { title: "Food Items", icon: UtensilsCrossed, href: "/food" },
+    label: "Food Management",
+    icon: UtensilsCrossed,
+    children: [
+      { title: "Food Listing", href: "/food", icon: UtensilsCrossed },
+      { title: "Food Calendar", href: "/food/calendar", icon: Calendar },
     ],
   },
   {
-    label: "Children",
-    items: [
-      { title: "All Children", icon: Baby, href: "/children" },
-      { title: "Enrollments", icon: GraduationCap, href: "/settings/parent-users" },
-      { title: "Assessments", icon: ClipboardList, href: "/assessments" },
+    label: "Employees Management",
+    icon: UserCheck,
+    children: [
+      { title: "Nurses Listing", href: "/employees/nurses", icon: Stethoscope },
+      { title: "Doctors Listing", href: "/employees/doctors", icon: Pill },
+      { title: "Managers Listing", href: "/employees/managers", icon: UserCheck },
+      { title: "Teachers Listing", href: "/employees/teachers", icon: GraduationCap },
+      { title: "Teachers Calendar", href: "/employees/calendar", icon: Calendar },
+      { title: "Upload Attendance", href: "/employees/attendance", icon: Upload },
+      { title: "Attendance Logs", href: "/employees/attendance-logs", icon: Clock },
     ],
   },
   {
-    label: "Health",
-    items: [
-      { title: "Medical Records", icon: Stethoscope, href: "/medical/general" },
-      { title: "Vaccinations", icon: Syringe, href: "/medical/vaccinations" },
-      { title: "Accidents", icon: AlertTriangle, href: "/medical/accidents" },
-      { title: "Conditions", icon: Pill, href: "/medical/conditions" },
-    ],
-  },
-  {
-    label: "Communication",
-    items: [
-      { title: "Messages", icon: Inbox, href: "/messages/inbox", badgeKey: "unreadMessages" },
-      { title: "Notifications", icon: Bell, href: "/alarms", badgeKey: "activeAlarms" },
-    ],
-  },
-  {
-    label: "Finance",
-    items: [
-      { title: "Accounting", icon: DollarSign, href: "/accounting" },
-    ],
-  },
-  {
-    label: "Management",
-    items: [
-      { title: "Branches & Classes", icon: Building2, href: "/branches" },
-      { title: "Employees", icon: UserCheck, href: "/employees/staff" },
-    ],
-  },
-  {
-    label: "Settings",
-    items: [
-      { title: "Settings", icon: Settings, href: "/settings" },
+    label: "Setting",
+    icon: Settings,
+    children: [
+      { title: "Holiday Calendar", href: "/settings/holidays", icon: Calendar },
+      {
+        title: "Address Management",
+        icon: MapPin,
+        children: [
+          { title: "Mouhafaza", href: "/settings/regions", icon: Globe },
+          { title: "Quadaa", href: "/settings/zones", icon: MapIcon },
+          { title: "Region", href: "/settings/areas", icon: MapPin },
+        ],
+      },
+      { title: "Notifications", href: "/alarms", icon: Bell, badgeKey: "activeAlarms" },
     ],
   },
 ]
 
 const teacherNav: NavSection[] = [
-  {
-    label: "Quick Access",
-    items: [
-      { title: "Today", icon: Sun, href: "/today" },
-    ],
-  },
+  { label: "Today", icon: Sun, href: "/today" },
   {
     label: "Daily Operations",
-    items: [
-      { title: "Daily Reports", icon: FileText, href: "/daily-reports", badgeKey: "missingReports" },
-      { title: "Absences", icon: CalendarDays, href: "/absent-reports" },
+    icon: FileText,
+    children: [
+      { title: "Daily Reports", href: "/daily-reports", icon: FileText, badgeKey: "missingReports" },
+      { title: "Drafts", href: "/daily-reports/drafts", icon: FileEdit },
+      { title: "Absent Reports", href: "/absent-reports", icon: CalendarDays },
     ],
   },
   {
     label: "Children",
-    items: [
-      { title: "Children", icon: Baby, href: "/children" },
+    icon: Baby,
+    children: [
+      { title: "Children Listing", href: "/children", icon: Baby },
     ],
   },
   {
     label: "Communication",
-    items: [
-      { title: "Messages", icon: Inbox, href: "/messages/inbox", badgeKey: "unreadMessages" },
-      { title: "Notifications", icon: Bell, href: "/alarms", badgeKey: "activeAlarms" },
+    icon: Inbox,
+    children: [
+      { title: "Messages", href: "/messages/inbox", icon: Inbox, badgeKey: "unreadMessages" },
+      { title: "Notifications", href: "/alarms", icon: Bell, badgeKey: "activeAlarms" },
     ],
   },
 ]
 
 const nurseNav: NavSection[] = [
-  {
-    label: "Quick Access",
-    items: [
-      { title: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-    ],
-  },
+  { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
   {
     label: "Health",
-    items: [
-      { title: "Medical Records", icon: Stethoscope, href: "/medical/general" },
-      { title: "Vaccinations", icon: Syringe, href: "/medical/vaccinations" },
-      { title: "Accidents", icon: AlertTriangle, href: "/medical/accidents" },
-      { title: "Conditions", icon: Pill, href: "/medical/conditions" },
+    icon: Stethoscope,
+    children: [
+      { title: "General Info", href: "/medical/general", icon: Stethoscope },
+      { title: "Vaccinations", href: "/medical/vaccinations", icon: Syringe },
+      { title: "Accidents", href: "/medical/accidents", icon: AlertTriangle },
+      { title: "Conditions", href: "/medical/conditions", icon: Pill },
     ],
   },
   {
     label: "Children",
-    items: [
-      { title: "All Children", icon: Baby, href: "/children" },
+    icon: Baby,
+    children: [
+      { title: "All Children", href: "/children", icon: Baby },
     ],
   },
   {
     label: "Communication",
-    items: [
-      { title: "Messages", icon: Inbox, href: "/messages/inbox", badgeKey: "unreadMessages" },
-      { title: "Notifications", icon: Bell, href: "/alarms", badgeKey: "activeAlarms" },
+    icon: Inbox,
+    children: [
+      { title: "Messages", href: "/messages/inbox", icon: Inbox, badgeKey: "unreadMessages" },
+      { title: "Notifications", href: "/alarms", icon: Bell, badgeKey: "activeAlarms" },
     ],
   },
 ]
 
-function getNavForRole(role: UserRole): NavSection[] {
+function getNavForRole(role: UserRole, classes?: SidebarClassInfo[]): NavSection[] {
+  let sections: NavSection[]
   switch (role) {
     case "TEACHER":
-      return teacherNav
+      sections = [...teacherNav]
+      break
     case "NURSE":
     case "DOCTOR":
-      return nurseNav
+      sections = [...nurseNav]
+      break
     case "ADMIN":
     case "MANAGER":
     default:
-      return adminNav
+      sections = [...adminNav]
+      break
   }
+
+  // Insert dynamic "Classes" section for admin/manager
+  if ((role === "ADMIN" || role === "MANAGER") && classes && classes.length > 0) {
+    // Group classes by branch
+    const byBranch = new Map<string, { branchId: string; branchName: string; items: NavLeaf[] }>()
+    for (const c of classes) {
+      let group = byBranch.get(c.branch.id)
+      if (!group) {
+        group = { branchId: c.branch.id, branchName: c.branch.name, items: [] }
+        byBranch.set(c.branch.id, group)
+      }
+      group.items.push({ title: c.name, href: `/classes/${c.id}`, icon: School })
+    }
+
+    const classChildren: NavItem[] = []
+    for (const group of byBranch.values()) {
+      if (byBranch.size === 1) {
+        // Single branch — flatten
+        classChildren.push(...group.items)
+      } else {
+        classChildren.push({
+          title: group.branchName,
+          icon: Building2,
+          children: group.items,
+        })
+      }
+    }
+
+    const classesSection: NavSection = {
+      label: "Classes",
+      icon: School,
+      children: classChildren,
+    }
+
+    // Insert after "Garderie Management" (index 1 in admin nav)
+    const garderieIdx = sections.findIndex((s) => s.label === "Garderie Management")
+    if (garderieIdx !== -1) {
+      sections.splice(garderieIdx + 1, 0, classesSection)
+    } else {
+      sections.push(classesSection)
+    }
+  }
+
+  return sections
 }
 
 // ---------------------------------------------------------------------------
@@ -229,7 +366,7 @@ const roleLabels: Record<UserRole, string> = {
 }
 
 // ---------------------------------------------------------------------------
-// Quick actions per role (contextual shortcuts)
+// Quick actions per role
 // ---------------------------------------------------------------------------
 
 interface QuickAction {
@@ -241,21 +378,176 @@ interface QuickAction {
 function getQuickActionsForRole(role: UserRole): QuickAction[] {
   switch (role) {
     case "TEACHER":
-      return [
-        { title: "New Daily Report", icon: Plus, href: "/daily-reports/new" },
-      ]
+      return [{ title: "New Daily Report", icon: Plus, href: "/daily-reports/new" }]
     case "NURSE":
     case "DOCTOR":
-      return [
-        { title: "Log Accident", icon: Plus, href: "/medical/accidents" },
-      ]
+      return [{ title: "Log Accident", icon: Plus, href: "/medical/accidents" }]
     case "ADMIN":
     case "MANAGER":
     default:
-      return [
-        { title: "New Daily Report", icon: Plus, href: "/daily-reports/new" },
-      ]
+      return [{ title: "New Daily Report", icon: Plus, href: "/daily-reports/new" }]
   }
+}
+
+// ---------------------------------------------------------------------------
+// Recursive rendering components
+// ---------------------------------------------------------------------------
+
+function NavBadge({ badgeKey, badges }: { badgeKey?: keyof SidebarBadges; badges?: SidebarBadges }) {
+  if (!badgeKey || !badges) return null
+  const count = badges[badgeKey]
+  if (!count || count <= 0) return null
+  return (
+    <Badge
+      variant="secondary"
+      className={`ml-auto min-w-5 h-5 justify-center rounded-full border px-1.5 py-0 text-[10px] font-bold tabular-nums ${badgeColors[badgeKey]}`}
+    >
+      {count > 99 ? "99+" : count}
+    </Badge>
+  )
+}
+
+/** Renders a leaf or nested accordion inside SidebarMenuSub */
+function NavItemRenderer({
+  item,
+  pathname,
+  badges,
+  depth = 1,
+}: {
+  item: NavItem
+  pathname: string
+  badges?: SidebarBadges
+  depth?: number
+}) {
+  if (!isAccordion(item)) {
+    // Leaf item
+    const active = isLeafActive(item.href, pathname)
+    return (
+      <SidebarMenuSubItem>
+        <SidebarMenuSubButton
+          asChild
+          size="sm"
+          isActive={active}
+          className={
+            active
+              ? "font-medium text-sidebar-primary"
+              : ""
+          }
+        >
+          <Link href={item.href}>
+            {item.icon && <item.icon className="size-3.5 shrink-0" />}
+            <span className="truncate">{item.title}</span>
+            <NavBadge badgeKey={item.badgeKey} badges={badges} />
+          </Link>
+        </SidebarMenuSubButton>
+      </SidebarMenuSubItem>
+    )
+  }
+
+  // Nested accordion (depth 2+)
+  const isOpen = hasActiveChild(item.children, pathname)
+  return (
+    <SidebarMenuSubItem>
+      <Collapsible defaultOpen={isOpen} className="group/subcollapsible">
+        <CollapsibleTrigger asChild>
+          <SidebarMenuSubButton
+            size="sm"
+            className="cursor-pointer w-full"
+          >
+            {item.icon && <item.icon className="size-3.5 shrink-0" />}
+            <span className="flex-1 truncate">{item.title}</span>
+            <ChevronRight className="ml-auto size-3.5 shrink-0 transition-transform duration-200 group-data-[state=open]/subcollapsible:rotate-90" />
+          </SidebarMenuSubButton>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <SidebarMenuSub className="ml-0 pl-3 border-l-0">
+            {item.children.map((child) => (
+              <NavItemRenderer
+                key={isAccordion(child) ? child.title : child.href}
+                item={child}
+                pathname={pathname}
+                badges={badges}
+                depth={depth + 1}
+              />
+            ))}
+          </SidebarMenuSub>
+        </CollapsibleContent>
+      </Collapsible>
+    </SidebarMenuSubItem>
+  )
+}
+
+/** Renders a top-level nav section: flat link or accordion */
+function NavSectionRenderer({
+  section,
+  pathname,
+  badges,
+}: {
+  section: NavSection
+  pathname: string
+  badges?: SidebarBadges
+}) {
+  if (!isSectionAccordion(section)) {
+    // Flat top-level link
+    const active = isLeafActive(section.href, pathname)
+    return (
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          asChild
+          isActive={active}
+          tooltip={section.label}
+          className={
+            active
+              ? "relative bg-sidebar-accent text-sidebar-accent-foreground font-medium rounded-lg border-l-[3px] border-l-sidebar-primary rounded-l-none pl-[9px] transition-all duration-200"
+              : "relative text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50 rounded-lg transition-all duration-200"
+          }
+        >
+          <Link href={section.href}>
+            <section.icon
+              className={`size-[18px] shrink-0 ${
+                active ? "text-sidebar-primary" : "text-sidebar-foreground/70"
+              }`}
+            />
+            <span className="flex-1 truncate text-[13px]">{section.label}</span>
+            {"badgeKey" in section && section.badgeKey && (
+              <NavBadge badgeKey={section.badgeKey} badges={badges} />
+            )}
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    )
+  }
+
+  // Accordion section
+  const isOpen = hasActiveChild(section.children, pathname)
+  return (
+    <Collapsible defaultOpen={isOpen} asChild className="group/collapsible">
+      <SidebarMenuItem>
+        <CollapsibleTrigger asChild>
+          <SidebarMenuButton
+            tooltip={section.label}
+            className="relative text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50 rounded-lg transition-all duration-200"
+          >
+            <section.icon className="size-[18px] shrink-0 text-sidebar-foreground/70" />
+            <span className="flex-1 truncate text-[13px]">{section.label}</span>
+            <ChevronRight className="ml-auto size-4 shrink-0 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+          </SidebarMenuButton>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <SidebarMenuSub>
+            {section.children.map((item) => (
+              <NavItemRenderer
+                key={isAccordion(item) ? item.title : item.href}
+                item={item}
+                pathname={pathname}
+                badges={badges}
+              />
+            ))}
+          </SidebarMenuSub>
+        </CollapsibleContent>
+      </SidebarMenuItem>
+    </Collapsible>
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -265,18 +557,17 @@ function getQuickActionsForRole(role: UserRole): QuickAction[] {
 interface AppSidebarProps {
   userRole: UserRole
   badges?: SidebarBadges
+  classes?: SidebarClassInfo[]
 }
 
 const TABLET_MAX = 1024
 
-export function AppSidebar({ userRole, badges }: AppSidebarProps) {
+export function AppSidebar({ userRole, badges, classes }: AppSidebarProps) {
   const pathname = usePathname()
   const { data: session } = useSession()
   const { setOpen } = useSidebar()
-  const sections = getNavForRole(userRole)
+  const sections = getNavForRole(userRole, classes)
   const quickActions = getQuickActionsForRole(userRole)
-  const { recentPages } = useRecentlyVisited()
-
   const userName = session?.user?.name || "User"
   const userInitial = userName.charAt(0).toUpperCase()
 
@@ -339,87 +630,19 @@ export function AppSidebar({ userRole, badges }: AppSidebarProps) {
         )}
 
         {/* Main nav sections */}
-        {sections.map((section) => (
-          <SidebarGroup key={section.label} className="py-1">
-            <SidebarGroupLabel className="px-3 mb-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-sidebar-foreground/70">
-              {section.label}
-            </SidebarGroupLabel>
-            <SidebarMenu className="space-y-0.5">
-              {section.items.map((item) => {
-                const isActive =
-                  pathname === item.href || pathname.startsWith(item.href + "/")
-                const badgeCount = item.badgeKey && badges ? badges[item.badgeKey] : 0
-                const badgeColor = item.badgeKey ? badgeColors[item.badgeKey] : ""
+        <SidebarGroup className="py-1">
+          <SidebarMenu className="space-y-0.5">
+            {sections.map((section) => (
+              <NavSectionRenderer
+                key={section.label}
+                section={section}
+                pathname={pathname}
+                badges={badges}
+              />
+            ))}
+          </SidebarMenu>
+        </SidebarGroup>
 
-                return (
-                  <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive}
-                      tooltip={item.title}
-                      className={
-                        isActive
-                          ? "relative bg-sidebar-accent text-sidebar-accent-foreground font-medium rounded-lg border-l-[3px] border-l-sidebar-primary rounded-l-none pl-[9px] transition-all duration-200"
-                          : "relative text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50 rounded-lg transition-all duration-200"
-                      }
-                    >
-                      <Link href={item.href}>
-                        <item.icon
-                          className={`size-[18px] shrink-0 ${
-                            isActive
-                              ? "text-sidebar-primary"
-                              : "text-sidebar-foreground/70"
-                          }`}
-                        />
-                        <span className="flex-1 truncate text-[13px]">{item.title}</span>
-                        {badgeCount > 0 && (
-                          <Badge
-                            variant="secondary"
-                            className={`ml-auto min-w-5 h-5 justify-center rounded-full border px-1.5 py-0 text-[10px] font-bold tabular-nums ${badgeColor}`}
-                          >
-                            {badgeCount > 99 ? "99+" : badgeCount}
-                          </Badge>
-                        )}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )
-              })}
-            </SidebarMenu>
-          </SidebarGroup>
-        ))}
-
-        {/* Recently Visited */}
-        {recentPages.length > 0 && (
-          <SidebarGroup className="py-1">
-            <SidebarGroupLabel className="px-3 mb-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-sidebar-foreground/70">
-              Recently Visited
-            </SidebarGroupLabel>
-            <SidebarMenu className="space-y-0.5">
-              {recentPages.slice(0, 5).map((page) => {
-                const isActive = pathname === page.href
-                return (
-                  <SidebarMenuItem key={page.href}>
-                    <SidebarMenuButton
-                      asChild
-                      tooltip={page.title}
-                      className={
-                        isActive
-                          ? "relative bg-sidebar-accent/50 text-sidebar-accent-foreground font-medium rounded-lg transition-all duration-200"
-                          : "relative text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/30 rounded-lg transition-all duration-200"
-                      }
-                    >
-                      <Link href={page.href}>
-                        <History className="size-[18px] shrink-0 text-sidebar-foreground/70" />
-                        <span className="flex-1 truncate text-[13px]">{page.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )
-              })}
-            </SidebarMenu>
-          </SidebarGroup>
-        )}
       </SidebarContent>
 
       {/* ── Footer: Quick Actions + User ── */}
@@ -506,5 +729,5 @@ export function AppSidebar({ userRole, badges }: AppSidebarProps) {
   )
 }
 
-// Export the nav configs for use by mobile nav
-export { getNavForRole, type NavSection, type FlatNavItem, type UserRole }
+// Export types and helpers for mobile nav
+export { getNavForRole, type NavSection, type NavItem, type NavLeaf, type NavAccordionItem, type UserRole, isAccordion, isSectionAccordion, hasActiveChild, sectionHasActiveChild, isLeafActive, badgeColors }

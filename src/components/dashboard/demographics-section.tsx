@@ -24,10 +24,12 @@ const CLASS_COLORS = [
 ];
 
 const GENDER_COLORS = ["#2563EB", "#E11D48"];
+const ATTENDANCE_COLORS = ["#16A34A", "#DC2626", "#D97706"];
 
 interface DemographicsSectionProps {
   childrenPerClass: Array<{ name: string; value: number }>;
   genderStats: Array<{ name: string; value: number }>;
+  attendanceBreakdown?: Array<{ name: string; value: number }>;
 }
 
 const tooltipStyle = {
@@ -41,14 +43,64 @@ const tooltipStyle = {
 export function DemographicsSection({
   childrenPerClass,
   genderStats,
+  attendanceBreakdown,
 }: DemographicsSectionProps) {
   const hasClassData = childrenPerClass.length > 0;
   const hasGenderData = genderStats.length > 0;
+  const hasAttendance = attendanceBreakdown && attendanceBreakdown.some((d) => d.value > 0);
 
-  if (!hasClassData && !hasGenderData) return null;
+  if (!hasClassData && !hasGenderData && !hasAttendance) return null;
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      {/* Attendance Breakdown donut */}
+      <Card className="rounded-xl border border-border bg-card shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base font-semibold font-heading">
+            Attendance Overview
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {hasAttendance ? (
+            <div className="h-[280px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={attendanceBreakdown}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={3}
+                    dataKey="value"
+                    strokeWidth={0}
+                    label={({ name, value }) => `${name}: ${value}`}
+                  >
+                    {attendanceBreakdown!.map((_, i) => (
+                      <Cell
+                        key={`att-${i}`}
+                        fill={ATTENDANCE_COLORS[i % ATTENDANCE_COLORS.length]}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={tooltipStyle} />
+                  <Legend
+                    verticalAlign="bottom"
+                    height={36}
+                    iconType="circle"
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="flex h-[280px] flex-col items-center justify-center gap-2 text-muted-foreground">
+              <Users className="size-8 opacity-40" />
+              <p className="text-sm">No attendance data yet</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Children Per Class donut */}
       <Card className="rounded-xl border border-border bg-card shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]">
         <CardHeader className="pb-2">
