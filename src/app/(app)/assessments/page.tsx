@@ -1,62 +1,49 @@
-import Link from "next/link";
-import { PageHeader } from "@/components/layout/page-header";
+import { getAssessments } from "@/lib/actions/assessments";
+import { getClasses } from "@/lib/actions/classes";
+import { getBranches } from "@/lib/actions/branches";
 import { ASSESSMENT_TYPE_NAMES } from "@/lib/assessment-types";
-import { Card, CardContent } from "@/components/ui/card";
-import { ClipboardList, Calendar } from "lucide-react";
+import AssessmentsListingClient from "./assessments-listing-client";
 
-export default function AssessmentsPage() {
-  const ageGroups = Object.entries(ASSESSMENT_TYPE_NAMES).map(([key, name]) => ({
-    type: key,
-    name,
+export default async function AssessmentsPage() {
+  const [{ assessments }, classesResult, branchesResult] = await Promise.all([
+    getAssessments({ pageSize: 500 }),
+    getClasses(),
+    getBranches(),
+  ]);
+
+  const classesData = Array.isArray(classesResult.data) ? classesResult.data : [];
+  const classes = classesData.map((c: { id: string; name: string }) => ({
+    id: c.id,
+    name: c.name,
+  }));
+
+  const branchesData = Array.isArray(branchesResult.data) ? branchesResult.data : [];
+  const branches = branchesData.map((b: { id: string; name: string }) => ({
+    id: b.id,
+    name: b.name,
+  }));
+
+  const serializedAssessments = assessments.map((a) => ({
+    id: a.id,
+    childId: a.childId,
+    firstName: a.child.firstName,
+    lastName: a.child.lastName,
+    photo: a.child.photo ?? null,
+    assessmentType: a.assessmentType,
+    assessmentTypeName: ASSESSMENT_TYPE_NAMES[a.assessmentType] ?? `Type ${a.assessmentType}`,
+    branchId: a.child.branchId,
+    branchName: a.child.branch.name,
+    classId: a.child.classId ?? "",
+    className: a.child.class?.name ?? "Unassigned",
+    status: a.status as "DRAFT" | "SUBMITTED" | "REVIEWED",
+    date: a.createdAt.toISOString().split("T")[0],
   }));
 
   return (
-    <>
-      <PageHeader
-        title="Assessments"
-        breadcrumbs={[{ label: "Assessments" }]}
-      />
-      <div className="p-4 md:p-6 space-y-6">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {ageGroups.map((group) => (
-            <Link key={group.type} href={`/assessments/${group.type}`}>
-              <Card className="group cursor-pointer py-4 transition-shadow hover:shadow-md">
-                <CardContent className="flex items-center gap-4">
-                  <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
-                    <ClipboardList className="size-5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-foreground group-hover:text-primary">
-                      {group.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Age group assessment
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-
-          <Link href="/assessments/dates">
-            <Card className="group cursor-pointer py-4 transition-shadow hover:shadow-md">
-              <CardContent className="flex items-center gap-4">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-blue-100">
-                  <Calendar className="size-5 text-blue-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground group-hover:text-primary">
-                    Assessment Dates
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Schedule and manage dates
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-        </div>
-      </div>
-    </>
+    <AssessmentsListingClient
+      assessments={serializedAssessments}
+      classes={classes}
+      branches={branches}
+    />
   );
 }

@@ -13,9 +13,10 @@ import { VALID_ASSESSMENT_TYPES } from "@/lib/assessment-types";
 // ─────────────────────────────────────────────
 
 interface GetAssessmentsParams {
-  assessmentType: number;
+  assessmentType?: number;
   childId?: string;
   classId?: string;
+  branchId?: string;
   status?: AssessmentStatus;
   search?: string;
   page?: number;
@@ -61,20 +62,25 @@ export async function getAssessments(params: GetAssessmentsParams) {
       assessmentType,
       childId,
       classId,
+      branchId,
       status,
       search,
       page = 1,
       pageSize = 50,
     } = params;
 
-    if (!VALID_ASSESSMENT_TYPES.includes(assessmentType as (typeof VALID_ASSESSMENT_TYPES)[number])) {
+    // If a specific type is given, validate it
+    if (assessmentType !== undefined && !VALID_ASSESSMENT_TYPES.includes(assessmentType as (typeof VALID_ASSESSMENT_TYPES)[number])) {
       return { assessments: [], total: 0 };
     }
 
     const where: Prisma.AssessmentWhereInput = {
-      assessmentType,
       child: { branch: { organizationId: orgId } },
     };
+
+    if (assessmentType !== undefined) {
+      where.assessmentType = assessmentType;
+    }
 
     if (childId) {
       where.childId = childId;
@@ -84,10 +90,13 @@ export async function getAssessments(params: GetAssessmentsParams) {
       where.status = status;
     }
 
-    if (classId || search) {
+    if (classId || branchId || search) {
       const childWhere = where.child as Prisma.ChildWhereInput;
       if (classId) {
         childWhere.classId = classId;
+      }
+      if (branchId) {
+        childWhere.branchId = branchId;
       }
       if (search) {
         childWhere.OR = [
@@ -104,7 +113,7 @@ export async function getAssessments(params: GetAssessmentsParams) {
         where,
         include: {
           child: {
-            include: { class: true },
+            include: { class: true, branch: { select: { id: true, name: true } } },
           },
           createdBy: {
             select: { id: true, name: true },
