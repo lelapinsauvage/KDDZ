@@ -23,6 +23,7 @@ export default async function VaccinationAlarmsPage() {
 
     return {
       id: v.id as string,
+      childId: v.child.id as string,
       childName: `${v.child.firstName} ${v.child.lastName}` as string,
       vaccine: v.vaccineName as string,
       dueDate: v.nextDueDate

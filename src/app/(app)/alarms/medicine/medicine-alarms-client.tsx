@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Pill } from "lucide-react";
+import { AlarmActionsCell } from "@/components/alarms/alarm-actions-cell";
 
 interface MedicineAlarm {
   id: string;
@@ -70,6 +71,11 @@ export function MedicineAlarmsClient({ alarms, branches }: MedicineAlarmsClientP
         ),
       },
       { accessorKey: "branch", header: "Branch" },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => <AlarmActionsCell id={row.original.id} />,
+      },
     ],
     []
   );

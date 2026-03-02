@@ -13,7 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CalendarDays, Eye } from "lucide-react";
+import { CalendarDays, ExternalLink } from "lucide-react";
+import Link from "next/link";
 
 interface EventAlarm {
   id: string;
@@ -74,9 +75,11 @@ export function EventAlarmsClient({ events, branches }: EventAlarmsClientProps) 
       {
         id: "actions",
         header: "Actions",
-        cell: () => (
-          <Button variant="ghost" size="icon" className="size-8">
-            <Eye className="size-4" />
+        cell: ({ row }) => (
+          <Button asChild variant="ghost" size="icon" className="size-8">
+            <Link href={`/settings/events`}>
+              <ExternalLink className="size-4" />
+            </Link>
           </Button>
         ),
       },

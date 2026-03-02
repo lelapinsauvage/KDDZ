@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Shield } from "lucide-react";
+import { AlarmActionsCell } from "@/components/alarms/alarm-actions-cell";
 
 interface InsuranceAlarm {
   id: string;
@@ -82,6 +83,11 @@ export function InsuranceAlarmsClient({ alarms }: InsuranceAlarmsClientProps) {
         ),
       },
       { accessorKey: "branch", header: "Branch" },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => <AlarmActionsCell id={row.original.id} />,
+      },
     ],
     []
   );

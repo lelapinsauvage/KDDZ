@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Bell } from "lucide-react";
+import { AlarmActionsCell } from "@/components/alarms/alarm-actions-cell";
 
 interface OtherAlarm {
   id: string;
@@ -74,6 +75,11 @@ export function OtherAlarmsClient({ alarms, branches }: OtherAlarmsClientProps) 
         ),
       },
       { accessorKey: "branch", header: "Branch" },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => <AlarmActionsCell id={row.original.id} />,
+      },
     ],
     []
   );

@@ -12,10 +12,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Syringe } from "lucide-react";
+import { Syringe, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 interface VaccinationAlarm {
   id: string;
+  childId: string;
   childName: string;
   vaccine: string;
   dueDate: string;
@@ -74,6 +77,17 @@ export function VaccinationsClient({ vaccinations, branches }: VaccinationsClien
       },
       { accessorKey: "branch", header: "Branch" },
       { accessorKey: "className", header: "Class" },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => (
+          <Button asChild variant="ghost" size="icon" className="size-8">
+            <Link href={`/children/${row.original.childId}/medical`}>
+              <ExternalLink className="size-4" />
+            </Link>
+          </Button>
+        ),
+      },
     ],
     []
   );

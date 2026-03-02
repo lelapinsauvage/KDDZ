@@ -13,7 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DollarSign, AlertTriangle, Users } from "lucide-react";
+import { DollarSign, AlertTriangle, Users, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { AlarmActionsCell } from "@/components/alarms/alarm-actions-cell";
 
 // ── Types ──
 
@@ -103,6 +106,11 @@ export function PaymentAlarmsClient({
         ),
       },
       { accessorKey: "branch", header: "Branch" },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => <AlarmActionsCell id={row.original.id} />,
+      },
     ],
     [],
   );
@@ -145,6 +153,17 @@ export function PaymentAlarmsClient({
         accessorKey: "oldestDate",
         header: "Since",
         cell: ({ row }) => formatDate(row.original.oldestDate),
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => (
+          <Button asChild variant="ghost" size="icon" className="size-8">
+            <Link href={`/children/${row.original.childId}/accounting`}>
+              <ExternalLink className="size-4" />
+            </Link>
+          </Button>
+        ),
       },
     ],
     [],

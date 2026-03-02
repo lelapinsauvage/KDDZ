@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Stethoscope } from "lucide-react";
+import { AlarmActionsCell } from "@/components/alarms/alarm-actions-cell";
 
 interface MedicalAlarm {
   id: string;
@@ -72,6 +73,11 @@ export function MedicalAlarmsClient({ alarms, branches }: MedicalAlarmsClientPro
         ),
       },
       { accessorKey: "branch", header: "Branch" },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => <AlarmActionsCell id={row.original.id} />,
+      },
     ],
     []
   );

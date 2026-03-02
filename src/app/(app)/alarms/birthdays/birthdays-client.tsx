@@ -12,7 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Cake } from "lucide-react";
+import { Cake, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 interface BirthdayAlarm {
   id: string;
@@ -91,6 +93,17 @@ export function BirthdaysClient({ birthdays, branches }: BirthdaysClientProps) {
       {
         accessorKey: "className",
         header: "Class",
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => (
+          <Button asChild variant="ghost" size="icon" className="size-8">
+            <Link href={`/children/${row.original.id}/dashboard`}>
+              <ExternalLink className="size-4" />
+            </Link>
+          </Button>
+        ),
       },
     ],
     []

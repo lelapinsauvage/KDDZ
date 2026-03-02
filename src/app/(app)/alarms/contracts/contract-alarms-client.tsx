@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FileText } from "lucide-react";
+import { AlarmActionsCell } from "@/components/alarms/alarm-actions-cell";
 
 interface ContractAlarm {
   id: string;
@@ -86,6 +87,11 @@ export function ContractAlarmsClient({ alarms }: ContractAlarmsClientProps) {
         ),
       },
       { accessorKey: "branch", header: "Branch" },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => <AlarmActionsCell id={row.original.id} />,
+      },
     ],
     []
   );

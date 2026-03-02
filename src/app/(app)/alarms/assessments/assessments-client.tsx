@@ -12,7 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ClipboardCheck } from "lucide-react";
+import { ClipboardCheck, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 interface AssessmentAlarm {
   id: string;
@@ -88,6 +90,17 @@ export function AssessmentsClient({ assessments, branches }: AssessmentsClientPr
         },
       },
       { accessorKey: "branch", header: "Branch" },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: () => (
+          <Button asChild variant="ghost" size="icon" className="size-8">
+            <Link href="/settings/assessments">
+              <ExternalLink className="size-4" />
+            </Link>
+          </Button>
+        ),
+      },
     ],
     []
   );
