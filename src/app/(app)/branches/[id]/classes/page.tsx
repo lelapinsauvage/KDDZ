@@ -35,6 +35,7 @@ export default async function BranchClassesPage({ params }: Props) {
     studentCount: cls._count?.children ?? 0,
     imageUrl: cls.imageUrl ?? null,
     isActive: cls.isActive ?? true,
+    createdAt: cls.createdAt ? new Date(cls.createdAt).toISOString() : new Date().toISOString(),
   }));
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

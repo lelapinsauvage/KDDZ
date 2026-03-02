@@ -13,6 +13,9 @@ import {
   Trash2,
   Camera,
   ImageIcon,
+  LayoutGrid,
+  TableIcon,
+  Search,
 } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
@@ -52,6 +55,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { createClass, updateClass, deleteClass } from "@/lib/actions/classes";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
@@ -73,6 +84,7 @@ export interface ClassItem {
   studentCount: number;
   imageUrl: string | null;
   isActive: boolean;
+  createdAt: string;
 }
 
 export interface BranchOption {
@@ -458,6 +470,8 @@ export function ClassesClient({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
+  const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
+  const [searchQuery, setSearchQuery] = useState("");
   const [branchFilter, setBranchFilter] = useState("ALL");
   const [addOpen, setAddOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ClassItem | null>(null);
@@ -466,10 +480,15 @@ export function ClassesClient({
   const [form, setForm] = useState<ClassFormState>(() => emptyForm(branchId));
 
   const filteredClasses = useMemo(() => {
-    if (branchId) return classes.filter((c) => c.branchId === branchId);
-    if (branchFilter === "ALL") return classes;
-    return classes.filter((c) => c.branchId === branchFilter);
-  }, [branchFilter, branchId, classes]);
+    let result = classes;
+    if (branchId) result = result.filter((c) => c.branchId === branchId);
+    else if (branchFilter !== "ALL") result = result.filter((c) => c.branchId === branchFilter);
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter((c) => c.name.toLowerCase().includes(q));
+    }
+    return result;
+  }, [branchFilter, branchId, classes, searchQuery]);
 
   const totalClasses = filteredClasses.length;
   const totalStudents = filteredClasses.reduce(
@@ -630,6 +649,15 @@ export function ClassesClient({
 
         {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-3">
+          <div className="relative w-full sm:w-auto sm:min-w-[220px]">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search classes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
           {!branchId && (
             <Select value={branchFilter} onValueChange={setBranchFilter}>
               <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[200px]">
@@ -646,13 +674,32 @@ export function ClassesClient({
             </Select>
           )}
           <div className="flex-1" />
+          {/* View toggle */}
+          <div className="flex items-center rounded-lg border bg-muted/30 p-0.5">
+            <Button
+              variant={viewMode === "table" ? "secondary" : "ghost"}
+              size="icon"
+              onClick={() => setViewMode("table")}
+              className="h-7 w-7"
+            >
+              <TableIcon className="size-3.5" />
+            </Button>
+            <Button
+              variant={viewMode === "cards" ? "secondary" : "ghost"}
+              size="icon"
+              onClick={() => setViewMode("cards")}
+              className="h-7 w-7"
+            >
+              <LayoutGrid className="size-3.5" />
+            </Button>
+          </div>
           <Button onClick={openAdd}>
             <Plus className="mr-1 size-4" />
             Add Class
           </Button>
         </div>
 
-        {/* Card Grid */}
+        {/* Data View */}
         {filteredClasses.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-16">
             <GraduationCap className="size-10 text-muted-foreground/50" />
@@ -664,7 +711,79 @@ export function ClassesClient({
               Add your first class
             </Button>
           </div>
+        ) : viewMode === "table" ? (
+          /* ── Table View ── */
+          <div className="overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm">
+            <div className="overflow-x-auto">
+              <Table className="min-w-[700px]">
+                <TableHeader>
+                  <TableRow className="border-border/60 hover:bg-transparent">
+                    <TableHead className="bg-muted/60 px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Class Name</TableHead>
+                    <TableHead className="bg-muted/60 px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Language</TableHead>
+                    <TableHead className="bg-muted/60 px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Max Students</TableHead>
+                    {!branchId && (
+                      <TableHead className="bg-muted/60 px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Branch</TableHead>
+                    )}
+                    <TableHead className="bg-muted/60 px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Students</TableHead>
+                    <TableHead className="bg-muted/60 px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Status</TableHead>
+                    <TableHead className="bg-muted/60 px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Created</TableHead>
+                    <TableHead className="bg-muted/60 px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredClasses.map((cls) => (
+                    <TableRow key={cls.id} className="group border-border/40 transition-colors hover:bg-accent/40">
+                      <TableCell className="px-4 py-3 text-sm font-medium">{cls.name}</TableCell>
+                      <TableCell className="px-4 py-3 text-sm text-muted-foreground">{cls.language || "—"}</TableCell>
+                      <TableCell className="px-4 py-3 text-sm text-muted-foreground">{cls.maxStudents}</TableCell>
+                      {!branchId && (
+                        <TableCell className="px-4 py-3 text-sm text-muted-foreground">{cls.branchName}</TableCell>
+                      )}
+                      <TableCell className="px-4 py-3 text-sm text-muted-foreground">{cls.studentCount}</TableCell>
+                      <TableCell className="px-4 py-3">
+                        <Badge
+                          className={
+                            cls.isActive
+                              ? "bg-[#059669]/15 text-[#047857] border-[#059669]/25"
+                              : "bg-muted text-muted-foreground border-border"
+                          }
+                        >
+                          {cls.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-sm text-muted-foreground">
+                        {new Date(cls.createdAt).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="size-8">
+                              <MoreVertical className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openEdit(cls)}>
+                              <Pencil className="mr-2 size-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-red-600 focus:text-red-600"
+                              onClick={() => setDeleteTarget(cls)}
+                            >
+                              <Trash2 className="mr-2 size-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
         ) : (
+          /* ── Card Grid ── */
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
             {filteredClasses.map((cls) => {
               const color = getAvatarColor(cls.name);
