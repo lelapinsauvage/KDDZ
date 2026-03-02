@@ -24,6 +24,8 @@ interface HolidayData {
   notificationTitle?: string | null;
   notificationMessage?: string | null;
   daysBefore?: number;
+  informTeachers?: boolean;
+  sendVia?: string;
   branchId?: string | null;
 }
 
@@ -469,6 +471,8 @@ export async function createHoliday(data: HolidayData): Promise<ActionResult> {
         notificationTitle: data.notificationTitle ?? null,
         notificationMessage: data.notificationMessage ?? null,
         daysBefore: data.daysBefore ?? 0,
+        informTeachers: data.informTeachers ?? false,
+        sendVia: data.sendVia ?? "BOTH",
         branchId: data.branchId ?? null,
       },
     });
@@ -526,6 +530,8 @@ export async function updateHoliday(
     if (data.notificationTitle !== undefined) updateData.notificationTitle = data.notificationTitle;
     if (data.notificationMessage !== undefined) updateData.notificationMessage = data.notificationMessage;
     if (data.daysBefore !== undefined) updateData.daysBefore = data.daysBefore;
+    if (data.informTeachers !== undefined) updateData.informTeachers = data.informTeachers;
+    if (data.sendVia !== undefined) updateData.sendVia = data.sendVia;
     if (data.branchId !== undefined) updateData.branchId = data.branchId;
 
     const holiday = await db.holiday.update({

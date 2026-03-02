@@ -25,6 +25,8 @@ export default async function HolidayCalendarPage() {
     notificationTitle: (h.notificationTitle ?? "") as string,
     notificationMessage: (h.notificationMessage ?? "") as string,
     daysBefore: (h.daysBefore ?? 0) as number,
+    informTeachers: (h.informTeachers ?? false) as boolean,
+    sendVia: (h.sendVia ?? "BOTH") as string,
     branch: h.branch ? (h.branch.name as string) : "All Branches",
     branchId: (h.branchId ?? null) as string | null,
   }));

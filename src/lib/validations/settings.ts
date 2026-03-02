@@ -27,8 +27,10 @@ export const holidaySchema = z.object({
   type: z.string(),
   isActive: z.boolean(),
   notificationTitle: z.string(),
-  notificationMessage: z.string(),
+  notificationMessage: z.string().max(155, "Message must be 155 characters or less"),
   daysBefore: z.number().int().min(0),
+  informTeachers: z.boolean(),
+  sendVia: z.string(),
   branchId: z.string().nullable(),
 });
 

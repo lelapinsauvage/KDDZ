@@ -70,6 +70,8 @@ interface Holiday {
   notificationTitle: string;
   notificationMessage: string;
   daysBefore: number;
+  informTeachers: boolean;
+  sendVia: string;
   branch: string;
   branchId: string | null;
 }
@@ -119,6 +121,8 @@ const DEFAULT_VALUES: HolidayFormValues = {
   notificationTitle: "",
   notificationMessage: "",
   daysBefore: 0,
+  informTeachers: false,
+  sendVia: "BOTH",
   branchId: null,
 };
 
@@ -166,6 +170,8 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
       notificationTitle: h.notificationTitle,
       notificationMessage: h.notificationMessage,
       daysBefore: h.daysBefore,
+      informTeachers: h.informTeachers,
+      sendVia: h.sendVia,
       branchId: h.branchId,
     });
     setDialogOpen(true);
@@ -195,6 +201,8 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
           notificationTitle: values.notificationTitle || null,
           notificationMessage: values.notificationMessage || null,
           daysBefore: values.daysBefore,
+          informTeachers: values.informTeachers,
+          sendVia: values.sendVia,
           branchId,
         });
         if (result.success && result.data) {
@@ -214,6 +222,8 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
               notificationTitle: values.notificationTitle,
               notificationMessage: values.notificationMessage,
               daysBefore: values.daysBefore,
+              informTeachers: values.informTeachers,
+              sendVia: values.sendVia,
               branch: branchName,
               branchId,
             },
@@ -234,6 +244,8 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
           notificationTitle: values.notificationTitle || null,
           notificationMessage: values.notificationMessage || null,
           daysBefore: values.daysBefore,
+          informTeachers: values.informTeachers,
+          sendVia: values.sendVia,
           branchId,
         });
         if (result.success) {
@@ -252,6 +264,8 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                     notificationTitle: values.notificationTitle,
                     notificationMessage: values.notificationMessage,
                     daysBefore: values.daysBefore,
+                    informTeachers: values.informTeachers,
+                    sendVia: values.sendVia,
                     branch: branchName,
                     branchId,
                   }
@@ -444,7 +458,7 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
         header: "Type",
         cell: ({ row }) => (
           <Badge variant={row.original.type === "HOLIDAY" ? "default" : "secondary"} className="font-normal">
-            {row.original.type === "HOLIDAY" ? "Holiday" : "Event"}
+            {row.original.type === "HOLIDAY" ? "Holiday" : "Strike"}
           </Badge>
         ),
       },
@@ -554,7 +568,7 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                   </span>
                   <span className="inline-flex items-center gap-1.5">
                     <span className="inline-block size-3 rounded bg-blue-500" />
-                    Event
+                    Strike
                   </span>
                 </div>
               </div>
@@ -626,7 +640,7 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                                 {barsByWeek[weekIdx]
                                   ?.filter((b) => b.startCol === dayIdx)
                                   .map((bar) => {
-                                    const isEvent = bar.holiday.type === "EVENT";
+                                    const isEvent = bar.holiday.type === "STRIKE";
                                     const isMultiDay = bar.span > 1;
                                     return (
                                       <div
@@ -709,7 +723,7 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="HOLIDAY">Holiday</SelectItem>
-                        <SelectItem value="EVENT">Event</SelectItem>
+                        <SelectItem value="STRIKE">Strike</SelectItem>
                       </SelectContent>
                     </Select>
                   )}
@@ -818,15 +832,41 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
 
               <div className="space-y-3">
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium">Notification Body</label>
-                  <Textarea
-                    placeholder="Dear Parents, please note that the nursery will be closed..."
-                    rows={3}
-                    {...form.register("notificationMessage")}
+                  <label className="mb-1.5 block text-sm font-medium">Notification Subject</label>
+                  <Input
+                    placeholder="Notification subject (for emails)"
+                    {...form.register("notificationTitle")}
                   />
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium">Notification Trigger</label>
+                  <label className="mb-1.5 block text-sm font-medium">Notification Message</label>
+                  <Controller
+                    control={form.control}
+                    name="notificationMessage"
+                    render={({ field }) => (
+                      <div>
+                        <Textarea
+                          placeholder="Dear Parents, please note that the nursery will be closed..."
+                          rows={3}
+                          maxLength={155}
+                          value={field.value}
+                          onChange={field.onChange}
+                        />
+                        <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+                          <span>Characters: {field.value?.length ?? 0} / 155</span>
+                          <span className="opacity-60">(155 per SMS)</span>
+                        </div>
+                        {form.formState.errors.notificationMessage && (
+                          <p className="mt-1 text-xs text-destructive">
+                            {form.formState.errors.notificationMessage.message}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium">Days Before</label>
                   <Controller
                     control={form.control}
                     name="daysBefore"
@@ -841,12 +881,55 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                         <SelectContent>
                           <SelectItem value="0">None</SelectItem>
                           <SelectItem value="1">1 Day Before</SelectItem>
+                          <SelectItem value="2">2 Days Before</SelectItem>
                           <SelectItem value="3">3 Days Before</SelectItem>
-                          <SelectItem value="7">1 Week Before</SelectItem>
+                          <SelectItem value="4">4 Days Before</SelectItem>
+                          <SelectItem value="5">5 Days Before</SelectItem>
+                          <SelectItem value="6">6 Days Before</SelectItem>
+                          <SelectItem value="7">7 Days Before</SelectItem>
                         </SelectContent>
                       </Select>
                     )}
                   />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium">Inform Teachers</label>
+                    <Controller
+                      control={form.control}
+                      name="informTeachers"
+                      render={({ field }) => (
+                        <div className="flex items-center gap-3 pt-1.5">
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                          <span className={`text-sm font-medium ${field.value ? "text-emerald-600" : "text-muted-foreground"}`}>
+                            {field.value ? "Yes" : "No"}
+                          </span>
+                        </div>
+                      )}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium">Send Via</label>
+                    <Controller
+                      control={form.control}
+                      name="sendVia"
+                      render={({ field }) => (
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="BOTH">Both</SelectItem>
+                            <SelectItem value="WHATSAPP">WhatsApp</SelectItem>
+                            <SelectItem value="SMS">SMS</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </div>
                 </div>
               </div>
             </div>

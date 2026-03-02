@@ -1741,11 +1741,13 @@ model Holiday {
   date                DateTime @db.Date
   endDate             DateTime? @db.Date
   repeated            Boolean  @default(false)
-  type                String   @default("HOLIDAY") // HOLIDAY | EVENT
+  type                String   @default("HOLIDAY") // HOLIDAY | STRIKE
   isActive            Boolean  @default(true)
   notificationTitle   String?
   notificationMessage String?
   daysBefore          Int      @default(0)
+  informTeachers      Boolean  @default(false)
+  sendVia             String   @default("BOTH") // WHATSAPP | SMS | BOTH
   branchId            String?  @db.Uuid
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
