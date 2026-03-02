@@ -215,14 +215,17 @@ export async function getRegions(): Promise<ActionResult> {
 // Province CRUD
 // ---------------------------------------------------------------------------
 
-export async function createProvince(name: string): Promise<ActionResult> {
+export async function createProvince(name: string, referenceNumber?: string): Promise<ActionResult> {
   try {
     const result = await requireOrgSafe();
     if (!result.ok) return { success: false, error: result.error };
 
-    const province = await db.province.create({ data: { name } });
+    const province = await db.province.create({
+      data: { name, referenceNumber: referenceNumber || null },
+    });
 
     revalidatePath("/settings/regions");
+    revalidatePath("/settings/zones");
 
     return { success: true, data: province };
   } catch (error) {
@@ -234,6 +237,7 @@ export async function createProvince(name: string): Promise<ActionResult> {
 export async function updateProvince(
   id: string,
   name: string,
+  referenceNumber?: string,
 ): Promise<ActionResult> {
   try {
     const result = await requireOrgSafe();
@@ -241,10 +245,11 @@ export async function updateProvince(
 
     const province = await db.province.update({
       where: { id },
-      data: { name },
+      data: { name, referenceNumber: referenceNumber || null },
     });
 
     revalidatePath("/settings/regions");
+    revalidatePath("/settings/zones");
 
     return { success: true, data: province };
   } catch (error) {
@@ -276,16 +281,18 @@ export async function deleteProvince(id: string): Promise<ActionResult> {
 export async function createDistrict(
   name: string,
   provinceId: string,
+  referenceNumber?: string,
 ): Promise<ActionResult> {
   try {
     const result = await requireOrgSafe();
     if (!result.ok) return { success: false, error: result.error };
 
     const district = await db.district.create({
-      data: { name, provinceId },
+      data: { name, provinceId, referenceNumber: referenceNumber || null },
     });
 
     revalidatePath("/settings/regions");
+    revalidatePath("/settings/areas");
 
     return { success: true, data: district };
   } catch (error) {
@@ -297,6 +304,7 @@ export async function createDistrict(
 export async function updateDistrict(
   id: string,
   name: string,
+  referenceNumber?: string,
 ): Promise<ActionResult> {
   try {
     const result = await requireOrgSafe();
@@ -304,10 +312,11 @@ export async function updateDistrict(
 
     const district = await db.district.update({
       where: { id },
-      data: { name },
+      data: { name, referenceNumber: referenceNumber || null },
     });
 
     revalidatePath("/settings/regions");
+    revalidatePath("/settings/areas");
 
     return { success: true, data: district };
   } catch (error) {
@@ -339,13 +348,14 @@ export async function deleteDistrict(id: string): Promise<ActionResult> {
 export async function createRegion(
   name: string,
   districtId: string,
+  referenceNumber?: string,
 ): Promise<ActionResult> {
   try {
     const result = await requireOrgSafe();
     if (!result.ok) return { success: false, error: result.error };
 
     const region = await db.region.create({
-      data: { name, districtId },
+      data: { name, districtId, referenceNumber: referenceNumber || null },
     });
 
     revalidatePath("/settings/regions");
@@ -360,6 +370,7 @@ export async function createRegion(
 export async function updateRegion(
   id: string,
   name: string,
+  referenceNumber?: string,
 ): Promise<ActionResult> {
   try {
     const result = await requireOrgSafe();
@@ -367,7 +378,7 @@ export async function updateRegion(
 
     const region = await db.region.update({
       where: { id },
-      data: { name },
+      data: { name, referenceNumber: referenceNumber || null },
     });
 
     revalidatePath("/settings/regions");

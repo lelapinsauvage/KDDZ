@@ -23,6 +23,8 @@ import {
 interface Zone {
   id: string;
   name: string;
+  referenceNumber: string;
+  createdAt: string;
   regionCount: number;
 }
 
@@ -35,12 +37,14 @@ export default function ZonesClient({ initialZones }: ZonesClientProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
   const [zoneName, setZoneName] = useState("");
+  const [zoneRef, setZoneRef] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function openAdd() {
     setDialogMode("add");
     setZoneName("");
+    setZoneRef("");
     setEditingId(null);
     setDialogOpen(true);
   }
@@ -48,6 +52,7 @@ export default function ZonesClient({ initialZones }: ZonesClientProps) {
   function openEdit(zone: Zone) {
     setDialogMode("edit");
     setZoneName(zone.name);
+    setZoneRef(zone.referenceNumber);
     setEditingId(zone.id);
     setDialogOpen(true);
   }
@@ -56,15 +61,32 @@ export default function ZonesClient({ initialZones }: ZonesClientProps) {
     if (!zoneName.trim()) return;
     startTransition(async () => {
       if (dialogMode === "add") {
-        const result = await createProvince(zoneName.trim());
+        const result = await createProvince(zoneName.trim(), zoneRef.trim() || undefined);
         if (result.success && result.data) {
-          const newZone = result.data as { id: string; name: string };
-          setZones([...zones, { id: newZone.id, name: newZone.name, regionCount: 0 }]);
+          const newZone = result.data as { id: string; name: string; referenceNumber: string | null; createdAt: string };
+          setZones([
+            ...zones,
+            {
+              id: newZone.id,
+              name: newZone.name,
+              referenceNumber: newZone.referenceNumber ?? "",
+              createdAt: new Date(newZone.createdAt).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              }),
+              regionCount: 0,
+            },
+          ]);
         }
       } else if (editingId) {
-        const result = await updateProvince(editingId, zoneName.trim());
+        const result = await updateProvince(editingId, zoneName.trim(), zoneRef.trim() || undefined);
         if (result.success) {
-          setZones(zones.map((z) => (z.id === editingId ? { ...z, name: zoneName.trim() } : z)));
+          setZones(
+            zones.map((z) =>
+              z.id === editingId ? { ...z, name: zoneName.trim(), referenceNumber: zoneRef.trim() } : z
+            )
+          );
         }
       }
       setDialogOpen(false);
@@ -84,13 +106,16 @@ export default function ZonesClient({ initialZones }: ZonesClientProps) {
     () => [
       {
         accessorKey: "name",
-        header: "Zone Name",
+        header: "Name",
         cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
       },
       {
-        accessorKey: "regionCount",
-        header: "Region Count",
-        cell: ({ row }) => row.original.regionCount,
+        accessorKey: "referenceNumber",
+        header: "Ref. Number",
+      },
+      {
+        accessorKey: "createdAt",
+        header: "Created Date",
       },
       {
         id: "actions",
@@ -141,22 +166,35 @@ export default function ZonesClient({ initialZones }: ZonesClientProps) {
           <DialogHeader>
             <DialogTitle>{dialogMode === "add" ? "Add Zone" : "Edit Zone"}</DialogTitle>
           </DialogHeader>
-          <div className="py-4">
-            <Input
-              placeholder="Zone name"
-              value={zoneName}
-              onChange={(e) => setZoneName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSave();
-              }}
-            />
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">Zone Name</label>
+              <Input
+                placeholder="Zone name"
+                value={zoneName}
+                onChange={(e) => setZoneName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSave();
+                }}
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">Reference Number</label>
+              <Input
+                placeholder="Reference number"
+                value={zoneRef}
+                onChange={(e) => setZoneRef(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSave();
+                }}
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancel
             </Button>
             <Button
-             
               className="text-white"
               onClick={handleSave}
               disabled={!zoneName.trim() || isPending}

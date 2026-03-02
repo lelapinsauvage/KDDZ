@@ -1826,10 +1826,11 @@ model PushToken {
 // ─────────────────────────────────────────────
 
 model Province {
-  id        String   @id @default(uuid()) @db.Uuid
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(uuid()) @db.Uuid
+  name            String
+  referenceNumber String?  @map("reference_number")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   districts District[]
 
@@ -1837,11 +1838,12 @@ model Province {
 }
 
 model District {
-  id         String   @id @default(uuid()) @db.Uuid
-  name       String
-  provinceId String   @db.Uuid
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id              String   @id @default(uuid()) @db.Uuid
+  name            String
+  referenceNumber String?  @map("reference_number")
+  provinceId      String   @db.Uuid
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   province Province @relation(fields: [provinceId], references: [id], onDelete: Cascade)
   regions  Region[]
@@ -1851,11 +1853,12 @@ model District {
 }
 
 model Region {
-  id         String   @id @default(uuid()) @db.Uuid
-  name       String
-  districtId String   @db.Uuid
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id              String   @id @default(uuid()) @db.Uuid
+  name            String
+  referenceNumber String?  @map("reference_number")
+  districtId      String   @db.Uuid
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   district       District       @relation(fields: [districtId], references: [id], onDelete: Cascade)
   childAddresses ChildAddress[]

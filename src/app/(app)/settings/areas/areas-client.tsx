@@ -30,8 +30,10 @@ import {
 interface Area {
   id: string;
   name: string;
+  referenceNumber: string;
   zone: string;
   zoneId: string;
+  createdAt: string;
 }
 
 interface ZoneOption {
@@ -49,6 +51,7 @@ export default function AreasClient({ initialAreas, zoneOptions }: AreasClientPr
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
   const [areaName, setAreaName] = useState("");
+  const [areaRef, setAreaRef] = useState("");
   const [areaZoneId, setAreaZoneId] = useState(zoneOptions[0]?.id ?? "");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -56,6 +59,7 @@ export default function AreasClient({ initialAreas, zoneOptions }: AreasClientPr
   function openAdd() {
     setDialogMode("add");
     setAreaName("");
+    setAreaRef("");
     setAreaZoneId(zoneOptions[0]?.id ?? "");
     setEditingId(null);
     setDialogOpen(true);
@@ -64,6 +68,7 @@ export default function AreasClient({ initialAreas, zoneOptions }: AreasClientPr
   function openEdit(area: Area) {
     setDialogMode("edit");
     setAreaName(area.name);
+    setAreaRef(area.referenceNumber);
     setAreaZoneId(area.zoneId);
     setEditingId(area.id);
     setDialogOpen(true);
@@ -73,16 +78,34 @@ export default function AreasClient({ initialAreas, zoneOptions }: AreasClientPr
     if (!areaName.trim()) return;
     startTransition(async () => {
       if (dialogMode === "add") {
-        const result = await createDistrict(areaName.trim(), areaZoneId);
+        const result = await createDistrict(areaName.trim(), areaZoneId, areaRef.trim() || undefined);
         if (result.success && result.data) {
-          const newArea = result.data as { id: string; name: string };
+          const newArea = result.data as { id: string; name: string; referenceNumber: string | null; createdAt: string };
           const zoneName = zoneOptions.find((z) => z.id === areaZoneId)?.name ?? "";
-          setAreas([...areas, { id: newArea.id, name: newArea.name, zone: zoneName, zoneId: areaZoneId }]);
+          setAreas([
+            ...areas,
+            {
+              id: newArea.id,
+              name: newArea.name,
+              referenceNumber: newArea.referenceNumber ?? "",
+              zone: zoneName,
+              zoneId: areaZoneId,
+              createdAt: new Date(newArea.createdAt).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              }),
+            },
+          ]);
         }
       } else if (editingId) {
-        const result = await updateDistrict(editingId, areaName.trim());
+        const result = await updateDistrict(editingId, areaName.trim(), areaRef.trim() || undefined);
         if (result.success) {
-          setAreas(areas.map((a) => (a.id === editingId ? { ...a, name: areaName.trim() } : a)));
+          setAreas(
+            areas.map((a) =>
+              a.id === editingId ? { ...a, name: areaName.trim(), referenceNumber: areaRef.trim() } : a
+            )
+          );
         }
       }
       setDialogOpen(false);
@@ -102,12 +125,20 @@ export default function AreasClient({ initialAreas, zoneOptions }: AreasClientPr
     () => [
       {
         accessorKey: "name",
-        header: "Area Name",
+        header: "Name",
         cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
+      },
+      {
+        accessorKey: "referenceNumber",
+        header: "Ref. Number",
       },
       {
         accessorKey: "zone",
         header: "Zone",
+      },
+      {
+        accessorKey: "createdAt",
+        header: "Created Date",
       },
       {
         id: "actions",
@@ -168,6 +199,14 @@ export default function AreasClient({ initialAreas, zoneOptions }: AreasClientPr
               />
             </div>
             <div>
+              <label className="mb-1.5 block text-sm font-medium">Reference Number</label>
+              <Input
+                placeholder="Reference number"
+                value={areaRef}
+                onChange={(e) => setAreaRef(e.target.value)}
+              />
+            </div>
+            <div>
               <label className="mb-1.5 block text-sm font-medium">Zone</label>
               <Select value={areaZoneId} onValueChange={setAreaZoneId}>
                 <SelectTrigger>
@@ -188,7 +227,6 @@ export default function AreasClient({ initialAreas, zoneOptions }: AreasClientPr
               Cancel
             </Button>
             <Button
-             
               className="text-white"
               onClick={handleSave}
               disabled={!areaName.trim() || isPending}

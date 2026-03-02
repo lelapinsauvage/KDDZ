@@ -4,6 +4,8 @@ import ZonesClient from "./zones-client";
 interface ProvinceData {
   id: string;
   name: string;
+  referenceNumber: string | null;
+  createdAt: string;
   districts: {
     id: string;
     name: string;
@@ -16,10 +18,15 @@ export default async function ZonesManagementPage() {
   const result = await getRegions();
   const provinces: ProvinceData[] = Array.isArray(result.data) ? result.data : [];
 
-  // Map provinces to zones with total region count (sum of all districts' regions)
   const zones = provinces.map((p) => ({
     id: p.id,
     name: p.name,
+    referenceNumber: p.referenceNumber ?? "",
+    createdAt: new Date(p.createdAt).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    }),
     regionCount: p.districts.reduce((sum, d) => sum + d._count.regions, 0),
   }));
 

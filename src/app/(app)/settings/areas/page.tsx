@@ -7,7 +7,9 @@ interface ProvinceData {
   districts: {
     id: string;
     name: string;
+    referenceNumber: string | null;
     provinceId: string;
+    createdAt: string;
     regions: { id: string; name: string }[];
     _count: { regions: number };
   }[];
@@ -17,19 +19,23 @@ export default async function AreasManagementPage() {
   const result = await getRegions();
   const provinces: ProvinceData[] = Array.isArray(result.data) ? result.data : [];
 
-  // Build zone options from provinces
   const zoneOptions = provinces.map((p) => ({
     id: p.id,
     name: p.name,
   }));
 
-  // Build areas from districts, referencing their parent province as zone
   const areas = provinces.flatMap((province) =>
     province.districts.map((district) => ({
       id: district.id,
       name: district.name,
+      referenceNumber: district.referenceNumber ?? "",
       zone: province.name,
       zoneId: province.id,
+      createdAt: new Date(district.createdAt).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      }),
     }))
   );
 

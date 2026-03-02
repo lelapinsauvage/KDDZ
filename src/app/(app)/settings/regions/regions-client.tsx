@@ -35,6 +35,7 @@ import {
 interface RegionItem {
   id: string;
   name: string;
+  referenceNumber: string;
   districtId: string;
   _count?: { childAddresses: number };
 }
@@ -42,6 +43,7 @@ interface RegionItem {
 interface DistrictItem {
   id: string;
   name: string;
+  referenceNumber: string;
   provinceId: string;
   regions: RegionItem[];
   _count?: { regions: number };
@@ -50,6 +52,7 @@ interface DistrictItem {
 interface ProvinceItem {
   id: string;
   name: string;
+  referenceNumber: string;
   districts: DistrictItem[];
 }
 
@@ -71,7 +74,8 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogType, setDialogType] = useState<"province" | "district" | "region">("province");
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
-  const [dialogValue, setDialogValue] = useState("");
+  const [dialogName, setDialogName] = useState("");
+  const [dialogRef, setDialogRef] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -83,40 +87,44 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
   function openAddDialog(type: "province" | "district" | "region") {
     setDialogType(type);
     setDialogMode("add");
-    setDialogValue("");
+    setDialogName("");
+    setDialogRef("");
     setEditingId(null);
     setDialogOpen(true);
   }
 
-  function openEditDialog(type: "province" | "district" | "region", id: string, name: string) {
+  function openEditDialog(type: "province" | "district" | "region", id: string, name: string, refNum: string) {
     setDialogType(type);
     setDialogMode("edit");
-    setDialogValue(name);
+    setDialogName(name);
+    setDialogRef(refNum);
     setEditingId(id);
     setDialogOpen(true);
   }
 
   function handleSave() {
-    if (!dialogValue.trim()) return;
+    if (!dialogName.trim()) return;
 
     startTransition(async () => {
+      const refVal = dialogRef.trim() || undefined;
+
       if (dialogType === "province") {
         if (dialogMode === "add") {
-          const result = await createProvince(dialogValue.trim());
+          const result = await createProvince(dialogName.trim(), refVal);
           if (result.success && result.data) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const newProv = result.data as any;
-            setProvinces([...provinces, { id: newProv.id, name: newProv.name, districts: [] }]);
+            setProvinces([...provinces, { id: newProv.id, name: newProv.name, referenceNumber: newProv.referenceNumber ?? "", districts: [] }]);
           }
         } else if (editingId) {
-          const result = await updateProvince(editingId, dialogValue.trim());
+          const result = await updateProvince(editingId, dialogName.trim(), refVal);
           if (result.success) {
-            setProvinces(provinces.map((p) => (p.id === editingId ? { ...p, name: dialogValue.trim() } : p)));
+            setProvinces(provinces.map((p) => (p.id === editingId ? { ...p, name: dialogName.trim(), referenceNumber: dialogRef.trim() } : p)));
           }
         }
       } else if (dialogType === "district") {
         if (dialogMode === "add" && selectedProvinceId) {
-          const result = await createDistrict(dialogValue.trim(), selectedProvinceId);
+          const result = await createDistrict(dialogName.trim(), selectedProvinceId, refVal);
           if (result.success && result.data) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const newDist = result.data as any;
@@ -127,7 +135,7 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
                       ...p,
                       districts: [
                         ...p.districts,
-                        { id: newDist.id, name: newDist.name, provinceId: selectedProvinceId, regions: [] },
+                        { id: newDist.id, name: newDist.name, referenceNumber: newDist.referenceNumber ?? "", provinceId: selectedProvinceId, regions: [] },
                       ],
                     }
                   : p
@@ -135,13 +143,13 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
             );
           }
         } else if (editingId) {
-          const result = await updateDistrict(editingId, dialogValue.trim());
+          const result = await updateDistrict(editingId, dialogName.trim(), refVal);
           if (result.success) {
             setProvinces(
               provinces.map((p) => ({
                 ...p,
                 districts: p.districts.map((d) =>
-                  d.id === editingId ? { ...d, name: dialogValue.trim() } : d
+                  d.id === editingId ? { ...d, name: dialogName.trim(), referenceNumber: dialogRef.trim() } : d
                 ),
               }))
             );
@@ -149,7 +157,7 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
         }
       } else if (dialogType === "region") {
         if (dialogMode === "add" && selectedDistrictId) {
-          const result = await createRegion(dialogValue.trim(), selectedDistrictId);
+          const result = await createRegion(dialogName.trim(), selectedDistrictId, refVal);
           if (result.success && result.data) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const newReg = result.data as any;
@@ -162,7 +170,7 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
                         ...d,
                         regions: [
                           ...d.regions,
-                          { id: newReg.id, name: newReg.name, districtId: selectedDistrictId },
+                          { id: newReg.id, name: newReg.name, referenceNumber: newReg.referenceNumber ?? "", districtId: selectedDistrictId },
                         ],
                       }
                     : d
@@ -171,7 +179,7 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
             );
           }
         } else if (editingId) {
-          const result = await updateRegion(editingId, dialogValue.trim());
+          const result = await updateRegion(editingId, dialogName.trim(), refVal);
           if (result.success) {
             setProvinces(
               provinces.map((p) => ({
@@ -179,7 +187,7 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
                 districts: p.districts.map((d) => ({
                   ...d,
                   regions: d.regions.map((r) =>
-                    r.id === editingId ? { ...r, name: dialogValue.trim() } : r
+                    r.id === editingId ? { ...r, name: dialogName.trim(), referenceNumber: dialogRef.trim() } : r
                   ),
                 })),
               }))
@@ -273,7 +281,12 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
                 >
                   <div className="flex items-center gap-2">
                     <MapPin className="size-4 text-primary" />
-                    <span className="text-sm font-medium">{prov.name}</span>
+                    <div>
+                      <span className="text-sm font-medium">{prov.name}</span>
+                      {prov.referenceNumber && (
+                        <span className="ml-2 text-xs text-muted-foreground">#{prov.referenceNumber}</span>
+                      )}
+                    </div>
                     <span className="text-xs text-muted-foreground">
                       ({prov.districts.length})
                     </span>
@@ -285,7 +298,7 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
                       className="size-7"
                       onClick={(e) => {
                         e.stopPropagation();
-                        openEditDialog("province", prov.id, prov.name);
+                        openEditDialog("province", prov.id, prov.name, prov.referenceNumber);
                       }}
                       disabled={isPending}
                     >
@@ -340,7 +353,12 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
                     >
                       <div className="flex items-center gap-2">
                         <MapPin className="size-4 text-blue-500" />
-                        <span className="text-sm font-medium">{dist.name}</span>
+                        <div>
+                          <span className="text-sm font-medium">{dist.name}</span>
+                          {dist.referenceNumber && (
+                            <span className="ml-2 text-xs text-muted-foreground">#{dist.referenceNumber}</span>
+                          )}
+                        </div>
                         <span className="text-xs text-muted-foreground">
                           ({dist.regions.length})
                         </span>
@@ -352,7 +370,7 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
                           className="size-7"
                           onClick={(e) => {
                             e.stopPropagation();
-                            openEditDialog("district", dist.id, dist.name);
+                            openEditDialog("district", dist.id, dist.name, dist.referenceNumber);
                           }}
                           disabled={isPending}
                         >
@@ -407,14 +425,19 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
                     >
                       <div className="flex items-center gap-2">
                         <MapPin className="size-4 text-orange-500" />
-                        <span className="text-sm font-medium">{reg.name}</span>
+                        <div>
+                          <span className="text-sm font-medium">{reg.name}</span>
+                          {reg.referenceNumber && (
+                            <span className="ml-2 text-xs text-muted-foreground">#{reg.referenceNumber}</span>
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center gap-1">
                         <Button
                           variant="ghost"
                           size="icon"
                           className="size-7"
-                          onClick={() => openEditDialog("region", reg.id, reg.name)}
+                          onClick={() => openEditDialog("region", reg.id, reg.name, reg.referenceNumber)}
                           disabled={isPending}
                         >
                           <Pencil className="size-3.5" />
@@ -448,25 +471,38 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
           <DialogHeader>
             <DialogTitle>{dialogMode === "add" ? `Add ${dialogLabel}` : `Edit ${dialogLabel}`}</DialogTitle>
           </DialogHeader>
-          <div className="py-4">
-            <Input
-              placeholder={`${dialogLabel} name`}
-              value={dialogValue}
-              onChange={(e) => setDialogValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSave();
-              }}
-            />
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">{dialogLabel} Name</label>
+              <Input
+                placeholder={`${dialogLabel} name`}
+                value={dialogName}
+                onChange={(e) => setDialogName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSave();
+                }}
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">Reference Number</label>
+              <Input
+                placeholder="Reference number"
+                value={dialogRef}
+                onChange={(e) => setDialogRef(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSave();
+                }}
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancel
             </Button>
             <Button
-             
               className="text-white"
               onClick={handleSave}
-              disabled={!dialogValue.trim() || isPending}
+              disabled={!dialogName.trim() || isPending}
             >
               {isPending && <Loader2 className="mr-1 size-4 animate-spin" />}
               {dialogMode === "add" ? "Add" : "Save"}
