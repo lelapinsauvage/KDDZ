@@ -4,7 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { type ColumnDef } from "@tanstack/react-table";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
-import { Badge } from "@/components/ui/badge";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -57,17 +57,6 @@ interface AttendanceLogsClientProps {
 }
 
 // ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-const statusColors: Record<string, string> = {
-  CHECK_IN: "bg-[#059669]/15 text-[#059669]",
-  CHECK_OUT: "bg-blue-100 text-blue-700",
-  LATE: "bg-amber-100 text-amber-700",
-  EARLY_LEAVE: "bg-red-100 text-red-700",
-};
-
-// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
@@ -86,9 +75,10 @@ export function AttendanceLogsClient({
   // Edit dialog
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingLog, setEditingLog] = useState<AttendanceLog | null>(null);
-  const [editTimeIn, setEditTimeIn] = useState("");
+  const [editDateOut, setEditDateOut] = useState("");
   const [editTimeOut, setEditTimeOut] = useState("");
-  const [editNote, setEditNote] = useState("");
+  const [editDateIn, setEditDateIn] = useState("");
+  const [editTimeIn, setEditTimeIn] = useState("");
 
   // Client-side filtering
   const filteredLogs = useMemo(() => {
@@ -104,9 +94,10 @@ export function AttendanceLogsClient({
 
   function openEditDialog(log: AttendanceLog) {
     setEditingLog(log);
-    setEditTimeIn(log.timeIn ?? "");
+    setEditDateOut(log.date);
     setEditTimeOut(log.timeOut ?? "");
-    setEditNote(log.note ?? "");
+    setEditDateIn(log.date);
+    setEditTimeIn(log.timeIn ?? "");
     setEditDialogOpen(true);
   }
 
@@ -117,7 +108,6 @@ export function AttendanceLogsClient({
       const result = await updateAttendanceLog(editingLog.id, {
         timeIn: editTimeIn || null,
         timeOut: editTimeOut || null,
-        note: editNote || null,
       });
 
       if (result.success) {
@@ -128,7 +118,6 @@ export function AttendanceLogsClient({
                   ...l,
                   timeIn: editTimeIn || null,
                   timeOut: editTimeOut || null,
-                  note: editNote || null,
                 }
               : l,
           ),
@@ -151,6 +140,22 @@ export function AttendanceLogsClient({
   const columns: ColumnDef<AttendanceLog>[] = useMemo(
     () => [
       {
+        accessorKey: "readerId",
+        header: "AC No.",
+        cell: ({ row }) => (
+          <span className="font-mono text-xs text-muted-foreground">
+            {row.original.readerId ?? "—"}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "employeeName",
+        header: "Name",
+        cell: ({ row }) => (
+          <span className="font-medium">{row.original.employeeName}</span>
+        ),
+      },
+      {
         accessorKey: "id",
         header: "Log",
         cell: ({ row }) => (
@@ -160,24 +165,30 @@ export function AttendanceLogsClient({
         ),
       },
       {
-        accessorKey: "employeeName",
-        header: "Employee",
+        id: "dateOut",
+        header: "Date Out",
         cell: ({ row }) => (
-          <span className="font-medium">{row.original.employeeName}</span>
+          <span className="text-sm">
+            {new Date(row.original.date).toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })}
+          </span>
         ),
       },
       {
-        accessorKey: "employeeType",
-        header: "Role",
+        accessorKey: "timeOut",
+        header: "Time Out",
         cell: ({ row }) => (
-          <Badge className="bg-muted/50 text-muted-foreground font-normal capitalize">
-            {row.original.employeeType}
-          </Badge>
+          <span className="font-mono text-sm">
+            {row.original.timeOut ?? "—"}
+          </span>
         ),
       },
       {
-        accessorKey: "date",
-        header: "Date",
+        id: "dateIn",
+        header: "Date In",
         cell: ({ row }) => (
           <span className="text-sm">
             {new Date(row.original.date).toLocaleDateString("en-GB", {
@@ -194,49 +205,6 @@ export function AttendanceLogsClient({
         cell: ({ row }) => (
           <span className="font-mono text-sm">
             {row.original.timeIn ?? "—"}
-          </span>
-        ),
-      },
-      {
-        accessorKey: "timeOut",
-        header: "Time Out",
-        cell: ({ row }) => (
-          <span className="font-mono text-sm">
-            {row.original.timeOut ?? "—"}
-          </span>
-        ),
-      },
-      {
-        accessorKey: "status",
-        header: "Status",
-        cell: ({ row }) => {
-          const status = row.original.status;
-          if (!status)
-            return <span className="text-muted-foreground">—</span>;
-          return (
-            <Badge
-              className={statusColors[status] ?? "bg-gray-100 text-gray-700"}
-            >
-              {status.replace("_", " ")}
-            </Badge>
-          );
-        },
-      },
-      {
-        accessorKey: "cardId",
-        header: "Card ID",
-        cell: ({ row }) => (
-          <span className="text-sm text-muted-foreground">
-            {row.original.cardId ?? "—"}
-          </span>
-        ),
-      },
-      {
-        accessorKey: "note",
-        header: "Note",
-        cell: ({ row }) => (
-          <span className="text-sm text-muted-foreground truncate max-w-[150px] block">
-            {row.original.note ?? "—"}
           </span>
         ),
       },
@@ -369,19 +337,11 @@ export function AttendanceLogsClient({
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div>
-              <Label>Employee</Label>
-              <Input value={editingLog?.employeeName ?? ""} disabled />
-            </div>
-            <div>
-              <Label>Date</Label>
-              <Input value={editingLog?.date ?? ""} disabled />
-            </div>
-            <div>
-              <Label>Time In</Label>
+              <Label>Date Out</Label>
               <Input
-                type="time"
-                value={editTimeIn}
-                onChange={(e) => setEditTimeIn(e.target.value)}
+                type="date"
+                value={editDateOut}
+                onChange={(e) => setEditDateOut(e.target.value)}
               />
             </div>
             <div>
@@ -393,11 +353,19 @@ export function AttendanceLogsClient({
               />
             </div>
             <div>
-              <Label>Note</Label>
+              <Label>Date In</Label>
               <Input
-                value={editNote}
-                onChange={(e) => setEditNote(e.target.value)}
-                placeholder="Note"
+                type="date"
+                value={editDateIn}
+                onChange={(e) => setEditDateIn(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Time In</Label>
+              <Input
+                type="time"
+                value={editTimeIn}
+                onChange={(e) => setEditTimeIn(e.target.value)}
               />
             </div>
           </div>
