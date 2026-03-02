@@ -18,12 +18,8 @@ import type { ExportColumn } from "@/lib/export";
 const employeeExportColumns: ExportColumn[] = [
   { header: "First Name", key: "firstName" },
   { header: "Last Name", key: "lastName" },
-  { header: "Email", key: "email" },
-  { header: "Phone", key: "phone" },
-  { header: "Mobile", key: "mobile" },
-  { header: "Nationality", key: "nationality" },
   {
-    header: "Date of Birth",
+    header: "DOB",
     key: "dateOfBirth",
     transform: (v) => {
       if (!v) return "";
@@ -31,21 +27,22 @@ const employeeExportColumns: ExportColumn[] = [
       return isNaN(d.getTime()) ? "" : d.toLocaleDateString("en-GB");
     },
   },
+  { header: "Branch", key: "branch" },
+  { header: "Mobile", key: "mobile" },
+  { header: "Nationality", key: "nationality" },
+  { header: "Gender", key: "gender" },
   {
-    header: "Hire Date",
-    key: "hireDate",
+    header: "Created Date",
+    key: "createdAt",
     transform: (v) => {
       if (!v) return "";
       const d = new Date(v as string);
       return isNaN(d.getTime()) ? "" : d.toLocaleDateString("en-GB");
     },
   },
-  { header: "Specialization", key: "specialization" },
-  { header: "Branch", key: "branchName" },
   {
     header: "Status",
-    key: "isActive",
-    transform: (v) => (v ? "Active" : "Inactive"),
+    key: "status",
   },
 ];
 
@@ -76,7 +73,8 @@ export function EmployeeListingClient({
       (e) =>
         e.firstName.toLowerCase().includes(lower) ||
         e.lastName.toLowerCase().includes(lower) ||
-        e.email.toLowerCase().includes(lower)
+        (e.mobile && e.mobile.toLowerCase().includes(lower)) ||
+        (e.nationality && e.nationality.toLowerCase().includes(lower))
     );
   }, [search, employees]);
 

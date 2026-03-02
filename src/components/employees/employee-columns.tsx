@@ -2,7 +2,7 @@
 
 import { type ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
-import { MoreHorizontal, Eye, Pencil, Trash2, Mail, Phone, CircleCheck, CircleOff } from "lucide-react";
+import { MoreHorizontal, Eye, Pencil, Trash2, CircleCheck, CircleOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,9 +29,14 @@ export interface Employee {
   lastName: string;
   email: string;
   phone: string;
+  mobile: string;
+  dateOfBirth: string;
+  nationality: string;
+  gender: string;
   branch: string;
   specialization?: string;
   hireDate: string;
+  createdAt: string;
   status: "Active" | "Inactive";
   type: EmployeeType;
 }
@@ -74,15 +79,14 @@ const ROLE_LABELS: Record<EmployeeType, string> = {
 export function createEmployeeColumns(
   type: EmployeeType
 ): ColumnDef<Employee>[] {
-  const columns: ColumnDef<Employee>[] = [
-    // Avatar — with tooltip showing extra info
+  return [
+    // Avatar
     {
       id: "avatar",
       header: "",
       cell: ({ row }) => {
         const employee = row.original;
         const colorClass = avatarColors[employee.type] || avatarColors.teacher;
-        const fullName = `${employee.firstName} ${employee.lastName}`;
         return (
           <TooltipProvider>
             <Tooltip>
@@ -94,10 +98,11 @@ export function createEmployeeColumns(
                 </div>
               </TooltipTrigger>
               <TooltipContent side="right" className="max-w-[220px]">
-                <p className="font-medium">{fullName}</p>
+                <p className="font-medium">{employee.firstName} {employee.lastName}</p>
                 <p className="text-muted-foreground">Role: {ROLE_LABELS[employee.type]}</p>
-                <p className="text-muted-foreground">{employee.email}</p>
-                <p className="text-muted-foreground">{employee.phone}</p>
+                {employee.email && (
+                  <p className="text-muted-foreground">{employee.email}</p>
+                )}
                 {employee.branch && (
                   <p className="text-muted-foreground">Branch: {employee.branch}</p>
                 )}
@@ -108,48 +113,55 @@ export function createEmployeeColumns(
       },
       enableSorting: false,
     },
-    // Full Name — with sort indicator
+    // First Name
     {
-      accessorKey: "fullName",
+      accessorKey: "firstName",
       header: ({ column }) => (
-        <SortableHeader column={column}>Full Name</SortableHeader>
+        <SortableHeader column={column}>F Name</SortableHeader>
       ),
-      accessorFn: (row) => `${row.firstName} ${row.lastName}`,
       cell: ({ row }) => {
         const employee = row.original;
-        const fullName = `${employee.firstName} ${employee.lastName}`;
         return (
           <Link
             href={getDetailPath(employee.type, employee.id)}
             className="font-medium text-foreground hover:text-primary transition-colors"
             onClick={(e) => e.stopPropagation()}
           >
-            {fullName}
+            {employee.firstName}
           </Link>
         );
       },
     },
-    // Email
+    // Last Name
     {
-      accessorKey: "email",
+      accessorKey: "lastName",
       header: ({ column }) => (
-        <SortableHeader column={column}>Email</SortableHeader>
+        <SortableHeader column={column}>L Name</SortableHeader>
       ),
-      cell: ({ row }) => (
-        <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-          <Mail className="size-3.5 text-muted-foreground/60" />
-          {row.original.email}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const employee = row.original;
+        return (
+          <Link
+            href={getDetailPath(employee.type, employee.id)}
+            className="font-medium text-foreground hover:text-primary transition-colors"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {employee.lastName}
+          </Link>
+        );
+      },
     },
-    // Phone
+    // Date of Birth
     {
-      accessorKey: "phone",
-      header: "Phone",
+      accessorKey: "dateOfBirth",
+      header: ({ column }) => (
+        <SortableHeader column={column}>DOB</SortableHeader>
+      ),
       cell: ({ row }) => (
-        <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-          <Phone className="size-3.5 text-muted-foreground/60" />
-          {row.original.phone}
+        <span className="text-muted-foreground">
+          {row.original.dateOfBirth
+            ? format(new Date(row.original.dateOfBirth), "dd/MM/yyyy")
+            : "—"}
         </span>
       ),
     },
@@ -163,35 +175,51 @@ export function createEmployeeColumns(
         </Badge>
       ),
     },
-  ];
-
-  // Add specialization column for doctors and teachers
-  if (type === "doctor" || type === "teacher") {
-    columns.push({
-      accessorKey: "specialization",
-      header: "Specialization",
-      cell: ({ row }) => (
-        <span className="text-muted-foreground">
-          {row.original.specialization || "---"}
-        </span>
-      ),
-    });
-  }
-
-  columns.push(
-    // Hire Date — with sort indicator
+    // Mobile
     {
-      accessorKey: "hireDate",
-      header: ({ column }) => (
-        <SortableHeader column={column}>Hire Date</SortableHeader>
-      ),
+      accessorKey: "mobile",
+      header: "Mobile",
       cell: ({ row }) => (
         <span className="text-muted-foreground">
-          {format(new Date(row.original.hireDate), "MMM d, yyyy")}
+          {row.original.mobile || "—"}
         </span>
       ),
     },
-    // Status — colored badge with icon (consistent with children)
+    // Nationality
+    {
+      accessorKey: "nationality",
+      header: "Nationality",
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          {row.original.nationality || "—"}
+        </span>
+      ),
+    },
+    // Gender
+    {
+      accessorKey: "gender",
+      header: "Gender",
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          {row.original.gender || "—"}
+        </span>
+      ),
+    },
+    // Created Date
+    {
+      accessorKey: "createdAt",
+      header: ({ column }) => (
+        <SortableHeader column={column}>Created Date</SortableHeader>
+      ),
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          {row.original.createdAt
+            ? format(new Date(row.original.createdAt), "dd/MM/yyyy")
+            : "—"}
+        </span>
+      ),
+    },
+    // Status
     {
       accessorKey: "status",
       header: "Status",
@@ -257,8 +285,6 @@ export function createEmployeeColumns(
         );
       },
       enableSorting: false,
-    }
-  );
-
-  return columns;
+    },
+  ];
 }

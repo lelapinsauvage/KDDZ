@@ -76,7 +76,8 @@ export function StaffPageClient({ employees }: StaffPageClientProps) {
         (e) =>
           e.firstName.toLowerCase().includes(lower) ||
           e.lastName.toLowerCase().includes(lower) ||
-          e.email.toLowerCase().includes(lower)
+          (e.mobile && e.mobile.toLowerCase().includes(lower)) ||
+          (e.nationality && e.nationality.toLowerCase().includes(lower))
       );
     }
 
@@ -109,9 +110,9 @@ export function StaffPageClient({ employees }: StaffPageClientProps) {
         );
       },
     };
-    // Insert after avatar and name columns
+    // Insert after avatar, firstName, and lastName columns
     const result = [...baseCols];
-    result.splice(2, 0, rolCol);
+    result.splice(3, 0, rolCol);
     return result;
   }, []);
 

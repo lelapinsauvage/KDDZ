@@ -12,11 +12,20 @@ export function mapEmployee(raw: any, type: EmployeeType): Employee {
     lastName: raw.lastName ?? "",
     email: raw.email ?? "",
     phone: raw.phone ?? raw.mobile ?? "",
+    mobile: raw.mobile ?? "",
+    dateOfBirth: raw.dateOfBirth
+      ? new Date(raw.dateOfBirth).toISOString()
+      : "",
+    nationality: raw.nationality ?? "",
+    gender: raw.gender ?? "",
     branch: raw.branch?.name ?? "—",
     specialization: raw.specialization ?? undefined,
     hireDate: raw.hireDate
       ? new Date(raw.hireDate).toISOString()
       : new Date().toISOString(),
+    createdAt: raw.createdAt
+      ? new Date(raw.createdAt).toISOString()
+      : "",
     status: raw.isActive === false ? "Inactive" : "Active",
     type,
   };
