@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { getSettings } from "@/lib/actions/settings";
+import { getSettings, getRegions } from "@/lib/actions/settings";
 import { getBranches } from "@/lib/actions/branches";
 import NurseryClient from "./nursery-client";
 
@@ -17,19 +17,24 @@ export default async function NurseryInfoPage() {
     }
   }
 
-  // Fetch settings for the branch
-  let settings: Record<string, string> = {};
-  if (branchId) {
-    const result = await getSettings(branchId);
-    if (result.success && result.data) {
-      settings = result.data;
-    }
-  }
+  // Fetch settings and geographic data in parallel
+  const [settingsResult, regionsResult] = await Promise.all([
+    branchId ? getSettings(branchId) : Promise.resolve({ success: false } as const),
+    getRegions(),
+  ]);
+
+  const settings: Record<string, string> =
+    settingsResult.success && settingsResult.data
+      ? settingsResult.data as Record<string, string>
+      : {};
+
+  const provinces = Array.isArray(regionsResult.data) ? regionsResult.data : [];
 
   return (
     <NurseryClient
       branchId={branchId ?? ""}
       initialSettings={settings}
+      provinces={provinces}
     />
   );
 }

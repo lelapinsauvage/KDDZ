@@ -14,6 +14,29 @@ export const nurserySettingsSchema = z.object({
   email_notifications: z.string(),
   sms_notifications: z.string(),
   push_notifications: z.string(),
+  // Government Registration
+  registration_number: z.string(),
+  registration_date: z.string(),
+  // Owner Information
+  owner_type: z.string(), // "person" | "entity"
+  owner_name: z.string(),
+  owner_father_name: z.string(),
+  owner_family_name: z.string(),
+  owner_id_number: z.string(),
+  owner_nationality: z.string(),
+  owner_place_of_birth: z.string(),
+  owner_date_of_birth: z.string(),
+  entity_legal_name: z.string(),
+  entity_type: z.string(),
+  entity_registration_number: z.string(),
+  entity_representative_name: z.string(),
+  // Nursery Identity
+  nursery_name_ar: z.string(),
+  nursery_name_latin: z.string(),
+  // Location
+  nursery_province_id: z.string(),
+  nursery_district_id: z.string(),
+  nursery_region_id: z.string(),
 });
 
 export type NurserySettingsValues = z.infer<typeof nurserySettingsSchema>;

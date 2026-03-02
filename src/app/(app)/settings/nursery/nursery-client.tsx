@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useMemo, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -12,6 +12,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Save,
   Upload,
   Building2,
@@ -19,6 +26,10 @@ import {
   Settings2,
   Bell,
   Loader2,
+  ShieldCheck,
+  User,
+  Languages,
+  MapPin,
 } from "lucide-react";
 import { updateNurserySettings } from "@/lib/actions/settings";
 import {
@@ -32,9 +43,34 @@ const DAY_SHORT: Record<string, string> = {
   Friday: "Fri", Saturday: "Sat", Sunday: "Sun",
 };
 
+const ENTITY_TYPES = [
+  { value: "company", label: "Company" },
+  { value: "association", label: "Association" },
+  { value: "organization", label: "Organization" },
+  { value: "other", label: "Other" },
+];
+
+interface Province {
+  id: string;
+  name: string;
+  districts: District[];
+}
+
+interface District {
+  id: string;
+  name: string;
+  regions: Region[];
+}
+
+interface Region {
+  id: string;
+  name: string;
+}
+
 interface NurseryClientProps {
   branchId: string;
   initialSettings: Record<string, string>;
+  provinces: Province[];
 }
 
 function parseJsonArray(value: string | undefined): string[] {
@@ -45,7 +81,7 @@ function parseJsonArray(value: string | undefined): string[] {
   }
 }
 
-export default function NurseryClient({ branchId, initialSettings }: NurseryClientProps) {
+export default function NurseryClient({ branchId, initialSettings, provinces }: NurseryClientProps) {
   const [isPending, startTransition] = useTransition();
 
   const {
@@ -70,11 +106,47 @@ export default function NurseryClient({ branchId, initialSettings }: NurseryClie
       email_notifications: initialSettings["email_notifications"] ?? "false",
       sms_notifications: initialSettings["sms_notifications"] ?? "false",
       push_notifications: initialSettings["push_notifications"] ?? "false",
+      // Government Registration
+      registration_number: initialSettings["registration_number"] ?? "",
+      registration_date: initialSettings["registration_date"] ?? "",
+      // Owner Information
+      owner_type: initialSettings["owner_type"] ?? "person",
+      owner_name: initialSettings["owner_name"] ?? "",
+      owner_father_name: initialSettings["owner_father_name"] ?? "",
+      owner_family_name: initialSettings["owner_family_name"] ?? "",
+      owner_id_number: initialSettings["owner_id_number"] ?? "",
+      owner_nationality: initialSettings["owner_nationality"] ?? "",
+      owner_place_of_birth: initialSettings["owner_place_of_birth"] ?? "",
+      owner_date_of_birth: initialSettings["owner_date_of_birth"] ?? "",
+      entity_legal_name: initialSettings["entity_legal_name"] ?? "",
+      entity_type: initialSettings["entity_type"] ?? "",
+      entity_registration_number: initialSettings["entity_registration_number"] ?? "",
+      entity_representative_name: initialSettings["entity_representative_name"] ?? "",
+      // Nursery Identity
+      nursery_name_ar: initialSettings["nursery_name_ar"] ?? "",
+      nursery_name_latin: initialSettings["nursery_name_latin"] ?? "",
+      // Location
+      nursery_province_id: initialSettings["nursery_province_id"] ?? "",
+      nursery_district_id: initialSettings["nursery_district_id"] ?? "",
+      nursery_region_id: initialSettings["nursery_region_id"] ?? "",
     },
   });
 
   const workingDays = parseJsonArray(watch("working_days"));
   const assessmentTypes = parseJsonArray(watch("assessment_types"));
+  const ownerType = watch("owner_type");
+  const selectedProvinceId = watch("nursery_province_id");
+  const selectedDistrictId = watch("nursery_district_id");
+
+  const districts = useMemo(() => {
+    const province = provinces.find((p) => p.id === selectedProvinceId);
+    return province?.districts ?? [];
+  }, [provinces, selectedProvinceId]);
+
+  const regions = useMemo(() => {
+    const district = districts.find((d) => d.id === selectedDistrictId);
+    return district?.regions ?? [];
+  }, [districts, selectedDistrictId]);
 
   function toggleDay(day: string) {
     const current = workingDays;
@@ -160,6 +232,246 @@ export default function NurseryClient({ branchId, initialSettings }: NurseryClie
                   Upload Logo
                 </Button>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Government Registration */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                <ShieldCheck className="size-5" />
+              </div>
+              <div>
+                <CardTitle className="text-base">Government Registration</CardTitle>
+                <CardDescription>Official registration details for compliance</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="registration-number">Registration Number</Label>
+              <Input id="registration-number" placeholder="e.g. REG-2024-001" {...register("registration_number")} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="registration-date">Registration Date</Label>
+              <Input id="registration-date" type="date" {...register("registration_date")} />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Owner Information */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
+                <User className="size-5" />
+              </div>
+              <div>
+                <CardTitle className="text-base">Owner Information</CardTitle>
+                <CardDescription>Details about the nursery owner or legal entity</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            {/* Owner Type Toggle */}
+            <div>
+              <Label className="mb-3 block">Owner Type</Label>
+              <div className="flex gap-2">
+                {[
+                  { value: "person", label: "Natural Person" },
+                  { value: "entity", label: "Legal Entity" },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setValue("owner_type", option.value, { shouldDirty: true })}
+                    className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+                      ownerType === option.value
+                        ? "border-violet-300 bg-violet-100 text-violet-700"
+                        : "border-border bg-muted/50 text-muted-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Natural Person Fields */}
+            {ownerType === "person" && (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="owner-name">Full Name</Label>
+                  <Input id="owner-name" placeholder="Full name" {...register("owner_name")} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="owner-father">Father&apos;s Name</Label>
+                  <Input id="owner-father" placeholder="Father's name" {...register("owner_father_name")} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="owner-family">Family Name</Label>
+                  <Input id="owner-family" placeholder="Family name" {...register("owner_family_name")} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="owner-id">ID Number</Label>
+                  <Input id="owner-id" placeholder="National ID number" {...register("owner_id_number")} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="owner-nationality">Nationality</Label>
+                  <Input id="owner-nationality" placeholder="e.g. Lebanese" {...register("owner_nationality")} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="owner-pob">Place of Birth</Label>
+                  <Input id="owner-pob" placeholder="City / Town" {...register("owner_place_of_birth")} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="owner-dob">Date of Birth</Label>
+                  <Input id="owner-dob" type="date" {...register("owner_date_of_birth")} />
+                </div>
+              </div>
+            )}
+
+            {/* Legal Entity Fields */}
+            {ownerType === "entity" && (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label htmlFor="entity-legal-name">Legal Name</Label>
+                  <Input id="entity-legal-name" placeholder="Registered legal name" {...register("entity_legal_name")} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="entity-type">Entity Type</Label>
+                  <Select
+                    value={watch("entity_type")}
+                    onValueChange={(v) => setValue("entity_type", v, { shouldDirty: true })}
+                  >
+                    <SelectTrigger id="entity-type" className="w-full">
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ENTITY_TYPES.map((t) => (
+                        <SelectItem key={t.value} value={t.value}>
+                          {t.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="entity-reg-number">Registration Number</Label>
+                  <Input id="entity-reg-number" placeholder="Entity registration number" {...register("entity_registration_number")} />
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label htmlFor="entity-rep-name">Authorized Representative Name</Label>
+                  <Input id="entity-rep-name" placeholder="Full name of authorized signatory" {...register("entity_representative_name")} />
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Nursery Identity */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-cyan-50 text-cyan-600">
+                <Languages className="size-5" />
+              </div>
+              <div>
+                <CardTitle className="text-base">Nursery Identity</CardTitle>
+                <CardDescription>Official names in Arabic and Latin script</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="nursery-name-ar">Arabic Name</Label>
+              <Input id="nursery-name-ar" dir="rtl" placeholder="اسم الحضانة بالعربية" {...register("nursery_name_ar")} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="nursery-name-latin">Latin Name</Label>
+              <Input id="nursery-name-latin" placeholder="Nursery name in Latin script" {...register("nursery_name_latin")} />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Location */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-orange-50 text-orange-600">
+                <MapPin className="size-5" />
+              </div>
+              <div>
+                <CardTitle className="text-base">Location</CardTitle>
+                <CardDescription>Geographic hierarchy for official reporting</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="nursery-province">Governorate</Label>
+              <Select
+                value={selectedProvinceId}
+                onValueChange={(v) => {
+                  setValue("nursery_province_id", v, { shouldDirty: true });
+                  setValue("nursery_district_id", "", { shouldDirty: true });
+                  setValue("nursery_region_id", "", { shouldDirty: true });
+                }}
+              >
+                <SelectTrigger id="nursery-province" className="w-full">
+                  <SelectValue placeholder="Select governorate" />
+                </SelectTrigger>
+                <SelectContent>
+                  {provinces.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="nursery-district">District</Label>
+              <Select
+                value={selectedDistrictId}
+                onValueChange={(v) => {
+                  setValue("nursery_district_id", v, { shouldDirty: true });
+                  setValue("nursery_region_id", "", { shouldDirty: true });
+                }}
+                disabled={!selectedProvinceId}
+              >
+                <SelectTrigger id="nursery-district" className="w-full">
+                  <SelectValue placeholder={selectedProvinceId ? "Select district" : "Select governorate first"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {districts.map((d) => (
+                    <SelectItem key={d.id} value={d.id}>
+                      {d.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="nursery-region">Region</Label>
+              <Select
+                value={watch("nursery_region_id")}
+                onValueChange={(v) => setValue("nursery_region_id", v, { shouldDirty: true })}
+                disabled={!selectedDistrictId}
+              >
+                <SelectTrigger id="nursery-region" className="w-full">
+                  <SelectValue placeholder={selectedDistrictId ? "Select region" : "Select district first"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {regions.map((r) => (
+                    <SelectItem key={r.id} value={r.id}>
+                      {r.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
