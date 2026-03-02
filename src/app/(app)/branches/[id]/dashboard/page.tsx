@@ -19,6 +19,7 @@ export default async function BranchDashboardPage({ params }: Props) {
 
   return (
     <BranchDashboardClient
+      branchId={id}
       stats={{
         childrenCount: branch._count?.children ?? 0,
         classCount: branch._count?.classes ?? 0,
