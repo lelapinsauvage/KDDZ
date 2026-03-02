@@ -79,6 +79,7 @@ export async function getParentUsers(
           child: {
             include: {
               branch: true,
+              class: true,
               parents: {
                 select: {
                   type: true,

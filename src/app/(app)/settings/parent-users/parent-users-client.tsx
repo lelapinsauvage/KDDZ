@@ -2,19 +2,12 @@
 
 import { useState, useMemo, useTransition } from "react";
 import Link from "next/link";
-import { type ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef} from "@tanstack/react-table";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -22,7 +15,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, KeyRound, UserX, Eye, Loader2, Phone, Mail, MessageCircle } from "lucide-react";
+import { Pencil, KeyRound, UserX, Eye, Loader2, UserPlus } from "lucide-react";
 import {
   createParentUser,
   toggleParentUserStatus,
@@ -30,12 +23,9 @@ import {
 } from "@/lib/actions/parent-users";
 import { getAvatarColor, getInitials } from "@/components/children/children-columns";
 
-interface ParentContact {
-  type: string;
-  name: string | null;
-  phone: string | null;
-  email: string | null;
-}
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 interface ParentUser {
   id: string;
@@ -45,107 +35,116 @@ interface ParentUser {
   childFirstName: string;
   childLastName: string;
   branchName: string;
+  className: string;
   status: "Active" | "Inactive";
   createdAt: string;
-  parents: ParentContact[];
 }
 
-interface ChildOption {
+interface ChildWithoutAccount {
   id: string;
   name: string;
+  firstName: string;
+  lastName: string;
+  branchName: string;
+  className: string;
 }
 
 interface ParentUsersClientProps {
-  users: ParentUser[];
-  childrenList: ChildOption[];
+  usersWithAccount: ParentUser[];
+  childrenWithoutAccount: ChildWithoutAccount[];
 }
 
-function formatWhatsAppUrl(phone: string): string {
-  const cleaned = phone.replace(/[\s\-\(\)\.+]/g, "");
-  return `https://wa.me/${cleaned}`;
-}
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
-function WhatsAppButton({ phone }: { phone: string }) {
-  return (
-    <a
-      href={formatWhatsAppUrl(phone)}
-      target="_blank"
-      rel="noopener noreferrer"
-      title={`WhatsApp ${phone}`}
-      className="inline-flex size-7 items-center justify-center rounded-md text-green-600 hover:bg-green-50 transition-colors"
-    >
-      <MessageCircle className="size-3.5" />
-    </a>
-  );
-}
-
-function PhoneButton({ phone }: { phone: string }) {
-  return (
-    <a
-      href={`tel:${phone}`}
-      title={`Call ${phone}`}
-      className="inline-flex size-7 items-center justify-center rounded-md text-blue-600 hover:bg-blue-50 transition-colors"
-    >
-      <Phone className="size-3.5" />
-    </a>
-  );
-}
-
-export function ParentUsersClient({ users: initialUsers, childrenList }: ParentUsersClientProps) {
+export function ParentUsersClient({
+  usersWithAccount: initialUsers,
+  childrenWithoutAccount: initialChildrenWithout,
+}: ParentUsersClientProps) {
   const [users, setUsers] = useState(initialUsers);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [newUsername, setNewUsername] = useState("");
-  const [newChild, setNewChild] = useState("");
-  const [newPassword, setNewPassword] = useState("");
+  const [childrenWithout, setChildrenWithout] = useState(initialChildrenWithout);
   const [isPending, startTransition] = useTransition();
-  const [search, setSearch] = useState("");
+
+  // Search state for table 1
+  const [searchWith, setSearchWith] = useState("");
+  // Search state for table 2
+  const [searchWithout, setSearchWithout] = useState("");
+
+  // Create-user dialog state
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createChildId, setCreateChildId] = useState("");
+  const [createChildName, setCreateChildName] = useState("");
+  const [newUsername, setNewUsername] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+
+  // ---------- Filtering ----------
 
   const filteredUsers = useMemo(() => {
-    if (!search.trim()) return users;
-    const q = search.toLowerCase();
+    if (!searchWith.trim()) return users;
+    const q = searchWith.toLowerCase();
     return users.filter(
       (u) =>
-        u.username.toLowerCase().includes(q) ||
         u.childName.toLowerCase().includes(q) ||
-        u.parents.some((p) => p.name?.toLowerCase().includes(q))
+        u.username.toLowerCase().includes(q) ||
+        u.branchName.toLowerCase().includes(q) ||
+        u.className.toLowerCase().includes(q)
     );
-  }, [users, search]);
+  }, [users, searchWith]);
+
+  const filteredChildrenWithout = useMemo(() => {
+    if (!searchWithout.trim()) return childrenWithout;
+    const q = searchWithout.toLowerCase();
+    return childrenWithout.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.branchName.toLowerCase().includes(q) ||
+        c.className.toLowerCase().includes(q)
+    );
+  }, [childrenWithout, searchWithout]);
+
+  // ---------- Handlers ----------
+
+  function openCreateDialog(childId: string, childName: string) {
+    setCreateChildId(childId);
+    setCreateChildName(childName);
+    setNewUsername("");
+    setNewPassword("");
+    setCreateOpen(true);
+  }
 
   function handleCreate() {
-    if (!newUsername.trim() || !newChild || !newPassword) return;
+    if (!newUsername.trim() || !createChildId || !newPassword) return;
 
     startTransition(async () => {
       const result = await createParentUser({
         username: newUsername.trim(),
         password: newPassword,
-        childId: newChild,
+        childId: createChildId,
       });
 
       if (result.success && result.data) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const newUser = result.data as any;
-        const child = childrenList.find((c) => c.id === newChild);
-        const childName = child?.name ?? "—";
-        const names = childName.split(" ");
+        const child = childrenWithout.find((c) => c.id === createChildId);
         setUsers([
           ...users,
           {
             id: newUser.id,
             username: newUsername.trim(),
-            childName,
-            childId: newChild,
-            childFirstName: names[0] ?? "",
-            childLastName: names.slice(1).join(" ") ?? "",
-            branchName: "—",
+            childName: child?.name ?? "—",
+            childId: createChildId,
+            childFirstName: child?.firstName ?? "",
+            childLastName: child?.lastName ?? "",
+            branchName: child?.branchName ?? "—",
+            className: child?.className ?? "—",
             status: "Active",
             createdAt: new Date().toISOString().split("T")[0],
-            parents: [],
           },
         ]);
+        // Remove from "without" list
+        setChildrenWithout(childrenWithout.filter((c) => c.id !== createChildId));
         setCreateOpen(false);
-        setNewUsername("");
-        setNewChild("");
-        setNewPassword("");
       }
     });
   }
@@ -175,40 +174,13 @@ export function ParentUsersClient({ users: initialUsers, childrenList }: ParentU
     });
   }
 
-  const columns: ColumnDef<ParentUser>[] = useMemo(
+  // ---------- Table 1: Children WITH parent account ----------
+
+  const withAccountColumns: ColumnDef<ParentUser>[] = useMemo(
     () => [
       {
-        id: "parent",
-        header: "Parent / Guardian",
-        cell: ({ row }) => {
-          const u = row.original;
-          const primaryParent = u.parents[0];
-          const parentName = primaryParent?.name ?? u.username;
-          const phone = primaryParent?.phone ?? null;
-          const email = primaryParent?.email ?? null;
-          return (
-            <div className="flex flex-col gap-0.5">
-              <Link href={`/settings/parent-users/${u.id}`} className="font-medium hover:underline">
-                {parentName}
-              </Link>
-              <span className="text-xs text-muted-foreground">@{u.username}</span>
-              {(phone || email) && (
-                <div className="flex items-center gap-1 mt-0.5">
-                  {phone && (
-                    <span className="text-xs text-muted-foreground">{phone}</span>
-                  )}
-                  {email && (
-                    <span className="text-xs text-muted-foreground">{phone ? ` · ${email}` : email}</span>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        },
-      },
-      {
-        id: "child",
-        header: "Linked Child",
+        id: "name",
+        header: "Name",
         cell: ({ row }) => {
           const u = row.original;
           const initials = getInitials(u.childFirstName || "?", u.childLastName || "?");
@@ -218,42 +190,17 @@ export function ParentUsersClient({ users: initialUsers, childrenList }: ParentU
               <div className={`flex size-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white ${bg}`}>
                 {initials}
               </div>
-              <span className="text-sm group-hover:underline">{u.childName}</span>
+              <span className="text-sm font-medium group-hover:underline">{u.childName}</span>
             </Link>
           );
         },
       },
       {
-        accessorKey: "branchName",
-        header: "Branch",
+        accessorKey: "username",
+        header: "Username",
         cell: ({ row }) => (
-          <span className="text-sm text-muted-foreground">{row.original.branchName}</span>
+          <span className="text-sm text-muted-foreground">@{row.original.username}</span>
         ),
-      },
-      {
-        id: "contact",
-        header: "Quick Contact",
-        cell: ({ row }) => {
-          const u = row.original;
-          const phone = u.parents[0]?.phone ?? null;
-          const email = u.parents[0]?.email ?? null;
-          if (!phone && !email) return <span className="text-xs text-muted-foreground">—</span>;
-          return (
-            <div className="flex items-center gap-0.5">
-              {phone && <PhoneButton phone={phone} />}
-              {phone && <WhatsAppButton phone={phone} />}
-              {email && (
-                <a
-                  href={`mailto:${email}`}
-                  title={`Email ${email}`}
-                  className="inline-flex size-7 items-center justify-center rounded-md text-[#4F46E5] hover:bg-[#4F46E5]/10 transition-colors"
-                >
-                  <Mail className="size-3.5" />
-                </a>
-              )}
-            </div>
-          );
-        },
       },
       {
         accessorKey: "status",
@@ -272,8 +219,22 @@ export function ParentUsersClient({ users: initialUsers, childrenList }: ParentU
         ),
       },
       {
+        accessorKey: "branchName",
+        header: "Branch",
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground">{row.original.branchName}</span>
+        ),
+      },
+      {
+        accessorKey: "className",
+        header: "Class",
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground">{row.original.className}</span>
+        ),
+      },
+      {
         id: "actions",
-        header: "Actions",
+        header: "Action",
         cell: ({ row }) => (
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="icon" className="size-8" asChild>
@@ -314,6 +275,63 @@ export function ParentUsersClient({ users: initialUsers, childrenList }: ParentU
     [users, isPending]
   );
 
+  // ---------- Table 2: Children WITHOUT parent account ----------
+
+  const withoutAccountColumns: ColumnDef<ChildWithoutAccount>[] = useMemo(
+    () => [
+      {
+        id: "name",
+        header: "Name",
+        cell: ({ row }) => {
+          const c = row.original;
+          const initials = getInitials(c.firstName || "?", c.lastName || "?");
+          const bg = getAvatarColor(c.name);
+          return (
+            <Link href={`/children/${c.id}/dashboard`} className="flex items-center gap-2 group">
+              <div className={`flex size-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white ${bg}`}>
+                {initials}
+              </div>
+              <span className="text-sm font-medium group-hover:underline">{c.name}</span>
+            </Link>
+          );
+        },
+      },
+      {
+        accessorKey: "branchName",
+        header: "Branch",
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground">{row.original.branchName}</span>
+        ),
+      },
+      {
+        accessorKey: "className",
+        header: "Class",
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground">{row.original.className}</span>
+        ),
+      },
+      {
+        id: "actions",
+        header: "Action",
+        cell: ({ row }) => (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => openCreateDialog(row.original.id, row.original.name)}
+            disabled={isPending}
+          >
+            <UserPlus className="mr-1.5 size-3.5" />
+            Create User
+          </Button>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [childrenWithout, isPending]
+  );
+
+  // ---------- Render ----------
+
   return (
     <>
       <PageHeader
@@ -322,33 +340,55 @@ export function ParentUsersClient({ users: initialUsers, childrenList }: ParentU
           { label: "Settings", href: "/settings/nursery" },
           { label: "Parent Users" },
         ]}
-        actions={
-          <Button className="bg-primary text-white hover:bg-primary/90" onClick={() => setCreateOpen(true)} disabled={isPending}>
-            <Plus className="mr-1 size-4" />
-            Create Parent Account
-          </Button>
-        }
       />
 
-      <div className="space-y-4 p-4 md:p-6">
-        <div className="flex items-center gap-3">
+      <div className="space-y-6 p-4 md:p-6">
+        {/* Table 1: Children WITH Parent User */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="flex size-6 items-center justify-center rounded bg-primary text-white text-xs font-bold">
+              1
+            </div>
+            <h2 className="text-base font-semibold">Children with Parent Account</h2>
+            <Badge variant="secondary" className="ml-1">
+              {filteredUsers.length}
+            </Badge>
+          </div>
+
           <Input
-            placeholder="Search by parent name, username, or child name..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name, username, branch, or class..."
+            value={searchWith}
+            onChange={(e) => setSearchWith(e.target.value)}
             className="max-w-sm"
           />
-          <span className="text-sm text-muted-foreground">
-            {filteredUsers.length} account{filteredUsers.length !== 1 ? "s" : ""}
-          </span>
+
+          <DataTable columns={withAccountColumns} data={filteredUsers} />
         </div>
 
-        <DataTable
-          columns={columns}
-          data={filteredUsers}
-        />
+        {/* Table 2: Children WITHOUT Parent User */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="flex size-6 items-center justify-center rounded bg-destructive text-white text-xs font-bold">
+              2
+            </div>
+            <h2 className="text-base font-semibold">Children without Parent Account</h2>
+            <Badge variant="secondary" className="ml-1">
+              {filteredChildrenWithout.length}
+            </Badge>
+          </div>
+
+          <Input
+            placeholder="Search by name, branch, or class..."
+            value={searchWithout}
+            onChange={(e) => setSearchWithout(e.target.value)}
+            className="max-w-sm"
+          />
+
+          <DataTable columns={withoutAccountColumns} data={filteredChildrenWithout} />
+        </div>
       </div>
 
+      {/* Create User Dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>
           <DialogHeader>
@@ -356,27 +396,16 @@ export function ParentUsersClient({ users: initialUsers, childrenList }: ParentU
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
+              <label className="mb-1.5 block text-sm font-medium">Child</label>
+              <Input value={createChildName} disabled />
+            </div>
+            <div>
               <label className="mb-1.5 block text-sm font-medium">Username</label>
               <Input
                 placeholder="e.g. lastname.parent"
                 value={newUsername}
                 onChange={(e) => setNewUsername(e.target.value)}
               />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium">Linked Child</label>
-              <Select value={newChild} onValueChange={setNewChild}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select child" />
-                </SelectTrigger>
-                <SelectContent>
-                  {childrenList.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium">Password</label>
@@ -393,10 +422,9 @@ export function ParentUsersClient({ users: initialUsers, childrenList }: ParentU
               Cancel
             </Button>
             <Button
-
               className="text-white"
               onClick={handleCreate}
-              disabled={!newUsername.trim() || !newChild || !newPassword || isPending}
+              disabled={!newUsername.trim() || !newPassword || isPending}
             >
               {isPending && <Loader2 className="mr-1 size-4 animate-spin" />}
               Create Account
