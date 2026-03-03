@@ -1,5 +1,5 @@
 import { getRegions } from "@/lib/actions/settings";
-import AreasClient from "./areas-client";
+import { AreasClient } from "./areas-client";
 
 interface ProvinceData {
   id: string;

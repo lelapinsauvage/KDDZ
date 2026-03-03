@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useMemo, useTransition } from "react";
+import { useState, useMemo, useTransition, useCallback } from "react";
 import { type ColumnDef } from "@tanstack/react-table";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +15,16 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import {
   createProvince,
@@ -32,7 +44,7 @@ interface ZonesClientProps {
   initialZones: Zone[];
 }
 
-export default function ZonesClient({ initialZones }: ZonesClientProps) {
+export function ZonesClient({ initialZones }: ZonesClientProps) {
   const [zones, setZones] = useState(initialZones);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
@@ -40,6 +52,7 @@ export default function ZonesClient({ initialZones }: ZonesClientProps) {
   const [zoneRef, setZoneRef] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   function openAdd() {
     setDialogMode("add");
@@ -49,13 +62,13 @@ export default function ZonesClient({ initialZones }: ZonesClientProps) {
     setDialogOpen(true);
   }
 
-  function openEdit(zone: Zone) {
+  const openEdit = useCallback((zone: Zone) => {
     setDialogMode("edit");
     setZoneName(zone.name);
     setZoneRef(zone.referenceNumber);
     setEditingId(zone.id);
     setDialogOpen(true);
-  }
+  }, []);
 
   function handleSave() {
     if (!zoneName.trim()) return;
@@ -64,8 +77,8 @@ export default function ZonesClient({ initialZones }: ZonesClientProps) {
         const result = await createProvince(zoneName.trim(), zoneRef.trim() || undefined);
         if (result.success && result.data) {
           const newZone = result.data as { id: string; name: string; referenceNumber: string | null; createdAt: string };
-          setZones([
-            ...zones,
+          setZones((prev) => [
+            ...prev,
             {
               id: newZone.id,
               name: newZone.name,
@@ -78,27 +91,38 @@ export default function ZonesClient({ initialZones }: ZonesClientProps) {
               regionCount: 0,
             },
           ]);
+          toast.success("Zone created successfully.");
+        } else {
+          toast.error("Failed to create zone.");
         }
       } else if (editingId) {
         const result = await updateProvince(editingId, zoneName.trim(), zoneRef.trim() || undefined);
         if (result.success) {
-          setZones(
-            zones.map((z) =>
+          setZones((prev) =>
+            prev.map((z) =>
               z.id === editingId ? { ...z, name: zoneName.trim(), referenceNumber: zoneRef.trim() } : z
             )
           );
+          toast.success("Zone updated successfully.");
+        } else {
+          toast.error("Failed to update zone.");
         }
       }
       setDialogOpen(false);
     });
   }
 
-  function handleDelete(id: string) {
+  function handleDeleteConfirm() {
+    if (!deleteTarget) return;
     startTransition(async () => {
-      const result = await deleteProvince(id);
+      const result = await deleteProvince(deleteTarget.id);
       if (result.success) {
-        setZones(zones.filter((z) => z.id !== id));
+        setZones((prev) => prev.filter((z) => z.id !== deleteTarget.id));
+        toast.success(`Zone "${deleteTarget.name}" deleted.`);
+      } else {
+        toast.error("Failed to delete zone.");
       }
+      setDeleteTarget(null);
     });
   }
 
@@ -129,7 +153,7 @@ export default function ZonesClient({ initialZones }: ZonesClientProps) {
               variant="ghost"
               size="icon"
               className="size-8 text-destructive"
-              onClick={() => handleDelete(row.original.id)}
+              onClick={() => setDeleteTarget({ id: row.original.id, name: row.original.name })}
             >
               <Trash2 className="size-4" />
             </Button>
@@ -137,8 +161,7 @@ export default function ZonesClient({ initialZones }: ZonesClientProps) {
         ),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [zones]
+    [openEdit]
   );
 
   return (
@@ -150,7 +173,7 @@ export default function ZonesClient({ initialZones }: ZonesClientProps) {
           { label: "Zones" },
         ]}
         actions={
-          <Button className="bg-primary text-white hover:bg-primary/90" onClick={openAdd}>
+          <Button onClick={openAdd}>
             <Plus className="mr-1 size-4" />
             Add Zone
           </Button>
@@ -168,7 +191,7 @@ export default function ZonesClient({ initialZones }: ZonesClientProps) {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label className="mb-1.5 block text-sm font-medium">Zone Name</label>
+              <Label className="mb-1.5">Zone Name</Label>
               <Input
                 placeholder="Zone name"
                 value={zoneName}
@@ -179,7 +202,7 @@ export default function ZonesClient({ initialZones }: ZonesClientProps) {
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium">Reference Number</label>
+              <Label className="mb-1.5">Reference Number</Label>
               <Input
                 placeholder="Reference number"
                 value={zoneRef}
@@ -195,7 +218,6 @@ export default function ZonesClient({ initialZones }: ZonesClientProps) {
               Cancel
             </Button>
             <Button
-              className="text-white"
               onClick={handleSave}
               disabled={!zoneName.trim() || isPending}
             >
@@ -204,6 +226,28 @@ export default function ZonesClient({ initialZones }: ZonesClientProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Zone</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>{deleteTarget?.name}</strong>? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction disabled={isPending} onClick={handleDeleteConfirm}>
+              {isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

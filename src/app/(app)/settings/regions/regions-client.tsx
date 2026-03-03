@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +13,16 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Plus,
   Pencil,
@@ -79,6 +91,13 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  // Delete confirmation state
+  const [deleteTarget, setDeleteTarget] = useState<{
+    type: "province" | "district" | "region";
+    id: string;
+    name: string;
+  } | null>(null);
+
   const selectedProvince = provinces.find((p) => p.id === selectedProvinceId);
   const filteredDistricts = selectedProvince?.districts ?? [];
   const selectedDistrict = filteredDistricts.find((d) => d.id === selectedDistrictId);
@@ -107,6 +126,7 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
 
     startTransition(async () => {
       const refVal = dialogRef.trim() || undefined;
+      const typeLabel = dialogType === "province" ? "Province" : dialogType === "district" ? "District" : "Region";
 
       if (dialogType === "province") {
         if (dialogMode === "add") {
@@ -115,11 +135,17 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const newProv = result.data as any;
             setProvinces([...provinces, { id: newProv.id, name: newProv.name, referenceNumber: newProv.referenceNumber ?? "", districts: [] }]);
+            toast.success(`${typeLabel} created successfully.`);
+          } else {
+            toast.error(`Failed to create ${typeLabel.toLowerCase()}.`);
           }
         } else if (editingId) {
           const result = await updateProvince(editingId, dialogName.trim(), refVal);
           if (result.success) {
             setProvinces(provinces.map((p) => (p.id === editingId ? { ...p, name: dialogName.trim(), referenceNumber: dialogRef.trim() } : p)));
+            toast.success(`${typeLabel} updated successfully.`);
+          } else {
+            toast.error(`Failed to update ${typeLabel.toLowerCase()}.`);
           }
         }
       } else if (dialogType === "district") {
@@ -141,6 +167,9 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
                   : p
               )
             );
+            toast.success(`${typeLabel} created successfully.`);
+          } else {
+            toast.error(`Failed to create ${typeLabel.toLowerCase()}.`);
           }
         } else if (editingId) {
           const result = await updateDistrict(editingId, dialogName.trim(), refVal);
@@ -153,6 +182,9 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
                 ),
               }))
             );
+            toast.success(`${typeLabel} updated successfully.`);
+          } else {
+            toast.error(`Failed to update ${typeLabel.toLowerCase()}.`);
           }
         }
       } else if (dialogType === "region") {
@@ -177,6 +209,9 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
                 ),
               }))
             );
+            toast.success(`${typeLabel} created successfully.`);
+          } else {
+            toast.error(`Failed to create ${typeLabel.toLowerCase()}.`);
           }
         } else if (editingId) {
           const result = await updateRegion(editingId, dialogName.trim(), refVal);
@@ -192,6 +227,9 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
                 })),
               }))
             );
+            toast.success(`${typeLabel} updated successfully.`);
+          } else {
+            toast.error(`Failed to update ${typeLabel.toLowerCase()}.`);
           }
         }
       }
@@ -200,7 +238,11 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
     });
   }
 
-  function handleDelete(type: "province" | "district" | "region", id: string) {
+  function handleDeleteConfirm() {
+    if (!deleteTarget) return;
+    const { type, id, name } = deleteTarget;
+    const typeLabel = type === "province" ? "Province" : type === "district" ? "District" : "Region";
+
     startTransition(async () => {
       if (type === "province") {
         const result = await deleteProvince(id);
@@ -210,6 +252,9 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
             setSelectedProvinceId(null);
             setSelectedDistrictId(null);
           }
+          toast.success(`${typeLabel} "${name}" deleted.`);
+        } else {
+          toast.error(`Failed to delete ${typeLabel.toLowerCase()}.`);
         }
       } else if (type === "district") {
         const result = await deleteDistrict(id);
@@ -221,6 +266,9 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
             }))
           );
           if (selectedDistrictId === id) setSelectedDistrictId(null);
+          toast.success(`${typeLabel} "${name}" deleted.`);
+        } else {
+          toast.error(`Failed to delete ${typeLabel.toLowerCase()}.`);
         }
       } else {
         const result = await deleteRegion(id);
@@ -234,8 +282,12 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
               })),
             }))
           );
+          toast.success(`${typeLabel} "${name}" deleted.`);
+        } else {
+          toast.error(`Failed to delete ${typeLabel.toLowerCase()}.`);
         }
       }
+      setDeleteTarget(null);
     });
   }
 
@@ -259,7 +311,7 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
               <h2 className="text-sm font-semibold uppercase text-muted-foreground">Provinces</h2>
               <Button
                 size="sm"
-                className="h-7 bg-primary text-white hover:bg-primary/90"
+                className="h-7"
                 onClick={() => openAddDialog("province")}
                 disabled={isPending}
               >
@@ -310,7 +362,7 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
                       className="size-7 text-destructive"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDelete("province", prov.id);
+                        setDeleteTarget({ type: "province", id: prov.id, name: prov.name });
                       }}
                       disabled={isPending}
                     >
@@ -332,7 +384,7 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
               <h2 className="text-sm font-semibold uppercase text-muted-foreground">Districts</h2>
               <Button
                 size="sm"
-                className="h-7 bg-primary text-white hover:bg-primary/90"
+                className="h-7"
                 onClick={() => openAddDialog("district")}
                 disabled={!selectedProvinceId || isPending}
               >
@@ -382,7 +434,7 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
                           className="size-7 text-destructive"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleDelete("district", dist.id);
+                            setDeleteTarget({ type: "district", id: dist.id, name: dist.name });
                           }}
                           disabled={isPending}
                         >
@@ -407,7 +459,7 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
               <h2 className="text-sm font-semibold uppercase text-muted-foreground">Regions</h2>
               <Button
                 size="sm"
-                className="h-7 bg-primary text-white hover:bg-primary/90"
+                className="h-7"
                 onClick={() => openAddDialog("region")}
                 disabled={!selectedDistrictId || isPending}
               >
@@ -446,7 +498,7 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
                           variant="ghost"
                           size="icon"
                           className="size-7 text-destructive"
-                          onClick={() => handleDelete("region", reg.id)}
+                          onClick={() => setDeleteTarget({ type: "region", id: reg.id, name: reg.name })}
                           disabled={isPending}
                         >
                           <Trash2 className="size-3.5" />
@@ -473,7 +525,7 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label className="mb-1.5 block text-sm font-medium">{dialogLabel} Name</label>
+              <Label className="mb-1.5">{dialogLabel} Name</Label>
               <Input
                 placeholder={`${dialogLabel} name`}
                 value={dialogName}
@@ -484,7 +536,7 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium">Reference Number</label>
+              <Label className="mb-1.5">Reference Number</Label>
               <Input
                 placeholder="Reference number"
                 value={dialogRef}
@@ -500,7 +552,6 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
               Cancel
             </Button>
             <Button
-              className="text-white"
               onClick={handleSave}
               disabled={!dialogName.trim() || isPending}
             >
@@ -510,6 +561,31 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ── Delete Confirmation ────────────── */}
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete {deleteTarget?.type === "province" ? "Province" : deleteTarget?.type === "district" ? "District" : "Region"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>{deleteTarget?.name}</strong>? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction disabled={isPending} onClick={handleDeleteConfirm}>
+              {isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

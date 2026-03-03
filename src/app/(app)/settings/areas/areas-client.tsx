@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useMemo, useTransition } from "react";
+import { useState, useMemo, useTransition, useCallback } from "react";
 import { type ColumnDef } from "@tanstack/react-table";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -20,6 +22,16 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import {
   createDistrict,
@@ -46,7 +58,7 @@ interface AreasClientProps {
   zoneOptions: ZoneOption[];
 }
 
-export default function AreasClient({ initialAreas, zoneOptions }: AreasClientProps) {
+export function AreasClient({ initialAreas, zoneOptions }: AreasClientProps) {
   const [areas, setAreas] = useState(initialAreas);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
@@ -55,6 +67,7 @@ export default function AreasClient({ initialAreas, zoneOptions }: AreasClientPr
   const [areaZoneId, setAreaZoneId] = useState(zoneOptions[0]?.id ?? "");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   function openAdd() {
     setDialogMode("add");
@@ -65,14 +78,14 @@ export default function AreasClient({ initialAreas, zoneOptions }: AreasClientPr
     setDialogOpen(true);
   }
 
-  function openEdit(area: Area) {
+  const openEdit = useCallback((area: Area) => {
     setDialogMode("edit");
     setAreaName(area.name);
     setAreaRef(area.referenceNumber);
     setAreaZoneId(area.zoneId);
     setEditingId(area.id);
     setDialogOpen(true);
-  }
+  }, []);
 
   function handleSave() {
     if (!areaName.trim()) return;
@@ -82,8 +95,8 @@ export default function AreasClient({ initialAreas, zoneOptions }: AreasClientPr
         if (result.success && result.data) {
           const newArea = result.data as { id: string; name: string; referenceNumber: string | null; createdAt: string };
           const zoneName = zoneOptions.find((z) => z.id === areaZoneId)?.name ?? "";
-          setAreas([
-            ...areas,
+          setAreas((prev) => [
+            ...prev,
             {
               id: newArea.id,
               name: newArea.name,
@@ -97,27 +110,38 @@ export default function AreasClient({ initialAreas, zoneOptions }: AreasClientPr
               }),
             },
           ]);
+          toast.success("Area created successfully.");
+        } else {
+          toast.error("Failed to create area.");
         }
       } else if (editingId) {
         const result = await updateDistrict(editingId, areaName.trim(), areaRef.trim() || undefined);
         if (result.success) {
-          setAreas(
-            areas.map((a) =>
+          setAreas((prev) =>
+            prev.map((a) =>
               a.id === editingId ? { ...a, name: areaName.trim(), referenceNumber: areaRef.trim() } : a
             )
           );
+          toast.success("Area updated successfully.");
+        } else {
+          toast.error("Failed to update area.");
         }
       }
       setDialogOpen(false);
     });
   }
 
-  function handleDelete(id: string) {
+  function handleDeleteConfirm() {
+    if (!deleteTarget) return;
     startTransition(async () => {
-      const result = await deleteDistrict(id);
+      const result = await deleteDistrict(deleteTarget.id);
       if (result.success) {
-        setAreas(areas.filter((a) => a.id !== id));
+        setAreas((prev) => prev.filter((a) => a.id !== deleteTarget.id));
+        toast.success(`Area "${deleteTarget.name}" deleted.`);
+      } else {
+        toast.error("Failed to delete area.");
       }
+      setDeleteTarget(null);
     });
   }
 
@@ -152,7 +176,7 @@ export default function AreasClient({ initialAreas, zoneOptions }: AreasClientPr
               variant="ghost"
               size="icon"
               className="size-8 text-destructive"
-              onClick={() => handleDelete(row.original.id)}
+              onClick={() => setDeleteTarget({ id: row.original.id, name: row.original.name })}
             >
               <Trash2 className="size-4" />
             </Button>
@@ -160,8 +184,7 @@ export default function AreasClient({ initialAreas, zoneOptions }: AreasClientPr
         ),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [areas]
+    [openEdit]
   );
 
   return (
@@ -173,7 +196,7 @@ export default function AreasClient({ initialAreas, zoneOptions }: AreasClientPr
           { label: "Areas" },
         ]}
         actions={
-          <Button className="bg-primary text-white hover:bg-primary/90" onClick={openAdd}>
+          <Button onClick={openAdd}>
             <Plus className="mr-1 size-4" />
             Add Area
           </Button>
@@ -191,7 +214,7 @@ export default function AreasClient({ initialAreas, zoneOptions }: AreasClientPr
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label className="mb-1.5 block text-sm font-medium">Area Name</label>
+              <Label className="mb-1.5">Area Name</Label>
               <Input
                 placeholder="Area name"
                 value={areaName}
@@ -199,7 +222,7 @@ export default function AreasClient({ initialAreas, zoneOptions }: AreasClientPr
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium">Reference Number</label>
+              <Label className="mb-1.5">Reference Number</Label>
               <Input
                 placeholder="Reference number"
                 value={areaRef}
@@ -207,7 +230,7 @@ export default function AreasClient({ initialAreas, zoneOptions }: AreasClientPr
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium">Zone</label>
+              <Label className="mb-1.5">Zone</Label>
               <Select value={areaZoneId} onValueChange={setAreaZoneId}>
                 <SelectTrigger>
                   <SelectValue />
@@ -227,7 +250,6 @@ export default function AreasClient({ initialAreas, zoneOptions }: AreasClientPr
               Cancel
             </Button>
             <Button
-              className="text-white"
               onClick={handleSave}
               disabled={!areaName.trim() || isPending}
             >
@@ -236,6 +258,28 @@ export default function AreasClient({ initialAreas, zoneOptions }: AreasClientPr
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Area</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>{deleteTarget?.name}</strong>? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction disabled={isPending} onClick={handleDeleteConfirm}>
+              {isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
