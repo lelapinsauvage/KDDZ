@@ -2,7 +2,7 @@
 
 import { useEffect } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useSearchParams } from "next/navigation"
 import { useSession } from "next-auth/react"
 import {
   LayoutDashboard,
@@ -129,20 +129,30 @@ const badgeColors: Record<keyof SidebarBadges, string> = {
 // Active-state detection
 // ---------------------------------------------------------------------------
 
-function isLeafActive(href: string, pathname: string): boolean {
+function isLeafActive(href: string, pathname: string, searchParams?: URLSearchParams): boolean {
+  const [hrefPath, hrefQuery] = href.split("?")
+  if (hrefQuery) {
+    // For hrefs with query params (e.g. "/children?tab=calls"), require exact path + param match
+    if (pathname !== hrefPath) return false
+    const expected = new URLSearchParams(hrefQuery)
+    for (const [key, value] of expected) {
+      if (searchParams?.get(key) !== value) return false
+    }
+    return true
+  }
   return pathname === href || pathname.startsWith(href + "/")
 }
 
-function hasActiveChild(items: NavItem[], pathname: string): boolean {
+function hasActiveChild(items: NavItem[], pathname: string, searchParams?: URLSearchParams): boolean {
   return items.some((item) => {
-    if (isAccordion(item)) return hasActiveChild(item.children, pathname)
-    return isLeafActive(item.href, pathname)
+    if (isAccordion(item)) return hasActiveChild(item.children, pathname, searchParams)
+    return isLeafActive(item.href, pathname, searchParams)
   })
 }
 
-function sectionHasActiveChild(section: NavSection, pathname: string): boolean {
-  if (isSectionAccordion(section)) return hasActiveChild(section.children, pathname)
-  return isLeafActive(section.href, pathname)
+function sectionHasActiveChild(section: NavSection, pathname: string, searchParams?: URLSearchParams): boolean {
+  if (isSectionAccordion(section)) return hasActiveChild(section.children, pathname, searchParams)
+  return isLeafActive(section.href, pathname, searchParams)
 }
 
 // ---------------------------------------------------------------------------
@@ -439,17 +449,17 @@ function NavBadge({ badgeKey, badges }: { badgeKey?: keyof SidebarBadges; badges
 function NavItemRenderer({
   item,
   pathname,
+  searchParams,
   badges,
-  depth = 1,
 }: {
   item: NavItem
   pathname: string
+  searchParams: URLSearchParams
   badges?: SidebarBadges
-  depth?: number
 }) {
   if (!isAccordion(item)) {
     // Leaf item
-    const active = isLeafActive(item.href, pathname)
+    const active = isLeafActive(item.href, pathname, searchParams)
     return (
       <SidebarMenuSubItem>
         <SidebarMenuSubButton
@@ -473,7 +483,7 @@ function NavItemRenderer({
   }
 
   // Nested accordion (depth 2+)
-  const isOpen = hasActiveChild(item.children, pathname)
+  const isOpen = hasActiveChild(item.children, pathname, searchParams)
   return (
     <SidebarMenuSubItem>
       <Collapsible defaultOpen={isOpen} className="group/subcollapsible">
@@ -494,8 +504,8 @@ function NavItemRenderer({
                 key={isAccordion(child) ? child.title : child.href}
                 item={child}
                 pathname={pathname}
+                searchParams={searchParams}
                 badges={badges}
-                depth={depth + 1}
               />
             ))}
           </SidebarMenuSub>
@@ -509,15 +519,17 @@ function NavItemRenderer({
 function NavSectionRenderer({
   section,
   pathname,
+  searchParams,
   badges,
 }: {
   section: NavSection
   pathname: string
+  searchParams: URLSearchParams
   badges?: SidebarBadges
 }) {
   if (!isSectionAccordion(section)) {
     // Flat top-level link
-    const active = isLeafActive(section.href, pathname)
+    const active = isLeafActive(section.href, pathname, searchParams)
     return (
       <SidebarMenuItem>
         <SidebarMenuButton
@@ -526,7 +538,7 @@ function NavSectionRenderer({
           tooltip={section.label}
           className={
             active
-              ? "relative bg-sidebar-accent text-sidebar-accent-foreground font-medium rounded-lg border-l-[3px] border-l-sidebar-primary rounded-l-none pl-[9px] transition-all duration-200"
+              ? "relative bg-sidebar-accent text-sidebar-accent-foreground font-medium rounded-lg border-l-2 border-l-sidebar-primary rounded-l-none pl-2.5 transition-all duration-200"
               : "relative text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50 rounded-lg transition-all duration-200"
           }
         >
@@ -547,7 +559,7 @@ function NavSectionRenderer({
   }
 
   // Accordion section
-  const isOpen = hasActiveChild(section.children, pathname)
+  const isOpen = hasActiveChild(section.children, pathname, searchParams)
   return (
     <Collapsible defaultOpen={isOpen} asChild className="group/collapsible">
       <SidebarMenuItem>
@@ -568,6 +580,7 @@ function NavSectionRenderer({
                 key={isAccordion(item) ? item.title : item.href}
                 item={item}
                 pathname={pathname}
+                searchParams={searchParams}
                 badges={badges}
               />
             ))}
@@ -592,6 +605,7 @@ const TABLET_MAX = 1024
 
 export function AppSidebar({ userRole, badges, classes }: AppSidebarProps) {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
   const { data: session } = useSession()
   const { setOpen } = useSidebar()
   const sections = getNavForRole(userRole, classes)
@@ -613,7 +627,7 @@ export function AppSidebar({ userRole, badges, classes }: AppSidebarProps) {
   return (
     <Sidebar
       collapsible="icon"
-      className="top-[56px] h-[calc(100svh-56px)]"
+      className="top-(--navbar-height) h-[calc(100svh-var(--navbar-height))]"
       aria-label="Main navigation"
     >
       {/* ── Brand header ── */}
@@ -665,6 +679,7 @@ export function AppSidebar({ userRole, badges, classes }: AppSidebarProps) {
                 key={section.label}
                 section={section}
                 pathname={pathname}
+                searchParams={searchParams}
                 badges={badges}
               />
             ))}
