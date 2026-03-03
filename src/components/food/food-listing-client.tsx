@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useTransition } from "react";
+import { useState, useMemo, useCallback, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { type ColumnDef } from "@tanstack/react-table";
@@ -60,6 +60,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { createFood, updateFood, deleteFood } from "@/lib/actions/food";
+import { FOOD_CATEGORY_COLORS } from "@/lib/food-colors";
 import { toast } from "sonner";
 
 // ── Types ───────────────────────────────────────
@@ -74,13 +75,6 @@ export interface FoodItem {
 }
 
 // ── Category helpers ────────────────────────────
-const categoryColors: Record<FoodCategory, string> = {
-  BREAKFAST: "bg-[#A0784C]/15 text-[#8B6537] border-[#A0784C]/25",
-  LUNCH: "bg-[#C17C5A]/15 text-[#A0613E] border-[#C17C5A]/25",
-  DESSERT: "bg-[#B07D62]/15 text-[#9A664A] border-[#B07D62]/25",
-  SNACK: "bg-[#059669]/15 text-[#047857] border-[#059669]/25",
-};
-
 const categoryLabels: Record<FoodCategory, string> = {
   BREAKFAST: "Breakfast",
   LUNCH: "Lunch",
@@ -88,11 +82,11 @@ const categoryLabels: Record<FoodCategory, string> = {
   SNACK: "Snack",
 };
 
-const categoryIcons: Record<FoodCategory, { icon: typeof Coffee; color: string; bg: string }> = {
-  BREAKFAST: { icon: Coffee, color: "text-[#A0784C]", bg: "bg-[#A0784C]/10" },
-  LUNCH: { icon: Soup, color: "text-[#C17C5A]", bg: "bg-[#C17C5A]/10" },
-  DESSERT: { icon: Cake, color: "text-[#B07D62]", bg: "bg-[#B07D62]/10" },
-  SNACK: { icon: Cookie, color: "text-[#059669]", bg: "bg-[#059669]/10" },
+const categoryIcons: Record<FoodCategory, { icon: typeof Coffee }> = {
+  BREAKFAST: { icon: Coffee },
+  LUNCH: { icon: Soup },
+  DESSERT: { icon: Cake },
+  SNACK: { icon: Cookie },
 };
 
 // ── Props ───────────────────────────────────────
@@ -147,19 +141,19 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
     setDialogOpen(true);
   }
 
-  function openEdit(food: FoodItem) {
+  const openEdit = useCallback((food: FoodItem) => {
     setDialogMode("edit");
     setEditingId(food.id);
     setFormName(food.name);
     setFormCategory(food.category);
     setFormActive(food.isActive);
     setDialogOpen(true);
-  }
+  }, []);
 
-  function openDelete(food: FoodItem) {
+  const openDelete = useCallback((food: FoodItem) => {
     setDeletingItem(food);
     setDeleteDialogOpen(true);
-  }
+  }, []);
 
   function handleSave() {
     if (!formName.trim()) return;
@@ -229,8 +223,9 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
         ),
         cell: ({ row }) => {
           const cat = row.original.category;
+          const colors = FOOD_CATEGORY_COLORS[cat];
           return (
-            <Badge className={categoryColors[cat]}>
+            <Badge className={`${colors.bg} ${colors.text}`}>
               {categoryLabels[cat]}
             </Badge>
           );
@@ -343,8 +338,7 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
         enableSorting: false,
       },
     ],
-
-    []
+    [openEdit, openDelete]
   );
 
   return (
@@ -382,7 +376,8 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
               { cat: "SNACK" as FoodCategory, label: "Snack" },
             ] as const
           ).map(({ cat, label }) => {
-            const { icon: Icon, color, bg } = categoryIcons[cat];
+            const { icon: Icon } = categoryIcons[cat];
+            const colors = FOOD_CATEGORY_COLORS[cat];
             return (
               <Card
                 key={cat}
@@ -393,9 +388,9 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
               >
                 <CardContent className="flex items-center gap-4">
                   <div
-                    className={`flex size-10 items-center justify-center rounded-xl ${bg}`}
+                    className={`flex size-10 items-center justify-center rounded-xl ${colors.bg}`}
                   >
-                    <Icon className={`size-5 ${color}`} />
+                    <Icon className={`size-5 ${colors.text}`} />
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">{label}</p>

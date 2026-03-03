@@ -16,6 +16,7 @@ import {
 import Link from "next/link";
 
 import { cn } from "@/lib/utils";
+import { FOOD_CATEGORY_COLORS } from "@/lib/food-colors";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -79,19 +80,12 @@ const MONTH_NAMES = [
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-const MEALS: { type: MealType; label: string; pillBg: string; pillText: string }[] = [
-  { type: "BREAKFAST", label: "Breakfast", pillBg: "bg-amber-100", pillText: "text-amber-800" },
-  { type: "LUNCH", label: "Lunch", pillBg: "bg-emerald-100", pillText: "text-emerald-800" },
-  { type: "SNACK", label: "Snack", pillBg: "bg-orange-100", pillText: "text-orange-800" },
-  { type: "DESSERT", label: "Dessert", pillBg: "bg-pink-100", pillText: "text-pink-800" },
+const MEALS: { type: MealType; label: string }[] = [
+  { type: "BREAKFAST", label: "Breakfast" },
+  { type: "LUNCH", label: "Lunch" },
+  { type: "SNACK", label: "Snack" },
+  { type: "DESSERT", label: "Dessert" },
 ];
-
-const MEAL_LABEL_COLORS: Record<string, string> = {
-  BREAKFAST: "text-amber-600",
-  LUNCH: "text-emerald-600",
-  SNACK: "text-orange-600",
-  DESSERT: "text-pink-600",
-};
 
 function toISODate(year: number, month: number, day: number): string {
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -577,13 +571,14 @@ export function FoodCalendarClient({
                                 {MEALS.map((meal) => {
                                   const entry = dayData[meal.type];
                                   if (!entry) return null;
+                                  const colors = FOOD_CATEGORY_COLORS[meal.type];
                                   return (
                                     <span
                                       key={meal.type}
                                       className={cn(
                                         "inline-block truncate rounded-full px-2 py-0.5 text-[10px] font-medium leading-tight",
-                                        meal.pillBg,
-                                        meal.pillText
+                                        colors.bg,
+                                        colors.text
                                       )}
                                       title={`${meal.label}: ${entry.foodName}`}
                                     >
@@ -606,18 +601,21 @@ export function FoodCalendarClient({
 
         {/* Legend */}
         <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-          {MEALS.map((meal) => (
-            <span
-              key={meal.type}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-medium",
-                meal.pillBg,
-                meal.pillText
-              )}
-            >
-              {meal.label}
-            </span>
-          ))}
+          {MEALS.map((meal) => {
+            const colors = FOOD_CATEGORY_COLORS[meal.type];
+            return (
+              <span
+                key={meal.type}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-medium",
+                  colors.bg,
+                  colors.text
+                )}
+              >
+                {meal.label}
+              </span>
+            );
+          })}
           <span className="ml-2 text-muted-foreground">
             Click a day to assign meals
           </span>
@@ -649,7 +647,7 @@ export function FoodCalendarClient({
           <div className="space-y-5 py-2">
             {/* Breakfast */}
             <div className="space-y-1.5">
-              <label className={cn("text-sm font-medium", MEAL_LABEL_COLORS.BREAKFAST)}>
+              <label className={cn("text-sm font-medium", FOOD_CATEGORY_COLORS.BREAKFAST.text)}>
                 Breakfast
               </label>
               <MealCombobox
@@ -662,7 +660,7 @@ export function FoodCalendarClient({
 
             {/* Lunch */}
             <div className="space-y-1.5">
-              <label className={cn("text-sm font-medium", MEAL_LABEL_COLORS.LUNCH)}>
+              <label className={cn("text-sm font-medium", FOOD_CATEGORY_COLORS.LUNCH.text)}>
                 Lunch
               </label>
               <MealCombobox
@@ -675,7 +673,7 @@ export function FoodCalendarClient({
 
             {/* Snack */}
             <div className="space-y-1.5">
-              <label className={cn("text-sm font-medium", MEAL_LABEL_COLORS.SNACK)}>
+              <label className={cn("text-sm font-medium", FOOD_CATEGORY_COLORS.SNACK.text)}>
                 Snack
               </label>
               <MealCombobox
@@ -688,7 +686,7 @@ export function FoodCalendarClient({
 
             {/* Dessert */}
             <div className="space-y-1.5">
-              <label className={cn("text-sm font-medium", MEAL_LABEL_COLORS.DESSERT)}>
+              <label className={cn("text-sm font-medium", FOOD_CATEGORY_COLORS.DESSERT.text)}>
                 Dessert
               </label>
               <MealCombobox
