@@ -24,7 +24,7 @@ const CLASS_COLORS = [
 ];
 
 const GENDER_COLORS = ["#2563EB", "#E11D48"];
-const ATTENDANCE_COLORS = ["#16A34A", "#DC2626", "#D97706"];
+export const ATTENDANCE_COLORS = ["#16A34A", "#DC2626", "#D97706"];
 
 interface DemographicsSectionProps {
   childrenPerClass: Array<{ name: string; value: number }>;

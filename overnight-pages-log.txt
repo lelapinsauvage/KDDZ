@@ -1,0 +1,726 @@
+=== OVERNIGHT PAGES START — Mon Mar  2 22:30:38 CET 2026 ===
+
+=== Phase 1: Dashboard layout — Mon Mar  2 22:30:38 CET 2026 ===
+Done. Here's what changed:
+
+**Sections reordered to match old app layout:**
+
+| Row | Section | What moved |
+|-----|---------|------------|
+| 1 | Greeting | (unchanged) |
+| 2 | Overview — Branches, Classes, Children | (unchanged) |
+| 3 | **Charts** — Attendance, Children/Class, Gender | **Moved up from bottom** |
+| 4 | Daily Compliance — Attendance, Absence, Missing Reports | (shifted down by 1) |
+| 5 | Operations — **Accounting, Accidents, Calls** | **Card order fixed** (was Calls, Accidents, Accounting) |
+| 6 | Medical Reports — Published, Missing, Drafts | (shifted down by 1) |
+| 7 | Assessments — Published, Missing, Drafts | (shifted down by 1) |
+
+Both `page.tsx` and `dashboard-skeleton.tsx` updated, TypeScript passes clean.
+To https://github.com/lelapinsauvage/KDDZ.git
+   d96acdf..a8e20ab  main -> main
+=== Phase 1: Dashboard layout COMPLETE — Mon Mar  2 22:32:29 CET 2026 ===
+
+=== Phase 2: Children listing — Mon Mar  2 22:32:29 CET 2026 ===
+Done. Here's a summary of all changes:
+
+### `src/components/children/children-columns.tsx`
+- **Split "Full Name"** into separate **"First Name"** and **"Last Name"** columns (both sortable, both link to child detail)
+- **Added "Nationality"** column (shows nationality or dash, sortable)
+- **Added "Created Date"** column (formatted dd/MM/yyyy, sortable)
+- **Added `createdAt`** to the `ChildRow` interface
+- **Reordered columns** to match old PHP app: Avatar → First Name → Last Name → DOB → Branch → Class → Nationality → Gender → Created → Status → Actions
+
+### `src/components/children/children-page-client.tsx`
+- Reordered export columns to match the new column order
+- Added "Created Date" to the export with dd/MM/yyyy formatting
+- Filters remain: Search, Branch, Class, Gender, Status (matching old app's toolbar filters)
+
+### `src/lib/actions/children.ts`
+- Added server-side sorting support for `firstName`, `lastName`, `nationality`, and `createdAt`
+- Replaced the old `fullName` sort with individual `firstName`/`lastName` sorts
+To https://github.com/lelapinsauvage/KDDZ.git
+   a8e20ab..f280444  main -> main
+=== Phase 2: Children listing COMPLETE — Mon Mar  2 22:36:59 CET 2026 ===
+
+=== Phase 3: Daily reports listing — Mon Mar  2 22:36:59 CET 2026 ===
+Done. Here's a summary of what was changed:
+
+**Old PHP app columns:** `#` | Image | F Name | L Name | Status | Branch | Class | Report Date | Date (created) | Action
+
+**New app columns (before):** Date | Child (combined name+class) | Breakfast | Lunch | Sleep | Mood | Status | By | Actions
+
+**New app columns (after):** Image | F Name | L Name | Status | Branch | Class | Report Date | Created Date | Action
+
+**Changes made:**
+
+1. **`page.tsx`** — Updated serialization to pass `photo`, `firstName`, `lastName`, `reportDate`, and `createdAt` as separate fields (removed `breakfast`, `lunch`, `sleep`, `sleepFrom`, `sleepTo`, `mood`)
+
+2. **`daily-reports-client.tsx`** — 
+   - Updated `DailyReportRow` type to match new fields
+   - Replaced 8 detail-oriented columns (date, child combo, breakfast dots, lunch dots, sleep, mood, status, by) with 9 columns matching old app order
+   - Removed unused helpers (`getMoodConfig`, `getPortionConfig`, `MealDots`, avatar functions)
+   - Cleaned up unused icon imports
+   - Updated export columns to match
+   - All existing filters preserved: name search, status dropdown, branch dropdown, class dropdown, date range (from/to)
+   - Actions: view, edit, print, delete + submit (for drafts)
+To https://github.com/lelapinsauvage/KDDZ.git
+   f280444..f1d21b4  main -> main
+=== Phase 3: Daily reports listing COMPLETE — Mon Mar  2 22:41:16 CET 2026 ===
+
+=== Phase 4: Absent reports listing — Mon Mar  2 22:41:16 CET 2026 ===
+Done. Here's a summary of the changes:
+
+**Columns updated** (now match old PHP app: Image, F Name, L Name, Status, Branch, Class, Report Date, Created Date, Action):
+- Replaced combined "Child" name+avatar column with separate **Image** (photo), **F Name**, **L Name** columns
+- Removed **Reason** and **Reported By** columns
+- Added **Branch**, **Class**, **Report Date**, **Created Date** columns
+- Action column keeps Approve/Reject buttons for PENDING reports + dropdown menu
+
+**Filters updated** (now match daily reports structure):
+- Removed status summary pills (PENDING/APPROVED/REJECTED toggle buttons)
+- Added **Date range** (From/To) date inputs
+- Added **Class** dropdown filter
+- Added **Status** dropdown (Pending/Approved/Rejected)
+- Kept **Search** by child name and **Branch** dropdown
+
+**page.tsx updated** to pass all required fields: `photo`, `firstName`, `lastName`, `className`, `reportDate`, `createdAt`.
+To https://github.com/lelapinsauvage/KDDZ.git
+   f1d21b4..55e791d  main -> main
+=== Phase 4: Absent reports listing COMPLETE — Mon Mar  2 22:44:20 CET 2026 ===
+
+=== Phase 5: Medical listings — Mon Mar  2 22:44:20 CET 2026 ===
+Done. Here's a summary of what was changed:
+
+**`src/lib/actions/medical.ts`** - Added `class: true` and `schoolYear: true` to the child include in `getMedicalForms`
+
+**All 3 server pages** (`general/page.tsx`, `suffering/page.tsx`, `visits/page.tsx`):
+- Now fetch `getClasses()` and `getSchoolYears()` alongside branches
+- Serialize child fields: `firstName`, `lastName`, `dateOfBirth`, `gender`, `className`, `yearLabel`, `classId`, `schoolYearId`
+- Pass `classes` and `schoolYears` arrays to client components
+
+**All 3 client components** (`medical-general-client.tsx`, `suffering-list-client.tsx`, `medical-visits-client.tsx`):
+- **Columns** now match old PHP exactly in order: Image, F Name, L Name, DOB, Branch, Class, Year, Gender, Created Date, Action
+- **Filters**: Name search, Branch, Class, Year, Gender dropdowns
+- Actions: View, Edit, Delete all working
+- `tsc --noEmit` passes clean
+To https://github.com/lelapinsauvage/KDDZ.git
+   55e791d..6a31f10  main -> main
+=== Phase 5: Medical listings COMPLETE — Mon Mar  2 22:51:21 CET 2026 ===
+
+=== Phase 6: Vaccinations + Accidents — Mon Mar  2 22:51:21 CET 2026 ===
+Done. Here's a summary of the changes:
+
+**Vaccinations listing** — now matches old PHP column order:
+- Image, F Name, L Name, DOB, Branch, Class, Nationality, Gender, Date, Action
+- Added `nationality`, `gender`, `dateOfBirth`, `className`, `firstName`, `lastName` to the data pipeline
+- Updated `getVaccinations()` to include `child.class` relation
+
+**Accidents listing** — now matches old PHP column order:
+- Image, F Name, L Name, Cause, Branch, Class, Place, First Aid, Date, Action
+- Added `accidentCause` (from `data.accidentCause` or `data.cause`), `firstName`, `lastName`, `className` to the data pipeline
+- Key differentiators (Cause, Place, First Aid) are all visible columns
+
+**Files changed (6):**
+- `src/lib/actions/medical.ts` — added `class: true` to vaccination child include
+- `src/app/(app)/medical/vaccinations/page.tsx` — serialize child details
+- `src/app/(app)/medical/vaccinations/vaccinations-page-client.tsx` — updated interface
+- `src/app/(app)/medical/vaccinations/vaccinations-client.tsx` — new column structure
+- `src/app/(app)/medical/accidents/page.tsx` — serialize child details + accidentCause
+- `src/app/(app)/medical/accidents/accident-reports-client.tsx` — new column structure
+To https://github.com/lelapinsauvage/KDDZ.git
+   6a31f10..9c918b2  main -> main
+=== Phase 6: Vaccinations + Accidents COMPLETE — Mon Mar  2 22:57:10 CET 2026 ===
+
+=== Phase 7: Employee listings — Mon Mar  2 22:57:10 CET 2026 ===
+Done. Here's a summary of all changes:
+
+**Files modified (4):**
+
+1. **`src/components/employees/employee-columns.tsx`** — Rewrote columns to match old PHP:
+   - Split "Full Name" → separate "F Name" + "L Name" columns (both link to detail)
+   - Replaced Email with DOB (dd/MM/yyyy format)
+   - Replaced Phone with Mobile
+   - Added Nationality, Gender columns
+   - Replaced Hire Date with Created Date
+   - Removed Specialization from listing (kept in detail via tooltip)
+   - Kept Status (improvement over old app)
+   - Column order: Avatar → F Name → L Name → DOB → Branch → Mobile → Nationality → Gender → Created Date → Status → Actions
+
+2. **`src/lib/map-employee.ts`** — Added mapping for `mobile`, `dateOfBirth`, `nationality`, `gender`, `createdAt` from Prisma records
+
+3. **`src/components/employees/employee-listing-client.tsx`** — Updated export columns to match new column order, updated search to filter by name/mobile/nationality instead of email
+
+4. **`src/app/(app)/employees/staff/staff-page-client.tsx`** — Fixed Role column splice index (2→3 since name is now 2 columns), updated search filter
+
+**Verification:** `npx tsc --noEmit` passes cleanly. All 4 employee pages (teachers, nurses, doctors, managers) plus the staff page use the shared components.
+To https://github.com/lelapinsauvage/KDDZ.git
+   9c918b2..989d2bd  main -> main
+=== Phase 7: Employee listings COMPLETE — Mon Mar  2 23:02:37 CET 2026 ===
+
+=== Phase 8: Classes listing — Mon Mar  2 23:02:37 CET 2026 ===
+Done. Here's what was changed:
+
+**Old PHP app** had a DataTable with columns: Checkbox, ID, Image, Class Name, Language, Max Students, Branch, Date, Action — with per-column filters.
+
+**Changes made** (3 files):
+
+1. **`src/components/classes/classes-client.tsx`** — Added:
+   - `viewMode` state with card/table toggle buttons (LayoutGrid + TableIcon icons, matching the children page pattern)
+   - Search input that filters by class name
+   - Table view with columns: Class Name, Language, Max Students, Branch, Students, Status, Created Date, Action
+   - `createdAt` field to `ClassItem` interface
+   - Existing card grid preserved as default view
+
+2. **`src/app/(app)/classes/page.tsx`** — Maps `createdAt` from the Prisma query result
+
+3. **`src/app/(app)/branches/[id]/classes/page.tsx`** — Same `createdAt` mapping for the branch detail classes page
+
+TypeScript check passes cleanly. Committed as `4957915`.
+To https://github.com/lelapinsauvage/KDDZ.git
+   989d2bd..4957915  main -> main
+=== Phase 8: Classes listing COMPLETE — Mon Mar  2 23:05:51 CET 2026 ===
+
+=== Phase 9: Food listing + calendar — Mon Mar  2 23:05:51 CET 2026 ===
+Done. Here's a summary of what was compared and fixed:
+
+**Food Listing (`food.php` vs `food-listing-client.tsx`):**
+- Old PHP columns: `#`, Type, Name, Active, Date, Action
+- **Fixed**: Reordered columns to **Type → Name → Active → Created Date → Action** (matching old PHP)
+- **Added**: `createdAt` field to `FoodItem` interface and column with `en-GB` date formatting
+- **Renamed**: "Category" header → "Type", "Status" header → "Active" (matching old PHP labels)
+
+**Food Calendar (`food_calendar.php` vs `food-calendar-client.tsx`):**
+- Old PHP had 4 meal slots: Breakfast, Lunch, **Early Dinner**, Dessert
+- New app had only 3: Breakfast, Lunch, Dessert
+- **Added**: **Snack** meal slot (maps to old "Early Dinner") with orange color scheme, combobox in assignment dialog, calendar pills, and legend entry
+- Branch filter, month navigation, save/clear/delete, and print were already working correctly
+
+**Print page** (`printFoodCal.php` vs `print-client.tsx`): Already included SNACK — no changes needed.
+
+TypeScript check passed cleanly. Committed as `821a016`.
+To https://github.com/lelapinsauvage/KDDZ.git
+   4957915..821a016  main -> main
+=== Phase 9: Food listing + calendar COMPLETE — Mon Mar  2 23:09:58 CET 2026 ===
+
+=== Phase 10: Messages pages — Mon Mar  2 23:09:58 CET 2026 ===
+All done. Here's a summary of what was compared and changed:
+
+**Old PHP vs New App Comparison:**
+
+| Feature | Old PHP | New App (before) | Fix Applied |
+|---|---|---|---|
+| **Inbox columns**: #, From, Date, **Nature**, Subject, Message, Status, Actions | All present | Missing Nature | Added Nature column with colored badges |
+| **Sent columns**: #, To, Date, Nature, Subject, Message, Thread, Actions | All present | Already had all | Already matched |
+| **Body preview** in inbox/sent | Message column | Already had body preview under Subject | Already matched |
+| **Broadcast compose**: Branch/Class filter, Nature, Subject, Message | All present | Already had all | Already matched |
+| **Direct compose**: To, **Nature**, Subject, Message | All present | Missing Nature dropdown | Added Nature dropdown + server action support |
+| **Class compose**: Class, **Nature**, Subject, Message | All present | Missing Nature dropdown | Added Nature dropdown + server action support |
+
+**Files changed (4):**
+- `inbox-client.tsx` — Added `parseNature` helper, `NATURE_STYLES` map, Nature column (colored badges: General=gray, Urgent=red, Legal=amber, Event=blue), and clean subject display
+- `direct-message-client.tsx` — Added Nature dropdown (General/Urgent/Legal/Event), passes nature to `sendMessage`
+- `class-message-client.tsx` — Added Nature dropdown, passes nature to `sendClassMessage`
+- `messages.ts` (server actions) — Added `nature` field to `SendMessageData` and `SendClassMessageData`, prefixes subject with `[Nature]` tag
+
+TypeScript check passed cleanly. Committed as `42f4353`.
+To https://github.com/lelapinsauvage/KDDZ.git
+   821a016..42f4353  main -> main
+=== Phase 10: Messages pages COMPLETE — Mon Mar  2 23:14:59 CET 2026 ===
+
+=== Phase 11: Alarm pages — Mon Mar  2 23:14:59 CET 2026 ===
+Done. Here's a summary of what was done:
+
+**Comparison with old PHP app:**
+- Old `alarms.php` had two tables (Active Alarms + Sent/History) with columns: #, Alarm details, Alarm Time, Status, Actions
+- Old sub-pages (`alarmsVaccinations.php`, `alarmsBirthday.php`) had per-row actions (Mark as Viewed, Dismiss), date range filters, and status filters (New/Viewed)
+- New main `/alarms` page already had good functionality: grouped alarms by type with resolve/snooze actions on `AlarmActionCard`, counts by type linking to sub-pages
+- New sub-pages were **missing Actions columns** (except events which had a bare Eye button)
+
+**Changes made (13 files, 166 additions):**
+
+1. **Created shared `AlarmActionsCell` component** (`src/components/alarms/alarm-actions-cell.tsx`) — reusable dropdown with "Mark as Viewed" and "Dismiss" actions using `dismissAlarm` server action
+
+2. **Added Actions column to 6 alarm-table based sub-pages** (medical, medicine, insurance, contracts, requests, others) — using `AlarmActionsCell` with Mark as Viewed / Dismiss dropdown
+
+3. **Added Actions column to 5 derived-data sub-pages:**
+   - **Vaccinations** — View link to child's medical page (also added `childId` to data pipeline)
+   - **Birthdays** — View link to child's dashboard
+   - **Events** — Updated Eye button to proper link to event settings
+   - **Assessments** — View link to assessment settings
+   - **Payments** — `AlarmActionsCell` for alarm table rows + View link to child's accounting for overdue children
+
+4. **TypeScript check** passed with zero errors
+To https://github.com/lelapinsauvage/KDDZ.git
+   42f4353..80cccd8  main -> main
+=== Phase 11: Alarm pages COMPLETE — Mon Mar  2 23:21:07 CET 2026 ===
+
+=== Phase 12: Address management — Mon Mar  2 23:21:07 CET 2026 ===
+Done. Here's a summary of what was changed:
+
+**Schema changes:**
+- Added `referenceNumber` (optional string) to `Province`, `District`, and `Region` models in Prisma, mapped to `reference_number` column
+
+**Server actions (`settings.ts`):**
+- `createProvince`, `updateProvince` now accept optional `referenceNumber` param
+- `createDistrict`, `updateDistrict` now accept optional `referenceNumber` param
+- `createRegion`, `updateRegion` now accept optional `referenceNumber` param
+- Added cross-page revalidation (`/settings/zones`, `/settings/areas`)
+
+**Zones page** (old: Mouhafazat):
+- Added **Ref. Number** column to table
+- Added **Created Date** column to table
+- Added **Reference Number** input to add/edit dialog
+
+**Areas page** (old: Quadaa):
+- Added **Ref. Number** column to table
+- Added **Created Date** column to table
+- Added **Reference Number** input to add/edit dialog
+- Already had **Zone** (parent) column
+
+**Regions page** (tree view):
+- Added `#refNumber` display next to each Province, District, and Region name in the tree
+- Added **Reference Number** input to the add/edit dialog for all three entity types
+- Kept the tree view (improvement over old flat table)
+To https://github.com/lelapinsauvage/KDDZ.git
+   80cccd8..2d626a9  main -> main
+=== Phase 12: Address management COMPLETE — Mon Mar  2 23:26:58 CET 2026 ===
+
+=== Phase 13: Parent users — Mon Mar  2 23:26:58 CET 2026 ===
+Done. Here's what was changed:
+
+**Old PHP app had two tables:**
+1. "Children With Parent User" (blue box): #, Name, Username, Status, Branch, Class, Action
+2. "Children without Parent Users" (red box): #, Name, Branch, Class, Action (Create User)
+
+**New app previously:** Single flat table mixing all parent users, no visibility into children without accounts.
+
+**Changes made (3 files):**
+
+1. **`page.tsx`** — Now fetches two datasets: parent users with accounts (via `getParentUsers()`) and children without any parent account (via `db.child.findMany` with `parentUsers: { none: {} }`). Also passes `className` through.
+
+2. **`parent-users-client.tsx`** — Completely refactored to dual-table layout:
+   - **Table 1** "Children with Parent Account": Name (avatar + link), Username, Status, Branch, Class, Action (view/edit/password-reset/toggle-status)
+   - **Table 2** "Children without Parent Account": Name (avatar + link), Branch, Class, Action ("Create User" button)
+   - Each table has its own search field and count badge
+   - Creating a user from Table 2 moves the child to Table 1 in real-time
+   - Removed unused parent contact columns (those belong on detail page, not listing)
+
+3. **`parent-users.ts`** — Added `class: true` to the parent users query include so class names are available.
+To https://github.com/lelapinsauvage/KDDZ.git
+   2d626a9..35270c8  main -> main
+=== Phase 13: Parent users COMPLETE — Mon Mar  2 23:30:16 CET 2026 ===
+
+=== Phase 14: Accounting — Mon Mar  2 23:30:16 CET 2026 ===
+There are no code changes to commit. The accounting page already fully matches the old PHP app's structure and features:
+
+**Verified present:**
+- Summary stat cards: Total Revenue, Pending, Overdue, This Month (`accounting-client.tsx:202-274`)
+- Fee category tabs: ALL, REGISTRATION, MONTHLY, BUS, XTRA_TIME, OTHER (`accounting-client.tsx:75-82`)
+- Child × month grid with clickable cells and Grand Total row (`accounting-client.tsx:294-393`)
+- QuickPaymentDialog with all old fields: Amount, Currency, Method, Fee Type, Date, Coverage months, Notes, Attachment (`quick-payment-dialog.tsx`)
+- PaymentDialog with: Amount, Currency, Method, Category, Status, Notes, Date, Date From/To, Month, Receipt # (`payment-dialog.tsx`)
+- Child-level accounting page with per-category tables, edit/delete actions, CSV export (`children/[id]/accounting/accounting-client.tsx`)
+- TypeScript compiles cleanly
+
+No commit is needed since the new app already matches (and exceeds) the old PHP app's accounting functionality.
+Everything up-to-date
+=== Phase 14: Accounting COMPLETE — Mon Mar  2 23:32:17 CET 2026 ===
+
+=== Phase 15: Child dashboard — Mon Mar  2 23:32:17 CET 2026 ===
+Done. Here's a summary of what was changed:
+
+**Stat cards added (was 5 + donut, now 14 + donut):**
+
+| Row | Cards | Colors |
+|-----|-------|--------|
+| Row 1 | Calls In/Out, Accident Reports, Total Payments | purple, red, green |
+| Row 2 | Attendance, Absence, Missing Daily Rpt, Missing Absent Rpt | green, red, slate, slate |
+| Row 3 | Medical Published, Medical Missing, Medical Drafts | green, pink, slate |
+| Row 4 | Assessments Done, Assessments Missing, Assessments Incomplete, Assessment Drafts | green, pink, red, slate |
+
+**Profile fields added to sidebar:**
+- Bus (busAttendance)
+- Milk (milkType + milkPortions)
+- Lunch (lunchIncluded)
+- Diapers (diaperType)
+
+**Data tables verified:** Daily Reports, Absence Reports, Medical, Assessments — all 4 were already present.
+
+**Server-side changes:** `page.tsx` now computes medical/assessment breakdowns (published, missing, drafts, incomplete) from form statuses and passes them to the client. Removed unused `outstandingBalance` and `medicalRecords` stats, combined `incomingCalls`/`outgoingCalls` into `callsInOut`.
+To https://github.com/lelapinsauvage/KDDZ.git
+   35270c8..52025ab  main -> main
+=== Phase 15: Child dashboard COMPLETE — Mon Mar  2 23:37:32 CET 2026 ===
+
+=== Phase 16: Class dashboard — Mon Mar  2 23:37:32 CET 2026 ===
+Done. Here's what was created:
+
+**Old PHP app**: The `class_dashboard.php` had 49 stat cards across 3 tabs (5 daily report cards, 16 medical cards with published/incomplete/draft per type, 28 assessment cards with 4 states per 7 types), loaded via AJAX from `getclassdashboard`.
+
+**New app**: No `classes/[id]` page existed.
+
+**Created 2 files:**
+
+1. **`src/lib/actions/classes.ts`** — Added `getClassDashboard(classId)` server action that queries:
+   - Class info (name, branch, language, student count) with org access verification
+   - Birthday count for current month from children's DOBs
+   - Daily report counts by status (submitted/draft) for today, plus "without report" calculation
+   - Medical form counts (submitted, missing, draft) with missing = active children without a submitted form
+   - Assessment counts (submitted, missing, draft) using the same pattern
+
+2. **`src/app/(app)/classes/[id]/page.tsx`** — Class dashboard page with:
+   - Header showing class name, branch (MapPin), language (Globe), student count (Users)
+   - Back link to `/classes`
+   - 3 shadcn Tabs (line variant) with icons:
+     - **Daily Reports**: 5 StatCards — Birthdays (purple), Without Report (rose), Completed (emerald), Incomplete (amber), Drafts (sky)
+     - **Medical Reports**: 3 StatCards — Published (emerald), Missing (rose), Drafts (sky)
+     - **Assessments**: 3 StatCards — Completed (emerald), Missing (rose), Drafts (sky)
+
+TypeScript passes clean. Committed as `5ef70ee`.
+To https://github.com/lelapinsauvage/KDDZ.git
+   52025ab..5ef70ee  main -> main
+=== Phase 16: Class dashboard COMPLETE — Mon Mar  2 23:41:29 CET 2026 ===
+
+=== Phase 17: Attendance heatmap — Mon Mar  2 23:41:29 CET 2026 ===
+Done. Here's what was changed to match the old PHP Monthly Report:
+
+**Old app had** (from `Monthly_report.php`):
+- Color legend: Purple=No Report, Green=Present, Pink=Absent, Red=Weekends, Yellow=Holidays
+- Month/year picker, branch filter, print functionality (via DataTables)
+
+**New app was missing**: Weekend/Holiday status detection, those 2 legend items, and a print button.
+
+**Changes made:**
+
+1. **`src/lib/actions/attendance.ts`**:
+   - Extended `CellStatus` type with `"WEEKEND" | "HOLIDAY"`
+   - `getMonthlyAttendanceGrid` now fetches holidays from the `holidays` table (org-wide + branch-specific) and computes weekend days (Sat/Sun)
+   - Priority: Weekend > Holiday > Absent > Present > No Report (daycare is closed on weekends/holidays)
+
+2. **`src/components/attendance/attendance-heatmap.tsx`**:
+   - Added `WEEKEND` (gray-400) and `HOLIDAY` (amber-400) to color maps
+   - Added Weekend and Holiday items to the 5-color legend (matching old app exactly)
+   - Added a **Print** button with printer icon
+   - Updated tooltip text to show correct status names for all 5 types
+   - Print title changed to "Monthly Attendance Report" to match old app
+To https://github.com/lelapinsauvage/KDDZ.git
+   5ef70ee..c074938  main -> main
+=== Phase 17: Attendance heatmap COMPLETE — Mon Mar  2 23:46:09 CET 2026 ===
+
+=== Phase 18: Holiday calendar — Mon Mar  2 23:46:09 CET 2026 ===
+Done. Here's a summary of all changes made to match the old PHP app:
+
+**Fields added to the form:**
+- **Notification Subject** — was in the data model (`notificationTitle`) but missing from the form UI
+- **Character count** on Notification Message — shows `Characters: X / 155` with `(155 per SMS)` hint, plus `maxLength={155}` and Zod `.max(155)` validation
+- **Inform Teachers** — new toggle (Switch), persisted as `informTeachers` boolean in DB
+- **Send Via** — new dropdown with WhatsApp / SMS / Both options, persisted as `sendVia` string in DB
+
+**Fields modified:**
+- **Type** — changed from Holiday/Event to **Holiday/Strike** (matching old PHP app's dropdown)
+- **Days Before** — expanded from 0/1/3/7 to **0 through 7** (matching old PHP's 1-7 multi-select)
+
+**Files changed:**
+- `prisma/schema.prisma` — added `informTeachers` and `sendVia` columns, updated type comment
+- `src/lib/validations/settings.ts` — added new fields to Zod schema, added 155-char max on message
+- `src/lib/actions/settings.ts` — added new fields to `HolidayData` interface, create, and update
+- `src/app/(app)/settings/holidays/page.tsx` — serializes new fields from DB
+- `src/app/(app)/settings/holidays/holidays-client.tsx` — full form UI updates + calendar legend/badges
+To https://github.com/lelapinsauvage/KDDZ.git
+   c074938..5536fa7  main -> main
+=== Phase 18: Holiday calendar COMPLETE — Mon Mar  2 23:51:02 CET 2026 ===
+
+=== Phase 19: Employee calendar — Mon Mar  2 23:51:02 CET 2026 ===
+TypeScript compiles cleanly with no errors. The calendar page already matches the old PHP app - all status types, colors, form fields, and CRUD operations are faithfully reproduced. No changes needed.
+
+Since there are no code changes to make, there's nothing to commit. The employee calendar already matches the old PHP calendar.php app with:
+- Same 4 event statuses (Sick/blue, Absent/purple, Day Off/green, Warning/red)
+- Same form structure (Status dropdown, Reference Number hidden for Day Off, Date disabled)
+- Same Create/Update/Delete functionality
+- Same "Tasks" page title
+Everything up-to-date
+=== Phase 19: Employee calendar COMPLETE — Mon Mar  2 23:53:12 CET 2026 ===
+
+=== Phase 20: Assessments listing — Mon Mar  2 23:53:12 CET 2026 ===
+Done. Here's a summary of the changes:
+
+**`src/lib/actions/assessments.ts`** — Made `assessmentType` optional in `getAssessments` so it can fetch all 7 types at once. Added `branchId` filter support. Added `branch: { select: { id, name } }` to the child include so branch data is available.
+
+**`src/app/(app)/assessments/page.tsx`** — Replaced the cards layout with a server page that fetches all assessments (across all types) plus classes and branches, serializes them with separate `firstName`, `lastName`, `photo`, `branchName`, `assessmentTypeName`, and passes to the new client component.
+
+**`src/app/(app)/assessments/assessments-listing-client.tsx`** (new) — Unified listing with columns matching the old PHP app:
+- **Avatar** — child photo or colored initials (reuses `getInitials`/`getAvatarColor`)
+- **First Name** — links to assessment detail
+- **Last Name**
+- **Assessment Type** — badge showing age range (e.g. "1-3 Months")
+- **Branch**
+- **Class**
+- **Status** — Draft/Submitted/Reviewed with colored badges
+- **Date** — dd/mm/yyyy format
+- **Action** — View/Edit/Delete dropdown
+
+Toolbar filters: **Type** (all 7 assessment types), **Branch**, **Class**, **Status**. Plus quick links to Assessment Dates and New Assessment.
+To https://github.com/lelapinsauvage/KDDZ.git
+   5536fa7..3bff2ae  main -> main
+=== Phase 20: Assessments listing COMPLETE — Mon Mar  2 23:58:37 CET 2026 ===
+
+=== Phase 21: Employee attendance — Mon Mar  2 23:58:37 CET 2026 ===
+Done. Here's a summary of what was compared and changed:
+
+**Attendance Upload page** (`/employees/attendance`) - Already matches the old `attendance.php`:
+- "Teachers Attendance Upload" title
+- "CSV ONLY" label
+- File input for CSV
+- "Upload Attendance" button
+
+**Attendance Logs page** (`/employees/attendance-logs`) - Updated to match old `PA_logs.php`:
+
+| Old PHP Columns | New App (Before) | New App (After) |
+|---|---|---|
+| AC No. | *(missing)* | AC No. (readerId) |
+| Name | Employee | Name |
+| Log | Log | Log |
+| Date Out | Date | Date Out |
+| Time Out | Time Out | Time Out |
+| Date In | *(missing)* | Date In |
+| Time In | Time In | Time In |
+| Datetime | Datetime | Datetime |
+
+Removed columns not in old modal: Role, Status, Card ID, Note
+
+**Edit dialog** updated from (Employee, Date, Time In, Time Out, Note) to match old app: (Date Out, Time Out, Date In, Time In)
+To https://github.com/lelapinsauvage/KDDZ.git
+   3bff2ae..e04f06a  main -> main
+=== Phase 21: Employee attendance COMPLETE — Tue Mar  3 00:02:48 CET 2026 ===
+
+=== Phase 22: Calls management — Tue Mar  3 00:02:48 CET 2026 ===
+Done. Here's what was fixed to match the old PHP app:
+
+**Changes made (3 files):**
+
+1. **`src/lib/actions/calls.ts`** — Added `staffId` to `CreateCallLogData` interface and passed it to the DB insert. Previously the `staffId` field in the schema was never populated.
+
+2. **`src/app/(app)/children/[id]/calls/call-report-dialog.tsx`** — Now passes `staffId: teacherId` to `createCallLog()`. The teacher selector was collecting the value but silently discarding it.
+
+3. **`src/app/(app)/children/[id]/calls/calls-client.tsx`** — Added an **Actions column** with a dropdown menu containing a functional **Delete** button (with confirmation), matching the old app's Action column. Uses `deleteCallLog` server action with `router.refresh()`.
+
+**Verification:** The existing listing columns (Date & Time, Type, Cause, Subject, Remarks, Filed By) and form sections (Call Type, Date, Time, Cause of Call, Subject, Remarks, Teacher selector, Attachments placeholder) already matched the old PHP app's structure. `npx tsc --noEmit` passes cleanly.
+To https://github.com/lelapinsauvage/KDDZ.git
+   e04f06a..3bab043  main -> main
+=== Phase 22: Calls management COMPLETE — Tue Mar  3 00:06:28 CET 2026 ===
+
+=== Phase 23: Daily report form — Tue Mar  3 00:06:28 CET 2026 ===
+All done. Here's a summary of the gaps found and what was added:
+
+**Gap Analysis (Old PHP vs New App):**
+
+| Old Section | Missing Fields | Status |
+|---|---|---|
+| Attendance | `checkInTime`, `checkOutTime` | Added |
+| Milk | `milkType` (Formula/Breast/Cow/Other), `scoops` | Added |
+| Sleep | `sleepQuality` (Good/Fair/Poor) | Added |
+| Activities | Entire section missing | Added new Card |
+| Health | `medicine` field | Added |
+
+**Files changed (9 files, +297/-22 lines):**
+
+1. **`prisma/schema.prisma`** - Added `checkInTime`, `checkOutTime`, `sleepQuality`, `activities`, `medicine` to DailyReport; added `milkType`, `scoops` to DailyReportMilk
+2. **`src/lib/validations/daily-report.ts`** - Added all new fields to Zod schema
+3. **`src/components/daily-reports/daily-report-form.tsx`** - Added Attendance Times card, milk type/scoops fields, sleep quality dropdown, Activities card, and Medicine field in Health section
+4. **`src/lib/actions/daily-reports.ts`** - Updated create & update to persist all new fields
+5. **`src/app/(app)/daily-reports/[id]/edit/page.tsx`** - Maps new fields to form defaults
+6. **`src/app/(app)/daily-reports/[id]/page.tsx`** + **detail-client.tsx** - Shows new fields in detail view
+7. **`src/app/(app)/daily-reports/[id]/print/page.tsx`** + **print-client.tsx** - Shows new fields in print view
+To https://github.com/lelapinsauvage/KDDZ.git
+   3bab043..9caf865  main -> main
+=== Phase 23: Daily report form COMPLETE — Tue Mar  3 00:14:36 CET 2026 ===
+
+=== Phase 24: Absent report form — Tue Mar  3 00:14:36 CET 2026 ===
+All done. Here's a summary of what was changed:
+
+**Prisma schema** (`prisma/schema.prisma`):
+- Added `absentFrom` (Date, nullable), `absentTo` (Date, nullable), `hospitalized` (Boolean, default false), `hospitalName` (String, nullable), `doctorName` (String, nullable) to `AbsenceReport` model
+
+**Validation** (`src/lib/validations/absence-report.ts`):
+- Added matching fields to the zod schema
+
+**Form** (`src/components/absent-reports/absence-report-form.tsx`):
+- Added **Absent From / Absent To** date pickers in the Absence Details card
+- Added **Hospital Information** card with a toggle switch; hospital name and doctor name inputs show/hide based on toggle state
+- Added **Attachments** card with a file upload drop zone (UI placeholder)
+
+**Server actions** (`src/lib/actions/absent-reports.ts`):
+- Both `createAbsenceReport` and `updateAbsenceReport` now persist the new fields
+- Hospital fields are cleared when `hospitalized` is false
+
+**Detail view** (`detail-client.tsx`, `page.tsx`, `edit/page.tsx`):
+- Detail page shows absence period and hospital info when present
+- Edit page pre-populates the new fields
+To https://github.com/lelapinsauvage/KDDZ.git
+   9caf865..1194bcb  main -> main
+=== Phase 24: Absent report form COMPLETE — Tue Mar  3 00:19:49 CET 2026 ===
+
+=== Phase 25: Nursery settings — Tue Mar  3 00:19:49 CET 2026 ===
+Done. Here's what was added across 3 files:
+
+**`src/lib/validations/settings.ts`** — Added 17 new fields to the Zod schema:
+- Registration: `registration_number`, `registration_date`
+- Owner (person): `owner_type`, `owner_name`, `owner_father_name`, `owner_family_name`, `owner_id_number`, `owner_nationality`, `owner_place_of_birth`, `owner_date_of_birth`
+- Owner (entity): `entity_legal_name`, `entity_type`, `entity_registration_number`, `entity_representative_name`
+- Identity: `nursery_name_ar`, `nursery_name_latin`
+- Location: `nursery_province_id`, `nursery_district_id`, `nursery_region_id`
+
+**`src/app/(app)/settings/nursery/page.tsx`** — Fetches geographic data (`getRegions()`) in parallel with settings and passes `provinces` to the client component.
+
+**`src/app/(app)/settings/nursery/nursery-client.tsx`** — 4 new Card sections added below General Info:
+
+1. **Government Registration** — Registration number + date picker
+2. **Owner Information** — Toggle between Natural Person (name, father, family, ID, nationality, place/date of birth) and Legal Entity (legal name, entity type dropdown, reg number, representative name)
+3. **Nursery Identity** — Arabic name (`dir=rtl`) + Latin name
+4. **Location** — Cascading Governorate → District → Region dropdowns filtered from the provinces hierarchy
+To https://github.com/lelapinsauvage/KDDZ.git
+   1194bcb..243092e  main -> main
+=== Phase 25: Nursery settings COMPLETE — Tue Mar  3 00:24:18 CET 2026 ===
+
+=== Phase 26: New year setup — Tue Mar  3 00:24:18 CET 2026 ===
+All done. Here's a summary of what was created:
+
+**New file:** `src/app/(app)/settings/new-year/page.tsx`
+- Page header with "New Academic Year Setup" title and breadcrumbs
+- Amber warning banner about database archival (matching old PHP alert)
+- **Data Import Options** card with:
+  - Optional imports checkboxes: General Forms, Vaccinations, Suffering, Teachers, Nurses, Managers, Doctors, Holidays (first 4 checked by default, matching old PHP)
+  - Mandatory imports (disabled, locked): Classes, Branches, Children, Parents
+- **Teacher Reassignment** card — placeholder with description and TODO
+- **Child Class Progression** card — placeholder with description and TODO
+- Disabled submit button with "Coming Soon" note
+
+**Updated files:**
+- `app-sidebar.tsx` — added "New Academic Year" link under the Setting accordion
+- `page-header.tsx` — added `"new-year"` segment label for breadcrumbs
+To https://github.com/lelapinsauvage/KDDZ.git
+   243092e..f4ba142  main -> main
+=== Phase 26: New year setup COMPLETE — Tue Mar  3 00:26:45 CET 2026 ===
+
+=== Phase 27: Events calendar — Tue Mar  3 00:26:45 CET 2026 ===
+There are no changes to commit — the events calendar page is already fully implemented and passes TypeScript checks. No modifications were needed.
+
+**Summary:** The events calendar page (`src/app/(app)/settings/events/`) is complete with:
+- A custom month calendar view with navigation
+- A searchable data table below the calendar
+- Add/Edit/Delete event dialogs
+- All fields matching the old PHP app: Title, Description, Date, Event Type, Branch, Active
+- Server actions for full CRUD operations
+- Zod validation schema
+- TypeScript compiles cleanly
+
+No commit needed since no files were changed.
+Everything up-to-date
+=== Phase 27: Events calendar COMPLETE — Tue Mar  3 00:28:08 CET 2026 ===
+
+=== Phase 28: Branch dashboard — Tue Mar  3 00:28:08 CET 2026 ===
+Done. Here's what was done:
+
+**Old PHP app** had 2 stat cards with links: Total Classes → `classesperbranch.php`, Total Active Children → `childrenperbranch.php`.
+
+**New app** had 6 stat cards + compliance + documents but **no links on any cards**.
+
+**Changes made:**
+
+1. **`page.tsx`** — passed `branchId={id}` to the client component
+2. **`branch-dashboard-client.tsx`**:
+   - Added `Link` import from `next/link`
+   - Added `branchId` prop to the component
+   - Added `href` to 3 stat cards:
+     - Children → `/children?branch=[id]`
+     - Classes → `/branches/[id]/classes`
+     - Teachers → `/employees/teachers?branch=[id]`
+   - Cards with `href` are wrapped in `<Link>`, others remain plain cards
+
+TypeScript passes clean, committed as `0d74fc6`.
+To https://github.com/lelapinsauvage/KDDZ.git
+   f4ba142..0d74fc6  main -> main
+=== Phase 28: Branch dashboard COMPLETE — Tue Mar  3 00:29:34 CET 2026 ===
+
+=== Phase 29: Invoice print — Tue Mar  3 00:29:34 CET 2026 ===
+Done. Here's what was created:
+
+**New server action** — `getPayment(id)` in `src/lib/actions/payments.ts:68` fetches a single payment with child, branch, class, and creator data, with org-scoped access control.
+
+**New invoice page** at `/accounting/invoice/[id]`:
+
+- **`page.tsx`** — Server component that fetches the payment, serializes Decimal/Date types, and passes data to the client
+- **`invoice-client.tsx`** — Print-friendly receipt layout with:
+  - Nursery name, address, phone, email header
+  - Receipt number (derived from payment UUID: `REC-XXXXXXXX`)
+  - Child name and class
+  - Payment date, status, reference number
+  - Category description with coverage period dates
+  - Payment method and amount with proper currency formatting (USD/LBP)
+  - Notes section (if present)
+  - Recorded-by footer with generation timestamp
+  - Print button using `window.print()`
+  - Full `@media print` support via Tailwind `print:` utilities matching existing patterns
+
+Committed as `2635cf4 accounting: create invoice print page`.
+To https://github.com/lelapinsauvage/KDDZ.git
+   0d74fc6..2635cf4  main -> main
+=== Phase 29: Invoice print COMPLETE — Tue Mar  3 00:33:38 CET 2026 ===
+
+=== Phase 30: Draft pages — Tue Mar  3 00:33:38 CET 2026 ===
+TypeScript compiles with no errors. All draft pages are verified correct — no changes needed. Since there are no code changes, there's nothing to commit.
+
+**Summary:**
+- All three draft pages exist and correctly redirect to their respective listing pages with the appropriate status filter
+- `children/drafts` and `daily-reports/drafts` use `?status=DRAFT`
+- `absent-reports/drafts` uses `?status=PENDING` (correct per the `AbsenceStatus` enum which has no `DRAFT` value)
+- TypeScript compiles cleanly with no errors
+Everything up-to-date
+=== Phase 30: Draft pages COMPLETE — Tue Mar  3 00:34:23 CET 2026 ===
+
+=== Phase 31: Sidebar navigation — Tue Mar  3 00:34:23 CET 2026 ===
+Done. Here's a summary of all changes made to `app-sidebar.tsx`:
+
+### Changes Made
+
+**1. Messages extracted to its own top-level group** (was incorrectly inside Garderie Management)
+- Old PHP app had "Messages" as a standalone accordion section
+- Added 4 items matching old app: Inbox (`/messages/inbox`), Messages Portal (`/messages/compose`), Single Messaging (`/messages/compose/direct`), Sent Messages (`/messages/sent`)
+- Badge indicator for unread messages on Inbox item
+
+**2. Garderie Management cleaned up** — removed the 3 message items that didn't belong
+
+**3. Events Calendar added to Settings** — `/settings/events` (old app: `NotifCalendar.php` → "Events Calendar")
+
+**4. Notifications expanded from flat link to sub-accordion** with all 12 alarm category pages:
+- Overview, Birthdays, Assessments, Vaccinations, Medical, Medicine, Events, Insurance, Payments, Requests, Others, Contracts
+- All route to existing `/alarms/*` pages
+- Badge indicator preserved on Overview item
+
+**5. New icon imports**: `Cake` (birthdays), `Shield` (insurance)
+
+### Final sidebar structure matches old PHP app:
+1. Dashboard → 2. Garderie Management → 3. Classes (dynamic) → 4. Messages → 5. Children Management → 6. Food Management → 7. Employees Management → 8. Setting
+To https://github.com/lelapinsauvage/KDDZ.git
+   2635cf4..f8abf50  main -> main
+=== Phase 31: Sidebar navigation COMPLETE — Tue Mar  3 00:40:09 CET 2026 ===
+
+=== Phase 32: Mobile navigation — Tue Mar  3 00:40:09 CET 2026 ===
+Done. Here's what I verified and fixed:
+
+**Verification results:**
+- **Mobile 'More' sheet accordion structure**: Already mirrors the sidebar — `MobileMoreSheet` uses `getNavForRole()` from `app-sidebar.tsx`, so all sections, nested accordions, and dynamic class groupings are shared.
+- **All menu items present**: Both sidebar and mobile use the same `adminNav`, `teacherNav`, `nurseNav` configs via `getNavForRole()`.
+- **Active state detection**: Both use the shared `isLeafActive()` and `hasActiveChild()` helpers from `app-sidebar.tsx`.
+
+**Discrepancy fixed:**
+- The `badges` prop (unread messages, missing reports, active alarms) was fetched in the layout and passed to `AppSidebar` but **not** to `MobileNav`. The `MobileMoreSheet` already had full badge rendering support but was never receiving the data. Added `badges` to `MobileNavProps` and wired it through from the layout → `MobileNav` → `MobileMoreSheet`.
+To https://github.com/lelapinsauvage/KDDZ.git
+   f8abf50..d50aded  main -> main
+=== Phase 32: Mobile navigation COMPLETE — Tue Mar  3 00:41:53 CET 2026 ===
+
+=== Phase 33: Final verification — Tue Mar  3 00:41:53 CET 2026 ===
+Everything is clean — **zero type errors** on both passes, and all four key files verified correct. There are no modified or staged files to commit (only the 3 untracked `overnight-pages*` files which are unrelated). No commit is needed since there were no type errors to fix.
+Everything up-to-date
+=== Phase 33: Final verification COMPLETE — Tue Mar  3 00:42:44 CET 2026 ===
+
+=== ALL PHASES COMPLETE — Tue Mar  3 00:42:44 CET 2026 ===

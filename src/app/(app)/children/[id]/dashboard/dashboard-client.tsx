@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { type ColumnDef } from "@tanstack/react-table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,8 +21,6 @@ import {
   FileQuestion,
   Eye,
   Send,
-  ChevronLeft,
-  ChevronRight,
   Droplets,
   ClipboardList,
   CheckCircle2,
@@ -34,6 +33,9 @@ import {
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { getAvatarColor, getInitials } from "@/components/children/children-columns";
 import { ASSESSMENT_TYPE_NAMES } from "@/lib/assessment-types";
+import { StatCard } from "@/components/dashboard/stat-card";
+import { DataTable } from "@/components/shared/data-table";
+import { ATTENDANCE_COLORS } from "@/components/dashboard/demographics-section";
 
 // ── Helpers ──────────────────────────────────────
 
@@ -200,86 +202,18 @@ interface Props {
   assessmentList: AssessmentRow[];
 }
 
-// ── Paginated Table ──────────────────────────────
-
-function PaginatedTable<T>({
-  data,
-  pageSize = 5,
-  columns,
-  renderRow,
-  emptyMessage,
-}: {
-  data: T[];
-  pageSize?: number;
-  columns: string[];
-  renderRow: (item: T, index: number) => React.ReactNode;
-  emptyMessage: string;
-}) {
-  const [page, setPage] = useState(0);
-  const totalPages = Math.max(1, Math.ceil(data.length / pageSize));
-  const pageData = data.slice(page * pageSize, (page + 1) * pageSize);
-
-  if (data.length === 0) {
-    return <p className="py-8 text-center text-sm text-muted-foreground">{emptyMessage}</p>;
-  }
-
-  return (
-    <div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b text-left text-xs text-muted-foreground">
-              {columns.map((col) => (
-                <th key={col} className="px-3 py-2 font-medium">
-                  {col}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>{pageData.map((item, i) => renderRow(item, i))}</tbody>
-        </table>
-      </div>
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between border-t px-3 py-2">
-          <span className="text-xs text-muted-foreground">
-            Page {page + 1} of {totalPages}
-          </span>
-          <div className="flex gap-1">
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-              disabled={page === 0}
-            >
-              <ChevronLeft className="size-3.5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-              disabled={page >= totalPages - 1}
-            >
-              <ChevronRight className="size-3.5" />
-            </Button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ── Status Badge ─────────────────────────────────
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
-    SUBMITTED: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    DRAFT: "bg-amber-50 text-amber-700 border-amber-200",
-    REVIEWED: "bg-sky-50 text-sky-700 border-sky-200",
-    PENDING: "bg-amber-50 text-amber-700 border-amber-200",
-    APPROVED: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    REJECTED: "bg-red-50 text-red-600 border-red-200",
-    COMPLETED: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    IN_PROGRESS: "bg-blue-50 text-blue-700 border-blue-200",
+    SUBMITTED: "bg-[var(--color-success-light)] text-[var(--color-success-dark)] border-[var(--color-success)]/20",
+    DRAFT: "bg-[var(--color-warning-light)] text-[var(--color-warning-dark)] border-[var(--color-warning)]/20",
+    REVIEWED: "bg-[var(--color-info-light)] text-[var(--color-info-dark)] border-[var(--color-info)]/20",
+    PENDING: "bg-[var(--color-warning-light)] text-[var(--color-warning-dark)] border-[var(--color-warning)]/20",
+    APPROVED: "bg-[var(--color-success-light)] text-[var(--color-success-dark)] border-[var(--color-success)]/20",
+    REJECTED: "bg-[var(--color-error-light)] text-[var(--color-error-dark)] border-[var(--color-error)]/20",
+    COMPLETED: "bg-[var(--color-success-light)] text-[var(--color-success-dark)] border-[var(--color-success)]/20",
+    IN_PROGRESS: "bg-[var(--color-info-light)] text-[var(--color-info-dark)] border-[var(--color-info)]/20",
   };
   return (
     <Badge variant="outline" className={`text-[10px] ${map[status] ?? ""}`}>
@@ -289,7 +223,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 // ── Donut chart colors ───────────────────────────
-const DONUT_COLORS = ["#22c55e", "#ef4444"]; // green = present, red = absent
+const DONUT_COLORS = ATTENDANCE_COLORS.slice(0, 2); // green = present, red = absent
 
 // ── Profile Info Row ─────────────────────────────
 
@@ -301,6 +235,120 @@ function InfoRow({ label, value, className }: { label: string; value: React.Reac
     </div>
   );
 }
+
+// ── Column Definitions ───────────────────────────
+
+const dailyReportColumns: ColumnDef<ReportRow>[] = [
+  { accessorKey: "date", header: "Date", cell: ({ row }) => formatDate(row.original.date) },
+  { accessorKey: "breakfastPortion", header: "Breakfast", cell: ({ row }) => row.original.breakfastPortion ?? "—" },
+  { accessorKey: "lunchPortion", header: "Lunch", cell: ({ row }) => row.original.lunchPortion ?? "—" },
+  { accessorKey: "dessertPortion", header: "Dessert", cell: ({ row }) => row.original.dessertPortion ?? "—" },
+  { accessorKey: "status", header: "Status", cell: ({ row }) => <StatusBadge status={row.original.status} /> },
+  {
+    id: "actions",
+    header: "",
+    enableHiding: false,
+    cell: ({ row }) => (
+      <Button variant="ghost" size="icon-xs" asChild>
+        <Link href={`/daily-reports/${row.original.id}`}>
+          <Eye className="size-3.5" />
+        </Link>
+      </Button>
+    ),
+  },
+];
+
+const absenceColumns: ColumnDef<AbsenceRow>[] = [
+  { accessorKey: "date", header: "Date", cell: ({ row }) => formatDate(row.original.date) },
+  { accessorKey: "reason", header: "Reason", cell: ({ row }) => <span className="max-w-xs truncate block text-xs">{row.original.reason ?? "—"}</span> },
+  { accessorKey: "status", header: "Status", cell: ({ row }) => <StatusBadge status={row.original.status} /> },
+  {
+    id: "actions",
+    header: "",
+    enableHiding: false,
+    cell: ({ row }) => (
+      <Button variant="ghost" size="icon-xs" asChild>
+        <Link href={`/absent-reports/${row.original.id}`}>
+          <Eye className="size-3.5" />
+        </Link>
+      </Button>
+    ),
+  },
+];
+
+const medicalColumns: ColumnDef<MedicalRow>[] = [
+  {
+    accessorKey: "formType",
+    header: "Type",
+    cell: ({ row }) => {
+      const m = row.original;
+      return (
+        <div className="flex items-center gap-1.5 text-xs font-medium">
+          {m.formType}
+          {m.status === "SUBMITTED" || m.status === "APPROVED" ? (
+            <CheckCircle2 className="size-3.5 text-[var(--color-success)]" />
+          ) : m.status === "DRAFT" || m.status === "PENDING" ? (
+            <Clock className="size-3.5 text-[var(--color-warning)]" />
+          ) : null}
+        </div>
+      );
+    },
+  },
+  { accessorKey: "status", header: "Status", cell: ({ row }) => <StatusBadge status={row.original.status} /> },
+  { accessorKey: "date", header: "Date", cell: ({ row }) => formatDate(row.original.date) },
+  {
+    id: "actions",
+    header: "",
+    enableHiding: false,
+    cell: ({ row }) => (
+      <Button variant="ghost" size="icon-xs" asChild>
+        <Link href={`/medical/${row.original.formType.toLowerCase()}`}>
+          <Eye className="size-3.5" />
+        </Link>
+      </Button>
+    ),
+  },
+];
+
+const assessmentColumns: ColumnDef<AssessmentRow>[] = [
+  {
+    accessorKey: "assessmentType",
+    header: "Type",
+    cell: ({ row }) => {
+      const a = row.original;
+      const typeName = ASSESSMENT_TYPE_NAMES[a.assessmentType] ?? `Type ${a.assessmentType}`;
+      const isCompleted = a.status === "SUBMITTED" || a.status === "APPROVED" || a.status === "COMPLETED";
+      return (
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-medium">{typeName}</span>
+          {isCompleted ? (
+            <Badge variant="outline" className="text-[9px] bg-[var(--color-success-light)] text-[var(--color-success-dark)] border-[var(--color-success)]/20 px-1">
+              Complete
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="text-[9px] bg-[var(--color-warning-light)] text-[var(--color-warning-dark)] border-[var(--color-warning)]/20 px-1">
+              Pending
+            </Badge>
+          )}
+        </div>
+      );
+    },
+  },
+  { accessorKey: "status", header: "Status", cell: ({ row }) => <StatusBadge status={row.original.status} /> },
+  { accessorKey: "date", header: "Date", cell: ({ row }) => formatDate(row.original.date) },
+  {
+    id: "actions",
+    header: "",
+    enableHiding: false,
+    cell: ({ row }) => (
+      <Button variant="ghost" size="icon-xs" asChild>
+        <Link href={`/assessments/${row.original.assessmentType}`}>
+          <Eye className="size-3.5" />
+        </Link>
+      </Button>
+    ),
+  },
+];
 
 // ── Main Dashboard Component ─────────────────────
 
@@ -375,8 +423,8 @@ export function DashboardClient({
                   <Badge
                     className={
                       child.isActive
-                        ? "bg-emerald-100 text-emerald-700 border-emerald-300"
-                        : "bg-gray-100 text-gray-600 border-gray-200"
+                        ? "bg-[var(--color-success-light)] text-[var(--color-success-dark)] border-[var(--color-success)]/20"
+                        : "bg-muted text-muted-foreground border-muted"
                     }
                   >
                     {child.isActive ? "Active" : "Inactive"}
@@ -418,7 +466,7 @@ export function DashboardClient({
                   <InfoRow
                     label="Blood Type"
                     value={
-                      <Badge variant="outline" className="text-xs bg-red-50 text-red-600 border-red-200">
+                      <Badge variant="outline" className="text-xs bg-[var(--color-error-light)] text-[var(--color-error-dark)] border-[var(--color-error)]/20">
                         <Droplets className="size-3 mr-1" />
                         {child.bloodType}
                       </Badge>
@@ -493,7 +541,7 @@ export function DashboardClient({
                         <div className="flex gap-0.5">
                           <a
                             href={`tel:${child.motherPhone}`}
-                            className="inline-flex size-6 items-center justify-center rounded text-blue-600 hover:bg-blue-50 transition-colors"
+                            className="inline-flex size-6 items-center justify-center rounded text-primary hover:bg-primary/5 transition-colors"
                           >
                             <Phone className="size-3" />
                           </a>
@@ -501,7 +549,7 @@ export function DashboardClient({
                             href={formatWhatsAppUrl(child.motherPhone)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex size-6 items-center justify-center rounded text-green-600 hover:bg-green-50 transition-colors"
+                            className="inline-flex size-6 items-center justify-center rounded text-emerald-600 hover:bg-emerald-50 transition-colors"
                           >
                             <MessageCircle className="size-3" />
                           </a>
@@ -521,7 +569,7 @@ export function DashboardClient({
                         <div className="flex gap-0.5">
                           <a
                             href={`tel:${child.fatherPhone}`}
-                            className="inline-flex size-6 items-center justify-center rounded text-blue-600 hover:bg-blue-50 transition-colors"
+                            className="inline-flex size-6 items-center justify-center rounded text-primary hover:bg-primary/5 transition-colors"
                           >
                             <Phone className="size-3" />
                           </a>
@@ -529,7 +577,7 @@ export function DashboardClient({
                             href={formatWhatsAppUrl(child.fatherPhone)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex size-6 items-center justify-center rounded text-green-600 hover:bg-green-50 transition-colors"
+                            className="inline-flex size-6 items-center justify-center rounded text-emerald-600 hover:bg-emerald-50 transition-colors"
                           >
                             <MessageCircle className="size-3" />
                           </a>
@@ -553,7 +601,7 @@ export function DashboardClient({
                         {r.phone && <span className="text-primary ml-1">{r.phone}</span>}
                       </div>
                       {r.isEmergencyContact && (
-                        <Badge variant="outline" className="text-[9px] bg-red-50 text-red-600 border-red-200 px-1 shrink-0">
+                        <Badge variant="outline" className="text-[9px] bg-[var(--color-error-light)] text-[var(--color-error-dark)] border-[var(--color-error)]/20 px-1 shrink-0">
                           SOS
                         </Badge>
                       )}
@@ -597,92 +645,17 @@ export function DashboardClient({
 
           {/* ─── Row 1: Calls, Accidents, Payments ── */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <Card className="overflow-hidden border-l-4 border-l-purple-500">
-              <CardContent className="flex items-center gap-3 py-3 px-4">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-purple-50">
-                  <Phone className="size-4.5 text-purple-600" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-lg font-bold leading-none text-purple-700">{stats.callsInOut}</p>
-                  <p className="mt-0.5 text-[10px] text-muted-foreground">Calls In/Out</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="overflow-hidden border-l-4 border-l-red-500">
-              <CardContent className="flex items-center gap-3 py-3 px-4">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-red-50">
-                  <ShieldAlert className="size-4.5 text-red-600" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-lg font-bold leading-none text-red-700">{stats.accidentReports}</p>
-                  <p className="mt-0.5 text-[10px] text-muted-foreground">Accident Reports</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="overflow-hidden border-l-4 border-l-emerald-500">
-              <CardContent className="flex items-center gap-3 py-3 px-4">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50">
-                  <DollarSign className="size-4.5 text-emerald-600" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-lg font-bold leading-none text-emerald-700">{stats.totalPayments}</p>
-                  <p className="mt-0.5 text-[10px] text-muted-foreground">Total Payments</p>
-                </div>
-              </CardContent>
-            </Card>
+            <StatCard title="Calls In/Out" value={stats.callsInOut} icon={Phone} color="purple" href={`/children/${id}/calls`} />
+            <StatCard title="Accident Reports" value={stats.accidentReports} icon={ShieldAlert} color="rose" href={`/children/${id}/accidents`} />
+            <StatCard title="Total Payments" value={stats.totalPayments} icon={DollarSign} color="emerald" />
           </div>
 
           {/* ─── Row 2: Attendance Stats ───────────── */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Card className="overflow-hidden border-l-4 border-l-emerald-500">
-              <CardContent className="flex items-center gap-3 py-3 px-4">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50">
-                  <Calendar className="size-4.5 text-emerald-600" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-lg font-bold leading-none text-emerald-700">{stats.totalAttendance}</p>
-                  <p className="mt-0.5 text-[10px] text-muted-foreground">Attendance</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="overflow-hidden border-l-4 border-l-red-500">
-              <CardContent className="flex items-center gap-3 py-3 px-4">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-red-50">
-                  <UserX className="size-4.5 text-red-600" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-lg font-bold leading-none text-red-700">{stats.totalAbsence}</p>
-                  <p className="mt-0.5 text-[10px] text-muted-foreground">Absence</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className={`overflow-hidden border-l-4 border-l-slate-400 ${stats.missingDailyReports > 0 ? "ring-1 ring-amber-300" : ""}`}>
-              <CardContent className="flex items-center gap-3 py-3 px-4">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-slate-50">
-                  <FileQuestion className="size-4.5 text-slate-600" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-lg font-bold leading-none text-slate-700">{stats.missingDailyReports}</p>
-                  <p className="mt-0.5 text-[10px] text-muted-foreground">Missing Daily Rpt</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className={`overflow-hidden border-l-4 border-l-slate-400 ${stats.missingAbsentReports > 0 ? "ring-1 ring-red-300" : ""}`}>
-              <CardContent className="flex items-center gap-3 py-3 px-4">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-slate-50">
-                  <AlertTriangle className="size-4.5 text-slate-600" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-lg font-bold leading-none text-slate-700">{stats.missingAbsentReports}</p>
-                  <p className="mt-0.5 text-[10px] text-muted-foreground">Missing Absent Rpt</p>
-                </div>
-              </CardContent>
-            </Card>
+            <StatCard title="Attendance" value={stats.totalAttendance} icon={Calendar} color="emerald" href={`/children/${id}/attendance`} />
+            <StatCard title="Absence" value={stats.totalAbsence} icon={UserX} color="rose" />
+            <StatCard title="Missing Daily Rpt" value={stats.missingDailyReports} icon={FileQuestion} color="amber" />
+            <StatCard title="Missing Absent Rpt" value={stats.missingAbsentReports} icon={AlertTriangle} color="amber" />
           </div>
 
           {/* ─── Attendance Pie Chart ──────────────── */}
@@ -725,92 +698,17 @@ export function DashboardClient({
 
           {/* ─── Row 3: Medical Stats ──────────────── */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <Card className="overflow-hidden border-l-4 border-l-emerald-500">
-              <CardContent className="flex items-center gap-3 py-3 px-4">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50">
-                  <Stethoscope className="size-4.5 text-emerald-600" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-lg font-bold leading-none text-emerald-700">{stats.medicalPublished}</p>
-                  <p className="mt-0.5 text-[10px] text-muted-foreground">Medical Published</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="overflow-hidden border-l-4 border-l-pink-500">
-              <CardContent className="flex items-center gap-3 py-3 px-4">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-pink-50">
-                  <Stethoscope className="size-4.5 text-pink-600" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-lg font-bold leading-none text-pink-700">{stats.medicalMissing}</p>
-                  <p className="mt-0.5 text-[10px] text-muted-foreground">Medical Missing</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="overflow-hidden border-l-4 border-l-slate-400">
-              <CardContent className="flex items-center gap-3 py-3 px-4">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-slate-50">
-                  <FilePenLine className="size-4.5 text-slate-600" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-lg font-bold leading-none text-slate-700">{stats.medicalDrafts}</p>
-                  <p className="mt-0.5 text-[10px] text-muted-foreground">Medical Drafts</p>
-                </div>
-              </CardContent>
-            </Card>
+            <StatCard title="Medical Published" value={stats.medicalPublished} icon={Stethoscope} color="emerald" />
+            <StatCard title="Medical Missing" value={stats.medicalMissing} icon={Stethoscope} color="rose" />
+            <StatCard title="Medical Drafts" value={stats.medicalDrafts} icon={FilePenLine} color="sky" />
           </div>
 
           {/* ─── Row 4: Assessment Stats ───────────── */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Card className="overflow-hidden border-l-4 border-l-emerald-500">
-              <CardContent className="flex items-center gap-3 py-3 px-4">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50">
-                  <GraduationCap className="size-4.5 text-emerald-600" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-lg font-bold leading-none text-emerald-700">{stats.assessmentsCompleted}</p>
-                  <p className="mt-0.5 text-[10px] text-muted-foreground">Assessments Done</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="overflow-hidden border-l-4 border-l-pink-500">
-              <CardContent className="flex items-center gap-3 py-3 px-4">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-pink-50">
-                  <GraduationCap className="size-4.5 text-pink-600" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-lg font-bold leading-none text-pink-700">{stats.assessmentsMissing}</p>
-                  <p className="mt-0.5 text-[10px] text-muted-foreground">Assessments Missing</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="overflow-hidden border-l-4 border-l-red-500">
-              <CardContent className="flex items-center gap-3 py-3 px-4">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-red-50">
-                  <CircleDashed className="size-4.5 text-red-600" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-lg font-bold leading-none text-red-700">{stats.assessmentsIncomplete}</p>
-                  <p className="mt-0.5 text-[10px] text-muted-foreground">Assessments Incomplete</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="overflow-hidden border-l-4 border-l-slate-400">
-              <CardContent className="flex items-center gap-3 py-3 px-4">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-slate-50">
-                  <FilePenLine className="size-4.5 text-slate-600" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-lg font-bold leading-none text-slate-700">{stats.assessmentsDrafts}</p>
-                  <p className="mt-0.5 text-[10px] text-muted-foreground">Assessment Drafts</p>
-                </div>
-              </CardContent>
-            </Card>
+            <StatCard title="Assessments Done" value={stats.assessmentsCompleted} icon={GraduationCap} color="emerald" />
+            <StatCard title="Assessments Missing" value={stats.assessmentsMissing} icon={GraduationCap} color="rose" />
+            <StatCard title="Assessments Incomplete" value={stats.assessmentsIncomplete} icon={CircleDashed} color="orange" />
+            <StatCard title="Assessment Drafts" value={stats.assessmentsDrafts} icon={FilePenLine} color="sky" />
           </div>
 
           {/* ─── Tabbed Historical Data ───────────── */}
@@ -850,30 +748,11 @@ export function DashboardClient({
                     </Link>
                   </Button>
                 </CardHeader>
-                <CardContent className="px-0">
-                  <PaginatedTable
+                <CardContent>
+                  <DataTable
+                    columns={dailyReportColumns}
                     data={recentReports}
-                    pageSize={5}
-                    columns={["Date", "Breakfast", "Lunch", "Dessert", "Status", ""]}
-                    emptyMessage="No daily reports yet."
-                    renderRow={(r, i) => (
-                      <tr key={r.id} className={i % 2 === 0 ? "bg-muted/30" : ""}>
-                        <td className="px-3 py-2 text-xs">{formatDate(r.date)}</td>
-                        <td className="px-3 py-2 text-xs">{r.breakfastPortion ?? "—"}</td>
-                        <td className="px-3 py-2 text-xs">{r.lunchPortion ?? "—"}</td>
-                        <td className="px-3 py-2 text-xs">{r.dessertPortion ?? "—"}</td>
-                        <td className="px-3 py-2">
-                          <StatusBadge status={r.status} />
-                        </td>
-                        <td className="px-3 py-2">
-                          <Button variant="ghost" size="icon-xs" asChild>
-                            <Link href={`/daily-reports/${r.id}`}>
-                              <Eye className="size-3.5" />
-                            </Link>
-                          </Button>
-                        </td>
-                      </tr>
-                    )}
+                    emptyState={<p className="py-8 text-center text-sm text-muted-foreground">No daily reports yet.</p>}
                   />
                 </CardContent>
               </Card>
@@ -891,28 +770,11 @@ export function DashboardClient({
                     </Link>
                   </Button>
                 </CardHeader>
-                <CardContent className="px-0">
-                  <PaginatedTable
+                <CardContent>
+                  <DataTable
+                    columns={absenceColumns}
                     data={absenceList}
-                    pageSize={5}
-                    columns={["Date", "Reason", "Status", ""]}
-                    emptyMessage="No absence reports."
-                    renderRow={(a, i) => (
-                      <tr key={a.id} className={i % 2 === 0 ? "bg-muted/30" : ""}>
-                        <td className="px-3 py-2 text-xs">{formatDate(a.date)}</td>
-                        <td className="px-3 py-2 text-xs max-w-xs truncate">{a.reason ?? "—"}</td>
-                        <td className="px-3 py-2">
-                          <StatusBadge status={a.status} />
-                        </td>
-                        <td className="px-3 py-2">
-                          <Button variant="ghost" size="icon-xs" asChild>
-                            <Link href={`/absent-reports/${a.id}`}>
-                              <Eye className="size-3.5" />
-                            </Link>
-                          </Button>
-                        </td>
-                      </tr>
-                    )}
+                    emptyState={<p className="py-8 text-center text-sm text-muted-foreground">No absence reports.</p>}
                   />
                 </CardContent>
               </Card>
@@ -938,35 +800,11 @@ export function DashboardClient({
                     </select>
                   )}
                 </CardHeader>
-                <CardContent className="px-0">
-                  <PaginatedTable
+                <CardContent>
+                  <DataTable
+                    columns={medicalColumns}
                     data={filteredMedical}
-                    pageSize={5}
-                    columns={["Type", "Status", "Date", ""]}
-                    emptyMessage="No medical reports."
-                    renderRow={(m, i) => (
-                      <tr key={m.id} className={i % 2 === 0 ? "bg-muted/30" : ""}>
-                        <td className="px-3 py-2 text-xs font-medium flex items-center gap-1.5">
-                          {m.formType}
-                          {m.status === "SUBMITTED" || m.status === "APPROVED" ? (
-                            <CheckCircle2 className="size-3.5 text-emerald-500" />
-                          ) : m.status === "DRAFT" || m.status === "PENDING" ? (
-                            <Clock className="size-3.5 text-amber-500" />
-                          ) : null}
-                        </td>
-                        <td className="px-3 py-2">
-                          <StatusBadge status={m.status} />
-                        </td>
-                        <td className="px-3 py-2 text-xs">{formatDate(m.date)}</td>
-                        <td className="px-3 py-2">
-                          <Button variant="ghost" size="icon-xs" asChild>
-                            <Link href={`/medical/${m.formType.toLowerCase()}`}>
-                              <Eye className="size-3.5" />
-                            </Link>
-                          </Button>
-                        </td>
-                      </tr>
-                    )}
+                    emptyState={<p className="py-8 text-center text-sm text-muted-foreground">No medical reports.</p>}
                   />
                 </CardContent>
               </Card>
@@ -978,45 +816,11 @@ export function DashboardClient({
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-semibold">Assessments</CardTitle>
                 </CardHeader>
-                <CardContent className="px-0">
-                  <PaginatedTable
+                <CardContent>
+                  <DataTable
+                    columns={assessmentColumns}
                     data={assessmentList}
-                    pageSize={5}
-                    columns={["Type", "Status", "Date", ""]}
-                    emptyMessage="No assessments."
-                    renderRow={(a, i) => {
-                      const typeName = ASSESSMENT_TYPE_NAMES[a.assessmentType] ?? `Type ${a.assessmentType}`;
-                      const isCompleted = a.status === "SUBMITTED" || a.status === "APPROVED" || a.status === "COMPLETED";
-                      return (
-                        <tr key={a.id} className={i % 2 === 0 ? "bg-muted/30" : ""}>
-                          <td className="px-3 py-2 text-xs font-medium">
-                            <div className="flex items-center gap-1.5">
-                              {typeName}
-                              {isCompleted ? (
-                                <Badge variant="outline" className="text-[9px] bg-emerald-50 text-emerald-700 border-emerald-200 px-1">
-                                  Complete
-                                </Badge>
-                              ) : (
-                                <Badge variant="outline" className="text-[9px] bg-amber-50 text-amber-700 border-amber-200 px-1">
-                                  Pending
-                                </Badge>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-3 py-2">
-                            <StatusBadge status={a.status} />
-                          </td>
-                          <td className="px-3 py-2 text-xs">{formatDate(a.date)}</td>
-                          <td className="px-3 py-2">
-                            <Button variant="ghost" size="icon-xs" asChild>
-                              <Link href={`/assessments/${a.assessmentType}`}>
-                                <Eye className="size-3.5" />
-                              </Link>
-                            </Button>
-                          </td>
-                        </tr>
-                      );
-                    }}
+                    emptyState={<p className="py-8 text-center text-sm text-muted-foreground">No assessments.</p>}
                   />
                 </CardContent>
               </Card>
