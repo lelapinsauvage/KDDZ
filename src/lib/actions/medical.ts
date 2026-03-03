@@ -321,6 +321,40 @@ export async function deleteMedicalForm(id: string) {
 }
 
 // ─────────────────────────────────────────────
+// deleteAccidentReport
+// ─────────────────────────────────────────────
+
+export async function deleteAccidentReport(id: string) {
+  try {
+    const result = await requireOrgSafe();
+    if (!result.ok) return { error: result.error };
+    const { organizationId: orgId } = result.ctx;
+
+    const existing = await db.medicalForm.findUnique({
+      where: { id },
+      include: { child: { include: { branch: true } } },
+    });
+    if (!existing) {
+      return { error: "Accident report not found" };
+    }
+    if (existing.child.branch.organizationId !== orgId) {
+      return { error: "Access denied" };
+    }
+    if (existing.formType !== "ACCIDENTS") {
+      return { error: "Record is not an accident report" };
+    }
+
+    await db.medicalForm.delete({ where: { id } });
+
+    revalidatePath("/medical");
+    return { success: true };
+  } catch (error) {
+    console.error("deleteAccidentReport error:", error);
+    return { error: "Failed to delete accident report" };
+  }
+}
+
+// ─────────────────────────────────────────────
 // getVaccinations — List with filtering
 // ─────────────────────────────────────────────
 

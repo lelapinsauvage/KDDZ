@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useTransition } from "react";
 import { type ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -45,7 +45,8 @@ import {
   Loader2,
   AlertTriangle,
 } from "lucide-react";
-import { deleteMedicalForm } from "@/lib/actions/medical";
+import { deleteAccidentReport } from "@/lib/actions/medical";
+import { getAvatarColor, getInitials } from "@/components/children/children-columns";
 
 // --- Types ---
 
@@ -72,22 +73,7 @@ interface AccidentReportRow {
   className: string;
 }
 
-// --- Avatar helpers ---
-
-const avatarColors = [
-  "bg-[#4F46E5]/15 text-[#4F46E5]",
-  "bg-sky-100 text-sky-700",
-  "bg-amber-100 text-amber-700",
-  "bg-rose-100 text-rose-700",
-  "bg-[#059669]/15 text-[#059669]",
-  "bg-fuchsia-100 text-fuchsia-700",
-  "bg-[#0B9178]/10 text-[#0B9178]",
-  "bg-orange-100 text-orange-700",
-];
-
-function getInitials(firstName: string, lastName: string) {
-  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
-}
+// --- Helpers ---
 
 function formatDate(date: string | null) {
   if (!date) return "-";
@@ -96,12 +82,6 @@ function formatDate(date: string | null) {
   const month = String(d.getMonth() + 1).padStart(2, "0");
   const year = d.getFullYear();
   return `${day}/${month}/${year}`;
-}
-
-function getAvatarColor(name: string) {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return avatarColors[Math.abs(hash) % avatarColors.length];
 }
 
 // --- Props ---
@@ -119,31 +99,27 @@ export function AccidentReportsClient({
   branches,
 }: AccidentReportsClientProps) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [branchFilter, setBranchFilter] = useState("all");
   const [deleteTarget, setDeleteTarget] = useState<AccidentReportRow | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   // --- Delete handler ---
 
-  async function handleDeleteConfirm() {
+  function handleDeleteConfirm() {
     if (!deleteTarget) return;
-    setIsDeleting(true);
-    try {
-      const result = await deleteMedicalForm(deleteTarget.id);
-      if ("error" in result && result.error) {
-        toast.error(result.error);
-      } else {
+    startTransition(async () => {
+      const result = await deleteAccidentReport(deleteTarget.id);
+      if (result.success) {
         toast.success(`Accident report for ${deleteTarget.childName} deleted.`);
+        setDeleteTarget(null);
         router.refresh();
+      } else {
+        toast.error(result.error ?? "Failed to delete accident report.");
+        setDeleteTarget(null);
       }
-    } catch {
-      toast.error("Failed to delete accident report.");
-    } finally {
-      setIsDeleting(false);
-      setDeleteTarget(null);
-    }
+    });
   }
 
   // --- Columns (matching old PHP: Image, F Name, L Name, Cause, Branch, Class, Place, First Aid, Date, Action) ---
@@ -156,7 +132,7 @@ export function AccidentReportsClient({
         const { firstName, lastName } = row.original;
         const fullName = `${firstName} ${lastName}`;
         return (
-          <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${getAvatarColor(fullName)}`}>
+          <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white ${getAvatarColor(fullName)}`}>
             {getInitials(firstName, lastName)}
           </div>
         );
@@ -388,15 +364,15 @@ export function AccidentReportsClient({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              variant="destructive"
               onClick={handleDeleteConfirm}
-              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isPending}
             >
-              {isDeleting ? (
+              {isPending ? (
                 <>
-                  <Loader2 className="size-4 animate-spin" />
+                  <Loader2 className="mr-1 size-4 animate-spin" />
                   Deleting...
                 </>
               ) : (

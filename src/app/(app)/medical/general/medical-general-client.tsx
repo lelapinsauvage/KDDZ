@@ -45,6 +45,7 @@ import {
   Stethoscope,
 } from "lucide-react";
 import { deleteMedicalForm } from "@/lib/actions/medical";
+import { getAvatarColor, getInitials } from "@/components/children/children-columns";
 import { toast } from "sonner";
 
 // --- Types ---
@@ -65,28 +66,7 @@ interface GeneralFormRow {
   createdAt: string;
 }
 
-// --- Avatar helpers ---
-
-const avatarColors = [
-  "bg-[#4F46E5]/15 text-[#4F46E5]",
-  "bg-sky-100 text-sky-700",
-  "bg-amber-100 text-amber-700",
-  "bg-rose-100 text-rose-700",
-  "bg-[#059669]/15 text-[#059669]",
-  "bg-fuchsia-100 text-fuchsia-700",
-  "bg-[#0B9178]/10 text-[#0B9178]",
-  "bg-orange-100 text-orange-700",
-];
-
-function getInitials(firstName: string, lastName: string) {
-  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
-}
-
-function getAvatarColor(name: string) {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return avatarColors[Math.abs(hash) % avatarColors.length];
-}
+// --- Helpers ---
 
 function formatDate(date: string | null) {
   if (!date) return "-";
@@ -184,7 +164,7 @@ export function MedicalGeneralClient({
         const { firstName, lastName } = row.original;
         const fullName = `${firstName} ${lastName}`;
         return (
-          <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${getAvatarColor(fullName)}`}>
+          <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white ${getAvatarColor(fullName)}`}>
             {getInitials(firstName, lastName)}
           </div>
         );
@@ -416,7 +396,7 @@ export function MedicalGeneralClient({
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-destructive text-white hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={isPending}
             >
               {isPending ? (
