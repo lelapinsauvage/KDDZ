@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { AlertTriangle, GraduationCap, Baby, Lock } from "lucide-react"
+import { AlertTriangle, GraduationCap, Baby, Lock, Wrench } from "lucide-react"
 import { PageHeader } from "@/components/layout/page-header"
 import {
   Card,
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 
 // ---------------------------------------------------------------------------
@@ -156,9 +157,14 @@ export default function NewYearPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-center rounded-lg border border-dashed border-border py-12 text-sm text-muted-foreground">
-              {/* TODO: Teacher reassignment table — select checkbox, name, current class → new class dropdown */}
-              Teacher reassignment table will be implemented here
+            <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border py-12">
+              <Wrench className="size-5 text-muted-foreground" />
+              <div className="text-center">
+                <Badge variant="secondary" className="mb-2">Coming soon</Badge>
+                <p className="text-sm text-muted-foreground">
+                  Teacher reassignment will allow mapping each teacher from their current class to a new one.
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -176,9 +182,14 @@ export default function NewYearPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-center rounded-lg border border-dashed border-border py-12 text-sm text-muted-foreground">
-              {/* TODO: Children progression table — checkbox, name, current class → new class dropdown, new S.N */}
-              Child class progression table will be implemented here
+            <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border py-12">
+              <Wrench className="size-5 text-muted-foreground" />
+              <div className="text-center">
+                <Badge variant="secondary" className="mb-2">Coming soon</Badge>
+                <p className="text-sm text-muted-foreground">
+                  Child progression will allow assigning each child a new class and serial number.
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>

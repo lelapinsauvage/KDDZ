@@ -75,7 +75,7 @@ export function InvoiceClient({ invoice }: { invoice: InvoiceData }) {
           ]}
           actions={
             <Button
-              className="bg-primary text-white hover:bg-primary/90"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
               onClick={() => window.print()}
             >
               <Printer className="mr-1 size-4" />
@@ -130,10 +130,10 @@ export function InvoiceClient({ invoice }: { invoice: InvoiceData }) {
               <span
                 className={
                   invoice.status === "PAID"
-                    ? "font-bold text-green-700 print:text-black"
+                    ? "font-bold text-emerald-700 print:text-black"
                     : invoice.status === "OVERDUE"
-                      ? "font-bold text-red-600 print:text-black"
-                      : "font-bold text-yellow-600 print:text-black"
+                      ? "font-bold text-destructive print:text-black"
+                      : "font-bold text-amber-600 print:text-black"
                 }
               >
                 {STATUS_LABELS[invoice.status] ?? invoice.status}

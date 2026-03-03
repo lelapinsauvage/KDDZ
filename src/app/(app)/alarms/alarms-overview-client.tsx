@@ -5,6 +5,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Cake,
   ClipboardCheck,
@@ -58,7 +59,7 @@ const urgencyLabels: Record<string, string> = {
 };
 
 const urgencyColors: Record<string, string> = {
-  critical: "text-red-600",
+  critical: "text-destructive",
   warning: "text-amber-600",
   info: "text-blue-600",
 };
@@ -128,18 +129,19 @@ export function AlarmsOverviewClient({
               { key: "warning", label: "Upcoming" },
               { key: "info", label: "Informational" },
             ].map((chip) => (
-              <button
+              <Button
                 key={chip.key}
-                type="button"
+                variant="outline"
+                size="sm"
                 onClick={() => setFilter(chip.key)}
-                className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                className={`rounded-full ${
                   filter === chip.key
                     ? "border-primary bg-primary/10 text-primary"
-                    : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+                    : ""
                 }`}
               >
                 {chip.label}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -174,7 +176,7 @@ export function AlarmsOverviewClient({
                             </p>
                             <div className="flex items-center gap-2">
                               {item.count > 0 ? (
-                                <Badge className="bg-red-100 text-red-700">
+                                <Badge variant="destructive">
                                   {item.count} active
                                 </Badge>
                               ) : (
