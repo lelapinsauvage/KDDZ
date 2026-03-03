@@ -145,7 +145,7 @@ export function AttendanceMarker({
                         className={`flex size-5 items-center justify-center rounded-md text-[10px] font-bold ${
                           isAbsent
                             ? "border border-rose-300 bg-white text-rose-300"
-                            : "bg-primary text-white"
+                            : "bg-primary text-primary-foreground"
                         }`}
                       >
                         {!isAbsent && "✓"}

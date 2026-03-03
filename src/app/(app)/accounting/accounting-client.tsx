@@ -17,6 +17,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { QuickPaymentDialog } from "@/components/accounting/quick-payment-dialog";
+import { getInitialsFromName, getPastelAvatarColor } from "@/components/children/children-columns";
 
 // ── Types ──
 
@@ -87,30 +88,6 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 
 function formatCurrency(amount: number) {
   return `$${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
-function getInitials(name: string) {
-  const parts = name.split(" ");
-  return parts.length >= 2
-    ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
-    : name.slice(0, 2).toUpperCase();
-}
-
-const childAvatarColors = [
-  "bg-[#4F46E5]/15 text-[#4F46E5]",
-  "bg-sky-100 text-sky-700",
-  "bg-amber-100 text-amber-700",
-  "bg-rose-100 text-rose-700",
-  "bg-[#059669]/15 text-[#059669]",
-  "bg-fuchsia-100 text-fuchsia-700",
-  "bg-[#0B9178]/10 text-[#0B9178]",
-  "bg-orange-100 text-orange-700",
-];
-
-function getAvatarColor(name: string) {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return childAvatarColors[Math.abs(hash) % childAvatarColors.length];
 }
 
 // ── Component ──
@@ -325,9 +302,9 @@ export function AccountingClient({
                           className="flex items-center gap-2.5 font-medium hover:text-primary transition-colors"
                         >
                           <div
-                            className={`flex size-7 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold ${getAvatarColor(row.childName)}`}
+                            className={`flex size-7 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold ${getPastelAvatarColor(row.childName)}`}
                           >
-                            {getInitials(row.childName)}
+                            {getInitialsFromName(row.childName)}
                           </div>
                           <span className="truncate max-w-[140px]">
                             {row.childName}

@@ -367,7 +367,7 @@ export default function ExportDatabasePage() {
                 )}
 
                 <Button
-                  className="w-full bg-primary text-white hover:bg-primary/90"
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                   onClick={() => handleExport(card.id)}
                   disabled={exporting === card.id}
                 >

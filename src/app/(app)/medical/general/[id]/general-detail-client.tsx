@@ -258,7 +258,7 @@ export function GeneralDetailClient({
             </Button>
             <Button
               variant="default"
-              className="text-white"
+              className="text-primary-foreground"
               onClick={handleSubmit(onSubmitForm)}
               disabled={isLoading}
             >

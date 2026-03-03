@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { getInitials } from "@/components/children/children-columns";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -42,10 +43,6 @@ interface TeacherData {
 
 interface TeacherDetailClientProps {
   teacher: TeacherData;
-}
-
-function getInitials(firstName: string, lastName: string): string {
-  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 }
 
 export function TeacherDetailClient({ teacher }: TeacherDetailClientProps) {

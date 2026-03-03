@@ -443,7 +443,7 @@ export function ComposeClient({
                   <Button
                     onClick={handleSend}
                     disabled={!canSend}
-                    className="text-white"
+                    className="text-primary-foreground"
                   >
                     {isPending ? (
                       <Loader2 className="mr-1.5 size-3.5 animate-spin" />

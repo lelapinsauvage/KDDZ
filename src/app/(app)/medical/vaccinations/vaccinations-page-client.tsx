@@ -60,7 +60,7 @@ export function VaccinationsPageClient({
           { label: "Vaccinations" },
         ]}
         actions={
-          <Button asChild className="bg-primary text-white hover:bg-primary/90">
+          <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
             <Link href="/medical/vaccinations/new">
               <Plus className="mr-1 size-4" />
               Add New

@@ -438,7 +438,7 @@ export function ParentUsersClient({
               Cancel
             </Button>
             <Button
-              className="text-white"
+              className="text-primary-foreground"
               onClick={handleCreate}
               disabled={!newUsername.trim() || !newPassword || isPending}
             >
@@ -479,7 +479,7 @@ export function ParentUsersClient({
               Cancel
             </Button>
             <Button
-              className="text-white"
+              className="text-primary-foreground"
               onClick={handleConfirmReset}
               disabled={!resetPassword || isPending}
             >

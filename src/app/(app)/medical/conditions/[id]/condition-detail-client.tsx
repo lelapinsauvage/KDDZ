@@ -243,7 +243,7 @@ export function ConditionDetailClient({
             </Button>
             <Button
               variant="default"
-              className="text-white"
+              className="text-primary-foreground"
               onClick={handleSubmit(onSubmit)}
               disabled={isLoading}
             >

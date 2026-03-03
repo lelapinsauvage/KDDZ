@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { createDailyReport } from "@/lib/actions/daily-reports";
 import { toast } from "sonner";
+import { getInitialsFromName } from "@/components/children/children-columns";
 
 const portionOptions = [
   { value: "NONE", label: "None" },
@@ -90,11 +91,6 @@ function getClassColor(className: string) {
   let hash = 0;
   for (let i = 0; i < className.length; i++) hash = className.charCodeAt(i) + ((hash << 5) - hash);
   return classColors[Math.abs(hash) % classColors.length];
-}
-
-function getInitials(name: string) {
-  const parts = name.split(" ");
-  return (parts[0]?.charAt(0) ?? "") + (parts[1]?.charAt(0) ?? "");
 }
 
 export function BatchReportClient({
@@ -229,7 +225,7 @@ export function BatchReportClient({
                         }
                       >
                         <div className={`flex size-9 items-center justify-center rounded-full text-xs font-bold ${colorSet.avatar}`}>
-                          {getInitials(child.name)}
+                          {getInitialsFromName(child.name)}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-foreground truncate">{child.name}</p>

@@ -268,7 +268,7 @@ export function EmployeeFormClient({
               <Button
                 type="submit"
                 disabled={isPending}
-                className="bg-primary hover:bg-primary/90 text-white"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 <Save className="size-4" />
                 {isPending ? "Saving..." : isEditing ? `Update ${singular}` : `Create ${singular}`}

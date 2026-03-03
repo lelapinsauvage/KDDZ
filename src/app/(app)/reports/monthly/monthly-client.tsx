@@ -134,7 +134,7 @@ export default function MonthlyClient({
           </div>
           <div className="flex-1" />
           <div className="flex items-end gap-2">
-            <Button className="text-white">
+            <Button className="text-primary-foreground">
               <TrendingUp className="mr-1 size-4" />
               Generate Report
             </Button>

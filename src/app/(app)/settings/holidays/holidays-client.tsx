@@ -516,7 +516,7 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
               <Button
                 variant={viewMode === "calendar" ? "default" : "ghost"}
                 size="sm"
-                className={viewMode === "calendar" ? "text-white" : ""}
+                className={viewMode === "calendar" ? "text-primary-foreground" : ""}
                 onClick={() => setViewMode("calendar")}
               >
                 <LayoutGrid className="mr-1 size-4" />
@@ -525,7 +525,7 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
               <Button
                 variant={viewMode === "list" ? "default" : "ghost"}
                 size="sm"
-                className={viewMode === "list" ? "text-white" : ""}
+                className={viewMode === "list" ? "text-primary-foreground" : ""}
                 onClick={() => setViewMode("list")}
               >
                 <List className="mr-1 size-4" />
@@ -533,7 +533,7 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
               </Button>
             </div>
             <Button
-              className="bg-primary text-white hover:bg-primary/90"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
               onClick={() => openAdd()}
               disabled={isPending}
             >
@@ -954,7 +954,7 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                 </Button>
                 <Button
                   type="submit"
-                  className="text-white"
+                  className="text-primary-foreground"
                   disabled={isPending}
                 >
                   {isPending && <Loader2 className="mr-1 size-4 animate-spin" />}
@@ -979,7 +979,7 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-white hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={handleDelete}
               disabled={isPending}
             >

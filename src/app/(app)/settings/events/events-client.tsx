@@ -433,7 +433,7 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
         ]}
         actions={
           <Button
-            className="bg-primary text-white hover:bg-primary/90"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
             onClick={() => openAdd()}
             disabled={isPending}
           >
@@ -657,7 +657,7 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
               </Button>
               <Button
                 type="submit"
-                className="text-white"
+                className="text-primary-foreground"
                 disabled={isPending}
               >
                 {isPending && <Loader2 className="mr-1 size-4 animate-spin" />}
@@ -681,7 +681,7 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-white hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={handleDelete}
               disabled={isPending}
             >

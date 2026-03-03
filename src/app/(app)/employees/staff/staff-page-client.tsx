@@ -127,7 +127,7 @@ export function StaffPageClient({ employees }: StaffPageClientProps) {
         title="Staff"
         breadcrumbs={[{ label: "Employees", href: "/employees/staff" }, { label: "Staff" }]}
         actions={
-          <Button asChild className="bg-primary hover:bg-primary/90 text-white">
+          <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
             <Link href={newLink}>
               <Plus className="size-4" />
               Add Staff

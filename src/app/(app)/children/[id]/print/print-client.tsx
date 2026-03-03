@@ -79,7 +79,7 @@ export function ChildPrintClient({ child }: { child: ChildData }) {
           ]}
           actions={
             <Button
-              className="bg-primary text-white hover:bg-primary/90"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
               onClick={() => window.print()}
             >
               <Printer className="mr-1 size-4" />

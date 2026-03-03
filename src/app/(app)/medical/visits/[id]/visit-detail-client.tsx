@@ -348,7 +348,7 @@ export function VisitDetailClient({
             </Button>
             <Button
               variant="default"
-              className="text-white"
+              className="text-primary-foreground"
               onClick={handleSubmit(onSubmitForm)}
               disabled={busy}
             >

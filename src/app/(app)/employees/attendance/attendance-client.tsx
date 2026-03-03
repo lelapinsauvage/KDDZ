@@ -516,7 +516,7 @@ export function AttendanceClient({
             </Select>
 
           <Button
-            className="bg-primary hover:bg-primary/90 text-white"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
             onClick={handleSubmitAttendance}
             disabled={isPending || filtered.length === 0}
           >
@@ -604,7 +604,7 @@ export function AttendanceClient({
               Cancel
             </Button>
             <Button
-              className="bg-primary hover:bg-primary/90 text-white"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
               onClick={handleCsvUpload}
               disabled={isPending}
             >

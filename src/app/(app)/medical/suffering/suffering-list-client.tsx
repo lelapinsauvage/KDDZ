@@ -45,6 +45,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { deleteMedicalForm } from "@/lib/actions/medical";
+import { getInitials, getPastelAvatarColor } from "@/components/children/children-columns";
 
 // --- Types ---
 
@@ -62,29 +63,6 @@ interface SufferingRow {
   schoolYearId: string | null;
   yearLabel: string;
   createdAt: string;
-}
-
-// --- Avatar helpers ---
-
-const avatarColors = [
-  "bg-[#4F46E5]/15 text-[#4F46E5]",
-  "bg-sky-100 text-sky-700",
-  "bg-amber-100 text-amber-700",
-  "bg-rose-100 text-rose-700",
-  "bg-[#059669]/15 text-[#059669]",
-  "bg-fuchsia-100 text-fuchsia-700",
-  "bg-[#0B9178]/10 text-[#0B9178]",
-  "bg-orange-100 text-orange-700",
-];
-
-function getInitials(firstName: string, lastName: string) {
-  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
-}
-
-function getAvatarColor(name: string) {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return avatarColors[Math.abs(hash) % avatarColors.length];
 }
 
 function formatDate(date: string | null) {
@@ -178,7 +156,7 @@ export function SufferingListClient({
         const { firstName, lastName } = row.original;
         const fullName = `${firstName} ${lastName}`;
         return (
-          <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${getAvatarColor(fullName)}`}>
+          <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${getPastelAvatarColor(fullName)}`}>
             {getInitials(firstName, lastName)}
           </div>
         );
@@ -320,7 +298,7 @@ export function SufferingListClient({
           { label: "Suffering Forms" },
         ]}
         actions={
-          <Button asChild className="bg-primary text-white hover:bg-primary/90">
+          <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
             <Link href="/medical/suffering/new">
               <Plus className="mr-1 size-4" />
               Add New
@@ -413,7 +391,7 @@ export function SufferingListClient({
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-destructive text-white hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={isPending}
             >
               {isPending ? "Deleting..." : "Delete"}

@@ -311,7 +311,7 @@ export function BranchesClient({ branches }: BranchesClientProps) {
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isPending}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-destructive hover:bg-destructive/90"
             >
               {isPending ? "Deleting..." : "Delete"}
             </AlertDialogAction>

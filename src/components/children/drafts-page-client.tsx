@@ -316,7 +316,7 @@ export function DraftsPageClient({
           {/* Add Child button */}
           <Button
             asChild
-            className="bg-primary text-white hover:bg-primary/90"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
             <Link href="/children/new">
               <Plus className="mr-1 size-4" />

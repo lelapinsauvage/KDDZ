@@ -230,7 +230,7 @@ export function SufferingFormClient({
               Save Draft
             </Button>
             <Button
-              className="text-white"
+              className="text-primary-foreground"
               onClick={() => save("SUBMITTED")}
               disabled={isLoading}
             >

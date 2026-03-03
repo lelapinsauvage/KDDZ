@@ -243,8 +243,8 @@ export function VaccinationDetailClient({
               </Button>
             )}
             <Button
-             
-              className="text-white"
+
+              className="text-primary-foreground"
               onClick={handleSubmit(onSave)}
               disabled={saving}
             >
@@ -394,7 +394,7 @@ export function VaccinationDetailClient({
             <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-destructive text-white hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={deleting}
             >
               {deleting ? (

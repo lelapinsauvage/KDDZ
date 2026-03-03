@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { deleteDailyReport } from "@/lib/actions/daily-reports";
 import { format } from "date-fns";
+import { getInitialsFromName, getPastelAvatarColor } from "@/components/children/children-columns";
 
 // -- Types --
 interface DraftDailyReport {
@@ -54,29 +55,6 @@ interface DraftDailyReport {
   status: "DRAFT";
   branchId: string;
   branchName: string;
-}
-
-// -- Avatar helpers --
-const avatarColors = [
-  "bg-[#0B9178]/10 text-[#0B9178]",
-  "bg-[#4F46E5]/15 text-[#4F46E5]",
-  "bg-rose-100 text-rose-700",
-  "bg-amber-100 text-amber-700",
-  "bg-sky-100 text-sky-700",
-  "bg-[#059669]/15 text-[#059669]",
-  "bg-fuchsia-100 text-fuchsia-700",
-  "bg-orange-100 text-orange-700",
-];
-
-function getAvatarColor(name: string) {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return avatarColors[Math.abs(hash) % avatarColors.length];
-}
-
-function getInitials(name: string) {
-  const parts = name.split(" ");
-  return (parts[0]?.charAt(0) ?? "") + (parts[1]?.charAt(0) ?? "");
 }
 
 // -- Props --
@@ -137,8 +115,8 @@ export function DraftDailyReportsClient({
         const name = row.original.childName;
         return (
           <div className="flex items-center gap-2.5">
-            <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${getAvatarColor(name)}`}>
-              {getInitials(name)}
+            <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${getPastelAvatarColor(name)}`}>
+              {getInitialsFromName(name)}
             </div>
             <span className="text-sm font-semibold text-foreground">{name}</span>
           </div>
@@ -296,7 +274,7 @@ export function DraftDailyReportsClient({
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-destructive text-white hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={isPending}
             >
               {isPending ? "Deleting..." : "Delete"}

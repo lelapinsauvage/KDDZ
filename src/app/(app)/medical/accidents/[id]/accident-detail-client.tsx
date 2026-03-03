@@ -291,7 +291,7 @@ export function AccidentDetailClient({
             </Button>
             <Button
               variant="default"
-              className="text-white"
+              className="text-primary-foreground"
               onClick={handleSubmit(onSubmit)}
               disabled={busy}
             >

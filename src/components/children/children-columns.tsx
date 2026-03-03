@@ -53,6 +53,14 @@ export function getInitials(firstName: string, lastName: string) {
   return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 }
 
+/** Get initials from a full name string */
+export function getInitialsFromName(name: string) {
+  const parts = name.split(" ");
+  return parts.length >= 2
+    ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+    : name.slice(0, 2).toUpperCase();
+}
+
 /** Deterministic color from a name string — design-system accent palette */
 const AVATAR_COLORS = [
   "bg-[#0B9178]",
@@ -73,6 +81,26 @@ export function getAvatarColor(name: string): string {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
   }
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+/** Deterministic pastel color from a name string — for light-bg avatars */
+const PASTEL_AVATAR_COLORS = [
+  "bg-[#4F46E5]/15 text-[#4F46E5]",
+  "bg-sky-100 text-sky-700",
+  "bg-amber-100 text-amber-700",
+  "bg-rose-100 text-rose-700",
+  "bg-[#059669]/15 text-[#059669]",
+  "bg-fuchsia-100 text-fuchsia-700",
+  "bg-[#0B9178]/10 text-[#0B9178]",
+  "bg-orange-100 text-orange-700",
+] as const;
+
+export function getPastelAvatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return PASTEL_AVATAR_COLORS[Math.abs(hash) % PASTEL_AVATAR_COLORS.length];
 }
 
 /** Format date to dd/MM/yyyy */
