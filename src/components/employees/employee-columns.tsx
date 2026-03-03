@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/tooltip";
 import { format } from "date-fns";
 import { SortableHeader } from "@/components/shared/data-table";
+import { getInitials, getAvatarColor } from "@/components/children/children-columns";
 
 export type EmployeeType = "teacher" | "nurse" | "doctor" | "manager";
 
@@ -39,10 +40,6 @@ export interface Employee {
   createdAt: string;
   status: "Active" | "Inactive";
   type: EmployeeType;
-}
-
-function getInitials(firstName: string, lastName: string): string {
-  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 }
 
 function getDetailPath(type: EmployeeType, id: string): string {
@@ -76,8 +73,13 @@ const ROLE_LABELS: Record<EmployeeType, string> = {
   manager: "Manager",
 };
 
+interface EmployeeColumnsOptions {
+  onDelete?: (id: string, name: string) => void;
+}
+
 export function createEmployeeColumns(
-  type: EmployeeType
+  type: EmployeeType,
+  options: EmployeeColumnsOptions = {}
 ): ColumnDef<Employee>[] {
   return [
     // Avatar
@@ -86,13 +88,14 @@ export function createEmployeeColumns(
       header: "",
       cell: ({ row }) => {
         const employee = row.original;
-        const colorClass = avatarColors[employee.type] || avatarColors.teacher;
+        const fullName = `${employee.firstName} ${employee.lastName}`;
+        const bg = getAvatarColor(fullName);
         return (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <div
-                  className={`flex size-9 items-center justify-center rounded-full text-xs font-semibold ${colorClass}`}
+                  className={`flex size-9 items-center justify-center rounded-full text-xs font-bold text-white shadow-sm ${bg}`}
                 >
                   {getInitials(employee.firstName, employee.lastName)}
                 </div>
@@ -168,11 +171,11 @@ export function createEmployeeColumns(
     // Branch
     {
       accessorKey: "branch",
-      header: "Branch",
+      header: ({ column }) => (
+        <SortableHeader column={column}>Branch</SortableHeader>
+      ),
       cell: ({ row }) => (
-        <Badge variant="secondary" className="bg-muted/50 text-muted-foreground font-normal">
-          {row.original.branch}
-        </Badge>
+        <span className="text-muted-foreground">{row.original.branch || "—"}</span>
       ),
     },
     // Mobile
@@ -276,7 +279,15 @@ export function createEmployeeColumns(
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem variant="destructive">
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => {
+                  options.onDelete?.(
+                    employee.id,
+                    `${employee.firstName} ${employee.lastName}`
+                  );
+                }}
+              >
                 <Trash2 className="size-4" />
                 Delete
               </DropdownMenuItem>

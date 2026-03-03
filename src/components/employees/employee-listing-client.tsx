@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
 import {
@@ -8,10 +9,20 @@ import {
   type Employee,
   type EmployeeType,
 } from "@/components/employees/employee-columns";
+import { deleteEmployee } from "@/lib/actions/employees";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Plus, Search, X } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useTransition } from "react";
+import { toast } from "sonner";
 import { ExportButton } from "@/components/shared/export-button";
 import type { ExportColumn } from "@/lib/export";
 
@@ -62,8 +73,34 @@ export function EmployeeListingClient({
   type,
   employees,
 }: EmployeeListingClientProps) {
-  const columns = useMemo(() => createEmployeeColumns(type), [type]);
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [search, setSearch] = useState("");
+
+  const handleDeleteRequest = useCallback((id: string, name: string) => {
+    setDeleteTarget({ id, name });
+  }, []);
+
+  const handleDeleteConfirm = useCallback(() => {
+    if (!deleteTarget) return;
+    const { id, name } = deleteTarget;
+    setDeleteTarget(null);
+    startTransition(async () => {
+      const result = await deleteEmployee(type, id);
+      if (result.success) {
+        toast.success(`${name} has been deactivated.`);
+        router.refresh();
+      } else {
+        toast.error(result.error);
+      }
+    });
+  }, [deleteTarget, type, router]);
+
+  const columns = useMemo(
+    () => createEmployeeColumns(type, { onDelete: handleDeleteRequest }),
+    [type, handleDeleteRequest]
+  );
   const { singular, plural } = labels[type];
 
   const filteredData = useMemo(() => {
@@ -125,6 +162,37 @@ export function EmployeeListingClient({
         {/* Data Table */}
         <DataTable columns={columns} data={filteredData} />
       </div>
+
+      {/* ── Delete Confirmation Dialog ──────────── */}
+      <Dialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Deactivation</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to deactivate{" "}
+              <strong>{deleteTarget?.name}</strong>? This will mark the{" "}
+              {singular.toLowerCase()} as inactive.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={isPending}
+            >
+              {isPending ? "Deactivating..." : "Deactivate"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
