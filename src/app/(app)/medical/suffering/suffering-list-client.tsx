@@ -5,7 +5,7 @@ import { type ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
-import { DataTable } from "@/components/shared/data-table";
+import { DataTable, SortableHeader } from "@/components/shared/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -187,7 +187,9 @@ export function SufferingListClient({
     },
     {
       accessorKey: "firstName",
-      header: "F Name",
+      header: ({ column }) => (
+        <SortableHeader column={column}>First Name</SortableHeader>
+      ),
       cell: ({ row }) => (
         <Link
           href={`/medical/suffering/${row.original.id}`}
@@ -199,7 +201,9 @@ export function SufferingListClient({
     },
     {
       accessorKey: "lastName",
-      header: "L Name",
+      header: ({ column }) => (
+        <SortableHeader column={column}>Last Name</SortableHeader>
+      ),
       cell: ({ row }) => (
         <span className="text-foreground">{row.original.lastName}</span>
       ),

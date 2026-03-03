@@ -5,11 +5,10 @@ import { type ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
-import { DataTable } from "@/components/shared/data-table";
+import { DataTable, SortableHeader } from "@/components/shared/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   Select,
@@ -200,21 +199,27 @@ export function DailyReportsClient({
     },
     {
       accessorKey: "firstName",
-      header: "F Name",
+      header: ({ column }) => (
+        <SortableHeader column={column}>First Name</SortableHeader>
+      ),
       cell: ({ row }) => (
         <span className="text-sm font-medium text-foreground">{row.original.firstName}</span>
       ),
     },
     {
       accessorKey: "lastName",
-      header: "L Name",
+      header: ({ column }) => (
+        <SortableHeader column={column}>Last Name</SortableHeader>
+      ),
       cell: ({ row }) => (
         <span className="text-sm font-medium text-foreground">{row.original.lastName}</span>
       ),
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: ({ column }) => (
+        <SortableHeader column={column}>Status</SortableHeader>
+      ),
       cell: ({ row }) => {
         const status = row.original.status;
         return status === "SUBMITTED" ? (
@@ -232,21 +237,27 @@ export function DailyReportsClient({
     },
     {
       accessorKey: "branchName",
-      header: "Branch",
+      header: ({ column }) => (
+        <SortableHeader column={column}>Branch</SortableHeader>
+      ),
       cell: ({ row }) => (
         <span className="text-sm text-foreground">{row.original.branchName}</span>
       ),
     },
     {
       accessorKey: "className",
-      header: "Class",
+      header: ({ column }) => (
+        <SortableHeader column={column}>Class</SortableHeader>
+      ),
       cell: ({ row }) => (
         <span className="text-sm text-foreground">{row.original.className}</span>
       ),
     },
     {
       accessorKey: "reportDate",
-      header: "Report Date",
+      header: ({ column }) => (
+        <SortableHeader column={column}>Report Date</SortableHeader>
+      ),
       cell: ({ row }) => (
         <span className="text-sm text-foreground whitespace-nowrap">
           {format(new Date(row.original.reportDate), "MMM d, yyyy")}
@@ -255,7 +266,9 @@ export function DailyReportsClient({
     },
     {
       accessorKey: "createdAt",
-      header: "Created Date",
+      header: ({ column }) => (
+        <SortableHeader column={column}>Created Date</SortableHeader>
+      ),
       cell: ({ row }) => (
         <span className="text-sm text-muted-foreground whitespace-nowrap">
           {format(new Date(row.original.createdAt), "MMM d, yyyy HH:mm")}
@@ -340,9 +353,7 @@ export function DailyReportsClient({
       />
       <div className="p-4 space-y-4 md:p-6">
         {/* Toolbar */}
-        <Card className="border-border/60 shadow-sm">
-          <CardContent className="p-3">
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <div className="relative w-full sm:max-w-xs sm:flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -420,9 +431,7 @@ export function DailyReportsClient({
                   data={filteredData as unknown as Record<string, unknown>[]}
                 />
               </div>
-            </div>
-          </CardContent>
-        </Card>
+        </div>
 
         {filteredData.length === 0 ? (
           <EmptyState

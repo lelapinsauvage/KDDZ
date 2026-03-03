@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
 import { PageHeader } from "@/components/layout/page-header";
-import { DataTable } from "@/components/shared/data-table";
+import { DataTable, SortableHeader } from "@/components/shared/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,7 +39,6 @@ import {
   Eye,
   MailCheck,
   MailX,
-  ArrowUpDown,
   Inbox,
 } from "lucide-react";
 import {
@@ -106,10 +105,10 @@ function parseNature(subject: string | null): {
 }
 
 const NATURE_STYLES: Record<string, string> = {
-  General: "bg-gray-100 text-gray-700",
-  Urgent: "bg-red-100 text-red-700",
-  Legal: "bg-amber-100 text-amber-700",
-  Event: "bg-blue-100 text-blue-700",
+  General: "bg-muted text-muted-foreground border-border",
+  Urgent: "bg-[var(--color-error-light)] text-[var(--color-error-dark)] border-[var(--color-error)]/20",
+  Legal: "bg-[var(--color-warning-light)] text-[var(--color-warning-dark)] border-[var(--color-warning)]/20",
+  Event: "bg-[var(--color-info-light)] text-[var(--color-info-dark)] border-[var(--color-info)]/20",
 };
 
 // ---------------------------------------------------------------------------
@@ -167,17 +166,7 @@ export function InboxClient({ messages, total }: InboxClientProps) {
     {
       accessorKey: "senderName",
       header: ({ column }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="px-0"
-          onClick={() =>
-            column.toggleSorting(column.getIsSorted() === "asc")
-          }
-        >
-          From
-          <ArrowUpDown className="ml-1 size-3" />
-        </Button>
+        <SortableHeader column={column}>From</SortableHeader>
       ),
       cell: ({ row }) => {
         const msg = row.original;
@@ -225,17 +214,7 @@ export function InboxClient({ messages, total }: InboxClientProps) {
     {
       accessorKey: "subject",
       header: ({ column }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="px-0"
-          onClick={() =>
-            column.toggleSorting(column.getIsSorted() === "asc")
-          }
-        >
-          Subject
-          <ArrowUpDown className="ml-1 size-3" />
-        </Button>
+        <SortableHeader column={column}>Subject</SortableHeader>
       ),
       cell: ({ row }) => {
         const msg = row.original;
@@ -258,17 +237,7 @@ export function InboxClient({ messages, total }: InboxClientProps) {
     {
       accessorKey: "createdAt",
       header: ({ column }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="px-0"
-          onClick={() =>
-            column.toggleSorting(column.getIsSorted() === "asc")
-          }
-        >
-          Date
-          <ArrowUpDown className="ml-1 size-3" />
-        </Button>
+        <SortableHeader column={column}>Date</SortableHeader>
       ),
       cell: ({ row }) => {
         const date = new Date(row.original.createdAt);
@@ -348,7 +317,7 @@ export function InboxClient({ messages, total }: InboxClientProps) {
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem
-                className="text-red-600"
+                variant="destructive"
                 onClick={() => {
                   setDeletingId(msg.id);
                   setDeleteDialogOpen(true);
@@ -449,7 +418,7 @@ export function InboxClient({ messages, total }: InboxClientProps) {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={isPending}
             >
               {isPending ? "Deleting..." : "Delete"}

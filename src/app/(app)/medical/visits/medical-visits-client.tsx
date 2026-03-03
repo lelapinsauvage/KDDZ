@@ -6,7 +6,7 @@ import { type ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/page-header";
-import { DataTable } from "@/components/shared/data-table";
+import { DataTable, SortableHeader } from "@/components/shared/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -162,7 +162,9 @@ export function MedicalVisitsClient({
     },
     {
       accessorKey: "firstName",
-      header: "F Name",
+      header: ({ column }) => (
+        <SortableHeader column={column}>First Name</SortableHeader>
+      ),
       cell: ({ row }) => (
         <Link
           href={`/medical/visits/${row.original.id}`}
@@ -174,14 +176,18 @@ export function MedicalVisitsClient({
     },
     {
       accessorKey: "lastName",
-      header: "L Name",
+      header: ({ column }) => (
+        <SortableHeader column={column}>Last Name</SortableHeader>
+      ),
       cell: ({ row }) => (
         <span className="text-foreground">{row.original.lastName}</span>
       ),
     },
     {
       accessorKey: "dateOfBirth",
-      header: "DOB",
+      header: ({ column }) => (
+        <SortableHeader column={column}>DOB</SortableHeader>
+      ),
       cell: ({ row }) => (
         <span className="text-sm text-muted-foreground">
           {formatDate(row.original.dateOfBirth)}
@@ -190,14 +196,18 @@ export function MedicalVisitsClient({
     },
     {
       accessorKey: "branchName",
-      header: "Branch",
+      header: ({ column }) => (
+        <SortableHeader column={column}>Branch</SortableHeader>
+      ),
       cell: ({ row }) => (
         <span className="text-muted-foreground">{row.original.branchName || "-"}</span>
       ),
     },
     {
       accessorKey: "className",
-      header: "Class",
+      header: ({ column }) => (
+        <SortableHeader column={column}>Class</SortableHeader>
+      ),
       cell: ({ row }) => {
         const name = row.original.className;
         if (!name) return <span className="text-muted-foreground">-</span>;
@@ -206,7 +216,9 @@ export function MedicalVisitsClient({
     },
     {
       accessorKey: "yearLabel",
-      header: "Year",
+      header: ({ column }) => (
+        <SortableHeader column={column}>Year</SortableHeader>
+      ),
       cell: ({ row }) => (
         <span className="text-sm text-muted-foreground">
           {row.original.yearLabel || "-"}
@@ -215,7 +227,9 @@ export function MedicalVisitsClient({
     },
     {
       accessorKey: "gender",
-      header: "Gender",
+      header: ({ column }) => (
+        <SortableHeader column={column}>Gender</SortableHeader>
+      ),
       cell: ({ row }) => {
         const gender = row.original.gender;
         if (!gender) return <span className="text-muted-foreground">-</span>;
@@ -233,7 +247,9 @@ export function MedicalVisitsClient({
     },
     {
       accessorKey: "createdAt",
-      header: "Created Date",
+      header: ({ column }) => (
+        <SortableHeader column={column}>Created Date</SortableHeader>
+      ),
       cell: ({ row }) => (
         <span className="text-sm text-muted-foreground">
           {formatDate(row.original.createdAt)}

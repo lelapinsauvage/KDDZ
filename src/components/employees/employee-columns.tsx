@@ -117,7 +117,7 @@ export function createEmployeeColumns(
     {
       accessorKey: "firstName",
       header: ({ column }) => (
-        <SortableHeader column={column}>F Name</SortableHeader>
+        <SortableHeader column={column}>First Name</SortableHeader>
       ),
       cell: ({ row }) => {
         const employee = row.original;
@@ -136,7 +136,7 @@ export function createEmployeeColumns(
     {
       accessorKey: "lastName",
       header: ({ column }) => (
-        <SortableHeader column={column}>L Name</SortableHeader>
+        <SortableHeader column={column}>Last Name</SortableHeader>
       ),
       cell: ({ row }) => {
         const employee = row.original;

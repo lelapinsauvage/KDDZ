@@ -5,7 +5,7 @@ import { type ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
-import { DataTable } from "@/components/shared/data-table";
+import { DataTable, SortableHeader } from "@/components/shared/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -204,21 +204,27 @@ export function AbsentReportsClient({ reports, branches, initialStatusFilter = "
     },
     {
       accessorKey: "firstName",
-      header: "F Name",
+      header: ({ column }) => (
+        <SortableHeader column={column}>First Name</SortableHeader>
+      ),
       cell: ({ row }) => (
         <span className="text-sm font-medium text-foreground">{row.original.firstName}</span>
       ),
     },
     {
       accessorKey: "lastName",
-      header: "L Name",
+      header: ({ column }) => (
+        <SortableHeader column={column}>Last Name</SortableHeader>
+      ),
       cell: ({ row }) => (
         <span className="text-sm font-medium text-foreground">{row.original.lastName}</span>
       ),
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: ({ column }) => (
+        <SortableHeader column={column}>Status</SortableHeader>
+      ),
       cell: ({ row }) => {
         const status = row.original.status;
         const config = statusConfig[status];
@@ -233,21 +239,27 @@ export function AbsentReportsClient({ reports, branches, initialStatusFilter = "
     },
     {
       accessorKey: "branchName",
-      header: "Branch",
+      header: ({ column }) => (
+        <SortableHeader column={column}>Branch</SortableHeader>
+      ),
       cell: ({ row }) => (
         <span className="text-sm text-foreground">{row.original.branchName}</span>
       ),
     },
     {
       accessorKey: "className",
-      header: "Class",
+      header: ({ column }) => (
+        <SortableHeader column={column}>Class</SortableHeader>
+      ),
       cell: ({ row }) => (
         <span className="text-sm text-foreground">{row.original.className}</span>
       ),
     },
     {
       accessorKey: "reportDate",
-      header: "Report Date",
+      header: ({ column }) => (
+        <SortableHeader column={column}>Report Date</SortableHeader>
+      ),
       cell: ({ row }) => (
         <span className="text-sm text-foreground whitespace-nowrap">
           {format(new Date(row.original.reportDate), "MMM d, yyyy")}
@@ -256,7 +268,9 @@ export function AbsentReportsClient({ reports, branches, initialStatusFilter = "
     },
     {
       accessorKey: "createdAt",
-      header: "Created Date",
+      header: ({ column }) => (
+        <SortableHeader column={column}>Created Date</SortableHeader>
+      ),
       cell: ({ row }) => (
         <span className="text-sm text-muted-foreground whitespace-nowrap">
           {format(new Date(row.original.createdAt), "MMM d, yyyy HH:mm")}
