@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useTransition } from "react";
+import { useState, useMemo, useTransition, useCallback } from "react";
 import Link from "next/link";
 import { type ColumnDef} from "@tanstack/react-table";
 import { PageHeader } from "@/components/layout/page-header";
@@ -16,6 +16,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Pencil, KeyRound, UserX, Eye, Loader2, UserPlus } from "lucide-react";
+import { toast } from "sonner";
 import {
   createParentUser,
   toggleParentUserStatus,
@@ -78,6 +79,10 @@ export function ParentUsersClient({
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
+  // Reset-password dialog state
+  const [resetPasswordDialog, setResetPasswordDialog] = useState<{ userId: string; childName: string } | null>(null);
+  const [resetPassword, setResetPassword] = useState("");
+
   // ---------- Filtering ----------
 
   const filteredUsers = useMemo(() => {
@@ -105,13 +110,13 @@ export function ParentUsersClient({
 
   // ---------- Handlers ----------
 
-  function openCreateDialog(childId: string, childName: string) {
+  const openCreateDialog = useCallback((childId: string, childName: string) => {
     setCreateChildId(childId);
     setCreateChildName(childName);
     setNewUsername("");
     setNewPassword("");
     setCreateOpen(true);
-  }
+  }, []);
 
   function handleCreate() {
     if (!newUsername.trim() || !createChildId || !newPassword) return;
@@ -145,16 +150,19 @@ export function ParentUsersClient({
         // Remove from "without" list
         setChildrenWithout(childrenWithout.filter((c) => c.id !== createChildId));
         setCreateOpen(false);
+        toast.success("Parent account created successfully.");
+      } else {
+        toast.error("Failed to create parent account.");
       }
     });
   }
 
-  function handleToggleStatus(id: string) {
+  const handleToggleStatus = useCallback((id: string) => {
     startTransition(async () => {
       const result = await toggleParentUserStatus(id);
       if (result.success) {
-        setUsers(
-          users.map((u) =>
+        setUsers((prev) =>
+          prev.map((u) =>
             u.id === id
               ? { ...u, status: u.status === "Active" ? "Inactive" : "Active" }
               : u
@@ -162,15 +170,25 @@ export function ParentUsersClient({
         );
       }
     });
-  }
+  }, []);
 
-  function handleResetPassword(id: string) {
-    const newPw = prompt("Enter new password for this parent user:");
-    if (!newPw) return;
+  const openResetDialog = useCallback((userId: string, childName: string) => {
+    setResetPasswordDialog({ userId, childName });
+    setResetPassword("");
+  }, []);
 
+  function handleConfirmReset() {
+    if (!resetPasswordDialog || !resetPassword) return;
+    const { userId } = resetPasswordDialog;
     startTransition(async () => {
-      await resetParentPassword(id, newPw);
-      alert("Password has been reset.");
+      try {
+        await resetParentPassword(userId, resetPassword);
+        toast.success("Password has been reset.");
+      } catch {
+        toast.error("Failed to reset password.");
+      }
+      setResetPasswordDialog(null);
+      setResetPassword("");
     });
   }
 
@@ -252,7 +270,7 @@ export function ParentUsersClient({
               size="icon"
               className="size-8"
               title="Reset Password"
-              onClick={() => handleResetPassword(row.original.id)}
+              onClick={() => openResetDialog(row.original.id, row.original.childName)}
               disabled={isPending}
             >
               <KeyRound className="size-4" />
@@ -271,8 +289,7 @@ export function ParentUsersClient({
         ),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [users, isPending]
+    [isPending, openResetDialog, handleToggleStatus]
   );
 
   // ---------- Table 2: Children WITHOUT parent account ----------
@@ -326,8 +343,7 @@ export function ParentUsersClient({
         ),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [childrenWithout, isPending]
+    [isPending, openCreateDialog]
   );
 
   // ---------- Render ----------
@@ -368,7 +384,7 @@ export function ParentUsersClient({
         {/* Table 2: Children WITHOUT Parent User */}
         <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <div className="flex size-6 items-center justify-center rounded bg-destructive text-white text-xs font-bold">
+            <div className="flex size-6 items-center justify-center rounded bg-amber-500 text-white text-xs font-bold">
               2
             </div>
             <h2 className="text-base font-semibold">Children without Parent Account</h2>
@@ -428,6 +444,47 @@ export function ParentUsersClient({
             >
               {isPending && <Loader2 className="mr-1 size-4 animate-spin" />}
               Create Account
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reset Password Dialog */}
+      <Dialog
+        open={resetPasswordDialog !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setResetPasswordDialog(null);
+            setResetPassword("");
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset Password for {resetPasswordDialog?.childName}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">New Password</label>
+              <Input
+                type="password"
+                placeholder="Enter new password"
+                value={resetPassword}
+                onChange={(e) => setResetPassword(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResetPasswordDialog(null)}>
+              Cancel
+            </Button>
+            <Button
+              className="text-white"
+              onClick={handleConfirmReset}
+              disabled={!resetPassword || isPending}
+            >
+              {isPending && <Loader2 className="mr-1 size-4 animate-spin" />}
+              Reset Password
             </Button>
           </DialogFooter>
         </DialogContent>
