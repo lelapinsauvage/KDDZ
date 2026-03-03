@@ -283,18 +283,16 @@ export default function NurseryClient({ branchId, initialSettings, provinces }: 
                   { value: "person", label: "Natural Person" },
                   { value: "entity", label: "Legal Entity" },
                 ].map((option) => (
-                  <button
+                  <Button
                     key={option.value}
                     type="button"
+                    variant={ownerType === option.value ? "default" : "outline"}
+                    size="sm"
+                    className="rounded-full"
                     onClick={() => setValue("owner_type", option.value, { shouldDirty: true })}
-                    className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
-                      ownerType === option.value
-                        ? "border-violet-300 bg-violet-100 text-violet-700"
-                        : "border-border bg-muted/50 text-muted-foreground hover:bg-muted"
-                    }`}
                   >
                     {option.label}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -508,18 +506,16 @@ export default function NurseryClient({ branchId, initialSettings, provinces }: 
                 {DAYS.map((day) => {
                   const active = workingDays.includes(day);
                   return (
-                    <button
+                    <Button
                       key={day}
                       type="button"
+                      variant={active ? "default" : "outline"}
+                      size="sm"
+                      className="rounded-full"
                       onClick={() => toggleDay(day)}
-                      className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors ${
-                        active
-                          ? "border-primary bg-primary text-white"
-                          : "border-border bg-muted/50 text-muted-foreground hover:bg-muted"
-                      }`}
                     >
                       {DAY_SHORT[day]}
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
@@ -531,7 +527,7 @@ export default function NurseryClient({ branchId, initialSettings, provinces }: 
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-[#4F46E5]/10 text-[#4F46E5]">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
                 <Settings2 className="size-5" />
               </div>
               <div>
@@ -557,18 +553,16 @@ export default function NurseryClient({ branchId, initialSettings, provinces }: 
                 {["Developmental", "Behavioral", "Cognitive", "Social", "Language"].map((t) => {
                   const active = assessmentTypes.includes(t);
                   return (
-                    <button
+                    <Button
                       key={t}
                       type="button"
+                      variant={active ? "default" : "outline"}
+                      size="sm"
+                      className="rounded-full"
                       onClick={() => toggleAssessment(t)}
-                      className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors ${
-                        active
-                          ? "border-[#4F46E5]/30 bg-[#4F46E5]/15 text-[#4F46E5]"
-                          : "border-border bg-muted/50 text-muted-foreground hover:bg-muted"
-                      }`}
                     >
                       {t}
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
@@ -629,7 +623,7 @@ export default function NurseryClient({ branchId, initialSettings, provinces }: 
             <Button
               type="submit"
               size="lg"
-              className="text-white px-8"
+              className="text-primary-foreground px-8"
               disabled={isPending}
             >
               {isPending ? (

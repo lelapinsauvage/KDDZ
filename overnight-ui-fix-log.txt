@@ -163,3 +163,23 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 8 — Alarms, New Year, Invoice polish — Tue Mar  3 21:26:18 CET 2026 ===
 =============================================
+All done. Here's what was changed:
+
+**alarms-overview-client.tsx:**
+- Raw `<button>` filter chips → `<Button variant="outline" size="sm">` with active state class
+- `text-red-600` urgency color → `text-destructive`
+- `Badge className="bg-red-100 text-red-700"` → `Badge variant="destructive"`
+
+**new-year/page.tsx:**
+- Both placeholder texts → proper Card content with `Wrench` icon, `<Badge variant="secondary">Coming soon</Badge>`, and muted description
+
+**invoice-client.tsx:**
+- `text-white` → `text-primary-foreground` on print button
+- `text-green-700` → `text-emerald-700` (paid), `text-red-600` → `text-destructive` (overdue), `text-yellow-600` → `text-amber-600` (pending)
+To https://github.com/lelapinsauvage/KDDZ.git
+   36d43b7..884f72b  main -> main
+=== Phase 8 — Alarms, New Year, Invoice polish COMPLETE — Tue Mar  3 21:27:27 CET 2026 ===
+
+=============================================
+=== Phase 9 — Nursery Settings polish — Tue Mar  3 21:27:27 CET 2026 ===
+=============================================
