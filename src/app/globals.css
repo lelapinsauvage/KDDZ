@@ -4,8 +4,8 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* ── Garderie — Meadow Design System ──
-   "Apple meets nursery" — clean, premium, warm.
+/* ── Garderie — Metronic v3 Dark-Blue Theme ──
+   Matching the original PHP app's look & feel exactly.
    See docs/design-system.md for full token reference. */
 
 @theme inline {
@@ -77,12 +77,12 @@
   --color-primary-800: var(--color-primary-800);
   --color-border-strong: var(--color-border-strong);
 
-  /* Warm-tinted shadows (slate-900 base, not pure black) */
-  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-md: 0 4px 6px rgba(15, 23, 42, 0.06), 0 2px 4px rgba(15, 23, 42, 0.04);
-  --shadow-lg: 0 10px 15px rgba(15, 23, 42, 0.08), 0 4px 6px rgba(15, 23, 42, 0.04);
-  --shadow-xl: 0 20px 25px rgba(15, 23, 42, 0.08), 0 8px 10px rgba(15, 23, 42, 0.03);
+  /* Near-zero shadows (flat Metronic style) */
+  --shadow-xs: 0 1px 1px rgba(0, 0, 0, 0.03);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 3px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 3px 5px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 4px 6px rgba(0, 0, 0, 0.05);
 
   /* Font stacks */
   --font-sans: var(--font-body);
@@ -100,63 +100,63 @@
 /* ── Light Mode (:root) ── */
 :root {
   --navbar-height: 56px;
-  --radius: 0.625rem;
+  --radius: 0.1875rem;
 
   /* ── Core surfaces ── */
-  --background: #F7F8FA;
-  --foreground: #1A1D23;
+  --background: #F5F5F5;
+  --foreground: #333333;
   --card: #FFFFFF;
-  --card-foreground: #1A1D23;
+  --card-foreground: #333333;
   --popover: #FFFFFF;
-  --popover-foreground: #1A1D23;
+  --popover-foreground: #333333;
 
-  /* ── Primary — Meadow teal-green ── */
-  --primary: #0B7464;
+  /* ── Primary — Metronic teal accent ── */
+  --primary: #1caf9a;
   --primary-foreground: #FFFFFF;
 
   /* ── Secondary ── */
-  --secondary: #F1F3F5;
-  --secondary-foreground: #4B5262;
+  --secondary: #f4f4f4;
+  --secondary-foreground: #333333;
 
   /* ── Muted ── */
-  --muted: #F1F3F5;
-  --muted-foreground: #6B7280;
+  --muted: #f4f4f4;
+  --muted-foreground: #505f72;
 
   /* ── Accent ── */
-  --accent: #EFFCF8;
-  --accent-foreground: #0B7464;
+  --accent: #e8f8f5;
+  --accent-foreground: #1caf9a;
 
   /* ── Destructive ── */
-  --destructive: #DC2626;
+  --destructive: #d64635;
   --destructive-foreground: #FFFFFF;
 
   /* ── Borders & inputs ── */
-  --border: #E2E5E9;
-  --input: #E2E5E9;
-  --ring: #0B7464;
+  --border: #e5e5e5;
+  --input: #e5e5e5;
+  --ring: #1caf9a;
 
-  /* ── Charts (colorblind-safe) ── */
-  --chart-1: #0B9178;
-  --chart-2: #2563EB;
+  /* ── Charts ── */
+  --chart-1: #1caf9a;
+  --chart-2: #327ad5;
   --chart-3: #7C3AED;
   --chart-4: #EA580C;
   --chart-5: #4F46E5;
 
-  /* ── Sidebar (always dark) ── */
-  --sidebar: #1A1F2E;
-  --sidebar-foreground: #94A3B8;
-  --sidebar-primary: #36CCA8;
-  --sidebar-primary-foreground: #1A1F2E;
-  --sidebar-accent: #2F3749;
-  --sidebar-accent-foreground: #F1F5F9;
-  --sidebar-border: #2D3548;
-  --sidebar-ring: #36CCA8;
+  /* ── Sidebar (Metronic dark-blue) ── */
+  --sidebar: #364150;
+  --sidebar-foreground: #b4bcc8;
+  --sidebar-primary: #1caf9a;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #2c3542;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #3f4b5a;
+  --sidebar-ring: #1caf9a;
 
   /* ── Module accents ── */
   --color-health: #059669;
-  --color-attendance: #2563EB;
+  --color-attendance: #327ad5;
   --color-finance: #4F46E5;
-  --color-alerts: #D97706;
+  --color-alerts: #c29d0b;
   --color-learning: #7C3AED;
   --color-meals: #EA580C;
   --color-comms: #E11D48;
@@ -173,44 +173,44 @@
   --color-sleep-light: #F0F9FF;
 
   /* ── Semantic colors ── */
-  --color-success: #16A34A;
+  --color-success: #008200;
   --color-success-light: #ECFDF5;
-  --color-success-dark: #15803D;
-  --color-warning: #D97706;
+  --color-success-dark: #006a00;
+  --color-warning: #c29d0b;
   --color-warning-light: #FFFBEB;
-  --color-warning-dark: #B45309;
-  --color-error: #DC2626;
+  --color-warning-dark: #a18508;
+  --color-error: #d64635;
   --color-error-light: #FEF2F2;
-  --color-error-dark: #B91C1C;
-  --color-info: #2563EB;
+  --color-error-dark: #b93325;
+  --color-info: #327ad5;
   --color-info-light: #EFF6FF;
-  --color-info-dark: #1D4ED8;
+  --color-info-dark: #2a66b3;
 
-  /* ── Primary scale (decorative/illustration use) ── */
-  --color-primary-50: #EFFCF8;
-  --color-primary-100: #D1F7EC;
-  --color-primary-200: #A6EFDB;
-  --color-primary-300: #6DE1C3;
-  --color-primary-400: #36CCA8;
-  --color-primary-500: #17B394;
-  --color-primary-600: #0B9178;
-  --color-primary-700: #0B7464;
-  --color-primary-800: #0D5C50;
-  --color-primary-900: #104C44;
-  --color-primary-950: #062D28;
+  /* ── Primary scale ── */
+  --color-primary-50: #e8f8f5;
+  --color-primary-100: #c5ede5;
+  --color-primary-200: #9ee0d3;
+  --color-primary-300: #6dd3bf;
+  --color-primary-400: #1caf9a;
+  --color-primary-500: #1caf9a;
+  --color-primary-600: #189a87;
+  --color-primary-700: #148574;
+  --color-primary-800: #106f61;
+  --color-primary-900: #0c5a4e;
+  --color-primary-950: #073d35;
 
   /* ── Extended neutrals ── */
-  --color-bg-subtle: #F1F3F5;
-  --color-bg-muted: #E8EAED;
+  --color-bg-subtle: #f4f4f4;
+  --color-bg-muted: #e5e5e5;
   --color-text-disabled: #9CA3AF;
-  --color-border-subtle: #ECEEF1;
-  --color-border-strong: #C9CED4;
+  --color-border-subtle: #eeeeee;
+  --color-border-strong: #cccccc;
 
   /* ── Font families ── */
-  --font-heading: 'Nunito', 'Cairo', system-ui, -apple-system, sans-serif;
-  --font-body: 'Cairo', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Open Sans', system-ui, -apple-system, sans-serif;
+  --font-body: 'Open Sans', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
-  --font-body-ar: 'Cairo', 'Noto Sans Arabic', sans-serif;
+  --font-body-ar: 'Open Sans', 'Noto Sans Arabic', sans-serif;
 
   /* ── Font sizes ── */
   --text-h1: 1.875rem;
@@ -253,14 +253,14 @@
   --tracking-wide: 0.02em;
   --tracking-wider: 0.06em;
 
-  /* ── Shadows (warm-tinted, slate-900 base) ── */
-  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-md: 0 4px 6px rgba(15, 23, 42, 0.06), 0 2px 4px rgba(15, 23, 42, 0.04);
-  --shadow-lg: 0 10px 15px rgba(15, 23, 42, 0.08), 0 4px 6px rgba(15, 23, 42, 0.04);
-  --shadow-xl: 0 20px 25px rgba(15, 23, 42, 0.08), 0 8px 10px rgba(15, 23, 42, 0.03);
-  --shadow-inner: inset 0 2px 4px rgba(15, 23, 42, 0.04);
-  --shadow-ring: 0 0 0 3px rgba(11, 116, 100, 0.15);
+  /* ── Shadows (near-zero, flat Metronic style) ── */
+  --shadow-xs: 0 1px 1px rgba(0, 0, 0, 0.03);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 3px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 3px 5px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 4px 6px rgba(0, 0, 0, 0.05);
+  --shadow-inner: inset 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-ring: 0 0 0 3px rgba(28, 175, 154, 0.15);
 
   /* ── Transitions ── */
   --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
@@ -281,8 +281,8 @@
   --card-foreground: #F1F5F9;
   --popover: #1A1D23;
   --popover-foreground: #F1F5F9;
-  --primary: #36CCA8;
-  --primary-foreground: #062D28;
+  --primary: #1caf9a;
+  --primary-foreground: #FFFFFF;
   --secondary: #252A33;
   --secondary-foreground: #CBD5E1;
   --muted: #252A33;
@@ -293,22 +293,22 @@
   --destructive-foreground: #FFFFFF;
   --border: #2D3548;
   --input: #2D3548;
-  --ring: #36CCA8;
-  --chart-1: #36CCA8;
+  --ring: #1caf9a;
+  --chart-1: #1caf9a;
   --chart-2: #60A5FA;
   --chart-3: #A78BFA;
   --chart-4: #FB923C;
   --chart-5: #818CF8;
 
   /* Sidebar stays the same in dark mode */
-  --sidebar: #1A1F2E;
-  --sidebar-foreground: #94A3B8;
-  --sidebar-primary: #36CCA8;
-  --sidebar-primary-foreground: #1A1F2E;
-  --sidebar-accent: #2F3749;
-  --sidebar-accent-foreground: #F1F5F9;
-  --sidebar-border: #2D3548;
-  --sidebar-ring: #36CCA8;
+  --sidebar: #364150;
+  --sidebar-foreground: #b4bcc8;
+  --sidebar-primary: #1caf9a;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #2c3542;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #3f4b5a;
+  --sidebar-ring: #1caf9a;
 }
 
 /* ── Base styles ── */
@@ -385,13 +385,11 @@
   }
 }
 
-/* ── Header bar (frosted glass) ── */
+/* ── Header bar (Metronic dark-blue) ── */
 .header-bar {
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(20px) saturate(1.4);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  background: #2b3643;
   height: var(--navbar-height);
-  border-bottom: 1px solid rgba(226, 229, 233, 0.5);
+  border-bottom: 1px solid #455263;
 }
 
 /* ── Footer bar ── */

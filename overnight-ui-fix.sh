@@ -1,11 +1,13 @@
 #!/bin/bash
-# Overnight UI Fix — Polish all pages from the structure script
-# Clean up: design tokens, shared components, delete confirmations, toasts
+# Overnight UI Fix — Copy old Metronic PHP app's EXACT visual style page by page
+# For each page: read old PHP template → read new Next.js page → make it look identical
 # NO set -e — we want to continue on failure
 unset CLAUDECODE
 cd /Users/karimsaab/Desktop/garderie
 LOG_FILE="./overnight-ui-fix-log.txt"
 BRANCH="main"
+OLD="$HOME/Desktop/Garderie-old-backup/Front/templates/admin"
+OLD_CSS="$HOME/Desktop/Garderie-old-backup/Front"
 
 echo "=== OVERNIGHT UI FIX START — $(date) ===" > "$LOG_FILE"
 
@@ -26,382 +28,517 @@ run_phase() {
 }
 
 # ═══════════════════════════════════════════════
-# PHASE 1: Child Dashboard — use StatCard + DataTable
+# PHASE 1: globals.css + fonts — Metronic foundation
 # ═══════════════════════════════════════════════
 
-run_phase "Phase 1 — Child Dashboard rewrite" '
-You are a Senior Frontend Engineer working in /Users/karimsaab/Desktop/garderie (Next.js 15, shadcn/ui, Tailwind v4).
+run_phase "Phase 1 — Metronic color system + Open Sans" '
+You are a Senior Frontend Engineer in /Users/karimsaab/Desktop/garderie.
 
-Read these files:
-- src/app/(app)/children/[id]/dashboard/dashboard-client.tsx
-- src/components/dashboard/stat-card.tsx (the shared StatCard component)
-- src/app/(app)/classes/[id]/page.tsx (example of correct StatCard usage)
+The old PHP app used Metronic v3 dark-blue theme. We must match it EXACTLY.
 
-The child dashboard has ~11 manually-built stat cards using raw Card+CardContent+inline colors. Replace ALL of them with the shared StatCard component. Look at how classes/[id]/page.tsx does it — each card is just:
-```tsx
-<StatCard title="..." value={...} icon={IconName} color="emerald" href="..." />
-```
+Read these old CSS files to understand the exact colors:
+- '"$OLD_CSS"'/assets/global/css/components.css (first 200 lines)
+- '"$OLD_CSS"'/assets/admin/css/custom.css
 
-Also:
-1. Replace the hand-rolled PaginatedTable (raw <table> element with manual pagination) with the shared DataTable component from @/components/shared/data-table
-2. Replace hardcoded hex chart colors like `["#22c55e", "#ef4444"]` with the design system constants from src/components/dashboard/demographics-section.tsx
-3. Replace `bg-emerald-50 text-emerald-600` and similar raw Tailwind on status badges with `var(--color-success-light)` / `var(--color-success-dark)` pattern used in children-columns.tsx
-4. Replace `text-blue-600`, `text-green-600` on contact links with `text-primary` and `text-emerald-600`
+Read the current new CSS:
+- src/app/globals.css
+
+And the font loading:
+- src/app/layout.tsx
+
+TASK 1: Update ALL CSS variables in globals.css :root to match old Metronic:
+  --background: #F5F5F5
+  --foreground: #333333
+  --primary: #1caf9a (old teal accent)
+  --primary-foreground: #FFFFFF
+  --secondary: #f4f4f4
+  --secondary-foreground: #333333
+  --muted: #f4f4f4
+  --muted-foreground: #505f72
+  --accent: #e8f8f5
+  --accent-foreground: #1caf9a
+  --destructive: #d64635
+  --border: #e5e5e5
+  --input: #e5e5e5
+  --ring: #1caf9a
+  --sidebar: #364150
+  --sidebar-foreground: #b4bcc8
+  --sidebar-primary: #1caf9a
+  --sidebar-primary-foreground: #FFFFFF
+  --sidebar-accent: #2c3542
+  --sidebar-accent-foreground: #FFFFFF
+  --sidebar-border: #3f4b5a
+  --radius: 0.1875rem (old app had ~3px rounding, almost flat)
+  --chart-1: #1caf9a
+  --chart-2: #327ad5
+  --color-success: #008200
+  --color-warning: #c29d0b
+  --color-error: #d64635
+  --color-info: #327ad5
+
+  Header bar class: bg #2b3643, no blur, border-bottom #455263
+  Shadows: flatten to near-zero
+
+TASK 2: In layout.tsx, replace Nunito/Cairo font loading with Open Sans:
+  import { Open_Sans } from "next/font/google"
+  const openSans = Open_Sans({ subsets: ["latin", "latin-ext"], weight: ["300","400","500","600","700","800"], variable: "--font-body", display: "swap" })
+  Remove separate heading font. Set both --font-heading and --font-body to Open Sans.
 
 Run: npx tsc --noEmit
-Commit:
-```
-git add -A && git commit -m "fix(ui): child dashboard — use StatCard and DataTable components"
-```
+Commit: git add -A && git commit -m "style: Metronic color system + Open Sans font"
 '
 
 # ═══════════════════════════════════════════════
-# PHASE 2: Medical pages — fix delete action + consistency
+# PHASE 2: Sidebar — exact copy of old leftmenu
 # ═══════════════════════════════════════════════
 
-run_phase "Phase 2 — Medical pages fixes" '
-You are a Senior Frontend Engineer working in /Users/karimsaab/Desktop/garderie.
+run_phase "Phase 2 — Sidebar exact copy" '
+You are a Senior Frontend Engineer in /Users/karimsaab/Desktop/garderie.
 
-Read these files:
-- src/app/(app)/medical/accidents/accident-reports-client.tsx
-- src/app/(app)/medical/general/medical-general-client.tsx
-- src/components/children/children-columns.tsx (for getAvatarColor, getInitials)
+Read the OLD sidebar:
+- '"$OLD"'/leftmenu.php
 
-Fix these issues:
-
-1. CRITICAL: In accident-reports-client.tsx, the delete handler calls `deleteMedicalForm(id)` which is the WRONG action. Find or create a proper `deleteAccidentReport` action. Check src/lib/actions/ for existing accident actions. If `deleteAccidentReport` exists, import and use it. If not, create it in the appropriate actions file following the same pattern as deleteMedicalForm.
-
-2. In accident-reports-client.tsx, replace the manual useState delete handling with useTransition pattern matching medical-general-client.tsx.
-
-3. In BOTH medical files, replace the locally-reimplemented avatar color arrays with imports from children-columns:
-```tsx
-import { getAvatarColor, getInitials } from "@/components/children/children-columns"
-```
-Remove the local duplicate arrays.
-
-4. In BOTH files, replace `className="bg-destructive text-white hover:bg-destructive/90"` on AlertDialogAction with just `className="bg-destructive text-destructive-foreground hover:bg-destructive/90"`.
-
-5. Fix the Button with `size="icon-sm"` — check if that variant exists in src/components/ui/button.tsx. If not, change to `size="sm"` with appropriate icon sizing.
-
-Run: npx tsc --noEmit
-Commit:
-```
-git add -A && git commit -m "fix(ui): medical pages — correct delete action, shared avatar utils"
-```
-'
-
-# ═══════════════════════════════════════════════
-# PHASE 3: Zones/Address — add delete confirmation + toasts
-# ═══════════════════════════════════════════════
-
-run_phase "Phase 3 — Zones/Address pages" '
-You are a Senior Frontend Engineer working in /Users/karimsaab/Desktop/garderie.
-
-Read these files:
-- src/app/(app)/settings/zones/zones-client.tsx
-- src/app/(app)/settings/areas/areas-client.tsx (if exists, likely has same issues)
-- src/app/(app)/settings/regions/regions-client.tsx (if exists, likely has same issues)
-- src/app/(app)/food/food-listing-client.tsx (reference for correct delete+toast pattern)
-
-Fix ALL three address pages (zones, areas, regions) with these changes:
-
-1. Add `import { toast } from "sonner"` — currently missing entirely.
-
-2. Add an AlertDialog for delete confirmation. Copy the pattern from food-listing-client.tsx:
-   - State: `const [deleteTarget, setDeleteTarget] = useState<{id: string, name: string} | null>(null)`
-   - Trash button opens the dialog instead of directly deleting
-   - AlertDialog with "Are you sure?" confirmation
-   - On confirm, call the delete action and show toast
-
-3. Add toast.success() on successful create/update and toast.error() on failure in handleSave.
-
-4. Replace bare `<label>` elements with shadcn `<Label>` component (import from @/components/ui/label).
-
-5. Replace `export default function` with `export function` (named export) to match codebase convention.
-
-6. Remove eslint-disable-next-line comments on useMemo — fix the actual dependency arrays instead.
-
-7. Replace manual Button color overrides (`className="bg-primary text-white"`) with just `<Button>` (default variant already handles this).
-
-Run: npx tsc --noEmit
-Commit:
-```
-git add -A && git commit -m "fix(ui): address pages — add delete confirmation, toasts, design tokens"
-```
-'
-
-# ═══════════════════════════════════════════════
-# PHASE 4: Parent Users — replace prompt/alert with Dialog
-# ═══════════════════════════════════════════════
-
-run_phase "Phase 4 — Parent Users dialog fix" '
-You are a Senior Frontend Engineer working in /Users/karimsaab/Desktop/garderie.
-
-Read:
-- src/app/(app)/settings/parent-users/parent-users-client.tsx
-- src/components/ui/dialog.tsx (for Dialog imports)
-- src/components/ui/input.tsx
-
-CRITICAL FIX: The password reset uses `prompt()` and `alert()` — native browser dialogs that look terrible and are a security issue (password visible in plain text).
-
-Replace with a proper shadcn Dialog:
-1. Add a resetPasswordDialog state: `useState<{userId: string, childName: string} | null>(null)`
-2. Add a password input state with `useState("")`
-3. Create a Dialog that shows:
-   - Title: "Reset Password for {childName}"
-   - A password Input (type="password")
-   - Cancel + Confirm buttons
-4. On confirm, call the resetPassword server action and show toast.success() or toast.error()
-5. Replace `alert()` calls with `toast.success()` / `toast.error()` from sonner
-
-Also fix:
-6. Add toast import if missing: `import { toast } from "sonner"`
-7. Add toast.success() on successful user creation (handleCreate)
-8. Replace the destructive-semantic badge on section "2" header — use `bg-amber-500` instead of `bg-destructive` since its just a section number, not a danger indicator
-9. Remove eslint-disable-next-line comments — fix actual deps
-
-Run: npx tsc --noEmit
-Commit:
-```
-git add -A && git commit -m "fix(ui): parent users — replace prompt/alert with proper Dialog"
-```
-'
-
-# ═══════════════════════════════════════════════
-# PHASE 5: Messages + Daily Reports — SortableHeader + tokens
-# ═══════════════════════════════════════════════
-
-run_phase "Phase 5 — Messages and Daily Reports polish" '
-You are a Senior Frontend Engineer working in /Users/karimsaab/Desktop/garderie.
-
-Read:
-- src/app/(app)/messages/inbox/inbox-client.tsx
-- src/app/(app)/daily-reports/daily-reports-client.tsx
-- src/components/shared/data-table/sortable-header.tsx (the shared SortableHeader)
-
-Fix messages inbox:
-1. Replace manual sort headers (Button ghost + ArrowUpDown) with SortableHeader component — import from @/components/shared/data-table
-2. Replace `className="text-red-600"` on delete DropdownMenuItem with `variant="destructive"`
-3. Replace `className="bg-red-600 hover:bg-red-700"` on AlertDialogAction with `className="bg-destructive text-destructive-foreground hover:bg-destructive/90"`
-4. Replace hardcoded nature badge colors (bg-gray-100, bg-red-100, etc.) with design tokens: use the same var(--color-*) pattern as status badges in children-columns.tsx
-
-Fix daily reports:
-5. Replace column header abbreviations "F Name" / "L Name" with "First Name" / "Last Name" — same for all other pages that use these abbreviations (absent-reports, medical pages, employee columns)
-6. Add SortableHeader to column definitions where missing
-7. Wrap toolbar in a plain div instead of Card — match the children page toolbar pattern
-
-Run: npx tsc --noEmit
-Commit:
-```
-git add -A && git commit -m "fix(ui): messages + daily reports — SortableHeader, design tokens"
-```
-'
-
-# ═══════════════════════════════════════════════
-# PHASE 6: Employee columns — fix delete stub + avatar colors
-# ═══════════════════════════════════════════════
-
-run_phase "Phase 6 — Employee columns fix" '
-You are a Senior Frontend Engineer working in /Users/karimsaab/Desktop/garderie.
-
-Read:
-- src/components/employees/employee-columns.tsx
-- src/components/employees/employee-listing-client.tsx
-- src/components/children/children-columns.tsx (reference for avatar pattern)
-
-Fix:
-1. The delete DropdownMenuItem is a no-op stub with no onClick handler. Wire it up:
-   - Add a deleteEmployee prop/callback to the columns definition (same pattern as children-columns)
-   - In employee-listing-client, pass the delete handler that calls the appropriate server action with confirmation dialog
-
-2. Replace the local avatar color arrays (bg-amber-100, bg-emerald-100, etc.) with imports from children-columns: `import { getAvatarColor, getInitials }`
-
-3. Replace "F Name" / "L Name" column headers with "First Name" / "Last Name"
-
-4. Add SortableHeader to the Branch column (currently missing it while other columns have it)
-
-5. Make the branch column consistent — use plain text like children-columns instead of Badge variant="secondary"
-
-Run: npx tsc --noEmit
-Commit:
-```
-git add -A && git commit -m "fix(ui): employee columns — wire delete, shared avatar utils, consistent headers"
-```
-'
-
-# ═══════════════════════════════════════════════
-# PHASE 7: Food pages — unify category colors
-# ═══════════════════════════════════════════════
-
-run_phase "Phase 7 — Food color unification" '
-You are a Senior Frontend Engineer working in /Users/karimsaab/Desktop/garderie.
-
-Read:
-- src/app/(app)/food/food-listing-client.tsx
-- src/app/(app)/food/calendar/food-calendar-client.tsx
-
-The food listing uses brownish hex colors (bg-[#A0784C]/15, bg-[#C17C5A]/15) for categories while the calendar uses Tailwind semantic colors (bg-amber-100, bg-emerald-100). They should match.
-
-1. Create a shared constant in a new file src/lib/food-colors.ts:
-```tsx
-export const FOOD_CATEGORY_COLORS = {
-  BREAKFAST: { bg: "bg-amber-100", text: "text-amber-800", dot: "bg-amber-500" },
-  LUNCH: { bg: "bg-emerald-100", text: "text-emerald-800", dot: "bg-emerald-500" },
-  DESSERT: { bg: "bg-pink-100", text: "text-pink-800", dot: "bg-pink-500" },
-  SNACK: { bg: "bg-sky-100", text: "text-sky-800", dot: "bg-sky-500" },
-} as const
-```
-
-2. Import and use this in BOTH food-listing-client.tsx and food-calendar-client.tsx, replacing their local color definitions.
-
-3. Fix the empty useMemo dependency array in food-listing-client.tsx — add the missing deps or wrap the callbacks with useCallback.
-
-Run: npx tsc --noEmit
-Commit:
-```
-git add -A && git commit -m "fix(ui): food pages — unified category colors"
-```
-'
-
-# ═══════════════════════════════════════════════
-# PHASE 8: Alarms + New Year + Invoice — tokens + stubs
-# ═══════════════════════════════════════════════
-
-run_phase "Phase 8 — Alarms, New Year, Invoice polish" '
-You are a Senior Frontend Engineer working in /Users/karimsaab/Desktop/garderie.
-
-Read:
-- src/app/(app)/alarms/alarms-overview-client.tsx
-- src/app/(app)/settings/new-year/page.tsx
-- src/app/(app)/accounting/invoice/[id]/invoice-client.tsx
-- src/components/ui/empty-state.tsx (if exists, for the EmptyState component)
-
-Fix alarms-overview-client.tsx:
-1. Replace raw <button> elements for filter chips with shadcn <Button variant="outline" size="sm"> or <Button variant="ghost" size="sm">. Use the active state class on the selected filter.
-2. Replace hardcoded urgency colors (text-red-600, text-amber-600) with text-destructive, text-amber-600 (amber has no semantic token so keep it)
-3. Replace hardcoded Badge className="bg-red-100 text-red-700" with variant="destructive"
-
-Fix new-year page:
-4. Replace the visible placeholder text ("Teacher reassignment table will be implemented here") with a proper EmptyState or a Card with a "Coming soon" Badge and muted description. Should look intentional, not broken.
-
-Fix invoice page:
-5. Replace `text-white` with `text-primary-foreground` on the print button
-6. Replace hardcoded status colors (text-green-700, text-red-600, text-yellow-600) with design tokens: text-emerald-700 for paid, text-destructive for overdue, text-amber-600 for pending
-
-Run: npx tsc --noEmit
-Commit:
-```
-git add -A && git commit -m "fix(ui): alarms, new-year, invoice — design tokens and proper components"
-```
-'
-
-# ═══════════════════════════════════════════════
-# PHASE 9: Nursery Settings — ToggleGroup + token cleanup
-# ═══════════════════════════════════════════════
-
-run_phase "Phase 9 — Nursery Settings polish" '
-You are a Senior Frontend Engineer working in /Users/karimsaab/Desktop/garderie.
-
-Read:
-- src/app/(app)/settings/nursery/nursery-client.tsx
-- src/components/ui/toggle-group.tsx (if exists)
-
-Fix:
-1. Replace the hand-rolled owner type toggle buttons with shadcn ToggleGroup (if available) or at minimum use <Button variant="outline"> with proper active state (variant="default" when selected). The current raw <button> with border-violet-300 is not design-system aligned.
-
-2. Same for the working days toggle — replace hand-rolled pill buttons with proper Button components.
-
-3. Replace the one hex color icon container (`bg-[#4F46E5]/10 text-[#4F46E5]`) on the Defaults section with `bg-indigo-50 text-indigo-600` to match the pattern of all other sections.
-
-4. Replace `text-white` on the save button with `text-primary-foreground`.
-
-5. The icon container per-section rainbow (blue, emerald, violet, cyan, orange, amber, indigo, rose) is actually fine as a design choice — keep it but make sure they all use the same Tailwind-50/600 pattern consistently.
-
-Run: npx tsc --noEmit
-Commit:
-```
-git add -A && git commit -m "fix(ui): nursery settings — proper toggles, consistent tokens"
-```
-'
-
-# ═══════════════════════════════════════════════
-# PHASE 10: Sidebar — fix calls nav active state
-# ═══════════════════════════════════════════════
-
-run_phase "Phase 10 — Sidebar nav fixes" '
-You are a Senior Frontend Engineer working in /Users/karimsaab/Desktop/garderie.
-
-Read:
+Read the NEW sidebar:
 - src/components/layout/app-sidebar.tsx
 
+Make the new sidebar look EXACTLY like the old one:
+
+Old sidebar visual:
+- Background: #364150 (solid, no gradient, no blur)
+- Menu text: #b4bcc8, icons: #606c7d
+- Each top-level item has border-top: 1px solid #3f4b5a
+- Hover: bg #2c3542
+- ACTIVE item: bg #1caf9a, text white, icon white
+- Active SUB-item: bg #3e4b5c with left border 4px solid #1caf9a, text white
+- Sub-menu bg: same #364150, items indented
+- NO rounded corners on any menu items
+- Header/brand area: bg #2b3643 (darker than sidebar body)
+
+Changes to make:
+1. Remove ALL rounded-lg, rounded-md on sidebar menu items → rounded-none
+2. Active top-level: className="bg-[#1caf9a] text-white" with icon white
+3. Active sub-item: className="bg-[#3e4b5c] text-white border-l-4 border-l-[#1caf9a]"
+4. Hover: className="hover:bg-[#2c3542]"
+5. Add border-top to each top-level section separator
+6. Sidebar brand/header: bg-[#2b3643]
+7. Remove any blur/glass effects
+8. Footer area (user dropdown, quick actions): bg-[#2b3643] or match sidebar
+
+Run: npx tsc --noEmit
+Commit: git add -A && git commit -m "style: sidebar exact visual copy of old Metronic leftmenu"
+'
+
+# ═══════════════════════════════════════════════
+# PHASE 3: Header — dark bar like old app
+# ═══════════════════════════════════════════════
+
+run_phase "Phase 3 — Header dark bar" '
+You are a Senior Frontend Engineer in /Users/karimsaab/Desktop/garderie.
+
+Read old layout header area:
+- '"$OLD"'/layout.php (first 100 lines, look for the header/navbar section)
+
+Read new header:
+- src/components/layout/header.tsx (find the actual header component)
+- src/app/(app)/layout.tsx
+
+Old header: dark bg #2b3643, height 46px, text/icons light #b4bcc8, no shadow, flat.
+
+Make the new header match:
+1. Background: bg-[#2b3643] (solid dark, NOT frosted glass)
+2. All text: text-[#b4bcc8] or text-white
+3. All icons: text-[#b4bcc8]
+4. Remove backdrop-filter, backdrop-blur from both CSS class and component
+5. Any buttons in header (sidebar toggle, notifications, search): light colored icons on dark bg
+6. Breadcrumb text: light (#b4bcc8)
+7. Remove the bottom border glow — just a simple border-[#455263]
+
+Run: npx tsc --noEmit
+Commit: git add -A && git commit -m "style: dark header bar matching old Metronic"
+'
+
+# ═══════════════════════════════════════════════
+# PHASE 4: UI primitives — Card, Table, Button, Badge, Dialog
+# ═══════════════════════════════════════════════
+
+run_phase "Phase 4 — UI primitives match old style" '
+You are a Senior Frontend Engineer in /Users/karimsaab/Desktop/garderie.
+
+Read old CSS:
+- '"$OLD_CSS"'/assets/global/css/components.css (search for .portlet, .table, .btn, .badge, .modal)
+- '"$OLD_CSS"'/assets/admin/css/custom.css
+
+Read new components:
+- src/components/ui/card.tsx
+- src/components/ui/table.tsx
+- src/components/ui/button.tsx
+- src/components/ui/badge.tsx
+- src/components/ui/dialog.tsx
+
+Match each to old Metronic:
+
+CARD (was .portlet.light.bordered):
+- Border: 1px solid #e5e5e5
+- No rounded corners (rounded-sm at most, --radius is now 3px)
+- No shadow (or barely perceptible)
+- White bg
+- Remove any rounded-xl, rounded-2xl hardcoded in card.tsx
+
+TABLE (was .table.table-striped.table-bordered.table-hover):
+- Striped: alternate rows bg #f9f9f9
+- Bordered: all cells have border #e5e5e5
+- Hover: row bg #f5f5f5
+- Header: bg #f4f4f4, text uppercase 12px semibold
+- Add these classes to TableRow, TableHead, TableCell in table.tsx
+
+BUTTON (was .btn):
+- Default: bg #e1e5ec text #333 hover #c2cad8
+- Primary: already uses --primary (#1caf9a) — verify
+- Danger: already uses --destructive (#d64635) — verify
+- Minimal rounding (radius already 3px from Phase 1)
+
+BADGE (was .badge):
+- Default: bg #1caf9a text white (solid teal, not outline)
+- Destructive: bg #d64635 text white
+- Secondary: bg #e1e5ec text #333
+- All solid backgrounds, no light tints
+
+DIALOG (was .modal):
+- No rounded corners (rounded-sm at most)
+- Overlay: bg black/50
+- Header: border-bottom #e5e5e5
+
+Run: npx tsc --noEmit
+Commit: git add -A && git commit -m "style: card, table, button, badge, dialog match old Metronic"
+'
+
+# ═══════════════════════════════════════════════
+# PHASE 5: Dashboard page — match old index.php exactly
+# ═══════════════════════════════════════════════
+
+run_phase "Phase 5 — Dashboard visual copy" '
+You are a Senior Frontend Engineer in /Users/karimsaab/Desktop/garderie.
+
+Read old dashboard:
+- '"$OLD"'/index.php
+- '"$OLD"'/js/index.js (first 150 lines)
+
+Read new dashboard:
+- src/app/(app)/dashboard/page.tsx
+- src/components/dashboard/stat-card.tsx
+- src/components/dashboard/demographics-section.tsx
+
+The old dashboard had:
+- Colored stat cards with SOLID colored backgrounds (not white cards with colored accents)
+  - .dashboard-stat.blue — solid blue bg
+  - .dashboard-stat.green — solid green bg
+  - .dashboard-stat.red — solid red bg
+  - .dashboard-stat.blue-hoki — lighter blue bg
+- Large icon on the left, number + description on the right
+- "More..." footer link on each card
+- Charts below: AmCharts pie/donut charts
+
+Make stat-card.tsx match the old visual:
+1. The card should have a SOLID colored background (not white with a thin colored top bar)
+2. The number should be large (text-2xl or text-3xl), bold, WHITE text on colored bg
+3. The description should be lighter white text below the number
+4. The icon should be on the right side, large (size-12), semi-transparent white
+5. The "href" should render as a darker footer bar "View More →"
+
+Color map for stat-card.tsx:
+- "blue" → bg-[#327ad5] (old blue)
+- "sky" → bg-[#67809F] (old blue-hoki)
+- "emerald" → bg-[#1caf9a] (old green/teal)
+- "green" → bg-[#008200] (dark green)
+- "rose" → bg-[#d64635] (old red)
+- "amber" → bg-[#c29d0b] (old gold)
+- "purple" → bg-[#8e44ad]
+
+For the charts (demographics-section.tsx):
+- Use the same Metronic color palette for chart segments
+- Card wrapper should be flat (no rounded corners, border #e5e5e5)
+
+Run: npx tsc --noEmit
+Commit: git add -A && git commit -m "style: dashboard matches old Metronic index.php exactly"
+'
+
+# ═══════════════════════════════════════════════
+# PHASE 6: Children listing — match children.php
+# ═══════════════════════════════════════════════
+
+run_phase "Phase 6 — Children page visual copy" '
+You are a Senior Frontend Engineer in /Users/karimsaab/Desktop/garderie.
+
+Read old page:
+- '"$OLD"'/children.php
+
+Read new page:
+- src/components/children/children-page-client.tsx
+- src/components/children/children-columns.tsx
+
+Look at the old page layout: it has a portlet (card) wrapping a DataTable with filters above. The table has striped rows, bordered cells, and action buttons.
+
+Make the new page match visually:
+1. The page should be wrapped in a single Card (portlet) with a card header showing the title + add button
+2. Filters should be inside the card header or a toolbar row within the card
+3. Table should fill the card body
+4. Status badges should be solid colored (not light-tinted):
+   - ACTIVE: bg-[#008200] text-white
+   - INACTIVE: bg-[#d64635] text-white
+   - DRAFT: bg-[#c29d0b] text-white
+5. Gender badges: solid colored
+6. Action column: small icon buttons (view/edit/delete) in a row, not a dropdown
+   The old app had visible icon buttons, not hidden in a dropdown menu.
+   Use Button size="icon" variant="ghost" with small icons.
+
+7. Remove any card-grid/tile view toggle — the old app was TABLE ONLY. If theres a grid view, keep it but make table the default.
+
+Run: npx tsc --noEmit
+Commit: git add -A && git commit -m "style: children listing matches old children.php"
+'
+
+# ═══════════════════════════════════════════════
+# PHASE 7: Daily reports + Absent reports — match old
+# ═══════════════════════════════════════════════
+
+run_phase "Phase 7 — Reports pages visual copy" '
+You are a Senior Frontend Engineer in /Users/karimsaab/Desktop/garderie.
+
+Read old pages:
+- '"$OLD"'/dailyreports.php
+- '"$OLD"'/absentreports.php
+
+Read new pages:
+- src/app/(app)/daily-reports/ (find the client component)
+- src/app/(app)/absent-reports/ (find the client component)
+
+Match old visual style for BOTH pages:
+1. Page wrapped in Card (portlet) with title in card header
+2. Filters: toolbar row inside card (Status dropdown, Branch dropdown, Date range)
+3. Table: striped, bordered, hover — using the table.tsx styles from Phase 4
+4. Status badges SOLID:
+   - SUBMITTED: bg-[#008200] text-white
+   - MISSING: bg-[#d64635] text-white
+   - DRAFT: bg-[#c29d0b] text-white
+   - INCOMPLETE: bg-[#659be0] text-white
+5. Action buttons: visible icon buttons not dropdown
+6. Avatar: small circle on the left of first column
+
+Run: npx tsc --noEmit
+Commit: git add -A && git commit -m "style: daily/absent reports match old PHP pages"
+'
+
+# ═══════════════════════════════════════════════
+# PHASE 8: Medical pages — all 5 types
+# ═══════════════════════════════════════════════
+
+run_phase "Phase 8 — Medical pages visual copy" '
+You are a Senior Frontend Engineer in /Users/karimsaab/Desktop/garderie.
+
+Read old pages:
+- '"$OLD"'/Medical_forms1.php (first 150 lines — general info)
+- '"$OLD"'/Medical_forms5.php (first 150 lines — accidents)
+
+Read new pages:
+- src/app/(app)/medical/general/ (find client component)
+- src/app/(app)/medical/suffering/ (find client component)
+- src/app/(app)/medical/visits/ (find client component)
+- src/app/(app)/medical/vaccinations/ (find client component)
+- src/app/(app)/medical/accidents/ (find client component)
+
+All 5 medical listing pages should match the old style:
+1. Card wrapper with title in header
+2. Striped bordered table
+3. Solid status badges
+4. Action buttons visible (not dropdown) — view, edit, delete as small icon buttons
+5. Avatar in first column
+
+Also fix the bug in accidents: it calls deleteMedicalForm() instead of the correct delete action. Check src/lib/actions/ for an accident-specific delete.
+
+Run: npx tsc --noEmit
+Commit: git add -A && git commit -m "style: all 5 medical pages match old Metronic PHP"
+'
+
+# ═══════════════════════════════════════════════
+# PHASE 9: Employee pages — all 4 types
+# ═══════════════════════════════════════════════
+
+run_phase "Phase 9 — Employee pages visual copy" '
+You are a Senior Frontend Engineer in /Users/karimsaab/Desktop/garderie.
+
+Read old page:
+- '"$OLD"'/teachers.php (first 150 lines)
+
+Read new:
+- src/components/employees/employee-listing-client.tsx
+- src/components/employees/employee-columns.tsx
+
+Match old style:
+1. Card wrapper with title + add button in header
+2. Filters toolbar inside card
+3. Striped bordered table
+4. Solid status badges
+5. Action buttons visible (not dropdown)
+6. Avatar small circle in first column
+
+Also fix: delete action is a no-op stub — wire it up with proper delete + confirmation dialog.
+
+This shared component is used by all 4 employee types (teachers, nurses, doctors, managers).
+
+Run: npx tsc --noEmit
+Commit: git add -A && git commit -m "style: employee listings match old Metronic PHP"
+'
+
+# ═══════════════════════════════════════════════
+# PHASE 10: Classes, Branches, Food, Accounting pages
+# ═══════════════════════════════════════════════
+
+run_phase "Phase 10 — Classes, Branches, Food, Accounting" '
+You are a Senior Frontend Engineer in /Users/karimsaab/Desktop/garderie.
+
+Read old pages:
+- '"$OLD"'/classes.php (first 100 lines)
+- '"$OLD"'/food.php (first 100 lines)
+
+Read new pages:
+- src/components/classes/classes-client.tsx (or find the classes listing component)
+- src/app/(app)/food/food-listing-client.tsx
+- src/app/(app)/accounting/ (find client component)
+
+Match old style for each:
+1. Classes: table view (not card grid) as default. Card wrapper. Striped table.
+2. Food: table listing in a card. Category badges solid colored.
+3. Accounting: table listing with payment details. Card wrapper.
+4. All pages: consistent portlet/card wrapper, striped table, solid badges, visible action buttons.
+
+Run: npx tsc --noEmit
+Commit: git add -A && git commit -m "style: classes, food, accounting match old Metronic"
+'
+
+# ═══════════════════════════════════════════════
+# PHASE 11: Settings pages — zones, parent-users, nursery, alarms
+# ═══════════════════════════════════════════════
+
+run_phase "Phase 11 — Settings and admin pages" '
+You are a Senior Frontend Engineer in /Users/karimsaab/Desktop/garderie.
+
+Read old pages:
+- '"$OLD"'/Zones_Management.php (first 100 lines)
+- '"$OLD"'/parent_users.php (first 100 lines)
+
+Read new:
+- src/app/(app)/settings/zones/zones-client.tsx
+- src/app/(app)/settings/parent-users/parent-users-client.tsx
+- src/app/(app)/settings/nursery/nursery-client.tsx
+- src/app/(app)/alarms/ (find client component)
+
 Fix:
-1. The "Calls Management" nav item has href="/children?tab=calls". The active state detection uses pathname matching which ignores query params — so this item NEVER shows as active. Fix by either:
-   a. Creating a dedicated /calls route that redirects to /children?tab=calls, OR
-   b. Updating the isLeafActive function to also check searchParams for items with query params in their href
+1. Zones/Areas/Regions: Card wrapper, table view, add delete confirmation dialog with toast
+2. Parent users: fix prompt()/alert() — replace with Dialog. Two-section layout like old app.
+3. Nursery settings: form sections in cards, flat style, no rounded corners
+4. Alarms: card wrapper, table listing, solid badges for alarm status
 
-2. Replace the magic number 56px (top-[56px], h-[calc(100svh-56px)]) — check if there is a CSS variable for navbar height. If not, define one in globals.css and use it.
-
-3. Replace border-l-[3px] with border-l-2 (standard Tailwind) and adjust pl-[9px] to pl-2.5 (standard Tailwind) on the active item styling.
-
-4. The depth prop is passed recursively but never used — remove it from NavItemRenderer to clean up the component.
+All should follow the Metronic visual pattern: card wrapper, flat, solid badges, visible actions.
 
 Run: npx tsc --noEmit
-Commit:
-```
-git add -A && git commit -m "fix(ui): sidebar — fix calls active state, remove magic numbers"
-```
+Commit: git add -A && git commit -m "style: settings and admin pages match old Metronic"
 '
 
 # ═══════════════════════════════════════════════
-# PHASE 11: Global text-white → text-primary-foreground sweep
+# PHASE 12: Messages, Attendance, Calendars
 # ═══════════════════════════════════════════════
 
-run_phase "Phase 11 — Global token sweep" '
-You are a Senior Frontend Engineer working in /Users/karimsaab/Desktop/garderie.
+run_phase "Phase 12 — Messages, Attendance, Calendars" '
+You are a Senior Frontend Engineer in /Users/karimsaab/Desktop/garderie.
 
-Search the entire src/ directory for these anti-patterns and fix them:
+Read old pages:
+- '"$OLD"'/alarmsMsg.php (first 100 lines — inbox)
+- '"$OLD"'/Monthly_report.php (first 100 lines — attendance heatmap)
 
-1. Search for `text-white` on Button or AlertDialogAction components. Replace with `text-primary-foreground` (for primary buttons) or `text-destructive-foreground` (for destructive buttons). Do NOT change text-white in print stylesheets, avatar initials, or actual white-on-dark backgrounds.
+Read new:
+- src/app/(app)/messages/inbox/ (find client component)
+- src/app/(app)/attendance/heatmap/ (find client component)
+- src/app/(app)/food/calendar/food-calendar-client.tsx
+- src/app/(app)/settings/holidays/ (find client component)
 
-2. Search for `className="bg-red-600` or `bg-red-700` on AlertDialogAction. Replace with `bg-destructive hover:bg-destructive/90`.
-
-3. Search for duplicate `getAvatarColor` / `getInitials` implementations. The canonical versions are in src/components/children/children-columns.tsx. Any other file that reimplements these arrays should import from there instead.
-
-4. Search for `"F Name"` and `"L Name"` column headers across all files. Replace with "First Name" and "Last Name".
-
-Be careful:
-- Only change files in src/components/ and src/app/
-- Do NOT modify src/components/ui/ (shadcn primitives)
-- Read each file before editing to understand context
-- Some text-white usages are correct (e.g., white text on colored avatar backgrounds)
+Match:
+1. Messages inbox: card wrapper, table with From/Date/Nature/Subject/Status/Actions, solid badges
+2. Attendance heatmap: keep the heatmap grid but make the surrounding card flat. Legend colors match old: green=present, pink=absent, red=weekends, yellow=holidays.
+3. Food calendar: flat card wrapper, calendar grid
+4. Holiday calendar: flat card wrapper
 
 Run: npx tsc --noEmit
-Commit:
-```
-git add -A && git commit -m "fix(ui): global sweep — design tokens, shared utils, consistent headers"
-```
+Commit: git add -A && git commit -m "style: messages, attendance, calendars match old Metronic"
 '
 
 # ═══════════════════════════════════════════════
-# PHASE 12: Final type check + verify
+# PHASE 13: Child dashboard + Class dashboard
 # ═══════════════════════════════════════════════
 
-run_phase "Phase 12 — Final verification" '
-You are a QA Engineer working in /Users/karimsaab/Desktop/garderie.
+run_phase "Phase 13 — Child and Class dashboards" '
+You are a Senior Frontend Engineer in /Users/karimsaab/Desktop/garderie.
+
+Read old pages:
+- '"$OLD"'/child_dashboard.php (first 200 lines)
+- '"$OLD"'/class_dashboard.php (first 200 lines)
+
+Read new:
+- src/app/(app)/children/[id]/dashboard/dashboard-client.tsx
+- src/app/(app)/classes/[id]/page.tsx (class dashboard)
+
+Match old style:
+1. Child dashboard:
+   - Use StatCard component (not manual Card+CardContent) for all stat cards
+   - Stat cards should be solid colored (from Phase 5 stat-card changes)
+   - Data tables below should be striped/bordered
+   - Profile section: clean layout with child info
+
+2. Class dashboard:
+   - Tab sections (Daily Reports / Medical / Assessments)
+   - Stat cards per section, solid colored
+   - Use StatCard component
+
+Run: npx tsc --noEmit
+Commit: git add -A && git commit -m "style: child and class dashboards match old Metronic"
+'
+
+# ═══════════════════════════════════════════════
+# PHASE 14: Global cleanup sweep
+# ═══════════════════════════════════════════════
+
+run_phase "Phase 14 — Global style sweep" '
+You are a Senior Frontend Engineer in /Users/karimsaab/Desktop/garderie.
+
+Do a final sweep across the entire app for visual consistency:
+
+1. Search for rounded-xl, rounded-2xl, rounded-3xl in src/ — change to rounded or rounded-sm (except rounded-full for avatars)
+
+2. Search for backdrop-blur, backdrop-filter in components — remove (except mobile nav overlay)
+
+3. Search for bg-[#0B7464], bg-[#0B9178], text-[#0B7464] (old meadow greens) — replace with bg-primary, text-primary
+
+4. Search for shadow-lg, shadow-xl on cards — remove or reduce to shadow-sm
+
+5. Search for any remaining light-tinted status badges (bg-emerald-50, bg-red-50, bg-amber-50 on badges) — replace with solid colored versions
+
+6. Verify all page wrappers use a Card portlet pattern
+
+Run: npx tsc --noEmit
+Commit: git add -A && git commit -m "style: final Metronic visual consistency sweep"
+'
+
+# ═══════════════════════════════════════════════
+# PHASE 15: Type check + verify
+# ═══════════════════════════════════════════════
+
+run_phase "Phase 15 — Final verification" '
+You are a QA Engineer in /Users/karimsaab/Desktop/garderie.
 
 Run: npx tsc --noEmit
 
-If there are ANY type errors:
-1. Read each file with errors
-2. Fix the type errors
-3. Run tsc again to verify
+Fix any type errors. Run again to verify zero errors.
 
-If zero errors, commit any remaining changes:
-```
-git add -A && git commit -m "fix: resolve type errors from UI polish"
-```
-
-If nothing to commit, thats fine — the job is done.
+Commit: git add -A && git commit -m "fix: resolve type errors from Metronic visual migration"
 '
 
 echo "" >> "$LOG_FILE"
