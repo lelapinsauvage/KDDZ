@@ -225,3 +225,19 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 8 — Medical pages style — Wed Mar  4 08:02:41 CET 2026 ===
 =============================================
+Done. All 5 medical pages updated:
+
+- **general** - Card wrapper, visible icon buttons, solid purple class badges
+- **suffering** - Card wrapper, visible icon buttons, solid purple class badges
+- **visits** - Card wrapper, visible icon buttons, solid purple class badges
+- **vaccinations** - Card wrapper, visible icon buttons, solid purple class badges (handles `hideHeader` prop)
+- **accidents** - Card wrapper, visible icon buttons, solid purple class badges (already used `deleteAccidentReport` correctly)
+
+TypeScript passes. Committed as `05803f1`.
+To https://github.com/lelapinsauvage/KDDZ.git
+   2c562ea..05803f1  main -> main
+=== Phase 8 — Medical pages style COMPLETE — Wed Mar  4 08:08:22 CET 2026 ===
+
+=============================================
+=== Phase 9 — Employee style — Wed Mar  4 08:08:22 CET 2026 ===
+=============================================

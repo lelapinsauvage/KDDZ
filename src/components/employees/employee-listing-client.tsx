@@ -20,6 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle, CardAction } from "@/components/ui/card";
 import { Plus, Search, X } from "lucide-react";
 import { useState, useMemo, useCallback, useTransition } from "react";
 import { toast } from "sonner";
@@ -124,44 +125,51 @@ export function EmployeeListingClient({
           { label: plural },
         ]}
       />
-      <div className="p-4 md:p-6 space-y-4">
-        {/* Toolbar */}
-        <div className="flex items-center justify-between gap-4">
-          <div className="relative max-w-sm flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder={`Search ${plural.toLowerCase()}...`}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 pr-8"
+      <Card className="m-4 md:m-6">
+        <CardHeader>
+          <CardTitle className="text-lg">{plural}</CardTitle>
+          <CardAction>
+            <Button asChild>
+              <Link href={`/employees/${plural.toLowerCase()}/new`}>
+                <Plus className="mr-1 size-4" />
+                Add {singular}
+              </Link>
+            </Button>
+          </CardAction>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Toolbar */}
+          <div className="flex items-center gap-4">
+            <div className="relative max-w-sm flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder={`Search ${plural.toLowerCase()}...`}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9 pr-8"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="size-3.5" />
+                </button>
+              )}
+            </div>
+            <ExportButton
+              filename={plural.toLowerCase()}
+              sheetName={plural}
+              columns={employeeExportColumns}
+              data={filteredData as unknown as Record<string, unknown>[]}
             />
-            {search && (
-              <button
-                type="button"
-                onClick={() => setSearch("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <X className="size-3.5" />
-              </button>
-            )}
           </div>
-          <ExportButton
-            filename={plural.toLowerCase()}
-            sheetName={plural}
-            columns={employeeExportColumns}
-            data={filteredData as unknown as Record<string, unknown>[]}
-          />
-          <Button asChild>
-            <Link href={`/employees/${plural.toLowerCase()}/new`}>
-              <Plus className="size-4" />
-              Add {singular}
-            </Link>
-          </Button>
-        </div>
 
-        {/* Data Table */}
-        <DataTable columns={columns} data={filteredData} />
-      </div>
+          {/* Data Table */}
+          <DataTable columns={columns} data={filteredData} />
+        </CardContent>
+      </Card>
 
       {/* ── Delete Confirmation Dialog ──────────── */}
       <Dialog

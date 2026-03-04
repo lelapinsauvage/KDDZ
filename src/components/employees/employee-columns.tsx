@@ -2,16 +2,9 @@
 
 import { type ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
-import { MoreHorizontal, Eye, Pencil, Trash2, CircleCheck, CircleOff } from "lucide-react";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Tooltip,
   TooltipContent,
@@ -231,17 +224,12 @@ export function createEmployeeColumns(
         const isActive = status === "Active";
         return (
           <Badge
-            className={`gap-1 border ${
+            className={`border ${
               isActive
-                ? "bg-[var(--color-success-light)] text-[var(--color-success-dark)] border-[var(--color-success)]/20"
-                : "bg-muted text-muted-foreground border-muted"
+                ? "bg-[#008200] text-white border-transparent"
+                : "bg-[#d64635] text-white border-transparent"
             }`}
           >
-            {isActive ? (
-              <CircleCheck className="size-3" />
-            ) : (
-              <CircleOff className="size-3" />
-            )}
             {status}
           </Badge>
         );
@@ -254,45 +242,32 @@ export function createEmployeeColumns(
       cell: ({ row }) => {
         const employee = row.original;
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <MoreHorizontal className="size-4 text-muted-foreground hover:text-primary" />
-                <span className="sr-only">Open menu</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href={getDetailPath(employee.type, employee.id)}>
-                  <Eye className="size-4" />
-                  View
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href={`${getDetailPath(employee.type, employee.id)}/edit`}>
-                  <Pencil className="size-4" />
-                  Edit
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                variant="destructive"
-                onClick={() => {
-                  options.onDelete?.(
-                    employee.id,
-                    `${employee.firstName} ${employee.lastName}`
-                  );
-                }}
-              >
-                <Trash2 className="size-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex items-center gap-0.5">
+            <Button variant="ghost" size="sm" className="size-8 p-0" asChild>
+              <Link href={getDetailPath(employee.type, employee.id)} onClick={(e) => e.stopPropagation()}>
+                <Eye className="size-4 text-muted-foreground" />
+                <span className="sr-only">View</span>
+              </Link>
+            </Button>
+            <Button variant="ghost" size="sm" className="size-8 p-0" asChild>
+              <Link href={`${getDetailPath(employee.type, employee.id)}/edit`} onClick={(e) => e.stopPropagation()}>
+                <Pencil className="size-4 text-muted-foreground" />
+                <span className="sr-only">Edit</span>
+              </Link>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="size-8 p-0 text-muted-foreground hover:text-destructive"
+              onClick={(e) => {
+                e.stopPropagation();
+                options.onDelete?.(employee.id, `${employee.firstName} ${employee.lastName}`);
+              }}
+            >
+              <Trash2 className="size-4" />
+              <span className="sr-only">Delete</span>
+            </Button>
+          </div>
         );
       },
       enableSorting: false,
