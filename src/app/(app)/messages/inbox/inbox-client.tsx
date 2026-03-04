@@ -9,6 +9,7 @@ import { DataTable, SortableHeader } from "@/components/shared/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -17,11 +18,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,7 +34,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   PenSquare,
-  MoreHorizontal,
   Trash2,
   Eye,
   MailCheck,
@@ -186,7 +185,7 @@ export function InboxClient({ messages, total }: InboxClientProps) {
               >
                 {msg.senderName}
               </span>
-              <Badge variant="outline" className="ml-1.5 text-[10px]">
+              <Badge className="ml-1.5 text-[10px] bg-muted text-muted-foreground">
                 {msg.senderType}
               </Badge>
             </div>
@@ -287,47 +286,52 @@ export function InboxClient({ messages, total }: InboxClientProps) {
     },
     {
       id: "actions",
-      header: "",
-      size: 50,
+      header: "Actions",
       cell: ({ row }) => {
         const msg = row.original;
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-8">
-                <MoreHorizontal className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href={`/messages/${msg.id}`}>
-                  <Eye className="mr-2 size-4" />
-                  View Message
-                </Link>
-              </DropdownMenuItem>
-              {msg.isRead ? (
-                <DropdownMenuItem onClick={() => handleMarkUnread(msg.id)}>
-                  <MailX className="mr-2 size-4" />
-                  Mark as Unread
-                </DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem onClick={() => handleMarkRead(msg.id)}>
-                  <MailCheck className="mr-2 size-4" />
-                  Mark as Read
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem
-                variant="destructive"
-                onClick={() => {
-                  setDeletingId(msg.id);
-                  setDeleteDialogOpen(true);
-                }}
-              >
-                <Trash2 className="mr-2 size-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex items-center gap-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="icon" className="size-8" asChild>
+                  <Link href={`/messages/${msg.id}`}>
+                    <Eye className="size-4" />
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>View</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                {msg.isRead ? (
+                  <Button variant="outline" size="icon" className="size-8" onClick={() => handleMarkUnread(msg.id)}>
+                    <MailX className="size-4" />
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="icon" className="size-8" onClick={() => handleMarkRead(msg.id)}>
+                    <MailCheck className="size-4" />
+                  </Button>
+                )}
+              </TooltipTrigger>
+              <TooltipContent>{msg.isRead ? "Mark Unread" : "Mark Read"}</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="size-8 text-destructive hover:bg-destructive/10"
+                  onClick={() => {
+                    setDeletingId(msg.id);
+                    setDeleteDialogOpen(true);
+                  }}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Delete</TooltipContent>
+            </Tooltip>
+          </div>
         );
       },
     },
@@ -383,19 +387,23 @@ export function InboxClient({ messages, total }: InboxClientProps) {
         </div>
 
         {/* DataTable */}
-        <DataTable
-          columns={columns}
-          data={filteredMessages}
-          searchKey="subject"
-          searchPlaceholder="Search by subject..."
-          emptyState={
-            <EmptyState
-              icon={Inbox}
-              title="Your inbox is empty"
-              description="No messages match your current filters. New messages will appear here."
+        <Card>
+          <CardContent className="p-0">
+            <DataTable
+              columns={columns}
+              data={filteredMessages}
+              searchKey="subject"
+              searchPlaceholder="Search by subject..."
+              emptyState={
+                <EmptyState
+                  icon={Inbox}
+                  title="Your inbox is empty"
+                  description="No messages match your current filters. New messages will appear here."
+                />
+              }
             />
-          }
-        />
+          </CardContent>
+        </Card>
 
         {total > 0 && (
           <p className="text-xs text-muted-foreground text-center">

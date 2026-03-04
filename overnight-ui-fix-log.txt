@@ -268,3 +268,16 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 11 — Settings pages style — Wed Mar  4 08:16:13 CET 2026 ===
 =============================================
+Done. Changes committed as `b42c8bd`:
+
+- **Zones**: Wrapped DataTable in Card, action buttons changed from ghost to outline
+- **Parent users**: Wrapped both tables in Cards, badges now solid (green/amber), action buttons changed from ghost to outline
+- **Nursery**: All cards now `rounded-none border-x-0` for flat sections
+- No alarms client exists in the settings directory
+To https://github.com/lelapinsauvage/KDDZ.git
+   9771298..b42c8bd  main -> main
+=== Phase 11 — Settings pages style COMPLETE — Wed Mar  4 08:18:17 CET 2026 ===
+
+=============================================
+=== Phase 12 — Messages, Attendance — Wed Mar  4 08:18:17 CET 2026 ===
+=============================================

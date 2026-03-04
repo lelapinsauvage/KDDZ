@@ -18,6 +18,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
+import { Card, CardContent } from "@/components/ui/card";
 import { DailyReportForm } from "@/components/daily-reports/daily-report-form";
 import type {
   MonthlyAttendanceGrid,
@@ -189,6 +190,8 @@ export function AttendanceHeatmap({
         </p>
       </div>
 
+      <Card className="print:border-0 print:shadow-none">
+        <CardContent className="space-y-6 p-4 sm:p-6 print:p-0 print:space-y-3">
       {/* ── Filters (hidden in print) ── */}
       <div className="flex flex-wrap items-center gap-3 print:hidden">
         <Select value={String(month)} onValueChange={handleMonthChange}>
@@ -292,13 +295,13 @@ export function AttendanceHeatmap({
 
       {/* ── Heatmap Grid ── */}
       {grid.rows.length === 0 ? (
-        <div className="flex items-center justify-center rounded-lg border bg-card p-12">
+        <div className="flex items-center justify-center rounded-lg p-12">
           <p className="text-muted-foreground">
             No active children found for the selected filters.
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border bg-card print:overflow-visible print:rounded-none print:border-gray-300">
+        <div className="overflow-x-auto rounded-lg print:overflow-visible print:rounded-none print:border-gray-300">
           <table className="w-full border-collapse print:text-[9px]">
             <thead>
               <tr>
@@ -324,7 +327,7 @@ export function AttendanceHeatmap({
                   key={row.child.id}
                   className="transition-colors hover:bg-accent/30 print:hover:bg-transparent"
                 >
-                  <td className="sticky left-0 z-10 border-r bg-card px-3 py-2 print:static print:bg-white print:px-2 print:py-1 print:border-gray-300">
+                  <td className="sticky left-0 z-10 border-r bg-background px-3 py-2 print:static print:bg-white print:px-2 print:py-1 print:border-gray-300">
                     <div className="flex flex-col">
                       <span className="text-sm font-medium truncate max-w-[170px] print:text-[9px] print:text-black">
                         {row.child.firstName} {row.child.lastName}
@@ -373,6 +376,8 @@ export function AttendanceHeatmap({
           </table>
         </div>
       )}
+        </CardContent>
+      </Card>
 
       {/* ── Slide-out Sheet for Daily Report ── */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
