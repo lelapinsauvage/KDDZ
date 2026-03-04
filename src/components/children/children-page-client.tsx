@@ -19,10 +19,8 @@ import { ExportButton } from "@/components/shared/export-button";
 import type { ExportColumn } from "@/lib/export";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardAction } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-
-import { PageHeader } from "@/components/layout/page-header";
 import { getChildrenColumns, getInitials, getAvatarColor, type ChildRow } from "@/components/children/children-columns";
 import { deleteChild } from "@/lib/actions/children";
 import { Button } from "@/components/ui/button";
@@ -377,23 +375,6 @@ export function ChildrenPageClient({
 
   return (
     <>
-      <div className="print:hidden">
-        <PageHeader
-          title="Children"
-          breadcrumbs={[
-            { label: "Children" },
-          ]}
-          actions={
-            <Button asChild>
-              <Link href="/children/new">
-                <Plus className="mr-1 size-4" />
-                Add Child
-              </Link>
-            </Button>
-          }
-        />
-      </div>
-
       {/* Print-only header */}
       <div className="hidden print:block print:mb-4 print:text-center">
         <h1 className="text-2xl font-bold text-black">Children List</h1>
@@ -402,7 +383,19 @@ export function ChildrenPageClient({
         </p>
       </div>
 
-      <div className="space-y-4 p-4 md:p-6 print:p-0 print:space-y-0">
+      <Card className="m-4 md:m-6 print:m-0 print:border-none print:shadow-none">
+        <CardHeader className="print:hidden">
+          <CardTitle className="text-lg">Children</CardTitle>
+          <CardAction>
+            <Button asChild>
+              <Link href="/children/new">
+                <Plus className="mr-1 size-4" />
+                Add Child
+              </Link>
+            </Button>
+          </CardAction>
+        </CardHeader>
+        <CardContent className="space-y-4 print:p-0 print:space-y-0">
         {/* ── Toolbar ─────────────────────────────── */}
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 print:hidden">
           {/* Search — instant debounced filter */}
@@ -560,10 +553,10 @@ export function ChildrenPageClient({
                     : "INACTIVE";
                   const statusColor =
                     status === "ACTIVE"
-                      ? "bg-[var(--color-success-light)] text-[var(--color-success-dark)] border-[var(--color-success)]/20"
+                      ? "bg-[#008200] text-white border-transparent"
                       : status === "DRAFT"
-                      ? "bg-[var(--color-warning-light)] text-[var(--color-warning-dark)] border-[var(--color-warning)]/20"
-                      : "bg-muted text-muted-foreground border-muted";
+                      ? "bg-[#c29d0b] text-white border-transparent"
+                      : "bg-[#d64635] text-white border-transparent";
                   const age = child.dateOfBirth ? getChildAge(child.dateOfBirth) : null;
                   const initials = getInitials(child.firstName, child.lastName);
                   const avatarBg = getAvatarColor(`${child.firstName} ${child.lastName}`);
@@ -765,7 +758,8 @@ export function ChildrenPageClient({
             </div>
           )}
         </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* ── Delete Confirmation Dialog ──────────── */}
       <Dialog

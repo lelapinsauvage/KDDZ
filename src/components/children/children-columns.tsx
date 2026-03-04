@@ -2,16 +2,10 @@
 
 import { type ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
-import { Eye, Pencil, Trash2, MoreHorizontal, CircleCheck, CircleDashed, CircleOff } from "lucide-react";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Tooltip,
   TooltipContent,
@@ -156,23 +150,18 @@ function getClassColor(className: string): string {
 
 const STATUS_CONFIG: Record<
   string,
-  { className: string; icon: typeof CircleCheck; label: string }
+  { className: string; label: string }
 > = {
   ACTIVE: {
-    className:
-      "bg-[var(--color-success-light)] text-[var(--color-success-dark)] border-[var(--color-success)]/20",
-    icon: CircleCheck,
+    className: "bg-[#008200] text-white border-transparent",
     label: "Active",
   },
   INACTIVE: {
-    className: "bg-muted text-muted-foreground border-muted",
-    icon: CircleOff,
+    className: "bg-[#d64635] text-white border-transparent",
     label: "Inactive",
   },
   DRAFT: {
-    className:
-      "bg-[var(--color-warning-light)] text-[var(--color-warning-dark)] border-[var(--color-warning)]/20",
-    icon: CircleDashed,
+    className: "bg-[#c29d0b] text-white border-transparent",
     label: "Draft",
   },
 };
@@ -375,11 +364,10 @@ export function getChildrenColumns(
       ),
       cell: ({ row }) => {
         const status = getStatus(row.original);
-        const { className, icon: Icon, label } =
+        const { className, label } =
           STATUS_CONFIG[status] ?? STATUS_CONFIG.INACTIVE;
         return (
-          <Badge className={`gap-1 border ${className}`}>
-            <Icon className="size-3" />
+          <Badge className={`border ${className}`}>
             {label}
           </Badge>
         );
@@ -398,45 +386,31 @@ export function getChildrenColumns(
       cell: ({ row }) => {
         const child = row.original;
         return (
-          <div className="print:hidden">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <MoreHorizontal className="size-4 text-muted-foreground hover:text-primary" />
-                  <span className="sr-only">Actions</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link href={`/children/${child.id}`}>
-                    <Eye className="mr-2 size-4" />
-                    View
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href={`/children/${child.id}?edit=true`}>
-                    <Pencil className="mr-2 size-4" />
-                    Edit
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  variant="destructive"
-                  onClick={() => {
-                    options.onDelete?.(
-                      child.id,
-                      `${child.firstName} ${child.lastName}`
-                    );
-                  }}
-                >
-                  <Trash2 className="mr-2 size-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          <div className="flex items-center gap-0.5 print:hidden">
+            <Button variant="ghost" size="sm" className="size-8 p-0" asChild>
+              <Link href={`/children/${child.id}`} onClick={(e) => e.stopPropagation()}>
+                <Eye className="size-4 text-muted-foreground" />
+                <span className="sr-only">View</span>
+              </Link>
+            </Button>
+            <Button variant="ghost" size="sm" className="size-8 p-0" asChild>
+              <Link href={`/children/${child.id}?edit=true`} onClick={(e) => e.stopPropagation()}>
+                <Pencil className="size-4 text-muted-foreground" />
+                <span className="sr-only">Edit</span>
+              </Link>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="size-8 p-0 text-muted-foreground hover:text-destructive"
+              onClick={(e) => {
+                e.stopPropagation();
+                options.onDelete?.(child.id, `${child.firstName} ${child.lastName}`);
+              }}
+            >
+              <Trash2 className="size-4" />
+              <span className="sr-only">Delete</span>
+            </Button>
           </div>
         );
       },

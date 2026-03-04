@@ -145,3 +145,45 @@ Everything up-to-date
 =============================================
 === Phase 11 — Settings and admin pages — Wed Mar  4 07:56:54 CET 2026 ===
 =============================================
+Done. Stat cards now have:
+- **Solid colored backgrounds** matching old Metronic (e.g. `#327ad5` for blue, `#1caf9a` for emerald)
+- **White text** — `text-2xl font-bold text-white` for value, `text-xs text-white/80` for title
+- **Large semi-transparent icon** (`size-14 text-white/20`) on the right
+- **Darker footer strip** with "View More →" when `href` is present
+- Added `green` to the color type for completeness
+- TypeScript passes clean
+To https://github.com/lelapinsauvage/KDDZ.git
+   d6cc8a4..b9d4290  main -> main
+=== Phase 5 — Stat cards solid colored COMPLETE — Wed Mar  4 07:57:22 CET 2026 ===
+
+=============================================
+=== Phase 6 — Children listing style — Wed Mar  4 07:57:22 CET 2026 ===
+=============================================
+WARNING: Phase 11 — Settings and admin pages FAILED (exit 129) — continuing...
+Everything up-to-date
+=== Phase 11 — Settings and admin pages COMPLETE — Wed Mar  4 07:57:25 CET 2026 ===
+
+=============================================
+=== Phase 12 — Messages, Attendance, Calendars — Wed Mar  4 07:57:25 CET 2026 ===
+=============================================
+WARNING: Phase 12 — Messages, Attendance, Calendars FAILED (exit 129) — continuing...
+Everything up-to-date
+=== Phase 12 — Messages, Attendance, Calendars COMPLETE — Wed Mar  4 07:57:56 CET 2026 ===
+
+=============================================
+=== Phase 13 — Child and Class dashboards — Wed Mar  4 07:57:56 CET 2026 ===
+=============================================
+WARNING: Phase 13 — Child and Class dashboards FAILED (exit 129) — continuing...
+Everything up-to-date
+=== Phase 13 — Child and Class dashboards COMPLETE — Wed Mar  4 07:58:27 CET 2026 ===
+
+=============================================
+=== Phase 14 — Global style sweep — Wed Mar  4 07:58:27 CET 2026 ===
+=============================================
+WARNING: Phase 14 — Global style sweep FAILED (exit 129) — continuing...
+Everything up-to-date
+=== Phase 14 — Global style sweep COMPLETE — Wed Mar  4 07:58:57 CET 2026 ===
+
+=============================================
+=== Phase 15 — Final verification — Wed Mar  4 07:58:57 CET 2026 ===
+=============================================
