@@ -659,8 +659,8 @@ export function DashboardClient({
           </div>
 
           {/* ─── Attendance Pie Chart ──────────────── */}
-          <Card className="overflow-hidden">
-            <CardContent className="flex items-center gap-4 py-3 px-4">
+          <div className="rounded border border-border/40 bg-card">
+            <div className="flex items-center gap-4 py-3 px-4">
               <div className="size-16 shrink-0">
                 {donutData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
@@ -693,8 +693,8 @@ export function DashboardClient({
                     : "No data"}
                 </p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* ─── Row 3: Medical Stats ──────────────── */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">

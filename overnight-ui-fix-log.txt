@@ -281,3 +281,21 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 12 — Messages, Attendance — Wed Mar  4 08:18:17 CET 2026 ===
 =============================================
+Done. Changes committed as `01465c6`:
+
+**Messages inbox** (`inbox-client.tsx`):
+- Wrapped DataTable in `<Card><CardContent className="p-0">`
+- Replaced outline senderType badge with solid `bg-muted` badge
+- Replaced dropdown menu actions with visible outline icon buttons (View, Mark Read/Unread, Delete) with tooltips
+
+**Attendance heatmap** (`attendance-heatmap.tsx`):
+- Wrapped filters + legend + grid in `<Card><CardContent>` with flat style
+- Removed redundant `border bg-card` from inner grid (Card provides the container)
+- Print styles preserved with `print:border-0 print:shadow-none`
+To https://github.com/lelapinsauvage/KDDZ.git
+   b42c8bd..01465c6  main -> main
+=== Phase 12 — Messages, Attendance COMPLETE — Wed Mar  4 08:21:01 CET 2026 ===
+
+=============================================
+=== Phase 13 — Dashboards style — Wed Mar  4 08:21:01 CET 2026 ===
+=============================================
