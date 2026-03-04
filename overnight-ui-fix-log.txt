@@ -126,3 +126,22 @@ Everything up-to-date
 =============================================
 === Phase 10 — Classes, Branches, Food, Accounting — Wed Mar  4 07:56:23 CET 2026 ===
 =============================================
+Done. Updated the three badge variants to solid Metronic colors:
+
+- **default**: `bg-[#1caf9a] text-white` (teal)
+- **destructive**: `bg-[#d64635] text-white` (red)
+- **secondary**: `bg-[#e1e5ec] text-[#333]` (light gray)
+To https://github.com/lelapinsauvage/KDDZ.git
+   0cea94b..d6cc8a4  main -> main
+=== Phase 4c — Solid badges COMPLETE — Wed Mar  4 07:56:38 CET 2026 ===
+
+=============================================
+=== Phase 5 — Stat cards solid colored — Wed Mar  4 07:56:38 CET 2026 ===
+=============================================
+WARNING: Phase 10 — Classes, Branches, Food, Accounting FAILED (exit 129) — continuing...
+Everything up-to-date
+=== Phase 10 — Classes, Branches, Food, Accounting COMPLETE — Wed Mar  4 07:56:54 CET 2026 ===
+
+=============================================
+=== Phase 11 — Settings and admin pages — Wed Mar  4 07:56:54 CET 2026 ===
+=============================================
