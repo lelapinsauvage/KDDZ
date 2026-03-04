@@ -89,3 +89,21 @@ Everything up-to-date
 =============================================
 === Phase 8 — Medical pages visual copy — Wed Mar  4 07:55:22 CET 2026 ===
 =============================================
+Done. Changes made:
+
+- **card.tsx**: `rounded-lg` → `rounded-sm`, `shadow-sm` → `shadow-none`
+- **dialog.tsx**: `sm:rounded-xl` → `sm:rounded-sm`, overlay `bg-black/40 backdrop-blur-[2px]` → `bg-black/50` (no blur)
+To https://github.com/lelapinsauvage/KDDZ.git
+   e5d305e..52b2f1a  main -> main
+=== Phase 4a — Card and Dialog flat COMPLETE — Wed Mar  4 07:55:40 CET 2026 ===
+
+=============================================
+=== Phase 4b — Table striped — Wed Mar  4 07:55:40 CET 2026 ===
+=============================================
+WARNING: Phase 8 — Medical pages visual copy FAILED (exit 129) — continuing...
+Everything up-to-date
+=== Phase 8 — Medical pages visual copy COMPLETE — Wed Mar  4 07:55:52 CET 2026 ===
+
+=============================================
+=== Phase 9 — Employee pages visual copy — Wed Mar  4 07:55:52 CET 2026 ===
+=============================================
