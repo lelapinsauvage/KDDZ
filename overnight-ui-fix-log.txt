@@ -107,3 +107,22 @@ Everything up-to-date
 =============================================
 === Phase 9 — Employee pages visual copy — Wed Mar  4 07:55:52 CET 2026 ===
 =============================================
+Done. The table component now has:
+- **Wrapper**: `border border-[#e5e5e5]`
+- **TableRow**: `even:bg-[#f9f9f9] hover:bg-[#f5f5f5]` (striped + hover)
+- **TableHead**: `bg-[#f4f4f4] text-[12px] font-semibold uppercase text-[#505f72]`
+- **TableCell**: `border-b border-[#e5e5e5]`
+To https://github.com/lelapinsauvage/KDDZ.git
+   52b2f1a..0cea94b  main -> main
+=== Phase 4b — Table striped COMPLETE — Wed Mar  4 07:56:13 CET 2026 ===
+
+=============================================
+=== Phase 4c — Solid badges — Wed Mar  4 07:56:13 CET 2026 ===
+=============================================
+WARNING: Phase 9 — Employee pages visual copy FAILED (exit 129) — continuing...
+Everything up-to-date
+=== Phase 9 — Employee pages visual copy COMPLETE — Wed Mar  4 07:56:23 CET 2026 ===
+
+=============================================
+=== Phase 10 — Classes, Branches, Food, Accounting — Wed Mar  4 07:56:23 CET 2026 ===
+=============================================
