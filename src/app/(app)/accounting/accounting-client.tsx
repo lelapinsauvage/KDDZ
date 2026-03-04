@@ -177,77 +177,49 @@ export function AccountingClient({
       <div className="space-y-6 p-4 md:p-6">
         {/* ── Summary Cards ── */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Card className="relative overflow-hidden py-4 border-[#059669]/15">
-            <div className="absolute inset-y-0 left-0 w-1 bg-[#059669]" />
-            <CardContent className="flex items-center gap-4">
-              <div className="flex size-11 items-center justify-center rounded-xl bg-[#059669]/15">
-                <DollarSign className="size-5 text-[#059669]" />
+          <div className="group relative overflow-hidden rounded bg-[#1caf9a] shadow-sm">
+            <div className="relative flex items-center justify-between px-4 py-3">
+              <div className="space-y-0.5">
+                <p className="text-2xl font-bold text-white tabular-nums">{formatCurrency(summary.totalRevenue)}</p>
+                <p className="text-xs text-white/80">Total Revenue</p>
+                <p className="text-[10px] text-white/60">{summary.revenueCount} payment{summary.revenueCount !== 1 ? "s" : ""}</p>
               </div>
-              <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Revenue</p>
-                <p className="text-2xl font-bold tabular-nums text-[#059669]">
-                  {formatCurrency(summary.totalRevenue)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {summary.revenueCount} payment{summary.revenueCount !== 1 ? "s" : ""}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+              <DollarSign className="size-14 text-white/20" strokeWidth={1.2} />
+            </div>
+          </div>
 
-          <Card className="relative overflow-hidden py-4 border-amber-200/60">
-            <div className="absolute inset-y-0 left-0 w-1 bg-amber-500" />
-            <CardContent className="flex items-center gap-4">
-              <div className="flex size-11 items-center justify-center rounded-xl bg-amber-100">
-                <Clock className="size-5 text-amber-600" />
+          <div className="group relative overflow-hidden rounded bg-[#c29d0b] shadow-sm">
+            <div className="relative flex items-center justify-between px-4 py-3">
+              <div className="space-y-0.5">
+                <p className="text-2xl font-bold text-white tabular-nums">{formatCurrency(summary.totalPending)}</p>
+                <p className="text-xs text-white/80">Pending</p>
+                <p className="text-[10px] text-white/60">{summary.pendingCount} payment{summary.pendingCount !== 1 ? "s" : ""}</p>
               </div>
-              <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Pending</p>
-                <p className="text-2xl font-bold tabular-nums text-amber-700">
-                  {formatCurrency(summary.totalPending)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {summary.pendingCount} payment{summary.pendingCount !== 1 ? "s" : ""}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+              <Clock className="size-14 text-white/20" strokeWidth={1.2} />
+            </div>
+          </div>
 
-          <Card className="relative overflow-hidden py-4 border-red-200/60">
-            <div className="absolute inset-y-0 left-0 w-1 bg-red-500" />
-            <CardContent className="flex items-center gap-4">
-              <div className="flex size-11 items-center justify-center rounded-xl bg-red-100">
-                <AlertTriangle className="size-5 text-red-600" />
+          <div className="group relative overflow-hidden rounded bg-[#d64635] shadow-sm">
+            <div className="relative flex items-center justify-between px-4 py-3">
+              <div className="space-y-0.5">
+                <p className="text-2xl font-bold text-white tabular-nums">{formatCurrency(summary.totalOverdue)}</p>
+                <p className="text-xs text-white/80">Overdue</p>
+                <p className="text-[10px] text-white/60">{summary.overdueCount} payment{summary.overdueCount !== 1 ? "s" : ""}</p>
               </div>
-              <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Overdue</p>
-                <p className="text-2xl font-bold tabular-nums text-red-700">
-                  {formatCurrency(summary.totalOverdue)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {summary.overdueCount} payment{summary.overdueCount !== 1 ? "s" : ""}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+              <AlertTriangle className="size-14 text-white/20" strokeWidth={1.2} />
+            </div>
+          </div>
 
-          <Card className="relative overflow-hidden py-4 border-blue-200/60">
-            <div className="absolute inset-y-0 left-0 w-1 bg-blue-500" />
-            <CardContent className="flex items-center gap-4">
-              <div className="flex size-11 items-center justify-center rounded-xl bg-blue-100">
-                <TrendingUp className="size-5 text-blue-600" />
+          <div className="group relative overflow-hidden rounded bg-[#327ad5] shadow-sm">
+            <div className="relative flex items-center justify-between px-4 py-3">
+              <div className="space-y-0.5">
+                <p className="text-2xl font-bold text-white tabular-nums">{formatCurrency(summary.thisMonthCollections)}</p>
+                <p className="text-xs text-white/80">This Month</p>
+                <p className="text-[10px] text-white/60">{summary.thisMonthCount} payment{summary.thisMonthCount !== 1 ? "s" : ""}</p>
               </div>
-              <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">This Month</p>
-                <p className="text-2xl font-bold tabular-nums text-blue-700">
-                  {formatCurrency(summary.thisMonthCollections)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {summary.thisMonthCount} payment{summary.thisMonthCount !== 1 ? "s" : ""}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+              <TrendingUp className="size-14 text-white/20" strokeWidth={1.2} />
+            </div>
+          </div>
         </div>
 
         {/* ── Fee Category Tabs ── */}

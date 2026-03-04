@@ -8,7 +8,6 @@ import {
   Plus,
   Pencil,
   Trash2,
-  MoreHorizontal,
   ArrowUpDown,
   Loader2,
   UtensilsCrossed,
@@ -36,12 +35,6 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -273,8 +266,8 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
             <Badge
               className={
                 active
-                  ? "bg-[#059669]/15 text-[#047857] border-[#059669]/25"
-                  : "bg-secondary text-muted-foreground border-border"
+                  ? "bg-[#008200] text-white border-transparent"
+                  : "bg-[#d64635] text-white border-transparent"
               }
             >
               {active ? "Active" : "Inactive"}
@@ -312,27 +305,14 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
         cell: ({ row }) => {
           const food = row.original;
           return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon-sm">
-                  <MoreHorizontal className="size-4" />
-                  <span className="sr-only">Actions</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => openEdit(food)}>
-                  <Pencil className="mr-2 size-4" />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  variant="destructive"
-                  onClick={() => openDelete(food)}
-                >
-                  <Trash2 className="mr-2 size-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="flex items-center gap-0.5">
+              <Button variant="ghost" size="sm" className="size-8 p-0" onClick={() => openEdit(food)}>
+                <Pencil className="size-4 text-muted-foreground" />
+              </Button>
+              <Button variant="ghost" size="sm" className="size-8 p-0 text-muted-foreground hover:text-destructive" onClick={() => openDelete(food)}>
+                <Trash2 className="size-4" />
+              </Button>
+            </div>
           );
         },
         enableSorting: false,

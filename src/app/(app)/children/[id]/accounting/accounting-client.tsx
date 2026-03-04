@@ -8,12 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/shared/data-table";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -25,7 +19,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Plus,
-  MoreHorizontal,
   Trash2,
   Pencil,
   DollarSign,
@@ -135,9 +128,9 @@ const methodLabels: Record<string, string> = {
 };
 
 const statusBadgeStyles: Record<string, string> = {
-  PAID: "bg-[#059669]/15 text-[#059669]",
-  PENDING: "bg-amber-100 text-amber-700",
-  OVERDUE: "bg-red-100 text-red-700",
+  PAID: "bg-[#008200] text-white border-transparent",
+  PENDING: "bg-[#c29d0b] text-white border-transparent",
+  OVERDUE: "bg-[#d64635] text-white border-transparent",
 };
 
 const monthNames = [
@@ -309,24 +302,14 @@ export function AccountingClient({
       cell: ({ row }) => {
         const p = row.original;
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleEdit(p)}>
-                <Pencil className="mr-2 h-4 w-4" /> Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-red-600"
-                onClick={() => handleDelete(p.id)}
-              >
-                <Trash2 className="mr-2 h-4 w-4" /> Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex items-center gap-0.5">
+            <Button variant="ghost" size="sm" className="size-8 p-0" onClick={() => handleEdit(p)}>
+              <Pencil className="size-4 text-muted-foreground" />
+            </Button>
+            <Button variant="ghost" size="sm" className="size-8 p-0 text-muted-foreground hover:text-destructive" onClick={() => handleDelete(p.id)}>
+              <Trash2 className="size-4" />
+            </Button>
+          </div>
         );
       },
       enableSorting: false,
@@ -382,71 +365,53 @@ export function AccountingClient({
       <div className="space-y-4 p-4 md:space-y-6 md:p-6">
         {/* Summary Cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5 text-blue-500" />
-                <div>
-                  <p className="text-2xl font-bold">${totalFees.toFixed(2)}</p>
-                  <p className="text-xs text-muted-foreground">Total Fees</p>
-                </div>
+          <div className="group relative overflow-hidden rounded bg-[#327ad5] shadow-sm">
+            <div className="relative flex items-center justify-between px-4 py-3">
+              <div className="space-y-0.5">
+                <p className="text-2xl font-bold text-white tabular-nums">${totalFees.toFixed(2)}</p>
+                <p className="text-xs text-white/80">Total Fees</p>
               </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5 text-green-500" />
-                <div>
-                  <p className="text-2xl font-bold text-green-600">
-                    ${paymentSummary.totalPaid.toFixed(2)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Total Paid</p>
-                </div>
+              <DollarSign className="size-14 text-white/20" strokeWidth={1.2} />
+            </div>
+          </div>
+          <div className="group relative overflow-hidden rounded bg-[#008200] shadow-sm">
+            <div className="relative flex items-center justify-between px-4 py-3">
+              <div className="space-y-0.5">
+                <p className="text-2xl font-bold text-white tabular-nums">${paymentSummary.totalPaid.toFixed(2)}</p>
+                <p className="text-xs text-white/80">Total Paid</p>
               </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-amber-500" />
-                <div>
-                  <p className="text-2xl font-bold text-amber-600">
-                    ${paymentSummary.totalPending.toFixed(2)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Pending</p>
-                </div>
+              <DollarSign className="size-14 text-white/20" strokeWidth={1.2} />
+            </div>
+          </div>
+          <div className="group relative overflow-hidden rounded bg-[#c29d0b] shadow-sm">
+            <div className="relative flex items-center justify-between px-4 py-3">
+              <div className="space-y-0.5">
+                <p className="text-2xl font-bold text-white tabular-nums">${paymentSummary.totalPending.toFixed(2)}</p>
+                <p className="text-xs text-white/80">Pending</p>
               </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-red-500" />
-                <div>
-                  <p className="text-2xl font-bold text-red-600">
-                    ${paymentSummary.totalOverdue.toFixed(2)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Overdue</p>
-                </div>
+              <Clock className="size-14 text-white/20" strokeWidth={1.2} />
+            </div>
+          </div>
+          <div className="group relative overflow-hidden rounded bg-[#d64635] shadow-sm">
+            <div className="relative flex items-center justify-between px-4 py-3">
+              <div className="space-y-0.5">
+                <p className="text-2xl font-bold text-white tabular-nums">${paymentSummary.totalOverdue.toFixed(2)}</p>
+                <p className="text-xs text-white/80">Overdue</p>
               </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5 text-primary" />
-                <div>
-                  <p className={`text-2xl font-bold ${balance > 0 ? "text-red-500" : "text-green-600"}`}>
-                    ${Math.abs(balance).toFixed(2)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {balance > 0 ? "Outstanding" : balance < 0 ? "Overpaid" : "Settled"}
-                  </p>
-                </div>
+              <AlertTriangle className="size-14 text-white/20" strokeWidth={1.2} />
+            </div>
+          </div>
+          <div className="group relative overflow-hidden rounded bg-[#8e44ad] shadow-sm">
+            <div className="relative flex items-center justify-between px-4 py-3">
+              <div className="space-y-0.5">
+                <p className="text-2xl font-bold text-white tabular-nums">${Math.abs(balance).toFixed(2)}</p>
+                <p className="text-xs text-white/80">
+                  {balance > 0 ? "Outstanding" : balance < 0 ? "Overpaid" : "Settled"}
+                </p>
               </div>
-            </CardContent>
-          </Card>
+              <DollarSign className="size-14 text-white/20" strokeWidth={1.2} />
+            </div>
+          </div>
         </div>
 
         {/* Action Buttons */}

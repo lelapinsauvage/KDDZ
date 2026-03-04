@@ -8,7 +8,6 @@ import {
   GraduationCap,
   Users,
   Globe,
-  MoreVertical,
   Pencil,
   Trash2,
   Camera,
@@ -39,12 +38,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -606,45 +599,33 @@ export function ClassesClient({
       <div className="space-y-6 p-4 md:p-6">
         {/* Stats Row */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Card className="rounded-2xl py-4 transition-all hover:shadow-md hover:-translate-y-0.5">
-            <CardContent className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-[#A0784C]/10">
-                <GraduationCap className="size-5 text-[#A0784C]" />
+          <div className="group relative overflow-hidden rounded bg-[#327ad5] shadow-sm">
+            <div className="relative flex items-center justify-between px-4 py-3">
+              <div className="space-y-0.5">
+                <p className="text-2xl font-bold text-white">{totalClasses}</p>
+                <p className="text-xs text-white/80">Total Classes</p>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Classes</p>
-                <p className="text-2xl font-semibold text-foreground">
-                  {totalClasses}
-                </p>
+              <GraduationCap className="size-14 text-white/20" strokeWidth={1.2} />
+            </div>
+          </div>
+          <div className="group relative overflow-hidden rounded bg-[#1caf9a] shadow-sm">
+            <div className="relative flex items-center justify-between px-4 py-3">
+              <div className="space-y-0.5">
+                <p className="text-2xl font-bold text-white">{totalStudents}</p>
+                <p className="text-xs text-white/80">Total Students</p>
               </div>
-            </CardContent>
-          </Card>
-          <Card className="rounded-2xl py-4 transition-all hover:shadow-md hover:-translate-y-0.5">
-            <CardContent className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-[#C17C5A]/10">
-                <Users className="size-5 text-[#C17C5A]" />
+              <Users className="size-14 text-white/20" strokeWidth={1.2} />
+            </div>
+          </div>
+          <div className="group relative overflow-hidden rounded bg-[#008200] shadow-sm">
+            <div className="relative flex items-center justify-between px-4 py-3">
+              <div className="space-y-0.5">
+                <p className="text-2xl font-bold text-white">{totalCapacity}</p>
+                <p className="text-xs text-white/80">Total Capacity</p>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Students</p>
-                <p className="text-2xl font-semibold text-foreground">
-                  {totalStudents}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="rounded-2xl py-4 transition-all hover:shadow-md hover:-translate-y-0.5">
-            <CardContent className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-[#059669]/10">
-                <Users className="size-5 text-[#059669]" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Capacity</p>
-                <p className="text-2xl font-semibold text-foreground">
-                  {totalCapacity}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+              <Users className="size-14 text-white/20" strokeWidth={1.2} />
+            </div>
+          </div>
         </div>
 
         {/* Toolbar */}
@@ -744,8 +725,8 @@ export function ClassesClient({
                         <Badge
                           className={
                             cls.isActive
-                              ? "bg-[#059669]/15 text-[#047857] border-[#059669]/25"
-                              : "bg-muted text-muted-foreground border-border"
+                              ? "bg-[#008200] text-white border-transparent"
+                              : "bg-[#d64635] text-white border-transparent"
                           }
                         >
                           {cls.isActive ? "Active" : "Inactive"}
@@ -755,26 +736,14 @@ export function ClassesClient({
                         {new Date(cls.createdAt).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="size-8">
-                              <MoreVertical className="size-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => openEdit(cls)}>
-                              <Pencil className="mr-2 size-4" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-red-600 focus:text-red-600"
-                              onClick={() => setDeleteTarget(cls)}
-                            >
-                              <Trash2 className="mr-2 size-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <div className="flex items-center justify-end gap-0.5">
+                          <Button variant="ghost" size="sm" className="size-8 p-0" onClick={() => openEdit(cls)}>
+                            <Pencil className="size-4 text-muted-foreground" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="size-8 p-0 text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(cls)}>
+                            <Trash2 className="size-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -820,36 +789,18 @@ export function ClassesClient({
                       <Badge
                         className={
                           cls.isActive
-                            ? "bg-[#059669]/15 text-[#047857] border-[#059669]/25"
-                            : "bg-muted text-muted-foreground border-border"
+                            ? "bg-[#008200] text-white border-transparent"
+                            : "bg-[#d64635] text-white border-transparent"
                         }
                       >
                         {cls.isActive ? "Active" : "Inactive"}
                       </Badge>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-8"
-                          >
-                            <MoreVertical className="size-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => openEdit(cls)}>
-                            <Pencil className="mr-2 size-4" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-red-600 focus:text-red-600"
-                            onClick={() => setDeleteTarget(cls)}
-                          >
-                            <Trash2 className="mr-2 size-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <Button variant="ghost" size="sm" className="size-8 p-0" onClick={() => openEdit(cls)}>
+                        <Pencil className="size-4 text-muted-foreground" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="size-8 p-0 text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(cls)}>
+                        <Trash2 className="size-4" />
+                      </Button>
                     </div>
                   </CardHeader>
 

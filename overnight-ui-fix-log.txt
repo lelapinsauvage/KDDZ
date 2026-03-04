@@ -241,3 +241,15 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 9 — Employee style — Wed Mar  4 08:08:22 CET 2026 ===
 =============================================
+Done. Changes committed as `c23cb0c`:
+
+1. **Solid status badges** — Active: green `#008200`, Inactive: red `#d64635`, both with white text (matching children pattern)
+2. **Visible icon buttons** — View/Edit/Delete shown directly instead of hidden in a dropdown menu; delete wired to existing `onDelete` callback with confirmation dialog + toast
+3. **Card wrapper** — Table wrapped in `Card` with `CardHeader` containing title + "Add" button in `CardAction`
+To https://github.com/lelapinsauvage/KDDZ.git
+   05803f1..c23cb0c  main -> main
+=== Phase 9 — Employee style COMPLETE — Wed Mar  4 08:09:59 CET 2026 ===
+
+=============================================
+=== Phase 10 — Classes, Food, Accounting style — Wed Mar  4 08:09:59 CET 2026 ===
+=============================================
