@@ -9,7 +9,7 @@ import { DataTable, SortableHeader } from "@/components/shared/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   Select,
@@ -18,13 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,7 +31,6 @@ import {
 import {
   Plus,
   Search,
-  MoreHorizontal,
   Eye,
   Pencil,
   Trash2,
@@ -46,9 +38,6 @@ import {
   Check,
   X,
   Loader2,
-  Clock,
-  CheckCircle2,
-  XCircle,
   Filter,
   User,
 } from "lucide-react";
@@ -86,20 +75,17 @@ interface Props {
 }
 
 // -- Status config --
-const statusConfig: Record<AbsenceStatus, { color: string; icon: typeof Clock; label: string }> = {
+const statusConfig: Record<AbsenceStatus, { color: string; label: string }> = {
   PENDING: {
-    color: "bg-[var(--color-warning-light)] text-[var(--color-warning-dark)] border-[var(--color-warning)]/20",
-    icon: Clock,
+    color: "bg-[#c29d0b] text-white border-transparent",
     label: "Pending",
   },
   APPROVED: {
-    color: "bg-[var(--color-success-light)] text-[var(--color-success-dark)] border-[var(--color-success)]/20",
-    icon: CheckCircle2,
+    color: "bg-[#008200] text-white border-transparent",
     label: "Approved",
   },
   REJECTED: {
-    color: "bg-red-50 text-red-700 border-red-200",
-    icon: XCircle,
+    color: "bg-[#d64635] text-white border-transparent",
     label: "Rejected",
   },
 };
@@ -228,10 +214,8 @@ export function AbsentReportsClient({ reports, branches, initialStatusFilter = "
       cell: ({ row }) => {
         const status = row.original.status;
         const config = statusConfig[status];
-        const Icon = config.icon;
         return (
-          <Badge className={`${config.color} gap-1`}>
-            <Icon className="size-3" />
+          <Badge className={config.color}>
             {config.label}
           </Badge>
         );
@@ -288,56 +272,45 @@ export function AbsentReportsClient({ reports, branches, initialStatusFilter = "
               <>
                 <Button
                   variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-[var(--color-success-dark)] hover:text-[var(--color-success-dark)] hover:bg-[var(--color-success-light)]"
+                  size="icon-sm"
+                  className="text-[#008200] hover:text-[#008200] hover:bg-[#008200]/10"
                   onClick={() => handleStatusUpdate(report.id, "APPROVED")}
                   disabled={isPending}
+                  title="Approve"
                 >
-                  {isPending ? <Loader2 className="size-3 animate-spin" /> : <Check className="size-3.5" />}
-                  <span className="ml-1 text-xs">Approve</span>
+                  {isPending ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
                 </Button>
                 <Button
                   variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  size="icon-sm"
+                  className="text-[#d64635] hover:text-[#d64635] hover:bg-[#d64635]/10"
                   onClick={() => handleStatusUpdate(report.id, "REJECTED")}
                   disabled={isPending}
+                  title="Reject"
                 >
-                  {isPending ? <Loader2 className="size-3 animate-spin" /> : <X className="size-3.5" />}
-                  <span className="ml-1 text-xs">Reject</span>
+                  {isPending ? <Loader2 className="size-4 animate-spin" /> : <X className="size-4" />}
                 </Button>
               </>
             )}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon-sm">
-                  <MoreHorizontal className="size-4" />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link href={`/absent-reports/${report.id}`}>
-                    <Eye className="size-4" />
-                    View
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href={`/absent-reports/${report.id}/edit`}>
-                    <Pencil className="size-4" />
-                    Edit
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  variant="destructive"
-                  onClick={() => setDeleteId(report.id)}
-                >
-                  <Trash2 className="size-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-primary" asChild title="View">
+              <Link href={`/absent-reports/${report.id}`}>
+                <Eye className="size-4" />
+              </Link>
+            </Button>
+            <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-primary" asChild title="Edit">
+              <Link href={`/absent-reports/${report.id}/edit`}>
+                <Pencil className="size-4" />
+              </Link>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="text-muted-foreground hover:text-destructive"
+              onClick={() => setDeleteId(report.id)}
+              title="Delete"
+            >
+              <Trash2 className="size-4" />
+            </Button>
           </div>
         );
       },
@@ -360,10 +333,13 @@ export function AbsentReportsClient({ reports, branches, initialStatusFilter = "
         }
       />
 
-      <div className="p-4 space-y-4 md:p-6">
-        {/* Toolbar — matches daily reports filter bar */}
-        <Card className="border-border/60 shadow-sm">
-          <CardContent className="p-3">
+      <div className="p-4 md:p-6">
+        <Card>
+          <CardHeader className="border-b">
+            <CardTitle>Absence Reports</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 pt-4">
+            {/* Toolbar */}
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <div className="relative w-full sm:max-w-xs sm:flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -437,23 +413,23 @@ export function AbsentReportsClient({ reports, branches, initialStatusFilter = "
 
               <div className="flex-1" />
             </div>
+
+            {filteredReports.length === 0 ? (
+              <EmptyState
+                icon={CalendarDays}
+                title="No absence reports found"
+                description={
+                  search || dateFrom || dateTo || branchFilter !== "all" || classFilter !== "all" || statusFilter !== "all"
+                    ? "Try adjusting your filters to see more results."
+                    : "No absence reports have been submitted yet."
+                }
+                action={{ label: "Report Absence", href: "/absent-reports/new", icon: Plus }}
+              />
+            ) : (
+              <DataTable columns={absenceColumns} data={filteredReports} />
+            )}
           </CardContent>
         </Card>
-
-        {filteredReports.length === 0 ? (
-          <EmptyState
-            icon={CalendarDays}
-            title="No absence reports found"
-            description={
-              search || dateFrom || dateTo || branchFilter !== "all" || classFilter !== "all" || statusFilter !== "all"
-                ? "Try adjusting your filters to see more results."
-                : "No absence reports have been submitted yet."
-            }
-            action={{ label: "Report Absence", href: "/absent-reports/new", icon: Plus }}
-          />
-        ) : (
-          <DataTable columns={absenceColumns} data={filteredReports} />
-        )}
       </div>
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>

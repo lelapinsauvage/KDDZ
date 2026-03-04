@@ -187,3 +187,21 @@ Everything up-to-date
 =============================================
 === Phase 15 — Final verification — Wed Mar  4 07:58:57 CET 2026 ===
 =============================================
+TypeScript reports zero errors. There are modified files but they're pre-existing changes (from before this session), not type error fixes. No type errors to fix, so no commit is needed.
+To https://github.com/lelapinsauvage/KDDZ.git
+   b9d4290..5109f22  main -> main
+=== Phase 15 — Final verification COMPLETE — Wed Mar  4 07:59:12 CET 2026 ===
+
+=== ALL PHASES COMPLETE — Wed Mar  4 07:59:12 CET 2026 ===
+Done. Changes committed as `5109f22`:
+
+1. **Status badges** — solid colors: Active `#008200`, Inactive `#d64635`, Draft `#c29d0b` (all white text, no icons)
+2. **Action column** — replaced DropdownMenu with 3 visible icon buttons (Eye, Pencil, Trash2) using ghost variant
+3. **Card wrapper** — page content wrapped in `Card` with `CardHeader` showing "Children" title + "Add Child" button via `CardAction`
+4. **Card view** — status colors updated to match the same solid palette
+Everything up-to-date
+=== Phase 6 — Children listing style COMPLETE — Wed Mar  4 07:59:18 CET 2026 ===
+
+=============================================
+=== Phase 7 — Reports style — Wed Mar  4 07:59:18 CET 2026 ===
+=============================================

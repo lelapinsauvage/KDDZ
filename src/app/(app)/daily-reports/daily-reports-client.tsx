@@ -17,13 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,15 +31,12 @@ import {
 import {
   Plus,
   Search,
-  MoreHorizontal,
   Eye,
   Pencil,
   Trash2,
   FileText,
   Send,
   Loader2,
-  CheckCircle2,
-  FileEdit,
   Filter,
   Printer,
   User,
@@ -223,13 +214,11 @@ export function DailyReportsClient({
       cell: ({ row }) => {
         const status = row.original.status;
         return status === "SUBMITTED" ? (
-          <Badge className="bg-[var(--color-success-light)] text-[var(--color-success-dark)] border-[var(--color-success)]/20 gap-1">
-            <CheckCircle2 className="size-3" />
+          <Badge className="bg-[#008200] text-white border-transparent">
             Submitted
           </Badge>
         ) : (
-          <Badge className="bg-[var(--color-warning-light)] text-[var(--color-warning-dark)] border-[var(--color-warning)]/20 gap-1">
-            <FileEdit className="size-3" />
+          <Badge className="bg-[#c29d0b] text-white border-transparent">
             Draft
           </Badge>
         );
@@ -285,51 +274,39 @@ export function DailyReportsClient({
             {report.status === "DRAFT" && (
               <Button
                 variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-primary hover:text-primary hover:bg-primary/10"
+                size="icon-sm"
+                className="text-primary hover:text-primary hover:bg-primary/10"
                 onClick={() => handleSubmit(report.id)}
                 disabled={isPending}
+                title="Submit"
               >
-                {isPending ? <Loader2 className="size-3 animate-spin" /> : <Send className="size-3.5" />}
-                <span className="ml-1 text-xs">Submit</span>
+                {isPending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
               </Button>
             )}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon-sm">
-                  <MoreHorizontal className="size-4" />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link href={`/daily-reports/${report.id}`}>
-                    <Eye className="size-4" />
-                    View Report
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href={`/daily-reports/${report.id}/edit`}>
-                    <Pencil className="size-4" />
-                    Edit
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href={`/daily-reports/${report.id}/print`}>
-                    <Printer className="size-4" />
-                    Print
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  variant="destructive"
-                  onClick={() => setDeleteId(report.id)}
-                >
-                  <Trash2 className="size-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-primary" asChild title="View">
+              <Link href={`/daily-reports/${report.id}`}>
+                <Eye className="size-4" />
+              </Link>
+            </Button>
+            <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-primary" asChild title="Edit">
+              <Link href={`/daily-reports/${report.id}/edit`}>
+                <Pencil className="size-4" />
+              </Link>
+            </Button>
+            <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-primary" asChild title="Print">
+              <Link href={`/daily-reports/${report.id}/print`}>
+                <Printer className="size-4" />
+              </Link>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="text-muted-foreground hover:text-destructive"
+              onClick={() => setDeleteId(report.id)}
+              title="Delete"
+            >
+              <Trash2 className="size-4" />
+            </Button>
           </div>
         );
       },
@@ -351,9 +328,14 @@ export function DailyReportsClient({
           </Button>
         }
       />
-      <div className="p-4 space-y-4 md:p-6">
-        {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+      <div className="p-4 md:p-6">
+        <Card>
+          <CardHeader className="border-b">
+            <CardTitle>Daily Reports</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 pt-4">
+            {/* Toolbar */}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <div className="relative w-full sm:max-w-xs sm:flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -431,23 +413,25 @@ export function DailyReportsClient({
                   data={filteredData as unknown as Record<string, unknown>[]}
                 />
               </div>
-        </div>
+            </div>
 
-        {filteredData.length === 0 ? (
-          <EmptyState
-            icon={FileText}
-            title="No daily reports found"
-            description={
-              search || dateFrom || dateTo || branchFilter !== "all" || classFilter !== "all" || statusFilter !== "all"
-                ? "Try adjusting your filters to see more results."
-                : "No reports have been submitted yet. Start filling out daily reports for your class."
-            }
-            action={{ label: "New Report", href: "/daily-reports/new", icon: Plus }}
-            secondaryAction={{ label: "Start Batch Reports", href: "/daily-reports/batch" }}
-          />
-        ) : (
-          <DataTable columns={dailyReportColumns} data={filteredData} />
-        )}
+            {filteredData.length === 0 ? (
+              <EmptyState
+                icon={FileText}
+                title="No daily reports found"
+                description={
+                  search || dateFrom || dateTo || branchFilter !== "all" || classFilter !== "all" || statusFilter !== "all"
+                    ? "Try adjusting your filters to see more results."
+                    : "No reports have been submitted yet. Start filling out daily reports for your class."
+                }
+                action={{ label: "New Report", href: "/daily-reports/new", icon: Plus }}
+                secondaryAction={{ label: "Start Batch Reports", href: "/daily-reports/batch" }}
+              />
+            ) : (
+              <DataTable columns={dailyReportColumns} data={filteredData} />
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
