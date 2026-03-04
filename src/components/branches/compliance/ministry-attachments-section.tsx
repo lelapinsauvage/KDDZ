@@ -75,7 +75,7 @@ const REQUIRED_DOCS = [
 
 export function MinistryAttachmentsSection({ branchId, documents }: Props) {
   return (
-    <div className="rounded-2xl border bg-card p-6 shadow-sm" dir="rtl">
+    <div className="rounded-sm border bg-card p-6 shadow-sm" dir="rtl">
       <h3 className="mb-1 text-base font-semibold text-foreground">
         المستندات المطلوبة
       </h3>
@@ -147,7 +147,7 @@ function AttachmentRow({
   return (
     <div
       className={cn(
-        "rounded-xl border border-l-4 p-4 transition-colors",
+        "rounded-sm border border-l-4 p-4 transition-colors",
         color,
         isUploaded ? "border-green-200 bg-green-50/50 dark:border-green-900 dark:bg-green-950/20" : "border-border",
       )}

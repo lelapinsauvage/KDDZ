@@ -57,7 +57,7 @@ export function getInitialsFromName(name: string) {
 
 /** Deterministic color from a name string — design-system accent palette */
 const AVATAR_COLORS = [
-  "bg-[#0B9178]",
+  "bg-primary",
   "bg-[#D97706]",
   "bg-[#4F46E5]",
   "bg-[#059669]",
@@ -85,7 +85,7 @@ const PASTEL_AVATAR_COLORS = [
   "bg-rose-100 text-rose-700",
   "bg-[#059669]/15 text-[#059669]",
   "bg-fuchsia-100 text-fuchsia-700",
-  "bg-[#0B9178]/10 text-[#0B9178]",
+  "bg-primary/10 text-[#0B9178]",
   "bg-orange-100 text-orange-700",
 ] as const;
 
@@ -128,7 +128,7 @@ function getAge(date: Date | string | null) {
 
 // ── Class pill color palette — design-system accents ──
 const CLASS_COLORS = [
-  "bg-[#0B9178]/10 text-[#0B9178] border-[#0B9178]/20",
+  "bg-primary/10 text-[#0B9178] border-[#0B9178]/20",
   "bg-[#D97706]/10 text-[#D97706] border-[#D97706]/20",
   "bg-[#059669]/10 text-[#059669] border-[#059669]/20",
   "bg-[#4F46E5]/10 text-[#4F46E5] border-[#4F46E5]/20",

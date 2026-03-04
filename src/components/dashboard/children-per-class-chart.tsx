@@ -17,7 +17,7 @@ interface ChildrenPerClassChartProps {
 
 export function ChildrenPerClassChart({ data }: ChildrenPerClassChartProps) {
   return (
-    <Card className="rounded-2xl border border-border/40 bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
+    <Card className="rounded-sm border border-border/40 bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold">
           Children Per Class

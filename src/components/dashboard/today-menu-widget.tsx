@@ -28,7 +28,7 @@ export function TodayMenuWidget({ breakfast, lunch, dessert, snack }: TodayMenuW
   const hasMenu = breakfast || lunch || dessert;
 
   return (
-    <Card className="rounded-xl border border-border bg-card shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]">
+    <Card className="rounded-sm border border-border bg-card shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base font-heading">
@@ -64,7 +64,7 @@ export function TodayMenuWidget({ breakfast, lunch, dessert, snack }: TodayMenuW
           </>
         ) : (
           <div className="flex flex-col items-center gap-2 py-4 text-center">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-muted">
+            <div className="flex size-10 items-center justify-center rounded-sm bg-muted">
               <UtensilsCrossed className="size-5 text-muted-foreground/50" />
             </div>
             <div>

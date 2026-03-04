@@ -795,7 +795,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                 type="button"
                 onClick={() => handleGoToStep(i)}
                 className={cn(
-                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors",
+                  "flex items-center gap-3 rounded-sm px-3 py-2.5 text-left text-sm transition-colors",
                   i === currentStep
                     ? "bg-primary/10 font-medium text-primary"
                     : i < currentStep
@@ -1837,7 +1837,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                 </div>
 
                 {/* Live Net$ Calculator */}
-                <div className="mt-6 rounded-xl border-2 border-primary/20 bg-primary/5 p-5">
+                <div className="mt-6 rounded-sm border-2 border-primary/20 bg-primary/5 p-5">
                   <h4 className="mb-3 text-sm font-semibold text-foreground">Live Fee Calculator</h4>
                   <div className="grid grid-cols-2 gap-y-3 text-sm md:grid-cols-4">
                     <div>
@@ -1973,7 +1973,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                  ════════════════════════════════════════════ */}
             {currentStep === 4 && (
               <FormSection title="Attachments" color="green">
-                <div className="rounded-xl border-2 border-dashed border-border bg-muted/20 p-8 text-center transition-colors hover:border-primary/40 hover:bg-muted/30">
+                <div className="rounded-sm border-2 border-dashed border-border bg-muted/20 p-8 text-center transition-colors hover:border-primary/40 hover:bg-muted/30">
                   <Upload className="mx-auto mb-4 size-12 text-muted-foreground" />
                   <p className="text-sm font-medium text-foreground">
                     Drag and drop files here, or click to browse

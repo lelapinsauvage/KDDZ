@@ -131,7 +131,7 @@ export function Header() {
               <ChevronDown className="hidden size-3 text-[#b4bcc8] sm:block" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-52 rounded-xl">
+          <DropdownMenuContent align="end" className="w-52 rounded-sm">
             <DropdownMenuLabel className="font-normal">
               <p className="text-sm font-semibold">{userName}</p>
               <p className="text-xs text-muted-foreground">Manage your account</p>

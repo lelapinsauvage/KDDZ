@@ -361,14 +361,14 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
             return (
               <Card
                 key={cat}
-                className="rounded-2xl py-4 transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
+                className="rounded-sm py-4 transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
                 onClick={() =>
                   setCategoryFilter(categoryFilter === cat ? "ALL" : cat)
                 }
               >
                 <CardContent className="flex items-center gap-4">
                   <div
-                    className={`flex size-10 items-center justify-center rounded-xl ${colors.bg}`}
+                    className={`flex size-10 items-center justify-center rounded-sm ${colors.bg}`}
                   >
                     <Icon className={`size-5 ${colors.text}`} />
                   </div>

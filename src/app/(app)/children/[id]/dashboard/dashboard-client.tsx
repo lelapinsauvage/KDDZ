@@ -393,7 +393,7 @@ export function DashboardClient({
             <div className="h-20 bg-gradient-to-br from-primary/80 via-primary/60 to-primary/40 relative">
               <div className="absolute -bottom-10 left-1/2 -translate-x-1/2">
                 <div
-                  className={`flex size-20 items-center justify-center rounded-full text-2xl font-bold text-white shadow-lg ring-4 ring-background ${avatarBg}`}
+                  className={`flex size-20 items-center justify-center rounded-full text-2xl font-bold text-white shadow-sm ring-4 ring-background ${avatarBg}`}
                 >
                   {child.photo ? (
                     // eslint-disable-next-line @next/next/no-img-element

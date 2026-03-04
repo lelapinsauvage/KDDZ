@@ -74,8 +74,8 @@ interface InboxClientProps {
 // ---------------------------------------------------------------------------
 
 const AVATAR_COLORS = [
-  "bg-[#059669]", "bg-[#0B9178]", "bg-[#D97706]", "bg-[#EC4899]",
-  "bg-[#4F46E5]", "bg-[#059669]/80", "bg-[#EC4899]/80", "bg-[#0B9178]/80",
+  "bg-[#059669]", "bg-primary", "bg-[#D97706]", "bg-[#EC4899]",
+  "bg-[#4F46E5]", "bg-[#059669]/80", "bg-[#EC4899]/80", "bg-primary/80",
 ];
 
 function avatarColor(name: string): string {

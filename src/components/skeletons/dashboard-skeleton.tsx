@@ -2,14 +2,14 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 function StatCardSkeleton() {
   return (
-    <div className="overflow-hidden rounded-xl border border-border/40 bg-card">
+    <div className="overflow-hidden rounded-sm border border-border/40 bg-card">
       <Skeleton className="h-[3px] w-full rounded-none" />
       <div className="flex items-center justify-between px-5 py-4">
         <div className="space-y-2">
           <Skeleton className="h-3 w-24 rounded-sm" />
           <Skeleton className="h-7 w-14 rounded-sm" />
         </div>
-        <Skeleton className="size-11 rounded-xl" />
+        <Skeleton className="size-11 rounded-sm" />
       </div>
     </div>
   )
@@ -45,7 +45,7 @@ export function DashboardSkeleton() {
         {Array.from({ length: 3 }).map((_, i) => (
           <div
             key={i}
-            className="overflow-hidden rounded-xl border border-border/40 bg-card"
+            className="overflow-hidden rounded-sm border border-border/40 bg-card"
           >
             <div className="border-b border-border px-5 py-3.5">
               <Skeleton className="h-4 w-36" />

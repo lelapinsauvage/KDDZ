@@ -60,7 +60,7 @@ const typeConfig: Record<
   },
   accidents: {
     icon: AlertTriangle,
-    iconBg: "bg-[#0B9178]/10",
+    iconBg: "bg-primary/10",
     iconColor: "text-[#0B9178]",
     label: "Accidents",
   },
@@ -116,7 +116,7 @@ export function MedicalHub({ data, childId }: MedicalHubProps) {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button size="sm" className="ml-auto rounded-xl">
+            <Button size="sm" className="ml-auto rounded-sm">
               <Plus className="mr-1 size-3.5" />
               Add Record
               <ChevronDown className="ml-1 size-3" />
@@ -149,7 +149,7 @@ export function MedicalHub({ data, childId }: MedicalHubProps) {
       </div>
 
       {/* Medical Timeline */}
-      <div className="rounded-2xl border border-border/40 bg-card shadow-sm">
+      <div className="rounded-sm border border-border/40 bg-card shadow-sm">
         <div className="px-5 py-4">
           <p className="text-sm font-semibold text-foreground">
             Medical History
@@ -168,7 +168,7 @@ export function MedicalHub({ data, childId }: MedicalHubProps) {
                 return (
                   <div
                     key={`${event.type}-${event.id}`}
-                    className="flex items-center gap-3 rounded-xl bg-muted/40 px-3 py-2.5"
+                    className="flex items-center gap-3 rounded-sm bg-muted/40 px-3 py-2.5"
                   >
                     <div
                       className={`flex size-7 shrink-0 items-center justify-center rounded-lg ${config.iconBg}`}
@@ -200,7 +200,7 @@ export function MedicalHub({ data, childId }: MedicalHubProps) {
       </div>
 
       {/* Vaccination Schedule */}
-      <div className="rounded-2xl border border-border/40 bg-card shadow-sm">
+      <div className="rounded-sm border border-border/40 bg-card shadow-sm">
         <div className="flex items-center gap-2 px-5 py-4">
           <div className="flex size-7 items-center justify-center rounded-lg bg-[#D97706]/10">
             <Syringe className="size-3.5 text-[#D97706]" />
@@ -222,8 +222,8 @@ export function MedicalHub({ data, childId }: MedicalHubProps) {
                 return (
                   <div
                     key={v.id}
-                    className={`flex items-center gap-3 rounded-xl px-3 py-2.5 ${
-                      isOverdue ? "bg-[#0B9178]/5 ring-1 ring-[#0B9178]/20" : "bg-muted/40"
+                    className={`flex items-center gap-3 rounded-sm px-3 py-2.5 ${
+                      isOverdue ? "bg-primary/5 ring-1 ring-[#0B9178]/20" : "bg-muted/40"
                     }`}
                   >
                     <div className="min-w-0 flex-1">

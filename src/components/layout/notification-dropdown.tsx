@@ -54,7 +54,7 @@ const typeConfig: Record<
   MEDICAL: {
     icon: Heart,
     color: "text-[#0B9178]",
-    bg: "bg-[#0B9178]/10",
+    bg: "bg-primary/10",
     border: "border-l-[#0B9178]",
   },
   MEDICINE: {
@@ -66,7 +66,7 @@ const typeConfig: Record<
   INSURANCE: {
     icon: Shield,
     color: "text-[#0B9178]",
-    bg: "bg-[#0B9178]/10",
+    bg: "bg-primary/10",
     border: "border-l-[#0B9178]",
   },
   PAYMENT: {
@@ -203,7 +203,7 @@ export function NotificationDropdown({
       <PopoverContent
         align="end"
         sideOffset={8}
-        className="w-[380px] rounded-2xl p-0 shadow-lg"
+        className="w-[380px] rounded-sm p-0 shadow-sm"
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b px-4 py-3">

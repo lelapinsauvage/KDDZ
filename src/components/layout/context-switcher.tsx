@@ -34,7 +34,7 @@ export function ContextSwitcher() {
           <ChevronDown className="ml-0.5 size-3 text-muted-foreground/50" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-60 space-y-3.5 rounded-xl border-border/50 p-4">
+      <PopoverContent align="start" className="w-60 space-y-3.5 rounded-sm border-border/50 p-4">
         {/* Branch selector */}
         <div>
           <label className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-primary/80">

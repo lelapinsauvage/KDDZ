@@ -20,14 +20,14 @@ export default function ForgotPasswordPage() {
       <div className="pointer-events-none fixed inset-0 bg-gradient-to-br from-[#EFFCF8] via-[#F7F8FA] to-[#D1F7EC]/30" />
       {/* Soft decorative blobs */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-[#0B9178]/10 blur-[100px]" />
+        <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-primary/10 blur-[100px]" />
         <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-[#36CCA8]/10 blur-[100px]" />
       </div>
 
       <div className="relative w-full max-w-[420px]">
         {/* Logo & branding */}
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-[#0B9178] shadow-lg shadow-[#0B9178]/25">
+          <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-sm bg-primary shadow-sm shadow-[#0B9178]/25">
             <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
               <text x="16" y="23" textAnchor="middle" fontFamily="'Nunito', system-ui, sans-serif" fontWeight="700" fontSize="22" fill="white">K</text>
             </svg>
@@ -41,7 +41,7 @@ export default function ForgotPasswordPage() {
         </div>
 
         {/* Card */}
-        <div className="rounded-xl border border-[#E2E5E9] bg-white p-8 shadow-[0_4px_6px_rgba(15,23,42,0.06),0_2px_4px_rgba(15,23,42,0.04)]">
+        <div className="rounded-sm border border-[#E2E5E9] bg-white p-8 shadow-[0_4px_6px_rgba(15,23,42,0.06),0_2px_4px_rgba(15,23,42,0.04)]">
           {sent ? (
             <div className="space-y-4 text-center">
               <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-[#EFFCF8]">
@@ -87,7 +87,7 @@ export default function ForgotPasswordPage() {
 
                 <Button
                   type="submit"
-                  className="h-11 w-full rounded-lg bg-[#0B7464] text-sm font-semibold tracking-wide text-white shadow-md shadow-[#0B7464]/20 transition-all hover:bg-[#0D5C50] hover:shadow-lg hover:shadow-[#0B7464]/25 active:scale-[0.98]"
+                  className="h-11 w-full rounded-lg bg-primary text-sm font-semibold tracking-wide text-white shadow-md shadow-[#0B7464]/20 transition-all hover:bg-[#0D5C50] hover:shadow-sm hover:shadow-[#0B7464]/25 active:scale-[0.98]"
                 >
                   Send Reset Link
                 </Button>

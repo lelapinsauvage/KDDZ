@@ -78,7 +78,7 @@ interface BatchReportClientProps {
 
 // -- Avatar helpers --
 const classColors = [
-  { bg: "bg-[#0B9178]/5", border: "border-[#0B9178]/20", text: "text-[#0B9178]", badge: "bg-[#0B9178]/10 text-[#0B9178]", avatar: "bg-[#0B9178]/10 text-[#0B9178]" },
+  { bg: "bg-primary/5", border: "border-[#0B9178]/20", text: "text-[#0B9178]", badge: "bg-primary/10 text-[#0B9178]", avatar: "bg-primary/10 text-[#0B9178]" },
   { bg: "bg-[#4F46E5]/10", border: "border-[#4F46E5]/20", text: "text-[#4F46E5]", badge: "bg-[#4F46E5]/15 text-[#4F46E5]", avatar: "bg-[#4F46E5]/15 text-[#4F46E5]" },
   { bg: "bg-rose-50", border: "border-rose-200", text: "text-rose-700", badge: "bg-rose-100 text-rose-700", avatar: "bg-rose-100 text-rose-700" },
   { bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-700", badge: "bg-amber-100 text-amber-700", avatar: "bg-amber-100 text-amber-700" },

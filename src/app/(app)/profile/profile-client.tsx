@@ -56,7 +56,7 @@ export function ProfileClient({ user }: { user: ProfileUser }) {
           </div>
         </div>
 
-        <Card className="rounded-2xl">
+        <Card className="rounded-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Account Information</CardTitle>
           </CardHeader>

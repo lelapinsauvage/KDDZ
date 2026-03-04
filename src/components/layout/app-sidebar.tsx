@@ -633,7 +633,7 @@ export function AppSidebar({ userRole, badges, classes }: AppSidebarProps) {
       {/* ── Brand header ── */}
       <SidebarHeader className="px-4 py-4 bg-[#2b3643]">
         <Link href="/dashboard" className="flex items-center gap-2.5 group">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#0B9178] text-white text-sm font-bold shadow-md ring-1 ring-white/10 transition-shadow duration-200 group-hover:shadow-lg group-hover:ring-white/20">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-white text-sm font-bold shadow-md ring-1 ring-white/10 transition-shadow duration-200 group-hover:shadow-sm group-hover:ring-white/20">
             K
           </div>
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
@@ -738,7 +738,7 @@ export function AppSidebar({ userRole, badges, classes }: AppSidebarProps) {
               <DropdownMenuContent
                 side="top"
                 align="start"
-                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-xl"
+                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-sm"
               >
                 <div className="flex items-center gap-2 px-2 py-2">
                   <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">

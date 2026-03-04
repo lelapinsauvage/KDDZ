@@ -54,7 +54,7 @@ export function DemographicsSection({
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       {/* Attendance Breakdown donut */}
-      <Card className="rounded-xl border border-border bg-card shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]">
+      <Card className="rounded-sm border border-border bg-card shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]">
         <CardHeader className="pb-2">
           <CardTitle className="text-base font-semibold font-heading">
             Attendance Overview
@@ -102,7 +102,7 @@ export function DemographicsSection({
       </Card>
 
       {/* Children Per Class donut */}
-      <Card className="rounded-xl border border-border bg-card shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]">
+      <Card className="rounded-sm border border-border bg-card shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]">
         <CardHeader className="pb-2">
           <CardTitle className="text-base font-semibold font-heading">
             Children Per Class
@@ -150,7 +150,7 @@ export function DemographicsSection({
       </Card>
 
       {/* Gender Stats donut */}
-      <Card className="rounded-xl border border-border bg-card shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]">
+      <Card className="rounded-sm border border-border bg-card shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]">
         <CardHeader className="pb-2">
           <CardTitle className="text-base font-semibold font-heading">
             Gender Distribution

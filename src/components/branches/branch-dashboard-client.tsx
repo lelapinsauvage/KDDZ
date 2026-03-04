@@ -86,10 +86,10 @@ export function BranchDashboardClient({
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         {cards.map((c) => {
           const card = (
-            <Card key={c.label} className="rounded-2xl py-4 transition-all hover:shadow-md hover:-translate-y-0.5">
+            <Card key={c.label} className="rounded-sm py-4 transition-all hover:shadow-md hover:-translate-y-0.5">
               <CardContent className="flex flex-col items-center gap-2 text-center">
                 <div
-                  className={`flex size-10 items-center justify-center rounded-xl ${c.bg}`}
+                  className={`flex size-10 items-center justify-center rounded-sm ${c.bg}`}
                 >
                   <c.icon className={`size-5 ${c.fg}`} />
                 </div>
@@ -110,7 +110,7 @@ export function BranchDashboardClient({
 
       {/* Compliance + Documents summary */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <Card className="rounded-2xl">
+        <Card className="rounded-sm">
           <CardContent className="flex items-center gap-4 p-6">
             <div className="relative flex size-20 items-center justify-center">
               <svg className="size-20 -rotate-90" viewBox="0 0 36 36">
@@ -150,10 +150,10 @@ export function BranchDashboardClient({
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl">
+        <Card className="rounded-sm">
           <CardContent className="flex items-center gap-4 p-6">
             <div
-              className="flex size-20 items-center justify-center rounded-2xl"
+              className="flex size-20 items-center justify-center rounded-sm"
               style={{ backgroundColor: `${color}20` }}
             >
               <FileText className="size-10" style={{ color }} />

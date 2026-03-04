@@ -133,7 +133,7 @@ function PortionRadio({
             key={p.value}
             type="button"
             onClick={() => onChange(isSelected ? undefined : p.value)}
-            className={`flex flex-col items-center gap-1 rounded-xl border-2 px-3 py-2.5 min-w-[60px] min-h-[56px] text-xs font-medium transition-all ${
+            className={`flex flex-col items-center gap-1 rounded-sm border-2 px-3 py-2.5 min-w-[60px] min-h-[56px] text-xs font-medium transition-all ${
               isSelected
                 ? "border-amber-500 bg-amber-500 text-white shadow-md scale-105"
                 : "border-gray-200 bg-white hover:border-amber-300 text-gray-600"
@@ -361,7 +361,7 @@ export function DailyReportForm({
       )}
 
       {/* ── ATTENDANCE MODE TOGGLE (HUGE & obvious) ── */}
-      <div className="rounded-2xl border-2 border-primary/20 bg-gradient-to-r from-emerald-50 to-rose-50 p-6">
+      <div className="rounded-sm border-2 border-primary/20 bg-gradient-to-r from-emerald-50 to-rose-50 p-6">
         <p className="mb-3 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Attendance Status
         </p>
@@ -369,9 +369,9 @@ export function DailyReportForm({
           <button
             type="button"
             onClick={() => setValue("attendanceMode", "PRESENT")}
-            className={`flex flex-1 flex-col items-center justify-center gap-2 rounded-2xl border-3 min-h-[100px] py-5 text-lg font-bold transition-all ${
+            className={`flex flex-1 flex-col items-center justify-center gap-2 rounded-sm border-3 min-h-[100px] py-5 text-lg font-bold transition-all ${
               attendanceMode === "PRESENT"
-                ? "border-emerald-500 bg-emerald-500 text-white shadow-lg shadow-emerald-200 scale-[1.02]"
+                ? "border-emerald-500 bg-emerald-500 text-white shadow-sm shadow-emerald-200 scale-[1.02]"
                 : "border-gray-200 bg-white text-gray-400 hover:border-emerald-300 hover:text-emerald-600"
             }`}
           >
@@ -381,9 +381,9 @@ export function DailyReportForm({
           <button
             type="button"
             onClick={() => setValue("attendanceMode", "ABSENT")}
-            className={`flex flex-1 flex-col items-center justify-center gap-2 rounded-2xl border-3 min-h-[100px] py-5 text-lg font-bold transition-all ${
+            className={`flex flex-1 flex-col items-center justify-center gap-2 rounded-sm border-3 min-h-[100px] py-5 text-lg font-bold transition-all ${
               attendanceMode === "ABSENT"
-                ? "border-rose-500 bg-rose-500 text-white shadow-lg shadow-rose-200 scale-[1.02]"
+                ? "border-rose-500 bg-rose-500 text-white shadow-sm shadow-rose-200 scale-[1.02]"
                 : "border-gray-200 bg-white text-gray-400 hover:border-rose-300 hover:text-rose-600"
             }`}
           >
@@ -559,7 +559,7 @@ export function DailyReportForm({
                 if (yesterdayData.sleepFrom) setValue("sleepFrom", yesterdayData.sleepFrom);
                 if (yesterdayData.sleepTo) setValue("sleepTo", yesterdayData.sleepTo);
               }}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 px-4 py-3 text-sm font-semibold text-primary transition-colors hover:border-primary/50 hover:bg-primary/10"
+              className="flex w-full items-center justify-center gap-2 rounded-sm border-2 border-dashed border-primary/30 bg-primary/5 px-4 py-3 text-sm font-semibold text-primary transition-colors hover:border-primary/50 hover:bg-primary/10"
             >
               <Copy className="size-4" />
               Copy meals &amp; sleep from yesterday
@@ -981,7 +981,7 @@ export function DailyReportForm({
                       key={key}
                       type="button"
                       onClick={() => setValue(key, !active)}
-                      className={`flex items-center gap-2 rounded-xl border-2 px-4 py-2.5 min-h-[44px] text-sm font-medium transition-all ${
+                      className={`flex items-center gap-2 rounded-sm border-2 px-4 py-2.5 min-h-[44px] text-sm font-medium transition-all ${
                         active
                           ? "border-rose-500 bg-rose-500 text-white shadow-sm"
                           : "border-rose-200 bg-white text-rose-700 hover:border-rose-400"
@@ -1109,7 +1109,7 @@ export function DailyReportForm({
                       key={mood.value}
                       type="button"
                       onClick={() => setValue("mood", mood.value as "HAPPY" | "CALM" | "FUSSY" | "CRYING" | "SLEEPY")}
-                      className={`flex flex-col items-center gap-1 rounded-xl border-2 px-4 py-3 min-w-[72px] min-h-[60px] text-sm font-medium transition-all ${
+                      className={`flex flex-col items-center gap-1 rounded-sm border-2 px-4 py-3 min-w-[72px] min-h-[60px] text-sm font-medium transition-all ${
                         isSelected
                           ? "border-primary bg-primary/10 text-primary shadow-sm scale-105"
                           : "border-border bg-white hover:border-primary/50"
@@ -1158,7 +1158,7 @@ export function DailyReportForm({
                       key={key}
                       type="button"
                       onClick={() => setValue(key, !isActive)}
-                      className={`rounded-xl border-2 px-4 py-3 min-h-[44px] text-sm font-medium transition-all ${
+                      className={`rounded-sm border-2 px-4 py-3 min-h-[44px] text-sm font-medium transition-all ${
                         isActive
                           ? "border-violet-500 bg-violet-500 text-white shadow-sm"
                           : "border-violet-200 bg-white text-violet-700 hover:border-violet-400"
@@ -1197,7 +1197,7 @@ export function DailyReportForm({
               <div
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={handleFileDrop}
-                className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-white p-8 text-center transition-colors hover:border-slate-400 hover:bg-slate-50"
+                className="flex flex-col items-center justify-center gap-2 rounded-sm border-2 border-dashed border-slate-300 bg-white p-8 text-center transition-colors hover:border-slate-400 hover:bg-slate-50"
               >
                 <Upload className="size-8 text-slate-400" />
                 <p className="text-sm font-medium text-slate-600">

@@ -125,9 +125,9 @@ export function BranchesClient({ branches }: BranchesClientProps) {
       <div className="space-y-6 p-4 md:p-6">
         {/* Stats Row */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Card className="rounded-2xl py-4 transition-all hover:shadow-md hover:-translate-y-0.5">
+          <Card className="rounded-sm py-4 transition-all hover:shadow-md hover:-translate-y-0.5">
             <CardContent className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-[#A0784C]/10">
+              <div className="flex size-10 items-center justify-center rounded-sm bg-[#A0784C]/10">
                 <GitBranch className="size-5 text-[#A0784C]" />
               </div>
               <div>
@@ -138,9 +138,9 @@ export function BranchesClient({ branches }: BranchesClientProps) {
               </div>
             </CardContent>
           </Card>
-          <Card className="rounded-2xl py-4 transition-all hover:shadow-md hover:-translate-y-0.5">
+          <Card className="rounded-sm py-4 transition-all hover:shadow-md hover:-translate-y-0.5">
             <CardContent className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-[#C17C5A]/10">
+              <div className="flex size-10 items-center justify-center rounded-sm bg-[#C17C5A]/10">
                 <GraduationCap className="size-5 text-[#C17C5A]" />
               </div>
               <div>
@@ -151,9 +151,9 @@ export function BranchesClient({ branches }: BranchesClientProps) {
               </div>
             </CardContent>
           </Card>
-          <Card className="rounded-2xl py-4 transition-all hover:shadow-md hover:-translate-y-0.5">
+          <Card className="rounded-sm py-4 transition-all hover:shadow-md hover:-translate-y-0.5">
             <CardContent className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-[#059669]/10">
+              <div className="flex size-10 items-center justify-center rounded-sm bg-[#059669]/10">
                 <Users className="size-5 text-[#059669]" />
               </div>
               <div>
@@ -181,7 +181,7 @@ export function BranchesClient({ branches }: BranchesClientProps) {
           {branches.map((branch) => {
             const color = branch.themeColor || "#A0784C";
             return (
-              <Card key={branch.id} className="relative overflow-hidden rounded-2xl transition-all hover:shadow-md hover:-translate-y-0.5">
+              <Card key={branch.id} className="relative overflow-hidden rounded-sm transition-all hover:shadow-md hover:-translate-y-0.5">
                 {/* Color stripe */}
                 <div
                   className="h-1.5"
@@ -189,7 +189,7 @@ export function BranchesClient({ branches }: BranchesClientProps) {
                 />
                 <CardHeader className="flex-row items-center gap-3">
                   <div
-                    className="flex size-10 items-center justify-center rounded-xl"
+                    className="flex size-10 items-center justify-center rounded-sm"
                     style={{ backgroundColor: `${color}20` }}
                   >
                     <Building2 className="size-5" style={{ color }} />

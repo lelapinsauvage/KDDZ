@@ -23,7 +23,7 @@ export default function TodayLoading() {
         {[0, 1, 2, 3].map((i) => (
           <Card key={i} className="py-3 border-l-4 border-l-muted">
             <CardContent className="flex items-center gap-3">
-              <Skeleton className="size-10 rounded-xl" />
+              <Skeleton className="size-10 rounded-sm" />
               <div className="space-y-1.5">
                 <Skeleton className="h-7 w-10" />
                 <Skeleton className="h-3 w-16" />
@@ -92,7 +92,7 @@ export default function TodayLoading() {
             </CardHeader>
             <CardContent className="space-y-2">
               {[0, 1].map((i) => (
-                <div key={i} className="flex items-start gap-3 rounded-xl border p-3">
+                <div key={i} className="flex items-start gap-3 rounded-sm border p-3">
                   <Skeleton className="size-8 rounded-lg" />
                   <div className="flex-1 space-y-1">
                     <Skeleton className="h-4 w-32" />

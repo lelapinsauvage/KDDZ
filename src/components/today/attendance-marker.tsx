@@ -83,10 +83,10 @@ export function AttendanceMarker({
   }
 
   return (
-    <div className="rounded-2xl border border-border/50 bg-white shadow-sm">
+    <div className="rounded-sm border border-border/50 bg-white shadow-sm">
       {/* Header */}
       <div className="flex items-center gap-3 px-5 py-4">
-        <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10">
+        <div className="flex size-9 items-center justify-center rounded-sm bg-primary/10">
           <CheckSquare className="size-4 text-primary" />
         </div>
         <div className="flex-1">
@@ -135,7 +135,7 @@ export function AttendanceMarker({
                       key={child.id}
                       type="button"
                       onClick={() => toggleChild(child.id)}
-                      className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-left transition-colors ${
+                      className={`flex items-center gap-2.5 rounded-sm px-3 py-2 text-left transition-colors ${
                         isAbsent
                           ? "bg-rose-50 ring-1 ring-rose-200"
                           : "bg-muted/40 hover:bg-muted/60"
@@ -186,7 +186,7 @@ export function AttendanceMarker({
               {absentCount} absent
             </span>
           </div>
-          <Button onClick={handleConfirm} disabled={isPending} size="sm" className="rounded-xl">
+          <Button onClick={handleConfirm} disabled={isPending} size="sm" className="rounded-sm">
             {isPending ? "Marking..." : "Confirm Attendance"}
           </Button>
         </div>

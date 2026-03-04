@@ -129,9 +129,9 @@ export function BranchForm({ branch, hideHeader = false }: BranchFormProps) {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
           {/* ── Left sidebar ── */}
           <div className="space-y-4">
-            <div className="rounded-2xl border bg-card p-6 text-center shadow-sm">
+            <div className="rounded-sm border bg-card p-6 text-center shadow-sm">
               <div
-                className="mx-auto flex size-28 items-center justify-center rounded-2xl"
+                className="mx-auto flex size-28 items-center justify-center rounded-sm"
                 style={{ backgroundColor: `${selectedColor}20` }}
               >
                 <Building2
@@ -170,7 +170,7 @@ export function BranchForm({ branch, hideHeader = false }: BranchFormProps) {
             </div>
 
             {error && (
-              <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+              <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-600">
                 {error}
               </div>
             )}

@@ -35,7 +35,7 @@ export function InsightsPanel({ insights }: InsightsPanelProps) {
   if (insights.length === 0) return null;
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5 shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]">
+    <div className="rounded-sm border border-border bg-card p-5 shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]">
       <h3 className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
         <Lightbulb className="size-4 text-[#D97706]" />
         Insights

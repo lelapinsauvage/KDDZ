@@ -228,7 +228,7 @@ function ClassForm({
       <div className="space-y-2">
         <Label>Class Image</Label>
         <div
-          className={`relative flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-6 cursor-pointer transition-colors ${
+          className={`relative flex flex-col items-center justify-center gap-2 rounded-sm border-2 border-dashed p-6 cursor-pointer transition-colors ${
             dragOver
               ? "border-primary bg-primary/5"
               : "border-border hover:border-primary/40 hover:bg-muted/50"
@@ -253,7 +253,7 @@ function ClassForm({
                 alt="Class"
                 width={96}
                 height={96}
-                className="size-24 rounded-xl object-cover"
+                className="size-24 rounded-sm object-cover"
                 unoptimized
               />
               <button
@@ -269,7 +269,7 @@ function ClassForm({
             </div>
           ) : (
             <>
-              <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
+              <div className="flex size-12 items-center justify-center rounded-sm bg-muted">
                 <ImageIcon className="size-6 text-muted-foreground" />
               </div>
               <p className="text-sm text-muted-foreground">
@@ -682,7 +682,7 @@ export function ClassesClient({
 
         {/* Data View */}
         {filteredClasses.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-16">
+          <div className="flex flex-col items-center justify-center rounded-sm border border-dashed py-16">
             <GraduationCap className="size-10 text-muted-foreground/50" />
             <p className="mt-3 text-sm text-muted-foreground">
               No classes found
@@ -766,12 +766,12 @@ export function ClassesClient({
               return (
                 <Card
                   key={cls.id}
-                  className="relative overflow-hidden rounded-2xl transition-all hover:shadow-md hover:-translate-y-0.5"
+                  className="relative overflow-hidden rounded-sm transition-all hover:shadow-md hover:-translate-y-0.5"
                 >
                   <CardHeader className="flex-row items-center gap-3">
                     {/* Avatar */}
                     <div
-                      className={`flex size-11 items-center justify-center rounded-xl text-lg font-bold ${color.bg} ${color.text}`}
+                      className={`flex size-11 items-center justify-center rounded-sm text-lg font-bold ${color.bg} ${color.text}`}
                     >
                       {cls.name.charAt(0).toUpperCase()}
                     </div>

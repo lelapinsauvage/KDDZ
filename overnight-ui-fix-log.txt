@@ -299,3 +299,15 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 13 — Dashboards style — Wed Mar  4 08:21:01 CET 2026 ===
 =============================================
+Done. Summary:
+
+1. **Child dashboard** - All stat rows were already using `StatCard`. Converted the attendance pie chart from `Card`/`CardContent` to a flat `div` with `border border-border/40 bg-card`.
+2. **Class dashboard** - Confirmed it already uses `StatCard` throughout (all 3 tabs).
+3. **TypeScript** - Clean build, no errors.
+To https://github.com/lelapinsauvage/KDDZ.git
+   01465c6..5f47a8d  main -> main
+=== Phase 13 — Dashboards style COMPLETE — Wed Mar  4 08:21:58 CET 2026 ===
+
+=============================================
+=== Phase 14 — Global sweep — Wed Mar  4 08:21:58 CET 2026 ===
+=============================================

@@ -43,7 +43,7 @@ interface TodayClientProps {
 
 // Deterministic avatar color based on child name
 const avatarColors = [
-  { bg: "bg-[#0B9178]/10", text: "text-[#0B9178]" },
+  { bg: "bg-primary/10", text: "text-[#0B9178]" },
   { bg: "bg-purple-100", text: "text-purple-700" },
   { bg: "bg-rose-100", text: "text-rose-700" },
   { bg: "bg-amber-100", text: "text-amber-700" },
@@ -110,7 +110,7 @@ export function TodayClient({ data }: TodayClientProps) {
       <div className="space-y-6 p-4 md:p-6">
         {/* Quick Actions */}
         <div className="flex flex-wrap gap-2">
-          <Button asChild size="sm" className="bg-[#0B9178] hover:bg-[#0B7464] text-white shadow-sm">
+          <Button asChild size="sm" className="bg-primary hover:bg-primary text-white shadow-sm">
             <Link href="/daily-reports/batch">
               <ClipboardList className="mr-1.5 size-3.5" />
               Start Daily Reports
@@ -156,7 +156,7 @@ export function TodayClient({ data }: TodayClientProps) {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Card className="py-3 border-l-4 border-l-[#0B9178]">
             <CardContent className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-[#0B9178]/5">
+              <div className="flex size-10 items-center justify-center rounded-sm bg-primary/5">
                 <Users className="size-5 text-[#0B9178]" />
               </div>
               <div>
@@ -168,7 +168,7 @@ export function TodayClient({ data }: TodayClientProps) {
 
           <Card className="py-3 border-l-4 border-l-purple-500">
             <CardContent className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-purple-50">
+              <div className="flex size-10 items-center justify-center rounded-sm bg-purple-50">
                 <CheckCircle2 className="size-5 text-purple-600" />
               </div>
               <div>
@@ -180,7 +180,7 @@ export function TodayClient({ data }: TodayClientProps) {
 
           <Card className="py-3 border-l-4 border-l-amber-500">
             <CardContent className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-amber-50">
+              <div className="flex size-10 items-center justify-center rounded-sm bg-amber-50">
                 <Clock className="size-5 text-amber-600" />
               </div>
               <div>
@@ -192,7 +192,7 @@ export function TodayClient({ data }: TodayClientProps) {
 
           <Card className="py-3 border-l-4 border-l-rose-500">
             <CardContent className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-rose-50">
+              <div className="flex size-10 items-center justify-center rounded-sm bg-rose-50">
                 <UserX className="size-5 text-rose-600" />
               </div>
               <div>
@@ -356,7 +356,7 @@ export function TodayClient({ data }: TodayClientProps) {
                       <Link
                         key={alert.id}
                         href={alert.href}
-                        className={`flex items-start gap-3 rounded-xl border p-3 transition-all hover:shadow-sm hover:-translate-y-0.5 ${alertConfig.border}`}
+                        className={`flex items-start gap-3 rounded-sm border p-3 transition-all hover:shadow-sm hover:-translate-y-0.5 ${alertConfig.border}`}
                       >
                         <div className={`mt-0.5 flex size-8 items-center justify-center rounded-lg ${alertConfig.bg} ${alertConfig.text}`}>
                           {alertConfig.icon}
@@ -428,7 +428,7 @@ function ChildRow({ child }: { child: TodayChild }) {
       <div className="flex items-center gap-2">
         {statusBadge}
         {!child.isAbsent && !child.reportId && (
-          <Button asChild size="sm" variant="outline" className="h-7 px-2.5 text-xs opacity-0 group-hover:opacity-100 transition-opacity border-[#0B9178]/20 text-[#0B9178] hover:bg-[#0B9178]/5">
+          <Button asChild size="sm" variant="outline" className="h-7 px-2.5 text-xs opacity-0 group-hover:opacity-100 transition-opacity border-[#0B9178]/20 text-[#0B9178] hover:bg-primary/5">
             <Link href={`/daily-reports/new?childId=${child.id}`}>
               <FileText className="mr-1 size-3" />
               Write

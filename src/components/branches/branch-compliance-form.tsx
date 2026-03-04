@@ -151,7 +151,7 @@ export function BranchComplianceForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="p-4 md:p-6">
       {/* Ministry Header */}
-      <div className="mb-6 rounded-2xl border bg-card p-5 text-center shadow-sm" dir="rtl">
+      <div className="mb-6 rounded-sm border bg-card p-5 text-center shadow-sm" dir="rtl">
         <p className="text-lg font-bold text-foreground">الجمهورية اللبنانية</p>
         <p className="text-sm font-semibold text-muted-foreground">وزارة الصحة العامة</p>
         <p className="text-sm text-muted-foreground">مديرية الوقاية الطبية</p>
@@ -162,7 +162,7 @@ export function BranchComplianceForm({
         {/* Vertical Tabs Sidebar */}
         <div className="lg:sticky lg:top-4 lg:self-start space-y-4">
           {/* Progress ring */}
-          <div className="rounded-2xl border bg-card p-4 shadow-sm text-center">
+          <div className="rounded-sm border bg-card p-4 shadow-sm text-center">
             <p className="text-sm font-semibold text-foreground">{branchName}</p>
             <div className="mx-auto mt-3 relative flex size-20 items-center justify-center">
               <svg className="size-20 -rotate-90" viewBox="0 0 36 36">
@@ -189,7 +189,7 @@ export function BranchComplianceForm({
           </div>
 
           {/* Section nav */}
-          <div className="rounded-2xl border bg-card p-3 shadow-sm">
+          <div className="rounded-sm border bg-card p-3 shadow-sm">
             <ul className="space-y-1">
               {complianceSections.map((section, idx) => {
                 const completion = sectionCompletion[section.id];

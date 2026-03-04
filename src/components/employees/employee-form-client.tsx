@@ -247,7 +247,7 @@ export function EmployeeFormClient({
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
           {/* ── Left sidebar: profile photo + save button ── */}
           <div className="space-y-4">
-            <div className="rounded-2xl border border-border bg-white p-6 text-center shadow-sm">
+            <div className="rounded-sm border border-border bg-white p-6 text-center shadow-sm">
               <div className="mx-auto flex size-40 items-center justify-center rounded-full bg-muted/50">
                 <User className="size-20 text-[#c5ccd6]" />
               </div>
@@ -259,7 +259,7 @@ export function EmployeeFormClient({
             </div>
 
             {error && (
-              <div className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+              <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-600">
                 {error}
               </div>
             )}
@@ -527,7 +527,7 @@ export function EmployeeFormClient({
                 )}
                 <div className="space-y-3">
                   {langFields.map((field, index) => (
-                    <div key={field.id} className="flex flex-wrap items-end gap-3 rounded-xl border bg-muted/30 p-3">
+                    <div key={field.id} className="flex flex-wrap items-end gap-3 rounded-sm border bg-muted/30 p-3">
                       <div className="w-32">
                         <Label>Language</Label>
                         <Controller
@@ -926,7 +926,7 @@ function ExperienceRow({
   onRemove: () => void;
 }) {
   return (
-    <div className="rounded-xl border bg-muted/30 p-3">
+    <div className="rounded-sm border bg-muted/30 p-3">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <div>
           <Label>Company / Organization</Label>
@@ -976,7 +976,7 @@ function DocumentRow({
   onRemove: () => void;
 }) {
   return (
-    <div className="rounded-xl border bg-muted/30 p-3">
+    <div className="rounded-sm border bg-muted/30 p-3">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <div>
           <Label>Title</Label>

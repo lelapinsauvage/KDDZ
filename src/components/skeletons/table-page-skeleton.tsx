@@ -34,7 +34,7 @@ export function TablePageSkeleton({
         </div>
 
         {/* Table — matches: rounded-md border bg-card */}
-        <div className="overflow-hidden rounded-2xl border border-border/40 bg-card">
+        <div className="overflow-hidden rounded-sm border border-border/40 bg-card">
           {/* Header row */}
           <div className="flex items-center gap-4 bg-muted/50 px-4 py-2.5">
             <Skeleton className="h-3 w-[5%] rounded-sm" />

@@ -11,7 +11,7 @@ interface Props {
 
 export function InsuranceSection({ register }: Props) {
   return (
-    <div className="rounded-2xl border bg-card p-6 shadow-sm" dir="rtl">
+    <div className="rounded-sm border bg-card p-6 shadow-sm" dir="rtl">
       <h3 className="mb-1 text-base font-semibold text-foreground">
         الضمان
       </h3>

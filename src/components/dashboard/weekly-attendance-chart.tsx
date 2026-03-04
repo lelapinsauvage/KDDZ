@@ -20,7 +20,7 @@ export function WeeklyAttendanceChart({ data }: WeeklyAttendanceChartProps) {
   const hasData = data.some((d) => d.present > 0);
 
   return (
-    <Card className="rounded-xl border border-border bg-card shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]">
+    <Card className="rounded-sm border border-border bg-card shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)]">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base font-heading">
           <TrendingUp className="size-4 text-[#0B9178]" />
@@ -65,7 +65,7 @@ export function WeeklyAttendanceChart({ data }: WeeklyAttendanceChartProps) {
           </ResponsiveContainer>
         ) : (
           <div className="flex flex-col items-center justify-center gap-2 py-6">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-muted">
+            <div className="flex size-10 items-center justify-center rounded-sm bg-muted">
               <BarChart3 className="size-5 text-muted-foreground/50" />
             </div>
             <p className="text-sm text-muted-foreground">

@@ -43,7 +43,7 @@ const typeConfig: Record<
   },
   vaccination: {
     icon: Syringe,
-    iconBg: "bg-[#0B9178]/10",
+    iconBg: "bg-primary/10",
     iconColor: "text-[#0B9178]",
     label: "Vaccinations",
   },
@@ -160,7 +160,7 @@ export function ChildTimeline({ events }: ChildTimelineProps) {
                     <Link
                       key={`${event.type}-${event.id}`}
                       href={event.href}
-                      className="flex items-center gap-3 rounded-xl bg-muted/40 px-3 py-2.5 transition-colors hover:bg-muted/60"
+                      className="flex items-center gap-3 rounded-sm bg-muted/40 px-3 py-2.5 transition-colors hover:bg-muted/60"
                     >
                       <div
                         className={`flex size-7 shrink-0 items-center justify-center rounded-lg ${config.iconBg}`}

@@ -23,7 +23,7 @@ const colorStyles: Record<
   rose:    { bg: "bg-[#d64635]", footer: "bg-[#b83b2d]" },
   amber:   { bg: "bg-[#c29d0b]", footer: "bg-[#a68709]" },
   purple:  { bg: "bg-[#8e44ad]", footer: "bg-[#783a93]" },
-  teal:    { bg: "bg-[#0B9178]", footer: "bg-[#097a65]" },
+  teal:    { bg: "bg-primary", footer: "bg-[#097a65]" },
   orange:  { bg: "bg-[#e7505a]", footer: "bg-[#c9444d]" },
 };
 

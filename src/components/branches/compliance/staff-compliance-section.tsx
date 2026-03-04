@@ -24,7 +24,7 @@ const EMPLOYEE_TYPE_LABELS: Record<string, string> = {
 
 export function StaffComplianceSection({ staff }: Props) {
   return (
-    <div className="rounded-2xl border bg-card p-6 shadow-sm" dir="rtl">
+    <div className="rounded-sm border bg-card p-6 shadow-sm" dir="rtl">
       <h3 className="mb-1 text-base font-semibold text-foreground">
         مستندات الموظفين
       </h3>
@@ -33,7 +33,7 @@ export function StaffComplianceSection({ staff }: Props) {
       </p>
 
       {staff.length === 0 ? (
-        <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+        <div className="rounded-sm border border-dashed p-8 text-center text-sm text-muted-foreground">
           لا يوجد موظفين مسجلين في هذا الفرع
         </div>
       ) : (

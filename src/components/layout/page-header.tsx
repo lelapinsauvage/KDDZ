@@ -125,7 +125,7 @@ export function PageHeader({ title, description, breadcrumbs, actions, showMobil
   const fullBreadcrumbs = buildFullBreadcrumbs(pathname, breadcrumbs)
 
   return (
-    <div className="border-b border-border/60 bg-card/80 backdrop-blur-sm px-4 py-4 sm:px-6 sm:py-5">
+    <div className="border-b border-border/60 bg-card/80 px-4 py-4 sm:px-6 sm:py-5">
       {/* Breadcrumbs — always show when there are items */}
       {fullBreadcrumbs.length > 0 && (
         <nav aria-label="Breadcrumb" className="mb-2 hidden items-center gap-1 text-[13px] text-muted-foreground sm:flex">

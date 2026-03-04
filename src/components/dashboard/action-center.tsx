@@ -120,10 +120,10 @@ export function ActionCenter({ metrics }: ActionCenterProps) {
             <Link
               key={item.key}
               href={item.href}
-              className="group flex items-center gap-3 sm:gap-3.5 rounded-xl border border-border bg-card px-3 py-3.5 sm:px-4 sm:py-4 min-h-[44px] shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:shadow-[0_4px_6px_rgba(15,23,42,0.06),0_2px_4px_rgba(15,23,42,0.04)] hover:-translate-y-0.5"
+              className="group flex items-center gap-3 sm:gap-3.5 rounded-sm border border-border bg-card px-3 py-3.5 sm:px-4 sm:py-4 min-h-[44px] shadow-[0_1px_3px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:shadow-[0_4px_6px_rgba(15,23,42,0.06),0_2px_4px_rgba(15,23,42,0.04)] hover:-translate-y-0.5"
             >
               <div
-                className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${item.iconBg}`}
+                className={`flex size-10 shrink-0 items-center justify-center rounded-sm ${item.iconBg}`}
               >
                 <Icon className={`size-5 ${item.iconColor}`} />
               </div>

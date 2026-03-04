@@ -69,7 +69,7 @@ export function AbsenceReportDetailClient({ report }: { report: ReportData }) {
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {/* Details */}
-          <Card className="rounded-2xl">
+          <Card className="rounded-sm">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
                 <UserX className="size-4 text-primary" />
@@ -115,7 +115,7 @@ export function AbsenceReportDetailClient({ report }: { report: ReportData }) {
           </Card>
 
           {/* Reason */}
-          <Card className="rounded-2xl">
+          <Card className="rounded-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Reason</CardTitle>
             </CardHeader>
@@ -129,7 +129,7 @@ export function AbsenceReportDetailClient({ report }: { report: ReportData }) {
 
         {/* Hospital Information */}
         {report.hospitalized && (
-          <Card className="rounded-2xl">
+          <Card className="rounded-sm">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
                 <Building2 className="size-4 text-primary" />
@@ -157,7 +157,7 @@ export function AbsenceReportDetailClient({ report }: { report: ReportData }) {
 
         {/* Attachments */}
         {report.attachments.length > 0 && (
-          <Card className="rounded-2xl">
+          <Card className="rounded-sm">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
                 <Paperclip className="size-4 text-primary" />

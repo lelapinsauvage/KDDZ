@@ -90,7 +90,7 @@ export function StatusBoard({ compliance }: StatusBoardProps) {
             <Link
               key={card.key}
               href={card.href}
-              className={`relative flex flex-col items-center gap-2 sm:gap-2.5 rounded-xl border px-3 py-4 sm:px-4 sm:py-5 bg-card transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:shadow-[0_4px_6px_rgba(15,23,42,0.06),0_2px_4px_rgba(15,23,42,0.04)] hover:-translate-y-0.5 ${
+              className={`relative flex flex-col items-center gap-2 sm:gap-2.5 rounded-sm border px-3 py-4 sm:px-4 sm:py-5 bg-card transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:shadow-[0_4px_6px_rgba(15,23,42,0.06),0_2px_4px_rgba(15,23,42,0.04)] hover:-translate-y-0.5 ${
                 isAlarm
                   ? "border-[#DC2626]/30 bg-[#FEF2F2]"
                   : `border-border ${style.ring}`
@@ -104,7 +104,7 @@ export function StatusBoard({ compliance }: StatusBoardProps) {
               )}
 
               <div
-                className={`flex size-10 items-center justify-center rounded-xl ${style.iconBg}`}
+                className={`flex size-10 items-center justify-center rounded-sm ${style.iconBg}`}
               >
                 <Icon className={`size-5 ${style.iconColor}`} />
               </div>

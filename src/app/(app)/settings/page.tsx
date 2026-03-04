@@ -23,7 +23,7 @@ const sections = [
     description: "Name, contact, working hours, defaults",
     href: "/settings/nursery",
     icon: Building2,
-    iconBg: "bg-[#0B9178]/10",
+    iconBg: "bg-primary/10",
     iconColor: "text-[#0B9178]",
   },
   {
@@ -135,7 +135,7 @@ export default async function SettingsPage() {
               <Link key={section.href} href={section.href}>
                 <Card className="group cursor-pointer py-4 transition-all hover:shadow-md hover:-translate-y-0.5">
                   <CardContent className="flex items-center gap-4">
-                    <div className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${section.iconBg}`}>
+                    <div className={`flex size-10 shrink-0 items-center justify-center rounded-sm ${section.iconBg}`}>
                       <Icon className={`size-5 ${section.iconColor}`} />
                     </div>
                     <div>

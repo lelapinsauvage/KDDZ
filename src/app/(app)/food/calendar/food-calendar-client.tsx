@@ -501,7 +501,7 @@ export function FoodCalendarClient({
             </p>
           </div>
         ) : (
-          <Card className="overflow-hidden rounded-2xl">
+          <Card className="overflow-hidden rounded-sm">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
@@ -624,7 +624,7 @@ export function FoodCalendarClient({
 
       {/* Day Assignment Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-[480px] rounded-2xl">
+        <DialogContent className="sm:max-w-[480px] rounded-sm">
           <DialogHeader>
             <DialogTitle>
               Assign Meals &mdash;{" "}

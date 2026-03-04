@@ -225,7 +225,7 @@ export function OrgDetailClient({ organization: org }: Props) {
               <Card key={kpi.label} className="py-4">
                 <CardContent className="flex items-center gap-3">
                   <div
-                    className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${kpi.color}`}
+                    className={`flex size-10 shrink-0 items-center justify-center rounded-sm ${kpi.color}`}
                   >
                     <Icon className="size-5" />
                   </div>

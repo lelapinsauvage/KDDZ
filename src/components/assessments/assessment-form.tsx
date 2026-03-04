@@ -276,7 +276,7 @@ export function AssessmentForm({
       </Card>
 
       {/* Age Bracket Tabs */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm pb-2 -mx-4 px-4 md:-mx-6 md:px-6 pt-2">
+      <div className="sticky top-0 z-10 bg-background/95 pb-2 -mx-4 px-4 md:-mx-6 md:px-6 pt-2">
         <ScrollArea className="w-full">
           <div className="flex gap-2 pb-2">
             {ALL_BRACKETS.map((bracket) => {
@@ -423,7 +423,7 @@ function CriteriaSection({
           <div
             key={criterion.key}
             className={`
-              flex items-center justify-between gap-3 rounded-xl px-4 py-3
+              flex items-center justify-between gap-3 rounded-sm px-4 py-3
               ${idx % 2 === 0 ? "bg-muted/40" : ""}
             `}
           >
@@ -495,7 +495,7 @@ function RedFlagSection({
           <div
             key={criterion.key}
             className={`
-              flex items-start gap-3 rounded-xl px-4 py-3
+              flex items-start gap-3 rounded-sm px-4 py-3
               ${checked ? "bg-amber-50 dark:bg-amber-950/20" : idx % 2 === 0 ? "bg-muted/40" : ""}
             `}
           >

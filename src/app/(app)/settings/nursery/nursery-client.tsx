@@ -619,7 +619,7 @@ export default function NurseryClient({ branchId, initialSettings, provinces }: 
 
         {/* Save Button — sticky bar */}
         <div className="sticky bottom-4 z-10">
-          <div className="flex items-center justify-end rounded-xl border bg-card px-5 py-3 shadow-lg">
+          <div className="flex items-center justify-end rounded-sm border bg-card px-5 py-3 shadow-sm">
             <Button
               type="submit"
               size="lg"

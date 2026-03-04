@@ -29,11 +29,11 @@ interface NotificationCenterProps {
 const typeConfig: Record<string, { icon: LucideIcon; color: string; bg: string; label: string; href: string }> = {
   BIRTHDAY:    { icon: Cake,          color: "text-[#EC4899]",  bg: "bg-[#EC4899]/10",  label: "Birthdays",    href: "/alarms/birthdays" },
   VACCINATION: { icon: Syringe,       color: "text-[#059669]",  bg: "bg-[#059669]/10",  label: "Vaccinations", href: "/alarms/vaccinations" },
-  MEDICAL:     { icon: Heart,         color: "text-[#0B9178]",  bg: "bg-[#0B9178]/10",  label: "Medical",      href: "/alarms/medical" },
+  MEDICAL:     { icon: Heart,         color: "text-[#0B9178]",  bg: "bg-primary/10",  label: "Medical",      href: "/alarms/medical" },
   MEDICINE:    { icon: Pill,          color: "text-[#4F46E5]",  bg: "bg-[#4F46E5]/10",  label: "Medicine",     href: "/alarms/medicine" },
   PAYMENT:     { icon: DollarSign,    color: "text-[#D97706]",  bg: "bg-[#D97706]/10",  label: "Payments",     href: "/alarms/payments" },
   EVENT:       { icon: Calendar,      color: "text-[#059669]",  bg: "bg-[#059669]/10",  label: "Events",       href: "/alarms/events" },
-  INSURANCE:   { icon: Shield,        color: "text-[#0B9178]",  bg: "bg-[#0B9178]/10",  label: "Insurance",    href: "/alarms/insurance" },
+  INSURANCE:   { icon: Shield,        color: "text-[#0B9178]",  bg: "bg-primary/10",  label: "Insurance",    href: "/alarms/insurance" },
   CONTRACT:    { icon: FileText,      color: "text-[#4F46E5]",  bg: "bg-[#4F46E5]/10",  label: "Contracts",    href: "/alarms/contracts" },
   REQUEST:     { icon: MessageSquare, color: "text-[#059669]",  bg: "bg-[#059669]/10",  label: "Requests",     href: "/alarms/requests" },
   ASSESSMENT:  { icon: FileText,      color: "text-[#4F46E5]",  bg: "bg-[#4F46E5]/10",  label: "Assessments",  href: "/alarms/assessments" },
@@ -74,7 +74,7 @@ export function NotificationCenter({ data }: NotificationCenterProps) {
       <div className="space-y-5 p-4 md:p-6">
         {/* Summary */}
         <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10">
+          <div className="flex size-10 items-center justify-center rounded-sm bg-primary/10">
             <Bell className="size-5 text-primary" />
           </div>
           <div>
@@ -86,8 +86,8 @@ export function NotificationCenter({ data }: NotificationCenterProps) {
         </div>
 
         {data.totalActive === 0 && (
-          <div className="flex items-center gap-3 rounded-2xl border border-[#059669]/20 bg-[#059669]/5 px-5 py-4">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-[#059669]/10">
+          <div className="flex items-center gap-3 rounded-sm border border-[#059669]/20 bg-[#059669]/5 px-5 py-4">
+            <div className="flex size-9 items-center justify-center rounded-sm bg-[#059669]/10">
               <Sparkles className="size-4 text-[#059669]" />
             </div>
             <div>
@@ -121,13 +121,13 @@ function TypeSection({
   const hasOverdue = alarms.some((a) => a.isOverdue);
 
   return (
-    <div className={`rounded-2xl border shadow-sm ${hasOverdue ? "border-[#0B9178]/30 bg-card" : "border-border/40 bg-card"}`}>
+    <div className={`rounded-sm border shadow-sm ${hasOverdue ? "border-[#0B9178]/30 bg-card" : "border-border/40 bg-card"}`}>
       <button
         type="button"
         className="flex w-full items-center gap-3 px-5 py-4"
         onClick={() => setExpanded(!expanded)}
       >
-        <div className={`flex size-9 items-center justify-center rounded-xl ${config.bg}`}>
+        <div className={`flex size-9 items-center justify-center rounded-sm ${config.bg}`}>
           <Icon className={`size-4 ${config.color}`} />
         </div>
         <span className="text-sm font-semibold text-foreground">
@@ -137,7 +137,7 @@ function TypeSection({
           {alarms.length}
         </Badge>
         {hasOverdue && (
-          <Badge className="ml-1 rounded-md border-0 bg-[#0B9178]/10 px-1.5 py-0 text-[11px] font-bold text-[#0B9178]">
+          <Badge className="ml-1 rounded-md border-0 bg-primary/10 px-1.5 py-0 text-[11px] font-bold text-[#0B9178]">
             overdue
           </Badge>
         )}

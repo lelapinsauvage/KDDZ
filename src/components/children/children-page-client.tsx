@@ -619,7 +619,7 @@ export function ChildrenPageClient({
                             key={header.id}
                             className={`bg-muted/60 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground px-3 sm:px-4 py-3 first:rounded-tl-lg last:rounded-tr-lg ${
                               idx === 0
-                                ? "sticky left-0 z-20 bg-muted/95 backdrop-blur-sm after:absolute after:right-0 after:top-0 after:bottom-0 after:w-px after:bg-border/50 md:after:hidden"
+                                ? "sticky left-0 z-20 bg-muted/95 after:absolute after:right-0 after:top-0 after:bottom-0 after:w-px after:bg-border/50 md:after:hidden"
                                 : ""
                             }`}
                           >

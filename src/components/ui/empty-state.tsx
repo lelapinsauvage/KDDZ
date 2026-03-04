@@ -26,7 +26,7 @@ export function EmptyState({
   secondaryAction,
 }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-primary/20 bg-primary/[0.02] p-12 text-center">
+    <div className="flex flex-col items-center justify-center rounded-sm border-2 border-dashed border-primary/20 bg-primary/[0.02] p-12 text-center">
       {/* Decorative illustration ring */}
       <div className="relative mb-5">
         <div className="absolute -inset-3 rounded-full bg-primary/5" />

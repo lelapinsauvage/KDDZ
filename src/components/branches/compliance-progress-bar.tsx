@@ -25,7 +25,7 @@ export function ComplianceProgressBar({
   return (
     <div className="space-y-4">
       {/* Branch identity */}
-      <div className="rounded-2xl border bg-card p-4 shadow-sm">
+      <div className="rounded-sm border bg-card p-4 shadow-sm">
         <p className="text-sm font-semibold text-foreground">{branchName}</p>
         <p className="text-xs text-muted-foreground">Government Compliance</p>
 
@@ -55,7 +55,7 @@ export function ComplianceProgressBar({
       </div>
 
       {/* Section checklist */}
-      <div className="rounded-2xl border bg-card p-3 shadow-sm">
+      <div className="rounded-sm border bg-card p-3 shadow-sm">
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Sections
         </p>

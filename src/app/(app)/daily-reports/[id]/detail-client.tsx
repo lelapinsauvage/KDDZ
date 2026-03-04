@@ -166,7 +166,7 @@ export function DailyReportDetailClient({ report }: { report: ReportData }) {
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {/* Meals */}
-          <Card className="rounded-2xl">
+          <Card className="rounded-sm">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
                 <UtensilsCrossed className="size-4 text-primary" />
@@ -198,7 +198,7 @@ export function DailyReportDetailClient({ report }: { report: ReportData }) {
           </Card>
 
           {/* Sleep */}
-          <Card className="rounded-2xl">
+          <Card className="rounded-sm">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
                 <Moon className="size-4 text-primary" />
@@ -225,7 +225,7 @@ export function DailyReportDetailClient({ report }: { report: ReportData }) {
           </Card>
 
           {/* Health */}
-          <Card className="rounded-2xl">
+          <Card className="rounded-sm">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
                 <Heart className="size-4 text-primary" />
@@ -269,7 +269,7 @@ export function DailyReportDetailClient({ report }: { report: ReportData }) {
           </Card>
 
           {/* Mood */}
-          <Card className="rounded-2xl">
+          <Card className="rounded-sm">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
                 <Smile className="size-4 text-primary" />
@@ -286,7 +286,7 @@ export function DailyReportDetailClient({ report }: { report: ReportData }) {
 
         {/* Milk feedings */}
         {report.milks.length > 0 && (
-          <Card className="rounded-2xl">
+          <Card className="rounded-sm">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
                 <Baby className="size-4 text-primary" />
@@ -313,7 +313,7 @@ export function DailyReportDetailClient({ report }: { report: ReportData }) {
           report.stoolPotty > 0 ||
           report.urineDiaper > 0 ||
           report.stoolDiaper > 0) && (
-          <Card className="rounded-2xl">
+          <Card className="rounded-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Potty / Diaper</CardTitle>
             </CardHeader>
@@ -330,7 +330,7 @@ export function DailyReportDetailClient({ report }: { report: ReportData }) {
 
         {/* Activities */}
         {report.activities && (
-          <Card className="rounded-2xl">
+          <Card className="rounded-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Activities</CardTitle>
             </CardHeader>
@@ -344,7 +344,7 @@ export function DailyReportDetailClient({ report }: { report: ReportData }) {
 
         {/* Remarks */}
         {report.remarks && (
-          <Card className="rounded-2xl">
+          <Card className="rounded-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Teacher Remarks</CardTitle>
             </CardHeader>

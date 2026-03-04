@@ -21,7 +21,7 @@ export function PropertyLeaseSection({ register, watch, setValue }: Props) {
   const ownershipType = watch("ownershipType");
 
   return (
-    <div className="rounded-2xl border bg-card p-6 shadow-sm" dir="rtl">
+    <div className="rounded-sm border bg-card p-6 shadow-sm" dir="rtl">
       <h3 className="mb-1 text-base font-semibold text-foreground">
         الملكية أو سند الإيجار المصدق
       </h3>
@@ -38,7 +38,7 @@ export function PropertyLeaseSection({ register, watch, setValue }: Props) {
             type="button"
             onClick={() => setValue("ownershipType", opt.value)}
             className={cn(
-              "flex w-full items-center gap-3 rounded-xl border p-4 text-right text-sm font-medium transition-colors",
+              "flex w-full items-center gap-3 rounded-sm border p-4 text-right text-sm font-medium transition-colors",
               ownershipType === opt.value
                 ? "border-primary/50 bg-primary/5 text-foreground"
                 : "border-border hover:bg-muted/50 text-muted-foreground",

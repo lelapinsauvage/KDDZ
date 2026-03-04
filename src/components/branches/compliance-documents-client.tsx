@@ -132,10 +132,10 @@ export function ComplianceDocumentsClient({
           const status = doc ? getStatusConfig(doc.status, doc.expiryDate) : null;
 
           return (
-            <Card key={reqDoc.type} className="overflow-hidden rounded-2xl transition-all hover:shadow-md hover:-translate-y-0.5">
+            <Card key={reqDoc.type} className="overflow-hidden rounded-sm transition-all hover:shadow-md hover:-translate-y-0.5">
               <CardContent className="flex items-start gap-4 p-4">
                 <div
-                  className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${doc ? "" : "bg-muted"}`}
+                  className={`flex size-10 shrink-0 items-center justify-center rounded-sm ${doc ? "" : "bg-muted"}`}
                   style={doc ? { backgroundColor: `${themeColor}20` } : undefined}
                 >
                   <FileText

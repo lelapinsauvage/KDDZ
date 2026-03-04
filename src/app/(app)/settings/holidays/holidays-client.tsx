@@ -689,7 +689,7 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-[540px] rounded-2xl">
+        <DialogContent className="sm:max-w-[540px] rounded-sm">
           <DialogHeader>
             <DialogTitle>{dialogMode === "add" ? "Add Holiday" : "Edit Holiday"}</DialogTitle>
           </DialogHeader>

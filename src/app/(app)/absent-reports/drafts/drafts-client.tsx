@@ -278,7 +278,7 @@ export function DraftsClient({ drafts, branches }: Props) {
         </Card>
 
         {filteredDrafts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/30 p-16 text-center">
+          <div className="flex flex-col items-center justify-center rounded-sm border border-dashed border-border/60 bg-muted/30 p-16 text-center">
             <div className="flex size-14 items-center justify-center rounded-full bg-amber-100 mb-4">
               <Clock className="size-7 text-amber-600" />
             </div>

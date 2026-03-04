@@ -17,7 +17,7 @@ export function ProfileSkeleton() {
         </div>
 
         {/* Account information card */}
-        <div className="overflow-hidden rounded-2xl border border-border/40 bg-card">
+        <div className="overflow-hidden rounded-sm border border-border/40 bg-card">
           <div className="border-b border-border px-6 py-4">
             <Skeleton className="h-4 w-40" />
           </div>

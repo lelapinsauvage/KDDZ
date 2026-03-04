@@ -66,11 +66,11 @@ function timeAgo(dateStr: string) {
 const alarmTypeConfig: Record<string, { icon: LucideIcon; color: string; bg: string }> = {
   BIRTHDAY:    { icon: Cake,          color: "text-[#EC4899]",  bg: "bg-[#EC4899]/10" },
   VACCINATION: { icon: Syringe,       color: "text-[#059669]",  bg: "bg-[#059669]/10" },
-  MEDICAL:     { icon: Heart,         color: "text-[#0B9178]",  bg: "bg-[#0B9178]/10" },
+  MEDICAL:     { icon: Heart,         color: "text-[#0B9178]",  bg: "bg-primary/10" },
   MEDICINE:    { icon: Pill,          color: "text-[#4F46E5]",  bg: "bg-[#4F46E5]/10" },
   PAYMENT:     { icon: DollarSign,    color: "text-[#D97706]",  bg: "bg-[#D97706]/10" },
   EVENT:       { icon: Calendar,      color: "text-[#059669]",  bg: "bg-[#059669]/10" },
-  INSURANCE:   { icon: Shield,        color: "text-[#0B9178]",  bg: "bg-[#0B9178]/10" },
+  INSURANCE:   { icon: Shield,        color: "text-[#0B9178]",  bg: "bg-primary/10" },
   CONTRACT:    { icon: FileText,      color: "text-[#4F46E5]",  bg: "bg-[#4F46E5]/10" },
   REQUEST:     { icon: MessageSquare, color: "text-[#059669]",  bg: "bg-[#059669]/10" },
   ASSESSMENT:  { icon: FileText,      color: "text-[#4F46E5]",  bg: "bg-[#4F46E5]/10" },
@@ -162,7 +162,7 @@ export function InboxTray({
             )}
           </button>
         </PopoverTrigger>
-        <PopoverContent align="end" className="w-[360px] p-0 rounded-2xl border-border/40 shadow-lg" sideOffset={8}>
+        <PopoverContent align="end" className="w-[360px] p-0 rounded-sm border-border/40 shadow-sm" sideOffset={8}>
           <div className="flex items-center justify-between border-b px-4 py-3">
             <h3 className="text-sm font-semibold text-foreground">Alerts</h3>
             <span className="text-xs text-muted-foreground">
