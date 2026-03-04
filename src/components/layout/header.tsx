@@ -57,12 +57,12 @@ export function Header() {
     <header className="header-bar fixed top-0 left-0 right-0 z-50 flex h-14 items-center">
       {/* Logo area — anchored left */}
       <div className="flex h-14 w-auto shrink-0 items-center gap-2 pl-2 pr-3 md:w-[260px] md:pl-3 md:pr-4">
-        <SidebarTrigger className="size-8 text-muted-foreground hover:text-foreground hover:bg-muted/60 rounded-lg transition-colors" />
+        <SidebarTrigger className="size-8 text-[#b4bcc8] hover:text-white hover:bg-white/10 rounded-lg transition-colors" />
         <Link href="/dashboard" className="flex items-center gap-2 group">
           <div className="flex size-7 items-center justify-center rounded-lg bg-primary text-white text-xs font-bold shadow-sm group-hover:shadow-md transition-shadow">
             K
           </div>
-          <span className="hidden font-heading text-[15px] font-bold text-foreground tracking-tight sm:block">
+          <span className="hidden font-heading text-[15px] font-bold text-white tracking-tight sm:block">
             KiddzOnline
           </span>
         </Link>
@@ -75,11 +75,11 @@ export function Header() {
         {/* Search pill — tablet & desktop */}
         <button
           onClick={() => setSearchOpen(true)}
-          className="hidden items-center gap-2 rounded-full border border-border/40 bg-muted/40 px-3.5 py-1.5 text-[13px] text-muted-foreground transition-all hover:bg-muted/70 hover:border-border/60 focus:outline-none focus:ring-2 focus:ring-ring/20 md:flex"
+          className="hidden items-center gap-2 rounded-full border border-white/10 bg-[#455263] px-3.5 py-1.5 text-[13px] text-[#b4bcc8] transition-all hover:bg-[#4f5f73] hover:border-white/20 focus:outline-none focus:ring-2 focus:ring-ring/20 md:flex"
         >
-          <Search className="size-3.5 text-muted-foreground/60" />
-          <span className="text-muted-foreground/60 min-w-[100px]">Search...</span>
-          <kbd className="ml-3 rounded-md border border-border/40 bg-background/80 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground/70">
+          <Search className="size-3.5 text-[#959fad]" />
+          <span className="text-[#959fad] min-w-[100px]">Search...</span>
+          <kbd className="ml-3 rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] font-medium text-[#959fad]">
             ⌘K
           </kbd>
         </button>
@@ -87,9 +87,9 @@ export function Header() {
         {/* Search button — mobile */}
         <button
           onClick={() => setSearchOpen(true)}
-          className="flex items-center gap-1.5 rounded-full bg-muted/40 border border-border/30 px-2.5 py-1.5 text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground md:hidden"
+          className="flex items-center gap-1.5 rounded-full bg-[#455263] border border-white/10 px-2.5 py-1.5 text-[#b4bcc8] transition-colors hover:bg-[#4f5f73] hover:text-white md:hidden"
         >
-          <Search className="size-4" />
+          <Search className="size-4 text-[#959fad]" />
           <span className="text-xs">Search</span>
         </button>
 
@@ -116,19 +116,19 @@ export function Header() {
         />
 
         {/* Divider */}
-        <div className="mx-1.5 hidden h-6 w-px bg-border/50 sm:block" />
+        <div className="mx-1.5 hidden h-6 w-px bg-white/15 sm:block" />
 
         {/* User avatar + dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 text-sm transition-colors hover:bg-muted/60 focus:outline-none focus:ring-2 focus:ring-ring/20">
+            <button className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 text-sm transition-colors hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-ring/20">
               <div className="flex size-7 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground ring-2 ring-background">
                 {userInitial}
               </div>
-              <span className="hidden max-w-[100px] truncate text-[13px] font-medium text-foreground sm:inline">
+              <span className="hidden max-w-[100px] truncate text-[13px] font-medium text-white sm:inline">
                 {userName}
               </span>
-              <ChevronDown className="hidden size-3 text-muted-foreground sm:block" />
+              <ChevronDown className="hidden size-3 text-[#b4bcc8] sm:block" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52 rounded-xl">

@@ -468,8 +468,8 @@ function NavItemRenderer({
           isActive={active}
           className={
             active
-              ? "font-medium text-sidebar-primary"
-              : ""
+              ? "font-medium text-white bg-[#3e4b5c] border-l-4 border-l-[#1caf9a] rounded-none"
+              : "hover:bg-[#2c3542] rounded-none"
           }
         >
           <Link href={item.href}>
@@ -490,7 +490,7 @@ function NavItemRenderer({
         <CollapsibleTrigger asChild>
           <SidebarMenuSubButton
             size="sm"
-            className="cursor-pointer w-full"
+            className="cursor-pointer w-full hover:bg-[#2c3542] rounded-none"
           >
             {item.icon && <item.icon className="size-3.5 shrink-0" />}
             <span className="flex-1 truncate">{item.title}</span>
@@ -531,21 +531,21 @@ function NavSectionRenderer({
     // Flat top-level link
     const active = isLeafActive(section.href, pathname, searchParams)
     return (
-      <SidebarMenuItem>
+      <SidebarMenuItem className="border-t border-[#3f4b5a]">
         <SidebarMenuButton
           asChild
           isActive={active}
           tooltip={section.label}
           className={
             active
-              ? "relative bg-sidebar-accent text-sidebar-accent-foreground font-medium rounded-lg border-l-2 border-l-sidebar-primary rounded-l-none pl-2.5 transition-all duration-200"
-              : "relative text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50 rounded-lg transition-all duration-200"
+              ? "relative bg-[#1caf9a] text-white font-medium rounded-none transition-all duration-200"
+              : "relative text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-[#2c3542] rounded-none transition-all duration-200"
           }
         >
           <Link href={section.href}>
             <section.icon
               className={`size-[18px] shrink-0 ${
-                active ? "text-sidebar-primary" : "text-sidebar-foreground/70"
+                active ? "text-white" : "text-[#606c7d]"
               }`}
             />
             <span className="flex-1 truncate text-[13px]">{section.label}</span>
@@ -562,13 +562,13 @@ function NavSectionRenderer({
   const isOpen = hasActiveChild(section.children, pathname, searchParams)
   return (
     <Collapsible defaultOpen={isOpen} asChild className="group/collapsible">
-      <SidebarMenuItem>
+      <SidebarMenuItem className="border-t border-[#3f4b5a]">
         <CollapsibleTrigger asChild>
           <SidebarMenuButton
             tooltip={section.label}
-            className="relative text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50 rounded-lg transition-all duration-200"
+            className="relative text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-[#2c3542] rounded-none transition-all duration-200"
           >
-            <section.icon className="size-[18px] shrink-0 text-sidebar-foreground/70" />
+            <section.icon className="size-[18px] shrink-0 text-[#606c7d]" />
             <span className="flex-1 truncate text-[13px]">{section.label}</span>
             <ChevronRight className="ml-auto size-4 shrink-0 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
           </SidebarMenuButton>
@@ -631,7 +631,7 @@ export function AppSidebar({ userRole, badges, classes }: AppSidebarProps) {
       aria-label="Main navigation"
     >
       {/* ── Brand header ── */}
-      <SidebarHeader className="px-4 py-4">
+      <SidebarHeader className="px-4 py-4 bg-[#2b3643]">
         <Link href="/dashboard" className="flex items-center gap-2.5 group">
           <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#0B9178] text-white text-sm font-bold shadow-md ring-1 ring-white/10 transition-shadow duration-200 group-hover:shadow-lg group-hover:ring-white/20">
             K
@@ -658,7 +658,7 @@ export function AppSidebar({ userRole, badges, classes }: AppSidebarProps) {
                   <SidebarMenuButton
                     asChild
                     tooltip={action.title}
-                    className="text-sidebar-primary hover:bg-sidebar-primary/10 hover:text-sidebar-primary rounded-lg transition-all duration-200 border border-sidebar-primary/20 border-dashed"
+                    className="text-sidebar-primary hover:bg-sidebar-primary/10 hover:text-sidebar-primary rounded-none transition-all duration-200 border border-sidebar-primary/20 border-dashed"
                   >
                     <Link href={action.href}>
                       <action.icon className="size-[18px] shrink-0" />
@@ -673,7 +673,7 @@ export function AppSidebar({ userRole, badges, classes }: AppSidebarProps) {
 
         {/* Main nav sections */}
         <SidebarGroup className="py-1">
-          <SidebarMenu className="space-y-0.5">
+          <SidebarMenu className="space-y-0">
             {sections.map((section) => (
               <NavSectionRenderer
                 key={section.label}
@@ -689,14 +689,14 @@ export function AppSidebar({ userRole, badges, classes }: AppSidebarProps) {
       </SidebarContent>
 
       {/* ── Footer: Quick Actions + User ── */}
-      <SidebarFooter className="border-t border-sidebar-border px-3 py-3">
+      <SidebarFooter className="border-t border-sidebar-border px-3 py-3 bg-[#2b3643]">
         {/* Quick Actions shortcut */}
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               tooltip="Quick Actions ⌘K"
               aria-label="Quick Actions (⌘K)"
-              className="text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50 rounded-lg transition-all duration-200"
+              className="text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-[#2c3542] rounded-none transition-all duration-200"
               onClick={() => {
                 document.dispatchEvent(
                   new KeyboardEvent("keydown", { key: "k", metaKey: true })
@@ -719,7 +719,7 @@ export function AppSidebar({ userRole, badges, classes }: AppSidebarProps) {
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton
                   size="lg"
-                  className="rounded-lg hover:bg-sidebar-accent/50 transition-all duration-200 data-[state=open]:bg-sidebar-accent"
+                  className="rounded-none hover:bg-[#2c3542] transition-all duration-200 data-[state=open]:bg-sidebar-accent"
                 >
                   <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-sidebar-primary text-sidebar-primary-foreground text-xs font-bold">
                     {userInitial}

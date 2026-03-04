@@ -3,3 +3,65 @@
 =============================================
 === Phase 1 — Metronic color system + Open Sans — Tue Mar  3 22:29:22 CET 2026 ===
 =============================================
+Done. Here's what changed:
+
+**globals.css** — All `:root` variables updated to Metronic v3:
+- `--primary: #1caf9a` (teal), `--background: #F5F5F5`, `--foreground: #333333`
+- Sidebar: `#364150` bg, `#b4bcc8` text, `#3f4b5a` borders
+- Header bar: solid `#2b3643` bg, `#455263` border-bottom, no blur
+- Shadows flattened to near-zero (`0.03`–`0.05` opacity)
+- `--radius: 0.1875rem` (~3px, almost flat)
+- Semantic colors: `--color-success: #008200`, `--color-warning: #c29d0b`, `--color-error: #d64635`, `--color-info: #327ad5`
+- Dark mode sidebar also updated to match
+
+**layout.tsx** — Font swap:
+- Removed `Nunito` + `Cairo`, replaced with single `Open_Sans` (weights 300–800)
+- `--font-heading` set to `var(--font-body)` so both use Open Sans
+- `theme-color` meta updated to `#2b3643`
+To https://github.com/lelapinsauvage/KDDZ.git
+   ac6551f..56eaa25  main -> main
+=== Phase 1 — Metronic color system + Open Sans COMPLETE — Tue Mar  3 22:32:56 CET 2026 ===
+
+=============================================
+=== Phase 2 — Sidebar exact copy — Tue Mar  3 22:32:56 CET 2026 ===
+=============================================
+WARNING: Phase 2 — Sidebar exact copy FAILED (exit 137) — continuing...
+Everything up-to-date
+=== Phase 2 — Sidebar exact copy COMPLETE — Wed Mar  4 07:52:46 CET 2026 ===
+
+=============================================
+=== Phase 3 — Header dark bar — Wed Mar  4 07:52:46 CET 2026 ===
+=============================================
+WARNING: Phase 3 — Header dark bar FAILED (exit 129) — continuing...
+Everything up-to-date
+=== Phase 3 — Header dark bar COMPLETE — Wed Mar  4 07:53:18 CET 2026 ===
+
+=============================================
+=== Phase 4 — UI primitives match old style — Wed Mar  4 07:53:18 CET 2026 ===
+=============================================
+WARNING: Phase 4 — UI primitives match old style FAILED (exit 129) — continuing...
+Everything up-to-date
+=== Phase 4 — UI primitives match old style COMPLETE — Wed Mar  4 07:53:49 CET 2026 ===
+
+=============================================
+=== Phase 5 — Dashboard visual copy — Wed Mar  4 07:53:49 CET 2026 ===
+=============================================
+WARNING: Phase 5 — Dashboard visual copy FAILED (exit 129) — continuing...
+Everything up-to-date
+=== Phase 5 — Dashboard visual copy COMPLETE — Wed Mar  4 07:54:20 CET 2026 ===
+
+=============================================
+=== Phase 6 — Children page visual copy — Wed Mar  4 07:54:20 CET 2026 ===
+=============================================
+=== OVERNIGHT UI FIX CONTINUE — Wed Mar  4 07:54:25 CET 2026 ===
+
+=============================================
+=== Phase 3 — Header dark — Wed Mar  4 07:54:25 CET 2026 ===
+=============================================
+WARNING: Phase 6 — Children page visual copy FAILED (exit 129) — continuing...
+Everything up-to-date
+=== Phase 6 — Children page visual copy COMPLETE — Wed Mar  4 07:54:51 CET 2026 ===
+
+=============================================
+=== Phase 7 — Reports pages visual copy — Wed Mar  4 07:54:51 CET 2026 ===
+=============================================
