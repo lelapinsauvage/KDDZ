@@ -17,13 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Card, CardContent, CardHeader, CardTitle, CardAction } from "@/components/ui/card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,7 +31,6 @@ import {
 import {
   Plus,
   Search,
-  MoreHorizontal,
   Eye,
   Pencil,
   Trash2,
@@ -201,7 +194,7 @@ export function VaccinationsClient({
       cell: ({ row }) => {
         const name = row.original.className;
         if (!name) return <span className="text-muted-foreground">-</span>;
-        return <Badge variant="secondary" className="font-normal">{name}</Badge>;
+        return <Badge className="bg-[#7239ea] text-white border-transparent font-normal">{name}</Badge>;
       },
     },
     {
@@ -246,36 +239,29 @@ export function VaccinationsClient({
       cell: ({ row }) => {
         const record = row.original;
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm">
-                <MoreHorizontal className="size-4" />
-                <span className="sr-only">Open menu</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href={`/medical/vaccinations/${record.id}`}>
-                  <Eye className="size-4" />
-                  View
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href={`/medical/vaccinations/${record.id}`}>
-                  <Pencil className="size-4" />
-                  Edit
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                variant="destructive"
-                onClick={() => setDeleteId(record.id)}
-              >
-                <Trash2 className="size-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex items-center gap-0.5">
+            <Button variant="ghost" size="sm" className="size-8 p-0" asChild>
+              <Link href={`/medical/vaccinations/${record.id}`}>
+                <Eye className="size-4 text-muted-foreground" />
+                <span className="sr-only">View</span>
+              </Link>
+            </Button>
+            <Button variant="ghost" size="sm" className="size-8 p-0" asChild>
+              <Link href={`/medical/vaccinations/${record.id}`}>
+                <Pencil className="size-4 text-muted-foreground" />
+                <span className="sr-only">Edit</span>
+              </Link>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="size-8 p-0 text-muted-foreground hover:text-destructive"
+              onClick={() => setDeleteId(record.id)}
+            >
+              <Trash2 className="size-4" />
+              <span className="sr-only">Delete</span>
+            </Button>
+          </div>
         );
       },
       enableSorting: false,
@@ -291,65 +277,72 @@ export function VaccinationsClient({
             { label: "Health", href: "/medical/general" },
             { label: "Vaccinations" },
           ]}
-          actions={
-            <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
-              <Link href="/medical/vaccinations/new">
-                <Plus className="mr-1 size-4" />
-                Add New
-              </Link>
-            </Button>
-          }
         />
       )}
-      <div className={hideHeader ? "space-y-4" : "p-4 md:p-6 space-y-4"}>
-        {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <div className="relative max-w-sm flex-1 min-w-0">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search by child or vaccine..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
+      <Card className={hideHeader ? "" : "m-4 md:m-6"}>
+        {!hideHeader && (
+          <CardHeader>
+            <CardTitle className="text-lg">Vaccination Records</CardTitle>
+            <CardAction>
+              <Button asChild>
+                <Link href="/medical/vaccinations/new">
+                  <Plus className="mr-1 size-4" />
+                  Add New
+                </Link>
+              </Button>
+            </CardAction>
+          </CardHeader>
+        )}
+        <CardContent className="space-y-4">
+          {/* Toolbar */}
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <div className="relative max-w-sm flex-1 min-w-0">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search by child or vaccine..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[160px]">
+                <SelectValue placeholder="All Statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="Up to date">Up to date</SelectItem>
+                <SelectItem value="Overdue">Overdue</SelectItem>
+                <SelectItem value="Upcoming">Upcoming</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={branchFilter} onValueChange={setBranchFilter}>
+              <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[160px]">
+                <SelectValue placeholder="All Branches" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Branches</SelectItem>
+                {branches.map((b) => (
+                  <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
           </div>
 
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[160px]">
-              <SelectValue placeholder="All Statuses" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="Up to date">Up to date</SelectItem>
-              <SelectItem value="Overdue">Overdue</SelectItem>
-              <SelectItem value="Upcoming">Upcoming</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={branchFilter} onValueChange={setBranchFilter}>
-            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[160px]">
-              <SelectValue placeholder="All Branches" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Branches</SelectItem>
-              {branches.map((b) => (
-                <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-        </div>
-
-        {filteredData.length === 0 ? (
-          <EmptyState
-            icon={Syringe}
-            title="No vaccination records found"
-            description="No vaccination records match your current filters."
-          />
-        ) : (
-          <DataTable columns={columns} data={filteredData} />
-        )}
-      </div>
+          {filteredData.length === 0 ? (
+            <EmptyState
+              icon={Syringe}
+              title="No vaccination records found"
+              description="No vaccination records match your current filters."
+            />
+          ) : (
+            <DataTable columns={columns} data={filteredData} />
+          )}
+        </CardContent>
+      </Card>
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>

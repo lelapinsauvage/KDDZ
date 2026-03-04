@@ -205,3 +205,23 @@ Everything up-to-date
 =============================================
 === Phase 7 — Reports style — Wed Mar  4 07:59:18 CET 2026 ===
 =============================================
+Done. Both pages updated:
+
+**Daily Reports** (`daily-reports-client.tsx`):
+- Status badges: solid `#008200` (Submitted), `#c29d0b` (Draft)
+- Action column: visible icon buttons (Submit, View, Edit, Print, Delete) replacing dropdown
+- Page wrapped in Card with "Daily Reports" title in header
+
+**Absent Reports** (`absent-reports-client.tsx`):
+- Status badges: solid `#c29d0b` (Pending), `#008200` (Approved), `#d64635` (Rejected)
+- Action column: visible icon buttons (Approve, Reject, View, Edit, Delete) replacing dropdown
+- Page wrapped in Card with "Absence Reports" title in header
+
+TypeScript passed clean, committed as `2c562ea`.
+To https://github.com/lelapinsauvage/KDDZ.git
+   5109f22..2c562ea  main -> main
+=== Phase 7 — Reports style COMPLETE — Wed Mar  4 08:02:41 CET 2026 ===
+
+=============================================
+=== Phase 8 — Medical pages style — Wed Mar  4 08:02:41 CET 2026 ===
+=============================================
