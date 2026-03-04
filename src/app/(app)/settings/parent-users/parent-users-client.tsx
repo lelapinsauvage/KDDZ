@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -227,11 +228,10 @@ export function ParentUsersClient({
           <Badge
             className={
               row.original.status === "Active"
-                ? "bg-[#059669]/15 text-[#059669]"
-                : "bg-gray-100 text-gray-600"
+                ? "bg-[#059669] text-white"
+                : "bg-gray-500 text-white"
             }
           >
-            <span className={`mr-1.5 inline-block size-1.5 rounded-full ${row.original.status === "Active" ? "bg-[#059669]" : "bg-gray-400"}`} />
             {row.original.status}
           </Badge>
         ),
@@ -255,18 +255,18 @@ export function ParentUsersClient({
         header: "Action",
         cell: ({ row }) => (
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" className="size-8" asChild>
+            <Button variant="outline" size="icon" className="size-8" asChild>
               <Link href={`/settings/parent-users/${row.original.id}`}>
                 <Eye className="size-4" />
               </Link>
             </Button>
-            <Button variant="ghost" size="icon" className="size-8" asChild>
+            <Button variant="outline" size="icon" className="size-8" asChild>
               <Link href={`/settings/parent-users/${row.original.id}`}>
                 <Pencil className="size-4" />
               </Link>
             </Button>
             <Button
-              variant="ghost"
+              variant="outline"
               size="icon"
               className="size-8"
               title="Reset Password"
@@ -276,9 +276,9 @@ export function ParentUsersClient({
               <KeyRound className="size-4" />
             </Button>
             <Button
-              variant="ghost"
+              variant="outline"
               size="icon"
-              className="size-8 text-destructive"
+              className="size-8 text-destructive hover:bg-destructive/10"
               title={row.original.status === "Active" ? "Deactivate" : "Activate"}
               onClick={() => handleToggleStatus(row.original.id)}
               disabled={isPending}
@@ -360,48 +360,52 @@ export function ParentUsersClient({
 
       <div className="space-y-6 p-4 md:p-6">
         {/* Table 1: Children WITH Parent User */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <div className="flex size-6 items-center justify-center rounded bg-primary text-white text-xs font-bold">
-              1
+        <Card>
+          <CardContent className="space-y-3 p-4 md:p-6">
+            <div className="flex items-center gap-3">
+              <div className="flex size-6 items-center justify-center rounded bg-primary text-white text-xs font-bold">
+                1
+              </div>
+              <h2 className="text-base font-semibold">Children with Parent Account</h2>
+              <Badge className="ml-1 bg-primary text-white">
+                {filteredUsers.length}
+              </Badge>
             </div>
-            <h2 className="text-base font-semibold">Children with Parent Account</h2>
-            <Badge variant="secondary" className="ml-1">
-              {filteredUsers.length}
-            </Badge>
-          </div>
 
-          <Input
-            placeholder="Search by name, username, branch, or class..."
-            value={searchWith}
-            onChange={(e) => setSearchWith(e.target.value)}
-            className="max-w-sm"
-          />
+            <Input
+              placeholder="Search by name, username, branch, or class..."
+              value={searchWith}
+              onChange={(e) => setSearchWith(e.target.value)}
+              className="max-w-sm"
+            />
 
-          <DataTable columns={withAccountColumns} data={filteredUsers} />
-        </div>
+            <DataTable columns={withAccountColumns} data={filteredUsers} />
+          </CardContent>
+        </Card>
 
         {/* Table 2: Children WITHOUT Parent User */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <div className="flex size-6 items-center justify-center rounded bg-amber-500 text-white text-xs font-bold">
-              2
+        <Card>
+          <CardContent className="space-y-3 p-4 md:p-6">
+            <div className="flex items-center gap-3">
+              <div className="flex size-6 items-center justify-center rounded bg-amber-500 text-white text-xs font-bold">
+                2
+              </div>
+              <h2 className="text-base font-semibold">Children without Parent Account</h2>
+              <Badge className="ml-1 bg-amber-500 text-white">
+                {filteredChildrenWithout.length}
+              </Badge>
             </div>
-            <h2 className="text-base font-semibold">Children without Parent Account</h2>
-            <Badge variant="secondary" className="ml-1">
-              {filteredChildrenWithout.length}
-            </Badge>
-          </div>
 
-          <Input
-            placeholder="Search by name, branch, or class..."
-            value={searchWithout}
-            onChange={(e) => setSearchWithout(e.target.value)}
-            className="max-w-sm"
-          />
+            <Input
+              placeholder="Search by name, branch, or class..."
+              value={searchWithout}
+              onChange={(e) => setSearchWithout(e.target.value)}
+              className="max-w-sm"
+            />
 
-          <DataTable columns={withoutAccountColumns} data={filteredChildrenWithout} />
-        </div>
+            <DataTable columns={withoutAccountColumns} data={filteredChildrenWithout} />
+          </CardContent>
+        </Card>
       </div>
 
       {/* Create User Dialog */}

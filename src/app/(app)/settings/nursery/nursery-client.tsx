@@ -191,7 +191,7 @@ export default function NurseryClient({ branchId, initialSettings, provinces }: 
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-4 md:p-6">
         {/* General Info */}
-        <Card>
+        <Card className="rounded-none border-x-0">
           <CardHeader>
             <div className="flex items-center gap-3">
               <div className="flex size-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
@@ -237,7 +237,7 @@ export default function NurseryClient({ branchId, initialSettings, provinces }: 
         </Card>
 
         {/* Government Registration */}
-        <Card>
+        <Card className="rounded-none border-x-0">
           <CardHeader>
             <div className="flex items-center gap-3">
               <div className="flex size-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
@@ -262,7 +262,7 @@ export default function NurseryClient({ branchId, initialSettings, provinces }: 
         </Card>
 
         {/* Owner Information */}
-        <Card>
+        <Card className="rounded-none border-x-0">
           <CardHeader>
             <div className="flex items-center gap-3">
               <div className="flex size-10 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
@@ -370,7 +370,7 @@ export default function NurseryClient({ branchId, initialSettings, provinces }: 
         </Card>
 
         {/* Nursery Identity */}
-        <Card>
+        <Card className="rounded-none border-x-0">
           <CardHeader>
             <div className="flex items-center gap-3">
               <div className="flex size-10 items-center justify-center rounded-lg bg-cyan-50 text-cyan-600">
@@ -395,7 +395,7 @@ export default function NurseryClient({ branchId, initialSettings, provinces }: 
         </Card>
 
         {/* Location */}
-        <Card>
+        <Card className="rounded-none border-x-0">
           <CardHeader>
             <div className="flex items-center gap-3">
               <div className="flex size-10 items-center justify-center rounded-lg bg-orange-50 text-orange-600">
@@ -475,7 +475,7 @@ export default function NurseryClient({ branchId, initialSettings, provinces }: 
         </Card>
 
         {/* Working Hours */}
-        <Card>
+        <Card className="rounded-none border-x-0">
           <CardHeader>
             <div className="flex items-center gap-3">
               <div className="flex size-10 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
@@ -524,7 +524,7 @@ export default function NurseryClient({ branchId, initialSettings, provinces }: 
         </Card>
 
         {/* Defaults */}
-        <Card>
+        <Card className="rounded-none border-x-0">
           <CardHeader>
             <div className="flex items-center gap-3">
               <div className="flex size-10 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
@@ -571,7 +571,7 @@ export default function NurseryClient({ branchId, initialSettings, provinces }: 
         </Card>
 
         {/* Notifications */}
-        <Card>
+        <Card className="rounded-none border-x-0">
           <CardHeader>
             <div className="flex items-center gap-3">
               <div className="flex size-10 items-center justify-center rounded-lg bg-rose-50 text-rose-600">

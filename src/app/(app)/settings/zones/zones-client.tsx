@@ -25,6 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Card, CardContent } from "@/components/ui/card";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import {
   createProvince,
@@ -146,13 +147,13 @@ export function ZonesClient({ initialZones }: ZonesClientProps) {
         header: "Actions",
         cell: ({ row }) => (
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" className="size-8" onClick={() => openEdit(row.original)}>
+            <Button variant="outline" size="icon" className="size-8" onClick={() => openEdit(row.original)}>
               <Pencil className="size-4" />
             </Button>
             <Button
-              variant="ghost"
+              variant="outline"
               size="icon"
-              className="size-8 text-destructive"
+              className="size-8 text-destructive hover:bg-destructive/10"
               onClick={() => setDeleteTarget({ id: row.original.id, name: row.original.name })}
             >
               <Trash2 className="size-4" />
@@ -180,8 +181,12 @@ export function ZonesClient({ initialZones }: ZonesClientProps) {
         }
       />
 
-      <div className="space-y-4 p-4 md:p-6">
-        <DataTable columns={columns} data={zones} searchKey="name" searchPlaceholder="Search zones..." />
+      <div className="p-4 md:p-6">
+        <Card>
+          <CardContent className="p-0">
+            <DataTable columns={columns} data={zones} searchKey="name" searchPlaceholder="Search zones..." />
+          </CardContent>
+        </Card>
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

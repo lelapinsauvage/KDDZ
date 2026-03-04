@@ -253,3 +253,18 @@ To https://github.com/lelapinsauvage/KDDZ.git
 =============================================
 === Phase 10 — Classes, Food, Accounting style — Wed Mar  4 08:09:59 CET 2026 ===
 =============================================
+Done. Committed `9771298` — 5 files changed, 153 insertions, 273 deletions.
+
+Changes applied across all 4 files:
+
+- **Stat cards** → solid colored backgrounds (blue `#327ad5`, emerald `#1caf9a`, green `#008200`, amber `#c29d0b`, red `#d64635`, purple `#8e44ad`) with white text and large faded icons
+- **Badges** → solid: Active `bg-[#008200] text-white`, Inactive `bg-[#d64635] text-white`, Paid/Pending/Overdue with matching solid colors
+- **Action buttons** → visible Edit/Delete icon buttons replacing all DropdownMenu menus
+- Removed unused `MoreVertical`/`MoreHorizontal` and `DropdownMenu` imports
+To https://github.com/lelapinsauvage/KDDZ.git
+   c23cb0c..9771298  main -> main
+=== Phase 10 — Classes, Food, Accounting style COMPLETE — Wed Mar  4 08:16:13 CET 2026 ===
+
+=============================================
+=== Phase 11 — Settings pages style — Wed Mar  4 08:16:13 CET 2026 ===
+=============================================
