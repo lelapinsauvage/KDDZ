@@ -11,17 +11,18 @@
  *   7. Daily Reports (depends on Children)
  *   8. Absences      (depends on Children, Users)
  *   9. Calls         (depends on Children, Employees, Users)
- *  10. Medical Forms (depends on Children)
- *  11. Payments      (depends on Children)
- *  12. Food/Calendar (depends on Branches)
- *  13. Messages      (depends on Users)
+ *  10. Assessments   (depends on Children, Classes, Employees, Users, Organization)
+ *  11. Medical Forms (depends on Children)
+ *  12. Payments      (depends on Children)
+ *  13. Food/Calendar (depends on Branches)
+ *  14. Messages      (depends on Users)
  *
  * Usage:
  *   pnpm tsx src/scripts/migration/migrate-all.ts [--dry-run] [--step=N]
  *
  * Flags:
  *   --dry-run   Preview what would be migrated without writing to DB
- *   --step=N    Run only step N (1-13) and all its dependencies
+ *   --step=N    Run only step N (1-14) and all its dependencies
  *   --from=N    Start from step N (skip earlier steps, assumes they ran)
  */
 
@@ -39,6 +40,7 @@ import { migrateUsers } from "./migrate-users";
 import { migrateDailyReports } from "./migrate-daily-reports";
 import { migrateAbsences } from "./migrate-absences";
 import { migrateCalls } from "./migrate-calls";
+import { migrateAssessments } from "./migrate-assessments";
 import { migrateMedical } from "./migrate-medical";
 import { migratePayments } from "./migrate-payments";
 import { migrateFoodCalendar } from "./migrate-food-calendar";
@@ -105,25 +107,31 @@ const steps: MigrationStep[] = [
     },
   },
   {
-    name: "10. Medical Forms",
+    name: "10. Assessments",
+    run: async (prisma, orgId) => {
+      await migrateAssessments(prisma, orgId);
+    },
+  },
+  {
+    name: "11. Medical Forms",
     run: async (prisma) => {
       await migrateMedical(prisma);
     },
   },
   {
-    name: "11. Payments",
+    name: "12. Payments",
     run: async (prisma) => {
       await migratePayments(prisma);
     },
   },
   {
-    name: "12. Food, Calendar & Holidays",
+    name: "13. Food, Calendar & Holidays",
     run: async (prisma, orgId) => {
       await migrateFoodCalendar(prisma, orgId);
     },
   },
   {
-    name: "13. Messages",
+    name: "14. Messages",
     run: async (prisma) => {
       await migrateMessages(prisma);
     },

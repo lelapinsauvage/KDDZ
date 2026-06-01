@@ -60,6 +60,7 @@ pnpm tsx src/scripts/migration/migrate-users.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-daily-reports.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-absences.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-calls.ts [--dry-run]
+pnpm tsx src/scripts/migration/migrate-assessments.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-medical.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-payments.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-food-calendar.ts [--dry-run]
@@ -80,10 +81,11 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 7. Daily Reports  ← needs Children
 8. Absences       ← needs Children, Users
 9. Calls          ← needs Children, Employees, Users
-10. Medical Forms ← needs Children
-11. Payments      ← needs Children
-12. Food/Calendar ← needs Branches, Organization
-13. Messages      ← needs Users
+10. Assessments   ← needs Children, Classes, Employees/Users, Organization
+11. Medical Forms ← needs Children
+12. Payments      ← needs Children
+13. Food/Calendar ← needs Branches, Organization
+14. Messages      ← needs Users
 ```
 
 ## Table Mappings
@@ -110,6 +112,9 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_absent_report` | AbsenceReport |
 | `t_absent_attachments` | AbsenceAttachment |
 | `t_form_6` | CallLog and MedicalForm (GENERAL) |
+| `t_assessment_1` .. `t_assessment_7` | Assessment |
+| `new_assessment` | Assessment `_legacyNewAssessmentMarkers` / notification stub |
+| `t_assessment_dates` | AssessmentScheduleRule |
 | `t_form_1` | MedicalForm (GENERAL) |
 | `t_form_2` | MedicalForm (CONDITIONS) |
 | `t_form_3` | MedicalForm (VISITS) |
@@ -148,7 +153,9 @@ Old DB stores dates as varchar. The migration handles multiple formats: `YYYY-MM
 The 6 old form tables are consolidated into a single `MedicalForm` model. Form-specific fields are stored as JSON in the `data` column. The `t_med_forms_info` detail rows become `MedicalFormEntry` records.
 
 ### Assessments
-Assessment data (t_assessment_1..7) is not migrated in this batch — assessments use the new Assessment model with JSON `data` field and can be migrated separately if needed.
+The seven legacy assessment tables are consolidated into `Assessment`. Answer keys (`m*`, `c*`, `l*`, `s*`, `d*`) stay as flat JSON keys so the modern assessment editor can reopen the migrated report. Legacy `new_assessment` rows are preserved as markers on the matching assessment, or as a stub assessment when the notification marker has no matching report row.
+
+Legacy `t_assessment_dates.assessment_date` stores age thresholds in days, not absolute calendar dates. Those values are migrated to `AssessmentScheduleRule`; the modern `AssessmentDate` table remains reserved for explicit scheduled calendar dates.
 
 ## Troubleshooting
 
