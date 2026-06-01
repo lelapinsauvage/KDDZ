@@ -61,7 +61,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - Modern invoice route exists, but legacy `invo.php` print details need exact field/layout audit.
 
 16. **Government/nursery compliance parity**
-   - Legacy `t_garderie`, `t_garderie_attachments`, and `t_old_garderie` now have migration coverage, but `nurseryinfo.php` UI parity and `t_garderie_doctor*` compliance details still need exact mapping.
+   - Legacy `t_garderie`, `t_garderie_attachments`, `t_old_garderie`, and `t_garderie_doctor*` rows now have migration coverage, but `nurseryinfo.php` UI parity still needs exact page-level audit.
 
 17. **Address hierarchy reference fields**
    - Legacy zones/areas/regions include reference numbers and created dates that need verified parity in modern settings pages.

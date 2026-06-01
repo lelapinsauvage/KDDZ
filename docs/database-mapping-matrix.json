@@ -395,9 +395,9 @@
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "t_attachments",
     "legacyColumns": "attid:int(11) NOT NULL AUTO_INCREMENT, att_title:varchar(50) CHARACTER SET utf8 NOT NULL, url:varchar(50) CHARACTER SET utf8 NOT NULL DEFAULT 'default.jpg', child_id:varchar(50) CHARACTER SET latin1 NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "ChildAttachment",
+    "status": "mapped - migrated by migrate-garderie-misc.ts",
+    "reconciliation": "Legacy child attachment rows preserve source key, child id mapping, file title/url, active flag, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -516,8 +516,8 @@
     "legacyTable": "t_events_types",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, event_name:varchar(50) NOT NULL, default_subject:varchar(50) NOT NULL, default_message:text NOT NULL",
     "modernDestination": "EventType",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-garderie-misc.ts",
+    "reconciliation": "Legacy event type rows preserve source key, default subject/message, organization link, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -619,17 +619,17 @@
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "t_garderie_doctor",
     "legacyColumns": "teacher_id:int(11) NOT NULL AUTO_INCREMENT, image:varchar(50) NOT NULL DEFAULT 'default.jpg', reg_num:varchar(100) CHARACTER SET utf8mb4 NOT NULL, f_name:varchar(50) CHARACTER SET utf8 NOT NULL, m_name:varchar(50) CHARACTER SET utf8 NOT NULL, l_name:varchar(50) CHARACTER SET utf8 NOT NULL, f_name_ar:varchar(100) CHARACTER SET utf8mb4 NOT NULL, m_name_ar:varchar(100) CHARACTER SET utf8mb4 NOT NULL, l_name_ar:varchar(100) CHARACTER SET utf8mb4 NOT NULL, dob:varchar(50) CHARACTER SET utf8 NOT NULL, pob:varchar(50) CHARACTER SET utf8 NOT NULL, nationality:varchar(50) CHARACTER SET utf8 NOT NULL, sel_gender:varchar(50) CHARACTER SET utf8 NOT NULL, mobile:varchar(50) CHARACTER SET utf8 NOT NULL, email:varchar(50) CHARACTER SET utf8 NOT NULL, uni_degree:varchar(50) CHARACTER SET utf8 NOT NULL, uni_degree_ar:varchar(50) CHARACTER SET utf8 NOT NULL, sel_branch:int(11) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', deleted:tinyint(1) NOT NULL DEFAULT '0', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:int(11) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "Doctor",
+    "status": "mapped - migrated by migrate-garderie-misc.ts",
+    "reconciliation": "Legacy garderie doctor rows restore the branch doctor with identity, registration, degree, active flag, source key, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "t_garderie_doctor_attachments",
     "legacyColumns": "tattid:int(11) NOT NULL AUTO_INCREMENT, att_title:varchar(50) CHARACTER SET utf8 NOT NULL, url:varchar(50) CHARACTER SET utf8 NOT NULL DEFAULT 'default.jpg', teacher_id:varchar(50) NOT NULL, type:varchar(20) NOT NULL, exp_date:varchar(20) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "DoctorAttachment",
+    "status": "mapped - migrated by migrate-garderie-misc.ts",
+    "reconciliation": "Legacy garderie doctor attachment rows preserve source key, doctor mapping, title/url/type/expiry, active flag, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -675,9 +675,9 @@
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "t_manager_attachments",
     "legacyColumns": "tattid:int(11) NOT NULL AUTO_INCREMENT, att_title:varchar(50) CHARACTER SET utf8 NOT NULL, url:varchar(50) CHARACTER SET utf8 NOT NULL DEFAULT 'default.jpg', teacher_id:varchar(50) NOT NULL, type:varchar(20) NOT NULL, exp_date:varchar(20) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "ManagerAttachment",
+    "status": "mapped - migrated by migrate-garderie-misc.ts",
+    "reconciliation": "Legacy manager attachment rows preserve source key, manager mapping, title/url/type/expiry, active flag, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1363,9 +1363,9 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "t_attachments",
     "legacyColumns": "attid:int(11) NOT NULL, att_title:varchar(50) CHARACTER SET utf8 NOT NULL, url:varchar(50) CHARACTER SET utf8 NOT NULL DEFAULT 'default.jpg', child_id:varchar(50) CHARACTER SET latin1 NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "ChildAttachment",
+    "status": "mapped - migrated by migrate-garderie-misc.ts",
+    "reconciliation": "Legacy child attachment rows preserve source key, child id mapping, file title/url, active flag, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1484,8 +1484,8 @@
     "legacyTable": "t_events_types",
     "legacyColumns": "id:int(11) NOT NULL, event_name:varchar(50) NOT NULL, default_subject:varchar(50) NOT NULL, default_message:text NOT NULL",
     "modernDestination": "EventType",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-garderie-misc.ts",
+    "reconciliation": "Legacy event type rows preserve source key, default subject/message, organization link, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1587,17 +1587,17 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "t_garderie_doctor",
     "legacyColumns": "teacher_id:int(11) NOT NULL, image:varchar(50) NOT NULL DEFAULT 'default.jpg', reg_num:varchar(100) CHARACTER SET utf8mb4 NOT NULL, f_name:varchar(50) CHARACTER SET utf8 NOT NULL, m_name:varchar(50) CHARACTER SET utf8 NOT NULL, l_name:varchar(50) CHARACTER SET utf8 NOT NULL, f_name_ar:varchar(100) CHARACTER SET utf8mb4 NOT NULL, m_name_ar:varchar(100) CHARACTER SET utf8mb4 NOT NULL, l_name_ar:varchar(100) CHARACTER SET utf8mb4 NOT NULL, dob:varchar(50) CHARACTER SET utf8 NOT NULL, pob:varchar(50) CHARACTER SET utf8 NOT NULL, nationality:varchar(50) CHARACTER SET utf8 NOT NULL, sel_gender:varchar(50) CHARACTER SET utf8 NOT NULL, mobile:varchar(50) CHARACTER SET utf8 NOT NULL, email:varchar(50) CHARACTER SET utf8 NOT NULL, uni_degree:varchar(50) CHARACTER SET utf8 NOT NULL, uni_degree_ar:varchar(50) CHARACTER SET utf8 NOT NULL, sel_branch:int(11) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', deleted:tinyint(1) NOT NULL DEFAULT '0', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:int(11) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "Doctor",
+    "status": "mapped - migrated by migrate-garderie-misc.ts",
+    "reconciliation": "Legacy garderie doctor rows restore the branch doctor with identity, registration, degree, active flag, source key, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "t_garderie_doctor_attachments",
     "legacyColumns": "tattid:int(11) NOT NULL, att_title:varchar(50) CHARACTER SET utf8 NOT NULL, url:varchar(50) CHARACTER SET utf8 NOT NULL DEFAULT 'default.jpg', teacher_id:varchar(50) NOT NULL, type:varchar(20) NOT NULL, exp_date:varchar(20) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "DoctorAttachment",
+    "status": "mapped - migrated by migrate-garderie-misc.ts",
+    "reconciliation": "Legacy garderie doctor attachment rows preserve source key, doctor mapping, title/url/type/expiry, active flag, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1643,9 +1643,9 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "t_manager_attachments",
     "legacyColumns": "tattid:int(11) NOT NULL, att_title:varchar(50) CHARACTER SET utf8 NOT NULL, url:varchar(50) CHARACTER SET utf8 NOT NULL DEFAULT 'default.jpg', teacher_id:varchar(50) NOT NULL, type:varchar(20) NOT NULL, exp_date:varchar(20) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "ManagerAttachment",
+    "status": "mapped - migrated by migrate-garderie-misc.ts",
+    "reconciliation": "Legacy manager attachment rows preserve source key, manager mapping, title/url/type/expiry, active flag, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -2203,9 +2203,9 @@
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "t_attachments",
     "legacyColumns": "attid:int(11) NOT NULL AUTO_INCREMENT, att_title:varchar(50) CHARACTER SET utf8 NOT NULL, url:varchar(50) CHARACTER SET utf8 NOT NULL DEFAULT 'default.jpg', child_id:varchar(50) CHARACTER SET latin1 NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "ChildAttachment",
+    "status": "mapped - migrated by migrate-garderie-misc.ts",
+    "reconciliation": "Legacy child attachment rows preserve source key, child id mapping, file title/url, active flag, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2324,8 +2324,8 @@
     "legacyTable": "t_events_types",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, event_name:varchar(50) NOT NULL, default_subject:varchar(50) NOT NULL, default_message:text NOT NULL",
     "modernDestination": "EventType",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-garderie-misc.ts",
+    "reconciliation": "Legacy event type rows preserve source key, default subject/message, organization link, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2427,17 +2427,17 @@
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "t_garderie_doctor",
     "legacyColumns": "teacher_id:int(11) NOT NULL AUTO_INCREMENT, image:varchar(50) NOT NULL DEFAULT 'default.jpg', reg_num:varchar(100) CHARACTER SET utf8mb4 NOT NULL, f_name:varchar(50) CHARACTER SET utf8 NOT NULL, m_name:varchar(50) CHARACTER SET utf8 NOT NULL, l_name:varchar(50) CHARACTER SET utf8 NOT NULL, f_name_ar:varchar(100) CHARACTER SET utf8mb4 NOT NULL, m_name_ar:varchar(100) CHARACTER SET utf8mb4 NOT NULL, l_name_ar:varchar(100) CHARACTER SET utf8mb4 NOT NULL, dob:varchar(50) CHARACTER SET utf8 NOT NULL, pob:varchar(50) CHARACTER SET utf8 NOT NULL, nationality:varchar(50) CHARACTER SET utf8 NOT NULL, sel_gender:varchar(50) CHARACTER SET utf8 NOT NULL, mobile:varchar(50) CHARACTER SET utf8 NOT NULL, email:varchar(50) CHARACTER SET utf8 NOT NULL, uni_degree:varchar(50) CHARACTER SET utf8 NOT NULL, uni_degree_ar:varchar(50) CHARACTER SET utf8 NOT NULL, sel_branch:int(11) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', deleted:tinyint(1) NOT NULL DEFAULT '0', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:int(11) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "Doctor",
+    "status": "mapped - migrated by migrate-garderie-misc.ts",
+    "reconciliation": "Legacy garderie doctor rows restore the branch doctor with identity, registration, degree, active flag, source key, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "t_garderie_doctor_attachments",
     "legacyColumns": "tattid:int(11) NOT NULL AUTO_INCREMENT, att_title:varchar(50) CHARACTER SET utf8 NOT NULL, url:varchar(50) CHARACTER SET utf8 NOT NULL DEFAULT 'default.jpg', teacher_id:varchar(50) NOT NULL, type:varchar(20) NOT NULL, exp_date:varchar(20) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "DoctorAttachment",
+    "status": "mapped - migrated by migrate-garderie-misc.ts",
+    "reconciliation": "Legacy garderie doctor attachment rows preserve source key, doctor mapping, title/url/type/expiry, active flag, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2483,9 +2483,9 @@
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "t_manager_attachments",
     "legacyColumns": "tattid:int(11) NOT NULL AUTO_INCREMENT, att_title:varchar(50) CHARACTER SET utf8 NOT NULL, url:varchar(50) CHARACTER SET utf8 NOT NULL DEFAULT 'default.jpg', teacher_id:varchar(50) NOT NULL, type:varchar(20) NOT NULL, exp_date:varchar(20) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "ManagerAttachment",
+    "status": "mapped - migrated by migrate-garderie-misc.ts",
+    "reconciliation": "Legacy manager attachment rows preserve source key, manager mapping, title/url/type/expiry, active flag, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",

@@ -10,26 +10,27 @@
  *   6. Garderie Profile (depends on Branches, Children)
  *   7. Parents      (depends on Children)
  *   8. Employees    (depends on Branches)
- *   9. Users        (depends on Branches, Children via Parents)
- *  10. Auth Metadata (depends on Users)
- *  11. Login Audit   (depends on Users, Parent Users when resolvable)
- *  12. Legacy Settings (optional settings/config tables)
- *  13. Daily Reports (depends on Children)
- *  14. Absences      (depends on Children, Users)
- *  15. Calls         (depends on Children, Employees, Users)
- *  16. Assessments   (depends on Children, Classes, Employees, Users, Organization)
- *  17. Medical Forms (depends on Children)
- *  18. Payments      (depends on Children)
- *  19. Food/Calendar (depends on Branches)
- *  20. Alarms        (depends on Children, Users, Parent Users, Teachers)
- *  21. Messages      (depends on Users)
+ *   9. Garderie Misc (depends on Branches, Children, Employees)
+ *  10. Users        (depends on Branches, Children via Parents)
+ *  11. Auth Metadata (depends on Users)
+ *  12. Login Audit   (depends on Users, Parent Users when resolvable)
+ *  13. Legacy Settings (optional settings/config tables)
+ *  14. Daily Reports (depends on Children)
+ *  15. Absences      (depends on Children, Users)
+ *  16. Calls         (depends on Children, Employees, Users)
+ *  17. Assessments   (depends on Children, Classes, Employees, Users, Organization)
+ *  18. Medical Forms (depends on Children)
+ *  19. Payments      (depends on Children)
+ *  20. Food/Calendar (depends on Branches)
+ *  21. Alarms        (depends on Children, Users, Parent Users, Teachers)
+ *  22. Messages      (depends on Users)
  *
  * Usage:
  *   pnpm tsx src/scripts/migration/migrate-all.ts [--dry-run] [--step=N]
  *
  * Flags:
  *   --dry-run   Preview what would be migrated without writing to DB
- *   --step=N    Run only step N (1-21) and all its dependencies
+ *   --step=N    Run only step N (1-22) and all its dependencies
  *   --from=N    Start from step N (skip earlier steps, assumes they ran)
  */
 
@@ -46,6 +47,7 @@ import { migrateChildren } from "./migrate-children";
 import { migrateGarderieProfile } from "./migrate-garderie-profile";
 import { migrateParents } from "./migrate-parents";
 import { migrateEmployees } from "./migrate-employees";
+import { migrateGarderieMisc } from "./migrate-garderie-misc";
 import { migrateUsers } from "./migrate-users";
 import { migrateAuthMetadata } from "./migrate-auth-metadata";
 import { migrateLoginAudit } from "./migrate-login-audit";
@@ -115,79 +117,85 @@ const steps: MigrationStep[] = [
     },
   },
   {
-    name: "9. Users",
+    name: "9. Garderie Misc",
+    run: async (prisma, orgId) => {
+      await migrateGarderieMisc(prisma, orgId);
+    },
+  },
+  {
+    name: "10. Users",
     run: async (prisma) => {
       await migrateUsers(prisma);
     },
   },
   {
-    name: "10. Auth Metadata",
+    name: "11. Auth Metadata",
     run: async (prisma) => {
       await migrateAuthMetadata(prisma);
     },
   },
   {
-    name: "11. Login Audit",
+    name: "12. Login Audit",
     run: async (prisma) => {
       await migrateLoginAudit(prisma);
     },
   },
   {
-    name: "12. Legacy Settings",
+    name: "13. Legacy Settings",
     run: async (prisma) => {
       await migrateLegacySettings(prisma);
     },
   },
   {
-    name: "13. Daily Reports",
+    name: "14. Daily Reports",
     run: async (prisma) => {
       await migrateDailyReports(prisma);
     },
   },
   {
-    name: "14. Absences",
+    name: "15. Absences",
     run: async (prisma) => {
       await migrateAbsences(prisma);
     },
   },
   {
-    name: "15. Calls",
+    name: "16. Calls",
     run: async (prisma) => {
       await migrateCalls(prisma);
     },
   },
   {
-    name: "16. Assessments",
+    name: "17. Assessments",
     run: async (prisma, orgId) => {
       await migrateAssessments(prisma, orgId);
     },
   },
   {
-    name: "17. Medical Forms",
+    name: "18. Medical Forms",
     run: async (prisma) => {
       await migrateMedical(prisma);
     },
   },
   {
-    name: "18. Payments",
+    name: "19. Payments",
     run: async (prisma) => {
       await migratePayments(prisma);
     },
   },
   {
-    name: "19. Food, Calendar & Holidays",
+    name: "20. Food, Calendar & Holidays",
     run: async (prisma, orgId) => {
       await migrateFoodCalendar(prisma, orgId);
     },
   },
   {
-    name: "20. Alarms & Notifications",
+    name: "21. Alarms & Notifications",
     run: async (prisma) => {
       await migrateAlarms(prisma);
     },
   },
   {
-    name: "21. Messages",
+    name: "22. Messages",
     run: async (prisma) => {
       await migrateMessages(prisma);
     },

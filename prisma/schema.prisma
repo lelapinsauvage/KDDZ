@@ -799,18 +799,28 @@ model ChildSibling {
 }
 
 model ChildAttachment {
-  id        String   @id @default(uuid()) @db.Uuid
-  childId   String   @db.Uuid
-  title     String?
-  filename  String
-  fileUrl   String
-  type      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(uuid()) @db.Uuid
+  childId        String   @db.Uuid
+  sourceDatabase String?
+  legacyKey      String?  @unique
+  legacyId       Int?
+  legacyChildId  Int?
+  title          String?
+  filename       String
+  fileUrl        String
+  type           String?
+  isActive       Boolean  @default(true)
+  legacyData     Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   child Child @relation(fields: [childId], references: [id], onDelete: Cascade)
 
   @@index([childId])
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyChildId])
+  @@index([isActive])
   @@map("child_attachments")
 }
 
@@ -1141,11 +1151,19 @@ model NurseDocument {
 
 model Doctor {
   id                     String         @id @default(uuid()) @db.Uuid
+  sourceDatabase         String?
+  legacyKey              String?        @unique
+  legacyId               Int?
+  legacyTable            String?
+  legacyUserId           Int?
   userId                 String?        @db.Uuid
   username               String?
   firstName              String
+  firstNameAr            String?
   middleName             String?
+  middleNameAr           String?
   lastName               String
+  lastNameAr             String?
   dateOfBirth            DateTime?      @db.Date
   placeOfBirth           String?
   registerNumber         String?
@@ -1172,6 +1190,7 @@ model Doctor {
   specialization         String?
   licenseNumber          String?
   isActive               Boolean        @default(true)
+  legacyData             Json?
   createdAt              DateTime       @default(now())
   updatedAt              DateTime       @updatedAt
 
@@ -1183,6 +1202,9 @@ model Doctor {
   documents   DoctorDocument[]
 
   @@index([branchId])
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyTable])
   @@index([userId])
   @@index([isActive])
   @@map("doctors")
@@ -1207,17 +1229,29 @@ model DoctorAddress {
 }
 
 model DoctorAttachment {
-  id        String   @id @default(uuid()) @db.Uuid
-  doctorId  String   @db.Uuid
-  filename  String
-  fileUrl   String
-  type      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String    @id @default(uuid()) @db.Uuid
+  doctorId       String    @db.Uuid
+  sourceDatabase String?
+  legacyKey      String?   @unique
+  legacyId       Int?
+  legacyDoctorId Int?
+  title          String?
+  filename       String
+  fileUrl        String
+  type           String?
+  expiryDate     DateTime? @db.Date
+  isActive       Boolean   @default(true)
+  legacyData     Json?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
 
   @@index([doctorId])
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyDoctorId])
+  @@index([isActive])
   @@map("doctor_attachments")
 }
 
@@ -1317,17 +1351,29 @@ model ManagerAddress {
 }
 
 model ManagerAttachment {
-  id        String   @id @default(uuid()) @db.Uuid
-  managerId String   @db.Uuid
-  filename  String
-  fileUrl   String
-  type      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String    @id @default(uuid()) @db.Uuid
+  managerId       String    @db.Uuid
+  sourceDatabase  String?
+  legacyKey       String?   @unique
+  legacyId        Int?
+  legacyManagerId Int?
+  title           String?
+  filename        String
+  fileUrl         String
+  type            String?
+  expiryDate      DateTime? @db.Date
+  isActive        Boolean   @default(true)
+  legacyData      Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   manager Manager @relation(fields: [managerId], references: [id], onDelete: Cascade)
 
   @@index([managerId])
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyManagerId])
+  @@index([isActive])
   @@map("manager_attachments")
 }
 
@@ -1966,9 +2012,15 @@ model Message {
 
 model EventType {
   id             String   @id @default(uuid()) @db.Uuid
+  sourceDatabase String?
+  legacyKey      String?  @unique
+  legacyId       Int?
   name           String
   color          String?
+  defaultSubject String?
+  defaultMessage String?  @db.Text
   organizationId String?  @db.Uuid
+  legacyData     Json?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -1976,6 +2028,8 @@ model EventType {
   events       Event[]
 
   @@index([organizationId])
+  @@index([sourceDatabase])
+  @@index([legacyId])
   @@map("event_types")
 }
 

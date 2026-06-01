@@ -59,6 +59,7 @@ pnpm tsx src/scripts/migration/migrate-children.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-garderie-profile.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-parents.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-employees.ts [--dry-run]
+pnpm tsx src/scripts/migration/migrate-garderie-misc.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-users.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-auth-metadata.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-login-audit.ts [--dry-run]
@@ -87,19 +88,20 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 6. Garderie Profile ← needs Branches, Children
 7. Parents        ← needs Children
 8. Employees      ← needs Branches
-9. Users          ← needs Branches, Children/Parents
-10. Auth Metadata  ← needs Users
-11. Login Audit    ← needs Users/Parent Users when resolvable
-12. Legacy Settings ← optional legacy config tables
-13. Daily Reports  ← needs Children
-14. Absences       ← needs Children, Users
-15. Calls          ← needs Children, Employees, Users
-16. Assessments    ← needs Children, Classes, Employees/Users, Organization
-17. Medical Forms  ← needs Children
-18. Payments       ← needs Children
-19. Food/Calendar  ← needs Branches, Organization
-20. Alarms         ← needs Children, Users, Parent Users, Teachers
-21. Messages       ← needs Users
+9. Garderie Misc  ← needs Branches, Children, Employees
+10. Users          ← needs Branches, Children/Parents
+11. Auth Metadata  ← needs Users
+12. Login Audit    ← needs Users/Parent Users when resolvable
+13. Legacy Settings ← optional legacy config tables
+14. Daily Reports  ← needs Children
+15. Absences       ← needs Children, Users
+16. Calls          ← needs Children, Employees, Users
+17. Assessments    ← needs Children, Classes, Employees/Users, Organization
+18. Medical Forms  ← needs Children
+19. Payments       ← needs Children
+20. Food/Calendar  ← needs Branches, Organization
+21. Alarms         ← needs Children, Users, Parent Users, Teachers
+22. Messages       ← needs Users
 ```
 
 ## Table Mappings
@@ -115,17 +117,20 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_child`, `t_child_draft` | Child (isDraft flag) |
 | `t_child_h` | ChildHistory |
 | `t_old_garderie` | ChildPreviousGarderie |
+| `t_attachments` | ChildAttachment |
 | `t_address` | ChildAddress |
 | `t_authorized` | Relative (isAuthorized=true) |
 | `t_relatives` | Relative |
 | `t_garderie` | BranchCompliance |
 | `t_garderie_attachments` | BranchDocument |
+| `t_garderie_doctor`, `t_garderie_doctor_attachments` | Doctor, DoctorAttachment |
 | `t_parents` | Parent |
 | `t_teacher`, `t_teacher_address`, `t_teacher_attachments` | Teacher, TeacherAddress, TeacherAttachment |
 | `t_teacher_info` | TeacherExperience |
 | `t_nurse`, `t_nurse_attachments` | Nurse, NurseAttachment |
 | `t_doctor` | Doctor, DoctorAddress |
 | `t_manager`, `t_manager_address` | Manager, ManagerAddress |
+| `t_manager_attachments` | ManagerAttachment |
 | `login_users` | User |
 | `parent_login_users` | ParentUser |
 | `login_confirm`, `login_profiles`, `login_profile_fields`, `parent_login_levels` | LegacyAuthRecord |
@@ -157,6 +162,7 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_food_calendar` | FoodCalendar |
 | `t_food_apply` | FoodApplication |
 | `t_holiday` | Holiday |
+| `t_events_types` | EventType |
 | `t_alarms`, `t_alarms_*` (except `t_alarms_msg`) | Alarm |
 | `custom_notifications_*` delivery tables | NotificationReceipt |
 | `notifications_tokens` | PushToken |
@@ -186,6 +192,9 @@ Legacy PHP auth, nursery, and notification setting tables are preserved in `Lega
 
 ### Garderie Profile
 Legacy `t_garderie` rows populate the active branch compliance form and also keep source database/table/id, legacy branch/user ids, coordinates, and the raw JSON. Legacy `t_garderie_attachments` rows become branch documents with source keys and active flags. Legacy `t_old_garderie` rows are preserved as child previous-garderie history, including inactive rows.
+
+### Garderie Misc
+The final small garderie-db tables are restored into their modern surfaces: general child attachments, event type defaults, garderie doctor identity/docs, and manager attachments. Each keeps a legacy key and raw JSON so the source row is auditable.
 
 ### Idempotency
 All scripts check for existing records before inserting, so they can be re-run safely. Already-migrated records are skipped.
