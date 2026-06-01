@@ -21,8 +21,8 @@ This list is the first implementation backlog after the generated inventory/matr
    - Remaining work is to run it against the canonical production dumps after import, resolve warnings/missing/error rows, and add skipped/orphan detail where count-only evidence is still weak.
 
 5. **Legacy cron schedule and delivery config**
-   - Cron PHP files exist, but hosting schedules and provider credentials must be recovered.
-   - Notification restoration requires schedule, recipient, template, delivery channel, and log parity.
+   - `docs/cron-notification-matrix.md` now maps the legacy cron entrypoints, observed daily schedule evidence, notification families, OneSignal token path, and modern coverage.
+   - Remaining work is to recover the production crontab, missing `../cronjob/*` helper files or proof they were obsolete, external provider credentials, and exact enablement for commented cron blocks.
 
 ## Product Parity Gaps
 
