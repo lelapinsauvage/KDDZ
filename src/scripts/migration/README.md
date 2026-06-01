@@ -210,6 +210,25 @@ Legacy file path rules are codified in `legacy-file-rules.ts` and documented in 
 
 Use `pnpm tsx src/scripts/migration/export-legacy-files.ts --out-dir=/tmp/kiddzonl-legacy-file-export` to copy found legacy files into a provider-neutral export package and write a manifest of exported, missing, default, unsafe, table-missing, and column-missing references.
 
+### Count Reconciliation
+
+After a dry run or full migration, run the count reconciler against the same imported MySQL database and the target PostgreSQL database:
+
+```bash
+pnpm tsx src/scripts/migration/reconcile-migration-counts.ts \
+  --json=/tmp/kiddzonl-migration-reconciliation.json
+```
+
+Use `--fail-on-warning` in CI or cutover rehearsal runs when warnings should fail the job. Use `--list-rules` to print the curated table rules and `--rule=<rule-id>` to inspect one rule at a time.
+
+The report labels each rule with evidence strength:
+
+- `strong`: target rows keep queryable legacy provenance such as `sourceDatabase`, `legacyTable`, or `sourceTable`.
+- `weak`: counts are useful sanity checks, but the target table does not yet expose row-level legacy keys.
+- `derived`: the row count is intentionally transformed or consolidated.
+
+Warnings are not cosmetic. Any `warning`, `missing`, or `error` result must be resolved or explicitly accepted before cutover. `not-applicable` means the legacy table was not present in the selected imported database, which is expected for some master/annual dumps.
+
 ### Idempotency
 All scripts check for existing records before inserting, so they can be re-run safely. Already-migrated records are skipped.
 

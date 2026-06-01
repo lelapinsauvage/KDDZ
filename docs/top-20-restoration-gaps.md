@@ -17,7 +17,8 @@ This list is the first implementation backlog after the generated inventory/matr
    - Need S3/R2-style storage, presigned uploads, file metadata, permissions, and provider-specific upload execution from the export manifest.
 
 4. **Full data reconciliation**
-   - Existing scripts migrate many core tables but do not yet output full count/skipped/orphan/file reconciliation for every legacy table.
+   - `reconcile-migration-counts.ts` now provides curated source/target count checks across the migration order and distinguishes strong provenance from weaker count-only evidence.
+   - Remaining work is to run it against the canonical production dumps after import, resolve warnings/missing/error rows, and add skipped/orphan detail where count-only evidence is still weak.
 
 5. **Legacy cron schedule and delivery config**
    - Cron PHP files exist, but hosting schedules and provider credentials must be recovered.
