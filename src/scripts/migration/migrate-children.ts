@@ -61,6 +61,7 @@ import {
   toBool,
   toInt,
   cleanString,
+  cleanLegacyFileName,
   log,
   logError,
   logProgress,
@@ -182,6 +183,7 @@ export async function migrateChildren(prisma: PrismaClient) {
 
     // Idempotency check by first+last name + branch + dob
     const dob = parseDate(row.dob);
+    const photo = cleanLegacyFileName(row.image);
     const existing = await prisma.child.findFirst({
       where: {
         firstName: row.cname,
@@ -192,10 +194,17 @@ export async function migrateChildren(prisma: PrismaClient) {
     });
 
     if (existing) {
-      if (!dryRun && schoolYearId && existing.schoolYearId !== schoolYearId) {
+      const updateData: { schoolYearId?: string; photo?: string } = {};
+      if (schoolYearId && existing.schoolYearId !== schoolYearId) {
+        updateData.schoolYearId = schoolYearId;
+      }
+      if (photo && existing.photo !== photo) {
+        updateData.photo = photo;
+      }
+      if (!dryRun && Object.keys(updateData).length > 0) {
         await prisma.child.update({
           where: { id: existing.id },
-          data: { schoolYearId },
+          data: updateData,
         });
       }
       setMapping("child", row.cid, existing.id);
@@ -218,7 +227,7 @@ export async function migrateChildren(prisma: PrismaClient) {
           nationality: cleanString(row.nationality),
           bloodType: cleanString(row.blood_type),
           allergies: cleanString(row.allergy),
-          photo: row.image !== "default.jpg" ? row.image : null,
+          photo,
           branchId,
           classId,
           schoolYearId,
@@ -284,7 +293,7 @@ export async function migrateChildren(prisma: PrismaClient) {
           nationality: cleanString(row.nationality),
           bloodType: cleanString(row.blood_type),
           allergies: cleanString(row.allergy),
-          photo: row.image !== "default.jpg" ? row.image : null,
+          photo: cleanLegacyFileName(row.image),
           branchId,
           classId,
           schoolYearId,

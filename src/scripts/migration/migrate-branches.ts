@@ -10,7 +10,7 @@
  *   t_branch.active      → Branch.isActive
  *   t_branch.datetime    → Branch.createdAt
  *   t_branch.prefix      → (stored in metadata, not in new schema directly)
- *   t_branch.image       → (not migrated — file reference)
+ *   t_branch.image       → Branch.imageUrl (legacy filename until storage import)
  *
  * Prerequisites: Organization must exist in new DB.
  */
@@ -22,6 +22,7 @@ import {
   generateUUID,
   setMapping,
   isDryRun,
+  cleanLegacyFileName,
   toBool,
   log,
   logError,
@@ -56,12 +57,19 @@ export async function migrateBranches(
   let skipped = 0;
 
   for (const row of oldRows) {
+    const imageUrl = cleanLegacyFileName(row.image);
     // Idempotency: check if already migrated by looking for name match
     const existing = await prisma.branch.findFirst({
       where: { organizationId, name: row.brname },
     });
 
     if (existing) {
+      if (!dryRun && imageUrl && existing.imageUrl !== imageUrl) {
+        await prisma.branch.update({
+          where: { id: existing.id },
+          data: { imageUrl },
+        });
+      }
       setMapping("branch", row.brid, existing.id);
       skipped++;
       continue;
@@ -78,6 +86,7 @@ export async function migrateBranches(
           address: row.brlocation || null,
           phone: row.mobile || row.tel || null,
           email: null,
+          imageUrl,
           isActive: toBool(row.active),
           createdAt: row.datetime ? new Date(row.datetime) : new Date(),
         },

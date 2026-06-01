@@ -15,6 +15,7 @@ import type { PrismaClient } from "@/generated/prisma/client";
 import { createPrismaClient } from "./lib/prisma-client";
 import { queryMysql, closeMysqlPool, getMysqlConfig } from "./lib/mysql-client";
 import {
+  cleanLegacyFileName,
   cleanString,
   generateUUID,
   getMapping,
@@ -325,7 +326,7 @@ async function migrateGarderieDoctors(
       universityDegree: cleanString(row.uni_degree),
       specialization: cleanString(row.uni_degree),
       licenseNumber: cleanString(row.reg_num),
-      imageUrl: row.image !== "default.jpg" ? cleanString(row.image) : null,
+      imageUrl: cleanLegacyFileName(row.image),
       branchId,
       isActive: toBool(row.active),
       legacyData: legacyData(row),

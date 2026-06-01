@@ -1319,6 +1319,7 @@ model Manager {
   nationality    String?
   dateOfBirth    DateTime? @db.Date
   hireDate       DateTime? @db.Date
+  imageUrl       String?
   branchId       String    @db.Uuid
   specialization String?
   isActive       Boolean   @default(true)
@@ -1775,27 +1776,38 @@ model AssessmentScheduleRule {
 // ─────────────────────────────────────────────
 
 model Payment {
-  id          String          @id @default(uuid()) @db.Uuid
-  childId     String          @db.Uuid
-  amount      Decimal         @db.Decimal(10, 2)
-  currency    String          @default("USD")
-  date        DateTime        @db.Date
-  dateFrom    DateTime?       @db.Date
-  dateTo      DateTime?       @db.Date
-  month       Int?
-  method      PaymentMethod
-  category    PaymentCategory @default(OTHER)
-  status      PaymentStatus   @default(PAID)
-  reference   String?
-  notes       String?         @db.Text
-  createdById String?         @db.Uuid
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  id                  String          @id @default(uuid()) @db.Uuid
+  childId             String          @db.Uuid
+  sourceDatabase      String?
+  legacyKey           String?         @unique
+  legacyId            Int?
+  legacyChildId       Int?
+  amount              Decimal         @db.Decimal(10, 2)
+  currency            String          @default("USD")
+  date                DateTime        @db.Date
+  dateFrom            DateTime?       @db.Date
+  dateTo              DateTime?       @db.Date
+  month               Int?
+  method              PaymentMethod
+  category            PaymentCategory @default(OTHER)
+  status              PaymentStatus   @default(PAID)
+  reference           String?
+  notes               String?         @db.Text
+  legacyImageFilename String?
+  receiptFilename     String?
+  receiptFileUrl      String?
+  createdById         String?         @db.Uuid
+  legacyData          Json?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
 
   child     Child @relation(fields: [childId], references: [id], onDelete: Cascade)
   createdBy User? @relation("PaymentCreator", fields: [createdById], references: [id], onDelete: SetNull)
   reminders PaymentReminder[]
 
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyChildId])
   @@index([childId])
   @@index([date])
   @@index([method])

@@ -16,6 +16,7 @@
  *   target       → category (monthly/reg/bus/xtra/other → PaymentCategory enum)
  *   cheque       → reference
  *   notes        → notes
+ *   image        → receiptFilename/receiptFileUrl (legacy filename until storage import)
  *   active       → (skip inactive)
  *   uby          → createdById (if user mapping available)
  *   pay_num      → (not migrated — will be regenerated)
@@ -49,6 +50,7 @@ import {
   toBool,
   toInt,
   cleanString,
+  cleanLegacyFileName,
   log,
   logError,
   logProgress,
@@ -127,6 +129,7 @@ function normalizeCurrency(val: string | null | undefined): string {
 export async function migratePayments(prisma: PrismaClient) {
   log("=== Migrating Payments ===");
   const dryRun = isDryRun();
+  const sourceDatabase = getMysqlConfig().database || "unknown";
 
   // --- t_payments → Payment ---
   const oldRows = await queryMysql<OldPayment>(
@@ -145,16 +148,47 @@ export async function migratePayments(prisma: PrismaClient) {
       continue;
     }
 
-    // Idempotency: check by child + amount + date
+    const legacyKey = `${sourceDatabase}:t_payments:${row.cpid}`;
+    const existingByLegacy = await prisma.payment.findUnique({
+      where: { legacyKey },
+    });
+    if (existingByLegacy) {
+      setMapping("payment", row.cpid, existingByLegacy.id);
+      skipped++;
+      continue;
+    }
+
+    const legacyImageFilename = cleanString(row.image);
+    const receiptFilename = cleanLegacyFileName(row.image);
+    const createdById = getMapping("user", row.uby);
+
+    // Fallback for databases that were migrated before legacy keys existed.
     const payDate = row.datetime ? new Date(row.datetime) : new Date();
     const existing = await prisma.payment.findFirst({
       where: {
         childId,
         amount: toFloat(row.amount),
         createdAt: payDate,
+        legacyKey: null,
       },
     });
     if (existing) {
+      if (!dryRun) {
+        await prisma.payment.update({
+          where: { id: existing.id },
+          data: {
+            sourceDatabase,
+            legacyKey,
+            legacyId: toInt(row.cpid),
+            legacyChildId: toInt(row.cid),
+            legacyImageFilename,
+            receiptFilename,
+            receiptFileUrl: receiptFilename,
+            createdById: existing.createdById ?? createdById,
+            legacyData: JSON.parse(JSON.stringify(row)),
+          },
+        });
+      }
       setMapping("payment", row.cpid, existing.id);
       skipped++;
       continue;
@@ -177,6 +211,15 @@ export async function migratePayments(prisma: PrismaClient) {
           category: mapPaymentCategory(row.target),
           reference: cleanString(row.cheque),
           notes: cleanString(row.notes),
+          sourceDatabase,
+          legacyKey,
+          legacyId: toInt(row.cpid),
+          legacyChildId: toInt(row.cid),
+          legacyImageFilename,
+          receiptFilename,
+          receiptFileUrl: receiptFilename,
+          createdById,
+          legacyData: JSON.parse(JSON.stringify(row)),
           status: "PAID",
           createdAt: payDate,
         },

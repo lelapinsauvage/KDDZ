@@ -17,7 +17,7 @@
  *   Not migrated: m_name, regnum, martial, noc, sel_gender, has_medcase,
  *     medcase, cnss, cnssnum, sec_degree, sec_degree_y, uni_degree,
  *     uni_degree_y, language skills (eng/fr/ar), remarks, classid,
- *     contract, medtest, firstaid, image, t_user_id, uby
+ *     contract, medtest, firstaid, t_user_id, uby
  *
  * === Nurse (t_nurse → Nurse) ===
  *   teacher_id   → (old ID, mapped to UUID)
@@ -28,6 +28,7 @@
  *   nationality  → nationality
  *   dob          → dateOfBirth
  *   sel_branch   → branchId (FK via mapping)
+ *   image        → imageUrl (legacy filename until storage import)
  *   active       → isActive
  *
  * === Doctor (t_doctor → Doctor) ===
@@ -71,6 +72,7 @@ import {
   isDryRun,
   parseDate,
   cleanString,
+  cleanLegacyFileName,
   toBool,
   toInt,
   log,
@@ -93,6 +95,7 @@ interface OldTeacher {
   tel: string;
   mobile: string;
   email: string;
+  image: string;
   sel_branch: number;
   active: number;
   deleted: number;
@@ -116,10 +119,17 @@ async function migrateTeachers(prisma: PrismaClient, dryRun: boolean) {
       continue;
     }
 
+    const imageUrl = cleanLegacyFileName(row.image);
     const existing = await prisma.teacher.findFirst({
       where: { firstName: row.f_name, lastName: row.l_name, branchId },
     });
     if (existing) {
+      if (!dryRun && imageUrl && existing.imageUrl !== imageUrl) {
+        await prisma.teacher.update({
+          where: { id: existing.id },
+          data: { imageUrl },
+        });
+      }
       setMapping("teacher", row.teacher_id, existing.id);
       skipped++;
       continue;
@@ -137,6 +147,7 @@ async function migrateTeachers(prisma: PrismaClient, dryRun: boolean) {
           email: cleanString(row.email),
           nationality: cleanString(row.nationality),
           dateOfBirth: parseDate(row.dob),
+          imageUrl,
           branchId,
           isActive: toBool(row.active),
           createdAt: row.datetime ? new Date(row.datetime) : new Date(),
@@ -335,6 +346,7 @@ interface OldNurse {
   sel_gender: string;
   mobile: string;
   email: string;
+  image: string;
   sel_branch: number;
   active: number;
   deleted: number;
@@ -357,10 +369,17 @@ async function migrateNurses(prisma: PrismaClient, dryRun: boolean) {
       continue;
     }
 
+    const imageUrl = cleanLegacyFileName(row.image);
     const existing = await prisma.nurse.findFirst({
       where: { firstName: row.f_name, lastName: row.l_name, branchId },
     });
     if (existing) {
+      if (!dryRun && imageUrl && existing.imageUrl !== imageUrl) {
+        await prisma.nurse.update({
+          where: { id: existing.id },
+          data: { imageUrl },
+        });
+      }
       setMapping("nurse", row.teacher_id, existing.id);
       skipped++;
       continue;
@@ -377,6 +396,7 @@ async function migrateNurses(prisma: PrismaClient, dryRun: boolean) {
           email: cleanString(row.email),
           nationality: cleanString(row.nationality),
           dateOfBirth: parseDate(row.dob),
+          imageUrl,
           branchId,
           isActive: toBool(row.active),
           createdAt: row.datetime ? new Date(row.datetime) : new Date(),
@@ -505,6 +525,7 @@ interface OldManager {
   sel_gender: string;
   mobile: string;
   email: string;
+  image: string;
   sel_branch: number;
   active: number;
   deleted: number;
@@ -529,10 +550,17 @@ async function migrateManagers(prisma: PrismaClient, dryRun: boolean) {
       continue;
     }
 
+    const imageUrl = cleanLegacyFileName(row.image);
     const existing = await prisma.manager.findFirst({
       where: { firstName: row.f_name, lastName: row.l_name, branchId },
     });
     if (existing) {
+      if (!dryRun && imageUrl && existing.imageUrl !== imageUrl) {
+        await prisma.manager.update({
+          where: { id: existing.id },
+          data: { imageUrl },
+        });
+      }
       setMapping("manager", row.teacher_id, existing.id);
       skipped++;
       continue;
@@ -549,6 +577,7 @@ async function migrateManagers(prisma: PrismaClient, dryRun: boolean) {
           email: cleanString(row.email),
           nationality: cleanString(row.nationality),
           dateOfBirth: parseDate(row.dob),
+          imageUrl,
           branchId,
           isActive: toBool(row.active),
           createdAt: row.datetime ? new Date(row.datetime) : new Date(),

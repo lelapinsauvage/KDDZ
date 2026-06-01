@@ -156,6 +156,20 @@ export function cleanString(val: unknown): string | null {
   return s === "" || s === "0" ? null : s;
 }
 
+export function cleanLegacyFileName(val: unknown): string | null {
+  const s = cleanString(val);
+  if (!s) return null;
+  const normalized = s.toLowerCase();
+  if (
+    normalized === "default.jpg" ||
+    normalized === "default.jpeg" ||
+    normalized === "default.png"
+  ) {
+    return null;
+  }
+  return s;
+}
+
 export function toBool(val: unknown): boolean {
   if (val == null) return false;
   if (typeof val === "boolean") return val;

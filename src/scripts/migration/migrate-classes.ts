@@ -7,13 +7,14 @@
  *   t_class.branch_id       → Class.branchId (FK via branch mapping)
  *   t_class.max_students    → Class.capacity
  *   t_class.age_from/age_to → Class.ageGroup (combined as "from-to months/years")
+ *   t_class.image           → Class.imageUrl (legacy filename until storage import)
  *   t_class.active          → Class.isActive
  *   t_class.datetime        → Class.createdAt
  *
  * Not migrated (computed/UI-only):
  *   branch_name, class_language, radiofrom, radioto, camera_number,
  *   current_students, males_num, females_num, teacher_id, helper_id,
- *   clfloor, uby, image
+ *   clfloor, uby
  *
  * Prerequisites: Branches must be migrated first.
  */
@@ -26,6 +27,7 @@ import {
   setMapping,
   getMapping,
   isDryRun,
+  cleanLegacyFileName,
   toBool,
   toInt,
   log,
@@ -47,6 +49,7 @@ interface OldClass {
   current_students: number;
   teacher_id: number;
   helper_id: number;
+  image: string;
   active: number;
   datetime: string;
 }
@@ -74,12 +77,19 @@ export async function migrateClasses(prisma: PrismaClient) {
       continue;
     }
 
+    const imageUrl = cleanLegacyFileName(row.image);
     // Idempotency: check by name + branch
     const existing = await prisma.class.findFirst({
       where: { branchId, name: row.classname },
     });
 
     if (existing) {
+      if (!dryRun && imageUrl && existing.imageUrl !== imageUrl) {
+        await prisma.class.update({
+          where: { id: existing.id },
+          data: { imageUrl },
+        });
+      }
       setMapping("class", row.clid, existing.id);
       skipped++;
       continue;
@@ -99,6 +109,7 @@ export async function migrateClasses(prisma: PrismaClient) {
           name: row.classname,
           capacity: toInt(row.max_students, 0),
           ageGroup,
+          imageUrl,
           isActive: toBool(row.active),
           createdAt: row.datetime ? new Date(row.datetime) : new Date(),
         },
