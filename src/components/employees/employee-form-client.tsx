@@ -11,6 +11,7 @@ import {
 import type { EmployeeType } from "@/components/employees/employee-columns";
 import { createEmployee, updateEmployee } from "@/lib/actions/employees";
 import { getClasses } from "@/lib/actions/classes";
+import { uploadFileWithPresign } from "@/lib/uploads/client-upload";
 import { PageHeader } from "@/components/layout/page-header";
 import { FormSection } from "@/components/ui/form-section";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ import {
   Plus,
   Trash2,
   Upload,
+  FileText,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -88,6 +90,19 @@ const PROFICIENCY_LEVELS = [
   { value: "FLUENT", label: "Fluent" },
 ];
 
+function employeeDocumentScope(type: EmployeeType) {
+  switch (type) {
+    case "teacher":
+      return "teacher-document";
+    case "nurse":
+      return "nurse-document";
+    case "doctor":
+      return "doctor-document";
+    case "manager":
+      return "manager-document";
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -101,6 +116,7 @@ export function EmployeeFormClient({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [documentFiles, setDocumentFiles] = useState<Array<File | null>>([]);
   const isEditing = !!employee;
   const { singular, plural, pluralLower } = labels[type];
 
@@ -215,12 +231,88 @@ export function EmployeeFormClient({
   const certDocs = indexedDocs.filter((f) => f.type === "CERTIFICATE");
   const attachDocs = indexedDocs.filter((f) => f.type === "ATTACHMENT");
 
+  function appendDocument(doc: EmployeeFormValues["documents"][number]) {
+    appendDoc(doc);
+    setDocumentFiles((current) => {
+      const next = [...current];
+      next[docFields.length] = null;
+      return next;
+    });
+  }
+
+  function removeDocument(index: number) {
+    removeDoc(index);
+    setDocumentFiles((current) => {
+      const next = [...current];
+      next.splice(index, 1);
+      return next;
+    });
+  }
+
+  function setDocumentFile(index: number, file: File) {
+    setValue(`documents.${index}.fileUrl`, "", { shouldDirty: true });
+    if (!watch(`documents.${index}.title`)) {
+      setValue(`documents.${index}.title`, file.name, { shouldDirty: true });
+    }
+    setDocumentFiles((current) => {
+      const next = [...current];
+      next[index] = file;
+      return next;
+    });
+  }
+
   function onSubmit(data: EmployeeFormValues) {
     setError(null);
     startTransition(async () => {
+      let payload = data;
+      const filesToUpload: Array<{ file: File; index: number }> = [];
+      documentFiles.forEach((file, index) => {
+        if (file) filesToUpload.push({ file, index });
+      });
+
+      if (filesToUpload.length) {
+        if (!data.branchId) {
+          setError("Cannot upload documents because the employee branch is unavailable");
+          return;
+        }
+
+        try {
+          const nextDocuments = [...data.documents];
+          for (const { file, index } of filesToUpload) {
+            const uploaded = await uploadFileWithPresign({
+              branchId: data.branchId,
+              scope: employeeDocumentScope(type),
+              ownerId: employee?.id,
+              file,
+            });
+            const existingDocument =
+              nextDocuments[index] ?? {
+                type: "ATTACHMENT" as const,
+                title: "",
+                date: "",
+                expiryDate: "",
+                fileUrl: "",
+              };
+            nextDocuments[index] = {
+              ...existingDocument,
+              title: existingDocument.title || file.name,
+              fileUrl: uploaded.publicUrl,
+            };
+          }
+          payload = { ...data, documents: nextDocuments };
+        } catch (uploadError) {
+          setError(
+            uploadError instanceof Error
+              ? uploadError.message
+              : "Failed to upload employee documents",
+          );
+          return;
+        }
+      }
+
       const result = isEditing
-        ? await updateEmployee(type, employee!.id, data)
-        : await createEmployee(type, data);
+        ? await updateEmployee(type, employee!.id, payload)
+        : await createEmployee(type, payload);
 
       if (!result.success) {
         setError(result.error ?? "Something went wrong");
@@ -785,8 +877,11 @@ export function EmployeeFormClient({
                       key={field.id}
                       index={field.index}
                       register={register}
+                      fileUrl={watch(`documents.${field.index}.fileUrl`)}
+                      selectedFileName={documentFiles[field.index]?.name}
+                      onFileSelect={(file) => setDocumentFile(field.index, file)}
                       showExpiry
-                      onRemove={() => removeDoc(field.index)}
+                      onRemove={() => removeDocument(field.index)}
                     />
                   ))}
                 </div>
@@ -795,7 +890,7 @@ export function EmployeeFormClient({
                   variant="outline"
                   size="sm"
                   className="mt-3"
-                  onClick={() => appendDoc({ type: "CONTRACT", title: "", date: "", expiryDate: "", fileUrl: "" })}
+                  onClick={() => appendDocument({ type: "CONTRACT", title: "", date: "", expiryDate: "", fileUrl: "" })}
                 >
                   <Plus className="size-4" /> Add Contract
                 </Button>
@@ -811,8 +906,11 @@ export function EmployeeFormClient({
                       key={field.id}
                       index={field.index}
                       register={register}
+                      fileUrl={watch(`documents.${field.index}.fileUrl`)}
+                      selectedFileName={documentFiles[field.index]?.name}
+                      onFileSelect={(file) => setDocumentFile(field.index, file)}
                       showExpiry
-                      onRemove={() => removeDoc(field.index)}
+                      onRemove={() => removeDocument(field.index)}
                     />
                   ))}
                 </div>
@@ -821,7 +919,7 @@ export function EmployeeFormClient({
                   variant="outline"
                   size="sm"
                   className="mt-3"
-                  onClick={() => appendDoc({ type: "MEDICAL_TEST", title: "", date: "", expiryDate: "", fileUrl: "" })}
+                  onClick={() => appendDocument({ type: "MEDICAL_TEST", title: "", date: "", expiryDate: "", fileUrl: "" })}
                 >
                   <Plus className="size-4" /> Add Medical Test
                 </Button>
@@ -837,8 +935,11 @@ export function EmployeeFormClient({
                       key={field.id}
                       index={field.index}
                       register={register}
+                      fileUrl={watch(`documents.${field.index}.fileUrl`)}
+                      selectedFileName={documentFiles[field.index]?.name}
+                      onFileSelect={(file) => setDocumentFile(field.index, file)}
                       showExpiry
-                      onRemove={() => removeDoc(field.index)}
+                      onRemove={() => removeDocument(field.index)}
                     />
                   ))}
                 </div>
@@ -847,7 +948,7 @@ export function EmployeeFormClient({
                   variant="outline"
                   size="sm"
                   className="mt-3"
-                  onClick={() => appendDoc({ type: "FIRST_AID", title: "", date: "", expiryDate: "", fileUrl: "" })}
+                  onClick={() => appendDocument({ type: "FIRST_AID", title: "", date: "", expiryDate: "", fileUrl: "" })}
                 >
                   <Plus className="size-4" /> Add First Aid
                 </Button>
@@ -863,8 +964,11 @@ export function EmployeeFormClient({
                       key={field.id}
                       index={field.index}
                       register={register}
+                      fileUrl={watch(`documents.${field.index}.fileUrl`)}
+                      selectedFileName={documentFiles[field.index]?.name}
+                      onFileSelect={(file) => setDocumentFile(field.index, file)}
                       showTitle
-                      onRemove={() => removeDoc(field.index)}
+                      onRemove={() => removeDocument(field.index)}
                     />
                   ))}
                 </div>
@@ -873,7 +977,7 @@ export function EmployeeFormClient({
                   variant="outline"
                   size="sm"
                   className="mt-3"
-                  onClick={() => appendDoc({ type: "CERTIFICATE", title: "", date: "", expiryDate: "", fileUrl: "" })}
+                  onClick={() => appendDocument({ type: "CERTIFICATE", title: "", date: "", expiryDate: "", fileUrl: "" })}
                 >
                   <Plus className="size-4" /> Add Certificate
                 </Button>
@@ -889,8 +993,11 @@ export function EmployeeFormClient({
                       key={field.id}
                       index={field.index}
                       register={register}
+                      fileUrl={watch(`documents.${field.index}.fileUrl`)}
+                      selectedFileName={documentFiles[field.index]?.name}
+                      onFileSelect={(file) => setDocumentFile(field.index, file)}
                       showTitle
-                      onRemove={() => removeDoc(field.index)}
+                      onRemove={() => removeDocument(field.index)}
                     />
                   ))}
                 </div>
@@ -899,7 +1006,7 @@ export function EmployeeFormClient({
                   variant="outline"
                   size="sm"
                   className="mt-3"
-                  onClick={() => appendDoc({ type: "ATTACHMENT", title: "", date: "", expiryDate: "", fileUrl: "" })}
+                  onClick={() => appendDocument({ type: "ATTACHMENT", title: "", date: "", expiryDate: "", fileUrl: "" })}
                 >
                   <Plus className="size-4" /> Add Attachment
                 </Button>
@@ -965,14 +1072,20 @@ function ExperienceRow({
 function DocumentRow({
   index,
   register,
+  fileUrl,
+  selectedFileName,
   showExpiry = false,
   showTitle: _showTitle = false,
+  onFileSelect,
   onRemove,
 }: {
   index: number;
   register: ReturnType<typeof useForm<EmployeeFormValues>>["register"];
+  fileUrl?: string;
+  selectedFileName?: string;
   showExpiry?: boolean;
   showTitle?: boolean;
+  onFileSelect: (file: File) => void;
   onRemove: () => void;
 }) {
   return (
@@ -994,9 +1107,33 @@ function DocumentRow({
         )}
         <div>
           <Label>File</Label>
-          <Button type="button" variant="outline" size="sm" className="w-full justify-start gap-2" disabled>
-            <Upload className="size-4" /> Coming soon
-          </Button>
+          <Input
+            type="file"
+            accept="image/*,.pdf"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) onFileSelect(file);
+            }}
+          />
+          <input type="hidden" {...register(`documents.${index}.fileUrl`)} />
+          {selectedFileName ? (
+            <p className="mt-1 flex items-center gap-1 truncate text-xs text-muted-foreground">
+              <Upload className="size-3" />
+              {selectedFileName}
+            </p>
+          ) : fileUrl ? (
+            <a
+              href={fileUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-1 flex items-center gap-1 truncate text-xs text-primary hover:underline"
+            >
+              <FileText className="size-3" />
+              Current file
+            </a>
+          ) : (
+            <p className="mt-1 text-xs text-muted-foreground">No file selected</p>
+          )}
         </div>
       </div>
       <div className="mt-2 flex justify-end">
