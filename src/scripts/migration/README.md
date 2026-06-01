@@ -132,7 +132,7 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_form_5` | MedicalForm (ACCIDENTS) |
 | `t_med_forms_info` | MedicalFormEntry |
 | `t_payments` | Payment |
-| `newpayment` | Payment follow-up mapping needed |
+| `newpayment` | PaymentReminder |
 | `t_accounting` | AccountingEntry |
 | `t_food` | Food |
 | `t_food_calendar` | FoodCalendar |
@@ -169,6 +169,9 @@ Legacy Lebanon location tables are migrated into the modern Province → Distric
 
 ### Food Applications
 Legacy `t_food_apply` rows restore the "food for all" class/date meal templates used to prefill daily reports. They are kept as `FoodApplication` rows with class, triggering child, breakfast/lunch food IDs, meal times, dessert text/time, creator, active flag, and the complete legacy row.
+
+### Payment Reminders
+Legacy `newpayment` rows are scheduled payment reminders/requests, not duplicate paid transactions. They become `PaymentReminder` rows linked to the migrated payment and child when mappings exist, preserving category, amount, currency, due date, month, sent flag, and source row JSON.
 
 ### Date Handling
 Old DB stores dates as varchar. The migration handles multiple formats: `YYYY-MM-DD`, `DD/MM/YYYY`, `DD-MM-YYYY`, empty strings, and `0000-00-00`.

@@ -179,9 +179,9 @@
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "newpayment",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, submit_time:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, payment_id:int(11) NOT NULL, cid:int(11) NOT NULL, target:varchar(50) NOT NULL, amount:varchar(50) NOT NULL, currency:varchar(50) NOT NULL, to:varchar(50) NOT NULL, for:varchar(50) NOT NULL, sent:int(11) NOT NULL",
-    "modernDestination": "Payment",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "PaymentReminder",
+    "status": "mapped - migrated by migrate-payments.ts",
+    "reconciliation": "Scheduled payment reminder rows restored with payment/child mappings, due date, category, amount, currency, sent flag, and legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1083,9 +1083,9 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "newpayment",
     "legacyColumns": "id:int(11) NOT NULL, submit_time:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, payment_id:int(11) NOT NULL, cid:int(11) NOT NULL, target:varchar(50) NOT NULL, amount:varchar(50) NOT NULL, currency:varchar(50) NOT NULL, to:varchar(50) NOT NULL, for:varchar(50) NOT NULL, sent:int(11) NOT NULL",
-    "modernDestination": "Payment",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "PaymentReminder",
+    "status": "mapped - migrated by migrate-payments.ts",
+    "reconciliation": "Scheduled payment reminder rows restored with payment/child mappings, due date, category, amount, currency, sent flag, and legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1987,9 +1987,9 @@
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "newpayment",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, submit_time:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, payment_id:int(11) NOT NULL, cid:int(11) NOT NULL, target:varchar(50) NOT NULL, amount:varchar(50) NOT NULL, currency:varchar(50) NOT NULL, to:varchar(50) NOT NULL, for:varchar(50) NOT NULL, sent:int(11) NOT NULL",
-    "modernDestination": "Payment",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "PaymentReminder",
+    "status": "mapped - migrated by migrate-payments.ts",
+    "reconciliation": "Scheduled payment reminder rows restored with payment/child mappings, due date, category, amount, currency, sent flag, and legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",

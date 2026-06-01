@@ -21,7 +21,6 @@ These are the highest-risk migration gaps because source data exists and no curr
 
 | SQL Dump | Legacy Table | Estimated Rows | Columns |
 | --- | --- | --- | --- |
-| kiddzonl_garderie29sept.sql | newpayment | 419 | id, submit_time, payment_id, cid, target, amount, currency, to, for, sent |
 | kiddzonl_garderie29sept.sql | t_child_h | 114 | cid, joining_date, child_num, prefix, sel_year, cname, cmname, clname, image, dob, pob, nationality, gender, mother_name, mother_nationality, branch_id, language, year_from, year_to, class_id, address_id, remarks, blood_type, allergy, bus, bus_id, diapers, milk_name, milk_portion, milk_scoop, milk_time, milktime1, milktime2, remarks_food, sleep_from, sleep_to, has_old_garderie, has_lunch, active, deleted, is_draft, progress_all, progress_m, datetime, uby |
 | kiddzonl_garderie29sept.sql | t_forms_attachments | 72 | fattid, att_title, url, child_id, formtype, formid, class_id, branch_id, datetime, active |
 | kiddzonl_garderie29sept.sql | callcauses | 46 | id, parent, child |
@@ -171,7 +170,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie17-18.sql | login_timestamps | 4 | 0 | covered by migrate-login-audit.ts |
 | kiddzonl_garderie17-18.sql | login_users | 12 | 0 | covered by migrate-users.ts |
 | kiddzonl_garderie17-18.sql | new_assessment | 6 | 0 | covered by migrate-assessments.ts |
-| kiddzonl_garderie17-18.sql | newpayment | 10 | 0 | not covered yet / needs explicit decision |
+| kiddzonl_garderie17-18.sql | newpayment | 10 | 0 | covered by migrate-payments.ts |
 | kiddzonl_garderie17-18.sql | parent_login_levels | 5 | 0 | not covered yet / needs explicit decision |
 | kiddzonl_garderie17-18.sql | parent_login_settings | 3 | 0 | not covered yet / needs explicit decision |
 | kiddzonl_garderie17-18.sql | parent_login_timestamps | 4 | 0 | covered by migrate-login-audit.ts |
@@ -268,7 +267,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie29sept.sql | t_parents | 17 | 504 | covered by migrate-parents.ts |
 | kiddzonl_garderie29sept.sql | t_notifications_log | 6 | 484 | covered by migrate-alarms.ts |
 | kiddzonl_garderie29sept.sql | t_payments | 20 | 435 | covered by migrate-payments.ts |
-| kiddzonl_garderie29sept.sql | newpayment | 10 | 419 | not covered yet / needs explicit decision |
+| kiddzonl_garderie29sept.sql | newpayment | 10 | 419 | covered by migrate-payments.ts |
 | kiddzonl_garderie29sept.sql | t_med_forms_info | 15 | 380 | covered by migrate-medical.ts |
 | kiddzonl_garderie29sept.sql | t_authorized | 12 | 303 | covered by migrate-children.ts |
 | kiddzonl_garderie29sept.sql | t_address | 19 | 253 | covered by migrate-children.ts |
@@ -397,7 +396,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie_2018-2019.sql | login_timestamps | 4 | 0 | covered by migrate-login-audit.ts |
 | kiddzonl_garderie_2018-2019.sql | login_users | 12 | 0 | covered by migrate-users.ts |
 | kiddzonl_garderie_2018-2019.sql | new_assessment | 6 | 0 | covered by migrate-assessments.ts |
-| kiddzonl_garderie_2018-2019.sql | newpayment | 10 | 0 | not covered yet / needs explicit decision |
+| kiddzonl_garderie_2018-2019.sql | newpayment | 10 | 0 | covered by migrate-payments.ts |
 | kiddzonl_garderie_2018-2019.sql | parent_login_levels | 5 | 0 | not covered yet / needs explicit decision |
 | kiddzonl_garderie_2018-2019.sql | parent_login_settings | 3 | 0 | not covered yet / needs explicit decision |
 | kiddzonl_garderie_2018-2019.sql | parent_login_timestamps | 4 | 0 | covered by migrate-login-audit.ts |

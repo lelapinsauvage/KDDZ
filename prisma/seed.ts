@@ -34,6 +34,7 @@ async function main() {
     await tx.message.deleteMany();
     await tx.messageThread.deleteMany();
     await tx.accountingEntry.deleteMany();
+    await tx.paymentReminder.deleteMany();
     await tx.payment.deleteMany();
     await tx.assessmentDate.deleteMany();
     await tx.assessment.deleteMany();

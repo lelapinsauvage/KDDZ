@@ -1,6 +1,7 @@
 /**
- * Migration: t_payments → Payment + AccountingEntry
+ * Migration: t_payments  → Payment + AccountingEntry
  *            t_accounting → AccountingEntry
+ *            newpayment   → PaymentReminder
  *
  * Field mapping (t_payments → Payment):
  *   cpid         → (old ID, mapped to UUID)
@@ -35,7 +36,7 @@
 
 import type { PrismaClient } from "@/generated/prisma/client";
 import { createPrismaClient } from "./lib/prisma-client";
-import { queryMysql, closeMysqlPool } from "./lib/mysql-client";
+import { queryMysql, closeMysqlPool, getMysqlConfig } from "./lib/mysql-client";
 import {
   generateUUID,
   setMapping,
@@ -45,6 +46,8 @@ import {
   mapPaymentMethod,
   mapPaymentCategory,
   toFloat,
+  toBool,
+  toInt,
   cleanString,
   log,
   logError,
@@ -98,6 +101,19 @@ interface OldAccounting {
   child_id: string;
   active: number;
   datetime: string;
+}
+
+interface OldNewPayment {
+  id: number;
+  submit_time: string;
+  payment_id: number;
+  cid: number;
+  target: string;
+  amount: string;
+  currency: string;
+  to: string;
+  for: string;
+  sent: number;
 }
 
 function normalizeCurrency(val: string | null | undefined): string {
@@ -178,6 +194,7 @@ export async function migratePayments(prisma: PrismaClient) {
 
   // --- t_accounting → AccountingEntry ---
   await migrateAccounting(prisma, dryRun);
+  await migratePaymentReminders(prisma, dryRun);
 
   log(`=== Payments migration complete ===${dryRun ? " [DRY RUN]" : ""}`);
 }
@@ -258,6 +275,59 @@ async function migrateAccounting(prisma: PrismaClient, dryRun: boolean) {
   }
 
   log(`Accounting: ${feeCount} fee entries, ${discCount} discount entries`);
+}
+
+async function migratePaymentReminders(prisma: PrismaClient, dryRun: boolean) {
+  const rows = await queryMysql<OldNewPayment>(
+    "SELECT * FROM newpayment ORDER BY id"
+  );
+  log(`Found ${rows.length} payment reminder rows in newpayment`);
+
+  const sourceDatabase = getMysqlConfig().database || "unknown";
+  let migrated = 0;
+  let skipped = 0;
+
+  for (const row of rows) {
+    const legacyKey = `${sourceDatabase}:newpayment:${row.id}`;
+    const existing = await prisma.paymentReminder.findUnique({
+      where: { legacyKey },
+    });
+    if (existing) {
+      setMapping("newpayment", row.id, existing.id);
+      skipped++;
+      continue;
+    }
+
+    const id = generateUUID();
+    if (!dryRun) {
+      await prisma.paymentReminder.create({
+        data: {
+          id,
+          sourceDatabase,
+          legacyKey,
+          legacyId: toInt(row.id),
+          paymentId: getMapping("payment", row.payment_id),
+          legacyPaymentId: toInt(row.payment_id),
+          childId: getMapping("child", row.cid),
+          legacyChildId: toInt(row.cid),
+          category: mapPaymentCategory(row.target),
+          amount: toFloat(row.amount),
+          currency: normalizeCurrency(row.currency),
+          dueDate: parseDate(row.to),
+          month: extractMonth(row.for),
+          sent: toBool(row.sent),
+          legacyData: JSON.parse(JSON.stringify(row)),
+          createdAt: parseDate(row.submit_time) ?? new Date(),
+        },
+      });
+    }
+
+    setMapping("newpayment", row.id, id);
+    migrated++;
+    logProgress(migrated, rows.length, "Payment Reminders");
+  }
+
+  log(`Payment Reminders: ${migrated} migrated, ${skipped} skipped`);
 }
 
 // ---------------------------------------------------------------------------

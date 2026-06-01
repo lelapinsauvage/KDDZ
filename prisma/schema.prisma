@@ -655,6 +655,7 @@ model Child {
   vaccinations     Vaccination[]
   assessments      Assessment[]
   payments         Payment[]
+  paymentReminders PaymentReminder[]
   accountingEntries AccountingEntry[]
   callLogs         CallLog[]
   foodApplications FoodApplication[]
@@ -1667,6 +1668,7 @@ model Payment {
 
   child     Child @relation(fields: [childId], references: [id], onDelete: Cascade)
   createdBy User? @relation("PaymentCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  reminders PaymentReminder[]
 
   @@index([childId])
   @@index([date])
@@ -1675,6 +1677,40 @@ model Payment {
   @@index([status])
   @@index([createdById])
   @@map("payments")
+}
+
+model PaymentReminder {
+  id              String          @id @default(uuid()) @db.Uuid
+  sourceDatabase  String?
+  legacyKey       String?         @unique
+  legacyId        Int?
+  paymentId       String?         @db.Uuid
+  legacyPaymentId Int?
+  childId         String?         @db.Uuid
+  legacyChildId   Int?
+  category        PaymentCategory @default(OTHER)
+  amount          Decimal?        @db.Decimal(10, 2)
+  currency        String?
+  dueDate         DateTime?       @db.Date
+  month           Int?
+  sent            Boolean         @default(false)
+  legacyData      Json?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  payment Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  child   Child?   @relation(fields: [childId], references: [id], onDelete: SetNull)
+
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([paymentId])
+  @@index([legacyPaymentId])
+  @@index([childId])
+  @@index([legacyChildId])
+  @@index([category])
+  @@index([dueDate])
+  @@index([sent])
+  @@map("payment_reminders")
 }
 
 model AccountingEntry {
