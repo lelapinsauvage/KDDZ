@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import type { ComplianceDocument } from "../branch-compliance-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Upload, CheckCircle2, Clock } from "lucide-react";
 import { upsertDocument } from "@/lib/actions/branch-compliance";
+import { uploadFileWithPresign } from "@/lib/uploads/client-upload";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -115,7 +117,11 @@ function AttachmentRow({
   color: string;
   existing?: ComplianceDocument;
 }) {
+  const router = useRouter();
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [isUploading, setIsUploading] = useState(false);
+  const [documentId, setDocumentId] = useState(existing?.id);
   const [title, setTitle] = useState(existing?.label ?? "");
   const [expiryDate, setExpiryDate] = useState(
     existing?.expiryDate
@@ -123,25 +129,69 @@ function AttachmentRow({
       : "",
   );
   const [filename, setFilename] = useState(existing?.filename ?? "");
+  const [fileUrl, setFileUrl] = useState(existing?.fileUrl ?? "");
 
   const isUploaded = existing?.status === "UPLOADED" || existing?.status === "VERIFIED";
 
   function handleSave() {
     startTransition(async () => {
       const result = await upsertDocument(branchId, {
-        id: existing?.id,
+        id: documentId,
         documentType: docType,
         label: title || undefined,
         filename: filename || undefined,
+        fileUrl: fileUrl || undefined,
         expiryDate: expiryDate || undefined,
         status: "UPLOADED",
       });
       if (result.success) {
+        const saved = result.data as { id?: string } | undefined;
+        if (saved?.id) setDocumentId(saved.id);
         toast.success("تم حفظ المستند");
+        router.refresh();
       } else {
         toast.error(result.error ?? "فشل في حفظ المستند");
       }
     });
+  }
+
+  async function handleUpload(file: File) {
+    setIsUploading(true);
+    try {
+      const uploaded = await uploadFileWithPresign({
+        branchId,
+        scope: "compliance-document",
+        file,
+        ownerId: documentId,
+      });
+
+      setFilename(file.name);
+      setFileUrl(uploaded.publicUrl);
+
+      const result = await upsertDocument(branchId, {
+        id: documentId,
+        documentType: docType,
+        label: title || undefined,
+        filename: file.name,
+        fileUrl: uploaded.publicUrl,
+        expiryDate: expiryDate || undefined,
+        status: "UPLOADED",
+      });
+
+      if (result.success) {
+        const saved = result.data as { id?: string } | undefined;
+        if (saved?.id) setDocumentId(saved.id);
+        toast.success("تم رفع المستند");
+        router.refresh();
+      } else {
+        toast.error(result.error ?? "فشل في حفظ المستند");
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "فشل في رفع المستند");
+    } finally {
+      setIsUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
   }
 
   return (
@@ -174,6 +224,16 @@ function AttachmentRow({
         <div>
           <Label className="text-xs">اسم الملف</Label>
           <div className="flex gap-2">
+            <input
+              ref={inputRef}
+              type="file"
+              accept="image/*,application/pdf"
+              className="hidden"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) void handleUpload(file);
+              }}
+            />
             <Input
               value={filename}
               onChange={(e) => setFilename(e.target.value)}
@@ -181,7 +241,14 @@ function AttachmentRow({
               dir="rtl"
               className="text-sm"
             />
-            <Button type="button" variant="outline" size="icon" className="shrink-0">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="shrink-0"
+              disabled={isPending || isUploading}
+              onClick={() => inputRef.current?.click()}
+            >
               <Upload className="size-4" />
             </Button>
           </div>
@@ -203,10 +270,10 @@ function AttachmentRow({
           type="button"
           size="sm"
           variant="outline"
-          disabled={isPending}
+          disabled={isPending || isUploading}
           onClick={handleSave}
         >
-          {isPending ? "جارٍ الحفظ..." : "حفظ"}
+          {isPending || isUploading ? "جارٍ الحفظ..." : "حفظ"}
         </Button>
       </div>
     </div>

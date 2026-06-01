@@ -1,6 +1,9 @@
 "use client";
 
+import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   FileText,
@@ -10,6 +13,9 @@ import {
   Clock,
   XCircle,
 } from "lucide-react";
+import { toast } from "sonner";
+import { upsertDocument } from "@/lib/actions/branch-compliance";
+import { uploadFileWithPresign } from "@/lib/uploads/client-upload";
 
 // ── Required document types for Lebanese Ministry of Health ──
 const REQUIRED_DOCUMENTS = [
@@ -26,6 +32,8 @@ const REQUIRED_DOCUMENTS = [
   { type: "FLOOR_PLAN", label: "Floor Plan / Layout Drawing", arabicLabel: "خريطة البناء (لا تقل عن 200 م²)" },
   { type: "OTHER", label: "Other Supporting Documents", arabicLabel: "مستندات أخرى" },
 ];
+
+type RequiredDocument = (typeof REQUIRED_DOCUMENTS)[number];
 
 interface Document {
   id: string;
@@ -88,6 +96,7 @@ function getStatusConfig(status: string, expiryDate: string | null) {
 }
 
 export function ComplianceDocumentsClient({
+  branchId,
   documents,
   themeColor = "#1caf9a",
 }: Props) {
@@ -173,19 +182,19 @@ export function ComplianceDocumentsClient({
                       {doc.notes && (
                         <p className="text-xs text-muted-foreground">{doc.notes}</p>
                       )}
+                      <DocumentUploadButton
+                        branchId={branchId}
+                        reqDoc={reqDoc}
+                        doc={doc}
+                      />
                     </div>
                   ) : (
                     <div className="mt-2">
-                      <button
-                        type="button"
-                        className="flex items-center gap-1.5 rounded-lg border border-dashed px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
-                        onClick={() => {
-                          // placeholder — file upload infra doesn't exist yet
-                        }}
-                      >
-                        <Upload className="size-3" />
-                        Coming soon
-                      </button>
+                      <DocumentUploadButton
+                        branchId={branchId}
+                        reqDoc={reqDoc}
+                        doc={doc}
+                      />
                     </div>
                   )}
                 </div>
@@ -194,6 +203,79 @@ export function ComplianceDocumentsClient({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function DocumentUploadButton({
+  branchId,
+  reqDoc,
+  doc,
+}: {
+  branchId: string;
+  reqDoc: RequiredDocument;
+  doc?: Document;
+}) {
+  const router = useRouter();
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  async function handleFile(file: File) {
+    setIsUploading(true);
+    try {
+      const uploaded = await uploadFileWithPresign({
+        branchId,
+        scope: "compliance-document",
+        file,
+        ownerId: doc?.id,
+      });
+
+      const result = await upsertDocument(branchId, {
+        id: doc?.id,
+        documentType: reqDoc.type,
+        label: doc?.label ?? reqDoc.label,
+        filename: file.name,
+        fileUrl: uploaded.publicUrl,
+        status: "UPLOADED",
+      });
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to save uploaded document");
+      }
+
+      toast.success("Document uploaded");
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setIsUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
+  return (
+    <div className="mt-2">
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*,application/pdf"
+        className="hidden"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (file) void handleFile(file);
+        }}
+      />
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="h-8 gap-1.5 rounded-sm border-dashed text-xs"
+        disabled={isUploading}
+        onClick={() => inputRef.current?.click()}
+      >
+        <Upload className="size-3" />
+        {isUploading ? "Uploading..." : doc ? "Replace" : "Upload"}
+      </Button>
     </div>
   );
 }
