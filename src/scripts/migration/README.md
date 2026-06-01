@@ -59,6 +59,7 @@ pnpm tsx src/scripts/migration/migrate-employees.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-users.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-daily-reports.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-absences.ts [--dry-run]
+pnpm tsx src/scripts/migration/migrate-calls.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-medical.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-payments.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-food-calendar.ts [--dry-run]
@@ -78,10 +79,11 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 6. Users          ← needs Branches, Children/Parents
 7. Daily Reports  ← needs Children
 8. Absences       ← needs Children, Users
-9. Medical Forms  ← needs Children
-10. Payments      ← needs Children
-11. Food/Calendar ← needs Branches, Organization
-12. Messages      ← needs Users
+9. Calls          ← needs Children, Employees, Users
+10. Medical Forms ← needs Children
+11. Payments      ← needs Children
+12. Food/Calendar ← needs Branches, Organization
+13. Messages      ← needs Users
 ```
 
 ## Table Mappings
@@ -107,12 +109,12 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_daily_attachments` | DailyReportAttachment |
 | `t_absent_report` | AbsenceReport |
 | `t_absent_attachments` | AbsenceAttachment |
+| `t_form_6` | CallLog and MedicalForm (GENERAL) |
 | `t_form_1` | MedicalForm (GENERAL) |
 | `t_form_2` | MedicalForm (CONDITIONS) |
 | `t_form_3` | MedicalForm (VISITS) |
 | `t_form_4` | MedicalForm (VACCINATIONS) + Vaccination |
 | `t_form_5` | MedicalForm (ACCIDENTS) |
-| `t_form_6` | MedicalForm (GENERAL) |
 | `t_med_forms_info` | MedicalFormEntry |
 | `t_payments` | Payment |
 | `newpayment` | Payment follow-up mapping needed |

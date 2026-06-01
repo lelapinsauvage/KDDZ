@@ -253,7 +253,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie17-18.sql | t_form_3 | 55 | 0 | covered by migrate-medical.ts |
 | kiddzonl_garderie17-18.sql | t_form_4 | 41 | 0 | covered by migrate-medical.ts |
 | kiddzonl_garderie17-18.sql | t_form_5 | 19 | 0 | covered by migrate-medical.ts |
-| kiddzonl_garderie17-18.sql | t_form_6 | 16 | 0 | covered by migrate-medical.ts |
+| kiddzonl_garderie17-18.sql | t_form_6 | 16 | 0 | covered by migrate-medical.ts + migrate-calls.ts |
 | kiddzonl_garderie17-18.sql | t_forms_attachments | 10 | 0 | not covered yet / needs explicit decision |
 | kiddzonl_garderie17-18.sql | t_garderie | 68 | 0 | not covered yet / needs explicit decision |
 | kiddzonl_garderie17-18.sql | t_garderie_attachments | 9 | 0 | not covered yet / needs explicit decision |
@@ -346,7 +346,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie29sept.sql | t_alarms_insurance | 11 | 6 | not covered yet / needs explicit decision |
 | kiddzonl_garderie29sept.sql | login_confirm | 6 | 5 | not covered yet / needs explicit decision |
 | kiddzonl_garderie29sept.sql | t_alarms | 10 | 5 | not covered yet / needs explicit decision |
-| kiddzonl_garderie29sept.sql | t_form_6 | 16 | 5 | covered by migrate-medical.ts |
+| kiddzonl_garderie29sept.sql | t_form_6 | 16 | 5 | covered by migrate-medical.ts + migrate-calls.ts |
 | kiddzonl_garderie29sept.sql | t_form_3 | 55 | 4 | covered by migrate-medical.ts |
 | kiddzonl_garderie29sept.sql | custom_notifications_medicine | 3 | 3 | not covered yet / needs explicit decision |
 | kiddzonl_garderie29sept.sql | t_assessment_4 | 55 | 3 | not covered yet / needs explicit decision |
@@ -479,7 +479,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie_2018-2019.sql | t_form_3 | 55 | 0 | covered by migrate-medical.ts |
 | kiddzonl_garderie_2018-2019.sql | t_form_4 | 41 | 0 | covered by migrate-medical.ts |
 | kiddzonl_garderie_2018-2019.sql | t_form_5 | 19 | 0 | covered by migrate-medical.ts |
-| kiddzonl_garderie_2018-2019.sql | t_form_6 | 16 | 0 | covered by migrate-medical.ts |
+| kiddzonl_garderie_2018-2019.sql | t_form_6 | 16 | 0 | covered by migrate-medical.ts + migrate-calls.ts |
 | kiddzonl_garderie_2018-2019.sql | t_forms_attachments | 10 | 0 | not covered yet / needs explicit decision |
 | kiddzonl_garderie_2018-2019.sql | t_garderie | 68 | 0 | not covered yet / needs explicit decision |
 | kiddzonl_garderie_2018-2019.sql | t_garderie_attachments | 9 | 0 | not covered yet / needs explicit decision |
