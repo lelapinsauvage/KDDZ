@@ -9,12 +9,12 @@ This list is the first implementation backlog after the generated inventory/matr
    - Need confirmation of which dump/year is authoritative for first migration.
 
 2. **Legacy uploaded files/media**
-   - SQL contains many file/image/url columns, but the legacy upload directories are not yet confirmed.
-   - Restoration cannot be exact until child photos, daily attachments, medical attachments, employee files, compliance documents, and invoice files are located.
+   - Legacy upload directories are now mapped in `docs/legacy-file-storage-rules.md`.
+   - `audit-legacy-files.ts` and `export-legacy-files.ts` can verify and stage child photos, daily attachments, medical attachments, employee files, compliance documents, and receipt files before object-storage import.
 
 3. **File storage pipeline**
    - Modern UI has many upload placeholders.
-   - Need S3/R2-style storage, presigned uploads, file metadata, permissions, and migration tooling.
+   - Need S3/R2-style storage, presigned uploads, file metadata, permissions, and provider-specific upload execution from the export manifest.
 
 4. **Full data reconciliation**
    - Existing scripts migrate many core tables but do not yet output full count/skipped/orphan/file reconciliation for every legacy table.

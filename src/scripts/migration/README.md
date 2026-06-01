@@ -208,6 +208,8 @@ The final small garderie-db tables are restored into their modern surfaces: gene
 ### Legacy File Audit
 Legacy file path rules are codified in `legacy-file-rules.ts` and documented in `docs/legacy-file-storage-rules.md`. Before object-storage import, run `pnpm tsx src/scripts/migration/audit-legacy-files.ts` with `MYSQL_DATABASE` pointed at the imported legacy database and `LEGACY_APP_ROOT` pointed at the legacy app backup. The audit reports found, missing, default/empty, and unsafe filename references for every legacy file table/column.
 
+Use `pnpm tsx src/scripts/migration/export-legacy-files.ts --out-dir=/tmp/kiddzonl-legacy-file-export` to copy found legacy files into a provider-neutral export package and write a manifest of exported, missing, default, unsafe, table-missing, and column-missing references.
+
 ### Idempotency
 All scripts check for existing records before inserting, so they can be re-run safely. Already-migrated records are skipped.
 

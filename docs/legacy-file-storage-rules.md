@@ -10,6 +10,17 @@ MYSQL_DATABASE=kiddzonl_garderie29sept \
 pnpm tsx src/scripts/migration/audit-legacy-files.ts --json=legacy-file-audit.json
 ```
 
+To stage a provider-neutral file export package for S3/R2 upload, run:
+
+```bash
+LEGACY_APP_ROOT="/Users/karimsaab/Desktop/Garderie Project/Garderie-old-backup" \
+MYSQL_DATABASE=kiddzonl_garderie29sept \
+pnpm tsx src/scripts/migration/export-legacy-files.ts \
+  --out-dir=/tmp/kiddzonl-legacy-file-export
+```
+
+The export script copies found files under deterministic keys like `legacy/<database>/<rule>/<legacy-id>/<filename>` and writes a `manifest.json` with every exported, missing, default, unsafe, table-missing, or column-missing reference.
+
 | Legacy Table | Column | Legacy Directory | Modern Destination | PHP Evidence | Status |
 | --- | --- | --- | --- | --- | --- |
 | `t_branch` | `image` | `BranchPhoto` | `Branch.imageUrl` | `Data.class.php:6880`, views `3742/3809` | source path identified; filename preserved by `migrate-branches.ts`; needs object storage import |
