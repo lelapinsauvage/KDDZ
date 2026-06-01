@@ -1,6 +1,6 @@
 /**
  * Migration: legacy alarm/notification tables → Alarm, PushToken,
- * NotificationReceipt, and LegacyNotificationLog.
+ * NotificationReceipt, LegacyNotificationLog, and LegacyNotificationNature.
  *
  * Legacy splits notifications into content tables (`t_alarms_*`) and delivery
  * tables (`custom_notifications_*`). The modern `Alarm` table restores the
@@ -14,7 +14,7 @@ import type {
   PushPlatform,
 } from "@/generated/prisma/client";
 import { createPrismaClient } from "./lib/prisma-client";
-import { queryMysql, closeMysqlPool } from "./lib/mysql-client";
+import { queryMysql, closeMysqlPool, getMysqlConfig } from "./lib/mysql-client";
 import {
   cleanString,
   generateUUID,
@@ -64,6 +64,22 @@ interface OldNotificationLog {
   status: number;
   childId: number;
   expiryDate: string;
+}
+
+interface OldNotificationNature {
+  id: number;
+  n_name: string;
+  descr: string;
+  table1: string;
+  table2: string;
+  table3: string;
+  table1_column: string;
+  table3_column: string;
+  child_column: string;
+  subject_col: string;
+  body_col: string;
+  n_order: number;
+  active: number;
 }
 
 const ALARM_CONFIGS: AlarmConfig[] = [
@@ -183,12 +199,6 @@ const RECEIPT_CONFIGS: ReceiptConfig[] = [
   { table: "custom_notifications_payments", alarmTable: "t_alarms_payments", category: "payments", recipientKind: "CHILD" },
   { table: "custom_notifications_vaccinations", alarmTable: "t_alarms_vaccinations", category: "vaccinations", recipientKind: "CHILD" },
 ];
-
-function asRecord(value: unknown): Record<string, unknown> {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : {};
-}
 
 function platformFromLegacy(os: number): PushPlatform {
   if (os === 1) return "ANDROID";
@@ -485,9 +495,72 @@ async function migrateNotificationLogs(prisma: PrismaClient, dryRun: boolean) {
   log(`Notification logs: ${migrated} migrated, ${skipped} skipped`);
 }
 
+async function migrateNotificationNatures(
+  prisma: PrismaClient,
+  dryRun: boolean
+) {
+  const rows = await queryMysql<OldNotificationNature>(
+    "SELECT * FROM notifications_nature ORDER BY id"
+  );
+  log(`Found ${rows.length} notification nature rows`);
+
+  const sourceDatabase = getMysqlConfig().database || "unknown";
+  let migrated = 0;
+  let skipped = 0;
+
+  for (const row of rows) {
+    const legacyId = toInt(row.id);
+    const name = cleanString(row.n_name);
+    if (!legacyId || !name) {
+      skipped++;
+      continue;
+    }
+
+    const legacyKey = `${sourceDatabase}:notifications_nature:${legacyId}`;
+    const existing = await prisma.legacyNotificationNature.findUnique({
+      where: { legacyKey },
+    });
+    if (existing) {
+      skipped++;
+      continue;
+    }
+
+    if (!dryRun) {
+      await prisma.legacyNotificationNature.create({
+        data: {
+          id: generateUUID(),
+          sourceDatabase,
+          legacyKey,
+          legacyId,
+          name,
+          description: cleanString(row.descr),
+          contentTable: cleanString(row.table1),
+          deliveryTable: cleanString(row.table2),
+          parentDeliveryTable: cleanString(row.table3),
+          contentIdColumn: cleanString(row.table1_column),
+          deliveryIdColumn: cleanString(row.table3_column),
+          recipientColumn: cleanString(row.child_column),
+          subjectColumn: cleanString(row.subject_col),
+          bodyColumn: cleanString(row.body_col),
+          displayOrder: toInt(row.n_order, 0) || null,
+          isActive: toBool(row.active),
+          legacyData: JSON.parse(JSON.stringify(row)),
+        },
+      });
+    }
+
+    migrated++;
+    logProgress(migrated, rows.length, "Notification Natures");
+  }
+
+  log(`Notification natures: ${migrated} migrated, ${skipped} skipped`);
+}
+
 export async function migrateAlarms(prisma: PrismaClient) {
   log("=== Migrating Alarms & Notifications ===");
   const dryRun = isDryRun();
+
+  await migrateNotificationNatures(prisma, dryRun);
 
   for (const config of ALARM_CONFIGS) {
     await migrateAlarmTable(prisma, config, dryRun);

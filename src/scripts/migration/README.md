@@ -150,6 +150,7 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `custom_notifications_*` delivery tables | NotificationReceipt |
 | `notifications_tokens` | PushToken |
 | `t_notifications_log` | LegacyNotificationLog |
+| `notifications_nature` | LegacyNotificationNature |
 | `t_alarms_msg` | MessageThread, Message |
 | `custom_notifications_msg` | Message (per-recipient) |
 

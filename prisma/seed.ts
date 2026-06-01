@@ -26,6 +26,7 @@ async function main() {
     await tx.notification.deleteMany();
     await tx.notificationReceipt.deleteMany();
     await tx.legacyNotificationLog.deleteMany();
+    await tx.legacyNotificationNature.deleteMany();
     await tx.legacyLoginTimestamp.deleteMany();
     await tx.legacySetting.deleteMany();
     await tx.alarm.deleteMany();

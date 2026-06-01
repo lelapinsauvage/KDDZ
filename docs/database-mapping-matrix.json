@@ -1099,9 +1099,9 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "notifications_nature",
     "legacyColumns": "id:int(11) NOT NULL, n_name:varchar(150) NOT NULL, descr:text NOT NULL, table1:varchar(150) NOT NULL, table2:varchar(150) NOT NULL, table3:varchar(50) NOT NULL, table1_column:varchar(50) NOT NULL, table3_column:varchar(50) NOT NULL, child_column:varchar(50) NOT NULL, subject_col:varchar(50) NOT NULL, body_col:varchar(50) NOT NULL, n_order:int(11) NOT NULL, active:int(11) NOT NULL DEFAULT '1'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyNotificationNature",
+    "status": "mapped - migrated by migrate-alarms.ts",
+    "reconciliation": "Legacy notification nature catalog rows preserved with category name, source/delivery table mappings, column mappings, display order, active flag, and raw legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",

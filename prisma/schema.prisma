@@ -2068,6 +2068,34 @@ model LegacyNotificationLog {
   @@map("legacy_notification_logs")
 }
 
+model LegacyNotificationNature {
+  id                   String   @id @default(uuid()) @db.Uuid
+  sourceDatabase       String
+  legacyKey            String   @unique
+  legacyId             Int
+  name                 String
+  description          String?  @db.Text
+  contentTable         String?
+  deliveryTable        String?
+  parentDeliveryTable  String?
+  contentIdColumn      String?
+  deliveryIdColumn     String?
+  recipientColumn      String?
+  subjectColumn        String?
+  bodyColumn           String?
+  displayOrder         Int?
+  isActive             Boolean  @default(true)
+  legacyData           Json?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([name])
+  @@index([isActive])
+  @@map("legacy_notification_natures")
+}
+
 model LegacyLoginTimestamp {
   id             String    @id @default(uuid()) @db.Uuid
   sourceDatabase String

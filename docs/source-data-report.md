@@ -21,7 +21,6 @@ These are the highest-risk migration gaps because source data exists and no curr
 
 | SQL Dump | Legacy Table | Estimated Rows | Columns |
 | --- | --- | --- | --- |
-| kiddzonl_garderie29sept.sql | notifications_nature | 11 | id, n_name, descr, table1, table2, table3, table1_column, table3_column, child_column, subject_col, body_col, n_order, active |
 | kiddzonl_garderie29sept.sql | t_old_garderie | 8 | gid, gname, gyear, child_id, active, datetime |
 | kiddzonl_garderie29sept.sql | t_garderie_attachments | 7 | fattid, branch_id, att_title, exp_date, start_date, url, type, datetime, active |
 | kiddzonl_garderie29sept.sql | login_confirm | 5 | id, data, username, email, key, type |
@@ -286,7 +285,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie29sept.sql | t_form_5 | 19 | 14 | covered by migrate-medical.ts |
 | kiddzonl_garderie29sept.sql | t_daily_fever | 6 | 13 | covered by migrate-daily-reports.ts |
 | kiddzonl_garderie29sept.sql | t_settings | 4 | 13 | covered by migrate-settings.ts |
-| kiddzonl_garderie29sept.sql | notifications_nature | 13 | 11 | not covered yet / needs explicit decision |
+| kiddzonl_garderie29sept.sql | notifications_nature | 13 | 11 | covered by migrate-alarms.ts |
 | kiddzonl_garderie29sept.sql | t_teacher | 46 | 11 | covered by migrate-employees.ts |
 | kiddzonl_garderie29sept.sql | t_teacher_attachments | 8 | 10 | covered by migrate-employees.ts |
 | kiddzonl_garderie29sept.sql | t_alarms_contracts | 10 | 9 | covered by migrate-alarms.ts |
