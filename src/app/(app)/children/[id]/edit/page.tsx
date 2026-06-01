@@ -167,6 +167,15 @@ export default async function ChildEditPage({ params }: ChildDetailsPageProps) {
       amount: Number(entry.amount),
       type: entry.type as "FEE" | "DISCOUNT" | "PAYMENT" | "ADJUSTMENT",
     })),
+
+    // Attachments
+    attachments: (child.attachments ?? []).map((attachment) => ({
+      id: attachment.id,
+      title: attachment.title ?? "",
+      filename: attachment.filename,
+      fileUrl: attachment.fileUrl,
+      type: attachment.type ?? "",
+    })),
   };
 
   return (

@@ -56,6 +56,14 @@ const accountingEntrySchema = z.object({
   type: z.enum(["FEE", "DISCOUNT", "PAYMENT", "ADJUSTMENT"]),
 });
 
+const childAttachmentSchema = z.object({
+  id: z.string().uuid().optional(),
+  title: z.string().default(""),
+  filename: z.string().min(1, "Filename is required").max(255),
+  fileUrl: z.string().min(1, "File URL is required").max(2048),
+  type: z.string().default(""),
+});
+
 const guardianDefaults = {
   firstName: "",
   lastName: "",
@@ -147,6 +155,9 @@ export const childFormSchema = z.object({
 
   // Accounting
   accountingEntries: z.array(accountingEntrySchema).default([]),
+
+  // Attachments
+  attachments: z.array(childAttachmentSchema).default([]),
 });
 
 export type ChildFormValues = z.input<typeof childFormSchema>;

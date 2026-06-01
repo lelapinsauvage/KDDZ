@@ -24,6 +24,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - Daily report attachments now upload through the presign route, preserve existing attachments on edit, and update `DailyReportAttachment` rows for additions/removals.
    - Employee document rows now upload through the presign route before save and persist URLs through the existing teacher/nurse/doctor document actions.
    - Call log and accident form dialogs now upload through the `form-attachment` scope and create `FormAttachment` rows.
+   - Child enrollment/edit forms now upload profile photos and child documents, storing URLs on `Child.photo` and `ChildAttachment.fileUrl`.
    - Remaining work is child-history JSON snapshot URL patching, upload attach/update actions for the remaining non-compliance surfaces, local multipart upload support if needed, and replacement of the remaining upload placeholders.
 
 4. **Full data reconciliation**

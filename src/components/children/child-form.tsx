@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { childFormSchema, type ChildFormValues } from "@/lib/validations/child";
 import { createChild, updateChild } from "@/lib/actions/children";
+import { uploadFileWithPresign } from "@/lib/uploads/client-upload";
 import { getBranches } from "@/lib/actions/branches";
 import { getClasses } from "@/lib/actions/classes";
 import { getSchoolYears } from "@/lib/actions/school-years";
@@ -36,7 +37,10 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  FileText,
+  ImageIcon,
   Upload,
+  X,
 } from "lucide-react";
 
 // ── Constants ──
@@ -128,11 +132,11 @@ const WIZARD_STEPS = [
 const DRAFT_STORAGE_KEY = "child-enrollment-draft";
 
 const ATTACHMENT_TYPES = [
-  { key: "photo", label: "Photo" },
   { key: "id", label: "ID Document" },
   { key: "vaccination", label: "Vaccination Card" },
   { key: "doctor", label: "Doctor Assessment" },
   { key: "medical", label: "Medical Report" },
+  { key: "other", label: "Other Attachment" },
 ];
 
 // ── Helper: form field with label + error ──
@@ -360,6 +364,15 @@ interface ChildFormProps {
   childId?: string;
 }
 
+type ChildAttachmentValue = NonNullable<ChildFormValues["attachments"]>[number];
+
+interface PendingChildAttachment {
+  key: string;
+  type: string;
+  title: string;
+  file: File;
+}
+
 /** Convert ChildFormValues to FormData for server action consumption */
 function toFormData(data: ChildFormValues, isDraft = false): FormData {
   const fd = new FormData();
@@ -418,6 +431,7 @@ function toFormData(data: ChildFormValues, isDraft = false): FormData {
   fd.set("siblings", JSON.stringify(data.siblings ?? []));
   fd.set("relatives", JSON.stringify(data.relatives ?? []));
   fd.set("accountingEntries", JSON.stringify(data.accountingEntries ?? []));
+  fd.set("attachments", JSON.stringify(data.attachments ?? []));
 
   return fd;
 }
@@ -548,6 +562,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
       tva: 0,
       financialRemarks: "",
       accountingEntries: [],
+      attachments: [],
       ...defaultValues,
     },
   });
@@ -578,6 +593,62 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
 
   const watchPreviousGarderie = watch("previousGarderie");
   const watchedBranchId = watch("branchId");
+  const selectedPhotoUrl = watch("photo");
+  const attachmentValues = watch("attachments") ?? [];
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
+  const [pendingAttachments, setPendingAttachments] = useState<PendingChildAttachment[]>([]);
+  const [removedAttachmentIds, setRemovedAttachmentIds] = useState<string[]>([]);
+
+  const visibleExistingAttachments = attachmentValues.filter(
+    (attachment): attachment is ChildAttachmentValue & { id: string } => {
+      const id = attachment.id;
+      if (!id) return false;
+      return !removedAttachmentIds.includes(id);
+    }
+  );
+
+  function setSelectedPhoto(file: File) {
+    if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+    setPhotoFile(file);
+    setPhotoPreviewUrl(URL.createObjectURL(file));
+  }
+
+  function clearSelectedPhoto() {
+    if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+    setPhotoFile(null);
+    setPhotoPreviewUrl(null);
+  }
+
+  function addPendingAttachment(type: string, title: string, file: File) {
+    setPendingAttachments((current) => [
+      ...current,
+      {
+        key: `${type}-${file.name}-${file.lastModified}-${crypto.randomUUID()}`,
+        type,
+        title,
+        file,
+      },
+    ]);
+  }
+
+  function removePendingAttachment(key: string) {
+    setPendingAttachments((current) =>
+      current.filter((attachment) => attachment.key !== key)
+    );
+  }
+
+  function removeExistingAttachment(id: string) {
+    setRemovedAttachmentIds((current) =>
+      current.includes(id) ? current : [...current, id]
+    );
+  }
+
+  useEffect(() => {
+    return () => {
+      if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+    };
+  }, [photoPreviewUrl]);
 
   // Auto-save draft to localStorage on step changes (non-edit mode only)
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -683,8 +754,78 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
     setCurrentStep(step);
   }
 
+  async function prepareFormDataWithUploads(
+    data: ChildFormValues,
+    isDraft = false
+  ): Promise<FormData | null> {
+    const needsFileUpload = Boolean(photoFile) || pendingAttachments.length > 0;
+    if (needsFileUpload && !data.branchId) {
+      toast.error("Select a branch before uploading files");
+      return null;
+    }
+
+    let nextPhoto = data.photo ?? "";
+    const nextAttachments: ChildAttachmentValue[] = [...(data.attachments ?? [])];
+
+    try {
+      if (photoFile && data.branchId) {
+        const uploaded = await uploadFileWithPresign({
+          branchId: data.branchId,
+          scope: "child",
+          ownerId: childId,
+          file: photoFile,
+        });
+        nextPhoto = uploaded.publicUrl;
+      }
+
+      for (const attachment of pendingAttachments) {
+        if (!data.branchId) break;
+        const uploaded = await uploadFileWithPresign({
+          branchId: data.branchId,
+          scope: "child-document",
+          ownerId: childId,
+          file: attachment.file,
+        });
+        nextAttachments.push({
+          title: attachment.title,
+          filename: attachment.file.name,
+          fileUrl: uploaded.publicUrl,
+          type: attachment.type,
+        });
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to upload files"
+      );
+      return null;
+    }
+
+    if (photoFile) {
+      setValue("photo", nextPhoto, { shouldDirty: true });
+      clearSelectedPhoto();
+    }
+    if (pendingAttachments.length > 0) {
+      setValue("attachments", nextAttachments, { shouldDirty: true });
+      setPendingAttachments([]);
+    }
+
+    const fd = toFormData(
+      {
+        ...data,
+        photo: nextPhoto,
+        attachments: nextAttachments,
+      },
+      isDraft
+    );
+    if (removedAttachmentIds.length) {
+      fd.set("removeAttachmentIds", JSON.stringify(removedAttachmentIds));
+    }
+    return fd;
+  }
+
   async function onSubmit(data: ChildFormValues) {
-    const fd = toFormData(data);
+    const fd = await prepareFormDataWithUploads(data);
+    if (!fd) return;
     let result;
     if (isEditing && childId) {
       result = await updateChild(childId, fd);
@@ -711,7 +852,8 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
 
   async function onSaveDraft() {
     const values = watch();
-    const fd = toFormData(values as ChildFormValues, true);
+    const fd = await prepareFormDataWithUploads(values as ChildFormValues, true);
+    if (!fd) return;
     let result;
     if (isEditing && childId) {
       result = await updateChild(childId, fd);
@@ -919,8 +1061,60 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                     <Input {...register("idNumber")} placeholder="National ID or document number" />
                   </FormField>
 
-                  <FormField label="Photo URL" error={errors.photo?.message}>
-                    <Input {...register("photo")} placeholder="Photo URL or upload path" />
+                  <FormField
+                    label="Photo"
+                    error={errors.photo?.message}
+                    className="md:col-span-2 lg:col-span-3"
+                  >
+                    <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted/20 p-3 sm:flex-row sm:items-center">
+                      <div className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-background">
+                        {photoPreviewUrl || selectedPhotoUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={photoPreviewUrl || selectedPhotoUrl}
+                            alt=""
+                            className="size-full object-cover"
+                          />
+                        ) : (
+                          <ImageIcon className="size-7 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1 space-y-2">
+                        <Input {...register("photo")} placeholder="Photo URL or uploaded file URL" />
+                        <div className="flex flex-wrap items-center gap-2">
+                          <label className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-medium shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground">
+                            <Upload className="size-4" />
+                            Upload photo
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(event) => {
+                                const file = event.target.files?.[0];
+                                if (file) setSelectedPhoto(file);
+                                event.target.value = "";
+                              }}
+                            />
+                          </label>
+                          {photoFile && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={clearSelectedPhoto}
+                            >
+                              <X className="mr-1 size-4" />
+                              Clear selected
+                            </Button>
+                          )}
+                        </div>
+                        {photoFile && (
+                          <p className="truncate text-xs text-muted-foreground">
+                            Selected: {photoFile.name}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </FormField>
                 </div>
 
@@ -1973,33 +2167,112 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                  ════════════════════════════════════════════ */}
             {currentStep === 4 && (
               <FormSection title="Attachments" color="green">
-                <div className="rounded-sm border-2 border-dashed border-border bg-muted/20 p-8 text-center transition-colors hover:border-primary/40 hover:bg-muted/30">
-                  <Upload className="mx-auto mb-4 size-12 text-muted-foreground" />
-                  <p className="text-sm font-medium text-foreground">
-                    Drag and drop files here, or click to browse
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Coming soon &mdash; file upload will be available in a future update
-                  </p>
-                </div>
-
-                <div className="mt-6">
+                <div>
                   <h4 className="mb-3 text-sm font-semibold text-foreground">Required Documents</h4>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {ATTACHMENT_TYPES.map((doc) => (
-                      <div
-                        key={doc.key}
-                        className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3"
-                      >
-                        <div className="flex size-8 items-center justify-center rounded-full bg-muted">
-                          <Paperclip className="size-4 text-muted-foreground" />
+                  <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                    {ATTACHMENT_TYPES.map((doc) => {
+                      const existingForType = visibleExistingAttachments.filter(
+                        (attachment) =>
+                          doc.key === "other"
+                            ? !attachment.type || attachment.type === doc.key
+                            : attachment.type === doc.key
+                      );
+                      const pendingForType = pendingAttachments.filter(
+                        (attachment) => attachment.type === doc.key
+                      );
+                      const hasFiles = existingForType.length > 0 || pendingForType.length > 0;
+
+                      return (
+                        <div
+                          key={doc.key}
+                          className="rounded-lg border border-border bg-card p-4"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex min-w-0 items-center gap-3">
+                              <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted">
+                                <Paperclip className="size-4 text-muted-foreground" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium text-foreground">{doc.label}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {hasFiles
+                                    ? `${existingForType.length + pendingForType.length} file(s)`
+                                    : "Not uploaded"}
+                                </p>
+                              </div>
+                            </div>
+
+                            <label className="inline-flex h-9 shrink-0 cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-medium shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground">
+                              <Upload className="size-4" />
+                              Add
+                              <input
+                                type="file"
+                                accept="image/*,.pdf"
+                                className="hidden"
+                                onChange={(event) => {
+                                  const files = Array.from(event.target.files ?? []);
+                                  for (const file of files) {
+                                    addPendingAttachment(doc.key, doc.label, file);
+                                  }
+                                  event.target.value = "";
+                                }}
+                                multiple
+                              />
+                            </label>
+                          </div>
+
+                          {hasFiles && (
+                            <div className="mt-3 space-y-2">
+                              {existingForType.map((attachment) => (
+                                <div
+                                  key={attachment.id}
+                                  className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2"
+                                >
+                                  <FileText className="size-4 shrink-0 text-muted-foreground" />
+                                  <a
+                                    href={attachment.fileUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="min-w-0 flex-1 truncate text-sm text-primary hover:underline"
+                                  >
+                                    {attachment.title || attachment.filename}
+                                  </a>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-xs"
+                                    className="shrink-0 text-muted-foreground hover:text-destructive"
+                                    onClick={() => removeExistingAttachment(attachment.id)}
+                                  >
+                                    <X className="size-3.5" />
+                                  </Button>
+                                </div>
+                              ))}
+                              {pendingForType.map((attachment) => (
+                                <div
+                                  key={attachment.key}
+                                  className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2"
+                                >
+                                  <FileText className="size-4 shrink-0 text-muted-foreground" />
+                                  <span className="min-w-0 flex-1 truncate text-sm">
+                                    {attachment.file.name}
+                                  </span>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-xs"
+                                    className="shrink-0 text-muted-foreground hover:text-destructive"
+                                    onClick={() => removePendingAttachment(attachment.key)}
+                                  >
+                                    <X className="size-3.5" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-foreground">{doc.label}</p>
-                          <p className="text-xs text-muted-foreground">Not uploaded</p>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </FormSection>

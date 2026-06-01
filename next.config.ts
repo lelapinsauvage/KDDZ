@@ -1,8 +1,14 @@
+import { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { NextConfig } from "next";
 import withSerwist from "@serwist/next";
 
+const projectRoot = dirname(fileURLToPath(import.meta.url));
+
 const nextConfig: NextConfig = {
-  turbopack: {},
+  turbopack: {
+    root: projectRoot,
+  },
   async headers() {
     return [
       {

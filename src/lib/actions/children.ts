@@ -6,6 +6,7 @@ import { verifyBranchAccess, verifyChildAccess } from "@/lib/verify-org-access";
 import { revalidatePath } from "next/cache";
 import { childFormSchema, childDraftSchema } from "@/lib/validations/child";
 import type { Prisma } from "@/generated/prisma/client";
+import { z } from "zod";
 
 // ── Types ─────────────────────────────────────────
 
@@ -25,11 +26,50 @@ type ActionResult =
   | { success: true; id: string }
   | { success: false; error: string };
 
+type ChildAttachmentInput = {
+  id?: string;
+  title?: string;
+  filename: string;
+  fileUrl: string;
+  type?: string;
+};
+
 // ── Helpers ───────────────────────────────────────
+
+const removeAttachmentIdsSchema = z.array(z.string().uuid()).max(50);
 
 function parseTimeField(value: string | undefined): Date | null {
   if (!value) return null;
   return new Date(`1970-01-01T${value}`);
+}
+
+function parseJsonPayload<T>(
+  value: unknown,
+  schema: z.ZodType<T>,
+  fallback: T
+): T {
+  if (!value || typeof value !== "string") return fallback;
+  try {
+    const parsed = schema.safeParse(JSON.parse(value));
+    return parsed.success ? parsed.data : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function parseRemoveAttachmentIds(value: unknown): string[] {
+  return parseJsonPayload(value, removeAttachmentIdsSchema, []);
+}
+
+function childAttachmentCreates(attachments: ChildAttachmentInput[]) {
+  return attachments
+    .filter((attachment) => !attachment.id && attachment.fileUrl && attachment.filename)
+    .map((attachment) => ({
+      title: attachment.title || null,
+      filename: attachment.filename,
+      fileUrl: attachment.fileUrl,
+      type: attachment.type || null,
+    }));
 }
 
 function parseParentData(raw: Record<string, unknown>) {
@@ -43,6 +83,7 @@ function parseParentData(raw: Record<string, unknown>) {
     accountingEntries: raw.accountingEntries
       ? JSON.parse(raw.accountingEntries as string)
       : [],
+    attachments: parseJsonPayload(raw.attachments, z.array(z.unknown()), []),
     busAttendance: (raw.busAttendance as string) || "false",
     isActive: raw.isActive === "true" || raw.isActive === undefined,
     isDraft: raw.isDraft === "true",
@@ -168,6 +209,9 @@ export async function getChild(id: string) {
         addresses: {
           include: { region: true },
         },
+        attachments: {
+          orderBy: { createdAt: "desc" },
+        },
       },
     });
 
@@ -203,6 +247,7 @@ export async function createChild(formData: FormData): Promise<ActionResult> {
     }
 
     const data = validation.data;
+    const attachmentCreates = childAttachmentCreates(data.attachments);
 
     // Verify the target branch belongs to this org
     const branchOk = await verifyBranchAccess(data.branchId, ctx.organizationId);
@@ -370,6 +415,14 @@ export async function createChild(formData: FormData): Promise<ActionResult> {
               },
             }
           : {}),
+
+        ...(attachmentCreates.length > 0
+          ? {
+              attachments: {
+                create: attachmentCreates,
+              },
+            }
+          : {}),
       },
     });
 
@@ -410,6 +463,7 @@ export async function updateChild(
     if (!childOk) return { success: false, error: "Child not found" };
     const raw = Object.fromEntries(formData.entries()) as Record<string, unknown>;
     const parsed = parseParentData(raw);
+    const removeAttachmentIds = parseRemoveAttachmentIds(raw.removeAttachmentIds);
 
     const schema = parsed.isDraft ? childDraftSchema : childFormSchema;
     const validation = schema.safeParse(parsed);
@@ -422,6 +476,11 @@ export async function updateChild(
     }
 
     const data = validation.data;
+    const attachmentCreates = childAttachmentCreates(data.attachments);
+    const attachmentUpdates = data.attachments.filter(
+      (attachment) =>
+        attachment.id && !removeAttachmentIds.includes(attachment.id)
+    );
 
     // Verify child exists
     const existing = await db.child.findUnique({
@@ -600,6 +659,36 @@ export async function updateChild(
           amount: entry.amount,
           type: entry.type,
           date: new Date(),
+        })),
+      });
+    }
+
+    if (removeAttachmentIds.length) {
+      await db.childAttachment.deleteMany({
+        where: {
+          childId: id,
+          id: { in: removeAttachmentIds },
+        },
+      });
+    }
+
+    for (const attachment of attachmentUpdates) {
+      await db.childAttachment.updateMany({
+        where: { childId: id, id: attachment.id },
+        data: {
+          title: attachment.title || null,
+          filename: attachment.filename,
+          fileUrl: attachment.fileUrl,
+          type: attachment.type || null,
+        },
+      });
+    }
+
+    if (attachmentCreates.length > 0) {
+      await db.childAttachment.createMany({
+        data: attachmentCreates.map((attachment) => ({
+          childId: id,
+          ...attachment,
         })),
       });
     }
