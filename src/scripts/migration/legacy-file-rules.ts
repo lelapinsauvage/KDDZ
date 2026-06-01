@@ -1,0 +1,333 @@
+import path from "path";
+
+export interface LegacyFileRule {
+  id: string;
+  legacyTable: string;
+  legacyIdColumn: string;
+  legacyFileColumn: string;
+  legacyDirectory: string;
+  modernDestination: string;
+  modernStorageKeyPrefix: string;
+  legacyTitleColumn?: string;
+  legacyOwnerColumn?: string;
+  legacyActiveColumn?: string;
+  uploadHandlers: string[];
+  viewHandlers: string[];
+  notes?: string;
+}
+
+export const LEGACY_ADMIN_IMAGES_RELATIVE_PATH =
+  "Front/templates/admin/images";
+
+export const LEGACY_FILE_RULES: LegacyFileRule[] = [
+  {
+    id: "branch-photo",
+    legacyTable: "t_branch",
+    legacyIdColumn: "brid",
+    legacyFileColumn: "image",
+    legacyDirectory: "BranchPhoto",
+    modernDestination: "Branch.imageUrl",
+    modernStorageKeyPrefix: "branches/{branchId}/profile",
+    legacyOwnerColumn: "brid",
+    legacyActiveColumn: "active",
+    uploadHandlers: ["Data.class.php:6880 BenBranchImage"],
+    viewHandlers: ["Data.class.php:3742,3809 images/BranchPhoto"],
+  },
+  {
+    id: "class-photo",
+    legacyTable: "t_class",
+    legacyIdColumn: "clid",
+    legacyFileColumn: "image",
+    legacyDirectory: "ClassPhoto",
+    modernDestination: "Class.imageUrl",
+    modernStorageKeyPrefix: "classes/{classId}/profile",
+    legacyOwnerColumn: "clid",
+    legacyActiveColumn: "active",
+    uploadHandlers: ["Data.class.php:7012 BenClassImage"],
+    viewHandlers: ["Data.class.php:3576,3634 images/ClassPhoto"],
+  },
+  {
+    id: "child-photo",
+    legacyTable: "t_child",
+    legacyIdColumn: "cid",
+    legacyFileColumn: "image",
+    legacyDirectory: "EmpPhoto",
+    modernDestination: "Child.photo",
+    modernStorageKeyPrefix: "children/{childId}/profile",
+    legacyOwnerColumn: "cid",
+    legacyActiveColumn: "active",
+    uploadHandlers: ["Data.class.php:11594 BenImage"],
+    viewHandlers: ["Data.class.php:431,705,913,1126,1383 images/EmpPhoto"],
+  },
+  {
+    id: "child-draft-photo",
+    legacyTable: "t_child_draft",
+    legacyIdColumn: "cid",
+    legacyFileColumn: "image",
+    legacyDirectory: "EmpPhoto",
+    modernDestination: "Child.photo for draft child imports",
+    modernStorageKeyPrefix: "children/{childId}/profile",
+    legacyOwnerColumn: "cid",
+    legacyActiveColumn: "active",
+    uploadHandlers: ["Data.class.php:11594 BenImage"],
+    viewHandlers: ["Data.class.php:431,705,913,1126,1383 images/EmpPhoto"],
+  },
+  {
+    id: "child-history-photo",
+    legacyTable: "t_child_h",
+    legacyIdColumn: "cid",
+    legacyFileColumn: "image",
+    legacyDirectory: "EmpPhoto",
+    modernDestination: "ChildHistory.snapshot.image",
+    modernStorageKeyPrefix: "children/{childId}/history",
+    legacyOwnerColumn: "cid",
+    legacyActiveColumn: "active",
+    uploadHandlers: ["Data.class.php:11594 BenImage"],
+    viewHandlers: ["Data.class.php:431,705,913,1126,1383 images/EmpPhoto"],
+  },
+  {
+    id: "child-document",
+    legacyTable: "t_attachments",
+    legacyIdColumn: "attid",
+    legacyFileColumn: "url",
+    legacyDirectory: "EmpDocs",
+    modernDestination: "ChildAttachment.fileUrl",
+    modernStorageKeyPrefix: "children/{childId}/documents",
+    legacyTitleColumn: "att_title",
+    legacyOwnerColumn: "child_id",
+    legacyActiveColumn: "active",
+    uploadHandlers: [
+      "Data.class.php:9361 AddAttToChild",
+      "Data.class.php:11602 BenImageAtt",
+      "ajax/v1/index.php:4151 /AddAttToChild",
+    ],
+    viewHandlers: ["Data.class.php:11660 t_attachments"],
+  },
+  {
+    id: "garderie-document",
+    legacyTable: "t_garderie_attachments",
+    legacyIdColumn: "fattid",
+    legacyFileColumn: "url",
+    legacyDirectory: "Garderie",
+    modernDestination: "BranchDocument.fileUrl",
+    modernStorageKeyPrefix: "branches/{branchId}/compliance",
+    legacyTitleColumn: "att_title",
+    legacyOwnerColumn: "branch_id",
+    legacyActiveColumn: "active",
+    uploadHandlers: [
+      "Data.class.php:9394 AddAttToGarderie",
+      "Data.class.php:9402 BenImageGAtt",
+      "ajax/v1/index.php:4168 /AddAttToGarderie",
+    ],
+    viewHandlers: ["Data.class.php:9427 images/Garderie"],
+  },
+  {
+    id: "teacher-photo",
+    legacyTable: "t_teacher",
+    legacyIdColumn: "teacher_id",
+    legacyFileColumn: "image",
+    legacyDirectory: "TeacherPhoto",
+    modernDestination: "Teacher.imageUrl",
+    modernStorageKeyPrefix: "staff/teachers/{teacherId}/profile",
+    legacyOwnerColumn: "teacher_id",
+    legacyActiveColumn: "active",
+    uploadHandlers: ["Data.class.php:7850 BenTeacherImage"],
+    viewHandlers: ["Data.class.php:1611,4242,4305 images/TeacherPhoto"],
+  },
+  {
+    id: "teacher-document",
+    legacyTable: "t_teacher_attachments",
+    legacyIdColumn: "tattid",
+    legacyFileColumn: "url",
+    legacyDirectory: "TeacherDocs",
+    modernDestination: "TeacherAttachment.fileUrl",
+    modernStorageKeyPrefix: "staff/teachers/{teacherId}/documents",
+    legacyTitleColumn: "att_title",
+    legacyOwnerColumn: "teacher_id",
+    legacyActiveColumn: "active",
+    uploadHandlers: [
+      "Data.class.php:7733 AddAttToTeacher",
+      "Data.class.php:7843 BenImageTeacherAtt",
+      "ajax/v1/index.php:3591 /AddAttToTeacher",
+      "ajax/v1/index.php:3626 /AddAttToTeacherN",
+      "ajax/v1/index.php:3665 /AddAttToTeacherNN",
+    ],
+    viewHandlers: ["Data.class.php:13754-13868 images/TeacherDocs"],
+  },
+  {
+    id: "nurse-photo",
+    legacyTable: "t_nurse",
+    legacyIdColumn: "teacher_id",
+    legacyFileColumn: "image",
+    legacyDirectory: "NursePhoto",
+    modernDestination: "Nurse.imageUrl",
+    modernStorageKeyPrefix: "staff/nurses/{nurseId}/profile",
+    legacyOwnerColumn: "teacher_id",
+    legacyActiveColumn: "active",
+    uploadHandlers: ["Data.class.php:7871 BenNurseImage"],
+    viewHandlers: ["Data.class.php:4002,4062 images/NursePhoto"],
+  },
+  {
+    id: "nurse-document",
+    legacyTable: "t_nurse_attachments",
+    legacyIdColumn: "tattid",
+    legacyFileColumn: "url",
+    legacyDirectory: "NurseDocs",
+    modernDestination: "NurseAttachment.fileUrl",
+    modernStorageKeyPrefix: "staff/nurses/{nurseId}/documents",
+    legacyTitleColumn: "att_title",
+    legacyOwnerColumn: "teacher_id",
+    legacyActiveColumn: "active",
+    uploadHandlers: [
+      "Data.class.php:7805 BenImageNurseAtt",
+      "ajax/v1/index.php:3724 /AddAttToNurseN",
+    ],
+    viewHandlers: ["Data.class.php:13990-14017 images/NurseDocs"],
+  },
+  {
+    id: "doctor-photo",
+    legacyTable: "t_garderie_doctor",
+    legacyIdColumn: "teacher_id",
+    legacyFileColumn: "image",
+    legacyDirectory: "DoctorPhoto",
+    modernDestination: "Doctor.imageUrl",
+    modernStorageKeyPrefix: "staff/doctors/{doctorId}/profile",
+    legacyOwnerColumn: "teacher_id",
+    legacyActiveColumn: "active",
+    uploadHandlers: ["Data.class.php:7864 BenDoctorImage"],
+    viewHandlers: ["Data.class.php:3879,3941 images/DoctorPhoto"],
+  },
+  {
+    id: "doctor-document",
+    legacyTable: "t_garderie_doctor_attachments",
+    legacyIdColumn: "tattid",
+    legacyFileColumn: "url",
+    legacyDirectory: "DoctorDocs",
+    modernDestination: "DoctorAttachment.fileUrl",
+    modernStorageKeyPrefix: "staff/doctors/{doctorId}/documents",
+    legacyTitleColumn: "att_title",
+    legacyOwnerColumn: "teacher_id",
+    legacyActiveColumn: "active",
+    uploadHandlers: [
+      "Data.class.php:7788 BenImageDoctorAtt",
+      "ajax/v1/index.php:3705 /AddAttToDoctorN",
+    ],
+    viewHandlers: ["Data.class.php:13891-13967 images/DoctorDocs"],
+  },
+  {
+    id: "manager-photo",
+    legacyTable: "t_manager",
+    legacyIdColumn: "teacher_id",
+    legacyFileColumn: "image",
+    legacyDirectory: "ManagerPhoto",
+    modernDestination: "Manager image field - schema gap",
+    modernStorageKeyPrefix: "staff/managers/{managerId}/profile",
+    legacyOwnerColumn: "teacher_id",
+    legacyActiveColumn: "active",
+    uploadHandlers: ["Data.class.php:7857 BenManagerImage"],
+    viewHandlers: ["Data.class.php:4123,4183 images/ManagerPhoto"],
+    notes: "Modern Manager currently has no imageUrl column; add one before final file import.",
+  },
+  {
+    id: "manager-document",
+    legacyTable: "t_manager_attachments",
+    legacyIdColumn: "tattid",
+    legacyFileColumn: "url",
+    legacyDirectory: "ManagerDocs",
+    modernDestination: "ManagerAttachment.fileUrl",
+    modernStorageKeyPrefix: "staff/managers/{managerId}/documents",
+    legacyTitleColumn: "att_title",
+    legacyOwnerColumn: "teacher_id",
+    legacyActiveColumn: "active",
+    uploadHandlers: [
+      "Data.class.php:7737 BenImageManagerAtt",
+      "ajax/v1/index.php:3608 /AddAttToManager",
+      "ajax/v1/index.php:3645 /AddAttToManagerN",
+      "ajax/v1/index.php:3684 /AddAttToManagerNN",
+    ],
+    viewHandlers: ["Data.class.php:13829-13868 images/ManagerDocs"],
+  },
+  {
+    id: "payment-receipt",
+    legacyTable: "t_payments",
+    legacyIdColumn: "cpid",
+    legacyFileColumn: "image",
+    legacyDirectory: "AccDocs",
+    modernDestination: "Payment receipt file - schema gap",
+    modernStorageKeyPrefix: "children/{childId}/payments",
+    legacyOwnerColumn: "cid",
+    legacyActiveColumn: "active",
+    uploadHandlers: ["Data.class.php:11413 BenImageAcc"],
+    viewHandlers: ["Data.class.php:9695,9969,10157,13618 images/AccDocs"],
+    notes: "Modern Payment currently does not store receipt image metadata.",
+  },
+  {
+    id: "daily-report-document",
+    legacyTable: "t_daily_attachments",
+    legacyIdColumn: "rattid",
+    legacyFileColumn: "url",
+    legacyDirectory: "RepDocs",
+    modernDestination: "DailyReportAttachment.fileUrl",
+    modernStorageKeyPrefix: "daily-reports/{dailyReportId}/attachments",
+    legacyTitleColumn: "att_title",
+    legacyOwnerColumn: "formid",
+    legacyActiveColumn: "active",
+    uploadHandlers: [
+      "Data.class.php:20061 AddAttToDaily",
+      "Data.class.php:20073 BenImageReport",
+      "ajax/v1/index.php:3765 /AddAttToDaily",
+    ],
+    viewHandlers: ["Data.class.php:15194 t_daily_attachments"],
+  },
+  {
+    id: "absence-document",
+    legacyTable: "t_absent_attachments",
+    legacyIdColumn: "rattid",
+    legacyFileColumn: "url",
+    legacyDirectory: "AbsDocs",
+    modernDestination: "AbsenceAttachment.fileUrl",
+    modernStorageKeyPrefix: "absence-reports/{absenceReportId}/attachments",
+    legacyTitleColumn: "att_title",
+    legacyOwnerColumn: "formid",
+    legacyActiveColumn: "active",
+    uploadHandlers: [
+      "Data.class.php:20105 AddAttToAbsent",
+      "Data.class.php:20117 BenImageAbsent",
+      "ajax/v1/index.php:3781 /AddAttToAbsent",
+    ],
+    viewHandlers: ["Data.class.php:10697-10712 images/AbsDocs"],
+  },
+  {
+    id: "medical-form-document",
+    legacyTable: "t_forms_attachments",
+    legacyIdColumn: "fattid",
+    legacyFileColumn: "url",
+    legacyDirectory: "MedForms",
+    modernDestination: "FormAttachment.fileUrl",
+    modernStorageKeyPrefix: "forms/{formType}/{formId}/attachments",
+    legacyTitleColumn: "att_title",
+    legacyOwnerColumn: "formid",
+    legacyActiveColumn: "active",
+    uploadHandlers: [
+      "Data.class.php:15049 AddAttToForm",
+      "Data.class.php:21112 BenImageFormAtt",
+      "ajax/v1/index.php:4277 /AddAttToForm",
+    ],
+    viewHandlers: ["Data.class.php:10241,10350,10467,10592 images/MedForms"],
+  },
+];
+
+export function getDefaultLegacyRoot(): string {
+  return path.resolve(process.cwd(), "../Garderie Project/Garderie-old-backup");
+}
+
+export function getLegacyImagesRoot(legacyRoot: string): string {
+  return path.join(legacyRoot, LEGACY_ADMIN_IMAGES_RELATIVE_PATH);
+}
+
+export function getLegacyDirectoryPath(
+  legacyRoot: string,
+  rule: LegacyFileRule
+): string {
+  return path.join(getLegacyImagesRoot(legacyRoot), rule.legacyDirectory);
+}

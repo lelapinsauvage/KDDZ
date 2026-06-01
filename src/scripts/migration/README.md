@@ -205,6 +205,9 @@ Legacy `t_garderie` rows populate the active branch compliance form and also kee
 ### Garderie Misc
 The final small garderie-db tables are restored into their modern surfaces: general child attachments, event type defaults, garderie doctor identity/docs, and manager attachments. Each keeps a legacy key and raw JSON so the source row is auditable.
 
+### Legacy File Audit
+Legacy file path rules are codified in `legacy-file-rules.ts` and documented in `docs/legacy-file-storage-rules.md`. Before object-storage import, run `pnpm tsx src/scripts/migration/audit-legacy-files.ts` with `MYSQL_DATABASE` pointed at the imported legacy database and `LEGACY_APP_ROOT` pointed at the legacy app backup. The audit reports found, missing, default/empty, and unsafe filename references for every legacy file table/column.
+
 ### Idempotency
 All scripts check for existing records before inserting, so they can be re-run safely. Already-migrated records are skipped.
 
