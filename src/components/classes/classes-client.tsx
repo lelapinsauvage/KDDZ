@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useTransition, useRef } from "react";
+import { useState, useMemo, useTransition, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -57,6 +57,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { createClass, updateClass, deleteClass } from "@/lib/actions/classes";
+import { uploadFileWithPresign } from "@/lib/uploads/client-upload";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 
@@ -207,19 +208,27 @@ function ClassForm({
   setForm,
   branches,
   hideBranch,
+  imagePreviewUrl,
+  imageFile,
+  onImageFileChange,
+  onClearImage,
 }: {
   form: ClassFormState;
   setForm: React.Dispatch<React.SetStateAction<ClassFormState>>;
   branches: BranchOption[];
   hideBranch?: boolean;
+  imagePreviewUrl: string | null;
+  imageFile: File | null;
+  onImageFileChange: (file: File) => void;
+  onClearImage: () => void;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
+  const displayImageUrl = imagePreviewUrl || form.imageUrl;
 
   function handleImageFile(file: File) {
     if (!file.type.startsWith("image/")) return;
-    const url = URL.createObjectURL(file);
-    setForm((f) => ({ ...f, imageUrl: url }));
+    onImageFileChange(file);
   }
 
   return (
@@ -246,10 +255,10 @@ function ClassForm({
           }}
           onClick={() => fileInputRef.current?.click()}
         >
-          {form.imageUrl ? (
+          {displayImageUrl ? (
             <div className="relative">
               <Image
-                src={form.imageUrl}
+                src={displayImageUrl}
                 alt="Class"
                 width={96}
                 height={96}
@@ -261,7 +270,7 @@ function ClassForm({
                 className="absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-full bg-red-500 text-white text-xs hover:bg-red-600"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setForm((f) => ({ ...f, imageUrl: "" }));
+                  onClearImage();
                 }}
               >
                 ×
@@ -285,9 +294,15 @@ function ClassForm({
             onChange={(e) => {
               const file = e.target.files?.[0];
               if (file) handleImageFile(file);
+              e.target.value = "";
             }}
           />
         </div>
+        {imageFile && (
+          <p className="truncate text-xs text-muted-foreground">
+            Selected: {imageFile.name}
+          </p>
+        )}
       </div>
 
       {!hideBranch && (
@@ -471,6 +486,8 @@ export function ClassesClient({
   const [deleteTarget, setDeleteTarget] = useState<ClassItem | null>(null);
 
   const [form, setForm] = useState<ClassFormState>(() => emptyForm(branchId));
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
 
   const filteredClasses = useMemo(() => {
     let result = classes;
@@ -495,12 +512,60 @@ export function ClassesClient({
 
   // ── Handlers ──
 
+  function clearImageSelection() {
+    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    setImageFile(null);
+    setImagePreviewUrl(null);
+  }
+
+  function handleImageFileChange(file: File) {
+    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    setImageFile(file);
+    setImagePreviewUrl(URL.createObjectURL(file));
+  }
+
+  function handleClearImage() {
+    clearImageSelection();
+    setForm((current) => ({ ...current, imageUrl: "" }));
+  }
+
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    };
+  }, [imagePreviewUrl]);
+
+  async function resolveImageUrlForSave(ownerId?: string): Promise<string | null | undefined> {
+    if (!imageFile) return form.imageUrl || null;
+    if (!form.branchId) {
+      toast.error("Select a branch before uploading the class image");
+      return undefined;
+    }
+
+    try {
+      const uploaded = await uploadFileWithPresign({
+        branchId: form.branchId,
+        scope: "class",
+        ownerId,
+        file: imageFile,
+      });
+      return uploaded.publicUrl;
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to upload class image"
+      );
+      return undefined;
+    }
+  }
+
   function openAdd() {
+    clearImageSelection();
     setForm(emptyForm(branchId));
     setAddOpen(true);
   }
 
   function openEdit(cls: ClassItem) {
+    clearImageSelection();
     setForm(classToForm(cls));
     setEditTarget(cls);
   }
@@ -511,6 +576,8 @@ export function ClassesClient({
       return;
     }
     startTransition(async () => {
+      const imageUrl = await resolveImageUrlForSave();
+      if (imageUrl === undefined) return;
       const ageFrom = formAgeToStorage(form.ageFromYears, form.ageFromMonths);
       const ageTo = formAgeToStorage(form.ageToYears, form.ageToMonths);
       const result = await createClass({
@@ -523,12 +590,13 @@ export function ClassesClient({
         ageToUnit: ageTo.unit,
         cameraNumber: form.cameraNumber ? parseInt(form.cameraNumber) : null,
         maxStudents: form.maxStudents ? parseInt(form.maxStudents) : 0,
-        imageUrl: form.imageUrl || null,
+        imageUrl,
         isActive: form.isActive,
       });
       if (result.success) {
         toast.success(`"${form.name}" created`);
         setAddOpen(false);
+        clearImageSelection();
         router.refresh();
       } else {
         toast.error(result.error ?? "Failed to create class");
@@ -543,6 +611,8 @@ export function ClassesClient({
       return;
     }
     startTransition(async () => {
+      const imageUrl = await resolveImageUrlForSave(editTarget.id);
+      if (imageUrl === undefined) return;
       const ageFrom = formAgeToStorage(form.ageFromYears, form.ageFromMonths);
       const ageTo = formAgeToStorage(form.ageToYears, form.ageToMonths);
       const result = await updateClass(editTarget.id, {
@@ -555,12 +625,13 @@ export function ClassesClient({
         ageToUnit: ageTo.unit,
         cameraNumber: form.cameraNumber ? parseInt(form.cameraNumber) : null,
         maxStudents: form.maxStudents ? parseInt(form.maxStudents) : 0,
-        imageUrl: form.imageUrl || null,
+        imageUrl,
         isActive: form.isActive,
       });
       if (result.success) {
         toast.success(`"${form.name}" updated`);
         setEditTarget(null);
+        clearImageSelection();
         router.refresh();
       } else {
         toast.error(result.error ?? "Failed to update class");
@@ -868,6 +939,10 @@ export function ClassesClient({
             setForm={setForm}
             branches={branches}
             hideBranch={!!branchId}
+            imagePreviewUrl={imagePreviewUrl}
+            imageFile={imageFile}
+            onImageFileChange={handleImageFileChange}
+            onClearImage={handleClearImage}
           />
           <DialogFooter>
             <Button
@@ -901,6 +976,10 @@ export function ClassesClient({
             setForm={setForm}
             branches={branches}
             hideBranch={!!branchId}
+            imagePreviewUrl={imagePreviewUrl}
+            imageFile={imageFile}
+            onImageFileChange={handleImageFileChange}
+            onClearImage={handleClearImage}
           />
           <DialogFooter>
             <Button
