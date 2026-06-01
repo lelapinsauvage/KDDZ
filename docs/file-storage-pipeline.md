@@ -139,3 +139,37 @@ The script still reports `child-history-photo` as unsupported because `ChildHist
 - Runtime upload routes use `createPresignedUploadUrl()` with authenticated org/branch permission checks before UI upload placeholders are enabled.
 - `apply-legacy-file-urls.ts` has zero unresolved `missing-public-url`, `not-found`, `no-provenance`, `unsupported-destination`, and `error` entries for every rule approved for cutover.
 - `reconcile-migration-counts.ts` confirms counts still match after URL rewrite.
+
+## Runtime Upload API
+
+`POST /api/uploads/presign` creates a short-lived object-store PUT URL for authenticated app users. It requires:
+
+```json
+{
+  "branchId": "uuid",
+  "scope": "child-document",
+  "filename": "medical-note.pdf",
+  "contentType": "application/pdf",
+  "byteSize": 12345,
+  "ownerId": "uuid"
+}
+```
+
+The route verifies the user session, organization context, and branch access before returning:
+
+```json
+{
+  "success": true,
+  "provider": "r2",
+  "method": "PUT",
+  "uploadUrl": "https://...",
+  "key": "uploads/<org>/<branch>/<scope>/...",
+  "publicUrl": "https://cdn.example.com/uploads/...",
+  "expiresAt": "2026-06-01T12:00:00.000Z",
+  "headers": {
+    "Content-Type": "application/pdf"
+  }
+}
+```
+
+Runtime presigned uploads require `STORAGE_PROVIDER=s3` or `STORAGE_PROVIDER=r2`. `STORAGE_PROVIDER=local` is still supported for migration rehearsals, but the runtime presign route returns `501` for local because browser-direct local uploads need a separate authenticated multipart endpoint.

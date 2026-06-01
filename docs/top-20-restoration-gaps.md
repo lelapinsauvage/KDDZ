@@ -17,7 +17,8 @@ This list is the first implementation backlog after the generated inventory/matr
    - `upload-legacy-file-export.ts` now uploads the provider-neutral export package and writes an auditable upload manifest with source row provenance, object keys, public URLs, byte counts, and upload status.
    - `apply-legacy-file-urls.ts` now rewrites strong-provenance migrated URL fields from the upload manifest and reports no-provenance/unsupported destinations without guessing.
    - `20260601017000_add_legacy_file_provenance` and the updated migration scripts now add source provenance for branch/class/child/staff photos plus teacher/nurse/daily/absence attachments so direct URL rewrites no longer require filename matching.
-   - Remaining work is child-history JSON snapshot URL patching, runtime upload API/routes with org/branch permissions, and UI replacement for upload placeholders.
+   - `POST /api/uploads/presign` now creates authenticated S3/R2 presigned PUT URLs with org/branch permission checks and safe object keys.
+   - Remaining work is child-history JSON snapshot URL patching, database attach/update actions after browser upload, local multipart upload support if needed, and UI replacement for upload placeholders.
 
 4. **Full data reconciliation**
    - `reconcile-migration-counts.ts` now provides curated source/target count checks across the migration order and distinguishes strong provenance from weaker count-only evidence.
