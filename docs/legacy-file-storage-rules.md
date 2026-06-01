@@ -21,6 +21,19 @@ pnpm tsx src/scripts/migration/export-legacy-files.ts \
 
 The export script copies found files under deterministic keys like `legacy/<database>/<rule>/<legacy-id>/<filename>` and writes a `manifest.json` with every exported, missing, default, unsafe, table-missing, or column-missing reference.
 
+Then upload the package with the configured storage provider:
+
+```bash
+STORAGE_PROVIDER=local \
+STORAGE_LOCAL_ROOT=/tmp/kiddzonl-storage \
+STORAGE_PUBLIC_BASE_URL=/storage \
+pnpm tsx src/scripts/migration/upload-legacy-file-export.ts \
+  --manifest=/tmp/kiddzonl-legacy-file-export/manifest.json \
+  --out-manifest=/tmp/kiddzonl-legacy-file-upload.json
+```
+
+Use `STORAGE_PROVIDER=s3` for AWS S3 or `STORAGE_PROVIDER=r2` for Cloudflare R2, with `STORAGE_BUCKET`, credentials, and `STORAGE_PUBLIC_BASE_URL` set. The upload manifest records object keys, public URLs, byte counts, and source row provenance for the later database URL rewrite. Full provider settings and cutover gates are documented in `docs/file-storage-pipeline.md`.
+
 | Legacy Table | Column | Legacy Directory | Modern Destination | PHP Evidence | Status |
 | --- | --- | --- | --- | --- | --- |
 | `t_branch` | `image` | `BranchPhoto` | `Branch.imageUrl` | `Data.class.php:6880`, views `3742/3809` | source path identified; filename preserved by `migrate-branches.ts`; needs object storage import |

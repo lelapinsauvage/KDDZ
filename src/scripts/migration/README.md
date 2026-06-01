@@ -210,6 +210,19 @@ Legacy file path rules are codified in `legacy-file-rules.ts` and documented in 
 
 Use `pnpm tsx src/scripts/migration/export-legacy-files.ts --out-dir=/tmp/kiddzonl-legacy-file-export` to copy found legacy files into a provider-neutral export package and write a manifest of exported, missing, default, unsafe, table-missing, and column-missing references.
 
+Then upload the export package with the shared storage adapter:
+
+```bash
+STORAGE_PROVIDER=local \
+STORAGE_LOCAL_ROOT=/tmp/kiddzonl-storage \
+STORAGE_PUBLIC_BASE_URL=/storage \
+pnpm tsx src/scripts/migration/upload-legacy-file-export.ts \
+  --manifest=/tmp/kiddzonl-legacy-file-export/manifest.json \
+  --out-manifest=/tmp/kiddzonl-legacy-file-upload.json
+```
+
+Set `STORAGE_PROVIDER=s3` or `STORAGE_PROVIDER=r2` with bucket credentials for production. The upload manifest keeps `sourceDatabase`, `legacyTable`, `legacyColumn`, `legacyId`, `ruleId`, `objectKey`, and `publicUrl` so migrated filename fields can be rewritten to object-storage URLs without guessing. See `docs/file-storage-pipeline.md` for provider env vars and cutover gates.
+
 ### Count Reconciliation
 
 After a dry run or full migration, run the count reconciler against the same imported MySQL database and the target PostgreSQL database:

@@ -13,8 +13,9 @@ This list is the first implementation backlog after the generated inventory/matr
    - `audit-legacy-files.ts` and `export-legacy-files.ts` can verify and stage child photos, daily attachments, medical attachments, employee files, compliance documents, and receipt files before object-storage import.
 
 3. **File storage pipeline**
-   - Modern UI has many upload placeholders.
-   - Need S3/R2-style storage, presigned uploads, file metadata, permissions, and provider-specific upload execution from the export manifest.
+   - `src/lib/storage/object-storage.ts` now provides local, S3, and R2 storage config, object upload, public URL calculation, and presigned PUT URL generation for future runtime upload routes.
+   - `upload-legacy-file-export.ts` now uploads the provider-neutral export package and writes an auditable upload manifest with source row provenance, object keys, public URLs, byte counts, and upload status.
+   - Remaining work is runtime upload API/routes with org/branch permissions, UI replacement for upload placeholders, and a database rewrite step that applies upload-manifest URLs to migrated filename fields.
 
 4. **Full data reconciliation**
    - `reconcile-migration-counts.ts` now provides curated source/target count checks across the migration order and distinguishes strong provenance from weaker count-only evidence.
