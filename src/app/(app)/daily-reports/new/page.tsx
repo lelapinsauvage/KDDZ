@@ -21,6 +21,7 @@ export default async function NewDailyReportPage({ searchParams }: Props) {
   const children = (childrenResult.children ?? []).map((c) => ({
     id: c.id,
     name: `${c.firstName} ${c.lastName}`,
+    branchId: c.branchId,
     className: c.class?.name ?? "",
   }));
 

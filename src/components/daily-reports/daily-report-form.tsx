@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useCallback } from "react";
+import { useState, useTransition } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -9,6 +9,7 @@ import {
   type DailyReportFormValues,
 } from "@/lib/validations/daily-report";
 import { createDailyReport, updateDailyReport } from "@/lib/actions/daily-reports";
+import { uploadFileWithPresign } from "@/lib/uploads/client-upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,6 +41,7 @@ import {
   Shirt,
   Paperclip,
   Upload,
+  FileText,
   Copy,
   X,
   Clock,
@@ -80,6 +82,7 @@ const clothesItems = [
 interface ChildOption {
   id: string;
   name: string;
+  branchId: string;
   className: string;
 }
 
@@ -109,6 +112,19 @@ interface DailyReportFormProps {
   defaultValues?: Partial<DailyReportFormValues>;
   reportId?: string;
   yesterdayData?: YesterdayData;
+  existingAttachments?: ExistingDailyAttachment[];
+}
+
+interface ExistingDailyAttachment {
+  id: string;
+  filename: string;
+  fileUrl: string;
+}
+
+interface UploadedDailyAttachment {
+  title?: string;
+  fileName: string;
+  fileUrl: string;
 }
 
 function currentTimeString() {
@@ -189,10 +205,13 @@ export function DailyReportForm({
   defaultValues,
   reportId,
   yesterdayData,
+  existingAttachments = [],
 }: DailyReportFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [attachmentFiles, setAttachmentFiles] = useState<Array<File | null>>([]);
+  const [removedAttachmentIds, setRemovedAttachmentIds] = useState<string[]>([]);
 
   const form = useForm<DailyReportFormValues>({
     resolver: zodResolver(dailyReportSchema),
@@ -240,19 +259,44 @@ export function DailyReportForm({
   const attachmentsArray = useFieldArray({ control: form.control, name: "attachments" });
 
   const attendanceMode = watch("attendanceMode");
-
-  const handleFileDrop = useCallback(
-    (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      const files = Array.from(e.dataTransfer.files);
-      for (const file of files) {
-        attachmentsArray.append({ title: "", fileName: file.name });
-      }
-    },
-    [attachmentsArray],
+  const visibleExistingAttachments = existingAttachments.filter(
+    (attachment) => !removedAttachmentIds.includes(attachment.id),
   );
 
-  function buildFormData(data: DailyReportFormValues, status: "DRAFT" | "SUBMITTED"): FormData {
+  function appendAttachment(file?: File) {
+    attachmentsArray.append({ title: "", fileName: file?.name ?? "" });
+    setAttachmentFiles((current) => [...current, file ?? null]);
+  }
+
+  function setAttachmentFile(index: number, file: File) {
+    setValue(`attachments.${index}.fileName`, file.name, { shouldDirty: true });
+    setAttachmentFiles((current) => {
+      const next = [...current];
+      next[index] = file;
+      return next;
+    });
+  }
+
+  function removeAttachment(index: number) {
+    attachmentsArray.remove(index);
+    setAttachmentFiles((current) =>
+      current.filter((_, fileIndex) => fileIndex !== index),
+    );
+  }
+
+  function handleFileDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    const files = Array.from(e.dataTransfer.files);
+    for (const file of files) {
+      appendAttachment(file);
+    }
+  }
+
+  function buildFormData(
+    data: DailyReportFormValues,
+    status: "DRAFT" | "SUBMITTED",
+    uploadedAttachments: UploadedDailyAttachment[],
+  ): FormData {
     const fd = new FormData();
     fd.set("childId", data.childId);
     fd.set("reportDate", data.reportDate);
@@ -324,7 +368,10 @@ export function DailyReportForm({
     fd.set("clothesSocks", String(data.clothesSocks));
 
     // Attachments
-    fd.set("attachments", JSON.stringify(data.attachments));
+    fd.set("attachments", JSON.stringify(uploadedAttachments));
+    if (removedAttachmentIds.length) {
+      fd.set("removeAttachmentIds", JSON.stringify(removedAttachmentIds));
+    }
 
     // Remarks
     if (data.remarks) fd.set("remarks", data.remarks);
@@ -334,9 +381,47 @@ export function DailyReportForm({
 
   function submitReport(data: DailyReportFormValues, status: "DRAFT" | "SUBMITTED") {
     setError(null);
-    const fd = buildFormData(data, status);
 
     startTransition(async () => {
+      const uploadedAttachments: UploadedDailyAttachment[] = [];
+      if (data.attendanceMode !== "ABSENT") {
+        const filesToUpload = attachmentFiles
+          .map((file, index) => ({ file, index }))
+          .filter((entry): entry is { file: File; index: number } => Boolean(entry.file));
+
+        if (filesToUpload.length) {
+          const child = childrenList.find((item) => item.id === data.childId);
+          if (!child?.branchId) {
+            setError("Cannot upload attachments because the child's branch is unavailable");
+            return;
+          }
+
+          try {
+            for (const { file, index } of filesToUpload) {
+              const uploaded = await uploadFileWithPresign({
+                branchId: child.branchId,
+                scope: "daily-report",
+                ownerId: reportId ?? data.childId,
+                file,
+              });
+              uploadedAttachments.push({
+                title: (data.attachments ?? [])[index]?.title,
+                fileName: file.name,
+                fileUrl: uploaded.publicUrl,
+              });
+            }
+          } catch (uploadError) {
+            setError(
+              uploadError instanceof Error
+                ? uploadError.message
+                : "Failed to upload attachments",
+            );
+            return;
+          }
+        }
+      }
+
+      const fd = buildFormData(data, status, uploadedAttachments);
       const result = reportId
         ? await updateDailyReport(reportId, fd)
         : await createDailyReport(fd);
@@ -1185,7 +1270,7 @@ export function DailyReportForm({
                   variant="outline"
                   size="sm"
                   className="border-slate-300 text-slate-700 hover:bg-slate-100"
-                  onClick={() => attachmentsArray.append({ title: "", fileName: "" })}
+                  onClick={() => appendAttachment()}
                 >
                   <Plus className="mr-1 size-3.5" />
                   Add Attachment
@@ -1208,13 +1293,49 @@ export function DailyReportForm({
                 </p>
               </div>
 
+              {visibleExistingAttachments.length > 0 && (
+                <div className="space-y-2">
+                  {visibleExistingAttachments.map((attachment) => (
+                    <div
+                      key={attachment.id}
+                      className="flex items-center gap-2 rounded-sm border bg-white p-3"
+                    >
+                      <FileText className="size-5 shrink-0 text-slate-500" />
+                      <a
+                        href={attachment.fileUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="min-w-0 flex-1 truncate text-sm font-medium text-primary hover:underline"
+                      >
+                        {attachment.filename}
+                      </a>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive hover:text-destructive"
+                        disabled={isPending}
+                        onClick={() =>
+                          setRemovedAttachmentIds((current) => [
+                            ...current,
+                            attachment.id,
+                          ])
+                        }
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Attachment entries */}
               {attachmentsArray.fields.length > 0 && (
                 <div className="space-y-3">
                   {attachmentsArray.fields.map((field, index) => (
-                    <div key={field.id} className="flex items-end gap-3">
+                    <div key={field.id} className="grid gap-3 rounded-sm border bg-white p-3 md:grid-cols-[1fr_1.4fr_auto] md:items-end">
                       <div className="flex-1 space-y-2">
-                        <Label>Title</Label>
+                        <Label>Label</Label>
                         <Input
                           placeholder="e.g. Photo, Document..."
                           {...register(`attachments.${index}.title`)}
@@ -1223,18 +1344,25 @@ export function DailyReportForm({
                       <div className="flex-1 space-y-2">
                         <Label>File</Label>
                         <Input
-                          placeholder="File name"
-                          {...register(`attachments.${index}.fileName`)}
-                          readOnly={!!field.fileName}
-                          className={field.fileName ? "bg-muted" : ""}
+                          type="file"
+                          accept="image/*,.pdf"
+                          onChange={(event) => {
+                            const file = event.target.files?.[0];
+                            if (file) setAttachmentFile(index, file);
+                          }}
                         />
+                        {watch(`attachments.${index}.fileName`) && (
+                          <p className="truncate text-xs text-muted-foreground">
+                            {watch(`attachments.${index}.fileName`)}
+                          </p>
+                        )}
                       </div>
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
                         className="text-destructive hover:text-destructive"
-                        onClick={() => attachmentsArray.remove(index)}
+                        onClick={() => removeAttachment(index)}
                       >
                         <Trash2 className="size-4" />
                       </Button>

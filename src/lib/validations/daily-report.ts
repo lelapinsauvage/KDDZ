@@ -13,8 +13,10 @@ export const milkEntrySchema = z.object({
 });
 
 export const attachmentEntrySchema = z.object({
+  id: z.string().optional(),
   title: z.string().optional(),
   fileName: z.string().optional(),
+  fileUrl: z.string().optional(),
 });
 
 export const dailyReportSchema = z.object({

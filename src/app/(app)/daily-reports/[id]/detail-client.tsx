@@ -15,6 +15,8 @@ import {
   Smile,
   Baby,
   Thermometer,
+  Paperclip,
+  FileText,
 } from "lucide-react";
 
 interface FeverEntry {
@@ -27,6 +29,12 @@ interface MilkEntry {
   amountCc: number;
   scoops: number | null;
   time: string;
+}
+
+interface Attachment {
+  id: string;
+  filename: string;
+  fileUrl: string;
 }
 
 interface ReportData {
@@ -62,6 +70,7 @@ interface ReportData {
   remarks: string | null;
   fevers: FeverEntry[];
   milks: MilkEntry[];
+  attachments: Attachment[];
 }
 
 function formatPortion(portion: string | null): string {
@@ -352,6 +361,34 @@ export function DailyReportDetailClient({ report }: { report: ReportData }) {
               <p className="whitespace-pre-wrap text-sm text-muted-foreground">
                 {report.remarks}
               </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {report.attachments.length > 0 && (
+          <Card className="rounded-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Paperclip className="size-4 text-primary" />
+                Attachments
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-1.5 text-sm">
+                {report.attachments.map((attachment) => (
+                  <li key={attachment.id}>
+                    <a
+                      href={attachment.fileUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 text-primary underline-offset-4 hover:underline"
+                    >
+                      <FileText className="size-3.5" />
+                      {attachment.filename}
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </CardContent>
           </Card>
         )}

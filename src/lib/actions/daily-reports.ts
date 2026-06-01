@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireOrg, requireOrgSafe } from "@/lib/require-org";
 import { verifyChildAccess } from "@/lib/verify-org-access";
@@ -21,6 +22,65 @@ interface GetDailyReportsParams {
   search?: string;
   page?: number;
   pageSize?: number;
+}
+
+const removeAttachmentIdsSchema = z.array(z.string().uuid()).max(50);
+
+function parseRemoveAttachmentIds(value: unknown): string[] {
+  if (typeof value !== "string" || value.trim() === "") {
+    return [];
+  }
+  try {
+    const parsed = removeAttachmentIdsSchema.safeParse(JSON.parse(value));
+    return parsed.success ? parsed.data : [];
+  } catch {
+    return [];
+  }
+}
+
+function parseJsonArrayField(rawData: Record<string, unknown>, field: string) {
+  if (typeof rawData[field] !== "string") {
+    return;
+  }
+  try {
+    rawData[field] = JSON.parse(rawData[field] as string);
+  } catch {
+    rawData[field] = [];
+  }
+}
+
+function parseDailyReportBooleans(rawData: Record<string, unknown>) {
+  for (const boolField of [
+    "isSleep",
+    "diarrhea",
+    "cough",
+    "runnyNose",
+    "vomit",
+    "applyFoodForAll",
+    "clothesPants",
+    "clothesSweater",
+    "clothesTshirt",
+    "clothesUnderwear",
+    "clothesSocks",
+    "hospitalAttend",
+  ]) {
+    rawData[boolField] =
+      rawData[boolField] === "true" || rawData[boolField] === true;
+  }
+}
+
+function dailyAttachmentCreates(
+  attachments: Array<{ title?: string; fileName?: string; fileUrl?: string }>,
+) {
+  return attachments
+    .filter((attachment) => attachment.fileUrl)
+    .map((attachment) => ({
+      filename:
+        attachment.title?.trim() ||
+        attachment.fileName?.trim() ||
+        "attachment",
+      fileUrl: attachment.fileUrl!,
+    }));
 }
 
 // ─────────────────────────────────────────────
@@ -136,6 +196,7 @@ export async function getDailyReport(id: string) {
         lunchFood: true,
         fevers: true,
         milks: true,
+        attachments: true,
       },
     });
 
@@ -170,23 +231,17 @@ export async function createDailyReport(formData: FormData) {
       rawData[key] = value;
     });
 
-    // Handle boolean fields
-    for (const boolField of ["isSleep", "diarrhea", "cough", "runnyNose", "vomit"]) {
-      rawData[boolField] = rawData[boolField] === "true" || rawData[boolField] === true;
-    }
+    parseDailyReportBooleans(rawData);
 
     // Handle numeric fields
     for (const numField of ["urinePotty", "stoolPotty", "urineDiaper", "stoolDiaper"]) {
       rawData[numField] = Number(rawData[numField] ?? 0);
     }
 
-    // Handle nested fever/milk entries from JSON
-    if (typeof rawData.feverEntries === "string") {
-      rawData.feverEntries = JSON.parse(rawData.feverEntries as string);
-    }
-    if (typeof rawData.milkEntries === "string") {
-      rawData.milkEntries = JSON.parse(rawData.milkEntries as string);
-    }
+    // Handle nested entries from JSON
+    parseJsonArrayField(rawData, "feverEntries");
+    parseJsonArrayField(rawData, "milkEntries");
+    parseJsonArrayField(rawData, "attachments");
 
     const parsed = dailyReportSchema.safeParse(rawData);
     if (!parsed.success) {
@@ -194,6 +249,7 @@ export async function createDailyReport(formData: FormData) {
     }
 
     const data = parsed.data;
+    const attachmentCreates = dailyAttachmentCreates(data.attachments);
 
     // Verify child belongs to this org
     const childOk = await verifyChildAccess(data.childId, ctx.organizationId);
@@ -260,10 +316,14 @@ export async function createDailyReport(formData: FormData) {
             time: new Date(`1970-01-01T${m.time}`),
           })),
         },
+        attachments: attachmentCreates.length
+          ? { create: attachmentCreates }
+          : undefined,
       },
     });
 
     revalidatePath("/daily-reports");
+    revalidatePath(`/daily-reports/${report.id}`);
     return { success: true, reportId: report.id };
   } catch (error) {
     console.error("createDailyReport error:", error);
@@ -298,23 +358,17 @@ export async function updateDailyReport(id: string, formData: FormData) {
       rawData[key] = value;
     });
 
-    // Handle boolean fields
-    for (const boolField of ["isSleep", "diarrhea", "cough", "runnyNose", "vomit"]) {
-      rawData[boolField] = rawData[boolField] === "true" || rawData[boolField] === true;
-    }
+    parseDailyReportBooleans(rawData);
 
     // Handle numeric fields
     for (const numField of ["urinePotty", "stoolPotty", "urineDiaper", "stoolDiaper"]) {
       rawData[numField] = Number(rawData[numField] ?? 0);
     }
 
-    // Handle nested fever/milk entries from JSON
-    if (typeof rawData.feverEntries === "string") {
-      rawData.feverEntries = JSON.parse(rawData.feverEntries as string);
-    }
-    if (typeof rawData.milkEntries === "string") {
-      rawData.milkEntries = JSON.parse(rawData.milkEntries as string);
-    }
+    // Handle nested entries from JSON
+    parseJsonArrayField(rawData, "feverEntries");
+    parseJsonArrayField(rawData, "milkEntries");
+    parseJsonArrayField(rawData, "attachments");
 
     const parsed = dailyReportSchema.safeParse(rawData);
     if (!parsed.success) {
@@ -322,6 +376,13 @@ export async function updateDailyReport(id: string, formData: FormData) {
     }
 
     const data = parsed.data;
+    const attachmentCreates = dailyAttachmentCreates(data.attachments);
+    const removeAttachmentIds = parseRemoveAttachmentIds(
+      rawData.removeAttachmentIds,
+    );
+
+    const childOk = await verifyChildAccess(data.childId, ctx.organizationId);
+    if (!childOk) return { error: "Invalid child" };
 
     // Check unique constraint if date/child changed
     if (data.childId !== existing.childId || new Date(data.reportDate).toISOString() !== existing.reportDate.toISOString()) {
@@ -341,6 +402,14 @@ export async function updateDailyReport(id: string, formData: FormData) {
     // Delete existing fevers and milks, then re-create
     await db.dailyReportFever.deleteMany({ where: { dailyReportId: id } });
     await db.dailyReportMilk.deleteMany({ where: { dailyReportId: id } });
+    if (removeAttachmentIds.length) {
+      await db.dailyReportAttachment.deleteMany({
+        where: {
+          dailyReportId: id,
+          id: { in: removeAttachmentIds },
+        },
+      });
+    }
 
     const report = await db.dailyReport.update({
       where: { id },
@@ -388,10 +457,14 @@ export async function updateDailyReport(id: string, formData: FormData) {
             time: new Date(`1970-01-01T${m.time}`),
           })),
         },
+        attachments: attachmentCreates.length
+          ? { create: attachmentCreates }
+          : undefined,
       },
     });
 
     revalidatePath("/daily-reports");
+    revalidatePath(`/daily-reports/${id}`);
     return { success: true, reportId: report.id };
   } catch (error) {
     console.error("updateDailyReport error:", error);

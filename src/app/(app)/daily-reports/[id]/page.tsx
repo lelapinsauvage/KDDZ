@@ -57,6 +57,11 @@ export default async function DailyReportDetailPage({ params }: Props) {
       scoops: m.scoops ?? null,
       time: m.time.toISOString(),
     })),
+    attachments: (r.attachments ?? []).map((attachment) => ({
+      id: attachment.id,
+      filename: attachment.filename,
+      fileUrl: attachment.fileUrl,
+    })),
   };
 
   return <DailyReportDetailClient report={report} />;

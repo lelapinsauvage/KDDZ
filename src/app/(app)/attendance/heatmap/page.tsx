@@ -50,6 +50,7 @@ export default async function AttendanceHeatmapPage({ searchParams }: Props) {
   const childrenList = (childrenResult.children ?? []).map((c) => ({
     id: c.id,
     name: `${c.firstName} ${c.lastName}`,
+    branchId: c.branchId,
     className: c.class?.name ?? "",
   }));
 

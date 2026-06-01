@@ -38,8 +38,18 @@ export default async function EditDailyReportPage({ params }: Props) {
   const children = (childrenResult.children ?? []).map((c) => ({
     id: c.id,
     name: `${c.firstName} ${c.lastName}`,
+    branchId: c.branchId,
     className: c.class?.name ?? "",
   }));
+
+  if (!children.some((child) => child.id === r.childId)) {
+    children.unshift({
+      id: r.childId,
+      name: `${r.child.firstName} ${r.child.lastName}`,
+      branchId: r.child.branchId,
+      className: r.child.class?.name ?? "",
+    });
+  }
 
   const foods = {
     breakfast: breakfastFoods.foods.map((f) => ({ id: f.id, name: f.name })),
@@ -103,6 +113,11 @@ export default async function EditDailyReportPage({ params }: Props) {
         foods={foods}
         defaultValues={defaultValues}
         reportId={id}
+        existingAttachments={(r.attachments ?? []).map((attachment) => ({
+          id: attachment.id,
+          filename: attachment.filename,
+          fileUrl: attachment.fileUrl,
+        }))}
       />
     </>
   );
