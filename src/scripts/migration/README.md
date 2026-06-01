@@ -39,11 +39,11 @@ pnpm tsx src/scripts/migration/migrate-all.ts
 ### Run specific steps
 
 ```bash
-# Run only up to step 3 (branches, classes, children)
-pnpm tsx src/scripts/migration/migrate-all.ts --step=3
+# Run only up to step 4 (branches, locations, classes, children)
+pnpm tsx src/scripts/migration/migrate-all.ts --step=4
 
-# Resume from step 6 (assumes steps 1-5 already ran)
-pnpm tsx src/scripts/migration/migrate-all.ts --from=6
+# Resume from step 7 (assumes steps 1-6 already ran)
+pnpm tsx src/scripts/migration/migrate-all.ts --from=7
 ```
 
 ### Run individual scripts
@@ -52,6 +52,7 @@ Each script can be run standalone:
 
 ```bash
 pnpm tsx src/scripts/migration/migrate-branches.ts [--dry-run]
+pnpm tsx src/scripts/migration/migrate-locations.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-classes.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-children.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-parents.ts [--dry-run]
@@ -74,20 +75,21 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 
 ```
 1. Branches       ← needs Organization (auto-created)
-2. Classes        ← needs Branches
-3. Children       ← needs Branches, Classes
-4. Parents        ← needs Children
-5. Employees      ← needs Branches
-6. Users          ← needs Branches, Children/Parents
-7. Daily Reports  ← needs Children
-8. Absences       ← needs Children, Users
-9. Calls          ← needs Children, Employees, Users
-10. Assessments   ← needs Children, Classes, Employees/Users, Organization
-11. Medical Forms ← needs Children
-12. Payments      ← needs Children
-13. Food/Calendar ← needs Branches, Organization
-14. Alarms        ← needs Children, Users, Parent Users, Teachers
-15. Messages      ← needs Users
+2. Locations      ← no deps; provides address location mappings
+3. Classes        ← needs Branches
+4. Children       ← needs Branches, Classes, Locations
+5. Parents        ← needs Children
+6. Employees      ← needs Branches
+7. Users          ← needs Branches, Children/Parents
+8. Daily Reports  ← needs Children
+9. Absences       ← needs Children, Users
+10. Calls         ← needs Children, Employees, Users
+11. Assessments   ← needs Children, Classes, Employees/Users, Organization
+12. Medical Forms ← needs Children
+13. Payments      ← needs Children
+14. Food/Calendar ← needs Branches, Organization
+15. Alarms        ← needs Children, Users, Parent Users, Teachers
+16. Messages      ← needs Users
 ```
 
 ## Table Mappings
@@ -95,6 +97,9 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | Old MySQL Table(s) | New PostgreSQL Model(s) |
 |---|---|
 | `t_branch` | Branch |
+| `t_mouhafaza` | Province |
+| `t_quadaa` | District |
+| `t_region` | Region |
 | `t_class` | Class |
 | `t_child`, `t_child_draft` | Child (isDraft flag) |
 | `t_address` | ChildAddress |
@@ -151,6 +156,9 @@ All scripts check for existing records before inserting, so they can be re-run s
 
 ### Soft Deletes
 Old DB uses `active = 0` for soft deletes. Only active records (active = 1) are migrated. Deleted records (deleted = 1) are also excluded.
+
+### Locations
+Legacy Lebanon location tables are migrated into the modern Province → District → Region hierarchy. Old `t_mouhafaza.m_id`, `t_quadaa.qid`, and `t_region.rid` values are mapped to UUIDs for downstream address restoration; inactive rows and orphan districts/regions are skipped and counted in logs.
 
 ### Date Handling
 Old DB stores dates as varchar. The migration handles multiple formats: `YYYY-MM-DD`, `DD/MM/YYYY`, `DD-MM-YYYY`, empty strings, and `0000-00-00`.

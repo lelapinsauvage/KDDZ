@@ -700,8 +700,8 @@
     "legacyTable": "t_mouhafaza",
     "legacyColumns": "m_id:int(11) NOT NULL AUTO_INCREMENT, m_name:text NOT NULL, m_ref_num:int(11) NOT NULL, m_datetime:datetime NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1'",
     "modernDestination": "Province",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-locations.ts",
+    "reconciliation": "Active rows migrated; inactive/orphan rows skipped and counted in logs."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -764,16 +764,16 @@
     "legacyTable": "t_quadaa",
     "legacyColumns": "qid:int(11) NOT NULL AUTO_INCREMENT, qname:varchar(50) NOT NULL, ref_nb:varchar(50) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1', q_mid:int(11) NOT NULL",
     "modernDestination": "District",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-locations.ts",
+    "reconciliation": "Active rows migrated; inactive/orphan rows skipped and counted in logs."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "t_region",
     "legacyColumns": "rid:int(11) NOT NULL AUTO_INCREMENT, rname:varchar(50) NOT NULL, ref_nb:varchar(50) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1', r_qid:int(11) NOT NULL",
     "modernDestination": "Region",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-locations.ts",
+    "reconciliation": "Active rows migrated; inactive/orphan rows skipped and counted in logs."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1668,8 +1668,8 @@
     "legacyTable": "t_mouhafaza",
     "legacyColumns": "m_id:int(11) NOT NULL, m_name:text NOT NULL, m_ref_num:int(11) NOT NULL, m_datetime:datetime NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1'",
     "modernDestination": "Province",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-locations.ts",
+    "reconciliation": "Active rows migrated; inactive/orphan rows skipped and counted in logs."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1732,16 +1732,16 @@
     "legacyTable": "t_quadaa",
     "legacyColumns": "qid:int(11) NOT NULL, qname:varchar(50) NOT NULL, ref_nb:varchar(50) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1', q_mid:int(11) NOT NULL",
     "modernDestination": "District",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-locations.ts",
+    "reconciliation": "Active rows migrated; inactive/orphan rows skipped and counted in logs."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "t_region",
     "legacyColumns": "rid:int(11) NOT NULL, rname:varchar(50) NOT NULL, ref_nb:varchar(50) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1', r_qid:int(11) NOT NULL",
     "modernDestination": "Region",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-locations.ts",
+    "reconciliation": "Active rows migrated; inactive/orphan rows skipped and counted in logs."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -2508,8 +2508,8 @@
     "legacyTable": "t_mouhafaza",
     "legacyColumns": "m_id:int(11) NOT NULL AUTO_INCREMENT, m_name:text NOT NULL, m_ref_num:int(11) NOT NULL, m_datetime:datetime NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1'",
     "modernDestination": "Province",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-locations.ts",
+    "reconciliation": "Active rows migrated; inactive/orphan rows skipped and counted in logs."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2572,16 +2572,16 @@
     "legacyTable": "t_quadaa",
     "legacyColumns": "qid:int(11) NOT NULL AUTO_INCREMENT, qname:varchar(50) NOT NULL, ref_nb:varchar(50) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1', q_mid:int(11) NOT NULL",
     "modernDestination": "District",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-locations.ts",
+    "reconciliation": "Active rows migrated; inactive/orphan rows skipped and counted in logs."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "t_region",
     "legacyColumns": "rid:int(11) NOT NULL AUTO_INCREMENT, rname:varchar(50) NOT NULL, ref_nb:varchar(50) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1', r_qid:int(11) NOT NULL",
     "modernDestination": "Region",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-locations.ts",
+    "reconciliation": "Active rows migrated; inactive/orphan rows skipped and counted in logs."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
