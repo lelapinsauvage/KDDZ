@@ -449,11 +449,17 @@ model BranchDocument {
 
 model SchoolYear {
   id             String   @id @default(uuid()) @db.Uuid
+  sourceDatabase String?
+  legacyKey      String?  @unique
+  legacyId       Int?
+  legacySid      Int?
+  legacyDate     DateTime? @db.Date
   label          String
   startDate      DateTime @db.Date
   endDate        DateTime @db.Date
   isActive       Boolean  @default(false)
   organizationId String?  @db.Uuid
+  legacyData     Json?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -462,6 +468,9 @@ model SchoolYear {
   assessments       Assessment[]
   accountingEntries AccountingEntry[]
 
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacySid])
   @@index([organizationId])
   @@map("school_years")
 }

@@ -15,6 +15,7 @@
  *   image            → photo
  *   branch_id        → branchId (FK via mapping)
  *   class_id         → classId (FK via mapping)
+ *   sel_year         → schoolYearId (FK via school-year mapping)
  *   joining_date     → enrollmentDate
  *   bus              → busAttendance (Yes/No → bool)
  *   diapers          → diaperType
@@ -43,7 +44,7 @@
  *   t_relatives  → Relative
  *   t_attachments → ChildAttachment
  *
- * Prerequisites: Branches and Classes must be migrated first.
+ * Prerequisites: Branches, Classes, Locations, and School Years must be migrated first.
  */
 
 import type { PrismaClient } from "@/generated/prisma/client";
@@ -81,6 +82,7 @@ interface OldChild {
   mother_nationality: string;
   branch_id: number;
   language: string;
+  sel_year: number;
   class_id: number;
   remarks: string;
   blood_type: string;
@@ -176,6 +178,7 @@ export async function migrateChildren(prisma: PrismaClient) {
     }
 
     const classId = getMapping("class", row.class_id);
+    const schoolYearId = getMapping("school_year", row.sel_year);
 
     // Idempotency check by first+last name + branch + dob
     const dob = parseDate(row.dob);
@@ -189,6 +192,12 @@ export async function migrateChildren(prisma: PrismaClient) {
     });
 
     if (existing) {
+      if (!dryRun && schoolYearId && existing.schoolYearId !== schoolYearId) {
+        await prisma.child.update({
+          where: { id: existing.id },
+          data: { schoolYearId },
+        });
+      }
       setMapping("child", row.cid, existing.id);
       skipped++;
       continue;
@@ -212,6 +221,7 @@ export async function migrateChildren(prisma: PrismaClient) {
           photo: row.image !== "default.jpg" ? row.image : null,
           branchId,
           classId,
+          schoolYearId,
           enrollmentDate: parseDate(row.joining_date),
           busAttendance: row.bus?.toLowerCase() === "yes" ? "morning" : "false",
           diaperType: cleanString(row.diapers),
@@ -258,6 +268,7 @@ export async function migrateChildren(prisma: PrismaClient) {
     if (!branchId) continue;
 
     const classId = getMapping("class", row.class_id);
+    const schoolYearId = getMapping("school_year", row.sel_year);
     const newId = generateUUID();
 
     if (!dryRun) {
@@ -276,6 +287,7 @@ export async function migrateChildren(prisma: PrismaClient) {
           photo: row.image !== "default.jpg" ? row.image : null,
           branchId,
           classId,
+          schoolYearId,
           isDraft: true,
           isActive: toBool(row.active),
           language: cleanString(row.language),

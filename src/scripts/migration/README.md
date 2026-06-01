@@ -53,6 +53,7 @@ Each script can be run standalone:
 ```bash
 pnpm tsx src/scripts/migration/migrate-branches.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-locations.ts [--dry-run]
+pnpm tsx src/scripts/migration/migrate-school-years.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-classes.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-children.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-garderie-profile.ts [--dry-run]
@@ -79,23 +80,24 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 ```
 1. Branches       ← needs Organization (auto-created)
 2. Locations      ← no deps; provides address location mappings
-3. Classes        ← needs Branches
-4. Children       ← needs Branches, Classes, Locations
-5. Garderie Profile ← needs Branches, Children
-6. Parents        ← needs Children
-7. Employees      ← needs Branches
-8. Users          ← needs Branches, Children/Parents
-9. Login Audit    ← needs Users/Parent Users when resolvable
-10. Legacy Settings ← optional legacy config tables
-11. Daily Reports  ← needs Children
-12. Absences       ← needs Children, Users
-13. Calls          ← needs Children, Employees, Users
-14. Assessments    ← needs Children, Classes, Employees/Users, Organization
-15. Medical Forms  ← needs Children
-16. Payments       ← needs Children
-17. Food/Calendar  ← needs Branches, Organization
-18. Alarms         ← needs Children, Users, Parent Users, Teachers
-19. Messages       ← needs Users
+3. School Years   ← needs Organization
+4. Classes        ← needs Branches
+5. Children       ← needs Branches, Classes, Locations, School Years
+6. Garderie Profile ← needs Branches, Children
+7. Parents        ← needs Children
+8. Employees      ← needs Branches
+9. Users          ← needs Branches, Children/Parents
+10. Login Audit    ← needs Users/Parent Users when resolvable
+11. Legacy Settings ← optional legacy config tables
+12. Daily Reports  ← needs Children
+13. Absences       ← needs Children, Users
+14. Calls          ← needs Children, Employees, Users
+15. Assessments    ← needs Children, Classes, Employees/Users, Organization
+16. Medical Forms  ← needs Children
+17. Payments       ← needs Children
+18. Food/Calendar  ← needs Branches, Organization
+19. Alarms         ← needs Children, Users, Parent Users, Teachers
+20. Messages       ← needs Users
 ```
 
 ## Table Mappings
@@ -106,6 +108,7 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_mouhafaza` | Province |
 | `t_quadaa` | District |
 | `t_region` | Region |
+| `t_school_year` | SchoolYear |
 | `t_class` | Class |
 | `t_child`, `t_child_draft` | Child (isDraft flag) |
 | `t_child_h` | ChildHistory |
@@ -186,6 +189,9 @@ Old DB uses `active = 0` for soft deletes. Only active records (active = 1) are 
 
 ### Locations
 Legacy Lebanon location tables are migrated into the modern Province → District → Region hierarchy. Old `t_mouhafaza.m_id`, `t_quadaa.qid`, and `t_region.rid` values are mapped to UUIDs for downstream address restoration; inactive rows and orphan districts/regions are skipped and counted in logs.
+
+### School Years
+Legacy `t_school_year` rows are migrated with source database/table/id, `sid`, source date, and raw JSON. The year from `t_school_year.sdate` is mapped so `t_child.sel_year` can populate each child's `schoolYearId`.
 
 ### Food Applications
 Legacy `t_food_apply` rows restore the "food for all" class/date meal templates used to prefill daily reports. They are kept as `FoodApplication` rows with class, triggering child, breakfast/lunch food IDs, meal times, dessert text/time, creator, active flag, and the complete legacy row.

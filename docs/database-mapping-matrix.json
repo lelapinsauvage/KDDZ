@@ -788,8 +788,8 @@
     "legacyTable": "t_school_year",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, sid:int(11) NOT NULL, sdate:varchar(50) NOT NULL",
     "modernDestination": "SchoolYear",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-school-years.ts",
+    "reconciliation": "Legacy school-year rows preserve source database/table/id, sid, source date, and raw JSON; t_child.sel_year now maps children to SchoolYear."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1756,8 +1756,8 @@
     "legacyTable": "t_school_year",
     "legacyColumns": "id:int(11) NOT NULL, sid:int(11) NOT NULL, sdate:varchar(50) NOT NULL",
     "modernDestination": "SchoolYear",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-school-years.ts",
+    "reconciliation": "Legacy school-year rows preserve source database/table/id, sid, source date, and raw JSON; t_child.sel_year now maps children to SchoolYear."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -2596,8 +2596,8 @@
     "legacyTable": "t_school_year",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, sid:int(11) NOT NULL, sdate:varchar(50) NOT NULL",
     "modernDestination": "SchoolYear",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-school-years.ts",
+    "reconciliation": "Legacy school-year rows preserve source database/table/id, sid, source date, and raw JSON; t_child.sel_year now maps children to SchoolYear."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",

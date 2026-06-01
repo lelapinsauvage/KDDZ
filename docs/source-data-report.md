@@ -24,7 +24,6 @@ These are the highest-risk migration gaps because source data exists and no curr
 | kiddzonl_garderie29sept.sql | login_confirm | 5 | id, data, username, email, key, type |
 | kiddzonl_garderie29sept.sql | login_profiles | 2 | p_id, pfield_id, user_id, profile_label, profile_value |
 | kiddzonl_garderie29sept.sql | parent_login_levels | 2 | id, level_name, level_disabled, redirect, welcome_email |
-| kiddzonl_garderie29sept.sql | t_school_year | 2 | id, sid, sdate |
 | kiddzonl_garderie29sept.sql | login_profile_fields | 1 | id, section, type, label, public, signup |
 | kiddzonl_garderie29sept.sql | t_attachments | 1 | attid, att_title, url, child_id, datetime, active |
 | kiddzonl_garderie29sept.sql | t_events_types | 1 | id, event_name, default_subject, default_message |
@@ -229,7 +228,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie17-18.sql | t_quadaa | 6 | 0 | covered by migrate-locations.ts |
 | kiddzonl_garderie17-18.sql | t_region | 6 | 0 | covered by migrate-locations.ts |
 | kiddzonl_garderie17-18.sql | t_relatives | 12 | 0 | covered by migrate-children.ts |
-| kiddzonl_garderie17-18.sql | t_school_year | 3 | 0 | not covered yet / needs explicit decision |
+| kiddzonl_garderie17-18.sql | t_school_year | 3 | 0 | covered by migrate-school-years.ts |
 | kiddzonl_garderie17-18.sql | t_teacher | 46 | 0 | covered by migrate-employees.ts |
 | kiddzonl_garderie17-18.sql | t_teacher_address | 10 | 0 | covered by migrate-employees.ts |
 | kiddzonl_garderie17-18.sql | t_teacher_attachments | 8 | 0 | covered by migrate-employees.ts |
@@ -307,7 +306,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie29sept.sql | t_alarms_vaccinations | 10 | 2 | covered by migrate-alarms.ts |
 | kiddzonl_garderie29sept.sql | t_garderie | 70 | 2 | covered by migrate-garderie-profile.ts |
 | kiddzonl_garderie29sept.sql | t_notification_setting | 3 | 2 | covered by migrate-settings.ts |
-| kiddzonl_garderie29sept.sql | t_school_year | 3 | 2 | not covered yet / needs explicit decision |
+| kiddzonl_garderie29sept.sql | t_school_year | 3 | 2 | covered by migrate-school-years.ts |
 | kiddzonl_garderie29sept.sql | login_profile_fields | 6 | 1 | not covered yet / needs explicit decision |
 | kiddzonl_garderie29sept.sql | login_users | 12 | 1 | covered by migrate-users.ts |
 | kiddzonl_garderie29sept.sql | parent_login_users | 10 | 1 | covered by migrate-parents.ts |
@@ -455,7 +454,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie_2018-2019.sql | t_quadaa | 6 | 0 | covered by migrate-locations.ts |
 | kiddzonl_garderie_2018-2019.sql | t_region | 6 | 0 | covered by migrate-locations.ts |
 | kiddzonl_garderie_2018-2019.sql | t_relatives | 12 | 0 | covered by migrate-children.ts |
-| kiddzonl_garderie_2018-2019.sql | t_school_year | 3 | 0 | not covered yet / needs explicit decision |
+| kiddzonl_garderie_2018-2019.sql | t_school_year | 3 | 0 | covered by migrate-school-years.ts |
 | kiddzonl_garderie_2018-2019.sql | t_teacher | 46 | 0 | covered by migrate-employees.ts |
 | kiddzonl_garderie_2018-2019.sql | t_teacher_address | 10 | 0 | covered by migrate-employees.ts |
 | kiddzonl_garderie_2018-2019.sql | t_teacher_attachments | 8 | 0 | covered by migrate-employees.ts |

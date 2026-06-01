@@ -4,30 +4,31 @@
  * Dependency order:
  *   1. Branches     (no deps — only needs Organization)
  *   2. Locations    (no deps — provides location mappings)
- *   3. Classes      (depends on Branches)
- *   4. Children     (depends on Branches, Classes, Locations)
- *   5. Garderie Profile (depends on Branches, Children)
- *   6. Parents      (depends on Children)
- *   7. Employees    (depends on Branches)
- *   8. Users        (depends on Branches, Children via Parents)
- *   9. Login Audit   (depends on Users, Parent Users when resolvable)
- *  10. Legacy Settings (optional settings/config tables)
- *  11. Daily Reports (depends on Children)
- *  12. Absences      (depends on Children, Users)
- *  13. Calls         (depends on Children, Employees, Users)
- *  14. Assessments   (depends on Children, Classes, Employees, Users, Organization)
- *  15. Medical Forms (depends on Children)
- *  16. Payments      (depends on Children)
- *  17. Food/Calendar (depends on Branches)
- *  18. Alarms        (depends on Children, Users, Parent Users, Teachers)
- *  19. Messages      (depends on Users)
+ *   3. School Years (depends on Organization)
+ *   4. Classes      (depends on Branches)
+ *   5. Children     (depends on Branches, Classes, Locations, School Years)
+ *   6. Garderie Profile (depends on Branches, Children)
+ *   7. Parents      (depends on Children)
+ *   8. Employees    (depends on Branches)
+ *   9. Users        (depends on Branches, Children via Parents)
+ *  10. Login Audit   (depends on Users, Parent Users when resolvable)
+ *  11. Legacy Settings (optional settings/config tables)
+ *  12. Daily Reports (depends on Children)
+ *  13. Absences      (depends on Children, Users)
+ *  14. Calls         (depends on Children, Employees, Users)
+ *  15. Assessments   (depends on Children, Classes, Employees, Users, Organization)
+ *  16. Medical Forms (depends on Children)
+ *  17. Payments      (depends on Children)
+ *  18. Food/Calendar (depends on Branches)
+ *  19. Alarms        (depends on Children, Users, Parent Users, Teachers)
+ *  20. Messages      (depends on Users)
  *
  * Usage:
  *   pnpm tsx src/scripts/migration/migrate-all.ts [--dry-run] [--step=N]
  *
  * Flags:
  *   --dry-run   Preview what would be migrated without writing to DB
- *   --step=N    Run only step N (1-19) and all its dependencies
+ *   --step=N    Run only step N (1-20) and all its dependencies
  *   --from=N    Start from step N (skip earlier steps, assumes they ran)
  */
 
@@ -38,6 +39,7 @@ import { isDryRun, log, logError } from "./lib/utils";
 
 import { migrateBranches } from "./migrate-branches";
 import { migrateLocations } from "./migrate-locations";
+import { migrateSchoolYears } from "./migrate-school-years";
 import { migrateClasses } from "./migrate-classes";
 import { migrateChildren } from "./migrate-children";
 import { migrateGarderieProfile } from "./migrate-garderie-profile";
@@ -75,103 +77,109 @@ const steps: MigrationStep[] = [
     },
   },
   {
-    name: "3. Classes",
+    name: "3. School Years",
+    run: async (prisma, orgId) => {
+      await migrateSchoolYears(prisma, orgId);
+    },
+  },
+  {
+    name: "4. Classes",
     run: async (prisma) => {
       await migrateClasses(prisma);
     },
   },
   {
-    name: "4. Children",
+    name: "5. Children",
     run: async (prisma) => {
       await migrateChildren(prisma);
     },
   },
   {
-    name: "5. Garderie Profile",
+    name: "6. Garderie Profile",
     run: async (prisma) => {
       await migrateGarderieProfile(prisma);
     },
   },
   {
-    name: "6. Parents",
+    name: "7. Parents",
     run: async (prisma) => {
       await migrateParents(prisma);
     },
   },
   {
-    name: "7. Employees",
+    name: "8. Employees",
     run: async (prisma) => {
       await migrateEmployees(prisma);
     },
   },
   {
-    name: "8. Users",
+    name: "9. Users",
     run: async (prisma) => {
       await migrateUsers(prisma);
     },
   },
   {
-    name: "9. Login Audit",
+    name: "10. Login Audit",
     run: async (prisma) => {
       await migrateLoginAudit(prisma);
     },
   },
   {
-    name: "10. Legacy Settings",
+    name: "11. Legacy Settings",
     run: async (prisma) => {
       await migrateLegacySettings(prisma);
     },
   },
   {
-    name: "11. Daily Reports",
+    name: "12. Daily Reports",
     run: async (prisma) => {
       await migrateDailyReports(prisma);
     },
   },
   {
-    name: "12. Absences",
+    name: "13. Absences",
     run: async (prisma) => {
       await migrateAbsences(prisma);
     },
   },
   {
-    name: "13. Calls",
+    name: "14. Calls",
     run: async (prisma) => {
       await migrateCalls(prisma);
     },
   },
   {
-    name: "14. Assessments",
+    name: "15. Assessments",
     run: async (prisma, orgId) => {
       await migrateAssessments(prisma, orgId);
     },
   },
   {
-    name: "15. Medical Forms",
+    name: "16. Medical Forms",
     run: async (prisma) => {
       await migrateMedical(prisma);
     },
   },
   {
-    name: "16. Payments",
+    name: "17. Payments",
     run: async (prisma) => {
       await migratePayments(prisma);
     },
   },
   {
-    name: "17. Food, Calendar & Holidays",
+    name: "18. Food, Calendar & Holidays",
     run: async (prisma, orgId) => {
       await migrateFoodCalendar(prisma, orgId);
     },
   },
   {
-    name: "18. Alarms & Notifications",
+    name: "19. Alarms & Notifications",
     run: async (prisma) => {
       await migrateAlarms(prisma);
     },
   },
   {
-    name: "19. Messages",
+    name: "20. Messages",
     run: async (prisma) => {
       await migrateMessages(prisma);
     },
