@@ -11,9 +11,9 @@
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "callparent",
     "legacyColumns": "parent_id:int(11) NOT NULL AUTO_INCREMENT, parent_name:varchar(20) NOT NULL",
-    "modernDestination": "CallLog",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "CallCauseCategory",
+    "status": "mapped - migrated by migrate-calls.ts",
+    "reconciliation": "Legacy call parent categories restored as CallCauseCategory rows and linked to CallCause children by parent label."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -843,9 +843,9 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "callparent",
     "legacyColumns": "parent_id:int(11) NOT NULL, parent_name:varchar(20) NOT NULL",
-    "modernDestination": "CallLog",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "CallCauseCategory",
+    "status": "mapped - migrated by migrate-calls.ts",
+    "reconciliation": "Legacy call parent categories restored as CallCauseCategory rows and linked to CallCause children by parent label."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1819,9 +1819,9 @@
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "callparent",
     "legacyColumns": "parent_id:int(11) NOT NULL AUTO_INCREMENT, parent_name:varchar(20) NOT NULL",
-    "modernDestination": "CallLog",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "CallCauseCategory",
+    "status": "mapped - migrated by migrate-calls.ts",
+    "reconciliation": "Legacy call parent categories restored as CallCauseCategory rows and linked to CallCause children by parent label."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",

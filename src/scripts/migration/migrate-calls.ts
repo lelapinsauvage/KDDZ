@@ -1,11 +1,17 @@
 /**
- * Migration: callcauses -> CallCause
+ * Migration: callparent -> CallCauseCategory
+ *            callcauses -> CallCause
  *            t_form_6    -> CallLog
  *
  * Legacy calls are stored as "medical form 6" records. The old call pages read
  * `t_form_6` directly for child calls, branch calls, and global calls.
- * `callcauses` provides the parent/child call reason lookup used by the call
- * form dropdown before the chosen child label is stored on `t_form_6`.
+ * `callparent` and `callcauses` provide the parent/child call reason lookup
+ * used by the call form dropdown before the chosen child label is stored on
+ * `t_form_6`.
+ *
+ * Field mapping (callparent -> CallCauseCategory):
+ *   parent_id   -> legacyId
+ *   parent_name -> name
  *
  * Field mapping (callcauses -> CallCause):
  *   id     -> legacyId
@@ -49,6 +55,11 @@ interface OldCallCause {
   child: string;
 }
 
+interface OldCallParent {
+  parent_id: number;
+  parent_name: string;
+}
+
 interface OldCall {
   form_id: number;
   child_id: string;
@@ -72,7 +83,75 @@ function mapDirection(value: string): CallDirection {
   return "INCOMING";
 }
 
-async function migrateCallCauses(prisma: PrismaClient, dryRun: boolean) {
+function categoryLookupKey(value: string | null): string | null {
+  if (!value) return null;
+  return value.trim().toLowerCase();
+}
+
+async function migrateCallParents(
+  prisma: PrismaClient,
+  dryRun: boolean
+): Promise<Map<string, string>> {
+  const oldRows = await queryMysql<OldCallParent>(
+    "SELECT * FROM callparent ORDER BY parent_id"
+  );
+  log(`Found ${oldRows.length} call parent rows in callparent`);
+
+  const sourceDatabase = getMysqlConfig().database || "unknown";
+  const categoriesByName = new Map<string, string>();
+  let migrated = 0;
+  let skipped = 0;
+
+  for (const row of oldRows) {
+    const legacyId = toInt(row.parent_id);
+    const name = cleanString(row.parent_name);
+    if (!legacyId || !name) {
+      skipped++;
+      continue;
+    }
+
+    const legacyKey = `${sourceDatabase}:callparent:${legacyId}`;
+    const existing = await prisma.callCauseCategory.findUnique({
+      where: { legacyKey },
+    });
+    if (existing) {
+      const lookupKey = categoryLookupKey(existing.name);
+      if (lookupKey) categoriesByName.set(lookupKey, existing.id);
+      setMapping("callparent", legacyId, existing.id);
+      skipped++;
+      continue;
+    }
+
+    const id = generateUUID();
+    if (!dryRun) {
+      await prisma.callCauseCategory.create({
+        data: {
+          id,
+          sourceDatabase,
+          legacyKey,
+          legacyId,
+          name,
+          legacyData: JSON.parse(JSON.stringify(row)),
+        },
+      });
+    }
+
+    const lookupKey = categoryLookupKey(name);
+    if (lookupKey) categoriesByName.set(lookupKey, id);
+    setMapping("callparent", legacyId, id);
+    migrated++;
+    logProgress(migrated, oldRows.length, "Call Parents");
+  }
+
+  log(`Call Parents: ${migrated} migrated, ${skipped} skipped`);
+  return categoriesByName;
+}
+
+async function migrateCallCauses(
+  prisma: PrismaClient,
+  dryRun: boolean,
+  categoriesByName: Map<string, string>
+) {
   const oldRows = await queryMysql<OldCallCause>(
     "SELECT * FROM callcauses ORDER BY id"
   );
@@ -85,10 +164,19 @@ async function migrateCallCauses(prisma: PrismaClient, dryRun: boolean) {
   for (const row of oldRows) {
     const legacyId = toInt(row.id);
     const legacyKey = `${sourceDatabase}:callcauses:${legacyId}`;
+    const parentLabel = cleanString(row.parent);
+    const categoryId =
+      categoriesByName.get(categoryLookupKey(parentLabel) ?? "") ?? null;
     const existing = await prisma.callCause.findUnique({
       where: { legacyKey },
     });
     if (existing) {
+      if (!dryRun && categoryId && existing.categoryId !== categoryId) {
+        await prisma.callCause.update({
+          where: { id: existing.id },
+          data: { categoryId },
+        });
+      }
       setMapping("callcause", legacyId, existing.id);
       skipped++;
       continue;
@@ -102,7 +190,8 @@ async function migrateCallCauses(prisma: PrismaClient, dryRun: boolean) {
           sourceDatabase,
           legacyKey,
           legacyId,
-          parentLabel: cleanString(row.parent),
+          categoryId,
+          parentLabel,
           childLabel: cleanString(row.child),
           legacyData: JSON.parse(JSON.stringify(row)),
         },
@@ -121,7 +210,8 @@ export async function migrateCalls(prisma: PrismaClient) {
   log("=== Migrating Call Logs ===");
   const dryRun = isDryRun();
 
-  await migrateCallCauses(prisma, dryRun);
+  const categoriesByName = await migrateCallParents(prisma, dryRun);
+  await migrateCallCauses(prisma, dryRun, categoriesByName);
 
   const oldRows = await queryMysql<OldCall>(
     "SELECT * FROM t_form_6 WHERE active = 1 AND is_rep_draft = 0 ORDER BY form_id"
