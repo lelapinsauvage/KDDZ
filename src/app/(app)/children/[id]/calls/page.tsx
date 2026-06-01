@@ -31,6 +31,7 @@ export default async function ChildCallsPage({ params }: Props) {
 
   const childData = {
     id: child.id,
+    branchId: child.branchId,
     firstName: child.firstName,
     lastName: child.lastName,
   };

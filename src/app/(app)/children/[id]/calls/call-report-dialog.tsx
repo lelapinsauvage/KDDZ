@@ -20,6 +20,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createCallLog } from "@/lib/actions/calls";
+import { uploadFileWithPresign } from "@/lib/uploads/client-upload";
+import { FileText, Upload, X } from "lucide-react";
 
 const CALL_CAUSE_OPTIONS = [
   { value: "health", label: "Health Issue" },
@@ -35,6 +37,7 @@ const CALL_CAUSE_OPTIONS = [
 
 interface Props {
   childId: string;
+  branchId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   staffList: { id: string; name: string | null; email: string }[];
@@ -42,6 +45,7 @@ interface Props {
 
 export function CallReportDialog({
   childId,
+  branchId,
   open,
   onOpenChange,
   staffList,
@@ -56,6 +60,7 @@ export function CallReportDialog({
   const [subject, setSubject] = useState("");
   const [remarks, setRemarks] = useState("");
   const [teacherId, setTeacherId] = useState("");
+  const [attachments, setAttachments] = useState<File[]>([]);
   const [error, setError] = useState("");
 
   function resetForm() {
@@ -66,7 +71,21 @@ export function CallReportDialog({
     setSubject("");
     setRemarks("");
     setTeacherId("");
+    setAttachments([]);
     setError("");
+  }
+
+  function addAttachments(fileList: FileList | null) {
+    const files = Array.from(fileList ?? []);
+    if (files.length) {
+      setAttachments((current) => [...current, ...files]);
+    }
+  }
+
+  function removeAttachment(index: number) {
+    setAttachments((current) =>
+      current.filter((_, attachmentIndex) => attachmentIndex !== index),
+    );
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -80,6 +99,31 @@ export function CallReportDialog({
     setError("");
 
     startTransition(async () => {
+      const uploadedAttachments: Array<{ filename: string; fileUrl: string }> = [];
+      if (attachments.length) {
+        try {
+          for (const file of attachments) {
+            const uploaded = await uploadFileWithPresign({
+              branchId,
+              scope: "form-attachment",
+              ownerId: childId,
+              file,
+            });
+            uploadedAttachments.push({
+              filename: file.name,
+              fileUrl: uploaded.publicUrl,
+            });
+          }
+        } catch (uploadError) {
+          setError(
+            uploadError instanceof Error
+              ? uploadError.message
+              : "Failed to upload attachments",
+          );
+          return;
+        }
+      }
+
       const result = await createCallLog({
         childId,
         direction,
@@ -89,6 +133,7 @@ export function CallReportDialog({
         subject: subject || undefined,
         remarks: remarks || undefined,
         staffId: teacherId || undefined,
+        attachments: uploadedAttachments,
       });
 
       if (!result.success) {
@@ -210,12 +255,52 @@ export function CallReportDialog({
             </Select>
           </div>
 
-          {/* Attachments placeholder */}
+          {/* Attachments */}
           <div className="space-y-1.5">
             <Label>Attachments</Label>
-            <div className="flex items-center justify-center rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-              File upload coming soon
-            </div>
+            {attachments.length > 0 && (
+              <div className="space-y-2">
+                {attachments.map((file, index) => (
+                  <div
+                    key={`${file.name}-${file.lastModified}-${index}`}
+                    className="flex items-center gap-2 rounded-md border bg-muted/30 p-2"
+                  >
+                    <FileText className="size-4 shrink-0 text-muted-foreground" />
+                    <span className="min-w-0 flex-1 truncate text-sm">
+                      {file.name}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-7 shrink-0"
+                      disabled={isPending}
+                      onClick={() => removeAttachment(index)}
+                    >
+                      <X className="size-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <label
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={(event) => {
+                event.preventDefault();
+                addAttachments(event.dataTransfer.files);
+              }}
+              className="flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed p-4 text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:bg-muted/40"
+            >
+              <Upload className="size-4" />
+              Add files
+              <input
+                type="file"
+                multiple
+                accept="image/*,.pdf"
+                className="hidden"
+                onChange={(event) => addAttachments(event.target.files)}
+              />
+            </label>
           </div>
 
           {/* Actions */}

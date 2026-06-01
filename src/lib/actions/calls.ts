@@ -29,6 +29,11 @@ interface CreateCallLogData {
   reason?: string;
   remarks?: string;
   staffId?: string;
+  attachments?: Array<{
+    title?: string;
+    filename: string;
+    fileUrl: string;
+  }>;
 }
 
 type ActionResult =
@@ -163,6 +168,17 @@ export async function createCallLog(
         remarks: data.remarks || null,
         staffId: data.staffId || null,
         createdById: ctx.userId,
+        attachments: data.attachments?.length
+          ? {
+              create: data.attachments.map((attachment) => ({
+                childId: data.childId,
+                formType: "CALL_LOG",
+                title: attachment.title ?? null,
+                filename: attachment.filename,
+                fileUrl: attachment.fileUrl,
+              })),
+            }
+          : undefined,
       },
     });
 

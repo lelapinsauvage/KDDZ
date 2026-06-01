@@ -17,6 +17,7 @@ import { AccidentReportDialog } from "./accident-report-dialog";
 
 interface ChildData {
   id: string;
+  branchId: string;
   firstName: string;
   lastName: string;
 }
@@ -193,6 +194,7 @@ export function AccidentsClient({ child, accidents, staffList }: Props) {
 
       <AccidentReportDialog
         childId={id}
+        branchId={child.branchId}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         staffList={staffList}

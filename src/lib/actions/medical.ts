@@ -31,6 +31,11 @@ interface CreateMedicalFormData {
   status?: MedicalFormStatus;
   data?: Record<string, unknown>;
   entries?: Array<{ field: string; value?: string }>;
+  attachments?: Array<{
+    title?: string;
+    filename: string;
+    fileUrl: string;
+  }>;
 }
 
 interface UpdateMedicalFormData {
@@ -211,9 +216,21 @@ export async function createMedicalForm(input: CreateMedicalFormData) {
               })),
             }
           : undefined,
+        attachments: input.attachments?.length
+          ? {
+              create: input.attachments.map((attachment) => ({
+                childId: input.childId,
+                formType: input.formType,
+                title: attachment.title ?? null,
+                filename: attachment.filename,
+                fileUrl: attachment.fileUrl,
+              })),
+            }
+          : undefined,
       },
       include: {
         entries: true,
+        attachments: true,
       },
     });
 

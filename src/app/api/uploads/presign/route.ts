@@ -33,6 +33,7 @@ const uploadScopeSchema = z.enum([
   "payment-receipt",
   "daily-report",
   "absence-report",
+  "form-attachment",
   "medical-form",
 ]);
 

@@ -22,6 +22,7 @@ export default async function ChildAccidentsPage({ params }: Props) {
 
   const childData = {
     id: child.id,
+    branchId: child.branchId,
     firstName: child.firstName,
     lastName: child.lastName,
   };

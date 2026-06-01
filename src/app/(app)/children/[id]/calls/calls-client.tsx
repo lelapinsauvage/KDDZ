@@ -19,6 +19,7 @@ import { deleteCallLog } from "@/lib/actions/calls";
 
 interface ChildData {
   id: string;
+  branchId: string;
   firstName: string;
   lastName: string;
 }
@@ -199,6 +200,7 @@ export function CallsClient({ child, calls, staffList }: Props) {
 
       <CallReportDialog
         childId={id}
+        branchId={child.branchId}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         staffList={staffList}

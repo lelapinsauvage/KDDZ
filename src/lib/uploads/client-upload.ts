@@ -15,6 +15,7 @@ export type UploadScope =
   | "payment-receipt"
   | "daily-report"
   | "absence-report"
+  | "form-attachment"
   | "medical-form";
 
 interface PresignResponse {
