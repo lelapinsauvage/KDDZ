@@ -59,6 +59,7 @@ pnpm tsx src/scripts/migration/migrate-parents.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-employees.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-users.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-login-audit.ts [--dry-run]
+pnpm tsx src/scripts/migration/migrate-settings.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-daily-reports.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-absences.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-calls.ts [--dry-run]
@@ -83,15 +84,16 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 6. Employees      ← needs Branches
 7. Users          ← needs Branches, Children/Parents
 8. Login Audit    ← needs Users/Parent Users when resolvable
-9. Daily Reports  ← needs Children
-10. Absences      ← needs Children, Users
-11. Calls         ← needs Children, Employees, Users
-12. Assessments   ← needs Children, Classes, Employees/Users, Organization
-13. Medical Forms ← needs Children
-14. Payments      ← needs Children
-15. Food/Calendar ← needs Branches, Organization
-16. Alarms        ← needs Children, Users, Parent Users, Teachers
-17. Messages      ← needs Users
+9. Legacy Settings ← optional legacy config tables
+10. Daily Reports  ← needs Children
+11. Absences       ← needs Children, Users
+12. Calls          ← needs Children, Employees, Users
+13. Assessments    ← needs Children, Classes, Employees/Users, Organization
+14. Medical Forms  ← needs Children
+15. Payments       ← needs Children
+16. Food/Calendar  ← needs Branches, Organization
+17. Alarms         ← needs Children, Users, Parent Users, Teachers
+18. Messages       ← needs Users
 ```
 
 ## Table Mappings
@@ -116,6 +118,7 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `login_users` | User |
 | `parent_login_users` | ParentUser |
 | `login_timestamps`, `login_timestamps_man`, `parent_login_timestamps` | LegacyLoginTimestamp |
+| `login_settings`, `parent_login_settings`, `login_settings_man`, `t_settings`, `t_notification_setting` | LegacySetting |
 | `t_daily_report` | DailyReport |
 | `t_daily_fever` | DailyReportFever |
 | `t_daily_milk` | DailyReportMilk |
@@ -160,6 +163,9 @@ Old passwords are MD5 hashes. They are rehashed as `bcrypt(md5:ORIGINAL_HASH)`. 
 
 ### Login Audit
 Legacy timestamp tables are historical login audit trails, not active sessions. They are restored into `LegacyLoginTimestamp` with source database/table/id, legacy user id, IP address, timestamp, and the resolved modern `User` or `ParentUser` UUID when the user mapping exists.
+
+### Legacy Settings
+Legacy PHP auth, nursery, and notification setting tables are preserved in `LegacySetting` with their source database/table/id, scope, key, exact value, optional description, and raw JSON. They are not written into active branch `Settings`.
 
 ### Idempotency
 All scripts check for existing records before inserting, so they can be re-run safely. Already-migrated records are skipped.

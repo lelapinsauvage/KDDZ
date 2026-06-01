@@ -147,9 +147,9 @@
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "login_settings",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, option_name:varchar(255) COLLATE utf8_unicode_ci NOT NULL, option_value:longtext COLLATE utf8_unicode_ci NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacySetting",
+    "status": "mapped - migrated by migrate-settings.ts",
+    "reconciliation": "Legacy settings rows preserved with source database/table/id, scope, key, exact value, optional description, and raw legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -195,9 +195,9 @@
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "parent_login_settings",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, option_name:varchar(255) NOT NULL, option_value:longtext NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacySetting",
+    "status": "mapped - migrated by migrate-settings.ts",
+    "reconciliation": "Legacy settings rows preserved with source database/table/id, scope, key, exact value, optional description, and raw legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -707,9 +707,9 @@
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "t_notification_setting",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, mtype:int(11) NOT NULL COMMENT '1: whatsapp / 2: sms', status:int(11) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacySetting",
+    "status": "mapped - migrated by migrate-settings.ts",
+    "reconciliation": "Legacy settings rows preserved with source database/table/id, scope, key, exact value, optional description, and raw legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1059,9 +1059,9 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "login_settings",
     "legacyColumns": "id:int(11) NOT NULL, option_name:varchar(255) COLLATE utf8_unicode_ci NOT NULL, option_value:longtext COLLATE utf8_unicode_ci NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacySetting",
+    "status": "mapped - migrated by migrate-settings.ts",
+    "reconciliation": "Legacy settings rows preserved with source database/table/id, scope, key, exact value, optional description, and raw legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1123,9 +1123,9 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "parent_login_settings",
     "legacyColumns": "id:int(11) NOT NULL, option_name:varchar(255) NOT NULL, option_value:longtext NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacySetting",
+    "status": "mapped - migrated by migrate-settings.ts",
+    "reconciliation": "Legacy settings rows preserved with source database/table/id, scope, key, exact value, optional description, and raw legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1683,9 +1683,9 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "t_notification_setting",
     "legacyColumns": "id:int(11) NOT NULL, mtype:int(11) NOT NULL COMMENT '1: whatsapp / 2: sms', status:int(11) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacySetting",
+    "status": "mapped - migrated by migrate-settings.ts",
+    "reconciliation": "Legacy settings rows preserved with source database/table/id, scope, key, exact value, optional description, and raw legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1763,9 +1763,9 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "t_settings",
     "legacyColumns": "id:int(11) NOT NULL, type:text COLLATE utf8_unicode_ci NOT NULL, value:text COLLATE utf8_unicode_ci NOT NULL, descr:text COLLATE utf8_unicode_ci NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacySetting",
+    "status": "mapped - migrated by migrate-settings.ts",
+    "reconciliation": "Legacy settings rows preserved with source database/table/id, scope, key, exact value, optional description, and raw legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1955,9 +1955,9 @@
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "login_settings",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, option_name:varchar(255) COLLATE utf8_unicode_ci NOT NULL, option_value:longtext COLLATE utf8_unicode_ci NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacySetting",
+    "status": "mapped - migrated by migrate-settings.ts",
+    "reconciliation": "Legacy settings rows preserved with source database/table/id, scope, key, exact value, optional description, and raw legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2003,9 +2003,9 @@
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "parent_login_settings",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, option_name:varchar(255) NOT NULL, option_value:longtext NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacySetting",
+    "status": "mapped - migrated by migrate-settings.ts",
+    "reconciliation": "Legacy settings rows preserved with source database/table/id, scope, key, exact value, optional description, and raw legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2515,9 +2515,9 @@
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "t_notification_setting",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, mtype:int(11) NOT NULL COMMENT '1: whatsapp / 2: sms', status:int(11) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacySetting",
+    "status": "mapped - migrated by migrate-settings.ts",
+    "reconciliation": "Legacy settings rows preserved with source database/table/id, scope, key, exact value, optional description, and raw legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2691,9 +2691,9 @@
     "sourceDump": "kiddzonl_master29sept",
     "legacyTable": "login_settings",
     "legacyColumns": "id:int(11) NOT NULL, option_name:varchar(255) NOT NULL, option_value:longtext NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacySetting",
+    "status": "mapped - migrated by migrate-settings.ts",
+    "reconciliation": "Legacy settings rows preserved with source database/table/id, scope, key, exact value, optional description, and raw legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_master29sept",
@@ -2843,17 +2843,17 @@
     "sourceDump": "kiddzonl_users29sept",
     "legacyTable": "login_settings",
     "legacyColumns": "id:int(11) NOT NULL, option_name:varchar(255) NOT NULL, option_value:longtext NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacySetting",
+    "status": "mapped - migrated by migrate-settings.ts",
+    "reconciliation": "Legacy settings rows preserved with source database/table/id, scope, key, exact value, optional description, and raw legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_users29sept",
     "legacyTable": "login_settings_man",
     "legacyColumns": "id:int(11) NOT NULL, option_name:varchar(255) NOT NULL, option_value:longtext NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacySetting",
+    "status": "mapped - migrated by migrate-settings.ts",
+    "reconciliation": "Legacy settings rows preserved with source database/table/id, scope, key, exact value, optional description, and raw legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_users29sept",
@@ -2923,9 +2923,9 @@
     "sourceDump": "kiddzonl_users29sept",
     "legacyTable": "t_notification_setting",
     "legacyColumns": "id:int(11) NOT NULL, name:text NOT NULL, alarms:int(11) NOT NULL, email:int(11) NOT NULL, sms:int(11) NOT NULL, whatsapp:int(11) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacySetting",
+    "status": "mapped - migrated by migrate-settings.ts",
+    "reconciliation": "Legacy settings rows preserved with source database/table/id, scope, key, exact value, optional description, and raw legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_users29sept",
@@ -3051,17 +3051,17 @@
     "sourceDump": "kiddzonl_users_2018-2019",
     "legacyTable": "login_settings",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, option_name:varchar(255) NOT NULL, option_value:longtext NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacySetting",
+    "status": "mapped - migrated by migrate-settings.ts",
+    "reconciliation": "Legacy settings rows preserved with source database/table/id, scope, key, exact value, optional description, and raw legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_users_2018-2019",
     "legacyTable": "login_settings_man",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, option_name:varchar(255) NOT NULL, option_value:longtext NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacySetting",
+    "status": "mapped - migrated by migrate-settings.ts",
+    "reconciliation": "Legacy settings rows preserved with source database/table/id, scope, key, exact value, optional description, and raw legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_users_2018-2019",
@@ -3131,9 +3131,9 @@
     "sourceDump": "kiddzonl_users_2018-2019",
     "legacyTable": "t_notification_setting",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, name:text NOT NULL, alarms:int(11) NOT NULL, email:int(11) NOT NULL, sms:int(11) NOT NULL, whatsapp:int(11) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacySetting",
+    "status": "mapped - migrated by migrate-settings.ts",
+    "reconciliation": "Legacy settings rows preserved with source database/table/id, scope, key, exact value, optional description, and raw legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_users_2018-2019",
