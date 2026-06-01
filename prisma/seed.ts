@@ -28,6 +28,7 @@ async function main() {
     await tx.legacyNotificationLog.deleteMany();
     await tx.legacyNotificationNature.deleteMany();
     await tx.legacyLoginTimestamp.deleteMany();
+    await tx.legacyAuthRecord.deleteMany();
     await tx.legacySetting.deleteMany();
     await tx.alarm.deleteMany();
     await tx.holiday.deleteMany();

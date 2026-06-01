@@ -187,6 +187,7 @@ async function clearAllData(prisma: PrismaClient) {
 
   await prisma.pushToken.deleteMany();
   await prisma.notification.deleteMany();
+  await prisma.legacyAuthRecord.deleteMany();
   await prisma.alarm.deleteMany();
   await prisma.holiday.deleteMany();
   await prisma.event.deleteMany();

@@ -4,7 +4,7 @@ Every legacy file reference must be migrated to modern object storage or explici
 
 | Source Dump | Legacy Table | File Columns | Modern Destination | Status |
 | --- | --- | --- | --- | --- |
-| kiddzonl_garderie17-18 | login_profiles | profile_label, profile_value |  | needs storage migration rule |
+| kiddzonl_garderie17-18 | login_profiles | profile_label, profile_value |  | covered by migrate-auth-metadata.ts |
 | kiddzonl_garderie17-18 | t_absent_attachments | url | AbsenceAttachment | needs storage migration rule |
 | kiddzonl_garderie17-18 | t_attachments | url |  | needs storage migration rule |
 | kiddzonl_garderie17-18 | t_branch | image | Branch | needs storage migration rule |
@@ -24,7 +24,7 @@ Every legacy file reference must be migrated to modern object storage or explici
 | kiddzonl_garderie17-18 | t_payments | image | Payment | needs storage migration rule |
 | kiddzonl_garderie17-18 | t_teacher | image | Teacher | needs storage migration rule |
 | kiddzonl_garderie17-18 | t_teacher_attachments | url | TeacherAttachment | needs storage migration rule |
-| kiddzonl_garderie29sept | login_profiles | profile_label, profile_value |  | needs storage migration rule |
+| kiddzonl_garderie29sept | login_profiles | profile_label, profile_value |  | covered by migrate-auth-metadata.ts |
 | kiddzonl_garderie29sept | t_absent_attachments | url | AbsenceAttachment | needs storage migration rule |
 | kiddzonl_garderie29sept | t_attachments | url |  | needs storage migration rule |
 | kiddzonl_garderie29sept | t_branch | image | Branch | needs storage migration rule |
@@ -44,7 +44,7 @@ Every legacy file reference must be migrated to modern object storage or explici
 | kiddzonl_garderie29sept | t_payments | image | Payment | needs storage migration rule |
 | kiddzonl_garderie29sept | t_teacher | image | Teacher | needs storage migration rule |
 | kiddzonl_garderie29sept | t_teacher_attachments | url | TeacherAttachment | needs storage migration rule |
-| kiddzonl_garderie_2018-2019 | login_profiles | profile_label, profile_value |  | needs storage migration rule |
+| kiddzonl_garderie_2018-2019 | login_profiles | profile_label, profile_value |  | covered by migrate-auth-metadata.ts |
 | kiddzonl_garderie_2018-2019 | t_absent_attachments | url | AbsenceAttachment | needs storage migration rule |
 | kiddzonl_garderie_2018-2019 | t_attachments | url |  | needs storage migration rule |
 | kiddzonl_garderie_2018-2019 | t_branch | image | Branch | needs storage migration rule |

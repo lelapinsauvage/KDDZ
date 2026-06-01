@@ -2187,6 +2187,38 @@ model LegacyLoginTimestamp {
   @@map("legacy_login_timestamps")
 }
 
+model LegacyAuthRecord {
+  id             String   @id @default(uuid()) @db.Uuid
+  sourceDatabase String
+  legacyTable    String
+  legacyKey      String   @unique
+  legacyId       Int
+  recordType     String
+  userId         String?  @db.Uuid
+  parentUserId   String?  @db.Uuid
+  legacyUserId   Int?
+  username       String?
+  email          String?
+  recordKey      String?
+  recordValue    String?  @db.Text
+  isDisabled     Boolean?
+  redirect       String?
+  welcomeEmail   Boolean?
+  legacyData     Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([sourceDatabase])
+  @@index([legacyTable])
+  @@index([legacyId])
+  @@index([recordType])
+  @@index([userId])
+  @@index([parentUserId])
+  @@index([legacyUserId])
+  @@index([email])
+  @@map("legacy_auth_records")
+}
+
 model LegacySetting {
   id             String   @id @default(uuid()) @db.Uuid
   sourceDatabase String

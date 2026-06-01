@@ -115,9 +115,9 @@
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "login_confirm",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, data:varchar(255) NOT NULL, username:varchar(255) NOT NULL, email:varchar(255) NOT NULL, key:varchar(255) NOT NULL, type:varchar(25) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy PHP auth metadata is preserved with source database/table/id, record type, relevant key/value fields, optional resolved user UUID, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -131,17 +131,17 @@
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "login_profile_fields",
     "legacyColumns": "id:int(255) NOT NULL AUTO_INCREMENT, section:varchar(255) NOT NULL, type:varchar(25) NOT NULL, label:varchar(255) NOT NULL, public:tinyint(4) NOT NULL, signup:varchar(255) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy PHP auth metadata is preserved with source database/table/id, record type, relevant key/value fields, optional resolved user UUID, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "login_profiles",
     "legacyColumns": "p_id:bigint(20) unsigned NOT NULL AUTO_INCREMENT, pfield_id:int(255) NOT NULL, user_id:bigint(20) unsigned NOT NULL DEFAULT '0', profile_label:varchar(255) CHARACTER SET utf8 DEFAULT NULL, profile_value:longtext CHARACTER SET utf8",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy PHP auth metadata is preserved with source database/table/id, record type, relevant key/value fields, optional resolved user UUID, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -187,9 +187,9 @@
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "parent_login_levels",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, level_name:varchar(255) NOT NULL, level_disabled:tinyint(1) NOT NULL DEFAULT '0', redirect:varchar(255) DEFAULT NULL, welcome_email:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy PHP auth metadata is preserved with source database/table/id, record type, relevant key/value fields, optional resolved user UUID, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1027,9 +1027,9 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "login_confirm",
     "legacyColumns": "id:int(11) NOT NULL, data:varchar(255) NOT NULL, username:varchar(255) NOT NULL, email:varchar(255) NOT NULL, key:varchar(255) NOT NULL, type:varchar(25) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy PHP auth metadata is preserved with source database/table/id, record type, relevant key/value fields, optional resolved user UUID, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1043,17 +1043,17 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "login_profiles",
     "legacyColumns": "p_id:bigint(20) UNSIGNED NOT NULL, pfield_id:int(255) NOT NULL, user_id:bigint(20) UNSIGNED NOT NULL DEFAULT '0', profile_label:varchar(255) CHARACTER SET utf8 DEFAULT NULL, profile_value:longtext CHARACTER SET utf8",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy PHP auth metadata is preserved with source database/table/id, record type, relevant key/value fields, optional resolved user UUID, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "login_profile_fields",
     "legacyColumns": "id:int(255) NOT NULL, section:varchar(255) NOT NULL, type:varchar(25) NOT NULL, label:varchar(255) NOT NULL, public:tinyint(4) NOT NULL, signup:varchar(255) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy PHP auth metadata is preserved with source database/table/id, record type, relevant key/value fields, optional resolved user UUID, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1115,9 +1115,9 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "parent_login_levels",
     "legacyColumns": "id:int(11) NOT NULL, level_name:varchar(255) NOT NULL, level_disabled:tinyint(1) NOT NULL DEFAULT '0', redirect:varchar(255) DEFAULT NULL, welcome_email:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy PHP auth metadata is preserved with source database/table/id, record type, relevant key/value fields, optional resolved user UUID, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1923,9 +1923,9 @@
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "login_confirm",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, data:varchar(255) NOT NULL, username:varchar(255) NOT NULL, email:varchar(255) NOT NULL, key:varchar(255) NOT NULL, type:varchar(25) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy PHP auth metadata is preserved with source database/table/id, record type, relevant key/value fields, optional resolved user UUID, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -1939,17 +1939,17 @@
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "login_profile_fields",
     "legacyColumns": "id:int(255) NOT NULL AUTO_INCREMENT, section:varchar(255) NOT NULL, type:varchar(25) NOT NULL, label:varchar(255) NOT NULL, public:tinyint(4) NOT NULL, signup:varchar(255) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy PHP auth metadata is preserved with source database/table/id, record type, relevant key/value fields, optional resolved user UUID, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "login_profiles",
     "legacyColumns": "p_id:bigint(20) unsigned NOT NULL AUTO_INCREMENT, pfield_id:int(255) NOT NULL, user_id:bigint(20) unsigned NOT NULL DEFAULT '0', profile_label:varchar(255) CHARACTER SET utf8 DEFAULT NULL, profile_value:longtext CHARACTER SET utf8",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy PHP auth metadata is preserved with source database/table/id, record type, relevant key/value fields, optional resolved user UUID, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -1995,9 +1995,9 @@
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "parent_login_levels",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, level_name:varchar(255) NOT NULL, level_disabled:tinyint(1) NOT NULL DEFAULT '0', redirect:varchar(255) DEFAULT NULL, welcome_email:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy PHP auth metadata is preserved with source database/table/id, record type, relevant key/value fields, optional resolved user UUID, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
