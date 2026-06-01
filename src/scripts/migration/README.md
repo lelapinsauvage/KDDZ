@@ -122,6 +122,7 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_daily_attachments` | DailyReportAttachment |
 | `t_absent_report` | AbsenceReport |
 | `t_absent_attachments` | AbsenceAttachment |
+| `callcauses` | CallCause |
 | `t_form_6` | CallLog and MedicalForm (GENERAL) |
 | `t_assessment_1` .. `t_assessment_7` | Assessment |
 | `new_assessment` | Assessment `_legacyNewAssessmentMarkers` / notification stub |

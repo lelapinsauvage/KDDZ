@@ -3,9 +3,9 @@
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "callcauses",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, parent:varchar(20) NOT NULL, child:varchar(50) NOT NULL",
-    "modernDestination": "CallLog metadata",
-    "status": "partial - model/category exists but needs schema review",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "CallCause",
+    "status": "mapped - migrated by migrate-calls.ts",
+    "reconciliation": "Call reason lookup rows restored as CallCause parent/child labels with legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -835,9 +835,9 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "callcauses",
     "legacyColumns": "id:int(11) NOT NULL, parent:varchar(20) NOT NULL, child:varchar(50) NOT NULL",
-    "modernDestination": "CallLog metadata",
-    "status": "partial - model/category exists but needs schema review",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "CallCause",
+    "status": "mapped - migrated by migrate-calls.ts",
+    "reconciliation": "Call reason lookup rows restored as CallCause parent/child labels with legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1811,9 +1811,9 @@
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "callcauses",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, parent:varchar(20) NOT NULL, child:varchar(50) NOT NULL",
-    "modernDestination": "CallLog metadata",
-    "status": "partial - model/category exists but needs schema review",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "CallCause",
+    "status": "mapped - migrated by migrate-calls.ts",
+    "reconciliation": "Call reason lookup rows restored as CallCause parent/child labels with legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",

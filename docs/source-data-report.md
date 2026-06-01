@@ -21,7 +21,6 @@ These are the highest-risk migration gaps because source data exists and no curr
 
 | SQL Dump | Legacy Table | Estimated Rows | Columns |
 | --- | --- | --- | --- |
-| kiddzonl_garderie29sept.sql | callcauses | 46 | id, parent, child |
 | kiddzonl_garderie29sept.sql | login_settings | 31 | id, option_name, option_value |
 | kiddzonl_garderie29sept.sql | parent_login_settings | 30 | id, option_name, option_value |
 | kiddzonl_garderie29sept.sql | t_teacher_info | 29 | tinfid, info_type, place, kindofjob, wfrom, wto, teacher_id, datetime, active |
@@ -146,7 +145,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 
 | SQL Dump | Legacy Table | Column Count | Estimated Rows | Known Coverage |
 | --- | --- | --- | --- | --- |
-| kiddzonl_garderie17-18.sql | callcauses | 3 | 0 | not covered yet / needs explicit decision |
+| kiddzonl_garderie17-18.sql | callcauses | 3 | 0 | covered by migrate-calls.ts |
 | kiddzonl_garderie17-18.sql | callparent | 2 | 0 | not covered yet / needs explicit decision |
 | kiddzonl_garderie17-18.sql | custom_notifications | 3 | 0 | covered by migrate-alarms.ts |
 | kiddzonl_garderie17-18.sql | custom_notifications_assessment | 3 | 0 | covered by migrate-alarms.ts |
@@ -280,7 +279,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie29sept.sql | t_forms_attachments | 10 | 72 | covered by migrate-medical.ts |
 | kiddzonl_garderie29sept.sql | custom_notifications | 3 | 70 | covered by migrate-alarms.ts |
 | kiddzonl_garderie29sept.sql | t_food | 7 | 51 | covered by migrate-food-calendar.ts |
-| kiddzonl_garderie29sept.sql | callcauses | 3 | 46 | not covered yet / needs explicit decision |
+| kiddzonl_garderie29sept.sql | callcauses | 3 | 46 | covered by migrate-calls.ts |
 | kiddzonl_garderie29sept.sql | t_doctor | 16 | 39 | covered by migrate-employees.ts |
 | kiddzonl_garderie29sept.sql | custom_notifications_contracts | 3 | 36 | covered by migrate-alarms.ts |
 | kiddzonl_garderie29sept.sql | login_settings | 3 | 31 | not covered yet / needs explicit decision |
@@ -372,7 +371,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie29sept.sql | t_medical_forms | 5 | 0 | covered by migrate-medical.ts |
 | kiddzonl_garderie29sept.sql | t_teacher_attendance | 12 | 0 | not covered yet / needs explicit decision |
 | kiddzonl_garderie29sept.sql | test | 3 | 0 | not covered yet / needs explicit decision |
-| kiddzonl_garderie_2018-2019.sql | callcauses | 3 | 0 | not covered yet / needs explicit decision |
+| kiddzonl_garderie_2018-2019.sql | callcauses | 3 | 0 | covered by migrate-calls.ts |
 | kiddzonl_garderie_2018-2019.sql | callparent | 2 | 0 | not covered yet / needs explicit decision |
 | kiddzonl_garderie_2018-2019.sql | custom_notifications | 3 | 0 | covered by migrate-alarms.ts |
 | kiddzonl_garderie_2018-2019.sql | custom_notifications_assessment | 3 | 0 | covered by migrate-alarms.ts |

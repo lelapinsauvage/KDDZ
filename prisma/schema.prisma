@@ -1740,6 +1740,23 @@ model AccountingEntry {
 // CALL LOG
 // ─────────────────────────────────────────────
 
+model CallCause {
+  id             String   @id @default(uuid()) @db.Uuid
+  sourceDatabase String?
+  legacyKey      String?  @unique
+  legacyId       Int?
+  parentLabel    String?
+  childLabel     String?
+  legacyData     Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([parentLabel])
+  @@map("call_causes")
+}
+
 model CallLog {
   id          String        @id @default(uuid()) @db.Uuid
   childId     String        @db.Uuid

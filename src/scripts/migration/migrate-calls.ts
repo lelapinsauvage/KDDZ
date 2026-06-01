@@ -1,8 +1,16 @@
 /**
- * Migration: t_form_6 → CallLog
+ * Migration: callcauses -> CallCause
+ *            t_form_6    -> CallLog
  *
  * Legacy calls are stored as "medical form 6" records. The old call pages read
  * `t_form_6` directly for child calls, branch calls, and global calls.
+ * `callcauses` provides the parent/child call reason lookup used by the call
+ * form dropdown before the chosen child label is stored on `t_form_6`.
+ *
+ * Field mapping (callcauses -> CallCause):
+ *   id     -> legacyId
+ *   parent -> parentLabel
+ *   child  -> childLabel
  *
  * Field mapping:
  *   form_id       → (old ID, mapped to UUID as call_log)
@@ -16,15 +24,11 @@
  *   teacher_id    → staffId when teacher mapping exists
  *   uby           → createdById when user mapping exists
  *   datetime      → createdAt
- *
- * Attachments in `t_forms_attachments` with `formtype = 'form6'` do not yet
- * have a modern CallLog attachment model. They remain tracked in
- * `docs/source-data-report.md` and `docs/file-attachment-matrix.md`.
  */
 
 import type { CallDirection, PrismaClient } from "@/generated/prisma/client";
 import { createPrismaClient } from "./lib/prisma-client";
-import { queryMysql, closeMysqlPool } from "./lib/mysql-client";
+import { queryMysql, closeMysqlPool, getMysqlConfig } from "./lib/mysql-client";
 import {
   cleanString,
   generateUUID,
@@ -36,7 +40,14 @@ import {
   parseDate,
   parseTime,
   setMapping,
+  toInt,
 } from "./lib/utils";
+
+interface OldCallCause {
+  id: number;
+  parent: string;
+  child: string;
+}
 
 interface OldCall {
   form_id: number;
@@ -61,9 +72,56 @@ function mapDirection(value: string): CallDirection {
   return "INCOMING";
 }
 
+async function migrateCallCauses(prisma: PrismaClient, dryRun: boolean) {
+  const oldRows = await queryMysql<OldCallCause>(
+    "SELECT * FROM callcauses ORDER BY id"
+  );
+  log(`Found ${oldRows.length} call cause rows in callcauses`);
+
+  const sourceDatabase = getMysqlConfig().database || "unknown";
+  let migrated = 0;
+  let skipped = 0;
+
+  for (const row of oldRows) {
+    const legacyId = toInt(row.id);
+    const legacyKey = `${sourceDatabase}:callcauses:${legacyId}`;
+    const existing = await prisma.callCause.findUnique({
+      where: { legacyKey },
+    });
+    if (existing) {
+      setMapping("callcause", legacyId, existing.id);
+      skipped++;
+      continue;
+    }
+
+    const id = generateUUID();
+    if (!dryRun) {
+      await prisma.callCause.create({
+        data: {
+          id,
+          sourceDatabase,
+          legacyKey,
+          legacyId,
+          parentLabel: cleanString(row.parent),
+          childLabel: cleanString(row.child),
+          legacyData: JSON.parse(JSON.stringify(row)),
+        },
+      });
+    }
+
+    setMapping("callcause", legacyId, id);
+    migrated++;
+    logProgress(migrated, oldRows.length, "Call Causes");
+  }
+
+  log(`Call Causes: ${migrated} migrated, ${skipped} skipped`);
+}
+
 export async function migrateCalls(prisma: PrismaClient) {
   log("=== Migrating Call Logs ===");
   const dryRun = isDryRun();
+
+  await migrateCallCauses(prisma, dryRun);
 
   const oldRows = await queryMysql<OldCall>(
     "SELECT * FROM t_form_6 WHERE active = 1 AND is_rep_draft = 0 ORDER BY form_id"
