@@ -21,7 +21,6 @@ These are the highest-risk migration gaps because source data exists and no curr
 
 | SQL Dump | Legacy Table | Estimated Rows | Columns |
 | --- | --- | --- | --- |
-| kiddzonl_garderie29sept.sql | t_child_h | 114 | cid, joining_date, child_num, prefix, sel_year, cname, cmname, clname, image, dob, pob, nationality, gender, mother_name, mother_nationality, branch_id, language, year_from, year_to, class_id, address_id, remarks, blood_type, allergy, bus, bus_id, diapers, milk_name, milk_portion, milk_scoop, milk_time, milktime1, milktime2, remarks_food, sleep_from, sleep_to, has_old_garderie, has_lunch, active, deleted, is_draft, progress_all, progress_m, datetime, uby |
 | kiddzonl_garderie29sept.sql | t_forms_attachments | 72 | fattid, att_title, url, child_id, formtype, formid, class_id, branch_id, datetime, active |
 | kiddzonl_garderie29sept.sql | callcauses | 46 | id, parent, child |
 | kiddzonl_garderie29sept.sql | login_settings | 31 | id, option_name, option_value |
@@ -80,7 +79,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie17-18.sql | t_branch | 0 | image | covered by migrate-branches.ts |
 | kiddzonl_garderie17-18.sql | t_child | 0 | image | covered by migrate-children.ts |
 | kiddzonl_garderie17-18.sql | t_child_draft | 0 | image | covered by migrate-children.ts |
-| kiddzonl_garderie17-18.sql | t_child_h | 0 | image | needs file migration rule |
+| kiddzonl_garderie17-18.sql | t_child_h | 0 | image | covered by migrate-children.ts |
 | kiddzonl_garderie17-18.sql | t_class | 0 | image | covered by migrate-classes.ts |
 | kiddzonl_garderie17-18.sql | t_daily_attachments | 0 | url | covered by migrate-daily-reports.ts |
 | kiddzonl_garderie17-18.sql | t_forms_attachments | 0 | url | needs file migration rule |
@@ -95,7 +94,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie17-18.sql | t_teacher | 0 | image | covered by migrate-employees.ts |
 | kiddzonl_garderie17-18.sql | t_teacher_attachments | 0 | url | covered by migrate-employees.ts |
 | kiddzonl_garderie29sept.sql | t_payments | 435 | image | covered by migrate-payments.ts |
-| kiddzonl_garderie29sept.sql | t_child_h | 114 | image | needs file migration rule |
+| kiddzonl_garderie29sept.sql | t_child_h | 114 | image | covered by migrate-children.ts |
 | kiddzonl_garderie29sept.sql | t_child | 79 | image | covered by migrate-children.ts |
 | kiddzonl_garderie29sept.sql | t_forms_attachments | 72 | url | needs file migration rule |
 | kiddzonl_garderie29sept.sql | t_teacher | 11 | image | covered by migrate-employees.ts |
@@ -120,7 +119,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie_2018-2019.sql | t_branch | 0 | image | covered by migrate-branches.ts |
 | kiddzonl_garderie_2018-2019.sql | t_child | 0 | image | covered by migrate-children.ts |
 | kiddzonl_garderie_2018-2019.sql | t_child_draft | 0 | image | covered by migrate-children.ts |
-| kiddzonl_garderie_2018-2019.sql | t_child_h | 0 | image | needs file migration rule |
+| kiddzonl_garderie_2018-2019.sql | t_child_h | 0 | image | covered by migrate-children.ts |
 | kiddzonl_garderie_2018-2019.sql | t_class | 0 | image | covered by migrate-classes.ts |
 | kiddzonl_garderie_2018-2019.sql | t_daily_attachments | 0 | url | covered by migrate-daily-reports.ts |
 | kiddzonl_garderie_2018-2019.sql | t_forms_attachments | 0 | url | needs file migration rule |
@@ -202,7 +201,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie17-18.sql | t_branch | 10 | 0 | covered by migrate-branches.ts |
 | kiddzonl_garderie17-18.sql | t_child | 45 | 0 | covered by migrate-children.ts |
 | kiddzonl_garderie17-18.sql | t_child_draft | 32 | 0 | covered by migrate-children.ts |
-| kiddzonl_garderie17-18.sql | t_child_h | 45 | 0 | not covered yet / needs explicit decision |
+| kiddzonl_garderie17-18.sql | t_child_h | 45 | 0 | covered by migrate-children.ts |
 | kiddzonl_garderie17-18.sql | t_class | 21 | 0 | covered by migrate-classes.ts |
 | kiddzonl_garderie17-18.sql | t_daily_attachments | 6 | 0 | covered by migrate-daily-reports.ts |
 | kiddzonl_garderie17-18.sql | t_daily_fever | 6 | 0 | covered by migrate-daily-reports.ts |
@@ -276,7 +275,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie29sept.sql | t_alarms_medical | 10 | 146 | covered by migrate-alarms.ts |
 | kiddzonl_garderie29sept.sql | t_alarms_birthday | 10 | 144 | covered by migrate-alarms.ts |
 | kiddzonl_garderie29sept.sql | t_accounting | 29 | 114 | covered by migrate-payments.ts |
-| kiddzonl_garderie29sept.sql | t_child_h | 45 | 114 | not covered yet / needs explicit decision |
+| kiddzonl_garderie29sept.sql | t_child_h | 45 | 114 | covered by migrate-children.ts |
 | kiddzonl_garderie29sept.sql | t_holiday | 16 | 105 | covered by migrate-food-calendar.ts |
 | kiddzonl_garderie29sept.sql | t_child | 45 | 79 | covered by migrate-children.ts |
 | kiddzonl_garderie29sept.sql | t_forms_attachments | 10 | 72 | not covered yet / needs explicit decision |
@@ -428,7 +427,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie_2018-2019.sql | t_branch | 10 | 0 | covered by migrate-branches.ts |
 | kiddzonl_garderie_2018-2019.sql | t_child | 45 | 0 | covered by migrate-children.ts |
 | kiddzonl_garderie_2018-2019.sql | t_child_draft | 32 | 0 | covered by migrate-children.ts |
-| kiddzonl_garderie_2018-2019.sql | t_child_h | 45 | 0 | not covered yet / needs explicit decision |
+| kiddzonl_garderie_2018-2019.sql | t_child_h | 45 | 0 | covered by migrate-children.ts |
 | kiddzonl_garderie_2018-2019.sql | t_class | 21 | 0 | covered by migrate-classes.ts |
 | kiddzonl_garderie_2018-2019.sql | t_daily_attachments | 6 | 0 | covered by migrate-daily-reports.ts |
 | kiddzonl_garderie_2018-2019.sql | t_daily_fever | 6 | 0 | covered by migrate-daily-reports.ts |

@@ -104,6 +104,7 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_region` | Region |
 | `t_class` | Class |
 | `t_child`, `t_child_draft` | Child (isDraft flag) |
+| `t_child_h` | ChildHistory |
 | `t_address` | ChildAddress |
 | `t_authorized` | Relative (isAuthorized=true) |
 | `t_relatives` | Relative |

@@ -37,6 +37,7 @@
  *   Same mapping with fewer fields available.
  *
  * Sub-tables also migrated:
+ *   t_child_h    → ChildHistory
  *   t_address    → ChildAddress
  *   t_authorized → Relative (isAuthorized = true)
  *   t_relatives  → Relative
@@ -143,6 +144,13 @@ interface OldRelative {
   can_pick: string;
   child_id: string;
   active: number;
+}
+
+interface OldChildHistory {
+  cid: number;
+  datetime: string;
+  uby: number;
+  [key: string]: unknown;
 }
 
 export async function migrateChildren(prisma: PrismaClient) {
@@ -283,6 +291,9 @@ export async function migrateChildren(prisma: PrismaClient) {
 
   log(`Children (drafts): ${draftMigrated} migrated`);
 
+  // --- Migrate t_child_h → ChildHistory ---
+  await migrateChildHistory(prisma, dryRun);
+
   // --- Migrate t_address → ChildAddress ---
   await migrateAddresses(prisma, dryRun);
 
@@ -293,6 +304,60 @@ export async function migrateChildren(prisma: PrismaClient) {
   await migrateRelatives(prisma, dryRun);
 
   log(`=== Children migration complete ===${dryRun ? " [DRY RUN]" : ""}`);
+}
+
+async function migrateChildHistory(prisma: PrismaClient, dryRun: boolean) {
+  const rows = await queryMysql<OldChildHistory>(
+    "SELECT * FROM t_child_h ORDER BY datetime, cid"
+  );
+  log(`Found ${rows.length} child history snapshots in t_child_h`);
+
+  let migrated = 0;
+  let skipped = 0;
+
+  for (const row of rows) {
+    const childId = getMapping("child", row.cid);
+    if (!childId) {
+      skipped++;
+      continue;
+    }
+
+    const createdAt = parseDate(row.datetime) ?? new Date();
+    const existing = await prisma.childHistory.findFirst({
+      where: {
+        childId,
+        createdAt,
+        changeNote: "Legacy t_child_h snapshot",
+      },
+    });
+    if (existing) {
+      skipped++;
+      continue;
+    }
+
+    if (!dryRun) {
+      await prisma.childHistory.create({
+        data: {
+          id: generateUUID(),
+          childId,
+          snapshot: JSON.parse(
+            JSON.stringify({
+              sourceTable: "t_child_h",
+              ...row,
+            })
+          ),
+          changedBy: cleanString(row.uby) ?? null,
+          changeNote: "Legacy t_child_h snapshot",
+          createdAt,
+        },
+      });
+    }
+
+    migrated++;
+    logProgress(migrated, rows.length, "Child History");
+  }
+
+  log(`Child History: ${migrated} migrated, ${skipped} skipped`);
 }
 
 async function migrateAddresses(prisma: PrismaClient, dryRun: boolean) {
