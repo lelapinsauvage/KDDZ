@@ -9,22 +9,23 @@
  *   5. Parents      (depends on Children)
  *   6. Employees    (depends on Branches)
  *   7. Users        (depends on Branches, Children via Parents)
- *   8. Daily Reports (depends on Children)
- *   9. Absences      (depends on Children, Users)
- *  10. Calls         (depends on Children, Employees, Users)
- *  11. Assessments   (depends on Children, Classes, Employees, Users, Organization)
- *  12. Medical Forms (depends on Children)
- *  13. Payments      (depends on Children)
- *  14. Food/Calendar (depends on Branches)
- *  15. Alarms        (depends on Children, Users, Parent Users, Teachers)
- *  16. Messages      (depends on Users)
+ *   8. Login Audit   (depends on Users, Parent Users when resolvable)
+ *   9. Daily Reports (depends on Children)
+ *  10. Absences      (depends on Children, Users)
+ *  11. Calls         (depends on Children, Employees, Users)
+ *  12. Assessments   (depends on Children, Classes, Employees, Users, Organization)
+ *  13. Medical Forms (depends on Children)
+ *  14. Payments      (depends on Children)
+ *  15. Food/Calendar (depends on Branches)
+ *  16. Alarms        (depends on Children, Users, Parent Users, Teachers)
+ *  17. Messages      (depends on Users)
  *
  * Usage:
  *   pnpm tsx src/scripts/migration/migrate-all.ts [--dry-run] [--step=N]
  *
  * Flags:
  *   --dry-run   Preview what would be migrated without writing to DB
- *   --step=N    Run only step N (1-16) and all its dependencies
+ *   --step=N    Run only step N (1-17) and all its dependencies
  *   --from=N    Start from step N (skip earlier steps, assumes they ran)
  */
 
@@ -40,6 +41,7 @@ import { migrateChildren } from "./migrate-children";
 import { migrateParents } from "./migrate-parents";
 import { migrateEmployees } from "./migrate-employees";
 import { migrateUsers } from "./migrate-users";
+import { migrateLoginAudit } from "./migrate-login-audit";
 import { migrateDailyReports } from "./migrate-daily-reports";
 import { migrateAbsences } from "./migrate-absences";
 import { migrateCalls } from "./migrate-calls";
@@ -99,55 +101,61 @@ const steps: MigrationStep[] = [
     },
   },
   {
-    name: "8. Daily Reports",
+    name: "8. Login Audit",
+    run: async (prisma) => {
+      await migrateLoginAudit(prisma);
+    },
+  },
+  {
+    name: "9. Daily Reports",
     run: async (prisma) => {
       await migrateDailyReports(prisma);
     },
   },
   {
-    name: "9. Absences",
+    name: "10. Absences",
     run: async (prisma) => {
       await migrateAbsences(prisma);
     },
   },
   {
-    name: "10. Calls",
+    name: "11. Calls",
     run: async (prisma) => {
       await migrateCalls(prisma);
     },
   },
   {
-    name: "11. Assessments",
+    name: "12. Assessments",
     run: async (prisma, orgId) => {
       await migrateAssessments(prisma, orgId);
     },
   },
   {
-    name: "12. Medical Forms",
+    name: "13. Medical Forms",
     run: async (prisma) => {
       await migrateMedical(prisma);
     },
   },
   {
-    name: "13. Payments",
+    name: "14. Payments",
     run: async (prisma) => {
       await migratePayments(prisma);
     },
   },
   {
-    name: "14. Food, Calendar & Holidays",
+    name: "15. Food, Calendar & Holidays",
     run: async (prisma, orgId) => {
       await migrateFoodCalendar(prisma, orgId);
     },
   },
   {
-    name: "15. Alarms & Notifications",
+    name: "16. Alarms & Notifications",
     run: async (prisma) => {
       await migrateAlarms(prisma);
     },
   },
   {
-    name: "16. Messages",
+    name: "17. Messages",
     run: async (prisma) => {
       await migrateMessages(prisma);
     },

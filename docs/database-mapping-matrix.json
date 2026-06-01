@@ -155,9 +155,9 @@
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "login_timestamps",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, user_id:int(11) NOT NULL, ip:varchar(255) NOT NULL, timestamp:timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyLoginTimestamp",
+    "status": "mapped - migrated by migrate-login-audit.ts",
+    "reconciliation": "Historical login rows preserved with source database/table/id, legacy user id, IP, timestamp, and resolved user UUID when available."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -203,9 +203,9 @@
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "parent_login_timestamps",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, user_id:int(11) NOT NULL, ip:varchar(255) NOT NULL, timestamp:timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyLoginTimestamp",
+    "status": "mapped - migrated by migrate-login-audit.ts",
+    "reconciliation": "Historical login rows preserved with source database/table/id, legacy user id, IP, timestamp, and resolved user UUID when available."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1067,9 +1067,9 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "login_timestamps",
     "legacyColumns": "id:int(11) NOT NULL, user_id:int(11) NOT NULL, ip:varchar(255) NOT NULL, timestamp:timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyLoginTimestamp",
+    "status": "mapped - migrated by migrate-login-audit.ts",
+    "reconciliation": "Historical login rows preserved with source database/table/id, legacy user id, IP, timestamp, and resolved user UUID when available."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1131,9 +1131,9 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "parent_login_timestamps",
     "legacyColumns": "id:int(11) NOT NULL, user_id:int(11) NOT NULL, ip:varchar(255) NOT NULL, timestamp:timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyLoginTimestamp",
+    "status": "mapped - migrated by migrate-login-audit.ts",
+    "reconciliation": "Historical login rows preserved with source database/table/id, legacy user id, IP, timestamp, and resolved user UUID when available."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1963,9 +1963,9 @@
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "login_timestamps",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, user_id:int(11) NOT NULL, ip:varchar(255) NOT NULL, timestamp:timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyLoginTimestamp",
+    "status": "mapped - migrated by migrate-login-audit.ts",
+    "reconciliation": "Historical login rows preserved with source database/table/id, legacy user id, IP, timestamp, and resolved user UUID when available."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2011,9 +2011,9 @@
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "parent_login_timestamps",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, user_id:int(11) NOT NULL, ip:varchar(255) NOT NULL, timestamp:timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyLoginTimestamp",
+    "status": "mapped - migrated by migrate-login-audit.ts",
+    "reconciliation": "Historical login rows preserved with source database/table/id, legacy user id, IP, timestamp, and resolved user UUID when available."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2699,9 +2699,9 @@
     "sourceDump": "kiddzonl_master29sept",
     "legacyTable": "login_timestamps",
     "legacyColumns": "id:int(11) NOT NULL, user_id:int(11) NOT NULL, ip:varchar(255) NOT NULL, timestamp:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyLoginTimestamp",
+    "status": "mapped - migrated by migrate-login-audit.ts",
+    "reconciliation": "Historical login rows preserved with source database/table/id, legacy user id, IP, timestamp, and resolved user UUID when available."
   },
   {
     "sourceDump": "kiddzonl_master29sept",
@@ -2859,17 +2859,17 @@
     "sourceDump": "kiddzonl_users29sept",
     "legacyTable": "login_timestamps",
     "legacyColumns": "id:int(11) NOT NULL, user_id:int(11) NOT NULL, ip:varchar(255) NOT NULL, timestamp:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyLoginTimestamp",
+    "status": "mapped - migrated by migrate-login-audit.ts",
+    "reconciliation": "Historical login rows preserved with source database/table/id, legacy user id, IP, timestamp, and resolved user UUID when available."
   },
   {
     "sourceDump": "kiddzonl_users29sept",
     "legacyTable": "login_timestamps_man",
     "legacyColumns": "id:int(11) NOT NULL, user_id:int(11) NOT NULL, ip:varchar(255) NOT NULL, timestamp:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyLoginTimestamp",
+    "status": "mapped - migrated by migrate-login-audit.ts",
+    "reconciliation": "Historical login rows preserved with source database/table/id, legacy user id, IP, timestamp, and resolved user UUID when available."
   },
   {
     "sourceDump": "kiddzonl_users29sept",
@@ -3067,17 +3067,17 @@
     "sourceDump": "kiddzonl_users_2018-2019",
     "legacyTable": "login_timestamps",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, user_id:int(11) NOT NULL, ip:varchar(255) NOT NULL, timestamp:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyLoginTimestamp",
+    "status": "mapped - migrated by migrate-login-audit.ts",
+    "reconciliation": "Historical login rows preserved with source database/table/id, legacy user id, IP, timestamp, and resolved user UUID when available."
   },
   {
     "sourceDump": "kiddzonl_users_2018-2019",
     "legacyTable": "login_timestamps_man",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, user_id:int(11) NOT NULL, ip:varchar(255) NOT NULL, timestamp:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyLoginTimestamp",
+    "status": "mapped - migrated by migrate-login-audit.ts",
+    "reconciliation": "Historical login rows preserved with source database/table/id, legacy user id, IP, timestamp, and resolved user UUID when available."
   },
   {
     "sourceDump": "kiddzonl_users_2018-2019",

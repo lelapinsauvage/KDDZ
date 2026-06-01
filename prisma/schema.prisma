@@ -1900,6 +1900,30 @@ model LegacyNotificationLog {
   @@map("legacy_notification_logs")
 }
 
+model LegacyLoginTimestamp {
+  id             String    @id @default(uuid()) @db.Uuid
+  sourceDatabase String
+  legacyTable    String
+  legacyId       Int
+  legacyUserId   Int
+  userId         String?   @db.Uuid
+  parentUserId   String?   @db.Uuid
+  principalType  String
+  ipAddress      String?
+  occurredAt     DateTime?
+  legacyData     Json?
+  createdAt      DateTime  @default(now())
+
+  @@unique([sourceDatabase, legacyTable, legacyId])
+  @@index([legacyTable])
+  @@index([legacyUserId])
+  @@index([userId])
+  @@index([parentUserId])
+  @@index([principalType])
+  @@index([occurredAt])
+  @@map("legacy_login_timestamps")
+}
+
 // ─────────────────────────────────────────────
 // LOCATION (Lebanon administrative divisions)
 // ─────────────────────────────────────────────

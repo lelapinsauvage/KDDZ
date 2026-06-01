@@ -58,6 +58,7 @@ pnpm tsx src/scripts/migration/migrate-children.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-parents.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-employees.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-users.ts [--dry-run]
+pnpm tsx src/scripts/migration/migrate-login-audit.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-daily-reports.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-absences.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-calls.ts [--dry-run]
@@ -81,15 +82,16 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 5. Parents        ← needs Children
 6. Employees      ← needs Branches
 7. Users          ← needs Branches, Children/Parents
-8. Daily Reports  ← needs Children
-9. Absences       ← needs Children, Users
-10. Calls         ← needs Children, Employees, Users
-11. Assessments   ← needs Children, Classes, Employees/Users, Organization
-12. Medical Forms ← needs Children
-13. Payments      ← needs Children
-14. Food/Calendar ← needs Branches, Organization
-15. Alarms        ← needs Children, Users, Parent Users, Teachers
-16. Messages      ← needs Users
+8. Login Audit    ← needs Users/Parent Users when resolvable
+9. Daily Reports  ← needs Children
+10. Absences      ← needs Children, Users
+11. Calls         ← needs Children, Employees, Users
+12. Assessments   ← needs Children, Classes, Employees/Users, Organization
+13. Medical Forms ← needs Children
+14. Payments      ← needs Children
+15. Food/Calendar ← needs Branches, Organization
+16. Alarms        ← needs Children, Users, Parent Users, Teachers
+17. Messages      ← needs Users
 ```
 
 ## Table Mappings
@@ -112,6 +114,7 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_manager`, `t_manager_address` | Manager, ManagerAddress |
 | `login_users` | User |
 | `parent_login_users` | ParentUser |
+| `login_timestamps`, `login_timestamps_man`, `parent_login_timestamps` | LegacyLoginTimestamp |
 | `t_daily_report` | DailyReport |
 | `t_daily_fever` | DailyReportFever |
 | `t_daily_milk` | DailyReportMilk |
@@ -150,6 +153,9 @@ Old MySQL uses auto-increment integers. New PostgreSQL uses UUIDs. The migration
 Old passwords are MD5 hashes. They are rehashed as `bcrypt(md5:ORIGINAL_HASH)`. The app should:
 1. On login: hash user input with MD5, prepend `md5:`, then verify with bcrypt
 2. After successful login: rehash directly with bcrypt for future logins
+
+### Login Audit
+Legacy timestamp tables are historical login audit trails, not active sessions. They are restored into `LegacyLoginTimestamp` with source database/table/id, legacy user id, IP address, timestamp, and the resolved modern `User` or `ParentUser` UUID when the user mapping exists.
 
 ### Idempotency
 All scripts check for existing records before inserting, so they can be re-run safely. Already-migrated records are skipped.
