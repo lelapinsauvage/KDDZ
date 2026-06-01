@@ -21,7 +21,6 @@ These are the highest-risk migration gaps because source data exists and no curr
 
 | SQL Dump | Legacy Table | Estimated Rows | Columns |
 | --- | --- | --- | --- |
-| kiddzonl_garderie29sept.sql | t_food_apply | 572 | apid, class_id, child_id, bfid, lnid, bftime, lntime, fdate, dessert, desstime, uby, active |
 | kiddzonl_garderie29sept.sql | newpayment | 419 | id, submit_time, payment_id, cid, target, amount, currency, to, for, sent |
 | kiddzonl_garderie29sept.sql | t_child_h | 114 | cid, joining_date, child_num, prefix, sel_year, cname, cmname, clname, image, dob, pob, nationality, gender, mother_name, mother_nationality, branch_id, language, year_from, year_to, class_id, address_id, remarks, blood_type, allergy, bus, bus_id, diapers, milk_name, milk_portion, milk_scoop, milk_time, milktime1, milktime2, remarks_food, sleep_from, sleep_to, has_old_garderie, has_lunch, active, deleted, is_draft, progress_all, progress_m, datetime, uby |
 | kiddzonl_garderie29sept.sql | t_forms_attachments | 72 | fattid, att_title, url, child_id, formtype, formid, class_id, branch_id, datetime, active |
@@ -216,7 +215,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie17-18.sql | t_events | 10 | 0 | not covered yet / needs explicit decision |
 | kiddzonl_garderie17-18.sql | t_events_types | 4 | 0 | not covered yet / needs explicit decision |
 | kiddzonl_garderie17-18.sql | t_food | 7 | 0 | covered by migrate-food-calendar.ts |
-| kiddzonl_garderie17-18.sql | t_food_apply | 12 | 0 | not covered yet / needs explicit decision |
+| kiddzonl_garderie17-18.sql | t_food_apply | 12 | 0 | covered by migrate-food-calendar.ts |
 | kiddzonl_garderie17-18.sql | t_food_calendar | 11 | 0 | covered by migrate-food-calendar.ts |
 | kiddzonl_garderie17-18.sql | t_form_1 | 26 | 0 | covered by migrate-medical.ts |
 | kiddzonl_garderie17-18.sql | t_form_2 | 11 | 0 | covered by migrate-medical.ts |
@@ -263,7 +262,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie29sept.sql | custom_notifications_birthday | 3 | 671 | covered by migrate-alarms.ts |
 | kiddzonl_garderie29sept.sql | custom_notifications_medical | 3 | 670 | covered by migrate-alarms.ts |
 | kiddzonl_garderie29sept.sql | t_absent_report | 17 | 602 | covered by migrate-absences.ts |
-| kiddzonl_garderie29sept.sql | t_food_apply | 12 | 572 | not covered yet / needs explicit decision |
+| kiddzonl_garderie29sept.sql | t_food_apply | 12 | 572 | covered by migrate-food-calendar.ts |
 | kiddzonl_garderie29sept.sql | t_alarms_payments | 10 | 556 | covered by migrate-alarms.ts |
 | kiddzonl_garderie29sept.sql | custom_notifications_payments | 3 | 551 | covered by migrate-alarms.ts |
 | kiddzonl_garderie29sept.sql | t_parents | 17 | 504 | covered by migrate-parents.ts |
@@ -442,7 +441,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie_2018-2019.sql | t_events | 10 | 0 | not covered yet / needs explicit decision |
 | kiddzonl_garderie_2018-2019.sql | t_events_types | 4 | 0 | not covered yet / needs explicit decision |
 | kiddzonl_garderie_2018-2019.sql | t_food | 7 | 0 | covered by migrate-food-calendar.ts |
-| kiddzonl_garderie_2018-2019.sql | t_food_apply | 12 | 0 | not covered yet / needs explicit decision |
+| kiddzonl_garderie_2018-2019.sql | t_food_apply | 12 | 0 | covered by migrate-food-calendar.ts |
 | kiddzonl_garderie_2018-2019.sql | t_food_calendar | 11 | 0 | covered by migrate-food-calendar.ts |
 | kiddzonl_garderie_2018-2019.sql | t_form_1 | 26 | 0 | covered by migrate-medical.ts |
 | kiddzonl_garderie_2018-2019.sql | t_form_2 | 11 | 0 | covered by migrate-medical.ts |

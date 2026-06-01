@@ -454,6 +454,7 @@ model Class {
   branch   Branch    @relation(fields: [branchId], references: [id], onDelete: Cascade)
   children Child[]
   teachers Teacher[]
+  foodApplications FoodApplication[]
 
   @@index([branchId])
   @@map("classes")
@@ -506,6 +507,7 @@ model User {
   notifications          Notification[]
   notificationTemplates  NotificationTemplate[] @relation("TemplateCreator")
   pushTokens             PushToken[]            @relation("UserPushTokens")
+  foodApplications       FoodApplication[]      @relation("FoodApplicationCreator")
 
   @@index([branchId])
   @@index([organizationId])
@@ -655,6 +657,7 @@ model Child {
   payments         Payment[]
   accountingEntries AccountingEntry[]
   callLogs         CallLog[]
+  foodApplications FoodApplication[]
 
   @@index([branchId])
   @@index([classId])
@@ -1513,6 +1516,8 @@ model Food {
   breakfastReports DailyReport[]  @relation("BreakfastFood")
   lunchReports     DailyReport[]  @relation("LunchFood")
   foodCalendars    FoodCalendar[]
+  breakfastApplications FoodApplication[] @relation("FoodApplicationBreakfast")
+  lunchApplications     FoodApplication[] @relation("FoodApplicationLunch")
 
   @@index([organizationId])
   @@index([category])
@@ -1537,6 +1542,44 @@ model FoodCalendar {
   @@index([date])
   @@index([foodId])
   @@map("food_calendars")
+}
+
+model FoodApplication {
+  id              String    @id @default(uuid()) @db.Uuid
+  sourceDatabase  String?
+  legacyKey       String?   @unique
+  legacyId        Int?
+  classId         String?   @db.Uuid
+  childId         String?   @db.Uuid
+  breakfastFoodId String?   @db.Uuid
+  lunchFoodId     String?   @db.Uuid
+  breakfastTime   DateTime? @db.Time(6)
+  lunchTime       DateTime? @db.Time(6)
+  date            DateTime? @db.Date
+  dessert         String?
+  dessertTime     DateTime? @db.Time(6)
+  createdById     String?   @db.Uuid
+  isActive        Boolean   @default(true)
+  legacyData      Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  class         Class? @relation(fields: [classId], references: [id], onDelete: SetNull)
+  child         Child? @relation(fields: [childId], references: [id], onDelete: SetNull)
+  breakfastFood Food?  @relation("FoodApplicationBreakfast", fields: [breakfastFoodId], references: [id], onDelete: SetNull)
+  lunchFood     Food?  @relation("FoodApplicationLunch", fields: [lunchFoodId], references: [id], onDelete: SetNull)
+  createdBy     User?  @relation("FoodApplicationCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([classId])
+  @@index([childId])
+  @@index([date])
+  @@index([breakfastFoodId])
+  @@index([lunchFoodId])
+  @@index([createdById])
+  @@index([isActive])
+  @@map("food_applications")
 }
 
 // ─────────────────────────────────────────────

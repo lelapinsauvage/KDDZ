@@ -531,9 +531,9 @@
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "t_food_apply",
     "legacyColumns": "apid:int(11) NOT NULL AUTO_INCREMENT, class_id:int(11) NOT NULL, child_id:int(11) NOT NULL, bfid:int(11) NOT NULL, lnid:int(11) NOT NULL, bftime:varchar(20) NOT NULL, lntime:varchar(20) NOT NULL, fdate:varchar(50) NOT NULL, dessert:varchar(20) NOT NULL, desstime:varchar(20) NOT NULL, uby:int(11) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "FoodApplication",
+    "status": "mapped - migrated by migrate-food-calendar.ts",
+    "reconciliation": "Food-for-all class/date meal application rows restored with linked class, child, foods, times, creator, active flag, and legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1499,9 +1499,9 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "t_food_apply",
     "legacyColumns": "apid:int(11) NOT NULL, class_id:int(11) NOT NULL, child_id:int(11) NOT NULL, bfid:int(11) NOT NULL, lnid:int(11) NOT NULL, bftime:varchar(20) NOT NULL, lntime:varchar(20) NOT NULL, fdate:varchar(50) NOT NULL, dessert:varchar(20) NOT NULL, desstime:varchar(20) NOT NULL, uby:int(11) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "FoodApplication",
+    "status": "mapped - migrated by migrate-food-calendar.ts",
+    "reconciliation": "Food-for-all class/date meal application rows restored with linked class, child, foods, times, creator, active flag, and legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -2339,9 +2339,9 @@
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "t_food_apply",
     "legacyColumns": "apid:int(11) NOT NULL AUTO_INCREMENT, class_id:int(11) NOT NULL, child_id:int(11) NOT NULL, bfid:int(11) NOT NULL, lnid:int(11) NOT NULL, bftime:varchar(20) NOT NULL, lntime:varchar(20) NOT NULL, fdate:varchar(50) NOT NULL, dessert:varchar(20) NOT NULL, desstime:varchar(20) NOT NULL, uby:int(11) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "FoodApplication",
+    "status": "mapped - migrated by migrate-food-calendar.ts",
+    "reconciliation": "Food-for-all class/date meal application rows restored with linked class, child, foods, times, creator, active flag, and legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",

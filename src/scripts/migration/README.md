@@ -136,6 +136,7 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_accounting` | AccountingEntry |
 | `t_food` | Food |
 | `t_food_calendar` | FoodCalendar |
+| `t_food_apply` | FoodApplication |
 | `t_holiday` | Holiday |
 | `t_alarms`, `t_alarms_*` (except `t_alarms_msg`) | Alarm |
 | `custom_notifications_*` delivery tables | NotificationReceipt |
@@ -165,6 +166,9 @@ Old DB uses `active = 0` for soft deletes. Only active records (active = 1) are 
 
 ### Locations
 Legacy Lebanon location tables are migrated into the modern Province → District → Region hierarchy. Old `t_mouhafaza.m_id`, `t_quadaa.qid`, and `t_region.rid` values are mapped to UUIDs for downstream address restoration; inactive rows and orphan districts/regions are skipped and counted in logs.
+
+### Food Applications
+Legacy `t_food_apply` rows restore the "food for all" class/date meal templates used to prefill daily reports. They are kept as `FoodApplication` rows with class, triggering child, breakfast/lunch food IDs, meal times, dessert text/time, creator, active flag, and the complete legacy row.
 
 ### Date Handling
 Old DB stores dates as varchar. The migration handles multiple formats: `YYYY-MM-DD`, `DD/MM/YYYY`, `DD-MM-YYYY`, empty strings, and `0000-00-00`.

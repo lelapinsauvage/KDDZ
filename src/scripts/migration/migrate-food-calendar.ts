@@ -6,14 +6,13 @@
  * Notes:
  * - Legacy `t_food_calendar` stores breakfast/lunch/early-dinner food IDs plus
  *   a free-text dessert. The modern schema stores one row per meal type.
- * - Legacy `t_food_apply` is per-class/per-child application history and has no
- *   direct modern model yet. It remains a restoration gap until a destination is
- *   approved or schema is extended.
+ * - Legacy `t_food_apply` stores class/date meal applications used to prefill
+ *   daily reports after "food for all"; those rows become FoodApplication.
  */
 
 import type { MealType, PrismaClient } from "@/generated/prisma/client";
 import { createPrismaClient } from "./lib/prisma-client";
-import { queryMysql, closeMysqlPool } from "./lib/mysql-client";
+import { queryMysql, closeMysqlPool, getMysqlConfig } from "./lib/mysql-client";
 import {
   cleanString,
   generateUUID,
@@ -23,6 +22,7 @@ import {
   logError,
   logProgress,
   parseDate,
+  parseTime,
   setMapping,
   toBool,
   toInt,
@@ -47,6 +47,21 @@ interface OldFoodCalendar {
   branch_id: number;
   date: string;
   datetime: string;
+  active: number;
+}
+
+interface OldFoodApplication {
+  apid: number;
+  class_id: number;
+  child_id: number;
+  bfid: number;
+  lnid: number;
+  bftime: string;
+  lntime: string;
+  fdate: string;
+  dessert: string;
+  desstime: string;
+  uby: number;
   active: number;
 }
 
@@ -243,9 +258,63 @@ export async function migrateFoodCalendar(prisma: PrismaClient, organizationId: 
 
   log(`Food Calendar Entries: ${calendarEntries} migrated, ${calendarSkipped} skipped`);
 
+  await migrateFoodApplications(prisma, dryRun);
   await migrateHolidays(prisma, dryRun);
 
   log(`=== Food/calendar migration complete ===${dryRun ? " [DRY RUN]" : ""}`);
+}
+
+async function migrateFoodApplications(prisma: PrismaClient, dryRun: boolean) {
+  const rows = await queryMysql<OldFoodApplication>(
+    "SELECT * FROM t_food_apply ORDER BY apid"
+  );
+  log(`Found ${rows.length} food application rows in old DB`);
+
+  const sourceDatabase = getMysqlConfig().database || "unknown";
+  let migrated = 0;
+  let skipped = 0;
+
+  for (const row of rows) {
+    const legacyKey = `${sourceDatabase}:t_food_apply:${row.apid}`;
+    const existing = await prisma.foodApplication.findUnique({
+      where: { legacyKey },
+    });
+    if (existing) {
+      setMapping("food_apply", row.apid, existing.id);
+      skipped++;
+      continue;
+    }
+
+    const id = generateUUID();
+    if (!dryRun) {
+      await prisma.foodApplication.create({
+        data: {
+          id,
+          sourceDatabase,
+          legacyKey,
+          legacyId: row.apid,
+          classId: getMapping("class", row.class_id),
+          childId: getMapping("child", row.child_id),
+          breakfastFoodId: getMapping("food", row.bfid),
+          lunchFoodId: getMapping("food", row.lnid),
+          breakfastTime: parseTime(row.bftime),
+          lunchTime: parseTime(row.lntime),
+          date: parseDate(row.fdate),
+          dessert: cleanString(row.dessert),
+          dessertTime: parseTime(row.desstime),
+          createdById: getMapping("user", row.uby),
+          isActive: toBool(row.active),
+          legacyData: JSON.parse(JSON.stringify(row)),
+        },
+      });
+    }
+
+    setMapping("food_apply", row.apid, id);
+    migrated++;
+    logProgress(migrated, rows.length, "Food Applications");
+  }
+
+  log(`Food Applications: ${migrated} migrated, ${skipped} skipped`);
 }
 
 async function migrateHolidays(prisma: PrismaClient, dryRun: boolean) {

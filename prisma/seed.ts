@@ -37,6 +37,7 @@ async function main() {
     await tx.payment.deleteMany();
     await tx.assessmentDate.deleteMany();
     await tx.assessment.deleteMany();
+    await tx.foodApplication.deleteMany();
     await tx.foodCalendar.deleteMany();
     await tx.food.deleteMany();
     await tx.vaccination.deleteMany();
