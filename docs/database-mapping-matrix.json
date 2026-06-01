@@ -595,9 +595,9 @@
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "t_forms_attachments",
     "legacyColumns": "fattid:int(11) NOT NULL AUTO_INCREMENT, att_title:varchar(50) CHARACTER SET utf8 NOT NULL, url:varchar(50) CHARACTER SET utf8 NOT NULL DEFAULT 'default.jpg', child_id:varchar(50) NOT NULL, formtype:varchar(50) NOT NULL, formid:varchar(50) NOT NULL, class_id:varchar(50) NOT NULL, branch_id:varchar(50) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "FormAttachment",
+    "status": "mapped - migrated by migrate-medical.ts",
+    "reconciliation": "Form attachments restored with child, medical-form, and form6 call-log mappings where available, plus legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1515,9 +1515,9 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "t_forms_attachments",
     "legacyColumns": "fattid:int(11) NOT NULL, att_title:varchar(50) CHARACTER SET utf8 NOT NULL, url:varchar(50) CHARACTER SET utf8 NOT NULL DEFAULT 'default.jpg', child_id:varchar(50) NOT NULL, formtype:varchar(50) NOT NULL, formid:varchar(50) NOT NULL, class_id:varchar(50) NOT NULL, branch_id:varchar(50) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "FormAttachment",
+    "status": "mapped - migrated by migrate-medical.ts",
+    "reconciliation": "Form attachments restored with child, medical-form, and form6 call-log mappings where available, plus legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -2403,9 +2403,9 @@
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "t_forms_attachments",
     "legacyColumns": "fattid:int(11) NOT NULL AUTO_INCREMENT, att_title:varchar(50) CHARACTER SET utf8 NOT NULL, url:varchar(50) CHARACTER SET utf8 NOT NULL DEFAULT 'default.jpg', child_id:varchar(50) NOT NULL, formtype:varchar(50) NOT NULL, formid:varchar(50) NOT NULL, class_id:varchar(50) NOT NULL, branch_id:varchar(50) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "FormAttachment",
+    "status": "mapped - migrated by migrate-medical.ts",
+    "reconciliation": "Form attachments restored with child, medical-form, and form6 call-log mappings where available, plus legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",

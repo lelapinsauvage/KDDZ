@@ -132,6 +132,7 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_form_4` | MedicalForm (VACCINATIONS) + Vaccination |
 | `t_form_5` | MedicalForm (ACCIDENTS) |
 | `t_med_forms_info` | MedicalFormEntry |
+| `t_forms_attachments` | FormAttachment |
 | `t_payments` | Payment |
 | `newpayment` | PaymentReminder |
 | `t_accounting` | AccountingEntry |

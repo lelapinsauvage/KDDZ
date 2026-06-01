@@ -9,7 +9,7 @@
  *   t_form_5 (Accident Report)     → MedicalForm (formType=ACCIDENTS)
  *   t_form_6 (Parent Call Report)  → stored as JSON data in MedicalForm
  *   t_med_forms_info               → MedicalFormEntry rows
- *   t_forms_attachments            → stored as JSON data in MedicalForm
+ *   t_forms_attachments            → FormAttachment
  *
  * Strategy:
  *   Each old form row creates one MedicalForm record.
@@ -21,17 +21,19 @@
 
 import type { PrismaClient } from "@/generated/prisma/client";
 import { createPrismaClient } from "./lib/prisma-client";
-import { queryMysql, closeMysqlPool } from "./lib/mysql-client";
+import { queryMysql, closeMysqlPool, getMysqlConfig } from "./lib/mysql-client";
 import {
   generateUUID,
   setMapping,
   getMapping,
   isDryRun,
   toBool,
+  toInt,
   cleanString,
   log,
   logError,
   logProgress,
+  parseDate,
 } from "./lib/utils";
 
 type MedFormType =
@@ -152,6 +154,19 @@ interface OldMedFormInfo {
   active: number;
 }
 
+interface OldFormAttachment {
+  fattid: number;
+  att_title: string;
+  url: string;
+  child_id: string;
+  formtype: string;
+  formid: string;
+  class_id: string;
+  branch_id: string;
+  datetime: string;
+  active: number;
+}
+
 async function migrateMedFormEntries(prisma: PrismaClient, dryRun: boolean) {
   const rows = await queryMysql<OldMedFormInfo>(
     "SELECT * FROM t_med_forms_info WHERE active = 1 ORDER BY medfid"
@@ -193,6 +208,70 @@ async function migrateMedFormEntries(prisma: PrismaClient, dryRun: boolean) {
   }
 
   log(`Medical form entries: ${migrated} migrated`);
+}
+
+async function migrateFormAttachments(prisma: PrismaClient, dryRun: boolean) {
+  const rows = await queryMysql<OldFormAttachment>(
+    "SELECT * FROM t_forms_attachments ORDER BY fattid"
+  );
+  log(`Found ${rows.length} form attachments in t_forms_attachments`);
+
+  const sourceDatabase = getMysqlConfig().database || "unknown";
+  let migrated = 0;
+  let skipped = 0;
+
+  for (const row of rows) {
+    const legacyKey = `${sourceDatabase}:t_forms_attachments:${row.fattid}`;
+    const existing = await prisma.formAttachment.findUnique({
+      where: { legacyKey },
+    });
+    if (existing) {
+      setMapping("forms_attachment", row.fattid, existing.id);
+      skipped++;
+      continue;
+    }
+
+    const formType = cleanString(row.formtype) ?? "unknown";
+    const legacyFormId = toInt(row.formid, 0) || null;
+    const filename = cleanString(row.url) ?? "default.jpg";
+    const id = generateUUID();
+
+    if (!dryRun) {
+      await prisma.formAttachment.create({
+        data: {
+          id,
+          sourceDatabase,
+          legacyKey,
+          legacyId: row.fattid,
+          formType,
+          legacyFormId,
+          childId: getMapping("child", row.child_id),
+          medicalFormId: legacyFormId
+            ? getMapping(formType, legacyFormId)
+            : null,
+          callLogId:
+            formType === "form6" && legacyFormId
+              ? getMapping("call_log", legacyFormId)
+              : null,
+          legacyChildId: toInt(row.child_id, 0) || null,
+          legacyClassId: toInt(row.class_id, 0) || null,
+          legacyBranchId: toInt(row.branch_id, 0) || null,
+          title: cleanString(row.att_title),
+          filename,
+          fileUrl: filename,
+          isActive: toBool(row.active),
+          legacyData: JSON.parse(JSON.stringify(row)),
+          createdAt: parseDate(row.datetime) ?? new Date(),
+        },
+      });
+    }
+
+    setMapping("forms_attachment", row.fattid, id);
+    migrated++;
+    logProgress(migrated, rows.length, "Form Attachments");
+  }
+
+  log(`Form Attachments: ${migrated} migrated, ${skipped} skipped`);
 }
 
 // ---------------------------------------------------------------------------
@@ -340,6 +419,7 @@ export async function migrateMedical(prisma: PrismaClient) {
 
   // Med form info entries (linked to forms 1-6)
   await migrateMedFormEntries(prisma, dryRun);
+  await migrateFormAttachments(prisma, dryRun);
 
   log(`=== Medical migration complete ===${dryRun ? " [DRY RUN]" : ""}`);
 }

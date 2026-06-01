@@ -659,6 +659,7 @@ model Child {
   accountingEntries AccountingEntry[]
   callLogs         CallLog[]
   foodApplications FoodApplication[]
+  formAttachments  FormAttachment[]
 
   @@index([branchId])
   @@index([classId])
@@ -1460,6 +1461,7 @@ model MedicalForm {
   child     Child              @relation(fields: [childId], references: [id], onDelete: Cascade)
   createdBy User?              @relation("MedicalFormCreator", fields: [createdById], references: [id], onDelete: SetNull)
   entries   MedicalFormEntry[]
+  attachments FormAttachment[]
 
   @@index([childId])
   @@index([formType])
@@ -1756,12 +1758,49 @@ model CallLog {
 
   child     Child @relation(fields: [childId], references: [id], onDelete: Cascade)
   createdBy User? @relation("CallLogCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  attachments FormAttachment[]
 
   @@index([childId])
   @@index([date])
   @@index([direction])
   @@index([createdById])
   @@map("call_logs")
+}
+
+model FormAttachment {
+  id             String   @id @default(uuid()) @db.Uuid
+  sourceDatabase String?
+  legacyKey      String?  @unique
+  legacyId       Int?
+  formType       String
+  legacyFormId   Int?
+  childId        String?  @db.Uuid
+  medicalFormId  String?  @db.Uuid
+  callLogId      String?  @db.Uuid
+  legacyChildId  Int?
+  legacyClassId  Int?
+  legacyBranchId Int?
+  title          String?
+  filename       String
+  fileUrl        String
+  isActive       Boolean  @default(true)
+  legacyData     Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  child       Child?       @relation(fields: [childId], references: [id], onDelete: SetNull)
+  medicalForm MedicalForm? @relation(fields: [medicalFormId], references: [id], onDelete: SetNull)
+  callLog     CallLog?     @relation(fields: [callLogId], references: [id], onDelete: SetNull)
+
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([formType])
+  @@index([legacyFormId])
+  @@index([childId])
+  @@index([medicalFormId])
+  @@index([callLogId])
+  @@index([isActive])
+  @@map("form_attachments")
 }
 
 // ─────────────────────────────────────────────
