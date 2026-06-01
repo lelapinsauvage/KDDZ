@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useRef, useTransition } from "react";
+import { FileText, Upload, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createPayment, updatePayment } from "@/lib/actions/payments";
+import { uploadFileWithPresign } from "@/lib/uploads/client-upload";
 
 // ── Types ──
 
@@ -25,6 +27,7 @@ interface ChildOption {
   id: string;
   firstName: string;
   lastName: string;
+  branchId: string;
   branch: { name: string } | null;
   class: { name: string } | null;
 }
@@ -33,6 +36,7 @@ interface EditData {
   id: string;
   childId: string;
   childName: string;
+  branchId?: string;
   amount: number;
   currency: string;
   date: string;
@@ -44,6 +48,8 @@ interface EditData {
   status: string;
   reference: string | null;
   notes: string | null;
+  receiptFilename?: string | null;
+  receiptFileUrl?: string | null;
 }
 
 interface PaymentDialogProps {
@@ -77,6 +83,7 @@ export function PaymentDialog({
   const isEditing = !!editData;
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   // Form state
   const [childId, setChildId] = useState("");
@@ -91,6 +98,9 @@ export function PaymentDialog({
   const [status, setStatus] = useState("PAID");
   const [reference, setReference] = useState("");
   const [notes, setNotes] = useState("");
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptFilename, setReceiptFilename] = useState("");
+  const [receiptFileUrl, setReceiptFileUrl] = useState("");
   const [childSearch, setChildSearch] = useState("");
 
   function resetForm() {
@@ -106,8 +116,25 @@ export function PaymentDialog({
     setStatus("PAID");
     setReference("");
     setNotes("");
+    setReceiptFile(null);
+    setReceiptFilename("");
+    setReceiptFileUrl("");
     setError(null);
     setChildSearch("");
+    if (fileRef.current) fileRef.current.value = "";
+  }
+
+  function selectReceiptFile(file: File) {
+    setReceiptFile(file);
+    setReceiptFilename(file.name);
+    setReceiptFileUrl("");
+  }
+
+  function clearReceipt() {
+    setReceiptFile(null);
+    setReceiptFilename("");
+    setReceiptFileUrl("");
+    if (fileRef.current) fileRef.current.value = "";
   }
 
   // Populate form when editing — syncing dialog state from props is a
@@ -127,6 +154,10 @@ export function PaymentDialog({
       setStatus(editData.status);
       setReference(editData.reference ?? "");
       setNotes(editData.notes ?? "");
+      setReceiptFile(null);
+      setReceiptFilename(editData.receiptFilename ?? "");
+      setReceiptFileUrl(editData.receiptFileUrl ?? "");
+      if (fileRef.current) fileRef.current.value = "";
     } else {
       resetForm();
     }
@@ -150,6 +181,36 @@ export function PaymentDialog({
     }
 
     startTransition(async () => {
+      let nextReceiptFilename = receiptFilename || null;
+      let nextReceiptFileUrl = receiptFileUrl || null;
+
+      if (receiptFile) {
+        const paymentChild = childrenList.find((c) => c.id === childId);
+        const branchId = paymentChild?.branchId ?? editData?.branchId;
+        if (!branchId) {
+          setError("Cannot upload receipt because the child's branch is unavailable");
+          return;
+        }
+
+        try {
+          const uploaded = await uploadFileWithPresign({
+            branchId,
+            scope: "payment-receipt",
+            ownerId: childId,
+            file: receiptFile,
+          });
+          nextReceiptFilename = receiptFile.name;
+          nextReceiptFileUrl = uploaded.publicUrl;
+        } catch (uploadError) {
+          setError(
+            uploadError instanceof Error
+              ? uploadError.message
+              : "Failed to upload receipt",
+          );
+          return;
+        }
+      }
+
       const payload = {
         childId,
         amount: Number(amount),
@@ -163,6 +224,8 @@ export function PaymentDialog({
         status: status as "PAID" | "PENDING" | "OVERDUE",
         reference: reference || null,
         notes: notes || null,
+        receiptFilename: nextReceiptFilename,
+        receiptFileUrl: nextReceiptFileUrl,
       };
 
       let result;
@@ -387,6 +450,82 @@ export function PaymentDialog({
               value={reference}
               onChange={(e) => setReference(e.target.value)}
               placeholder="Receipt #"
+            />
+          </div>
+
+          {/* Receipt Attachment */}
+          <div className="space-y-2">
+            <Label>Receipt Attachment</Label>
+            {receiptFile || receiptFilename || receiptFileUrl ? (
+              <div className="flex items-center gap-2 rounded-lg border bg-muted/30 p-3">
+                <FileText className="size-5 shrink-0 text-muted-foreground" />
+                <div className="min-w-0 flex-1">
+                  {receiptFileUrl ? (
+                    <a
+                      href={receiptFileUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="block truncate text-sm font-medium text-primary hover:underline"
+                    >
+                      {receiptFilename || "Receipt file"}
+                    </a>
+                  ) : (
+                    <span className="block truncate text-sm font-medium">
+                      {receiptFile?.name || receiptFilename}
+                    </span>
+                  )}
+                  {receiptFile && (
+                    <span className="text-xs text-muted-foreground">
+                      Ready to upload
+                    </span>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileRef.current?.click()}
+                  disabled={isPending}
+                >
+                  Replace
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8 shrink-0"
+                  onClick={clearReceipt}
+                  disabled={isPending}
+                >
+                  <X className="size-4" />
+                </Button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) selectReceiptFile(file);
+                }}
+                className="flex w-full flex-col items-center gap-2 rounded-lg border-2 border-dashed border-muted-foreground/20 bg-muted/20 p-5 text-sm text-muted-foreground transition-colors hover:border-muted-foreground/40 hover:bg-muted/40"
+                disabled={isPending}
+              >
+                <Upload className="size-5" />
+                <span>Click or drop receipt to upload</span>
+              </button>
+            )}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*,.pdf"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) selectReceiptFile(file);
+              }}
             />
           </div>
 

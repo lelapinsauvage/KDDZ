@@ -26,6 +26,7 @@ export default async function ChildAccountingPage({ params }: Props) {
     id: child.id,
     firstName: child.firstName,
     lastName: child.lastName,
+    branchId: child.branchId,
   };
 
   // Serialize accounting entries
@@ -54,6 +55,8 @@ export default async function ChildAccountingPage({ params }: Props) {
             status: string;
             reference: string | null;
             notes: string | null;
+            receiptFilename: string | null;
+            receiptFileUrl: string | null;
             createdBy: { name: string | null } | null;
           }>;
           summary: {
@@ -78,6 +81,8 @@ export default async function ChildAccountingPage({ params }: Props) {
     status: p.status,
     reference: p.reference,
     notes: p.notes,
+    receiptFilename: p.receiptFilename,
+    receiptFileUrl: p.receiptFileUrl,
     createdBy: p.createdBy?.name ?? null,
   }));
 
@@ -87,6 +92,7 @@ export default async function ChildAccountingPage({ params }: Props) {
           id: string;
           firstName: string;
           lastName: string;
+          branchId: string;
           branch: { name: string } | null;
           class: { name: string } | null;
         }>)

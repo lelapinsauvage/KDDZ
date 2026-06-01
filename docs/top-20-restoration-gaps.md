@@ -19,7 +19,8 @@ This list is the first implementation backlog after the generated inventory/matr
    - `20260601017000_add_legacy_file_provenance` and the updated migration scripts now add source provenance for branch/class/child/staff photos plus teacher/nurse/daily/absence attachments so direct URL rewrites no longer require filename matching.
    - `POST /api/uploads/presign` now creates authenticated S3/R2 presigned PUT URLs with org/branch permission checks and safe object keys.
    - Branch compliance document screens now use the presign route and update `BranchDocument` rows after browser upload.
-   - Remaining work is child-history JSON snapshot URL patching, upload attach/update actions for non-compliance surfaces, local multipart upload support if needed, and replacement of the remaining upload placeholders.
+   - Payment receipt upload is now wired through the accounting quick-payment and child-accounting payment dialogs, storing browser-uploaded receipt URLs on `Payment.receiptFileUrl`.
+   - Remaining work is child-history JSON snapshot URL patching, upload attach/update actions for the remaining non-compliance surfaces, local multipart upload support if needed, and replacement of the remaining upload placeholders.
 
 4. **Full data reconciliation**
    - `reconcile-migration-counts.ts` now provides curated source/target count checks across the migration order and distinguishes strong provenance from weaker count-only evidence.
@@ -64,7 +65,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - Modern accounting/payment flows exist, but the old `accounting.php` month/category matrix must be restored or explicitly approved as changed.
 
 15. **Invoice/receipt parity**
-   - Modern invoice route exists, but legacy `invo.php` print details need exact field/layout audit.
+   - Runtime payment receipt upload now stores files on `Payment.receiptFileUrl`; modern invoice route exists, but legacy `invo.php` print details still need exact field/layout audit.
 
 16. **Government/nursery compliance parity**
    - Legacy `t_garderie`, `t_garderie_attachments`, `t_old_garderie`, and `t_garderie_doctor*` rows now have migration coverage, but `nurseryinfo.php` UI parity still needs exact page-level audit.

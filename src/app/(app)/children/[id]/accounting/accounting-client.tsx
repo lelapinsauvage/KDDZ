@@ -25,6 +25,7 @@ import {
   Download,
   AlertTriangle,
   Clock,
+  FileText,
 } from "lucide-react";
 import { deletePayment } from "@/lib/actions/payments";
 import { PaymentDialog } from "@/app/(app)/accounting/payment-dialog";
@@ -35,6 +36,7 @@ interface ChildData {
   id: string;
   firstName: string;
   lastName: string;
+  branchId: string;
 }
 
 interface AccountingEntry {
@@ -58,6 +60,8 @@ interface PaymentRow {
   status: string;
   reference: string | null;
   notes: string | null;
+  receiptFilename: string | null;
+  receiptFileUrl: string | null;
   createdBy: string | null;
 }
 
@@ -72,6 +76,7 @@ interface ChildOption {
   id: string;
   firstName: string;
   lastName: string;
+  branchId: string;
   branch: { name: string } | null;
   class: { name: string } | null;
 }
@@ -153,7 +158,9 @@ export function AccountingClient({
   childrenList,
 }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editPayment, setEditPayment] = useState<PaymentRow & { childId: string; childName: string } | null>(null);
+  const [editPayment, setEditPayment] = useState<
+    (PaymentRow & { childId: string; childName: string; branchId: string }) | null
+  >(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -201,6 +208,7 @@ export function AccountingClient({
       ...row,
       childId: child.id,
       childName: `${child.firstName} ${child.lastName}`,
+      branchId: child.branchId,
     });
     setDialogOpen(true);
   }
@@ -295,6 +303,24 @@ export function AccountingClient({
       cell: ({ row }) => (
         <span className="text-[#555] text-sm">{row.original.notes ?? "\u2014"}</span>
       ),
+    },
+    {
+      accessorKey: "receiptFileUrl",
+      header: "Receipt",
+      cell: ({ row }) =>
+        row.original.receiptFileUrl ? (
+          <a
+            href={row.original.receiptFileUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+          >
+            <FileText className="size-3.5" />
+            View
+          </a>
+        ) : (
+          <span className="text-muted-foreground">\u2014</span>
+        ),
     },
     {
       id: "actions",

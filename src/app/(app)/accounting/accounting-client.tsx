@@ -59,6 +59,7 @@ interface ChildOption {
   id: string;
   firstName: string;
   lastName: string;
+  branchId: string;
   branch: { name: string } | null;
   class: { name: string } | null;
 }

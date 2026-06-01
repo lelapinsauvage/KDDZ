@@ -42,6 +42,8 @@ interface CreatePaymentData {
   status?: PaymentStatus;
   reference?: string | null;
   notes?: string | null;
+  receiptFilename?: string | null;
+  receiptFileUrl?: string | null;
 }
 
 interface UpdatePaymentData {
@@ -57,6 +59,8 @@ interface UpdatePaymentData {
   status?: PaymentStatus;
   reference?: string | null;
   notes?: string | null;
+  receiptFilename?: string | null;
+  receiptFileUrl?: string | null;
 }
 
 type ActionResult<T = unknown> = {
@@ -324,6 +328,8 @@ export async function createPayment(
         status: data.status ?? "PAID",
         reference: data.reference ?? null,
         notes: data.notes ?? null,
+        receiptFilename: data.receiptFilename ?? null,
+        receiptFileUrl: data.receiptFileUrl ?? null,
         createdById: ctx.userId,
       },
     });
@@ -377,6 +383,10 @@ export async function updatePayment(
     if (data.status !== undefined) updateData.status = data.status;
     if (data.reference !== undefined) updateData.reference = data.reference;
     if (data.notes !== undefined) updateData.notes = data.notes;
+    if (data.receiptFilename !== undefined)
+      updateData.receiptFilename = data.receiptFilename;
+    if (data.receiptFileUrl !== undefined)
+      updateData.receiptFileUrl = data.receiptFileUrl;
 
     const payment = await db.payment.update({
       where: { id },
@@ -589,7 +599,19 @@ export async function recordPayment(
       return { success: false, error: firstError };
     }
 
-    const { childId, amount, currency, method, category, notes, date, coverageFromMonth, coverageToMonth } = parsed.data;
+    const {
+      childId,
+      amount,
+      currency,
+      method,
+      category,
+      notes,
+      date,
+      coverageFromMonth,
+      coverageToMonth,
+      receiptFilename,
+      receiptFileUrl,
+    } = parsed.data;
 
     // Verify child belongs to org
     if (!(await verifyChildAccess(childId, ctx.organizationId))) {
@@ -622,6 +644,8 @@ export async function recordPayment(
         category,
         status: "PAID",
         notes: notes || null,
+        receiptFilename: receiptFilename || null,
+        receiptFileUrl: receiptFileUrl || null,
         createdById: ctx.userId,
       },
     });

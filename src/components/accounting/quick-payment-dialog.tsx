@@ -53,6 +53,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 
 import { recordPayment } from "@/lib/actions/payments";
+import { uploadFileWithPresign } from "@/lib/uploads/client-upload";
 import {
   quickPaymentSchema,
   type QuickPaymentInput,
@@ -64,6 +65,7 @@ interface ChildOption {
   id: string;
   firstName: string;
   lastName: string;
+  branchId: string;
   branch: { name: string } | null;
   class: { name: string } | null;
 }
@@ -183,7 +185,35 @@ export function QuickPaymentDialog({
 
   function onSubmit(data: QuickPaymentInput) {
     startTransition(async () => {
-      const result = await recordPayment(data);
+      let payload = data;
+
+      if (attachment) {
+        if (!selectedChild?.branchId) {
+          toast.error("Cannot upload receipt because the child's branch is unavailable");
+          return;
+        }
+
+        try {
+          const uploaded = await uploadFileWithPresign({
+            branchId: selectedChild.branchId,
+            scope: "payment-receipt",
+            ownerId: data.childId,
+            file: attachment,
+          });
+          payload = {
+            ...data,
+            receiptFilename: attachment.name,
+            receiptFileUrl: uploaded.publicUrl,
+          };
+        } catch (error) {
+          toast.error(
+            error instanceof Error ? error.message : "Failed to upload receipt",
+          );
+          return;
+        }
+      }
+
+      const result = await recordPayment(payload);
       if (result.success && result.data) {
         toast.success(
           `Payment of ${data.currency === "LBP" ? "LL" : "$"}${data.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })} recorded for ${result.data.childName}`,
@@ -502,6 +532,12 @@ export function QuickPaymentDialog({
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) setAttachment(file);
+                }}
                 className="flex w-full flex-col items-center gap-2 rounded-lg border-2 border-dashed border-muted-foreground/20 bg-muted/20 p-6 text-sm text-muted-foreground transition-colors hover:border-muted-foreground/40 hover:bg-muted/40"
               >
                 <Upload className="size-6" />

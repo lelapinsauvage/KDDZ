@@ -102,6 +102,7 @@ export default async function AccountingPage() {
           id: string;
           firstName: string;
           lastName: string;
+          branchId: string;
           branch: { name: string } | null;
           class: { name: string } | null;
         }>)
