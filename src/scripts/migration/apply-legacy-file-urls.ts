@@ -1,0 +1,719 @@
+import fs from "fs";
+import path from "path";
+
+import type { PrismaClient } from "@/generated/prisma/client";
+import { createPrismaClient } from "./lib/prisma-client";
+import { log, logError } from "./lib/utils";
+
+type UploadStatus =
+  | "uploaded"
+  | "skipped"
+  | "dry-run"
+  | "not-exported"
+  | "missing-package-file"
+  | "unsafe-key"
+  | "error";
+
+type ApplyStatus =
+  | "updated"
+  | "would-update"
+  | "already-current"
+  | "not-uploaded"
+  | "missing-public-url"
+  | "not-found"
+  | "no-provenance"
+  | "unsupported-destination"
+  | "error";
+
+interface LegacyFileUploadEntry {
+  status: UploadStatus;
+  sourceDatabase: string;
+  ruleId: string;
+  legacyTable: string;
+  legacyColumn: string;
+  legacyId: number | string | null;
+  ownerId: number | string | null;
+  title: string | null;
+  active: number | string | null;
+  filename: string | null;
+  exportStatus: string;
+  packagePath: string | null;
+  storageKey: string | null;
+  objectKey: string | null;
+  publicUrl: string | null;
+  bytes: number | null;
+  provider: string;
+  bucket: string | null;
+  modernDestination: string;
+  modernStorageKeyPrefix: string;
+  reason?: string;
+}
+
+interface LegacyFileUploadManifest {
+  generatedAt: string;
+  sourceManifest: string;
+  sourceDatabase: string;
+  dryRun: boolean;
+  provider: string;
+  bucket: string | null;
+  publicBaseUrl: string | null;
+  entries: LegacyFileUploadEntry[];
+}
+
+interface LegacyFileUrlApplyEntry {
+  status: ApplyStatus;
+  sourceDatabase: string;
+  ruleId: string;
+  legacyTable: string;
+  legacyColumn: string;
+  legacyId: number | string | null;
+  ownerId: number | string | null;
+  filename: string | null;
+  uploadStatus: UploadStatus;
+  storageKey: string | null;
+  objectKey: string | null;
+  publicUrl: string | null;
+  modernDestination: string;
+  targetModel: string | null;
+  targetField: string | null;
+  affectedRows: number;
+  reason?: string;
+}
+
+interface LegacyFileUrlApplyManifest {
+  generatedAt: string;
+  sourceUploadManifest: string;
+  sourceUploadManifestGeneratedAt: string;
+  sourceDatabase: string;
+  dryRun: boolean;
+  uploadWasDryRun: boolean;
+  totals: Record<ApplyStatus, number>;
+  entries: LegacyFileUrlApplyEntry[];
+}
+
+interface LocatedRow {
+  id: string;
+  value: string | null;
+}
+
+interface ApplyContext {
+  prisma: PrismaClient;
+  entry: LegacyFileUploadEntry;
+  publicUrl: string;
+  dryRun: boolean;
+}
+
+interface ApplyRowsParams {
+  entry: LegacyFileUploadEntry;
+  publicUrl: string;
+  dryRun: boolean;
+  targetModel: string;
+  targetField: string;
+  rows: LocatedRow[];
+  updateRow: (id: string) => Promise<void>;
+}
+
+const NO_PROVENANCE_REASONS: Record<string, string> = {
+  "branch-photo":
+    "Branch currently stores imageUrl only; sourceDatabase and legacy branch id are not persisted.",
+  "class-photo":
+    "Class currently stores imageUrl only; sourceDatabase and legacy class id are not persisted.",
+  "child-photo":
+    "Child currently stores photo only; sourceDatabase and legacy child id are not persisted.",
+  "child-draft-photo":
+    "Draft children currently store photo only; sourceDatabase and legacy child id are not persisted.",
+  "teacher-photo":
+    "Teacher currently stores imageUrl only; sourceDatabase and legacy teacher id are not persisted.",
+  "teacher-document":
+    "TeacherAttachment currently stores fileUrl only; sourceDatabase and legacy attachment id are not persisted.",
+  "nurse-photo":
+    "Nurse currently stores imageUrl only; sourceDatabase and legacy nurse id are not persisted.",
+  "nurse-document":
+    "NurseAttachment currently stores fileUrl only; sourceDatabase and legacy attachment id are not persisted.",
+  "manager-photo":
+    "Manager currently stores imageUrl only; sourceDatabase and legacy manager id are not persisted.",
+  "daily-attachment":
+    "DailyReportAttachment currently stores fileUrl only; sourceDatabase and legacy attachment id are not persisted.",
+  "absence-attachment":
+    "AbsenceAttachment currently stores fileUrl only; sourceDatabase and legacy attachment id are not persisted.",
+};
+
+const UNSUPPORTED_DESTINATION_REASONS: Record<string, string> = {
+  "child-history-photo":
+    "ChildHistory stores image data inside JSON snapshots; a dedicated JSON patch strategy is required.",
+};
+
+function argValue(name: string): string | null {
+  const prefix = `--${name}=`;
+  const arg = process.argv.find((item) => item.startsWith(prefix));
+  return arg ? arg.slice(prefix.length) : null;
+}
+
+function hasArg(name: string): boolean {
+  return process.argv.includes(`--${name}`);
+}
+
+function usage(): string {
+  return [
+    "Usage:",
+    "  pnpm tsx src/scripts/migration/apply-legacy-file-urls.ts \\",
+    "    --manifest=/tmp/kiddzonl-legacy-file-upload.json --dry-run",
+    "",
+    "Options:",
+    "  --manifest=<path>       Required upload manifest from upload-legacy-file-export.ts.",
+    "  --out-manifest=<path>   URL-application report path.",
+    "  --json=<path>           Alias for --out-manifest.",
+    "  --rule=<rule-id>        Apply only one legacy file rule.",
+    "  --dry-run               Report rows that would change without updating PostgreSQL.",
+    "  --fail-on-warning       Exit non-zero on not-uploaded, missing-public-url, not-found, no-provenance, unsupported, or error entries.",
+  ].join("\n");
+}
+
+function readUploadManifest(manifestPath: string): LegacyFileUploadManifest {
+  const raw = fs.readFileSync(manifestPath, "utf8");
+  const parsed = JSON.parse(raw) as LegacyFileUploadManifest;
+  if (!Array.isArray(parsed.entries)) {
+    throw new Error(`Invalid legacy file upload manifest: ${manifestPath}`);
+  }
+  return parsed;
+}
+
+function emptyTotals(): Record<ApplyStatus, number> {
+  return {
+    updated: 0,
+    "would-update": 0,
+    "already-current": 0,
+    "not-uploaded": 0,
+    "missing-public-url": 0,
+    "not-found": 0,
+    "no-provenance": 0,
+    "unsupported-destination": 0,
+    error: 0,
+  };
+}
+
+function legacyIdNumber(entry: LegacyFileUploadEntry): number | null {
+  if (entry.legacyId == null || entry.legacyId === "") return null;
+  const value =
+    typeof entry.legacyId === "number"
+      ? entry.legacyId
+      : Number.parseInt(String(entry.legacyId), 10);
+  return Number.isFinite(value) ? value : null;
+}
+
+function applyEntry(params: {
+  entry: LegacyFileUploadEntry;
+  status: ApplyStatus;
+  targetModel?: string | null;
+  targetField?: string | null;
+  affectedRows?: number;
+  reason?: string;
+}): LegacyFileUrlApplyEntry {
+  return {
+    status: params.status,
+    sourceDatabase: params.entry.sourceDatabase,
+    ruleId: params.entry.ruleId,
+    legacyTable: params.entry.legacyTable,
+    legacyColumn: params.entry.legacyColumn,
+    legacyId: params.entry.legacyId,
+    ownerId: params.entry.ownerId,
+    filename: params.entry.filename,
+    uploadStatus: params.entry.status,
+    storageKey: params.entry.storageKey,
+    objectKey: params.entry.objectKey,
+    publicUrl: params.entry.publicUrl,
+    modernDestination: params.entry.modernDestination,
+    targetModel: params.targetModel ?? null,
+    targetField: params.targetField ?? null,
+    affectedRows: params.affectedRows ?? 0,
+    reason: params.reason,
+  };
+}
+
+async function applyRows(
+  params: ApplyRowsParams
+): Promise<LegacyFileUrlApplyEntry> {
+  const {
+    entry,
+    publicUrl,
+    dryRun,
+    targetModel,
+    targetField,
+    rows,
+    updateRow,
+  } = params;
+
+  if (rows.length === 0) {
+    return applyEntry({
+      entry,
+      status: "not-found",
+      targetModel,
+      targetField,
+      reason: "No migrated row matched sourceDatabase and legacyId.",
+    });
+  }
+
+  const staleRows = rows.filter((row) => row.value !== publicUrl);
+  if (staleRows.length === 0) {
+    return applyEntry({
+      entry,
+      status: "already-current",
+      targetModel,
+      targetField,
+      affectedRows: rows.length,
+    });
+  }
+
+  if (dryRun) {
+    return applyEntry({
+      entry,
+      status: "would-update",
+      targetModel,
+      targetField,
+      affectedRows: staleRows.length,
+    });
+  }
+
+  for (const row of staleRows) {
+    await updateRow(row.id);
+  }
+
+  return applyEntry({
+    entry,
+    status: "updated",
+    targetModel,
+    targetField,
+    affectedRows: staleRows.length,
+  });
+}
+
+async function applyChildAttachment(
+  context: ApplyContext
+): Promise<LegacyFileUrlApplyEntry> {
+  const legacyId = legacyIdNumber(context.entry);
+  if (!legacyId) {
+    return applyEntry({
+      entry: context.entry,
+      status: "error",
+      targetModel: "ChildAttachment",
+      targetField: "fileUrl",
+      reason: "Missing numeric legacyId.",
+    });
+  }
+
+  const rows = await context.prisma.childAttachment.findMany({
+    where: {
+      sourceDatabase: context.entry.sourceDatabase,
+      legacyId,
+    },
+    select: { id: true, fileUrl: true },
+  });
+
+  return applyRows({
+    entry: context.entry,
+    publicUrl: context.publicUrl,
+    dryRun: context.dryRun,
+    targetModel: "ChildAttachment",
+    targetField: "fileUrl",
+    rows: rows.map((row) => ({ id: row.id, value: row.fileUrl })),
+    updateRow: (id) =>
+      context.prisma.childAttachment
+        .update({ where: { id }, data: { fileUrl: context.publicUrl } })
+        .then(() => undefined),
+  });
+}
+
+async function applyBranchDocument(
+  context: ApplyContext
+): Promise<LegacyFileUrlApplyEntry> {
+  const legacyId = legacyIdNumber(context.entry);
+  if (!legacyId) {
+    return applyEntry({
+      entry: context.entry,
+      status: "error",
+      targetModel: "BranchDocument",
+      targetField: "fileUrl",
+      reason: "Missing numeric legacyId.",
+    });
+  }
+
+  const rows = await context.prisma.branchDocument.findMany({
+    where: {
+      sourceDatabase: context.entry.sourceDatabase,
+      legacyId,
+    },
+    select: { id: true, fileUrl: true },
+  });
+
+  return applyRows({
+    entry: context.entry,
+    publicUrl: context.publicUrl,
+    dryRun: context.dryRun,
+    targetModel: "BranchDocument",
+    targetField: "fileUrl",
+    rows: rows.map((row) => ({ id: row.id, value: row.fileUrl })),
+    updateRow: (id) =>
+      context.prisma.branchDocument
+        .update({ where: { id }, data: { fileUrl: context.publicUrl } })
+        .then(() => undefined),
+  });
+}
+
+async function applyDoctorPhoto(
+  context: ApplyContext
+): Promise<LegacyFileUrlApplyEntry> {
+  const legacyId = legacyIdNumber(context.entry);
+  if (!legacyId) {
+    return applyEntry({
+      entry: context.entry,
+      status: "error",
+      targetModel: "Doctor",
+      targetField: "imageUrl",
+      reason: "Missing numeric legacyId.",
+    });
+  }
+
+  const rows = await context.prisma.doctor.findMany({
+    where: {
+      sourceDatabase: context.entry.sourceDatabase,
+      legacyTable: context.entry.legacyTable,
+      legacyId,
+    },
+    select: { id: true, imageUrl: true },
+  });
+
+  return applyRows({
+    entry: context.entry,
+    publicUrl: context.publicUrl,
+    dryRun: context.dryRun,
+    targetModel: "Doctor",
+    targetField: "imageUrl",
+    rows: rows.map((row) => ({ id: row.id, value: row.imageUrl })),
+    updateRow: (id) =>
+      context.prisma.doctor
+        .update({ where: { id }, data: { imageUrl: context.publicUrl } })
+        .then(() => undefined),
+  });
+}
+
+async function applyDoctorAttachment(
+  context: ApplyContext
+): Promise<LegacyFileUrlApplyEntry> {
+  const legacyId = legacyIdNumber(context.entry);
+  if (!legacyId) {
+    return applyEntry({
+      entry: context.entry,
+      status: "error",
+      targetModel: "DoctorAttachment",
+      targetField: "fileUrl",
+      reason: "Missing numeric legacyId.",
+    });
+  }
+
+  const rows = await context.prisma.doctorAttachment.findMany({
+    where: {
+      sourceDatabase: context.entry.sourceDatabase,
+      legacyId,
+    },
+    select: { id: true, fileUrl: true },
+  });
+
+  return applyRows({
+    entry: context.entry,
+    publicUrl: context.publicUrl,
+    dryRun: context.dryRun,
+    targetModel: "DoctorAttachment",
+    targetField: "fileUrl",
+    rows: rows.map((row) => ({ id: row.id, value: row.fileUrl })),
+    updateRow: (id) =>
+      context.prisma.doctorAttachment
+        .update({ where: { id }, data: { fileUrl: context.publicUrl } })
+        .then(() => undefined),
+  });
+}
+
+async function applyManagerAttachment(
+  context: ApplyContext
+): Promise<LegacyFileUrlApplyEntry> {
+  const legacyId = legacyIdNumber(context.entry);
+  if (!legacyId) {
+    return applyEntry({
+      entry: context.entry,
+      status: "error",
+      targetModel: "ManagerAttachment",
+      targetField: "fileUrl",
+      reason: "Missing numeric legacyId.",
+    });
+  }
+
+  const rows = await context.prisma.managerAttachment.findMany({
+    where: {
+      sourceDatabase: context.entry.sourceDatabase,
+      legacyId,
+    },
+    select: { id: true, fileUrl: true },
+  });
+
+  return applyRows({
+    entry: context.entry,
+    publicUrl: context.publicUrl,
+    dryRun: context.dryRun,
+    targetModel: "ManagerAttachment",
+    targetField: "fileUrl",
+    rows: rows.map((row) => ({ id: row.id, value: row.fileUrl })),
+    updateRow: (id) =>
+      context.prisma.managerAttachment
+        .update({ where: { id }, data: { fileUrl: context.publicUrl } })
+        .then(() => undefined),
+  });
+}
+
+async function applyPaymentReceipt(
+  context: ApplyContext
+): Promise<LegacyFileUrlApplyEntry> {
+  const legacyId = legacyIdNumber(context.entry);
+  if (!legacyId) {
+    return applyEntry({
+      entry: context.entry,
+      status: "error",
+      targetModel: "Payment",
+      targetField: "receiptFileUrl",
+      reason: "Missing numeric legacyId.",
+    });
+  }
+
+  const rows = await context.prisma.payment.findMany({
+    where: {
+      sourceDatabase: context.entry.sourceDatabase,
+      legacyId,
+    },
+    select: { id: true, receiptFileUrl: true },
+  });
+
+  return applyRows({
+    entry: context.entry,
+    publicUrl: context.publicUrl,
+    dryRun: context.dryRun,
+    targetModel: "Payment",
+    targetField: "receiptFileUrl",
+    rows: rows.map((row) => ({ id: row.id, value: row.receiptFileUrl })),
+    updateRow: (id) =>
+      context.prisma.payment
+        .update({ where: { id }, data: { receiptFileUrl: context.publicUrl } })
+        .then(() => undefined),
+  });
+}
+
+async function applyFormAttachment(
+  context: ApplyContext
+): Promise<LegacyFileUrlApplyEntry> {
+  const legacyId = legacyIdNumber(context.entry);
+  if (!legacyId) {
+    return applyEntry({
+      entry: context.entry,
+      status: "error",
+      targetModel: "FormAttachment",
+      targetField: "fileUrl",
+      reason: "Missing numeric legacyId.",
+    });
+  }
+
+  const rows = await context.prisma.formAttachment.findMany({
+    where: {
+      sourceDatabase: context.entry.sourceDatabase,
+      legacyId,
+    },
+    select: { id: true, fileUrl: true },
+  });
+
+  return applyRows({
+    entry: context.entry,
+    publicUrl: context.publicUrl,
+    dryRun: context.dryRun,
+    targetModel: "FormAttachment",
+    targetField: "fileUrl",
+    rows: rows.map((row) => ({ id: row.id, value: row.fileUrl })),
+    updateRow: (id) =>
+      context.prisma.formAttachment
+        .update({ where: { id }, data: { fileUrl: context.publicUrl } })
+        .then(() => undefined),
+  });
+}
+
+const APPLY_BY_RULE: Record<
+  string,
+  (context: ApplyContext) => Promise<LegacyFileUrlApplyEntry>
+> = {
+  "child-document": applyChildAttachment,
+  "garderie-document": applyBranchDocument,
+  "doctor-photo": applyDoctorPhoto,
+  "doctor-document": applyDoctorAttachment,
+  "manager-document": applyManagerAttachment,
+  "payment-receipt": applyPaymentReceipt,
+  "form-attachment": applyFormAttachment,
+};
+
+async function applyUploadEntry(
+  prisma: PrismaClient,
+  entry: LegacyFileUploadEntry,
+  dryRun: boolean
+): Promise<LegacyFileUrlApplyEntry> {
+  try {
+    if (NO_PROVENANCE_REASONS[entry.ruleId]) {
+      return applyEntry({
+        entry,
+        status: "no-provenance",
+        reason: NO_PROVENANCE_REASONS[entry.ruleId],
+      });
+    }
+
+    if (UNSUPPORTED_DESTINATION_REASONS[entry.ruleId]) {
+      return applyEntry({
+        entry,
+        status: "unsupported-destination",
+        reason: UNSUPPORTED_DESTINATION_REASONS[entry.ruleId],
+      });
+    }
+
+    if (entry.status !== "uploaded" && entry.status !== "skipped") {
+      return applyEntry({
+        entry,
+        status: "not-uploaded",
+        reason: `Upload status was ${entry.status}.`,
+      });
+    }
+
+    if (!entry.publicUrl) {
+      return applyEntry({
+        entry,
+        status: "missing-public-url",
+        reason: "Upload manifest entry has no publicUrl.",
+      });
+    }
+
+    const handler = APPLY_BY_RULE[entry.ruleId];
+    if (!handler) {
+      return applyEntry({
+        entry,
+        status: "unsupported-destination",
+        reason: `No URL application handler for rule ${entry.ruleId}.`,
+      });
+    }
+
+    return handler({
+      prisma,
+      entry,
+      publicUrl: entry.publicUrl,
+      dryRun,
+    });
+  } catch (err) {
+    return applyEntry({
+      entry,
+      status: "error",
+      reason: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
+async function applyLegacyFileUrls(): Promise<LegacyFileUrlApplyManifest> {
+  if (hasArg("help") || hasArg("h")) {
+    console.log(usage());
+    process.exit(0);
+  }
+
+  const manifestArg = argValue("manifest");
+  if (!manifestArg) {
+    throw new Error(`--manifest is required.\n\n${usage()}`);
+  }
+
+  const manifestPath = path.resolve(manifestArg);
+  const uploadManifest = readUploadManifest(manifestPath);
+  const outManifest = path.resolve(
+    argValue("out-manifest") ||
+      argValue("json") ||
+      path.join(path.dirname(manifestPath), "file-url-apply-manifest.json")
+  );
+  const onlyRule = argValue("rule");
+  const dryRun = hasArg("dry-run");
+  const failOnWarning = hasArg("fail-on-warning");
+
+  if (uploadManifest.dryRun && !dryRun) {
+    throw new Error(
+      "The upload manifest was generated with --dry-run. Re-run this script with --dry-run or upload files for real first."
+    );
+  }
+
+  const entries = onlyRule
+    ? uploadManifest.entries.filter((entry) => entry.ruleId === onlyRule)
+    : uploadManifest.entries;
+
+  if (onlyRule && entries.length === 0) {
+    throw new Error(`No upload manifest entries found for rule: ${onlyRule}`);
+  }
+
+  log(
+    `${dryRun ? "Planning" : "Applying"} storage URLs for ${entries.length} upload manifest entries`
+  );
+  log(`Upload manifest: ${manifestPath}`);
+  log(`Upload provider: ${uploadManifest.provider}`);
+
+  const prisma = createPrismaClient();
+  const totals = emptyTotals();
+  const results: LegacyFileUrlApplyEntry[] = [];
+
+  try {
+    for (const entry of entries) {
+      const result = await applyUploadEntry(prisma, entry, dryRun);
+      results.push(result);
+      totals[result.status]++;
+    }
+  } finally {
+    await prisma.$disconnect();
+  }
+
+  const manifest: LegacyFileUrlApplyManifest = {
+    generatedAt: new Date().toISOString(),
+    sourceUploadManifest: manifestPath,
+    sourceUploadManifestGeneratedAt: uploadManifest.generatedAt,
+    sourceDatabase: uploadManifest.sourceDatabase,
+    dryRun,
+    uploadWasDryRun: uploadManifest.dryRun,
+    totals,
+    entries: results,
+  };
+
+  fs.mkdirSync(path.dirname(outManifest), { recursive: true });
+  fs.writeFileSync(outManifest, `${JSON.stringify(manifest, null, 2)}\n`);
+  log(`Wrote legacy file URL apply manifest to ${outManifest}`);
+  log(
+    `Legacy file URL apply totals: ${totals.updated} updated, ` +
+      `${totals["would-update"]} would-update, ` +
+      `${totals["already-current"]} already-current, ` +
+      `${totals["not-uploaded"]} not-uploaded, ` +
+      `${totals["missing-public-url"]} missing public URLs, ` +
+      `${totals["not-found"]} not found, ` +
+      `${totals["no-provenance"]} no provenance, ` +
+      `${totals["unsupported-destination"]} unsupported, ${totals.error} errors`
+  );
+
+  if (
+    failOnWarning &&
+    (totals["not-uploaded"] > 0 ||
+      totals["missing-public-url"] > 0 ||
+      totals["not-found"] > 0 ||
+      totals["no-provenance"] > 0 ||
+      totals["unsupported-destination"] > 0 ||
+      totals.error > 0)
+  ) {
+    throw new Error("Legacy file URL apply warnings found.");
+  }
+
+  return manifest;
+}
+
+if (require.main === module) {
+  applyLegacyFileUrls().catch((err) => {
+    logError("Legacy file URL application failed", err);
+    process.exit(1);
+  });
+}

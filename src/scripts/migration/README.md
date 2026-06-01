@@ -223,6 +223,17 @@ pnpm tsx src/scripts/migration/upload-legacy-file-export.ts \
 
 Set `STORAGE_PROVIDER=s3` or `STORAGE_PROVIDER=r2` with bucket credentials for production. The upload manifest keeps `sourceDatabase`, `legacyTable`, `legacyColumn`, `legacyId`, `ruleId`, `objectKey`, and `publicUrl` so migrated filename fields can be rewritten to object-storage URLs without guessing. See `docs/file-storage-pipeline.md` for provider env vars and cutover gates.
 
+After upload, preview URL rewrites against PostgreSQL:
+
+```bash
+pnpm tsx src/scripts/migration/apply-legacy-file-urls.ts \
+  --manifest=/tmp/kiddzonl-legacy-file-upload.json \
+  --out-manifest=/tmp/kiddzonl-legacy-file-url-apply.json \
+  --dry-run
+```
+
+The apply script updates only tables with strong legacy provenance. It rewrites `ChildAttachment`, `BranchDocument`, `Doctor`, `DoctorAttachment`, `ManagerAttachment`, `Payment`, and `FormAttachment` URL fields by `sourceDatabase + legacyId`. It reports no-provenance targets such as branch/class/child/staff profile photos and teacher/nurse/daily/absence attachments for follow-up schema or mapping work.
+
 ### Count Reconciliation
 
 After a dry run or full migration, run the count reconciler against the same imported MySQL database and the target PostgreSQL database:

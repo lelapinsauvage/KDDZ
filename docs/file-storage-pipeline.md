@@ -12,8 +12,9 @@ The legacy PHP app stored uploads in `Front/templates/admin/images/<directory>` 
    ```
 
 3. `upload-legacy-file-export.ts` uploads that package to the configured storage provider and writes an upload manifest with source row provenance, object keys, public URLs, byte counts, and upload status.
+4. `apply-legacy-file-urls.ts` reads the upload manifest and updates migrated rows where the modern table has strong legacy provenance.
 
-The upload manifest is the cutover artifact for the later database URL rewrite step. It preserves `sourceDatabase`, `legacyTable`, `legacyColumn`, `legacyId`, `ownerId`, `ruleId`, `modernDestination`, `storageKey`, `objectKey`, and `publicUrl`.
+The upload manifest is the cutover artifact for the database URL rewrite step. It preserves `sourceDatabase`, `legacyTable`, `legacyColumn`, `legacyId`, `ownerId`, `ruleId`, `modernDestination`, `storageKey`, `objectKey`, and `publicUrl`.
 
 ## Storage Providers
 
@@ -94,6 +95,29 @@ pnpm tsx src/scripts/migration/upload-legacy-file-export.ts \
 
 Use `--dry-run` to validate package paths and object keys without uploading. Use `--rule=<rule-id>` to isolate one legacy rule. By default existing objects are skipped; pass `--overwrite` only during a controlled rerun.
 
+Apply uploaded URLs to migrated rows:
+
+```bash
+pnpm tsx src/scripts/migration/apply-legacy-file-urls.ts \
+  --manifest=/tmp/kiddzonl-legacy-file-upload.json \
+  --out-manifest=/tmp/kiddzonl-legacy-file-url-apply.json \
+  --dry-run
+```
+
+Remove `--dry-run` only after reviewing the apply manifest. The script updates strong-provenance destinations:
+
+| Rule | Target |
+| --- | --- |
+| `child-document` | `ChildAttachment.fileUrl` |
+| `garderie-document` | `BranchDocument.fileUrl` |
+| `doctor-photo` | `Doctor.imageUrl` |
+| `doctor-document` | `DoctorAttachment.fileUrl` |
+| `manager-document` | `ManagerAttachment.fileUrl` |
+| `payment-receipt` | `Payment.receiptFileUrl` |
+| `form-attachment` | `FormAttachment.fileUrl` |
+
+The script reports, but does not guess, no-provenance destinations such as branch/class/child/staff profile photos, teacher/nurse attachments, daily report attachments, and absence attachments. Those tables need legacy source fields added or an approved deterministic matching strategy before URL rewrite.
+
 ## Cutover Gates
 
 - The audit has no unresolved unsafe filenames.
@@ -102,4 +126,5 @@ Use `--dry-run` to validate package paths and object keys without uploading. Use
 - The upload manifest has zero `missing-package-file`, `unsafe-key`, and `error` entries.
 - `STORAGE_PUBLIC_BASE_URL` is set for production so migrated records can resolve to stable URLs.
 - Runtime upload routes use `createPresignedUploadUrl()` with authenticated org/branch permission checks before UI upload placeholders are enabled.
-- A database rewrite step updates legacy filename fields to uploaded object URLs using upload-manifest provenance, then `reconcile-migration-counts.ts` confirms counts still match.
+- `apply-legacy-file-urls.ts` has zero unresolved `missing-public-url`, `not-found`, `no-provenance`, `unsupported-destination`, and `error` entries for every rule approved for cutover.
+- `reconcile-migration-counts.ts` confirms counts still match after URL rewrite.
