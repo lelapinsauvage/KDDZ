@@ -26,7 +26,7 @@
 
 import type { PrismaClient } from "@/generated/prisma/client";
 import { createPrismaClient } from "./lib/prisma-client";
-import { queryMysql, closeMysqlPool } from "./lib/mysql-client";
+import { queryMysql, closeMysqlPool, getMysqlConfig } from "./lib/mysql-client";
 import {
   cleanString,
   generateUUID,
@@ -65,9 +65,14 @@ interface OldAbsenceAttachment {
   active: number;
 }
 
+function legacyKey(sourceDatabase: string, table: string, legacyId: number) {
+  return `${sourceDatabase}:${table}:${legacyId}`;
+}
+
 export async function migrateAbsences(prisma: PrismaClient) {
   log("=== Migrating Absence Reports ===");
   const dryRun = isDryRun();
+  const sourceDatabase = getMysqlConfig().database || "unknown";
 
   const oldRows = await queryMysql<OldAbsenceReport>(
     "SELECT * FROM t_absent_report WHERE active = 1 ORDER BY report_id"
@@ -141,8 +146,34 @@ export async function migrateAbsences(prisma: PrismaClient) {
   let attSkipped = 0;
 
   for (const a of attachments) {
-    const absenceReportId = getMapping("absence_report", a.formid);
-    if (!absenceReportId) {
+    const legacyId = Number.parseInt(String(a.rattid), 10);
+    const legacyAbsenceReportId = Number.parseInt(String(a.formid), 10);
+    const absenceReportId = getMapping("absence_report", legacyAbsenceReportId);
+    if (!absenceReportId || !Number.isFinite(legacyId)) {
+      attSkipped++;
+      continue;
+    }
+
+    const key = legacyKey(sourceDatabase, "t_absent_attachments", legacyId);
+    const existing = await prisma.absenceAttachment.findUnique({
+      where: { legacyKey: key },
+    });
+    if (existing) {
+      if (!dryRun) {
+        await prisma.absenceAttachment.update({
+          where: { id: existing.id },
+          data: {
+            sourceDatabase,
+            legacyKey: key,
+            legacyId,
+            legacyTable: "t_absent_attachments",
+            legacyAbsenceReportId,
+            filename: cleanString(a.att_title) ?? cleanString(a.url) ?? "attachment",
+            fileUrl: cleanString(a.url) ?? "missing",
+            createdAt: parseDate(a.datetime) ?? new Date(),
+          },
+        });
+      }
       attSkipped++;
       continue;
     }
@@ -152,6 +183,11 @@ export async function migrateAbsences(prisma: PrismaClient) {
         data: {
           id: generateUUID(),
           absenceReportId,
+          sourceDatabase,
+          legacyKey: key,
+          legacyId,
+          legacyTable: "t_absent_attachments",
+          legacyAbsenceReportId,
           filename: cleanString(a.att_title) ?? cleanString(a.url) ?? "attachment",
           fileUrl: cleanString(a.url) ?? "missing",
           createdAt: parseDate(a.datetime) ?? new Date(),

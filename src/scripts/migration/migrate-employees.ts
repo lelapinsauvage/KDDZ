@@ -80,6 +80,10 @@ import {
   logProgress,
 } from "./lib/utils";
 
+function legacyKey(sourceDatabase: string, table: string, legacyId: number) {
+  return `${sourceDatabase}:${table}:${legacyId}`;
+}
+
 // ---------------------------------------------------------------------------
 // Teachers
 // ---------------------------------------------------------------------------
@@ -104,6 +108,7 @@ interface OldTeacher {
 }
 
 async function migrateTeachers(prisma: PrismaClient, dryRun: boolean) {
+  const sourceDatabase = getMysqlConfig().database || "unknown";
   const rows = await queryMysql<OldTeacher>(
     "SELECT * FROM t_teacher WHERE deleted = 0 ORDER BY teacher_id"
   );
@@ -120,14 +125,35 @@ async function migrateTeachers(prisma: PrismaClient, dryRun: boolean) {
     }
 
     const imageUrl = cleanLegacyFileName(row.image);
-    const existing = await prisma.teacher.findFirst({
-      where: { firstName: row.f_name, lastName: row.l_name, branchId },
+    const key = legacyKey(sourceDatabase, "t_teacher", row.teacher_id);
+    const existingByKey = await prisma.teacher.findUnique({
+      where: { legacyKey: key },
     });
+    const existing =
+      existingByKey ??
+      (await prisma.teacher.findFirst({
+        where: { firstName: row.f_name, lastName: row.l_name, branchId },
+      }));
     if (existing) {
-      if (!dryRun && imageUrl && existing.imageUrl !== imageUrl) {
+      const updateData: {
+        sourceDatabase?: string;
+        legacyKey?: string;
+        legacyId?: number;
+        legacyTable?: string;
+        imageUrl?: string;
+      } = {
+        sourceDatabase,
+        legacyKey: key,
+        legacyId: row.teacher_id,
+        legacyTable: "t_teacher",
+      };
+      if (imageUrl && existing.imageUrl !== imageUrl) {
+        updateData.imageUrl = imageUrl;
+      }
+      if (!dryRun) {
         await prisma.teacher.update({
           where: { id: existing.id },
-          data: { imageUrl },
+          data: updateData,
         });
       }
       setMapping("teacher", row.teacher_id, existing.id);
@@ -140,6 +166,10 @@ async function migrateTeachers(prisma: PrismaClient, dryRun: boolean) {
       await prisma.teacher.create({
         data: {
           id: newId,
+          sourceDatabase,
+          legacyKey: key,
+          legacyId: row.teacher_id,
+          legacyTable: "t_teacher",
           firstName: row.f_name || "",
           lastName: row.l_name || "",
           phone: cleanString(row.tel),
@@ -243,19 +273,52 @@ async function migrateTeacherAttachments(
   prisma: PrismaClient,
   dryRun: boolean
 ) {
+  const sourceDatabase = getMysqlConfig().database || "unknown";
   const rows = await queryMysql<OldTeacherAttachment>(
     "SELECT * FROM t_teacher_attachments WHERE active = 1"
   );
   let count = 0;
+  let skipped = 0;
   for (const row of rows) {
-    const teacherId = getMapping("teacher", row.teacher_id);
-    if (!teacherId) continue;
+    const legacyId = toInt(row.tattid);
+    const legacyTeacherId = toInt(row.teacher_id);
+    const teacherId = getMapping("teacher", legacyTeacherId);
+    if (!teacherId || !legacyId) continue;
+
+    const key = legacyKey(sourceDatabase, "t_teacher_attachments", legacyId);
+    const existing = await prisma.teacherAttachment.findUnique({
+      where: { legacyKey: key },
+    });
+    if (existing) {
+      if (!dryRun) {
+        await prisma.teacherAttachment.update({
+          where: { id: existing.id },
+          data: {
+            sourceDatabase,
+            legacyKey: key,
+            legacyId,
+            legacyTable: "t_teacher_attachments",
+            legacyTeacherId,
+            filename: row.att_title || row.url,
+            fileUrl: row.url,
+            type: cleanString(row.type),
+          },
+        });
+      }
+      skipped++;
+      continue;
+    }
 
     if (!dryRun) {
       await prisma.teacherAttachment.create({
         data: {
           id: generateUUID(),
           teacherId,
+          sourceDatabase,
+          legacyKey: key,
+          legacyId,
+          legacyTable: "t_teacher_attachments",
+          legacyTeacherId,
           filename: row.att_title || row.url,
           fileUrl: row.url,
           type: cleanString(row.type),
@@ -264,7 +327,7 @@ async function migrateTeacherAttachments(
     }
     count++;
   }
-  log(`Teacher attachments: ${count} migrated`);
+  log(`Teacher attachments: ${count} migrated, ${skipped} skipped`);
 }
 
 async function migrateTeacherExperiences(
@@ -354,6 +417,7 @@ interface OldNurse {
 }
 
 async function migrateNurses(prisma: PrismaClient, dryRun: boolean) {
+  const sourceDatabase = getMysqlConfig().database || "unknown";
   const rows = await queryMysql<OldNurse>(
     "SELECT * FROM t_nurse WHERE deleted = 0 ORDER BY teacher_id"
   );
@@ -370,14 +434,35 @@ async function migrateNurses(prisma: PrismaClient, dryRun: boolean) {
     }
 
     const imageUrl = cleanLegacyFileName(row.image);
-    const existing = await prisma.nurse.findFirst({
-      where: { firstName: row.f_name, lastName: row.l_name, branchId },
+    const key = legacyKey(sourceDatabase, "t_nurse", row.teacher_id);
+    const existingByKey = await prisma.nurse.findUnique({
+      where: { legacyKey: key },
     });
+    const existing =
+      existingByKey ??
+      (await prisma.nurse.findFirst({
+        where: { firstName: row.f_name, lastName: row.l_name, branchId },
+      }));
     if (existing) {
-      if (!dryRun && imageUrl && existing.imageUrl !== imageUrl) {
+      const updateData: {
+        sourceDatabase?: string;
+        legacyKey?: string;
+        legacyId?: number;
+        legacyTable?: string;
+        imageUrl?: string;
+      } = {
+        sourceDatabase,
+        legacyKey: key,
+        legacyId: row.teacher_id,
+        legacyTable: "t_nurse",
+      };
+      if (imageUrl && existing.imageUrl !== imageUrl) {
+        updateData.imageUrl = imageUrl;
+      }
+      if (!dryRun) {
         await prisma.nurse.update({
           where: { id: existing.id },
-          data: { imageUrl },
+          data: updateData,
         });
       }
       setMapping("nurse", row.teacher_id, existing.id);
@@ -390,6 +475,10 @@ async function migrateNurses(prisma: PrismaClient, dryRun: boolean) {
       await prisma.nurse.create({
         data: {
           id: newId,
+          sourceDatabase,
+          legacyKey: key,
+          legacyId: row.teacher_id,
+          legacyTable: "t_nurse",
           firstName: row.f_name || "",
           lastName: row.l_name || "",
           mobile: cleanString(row.mobile),
@@ -413,14 +502,47 @@ async function migrateNurses(prisma: PrismaClient, dryRun: boolean) {
     "SELECT * FROM t_nurse_attachments WHERE active = 1"
   );
   let attCount = 0;
+  let attSkipped = 0;
   for (const row of attachments) {
-    const nurseId = getMapping("nurse", row.teacher_id);
-    if (!nurseId) continue;
+    const legacyId = toInt(row.tattid);
+    const legacyNurseId = toInt(row.teacher_id);
+    const nurseId = getMapping("nurse", legacyNurseId);
+    if (!nurseId || !legacyId) continue;
+
+    const key = legacyKey(sourceDatabase, "t_nurse_attachments", legacyId);
+    const existing = await prisma.nurseAttachment.findUnique({
+      where: { legacyKey: key },
+    });
+    if (existing) {
+      if (!dryRun) {
+        await prisma.nurseAttachment.update({
+          where: { id: existing.id },
+          data: {
+            sourceDatabase,
+            legacyKey: key,
+            legacyId,
+            legacyTable: "t_nurse_attachments",
+            legacyNurseId,
+            filename: row.att_title || row.url,
+            fileUrl: row.url,
+            type: cleanString(row.type),
+          },
+        });
+      }
+      attSkipped++;
+      continue;
+    }
+
     if (!dryRun) {
       await prisma.nurseAttachment.create({
         data: {
           id: generateUUID(),
           nurseId,
+          sourceDatabase,
+          legacyKey: key,
+          legacyId,
+          legacyTable: "t_nurse_attachments",
+          legacyNurseId,
           filename: row.att_title || row.url,
           fileUrl: row.url,
           type: cleanString(row.type),
@@ -429,7 +551,7 @@ async function migrateNurses(prisma: PrismaClient, dryRun: boolean) {
     }
     attCount++;
   }
-  log(`Nurse attachments: ${attCount} migrated`);
+  log(`Nurse attachments: ${attCount} migrated, ${attSkipped} skipped`);
 }
 
 // ---------------------------------------------------------------------------
@@ -533,6 +655,7 @@ interface OldManager {
 }
 
 async function migrateManagers(prisma: PrismaClient, dryRun: boolean) {
+  const sourceDatabase = getMysqlConfig().database || "unknown";
   const rows = await queryMysql<OldManager>(
     "SELECT * FROM t_manager WHERE deleted = 0 ORDER BY teacher_id"
   );
@@ -551,14 +674,35 @@ async function migrateManagers(prisma: PrismaClient, dryRun: boolean) {
     }
 
     const imageUrl = cleanLegacyFileName(row.image);
-    const existing = await prisma.manager.findFirst({
-      where: { firstName: row.f_name, lastName: row.l_name, branchId },
+    const key = legacyKey(sourceDatabase, "t_manager", row.teacher_id);
+    const existingByKey = await prisma.manager.findUnique({
+      where: { legacyKey: key },
     });
+    const existing =
+      existingByKey ??
+      (await prisma.manager.findFirst({
+        where: { firstName: row.f_name, lastName: row.l_name, branchId },
+      }));
     if (existing) {
-      if (!dryRun && imageUrl && existing.imageUrl !== imageUrl) {
+      const updateData: {
+        sourceDatabase?: string;
+        legacyKey?: string;
+        legacyId?: number;
+        legacyTable?: string;
+        imageUrl?: string;
+      } = {
+        sourceDatabase,
+        legacyKey: key,
+        legacyId: row.teacher_id,
+        legacyTable: "t_manager",
+      };
+      if (imageUrl && existing.imageUrl !== imageUrl) {
+        updateData.imageUrl = imageUrl;
+      }
+      if (!dryRun) {
         await prisma.manager.update({
           where: { id: existing.id },
-          data: { imageUrl },
+          data: updateData,
         });
       }
       setMapping("manager", row.teacher_id, existing.id);
@@ -571,6 +715,10 @@ async function migrateManagers(prisma: PrismaClient, dryRun: boolean) {
       await prisma.manager.create({
         data: {
           id: newId,
+          sourceDatabase,
+          legacyKey: key,
+          legacyId: row.teacher_id,
+          legacyTable: "t_manager",
           firstName: row.f_name || "",
           lastName: row.l_name || "",
           mobile: cleanString(row.mobile),

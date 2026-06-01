@@ -113,30 +113,7 @@ interface ApplyRowsParams {
   updateRow: (id: string) => Promise<void>;
 }
 
-const NO_PROVENANCE_REASONS: Record<string, string> = {
-  "branch-photo":
-    "Branch currently stores imageUrl only; sourceDatabase and legacy branch id are not persisted.",
-  "class-photo":
-    "Class currently stores imageUrl only; sourceDatabase and legacy class id are not persisted.",
-  "child-photo":
-    "Child currently stores photo only; sourceDatabase and legacy child id are not persisted.",
-  "child-draft-photo":
-    "Draft children currently store photo only; sourceDatabase and legacy child id are not persisted.",
-  "teacher-photo":
-    "Teacher currently stores imageUrl only; sourceDatabase and legacy teacher id are not persisted.",
-  "teacher-document":
-    "TeacherAttachment currently stores fileUrl only; sourceDatabase and legacy attachment id are not persisted.",
-  "nurse-photo":
-    "Nurse currently stores imageUrl only; sourceDatabase and legacy nurse id are not persisted.",
-  "nurse-document":
-    "NurseAttachment currently stores fileUrl only; sourceDatabase and legacy attachment id are not persisted.",
-  "manager-photo":
-    "Manager currently stores imageUrl only; sourceDatabase and legacy manager id are not persisted.",
-  "daily-attachment":
-    "DailyReportAttachment currently stores fileUrl only; sourceDatabase and legacy attachment id are not persisted.",
-  "absence-attachment":
-    "AbsenceAttachment currently stores fileUrl only; sourceDatabase and legacy attachment id are not persisted.",
-};
+const NO_PROVENANCE_REASONS: Record<string, string> = {};
 
 const UNSUPPORTED_DESTINATION_REASONS: Record<string, string> = {
   "child-history-photo":
@@ -287,6 +264,117 @@ async function applyRows(
   });
 }
 
+async function applyBranchPhoto(
+  context: ApplyContext
+): Promise<LegacyFileUrlApplyEntry> {
+  const legacyId = legacyIdNumber(context.entry);
+  if (!legacyId) {
+    return applyEntry({
+      entry: context.entry,
+      status: "error",
+      targetModel: "Branch",
+      targetField: "imageUrl",
+      reason: "Missing numeric legacyId.",
+    });
+  }
+
+  const rows = await context.prisma.branch.findMany({
+    where: {
+      sourceDatabase: context.entry.sourceDatabase,
+      legacyTable: context.entry.legacyTable,
+      legacyId,
+    },
+    select: { id: true, imageUrl: true },
+  });
+
+  return applyRows({
+    entry: context.entry,
+    publicUrl: context.publicUrl,
+    dryRun: context.dryRun,
+    targetModel: "Branch",
+    targetField: "imageUrl",
+    rows: rows.map((row) => ({ id: row.id, value: row.imageUrl })),
+    updateRow: (id) =>
+      context.prisma.branch
+        .update({ where: { id }, data: { imageUrl: context.publicUrl } })
+        .then(() => undefined),
+  });
+}
+
+async function applyClassPhoto(
+  context: ApplyContext
+): Promise<LegacyFileUrlApplyEntry> {
+  const legacyId = legacyIdNumber(context.entry);
+  if (!legacyId) {
+    return applyEntry({
+      entry: context.entry,
+      status: "error",
+      targetModel: "Class",
+      targetField: "imageUrl",
+      reason: "Missing numeric legacyId.",
+    });
+  }
+
+  const rows = await context.prisma.class.findMany({
+    where: {
+      sourceDatabase: context.entry.sourceDatabase,
+      legacyTable: context.entry.legacyTable,
+      legacyId,
+    },
+    select: { id: true, imageUrl: true },
+  });
+
+  return applyRows({
+    entry: context.entry,
+    publicUrl: context.publicUrl,
+    dryRun: context.dryRun,
+    targetModel: "Class",
+    targetField: "imageUrl",
+    rows: rows.map((row) => ({ id: row.id, value: row.imageUrl })),
+    updateRow: (id) =>
+      context.prisma.class
+        .update({ where: { id }, data: { imageUrl: context.publicUrl } })
+        .then(() => undefined),
+  });
+}
+
+async function applyChildPhoto(
+  context: ApplyContext
+): Promise<LegacyFileUrlApplyEntry> {
+  const legacyId = legacyIdNumber(context.entry);
+  if (!legacyId) {
+    return applyEntry({
+      entry: context.entry,
+      status: "error",
+      targetModel: "Child",
+      targetField: "photo",
+      reason: "Missing numeric legacyId.",
+    });
+  }
+
+  const rows = await context.prisma.child.findMany({
+    where: {
+      sourceDatabase: context.entry.sourceDatabase,
+      legacyTable: context.entry.legacyTable,
+      legacyId,
+    },
+    select: { id: true, photo: true },
+  });
+
+  return applyRows({
+    entry: context.entry,
+    publicUrl: context.publicUrl,
+    dryRun: context.dryRun,
+    targetModel: "Child",
+    targetField: "photo",
+    rows: rows.map((row) => ({ id: row.id, value: row.photo })),
+    updateRow: (id) =>
+      context.prisma.child
+        .update({ where: { id }, data: { photo: context.publicUrl } })
+        .then(() => undefined),
+  });
+}
+
 async function applyChildAttachment(
   context: ApplyContext
 ): Promise<LegacyFileUrlApplyEntry> {
@@ -432,6 +520,191 @@ async function applyDoctorAttachment(
   });
 }
 
+async function applyTeacherPhoto(
+  context: ApplyContext
+): Promise<LegacyFileUrlApplyEntry> {
+  const legacyId = legacyIdNumber(context.entry);
+  if (!legacyId) {
+    return applyEntry({
+      entry: context.entry,
+      status: "error",
+      targetModel: "Teacher",
+      targetField: "imageUrl",
+      reason: "Missing numeric legacyId.",
+    });
+  }
+
+  const rows = await context.prisma.teacher.findMany({
+    where: {
+      sourceDatabase: context.entry.sourceDatabase,
+      legacyTable: context.entry.legacyTable,
+      legacyId,
+    },
+    select: { id: true, imageUrl: true },
+  });
+
+  return applyRows({
+    entry: context.entry,
+    publicUrl: context.publicUrl,
+    dryRun: context.dryRun,
+    targetModel: "Teacher",
+    targetField: "imageUrl",
+    rows: rows.map((row) => ({ id: row.id, value: row.imageUrl })),
+    updateRow: (id) =>
+      context.prisma.teacher
+        .update({ where: { id }, data: { imageUrl: context.publicUrl } })
+        .then(() => undefined),
+  });
+}
+
+async function applyTeacherAttachment(
+  context: ApplyContext
+): Promise<LegacyFileUrlApplyEntry> {
+  const legacyId = legacyIdNumber(context.entry);
+  if (!legacyId) {
+    return applyEntry({
+      entry: context.entry,
+      status: "error",
+      targetModel: "TeacherAttachment",
+      targetField: "fileUrl",
+      reason: "Missing numeric legacyId.",
+    });
+  }
+
+  const rows = await context.prisma.teacherAttachment.findMany({
+    where: {
+      sourceDatabase: context.entry.sourceDatabase,
+      legacyTable: context.entry.legacyTable,
+      legacyId,
+    },
+    select: { id: true, fileUrl: true },
+  });
+
+  return applyRows({
+    entry: context.entry,
+    publicUrl: context.publicUrl,
+    dryRun: context.dryRun,
+    targetModel: "TeacherAttachment",
+    targetField: "fileUrl",
+    rows: rows.map((row) => ({ id: row.id, value: row.fileUrl })),
+    updateRow: (id) =>
+      context.prisma.teacherAttachment
+        .update({ where: { id }, data: { fileUrl: context.publicUrl } })
+        .then(() => undefined),
+  });
+}
+
+async function applyNursePhoto(
+  context: ApplyContext
+): Promise<LegacyFileUrlApplyEntry> {
+  const legacyId = legacyIdNumber(context.entry);
+  if (!legacyId) {
+    return applyEntry({
+      entry: context.entry,
+      status: "error",
+      targetModel: "Nurse",
+      targetField: "imageUrl",
+      reason: "Missing numeric legacyId.",
+    });
+  }
+
+  const rows = await context.prisma.nurse.findMany({
+    where: {
+      sourceDatabase: context.entry.sourceDatabase,
+      legacyTable: context.entry.legacyTable,
+      legacyId,
+    },
+    select: { id: true, imageUrl: true },
+  });
+
+  return applyRows({
+    entry: context.entry,
+    publicUrl: context.publicUrl,
+    dryRun: context.dryRun,
+    targetModel: "Nurse",
+    targetField: "imageUrl",
+    rows: rows.map((row) => ({ id: row.id, value: row.imageUrl })),
+    updateRow: (id) =>
+      context.prisma.nurse
+        .update({ where: { id }, data: { imageUrl: context.publicUrl } })
+        .then(() => undefined),
+  });
+}
+
+async function applyNurseAttachment(
+  context: ApplyContext
+): Promise<LegacyFileUrlApplyEntry> {
+  const legacyId = legacyIdNumber(context.entry);
+  if (!legacyId) {
+    return applyEntry({
+      entry: context.entry,
+      status: "error",
+      targetModel: "NurseAttachment",
+      targetField: "fileUrl",
+      reason: "Missing numeric legacyId.",
+    });
+  }
+
+  const rows = await context.prisma.nurseAttachment.findMany({
+    where: {
+      sourceDatabase: context.entry.sourceDatabase,
+      legacyTable: context.entry.legacyTable,
+      legacyId,
+    },
+    select: { id: true, fileUrl: true },
+  });
+
+  return applyRows({
+    entry: context.entry,
+    publicUrl: context.publicUrl,
+    dryRun: context.dryRun,
+    targetModel: "NurseAttachment",
+    targetField: "fileUrl",
+    rows: rows.map((row) => ({ id: row.id, value: row.fileUrl })),
+    updateRow: (id) =>
+      context.prisma.nurseAttachment
+        .update({ where: { id }, data: { fileUrl: context.publicUrl } })
+        .then(() => undefined),
+  });
+}
+
+async function applyManagerPhoto(
+  context: ApplyContext
+): Promise<LegacyFileUrlApplyEntry> {
+  const legacyId = legacyIdNumber(context.entry);
+  if (!legacyId) {
+    return applyEntry({
+      entry: context.entry,
+      status: "error",
+      targetModel: "Manager",
+      targetField: "imageUrl",
+      reason: "Missing numeric legacyId.",
+    });
+  }
+
+  const rows = await context.prisma.manager.findMany({
+    where: {
+      sourceDatabase: context.entry.sourceDatabase,
+      legacyTable: context.entry.legacyTable,
+      legacyId,
+    },
+    select: { id: true, imageUrl: true },
+  });
+
+  return applyRows({
+    entry: context.entry,
+    publicUrl: context.publicUrl,
+    dryRun: context.dryRun,
+    targetModel: "Manager",
+    targetField: "imageUrl",
+    rows: rows.map((row) => ({ id: row.id, value: row.imageUrl })),
+    updateRow: (id) =>
+      context.prisma.manager
+        .update({ where: { id }, data: { imageUrl: context.publicUrl } })
+        .then(() => undefined),
+  });
+}
+
 async function applyManagerAttachment(
   context: ApplyContext
 ): Promise<LegacyFileUrlApplyEntry> {
@@ -463,6 +736,80 @@ async function applyManagerAttachment(
     rows: rows.map((row) => ({ id: row.id, value: row.fileUrl })),
     updateRow: (id) =>
       context.prisma.managerAttachment
+        .update({ where: { id }, data: { fileUrl: context.publicUrl } })
+        .then(() => undefined),
+  });
+}
+
+async function applyDailyReportAttachment(
+  context: ApplyContext
+): Promise<LegacyFileUrlApplyEntry> {
+  const legacyId = legacyIdNumber(context.entry);
+  if (!legacyId) {
+    return applyEntry({
+      entry: context.entry,
+      status: "error",
+      targetModel: "DailyReportAttachment",
+      targetField: "fileUrl",
+      reason: "Missing numeric legacyId.",
+    });
+  }
+
+  const rows = await context.prisma.dailyReportAttachment.findMany({
+    where: {
+      sourceDatabase: context.entry.sourceDatabase,
+      legacyTable: context.entry.legacyTable,
+      legacyId,
+    },
+    select: { id: true, fileUrl: true },
+  });
+
+  return applyRows({
+    entry: context.entry,
+    publicUrl: context.publicUrl,
+    dryRun: context.dryRun,
+    targetModel: "DailyReportAttachment",
+    targetField: "fileUrl",
+    rows: rows.map((row) => ({ id: row.id, value: row.fileUrl })),
+    updateRow: (id) =>
+      context.prisma.dailyReportAttachment
+        .update({ where: { id }, data: { fileUrl: context.publicUrl } })
+        .then(() => undefined),
+  });
+}
+
+async function applyAbsenceAttachment(
+  context: ApplyContext
+): Promise<LegacyFileUrlApplyEntry> {
+  const legacyId = legacyIdNumber(context.entry);
+  if (!legacyId) {
+    return applyEntry({
+      entry: context.entry,
+      status: "error",
+      targetModel: "AbsenceAttachment",
+      targetField: "fileUrl",
+      reason: "Missing numeric legacyId.",
+    });
+  }
+
+  const rows = await context.prisma.absenceAttachment.findMany({
+    where: {
+      sourceDatabase: context.entry.sourceDatabase,
+      legacyTable: context.entry.legacyTable,
+      legacyId,
+    },
+    select: { id: true, fileUrl: true },
+  });
+
+  return applyRows({
+    entry: context.entry,
+    publicUrl: context.publicUrl,
+    dryRun: context.dryRun,
+    targetModel: "AbsenceAttachment",
+    targetField: "fileUrl",
+    rows: rows.map((row) => ({ id: row.id, value: row.fileUrl })),
+    updateRow: (id) =>
+      context.prisma.absenceAttachment
         .update({ where: { id }, data: { fileUrl: context.publicUrl } })
         .then(() => undefined),
   });
@@ -544,12 +891,23 @@ const APPLY_BY_RULE: Record<
   string,
   (context: ApplyContext) => Promise<LegacyFileUrlApplyEntry>
 > = {
+  "branch-photo": applyBranchPhoto,
+  "class-photo": applyClassPhoto,
+  "child-photo": applyChildPhoto,
+  "child-draft-photo": applyChildPhoto,
   "child-document": applyChildAttachment,
   "garderie-document": applyBranchDocument,
+  "teacher-photo": applyTeacherPhoto,
+  "teacher-document": applyTeacherAttachment,
+  "nurse-photo": applyNursePhoto,
+  "nurse-document": applyNurseAttachment,
   "doctor-photo": applyDoctorPhoto,
   "doctor-document": applyDoctorAttachment,
+  "manager-photo": applyManagerPhoto,
   "manager-document": applyManagerAttachment,
   "payment-receipt": applyPaymentReceipt,
+  "daily-attachment": applyDailyReportAttachment,
+  "absence-attachment": applyAbsenceAttachment,
   "form-attachment": applyFormAttachment,
 };
 

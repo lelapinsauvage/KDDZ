@@ -49,7 +49,7 @@
 
 import type { PrismaClient } from "@/generated/prisma/client";
 import { createPrismaClient } from "./lib/prisma-client";
-import { queryMysql, closeMysqlPool } from "./lib/mysql-client";
+import { queryMysql, closeMysqlPool, getMysqlConfig } from "./lib/mysql-client";
 import {
   generateUUID,
   setMapping,
@@ -69,6 +69,7 @@ import {
 
 interface OldChild {
   cid: number;
+  d_cid?: number;
   joining_date: string;
   child_num: string;
   cname: string;
@@ -156,9 +157,14 @@ interface OldChildHistory {
   [key: string]: unknown;
 }
 
+function legacyKey(sourceDatabase: string, table: string, legacyId: number) {
+  return `${sourceDatabase}:${table}:${legacyId}`;
+}
+
 export async function migrateChildren(prisma: PrismaClient) {
   log("=== Migrating Children ===");
   const dryRun = isDryRun();
+  const sourceDatabase = getMysqlConfig().database || "unknown";
 
   // --- Migrate t_child ---
   const oldChildren = await queryMysql<OldChild>(
@@ -184,17 +190,35 @@ export async function migrateChildren(prisma: PrismaClient) {
     // Idempotency check by first+last name + branch + dob
     const dob = parseDate(row.dob);
     const photo = cleanLegacyFileName(row.image);
-    const existing = await prisma.child.findFirst({
-      where: {
-        firstName: row.cname,
-        lastName: row.clname,
-        branchId,
-        dateOfBirth: dob,
-      },
+    const key = legacyKey(sourceDatabase, "t_child", row.cid);
+    const existingByKey = await prisma.child.findUnique({
+      where: { legacyKey: key },
     });
+    const existing =
+      existingByKey ??
+      (await prisma.child.findFirst({
+        where: {
+          firstName: row.cname,
+          lastName: row.clname,
+          branchId,
+          dateOfBirth: dob,
+        },
+      }));
 
     if (existing) {
-      const updateData: { schoolYearId?: string; photo?: string } = {};
+      const updateData: {
+        sourceDatabase?: string;
+        legacyKey?: string;
+        legacyId?: number;
+        legacyTable?: string;
+        schoolYearId?: string;
+        photo?: string;
+      } = {
+        sourceDatabase,
+        legacyKey: key,
+        legacyId: row.cid,
+        legacyTable: "t_child",
+      };
       if (schoolYearId && existing.schoolYearId !== schoolYearId) {
         updateData.schoolYearId = schoolYearId;
       }
@@ -218,6 +242,10 @@ export async function migrateChildren(prisma: PrismaClient) {
       await prisma.child.create({
         data: {
           id: newId,
+          sourceDatabase,
+          legacyKey: key,
+          legacyId: row.cid,
+          legacyTable: "t_child",
           firstName: row.cname || "",
           middleName: cleanString(row.cmname),
           lastName: row.clname || "",
@@ -270,20 +298,50 @@ export async function migrateChildren(prisma: PrismaClient) {
   log(`Found ${oldDrafts.length} draft children in t_child_draft`);
 
   let draftMigrated = 0;
+  let draftSkipped = 0;
   for (const row of oldDrafts) {
-    // Use d_cid as the old ID — prefix with "d" to avoid collision
-    const draftKey = `d${(row as unknown as Record<string, unknown>).d_cid}`;
+    const draftLegacyId = toInt(row.d_cid, 0);
+    if (!draftLegacyId) continue;
+    const draftMappingKey = `d${draftLegacyId}`;
+    const key = legacyKey(sourceDatabase, "t_child_draft", draftLegacyId);
     const branchId = getMapping("branch", row.branch_id);
     if (!branchId) continue;
 
     const classId = getMapping("class", row.class_id);
     const schoolYearId = getMapping("school_year", row.sel_year);
+    const existing = await prisma.child.findUnique({
+      where: { legacyKey: key },
+    });
+
+    if (existing) {
+      if (!dryRun) {
+        await prisma.child.update({
+          where: { id: existing.id },
+          data: {
+            sourceDatabase,
+            legacyKey: key,
+            legacyId: draftLegacyId,
+            legacyTable: "t_child_draft",
+            photo: cleanLegacyFileName(row.image),
+            schoolYearId,
+          },
+        });
+      }
+      setMapping("child_draft", draftMappingKey, existing.id);
+      draftSkipped++;
+      continue;
+    }
+
     const newId = generateUUID();
 
     if (!dryRun) {
       await prisma.child.create({
         data: {
           id: newId,
+          sourceDatabase,
+          legacyKey: key,
+          legacyId: draftLegacyId,
+          legacyTable: "t_child_draft",
           firstName: row.cname || "",
           middleName: cleanString(row.cmname),
           lastName: row.clname || "",
@@ -306,11 +364,11 @@ export async function migrateChildren(prisma: PrismaClient) {
       });
     }
 
-    setMapping("child_draft", draftKey, newId);
+    setMapping("child_draft", draftMappingKey, newId);
     draftMigrated++;
   }
 
-  log(`Children (drafts): ${draftMigrated} migrated`);
+  log(`Children (drafts): ${draftMigrated} migrated, ${draftSkipped} skipped`);
 
   // --- Migrate t_child_h → ChildHistory ---
   await migrateChildHistory(prisma, dryRun);

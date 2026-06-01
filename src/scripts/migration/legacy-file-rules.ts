@@ -62,7 +62,7 @@ export const LEGACY_FILE_RULES: LegacyFileRule[] = [
   {
     id: "child-draft-photo",
     legacyTable: "t_child_draft",
-    legacyIdColumn: "cid",
+    legacyIdColumn: "d_cid",
     legacyFileColumn: "image",
     legacyDirectory: "EmpPhoto",
     modernDestination: "Child.photo for draft child imports",

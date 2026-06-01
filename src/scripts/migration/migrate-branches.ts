@@ -17,7 +17,7 @@
 
 import type { PrismaClient } from "@/generated/prisma/client";
 import { createPrismaClient } from "./lib/prisma-client";
-import { queryMysql, closeMysqlPool } from "./lib/mysql-client";
+import { queryMysql, closeMysqlPool, getMysqlConfig } from "./lib/mysql-client";
 import {
   generateUUID,
   setMapping,
@@ -41,12 +41,17 @@ interface OldBranch {
   image: string;
 }
 
+function legacyKey(sourceDatabase: string, table: string, legacyId: number) {
+  return `${sourceDatabase}:${table}:${legacyId}`;
+}
+
 export async function migrateBranches(
   prisma: PrismaClient,
   organizationId: string
 ) {
   log("=== Migrating Branches ===");
   const dryRun = isDryRun();
+  const sourceDatabase = getMysqlConfig().database || "unknown";
 
   const oldRows = await queryMysql<OldBranch>(
     "SELECT * FROM t_branch ORDER BY brid"
@@ -58,16 +63,42 @@ export async function migrateBranches(
 
   for (const row of oldRows) {
     const imageUrl = cleanLegacyFileName(row.image);
-    // Idempotency: check if already migrated by looking for name match
-    const existing = await prisma.branch.findFirst({
-      where: { organizationId, name: row.brname },
+    const key = legacyKey(sourceDatabase, "t_branch", row.brid);
+    const existingByKey = await prisma.branch.findUnique({
+      where: { legacyKey: key },
     });
+    // Idempotency fallback for rows migrated before provenance fields existed.
+    const existing =
+      existingByKey ??
+      (await prisma.branch.findFirst({
+        where: { organizationId, name: row.brname },
+      }));
 
     if (existing) {
+      const updateData: {
+        sourceDatabase?: string;
+        legacyKey?: string;
+        legacyId?: number;
+        legacyTable?: string;
+        imageUrl?: string;
+      } = {
+        sourceDatabase,
+        legacyKey: key,
+        legacyId: row.brid,
+        legacyTable: "t_branch",
+      };
+      if (imageUrl && existing.imageUrl !== imageUrl) {
+        updateData.imageUrl = imageUrl;
+      }
       if (!dryRun && imageUrl && existing.imageUrl !== imageUrl) {
         await prisma.branch.update({
           where: { id: existing.id },
-          data: { imageUrl },
+          data: updateData,
+        });
+      } else if (!dryRun) {
+        await prisma.branch.update({
+          where: { id: existing.id },
+          data: updateData,
         });
       }
       setMapping("branch", row.brid, existing.id);
@@ -81,6 +112,10 @@ export async function migrateBranches(
       await prisma.branch.create({
         data: {
           id: newId,
+          sourceDatabase,
+          legacyKey: key,
+          legacyId: row.brid,
+          legacyTable: "t_branch",
           organizationId,
           name: row.brname,
           address: row.brlocation || null,

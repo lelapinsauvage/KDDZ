@@ -50,7 +50,7 @@
 
 import type { PrismaClient } from "@/generated/prisma/client";
 import { createPrismaClient } from "./lib/prisma-client";
-import { queryMysql, closeMysqlPool } from "./lib/mysql-client";
+import { queryMysql, closeMysqlPool, getMysqlConfig } from "./lib/mysql-client";
 import {
   generateUUID,
   setMapping,
@@ -125,9 +125,14 @@ interface OldDailyAttachment {
   active: number;
 }
 
+function legacyKey(sourceDatabase: string, table: string, legacyId: number) {
+  return `${sourceDatabase}:${table}:${legacyId}`;
+}
+
 export async function migrateDailyReports(prisma: PrismaClient) {
   log("=== Migrating Daily Reports ===");
   const dryRun = isDryRun();
+  const sourceDatabase = getMysqlConfig().database || "unknown";
 
   const oldRows = await queryMysql<OldDailyReport>(
     "SELECT * FROM t_daily_report WHERE active = 1 ORDER BY report_id"
@@ -259,15 +264,46 @@ export async function migrateDailyReports(prisma: PrismaClient) {
     "SELECT * FROM t_daily_attachments WHERE active = 1"
   );
   let attCount = 0;
+  let attSkipped = 0;
   for (const a of attachments) {
-    const dailyReportId = getMapping("daily_report", a.formid);
-    if (!dailyReportId) continue;
+    const legacyId = toInt(a.rattid);
+    const legacyDailyReportId = toInt(a.formid);
+    const dailyReportId = getMapping("daily_report", legacyDailyReportId);
+    if (!dailyReportId || !legacyId) continue;
+
+    const key = legacyKey(sourceDatabase, "t_daily_attachments", legacyId);
+    const existing = await prisma.dailyReportAttachment.findUnique({
+      where: { legacyKey: key },
+    });
+    if (existing) {
+      if (!dryRun) {
+        await prisma.dailyReportAttachment.update({
+          where: { id: existing.id },
+          data: {
+            sourceDatabase,
+            legacyKey: key,
+            legacyId,
+            legacyTable: "t_daily_attachments",
+            legacyDailyReportId,
+            filename: a.att_title || a.url,
+            fileUrl: a.url,
+          },
+        });
+      }
+      attSkipped++;
+      continue;
+    }
 
     if (!dryRun) {
       await prisma.dailyReportAttachment.create({
         data: {
           id: generateUUID(),
           dailyReportId,
+          sourceDatabase,
+          legacyKey: key,
+          legacyId,
+          legacyTable: "t_daily_attachments",
+          legacyDailyReportId,
           filename: a.att_title || a.url,
           fileUrl: a.url,
         },
@@ -275,7 +311,7 @@ export async function migrateDailyReports(prisma: PrismaClient) {
     }
     attCount++;
   }
-  log(`Daily Report Attachments: ${attCount} migrated`);
+  log(`Daily Report Attachments: ${attCount} migrated, ${attSkipped} skipped`);
 
   log(
     `=== Daily Reports migration complete ===${dryRun ? " [DRY RUN]" : ""}`

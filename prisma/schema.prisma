@@ -248,20 +248,24 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  branches    Branch[]
-  users       User[]
-  schoolYears SchoolYear[]
-  foods       Food[]
+  branches                Branch[]
+  users                   User[]
+  schoolYears             SchoolYear[]
+  foods                   Food[]
   assessmentScheduleRules AssessmentScheduleRule[]
-  eventTypes             EventType[]
-  notificationTemplates  NotificationTemplate[]
+  eventTypes              EventType[]
+  notificationTemplates   NotificationTemplate[]
 
   @@map("organizations")
 }
 
 model Branch {
-  id             String       @id @default(uuid()) @db.Uuid
-  organizationId String       @db.Uuid
+  id             String   @id @default(uuid()) @db.Uuid
+  sourceDatabase String?
+  legacyKey      String?  @unique
+  legacyId       Int?
+  legacyTable    String?
+  organizationId String   @db.Uuid
   name           String
   prefix         String?
   address        String?
@@ -269,30 +273,33 @@ model Branch {
   telephone      String?
   email          String?
   imageUrl       String?
-  themeColor     String?      @default("#1caf9a")
-  isActive       Boolean      @default(true)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  themeColor     String?  @default("#1caf9a")
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  users            User[]
-  classes          Class[]
-  settings         Settings[]
-  teachers         Teacher[]
-  nurses           Nurse[]
-  doctors          Doctor[]
-  managers         Manager[]
-  children         Child[]
-  foodCalendars    FoodCalendar[]
-  events           Event[]
-  holidays         Holiday[]
-  alarms           Alarm[]
-  assessmentDates  AssessmentDate[]
-  compliance       BranchCompliance?
-  documents        BranchDocument[]
+  users           User[]
+  classes         Class[]
+  settings        Settings[]
+  teachers        Teacher[]
+  nurses          Nurse[]
+  doctors         Doctor[]
+  managers        Manager[]
+  children        Child[]
+  foodCalendars   FoodCalendar[]
+  events          Event[]
+  holidays        Holiday[]
+  alarms          Alarm[]
+  assessmentDates AssessmentDate[]
+  compliance      BranchCompliance?
+  documents       BranchDocument[]
 
   @@index([organizationId])
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyTable])
   @@map("branches")
 }
 
@@ -307,27 +314,27 @@ model BranchCompliance {
   legacyUserId   Int?
 
   // Section A: Legal Entity Type
-  entityType        String?
-  legalName         String?
-  organizationType  String?
-  companySubType    String?
-  purpose           String? @db.Text
+  entityType       String?
+  legalName        String?
+  organizationType String?
+  companySubType   String?
+  purpose          String? @db.Text
 
   // Section B: Owner Information (معلومات عن صاحب العلاقة)
-  ownerFirstName      String?
-  ownerFatherName     String?
-  ownerFamilyName     String?
-  ownerMotherName     String?
+  ownerFirstName        String?
+  ownerFatherName       String?
+  ownerFamilyName       String?
+  ownerMotherName       String?
   ownerMotherMaidenName String?
-  ownerDob            DateTime? @db.Date
-  ownerPlaceOfBirth   String?
-  ownerNationality    String?
-  ownerRegistryNumber String?
+  ownerDob              DateTime? @db.Date
+  ownerPlaceOfBirth     String?
+  ownerNationality      String?
+  ownerRegistryNumber   String?
 
   // Legacy signatory fields (kept for backward compat)
-  registrationNumber String?
-  registrationPlace  String?
-  registrationDate   DateTime? @db.Date
+  registrationNumber   String?
+  registrationPlace    String?
+  registrationDate     DateTime? @db.Date
   signatoryName        String?
   signatoryRole        String?
   signatoryNationality String?
@@ -338,7 +345,7 @@ model BranchCompliance {
   nameLatin  String?
 
   // Section D: Nursery Address (عنوان الحضانة)
-  country        String?  @default("Lebanon")
+  country        String? @default("Lebanon")
   governorate    String?
   district       String?
   town           String?
@@ -360,32 +367,32 @@ model BranchCompliance {
   addrWebsite String?
 
   // Property / Lease (legacy)
-  ownerName          String?
-  propertyGovernorate String?
-  propertyDistrict   String?
-  propertyRegion     String?
-  ownershipType      String?
-  specialFor         String?
-  specialNumber      String?
-  specialDate        DateTime? @db.Date
+  ownerName              String?
+  propertyGovernorate    String?
+  propertyDistrict       String?
+  propertyRegion         String?
+  ownershipType          String?
+  specialFor             String?
+  specialNumber          String?
+  specialDate            DateTime? @db.Date
   applicationOwnerName   String?
   applicationNumber      String?
   applicationRegion      String?
   applicationGovernorate String?
   applicationDistrict    String?
-  leaseOwnerName     String?
-  leaseDate          DateTime? @db.Date
-  leaseVerified      String?
+  leaseOwnerName         String?
+  leaseDate              DateTime? @db.Date
+  leaseVerified          String?
 
   // Management (legacy)
-  directorFirstName  String?
-  directorLastName   String?
-  directorSpecialty  String?
-  doctorFirstName    String?
-  doctorFatherName   String?
-  doctorLastName     String?
-  doctorSyndicateNo  String?
-  doctorSpecialty    String?
+  directorFirstName String?
+  directorLastName  String?
+  directorSpecialty String?
+  doctorFirstName   String?
+  doctorFatherName  String?
+  doctorLastName    String?
+  doctorSyndicateNo String?
+  doctorSpecialty   String?
 
   // Capacity (legacy)
   totalChildren Int?
@@ -398,7 +405,7 @@ model BranchCompliance {
   insuranceContractType String?
 
   // Progress
-  completionPercentage Int @default(0)
+  completionPercentage Int     @default(0)
   legacyLatitude       String? @db.Text
   legacyLongitude      String? @db.Text
   legacyData           Json?
@@ -416,24 +423,24 @@ model BranchCompliance {
 }
 
 model BranchDocument {
-  id           String         @id @default(uuid()) @db.Uuid
-  branchId     String         @db.Uuid
+  id             String         @id @default(uuid()) @db.Uuid
+  branchId       String         @db.Uuid
   sourceDatabase String?
-  legacyKey      String?      @unique
+  legacyKey      String?        @unique
   legacyId       Int?
   legacyBranchId Int?
-  documentType DocumentType
-  label        String?
-  filename     String?
-  fileUrl      String?
-  issueDate    DateTime?      @db.Date
-  expiryDate   DateTime?      @db.Date
-  status       DocumentStatus @default(PENDING)
-  isActive     Boolean        @default(true)
-  notes        String?        @db.Text
-  legacyData   Json?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  documentType   DocumentType
+  label          String?
+  filename       String?
+  fileUrl        String?
+  issueDate      DateTime?      @db.Date
+  expiryDate     DateTime?      @db.Date
+  status         DocumentStatus @default(PENDING)
+  isActive       Boolean        @default(true)
+  notes          String?        @db.Text
+  legacyData     Json?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 
   branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
@@ -448,22 +455,22 @@ model BranchDocument {
 }
 
 model SchoolYear {
-  id             String   @id @default(uuid()) @db.Uuid
+  id             String    @id @default(uuid()) @db.Uuid
   sourceDatabase String?
-  legacyKey      String?  @unique
+  legacyKey      String?   @unique
   legacyId       Int?
   legacySid      Int?
   legacyDate     DateTime? @db.Date
   label          String
-  startDate      DateTime @db.Date
-  endDate        DateTime @db.Date
-  isActive       Boolean  @default(false)
-  organizationId String?  @db.Uuid
+  startDate      DateTime  @db.Date
+  endDate        DateTime  @db.Date
+  isActive       Boolean   @default(false)
+  organizationId String?   @db.Uuid
   legacyData     Json?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  organization      Organization?    @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  organization      Organization?     @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   children          Child[]
   assessments       Assessment[]
   accountingEntries AccountingEntry[]
@@ -476,29 +483,36 @@ model SchoolYear {
 }
 
 model Class {
-  id           String   @id @default(uuid()) @db.Uuid
-  branchId     String   @db.Uuid
-  name         String
-  language     String?
-  ageFrom      Int?
-  ageTo        Int?
-  ageFromUnit  AgeUnit?
-  ageToUnit    AgeUnit?
-  cameraNumber Int?
-  maxStudents  Int      @default(0)
-  imageUrl     String?
-  capacity     Int      @default(0)
-  ageGroup     String?
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id             String   @id @default(uuid()) @db.Uuid
+  sourceDatabase String?
+  legacyKey      String?  @unique
+  legacyId       Int?
+  legacyTable    String?
+  branchId       String   @db.Uuid
+  name           String
+  language       String?
+  ageFrom        Int?
+  ageTo          Int?
+  ageFromUnit    AgeUnit?
+  ageToUnit      AgeUnit?
+  cameraNumber   Int?
+  maxStudents    Int      @default(0)
+  imageUrl       String?
+  capacity       Int      @default(0)
+  ageGroup       String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  branch   Branch    @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  children Child[]
-  teachers Teacher[]
+  branch           Branch            @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  children         Child[]
+  teachers         Teacher[]
   foodApplications FoodApplication[]
 
   @@index([branchId])
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyTable])
   @@map("classes")
 }
 
@@ -522,34 +536,34 @@ model Settings {
 // ─────────────────────────────────────────────
 
 model User {
-  id            String    @id @default(uuid()) @db.Uuid
-  email         String    @unique
-  emailVerified DateTime?
-  passwordHash  String?
-  name          String?
-  image         String?
-  role          UserRole  @default(TEACHER)
-  isActive      Boolean   @default(true)
-  branchId      String?   @db.Uuid
-  organizationId String?  @db.Uuid
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id             String    @id @default(uuid()) @db.Uuid
+  email          String    @unique
+  emailVerified  DateTime?
+  passwordHash   String?
+  name           String?
+  image          String?
+  role           UserRole  @default(TEACHER)
+  isActive       Boolean   @default(true)
+  branchId       String?   @db.Uuid
+  organizationId String?   @db.Uuid
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   branch       Branch?       @relation(fields: [branchId], references: [id], onDelete: SetNull)
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
 
-  accounts      Account[]
-  sessions      Session[]
-  dailyReports  DailyReport[]   @relation("DailyReportCreator")
-  absenceReports AbsenceReport[] @relation("AbsenceReportCreator")
-  assessments   Assessment[]    @relation("AssessmentCreator")
-  payments      Payment[]       @relation("PaymentCreator")
-  callLogs      CallLog[]       @relation("CallLogCreator")
-  medicalForms  MedicalForm[]   @relation("MedicalFormCreator")
-  notifications          Notification[]
-  notificationTemplates  NotificationTemplate[] @relation("TemplateCreator")
-  pushTokens             PushToken[]            @relation("UserPushTokens")
-  foodApplications       FoodApplication[]      @relation("FoodApplicationCreator")
+  accounts              Account[]
+  sessions              Session[]
+  dailyReports          DailyReport[]          @relation("DailyReportCreator")
+  absenceReports        AbsenceReport[]        @relation("AbsenceReportCreator")
+  assessments           Assessment[]           @relation("AssessmentCreator")
+  payments              Payment[]              @relation("PaymentCreator")
+  callLogs              CallLog[]              @relation("CallLogCreator")
+  medicalForms          MedicalForm[]          @relation("MedicalFormCreator")
+  notifications         Notification[]
+  notificationTemplates NotificationTemplate[] @relation("TemplateCreator")
+  pushTokens            PushToken[]            @relation("UserPushTokens")
+  foodApplications      FoodApplication[]      @relation("FoodApplicationCreator")
 
   @@index([branchId])
   @@index([organizationId])
@@ -559,17 +573,17 @@ model User {
 }
 
 model Account {
-  id                String  @id @default(uuid()) @db.Uuid
-  userId            String  @db.Uuid
+  id                String   @id @default(uuid()) @db.Uuid
+  userId            String   @db.Uuid
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?  @db.Text
+  access_token      String?  @db.Text
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?  @db.Text
   session_state     String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -628,43 +642,47 @@ model ParentUser {
 // ─────────────────────────────────────────────
 
 model Child {
-  id             String    @id @default(uuid()) @db.Uuid
-  firstName      String
-  firstNameAr    String?
-  middleName     String?
-  lastName       String
-  lastNameAr     String?
-  dateOfBirth    DateTime? @db.Date
-  placeOfBirth   String?
-  gender         Gender?
-  nationality    String?
-  religion       String?
-  idNumber       String?
-  bloodType      String?
-  allergies      String?   @db.Text
-  photo          String?
-  branchId       String    @db.Uuid
-  classId        String?   @db.Uuid
-  schoolYearId   String?   @db.Uuid
-  isActive       Boolean   @default(true)
-  isDraft        Boolean   @default(false)
-  enrollmentDate DateTime? @db.Date
-  busAttendance  String?   @default("false")
-  diaperType     String?
-  milkType       String?
-  milkPortions   Int?
-  milkScoop      Int?
-  milkTime1      DateTime? @db.Time(6)
-  milkTime2      DateTime? @db.Time(6)
-  milkTime3      DateTime? @db.Time(6)
-  lunchIncluded  Boolean   @default(true)
-  sleepFrom      DateTime? @db.Time(6)
-  sleepTo        DateTime? @db.Time(6)
-  remarks        String?   @db.Text
-  language       String?
-  previousGarderie     Boolean @default(false)
+  id                   String    @id @default(uuid()) @db.Uuid
+  sourceDatabase       String?
+  legacyKey            String?   @unique
+  legacyId             Int?
+  legacyTable          String?
+  firstName            String
+  firstNameAr          String?
+  middleName           String?
+  lastName             String
+  lastNameAr           String?
+  dateOfBirth          DateTime? @db.Date
+  placeOfBirth         String?
+  gender               Gender?
+  nationality          String?
+  religion             String?
+  idNumber             String?
+  bloodType            String?
+  allergies            String?   @db.Text
+  photo                String?
+  branchId             String    @db.Uuid
+  classId              String?   @db.Uuid
+  schoolYearId         String?   @db.Uuid
+  isActive             Boolean   @default(true)
+  isDraft              Boolean   @default(false)
+  enrollmentDate       DateTime? @db.Date
+  busAttendance        String?   @default("false")
+  diaperType           String?
+  milkType             String?
+  milkPortions         Int?
+  milkScoop            Int?
+  milkTime1            DateTime? @db.Time(6)
+  milkTime2            DateTime? @db.Time(6)
+  milkTime3            DateTime? @db.Time(6)
+  lunchIncluded        Boolean   @default(true)
+  sleepFrom            DateTime? @db.Time(6)
+  sleepTo              DateTime? @db.Time(6)
+  remarks              String?   @db.Text
+  language             String?
+  previousGarderie     Boolean   @default(false)
   previousGarderieName String?
-  childNumber    String?
+  childNumber          String?
 
   // Financial
   garderieFees     Decimal? @db.Decimal(10, 2)
@@ -677,36 +695,39 @@ model Child {
   tva              Decimal? @db.Decimal(5, 2)
   financialRemarks String?  @db.Text
 
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   branch     Branch      @relation(fields: [branchId], references: [id], onDelete: Cascade)
   class      Class?      @relation(fields: [classId], references: [id], onDelete: SetNull)
   schoolYear SchoolYear? @relation(fields: [schoolYearId], references: [id], onDelete: SetNull)
 
-  addresses        ChildAddress[]
-  parents          Parent[]
-  relatives        Relative[]
-  siblings         ChildSibling[]
-  attachments      ChildAttachment[]
-  history          ChildHistory[]
+  addresses         ChildAddress[]
+  parents           Parent[]
+  relatives         Relative[]
+  siblings          ChildSibling[]
+  attachments       ChildAttachment[]
+  history           ChildHistory[]
   previousGarderies ChildPreviousGarderie[]
-  parentUsers      ParentUser[]
-  dailyReports     DailyReport[]
-  absenceReports   AbsenceReport[]
-  medicalForms     MedicalForm[]
-  vaccinations     Vaccination[]
-  assessments      Assessment[]
-  payments         Payment[]
-  paymentReminders PaymentReminder[]
+  parentUsers       ParentUser[]
+  dailyReports      DailyReport[]
+  absenceReports    AbsenceReport[]
+  medicalForms      MedicalForm[]
+  vaccinations      Vaccination[]
+  assessments       Assessment[]
+  payments          Payment[]
+  paymentReminders  PaymentReminder[]
   accountingEntries AccountingEntry[]
-  callLogs         CallLog[]
-  foodApplications FoodApplication[]
-  formAttachments  FormAttachment[]
+  callLogs          CallLog[]
+  foodApplications  FoodApplication[]
+  formAttachments   FormAttachment[]
 
   @@index([branchId])
   @@index([classId])
   @@index([schoolYearId])
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyTable])
   @@index([isActive])
   @@index([lastName, firstName])
   @@map("children")
@@ -825,12 +846,12 @@ model ChildAttachment {
 }
 
 model ChildHistory {
-  id        String   @id @default(uuid()) @db.Uuid
-  childId   String   @db.Uuid
-  snapshot  Json
-  changedBy String?
+  id         String   @id @default(uuid()) @db.Uuid
+  childId    String   @db.Uuid
+  snapshot   Json
+  changedBy  String?
   changeNote String?
-  createdAt DateTime @default(now())
+  createdAt  DateTime @default(now())
 
   child Child @relation(fields: [childId], references: [id], onDelete: Cascade)
 
@@ -868,40 +889,44 @@ model ChildPreviousGarderie {
 // ─────────────────────────────────────────────
 
 model Teacher {
-  id                    String         @id @default(uuid()) @db.Uuid
-  userId                String?        @db.Uuid
-  username              String?
-  firstName             String
-  middleName            String?
-  lastName              String
-  dateOfBirth           DateTime?      @db.Date
-  placeOfBirth          String?
-  registerNumber        String?
-  nationality           String?
-  maritalStatus         MaritalStatus?
-  numberOfChildren      Int?
-  gender                Gender?
-  medicalCase           Boolean?       @default(false)
-  medicalCaseDescription String?       @db.Text
-  phone                 String?
-  telephone             String?
-  mobile                String?
-  email                 String?
-  cnss                  String?
-  cnssNo                String?
-  secondaryDegree       String?
-  secondaryDegreeYear   String?
-  universityDegree      String?
-  universityDegreeYear  String?
-  remarks               String?        @db.Text
-  imageUrl              String?
-  hireDate              DateTime?      @db.Date
-  branchId              String         @db.Uuid
-  classId               String?        @db.Uuid
-  specialization        String?
-  isActive              Boolean        @default(true)
-  createdAt             DateTime       @default(now())
-  updatedAt             DateTime       @updatedAt
+  id                     String         @id @default(uuid()) @db.Uuid
+  sourceDatabase         String?
+  legacyKey              String?        @unique
+  legacyId               Int?
+  legacyTable            String?
+  userId                 String?        @db.Uuid
+  username               String?
+  firstName              String
+  middleName             String?
+  lastName               String
+  dateOfBirth            DateTime?      @db.Date
+  placeOfBirth           String?
+  registerNumber         String?
+  nationality            String?
+  maritalStatus          MaritalStatus?
+  numberOfChildren       Int?
+  gender                 Gender?
+  medicalCase            Boolean?       @default(false)
+  medicalCaseDescription String?        @db.Text
+  phone                  String?
+  telephone              String?
+  mobile                 String?
+  email                  String?
+  cnss                   String?
+  cnssNo                 String?
+  secondaryDegree        String?
+  secondaryDegreeYear    String?
+  universityDegree       String?
+  universityDegreeYear   String?
+  remarks                String?        @db.Text
+  imageUrl               String?
+  hireDate               DateTime?      @db.Date
+  branchId               String         @db.Uuid
+  classId                String?        @db.Uuid
+  specialization         String?
+  isActive               Boolean        @default(true)
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
 
   branch      Branch              @relation(fields: [branchId], references: [id], onDelete: Cascade)
   class       Class?              @relation(fields: [classId], references: [id], onDelete: SetNull)
@@ -912,6 +937,9 @@ model Teacher {
   documents   TeacherDocument[]
 
   @@index([branchId])
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyTable])
   @@index([userId])
   @@index([classId])
   @@index([isActive])
@@ -937,17 +965,26 @@ model TeacherAddress {
 }
 
 model TeacherAttachment {
-  id        String   @id @default(uuid()) @db.Uuid
-  teacherId String   @db.Uuid
-  filename  String
-  fileUrl   String
-  type      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(uuid()) @db.Uuid
+  teacherId       String   @db.Uuid
+  sourceDatabase  String?
+  legacyKey       String?  @unique
+  legacyId        Int?
+  legacyTable     String?
+  legacyTeacherId Int?
+  filename        String
+  fileUrl         String
+  type            String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 
   @@index([teacherId])
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyTable])
+  @@index([legacyTeacherId])
   @@map("teacher_attachments")
 }
 
@@ -1017,6 +1054,10 @@ model TeacherDocument {
 
 model Nurse {
   id                     String         @id @default(uuid()) @db.Uuid
+  sourceDatabase         String?
+  legacyKey              String?        @unique
+  legacyId               Int?
+  legacyTable            String?
   userId                 String?        @db.Uuid
   username               String?
   firstName              String
@@ -1058,6 +1099,9 @@ model Nurse {
   documents   NurseDocument[]
 
   @@index([branchId])
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyTable])
   @@index([userId])
   @@index([isActive])
   @@map("nurses")
@@ -1082,17 +1126,26 @@ model NurseAddress {
 }
 
 model NurseAttachment {
-  id        String   @id @default(uuid()) @db.Uuid
-  nurseId   String   @db.Uuid
-  filename  String
-  fileUrl   String
-  type      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(uuid()) @db.Uuid
+  nurseId        String   @db.Uuid
+  sourceDatabase String?
+  legacyKey      String?  @unique
+  legacyId       Int?
+  legacyTable    String?
+  legacyNurseId  Int?
+  filename       String
+  fileUrl        String
+  type           String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   nurse Nurse @relation(fields: [nurseId], references: [id], onDelete: Cascade)
 
   @@index([nurseId])
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyTable])
+  @@index([legacyNurseId])
   @@map("nurse_attachments")
 }
 
@@ -1194,7 +1247,7 @@ model Doctor {
   createdAt              DateTime       @default(now())
   updatedAt              DateTime       @updatedAt
 
-  branch      Branch              @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  branch      Branch             @relation(fields: [branchId], references: [id], onDelete: Cascade)
   addresses   DoctorAddress[]
   attachments DoctorAttachment[]
   languages   DoctorLanguage[]
@@ -1310,6 +1363,10 @@ model DoctorDocument {
 
 model Manager {
   id             String    @id @default(uuid()) @db.Uuid
+  sourceDatabase String?
+  legacyKey      String?   @unique
+  legacyId       Int?
+  legacyTable    String?
   userId         String?   @db.Uuid
   firstName      String
   lastName       String
@@ -1326,11 +1383,14 @@ model Manager {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  branch      Branch               @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  branch      Branch              @relation(fields: [branchId], references: [id], onDelete: Cascade)
   addresses   ManagerAddress[]
   attachments ManagerAttachment[]
 
   @@index([branchId])
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyTable])
   @@index([userId])
   @@index([isActive])
   @@map("managers")
@@ -1393,7 +1453,7 @@ model EmployeeEvent {
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
 
-  branchId        String?             @db.Uuid
+  branchId String? @db.Uuid
 
   @@unique([employeeId, employeeType, date])
   @@index([employeeId, employeeType])
@@ -1404,21 +1464,21 @@ model EmployeeEvent {
 }
 
 model TeacherAttendance {
-  id           String                @id @default(uuid()) @db.Uuid
-  employeeId   String                @db.Uuid
-  employeeType String                @default("teacher")
-  date         DateTime              @db.Date
-  timeIn       DateTime?             @db.Time(6)
-  timeOut      DateTime?             @db.Time(6)
+  id           String               @id @default(uuid()) @db.Uuid
+  employeeId   String               @db.Uuid
+  employeeType String               @default("teacher")
+  date         DateTime             @db.Date
+  timeIn       DateTime?            @db.Time(6)
+  timeOut      DateTime?            @db.Time(6)
   status       AttendanceLogStatus?
   readerId     String?
   readerName   String?
   cardId       String?
-  note         String?               @db.Text
-  createdAt    DateTime              @default(now())
-  updatedAt    DateTime              @updatedAt
+  note         String?              @db.Text
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
 
-  branchId     String?               @db.Uuid
+  branchId String? @db.Uuid
 
   @@index([employeeId, employeeType])
   @@index([date])
@@ -1514,15 +1574,24 @@ model DailyReportMilk {
 }
 
 model DailyReportAttachment {
-  id            String   @id @default(uuid()) @db.Uuid
-  dailyReportId String   @db.Uuid
-  filename      String
-  fileUrl       String
-  createdAt     DateTime @default(now())
+  id                  String   @id @default(uuid()) @db.Uuid
+  dailyReportId       String   @db.Uuid
+  sourceDatabase      String?
+  legacyKey           String?  @unique
+  legacyId            Int?
+  legacyTable         String?
+  legacyDailyReportId Int?
+  filename            String
+  fileUrl             String
+  createdAt           DateTime @default(now())
 
   dailyReport DailyReport @relation(fields: [dailyReportId], references: [id], onDelete: Cascade)
 
   @@index([dailyReportId])
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyTable])
+  @@index([legacyDailyReportId])
   @@map("daily_report_attachments")
 }
 
@@ -1531,22 +1600,22 @@ model DailyReportAttachment {
 // ─────────────────────────────────────────────
 
 model AbsenceReport {
-  id             String        @id @default(uuid()) @db.Uuid
-  childId        String        @db.Uuid
-  date           DateTime      @db.Date
-  reason         String?       @db.Text
-  absentFrom     DateTime?     @db.Date
-  absentTo       DateTime?     @db.Date
-  hospitalized   Boolean       @default(false)
-  hospitalName   String?
-  doctorName     String?
-  status         AbsenceStatus @default(PENDING)
-  createdById    String?       @db.Uuid
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id           String        @id @default(uuid()) @db.Uuid
+  childId      String        @db.Uuid
+  date         DateTime      @db.Date
+  reason       String?       @db.Text
+  absentFrom   DateTime?     @db.Date
+  absentTo     DateTime?     @db.Date
+  hospitalized Boolean       @default(false)
+  hospitalName String?
+  doctorName   String?
+  status       AbsenceStatus @default(PENDING)
+  createdById  String?       @db.Uuid
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
-  child       Child                @relation(fields: [childId], references: [id], onDelete: Cascade)
-  createdBy   User?                @relation("AbsenceReportCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  child       Child               @relation(fields: [childId], references: [id], onDelete: Cascade)
+  createdBy   User?               @relation("AbsenceReportCreator", fields: [createdById], references: [id], onDelete: SetNull)
   attachments AbsenceAttachment[]
 
   @@index([childId])
@@ -1557,15 +1626,24 @@ model AbsenceReport {
 }
 
 model AbsenceAttachment {
-  id              String   @id @default(uuid()) @db.Uuid
-  absenceReportId String   @db.Uuid
-  filename        String
-  fileUrl         String
-  createdAt       DateTime @default(now())
+  id                    String   @id @default(uuid()) @db.Uuid
+  absenceReportId       String   @db.Uuid
+  sourceDatabase        String?
+  legacyKey             String?  @unique
+  legacyId              Int?
+  legacyTable           String?
+  legacyAbsenceReportId Int?
+  filename              String
+  fileUrl               String
+  createdAt             DateTime @default(now())
 
   absenceReport AbsenceReport @relation(fields: [absenceReportId], references: [id], onDelete: Cascade)
 
   @@index([absenceReportId])
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyTable])
+  @@index([legacyAbsenceReportId])
   @@map("absence_attachments")
 }
 
@@ -1583,9 +1661,9 @@ model MedicalForm {
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 
-  child     Child              @relation(fields: [childId], references: [id], onDelete: Cascade)
-  createdBy User?              @relation("MedicalFormCreator", fields: [createdById], references: [id], onDelete: SetNull)
-  entries   MedicalFormEntry[]
+  child       Child              @relation(fields: [childId], references: [id], onDelete: Cascade)
+  createdBy   User?              @relation("MedicalFormCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  entries     MedicalFormEntry[]
   attachments FormAttachment[]
 
   @@index([childId])
@@ -1611,14 +1689,14 @@ model MedicalFormEntry {
 }
 
 model Vaccination {
-  id           String    @id @default(uuid()) @db.Uuid
-  childId      String    @db.Uuid
-  vaccineName  String
-  dateGiven    DateTime? @db.Date
-  nextDueDate  DateTime? @db.Date
-  notes        String?   @db.Text
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id          String    @id @default(uuid()) @db.Uuid
+  childId     String    @db.Uuid
+  vaccineName String
+  dateGiven   DateTime? @db.Date
+  nextDueDate DateTime? @db.Date
+  notes       String?   @db.Text
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   child Child @relation(fields: [childId], references: [id], onDelete: Cascade)
 
@@ -1640,10 +1718,10 @@ model Food {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
-  organization     Organization?  @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-  breakfastReports DailyReport[]  @relation("BreakfastFood")
-  lunchReports     DailyReport[]  @relation("LunchFood")
-  foodCalendars    FoodCalendar[]
+  organization          Organization?     @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  breakfastReports      DailyReport[]     @relation("BreakfastFood")
+  lunchReports          DailyReport[]     @relation("LunchFood")
+  foodCalendars         FoodCalendar[]
   breakfastApplications FoodApplication[] @relation("FoodApplicationBreakfast")
   lunchApplications     FoodApplication[] @relation("FoodApplicationLunch")
 
@@ -1801,8 +1879,8 @@ model Payment {
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
 
-  child     Child @relation(fields: [childId], references: [id], onDelete: Cascade)
-  createdBy User? @relation("PaymentCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  child     Child             @relation(fields: [childId], references: [id], onDelete: Cascade)
+  createdBy User?             @relation("PaymentCreator", fields: [createdById], references: [id], onDelete: SetNull)
   reminders PaymentReminder[]
 
   @@index([sourceDatabase])
@@ -1931,8 +2009,8 @@ model CallLog {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
-  child     Child @relation(fields: [childId], references: [id], onDelete: Cascade)
-  createdBy User? @relation("CallLogCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  child       Child            @relation(fields: [childId], references: [id], onDelete: Cascade)
+  createdBy   User?            @relation("CallLogCreator", fields: [createdById], references: [id], onDelete: SetNull)
   attachments FormAttachment[]
 
   @@index([childId])
@@ -2068,22 +2146,22 @@ model Event {
 }
 
 model Holiday {
-  id                  String   @id @default(uuid()) @db.Uuid
+  id                  String    @id @default(uuid()) @db.Uuid
   name                String
   description         String?
-  date                DateTime @db.Date
+  date                DateTime  @db.Date
   endDate             DateTime? @db.Date
-  repeated            Boolean  @default(false)
-  type                String   @default("HOLIDAY") // HOLIDAY | STRIKE
-  isActive            Boolean  @default(true)
+  repeated            Boolean   @default(false)
+  type                String    @default("HOLIDAY") // HOLIDAY | STRIKE
+  isActive            Boolean   @default(true)
   notificationTitle   String?
   notificationMessage String?
-  daysBefore          Int      @default(0)
-  informTeachers      Boolean  @default(false)
-  sendVia             String   @default("BOTH") // WHATSAPP | SMS | BOTH
-  branchId            String?  @db.Uuid
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  daysBefore          Int       @default(0)
+  informTeachers      Boolean   @default(false)
+  sendVia             String    @default("BOTH") // WHATSAPP | SMS | BOTH
+  branchId            String?   @db.Uuid
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   branch Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
 
@@ -2109,7 +2187,7 @@ model Alarm {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  branch Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  branch               Branch?               @relation(fields: [branchId], references: [id], onDelete: SetNull)
   notificationReceipts NotificationReceipt[]
 
   @@index([type])
@@ -2202,25 +2280,25 @@ model LegacyNotificationLog {
 }
 
 model LegacyNotificationNature {
-  id                   String   @id @default(uuid()) @db.Uuid
-  sourceDatabase       String
-  legacyKey            String   @unique
-  legacyId             Int
-  name                 String
-  description          String?  @db.Text
-  contentTable         String?
-  deliveryTable        String?
-  parentDeliveryTable  String?
-  contentIdColumn      String?
-  deliveryIdColumn     String?
-  recipientColumn      String?
-  subjectColumn        String?
-  bodyColumn           String?
-  displayOrder         Int?
-  isActive             Boolean  @default(true)
-  legacyData           Json?
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  id                  String   @id @default(uuid()) @db.Uuid
+  sourceDatabase      String
+  legacyKey           String   @unique
+  legacyId            Int
+  name                String
+  description         String?  @db.Text
+  contentTable        String?
+  deliveryTable       String?
+  parentDeliveryTable String?
+  contentIdColumn     String?
+  deliveryIdColumn    String?
+  recipientColumn     String?
+  subjectColumn       String?
+  bodyColumn          String?
+  displayOrder        Int?
+  isActive            Boolean  @default(true)
+  legacyData          Json?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   @@index([sourceDatabase])
   @@index([legacyId])

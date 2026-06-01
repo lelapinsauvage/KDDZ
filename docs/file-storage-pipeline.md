@@ -104,19 +104,30 @@ pnpm tsx src/scripts/migration/apply-legacy-file-urls.ts \
   --dry-run
 ```
 
-Remove `--dry-run` only after reviewing the apply manifest. The script updates strong-provenance destinations:
+Remove `--dry-run` only after reviewing the apply manifest. After the legacy migration scripts have been rerun with `20260601017000_add_legacy_file_provenance`, the script updates strong-provenance destinations:
 
 | Rule | Target |
 | --- | --- |
+| `branch-photo` | `Branch.imageUrl` |
+| `class-photo` | `Class.imageUrl` |
+| `child-photo` | `Child.photo` |
+| `child-draft-photo` | `Child.photo` |
 | `child-document` | `ChildAttachment.fileUrl` |
 | `garderie-document` | `BranchDocument.fileUrl` |
+| `teacher-photo` | `Teacher.imageUrl` |
+| `teacher-document` | `TeacherAttachment.fileUrl` |
+| `nurse-photo` | `Nurse.imageUrl` |
+| `nurse-document` | `NurseAttachment.fileUrl` |
 | `doctor-photo` | `Doctor.imageUrl` |
 | `doctor-document` | `DoctorAttachment.fileUrl` |
+| `manager-photo` | `Manager.imageUrl` |
 | `manager-document` | `ManagerAttachment.fileUrl` |
 | `payment-receipt` | `Payment.receiptFileUrl` |
+| `daily-attachment` | `DailyReportAttachment.fileUrl` |
+| `absence-attachment` | `AbsenceAttachment.fileUrl` |
 | `form-attachment` | `FormAttachment.fileUrl` |
 
-The script reports, but does not guess, no-provenance destinations such as branch/class/child/staff profile photos, teacher/nurse attachments, daily report attachments, and absence attachments. Those tables need legacy source fields added or an approved deterministic matching strategy before URL rewrite.
+The script still reports `child-history-photo` as unsupported because `ChildHistory.snapshot` is JSON, not a direct URL column. That needs a dedicated JSON patch strategy if historical snapshots must display migrated image URLs.
 
 ## Cutover Gates
 

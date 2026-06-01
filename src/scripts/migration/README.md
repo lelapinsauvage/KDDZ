@@ -232,7 +232,7 @@ pnpm tsx src/scripts/migration/apply-legacy-file-urls.ts \
   --dry-run
 ```
 
-The apply script updates only tables with strong legacy provenance. It rewrites `ChildAttachment`, `BranchDocument`, `Doctor`, `DoctorAttachment`, `ManagerAttachment`, `Payment`, and `FormAttachment` URL fields by `sourceDatabase + legacyId`. It reports no-provenance targets such as branch/class/child/staff profile photos and teacher/nurse/daily/absence attachments for follow-up schema or mapping work.
+The apply script updates only tables with strong legacy provenance. After rerunning migrations that include `20260601017000_add_legacy_file_provenance`, it rewrites branch/class/child/staff profile photos plus child, branch, teacher, nurse, doctor, manager, daily report, absence, payment, and form attachment URL fields by `sourceDatabase + legacyTable + legacyId`. It still reports `child-history-photo` as unsupported because that target lives inside JSON snapshots.
 
 ### Count Reconciliation
 

@@ -21,7 +21,7 @@
 
 import type { PrismaClient } from "@/generated/prisma/client";
 import { createPrismaClient } from "./lib/prisma-client";
-import { queryMysql, closeMysqlPool } from "./lib/mysql-client";
+import { queryMysql, closeMysqlPool, getMysqlConfig } from "./lib/mysql-client";
 import {
   generateUUID,
   setMapping,
@@ -54,9 +54,14 @@ interface OldClass {
   datetime: string;
 }
 
+function legacyKey(sourceDatabase: string, table: string, legacyId: number) {
+  return `${sourceDatabase}:${table}:${legacyId}`;
+}
+
 export async function migrateClasses(prisma: PrismaClient) {
   log("=== Migrating Classes ===");
   const dryRun = isDryRun();
+  const sourceDatabase = getMysqlConfig().database || "unknown";
 
   const oldRows = await queryMysql<OldClass>(
     "SELECT * FROM t_class ORDER BY clid"
@@ -78,16 +83,37 @@ export async function migrateClasses(prisma: PrismaClient) {
     }
 
     const imageUrl = cleanLegacyFileName(row.image);
-    // Idempotency: check by name + branch
-    const existing = await prisma.class.findFirst({
-      where: { branchId, name: row.classname },
+    const key = legacyKey(sourceDatabase, "t_class", row.clid);
+    const existingByKey = await prisma.class.findUnique({
+      where: { legacyKey: key },
     });
+    // Idempotency fallback for rows migrated before provenance fields existed.
+    const existing =
+      existingByKey ??
+      (await prisma.class.findFirst({
+        where: { branchId, name: row.classname },
+      }));
 
     if (existing) {
-      if (!dryRun && imageUrl && existing.imageUrl !== imageUrl) {
+      const updateData: {
+        sourceDatabase?: string;
+        legacyKey?: string;
+        legacyId?: number;
+        legacyTable?: string;
+        imageUrl?: string;
+      } = {
+        sourceDatabase,
+        legacyKey: key,
+        legacyId: row.clid,
+        legacyTable: "t_class",
+      };
+      if (imageUrl && existing.imageUrl !== imageUrl) {
+        updateData.imageUrl = imageUrl;
+      }
+      if (!dryRun) {
         await prisma.class.update({
           where: { id: existing.id },
-          data: { imageUrl },
+          data: updateData,
         });
       }
       setMapping("class", row.clid, existing.id);
@@ -105,6 +131,10 @@ export async function migrateClasses(prisma: PrismaClient) {
       await prisma.class.create({
         data: {
           id: newId,
+          sourceDatabase,
+          legacyKey: key,
+          legacyId: row.clid,
+          legacyTable: "t_class",
           branchId,
           name: row.classname,
           capacity: toInt(row.max_students, 0),
