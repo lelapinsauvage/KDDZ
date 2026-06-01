@@ -105,7 +105,7 @@ export async function getDocuments(branchId: string): Promise<ActionResult> {
     }
 
     const documents = await db.branchDocument.findMany({
-      where: { branchId },
+      where: { branchId, isActive: true },
       orderBy: { createdAt: "asc" },
     });
 

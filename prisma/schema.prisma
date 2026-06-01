@@ -300,6 +300,12 @@ model BranchCompliance {
   id       String @id @default(uuid()) @db.Uuid
   branchId String @unique @db.Uuid
 
+  sourceDatabase String?
+  legacyKey      String? @unique
+  legacyId       Int?
+  legacyBranchId Int?
+  legacyUserId   Int?
+
   // Section A: Legal Entity Type
   entityType        String?
   legalName         String?
@@ -359,6 +365,17 @@ model BranchCompliance {
   propertyDistrict   String?
   propertyRegion     String?
   ownershipType      String?
+  specialFor         String?
+  specialNumber      String?
+  specialDate        DateTime? @db.Date
+  applicationOwnerName   String?
+  applicationNumber      String?
+  applicationRegion      String?
+  applicationGovernorate String?
+  applicationDistrict    String?
+  leaseOwnerName     String?
+  leaseDate          DateTime? @db.Date
+  leaseVerified      String?
 
   // Management (legacy)
   directorFirstName  String?
@@ -382,12 +399,18 @@ model BranchCompliance {
 
   // Progress
   completionPercentage Int @default(0)
+  legacyLatitude       String? @db.Text
+  legacyLongitude      String? @db.Text
+  legacyData           Json?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyBranchId])
   @@index([branchId])
   @@map("branch_compliance")
 }
@@ -395,6 +418,10 @@ model BranchCompliance {
 model BranchDocument {
   id           String         @id @default(uuid()) @db.Uuid
   branchId     String         @db.Uuid
+  sourceDatabase String?
+  legacyKey      String?      @unique
+  legacyId       Int?
+  legacyBranchId Int?
   documentType DocumentType
   label        String?
   filename     String?
@@ -402,15 +429,21 @@ model BranchDocument {
   issueDate    DateTime?      @db.Date
   expiryDate   DateTime?      @db.Date
   status       DocumentStatus @default(PENDING)
+  isActive     Boolean        @default(true)
   notes        String?        @db.Text
+  legacyData   Json?
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
 
   branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
   @@index([branchId])
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyBranchId])
   @@index([documentType])
   @@index([status])
+  @@index([isActive])
   @@map("branch_documents")
 }
 
@@ -648,6 +681,7 @@ model Child {
   siblings         ChildSibling[]
   attachments      ChildAttachment[]
   history          ChildHistory[]
+  previousGarderies ChildPreviousGarderie[]
   parentUsers      ParentUser[]
   dailyReports     DailyReport[]
   absenceReports   AbsenceReport[]
@@ -784,6 +818,30 @@ model ChildHistory {
   @@index([childId])
   @@index([createdAt])
   @@map("child_history")
+}
+
+model ChildPreviousGarderie {
+  id             String   @id @default(uuid()) @db.Uuid
+  sourceDatabase String
+  legacyKey      String   @unique
+  legacyId       Int
+  childId        String?  @db.Uuid
+  legacyChildId  Int?
+  name           String?
+  year           String?
+  isActive       Boolean  @default(true)
+  legacyData     Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  child Child? @relation(fields: [childId], references: [id], onDelete: SetNull)
+
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([childId])
+  @@index([legacyChildId])
+  @@index([isActive])
+  @@map("child_previous_garderies")
 }
 
 // ─────────────────────────────────────────────

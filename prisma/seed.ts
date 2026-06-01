@@ -55,6 +55,7 @@ async function main() {
     await tx.dailyReportMilk.deleteMany();
     await tx.dailyReportFever.deleteMany();
     await tx.dailyReport.deleteMany();
+    await tx.childPreviousGarderie.deleteMany();
     await tx.childHistory.deleteMany();
     await tx.childAttachment.deleteMany();
     await tx.relative.deleteMany();
@@ -81,6 +82,8 @@ async function main() {
     await tx.settings.deleteMany();
     await tx.class.deleteMany();
     await tx.user.deleteMany();
+    await tx.branchDocument.deleteMany();
+    await tx.branchCompliance.deleteMany();
     await tx.region.deleteMany();
     await tx.district.deleteMany();
     await tx.province.deleteMany();

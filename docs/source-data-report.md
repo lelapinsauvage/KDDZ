@@ -21,12 +21,9 @@ These are the highest-risk migration gaps because source data exists and no curr
 
 | SQL Dump | Legacy Table | Estimated Rows | Columns |
 | --- | --- | --- | --- |
-| kiddzonl_garderie29sept.sql | t_old_garderie | 8 | gid, gname, gyear, child_id, active, datetime |
-| kiddzonl_garderie29sept.sql | t_garderie_attachments | 7 | fattid, branch_id, att_title, exp_date, start_date, url, type, datetime, active |
 | kiddzonl_garderie29sept.sql | login_confirm | 5 | id, data, username, email, key, type |
 | kiddzonl_garderie29sept.sql | login_profiles | 2 | p_id, pfield_id, user_id, profile_label, profile_value |
 | kiddzonl_garderie29sept.sql | parent_login_levels | 2 | id, level_name, level_disabled, redirect, welcome_email |
-| kiddzonl_garderie29sept.sql | t_garderie | 2 | id, branch_id, formtype, special_for, special_num, special_date, name, father, family, mother, idnum, nationality, pob, dob, type, legal_name, companytype, type_others, sub_others, subject, regnum, regplace, regdate, res_name, res_position, res_nationality, res_phone, garderie_ar, garderie, gar_country, gar_muhafaza, gar_quadaa, gar_region, gar_street, gar_bldg, gar_floor, gar_post, gar_post_no, gar_tel, gar_phone, gar_fax, gar_email, gar_website, app_owner_name, app_num, app_regoin, app_muhafaza, app_quadaa, ownership, rent_name, rent_date, rentalverify, man_name, man_family, man_pos, doc_name, doc_father, doc_family, doc_pos, doc_reg_no, child_walk, child_n_walk, work_hours, daman, damantype, progress, uby, datetime, latitude, longitude |
 | kiddzonl_garderie29sept.sql | t_school_year | 2 | id, sid, sdate |
 | kiddzonl_garderie29sept.sql | login_profile_fields | 1 | id, section, type, label, public, signup |
 | kiddzonl_garderie29sept.sql | t_attachments | 1 | attid, att_title, url, child_id, datetime, active |
@@ -70,7 +67,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie17-18.sql | t_class | 0 | image | covered by migrate-classes.ts |
 | kiddzonl_garderie17-18.sql | t_daily_attachments | 0 | url | covered by migrate-daily-reports.ts |
 | kiddzonl_garderie17-18.sql | t_forms_attachments | 0 | url | covered by migrate-medical.ts |
-| kiddzonl_garderie17-18.sql | t_garderie_attachments | 0 | url | needs file migration rule |
+| kiddzonl_garderie17-18.sql | t_garderie_attachments | 0 | url | covered by migrate-garderie-profile.ts |
 | kiddzonl_garderie17-18.sql | t_garderie_doctor | 0 | image | needs file migration rule |
 | kiddzonl_garderie17-18.sql | t_garderie_doctor_attachments | 0 | url | needs file migration rule |
 | kiddzonl_garderie17-18.sql | t_manager | 0 | image | covered by migrate-employees.ts |
@@ -88,7 +85,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie29sept.sql | t_teacher_attachments | 10 | url | covered by migrate-employees.ts |
 | kiddzonl_garderie29sept.sql | t_class | 9 | image | covered by migrate-classes.ts |
 | kiddzonl_garderie29sept.sql | t_branch | 7 | image | covered by migrate-branches.ts |
-| kiddzonl_garderie29sept.sql | t_garderie_attachments | 7 | url | needs file migration rule |
+| kiddzonl_garderie29sept.sql | t_garderie_attachments | 7 | url | covered by migrate-garderie-profile.ts |
 | kiddzonl_garderie29sept.sql | t_nurse | 3 | image | covered by migrate-employees.ts |
 | kiddzonl_garderie29sept.sql | login_profiles | 2 | profile_label, profile_value | needs file migration rule |
 | kiddzonl_garderie29sept.sql | t_attachments | 1 | url | needs file migration rule |
@@ -110,7 +107,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie_2018-2019.sql | t_class | 0 | image | covered by migrate-classes.ts |
 | kiddzonl_garderie_2018-2019.sql | t_daily_attachments | 0 | url | covered by migrate-daily-reports.ts |
 | kiddzonl_garderie_2018-2019.sql | t_forms_attachments | 0 | url | covered by migrate-medical.ts |
-| kiddzonl_garderie_2018-2019.sql | t_garderie_attachments | 0 | url | needs file migration rule |
+| kiddzonl_garderie_2018-2019.sql | t_garderie_attachments | 0 | url | covered by migrate-garderie-profile.ts |
 | kiddzonl_garderie_2018-2019.sql | t_garderie_doctor | 0 | image | needs file migration rule |
 | kiddzonl_garderie_2018-2019.sql | t_garderie_doctor_attachments | 0 | url | needs file migration rule |
 | kiddzonl_garderie_2018-2019.sql | t_manager | 0 | image | covered by migrate-employees.ts |
@@ -209,8 +206,8 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie17-18.sql | t_form_5 | 19 | 0 | covered by migrate-medical.ts |
 | kiddzonl_garderie17-18.sql | t_form_6 | 16 | 0 | covered by migrate-medical.ts + migrate-calls.ts |
 | kiddzonl_garderie17-18.sql | t_forms_attachments | 10 | 0 | covered by migrate-medical.ts |
-| kiddzonl_garderie17-18.sql | t_garderie | 68 | 0 | not covered yet / needs explicit decision |
-| kiddzonl_garderie17-18.sql | t_garderie_attachments | 9 | 0 | not covered yet / needs explicit decision |
+| kiddzonl_garderie17-18.sql | t_garderie | 68 | 0 | covered by migrate-garderie-profile.ts |
+| kiddzonl_garderie17-18.sql | t_garderie_attachments | 9 | 0 | covered by migrate-garderie-profile.ts |
 | kiddzonl_garderie17-18.sql | t_garderie_doctor | 22 | 0 | not covered yet / needs explicit decision |
 | kiddzonl_garderie17-18.sql | t_garderie_doctor_attachments | 8 | 0 | not covered yet / needs explicit decision |
 | kiddzonl_garderie17-18.sql | t_history_actions | 3 | 0 | not covered yet / needs explicit decision |
@@ -226,7 +223,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie17-18.sql | t_notifications_log | 6 | 0 | covered by migrate-alarms.ts |
 | kiddzonl_garderie17-18.sql | t_nurse | 21 | 0 | covered by migrate-employees.ts |
 | kiddzonl_garderie17-18.sql | t_nurse_attachments | 8 | 0 | covered by migrate-employees.ts |
-| kiddzonl_garderie17-18.sql | t_old_garderie | 6 | 0 | not covered yet / needs explicit decision |
+| kiddzonl_garderie17-18.sql | t_old_garderie | 6 | 0 | covered by migrate-garderie-profile.ts |
 | kiddzonl_garderie17-18.sql | t_parents | 17 | 0 | covered by migrate-parents.ts |
 | kiddzonl_garderie17-18.sql | t_payments | 20 | 0 | covered by migrate-payments.ts |
 | kiddzonl_garderie17-18.sql | t_quadaa | 6 | 0 | covered by migrate-locations.ts |
@@ -291,10 +288,10 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie29sept.sql | t_alarms_contracts | 10 | 9 | covered by migrate-alarms.ts |
 | kiddzonl_garderie29sept.sql | t_class | 21 | 9 | covered by migrate-classes.ts |
 | kiddzonl_garderie29sept.sql | custom_notifications_vaccinations | 3 | 8 | covered by migrate-alarms.ts |
-| kiddzonl_garderie29sept.sql | t_old_garderie | 6 | 8 | not covered yet / needs explicit decision |
+| kiddzonl_garderie29sept.sql | t_old_garderie | 6 | 8 | covered by migrate-garderie-profile.ts |
 | kiddzonl_garderie29sept.sql | new_assessment | 6 | 7 | covered by migrate-assessments.ts |
 | kiddzonl_garderie29sept.sql | t_branch | 10 | 7 | covered by migrate-branches.ts |
-| kiddzonl_garderie29sept.sql | t_garderie_attachments | 9 | 7 | not covered yet / needs explicit decision |
+| kiddzonl_garderie29sept.sql | t_garderie_attachments | 9 | 7 | covered by migrate-garderie-profile.ts |
 | kiddzonl_garderie29sept.sql | t_mouhafaza | 5 | 7 | covered by migrate-locations.ts |
 | kiddzonl_garderie29sept.sql | callparent | 2 | 6 | covered by migrate-calls.ts |
 | kiddzonl_garderie29sept.sql | t_alarms_insurance | 11 | 6 | covered by migrate-alarms.ts |
@@ -308,7 +305,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie29sept.sql | login_profiles | 5 | 2 | not covered yet / needs explicit decision |
 | kiddzonl_garderie29sept.sql | parent_login_levels | 5 | 2 | not covered yet / needs explicit decision |
 | kiddzonl_garderie29sept.sql | t_alarms_vaccinations | 10 | 2 | covered by migrate-alarms.ts |
-| kiddzonl_garderie29sept.sql | t_garderie | 70 | 2 | not covered yet / needs explicit decision |
+| kiddzonl_garderie29sept.sql | t_garderie | 70 | 2 | covered by migrate-garderie-profile.ts |
 | kiddzonl_garderie29sept.sql | t_notification_setting | 3 | 2 | covered by migrate-settings.ts |
 | kiddzonl_garderie29sept.sql | t_school_year | 3 | 2 | not covered yet / needs explicit decision |
 | kiddzonl_garderie29sept.sql | login_profile_fields | 6 | 1 | not covered yet / needs explicit decision |
@@ -435,8 +432,8 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie_2018-2019.sql | t_form_5 | 19 | 0 | covered by migrate-medical.ts |
 | kiddzonl_garderie_2018-2019.sql | t_form_6 | 16 | 0 | covered by migrate-medical.ts + migrate-calls.ts |
 | kiddzonl_garderie_2018-2019.sql | t_forms_attachments | 10 | 0 | covered by migrate-medical.ts |
-| kiddzonl_garderie_2018-2019.sql | t_garderie | 68 | 0 | not covered yet / needs explicit decision |
-| kiddzonl_garderie_2018-2019.sql | t_garderie_attachments | 9 | 0 | not covered yet / needs explicit decision |
+| kiddzonl_garderie_2018-2019.sql | t_garderie | 68 | 0 | covered by migrate-garderie-profile.ts |
+| kiddzonl_garderie_2018-2019.sql | t_garderie_attachments | 9 | 0 | covered by migrate-garderie-profile.ts |
 | kiddzonl_garderie_2018-2019.sql | t_garderie_doctor | 22 | 0 | not covered yet / needs explicit decision |
 | kiddzonl_garderie_2018-2019.sql | t_garderie_doctor_attachments | 8 | 0 | not covered yet / needs explicit decision |
 | kiddzonl_garderie_2018-2019.sql | t_history_actions | 3 | 0 | not covered yet / needs explicit decision |
@@ -452,7 +449,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie_2018-2019.sql | t_notifications_log | 6 | 0 | covered by migrate-alarms.ts |
 | kiddzonl_garderie_2018-2019.sql | t_nurse | 21 | 0 | covered by migrate-employees.ts |
 | kiddzonl_garderie_2018-2019.sql | t_nurse_attachments | 8 | 0 | covered by migrate-employees.ts |
-| kiddzonl_garderie_2018-2019.sql | t_old_garderie | 6 | 0 | not covered yet / needs explicit decision |
+| kiddzonl_garderie_2018-2019.sql | t_old_garderie | 6 | 0 | covered by migrate-garderie-profile.ts |
 | kiddzonl_garderie_2018-2019.sql | t_parents | 17 | 0 | covered by migrate-parents.ts |
 | kiddzonl_garderie_2018-2019.sql | t_payments | 20 | 0 | covered by migrate-payments.ts |
 | kiddzonl_garderie_2018-2019.sql | t_quadaa | 6 | 0 | covered by migrate-locations.ts |

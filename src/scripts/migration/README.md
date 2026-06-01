@@ -55,6 +55,7 @@ pnpm tsx src/scripts/migration/migrate-branches.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-locations.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-classes.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-children.ts [--dry-run]
+pnpm tsx src/scripts/migration/migrate-garderie-profile.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-parents.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-employees.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-users.ts [--dry-run]
@@ -80,20 +81,21 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 2. Locations      ← no deps; provides address location mappings
 3. Classes        ← needs Branches
 4. Children       ← needs Branches, Classes, Locations
-5. Parents        ← needs Children
-6. Employees      ← needs Branches
-7. Users          ← needs Branches, Children/Parents
-8. Login Audit    ← needs Users/Parent Users when resolvable
-9. Legacy Settings ← optional legacy config tables
-10. Daily Reports  ← needs Children
-11. Absences       ← needs Children, Users
-12. Calls          ← needs Children, Employees, Users
-13. Assessments    ← needs Children, Classes, Employees/Users, Organization
-14. Medical Forms  ← needs Children
-15. Payments       ← needs Children
-16. Food/Calendar  ← needs Branches, Organization
-17. Alarms         ← needs Children, Users, Parent Users, Teachers
-18. Messages       ← needs Users
+5. Garderie Profile ← needs Branches, Children
+6. Parents        ← needs Children
+7. Employees      ← needs Branches
+8. Users          ← needs Branches, Children/Parents
+9. Login Audit    ← needs Users/Parent Users when resolvable
+10. Legacy Settings ← optional legacy config tables
+11. Daily Reports  ← needs Children
+12. Absences       ← needs Children, Users
+13. Calls          ← needs Children, Employees, Users
+14. Assessments    ← needs Children, Classes, Employees/Users, Organization
+15. Medical Forms  ← needs Children
+16. Payments       ← needs Children
+17. Food/Calendar  ← needs Branches, Organization
+18. Alarms         ← needs Children, Users, Parent Users, Teachers
+19. Messages       ← needs Users
 ```
 
 ## Table Mappings
@@ -107,9 +109,12 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_class` | Class |
 | `t_child`, `t_child_draft` | Child (isDraft flag) |
 | `t_child_h` | ChildHistory |
+| `t_old_garderie` | ChildPreviousGarderie |
 | `t_address` | ChildAddress |
 | `t_authorized` | Relative (isAuthorized=true) |
 | `t_relatives` | Relative |
+| `t_garderie` | BranchCompliance |
+| `t_garderie_attachments` | BranchDocument |
 | `t_parents` | Parent |
 | `t_teacher`, `t_teacher_address`, `t_teacher_attachments` | Teacher, TeacherAddress, TeacherAttachment |
 | `t_teacher_info` | TeacherExperience |
@@ -169,6 +174,9 @@ Legacy timestamp tables are historical login audit trails, not active sessions. 
 
 ### Legacy Settings
 Legacy PHP auth, nursery, and notification setting tables are preserved in `LegacySetting` with their source database/table/id, scope, key, exact value, optional description, and raw JSON. They are not written into active branch `Settings`.
+
+### Garderie Profile
+Legacy `t_garderie` rows populate the active branch compliance form and also keep source database/table/id, legacy branch/user ids, coordinates, and the raw JSON. Legacy `t_garderie_attachments` rows become branch documents with source keys and active flags. Legacy `t_old_garderie` rows are preserved as child previous-garderie history, including inactive rows.
 
 ### Idempotency
 All scripts check for existing records before inserting, so they can be re-run safely. Already-migrated records are skipped.

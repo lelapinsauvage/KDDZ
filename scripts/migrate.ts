@@ -208,6 +208,7 @@ async function clearAllData(prisma: PrismaClient) {
   await prisma.dailyReportMilk.deleteMany();
   await prisma.dailyReportFever.deleteMany();
   await prisma.dailyReport.deleteMany();
+  await prisma.childPreviousGarderie.deleteMany();
   await prisma.childHistory.deleteMany();
   await prisma.childAttachment.deleteMany();
   await prisma.relative.deleteMany();
@@ -233,6 +234,8 @@ async function clearAllData(prisma: PrismaClient) {
   await prisma.settings.deleteMany();
   await prisma.class.deleteMany();
   await prisma.user.deleteMany();
+  await prisma.branchDocument.deleteMany();
+  await prisma.branchCompliance.deleteMany();
   await prisma.region.deleteMany();
   await prisma.district.deleteMany();
   await prisma.province.deleteMany();

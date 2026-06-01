@@ -14,7 +14,7 @@ Every legacy file reference must be migrated to modern object storage or explici
 | kiddzonl_garderie17-18 | t_class | image | Class | needs storage migration rule |
 | kiddzonl_garderie17-18 | t_daily_attachments | url | DailyReportAttachment | needs storage migration rule |
 | kiddzonl_garderie17-18 | t_forms_attachments | url |  | needs storage migration rule |
-| kiddzonl_garderie17-18 | t_garderie_attachments | url |  | needs storage migration rule |
+| kiddzonl_garderie17-18 | t_garderie_attachments | url |  | covered by migrate-garderie-profile.ts |
 | kiddzonl_garderie17-18 | t_garderie_doctor | image |  | needs storage migration rule |
 | kiddzonl_garderie17-18 | t_garderie_doctor_attachments | url |  | needs storage migration rule |
 | kiddzonl_garderie17-18 | t_manager | image | Manager | needs storage migration rule |
@@ -34,7 +34,7 @@ Every legacy file reference must be migrated to modern object storage or explici
 | kiddzonl_garderie29sept | t_class | image | Class | needs storage migration rule |
 | kiddzonl_garderie29sept | t_daily_attachments | url | DailyReportAttachment | needs storage migration rule |
 | kiddzonl_garderie29sept | t_forms_attachments | url |  | needs storage migration rule |
-| kiddzonl_garderie29sept | t_garderie_attachments | url |  | needs storage migration rule |
+| kiddzonl_garderie29sept | t_garderie_attachments | url |  | covered by migrate-garderie-profile.ts |
 | kiddzonl_garderie29sept | t_garderie_doctor | image |  | needs storage migration rule |
 | kiddzonl_garderie29sept | t_garderie_doctor_attachments | url |  | needs storage migration rule |
 | kiddzonl_garderie29sept | t_manager | image | Manager | needs storage migration rule |
@@ -54,7 +54,7 @@ Every legacy file reference must be migrated to modern object storage or explici
 | kiddzonl_garderie_2018-2019 | t_class | image | Class | needs storage migration rule |
 | kiddzonl_garderie_2018-2019 | t_daily_attachments | url | DailyReportAttachment | needs storage migration rule |
 | kiddzonl_garderie_2018-2019 | t_forms_attachments | url |  | needs storage migration rule |
-| kiddzonl_garderie_2018-2019 | t_garderie_attachments | url |  | needs storage migration rule |
+| kiddzonl_garderie_2018-2019 | t_garderie_attachments | url |  | covered by migrate-garderie-profile.ts |
 | kiddzonl_garderie_2018-2019 | t_garderie_doctor | image |  | needs storage migration rule |
 | kiddzonl_garderie_2018-2019 | t_garderie_doctor_attachments | url |  | needs storage migration rule |
 | kiddzonl_garderie_2018-2019 | t_manager | image | Manager | needs storage migration rule |
