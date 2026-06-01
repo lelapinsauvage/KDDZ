@@ -64,6 +64,7 @@ pnpm tsx src/scripts/migration/migrate-assessments.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-medical.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-payments.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-food-calendar.ts [--dry-run]
+pnpm tsx src/scripts/migration/migrate-alarms.ts [--dry-run]
 pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 ```
 
@@ -85,7 +86,8 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 11. Medical Forms ← needs Children
 12. Payments      ← needs Children
 13. Food/Calendar ← needs Branches, Organization
-14. Messages      ← needs Users
+14. Alarms        ← needs Children, Users, Parent Users, Teachers
+15. Messages      ← needs Users
 ```
 
 ## Table Mappings
@@ -127,6 +129,10 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_food` | Food |
 | `t_food_calendar` | FoodCalendar |
 | `t_holiday` | Holiday |
+| `t_alarms`, `t_alarms_*` (except `t_alarms_msg`) | Alarm |
+| `custom_notifications_*` delivery tables | NotificationReceipt |
+| `notifications_tokens` | PushToken |
+| `t_notifications_log` | LegacyNotificationLog |
 | `t_alarms_msg` | MessageThread, Message |
 | `custom_notifications_msg` | Message (per-recipient) |
 
@@ -156,6 +162,9 @@ The 6 old form tables are consolidated into a single `MedicalForm` model. Form-s
 The seven legacy assessment tables are consolidated into `Assessment`. Answer keys (`m*`, `c*`, `l*`, `s*`, `d*`) stay as flat JSON keys so the modern assessment editor can reopen the migrated report. Legacy `new_assessment` rows are preserved as markers on the matching assessment, or as a stub assessment when the notification marker has no matching report row.
 
 Legacy `t_assessment_dates.assessment_date` stores age thresholds in days, not absolute calendar dates. Those values are migrated to `AssessmentScheduleRule`; the modern `AssessmentDate` table remains reserved for explicit scheduled calendar dates.
+
+### Alarms And Notifications
+Legacy alarm content rows are restored into `Alarm` with the complete source row preserved in `legacyData`. Legacy delivery/read rows from `custom_notifications_*` are restored into `NotificationReceipt` so "seen" state and recipient ids remain auditable even when the modern notification UI reads from `Alarm`. Mobile push tokens retain their legacy active flag on `PushToken.isActive`.
 
 ## Troubleshooting
 

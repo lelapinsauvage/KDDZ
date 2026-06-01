@@ -19,32 +19,32 @@
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "custom_notifications",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "custom_notifications_assessment",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "custom_notifications_birthday",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "custom_notifications_contracts",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
@@ -67,24 +67,24 @@
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "custom_notifications_insurance",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "custom_notifications_medical",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "custom_notifications_medicine",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
@@ -99,16 +99,16 @@
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "custom_notifications_payments",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "custom_notifications_vaccinations",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
@@ -251,56 +251,56 @@
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "t_alarms",
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "t_alarms_assessment",
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "t_alarms_birthday",
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "t_alarms_contracts",
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, person_id:int(11) NOT NULL, type:varchar(50) NOT NULL, level:varchar(50) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "t_alarms_insurance",
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, med_id:int(11) NOT NULL, details:text NOT NULL, curr_date:varchar(20) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "t_alarms_medical",
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "t_alarms_medicine",
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, med_id:int(11) NOT NULL, details:text NOT NULL, curr_date:varchar(20) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
@@ -315,16 +315,16 @@
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "t_alarms_payments",
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "t_alarms_vaccinations",
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
@@ -715,8 +715,8 @@
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "t_notifications_log",
     "legacyColumns": "id:bigint(20) NOT NULL AUTO_INCREMENT, date:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, name:varchar(100) DEFAULT NULL, status:int(11) NOT NULL, childId:bigint(20) NOT NULL, expiryDate:varchar(100) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "LegacyNotificationLog",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
@@ -851,24 +851,24 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "custom_notifications",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "custom_notifications_assessment",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "custom_notifications_birthday",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
@@ -883,8 +883,8 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "custom_notifications_contracts",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
@@ -915,8 +915,8 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "custom_notifications_insurance",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
@@ -931,8 +931,8 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "custom_notifications_medical",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
@@ -947,8 +947,8 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "custom_notifications_medicine",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
@@ -995,8 +995,8 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "custom_notifications_payments",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
@@ -1019,8 +1019,8 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "custom_notifications_vaccinations",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
@@ -1107,8 +1107,8 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "notifications_tokens",
     "legacyColumns": "id:int(11) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, child_id:int(11) NOT NULL, token:text NOT NULL, os:int(11) NOT NULL DEFAULT '0' COMMENT '0: NA / 1: Android / 2: iOS / 3: Other', active:int(11) NOT NULL DEFAULT '1'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "PushToken",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
@@ -1187,64 +1187,64 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "t_alarms",
     "legacyColumns": "aid:int(11) NOT NULL, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL, ntype:int(11) NOT NULL COMMENT '0: System / 1: Message'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "t_alarms_assessment",
     "legacyColumns": "aid:int(11) NOT NULL, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL, ntype:int(11) NOT NULL COMMENT '0: System / 1: Message'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "t_alarms_assessment_parents",
     "legacyColumns": "aid:int(11) NOT NULL, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL, ntype:int(11) NOT NULL COMMENT '0: System / 1: Message'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "t_alarms_birthday",
     "legacyColumns": "aid:int(11) NOT NULL, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL, ntype:int(11) NOT NULL COMMENT '0: System / 1: Message'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "t_alarms_contracts",
     "legacyColumns": "aid:int(11) NOT NULL, mid:int(11) NOT NULL, person_id:int(11) NOT NULL, type:varchar(50) NOT NULL, level:varchar(50) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL, ntype:int(11) NOT NULL COMMENT '0: System / 1: Message'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "t_alarms_insurance",
     "legacyColumns": "aid:int(11) NOT NULL, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, med_id:int(11) NOT NULL, details:text NOT NULL, curr_date:varchar(20) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL, ntype:int(11) NOT NULL COMMENT '0: System / 1: Message'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "t_alarms_medical",
     "legacyColumns": "aid:int(11) NOT NULL, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL, ntype:int(11) NOT NULL COMMENT '0: System / 1: Message'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "t_alarms_medicine",
     "legacyColumns": "aid:int(11) NOT NULL, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, med_id:int(11) NOT NULL, details:text NOT NULL, curr_date:varchar(20) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL, ntype:int(11) NOT NULL COMMENT '0: System / 1: Message'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
@@ -1259,40 +1259,40 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "t_alarms_others",
     "legacyColumns": "aid:int(11) NOT NULL, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL, ntype:int(11) NOT NULL COMMENT '0: System / 1: Message'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "t_alarms_parents",
     "legacyColumns": "aid:int(11) NOT NULL, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL, ntype:int(11) NOT NULL COMMENT '0: System / 1: Message / 2: Both'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "t_alarms_payments",
     "legacyColumns": "aid:int(11) NOT NULL, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL, ntype:int(11) NOT NULL COMMENT '0: System / 1: Message'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "t_alarms_requests",
     "legacyColumns": "aid:int(11) NOT NULL, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL, ntype:int(11) NOT NULL COMMENT '0: System / 1: Message'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "t_alarms_vaccinations",
     "legacyColumns": "aid:int(11) NOT NULL, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL, ntype:int(11) NOT NULL COMMENT '0: System / 1: Message'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
@@ -1675,8 +1675,8 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "t_notifications_log",
     "legacyColumns": "id:bigint(20) NOT NULL, date:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, name:varchar(100) DEFAULT NULL, status:int(11) NOT NULL, childId:bigint(20) NOT NULL, expiryDate:varchar(100) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "LegacyNotificationLog",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
@@ -1827,32 +1827,32 @@
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "custom_notifications",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "custom_notifications_assessment",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "custom_notifications_birthday",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "custom_notifications_contracts",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
@@ -1875,24 +1875,24 @@
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "custom_notifications_insurance",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "custom_notifications_medical",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "custom_notifications_medicine",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
@@ -1907,16 +1907,16 @@
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "custom_notifications_payments",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "custom_notifications_vaccinations",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
@@ -2059,56 +2059,56 @@
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "t_alarms",
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "t_alarms_assessment",
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "t_alarms_birthday",
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "t_alarms_contracts",
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, person_id:int(11) NOT NULL, type:varchar(50) NOT NULL, level:varchar(50) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "t_alarms_insurance",
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, med_id:int(11) NOT NULL, details:text NOT NULL, curr_date:varchar(20) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "t_alarms_medical",
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "t_alarms_medicine",
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, med_id:int(11) NOT NULL, details:text NOT NULL, curr_date:varchar(20) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
@@ -2123,16 +2123,16 @@
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "t_alarms_payments",
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "t_alarms_vaccinations",
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "Alarm",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {
@@ -2523,8 +2523,8 @@
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "t_notifications_log",
     "legacyColumns": "id:bigint(20) NOT NULL AUTO_INCREMENT, date:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, name:varchar(100) DEFAULT NULL, status:int(11) NOT NULL, childId:bigint(20) NOT NULL, expiryDate:varchar(100) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
+    "modernDestination": "LegacyNotificationLog",
+    "status": "mapped - migrated by migrate-alarms.ts",
     "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
   },
   {

@@ -24,6 +24,8 @@ async function main() {
 
     await tx.pushToken.deleteMany();
     await tx.notification.deleteMany();
+    await tx.notificationReceipt.deleteMany();
+    await tx.legacyNotificationLog.deleteMany();
     await tx.alarm.deleteMany();
     await tx.holiday.deleteMany();
     await tx.event.deleteMany();

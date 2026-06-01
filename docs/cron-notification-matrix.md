@@ -2,6 +2,8 @@
 
 Legacy cron and notification behavior must be restored as auditable background jobs.
 
+Historical rows from `t_alarms*`, `custom_notifications*`, `notifications_tokens`, and `t_notifications_log` are now covered by `src/scripts/migration/migrate-alarms.ts`. The rows below still need exact job scheduling and recurrence reconstruction for future alarm generation/sending.
+
 | Legacy Script | Tables Mentioned | Legacy Schedule | Modern Job Status | Restoration Notes |
 | --- | --- | --- | --- | --- |
 | Front/templates/admin/AlarmBar.php |  | unknown - inspect hosting cron schedule | missing/partial - map to background job | Needs schedule, recipients, template, delivery channel, log table. |

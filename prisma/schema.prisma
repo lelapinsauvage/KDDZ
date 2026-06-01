@@ -1804,10 +1804,12 @@ model Alarm {
   dueDate       DateTime? @db.Date
   isActive      Boolean   @default(true)
   branchId      String?   @db.Uuid
+  legacyData    Json?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   branch Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  notificationReceipts NotificationReceipt[]
 
   @@index([type])
   @@index([dueDate])
@@ -1843,6 +1845,8 @@ model PushToken {
   parentUserId String?      @db.Uuid
   token        String       @unique
   platform     PushPlatform
+  isActive     Boolean      @default(true)
+  legacyData   Json?
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
@@ -1852,7 +1856,48 @@ model PushToken {
   @@index([userId])
   @@index([parentUserId])
   @@index([platform])
+  @@index([isActive])
   @@map("push_tokens")
+}
+
+model NotificationReceipt {
+  id                   String   @id @default(uuid()) @db.Uuid
+  sourceTable          String
+  category             String
+  legacyNotificationId Int
+  legacyRecipientId    Int
+  recipientType        String
+  recipientId          String?  @db.Uuid
+  alarmId              String?  @db.Uuid
+  isRead               Boolean  @default(false)
+  metadata             Json?
+  createdAt            DateTime @default(now())
+
+  alarm Alarm? @relation(fields: [alarmId], references: [id], onDelete: SetNull)
+
+  @@unique([sourceTable, legacyNotificationId, legacyRecipientId, recipientType])
+  @@index([alarmId])
+  @@index([recipientId, recipientType])
+  @@index([category])
+  @@index([isRead])
+  @@map("notification_receipts")
+}
+
+model LegacyNotificationLog {
+  id            String   @id @default(uuid()) @db.Uuid
+  legacyId      Int      @unique
+  childId       String?  @db.Uuid
+  legacyChildId Int?
+  name          String?
+  status        Int?
+  expiryDate    String?
+  legacyData    Json?
+  createdAt     DateTime @default(now())
+
+  @@index([childId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("legacy_notification_logs")
 }
 
 // ─────────────────────────────────────────────

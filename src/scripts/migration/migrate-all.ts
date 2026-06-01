@@ -15,14 +15,15 @@
  *  11. Medical Forms (depends on Children)
  *  12. Payments      (depends on Children)
  *  13. Food/Calendar (depends on Branches)
- *  14. Messages      (depends on Users)
+ *  14. Alarms        (depends on Children, Users, Parent Users, Teachers)
+ *  15. Messages      (depends on Users)
  *
  * Usage:
  *   pnpm tsx src/scripts/migration/migrate-all.ts [--dry-run] [--step=N]
  *
  * Flags:
  *   --dry-run   Preview what would be migrated without writing to DB
- *   --step=N    Run only step N (1-14) and all its dependencies
+ *   --step=N    Run only step N (1-15) and all its dependencies
  *   --from=N    Start from step N (skip earlier steps, assumes they ran)
  */
 
@@ -44,6 +45,7 @@ import { migrateAssessments } from "./migrate-assessments";
 import { migrateMedical } from "./migrate-medical";
 import { migratePayments } from "./migrate-payments";
 import { migrateFoodCalendar } from "./migrate-food-calendar";
+import { migrateAlarms } from "./migrate-alarms";
 import { migrateMessages } from "./migrate-messages";
 
 interface MigrationStep {
@@ -131,7 +133,13 @@ const steps: MigrationStep[] = [
     },
   },
   {
-    name: "14. Messages",
+    name: "14. Alarms & Notifications",
+    run: async (prisma) => {
+      await migrateAlarms(prisma);
+    },
+  },
+  {
+    name: "15. Messages",
     run: async (prisma) => {
       await migrateMessages(prisma);
     },
