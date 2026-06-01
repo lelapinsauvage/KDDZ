@@ -21,7 +21,6 @@ These are the highest-risk migration gaps because source data exists and no curr
 
 | SQL Dump | Legacy Table | Estimated Rows | Columns |
 | --- | --- | --- | --- |
-| kiddzonl_garderie29sept.sql | t_teacher_info | 29 | tinfid, info_type, place, kindofjob, wfrom, wto, teacher_id, datetime, active |
 | kiddzonl_garderie29sept.sql | notifications_nature | 11 | id, n_name, descr, table1, table2, table3, table1_column, table3_column, child_column, subject_col, body_col, n_order, active |
 | kiddzonl_garderie29sept.sql | t_old_garderie | 8 | gid, gname, gyear, child_id, active, datetime |
 | kiddzonl_garderie29sept.sql | t_garderie_attachments | 7 | fattid, branch_id, att_title, exp_date, start_date, url, type, datetime, active |
@@ -240,7 +239,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie17-18.sql | t_teacher_address | 10 | 0 | covered by migrate-employees.ts |
 | kiddzonl_garderie17-18.sql | t_teacher_attachments | 8 | 0 | covered by migrate-employees.ts |
 | kiddzonl_garderie17-18.sql | t_teacher_attendance | 12 | 0 | not covered yet / needs explicit decision |
-| kiddzonl_garderie17-18.sql | t_teacher_info | 9 | 0 | not covered yet / needs explicit decision |
+| kiddzonl_garderie17-18.sql | t_teacher_info | 9 | 0 | covered by migrate-employees.ts |
 | kiddzonl_garderie29sept.sql | t_daily_report | 63 | 5938 | covered by migrate-daily-reports.ts |
 | kiddzonl_garderie29sept.sql | t_daily_milk | 7 | 1773 | covered by migrate-daily-reports.ts |
 | kiddzonl_garderie29sept.sql | t_region | 6 | 1097 | covered by migrate-locations.ts |
@@ -276,7 +275,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie29sept.sql | custom_notifications_contracts | 3 | 36 | covered by migrate-alarms.ts |
 | kiddzonl_garderie29sept.sql | login_settings | 3 | 31 | covered by migrate-settings.ts |
 | kiddzonl_garderie29sept.sql | parent_login_settings | 3 | 30 | covered by migrate-settings.ts |
-| kiddzonl_garderie29sept.sql | t_teacher_info | 9 | 29 | not covered yet / needs explicit decision |
+| kiddzonl_garderie29sept.sql | t_teacher_info | 9 | 29 | covered by migrate-employees.ts |
 | kiddzonl_garderie29sept.sql | t_teacher_address | 10 | 28 | covered by migrate-employees.ts |
 | kiddzonl_garderie29sept.sql | notifications_tokens | 6 | 26 | covered by migrate-alarms.ts |
 | kiddzonl_garderie29sept.sql | custom_notifications_insurance | 3 | 24 | covered by migrate-alarms.ts |
@@ -466,7 +465,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie_2018-2019.sql | t_teacher_address | 10 | 0 | covered by migrate-employees.ts |
 | kiddzonl_garderie_2018-2019.sql | t_teacher_attachments | 8 | 0 | covered by migrate-employees.ts |
 | kiddzonl_garderie_2018-2019.sql | t_teacher_attendance | 12 | 0 | not covered yet / needs explicit decision |
-| kiddzonl_garderie_2018-2019.sql | t_teacher_info | 9 | 0 | not covered yet / needs explicit decision |
+| kiddzonl_garderie_2018-2019.sql | t_teacher_info | 9 | 0 | covered by migrate-employees.ts |
 | kiddzonl_master29sept.sql | login_timestamps | 4 | 69 | covered by migrate-login-audit.ts |
 | kiddzonl_master29sept.sql | actions_control | 2 | 43 | not covered yet / needs explicit decision |
 | kiddzonl_master29sept.sql | login_settings | 3 | 30 | covered by migrate-settings.ts |

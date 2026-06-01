@@ -69,6 +69,7 @@ async function main() {
     await tx.nurseAttachment.deleteMany();
     await tx.nurseAddress.deleteMany();
     await tx.nurse.deleteMany();
+    await tx.teacherExperience.deleteMany();
     await tx.teacherAttachment.deleteMany();
     await tx.teacherAddress.deleteMany();
     await tx.teacher.deleteMany();

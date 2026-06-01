@@ -892,20 +892,31 @@ model TeacherLanguage {
 }
 
 model TeacherExperience {
-  id          String         @id @default(uuid()) @db.Uuid
-  teacherId   String         @db.Uuid
-  type        ExperienceType
-  company     String?
-  position    String?
-  fromDate    DateTime?      @db.Date
-  toDate      DateTime?      @db.Date
-  description String?        @db.Text
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  id              String         @id @default(uuid()) @db.Uuid
+  sourceDatabase  String?
+  legacyKey       String?        @unique
+  legacyId        Int?
+  legacyTeacherId Int?
+  teacherId       String         @db.Uuid
+  type            ExperienceType
+  company         String?
+  position        String?
+  fromDate        DateTime?      @db.Date
+  toDate          DateTime?      @db.Date
+  description     String?        @db.Text
+  isActive        Boolean        @default(true)
+  legacyData      Json?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 
   teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyTeacherId])
   @@index([teacherId])
+  @@index([type])
+  @@index([isActive])
   @@map("teacher_experiences")
 }
 

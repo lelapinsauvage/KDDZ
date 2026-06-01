@@ -112,6 +112,7 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_relatives` | Relative |
 | `t_parents` | Parent |
 | `t_teacher`, `t_teacher_address`, `t_teacher_attachments` | Teacher, TeacherAddress, TeacherAttachment |
+| `t_teacher_info` | TeacherExperience |
 | `t_nurse`, `t_nurse_attachments` | Nurse, NurseAttachment |
 | `t_doctor` | Doctor, DoctorAddress |
 | `t_manager`, `t_manager_address` | Manager, ManagerAddress |

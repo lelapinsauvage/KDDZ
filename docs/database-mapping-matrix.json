@@ -827,9 +827,9 @@
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "t_teacher_info",
     "legacyColumns": "tinfid:int(11) NOT NULL AUTO_INCREMENT, info_type:varchar(50) CHARACTER SET utf8 NOT NULL, place:varchar(50) CHARACTER SET utf8 NOT NULL, kindofjob:varchar(50) CHARACTER SET utf8 NOT NULL, wfrom:varchar(50) CHARACTER SET utf8 NOT NULL, wto:varchar(50) CHARACTER SET utf8 NOT NULL, teacher_id:varchar(50) CHARACTER SET utf8 NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "TeacherExperience",
+    "status": "mapped - migrated by migrate-employees.ts",
+    "reconciliation": "Legacy teacher info rows restored as TeacherExperience with type, place/company, position, date range, active flag, teacher mapping, and raw legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1803,9 +1803,9 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "t_teacher_info",
     "legacyColumns": "tinfid:int(11) NOT NULL, info_type:varchar(50) CHARACTER SET utf8 NOT NULL, place:varchar(50) CHARACTER SET utf8 NOT NULL, kindofjob:varchar(50) CHARACTER SET utf8 NOT NULL, wfrom:varchar(50) CHARACTER SET utf8 NOT NULL, wto:varchar(50) CHARACTER SET utf8 NOT NULL, teacher_id:varchar(50) CHARACTER SET utf8 NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "TeacherExperience",
+    "status": "mapped - migrated by migrate-employees.ts",
+    "reconciliation": "Legacy teacher info rows restored as TeacherExperience with type, place/company, position, date range, active flag, teacher mapping, and raw legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2635,9 +2635,9 @@
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "t_teacher_info",
     "legacyColumns": "tinfid:int(11) NOT NULL AUTO_INCREMENT, info_type:varchar(50) CHARACTER SET utf8 NOT NULL, place:varchar(50) CHARACTER SET utf8 NOT NULL, kindofjob:varchar(50) CHARACTER SET utf8 NOT NULL, wfrom:varchar(50) CHARACTER SET utf8 NOT NULL, wto:varchar(50) CHARACTER SET utf8 NOT NULL, teacher_id:varchar(50) CHARACTER SET utf8 NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "TeacherExperience",
+    "status": "mapped - migrated by migrate-employees.ts",
+    "reconciliation": "Legacy teacher info rows restored as TeacherExperience with type, place/company, position, date range, active flag, teacher mapping, and raw legacy JSON."
   },
   {
     "sourceDump": "kiddzonl_master29sept",

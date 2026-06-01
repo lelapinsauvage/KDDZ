@@ -54,15 +54,16 @@
  * Sub-tables:
  *   t_teacher_address → TeacherAddress
  *   t_teacher_attachments → TeacherAttachment
+ *   t_teacher_info → TeacherExperience
  *   t_nurse_attachments → NurseAttachment
  *   t_manager_address → ManagerAddress
  *
  * Prerequisites: Branches must be migrated first.
  */
 
-import type { PrismaClient } from "@/generated/prisma/client";
+import type { ExperienceType, PrismaClient } from "@/generated/prisma/client";
 import { createPrismaClient } from "./lib/prisma-client";
-import { queryMysql, closeMysqlPool } from "./lib/mysql-client";
+import { queryMysql, closeMysqlPool, getMysqlConfig } from "./lib/mysql-client";
 import {
   generateUUID,
   setMapping,
@@ -71,6 +72,7 @@ import {
   parseDate,
   cleanString,
   toBool,
+  toInt,
   log,
   logError,
   logProgress,
@@ -151,6 +153,8 @@ async function migrateTeachers(prisma: PrismaClient, dryRun: boolean) {
   await migrateTeacherAddresses(prisma, dryRun);
   // Teacher attachments
   await migrateTeacherAttachments(prisma, dryRun);
+  // Teacher experience/stage/workshop rows
+  await migrateTeacherExperiences(prisma, dryRun);
 }
 
 interface OldTeacherAddress {
@@ -205,6 +209,25 @@ interface OldTeacherAttachment {
   active: number;
 }
 
+interface OldTeacherInfo {
+  tinfid: number;
+  info_type: string;
+  place: string;
+  kindofjob: string;
+  wfrom: string;
+  wto: string;
+  teacher_id: string;
+  datetime: string;
+  active: number;
+}
+
+function mapExperienceType(value: string): ExperienceType {
+  const normalized = value.toLowerCase().trim();
+  if (normalized === "stage") return "STAGE";
+  if (normalized === "shop") return "WORKSHOP";
+  return "WORK";
+}
+
 async function migrateTeacherAttachments(
   prisma: PrismaClient,
   dryRun: boolean
@@ -231,6 +254,71 @@ async function migrateTeacherAttachments(
     count++;
   }
   log(`Teacher attachments: ${count} migrated`);
+}
+
+async function migrateTeacherExperiences(
+  prisma: PrismaClient,
+  dryRun: boolean
+) {
+  const rows = await queryMysql<OldTeacherInfo>(
+    "SELECT * FROM t_teacher_info ORDER BY tinfid"
+  );
+  log(`Found ${rows.length} teacher info rows in t_teacher_info`);
+
+  const sourceDatabase = getMysqlConfig().database || "unknown";
+  let migrated = 0;
+  let skipped = 0;
+  let orphaned = 0;
+
+  for (const row of rows) {
+    const legacyId = toInt(row.tinfid);
+    const legacyTeacherId = toInt(row.teacher_id);
+    const teacherId = getMapping("teacher", legacyTeacherId);
+    if (!teacherId || !legacyId) {
+      orphaned++;
+      continue;
+    }
+
+    const legacyKey = `${sourceDatabase}:t_teacher_info:${legacyId}`;
+    const existing = await prisma.teacherExperience.findUnique({
+      where: { legacyKey },
+    });
+    if (existing) {
+      setMapping("teacher_info", legacyId, existing.id);
+      skipped++;
+      continue;
+    }
+
+    const id = generateUUID();
+    if (!dryRun) {
+      await prisma.teacherExperience.create({
+        data: {
+          id,
+          sourceDatabase,
+          legacyKey,
+          legacyId,
+          legacyTeacherId,
+          teacherId,
+          type: mapExperienceType(row.info_type),
+          company: cleanString(row.place),
+          position: cleanString(row.kindofjob),
+          fromDate: parseDate(row.wfrom),
+          toDate: parseDate(row.wto),
+          isActive: toBool(row.active),
+          legacyData: JSON.parse(JSON.stringify(row)),
+          createdAt: parseDate(row.datetime) ?? new Date(),
+        },
+      });
+    }
+
+    setMapping("teacher_info", legacyId, id);
+    migrated++;
+    logProgress(migrated, rows.length, "Teacher Experiences");
+  }
+
+  log(
+    `Teacher experiences: ${migrated} migrated, ${skipped} skipped, ${orphaned} orphaned`
+  );
 }
 
 // ---------------------------------------------------------------------------

@@ -203,14 +203,15 @@ export async function getEmployee(
     const { model } = getDelegate(type);
 
     // Manager model has fewer relations — no languages, experiences, documents
-    const include: Record<string, boolean> = {
+    const include: Record<string, unknown> = {
       branch: true,
       addresses: true,
       attachments: true,
     };
     if (type !== "manager") {
       include.languages = true;
-      include.experiences = true;
+      include.experiences =
+        type === "teacher" ? { where: { isActive: true } } : true;
       include.documents = true;
     }
     if (type === "teacher") {
@@ -513,7 +514,7 @@ export async function updateEmployee(
 
       if (data.experiences !== undefined) {
         updateData.experiences = {
-          deleteMany: {},
+          deleteMany: type === "teacher" ? { isActive: true } : {},
           ...(data.experiences.length
             ? {
                 create: data.experiences.map((e) => ({
