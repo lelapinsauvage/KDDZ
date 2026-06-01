@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireOrg, requireOrgSafe } from "@/lib/require-org";
 import { verifyChildAccess } from "@/lib/verify-org-access";
@@ -20,6 +21,33 @@ interface GetAbsenceReportsParams {
   search?: string;
   page?: number;
   pageSize?: number;
+}
+
+const attachmentPayloadSchema = z
+  .array(
+    z.object({
+      filename: z.string().min(1).max(240),
+      fileUrl: z.string().min(1).max(2048),
+    }),
+  )
+  .max(20);
+
+const removeAttachmentIdsSchema = z.array(z.string().uuid()).max(50);
+
+function parseJsonPayload<T>(
+  value: unknown,
+  schema: z.ZodType<T>,
+  fallback: T,
+): T {
+  if (typeof value !== "string" || value.trim() === "") {
+    return fallback;
+  }
+  try {
+    const parsed = schema.safeParse(JSON.parse(value));
+    return parsed.success ? parsed.data : fallback;
+  } catch {
+    return fallback;
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -177,6 +205,11 @@ export async function createAbsenceReport(formData: FormData) {
     }
 
     const data = parsed.data;
+    const attachments = parseJsonPayload(
+      rawData.attachments,
+      attachmentPayloadSchema,
+      [],
+    );
 
     // Verify child belongs to this org
     const childOk = await verifyChildAccess(data.childId, ctx.organizationId);
@@ -194,10 +227,19 @@ export async function createAbsenceReport(formData: FormData) {
         doctorName: data.hospitalized ? (data.doctorName || null) : null,
         status: data.status,
         createdById: ctx.userId,
+        attachments: attachments.length
+          ? {
+              create: attachments.map((attachment) => ({
+                filename: attachment.filename,
+                fileUrl: attachment.fileUrl,
+              })),
+            }
+          : undefined,
       },
     });
 
     revalidatePath("/absent-reports");
+    revalidatePath(`/absent-reports/${report.id}`);
     return { success: true, reportId: report.id };
   } catch (error) {
     console.error("createAbsenceReport error:", error);
@@ -240,23 +282,60 @@ export async function updateAbsenceReport(id: string, formData: FormData) {
     }
 
     const data = parsed.data;
+    const attachments = parseJsonPayload(
+      rawData.attachments,
+      attachmentPayloadSchema,
+      [],
+    );
+    const removeAttachmentIds = parseJsonPayload(
+      rawData.removeAttachmentIds,
+      removeAttachmentIdsSchema,
+      [],
+    );
 
-    const report = await db.absenceReport.update({
-      where: { id },
-      data: {
-        childId: data.childId,
-        date: new Date(data.date),
-        reason: data.reason || null,
-        absentFrom: data.absentFrom ? new Date(data.absentFrom) : null,
-        absentTo: data.absentTo ? new Date(data.absentTo) : null,
-        hospitalized: data.hospitalized ?? false,
-        hospitalName: data.hospitalized ? (data.hospitalName || null) : null,
-        doctorName: data.hospitalized ? (data.doctorName || null) : null,
-        status: data.status,
-      },
+    const childOk = await verifyChildAccess(data.childId, ctx.organizationId);
+    if (!childOk) return { error: "Invalid child" };
+
+    const report = await db.$transaction(async (tx) => {
+      const updatedReport = await tx.absenceReport.update({
+        where: { id },
+        data: {
+          childId: data.childId,
+          date: new Date(data.date),
+          reason: data.reason || null,
+          absentFrom: data.absentFrom ? new Date(data.absentFrom) : null,
+          absentTo: data.absentTo ? new Date(data.absentTo) : null,
+          hospitalized: data.hospitalized ?? false,
+          hospitalName: data.hospitalized ? (data.hospitalName || null) : null,
+          doctorName: data.hospitalized ? (data.doctorName || null) : null,
+          status: data.status,
+        },
+      });
+
+      if (removeAttachmentIds.length) {
+        await tx.absenceAttachment.deleteMany({
+          where: {
+            absenceReportId: id,
+            id: { in: removeAttachmentIds },
+          },
+        });
+      }
+
+      if (attachments.length) {
+        await tx.absenceAttachment.createMany({
+          data: attachments.map((attachment) => ({
+            absenceReportId: id,
+            filename: attachment.filename,
+            fileUrl: attachment.fileUrl,
+          })),
+        });
+      }
+
+      return updatedReport;
     });
 
     revalidatePath("/absent-reports");
+    revalidatePath(`/absent-reports/${id}`);
     return { success: true, reportId: report.id };
   } catch (error) {
     console.error("updateAbsenceReport error:", error);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -12,6 +12,7 @@ import {
   createAbsenceReport,
   updateAbsenceReport,
 } from "@/lib/actions/absent-reports";
+import { uploadFileWithPresign } from "@/lib/uploads/client-upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,28 +26,48 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UserX, Loader2, Building2, Paperclip, Upload } from "lucide-react";
+import {
+  UserX,
+  Loader2,
+  Building2,
+  Paperclip,
+  Upload,
+  FileText,
+  X,
+} from "lucide-react";
 
 interface ChildOption {
   id: string;
   name: string;
+  branchId: string;
   className: string;
+}
+
+interface ExistingAttachment {
+  id: string;
+  filename: string;
+  fileUrl: string;
 }
 
 interface AbsenceReportFormProps {
   childrenList: ChildOption[];
   defaultValues?: Partial<AbsenceReportFormValues>;
   reportId?: string;
+  existingAttachments?: ExistingAttachment[];
 }
 
 export function AbsenceReportForm({
   childrenList,
   defaultValues,
   reportId,
+  existingAttachments = [],
 }: AbsenceReportFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [removedAttachmentIds, setRemovedAttachmentIds] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
     register,
@@ -63,20 +84,69 @@ export function AbsenceReportForm({
     },
   });
 
+  function addPendingFiles(fileList: FileList | null) {
+    const files = Array.from(fileList ?? []);
+    if (files.length) {
+      setPendingFiles((current) => [...current, ...files]);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
+
   function onSubmit(data: AbsenceReportFormValues) {
     setError(null);
-    const fd = new FormData();
-    fd.set("childId", data.childId);
-    fd.set("date", data.date);
-    if (data.reason) fd.set("reason", data.reason);
-    if (data.absentFrom) fd.set("absentFrom", data.absentFrom);
-    if (data.absentTo) fd.set("absentTo", data.absentTo);
-    fd.set("hospitalized", String(data.hospitalized ?? false));
-    if (data.hospitalName) fd.set("hospitalName", data.hospitalName);
-    if (data.doctorName) fd.set("doctorName", data.doctorName);
-    fd.set("status", data.status ?? "PENDING");
-
     startTransition(async () => {
+      const fd = new FormData();
+      fd.set("childId", data.childId);
+      fd.set("date", data.date);
+      if (data.reason) fd.set("reason", data.reason);
+      if (data.absentFrom) fd.set("absentFrom", data.absentFrom);
+      if (data.absentTo) fd.set("absentTo", data.absentTo);
+      fd.set("hospitalized", String(data.hospitalized ?? false));
+      if (data.hospitalName) fd.set("hospitalName", data.hospitalName);
+      if (data.doctorName) fd.set("doctorName", data.doctorName);
+      fd.set("status", data.status ?? "PENDING");
+
+      if (pendingFiles.length) {
+        const child = childrenList.find((item) => item.id === data.childId);
+        if (!child?.branchId) {
+          setError("Cannot upload attachments because the child's branch is unavailable");
+          return;
+        }
+
+        try {
+          const uploadedAttachments: Array<{
+            filename: string;
+            fileUrl: string;
+          }> = [];
+          for (const file of pendingFiles) {
+            const uploaded = await uploadFileWithPresign({
+              branchId: child.branchId,
+              scope: "absence-report",
+              ownerId: reportId ?? data.childId,
+              file,
+            });
+            uploadedAttachments.push({
+              filename: file.name,
+              fileUrl: uploaded.publicUrl,
+            });
+          }
+          fd.set("attachments", JSON.stringify(uploadedAttachments));
+        } catch (uploadError) {
+          setError(
+            uploadError instanceof Error
+              ? uploadError.message
+              : "Failed to upload attachments",
+          );
+          return;
+        }
+      }
+
+      if (removedAttachmentIds.length) {
+        fd.set("removeAttachmentIds", JSON.stringify(removedAttachmentIds));
+      }
+
       const result = reportId
         ? await updateAbsenceReport(reportId, fd)
         : await createAbsenceReport(fd);
@@ -84,10 +154,14 @@ export function AbsenceReportForm({
       if ("error" in result && result.error) {
         setError(result.error);
       } else {
-        router.push("/absent-reports");
+        router.push(reportId ? `/absent-reports/${reportId}` : "/absent-reports");
       }
     });
   }
+
+  const visibleExistingAttachments = existingAttachments.filter(
+    (attachment) => !removedAttachmentIds.includes(attachment.id),
+  );
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-4 md:p-6">
@@ -237,16 +311,98 @@ export function AbsenceReportForm({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/50 p-8 text-center transition-colors hover:border-primary/50 hover:bg-muted">
-            <Upload className="size-8 text-muted-foreground" />
-            <span className="text-sm font-medium text-muted-foreground">
-              Click to upload files
-            </span>
-            <span className="text-xs text-muted-foreground/70">
-              Medical documents, doctor notes, etc.
-            </span>
-            <input type="file" multiple className="hidden" />
-          </label>
+          <div className="space-y-3">
+            {(visibleExistingAttachments.length > 0 || pendingFiles.length > 0) && (
+              <div className="space-y-2">
+                {visibleExistingAttachments.map((attachment) => (
+                  <div
+                    key={attachment.id}
+                    className="flex items-center gap-2 rounded-lg border bg-muted/30 p-3"
+                  >
+                    <FileText className="size-5 shrink-0 text-muted-foreground" />
+                    <a
+                      href={attachment.fileUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="min-w-0 flex-1 truncate text-sm font-medium text-primary hover:underline"
+                    >
+                      {attachment.filename}
+                    </a>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-8 shrink-0"
+                      disabled={isPending}
+                      onClick={() =>
+                        setRemovedAttachmentIds((current) => [
+                          ...current,
+                          attachment.id,
+                        ])
+                      }
+                    >
+                      <X className="size-4" />
+                    </Button>
+                  </div>
+                ))}
+                {pendingFiles.map((file, index) => (
+                  <div
+                    key={`${file.name}-${file.lastModified}-${index}`}
+                    className="flex items-center gap-2 rounded-lg border bg-muted/30 p-3"
+                  >
+                    <FileText className="size-5 shrink-0 text-muted-foreground" />
+                    <div className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium">
+                        {file.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        Ready to upload
+                      </span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-8 shrink-0"
+                      disabled={isPending}
+                      onClick={() =>
+                        setPendingFiles((current) =>
+                          current.filter((_, fileIndex) => fileIndex !== index),
+                        )
+                      }
+                    >
+                      <X className="size-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <label
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={(event) => {
+                event.preventDefault();
+                addPendingFiles(event.dataTransfer.files);
+              }}
+              className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/50 p-8 text-center transition-colors hover:border-primary/50 hover:bg-muted"
+            >
+              <Upload className="size-8 text-muted-foreground" />
+              <span className="text-sm font-medium text-muted-foreground">
+                Click to upload files
+              </span>
+              <span className="text-xs text-muted-foreground/70">
+                Medical documents, doctor notes, etc.
+              </span>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*,.pdf"
+                className="hidden"
+                onChange={(event) => addPendingFiles(event.target.files)}
+              />
+            </label>
+          </div>
         </CardContent>
       </Card>
 
