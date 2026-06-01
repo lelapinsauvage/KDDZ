@@ -12,25 +12,26 @@
  *   8. Employees    (depends on Branches)
  *   9. Garderie Misc (depends on Branches, Children, Employees)
  *  10. Users        (depends on Branches, Children via Parents)
- *  11. Auth Metadata (depends on Users)
- *  12. Login Audit   (depends on Users, Parent Users when resolvable)
- *  13. Legacy Settings (optional settings/config tables)
- *  14. Daily Reports (depends on Children)
- *  15. Absences      (depends on Children, Users)
- *  16. Calls         (depends on Children, Employees, Users)
- *  17. Assessments   (depends on Children, Classes, Employees, Users, Organization)
- *  18. Medical Forms (depends on Children)
- *  19. Payments      (depends on Children)
- *  20. Food/Calendar (depends on Branches)
- *  21. Alarms        (depends on Children, Users, Parent Users, Teachers)
- *  22. Messages      (depends on Users)
+ *  11. Control Plane (depends on Users when user grants are resolvable)
+ *  12. Auth Metadata (depends on Users)
+ *  13. Login Audit   (depends on Users, Parent Users when resolvable)
+ *  14. Legacy Settings (optional settings/config tables)
+ *  15. Daily Reports (depends on Children)
+ *  16. Absences      (depends on Children, Users)
+ *  17. Calls         (depends on Children, Employees, Users)
+ *  18. Assessments   (depends on Children, Classes, Employees, Users, Organization)
+ *  19. Medical Forms (depends on Children)
+ *  20. Payments      (depends on Children)
+ *  21. Food/Calendar (depends on Branches)
+ *  22. Alarms        (depends on Children, Users, Parent Users, Teachers)
+ *  23. Messages      (depends on Users)
  *
  * Usage:
  *   pnpm tsx src/scripts/migration/migrate-all.ts [--dry-run] [--step=N]
  *
  * Flags:
  *   --dry-run   Preview what would be migrated without writing to DB
- *   --step=N    Run only step N (1-22) and all its dependencies
+ *   --step=N    Run only step N (1-23) and all its dependencies
  *   --from=N    Start from step N (skip earlier steps, assumes they ran)
  */
 
@@ -49,6 +50,7 @@ import { migrateParents } from "./migrate-parents";
 import { migrateEmployees } from "./migrate-employees";
 import { migrateGarderieMisc } from "./migrate-garderie-misc";
 import { migrateUsers } from "./migrate-users";
+import { migrateControlPlane } from "./migrate-control-plane";
 import { migrateAuthMetadata } from "./migrate-auth-metadata";
 import { migrateLoginAudit } from "./migrate-login-audit";
 import { migrateLegacySettings } from "./migrate-settings";
@@ -129,73 +131,79 @@ const steps: MigrationStep[] = [
     },
   },
   {
-    name: "11. Auth Metadata",
+    name: "11. Control Plane",
+    run: async (prisma) => {
+      await migrateControlPlane(prisma);
+    },
+  },
+  {
+    name: "12. Auth Metadata",
     run: async (prisma) => {
       await migrateAuthMetadata(prisma);
     },
   },
   {
-    name: "12. Login Audit",
+    name: "13. Login Audit",
     run: async (prisma) => {
       await migrateLoginAudit(prisma);
     },
   },
   {
-    name: "13. Legacy Settings",
+    name: "14. Legacy Settings",
     run: async (prisma) => {
       await migrateLegacySettings(prisma);
     },
   },
   {
-    name: "14. Daily Reports",
+    name: "15. Daily Reports",
     run: async (prisma) => {
       await migrateDailyReports(prisma);
     },
   },
   {
-    name: "15. Absences",
+    name: "16. Absences",
     run: async (prisma) => {
       await migrateAbsences(prisma);
     },
   },
   {
-    name: "16. Calls",
+    name: "17. Calls",
     run: async (prisma) => {
       await migrateCalls(prisma);
     },
   },
   {
-    name: "17. Assessments",
+    name: "18. Assessments",
     run: async (prisma, orgId) => {
       await migrateAssessments(prisma, orgId);
     },
   },
   {
-    name: "18. Medical Forms",
+    name: "19. Medical Forms",
     run: async (prisma) => {
       await migrateMedical(prisma);
     },
   },
   {
-    name: "19. Payments",
+    name: "20. Payments",
     run: async (prisma) => {
       await migratePayments(prisma);
     },
   },
   {
-    name: "20. Food, Calendar & Holidays",
+    name: "21. Food, Calendar & Holidays",
     run: async (prisma, orgId) => {
       await migrateFoodCalendar(prisma, orgId);
     },
   },
   {
-    name: "21. Alarms & Notifications",
+    name: "22. Alarms & Notifications",
     run: async (prisma) => {
       await migrateAlarms(prisma);
     },
   },
   {
-    name: "22. Messages",
+    name: "23. Messages",
     run: async (prisma) => {
       await migrateMessages(prisma);
     },

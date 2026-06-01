@@ -2,8 +2,8 @@
  * Migration: legacy PHP auth metadata -> LegacyAuthRecord
  *
  * These rows are not active Auth.js users. They preserve pending confirmation
- * tokens, profile fields/values, and parent-login level metadata from the old
- * PHP login library.
+ * tokens, profile fields/values, login levels, manager-login metadata, and
+ * parent-login level metadata from the old PHP login library.
  *
  * Prerequisites: Users should be migrated first so records can resolve userId
  * where possible.
@@ -50,12 +50,27 @@ interface OldLoginProfileField {
   signup: string;
 }
 
-interface OldParentLoginLevel {
+interface OldLoginLevel {
   id: number;
   level_name: string;
   level_disabled: number;
   redirect: string | null;
   welcome_email: number;
+}
+
+interface OldLegacyLoginUser {
+  user_id: number;
+  user_level: string;
+  restricted: number;
+  username: string;
+  name: string;
+  email: string;
+  password: string;
+  db_id: number;
+  timestamp: string | Date;
+  usites: string;
+  uclasses: string;
+  uchild: string;
 }
 
 function legacyData(row: object) {
@@ -65,7 +80,7 @@ function legacyData(row: object) {
 function legacyKey(
   sourceDatabase: string,
   table: string,
-  legacyId: number
+  legacyId: number | string
 ): string {
   return `${sourceDatabase}:${table}:${legacyId}`;
 }
@@ -103,11 +118,14 @@ async function createRecord(
     isDisabled?: boolean | null;
     redirect?: string | null;
     welcomeEmail?: boolean | null;
+    legacyKeyValue?: string | null;
     legacyData: object;
   },
   dryRun: boolean
 ): Promise<"migrated" | "skipped"> {
-  const key = legacyKey(data.sourceDatabase, data.legacyTable, data.legacyId);
+  const key =
+    data.legacyKeyValue ??
+    legacyKey(data.sourceDatabase, data.legacyTable, data.legacyId);
   const existing = await prisma.legacyAuthRecord.findUnique({
     where: { legacyKey: key },
   });
@@ -143,41 +161,45 @@ async function createRecord(
 async function migrateLoginConfirm(
   prisma: PrismaClient,
   sourceDatabase: string,
+  table: "login_confirm" | "login_confirm_man",
   dryRun: boolean
 ) {
-  if (!(await tableExists("login_confirm"))) {
-    log("login_confirm: table not present, skipping");
+  if (!(await tableExists(table))) {
+    log(`${table}: table not present, skipping`);
     return;
   }
 
   const rows = await queryMysql<OldLoginConfirm>(
-    "SELECT * FROM login_confirm ORDER BY id"
+    `SELECT * FROM ${table} ORDER BY id`
   );
-  log(`Found ${rows.length} rows in login_confirm`);
+  log(`Found ${rows.length} rows in ${table}`);
 
   let migrated = 0;
   let skipped = 0;
 
-  for (const row of rows) {
+  for (const [index, row] of rows.entries()) {
     const legacyId = toInt(row.id, 0);
-    if (!legacyId) {
-      skipped++;
-      continue;
-    }
-
     const email = cleanString(row.email);
+    const keyDiscriminator =
+      legacyId === 0
+        ? `${legacyId}:${index}:${cleanString(row.key) ?? email ?? cleanString(row.username) ?? "unknown"}`
+        : legacyId;
     const result = await createRecord(
       prisma,
       {
         sourceDatabase,
-        legacyTable: "login_confirm",
+        legacyTable: table,
         legacyId,
-        recordType: cleanString(row.type) ?? "login_confirm",
+        recordType: cleanString(row.type) ?? table,
         userId: await resolveUserByEmail(prisma, email),
         username: cleanString(row.username),
         email,
         recordKey: cleanString(row.key),
         recordValue: cleanString(row.data),
+        legacyKeyValue:
+          legacyId === 0
+            ? legacyKey(sourceDatabase, table, keyDiscriminator)
+            : null,
         legacyData: row,
       },
       dryRun
@@ -185,26 +207,27 @@ async function migrateLoginConfirm(
 
     if (result === "migrated") migrated++;
     else skipped++;
-    logProgress(migrated + skipped, rows.length, "Login Confirm");
+    logProgress(migrated + skipped, rows.length, table);
   }
 
-  log(`login_confirm: ${migrated} migrated, ${skipped} skipped`);
+  log(`${table}: ${migrated} migrated, ${skipped} skipped`);
 }
 
 async function migrateLoginProfiles(
   prisma: PrismaClient,
   sourceDatabase: string,
+  table: "login_profiles" | "login_profiles_man",
   dryRun: boolean
 ) {
-  if (!(await tableExists("login_profiles"))) {
-    log("login_profiles: table not present, skipping");
+  if (!(await tableExists(table))) {
+    log(`${table}: table not present, skipping`);
     return;
   }
 
   const rows = await queryMysql<OldLoginProfile>(
-    "SELECT * FROM login_profiles ORDER BY p_id"
+    `SELECT * FROM ${table} ORDER BY p_id`
   );
-  log(`Found ${rows.length} rows in login_profiles`);
+  log(`Found ${rows.length} rows in ${table}`);
 
   let migrated = 0;
   let skipped = 0;
@@ -221,9 +244,12 @@ async function migrateLoginProfiles(
       prisma,
       {
         sourceDatabase,
-        legacyTable: "login_profiles",
+        legacyTable: table,
         legacyId,
-        recordType: "profile_value",
+        recordType:
+          table === "login_profiles_man"
+            ? "manager_profile_value"
+            : "profile_value",
         userId: legacyUserId ? getMapping("user", legacyUserId) : null,
         legacyUserId,
         recordKey:
@@ -237,26 +263,27 @@ async function migrateLoginProfiles(
 
     if (result === "migrated") migrated++;
     else skipped++;
-    logProgress(migrated + skipped, rows.length, "Login Profiles");
+    logProgress(migrated + skipped, rows.length, table);
   }
 
-  log(`login_profiles: ${migrated} migrated, ${skipped} skipped`);
+  log(`${table}: ${migrated} migrated, ${skipped} skipped`);
 }
 
 async function migrateLoginProfileFields(
   prisma: PrismaClient,
   sourceDatabase: string,
+  table: "login_profile_fields" | "login_profile_fields_man",
   dryRun: boolean
 ) {
-  if (!(await tableExists("login_profile_fields"))) {
-    log("login_profile_fields: table not present, skipping");
+  if (!(await tableExists(table))) {
+    log(`${table}: table not present, skipping`);
     return;
   }
 
   const rows = await queryMysql<OldLoginProfileField>(
-    "SELECT * FROM login_profile_fields ORDER BY id"
+    `SELECT * FROM ${table} ORDER BY id`
   );
-  log(`Found ${rows.length} rows in login_profile_fields`);
+  log(`Found ${rows.length} rows in ${table}`);
 
   let migrated = 0;
   let skipped = 0;
@@ -272,9 +299,12 @@ async function migrateLoginProfileFields(
       prisma,
       {
         sourceDatabase,
-        legacyTable: "login_profile_fields",
+        legacyTable: table,
         legacyId,
-        recordType: "profile_field",
+        recordType:
+          table === "login_profile_fields_man"
+            ? "manager_profile_field"
+            : "profile_field",
         recordKey: cleanString(row.label),
         recordValue: cleanString(row.type),
         isDisabled: !toBool(row.public),
@@ -285,26 +315,27 @@ async function migrateLoginProfileFields(
 
     if (result === "migrated") migrated++;
     else skipped++;
-    logProgress(migrated + skipped, rows.length, "Login Profile Fields");
+    logProgress(migrated + skipped, rows.length, table);
   }
 
-  log(`login_profile_fields: ${migrated} migrated, ${skipped} skipped`);
+  log(`${table}: ${migrated} migrated, ${skipped} skipped`);
 }
 
-async function migrateParentLoginLevels(
+async function migrateLoginLevels(
   prisma: PrismaClient,
   sourceDatabase: string,
+  table: "login_levels" | "login_levels_man" | "parent_login_levels",
   dryRun: boolean
 ) {
-  if (!(await tableExists("parent_login_levels"))) {
-    log("parent_login_levels: table not present, skipping");
+  if (!(await tableExists(table))) {
+    log(`${table}: table not present, skipping`);
     return;
   }
 
-  const rows = await queryMysql<OldParentLoginLevel>(
-    "SELECT * FROM parent_login_levels ORDER BY id"
+  const rows = await queryMysql<OldLoginLevel>(
+    `SELECT * FROM ${table} ORDER BY id`
   );
-  log(`Found ${rows.length} rows in parent_login_levels`);
+  log(`Found ${rows.length} rows in ${table}`);
 
   let migrated = 0;
   let skipped = 0;
@@ -320,9 +351,14 @@ async function migrateParentLoginLevels(
       prisma,
       {
         sourceDatabase,
-        legacyTable: "parent_login_levels",
+        legacyTable: table,
         legacyId,
-        recordType: "parent_login_level",
+        recordType:
+          table === "parent_login_levels"
+            ? "parent_login_level"
+            : table === "login_levels_man"
+              ? "manager_login_level"
+              : "login_level",
         recordKey: cleanString(row.level_name),
         isDisabled: toBool(row.level_disabled),
         redirect: cleanString(row.redirect),
@@ -334,10 +370,64 @@ async function migrateParentLoginLevels(
 
     if (result === "migrated") migrated++;
     else skipped++;
-    logProgress(migrated + skipped, rows.length, "Parent Login Levels");
+    logProgress(migrated + skipped, rows.length, table);
   }
 
-  log(`parent_login_levels: ${migrated} migrated, ${skipped} skipped`);
+  log(`${table}: ${migrated} migrated, ${skipped} skipped`);
+}
+
+async function migrateManagerLoginUsers(
+  prisma: PrismaClient,
+  sourceDatabase: string,
+  dryRun: boolean
+) {
+  const table = "login_users_man";
+  if (!(await tableExists(table))) {
+    log(`${table}: table not present, skipping`);
+    return;
+  }
+
+  const rows = await queryMysql<OldLegacyLoginUser>(
+    "SELECT * FROM login_users_man ORDER BY user_id"
+  );
+  log(`Found ${rows.length} rows in login_users_man`);
+
+  let migrated = 0;
+  let skipped = 0;
+
+  for (const row of rows) {
+    const legacyId = toInt(row.user_id, 0);
+    if (!legacyId) {
+      skipped++;
+      continue;
+    }
+
+    const email = cleanString(row.email);
+    const result = await createRecord(
+      prisma,
+      {
+        sourceDatabase,
+        legacyTable: table,
+        legacyId,
+        recordType: "manager_login_user",
+        userId: await resolveUserByEmail(prisma, email),
+        legacyUserId: legacyId,
+        username: cleanString(row.username),
+        email,
+        recordKey: cleanString(row.username) ?? `user:${legacyId}`,
+        recordValue: cleanString(row.user_level),
+        isDisabled: toBool(row.restricted),
+        legacyData: row,
+      },
+      dryRun
+    );
+
+    if (result === "migrated") migrated++;
+    else skipped++;
+    logProgress(migrated + skipped, rows.length, table);
+  }
+
+  log(`${table}: ${migrated} migrated, ${skipped} skipped`);
 }
 
 export async function migrateAuthMetadata(prisma: PrismaClient) {
@@ -345,10 +435,36 @@ export async function migrateAuthMetadata(prisma: PrismaClient) {
   const dryRun = isDryRun();
   const sourceDatabase = getMysqlConfig().database || "unknown";
 
-  await migrateLoginConfirm(prisma, sourceDatabase, dryRun);
-  await migrateLoginProfiles(prisma, sourceDatabase, dryRun);
-  await migrateLoginProfileFields(prisma, sourceDatabase, dryRun);
-  await migrateParentLoginLevels(prisma, sourceDatabase, dryRun);
+  await migrateLoginConfirm(prisma, sourceDatabase, "login_confirm", dryRun);
+  await migrateLoginConfirm(prisma, sourceDatabase, "login_confirm_man", dryRun);
+  await migrateLoginProfiles(prisma, sourceDatabase, "login_profiles", dryRun);
+  await migrateLoginProfiles(
+    prisma,
+    sourceDatabase,
+    "login_profiles_man",
+    dryRun
+  );
+  await migrateLoginProfileFields(
+    prisma,
+    sourceDatabase,
+    "login_profile_fields",
+    dryRun
+  );
+  await migrateLoginProfileFields(
+    prisma,
+    sourceDatabase,
+    "login_profile_fields_man",
+    dryRun
+  );
+  await migrateLoginLevels(prisma, sourceDatabase, "login_levels", dryRun);
+  await migrateLoginLevels(prisma, sourceDatabase, "login_levels_man", dryRun);
+  await migrateLoginLevels(
+    prisma,
+    sourceDatabase,
+    "parent_login_levels",
+    dryRun
+  );
+  await migrateManagerLoginUsers(prisma, sourceDatabase, dryRun);
 
   log(
     `=== Legacy auth metadata migration complete ===${dryRun ? " [DRY RUN]" : ""}`

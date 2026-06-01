@@ -73,7 +73,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - Modern messages exist, but legacy `t_alarms_msg` and `custom_notifications_msg` delivery/read/reset behavior needs exact restoration.
 
 20. **Role and permission parity**
-   - Modern organization scoping exists, but legacy levels/actions/control tables must be mapped to modern roles and enforced in pages/actions.
+   - Legacy levels/actions/control tables are now preserved as metadata; remaining work is mapping them to modern roles and enforcing them in pages/actions.
 
 ## Execution Order
 

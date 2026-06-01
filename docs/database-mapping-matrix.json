@@ -2643,17 +2643,17 @@
     "sourceDump": "kiddzonl_master29sept",
     "legacyTable": "actions_control",
     "legacyColumns": "actioncon_level_id:int(11) NOT NULL, actioncon_sysact_id:int(11) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAccessControlRecord",
+    "status": "mapped - migrated by migrate-control-plane.ts",
+    "reconciliation": "Legacy level-to-action grants preserve source database/table, level id, action id, active grant state, and raw JSON for later RBAC parity."
   },
   {
     "sourceDump": "kiddzonl_master29sept",
     "legacyTable": "login_confirm",
     "legacyColumns": "id:int(11) NOT NULL, data:varchar(255) NOT NULL, username:varchar(255) NOT NULL, email:varchar(255) NOT NULL, key:varchar(255) NOT NULL, type:varchar(25) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy PHP auth metadata is preserved with source database/table/id, composite key support for id=0 token rows, relevant key/value fields, optional resolved user UUID, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_master29sept",
@@ -2667,25 +2667,25 @@
     "sourceDump": "kiddzonl_master29sept",
     "legacyTable": "login_levels",
     "legacyColumns": "id:int(11) NOT NULL, level_name:varchar(255) NOT NULL, level_disabled:tinyint(1) NOT NULL DEFAULT '0', redirect:varchar(255) DEFAULT NULL, welcome_email:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy login level rows preserve source database/table/id, level name, disabled flag, redirect, welcome-email flag, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_master29sept",
     "legacyTable": "login_profiles",
     "legacyColumns": "p_id:bigint(20) UNSIGNED NOT NULL, pfield_id:int(255) UNSIGNED NOT NULL, user_id:bigint(20) UNSIGNED NOT NULL DEFAULT '0', profile_value:longtext",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy PHP profile values preserve source database/table/id, profile field key/value, legacy user id, optional resolved user UUID, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_master29sept",
     "legacyTable": "login_profile_fields",
     "legacyColumns": "id:int(255) NOT NULL, section:varchar(255) NOT NULL, type:varchar(25) NOT NULL, label:varchar(255) NOT NULL, public:tinyint(4) NOT NULL, signup:varchar(255) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy PHP profile field definitions preserve source database/table/id, label/type, public flag, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_master29sept",
@@ -2715,65 +2715,65 @@
     "sourceDump": "kiddzonl_master29sept",
     "legacyTable": "notifications",
     "legacyColumns": "id:bigint(20) NOT NULL, email:tinyint(4) NOT NULL, whatsapp:tinyint(4) NOT NULL, sms:tinyint(4) NOT NULL, gid:tinyint(4) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacySetting",
+    "status": "mapped - migrated by migrate-control-plane.ts",
+    "reconciliation": "Legacy master notification channel switches preserve source database/table/id, garderie id key, email/WhatsApp/SMS toggles, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_master29sept",
     "legacyTable": "system_actions",
     "legacyColumns": "sysaction_id:int(11) NOT NULL, sysaction_group_id:int(11) NOT NULL DEFAULT '4', sysaction_name:text NOT NULL, sysaction_type:text NOT NULL COMMENT '\"ACTION\" or \"PAGE\"', sysaction_descr:text NOT NULL, sysaction_is_active:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAccessControlRecord",
+    "status": "mapped - migrated by migrate-control-plane.ts",
+    "reconciliation": "Legacy system action catalogue rows preserve source database/table/id, action/page name, type, description, active flag, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_master29sept",
     "legacyTable": "t_garderies",
     "legacyColumns": "gid:int(11) NOT NULL, garderie_name:varchar(200) NOT NULL, garderie_alias:varchar(100) NOT NULL, user_manage_db:varchar(100) NOT NULL, current_db:varchar(100) NOT NULL, path:varchar(150) NOT NULL, active:int(11) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyGarderieRegistry",
+    "status": "mapped - migrated by migrate-control-plane.ts",
+    "reconciliation": "Legacy master nursery registry rows preserve source database/table/id, nursery name, alias, user/current database names, path, active flag, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_master29sept",
     "legacyTable": "users_control",
     "legacyColumns": "usercon_user_id:int(11) NOT NULL, usercon_sysact_id:int(11) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAccessControlRecord",
+    "status": "mapped - migrated by migrate-control-plane.ts",
+    "reconciliation": "Legacy per-user action grants preserve source database/table, user id, optional resolved modern user UUID, action id, active grant state, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_users29sept",
     "legacyTable": "actions_control",
     "legacyColumns": "actioncon_level_id:int(11) NOT NULL, actioncon_sysact_id:int(11) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAccessControlRecord",
+    "status": "mapped - migrated by migrate-control-plane.ts",
+    "reconciliation": "Legacy level-to-action grants preserve source database/table, level id, action id, active grant state, and raw JSON for later RBAC parity."
   },
   {
     "sourceDump": "kiddzonl_users29sept",
     "legacyTable": "actions_control_man",
     "legacyColumns": "actioncon_level_id:int(11) NOT NULL, actioncon_sysact_id:int(11) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAccessControlRecord",
+    "status": "mapped - migrated by migrate-control-plane.ts",
+    "reconciliation": "Legacy manager level-to-action grants preserve source database/table, level id, action id, active grant state, and raw JSON for later RBAC parity."
   },
   {
     "sourceDump": "kiddzonl_users29sept",
     "legacyTable": "login_confirm",
     "legacyColumns": "id:int(11) NOT NULL, data:varchar(255) NOT NULL, username:varchar(255) NOT NULL, email:varchar(255) NOT NULL, key:varchar(255) NOT NULL, type:varchar(25) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy PHP auth metadata is preserved with source database/table/id, composite key support for id=0 token rows, relevant key/value fields, optional resolved user UUID, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_users29sept",
     "legacyTable": "login_confirm_man",
     "legacyColumns": "id:int(11) NOT NULL, data:varchar(255) NOT NULL, username:varchar(255) NOT NULL, email:varchar(255) NOT NULL, key:varchar(255) NOT NULL, type:varchar(25) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy manager auth confirmation metadata is preserved with source database/table/id, composite key support for id=0 token rows, relevant key/value fields, optional resolved user UUID, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_users29sept",
@@ -2795,49 +2795,49 @@
     "sourceDump": "kiddzonl_users29sept",
     "legacyTable": "login_levels",
     "legacyColumns": "id:int(11) NOT NULL, level_name:varchar(255) NOT NULL, level_disabled:tinyint(1) NOT NULL DEFAULT '0', redirect:varchar(255) DEFAULT NULL, welcome_email:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy login level rows preserve source database/table/id, level name, disabled flag, redirect, welcome-email flag, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_users29sept",
     "legacyTable": "login_levels_man",
     "legacyColumns": "id:int(11) NOT NULL, level_name:varchar(255) NOT NULL, level_disabled:tinyint(1) NOT NULL DEFAULT '0', redirect:varchar(255) DEFAULT NULL, welcome_email:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy manager login level rows preserve source database/table/id, level name, disabled flag, redirect, welcome-email flag, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_users29sept",
     "legacyTable": "login_profiles",
     "legacyColumns": "p_id:bigint(20) UNSIGNED NOT NULL, pfield_id:int(255) UNSIGNED NOT NULL, user_id:bigint(20) UNSIGNED NOT NULL DEFAULT '0', profile_value:longtext",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy PHP profile values preserve source database/table/id, profile field key/value, legacy user id, optional resolved user UUID, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_users29sept",
     "legacyTable": "login_profiles_man",
     "legacyColumns": "p_id:bigint(20) UNSIGNED NOT NULL, pfield_id:int(255) UNSIGNED NOT NULL, user_id:bigint(20) UNSIGNED NOT NULL DEFAULT '0', profile_value:longtext",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy manager profile values preserve source database/table/id, profile field key/value, legacy user id, optional resolved user UUID, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_users29sept",
     "legacyTable": "login_profile_fields",
     "legacyColumns": "id:int(255) NOT NULL, section:varchar(255) NOT NULL, type:varchar(25) NOT NULL, label:varchar(255) NOT NULL, public:tinyint(4) NOT NULL, signup:varchar(255) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy PHP profile field definitions preserve source database/table/id, label/type, public flag, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_users29sept",
     "legacyTable": "login_profile_fields_man",
     "legacyColumns": "id:int(255) NOT NULL, section:varchar(255) NOT NULL, type:varchar(25) NOT NULL, label:varchar(255) NOT NULL, public:tinyint(4) NOT NULL, signup:varchar(255) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy manager profile field definitions preserve source database/table/id, label/type, public flag, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_users29sept",
@@ -2883,25 +2883,25 @@
     "sourceDump": "kiddzonl_users29sept",
     "legacyTable": "login_users_man",
     "legacyColumns": "user_id:int(8) NOT NULL, user_level:longtext NOT NULL, restricted:int(1) NOT NULL DEFAULT '0', username:varchar(255) NOT NULL, name:varchar(255) NOT NULL, email:varchar(255) NOT NULL, password:varchar(128) NOT NULL, db_id:int(11) NOT NULL, timestamp:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, usites:varchar(255) NOT NULL DEFAULT '0', uclasses:varchar(50) NOT NULL DEFAULT '0', uchild:varchar(20) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy manager login users are preserved as auth metadata with source database/table/id, username, email, level payload, disabled flag, optional resolved user UUID, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_users29sept",
     "legacyTable": "system_actions",
     "legacyColumns": "sysaction_id:int(11) NOT NULL, sysaction_group_id:int(11) NOT NULL DEFAULT '4', sysaction_name:text NOT NULL, sysaction_type:text NOT NULL COMMENT '\"ACTION\" or \"PAGE\"', sysaction_descr:text NOT NULL, sysaction_is_active:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAccessControlRecord",
+    "status": "mapped - migrated by migrate-control-plane.ts",
+    "reconciliation": "Legacy system action catalogue rows preserve source database/table/id, action/page name, type, description, active flag, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_users29sept",
     "legacyTable": "system_actions_man",
     "legacyColumns": "sysaction_id:int(11) NOT NULL, sysaction_group_id:int(11) NOT NULL DEFAULT '4', sysaction_name:text NOT NULL, sysaction_type:text NOT NULL COMMENT '\"ACTION\" or \"PAGE\"', sysaction_descr:text NOT NULL, sysaction_is_active:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAccessControlRecord",
+    "status": "mapped - migrated by migrate-control-plane.ts",
+    "reconciliation": "Legacy manager system action catalogue rows preserve source database/table/id, action/page name, type, description, active flag, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_users29sept",
@@ -2931,57 +2931,57 @@
     "sourceDump": "kiddzonl_users29sept",
     "legacyTable": "users_control",
     "legacyColumns": "usercon_user_id:int(11) NOT NULL, usercon_sysact_id:int(11) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAccessControlRecord",
+    "status": "mapped - migrated by migrate-control-plane.ts",
+    "reconciliation": "Legacy per-user action grants preserve source database/table, user id, optional resolved modern user UUID, action id, active grant state, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_users29sept",
     "legacyTable": "year_db",
     "legacyColumns": "dbid:int(11) NOT NULL, db_yid:int(11) NOT NULL, dbname:varchar(100) NOT NULL, selected:tinyint(1) NOT NULL DEFAULT '0', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyYearDatabase",
+    "status": "mapped - migrated by migrate-control-plane.ts",
+    "reconciliation": "Legacy year database rows preserve source database/table/id, year id, database name, selected flag, source timestamp, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_users29sept",
     "legacyTable": "year_select",
     "legacyColumns": "yid:int(11) NOT NULL, sel_year:varchar(20) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyYearDatabase",
+    "status": "mapped - migrated by migrate-control-plane.ts",
+    "reconciliation": "Legacy year selector rows preserve source database/table/id, selected year label, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_users_2018-2019",
     "legacyTable": "actions_control",
     "legacyColumns": "actioncon_level_id:int(11) NOT NULL, actioncon_sysact_id:int(11) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAccessControlRecord",
+    "status": "mapped - migrated by migrate-control-plane.ts",
+    "reconciliation": "Legacy level-to-action grants preserve source database/table, level id, action id, active grant state, and raw JSON for later RBAC parity."
   },
   {
     "sourceDump": "kiddzonl_users_2018-2019",
     "legacyTable": "actions_control_man",
     "legacyColumns": "actioncon_level_id:int(11) NOT NULL, actioncon_sysact_id:int(11) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAccessControlRecord",
+    "status": "mapped - migrated by migrate-control-plane.ts",
+    "reconciliation": "Legacy manager level-to-action grants preserve source database/table, level id, action id, active grant state, and raw JSON for later RBAC parity."
   },
   {
     "sourceDump": "kiddzonl_users_2018-2019",
     "legacyTable": "login_confirm",
     "legacyColumns": "id:int(11) NOT NULL, data:varchar(255) NOT NULL, username:varchar(255) NOT NULL, email:varchar(255) NOT NULL, key:varchar(255) NOT NULL, type:varchar(25) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy PHP auth metadata is preserved with source database/table/id, composite key support for id=0 token rows, relevant key/value fields, optional resolved user UUID, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_users_2018-2019",
     "legacyTable": "login_confirm_man",
     "legacyColumns": "id:int(11) NOT NULL, data:varchar(255) NOT NULL, username:varchar(255) NOT NULL, email:varchar(255) NOT NULL, key:varchar(255) NOT NULL, type:varchar(25) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy manager auth confirmation metadata is preserved with source database/table/id, composite key support for id=0 token rows, relevant key/value fields, optional resolved user UUID, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_users_2018-2019",
@@ -3003,49 +3003,49 @@
     "sourceDump": "kiddzonl_users_2018-2019",
     "legacyTable": "login_levels",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, level_name:varchar(255) NOT NULL, level_disabled:tinyint(1) NOT NULL DEFAULT '0', redirect:varchar(255) DEFAULT NULL, welcome_email:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy login level rows preserve source database/table/id, level name, disabled flag, redirect, welcome-email flag, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_users_2018-2019",
     "legacyTable": "login_levels_man",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, level_name:varchar(255) NOT NULL, level_disabled:tinyint(1) NOT NULL DEFAULT '0', redirect:varchar(255) DEFAULT NULL, welcome_email:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy manager login level rows preserve source database/table/id, level name, disabled flag, redirect, welcome-email flag, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_users_2018-2019",
     "legacyTable": "login_profile_fields",
     "legacyColumns": "id:int(255) NOT NULL, section:varchar(255) NOT NULL, type:varchar(25) NOT NULL, label:varchar(255) NOT NULL, public:tinyint(4) NOT NULL, signup:varchar(255) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy PHP profile field definitions preserve source database/table/id, label/type, public flag, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_users_2018-2019",
     "legacyTable": "login_profile_fields_man",
     "legacyColumns": "id:int(255) NOT NULL, section:varchar(255) NOT NULL, type:varchar(25) NOT NULL, label:varchar(255) NOT NULL, public:tinyint(4) NOT NULL, signup:varchar(255) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy manager profile field definitions preserve source database/table/id, label/type, public flag, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_users_2018-2019",
     "legacyTable": "login_profiles",
     "legacyColumns": "p_id:bigint(20) unsigned NOT NULL, pfield_id:int(255) unsigned NOT NULL, user_id:bigint(20) unsigned NOT NULL DEFAULT '0', profile_value:longtext",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy PHP profile values preserve source database/table/id, profile field key/value, legacy user id, optional resolved user UUID, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_users_2018-2019",
     "legacyTable": "login_profiles_man",
     "legacyColumns": "p_id:bigint(20) unsigned NOT NULL, pfield_id:int(255) unsigned NOT NULL, user_id:bigint(20) unsigned NOT NULL DEFAULT '0', profile_value:longtext",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy manager profile values preserve source database/table/id, profile field key/value, legacy user id, optional resolved user UUID, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_users_2018-2019",
@@ -3091,25 +3091,25 @@
     "sourceDump": "kiddzonl_users_2018-2019",
     "legacyTable": "login_users_man",
     "legacyColumns": "user_id:int(8) NOT NULL AUTO_INCREMENT, user_level:longtext NOT NULL, restricted:int(1) NOT NULL DEFAULT '0', username:varchar(255) NOT NULL, name:varchar(255) NOT NULL, email:varchar(255) NOT NULL, password:varchar(128) NOT NULL, db_id:int(11) NOT NULL, timestamp:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, usites:varchar(255) NOT NULL DEFAULT '0', uclasses:varchar(50) NOT NULL DEFAULT '0', uchild:varchar(20) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAuthRecord",
+    "status": "mapped - migrated by migrate-auth-metadata.ts",
+    "reconciliation": "Legacy manager login users are preserved as auth metadata with source database/table/id, username, email, level payload, disabled flag, optional resolved user UUID, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_users_2018-2019",
     "legacyTable": "system_actions",
     "legacyColumns": "sysaction_id:int(11) NOT NULL AUTO_INCREMENT, sysaction_group_id:int(11) NOT NULL DEFAULT '4', sysaction_name:text NOT NULL, sysaction_type:text NOT NULL COMMENT '\"ACTION\" or \"PAGE\"', sysaction_descr:text NOT NULL, sysaction_is_active:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAccessControlRecord",
+    "status": "mapped - migrated by migrate-control-plane.ts",
+    "reconciliation": "Legacy system action catalogue rows preserve source database/table/id, action/page name, type, description, active flag, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_users_2018-2019",
     "legacyTable": "system_actions_man",
     "legacyColumns": "sysaction_id:int(11) NOT NULL AUTO_INCREMENT, sysaction_group_id:int(11) NOT NULL DEFAULT '4', sysaction_name:text NOT NULL, sysaction_type:text NOT NULL COMMENT '\"ACTION\" or \"PAGE\"', sysaction_descr:text NOT NULL, sysaction_is_active:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAccessControlRecord",
+    "status": "mapped - migrated by migrate-control-plane.ts",
+    "reconciliation": "Legacy manager system action catalogue rows preserve source database/table/id, action/page name, type, description, active flag, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_users_2018-2019",
@@ -3139,24 +3139,24 @@
     "sourceDump": "kiddzonl_users_2018-2019",
     "legacyTable": "users_control",
     "legacyColumns": "usercon_user_id:int(11) NOT NULL, usercon_sysact_id:int(11) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyAccessControlRecord",
+    "status": "mapped - migrated by migrate-control-plane.ts",
+    "reconciliation": "Legacy per-user action grants preserve source database/table, user id, optional resolved modern user UUID, action id, active grant state, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_users_2018-2019",
     "legacyTable": "year_db",
     "legacyColumns": "dbid:int(11) NOT NULL AUTO_INCREMENT, db_yid:int(11) NOT NULL, dbname:varchar(100) NOT NULL, selected:tinyint(1) NOT NULL DEFAULT '0', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyYearDatabase",
+    "status": "mapped - migrated by migrate-control-plane.ts",
+    "reconciliation": "Legacy year database rows preserve source database/table/id, year id, database name, selected flag, source timestamp, and raw JSON."
   },
   {
     "sourceDump": "kiddzonl_users_2018-2019",
     "legacyTable": "year_select",
     "legacyColumns": "yid:int(11) NOT NULL AUTO_INCREMENT, sel_year:varchar(20) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "LegacyYearDatabase",
+    "status": "mapped - migrated by migrate-control-plane.ts",
+    "reconciliation": "Legacy year selector rows preserve source database/table/id, selected year label, and raw JSON."
   }
 ]

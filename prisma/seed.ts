@@ -30,6 +30,9 @@ async function main() {
     await tx.legacyLoginTimestamp.deleteMany();
     await tx.legacyAuthRecord.deleteMany();
     await tx.legacySetting.deleteMany();
+    await tx.legacyAccessControlRecord.deleteMany();
+    await tx.legacyGarderieRegistry.deleteMany();
+    await tx.legacyYearDatabase.deleteMany();
     await tx.alarm.deleteMany();
     await tx.holiday.deleteMany();
     await tx.event.deleteMany();

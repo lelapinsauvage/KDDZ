@@ -64,12 +64,12 @@ Every legacy file reference must be migrated to modern object storage or explici
 | kiddzonl_garderie_2018-2019 | t_payments | image | Payment | needs storage migration rule |
 | kiddzonl_garderie_2018-2019 | t_teacher | image | Teacher | needs storage migration rule |
 | kiddzonl_garderie_2018-2019 | t_teacher_attachments | url | TeacherAttachment | needs storage migration rule |
-| kiddzonl_master29sept | login_profiles | profile_value |  | needs storage migration rule |
-| kiddzonl_users29sept | login_profiles | profile_value |  | needs storage migration rule |
-| kiddzonl_users29sept | login_profiles_man | profile_value |  | needs storage migration rule |
+| kiddzonl_master29sept | login_profiles | profile_value | LegacyAuthRecord | covered by migrate-auth-metadata.ts |
+| kiddzonl_users29sept | login_profiles | profile_value | LegacyAuthRecord | covered by migrate-auth-metadata.ts |
+| kiddzonl_users29sept | login_profiles_man | profile_value | LegacyAuthRecord | covered by migrate-auth-metadata.ts |
 | kiddzonl_users29sept | t_branch | image | Branch | needs storage migration rule |
 | kiddzonl_users29sept | t_class | image | Class | needs storage migration rule |
-| kiddzonl_users_2018-2019 | login_profiles | profile_value |  | needs storage migration rule |
-| kiddzonl_users_2018-2019 | login_profiles_man | profile_value |  | needs storage migration rule |
+| kiddzonl_users_2018-2019 | login_profiles | profile_value | LegacyAuthRecord | covered by migrate-auth-metadata.ts |
+| kiddzonl_users_2018-2019 | login_profiles_man | profile_value | LegacyAuthRecord | covered by migrate-auth-metadata.ts |
 | kiddzonl_users_2018-2019 | t_branch | image | Branch | needs storage migration rule |
 | kiddzonl_users_2018-2019 | t_class | image | Class | needs storage migration rule |

@@ -21,25 +21,6 @@ These are the highest-risk migration gaps because source data exists and no curr
 
 | SQL Dump | Legacy Table | Estimated Rows | Columns |
 | --- | --- | --- | --- |
-| kiddzonl_master29sept.sql | actions_control | 43 | actioncon_level_id, actioncon_sysact_id |
-| kiddzonl_master29sept.sql | system_actions | 24 | sysaction_id, sysaction_group_id, sysaction_name, sysaction_type, sysaction_descr, sysaction_is_active |
-| kiddzonl_master29sept.sql | users_control | 18 | usercon_user_id, usercon_sysact_id |
-| kiddzonl_master29sept.sql | t_garderies | 8 | gid, garderie_name, garderie_alias, user_manage_db, current_db, path, active |
-| kiddzonl_master29sept.sql | login_confirm | 2 | id, data, username, email, key, type |
-| kiddzonl_master29sept.sql | notifications | 2 | id, email, whatsapp, sms, gid |
-| kiddzonl_master29sept.sql | login_levels | 1 | id, level_name, level_disabled, redirect, welcome_email |
-| kiddzonl_users29sept.sql | actions_control | 104 | actioncon_level_id, actioncon_sysact_id |
-| kiddzonl_users29sept.sql | system_actions | 64 | sysaction_id, sysaction_group_id, sysaction_name, sysaction_type, sysaction_descr, sysaction_is_active |
-| kiddzonl_users29sept.sql | actions_control_man | 43 | actioncon_level_id, actioncon_sysact_id |
-| kiddzonl_users29sept.sql | system_actions_man | 24 | sysaction_id, sysaction_group_id, sysaction_name, sysaction_type, sysaction_descr, sysaction_is_active |
-| kiddzonl_users29sept.sql | users_control | 18 | usercon_user_id, usercon_sysact_id |
-| kiddzonl_users29sept.sql | year_select | 10 | yid, sel_year |
-| kiddzonl_users29sept.sql | login_levels | 7 | id, level_name, level_disabled, redirect, welcome_email |
-| kiddzonl_users29sept.sql | login_confirm | 4 | id, data, username, email, key, type |
-| kiddzonl_users29sept.sql | login_confirm_man | 2 | id, data, username, email, key, type |
-| kiddzonl_users29sept.sql | login_levels_man | 2 | id, level_name, level_disabled, redirect, welcome_email |
-| kiddzonl_users29sept.sql | year_db | 2 | dbid, db_yid, dbname, selected, datetime |
-| kiddzonl_users29sept.sql | login_users_man | 1 | user_id, user_level, restricted, username, name, email, password, db_id, timestamp, usites, uclasses, uchild |
 
 ## File Reference Tables
 
@@ -107,13 +88,13 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie_2018-2019.sql | t_payments | 0 | image | covered by migrate-payments.ts |
 | kiddzonl_garderie_2018-2019.sql | t_teacher | 0 | image | covered by migrate-employees.ts |
 | kiddzonl_garderie_2018-2019.sql | t_teacher_attachments | 0 | url | covered by migrate-employees.ts |
-| kiddzonl_master29sept.sql | login_profiles | 0 | profile_value | needs file migration rule |
+| kiddzonl_master29sept.sql | login_profiles | 0 | profile_value | covered by migrate-auth-metadata.ts |
 | kiddzonl_users29sept.sql | t_class | 9 | image | covered by migrate-classes.ts |
 | kiddzonl_users29sept.sql | t_branch | 7 | image | covered by migrate-branches.ts |
-| kiddzonl_users29sept.sql | login_profiles | 0 | profile_value | needs file migration rule |
-| kiddzonl_users29sept.sql | login_profiles_man | 0 | profile_value | needs file migration rule |
-| kiddzonl_users_2018-2019.sql | login_profiles | 0 | profile_value | needs file migration rule |
-| kiddzonl_users_2018-2019.sql | login_profiles_man | 0 | profile_value | needs file migration rule |
+| kiddzonl_users29sept.sql | login_profiles | 0 | profile_value | covered by migrate-auth-metadata.ts |
+| kiddzonl_users29sept.sql | login_profiles_man | 0 | profile_value | covered by migrate-auth-metadata.ts |
+| kiddzonl_users_2018-2019.sql | login_profiles | 0 | profile_value | covered by migrate-auth-metadata.ts |
+| kiddzonl_users_2018-2019.sql | login_profiles_man | 0 | profile_value | covered by migrate-auth-metadata.ts |
 | kiddzonl_users_2018-2019.sql | t_branch | 0 | image | covered by migrate-branches.ts |
 | kiddzonl_users_2018-2019.sql | t_class | 0 | image | covered by migrate-classes.ts |
 
@@ -452,67 +433,67 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie_2018-2019.sql | t_teacher_attendance | 12 | 0 | not covered yet / needs explicit decision |
 | kiddzonl_garderie_2018-2019.sql | t_teacher_info | 9 | 0 | covered by migrate-employees.ts |
 | kiddzonl_master29sept.sql | login_timestamps | 4 | 69 | covered by migrate-login-audit.ts |
-| kiddzonl_master29sept.sql | actions_control | 2 | 43 | not covered yet / needs explicit decision |
+| kiddzonl_master29sept.sql | actions_control | 2 | 43 | covered by migrate-control-plane.ts |
 | kiddzonl_master29sept.sql | login_settings | 3 | 30 | covered by migrate-settings.ts |
-| kiddzonl_master29sept.sql | system_actions | 6 | 24 | not covered yet / needs explicit decision |
-| kiddzonl_master29sept.sql | users_control | 2 | 18 | not covered yet / needs explicit decision |
-| kiddzonl_master29sept.sql | t_garderies | 7 | 8 | not covered yet / needs explicit decision |
-| kiddzonl_master29sept.sql | login_confirm | 6 | 2 | not covered yet / needs explicit decision |
-| kiddzonl_master29sept.sql | notifications | 5 | 2 | not covered yet / needs explicit decision |
-| kiddzonl_master29sept.sql | login_levels | 5 | 1 | not covered yet / needs explicit decision |
+| kiddzonl_master29sept.sql | system_actions | 6 | 24 | covered by migrate-control-plane.ts |
+| kiddzonl_master29sept.sql | users_control | 2 | 18 | covered by migrate-control-plane.ts |
+| kiddzonl_master29sept.sql | t_garderies | 7 | 8 | covered by migrate-control-plane.ts |
+| kiddzonl_master29sept.sql | login_confirm | 6 | 2 | covered by migrate-auth-metadata.ts |
+| kiddzonl_master29sept.sql | notifications | 5 | 2 | covered by migrate-control-plane.ts |
+| kiddzonl_master29sept.sql | login_levels | 5 | 1 | covered by migrate-auth-metadata.ts |
 | kiddzonl_master29sept.sql | login_users | 12 | 1 | covered by migrate-users.ts |
 | kiddzonl_master29sept.sql | login_integration | 6 | 0 | not covered yet / needs explicit decision |
-| kiddzonl_master29sept.sql | login_profile_fields | 6 | 0 | not covered yet / needs explicit decision |
-| kiddzonl_master29sept.sql | login_profiles | 4 | 0 | not covered yet / needs explicit decision |
+| kiddzonl_master29sept.sql | login_profile_fields | 6 | 0 | covered by migrate-auth-metadata.ts |
+| kiddzonl_master29sept.sql | login_profiles | 4 | 0 | covered by migrate-auth-metadata.ts |
 | kiddzonl_users29sept.sql | login_timestamps | 4 | 6454 | covered by migrate-login-audit.ts |
-| kiddzonl_users29sept.sql | actions_control | 2 | 104 | not covered yet / needs explicit decision |
+| kiddzonl_users29sept.sql | actions_control | 2 | 104 | covered by migrate-control-plane.ts |
 | kiddzonl_users29sept.sql | login_timestamps_man | 4 | 76 | covered by migrate-login-audit.ts |
-| kiddzonl_users29sept.sql | system_actions | 6 | 64 | not covered yet / needs explicit decision |
-| kiddzonl_users29sept.sql | actions_control_man | 2 | 43 | not covered yet / needs explicit decision |
+| kiddzonl_users29sept.sql | system_actions | 6 | 64 | covered by migrate-control-plane.ts |
+| kiddzonl_users29sept.sql | actions_control_man | 2 | 43 | covered by migrate-control-plane.ts |
 | kiddzonl_users29sept.sql | login_settings_man | 3 | 30 | covered by migrate-settings.ts |
-| kiddzonl_users29sept.sql | system_actions_man | 6 | 24 | not covered yet / needs explicit decision |
-| kiddzonl_users29sept.sql | users_control | 2 | 18 | not covered yet / needs explicit decision |
+| kiddzonl_users29sept.sql | system_actions_man | 6 | 24 | covered by migrate-control-plane.ts |
+| kiddzonl_users29sept.sql | users_control | 2 | 18 | covered by migrate-control-plane.ts |
 | kiddzonl_users29sept.sql | t_notification_setting | 6 | 14 | covered by migrate-settings.ts |
-| kiddzonl_users29sept.sql | year_select | 2 | 10 | not covered yet / needs explicit decision |
+| kiddzonl_users29sept.sql | year_select | 2 | 10 | covered by migrate-control-plane.ts |
 | kiddzonl_users29sept.sql | t_class | 21 | 9 | covered by migrate-classes.ts |
-| kiddzonl_users29sept.sql | login_levels | 5 | 7 | not covered yet / needs explicit decision |
+| kiddzonl_users29sept.sql | login_levels | 5 | 7 | covered by migrate-auth-metadata.ts |
 | kiddzonl_users29sept.sql | t_branch | 10 | 7 | covered by migrate-branches.ts |
 | kiddzonl_users29sept.sql | login_settings | 3 | 5 | covered by migrate-settings.ts |
-| kiddzonl_users29sept.sql | login_confirm | 6 | 4 | not covered yet / needs explicit decision |
-| kiddzonl_users29sept.sql | login_confirm_man | 6 | 2 | not covered yet / needs explicit decision |
-| kiddzonl_users29sept.sql | login_levels_man | 5 | 2 | not covered yet / needs explicit decision |
-| kiddzonl_users29sept.sql | year_db | 5 | 2 | not covered yet / needs explicit decision |
+| kiddzonl_users29sept.sql | login_confirm | 6 | 4 | covered by migrate-auth-metadata.ts |
+| kiddzonl_users29sept.sql | login_confirm_man | 6 | 2 | covered by migrate-auth-metadata.ts |
+| kiddzonl_users29sept.sql | login_levels_man | 5 | 2 | covered by migrate-auth-metadata.ts |
+| kiddzonl_users29sept.sql | year_db | 5 | 2 | covered by migrate-control-plane.ts |
 | kiddzonl_users29sept.sql | login_users | 12 | 1 | covered by migrate-users.ts |
-| kiddzonl_users29sept.sql | login_users_man | 12 | 1 | not covered yet / needs explicit decision |
+| kiddzonl_users29sept.sql | login_users_man | 12 | 1 | covered by migrate-auth-metadata.ts |
 | kiddzonl_users29sept.sql | login_integration | 6 | 0 | not covered yet / needs explicit decision |
 | kiddzonl_users29sept.sql | login_integration_man | 6 | 0 | not covered yet / needs explicit decision |
-| kiddzonl_users29sept.sql | login_profile_fields | 6 | 0 | not covered yet / needs explicit decision |
-| kiddzonl_users29sept.sql | login_profile_fields_man | 6 | 0 | not covered yet / needs explicit decision |
-| kiddzonl_users29sept.sql | login_profiles | 4 | 0 | not covered yet / needs explicit decision |
-| kiddzonl_users29sept.sql | login_profiles_man | 4 | 0 | not covered yet / needs explicit decision |
-| kiddzonl_users_2018-2019.sql | actions_control | 2 | 0 | not covered yet / needs explicit decision |
-| kiddzonl_users_2018-2019.sql | actions_control_man | 2 | 0 | not covered yet / needs explicit decision |
-| kiddzonl_users_2018-2019.sql | login_confirm | 6 | 0 | not covered yet / needs explicit decision |
-| kiddzonl_users_2018-2019.sql | login_confirm_man | 6 | 0 | not covered yet / needs explicit decision |
+| kiddzonl_users29sept.sql | login_profile_fields | 6 | 0 | covered by migrate-auth-metadata.ts |
+| kiddzonl_users29sept.sql | login_profile_fields_man | 6 | 0 | covered by migrate-auth-metadata.ts |
+| kiddzonl_users29sept.sql | login_profiles | 4 | 0 | covered by migrate-auth-metadata.ts |
+| kiddzonl_users29sept.sql | login_profiles_man | 4 | 0 | covered by migrate-auth-metadata.ts |
+| kiddzonl_users_2018-2019.sql | actions_control | 2 | 0 | covered by migrate-control-plane.ts |
+| kiddzonl_users_2018-2019.sql | actions_control_man | 2 | 0 | covered by migrate-control-plane.ts |
+| kiddzonl_users_2018-2019.sql | login_confirm | 6 | 0 | covered by migrate-auth-metadata.ts |
+| kiddzonl_users_2018-2019.sql | login_confirm_man | 6 | 0 | covered by migrate-auth-metadata.ts |
 | kiddzonl_users_2018-2019.sql | login_integration | 6 | 0 | not covered yet / needs explicit decision |
 | kiddzonl_users_2018-2019.sql | login_integration_man | 6 | 0 | not covered yet / needs explicit decision |
-| kiddzonl_users_2018-2019.sql | login_levels | 5 | 0 | not covered yet / needs explicit decision |
-| kiddzonl_users_2018-2019.sql | login_levels_man | 5 | 0 | not covered yet / needs explicit decision |
-| kiddzonl_users_2018-2019.sql | login_profile_fields | 6 | 0 | not covered yet / needs explicit decision |
-| kiddzonl_users_2018-2019.sql | login_profile_fields_man | 6 | 0 | not covered yet / needs explicit decision |
-| kiddzonl_users_2018-2019.sql | login_profiles | 4 | 0 | not covered yet / needs explicit decision |
-| kiddzonl_users_2018-2019.sql | login_profiles_man | 4 | 0 | not covered yet / needs explicit decision |
+| kiddzonl_users_2018-2019.sql | login_levels | 5 | 0 | covered by migrate-auth-metadata.ts |
+| kiddzonl_users_2018-2019.sql | login_levels_man | 5 | 0 | covered by migrate-auth-metadata.ts |
+| kiddzonl_users_2018-2019.sql | login_profile_fields | 6 | 0 | covered by migrate-auth-metadata.ts |
+| kiddzonl_users_2018-2019.sql | login_profile_fields_man | 6 | 0 | covered by migrate-auth-metadata.ts |
+| kiddzonl_users_2018-2019.sql | login_profiles | 4 | 0 | covered by migrate-auth-metadata.ts |
+| kiddzonl_users_2018-2019.sql | login_profiles_man | 4 | 0 | covered by migrate-auth-metadata.ts |
 | kiddzonl_users_2018-2019.sql | login_settings | 3 | 0 | covered by migrate-settings.ts |
 | kiddzonl_users_2018-2019.sql | login_settings_man | 3 | 0 | covered by migrate-settings.ts |
 | kiddzonl_users_2018-2019.sql | login_timestamps | 4 | 0 | covered by migrate-login-audit.ts |
 | kiddzonl_users_2018-2019.sql | login_timestamps_man | 4 | 0 | covered by migrate-login-audit.ts |
 | kiddzonl_users_2018-2019.sql | login_users | 12 | 0 | covered by migrate-users.ts |
-| kiddzonl_users_2018-2019.sql | login_users_man | 12 | 0 | not covered yet / needs explicit decision |
-| kiddzonl_users_2018-2019.sql | system_actions | 6 | 0 | not covered yet / needs explicit decision |
-| kiddzonl_users_2018-2019.sql | system_actions_man | 6 | 0 | not covered yet / needs explicit decision |
+| kiddzonl_users_2018-2019.sql | login_users_man | 12 | 0 | covered by migrate-auth-metadata.ts |
+| kiddzonl_users_2018-2019.sql | system_actions | 6 | 0 | covered by migrate-control-plane.ts |
+| kiddzonl_users_2018-2019.sql | system_actions_man | 6 | 0 | covered by migrate-control-plane.ts |
 | kiddzonl_users_2018-2019.sql | t_branch | 10 | 0 | covered by migrate-branches.ts |
 | kiddzonl_users_2018-2019.sql | t_class | 21 | 0 | covered by migrate-classes.ts |
 | kiddzonl_users_2018-2019.sql | t_notification_setting | 6 | 0 | covered by migrate-settings.ts |
-| kiddzonl_users_2018-2019.sql | users_control | 2 | 0 | not covered yet / needs explicit decision |
-| kiddzonl_users_2018-2019.sql | year_db | 5 | 0 | not covered yet / needs explicit decision |
-| kiddzonl_users_2018-2019.sql | year_select | 2 | 0 | not covered yet / needs explicit decision |
+| kiddzonl_users_2018-2019.sql | users_control | 2 | 0 | covered by migrate-control-plane.ts |
+| kiddzonl_users_2018-2019.sql | year_db | 5 | 0 | covered by migrate-control-plane.ts |
+| kiddzonl_users_2018-2019.sql | year_select | 2 | 0 | covered by migrate-control-plane.ts |
