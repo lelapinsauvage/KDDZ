@@ -16,6 +16,7 @@ interface BranchData {
   phone?: string | null;
   telephone?: string | null;
   email?: string | null;
+  imageUrl?: string | null;
   themeColor?: string | null;
   isActive?: boolean;
   organizationId: string;
@@ -121,6 +122,7 @@ export async function createBranch(
         phone: data.phone ?? null,
         telephone: data.telephone ?? null,
         email: data.email ?? null,
+        imageUrl: data.imageUrl ?? null,
         themeColor: data.themeColor ?? "#1caf9a",
         isActive: data.isActive ?? true,
         organizationId: ctx.organizationId,
@@ -161,6 +163,7 @@ export async function updateBranch(
     if (data.phone !== undefined) updateData.phone = data.phone;
     if (data.telephone !== undefined) updateData.telephone = data.telephone;
     if (data.email !== undefined) updateData.email = data.email;
+    if (data.imageUrl !== undefined) updateData.imageUrl = data.imageUrl;
     if (data.themeColor !== undefined) updateData.themeColor = data.themeColor;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
     // Never allow changing organizationId

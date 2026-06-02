@@ -8,6 +8,7 @@ export const branchFormSchema = z.object({
   phone: z.string().default(""),
   telephone: z.string().default(""),
   email: z.string().email("Invalid email").or(z.literal("")).default(""),
+  imageUrl: z.string().default(""),
   themeColor: z.string().default("#1caf9a"),
   isActive: z.boolean().default(true),
 });
