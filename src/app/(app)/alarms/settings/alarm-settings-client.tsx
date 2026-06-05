@@ -110,7 +110,7 @@ const ALARM_CONFIGS: AlarmConfig[] = [
     iconColor: "text-blue-500",
     settingKeyEnabled: "alarm.insurance.enabled",
     settingKeyThreshold: "alarm.insurance.threshold",
-    defaultThreshold: "30",
+    defaultThreshold: "7",
     thresholdLabel: "Days before expiry to notify",
   },
   {

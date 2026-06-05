@@ -62,6 +62,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - Birthday generation now restores the active daily legacy family: it scans the configured birthday window, creates idempotent `Alarm` rows with legacy method metadata, sends unread staff in-app notifications from the Birthday template, and exposes a cron-safe `/api/cron/birthday-alarms` endpoint protected by `CRON_SECRET` or `VERCEL_CRON_SECRET`.
    - Assessment alarm generation now exposes the same manual/cron-safe path through `/alarms/assessments` and `/api/cron/assessment-alarms`.
    - Medicine alarm generation now restores the legacy 10-minute family as a cron-safe/manual path: it scans migrated `MedicalFormEntry` medication rows from submitted general medical forms, matches the current `HH:mm`, skips expired medication, creates idempotent `Alarm` rows, sends staff in-app notifications from the Medicine template, and exposes `/api/cron/medicine-alarms`.
+   - Insurance alarm generation now restores the legacy expiry-window family as a cron-safe/manual path: it scans migrated and modern general medical-form insurance fields, creates idempotent `Alarm` rows, sends staff in-app notifications from the Insurance template, and exposes `/api/cron/insurance-alarms`.
    - Remaining work is idempotent cron/job generation for the other approved legacy families, hosted schedule configuration after production crontab confirmation, and external push/email/SMS/WhatsApp providers after credential recovery or rotation.
 
 9. **Parent portal UI**

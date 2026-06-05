@@ -70,6 +70,9 @@ const TEST_VARIABLES: TemplateVariables = {
   med_name: "Sample Medicine",
   med_time: "09:30",
   date: new Date().toISOString().slice(0, 10),
+  expiry_date: new Date().toISOString().slice(0, 10),
+  days_until: 7,
+  insurance_type: "Sample Insurance",
 };
 
 export interface TemplateRow {

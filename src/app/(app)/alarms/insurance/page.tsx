@@ -39,6 +39,7 @@ export default async function InsuranceAlarmsPage() {
       dueDate,
       daysLeft,
       status,
+      branchId: (a.branch?.id ?? "") as string,
       branch: (a.branch?.name ?? "—") as string,
     };
   });
