@@ -27,7 +27,8 @@ This list is the first implementation backlog after the generated inventory/matr
    - Child enrollment/edit forms now upload profile photos and child documents, storing URLs on `Child.photo` and `ChildAttachment.fileUrl`.
    - Class add/edit dialogs now upload class images before save and persist URLs on `Class.imageUrl`.
    - Branch add/edit forms now upload branch images through the `branch` scope and persist URLs on `Branch.imageUrl`; new branches are created first so the upload can pass branch-level access checks, then immediately updated with the uploaded image URL.
-   - Remaining work is child-history JSON snapshot URL patching, upload attach/update actions for the remaining non-compliance surfaces, local multipart upload support if needed, and replacement of the remaining upload placeholders.
+   - `apply-legacy-file-urls.ts` now patches legacy `ChildHistory.snapshot.image` JSON for `child-history-photo` entries when source database, child legacy id, source table, and legacy filename all match.
+   - Remaining work is upload attach/update actions for the remaining non-compliance surfaces, local multipart upload support if needed, and replacement of the remaining upload placeholders.
 
 4. **Full data reconciliation**
    - `reconcile-migration-counts.ts` now provides curated source/target count checks across the migration order and distinguishes strong provenance from weaker count-only evidence.

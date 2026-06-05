@@ -34,7 +34,7 @@ pnpm tsx src/scripts/migration/upload-legacy-file-export.ts \
 
 Use `STORAGE_PROVIDER=s3` for AWS S3 or `STORAGE_PROVIDER=r2` for Cloudflare R2, with `STORAGE_BUCKET`, credentials, and `STORAGE_PUBLIC_BASE_URL` set. The upload manifest records object keys, public URLs, byte counts, and source row provenance for the later database URL rewrite. Full provider settings and cutover gates are documented in `docs/file-storage-pipeline.md`.
 
-After upload, run `apply-legacy-file-urls.ts --dry-run` against the upload manifest to preview PostgreSQL URL rewrites. After rerunning migrations with `20260601017000_add_legacy_file_provenance`, it updates every direct URL/photo target by source provenance and still reports `child-history-photo` for a dedicated JSON snapshot patch.
+After upload, run `apply-legacy-file-urls.ts --dry-run` against the upload manifest to preview PostgreSQL URL rewrites. After rerunning migrations with `20260601017000_add_legacy_file_provenance`, it updates every direct URL/photo target by source provenance and patches legacy `ChildHistory.snapshot.image` JSON values for `child-history-photo` rows whose snapshot still contains the exported legacy filename.
 
 | Legacy Table | Column | Legacy Directory | Modern Destination | PHP Evidence | Status |
 | --- | --- | --- | --- | --- | --- |

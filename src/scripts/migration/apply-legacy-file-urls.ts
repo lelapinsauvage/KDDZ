@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 
-import type { PrismaClient } from "@/generated/prisma/client";
+import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 import { createPrismaClient } from "./lib/prisma-client";
 import { log, logError } from "./lib/utils";
 
@@ -96,6 +96,12 @@ interface LocatedRow {
   value: string | null;
 }
 
+interface LocatedChildHistoryRow {
+  id: string;
+  snapshot: Record<string, unknown>;
+  value: string | null;
+}
+
 interface ApplyContext {
   prisma: PrismaClient;
   entry: LegacyFileUploadEntry;
@@ -115,10 +121,7 @@ interface ApplyRowsParams {
 
 const NO_PROVENANCE_REASONS: Record<string, string> = {};
 
-const UNSUPPORTED_DESTINATION_REASONS: Record<string, string> = {
-  "child-history-photo":
-    "ChildHistory stores image data inside JSON snapshots; a dedicated JSON patch strategy is required.",
-};
+const UNSUPPORTED_DESTINATION_REASONS: Record<string, string> = {};
 
 function argValue(name: string): string | null {
   const prefix = `--${name}=`;
@@ -176,6 +179,17 @@ function legacyIdNumber(entry: LegacyFileUploadEntry): number | null {
       ? entry.legacyId
       : Number.parseInt(String(entry.legacyId), 10);
   return Number.isFinite(value) ? value : null;
+}
+
+function snapshotObject(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+}
+
+function normalizedString(value: unknown): string | null {
+  if (value == null) return null;
+  const trimmed = String(value).trim();
+  return trimmed === "" ? null : trimmed;
 }
 
 function applyEntry(params: {
@@ -372,6 +386,123 @@ async function applyChildPhoto(
       context.prisma.child
         .update({ where: { id }, data: { photo: context.publicUrl } })
         .then(() => undefined),
+  });
+}
+
+async function applyChildHistoryPhoto(
+  context: ApplyContext
+): Promise<LegacyFileUrlApplyEntry> {
+  const legacyId = legacyIdNumber(context.entry);
+  if (!legacyId) {
+    return applyEntry({
+      entry: context.entry,
+      status: "error",
+      targetModel: "ChildHistory",
+      targetField: "snapshot.image",
+      reason: "Missing numeric legacyId.",
+    });
+  }
+
+  const filename = normalizedString(context.entry.filename);
+  if (!filename) {
+    return applyEntry({
+      entry: context.entry,
+      status: "error",
+      targetModel: "ChildHistory",
+      targetField: "snapshot.image",
+      reason: "Missing legacy filename.",
+    });
+  }
+
+  const children = await context.prisma.child.findMany({
+    where: {
+      sourceDatabase: context.entry.sourceDatabase,
+      legacyId,
+    },
+    select: { id: true },
+  });
+
+  if (children.length === 0) {
+    return applyEntry({
+      entry: context.entry,
+      status: "not-found",
+      targetModel: "ChildHistory",
+      targetField: "snapshot.image",
+      reason: "No migrated child matched sourceDatabase and legacyId.",
+    });
+  }
+
+  const histories = await context.prisma.childHistory.findMany({
+    where: {
+      changeNote: "Legacy t_child_h snapshot",
+      childId: { in: children.map((child) => child.id) },
+    },
+    select: { id: true, snapshot: true },
+  });
+
+  const rows: LocatedChildHistoryRow[] = histories.flatMap((history) => {
+    const snapshot = snapshotObject(history.snapshot);
+    if (!snapshot) return [];
+    if (normalizedString(snapshot.sourceTable) !== context.entry.legacyTable) {
+      return [];
+    }
+
+    const image = normalizedString(snapshot.image);
+    if (image !== filename && image !== context.publicUrl) return [];
+
+    return [{ id: history.id, snapshot, value: image }];
+  });
+
+  if (rows.length === 0) {
+    return applyEntry({
+      entry: context.entry,
+      status: "not-found",
+      targetModel: "ChildHistory",
+      targetField: "snapshot.image",
+      reason:
+        "No legacy child history snapshot matched sourceDatabase, child legacyId, sourceTable, and image filename.",
+    });
+  }
+
+  const staleRows = rows.filter((row) => row.value !== context.publicUrl);
+  if (staleRows.length === 0) {
+    return applyEntry({
+      entry: context.entry,
+      status: "already-current",
+      targetModel: "ChildHistory",
+      targetField: "snapshot.image",
+      affectedRows: rows.length,
+    });
+  }
+
+  if (context.dryRun) {
+    return applyEntry({
+      entry: context.entry,
+      status: "would-update",
+      targetModel: "ChildHistory",
+      targetField: "snapshot.image",
+      affectedRows: staleRows.length,
+    });
+  }
+
+  for (const row of staleRows) {
+    await context.prisma.childHistory.update({
+      where: { id: row.id },
+      data: {
+        snapshot: {
+          ...row.snapshot,
+          image: context.publicUrl,
+        } as Prisma.InputJsonValue,
+      },
+    });
+  }
+
+  return applyEntry({
+    entry: context.entry,
+    status: "updated",
+    targetModel: "ChildHistory",
+    targetField: "snapshot.image",
+    affectedRows: staleRows.length,
   });
 }
 
@@ -895,6 +1026,7 @@ const APPLY_BY_RULE: Record<
   "class-photo": applyClassPhoto,
   "child-photo": applyChildPhoto,
   "child-draft-photo": applyChildPhoto,
+  "child-history-photo": applyChildHistoryPhoto,
   "child-document": applyChildAttachment,
   "garderie-document": applyBranchDocument,
   "teacher-photo": applyTeacherPhoto,
@@ -958,7 +1090,7 @@ async function applyUploadEntry(
       });
     }
 
-    return handler({
+    return await handler({
       prisma,
       entry,
       publicUrl: entry.publicUrl,

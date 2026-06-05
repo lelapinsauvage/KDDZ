@@ -112,6 +112,7 @@ Remove `--dry-run` only after reviewing the apply manifest. After the legacy mig
 | `class-photo` | `Class.imageUrl` |
 | `child-photo` | `Child.photo` |
 | `child-draft-photo` | `Child.photo` |
+| `child-history-photo` | `ChildHistory.snapshot.image` |
 | `child-document` | `ChildAttachment.fileUrl` |
 | `garderie-document` | `BranchDocument.fileUrl` |
 | `teacher-photo` | `Teacher.imageUrl` |
@@ -127,7 +128,7 @@ Remove `--dry-run` only after reviewing the apply manifest. After the legacy mig
 | `absence-attachment` | `AbsenceAttachment.fileUrl` |
 | `form-attachment` | `FormAttachment.fileUrl` |
 
-The script still reports `child-history-photo` as unsupported because `ChildHistory.snapshot` is JSON, not a direct URL column. That needs a dedicated JSON patch strategy if historical snapshots must display migrated image URLs.
+For `child-history-photo`, the script patches legacy `ChildHistory.snapshot.image` JSON values only when the snapshot is a migrated `t_child_h` row for the matching child legacy id and the current `image` value still matches the legacy filename. This preserves idempotent reruns and avoids changing unrelated snapshots for the same child.
 
 ## Cutover Gates
 
