@@ -13,11 +13,12 @@ This list is the first implementation backlog after the generated inventory/matr
    - `audit-legacy-files.ts` and `export-legacy-files.ts` can verify and stage child photos, daily attachments, medical attachments, employee files, compliance documents, and receipt files before object-storage import.
 
 3. **File storage pipeline**
-   - `src/lib/storage/object-storage.ts` now provides local, S3, and R2 storage config, object upload, public URL calculation, and presigned PUT URL generation for future runtime upload routes.
+   - `src/lib/storage/object-storage.ts` now provides local, S3, and R2 storage config, object upload, public URL calculation, and presigned PUT URL generation for runtime upload routes.
    - `upload-legacy-file-export.ts` now uploads the provider-neutral export package and writes an auditable upload manifest with source row provenance, object keys, public URLs, byte counts, and upload status.
    - `apply-legacy-file-urls.ts` now rewrites strong-provenance migrated URL fields from the upload manifest and reports no-provenance/unsupported destinations without guessing.
    - `20260601017000_add_legacy_file_provenance` and the updated migration scripts now add source provenance for branch/class/child/staff photos plus teacher/nurse/daily/absence attachments so direct URL rewrites no longer require filename matching.
-   - `POST /api/uploads/presign` now creates authenticated S3/R2 presigned PUT URLs with org/branch permission checks and safe object keys.
+   - `POST /api/uploads/presign` now creates authenticated S3/R2 presigned PUT URLs or local same-origin upload URLs with org/branch permission checks and safe object keys.
+   - `PUT /api/uploads/local` now supports browser uploads for `STORAGE_PROVIDER=local`, and `/storage/<object-key>` serves authenticated local object URLs from `STORAGE_LOCAL_ROOT`.
    - Branch compliance document screens now use the presign route and update `BranchDocument` rows after browser upload.
    - Payment receipt upload is now wired through the accounting quick-payment and child-accounting payment dialogs, storing browser-uploaded receipt URLs on `Payment.receiptFileUrl`.
    - Absence report attachments now upload through the presign route, preserve existing attachments on edit, and update `AbsenceAttachment` rows for additions/removals.
@@ -30,7 +31,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - `apply-legacy-file-urls.ts` now patches legacy `ChildHistory.snapshot.image` JSON for `child-history-photo` entries when source database, child legacy id, source table, and legacy filename all match.
    - Legacy `t_forms_attachments` upload manifests now use the `medical-form-document` rule to rewrite imported medical form attachment files onto `FormAttachment.fileUrl`; runtime call/accident uploads still use the `form-attachment` scope for the same target table.
    - Medical general, condition, visit, accident, and suffering form screens now upload runtime attachments through the `medical-form` scope, load existing active attachments, and sync added/removed files through `FormAttachment.fileUrl`.
-   - Remaining work is upload attach/update actions for the remaining non-compliance surfaces, local multipart upload support if needed, and replacement of the remaining upload placeholders.
+   - Remaining work is upload attach/update actions for the remaining non-compliance surfaces and replacement of the remaining upload placeholders.
 
 4. **Full data reconciliation**
    - `reconcile-migration-counts.ts` now provides curated source/target count checks across the migration order and distinguishes strong provenance from weaker count-only evidence.

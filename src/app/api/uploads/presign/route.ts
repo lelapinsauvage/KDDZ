@@ -8,6 +8,8 @@ import {
   contentTypeForFilename,
   createPresignedUploadUrl,
   getObjectStorageConfig,
+  objectKeyForStorageKey,
+  publicUrlForObjectKey,
 } from "@/lib/storage/object-storage";
 import { requireOrgSafe } from "@/lib/require-org";
 import { verifyBranchAccess } from "@/lib/verify-org-access";
@@ -123,15 +125,8 @@ export async function POST(request: NextRequest) {
     return jsonError(message, 500);
   }
 
-  if (storage.provider === "local") {
-    return jsonError(
-      "Runtime presigned uploads require STORAGE_PROVIDER=s3 or r2",
-      501
-    );
-  }
-
   try {
-    const key = uploadObjectKey({
+    const storageKey = uploadObjectKey({
       organizationId: auth.ctx.organizationId,
       branchId,
       scope,
@@ -139,8 +134,25 @@ export async function POST(request: NextRequest) {
       filename,
     });
 
+    if (storage.provider === "local") {
+      const key = objectKeyForStorageKey(storageKey, storage);
+      const params = new URLSearchParams({ key, branchId });
+      return NextResponse.json({
+        success: true,
+        provider: storage.provider,
+        method: "PUT",
+        uploadUrl: `/api/uploads/local?${params.toString()}`,
+        key,
+        publicUrl: publicUrlForObjectKey(key, storage),
+        expiresAt: new Date(Date.now() + 900_000).toISOString(),
+        headers: {
+          "Content-Type": contentType,
+        },
+      });
+    }
+
     const presigned = await createPresignedUploadUrl({
-      key,
+      key: storageKey,
       contentType,
       expiresInSeconds: 900,
       metadata: {
