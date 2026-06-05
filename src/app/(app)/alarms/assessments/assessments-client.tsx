@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { type ColumnDef } from "@tanstack/react-table";
 import {
@@ -9,6 +10,7 @@ import {
   ClipboardCheck,
   ExternalLink,
   FileWarning,
+  RefreshCw,
 } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
@@ -22,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { generateAssessmentAlarms } from "@/lib/actions/alarms";
 
 interface AssessmentDueAlarmEntry {
   id: string;
@@ -82,8 +85,11 @@ export function AssessmentsClient({
   scheduledAssessments,
   branches,
 }: AssessmentsClientProps) {
+  const router = useRouter();
   const [branchFilter, setBranchFilter] = useState("ALL");
   const [urgencyFilter, setUrgencyFilter] = useState("ALL");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationStatus, setGenerationStatus] = useState<string | null>(null);
 
   const filteredDueAlarms = useMemo(() => {
     return dueAlarms.filter((alarm) => {
@@ -101,6 +107,26 @@ export function AssessmentsClient({
 
   const dueToday = dueAlarms.filter((alarm) => alarm.daysUntilDue === 0).length;
   const dueThisWeek = dueAlarms.filter((alarm) => alarm.daysUntilDue <= 7).length;
+
+  async function handleGenerate() {
+    setIsGenerating(true);
+    setGenerationStatus(null);
+    const result = await generateAssessmentAlarms(
+      branchFilter === "ALL" ? undefined : branchFilter,
+    );
+    setIsGenerating(false);
+
+    if (result.success && result.data) {
+      const { alarmsCreated, notificationsCreated, skippedExisting } = result.data;
+      setGenerationStatus(
+        `Created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"} and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing.`,
+      );
+      router.refresh();
+      return;
+    }
+
+    setGenerationStatus(result.error ?? "Assessment generation failed.");
+  }
 
   const dueColumns: ColumnDef<AssessmentDueAlarmEntry>[] = useMemo(
     () => [
@@ -362,6 +388,19 @@ export function AssessmentsClient({
               <SelectItem value="WEEK">7 Days</SelectItem>
             </SelectContent>
           </Select>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleGenerate}
+            disabled={isGenerating}
+            className="gap-2"
+          >
+            <RefreshCw className={`size-4 ${isGenerating ? "animate-spin" : ""}`} />
+            {isGenerating ? "Generating..." : "Generate"}
+          </Button>
+          {generationStatus && (
+            <span className="text-sm text-muted-foreground">{generationStatus}</span>
+          )}
         </div>
 
         <div className="rounded-lg border bg-card">

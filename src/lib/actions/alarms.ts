@@ -6,11 +6,18 @@ import { auth } from "@/lib/auth";
 import { requireOrg, requireOrgSafe } from "@/lib/require-org";
 import { verifyBranchAccess } from "@/lib/verify-org-access";
 import type { AlarmType } from "@/generated/prisma/enums";
-import { ASSESSMENT_TYPE_NAMES, VALID_ASSESSMENT_TYPES } from "@/lib/assessment-types";
 import {
   generateBirthdayAlarmsForOrganization,
   type BirthdayGenerationSummary,
 } from "@/lib/jobs/birthday-alarms";
+import {
+  generateAssessmentAlarmsForOrganization,
+  getAssessmentDueAlarmCandidates,
+  type AssessmentDueAlarm,
+  type AssessmentGenerationSummary,
+} from "@/lib/jobs/assessment-alarms";
+
+export type { AssessmentDueAlarm, AssessmentGenerationSummary } from "@/lib/jobs/assessment-alarms";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -40,23 +47,6 @@ type ActionResult<T = unknown> = {
   data?: T;
 };
 
-export interface AssessmentDueAlarm {
-  id: string;
-  assessmentType: number;
-  assessmentTypeName: string;
-  childId: string;
-  childNumber: string | null;
-  childName: string;
-  branchId: string;
-  branchName: string;
-  classId: string | null;
-  className: string | null;
-  dueDate: Date;
-  daysUntilDue: number;
-  actionHref: string;
-  message: string;
-}
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -66,54 +56,6 @@ function toDateOrNull(
 ): Date | null {
   if (!value) return null;
   return typeof value === "string" ? new Date(value) : value;
-}
-
-const assessmentTypes = [...VALID_ASSESSMENT_TYPES];
-
-const fallbackAssessmentWindows: Record<number, { minDays: number; maxDays: number }> = {
-  1: { minDays: 0, maxDays: 90 },
-  2: { minDays: 91, maxDays: 243 },
-  3: { minDays: 244, maxDays: 365 },
-  4: { minDays: 366, maxDays: 730 },
-  5: { minDays: 731, maxDays: 1095 },
-  6: { minDays: 1096, maxDays: 1460 },
-  7: { minDays: 1461, maxDays: 1825 },
-};
-
-function startOfToday() {
-  const date = new Date();
-  date.setHours(0, 0, 0, 0);
-  return date;
-}
-
-function addDays(date: Date, days: number) {
-  const next = new Date(date);
-  next.setDate(next.getDate() + days);
-  return next;
-}
-
-function ageInDays(dateOfBirth: Date | null, asOf: Date) {
-  if (!dateOfBirth) return null;
-  return Math.floor((asOf.getTime() - dateOfBirth.getTime()) / 86_400_000);
-}
-
-function isEligibleForAssessmentAlarm(
-  child: { dateOfBirth: Date | null; enrollmentDate: Date | null },
-  asOf: Date,
-  minDays: number,
-  maxDays: number
-) {
-  const currentAge = ageInDays(child.dateOfBirth, asOf);
-  if (currentAge === null || currentAge < minDays || currentAge > maxDays) {
-    return { eligible: false, currentAge: null };
-  }
-
-  const joiningAge = ageInDays(child.dateOfBirth, child.enrollmentDate ?? asOf);
-  if (joiningAge !== null && joiningAge > maxDays) {
-    return { eligible: false, currentAge: null };
-  }
-
-  return { eligible: true, currentAge };
 }
 
 // ---------------------------------------------------------------------------
@@ -145,6 +87,38 @@ export async function generateBirthdayAlarms(
   } catch (error) {
     console.error("Failed to generate birthday alarms:", error);
     return { success: false, error: "Failed to generate birthday alarms" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// generateAssessmentAlarms
+// ---------------------------------------------------------------------------
+
+export async function generateAssessmentAlarms(
+  branchId?: string,
+): Promise<ActionResult<AssessmentGenerationSummary>> {
+  try {
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
+
+    if (branchId && !(await verifyBranchAccess(branchId, ctx.organizationId))) {
+      return { success: false, error: "Branch not found in your organization" };
+    }
+
+    const summary = await generateAssessmentAlarmsForOrganization({
+      organizationId: ctx.organizationId,
+      branchId,
+    });
+
+    revalidatePath("/alarms");
+    revalidatePath("/alarms/assessments");
+    revalidatePath("/");
+
+    return { success: true, data: summary };
+  } catch (error) {
+    console.error("Failed to generate assessment alarms:", error);
+    return { success: false, error: "Failed to generate assessment alarms" };
   }
 }
 
@@ -494,135 +468,9 @@ export async function getAssessmentDueAlarms(
 ): Promise<ActionResult<AssessmentDueAlarm[]>> {
   try {
     const { organizationId: orgId } = await requireOrg();
-    const today = startOfToday();
-
-    const childWhere = {
-      isActive: true,
-      isDraft: false,
-      branch: { organizationId: orgId },
-      ...(branchId ? { branchId } : {}),
-    };
-
-    const [children, assessments, scheduleRules] = await Promise.all([
-      db.child.findMany({
-        where: childWhere,
-        select: {
-          id: true,
-          childNumber: true,
-          firstName: true,
-          lastName: true,
-          dateOfBirth: true,
-          enrollmentDate: true,
-          branchId: true,
-          classId: true,
-          branch: { select: { id: true, name: true } },
-          class: { select: { id: true, name: true } },
-        },
-        orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
-      }),
-      db.assessment.findMany({
-        where: {
-          assessmentType: { in: assessmentTypes },
-          child: childWhere,
-        },
-        select: {
-          childId: true,
-          assessmentType: true,
-        },
-      }),
-      db.assessmentScheduleRule.findMany({
-        where: {
-          organizationId: orgId,
-          assessmentType: { in: assessmentTypes },
-        },
-        select: {
-          assessmentType: true,
-          minimumAgeDays: true,
-          maximumAgeDays: true,
-        },
-      }),
-    ]);
-
-    const ruleByType = new Map(
-      scheduleRules.map((rule) => [
-        rule.assessmentType,
-        {
-          minDays: Number(
-            rule.minimumAgeDays ??
-              fallbackAssessmentWindows[rule.assessmentType]?.minDays ??
-              0
-          ),
-          maxDays: Number(
-            rule.maximumAgeDays ??
-              fallbackAssessmentWindows[rule.assessmentType]?.maxDays ??
-              Number.MAX_SAFE_INTEGER
-          ),
-        },
-      ])
-    );
-
-    const assessedKeys = new Set(
-      assessments.map((assessment) => `${assessment.assessmentType}:${assessment.childId}`)
-    );
-
-    const alarms: AssessmentDueAlarm[] = [];
-
-    for (const type of assessmentTypes) {
-      const window = ruleByType.get(type) ?? fallbackAssessmentWindows[type];
-
-      for (const child of children) {
-        if (assessedKeys.has(`${type}:${child.id}`)) {
-          continue;
-        }
-
-        const { eligible, currentAge } = isEligibleForAssessmentAlarm(
-          child,
-          today,
-          window.minDays,
-          window.maxDays
-        );
-        if (!eligible || currentAge === null) {
-          continue;
-        }
-
-        const daysUntilDue = Math.floor(window.maxDays - currentAge);
-        if (daysUntilDue < 0 || daysUntilDue > 15) {
-          continue;
-        }
-
-        const dueDate = child.dateOfBirth
-          ? addDays(child.dateOfBirth, Math.floor(window.maxDays))
-          : today;
-        const assessmentTypeName = ASSESSMENT_TYPE_NAMES[type] ?? `Type ${type}`;
-        const childName = `${child.firstName} ${child.lastName}`;
-
-        alarms.push({
-          id: `${type}:${child.id}`,
-          assessmentType: type,
-          assessmentTypeName,
-          childId: child.id,
-          childNumber: child.childNumber,
-          childName,
-          branchId: child.branchId,
-          branchName: child.branch.name,
-          classId: child.classId,
-          className: child.class?.name ?? null,
-          dueDate,
-          daysUntilDue,
-          actionHref: `/assessments/${type}/new?childId=${child.id}`,
-          message: `${assessmentTypeName} for ${childName} is needed within 15 days`,
-        });
-      }
-    }
-
-    alarms.sort((a, b) => {
-      if (a.daysUntilDue !== b.daysUntilDue) {
-        return a.daysUntilDue - b.daysUntilDue;
-      }
-      if (a.assessmentType !== b.assessmentType) {
-        return a.assessmentType - b.assessmentType;
-      }
-      return a.childName.localeCompare(b.childName);
+    const alarms = await getAssessmentDueAlarmCandidates({
+      organizationId: orgId,
+      branchId,
     });
 
     return { success: true, data: alarms };

@@ -49,8 +49,8 @@ This list is the first implementation backlog after the generated inventory/matr
    - Legacy has `t_assessment_1` through `t_assessment_7` plus `new_assessment`.
    - Historical row migration is covered by `migrate-assessments.ts`.
    - `/assessments` and `/assessments/[type]` now restore the legacy completed/incomplete/draft/missing review queues, using migrated `AssessmentScheduleRule` age windows, legacy `progress` payloads when present, active non-draft children, and direct create/open actions.
-   - `/alarms/assessments` now restores the child-level due queue for missing assessment reports needed within 15 days, alongside scheduled assessment dates.
-   - Remaining work is exact legacy alarm delivery parity for `alarmsAssessment.php` teacher/parent notification history/viewed status and final per-question visual audit.
+   - `/alarms/assessments` now restores the child-level due queue for missing assessment reports needed within 15 days, alongside scheduled assessment dates, plus manual/server generation of idempotent staff-facing `Alarm` rows and in-app notifications from the Assessment template.
+   - Remaining work is exact legacy parent-complete notification behavior, `alarmsAssessment.php` history/viewed status, exact class-user targeting, and final per-question visual audit.
 
 7. **Notification logs/settings migration**
    - Legacy has many `custom_notifications_*`, `t_alarms_*`, `t_notification_setting`, and `t_notifications_log` tables.
@@ -60,6 +60,7 @@ This list is the first implementation backlog after the generated inventory/matr
 8. **Actual notification sending**
    - Modern app now has an in-app template dispatch path with variable rendering, sent-log visibility, resend, and per-template test send to the current user.
    - Birthday generation now restores the active daily legacy family: it scans the configured birthday window, creates idempotent `Alarm` rows with legacy method metadata, sends unread staff in-app notifications from the Birthday template, and exposes a cron-safe `/api/cron/birthday-alarms` endpoint protected by `CRON_SECRET` or `VERCEL_CRON_SECRET`.
+   - Assessment alarm generation now exposes the same manual/cron-safe path through `/alarms/assessments` and `/api/cron/assessment-alarms`.
    - Remaining work is idempotent cron/job generation per approved legacy family plus external push/email/SMS/WhatsApp providers after credential recovery or rotation.
 
 9. **Parent portal UI**
