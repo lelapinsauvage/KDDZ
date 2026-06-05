@@ -144,48 +144,122 @@ function employeeDocumentCreateData(document: DocumentData) {
   };
 }
 
-function managerAttachmentCreateData(document: DocumentData) {
+function documentRowSource(id: string | undefined): "attachment" | "document" {
+  return id?.startsWith("document:") ? "document" : "attachment";
+}
+
+function documentRowId(id: string | undefined): string | undefined {
+  if (!id) return undefined;
+  return id.includes(":") ? id.split(":").slice(1).join(":") : id;
+}
+
+function staffAttachmentDelegate(type: EmployeeType) {
+  switch (type) {
+    case "teacher":
+      return {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        model: db.teacherAttachment as any,
+        ownerField: "teacherId",
+        softDelete: false,
+      };
+    case "nurse":
+      return {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        model: db.nurseAttachment as any,
+        ownerField: "nurseId",
+        softDelete: false,
+      };
+    case "doctor":
+      return {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        model: db.doctorAttachment as any,
+        ownerField: "doctorId",
+        softDelete: true,
+      };
+    case "manager":
+      return {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        model: db.managerAttachment as any,
+        ownerField: "managerId",
+        softDelete: true,
+      };
+  }
+}
+
+function staffAttachmentCreateData(type: EmployeeType, document: DocumentData) {
   const title = document.title?.trim() || null;
   const fileUrl = document.fileUrl?.trim() || "pending";
-  return {
-    title,
+  const data: Record<string, unknown> = {
     filename: title || fileUrl,
     fileUrl,
     type: document.type,
-    expiryDate: toDate(document.expiryDate) ?? null,
-    isActive: true,
   };
+  if (type === "doctor" || type === "manager") {
+    data.title = title;
+    data.expiryDate = toDate(document.expiryDate) ?? null;
+    data.isActive = true;
+  }
+  return data;
 }
 
-async function syncManagerAttachments(
-  managerId: string,
+function attachmentDocuments(documents: DocumentData[] | undefined) {
+  return documentsWithContent(documents).filter(
+    (document) => documentRowSource(document.id) === "attachment"
+  );
+}
+
+function modernDocumentRows(documents: DocumentData[] | undefined) {
+  return documentsWithContent(documents).filter(
+    (document) => documentRowSource(document.id) === "document"
+  );
+}
+
+async function syncStaffAttachments(
+  type: EmployeeType,
+  employeeId: string,
   documents: DocumentData[]
 ) {
-  const submittedDocuments = documentsWithContent(documents);
+  const submittedDocuments = attachmentDocuments(documents);
   const submittedIds = submittedDocuments
-    .map((document) => document.id)
+    .map((document) => documentRowId(document.id))
     .filter((id): id is string => Boolean(id));
+  const { model, ownerField, softDelete } = staffAttachmentDelegate(type);
 
-  await db.managerAttachment.updateMany({
-    where: {
-      managerId,
-      isActive: true,
-      ...(submittedIds.length ? { id: { notIn: submittedIds } } : {}),
-    },
-    data: { isActive: false },
-  });
+  const omittedWhere = {
+    [ownerField]: employeeId,
+    ...(submittedIds.length ? { id: { notIn: submittedIds } } : {}),
+  };
+
+  if (softDelete) {
+    await model.updateMany({
+      where: {
+        ...omittedWhere,
+        isActive: true,
+      },
+      data: { isActive: false },
+    });
+  } else {
+    await model.deleteMany({
+      where: {
+        ...omittedWhere,
+        sourceDatabase: null,
+        legacyKey: null,
+      },
+    });
+  }
 
   for (const document of submittedDocuments) {
-    const data = managerAttachmentCreateData(document);
-    if (document.id) {
-      await db.managerAttachment.updateMany({
-        where: { id: document.id, managerId },
+    const id = documentRowId(document.id);
+    const data = staffAttachmentCreateData(type, document);
+    if (id) {
+      await model.updateMany({
+        where: { id, [ownerField]: employeeId },
         data,
       });
     } else {
-      await db.managerAttachment.create({
+      await model.create({
         data: {
-          managerId,
+          [ownerField]: employeeId,
           ...data,
         },
       });
@@ -407,7 +481,7 @@ export async function createEmployee(
     }
 
     // Nested languages and experiences only exist on Teacher/Nurse/Doctor.
-    // Manager document uploads map to ManagerAttachment to match the legacy app.
+    // Staff document uploads map to the legacy-compatible attachment tables.
     if (type !== "manager") {
       if (data.languages?.length) {
         createData.languages = {
@@ -433,19 +507,15 @@ export async function createEmployee(
         };
       }
 
-      if (data.documents?.length) {
-        const documents = documentsWithContent(data.documents);
-        if (documents.length) {
-          createData.documents = {
-            create: documents.map(employeeDocumentCreateData),
-          };
-        }
-      }
-    } else if (data.documents?.length) {
-      const documents = documentsWithContent(data.documents);
+    }
+
+    if (data.documents?.length) {
+      const documents = attachmentDocuments(data.documents);
       if (documents.length) {
         createData.attachments = {
-          create: documents.map(managerAttachmentCreateData),
+          create: documents.map((document) =>
+            staffAttachmentCreateData(type, document)
+          ),
         };
       }
     }
@@ -578,7 +648,7 @@ export async function updateEmployee(
     }
 
     // Languages and experiences only exist on Teacher/Nurse/Doctor.
-    // Manager document uploads are synced separately into ManagerAttachment.
+    // Staff document uploads are synced separately into legacy-compatible attachments.
     if (type !== "manager") {
       if (data.languages !== undefined) {
         updateData.languages = {
@@ -615,7 +685,7 @@ export async function updateEmployee(
       }
 
       if (data.documents !== undefined) {
-        const documents = documentsWithContent(data.documents);
+        const documents = modernDocumentRows(data.documents);
         updateData.documents = {
           deleteMany: {},
           ...(documents.length
@@ -633,8 +703,8 @@ export async function updateEmployee(
       data: updateData,
     });
 
-    if (type === "manager" && data.documents !== undefined) {
-      await syncManagerAttachments(id, data.documents);
+    if (data.documents !== undefined) {
+      await syncStaffAttachments(type, id, data.documents);
     }
 
     revalidatePath(path);

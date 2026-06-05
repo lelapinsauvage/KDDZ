@@ -194,7 +194,7 @@ export function EmployeeFormClient({
     fields: docFields,
     append: appendDoc,
     remove: removeDoc,
-  } = useFieldArray({ control, name: "documents" });
+  } = useFieldArray({ control, name: "documents", keyName: "fieldId" });
 
   const storedImageUrl = watch("imageUrl") || "";
   const displayImageUrl = imagePreviewUrl || storedImageUrl;
@@ -982,7 +982,7 @@ export function EmployeeFormClient({
                 <div className="space-y-3">
                   {contractDocs.map((field) => (
                     <DocumentRow
-                      key={field.id}
+                      key={field.fieldId}
                       index={field.index}
                       register={register}
                       fileUrl={watch(`documents.${field.index}.fileUrl`)}
@@ -1011,7 +1011,7 @@ export function EmployeeFormClient({
                 <div className="space-y-3">
                   {medicalDocs.map((field) => (
                     <DocumentRow
-                      key={field.id}
+                      key={field.fieldId}
                       index={field.index}
                       register={register}
                       fileUrl={watch(`documents.${field.index}.fileUrl`)}
@@ -1040,7 +1040,7 @@ export function EmployeeFormClient({
                 <div className="space-y-3">
                   {firstAidDocs.map((field) => (
                     <DocumentRow
-                      key={field.id}
+                      key={field.fieldId}
                       index={field.index}
                       register={register}
                       fileUrl={watch(`documents.${field.index}.fileUrl`)}
@@ -1069,7 +1069,7 @@ export function EmployeeFormClient({
                 <div className="space-y-3">
                   {certDocs.map((field) => (
                     <DocumentRow
-                      key={field.id}
+                      key={field.fieldId}
                       index={field.index}
                       register={register}
                       fileUrl={watch(`documents.${field.index}.fileUrl`)}
@@ -1098,7 +1098,7 @@ export function EmployeeFormClient({
                 <div className="space-y-3">
                   {attachDocs.map((field) => (
                     <DocumentRow
-                      key={field.id}
+                      key={field.fieldId}
                       index={field.index}
                       register={register}
                       fileUrl={watch(`documents.${field.index}.fileUrl`)}
@@ -1215,6 +1215,7 @@ function DocumentRow({
         )}
         <div>
           <Label>File</Label>
+          <input type="hidden" {...register(`documents.${index}.id`)} />
           <Input
             type="file"
             accept="image/*,.pdf"

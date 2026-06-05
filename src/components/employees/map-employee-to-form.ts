@@ -1,5 +1,7 @@
 import type { EmployeeFormValues } from "@/lib/validations/employee";
 
+type LooseRow = Record<string, unknown>;
+
 const DOCUMENT_TYPES = new Set([
   "CONTRACT",
   "MEDICAL_TEST",
@@ -7,6 +9,9 @@ const DOCUMENT_TYPES = new Set([
   "CERTIFICATE",
   "ATTACHMENT",
 ]);
+
+const fileRowId = (source: "attachment" | "document", id: unknown): string | undefined =>
+  typeof id === "string" && id ? `${source}:${id}` : undefined;
 
 function fmtDate(d: unknown): string {
   if (!d) return "";
@@ -26,7 +31,26 @@ function documentType(value: unknown): EmployeeFormValues["documents"][number]["
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function mapEmployeeToForm(emp: any): EmployeeFormValues & { id: string } {
   const address = emp.addresses?.[0];
-  const employeeDocuments = emp.documents ?? emp.attachments ?? [];
+  const employeeAttachments = (emp.attachments ?? []).map((attachment: LooseRow) => ({
+    id: fileRowId("attachment", attachment.id),
+    type: documentType(attachment.type),
+    title: typeof attachment.title === "string"
+      ? attachment.title
+      : typeof attachment.filename === "string"
+        ? attachment.filename
+        : "",
+    date: "",
+    expiryDate: fmtDate(attachment.expiryDate),
+    fileUrl: typeof attachment.fileUrl === "string" ? attachment.fileUrl : "",
+  }));
+  const employeeDocuments = (emp.documents ?? []).map((document: LooseRow) => ({
+    id: fileRowId("document", document.id),
+    type: documentType(document.type),
+    title: typeof document.title === "string" ? document.title : "",
+    date: fmtDate(document.date),
+    expiryDate: fmtDate(document.expiryDate),
+    fileUrl: typeof document.fileUrl === "string" ? document.fileUrl : "",
+  }));
 
   return {
     id: emp.id,
@@ -84,14 +108,6 @@ export function mapEmployeeToForm(emp: any): EmployeeFormValues & { id: string }
       toDate: fmtDate(e.toDate),
       description: e.description ?? "",
     })),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    documents: employeeDocuments.map((d: any) => ({
-      id: d.id,
-      type: documentType(d.type),
-      title: d.title ?? d.filename ?? "",
-      date: fmtDate(d.date),
-      expiryDate: fmtDate(d.expiryDate),
-      fileUrl: d.fileUrl ?? "",
-    })),
+    documents: [...employeeAttachments, ...employeeDocuments],
   };
 }

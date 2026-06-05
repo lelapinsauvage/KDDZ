@@ -24,7 +24,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - Absence report attachments now upload through the presign route, preserve existing attachments on edit, and update `AbsenceAttachment` rows for additions/removals.
    - Daily report attachments now upload through the presign route, preserve existing attachments on edit, and update `DailyReportAttachment` rows for additions/removals.
    - Teacher, nurse, doctor, and manager forms now upload profile photos through role-specific staff scopes and persist/display URLs on each staff `imageUrl` field.
-   - Employee document rows now upload through the presign route before save and persist URLs through the existing teacher/nurse/doctor document actions; manager document rows now persist through `ManagerAttachment.fileUrl` and display on manager detail pages.
+   - Employee document rows now upload through the presign route before save and persist URLs through the legacy-compatible teacher/nurse/doctor/manager attachment tables.
    - Staff detail pages now display migrated teacher/nurse/doctor/manager attachment rows with file-open links, so object-storage URL rewrites are visible in the employee UI.
    - Call log and accident form dialogs now upload through the `form-attachment` scope and create `FormAttachment` rows.
    - Child enrollment/edit forms now upload profile photos and child documents, storing URLs on `Child.photo` and `ChildAttachment.fileUrl`.

@@ -11,6 +11,8 @@ import { Mail, Phone, Calendar, GraduationCap, Building2, Pencil } from "lucide-
 import {
   StaffAttachmentsSection,
   type StaffAttachment,
+  type StaffDocumentFile,
+  staffFilesFromRows,
 } from "@/components/employees/staff-attachments-section";
 import { format } from "date-fns";
 
@@ -37,6 +39,7 @@ interface TeacherData {
   branch: { id: string; name: string };
   addresses: Address[];
   attachments: StaffAttachment[];
+  documents?: StaffDocumentFile[];
 }
 
 interface TeacherDetailClientProps {
@@ -261,7 +264,9 @@ export function TeacherDetailClient({ teacher }: TeacherDetailClientProps) {
 
           {/* Attachments Tab */}
           <TabsContent value="attachments">
-            <StaffAttachmentsSection attachments={teacher.attachments} />
+            <StaffAttachmentsSection
+              attachments={staffFilesFromRows(teacher.attachments, teacher.documents)}
+            />
           </TabsContent>
         </Tabs>
       </div>

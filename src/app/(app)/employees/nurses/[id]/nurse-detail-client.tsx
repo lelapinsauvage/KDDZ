@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import {
   StaffAttachmentsSection,
   type StaffAttachment,
+  type StaffDocumentFile,
+  staffFilesFromRows,
 } from "@/components/employees/staff-attachments-section";
 import {
   Table,
@@ -52,6 +54,7 @@ interface NurseData {
   branch: { id: string; name: string };
   addresses: Address[];
   attachments: StaffAttachment[];
+  documents?: StaffDocumentFile[];
 }
 
 interface NurseDetailClientProps {
@@ -194,7 +197,9 @@ export function NurseDetailClient({ nurse, recentActivities }: NurseDetailClient
           </TabsContent>
 
           <TabsContent value="attachments">
-            <StaffAttachmentsSection attachments={nurse.attachments} />
+            <StaffAttachmentsSection
+              attachments={staffFilesFromRows(nurse.attachments, nurse.documents)}
+            />
           </TabsContent>
 
           <TabsContent value="activity">

@@ -16,8 +16,33 @@ export interface StaffAttachment {
   expiryDate?: string | null;
 }
 
+export interface StaffDocumentFile {
+  id: string;
+  title?: string | null;
+  fileUrl: string;
+  type?: string | null;
+  expiryDate?: string | null;
+}
+
 interface StaffAttachmentsSectionProps {
   attachments: StaffAttachment[];
+}
+
+export function staffFilesFromRows(
+  attachments: StaffAttachment[],
+  documents: StaffDocumentFile[] = []
+): StaffAttachment[] {
+  return [
+    ...attachments,
+    ...documents.map((document) => ({
+      id: `document:${document.id}`,
+      title: document.title ?? null,
+      filename: document.title || document.fileUrl,
+      fileUrl: document.fileUrl,
+      type: document.type ?? null,
+      expiryDate: document.expiryDate ?? null,
+    })),
+  ];
 }
 
 export function StaffAttachmentsSection({
