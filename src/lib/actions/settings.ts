@@ -66,6 +66,12 @@ function toDate(value: Date | string): Date {
   return typeof value === "string" ? new Date(value) : value;
 }
 
+function revalidateLocationPages() {
+  revalidatePath("/settings/regions");
+  revalidatePath("/settings/zones");
+  revalidatePath("/settings/areas");
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // SETTINGS (key-value per branch)
 // ═══════════════════════════════════════════════════════════════════════════
@@ -226,8 +232,7 @@ export async function createProvince(name: string, referenceNumber?: string): Pr
       data: { name, referenceNumber: referenceNumber || null },
     });
 
-    revalidatePath("/settings/regions");
-    revalidatePath("/settings/zones");
+    revalidateLocationPages();
 
     return { success: true, data: province };
   } catch (error) {
@@ -250,8 +255,7 @@ export async function updateProvince(
       data: { name, referenceNumber: referenceNumber || null },
     });
 
-    revalidatePath("/settings/regions");
-    revalidatePath("/settings/zones");
+    revalidateLocationPages();
 
     return { success: true, data: province };
   } catch (error) {
@@ -267,7 +271,7 @@ export async function deleteProvince(id: string): Promise<ActionResult> {
 
     await db.province.delete({ where: { id } });
 
-    revalidatePath("/settings/regions");
+    revalidateLocationPages();
 
     return { success: true };
   } catch (error) {
@@ -293,8 +297,7 @@ export async function createDistrict(
       data: { name, provinceId, referenceNumber: referenceNumber || null },
     });
 
-    revalidatePath("/settings/regions");
-    revalidatePath("/settings/areas");
+    revalidateLocationPages();
 
     return { success: true, data: district };
   } catch (error) {
@@ -317,8 +320,7 @@ export async function updateDistrict(
       data: { name, referenceNumber: referenceNumber || null },
     });
 
-    revalidatePath("/settings/regions");
-    revalidatePath("/settings/areas");
+    revalidateLocationPages();
 
     return { success: true, data: district };
   } catch (error) {
@@ -334,7 +336,7 @@ export async function deleteDistrict(id: string): Promise<ActionResult> {
 
     await db.district.delete({ where: { id } });
 
-    revalidatePath("/settings/regions");
+    revalidateLocationPages();
 
     return { success: true };
   } catch (error) {
@@ -360,7 +362,7 @@ export async function createRegion(
       data: { name, districtId, referenceNumber: referenceNumber || null },
     });
 
-    revalidatePath("/settings/regions");
+    revalidateLocationPages();
 
     return { success: true, data: region };
   } catch (error) {
@@ -383,7 +385,7 @@ export async function updateRegion(
       data: { name, referenceNumber: referenceNumber || null },
     });
 
-    revalidatePath("/settings/regions");
+    revalidateLocationPages();
 
     return { success: true, data: region };
   } catch (error) {
@@ -399,7 +401,7 @@ export async function deleteRegion(id: string): Promise<ActionResult> {
 
     await db.region.delete({ where: { id } });
 
-    revalidatePath("/settings/regions");
+    revalidateLocationPages();
 
     return { success: true };
   } catch (error) {

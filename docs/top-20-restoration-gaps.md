@@ -84,7 +84,8 @@ This list is the first implementation backlog after the generated inventory/matr
    - Legacy `t_garderie`, `t_garderie_attachments`, `t_old_garderie`, and `t_garderie_doctor*` rows now have migration coverage, but `nurseryinfo.php` UI parity still needs exact page-level audit.
 
 17. **Address hierarchy reference fields**
-   - Legacy zones/areas/regions include reference numbers and created dates that need verified parity in modern settings pages.
+   - Legacy `t_mouhafaza`, `t_quadaa`, and `t_region` reference numbers and created dates are migrated and now displayed across `/settings/zones`, `/settings/areas`, and `/settings/regions`; location CRUD revalidates all three views.
+   - Remaining work is final visual/action audit against `Zones_Management.php`, `Areas.php`, `regions.php`, and `regions.js`.
 
 18. **Food/holiday/event calendar nuances**
    - Modern pages exist, but legacy tables include `t_food_apply`, holiday notification fields, send channels, repeat behavior, and event types that need exact mapping.

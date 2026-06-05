@@ -48,6 +48,7 @@ interface RegionItem {
   id: string;
   name: string;
   referenceNumber: string;
+  createdAt: string;
   districtId: string;
   _count?: { childAddresses: number };
 }
@@ -56,6 +57,7 @@ interface DistrictItem {
   id: string;
   name: string;
   referenceNumber: string;
+  createdAt: string;
   provinceId: string;
   regions: RegionItem[];
   _count?: { regions: number };
@@ -65,6 +67,7 @@ interface ProvinceItem {
   id: string;
   name: string;
   referenceNumber: string;
+  createdAt: string;
   districts: DistrictItem[];
 }
 
@@ -103,6 +106,20 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
   const selectedDistrict = filteredDistricts.find((d) => d.id === selectedDistrictId);
   const filteredRegions = selectedDistrict?.regions ?? [];
 
+  function formatCreatedAt(value: string | Date | null | undefined) {
+    if (!value) return new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+
+    return new Date(value).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  }
+
   function openAddDialog(type: "province" | "district" | "region") {
     setDialogType(type);
     setDialogMode("add");
@@ -134,7 +151,16 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
           if (result.success && result.data) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const newProv = result.data as any;
-            setProvinces([...provinces, { id: newProv.id, name: newProv.name, referenceNumber: newProv.referenceNumber ?? "", districts: [] }]);
+            setProvinces([
+              ...provinces,
+              {
+                id: newProv.id,
+                name: newProv.name,
+                referenceNumber: newProv.referenceNumber ?? "",
+                createdAt: formatCreatedAt(newProv.createdAt),
+                districts: [],
+              },
+            ]);
             toast.success(`${typeLabel} created successfully.`);
           } else {
             toast.error(`Failed to create ${typeLabel.toLowerCase()}.`);
@@ -161,7 +187,14 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
                       ...p,
                       districts: [
                         ...p.districts,
-                        { id: newDist.id, name: newDist.name, referenceNumber: newDist.referenceNumber ?? "", provinceId: selectedProvinceId, regions: [] },
+                        {
+                          id: newDist.id,
+                          name: newDist.name,
+                          referenceNumber: newDist.referenceNumber ?? "",
+                          createdAt: formatCreatedAt(newDist.createdAt),
+                          provinceId: selectedProvinceId,
+                          regions: [],
+                        },
                       ],
                     }
                   : p
@@ -202,7 +235,13 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
                         ...d,
                         regions: [
                           ...d.regions,
-                          { id: newReg.id, name: newReg.name, referenceNumber: newReg.referenceNumber ?? "", districtId: selectedDistrictId },
+                          {
+                            id: newReg.id,
+                            name: newReg.name,
+                            referenceNumber: newReg.referenceNumber ?? "",
+                            createdAt: formatCreatedAt(newReg.createdAt),
+                            districtId: selectedDistrictId,
+                          },
                         ],
                       }
                     : d
@@ -338,6 +377,7 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
                       {prov.referenceNumber && (
                         <span className="ml-2 text-xs text-muted-foreground">#{prov.referenceNumber}</span>
                       )}
+                      <p className="text-xs text-muted-foreground">Created {prov.createdAt}</p>
                     </div>
                     <span className="text-xs text-muted-foreground">
                       ({prov.districts.length})
@@ -410,6 +450,7 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
                           {dist.referenceNumber && (
                             <span className="ml-2 text-xs text-muted-foreground">#{dist.referenceNumber}</span>
                           )}
+                          <p className="text-xs text-muted-foreground">Created {dist.createdAt}</p>
                         </div>
                         <span className="text-xs text-muted-foreground">
                           ({dist.regions.length})
@@ -482,6 +523,7 @@ export function RegionsClient({ provinces: initialProvinces }: RegionsClientProp
                           {reg.referenceNumber && (
                             <span className="ml-2 text-xs text-muted-foreground">#{reg.referenceNumber}</span>
                           )}
+                          <p className="text-xs text-muted-foreground">Created {reg.createdAt}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
