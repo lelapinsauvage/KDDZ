@@ -164,6 +164,42 @@ export interface SentNotificationRow {
   userName: string | null;
 }
 
+export interface LegacyNotificationSettingRow {
+  id: string;
+  sourceDatabase: string;
+  legacyTable: string;
+  legacyId: number;
+  scope: string | null;
+  settingKey: string;
+  settingValue: string | null;
+  description: string | null;
+}
+
+export interface LegacyNotificationNatureRow {
+  id: string;
+  sourceDatabase: string;
+  legacyId: number;
+  name: string;
+  description: string | null;
+  contentTable: string | null;
+  deliveryTable: string | null;
+  parentDeliveryTable: string | null;
+  displayOrder: number | null;
+  isActive: boolean;
+}
+
+export interface LegacyNotificationLogRow {
+  id: string;
+  legacyId: number;
+  name: string | null;
+  status: number | null;
+  expiryDate: string | null;
+  createdAt: string;
+  childId: string | null;
+  legacyChildId: number | null;
+  childName: string | null;
+}
+
 export async function getSentNotifications(params: {
   category?: string;
   from?: string;
@@ -213,6 +249,143 @@ export async function getSentNotifications(params: {
   } catch (error) {
     console.error("Failed to fetch sent notifications:", error);
     return { success: false, error: "Failed to fetch sent notifications" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// getLegacyNotificationSettings
+// ---------------------------------------------------------------------------
+
+export async function getLegacyNotificationSettings(): Promise<
+  ActionResult<LegacyNotificationSettingRow[]>
+> {
+  try {
+    await requireOrg();
+
+    const settings = await db.legacySetting.findMany({
+      where: {
+        OR: [
+          { legacyTable: "t_notification_setting" },
+          { settingKey: { startsWith: "email-" } },
+          { scope: "notification" },
+        ],
+      },
+      orderBy: [
+        { sourceDatabase: "asc" },
+        { legacyTable: "asc" },
+        { settingKey: "asc" },
+      ],
+      take: 500,
+    });
+
+    return {
+      success: true,
+      data: settings.map((setting) => ({
+        id: setting.id,
+        sourceDatabase: setting.sourceDatabase,
+        legacyTable: setting.legacyTable,
+        legacyId: setting.legacyId,
+        scope: setting.scope,
+        settingKey: setting.settingKey,
+        settingValue: setting.settingValue,
+        description: setting.description,
+      })),
+    };
+  } catch (error) {
+    console.error("Failed to fetch legacy notification settings:", error);
+    return {
+      success: false,
+      error: "Failed to fetch legacy notification settings",
+    };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// getLegacyNotificationNatures
+// ---------------------------------------------------------------------------
+
+export async function getLegacyNotificationNatures(): Promise<
+  ActionResult<LegacyNotificationNatureRow[]>
+> {
+  try {
+    await requireOrg();
+
+    const natures = await db.legacyNotificationNature.findMany({
+      orderBy: [
+        { sourceDatabase: "asc" },
+        { displayOrder: "asc" },
+        { name: "asc" },
+      ],
+      take: 300,
+    });
+
+    return {
+      success: true,
+      data: natures.map((nature) => ({
+        id: nature.id,
+        sourceDatabase: nature.sourceDatabase,
+        legacyId: nature.legacyId,
+        name: nature.name,
+        description: nature.description,
+        contentTable: nature.contentTable,
+        deliveryTable: nature.deliveryTable,
+        parentDeliveryTable: nature.parentDeliveryTable,
+        displayOrder: nature.displayOrder,
+        isActive: nature.isActive,
+      })),
+    };
+  } catch (error) {
+    console.error("Failed to fetch legacy notification natures:", error);
+    return {
+      success: false,
+      error: "Failed to fetch legacy notification natures",
+    };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// getLegacyNotificationLogs
+// ---------------------------------------------------------------------------
+
+export async function getLegacyNotificationLogs(): Promise<
+  ActionResult<LegacyNotificationLogRow[]>
+> {
+  try {
+    await requireOrg();
+
+    const logs = await db.legacyNotificationLog.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 200,
+    });
+
+    const childIds = [...new Set(logs.map((log) => log.childId).filter(Boolean))] as string[];
+    const children = childIds.length
+      ? await db.child.findMany({
+          where: { id: { in: childIds } },
+          select: { id: true, firstName: true, lastName: true },
+        })
+      : [];
+    const childNameById = new Map(
+      children.map((child) => [child.id, `${child.firstName} ${child.lastName}`])
+    );
+
+    return {
+      success: true,
+      data: logs.map((log) => ({
+        id: log.id,
+        legacyId: log.legacyId,
+        name: log.name,
+        status: log.status,
+        expiryDate: log.expiryDate,
+        createdAt: log.createdAt.toISOString(),
+        childId: log.childId,
+        legacyChildId: log.legacyChildId,
+        childName: log.childId ? childNameById.get(log.childId) ?? null : null,
+      })),
+    };
+  } catch (error) {
+    console.error("Failed to fetch legacy notification logs:", error);
+    return { success: false, error: "Failed to fetch legacy notification logs" };
   }
 }
 

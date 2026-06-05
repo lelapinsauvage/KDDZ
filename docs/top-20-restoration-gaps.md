@@ -54,7 +54,8 @@ This list is the first implementation backlog after the generated inventory/matr
 
 7. **Notification logs/settings migration**
    - Legacy has many `custom_notifications_*`, `t_alarms_*`, `t_notification_setting`, and `t_notifications_log` tables.
-   - Historical alarms, receipts, push tokens, and notification logs are covered by `migrate-alarms.ts`; notification settings and future send-job behavior still need exact mapping.
+   - Historical alarms, receipts, push tokens, and notification logs are covered by `migrate-alarms.ts`; migrated `t_notification_setting`, `notifications_nature`, and `t_notifications_log` rows are now visible in `/settings/notifications` under the Legacy tab for audit and parity review.
+   - Remaining work is exact activation/edit behavior, parent/custom notification families, and production send-job parity.
 
 8. **Actual notification sending**
    - Modern app stores templates/logs and header notifications, but production send jobs are not complete.

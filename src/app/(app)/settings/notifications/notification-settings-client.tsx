@@ -41,9 +41,15 @@ import {
   Eye,
   EyeOff,
   Calendar,
+  Database,
+  History,
+  ListTree,
   type LucideIcon,
 } from "lucide-react";
 import {
+  type LegacyNotificationLogRow,
+  type LegacyNotificationNatureRow,
+  type LegacyNotificationSettingRow,
   type TemplateRow,
   upsertNotificationTemplate,
   getSentNotifications,
@@ -151,6 +157,9 @@ const LOG_CATEGORIES = [
 interface NotificationSettingsClientProps {
   initialTemplates: TemplateRow[];
   initialLogs: SentNotificationRow[];
+  initialLegacySettings: LegacyNotificationSettingRow[];
+  initialLegacyNatures: LegacyNotificationNatureRow[];
+  initialLegacyLogs: LegacyNotificationLogRow[];
 }
 
 // ---------------------------------------------------------------------------
@@ -160,6 +169,9 @@ interface NotificationSettingsClientProps {
 export function NotificationSettingsClient({
   initialTemplates,
   initialLogs,
+  initialLegacySettings,
+  initialLegacyNatures,
+  initialLegacyLogs,
 }: NotificationSettingsClientProps) {
   const [tab, setTab] = useState("templates");
 
@@ -183,6 +195,10 @@ export function NotificationSettingsClient({
               <ScrollText className="size-3.5" />
               Sent Logs
             </TabsTrigger>
+            <TabsTrigger value="legacy" className="gap-1.5">
+              <Database className="size-3.5" />
+              Legacy
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="templates">
@@ -191,6 +207,14 @@ export function NotificationSettingsClient({
 
           <TabsContent value="logs">
             <SentLogsTab initialLogs={initialLogs} />
+          </TabsContent>
+
+          <TabsContent value="legacy">
+            <LegacyTab
+              settings={initialLegacySettings}
+              natures={initialLegacyNatures}
+              logs={initialLegacyLogs}
+            />
           </TabsContent>
         </Tabs>
       </div>
@@ -581,6 +605,292 @@ function SentLogsTab({
       <p className="text-xs text-muted-foreground">
         Showing {logs.length} notification{logs.length !== 1 ? "s" : ""}
       </p>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Tab C: Legacy
+// ═══════════════════════════════════════════════════════════════════════════
+
+function LegacyTab({
+  settings,
+  natures,
+  logs,
+}: {
+  settings: LegacyNotificationSettingRow[];
+  natures: LegacyNotificationNatureRow[];
+  logs: LegacyNotificationLogRow[];
+}) {
+  function formatDate(iso: string) {
+    return new Date(iso).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  function shortValue(value: string | null) {
+    if (!value) return "-";
+    return value.length > 90 ? `${value.slice(0, 90)}...` : value;
+  }
+
+  function statusLabel(status: number | null) {
+    if (status === null) return "Unknown";
+    if (status === 1) return "Enabled";
+    if (status === 0) return "Disabled";
+    return String(status);
+  }
+
+  function settingStatusLabel(value: string | null) {
+    if (value === null || value.trim() === "") return "Unknown";
+    const numericValue = Number(value);
+    return Number.isFinite(numericValue) ? statusLabel(numericValue) : value;
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3 md:grid-cols-3">
+        <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-blue-700">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-xs font-medium uppercase tracking-normal">
+                Settings
+              </div>
+              <div className="mt-1 text-2xl font-semibold">{settings.length}</div>
+            </div>
+            <Database className="size-5" />
+          </div>
+        </div>
+        <div className="rounded-lg border border-violet-200 bg-violet-50 px-4 py-3 text-violet-700">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-xs font-medium uppercase tracking-normal">
+                Natures
+              </div>
+              <div className="mt-1 text-2xl font-semibold">{natures.length}</div>
+            </div>
+            <ListTree className="size-5" />
+          </div>
+        </div>
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-700">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-xs font-medium uppercase tracking-normal">
+                Logs
+              </div>
+              <div className="mt-1 text-2xl font-semibold">{logs.length}</div>
+            </div>
+            <History className="size-5" />
+          </div>
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Legacy Settings</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto rounded-md border">
+            <Table className="min-w-[860px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="bg-secondary/40 px-4 py-3 text-xs font-medium uppercase text-muted-foreground">
+                    Source
+                  </TableHead>
+                  <TableHead className="bg-secondary/40 px-4 py-3 text-xs font-medium uppercase text-muted-foreground">
+                    Table
+                  </TableHead>
+                  <TableHead className="bg-secondary/40 px-4 py-3 text-xs font-medium uppercase text-muted-foreground">
+                    Key
+                  </TableHead>
+                  <TableHead className="bg-secondary/40 px-4 py-3 text-xs font-medium uppercase text-muted-foreground">
+                    Value
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {settings.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={4}
+                      className="h-24 text-center text-muted-foreground"
+                    >
+                      No legacy notification settings found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  settings.map((setting) => (
+                    <TableRow key={setting.id}>
+                      <TableCell className="px-4 py-3 text-xs text-muted-foreground">
+                        {setting.sourceDatabase}
+                      </TableCell>
+                      <TableCell className="px-4 py-3">
+                        <Badge variant="outline" className="font-mono text-xs">
+                          {setting.legacyTable}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-sm font-medium">
+                        {setting.settingKey}
+                      </TableCell>
+                      <TableCell className="max-w-[360px] px-4 py-3 text-sm text-muted-foreground">
+                        {setting.legacyTable === "t_notification_setting" ? (
+                          <Badge variant="secondary">
+                            {settingStatusLabel(setting.settingValue)}
+                          </Badge>
+                        ) : (
+                          shortValue(setting.settingValue)
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Legacy Notification Natures</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto rounded-md border">
+            <Table className="min-w-[900px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="bg-secondary/40 px-4 py-3 text-xs font-medium uppercase text-muted-foreground">
+                    Name
+                  </TableHead>
+                  <TableHead className="bg-secondary/40 px-4 py-3 text-xs font-medium uppercase text-muted-foreground">
+                    Content
+                  </TableHead>
+                  <TableHead className="bg-secondary/40 px-4 py-3 text-xs font-medium uppercase text-muted-foreground">
+                    Delivery
+                  </TableHead>
+                  <TableHead className="bg-secondary/40 px-4 py-3 text-xs font-medium uppercase text-muted-foreground">
+                    Parent
+                  </TableHead>
+                  <TableHead className="bg-secondary/40 px-4 py-3 text-xs font-medium uppercase text-muted-foreground">
+                    Status
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {natures.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      className="h-24 text-center text-muted-foreground"
+                    >
+                      No legacy notification natures found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  natures.map((nature) => (
+                    <TableRow key={nature.id}>
+                      <TableCell className="px-4 py-3">
+                        <div className="font-medium">{nature.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {nature.sourceDatabase} #{nature.legacyId}
+                        </div>
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-sm text-muted-foreground">
+                        {nature.contentTable ?? "-"}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-sm text-muted-foreground">
+                        {nature.deliveryTable ?? "-"}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-sm text-muted-foreground">
+                        {nature.parentDeliveryTable ?? "-"}
+                      </TableCell>
+                      <TableCell className="px-4 py-3">
+                        <Badge
+                          variant="outline"
+                          className={
+                            nature.isActive
+                              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                              : "border-slate-200 bg-slate-50 text-slate-600"
+                          }
+                        >
+                          {nature.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Legacy Send Logs</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto rounded-md border">
+            <Table className="min-w-[780px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="bg-secondary/40 px-4 py-3 text-xs font-medium uppercase text-muted-foreground">
+                    Date
+                  </TableHead>
+                  <TableHead className="bg-secondary/40 px-4 py-3 text-xs font-medium uppercase text-muted-foreground">
+                    Name
+                  </TableHead>
+                  <TableHead className="bg-secondary/40 px-4 py-3 text-xs font-medium uppercase text-muted-foreground">
+                    Child
+                  </TableHead>
+                  <TableHead className="bg-secondary/40 px-4 py-3 text-xs font-medium uppercase text-muted-foreground">
+                    Expiry
+                  </TableHead>
+                  <TableHead className="bg-secondary/40 px-4 py-3 text-xs font-medium uppercase text-muted-foreground">
+                    Status
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {logs.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      className="h-24 text-center text-muted-foreground"
+                    >
+                      No legacy notification logs found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  logs.map((log) => (
+                    <TableRow key={log.id}>
+                      <TableCell className="px-4 py-3 text-xs text-muted-foreground">
+                        {formatDate(log.createdAt)}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-sm font-medium">
+                        {log.name ?? `Legacy #${log.legacyId}`}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-sm text-muted-foreground">
+                        {log.childName ??
+                          (log.legacyChildId ? `Legacy child #${log.legacyChildId}` : "-")}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-sm text-muted-foreground">
+                        {log.expiryDate ?? "-"}
+                      </TableCell>
+                      <TableCell className="px-4 py-3">
+                        <Badge variant="secondary">{statusLabel(log.status)}</Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
