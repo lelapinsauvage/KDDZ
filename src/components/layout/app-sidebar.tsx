@@ -188,7 +188,7 @@ const adminNav: NavSection[] = [
     children: [
       { title: "Children Listing", href: "/children", icon: Baby },
       { title: "Children Drafts", href: "/children/drafts", icon: FileEdit },
-      { title: "Calls Management", href: "/children?tab=calls", icon: Phone },
+      { title: "Calls Management", href: "/calls", icon: Phone },
       {
         title: "Daily Reports",
         icon: FileText,

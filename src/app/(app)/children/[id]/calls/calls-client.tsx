@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Plus, Phone, PhoneIncoming, PhoneOutgoing, MoreHorizontal, Trash2 } from "lucide-react";
-import { CallReportDialog } from "./call-report-dialog";
+import { CallReportDialog, type CallCauseOption } from "./call-report-dialog";
 import { deleteCallLog } from "@/lib/actions/calls";
 
 interface ChildData {
@@ -47,6 +47,7 @@ interface Props {
   child: ChildData;
   calls: CallRecord[];
   staffList: StaffMember[];
+  callCauseOptions: CallCauseOption[];
 }
 
 const causeLabels: Record<string, string> = {
@@ -162,7 +163,7 @@ function CallActions({ callId }: { callId: string }) {
   );
 }
 
-export function CallsClient({ child, calls, staffList }: Props) {
+export function CallsClient({ child, calls, staffList, callCauseOptions }: Props) {
   const id = child.id;
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -204,6 +205,7 @@ export function CallsClient({ child, calls, staffList }: Props) {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         staffList={staffList}
+        callCauseOptions={callCauseOptions}
       />
     </>
   );

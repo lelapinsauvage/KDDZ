@@ -64,8 +64,8 @@ This list is the first implementation backlog after the generated inventory/matr
    - Legacy `ws/*.php`, iOS `WebFunctions.swift`, and Android `WebServiceFunctions.java` must be response-shape audited against modern `/api/parent/*`.
 
 11. **Top-level calls module**
-   - Modern app has child-scoped calls under `/children/[id]/calls`.
-   - Legacy includes broader `calls.php`, `call.php`, `bcalls.php`, `callparent`, and `callcauses`.
+   - `/calls` now restores the global call management surface with search, branch/class/date/type filters, pagination, child links, delete actions, runtime call logging, attachment upload, and migrated `callparent`/`callcauses` reason options.
+   - Remaining work is exact field/layout audit against `calls.php`, `call.php`, `bcalls.php`, and their JS files after the legacy sources are available for page-level comparison.
 
 12. **New academic year workflow**
    - Modern page exists but is largely disabled/placeholder.

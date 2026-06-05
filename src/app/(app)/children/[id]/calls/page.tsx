@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getChild } from "@/lib/actions/children";
-import { getChildCallLogs } from "@/lib/actions/calls";
+import { getCallCauseOptions, getChildCallLogs } from "@/lib/actions/calls";
 import { getOrgStaffList } from "@/lib/actions/medical";
 import { CallsClient } from "./calls-client";
 
@@ -19,10 +19,11 @@ function formatTime(date: Date | null): string | null {
 export default async function ChildCallsPage({ params }: Props) {
   const { id } = await params;
 
-  const [child, callsRaw, staffList] = await Promise.all([
+  const [child, callsRaw, staffList, callCauseOptions] = await Promise.all([
     getChild(id),
     getChildCallLogs(id),
     getOrgStaffList(),
+    getCallCauseOptions(),
   ]);
 
   if (!child) {
@@ -54,6 +55,7 @@ export default async function ChildCallsPage({ params }: Props) {
       child={childData}
       calls={calls}
       staffList={staffList}
+      callCauseOptions={callCauseOptions}
     />
   );
 }

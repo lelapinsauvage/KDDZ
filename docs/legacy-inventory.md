@@ -91,12 +91,12 @@ Generated from local source trees. This is a first-pass inventory and must be re
 | Front/templates/admin/assets/plugins/jquery-validation/demo/captcha/process.php |  | no |
 | Front/templates/admin/assets/plugins/jquery-validation/demo/captcha/rand.php |  | no |
 | Front/templates/admin/attendance.php | /employees/attendance | yes |
-| Front/templates/admin/bcalls.php | /children/[id]/calls | yes |
+| Front/templates/admin/bcalls.php | /calls | yes |
 | Front/templates/admin/branch.php | /branches/[id]/edit | yes |
 | Front/templates/admin/branches.php | /branches | yes |
 | Front/templates/admin/calendar.php | /employees/calendar | yes |
 | Front/templates/admin/call.php | /children/[id]/calls | yes |
-| Front/templates/admin/calls.php | /children/[id]/calls | yes |
+| Front/templates/admin/calls.php | /calls | yes |
 | Front/templates/admin/child_absence.php | /children/[id]/absence | yes |
 | Front/templates/admin/child_accident.php | /children/[id]/accidents | yes |
 | Front/templates/admin/child_accounting.php | /children/[id]/accounting | yes |

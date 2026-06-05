@@ -23,16 +23,23 @@ import { createCallLog } from "@/lib/actions/calls";
 import { uploadFileWithPresign } from "@/lib/uploads/client-upload";
 import { FileText, Upload, X } from "lucide-react";
 
-const CALL_CAUSE_OPTIONS = [
-  { value: "health", label: "Health Issue" },
-  { value: "behavior", label: "Behavior" },
-  { value: "absence", label: "Absence" },
-  { value: "pickup", label: "Pickup Arrangement" },
-  { value: "emergency", label: "Emergency" },
-  { value: "general_inquiry", label: "General Inquiry" },
-  { value: "complaint", label: "Complaint" },
-  { value: "follow_up", label: "Follow Up" },
-  { value: "other", label: "Other" },
+export interface CallCauseOption {
+  id: string;
+  value: string;
+  label: string;
+  category?: string;
+}
+
+const CALL_CAUSE_OPTIONS: CallCauseOption[] = [
+  { id: "health", value: "health", label: "Health Issue" },
+  { id: "behavior", value: "behavior", label: "Behavior" },
+  { id: "absence", value: "absence", label: "Absence" },
+  { id: "pickup", value: "pickup", label: "Pickup Arrangement" },
+  { id: "emergency", value: "emergency", label: "Emergency" },
+  { id: "general_inquiry", value: "general_inquiry", label: "General Inquiry" },
+  { id: "complaint", value: "complaint", label: "Complaint" },
+  { id: "follow_up", value: "follow_up", label: "Follow Up" },
+  { id: "other", value: "other", label: "Other" },
 ];
 
 interface Props {
@@ -41,6 +48,7 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   staffList: { id: string; name: string | null; email: string }[];
+  callCauseOptions?: CallCauseOption[];
 }
 
 export function CallReportDialog({
@@ -49,6 +57,7 @@ export function CallReportDialog({
   open,
   onOpenChange,
   staffList,
+  callCauseOptions = [],
 }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -62,6 +71,7 @@ export function CallReportDialog({
   const [teacherId, setTeacherId] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
   const [error, setError] = useState("");
+  const causeOptions = callCauseOptions.length ? callCauseOptions : CALL_CAUSE_OPTIONS;
 
   function resetForm() {
     setDirection("INCOMING");
@@ -206,9 +216,9 @@ export function CallReportDialog({
                 <SelectValue placeholder="Select cause..." />
               </SelectTrigger>
               <SelectContent>
-                {CALL_CAUSE_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
+                {causeOptions.map((opt) => (
+                  <SelectItem key={opt.id ?? opt.value} value={opt.value}>
+                    {opt.category ? `${opt.category} - ${opt.label}` : opt.label}
                   </SelectItem>
                 ))}
               </SelectContent>

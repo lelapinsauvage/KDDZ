@@ -10,6 +10,8 @@ import type { CallDirection, Prisma } from "@/generated/prisma/client";
 
 interface GetCallLogsParams {
   childId?: string;
+  branchId?: string;
+  classId?: string;
   direction?: CallDirection;
   dateFrom?: string;
   dateTo?: string;
@@ -75,6 +77,8 @@ export async function getCallLogs(params: GetCallLogsParams = {}) {
 
     const {
       childId,
+      branchId,
+      classId,
       direction,
       dateFrom,
       dateTo,
@@ -83,10 +87,20 @@ export async function getCallLogs(params: GetCallLogsParams = {}) {
       pageSize = 20,
     } = params;
 
-    const where: Prisma.CallLogWhereInput = {
-      child: { branch: { organizationId: orgId } },
+    const childWhere: Prisma.ChildWhereInput = {
+      branch: { organizationId: orgId },
     };
 
+    if (branchId) {
+      childWhere.branchId = branchId;
+    }
+    if (classId) {
+      childWhere.classId = classId;
+    }
+
+    const where: Prisma.CallLogWhereInput = {
+      child: childWhere,
+    };
     if (childId) where.childId = childId;
     if (direction) where.direction = direction;
 
@@ -101,6 +115,9 @@ export async function getCallLogs(params: GetCallLogsParams = {}) {
         { contact: { contains: search, mode: "insensitive" } },
         { subject: { contains: search, mode: "insensitive" } },
         { reason: { contains: search, mode: "insensitive" } },
+        { remarks: { contains: search, mode: "insensitive" } },
+        { child: { firstName: { contains: search, mode: "insensitive" } } },
+        { child: { lastName: { contains: search, mode: "insensitive" } } },
       ];
     }
 
@@ -111,13 +128,24 @@ export async function getCallLogs(params: GetCallLogsParams = {}) {
         where,
         include: {
           child: {
-            select: { id: true, firstName: true, lastName: true },
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              branchId: true,
+              classId: true,
+              branch: { select: { id: true, name: true } },
+              class: { select: { id: true, name: true } },
+            },
           },
           createdBy: {
             select: { id: true, name: true, email: true },
           },
+          _count: {
+            select: { attachments: true },
+          },
         },
-        orderBy: { date: "desc" },
+        orderBy: [{ date: "desc" }, { createdAt: "desc" }],
         skip,
         take: pageSize,
       }),
@@ -128,6 +156,73 @@ export async function getCallLogs(params: GetCallLogsParams = {}) {
   } catch (error) {
     console.error("getCallLogs error:", error);
     return { calls: [], total: 0 };
+  }
+}
+
+// ── getCallCauseOptions — migrated callparent/callcauses lookup ──
+
+export async function getCallCauseOptions() {
+  try {
+    await requireOrg();
+
+    const causes = await db.callCause.findMany({
+      include: {
+        category: { select: { name: true } },
+      },
+      orderBy: [
+        { category: { name: "asc" } },
+        { parentLabel: "asc" },
+        { childLabel: "asc" },
+      ],
+    });
+
+    return causes
+      .map((cause) => {
+        const category = cause.category?.name ?? cause.parentLabel ?? "";
+        const childLabel = cause.childLabel ?? "";
+        const label = childLabel || category;
+        if (!label) return null;
+
+        return {
+          id: cause.id,
+          category,
+          label,
+          value: category && childLabel ? `${category}: ${childLabel}` : label,
+        };
+      })
+      .filter((cause): cause is NonNullable<typeof cause> => cause !== null);
+  } catch (error) {
+    console.error("getCallCauseOptions error:", error);
+    return [];
+  }
+}
+
+// ── getCallChildOptions — active children for global call logging ──
+
+export async function getCallChildOptions() {
+  try {
+    const { organizationId: orgId } = await requireOrg();
+
+    return await db.child.findMany({
+      where: {
+        branch: { organizationId: orgId },
+        isActive: true,
+        isDraft: false,
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        branchId: true,
+        classId: true,
+        branch: { select: { id: true, name: true } },
+        class: { select: { id: true, name: true } },
+      },
+      orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+    });
+  } catch (error) {
+    console.error("getCallChildOptions error:", error);
+    return [];
   }
 }
 
@@ -183,6 +278,7 @@ export async function createCallLog(
     });
 
     revalidatePath(`/children/${data.childId}/calls`);
+    revalidatePath("/calls");
 
     return { success: true, id: call.id };
   } catch (error) {
@@ -212,6 +308,7 @@ export async function deleteCallLog(id: string): Promise<ActionResult> {
     await db.callLog.delete({ where: { id } });
 
     revalidatePath(`/children/${existing.childId}/calls`);
+    revalidatePath("/calls");
 
     return { success: true, id };
   } catch (error) {
