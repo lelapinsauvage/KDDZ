@@ -232,7 +232,7 @@ pnpm tsx src/scripts/migration/apply-legacy-file-urls.ts \
   --dry-run
 ```
 
-The apply script updates only tables with strong legacy provenance. After rerunning migrations that include `20260601017000_add_legacy_file_provenance`, it rewrites branch/class/child/staff profile photos plus child, branch, teacher, nurse, doctor, manager, daily report, absence, payment, and form attachment URL fields by `sourceDatabase + legacyTable + legacyId`. It also patches `child-history-photo` entries inside legacy `ChildHistory.snapshot.image` JSON when the snapshot is a migrated `t_child_h` row and the current image value still matches the exported legacy filename.
+The apply script updates only tables with strong legacy provenance. After rerunning migrations that include `20260601017000_add_legacy_file_provenance`, it rewrites branch/class/child/staff profile photos plus child, branch, teacher, nurse, doctor, manager, daily report, absence, payment, and form attachment URL fields by `sourceDatabase + legacyTable + legacyId`. Legacy `t_forms_attachments` exports use the `medical-form-document` rule and update `FormAttachment.fileUrl`; runtime-created form attachments use `form-attachment` for the same target. The script also patches `child-history-photo` entries inside legacy `ChildHistory.snapshot.image` JSON when the snapshot is a migrated `t_child_h` row and the current image value still matches the exported legacy filename.
 
 ### Count Reconciliation
 

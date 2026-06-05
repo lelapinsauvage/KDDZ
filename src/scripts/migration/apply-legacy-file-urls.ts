@@ -1040,6 +1040,7 @@ const APPLY_BY_RULE: Record<
   "payment-receipt": applyPaymentReceipt,
   "daily-attachment": applyDailyReportAttachment,
   "absence-attachment": applyAbsenceAttachment,
+  "medical-form-document": applyFormAttachment,
   "form-attachment": applyFormAttachment,
 };
 

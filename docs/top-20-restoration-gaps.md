@@ -28,6 +28,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - Class add/edit dialogs now upload class images before save and persist URLs on `Class.imageUrl`.
    - Branch add/edit forms now upload branch images through the `branch` scope and persist URLs on `Branch.imageUrl`; new branches are created first so the upload can pass branch-level access checks, then immediately updated with the uploaded image URL.
    - `apply-legacy-file-urls.ts` now patches legacy `ChildHistory.snapshot.image` JSON for `child-history-photo` entries when source database, child legacy id, source table, and legacy filename all match.
+   - Legacy `t_forms_attachments` upload manifests now use the `medical-form-document` rule to rewrite imported medical form attachment files onto `FormAttachment.fileUrl`; runtime call/accident uploads still use the `form-attachment` scope for the same target table.
    - Remaining work is upload attach/update actions for the remaining non-compliance surfaces, local multipart upload support if needed, and replacement of the remaining upload placeholders.
 
 4. **Full data reconciliation**
