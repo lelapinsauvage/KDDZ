@@ -68,8 +68,8 @@ This list is the first implementation backlog after the generated inventory/matr
    - Remaining work is exact field/layout audit against `calls.php`, `call.php`, `bcalls.php`, and their JS files after the legacy sources are available for page-level comparison.
 
 12. **New academic year workflow**
-   - Modern page exists but is largely disabled/placeholder.
-   - Legacy `newyear.php` performs archive/import/reassignment/progression workflows.
+   - `/settings/new-year` now restores the legacy optional/mandatory import selection UI, teacher reassignment table, child class progression table, legacy-style S.N. generation, and a transactional action that creates the next active `SchoolYear`, updates selected teachers/children, and snapshots child history.
+   - Remaining work is exact parity for legacy physical database backup/truncate/import behavior from `ArchiveAndCreate`; modern currently records import selections in `SchoolYear.legacyData` and avoids destructive deletion.
 
 13. **Class dashboard depth**
    - Modern class dashboard exists, but legacy `class_dashboard.php` has deeper daily, medical, and assessment stat coverage.
