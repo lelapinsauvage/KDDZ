@@ -31,11 +31,7 @@ interface CreateMedicalFormData {
   status?: MedicalFormStatus;
   data?: Record<string, unknown>;
   entries?: Array<{ field: string; value?: string }>;
-  attachments?: Array<{
-    title?: string;
-    filename: string;
-    fileUrl: string;
-  }>;
+  attachments?: MedicalFormAttachmentInput[];
 }
 
 interface UpdateMedicalFormData {
@@ -44,6 +40,15 @@ interface UpdateMedicalFormData {
   status?: MedicalFormStatus;
   data?: Record<string, unknown>;
   entries?: Array<{ id?: string; field: string; value?: string }>;
+  attachments?: MedicalFormAttachmentInput[];
+  removeAttachmentIds?: string[];
+}
+
+interface MedicalFormAttachmentInput {
+  id?: string;
+  title?: string;
+  filename: string;
+  fileUrl: string;
 }
 
 interface GetVaccinationsParams {
@@ -165,6 +170,10 @@ export async function getMedicalForm(id: string) {
           },
         },
         entries: true,
+        attachments: {
+          where: { isActive: true },
+          orderBy: { createdAt: "asc" },
+        },
       },
     });
 
@@ -267,6 +276,9 @@ export async function updateMedicalForm(id: string, input: UpdateMedicalFormData
     const updateData: Prisma.MedicalFormUpdateInput = {};
 
     if (input.childId !== undefined) {
+      if (!(await verifyChildAccess(input.childId, orgId))) {
+        return { error: "Access denied" };
+      }
       updateData.child = { connect: { id: input.childId } };
     }
     if (input.formType !== undefined) {
@@ -295,8 +307,57 @@ export async function updateMedicalForm(id: string, input: UpdateMedicalFormData
       data: updateData,
       include: {
         entries: true,
+        attachments: true,
       },
     });
+
+    const attachmentChildId = input.childId ?? existing.childId;
+    const attachmentFormType = input.formType ?? existing.formType;
+
+    if (input.removeAttachmentIds?.length) {
+      await db.formAttachment.updateMany({
+        where: {
+          medicalFormId: id,
+          id: { in: input.removeAttachmentIds },
+        },
+        data: { isActive: false },
+      });
+    }
+
+    if (input.attachments !== undefined) {
+      const activeExisting = input.attachments.filter((attachment) => attachment.id);
+      const newAttachments = input.attachments.filter((attachment) => !attachment.id);
+
+      for (const attachment of activeExisting) {
+        await db.formAttachment.updateMany({
+          where: {
+            medicalFormId: id,
+            id: attachment.id,
+          },
+          data: {
+            childId: attachmentChildId,
+            formType: attachmentFormType,
+            title: attachment.title ?? null,
+            filename: attachment.filename,
+            fileUrl: attachment.fileUrl,
+            isActive: true,
+          },
+        });
+      }
+
+      if (newAttachments.length) {
+        await db.formAttachment.createMany({
+          data: newAttachments.map((attachment) => ({
+            medicalFormId: id,
+            childId: attachmentChildId,
+            formType: attachmentFormType,
+            title: attachment.title ?? null,
+            filename: attachment.filename,
+            fileUrl: attachment.fileUrl,
+          })),
+        });
+      }
+    }
 
     revalidatePath("/medical");
     return { success: true, formId: form.id };

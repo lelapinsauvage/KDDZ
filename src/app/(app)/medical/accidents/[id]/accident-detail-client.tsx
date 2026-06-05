@@ -32,6 +32,12 @@ import {
   createMedicalForm,
   updateMedicalForm,
 } from "@/lib/actions/medical";
+import {
+  MedicalAttachmentsSection,
+  type MedicalAttachmentValue,
+  type MedicalChildOption,
+  useMedicalAttachments,
+} from "@/components/medical/medical-attachments-section";
 
 // --- Schema ---
 
@@ -126,7 +132,8 @@ interface AccidentDetailClientProps {
   childId: string;
   childName?: string;
   formData: AccidentFormValues;
-  childrenList: { id: string; name: string }[];
+  childrenList: MedicalChildOption[];
+  initialAttachments: MedicalAttachmentValue[];
 }
 
 // --- Client Component ---
@@ -138,10 +145,12 @@ export function AccidentDetailClient({
   childName,
   formData,
   childrenList,
+  initialAttachments,
 }: AccidentDetailClientProps) {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const attachments = useMedicalAttachments(initialAttachments);
 
   const {
     register,
@@ -183,12 +192,20 @@ export function AccidentDetailClient({
   async function onSaveDraft(data: AccidentFormValues) {
     setIsSaving(true);
     try {
+      const attachmentPayload = await attachments.resolveAttachmentPayload({
+        childrenList,
+        childId: data.childId,
+        formId,
+      });
+      if (!attachmentPayload) return;
+
       if (isNew) {
         const result = await createMedicalForm({
           childId: data.childId,
           formType: "ACCIDENTS",
           status: "DRAFT",
           data: buildPayload(data),
+          attachments: attachmentPayload,
         });
         if ("error" in result && result.error) {
           toast.error(result.error);
@@ -201,6 +218,8 @@ export function AccidentDetailClient({
           childId: data.childId,
           status: "DRAFT",
           data: buildPayload(data),
+          attachments: attachmentPayload,
+          removeAttachmentIds: attachments.removedAttachmentIds,
         });
         if ("error" in result && result.error) {
           toast.error(result.error);
@@ -221,12 +240,20 @@ export function AccidentDetailClient({
   async function onSubmit(data: AccidentFormValues) {
     setIsSubmitting(true);
     try {
+      const attachmentPayload = await attachments.resolveAttachmentPayload({
+        childrenList,
+        childId: data.childId,
+        formId,
+      });
+      if (!attachmentPayload) return;
+
       if (isNew) {
         const result = await createMedicalForm({
           childId: data.childId,
           formType: "ACCIDENTS",
           status: "SUBMITTED",
           data: buildPayload(data),
+          attachments: attachmentPayload,
         });
         if ("error" in result && result.error) {
           toast.error(result.error);
@@ -239,6 +266,8 @@ export function AccidentDetailClient({
           childId: data.childId,
           status: "SUBMITTED",
           data: buildPayload(data),
+          attachments: attachmentPayload,
+          removeAttachmentIds: attachments.removedAttachmentIds,
         });
         if ("error" in result && result.error) {
           toast.error(result.error);
@@ -537,6 +566,17 @@ export function AccidentDetailClient({
               </div>
             </CardContent>
           </Card>
+
+          <MedicalAttachmentsSection
+            existingAttachments={attachments.existingAttachments}
+            pendingAttachments={attachments.pendingAttachments}
+            disabled={busy}
+            onExistingTitleChange={attachments.updateExistingAttachmentTitle}
+            onRemoveExisting={attachments.removeExistingAttachment}
+            onAddPending={attachments.addPendingAttachments}
+            onPendingTitleChange={attachments.updatePendingAttachmentTitle}
+            onRemovePending={attachments.removePendingAttachment}
+          />
         </form>
       </div>
     </>

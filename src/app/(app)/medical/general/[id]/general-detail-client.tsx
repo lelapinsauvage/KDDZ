@@ -29,6 +29,12 @@ import {
 import { ArrowLeft, Save, Send, Loader2 } from "lucide-react";
 import { createMedicalForm, updateMedicalForm } from "@/lib/actions/medical";
 import { toast } from "sonner";
+import {
+  MedicalAttachmentsSection,
+  type MedicalAttachmentValue,
+  type MedicalChildOption,
+  useMedicalAttachments,
+} from "@/components/medical/medical-attachments-section";
 
 // --- Constants ---
 
@@ -89,7 +95,8 @@ interface GeneralDetailClientProps {
   formId: string | null;
   initialData: GeneralFormValues;
   initialStatus: "DRAFT" | "SUBMITTED" | "REVIEWED";
-  childrenList: { id: string; name: string }[];
+  childrenList: MedicalChildOption[];
+  initialAttachments: MedicalAttachmentValue[];
 }
 
 // --- Client Component ---
@@ -100,11 +107,13 @@ export function GeneralDetailClient({
   initialData,
   initialStatus,
   childrenList,
+  initialAttachments,
 }: GeneralDetailClientProps) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState(initialStatus);
+  const attachments = useMedicalAttachments(initialAttachments);
 
   const {
     register,
@@ -151,6 +160,12 @@ export function GeneralDetailClient({
     setSaving(true);
     try {
       const data = buildPayload(values);
+      const attachmentPayload = await attachments.resolveAttachmentPayload({
+        childrenList,
+        childId: values.childId,
+        formId,
+      });
+      if (!attachmentPayload) return;
 
       if (isNew || !formId) {
         const result = await createMedicalForm({
@@ -158,6 +173,7 @@ export function GeneralDetailClient({
           formType: "GENERAL",
           status: "DRAFT",
           data,
+          attachments: attachmentPayload,
         });
         if (result.error) {
           toast.error(result.error);
@@ -169,6 +185,8 @@ export function GeneralDetailClient({
           childId: values.childId,
           status: "DRAFT",
           data,
+          attachments: attachmentPayload,
+          removeAttachmentIds: attachments.removedAttachmentIds,
         });
         if (result.error) {
           toast.error(result.error);
@@ -189,6 +207,12 @@ export function GeneralDetailClient({
     setSubmitting(true);
     try {
       const data = buildPayload(values);
+      const attachmentPayload = await attachments.resolveAttachmentPayload({
+        childrenList,
+        childId: values.childId,
+        formId,
+      });
+      if (!attachmentPayload) return;
 
       if (isNew || !formId) {
         const result = await createMedicalForm({
@@ -196,6 +220,7 @@ export function GeneralDetailClient({
           formType: "GENERAL",
           status: "SUBMITTED",
           data,
+          attachments: attachmentPayload,
         });
         if (result.error) {
           toast.error(result.error);
@@ -207,6 +232,8 @@ export function GeneralDetailClient({
           childId: values.childId,
           status: "SUBMITTED",
           data,
+          attachments: attachmentPayload,
+          removeAttachmentIds: attachments.removedAttachmentIds,
         });
         if (result.error) {
           toast.error(result.error);
@@ -481,6 +508,17 @@ export function GeneralDetailClient({
               </div>
             </CardContent>
           </Card>
+
+          <MedicalAttachmentsSection
+            existingAttachments={attachments.existingAttachments}
+            pendingAttachments={attachments.pendingAttachments}
+            disabled={isLoading}
+            onExistingTitleChange={attachments.updateExistingAttachmentTitle}
+            onRemoveExisting={attachments.removeExistingAttachment}
+            onAddPending={attachments.addPendingAttachments}
+            onPendingTitleChange={attachments.updatePendingAttachmentTitle}
+            onRemovePending={attachments.removePendingAttachment}
+          />
         </form>
       </div>
     </>

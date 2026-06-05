@@ -31,6 +31,12 @@ import {
   createMedicalForm,
   updateMedicalForm,
 } from "@/lib/actions/medical";
+import {
+  MedicalAttachmentsSection,
+  type MedicalAttachmentValue,
+  type MedicalChildOption,
+  useMedicalAttachments,
+} from "@/components/medical/medical-attachments-section";
 
 // --- Constants ---
 
@@ -93,7 +99,8 @@ interface ConditionDetailClientProps {
   isNew: boolean;
   formId: string | null;
   formData: ConditionFormValues;
-  childrenList: { id: string; name: string }[];
+  childrenList: MedicalChildOption[];
+  initialAttachments: MedicalAttachmentValue[];
 }
 
 // --- Client Component ---
@@ -103,11 +110,13 @@ export function ConditionDetailClient({
   formId,
   formData,
   childrenList,
+  initialAttachments,
 }: ConditionDetailClientProps) {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<string>(isNew ? "DRAFT" : "SUBMITTED");
+  const attachments = useMedicalAttachments(initialAttachments);
 
   const {
     register,
@@ -131,6 +140,12 @@ export function ConditionDetailClient({
         treatmentPlan: data.treatmentPlan ?? "",
         doctorNotes: data.doctorNotes ?? "",
       };
+      const attachmentPayload = await attachments.resolveAttachmentPayload({
+        childrenList,
+        childId: data.childId,
+        formId,
+      });
+      if (!attachmentPayload) return;
 
       let result;
 
@@ -140,12 +155,15 @@ export function ConditionDetailClient({
           formType: "CONDITIONS",
           status: "DRAFT",
           data: payload,
+          attachments: attachmentPayload,
         });
       } else {
         result = await updateMedicalForm(formId!, {
           childId: data.childId,
           status: "DRAFT",
           data: payload,
+          attachments: attachmentPayload,
+          removeAttachmentIds: attachments.removedAttachmentIds,
         });
       }
 
@@ -174,6 +192,12 @@ export function ConditionDetailClient({
         treatmentPlan: data.treatmentPlan ?? "",
         doctorNotes: data.doctorNotes ?? "",
       };
+      const attachmentPayload = await attachments.resolveAttachmentPayload({
+        childrenList,
+        childId: data.childId,
+        formId,
+      });
+      if (!attachmentPayload) return;
 
       let result;
 
@@ -183,12 +207,15 @@ export function ConditionDetailClient({
           formType: "CONDITIONS",
           status: "SUBMITTED",
           data: payload,
+          attachments: attachmentPayload,
         });
       } else {
         result = await updateMedicalForm(formId!, {
           childId: data.childId,
           status: "SUBMITTED",
           data: payload,
+          attachments: attachmentPayload,
+          removeAttachmentIds: attachments.removedAttachmentIds,
         });
       }
 
@@ -383,6 +410,17 @@ export function ConditionDetailClient({
               />
             </CardContent>
           </Card>
+
+          <MedicalAttachmentsSection
+            existingAttachments={attachments.existingAttachments}
+            pendingAttachments={attachments.pendingAttachments}
+            disabled={isLoading}
+            onExistingTitleChange={attachments.updateExistingAttachmentTitle}
+            onRemoveExisting={attachments.removeExistingAttachment}
+            onAddPending={attachments.addPendingAttachments}
+            onPendingTitleChange={attachments.updatePendingAttachmentTitle}
+            onRemovePending={attachments.removePendingAttachment}
+          />
         </form>
       </div>
     </>

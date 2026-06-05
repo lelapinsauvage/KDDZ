@@ -46,6 +46,12 @@ import {
   Sparkles,
 } from "lucide-react";
 import { createMedicalForm, updateMedicalForm } from "@/lib/actions/medical";
+import {
+  MedicalAttachmentsSection,
+  type MedicalAttachmentValue,
+  type MedicalChildOption,
+  useMedicalAttachments,
+} from "@/components/medical/medical-attachments-section";
 
 // ---------------------------------------------------------------------------
 // Zod schema — comprehensive physical exam
@@ -214,7 +220,8 @@ interface VisitDetailClientProps {
   formId: string | null;
   initialData: VisitFormValues;
   status: "DRAFT" | "SUBMITTED" | "REVIEWED";
-  childrenList: { id: string; name: string }[];
+  childrenList: MedicalChildOption[];
+  initialAttachments: MedicalAttachmentValue[];
 }
 
 // ---------------------------------------------------------------------------
@@ -227,10 +234,12 @@ export function VisitDetailClient({
   initialData,
   status,
   childrenList,
+  initialAttachments,
 }: VisitDetailClientProps) {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const attachments = useMedicalAttachments(initialAttachments);
 
   const {
     register,
@@ -271,7 +280,19 @@ export function VisitDetailClient({
   const onSaveDraft = async (data: VisitFormValues) => {
     setIsSaving(true);
     try {
-      const payload = buildPayload(data, "DRAFT");
+      const attachmentPayload = await attachments.resolveAttachmentPayload({
+        childrenList,
+        childId: data.childId,
+        formId,
+      });
+      if (!attachmentPayload) return;
+      const payload = {
+        ...buildPayload(data, "DRAFT"),
+        attachments: attachmentPayload,
+        ...(!isNew
+          ? { removeAttachmentIds: attachments.removedAttachmentIds }
+          : {}),
+      };
       const result = isNew
         ? await createMedicalForm(payload)
         : await updateMedicalForm(formId!, payload);
@@ -292,7 +313,19 @@ export function VisitDetailClient({
   const onSubmitForm = async (data: VisitFormValues) => {
     setIsSubmitting(true);
     try {
-      const payload = buildPayload(data, "SUBMITTED");
+      const attachmentPayload = await attachments.resolveAttachmentPayload({
+        childrenList,
+        childId: data.childId,
+        formId,
+      });
+      if (!attachmentPayload) return;
+      const payload = {
+        ...buildPayload(data, "SUBMITTED"),
+        attachments: attachmentPayload,
+        ...(!isNew
+          ? { removeAttachmentIds: attachments.removedAttachmentIds }
+          : {}),
+      };
       const result = isNew
         ? await createMedicalForm(payload)
         : await updateMedicalForm(formId!, payload);
@@ -712,6 +745,17 @@ export function VisitDetailClient({
               </Accordion>
             </CardContent>
           </Card>
+
+          <MedicalAttachmentsSection
+            existingAttachments={attachments.existingAttachments}
+            pendingAttachments={attachments.pendingAttachments}
+            disabled={busy}
+            onExistingTitleChange={attachments.updateExistingAttachmentTitle}
+            onRemoveExisting={attachments.removeExistingAttachment}
+            onAddPending={attachments.addPendingAttachments}
+            onPendingTitleChange={attachments.updatePendingAttachmentTitle}
+            onRemovePending={attachments.removePendingAttachment}
+          />
         </form>
       </div>
     </>

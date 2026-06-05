@@ -15,13 +15,14 @@ export default async function ConditionDetailPage({ params }: PageProps) {
 
   const children = await db.child.findMany({
     where: { isActive: true, branch: { organizationId: orgId } },
-    select: { id: true, firstName: true, lastName: true },
+    select: { id: true, firstName: true, lastName: true, branchId: true },
     orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
   });
 
   const childOptions = children.map((c) => ({
     id: c.id,
     name: `${c.firstName} ${c.lastName}`,
+    branchId: c.branchId,
   }));
 
   if (isNew) {
@@ -39,6 +40,7 @@ export default async function ConditionDetailPage({ params }: PageProps) {
           doctorNotes: "",
         }}
         childrenList={childOptions}
+        initialAttachments={[]}
       />
     );
   }
@@ -69,6 +71,12 @@ export default async function ConditionDetailPage({ params }: PageProps) {
       formId={form.id}
       formData={formData}
       childrenList={childOptions}
+      initialAttachments={form.attachments.map((attachment) => ({
+        id: attachment.id,
+        title: attachment.title ?? "",
+        filename: attachment.filename,
+        fileUrl: attachment.fileUrl,
+      }))}
     />
   );
 }

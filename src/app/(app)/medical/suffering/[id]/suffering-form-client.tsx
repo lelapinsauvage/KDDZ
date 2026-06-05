@@ -46,6 +46,12 @@ import {
   updateMedicalForm,
 } from "@/lib/actions/medical";
 import type { LucideIcon } from "lucide-react";
+import {
+  MedicalAttachmentsSection,
+  type MedicalAttachmentValue,
+  type MedicalChildOption,
+  useMedicalAttachments,
+} from "@/components/medical/medical-attachments-section";
 
 // --- Assessment categories ---
 
@@ -102,7 +108,8 @@ interface SufferingFormClientProps {
   childName: string;
   formStatus: string;
   initialData: SufferingFormData;
-  childrenList: { id: string; name: string }[];
+  childrenList: MedicalChildOption[];
+  initialAttachments: MedicalAttachmentValue[];
 }
 
 // --- Component ---
@@ -115,6 +122,7 @@ export function SufferingFormClient({
   formStatus,
   initialData,
   childrenList,
+  initialAttachments,
 }: SufferingFormClientProps) {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
@@ -125,6 +133,7 @@ export function SufferingFormClient({
     initialData.assessments
   );
   const [conclusion, setConclusion] = useState(initialData.conclusion);
+  const attachments = useMedicalAttachments(initialAttachments);
 
   function updateAssessment(key: string, field: "status" | "remarks", value: string) {
     setAssessments((prev) => ({
@@ -148,6 +157,12 @@ export function SufferingFormClient({
         assessments,
         conclusion,
       };
+      const attachmentPayload = await attachments.resolveAttachmentPayload({
+        childrenList,
+        childId,
+        formId,
+      });
+      if (!attachmentPayload) return;
 
       let result;
       if (isNew) {
@@ -156,12 +171,15 @@ export function SufferingFormClient({
           formType: "CONDITIONS",
           status,
           data: payload,
+          attachments: attachmentPayload,
         });
       } else {
         result = await updateMedicalForm(formId!, {
           childId,
           status,
           data: payload,
+          attachments: attachmentPayload,
+          removeAttachmentIds: attachments.removedAttachmentIds,
         });
       }
 
@@ -351,6 +369,17 @@ export function SufferingFormClient({
             </div>
           </CardContent>
         </Card>
+
+        <MedicalAttachmentsSection
+          existingAttachments={attachments.existingAttachments}
+          pendingAttachments={attachments.pendingAttachments}
+          disabled={isLoading}
+          onExistingTitleChange={attachments.updateExistingAttachmentTitle}
+          onRemoveExisting={attachments.removeExistingAttachment}
+          onAddPending={attachments.addPendingAttachments}
+          onPendingTitleChange={attachments.updatePendingAttachmentTitle}
+          onRemovePending={attachments.removePendingAttachment}
+        />
       </div>
     </>
   );
