@@ -16,6 +16,7 @@ export default async function BirthdayAlarmsPage() {
   const serializedBirthdays = rawBirthdays.map((b) => ({
     id: b.child.id as string,
     childName: `${b.child.firstName} ${b.child.lastName}` as string,
+    branchId: b.child.branchId as string,
     dateOfBirth: b.child.dateOfBirth
       ? (b.child.dateOfBirth as Date).toISOString().split("T")[0]
       : "",
