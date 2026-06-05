@@ -30,10 +30,12 @@ import {
   Save,
   ArrowLeft,
   User,
+  ImageIcon,
   Plus,
   Trash2,
   Upload,
   FileText,
+  X,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -103,6 +105,10 @@ function employeeDocumentScope(type: EmployeeType) {
   }
 }
 
+function employeePhotoScope(type: EmployeeType) {
+  return type;
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -116,6 +122,8 @@ export function EmployeeFormClient({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [documentFiles, setDocumentFiles] = useState<Array<File | null>>([]);
   const isEditing = !!employee;
   const { singular, plural, pluralLower } = labels[type];
@@ -126,6 +134,7 @@ export function EmployeeFormClient({
       username: "",
       firstName: "",
       lastName: "",
+      imageUrl: "",
       dateOfBirth: "",
       placeOfBirth: "",
       registerNumber: "",
@@ -186,6 +195,9 @@ export function EmployeeFormClient({
     append: appendDoc,
     remove: removeDoc,
   } = useFieldArray({ control, name: "documents" });
+
+  const storedImageUrl = watch("imageUrl") || "";
+  const displayImageUrl = imagePreviewUrl || storedImageUrl;
 
   // Fetch classes filtered by selected branch
   const [filteredClasses, setFilteredClasses] = useState<ClassOption[]>(classes);
@@ -261,6 +273,34 @@ export function EmployeeFormClient({
     });
   }
 
+  function clearImageSelection() {
+    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    setImageFile(null);
+    setImagePreviewUrl(null);
+  }
+
+  function setSelectedImage(file: File) {
+    if (!file.type.startsWith("image/")) {
+      setError("Select an image file for the profile photo");
+      return;
+    }
+    clearImageSelection();
+    setImageFile(file);
+    setImagePreviewUrl(URL.createObjectURL(file));
+    setValue("imageUrl", "", { shouldDirty: true });
+  }
+
+  function clearStoredImage() {
+    clearImageSelection();
+    setValue("imageUrl", "", { shouldDirty: true });
+  }
+
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    };
+  }, [imagePreviewUrl]);
+
   function onSubmit(data: EmployeeFormValues) {
     setError(null);
     startTransition(async () => {
@@ -270,17 +310,42 @@ export function EmployeeFormClient({
         if (file) filesToUpload.push({ file, index });
       });
 
-      if (filesToUpload.length) {
+      if (imageFile || filesToUpload.length) {
         if (!data.branchId) {
-          setError("Cannot upload documents because the employee branch is unavailable");
+          setError("Cannot upload files because the employee branch is unavailable");
           return;
         }
+      }
 
+      if (imageFile) {
         try {
-          const nextDocuments = [...data.documents];
+          const uploaded = await uploadFileWithPresign({
+            branchId: data.branchId,
+            scope: employeePhotoScope(type),
+            ownerId: employee?.id,
+            file: imageFile,
+          });
+          payload = {
+            ...payload,
+            imageUrl: uploaded.publicUrl,
+          };
+          setValue("imageUrl", uploaded.publicUrl, { shouldDirty: true });
+        } catch (uploadError) {
+          setError(
+            uploadError instanceof Error
+              ? uploadError.message
+              : "Failed to upload employee photo",
+          );
+          return;
+        }
+      }
+
+      if (filesToUpload.length) {
+        try {
+          const nextDocuments = [...payload.documents];
           for (const { file, index } of filesToUpload) {
             const uploaded = await uploadFileWithPresign({
-              branchId: data.branchId,
+              branchId: payload.branchId,
               scope: employeeDocumentScope(type),
               ownerId: employee?.id,
               file,
@@ -299,7 +364,7 @@ export function EmployeeFormClient({
               fileUrl: uploaded.publicUrl,
             };
           }
-          payload = { ...data, documents: nextDocuments };
+          payload = { ...payload, documents: nextDocuments };
         } catch (uploadError) {
           setError(
             uploadError instanceof Error
@@ -319,6 +384,7 @@ export function EmployeeFormClient({
         return;
       }
 
+      clearImageSelection();
       router.push(`/employees/${pluralLower}`);
       router.refresh();
     });
@@ -340,14 +406,56 @@ export function EmployeeFormClient({
           {/* ── Left sidebar: profile photo + save button ── */}
           <div className="space-y-4">
             <div className="rounded-sm border border-border bg-white p-6 text-center shadow-sm">
-              <div className="mx-auto flex size-40 items-center justify-center rounded-full bg-muted/50">
-                <User className="size-20 text-[#c5ccd6]" />
+              <input type="hidden" {...register("imageUrl")} />
+              <div className="mx-auto flex size-40 items-center justify-center overflow-hidden rounded-full border bg-muted/50">
+                {displayImageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={displayImageUrl}
+                    alt=""
+                    className="size-full object-cover"
+                  />
+                ) : (
+                  <User className="size-20 text-[#c5ccd6]" />
+                )}
               </div>
               <p className="mt-4 text-lg font-semibold text-foreground">
                 {watch("firstName") || watch("lastName")
                   ? `${watch("firstName")} ${watch("lastName")}`
                   : `New ${singular}`}
               </p>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                <label className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-medium shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground">
+                  <ImageIcon className="size-4" />
+                  Photo
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) setSelectedImage(file);
+                      event.target.value = "";
+                    }}
+                  />
+                </label>
+                {(imageFile || storedImageUrl) && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearStoredImage}
+                  >
+                    <X className="size-4" />
+                    Clear
+                  </Button>
+                )}
+              </div>
+              {imageFile && (
+                <p className="mt-2 truncate text-xs text-muted-foreground">
+                  {imageFile.name}
+                </p>
+              )}
             </div>
 
             {error && (

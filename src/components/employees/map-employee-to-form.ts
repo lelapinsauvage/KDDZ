@@ -33,6 +33,7 @@ export function mapEmployeeToForm(emp: any): EmployeeFormValues & { id: string }
     username: emp.username ?? "",
     firstName: emp.firstName ?? "",
     lastName: emp.lastName ?? "",
+    imageUrl: emp.imageUrl ?? "",
     dateOfBirth: fmtDate(emp.dateOfBirth),
     placeOfBirth: emp.placeOfBirth ?? "",
     registerNumber: emp.registerNumber ?? "",

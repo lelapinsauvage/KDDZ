@@ -57,6 +57,7 @@ interface EmployeeData {
   username?: string | null;
   firstName: string;
   lastName: string;
+  imageUrl?: string | null;
   email?: string | null;
   phone?: string | null;
   telephone?: string | null;
@@ -330,6 +331,7 @@ export async function createEmployee(
     const createData: any = {
       firstName: data.firstName,
       lastName: data.lastName,
+      imageUrl: data.imageUrl ?? null,
       email: data.email ?? null,
       phone: data.phone ?? null,
       mobile: data.mobile ?? null,
@@ -495,6 +497,7 @@ export async function updateEmployee(
     // Common fields (exist on all employee models including Manager)
     if (data.firstName !== undefined) updateData.firstName = data.firstName;
     if (data.lastName !== undefined) updateData.lastName = data.lastName;
+    if (data.imageUrl !== undefined) updateData.imageUrl = data.imageUrl || null;
     if (data.email !== undefined) updateData.email = data.email || null;
     if (data.phone !== undefined) updateData.phone = data.phone || null;
     if (data.mobile !== undefined) updateData.mobile = data.mobile || null;

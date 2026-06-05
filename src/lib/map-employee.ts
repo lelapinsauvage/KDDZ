@@ -10,6 +10,7 @@ export function mapEmployee(raw: any, type: EmployeeType): Employee {
     id: raw.id,
     firstName: raw.firstName ?? "",
     lastName: raw.lastName ?? "",
+    imageUrl: raw.imageUrl ?? null,
     email: raw.email ?? "",
     phone: raw.phone ?? raw.mobile ?? "",
     mobile: raw.mobile ?? "",

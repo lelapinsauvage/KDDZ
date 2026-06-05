@@ -21,6 +21,7 @@ export interface Employee {
   id: string;
   firstName: string;
   lastName: string;
+  imageUrl?: string | null;
   email: string;
   phone: string;
   mobile: string;
@@ -88,9 +89,18 @@ export function createEmployeeColumns(
             <Tooltip>
               <TooltipTrigger asChild>
                 <div
-                  className={`flex size-9 items-center justify-center rounded-full text-xs font-bold text-white shadow-sm ${bg}`}
+                  className={`flex size-9 items-center justify-center overflow-hidden rounded-full text-xs font-bold text-white shadow-sm ${employee.imageUrl ? "bg-muted" : bg}`}
                 >
-                  {getInitials(employee.firstName, employee.lastName)}
+                  {employee.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={employee.imageUrl}
+                      alt=""
+                      className="size-full object-cover"
+                    />
+                  ) : (
+                    getInitials(employee.firstName, employee.lastName)
+                  )}
                 </div>
               </TooltipTrigger>
               <TooltipContent side="right" className="max-w-[220px]">

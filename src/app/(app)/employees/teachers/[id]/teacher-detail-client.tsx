@@ -28,6 +28,7 @@ interface TeacherData {
   id: string;
   firstName: string;
   lastName: string;
+  imageUrl: string | null;
   email: string | null;
   phone: string | null;
   mobile: string | null;
@@ -64,8 +65,17 @@ export function TeacherDetailClient({ teacher }: TeacherDetailClientProps) {
           <CardContent className="pt-0">
             <div className="flex flex-col sm:flex-row items-start gap-6">
               {/* Avatar */}
-              <div className="flex size-20 items-center justify-center rounded-full bg-primary/10 text-xl font-bold text-primary shrink-0">
-                {getInitials(teacher.firstName, teacher.lastName)}
+              <div className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-xl font-bold text-primary">
+                {teacher.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={teacher.imageUrl}
+                    alt=""
+                    className="size-full object-cover"
+                  />
+                ) : (
+                  getInitials(teacher.firstName, teacher.lastName)
+                )}
               </div>
 
               {/* Info */}

@@ -43,6 +43,7 @@ interface ManagerData {
   id: string;
   firstName: string;
   lastName: string;
+  imageUrl: string | null;
   email: string | null;
   phone: string | null;
   mobile: string | null;
@@ -79,8 +80,19 @@ export function ManagerDetailClient({ manager, branchStats }: ManagerDetailClien
       <div className="space-y-6 p-4 md:p-6">
         <Card>
           <CardContent className="flex items-start gap-6 pt-6">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-purple-100 text-2xl font-bold text-purple-600">
-              {manager.firstName.charAt(0)}{manager.lastName.charAt(0)}
+            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-purple-100 text-2xl font-bold text-purple-600">
+              {manager.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={manager.imageUrl}
+                  alt=""
+                  className="size-full object-cover"
+                />
+              ) : (
+                <>
+                  {manager.firstName.charAt(0)}{manager.lastName.charAt(0)}
+                </>
+              )}
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-3">

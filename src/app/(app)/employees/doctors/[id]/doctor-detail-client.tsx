@@ -36,6 +36,7 @@ interface DoctorData {
   id: string;
   firstName: string;
   lastName: string;
+  imageUrl: string | null;
   email: string | null;
   phone: string | null;
   mobile: string | null;
@@ -72,8 +73,19 @@ export function DoctorDetailClient({ doctor, recentVisits }: DoctorDetailClientP
       <div className="space-y-6 p-4 md:p-6">
         <Card>
           <CardContent className="flex items-start gap-6 pt-6">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-2xl font-bold text-primary">
-              {doctor.firstName.charAt(0)}{doctor.lastName.charAt(0)}
+            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-2xl font-bold text-primary">
+              {doctor.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={doctor.imageUrl}
+                  alt=""
+                  className="size-full object-cover"
+                />
+              ) : (
+                <>
+                  {doctor.firstName.charAt(0)}{doctor.lastName.charAt(0)}
+                </>
+              )}
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-3">
