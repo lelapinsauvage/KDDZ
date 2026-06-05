@@ -1876,6 +1876,7 @@ model Payment {
   receiptFileUrl      String?
   createdById         String?         @db.Uuid
   legacyData          Json?
+  deletedAt           DateTime?
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
 
@@ -1892,6 +1893,7 @@ model Payment {
   @@index([category])
   @@index([status])
   @@index([createdById])
+  @@index([deletedAt])
   @@map("payments")
 }
 

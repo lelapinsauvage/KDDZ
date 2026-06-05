@@ -81,7 +81,11 @@ export async function getActionableAlarms(): Promise<ActionableAlarmGroups> {
   }> = [];
   try {
     const raw = await db.payment.findMany({
-      where: { status: "OVERDUE", child: { branchId: { in: branchIds } } },
+      where: {
+        status: "OVERDUE",
+        deletedAt: null,
+        child: { branchId: { in: branchIds } },
+      },
       include: { child: true },
       take: 20,
     });

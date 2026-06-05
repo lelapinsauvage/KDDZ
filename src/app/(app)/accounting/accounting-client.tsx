@@ -1,12 +1,16 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useTransition } from "react";
 import {
   DollarSign,
   Clock,
   AlertTriangle,
   TrendingUp,
   Banknote,
+  FileText,
+  Pencil,
+  Printer,
+  Trash2,
 } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
@@ -16,6 +20,23 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -24,13 +45,17 @@ import {
 } from "@/components/ui/select";
 
 import { QuickPaymentDialog } from "@/components/accounting/quick-payment-dialog";
+import { deletePayment } from "@/lib/actions/payments";
+import { PaymentDialog } from "./payment-dialog";
 import { getInitialsFromName, getPastelAvatarColor } from "@/components/children/children-columns";
+import { toast } from "sonner";
 
 // ── Types ──
 
 interface PaymentRow {
   id: string;
   childId: string;
+  childNumber: string | null;
   childName: string;
   branchName: string;
   branchId: string;
@@ -47,6 +72,8 @@ interface PaymentRow {
   status: string;
   reference: string | null;
   notes: string | null;
+  receiptFilename: string | null;
+  receiptFileUrl: string | null;
   createdBy: string | null;
   createdAt: string;
 }
@@ -113,6 +140,21 @@ function formatCurrency(amount: number) {
   return `$${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+function formatPaymentCurrency(amount: number, currency: string) {
+  if (currency === "LBP") return `LL ${amount.toLocaleString("en-US")}`;
+  return formatCurrency(amount);
+}
+
+function formatDate(value: string | null) {
+  if (!value) return "-";
+  const date = new Date(`${value}T00:00:00`);
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "2-digit",
+    year: "numeric",
+  });
+}
+
 function currentAcademicStartYear() {
   const now = new Date();
   return now.getMonth() + 1 >= 10 ? now.getFullYear() : now.getFullYear() - 1;
@@ -144,6 +186,11 @@ export function AccountingClient({
   const [classFilter, setClassFilter] = useState("ALL");
   const [quickDialogOpen, setQuickDialogOpen] = useState(false);
   const [selectedCell, setSelectedCell] = useState<{ childId: string; month: number } | null>(null);
+  const [detailsCell, setDetailsCell] = useState<{ childId: string; month: number } | null>(null);
+  const [editingPayment, setEditingPayment] = useState<PaymentRow | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingPayment, setDeletingPayment] = useState<PaymentRow | null>(null);
+  const [isDeleting, startDeleteTransition] = useTransition();
 
   const academicYearOptions = useMemo(() => {
     const years = new Set<number>([currentAcademicStartYear()]);
@@ -263,9 +310,52 @@ export function AccountingClient({
 
   const grandTotal = monthTotals.reduce((a, b) => a + b, 0);
 
-  function handleCellClick(childId: string, month: number) {
+  const detailsPayments = useMemo(() => {
+    if (!detailsCell) return [];
+    return tabPayments
+      .filter((payment) => {
+        const month = payment.month ?? (new Date(`${payment.date}T00:00:00`).getMonth() + 1);
+        return payment.childId === detailsCell.childId && month === detailsCell.month;
+      })
+      .sort((a, b) => a.date.localeCompare(b.date));
+  }, [detailsCell, tabPayments]);
+
+  const detailsChild = detailsCell
+    ? childrenList.find((child) => child.id === detailsCell.childId)
+    : null;
+
+  function handleCellClick(childId: string, month: number, amount: number) {
     setSelectedCell({ childId, month });
+    if (amount > 0) {
+      setDetailsCell({ childId, month });
+      return;
+    }
     setQuickDialogOpen(true);
+  }
+
+  function handleEdit(payment: PaymentRow) {
+    setEditingPayment(payment);
+    setDetailsCell(null);
+  }
+
+  function handleDelete(payment: PaymentRow) {
+    setDeletingPayment(payment);
+    setDeleteDialogOpen(true);
+  }
+
+  function confirmDelete() {
+    if (!deletingPayment) return;
+    startDeleteTransition(async () => {
+      const result = await deletePayment(deletingPayment.id);
+      if (result.success) {
+        toast.success("Payment deleted");
+        setDeleteDialogOpen(false);
+        setDeletingPayment(null);
+        setDetailsCell(null);
+      } else {
+        toast.error(result.error ?? "Failed to delete payment");
+      }
+    });
   }
 
   const dialogCategory = activeTab !== "ALL" ? activeTab : undefined;
@@ -512,7 +602,7 @@ export function AccountingClient({
                           <td
                             key={monthDef.month}
                             className="px-3 py-2.5 text-center tabular-nums cursor-pointer transition-colors hover:bg-primary/5"
-                            onClick={() => handleCellClick(row.childId, monthDef.month)}
+                            onClick={() => handleCellClick(row.childId, monthDef.month, amount)}
                           >
                             {amount > 0 ? (
                               <span className="font-medium text-foreground">
@@ -584,6 +674,143 @@ export function AccountingClient({
         preselectedMonth={selectedCell?.month}
         preselectedYear={selectedAcademicYear}
       />
+
+      <Dialog
+        open={!!detailsCell}
+        onOpenChange={(open) => {
+          if (!open) setDetailsCell(null);
+        }}
+      >
+        <DialogContent className="max-h-[85vh] max-w-5xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Payments Details</DialogTitle>
+            <DialogDescription>
+              {detailsChild
+                ? `${detailsChild.firstName} ${detailsChild.lastName}`
+                : "Selected child"}{" "}
+              - {SCHOOL_YEAR_MONTHS.find((item) => item.month === detailsCell?.month)?.label}{" "}
+              {selectedAcademicYear}-{selectedAcademicYear + 1}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="overflow-x-auto rounded-sm border">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="bg-muted/80 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <th className="px-3 py-3">Date</th>
+                  <th className="px-3 py-3">Child #</th>
+                  <th className="px-3 py-3">Child Name</th>
+                  <th className="px-3 py-3">Class</th>
+                  <th className="px-3 py-3 text-right">Amount</th>
+                  <th className="px-3 py-3">For</th>
+                  <th className="px-3 py-3">Fees Type</th>
+                  <th className="px-3 py-3">Payment</th>
+                  <th className="px-3 py-3">From</th>
+                  <th className="px-3 py-3">To</th>
+                  <th className="px-3 py-3">Remarks</th>
+                  <th className="px-3 py-3">Attachment</th>
+                  <th className="px-3 py-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {detailsPayments.map((payment) => (
+                  <tr key={payment.id} className="border-t">
+                    <td className="px-3 py-3">{formatDate(payment.date)}</td>
+                    <td className="px-3 py-3">{payment.childNumber ?? "-"}</td>
+                    <td className="px-3 py-3 font-medium">{payment.childName}</td>
+                    <td className="px-3 py-3">{payment.className || "-"}</td>
+                    <td className="px-3 py-3 text-right font-semibold">
+                      {formatPaymentCurrency(payment.amount, payment.currency)}
+                    </td>
+                    <td className="px-3 py-3">
+                      {SCHOOL_YEAR_MONTHS.find((item) => item.month === payment.month)?.label ?? "-"}
+                    </td>
+                    <td className="px-3 py-3">
+                      {FEE_TABS.find((item) => item.value === payment.category)?.label ?? payment.category}
+                    </td>
+                    <td className="px-3 py-3">{payment.method.replaceAll("_", " ")}</td>
+                    <td className="px-3 py-3">{formatDate(payment.dateFrom)}</td>
+                    <td className="px-3 py-3">{formatDate(payment.dateTo)}</td>
+                    <td className="max-w-[180px] px-3 py-3">{payment.notes || "-"}</td>
+                    <td className="px-3 py-3">
+                      {payment.receiptFileUrl ? (
+                        <a
+                          href={payment.receiptFileUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-primary hover:underline"
+                        >
+                          <FileText className="size-3.5" />
+                          View
+                        </a>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+                    <td className="px-3 py-3">
+                      <div className="flex justify-end gap-1">
+                        <Button asChild variant="ghost" size="icon" className="size-8">
+                          <a href={`/accounting/invoice/${payment.id}`} target="_blank" rel="noreferrer">
+                            <Printer className="size-4" />
+                          </a>
+                        </Button>
+                        <Button variant="ghost" size="icon" className="size-8" onClick={() => handleEdit(payment)}>
+                          <Pencil className="size-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8 text-muted-foreground hover:text-destructive"
+                          onClick={() => handleDelete(payment)}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <PaymentDialog
+        open={!!editingPayment}
+        onOpenChange={(open) => {
+          if (!open) setEditingPayment(null);
+        }}
+        childrenList={childrenList}
+        editData={
+          editingPayment
+            ? {
+                ...editingPayment,
+                branchId: editingPayment.branchId,
+              }
+            : null
+        }
+      />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Payment</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this payment? It will be hidden from accounting totals, matching the legacy delete behavior.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive hover:bg-destructive/90"
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

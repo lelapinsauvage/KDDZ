@@ -26,6 +26,7 @@ import {
   AlertTriangle,
   Clock,
   FileText,
+  Printer,
 } from "lucide-react";
 import { deletePayment } from "@/lib/actions/payments";
 import { PaymentDialog } from "@/app/(app)/accounting/payment-dialog";
@@ -329,6 +330,11 @@ export function AccountingClient({
         const p = row.original;
         return (
           <div className="flex items-center gap-0.5">
+            <Button asChild variant="ghost" size="sm" className="size-8 p-0">
+              <a href={`/accounting/invoice/${p.id}`} target="_blank" rel="noreferrer">
+                <Printer className="size-4 text-muted-foreground" />
+              </a>
+            </Button>
             <Button variant="ghost" size="sm" className="size-8 p-0" onClick={() => handleEdit(p)}>
               <Pencil className="size-4 text-muted-foreground" />
             </Button>
@@ -527,7 +533,7 @@ export function AccountingClient({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Payment</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this payment? This action cannot be undone.
+              Are you sure you want to delete this payment? It will be hidden from accounting totals, matching the legacy delete behavior.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

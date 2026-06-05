@@ -9,15 +9,19 @@ interface InvoiceData {
   id: string;
   amount: number;
   currency: string;
+  receiptNumber: string;
   date: string;
   dateFrom: string | null;
   dateTo: string | null;
+  month: number | null;
   method: string;
   category: string;
   status: string;
   reference: string | null;
   notes: string | null;
+  childNumber: string | null;
   childName: string;
+  childLastName: string;
   className: string | null;
   branchName: string;
   branchAddress: string | null;
@@ -29,18 +33,18 @@ interface InvoiceData {
 
 const METHOD_LABELS: Record<string, string> = {
   CASH: "Cash",
-  CHECK: "Check",
-  TRANSFER: "Bank Transfer",
-  CREDIT_CARD: "Credit Card",
+  CHECK: "Cheque",
+  TRANSFER: "by Bank Transfere",
+  CREDIT_CARD: "by Credit Card",
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
-  REGISTRATION: "Registration",
-  MONTHLY: "Monthly Tuition",
-  BUS: "Bus Service",
-  XTRA_TIME: "Extra Time",
-  FOOD: "Food",
-  OTHER: "Other",
+  REGISTRATION: "Registration Fees",
+  MONTHLY: "Monthly Fees",
+  BUS: "Bus Fees",
+  XTRA_TIME: "Xtra-time Fees",
+  FOOD: "Food Fees",
+  OTHER: "Other Fees",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -51,17 +55,111 @@ const STATUS_LABELS: Record<string, string> = {
 
 function formatCurrency(amount: number, currency: string) {
   if (currency === "LBP") {
-    return `${amount.toLocaleString("en-US")} LBP`;
+    return `LL ${amount.toLocaleString("en-US")}`;
   }
-  return `$${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `US ${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-function receiptNumber(id: string) {
-  return `REC-${id.slice(0, 8).toUpperCase()}`;
+function formatLegacyDate(value: string | null) {
+  if (!value) return "-";
+  return format(new Date(`${value}T00:00:00`), "dd/MM/yyyy");
+}
+
+function monthName(month: number | null) {
+  if (!month || month < 1 || month > 12) return "-";
+  return format(new Date(1990, month - 1, 1), "MMMM");
+}
+
+function currencyName(currency: string) {
+  return currency === "LBP" ? "LEBANESE POUND" : "US DOLLAR";
+}
+
+function numberToWords(value: number): string {
+  const dictionary: Record<number, string> = {
+    0: "Zero",
+    1: "One",
+    2: "Two",
+    3: "Three",
+    4: "Four",
+    5: "Five",
+    6: "Six",
+    7: "Seven",
+    8: "Eight",
+    9: "Nine",
+    10: "Ten",
+    11: "Eleven",
+    12: "Twelve",
+    13: "Thirteen",
+    14: "Fourteen",
+    15: "Fifteen",
+    16: "Sixteen",
+    17: "Seventeen",
+    18: "Eighteen",
+    19: "Nineteen",
+    20: "Twenty",
+    30: "Thirty",
+    40: "Fourty",
+    50: "Fifty",
+    60: "Sixty",
+    70: "Seventy",
+    80: "Eighty",
+    90: "Ninety",
+  };
+
+  if (!Number.isFinite(value)) return "";
+  if (value < 0) return `negative ${numberToWords(Math.abs(value))}`;
+
+  const [wholeRaw, fractionRaw] = value.toString().split(".");
+  const whole = Number(wholeRaw);
+
+  function wholeToWords(number: number): string {
+    if (number < 21) return dictionary[number];
+    if (number < 100) {
+      const tens = Math.floor(number / 10) * 10;
+      const units = number % 10;
+      return units ? `${dictionary[tens]}-${dictionary[units]}` : dictionary[tens];
+    }
+    if (number < 1000) {
+      const hundreds = Math.floor(number / 100);
+      const remainder = number % 100;
+      return remainder
+        ? `${dictionary[hundreds]} Hundred and ${wholeToWords(remainder)}`
+        : `${dictionary[hundreds]} Hundred`;
+    }
+
+    const units = [
+      { value: 1_000_000_000, label: "Billion" },
+      { value: 1_000_000, label: "Million" },
+      { value: 1_000, label: "Thousand" },
+    ];
+
+    for (const unit of units) {
+      if (number >= unit.value) {
+        const leading = Math.floor(number / unit.value);
+        const remainder = number % unit.value;
+        return remainder
+          ? `${wholeToWords(leading)} ${unit.label}, ${wholeToWords(remainder)}`
+          : `${wholeToWords(leading)} ${unit.label}`;
+      }
+    }
+
+    return "";
+  }
+
+  let words = wholeToWords(whole);
+  if (fractionRaw && Number(fractionRaw) > 0) {
+    words += ` point ${fractionRaw
+      .split("")
+      .map((digit) => dictionary[Number(digit)])
+      .join(" ")}`;
+  }
+  return words;
 }
 
 export function InvoiceClient({ invoice }: { invoice: InvoiceData }) {
-  const receiptNo = receiptNumber(invoice.id);
+  const receiptNo = invoice.receiptNumber;
+  const methodLabel = METHOD_LABELS[invoice.method] ?? invoice.method;
+  const categoryLabel = CATEGORY_LABELS[invoice.category] ?? invoice.category;
 
   return (
     <>
@@ -85,159 +183,86 @@ export function InvoiceClient({ invoice }: { invoice: InvoiceData }) {
         />
       </div>
 
-      {/* Printable content */}
-      <div className="mx-auto max-w-2xl p-6 print:max-w-none print:p-0 print:text-black">
-        {/* Header / Nursery branding */}
-        <div className="mb-8 text-center" style={{ breakInside: "avoid" }}>
-          <h1 className="text-2xl font-bold text-foreground print:text-black">
-            {invoice.branchName}
-          </h1>
-          {invoice.branchAddress && (
-            <p className="text-sm text-muted-foreground print:text-gray-600">
-              {invoice.branchAddress}
-            </p>
-          )}
-          {(invoice.branchPhone || invoice.branchEmail) && (
-            <p className="text-sm text-muted-foreground print:text-gray-600">
-              {[invoice.branchPhone, invoice.branchEmail]
-                .filter(Boolean)
-                .join(" | ")}
-            </p>
-          )}
-          <div className="mx-auto mt-4 h-px w-24 bg-border print:bg-gray-300" />
-          <p className="mt-3 text-lg font-semibold text-foreground print:text-black">
-            Payment Receipt
-          </p>
-        </div>
-
-        {/* Receipt meta */}
-        <div
-          className="mb-6 flex justify-between rounded-lg border border-border p-4 text-sm print:rounded-none print:border-gray-300"
-          style={{ breakInside: "avoid" }}
-        >
-          <div className="space-y-1">
-            <div>
-              <span className="font-semibold">Receipt No:</span> {receiptNo}
-            </div>
-            <div>
-              <span className="font-semibold">Date:</span>{" "}
-              {format(new Date(invoice.date), "MMMM d, yyyy")}
-            </div>
-          </div>
-          <div className="space-y-1 text-right">
-            <div>
-              <span className="font-semibold">Status:</span>{" "}
-              <span
-                className={
-                  invoice.status === "PAID"
-                    ? "font-bold text-emerald-700 print:text-black"
-                    : invoice.status === "OVERDUE"
-                      ? "font-bold text-destructive print:text-black"
-                      : "font-bold text-amber-600 print:text-black"
-                }
-              >
-                {STATUS_LABELS[invoice.status] ?? invoice.status}
-              </span>
-            </div>
-            {invoice.reference && (
-              <div>
-                <span className="font-semibold">Ref:</span> {invoice.reference}
+      <div className="mx-auto max-w-3xl bg-background p-6 print:max-w-none print:bg-white print:p-0 print:text-black">
+        <div className="border-b border-transparent pb-4">
+          <div className="grid grid-cols-[1fr_1.5fr_1fr] items-start gap-4">
+            <div className="text-center">
+              <div className="mx-auto flex size-24 items-center justify-center rounded-full border text-lg font-bold print:border-gray-400">
+                {invoice.branchName.slice(0, 2).toUpperCase()}
               </div>
-            )}
+              <p className="mt-2 text-sm font-semibold">{invoice.branchName}</p>
+              {(invoice.branchPhone || invoice.branchEmail) && (
+                <p className="text-xs text-muted-foreground print:text-gray-600">
+                  {[invoice.branchPhone, invoice.branchEmail].filter(Boolean).join(" | ")}
+                </p>
+              )}
+            </div>
+
+            <div className="pt-6 text-center">
+              <h1 className="text-2xl font-bold">Receipt Voucher</h1>
+              <p className="mt-4 text-base font-semibold">
+                Receipt No. {receiptNo}
+              </p>
+            </div>
+
+            <div />
           </div>
+
+          <hr className="mt-4" />
+
+          <ul className="mt-5 space-y-1 text-sm">
+            <li>Child No. : {invoice.childNumber ?? "-"}</li>
+            <li>Invoice Date : {formatLegacyDate(invoice.date)}</li>
+            <li>
+              <b>Child Name</b> : {invoice.childName}
+            </li>
+            <li>
+              <b>Status</b> : {STATUS_LABELS[invoice.status] ?? invoice.status}
+            </li>
+          </ul>
         </div>
 
-        {/* Bill To */}
-        <div
-          className="mb-6 rounded-lg border border-border p-4 print:rounded-none print:border-gray-300"
-          style={{ breakInside: "avoid" }}
-        >
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground print:text-gray-500">
-            Bill To
-          </h2>
-          <p className="text-base font-bold">{invoice.childName}</p>
-          {invoice.className && (
-            <p className="text-sm text-muted-foreground print:text-gray-600">
-              Class: {invoice.className}
+        <div className="mt-12 space-y-5 text-base leading-8">
+          <p>
+            <b>
+              We have received {methodLabel} from Mr/Mrs. {invoice.childLastName} on{" "}
+              {formatLegacyDate(invoice.date)}
+              <br />
+              The amount of {formatCurrency(invoice.amount, invoice.currency)} (
+              {numberToWords(invoice.amount)} {currencyName(invoice.currency)}).
+            </b>
+          </p>
+
+          <p>
+            <b>{categoryLabel}</b>
+          </p>
+
+          <p>
+            <b>Month</b>: {monthName(invoice.month)}
+            <br />
+            <b>Valid From</b>: {formatLegacyDate(invoice.dateFrom)} <b>To</b>:{" "}
+            {formatLegacyDate(invoice.dateTo)}
+          </p>
+
+          {invoice.notes && (
+            <p>
+              <b>Remarks</b>: {invoice.notes}
             </p>
           )}
-        </div>
 
-        {/* Payment details table */}
-        <div className="mb-6" style={{ breakInside: "avoid" }}>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border text-left text-xs font-semibold uppercase text-muted-foreground print:border-gray-300 print:text-gray-500">
-                <th className="pb-2 pr-4">Description</th>
-                <th className="pb-2 pr-4">Method</th>
-                <th className="pb-2 text-right">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-b border-border/50 print:border-gray-200">
-                <td className="py-3 pr-4">
-                  <div className="font-medium">
-                    {CATEGORY_LABELS[invoice.category] ?? invoice.category}
-                  </div>
-                  {(invoice.dateFrom || invoice.dateTo) && (
-                    <div className="text-xs text-muted-foreground print:text-gray-500">
-                      Period:{" "}
-                      {invoice.dateFrom
-                        ? format(new Date(invoice.dateFrom), "MMM d, yyyy")
-                        : "—"}{" "}
-                      to{" "}
-                      {invoice.dateTo
-                        ? format(new Date(invoice.dateTo), "MMM d, yyyy")
-                        : "—"}
-                    </div>
-                  )}
-                </td>
-                <td className="py-3 pr-4">
-                  {METHOD_LABELS[invoice.method] ?? invoice.method}
-                </td>
-                <td className="py-3 text-right font-medium">
-                  {formatCurrency(invoice.amount, invoice.currency)}
-                </td>
-              </tr>
-            </tbody>
-            <tfoot>
-              <tr>
-                <td colSpan={2} className="pt-3 text-right font-bold">
-                  Total
-                </td>
-                <td className="pt-3 text-right text-lg font-bold">
-                  {formatCurrency(invoice.amount, invoice.currency)}
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-
-        {/* Notes */}
-        {invoice.notes && (
-          <div
-            className="mb-6 rounded-lg border border-border p-4 print:rounded-none print:border-gray-300"
-            style={{ breakInside: "avoid" }}
-          >
-            <h2 className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground print:text-gray-500">
-              Notes
-            </h2>
-            <p className="text-sm">{invoice.notes}</p>
+          <div className="pt-8">
+            <p>
+              <b>Signature</b> :
+            </p>
+            <p className="pt-8 tracking-[0.2em]">.......................</p>
           </div>
-        )}
+        </div>
 
-        {/* Footer */}
-        <div
-          className="mt-8 border-t border-border pt-4 text-center text-xs text-muted-foreground print:border-gray-300 print:text-gray-500"
-          style={{ breakInside: "avoid" }}
-        >
-          {invoice.createdBy && (
-            <p className="mb-1">Recorded by: {invoice.createdBy}</p>
-          )}
-          <p>
-            Generated on{" "}
-            {format(new Date(), "MMMM d, yyyy 'at' h:mm a")}
-          </p>
+        <div className="mt-10 flex justify-end print:hidden">
+          <Button size="lg" onClick={() => window.print()}>
+            Print
+            <Printer className="ml-2 size-4" />
+          </Button>
         </div>
       </div>
     </>

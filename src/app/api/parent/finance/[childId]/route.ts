@@ -31,7 +31,7 @@ export async function GET(
     }
 
     const payments = await db.payment.findMany({
-      where: { childId },
+      where: { childId, deletedAt: null },
       orderBy: { date: "desc" },
     });
 

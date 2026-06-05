@@ -76,11 +76,12 @@ This list is the first implementation backlog after the generated inventory/matr
    - Remaining work is exact legacy parity for fields that no longer exist one-to-one in the modern schema: daily report numeric progress, call draft status, and legacy `db_curr` year switching for medical visits.
 
 14. **Accounting monthly matrix**
-   - `/accounting` now restores the legacy `accounting.php` Oct-Sep school-year matrix with category tabs, child number/first/last/branch/class columns, active-child zero rows, branch/class/search/year filters, month totals, and payment-dialog prefill from matrix cells.
-   - Remaining work is exact legacy parity for payment detail/update/delete/history modals and the invoice/receipt print field audit tracked below.
+   - `/accounting` now restores the legacy `accounting.php` Oct-Sep school-year matrix with category tabs, child number/first/last/branch/class columns, active-child zero rows, branch/class/search/year filters, month totals, zero-cell payment-dialog prefill, nonzero-cell payment detail modal, print/edit/delete/attachment actions, and legacy-style soft delete.
+   - Remaining work is exact visual audit for any legacy WebSocket refresh/status behavior that was commented out or environment-specific.
 
 15. **Invoice/receipt parity**
-   - Runtime payment receipt upload now stores files on `Payment.receiptFileUrl`; modern invoice route exists, but legacy `invo.php` print details still need exact field/layout audit.
+   - Runtime payment receipt upload now stores files on `Payment.receiptFileUrl`; `/accounting/invoice/[id]` now restores the legacy `invo.php` Receipt Voucher fields, original migrated receipt number when available, amount-in-words text, child number/name, payer wording, category, month, validity dates, signature line, and print action.
+   - Remaining work is exact logo/print stylesheet acceptance against production stationery.
 
 16. **Government/nursery compliance parity**
    - Legacy `t_garderie`, `t_garderie_attachments`, `t_old_garderie`, and `t_garderie_doctor*` rows now have migration coverage, but `nurseryinfo.php` UI parity still needs exact page-level audit.

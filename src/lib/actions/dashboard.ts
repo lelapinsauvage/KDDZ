@@ -212,7 +212,11 @@ export async function getMorningBriefing(): Promise<MorningBriefing> {
   let overdueAmount = 0;
   try {
     const overdueAgg = await db.payment.aggregate({
-      where: { status: "OVERDUE", child: { branch: { organizationId: orgId } } },
+      where: {
+        status: "OVERDUE",
+        deletedAt: null,
+        child: { branch: { organizationId: orgId } },
+      },
       _count: true,
       _sum: { amount: true },
     });
@@ -577,7 +581,7 @@ export async function getActionCenterMetrics(
   ] = await Promise.all([
     // 1. Total payments collected
     db.payment.aggregate({
-      where: { status: "PAID", child: branchFilter },
+      where: { status: "PAID", deletedAt: null, child: branchFilter },
       _sum: { amount: true },
     }).catch(() => ({ _sum: { amount: null } })),
 
@@ -736,7 +740,11 @@ export async function getActionItems(): Promise<ActionItems> {
   }> = [];
   try {
     const raw = await db.payment.findMany({
-      where: { status: "OVERDUE", child: { branch: { organizationId: orgId } } },
+      where: {
+        status: "OVERDUE",
+        deletedAt: null,
+        child: { branch: { organizationId: orgId } },
+      },
       include: { child: true },
       take: 20,
     });

@@ -77,12 +77,21 @@ export async function getPayment(id: string) {
   try {
     const { organizationId: orgId } = await requireOrg();
 
-    const payment = await db.payment.findUnique({
-      where: { id },
+    const payment = await db.payment.findFirst({
+      where: { id, deletedAt: null },
       include: {
         child: {
           include: {
-            branch: { select: { id: true, name: true, address: true, phone: true, email: true, organizationId: true } },
+            branch: {
+              select: {
+                id: true,
+                name: true,
+                address: true,
+                phone: true,
+                email: true,
+                organizationId: true,
+              },
+            },
             class: { select: { id: true, name: true } },
           },
         },
@@ -127,6 +136,7 @@ export async function getPayments(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {
       child: { branch: { organizationId: orgId } },
+      deletedAt: null,
     };
 
     if (childId) where.childId = childId;
@@ -203,6 +213,7 @@ export async function getPaymentsSummary(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {
       child: { branch: { organizationId: orgId } },
+      deletedAt: null,
     };
     if (params.branchId) {
       where.child.branchId = params.branchId;
@@ -335,6 +346,7 @@ export async function createPayment(
     });
 
     revalidatePath("/accounting");
+    revalidatePath(`/accounting/invoice/${payment.id}`);
     revalidatePath(`/children/${data.childId}/accounting`);
 
     return { success: true, data: payment };
@@ -358,8 +370,8 @@ export async function updatePayment(
     const { ctx } = result;
 
     // Verify payment belongs to org
-    const existing = await db.payment.findUnique({
-      where: { id },
+    const existing = await db.payment.findFirst({
+      where: { id, deletedAt: null },
       include: { child: { include: { branch: { select: { organizationId: true } } } } },
     });
     if (!existing || existing.child.branch.organizationId !== ctx.organizationId) {
@@ -394,6 +406,8 @@ export async function updatePayment(
     });
 
     revalidatePath("/accounting");
+    revalidatePath(`/accounting/invoice/${id}`);
+    revalidatePath(`/children/${payment.childId}/accounting`);
 
     return { success: true, data: payment };
   } catch (error) {
@@ -412,17 +426,24 @@ export async function deletePayment(id: string): Promise<ActionResult> {
     if (!result.ok) return { success: false, error: result.error };
     const { ctx } = result;
 
-    const payment = await db.payment.findUnique({
-      where: { id },
+    const payment = await db.payment.findFirst({
+      where: { id, deletedAt: null },
       include: { child: { include: { branch: { select: { organizationId: true } } } } },
     });
     if (!payment || payment.child.branch.organizationId !== ctx.organizationId) {
       return { success: false, error: "Payment not found" };
     }
 
-    await db.payment.delete({ where: { id } });
+    await db.$transaction([
+      db.payment.update({
+        where: { id },
+        data: { deletedAt: new Date() },
+      }),
+      db.paymentReminder.deleteMany({ where: { paymentId: id } }),
+    ]);
 
     revalidatePath("/accounting");
+    revalidatePath(`/accounting/invoice/${id}`);
     revalidatePath(`/children/${payment.childId}/accounting`);
 
     return { success: true };
@@ -445,7 +466,7 @@ export async function getChildPayments(childId: string): Promise<ActionResult> {
     }
 
     const payments = await db.payment.findMany({
-      where: { childId },
+      where: { childId, deletedAt: null },
       include: {
         createdBy: { select: { id: true, name: true } },
       },
@@ -498,7 +519,11 @@ export async function getOverduePayments(): Promise<ActionResult> {
     const { organizationId: orgId } = await requireOrg();
 
     const overduePayments = await db.payment.findMany({
-      where: { status: "OVERDUE", child: { branch: { organizationId: orgId } } },
+      where: {
+        status: "OVERDUE",
+        deletedAt: null,
+        child: { branch: { organizationId: orgId } },
+      },
       include: {
         child: {
           include: {
@@ -654,6 +679,7 @@ export async function recordPayment(
     });
 
     revalidatePath("/accounting");
+    revalidatePath(`/accounting/invoice/${payment.id}`);
     revalidatePath(`/children/${childId}/accounting`);
 
     return {

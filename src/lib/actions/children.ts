@@ -779,7 +779,7 @@ export async function getChildDashboardStats(childId: string) {
       db.callLog.count({ where: { childId, direction: "OUTGOING" } }),
       db.medicalForm.count({ where: { childId, formType: "ACCIDENTS" } }),
       db.payment.aggregate({
-        where: { childId },
+        where: { childId, deletedAt: null },
         _sum: { amount: true },
       }),
       db.dailyReport.count({

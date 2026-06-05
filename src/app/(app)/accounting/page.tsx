@@ -30,8 +30,11 @@ export default async function AccountingPage() {
         status: string;
         reference: string | null;
         notes: string | null;
+        receiptFilename: string | null;
+        receiptFileUrl: string | null;
         createdAt: Date;
         child: {
+          childNumber: string | null;
           firstName: string;
           lastName: string;
           branch: { id: string; name: string } | null;
@@ -44,6 +47,7 @@ export default async function AccountingPage() {
   const serializedPayments = payments.map((p) => ({
     id: p.id,
     childId: p.childId,
+    childNumber: p.child.childNumber,
     childName: `${p.child.firstName} ${p.child.lastName}`,
     branchName: p.child.branch?.name ?? "",
     branchId: p.child.branch?.id ?? "",
@@ -60,6 +64,8 @@ export default async function AccountingPage() {
     status: p.status,
     reference: p.reference,
     notes: p.notes,
+    receiptFilename: p.receiptFilename,
+    receiptFileUrl: p.receiptFileUrl,
     createdBy: p.createdBy?.name ?? null,
     createdAt: p.createdAt.toISOString().split("T")[0],
   }));

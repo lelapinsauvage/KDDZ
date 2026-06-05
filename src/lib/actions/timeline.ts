@@ -70,7 +70,7 @@ export async function getChildTimeline(
       }),
 
       db.payment.findMany({
-        where: { childId },
+        where: { childId, deletedAt: null },
         select: { id: true, amount: true, status: true, date: true, category: true },
         orderBy: { date: "desc" },
         take: 10,

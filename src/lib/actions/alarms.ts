@@ -457,7 +457,11 @@ export async function getAlarmOverviewCounts(): Promise<ActionResult> {
       }),
       // Payments: overdue
       db.payment.count({
-        where: { status: "OVERDUE", child: { branch: { organizationId: orgId } } },
+        where: {
+          status: "OVERDUE",
+          deletedAt: null,
+          child: { branch: { organizationId: orgId } },
+        },
       }),
       // Requests: active alarms
       db.alarm.count({
