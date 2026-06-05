@@ -19,6 +19,7 @@ export default async function MedicineAlarmsPage() {
     id: a.id as string,
     message: (a.message ?? "—") as string,
     dueDate: a.dueDate ? (a.dueDate as Date).toISOString().split("T")[0] : "",
+    branchId: (a.branch?.id ?? "") as string,
     branch: (a.branch?.name ?? "—") as string,
     isActive: a.isActive as boolean,
   }));

@@ -1,10 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { type ColumnDef } from "@tanstack/react-table";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -12,13 +14,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Pill } from "lucide-react";
+import { Pill, RefreshCw } from "lucide-react";
 import { AlarmActionsCell } from "@/components/alarms/alarm-actions-cell";
+import { generateMedicineAlarms } from "@/lib/actions/alarms";
 
 interface MedicineAlarm {
   id: string;
   message: string;
   dueDate: string;
+  branchId: string;
   branch: string;
   isActive: boolean;
 }
@@ -29,12 +33,41 @@ interface MedicineAlarmsClientProps {
 }
 
 export function MedicineAlarmsClient({ alarms, branches }: MedicineAlarmsClientProps) {
+  const router = useRouter();
   const [branchFilter, setBranchFilter] = useState("ALL");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationStatus, setGenerationStatus] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     if (branchFilter === "ALL") return alarms;
-    return alarms.filter((m) => m.branch === branchFilter);
+    return alarms.filter((m) => m.branchId === branchFilter);
   }, [branchFilter, alarms]);
+
+  async function handleGenerate() {
+    setIsGenerating(true);
+    setGenerationStatus(null);
+    const result = await generateMedicineAlarms(
+      branchFilter === "ALL" ? undefined : branchFilter,
+    );
+    setIsGenerating(false);
+
+    if (result.success && result.data) {
+      const {
+        entriesMatched,
+        alarmsCreated,
+        notificationsCreated,
+        skippedExisting,
+        skippedExpired,
+      } = result.data;
+      setGenerationStatus(
+        `Matched ${entriesMatched}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"} and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing, ${skippedExpired} expired.`,
+      );
+      router.refresh();
+      return;
+    }
+
+    setGenerationStatus(result.error ?? "Medicine generation failed.");
+  }
 
   const columns: ColumnDef<MedicineAlarm>[] = useMemo(
     () => [
@@ -98,12 +131,25 @@ export function MedicineAlarmsClient({ alarms, branches }: MedicineAlarmsClientP
             <SelectContent>
               <SelectItem value="ALL">All Branches</SelectItem>
               {branches.map((b) => (
-                <SelectItem key={b.id} value={b.name}>
+                <SelectItem key={b.id} value={b.id}>
                   {b.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleGenerate}
+            disabled={isGenerating}
+            className="gap-2"
+          >
+            <RefreshCw className={`size-4 ${isGenerating ? "animate-spin" : ""}`} />
+            {isGenerating ? "Generating..." : "Generate"}
+          </Button>
+          {generationStatus && (
+            <span className="text-sm text-muted-foreground">{generationStatus}</span>
+          )}
         </div>
         {filtered.length > 0 ? (
           <DataTable columns={columns} data={filtered} searchKey="message" searchPlaceholder="Search alarms..." />

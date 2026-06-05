@@ -38,7 +38,7 @@ const CATEGORY_DEFAULTS: Record<
   },
   MEDICINE: {
     subject: "Medicine Reminder",
-    body: "Reminder: [[child_name]] needs medication today. Please check the medical records.",
+    body: "Reminder: [[child_name]] needs [[med_name]] at [[med_time]]. Please check the medical records.",
   },
   INSURANCE: {
     subject: "Insurance Expiring",
@@ -67,6 +67,8 @@ const TEST_VARIABLES: TemplateVariables = {
   parent_name: "Sample Parent",
   class_name: "Sample Class",
   branch_name: "Sample Branch",
+  med_name: "Sample Medicine",
+  med_time: "09:30",
   date: new Date().toISOString().slice(0, 10),
 };
 

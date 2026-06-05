@@ -16,8 +16,13 @@ import {
   type AssessmentDueAlarm,
   type AssessmentGenerationSummary,
 } from "@/lib/jobs/assessment-alarms";
+import {
+  generateMedicineAlarmsForOrganization,
+  type MedicineGenerationSummary,
+} from "@/lib/jobs/medicine-alarms";
 
 export type { AssessmentDueAlarm, AssessmentGenerationSummary } from "@/lib/jobs/assessment-alarms";
+export type { MedicineGenerationSummary } from "@/lib/jobs/medicine-alarms";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -119,6 +124,38 @@ export async function generateAssessmentAlarms(
   } catch (error) {
     console.error("Failed to generate assessment alarms:", error);
     return { success: false, error: "Failed to generate assessment alarms" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// generateMedicineAlarms
+// ---------------------------------------------------------------------------
+
+export async function generateMedicineAlarms(
+  branchId?: string,
+): Promise<ActionResult<MedicineGenerationSummary>> {
+  try {
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
+
+    if (branchId && !(await verifyBranchAccess(branchId, ctx.organizationId))) {
+      return { success: false, error: "Branch not found in your organization" };
+    }
+
+    const summary = await generateMedicineAlarmsForOrganization({
+      organizationId: ctx.organizationId,
+      branchId,
+    });
+
+    revalidatePath("/alarms");
+    revalidatePath("/alarms/medicine");
+    revalidatePath("/");
+
+    return { success: true, data: summary };
+  } catch (error) {
+    console.error("Failed to generate medicine alarms:", error);
+    return { success: false, error: "Failed to generate medicine alarms" };
   }
 }
 
