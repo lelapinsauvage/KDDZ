@@ -59,7 +59,7 @@ This list is the first implementation backlog after the generated inventory/matr
 
 8. **Actual notification sending**
    - Modern app now has an in-app template dispatch path with variable rendering, sent-log visibility, resend, and per-template test send to the current user.
-   - Birthday generation now restores the active daily legacy family: it scans the configured birthday window, creates idempotent `Alarm` rows with legacy method metadata, and sends unread staff in-app notifications from the Birthday template.
+   - Birthday generation now restores the active daily legacy family: it scans the configured birthday window, creates idempotent `Alarm` rows with legacy method metadata, sends unread staff in-app notifications from the Birthday template, and exposes a cron-safe `/api/cron/birthday-alarms` endpoint protected by `CRON_SECRET` or `VERCEL_CRON_SECRET`.
    - Remaining work is idempotent cron/job generation per approved legacy family plus external push/email/SMS/WhatsApp providers after credential recovery or rotation.
 
 9. **Parent portal UI**

@@ -39,6 +39,7 @@ export const authConfig = {
         pathname.startsWith("/login") ||
         pathname.startsWith("/forgot") ||
         pathname.startsWith("/api/auth") ||
+        pathname.startsWith("/api/cron") ||
         pathname.startsWith("/api/parent");
 
       if (isPublic) {
