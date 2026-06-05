@@ -72,7 +72,8 @@ This list is the first implementation backlog after the generated inventory/matr
    - Remaining work is exact parity for legacy physical database backup/truncate/import behavior from `ArchiveAndCreate`; modern currently records import selections in `SchoolYear.legacyData` and avoids destructive deletion.
 
 13. **Class dashboard depth**
-   - Modern class dashboard exists, but legacy `class_dashboard.php` has deeper daily, medical, and assessment stat coverage.
+   - `/classes/[id]` now restores the legacy `class_dashboard.php` depth for class capacity/gender summary, seven-day birthdays, daily report roster, absent report roster, medical/general/suffering/visits/vaccination/accident/call breakdowns, and seven assessment age-band summaries with eligible child rows.
+   - Remaining work is exact legacy parity for fields that no longer exist one-to-one in the modern schema: daily report numeric progress, call draft status, and legacy `db_curr` year switching for medical visits.
 
 14. **Accounting monthly matrix**
    - Modern accounting/payment flows exist, but the old `accounting.php` month/category matrix must be restored or explicitly approved as changed.

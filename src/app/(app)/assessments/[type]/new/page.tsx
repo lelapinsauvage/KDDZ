@@ -10,10 +10,12 @@ import {
 
 interface PageProps {
   params: Promise<{ type: string }>;
+  searchParams: Promise<{ childId?: string }>;
 }
 
-export default async function NewAssessmentPage({ params }: PageProps) {
+export default async function NewAssessmentPage({ params, searchParams }: PageProps) {
   const { type: typeParam } = await params;
+  const { childId } = await searchParams;
   const typeNum = parseInt(typeParam, 10);
 
   if (!VALID_ASSESSMENT_TYPES.includes(typeNum as (typeof VALID_ASSESSMENT_TYPES)[number])) {
@@ -45,6 +47,7 @@ export default async function NewAssessmentPage({ params }: PageProps) {
         assessmentType={typeNum}
         typeConfig={typeConfig}
         childrenList={children}
+        defaultValues={childId ? { childId } : undefined}
       />
     </>
   );

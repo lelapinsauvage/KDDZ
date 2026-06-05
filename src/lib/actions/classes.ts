@@ -4,7 +4,12 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireOrg, requireOrgSafe } from "@/lib/require-org";
 import { verifyBranchAccess } from "@/lib/verify-org-access";
-import type { AgeUnit, Prisma } from "@/generated/prisma/client";
+import {
+  ASSESSMENT_CONFIGS,
+  ASSESSMENT_TYPE_NAMES,
+  VALID_ASSESSMENT_TYPES,
+} from "@/lib/assessment-types";
+import type { AgeUnit, MedicalFormType, Prisma } from "@/generated/prisma/client";
 
 // ---------------------------------------------------------------------------
 // ClassDashboard types & action
@@ -17,6 +22,9 @@ export interface ClassDashboardData {
     branchName: string;
     language: string | null;
     studentCount: number;
+    maxStudents: number;
+    maleCount: number;
+    femaleCount: number;
   };
   dailyReports: {
     birthdays: number;
@@ -24,17 +32,234 @@ export interface ClassDashboardData {
     completed: number;
     incomplete: number;
     drafts: number;
+    rows: ClassDailyReportRow[];
+    absentRows: ClassAbsentReportRow[];
   };
   medical: {
     published: number;
     missing: number;
     drafts: number;
+    categories: ClassMedicalBreakdown[];
   };
   assessments: {
     completed: number;
     missing: number;
+    incomplete: number;
     drafts: number;
+    categories: ClassAssessmentBreakdown[];
   };
+}
+
+export interface ClassDailyReportRow {
+  childId: string;
+  reportId: string | null;
+  childNumber: string | null;
+  firstName: string;
+  lastName: string;
+  attendanceStatus: string;
+  reportStatus: "No Report" | "Completed Report" | "Draft Report";
+  actionHref: string;
+}
+
+export interface ClassAbsentReportRow {
+  childId: string;
+  reportId: string;
+  childNumber: string | null;
+  firstName: string;
+  lastName: string;
+  reason: string | null;
+  from: string | null;
+  to: string | null;
+  reportStatus: "Pending Report" | "Completed Report" | "Rejected Report";
+  actionHref: string;
+}
+
+export interface ClassMedicalBreakdown {
+  key: string;
+  label: string;
+  completed: number;
+  missing: number | null;
+  drafts: number;
+  href: string;
+  createHref: string | null;
+}
+
+export interface ClassAssessmentBreakdown {
+  type: number;
+  label: string;
+  completed: number;
+  missing: number;
+  incomplete: number;
+  drafts: number;
+  rows: ClassAssessmentRow[];
+  href: string;
+}
+
+export interface ClassAssessmentRow {
+  childId: string;
+  assessmentId: string | null;
+  childNumber: string | null;
+  firstName: string;
+  lastName: string;
+  currentAge: string;
+  joiningAge: string;
+  reportStatus:
+    | "No Assessment"
+    | "Completed Assessment"
+    | "Incomplete Assessment"
+    | "Draft Assessment";
+  actionHref: string;
+}
+
+const assessmentTypes = [...VALID_ASSESSMENT_TYPES];
+
+const medicalBreakdownConfig: Array<{
+  key: string;
+  label: string;
+  formType?: MedicalFormType;
+  href: string;
+  createHref: string | null;
+  todayOnly?: boolean;
+  sufferingOnly?: boolean;
+}> = [
+  {
+    key: "general",
+    label: "General Form",
+    formType: "GENERAL",
+    href: "/medical/general",
+    createHref: "/medical/general/new",
+  },
+  {
+    key: "suffering",
+    label: "Suffering Form",
+    formType: "CONDITIONS",
+    href: "/medical/suffering",
+    createHref: "/medical/suffering/new",
+    sufferingOnly: true,
+  },
+  {
+    key: "visits",
+    label: "Medical Visits",
+    formType: "VISITS",
+    href: "/medical/visits",
+    createHref: "/medical/visits/new",
+  },
+  {
+    key: "vaccinations",
+    label: "Vaccination Reports",
+    href: "/medical/vaccinations",
+    createHref: "/medical/vaccinations/new",
+  },
+  {
+    key: "accidents",
+    label: "Accident Reports Today",
+    formType: "ACCIDENTS",
+    href: "/medical/accidents",
+    createHref: "/medical/accidents/new",
+    todayOnly: true,
+  },
+  {
+    key: "calls",
+    label: "Incoming/Outgoing Calls Today",
+    href: "/calls",
+    createHref: null,
+    todayOnly: true,
+  },
+];
+
+const fallbackAssessmentWindows: Record<number, { minDays: number; maxDays: number }> = {
+  1: { minDays: 0, maxDays: 90 },
+  2: { minDays: 91, maxDays: 243 },
+  3: { minDays: 244, maxDays: 365 },
+  4: { minDays: 366, maxDays: 730 },
+  5: { minDays: 731, maxDays: 1095 },
+  6: { minDays: 1096, maxDays: 1460 },
+  7: { minDays: 1461, maxDays: 1825 },
+};
+
+function startOfToday() {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+function addDays(date: Date, days: number) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function toDateString(date: Date | null | undefined) {
+  if (!date) return null;
+  return date.toISOString().slice(0, 10);
+}
+
+function monthDayKey(date: Date) {
+  return `${date.getMonth() + 1}-${date.getDate()}`;
+}
+
+function ageInDays(dateOfBirth: Date | null, asOf: Date) {
+  if (!dateOfBirth) return null;
+  return Math.floor((asOf.getTime() - dateOfBirth.getTime()) / 86_400_000);
+}
+
+function formatAge(from: Date | null, to: Date | null) {
+  if (!from || !to || to < from) return "-";
+
+  let years = to.getFullYear() - from.getFullYear();
+  let months = to.getMonth() - from.getMonth();
+  let days = to.getDate() - from.getDate();
+
+  if (days < 0) {
+    months -= 1;
+    const previousMonth = new Date(to.getFullYear(), to.getMonth(), 0);
+    days += previousMonth.getDate();
+  }
+  if (months < 0) {
+    years -= 1;
+    months += 12;
+  }
+
+  return `${years}y ${months}m ${days}d`;
+}
+
+function jsonObject(value: Prisma.JsonValue | null | undefined) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+  return value as Record<string, unknown>;
+}
+
+function assessmentProgressPercent(data: Prisma.JsonValue | null | undefined, type: number) {
+  const config = ASSESSMENT_CONFIGS[type];
+  const payload = jsonObject(data);
+  if (!config || !payload) return null;
+
+  const criteria = config.categories
+    .filter((category) => !category.isRedFlags)
+    .flatMap((category) => category.criteria);
+
+  if (criteria.length === 0) return null;
+
+  const answered = criteria.filter((criterion) => {
+    const value = payload[criterion.key];
+    return typeof value === "number" && value !== 0;
+  }).length;
+
+  return Math.round((answered / criteria.length) * 100);
+}
+
+function isEligibleForAssessment(
+  child: { dateOfBirth: Date | null; enrollmentDate: Date | null },
+  asOf: Date,
+  minDays: number,
+  maxDays: number
+) {
+  const currentAge = ageInDays(child.dateOfBirth, asOf);
+  if (currentAge === null || currentAge < minDays) return false;
+
+  const joiningAge = ageInDays(child.dateOfBirth, child.enrollmentDate ?? asOf);
+  return joiningAge === null || joiningAge <= maxDays;
 }
 
 export async function getClassDashboard(
@@ -58,21 +283,33 @@ export async function getClassDashboard(
     // Active children in this class
     const activeChildren = await db.child.findMany({
       where: { classId, isActive: true, isDraft: false },
-      select: { id: true, dateOfBirth: true },
+      select: {
+        id: true,
+        childNumber: true,
+        firstName: true,
+        lastName: true,
+        dateOfBirth: true,
+        enrollmentDate: true,
+        gender: true,
+      },
+      orderBy: [{ childNumber: "asc" }, { firstName: "asc" }, { lastName: "asc" }],
     });
 
     const activeChildIds = activeChildren.map((c) => c.id);
+    const activeStudentCount = activeChildren.length;
+    const maleCount = activeChildren.filter((child) => child.gender === "MALE").length;
+    const femaleCount = activeChildren.filter((child) => child.gender === "FEMALE").length;
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    const today = startOfToday();
+    const tomorrow = addDays(today, 1);
 
-    // Count birthdays this month
-    const currentMonth = today.getMonth() + 1;
+    // Legacy class dashboard counts birthdays in the next seven calendar days.
+    const birthdayWindow = new Set(
+      Array.from({ length: 7 }, (_, index) => monthDayKey(addDays(today, index)))
+    );
     const birthdays = activeChildren.filter((c) => {
       if (!c.dateOfBirth) return false;
-      return new Date(c.dateOfBirth).getMonth() + 1 === currentMonth;
+      return birthdayWindow.has(monthDayKey(new Date(c.dateOfBirth)));
     }).length;
 
     if (activeChildIds.length === 0) {
@@ -84,11 +321,50 @@ export async function getClassDashboard(
             name: cls.name,
             branchName: cls.branch.name,
             language: cls.language,
-            studentCount: cls._count.children,
+            studentCount: activeStudentCount,
+            maxStudents: cls.maxStudents,
+            maleCount,
+            femaleCount,
           },
-          dailyReports: { birthdays, withoutReport: 0, completed: 0, incomplete: 0, drafts: 0 },
-          medical: { published: 0, missing: 0, drafts: 0 },
-          assessments: { completed: 0, missing: 0, drafts: 0 },
+          dailyReports: {
+            birthdays,
+            withoutReport: 0,
+            completed: 0,
+            incomplete: 0,
+            drafts: 0,
+            rows: [],
+            absentRows: [],
+          },
+          medical: {
+            published: 0,
+            missing: 0,
+            drafts: 0,
+            categories: medicalBreakdownConfig.map((item) => ({
+              key: item.key,
+              label: item.label,
+              completed: 0,
+              missing: item.key === "calls" || item.todayOnly ? null : 0,
+              drafts: 0,
+              href: item.href,
+              createHref: item.createHref,
+            })),
+          },
+          assessments: {
+            completed: 0,
+            missing: 0,
+            incomplete: 0,
+            drafts: 0,
+            categories: assessmentTypes.map((type) => ({
+              type,
+              label: ASSESSMENT_TYPE_NAMES[type],
+              completed: 0,
+              missing: 0,
+              incomplete: 0,
+              drafts: 0,
+              rows: [],
+              href: `/assessments/${type}`,
+            })),
+          },
         },
       };
     }
@@ -96,73 +372,297 @@ export async function getClassDashboard(
     const childFilter = { childId: { in: activeChildIds } };
 
     const [
-      submittedReports,
-      draftReports,
-      todayReportChildIds,
-      submittedMedical,
-      draftMedical,
-      medicalChildIds,
-      submittedAssessments,
-      draftAssessments,
-      assessmentChildIds,
+      todayReports,
+      todayAbsenceReports,
+      medicalForms,
+      vaccinations,
+      todayCalls,
+      assessments,
+      scheduleRules,
     ] = await Promise.all([
-      // Daily reports — submitted today
-      db.dailyReport.count({
-        where: { ...childFilter, reportDate: { gte: today, lt: tomorrow }, status: "SUBMITTED" },
-      }),
-      // Daily reports — drafts today
-      db.dailyReport.count({
-        where: { ...childFilter, reportDate: { gte: today, lt: tomorrow }, status: "DRAFT" },
-      }),
-      // Children who have any report today (to compute "without report")
       db.dailyReport.findMany({
         where: { ...childFilter, reportDate: { gte: today, lt: tomorrow } },
-        select: { childId: true },
-        distinct: ["childId"],
+        select: { id: true, childId: true, status: true },
       }),
-      // Medical — submitted
-      db.medicalForm.count({
-        where: { ...childFilter, status: "SUBMITTED" },
+      db.absenceReport.findMany({
+        where: {
+          ...childFilter,
+          OR: [
+            { date: { gte: today, lt: tomorrow } },
+            { AND: [{ absentFrom: { lte: today } }, { absentTo: { gte: today } }] },
+          ],
+        },
+        select: {
+          id: true,
+          childId: true,
+          reason: true,
+          absentFrom: true,
+          absentTo: true,
+          status: true,
+          child: {
+            select: {
+              childNumber: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+        orderBy: [{ date: "desc" }, { createdAt: "desc" }],
       }),
-      // Medical — drafts
-      db.medicalForm.count({
-        where: { ...childFilter, status: "DRAFT" },
-      }),
-      // Distinct children with a submitted medical form
       db.medicalForm.findMany({
-        where: { ...childFilter, status: "SUBMITTED" },
-        select: { childId: true },
-        distinct: ["childId"],
+        where: { ...childFilter },
+        select: { id: true, childId: true, formType: true, status: true, data: true, createdAt: true },
       }),
-      // Assessments — submitted
-      db.assessment.count({
-        where: { ...childFilter, status: "SUBMITTED" },
+      db.vaccination.findMany({
+        where: { ...childFilter },
+        select: { id: true, childId: true },
       }),
-      // Assessments — drafts
-      db.assessment.count({
-        where: { ...childFilter, status: "DRAFT" },
+      db.callLog.findMany({
+        where: { ...childFilter, date: { gte: today, lt: tomorrow } },
+        select: { id: true, childId: true },
       }),
-      // Distinct children with a submitted assessment
       db.assessment.findMany({
-        where: { ...childFilter, status: "SUBMITTED" },
-        select: { childId: true },
-        distinct: ["childId"],
+        where: { ...childFilter, assessmentType: { in: assessmentTypes } },
+        select: {
+          id: true,
+          childId: true,
+          assessmentType: true,
+          status: true,
+          data: true,
+        },
+      }),
+      db.assessmentScheduleRule.findMany({
+        where: { organizationId: orgId, assessmentType: { in: assessmentTypes } },
+        select: { assessmentType: true, minimumAgeDays: true, maximumAgeDays: true },
       }),
     ]);
 
-    const reportedChildIds = new Set(todayReportChildIds.map((r) => r.childId));
+    const reportByChildId = new Map(todayReports.map((report) => [report.childId, report]));
+    const reportedChildIds = new Set(todayReports.map((report) => report.childId));
     const withoutReport = activeChildIds.filter((id) => !reportedChildIds.has(id)).length;
 
-    // "Incomplete" = children who have a draft but not submitted today
-    const incomplete = draftReports;
-    // "Completed" = submitted reports today
-    const completed = submittedReports;
+    const completed = todayReports.filter((report) => report.status === "SUBMITTED").length;
+    const draftReports = todayReports.filter((report) => report.status === "DRAFT").length;
 
-    const medicalCoveredIds = new Set(medicalChildIds.map((m) => m.childId));
-    const missingMedical = activeChildIds.filter((id) => !medicalCoveredIds.has(id)).length;
+    const absenceChildIds = new Set(todayAbsenceReports.map((report) => report.childId));
+    const dailyRows: ClassDailyReportRow[] = activeChildren.map((child) => {
+      const report = reportByChildId.get(child.id);
+      const hasAbsence = absenceChildIds.has(child.id);
 
-    const assessmentCoveredIds = new Set(assessmentChildIds.map((a) => a.childId));
-    const missingAssessments = activeChildIds.filter((id) => !assessmentCoveredIds.has(id)).length;
+      const reportStatus =
+        report?.status === "SUBMITTED"
+          ? "Completed Report"
+          : report?.status === "DRAFT"
+            ? "Draft Report"
+            : "No Report";
+
+      const attendanceStatus =
+        hasAbsence ? "Absent" : report?.status === "SUBMITTED" ? "Present" : report?.status === "DRAFT" ? "Draft" : "-";
+
+      return {
+        childId: child.id,
+        reportId: report?.id ?? null,
+        childNumber: child.childNumber,
+        firstName: child.firstName,
+        lastName: child.lastName,
+        attendanceStatus,
+        reportStatus,
+        actionHref:
+          report?.id && report.status === "DRAFT"
+            ? `/daily-reports/${report.id}/edit`
+            : report?.id
+              ? `/daily-reports/${report.id}`
+              : `/daily-reports/new?childId=${child.id}`,
+      };
+    });
+
+    const absentRows: ClassAbsentReportRow[] = todayAbsenceReports.map((report) => ({
+      childId: report.childId,
+      reportId: report.id,
+      childNumber: report.child.childNumber,
+      firstName: report.child.firstName,
+      lastName: report.child.lastName,
+      reason: report.reason,
+      from: toDateString(report.absentFrom),
+      to: toDateString(report.absentTo),
+      reportStatus:
+        report.status === "APPROVED"
+          ? "Completed Report"
+          : report.status === "REJECTED"
+            ? "Rejected Report"
+            : "Pending Report",
+      actionHref:
+        report.status === "PENDING"
+          ? `/absent-reports/${report.id}/edit`
+          : `/absent-reports/${report.id}`,
+    }));
+
+    const medicalCategories = medicalBreakdownConfig.map((config) => {
+      if (config.key === "calls") {
+        return {
+          key: config.key,
+          label: config.label,
+          completed: todayCalls.length,
+          missing: null,
+          drafts: 0,
+          href: config.href,
+          createHref: config.createHref,
+        };
+      }
+
+      if (config.key === "vaccinations") {
+        const coveredChildIds = new Set(vaccinations.map((vaccination) => vaccination.childId));
+        return {
+          key: config.key,
+          label: config.label,
+          completed: vaccinations.length,
+          missing: Math.max(0, activeStudentCount - coveredChildIds.size),
+          drafts: 0,
+          href: config.href,
+          createHref: config.createHref,
+        };
+      }
+
+      const forms = medicalForms.filter((form) => {
+        if (form.formType !== config.formType) return false;
+        if (config.todayOnly && (form.createdAt < today || form.createdAt >= tomorrow)) return false;
+        if (config.sufferingOnly) {
+          const data = jsonObject(form.data);
+          return data?.formSubType === "SUFFERING";
+        }
+        return true;
+      });
+
+      const coveredChildIds = new Set(forms.map((form) => form.childId));
+      const completedCount = forms.filter((form) => form.status === "SUBMITTED" || form.status === "REVIEWED").length;
+      const drafts = forms.filter((form) => form.status === "DRAFT").length;
+
+      return {
+        key: config.key,
+        label: config.label,
+        completed: completedCount,
+        missing: config.todayOnly ? null : Math.max(0, activeStudentCount - coveredChildIds.size),
+        drafts,
+        href: config.href,
+        createHref: config.createHref,
+      };
+    });
+
+    const ruleByType = new Map(
+      scheduleRules.map((rule) => [
+        rule.assessmentType,
+        {
+          minDays: Number(rule.minimumAgeDays ?? fallbackAssessmentWindows[rule.assessmentType]?.minDays ?? 0),
+          maxDays: Number(rule.maximumAgeDays ?? fallbackAssessmentWindows[rule.assessmentType]?.maxDays ?? Number.MAX_SAFE_INTEGER),
+        },
+      ])
+    );
+
+    const assessmentsByType = new Map<number, typeof assessments>();
+    for (const assessment of assessments) {
+      const current = assessmentsByType.get(assessment.assessmentType) ?? [];
+      current.push(assessment);
+      assessmentsByType.set(assessment.assessmentType, current);
+    }
+
+    const assessmentCategories: ClassAssessmentBreakdown[] = assessmentTypes.map((type) => {
+      const records = assessmentsByType.get(type) ?? [];
+      const recordsByChildId = new Map<string, typeof records>();
+      for (const record of records) {
+        const current = recordsByChildId.get(record.childId) ?? [];
+        current.push(record);
+        recordsByChildId.set(record.childId, current);
+      }
+
+      const window = ruleByType.get(type) ?? fallbackAssessmentWindows[type];
+      const eligibleChildren = activeChildren.filter((child) =>
+        isEligibleForAssessment(child, today, window.minDays, window.maxDays)
+      );
+
+      let completedCount = 0;
+      let incompleteCount = 0;
+      let drafts = 0;
+      const rows: ClassAssessmentRow[] = [];
+
+      for (const child of activeChildren) {
+        const childRecords = recordsByChildId.get(child.id) ?? [];
+        const sortedRecords = [...childRecords].sort((a, b) => {
+          if (a.status === "DRAFT" && b.status !== "DRAFT") return 1;
+          if (a.status !== "DRAFT" && b.status === "DRAFT") return -1;
+          return 0;
+        });
+        const record = sortedRecords[0] ?? null;
+        const progress = record ? assessmentProgressPercent(record.data, type) : null;
+        const eligible = isEligibleForAssessment(child, today, window.minDays, window.maxDays);
+
+        if (record?.status === "DRAFT") {
+          drafts += childRecords.filter((item) => item.status === "DRAFT").length;
+        }
+
+        if (record && record.status !== "DRAFT") {
+          if (progress !== null && progress < 100) {
+            incompleteCount += 1;
+          } else {
+            completedCount += 1;
+          }
+        }
+
+        if (!record && !eligible) {
+          continue;
+        }
+
+        const reportStatus: ClassAssessmentRow["reportStatus"] =
+          !record
+            ? "No Assessment"
+            : record.status === "DRAFT"
+              ? "Draft Assessment"
+              : progress !== null && progress < 100
+                ? "Incomplete Assessment"
+                : "Completed Assessment";
+
+        rows.push({
+          childId: child.id,
+          assessmentId: record?.id ?? null,
+          childNumber: child.childNumber,
+          firstName: child.firstName,
+          lastName: child.lastName,
+          currentAge: formatAge(child.dateOfBirth, today),
+          joiningAge: formatAge(child.dateOfBirth, child.enrollmentDate ?? today),
+          reportStatus,
+          actionHref: record?.id ? `/assessments/${type}/${record.id}` : `/assessments/${type}/new?childId=${child.id}`,
+        });
+      }
+
+      const assessedChildIds = new Set(records.map((record) => record.childId));
+      const missing = eligibleChildren.filter((child) => !assessedChildIds.has(child.id)).length;
+
+      return {
+        type,
+        label: ASSESSMENT_TYPE_NAMES[type],
+        completed: completedCount,
+        missing,
+        incomplete: incompleteCount,
+        drafts,
+        rows,
+        href: `/assessments/${type}`,
+      };
+    });
+
+    const submittedMedical = medicalCategories
+      .filter((category) => category.key !== "calls")
+      .reduce((sum, category) => sum + category.completed, 0);
+    const draftMedical = medicalCategories
+      .filter((category) => category.key !== "calls")
+      .reduce((sum, category) => sum + category.drafts, 0);
+    const missingMedical = medicalCategories.reduce(
+      (sum, category) => sum + (category.missing ?? 0),
+      0
+    );
+
+    const completedAssessments = assessmentCategories.reduce((sum, item) => sum + item.completed, 0);
+    const missingAssessments = assessmentCategories.reduce((sum, item) => sum + item.missing, 0);
+    const incompleteAssessments = assessmentCategories.reduce((sum, item) => sum + item.incomplete, 0);
+    const draftAssessments = assessmentCategories.reduce((sum, item) => sum + item.drafts, 0);
 
     return {
       success: true,
@@ -172,24 +672,32 @@ export async function getClassDashboard(
           name: cls.name,
           branchName: cls.branch.name,
           language: cls.language,
-          studentCount: cls._count.children,
+          studentCount: activeStudentCount,
+          maxStudents: cls.maxStudents,
+          maleCount,
+          femaleCount,
         },
         dailyReports: {
           birthdays,
           withoutReport,
           completed,
-          incomplete,
+          incomplete: 0,
           drafts: draftReports,
+          rows: dailyRows,
+          absentRows,
         },
         medical: {
           published: submittedMedical,
           missing: missingMedical,
           drafts: draftMedical,
+          categories: medicalCategories,
         },
         assessments: {
-          completed: submittedAssessments,
+          completed: completedAssessments,
           missing: missingAssessments,
+          incomplete: incompleteAssessments,
           drafts: draftAssessments,
+          categories: assessmentCategories,
         },
       },
     };

@@ -28,11 +28,12 @@ interface ClassOption {
 
 interface ClassMessageClientProps {
   classes: ClassOption[];
+  defaultClassId?: string;
 }
 
-export function ClassMessageClient({ classes }: ClassMessageClientProps) {
+export function ClassMessageClient({ classes, defaultClassId }: ClassMessageClientProps) {
   const router = useRouter();
-  const [selectedClass, setSelectedClass] = useState("");
+  const [selectedClass, setSelectedClass] = useState(defaultClassId ?? "");
   const [nature, setNature] = useState("General");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
