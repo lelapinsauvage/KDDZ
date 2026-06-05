@@ -47,7 +47,9 @@ This list is the first implementation backlog after the generated inventory/matr
 
 6. **Assessments migration**
    - Legacy has `t_assessment_1` through `t_assessment_7` plus `new_assessment`.
-   - Historical row migration is covered by `migrate-assessments.ts`; remaining work is UI/behavior parity for missing-report generation and review flows.
+   - Historical row migration is covered by `migrate-assessments.ts`.
+   - `/assessments` and `/assessments/[type]` now restore the legacy completed/incomplete/draft/missing review queues, using migrated `AssessmentScheduleRule` age windows, legacy `progress` payloads when present, active non-draft children, and direct create/open actions.
+   - Remaining work is exact legacy alarm delivery parity for `alarmsAssessment.php` teacher/parent notification history and final per-question visual audit.
 
 7. **Notification logs/settings migration**
    - Legacy has many `custom_notifications_*`, `t_alarms_*`, `t_notification_setting`, and `t_notifications_log` tables.

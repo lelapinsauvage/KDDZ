@@ -4,7 +4,20 @@ import { useCallback, useState, useMemo, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { type ColumnDef } from "@tanstack/react-table";
-import { Plus, ArrowUpDown, MoreHorizontal, Eye, Pencil, Trash2, Calendar } from "lucide-react";
+import {
+  Plus,
+  ArrowUpDown,
+  MoreHorizontal,
+  Eye,
+  Pencil,
+  Trash2,
+  Calendar,
+  AlertTriangle,
+  ClipboardCheck,
+  FileWarning,
+  FileText,
+  ExternalLink,
+} from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
@@ -28,6 +41,7 @@ import { ASSESSMENT_TYPE_NAMES } from "@/lib/assessment-types";
 import { getInitials, getAvatarColor } from "@/components/children/children-columns";
 
 type AssessmentStatus = "DRAFT" | "SUBMITTED" | "REVIEWED";
+type ReviewStatus = "COMPLETED" | "INCOMPLETE" | "DRAFT" | "MISSING";
 
 interface AssessmentEntry {
   id: string;
@@ -55,10 +69,54 @@ interface BranchOption {
   name: string;
 }
 
+interface AssessmentReviewEntry {
+  assessmentType: number;
+  assessmentTypeName: string;
+  childId: string;
+  assessmentId: string | null;
+  childNumber: string | null;
+  childName: string;
+  firstName: string;
+  lastName: string;
+  photo: string | null;
+  branchId: string;
+  branchName: string;
+  classId: string;
+  className: string;
+  currentAge: string;
+  joiningAge: string;
+  status: ReviewStatus;
+  progress: number | null;
+  reportDate: string | null;
+  actionHref: string;
+}
+
+interface AssessmentReviewSummary {
+  completed: number;
+  incomplete: number;
+  drafts: number;
+  missing: number;
+  total: number;
+}
+
 const statusBadgeStyles: Record<AssessmentStatus, string> = {
   DRAFT: "bg-amber-100 text-amber-700 border-amber-200",
   SUBMITTED: "bg-blue-100 text-blue-700 border-blue-200",
   REVIEWED: "bg-[#059669]/15 text-[#059669] border-[#059669]/20",
+};
+
+const reviewStatusBadgeStyles: Record<ReviewStatus, string> = {
+  MISSING: "bg-rose-100 text-rose-700 border-rose-200",
+  INCOMPLETE: "bg-orange-100 text-orange-700 border-orange-200",
+  DRAFT: "bg-amber-100 text-amber-700 border-amber-200",
+  COMPLETED: "bg-[#059669]/15 text-[#059669] border-[#059669]/20",
+};
+
+const reviewStatusLabels: Record<ReviewStatus, string> = {
+  MISSING: "No Report",
+  INCOMPLETE: "Incomplete",
+  DRAFT: "Draft",
+  COMPLETED: "Completed",
 };
 
 function formatDate(iso: string) {
@@ -71,12 +129,16 @@ function formatDate(iso: string) {
 
 interface AssessmentsListingClientProps {
   assessments: AssessmentEntry[];
+  reviewRows: AssessmentReviewEntry[];
+  reviewSummary: AssessmentReviewSummary;
   classes: ClassOption[];
   branches: BranchOption[];
 }
 
 export default function AssessmentsListingClient({
   assessments,
+  reviewRows,
+  reviewSummary,
   classes,
   branches,
 }: AssessmentsListingClientProps) {
@@ -87,6 +149,7 @@ export default function AssessmentsListingClient({
   const [branchFilter, setBranchFilter] = useState("ALL");
   const [classFilter, setClassFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [reviewStatusFilter, setReviewStatusFilter] = useState("NEEDS_ACTION");
 
   const handleDelete = useCallback(
     (id: string) => {
@@ -108,6 +171,23 @@ export default function AssessmentsListingClient({
       return true;
     });
   }, [assessments, typeFilter, branchFilter, classFilter, statusFilter]);
+
+  const filteredReviewEntries = useMemo(() => {
+    return reviewRows.filter((entry) => {
+      if (typeFilter !== "ALL" && String(entry.assessmentType) !== typeFilter) return false;
+      if (branchFilter !== "ALL" && entry.branchId !== branchFilter) return false;
+      if (classFilter !== "ALL" && entry.classId !== classFilter) return false;
+      if (reviewStatusFilter === "NEEDS_ACTION" && entry.status === "COMPLETED") return false;
+      if (
+        reviewStatusFilter !== "ALL" &&
+        reviewStatusFilter !== "NEEDS_ACTION" &&
+        entry.status !== reviewStatusFilter
+      ) {
+        return false;
+      }
+      return true;
+    });
+  }, [reviewRows, typeFilter, branchFilter, classFilter, reviewStatusFilter]);
 
   const columns: ColumnDef<AssessmentEntry>[] = useMemo(
     () => [
@@ -314,6 +394,225 @@ export default function AssessmentsListingClient({
     [handleDelete]
   );
 
+  const reviewColumns: ColumnDef<AssessmentReviewEntry>[] = useMemo(
+    () => [
+      {
+        accessorKey: "childNumber",
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-3 h-8 text-xs font-semibold uppercase"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Child #
+            <ArrowUpDown className="ml-1 size-3" />
+          </Button>
+        ),
+        cell: ({ row }) => (
+          <span className="text-[#555]">{row.original.childNumber ?? "-"}</span>
+        ),
+      },
+      {
+        accessorKey: "childName",
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-3 h-8 text-xs font-semibold uppercase"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Child
+            <ArrowUpDown className="ml-1 size-3" />
+          </Button>
+        ),
+        cell: ({ row }) => {
+          const entry = row.original;
+          const initials = getInitials(entry.firstName, entry.lastName);
+          const bg = getAvatarColor(`${entry.firstName} ${entry.lastName}`);
+          return (
+            <div className="flex items-center gap-2">
+              {entry.photo ? (
+                <img
+                  src={entry.photo}
+                  alt=""
+                  className="size-8 rounded-full object-cover"
+                />
+              ) : (
+                <div
+                  className={`flex size-8 items-center justify-center rounded-full text-xs font-bold text-white ${bg}`}
+                >
+                  {initials}
+                </div>
+              )}
+              <Link
+                href={entry.actionHref}
+                className="font-medium text-primary hover:underline"
+              >
+                {entry.childName}
+              </Link>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "assessmentTypeName",
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-3 h-8 text-xs font-semibold uppercase"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Assessment
+            <ArrowUpDown className="ml-1 size-3" />
+          </Button>
+        ),
+        cell: ({ row }) => (
+          <Badge variant="outline" className="font-normal">
+            {row.original.assessmentTypeName}
+          </Badge>
+        ),
+      },
+      {
+        accessorKey: "branchName",
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-3 h-8 text-xs font-semibold uppercase"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Branch
+            <ArrowUpDown className="ml-1 size-3" />
+          </Button>
+        ),
+        cell: ({ row }) => (
+          <span className="text-[#555]">{row.original.branchName}</span>
+        ),
+      },
+      {
+        accessorKey: "className",
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-3 h-8 text-xs font-semibold uppercase"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Class
+            <ArrowUpDown className="ml-1 size-3" />
+          </Button>
+        ),
+        cell: ({ row }) => (
+          <Badge variant="secondary" className="bg-[#e8ecf1] text-[#555] font-normal">
+            {row.original.className}
+          </Badge>
+        ),
+      },
+      {
+        id: "age",
+        header: "Age",
+        cell: ({ row }) => (
+          <div className="text-xs text-[#555]">
+            <div>{row.original.currentAge}</div>
+            <div className="text-muted-foreground">Joined {row.original.joiningAge}</div>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "status",
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-3 h-8 text-xs font-semibold uppercase"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Status
+            <ArrowUpDown className="ml-1 size-3" />
+          </Button>
+        ),
+        cell: ({ row }) => {
+          const entry = row.original;
+          return (
+            <div className="flex flex-col gap-1">
+              <Badge className={reviewStatusBadgeStyles[entry.status]}>
+                {reviewStatusLabels[entry.status]}
+              </Badge>
+              {entry.progress !== null && entry.status === "INCOMPLETE" && (
+                <span className="text-xs text-muted-foreground">{entry.progress}%</span>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "reportDate",
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-3 h-8 text-xs font-semibold uppercase"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Date
+            <ArrowUpDown className="ml-1 size-3" />
+          </Button>
+        ),
+        cell: ({ row }) => (
+          <span className="text-[#555]">
+            {row.original.reportDate ? formatDate(row.original.reportDate) : "-"}
+          </span>
+        ),
+      },
+      {
+        id: "actions",
+        header: "",
+        cell: ({ row }) => {
+          const entry = row.original;
+          return (
+            <Button asChild variant={entry.status === "MISSING" ? "default" : "outline"} size="sm">
+              <Link href={entry.actionHref}>
+                <ExternalLink className="mr-1 size-4" />
+                {entry.status === "MISSING" ? "Create" : "Open"}
+              </Link>
+            </Button>
+          );
+        },
+        enableSorting: false,
+      },
+    ],
+    []
+  );
+
+  const reviewStats = [
+    {
+      label: "Missing",
+      value: reviewSummary.missing,
+      icon: FileWarning,
+      className: "border-rose-200 bg-rose-50 text-rose-700",
+    },
+    {
+      label: "Incomplete",
+      value: reviewSummary.incomplete,
+      icon: AlertTriangle,
+      className: "border-orange-200 bg-orange-50 text-orange-700",
+    },
+    {
+      label: "Drafts",
+      value: reviewSummary.drafts,
+      icon: FileText,
+      className: "border-amber-200 bg-amber-50 text-amber-700",
+    },
+    {
+      label: "Completed",
+      value: reviewSummary.completed,
+      icon: ClipboardCheck,
+      className: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    },
+  ];
+
   return (
     <>
       <PageHeader
@@ -409,6 +708,63 @@ export default function AssessmentsListingClient({
         {isPending && (
           <div className="text-sm text-muted-foreground">Processing...</div>
         )}
+
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {reviewStats.map((stat) => {
+            const Icon = stat.icon;
+            return (
+              <div
+                key={stat.label}
+                className={`rounded-lg border px-4 py-3 ${stat.className}`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-xs font-medium uppercase tracking-normal">
+                      {stat.label}
+                    </div>
+                    <div className="mt-1 text-2xl font-semibold">{stat.value}</div>
+                  </div>
+                  <Icon className="size-5" />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="rounded-lg border bg-card">
+          <div className="flex flex-wrap items-center gap-3 border-b px-4 py-3">
+            <div>
+              <h2 className="text-base font-semibold">Report Review Queue</h2>
+              <p className="text-xs text-muted-foreground">
+                {filteredReviewEntries.length} of {reviewSummary.total} reports
+              </p>
+            </div>
+
+            <div className="flex-1" />
+
+            <Select value={reviewStatusFilter} onValueChange={setReviewStatusFilter}>
+              <SelectTrigger className="w-full sm:w-[170px]">
+                <SelectValue placeholder="Review Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="NEEDS_ACTION">Needs Action</SelectItem>
+                <SelectItem value="ALL">All Review</SelectItem>
+                <SelectItem value="MISSING">No Report</SelectItem>
+                <SelectItem value="INCOMPLETE">Incomplete</SelectItem>
+                <SelectItem value="DRAFT">Draft</SelectItem>
+                <SelectItem value="COMPLETED">Completed</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="p-4">
+            <DataTable
+              columns={reviewColumns}
+              data={filteredReviewEntries}
+              searchKey="childName"
+              searchPlaceholder="Search by child name..."
+            />
+          </div>
+        </div>
       </div>
     </>
   );

@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getAssessments } from "@/lib/actions/assessments";
+import { getAssessmentReview, getAssessments } from "@/lib/actions/assessments";
 import { getClasses } from "@/lib/actions/classes";
 import { ASSESSMENT_TYPE_NAMES, VALID_ASSESSMENT_TYPES } from "@/lib/assessment-types";
 import AssessmentsClient from "./assessments-client";
@@ -16,8 +16,9 @@ export default async function AssessmentListingPage({ params }: PageProps) {
     notFound();
   }
 
-  const [{ assessments }, classesResult] = await Promise.all([
+  const [{ assessments }, reviewResult, classesResult] = await Promise.all([
     getAssessments({ assessmentType: typeNum, pageSize: 500 }),
+    getAssessmentReview({ assessmentType: typeNum }),
     getClasses(),
   ]);
 
@@ -38,6 +39,14 @@ export default async function AssessmentListingPage({ params }: PageProps) {
     assessor: a.createdBy?.name ?? "Unknown",
   }));
 
+  const serializedReviewRows = reviewResult.rows.map((row) => ({
+    ...row,
+    childName: `${row.firstName} ${row.lastName}`,
+    classId: row.classId ?? "",
+    className: row.className ?? "Unassigned",
+    reportDate: row.reportDate?.toISOString().split("T")[0] ?? null,
+  }));
+
   const typeName = ASSESSMENT_TYPE_NAMES[typeNum] ?? "Assessment";
 
   return (
@@ -45,6 +54,8 @@ export default async function AssessmentListingPage({ params }: PageProps) {
       typeParam={typeParam}
       typeName={typeName}
       assessments={serializedAssessments}
+      reviewRows={serializedReviewRows}
+      reviewSummary={reviewResult.summary}
       classes={classes}
     />
   );

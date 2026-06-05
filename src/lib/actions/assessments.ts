@@ -6,7 +6,11 @@ import { requireOrg, requireOrgSafe } from "@/lib/require-org";
 import { verifyChildAccess, verifyBranchAccess } from "@/lib/verify-org-access";
 import type { InputJsonValue } from "@prisma/client/runtime/client";
 import type { AssessmentStatus, Prisma } from "@/generated/prisma/client";
-import { VALID_ASSESSMENT_TYPES } from "@/lib/assessment-types";
+import {
+  ASSESSMENT_CONFIGS,
+  ASSESSMENT_TYPE_NAMES,
+  VALID_ASSESSMENT_TYPES,
+} from "@/lib/assessment-types";
 
 // ─────────────────────────────────────────────
 // Types
@@ -48,6 +52,168 @@ interface CreateAssessmentDateData {
   assessmentType: number;
   branchId: string;
   scheduledDate: string;
+}
+
+interface GetAssessmentReviewParams {
+  assessmentType?: number;
+  classId?: string;
+  branchId?: string;
+}
+
+export type AssessmentReviewStatus =
+  | "COMPLETED"
+  | "INCOMPLETE"
+  | "DRAFT"
+  | "MISSING";
+
+export interface AssessmentReviewRow {
+  assessmentType: number;
+  assessmentTypeName: string;
+  childId: string;
+  assessmentId: string | null;
+  childNumber: string | null;
+  firstName: string;
+  lastName: string;
+  photo: string | null;
+  branchId: string;
+  branchName: string;
+  classId: string | null;
+  className: string | null;
+  currentAge: string;
+  joiningAge: string;
+  status: AssessmentReviewStatus;
+  progress: number | null;
+  reportDate: Date | null;
+  actionHref: string;
+}
+
+export interface AssessmentReviewSummary {
+  completed: number;
+  incomplete: number;
+  drafts: number;
+  missing: number;
+  total: number;
+}
+
+const assessmentTypes = [...VALID_ASSESSMENT_TYPES];
+
+const fallbackAssessmentWindows: Record<number, { minDays: number; maxDays: number }> = {
+  1: { minDays: 0, maxDays: 90 },
+  2: { minDays: 91, maxDays: 243 },
+  3: { minDays: 244, maxDays: 365 },
+  4: { minDays: 366, maxDays: 730 },
+  5: { minDays: 731, maxDays: 1095 },
+  6: { minDays: 1096, maxDays: 1460 },
+  7: { minDays: 1461, maxDays: 1825 },
+};
+
+function startOfToday() {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+function ageInDays(dateOfBirth: Date | null, asOf: Date) {
+  if (!dateOfBirth) return null;
+  return Math.floor((asOf.getTime() - dateOfBirth.getTime()) / 86_400_000);
+}
+
+function formatAge(from: Date | null, to: Date | null) {
+  if (!from || !to || to < from) return "-";
+
+  let years = to.getFullYear() - from.getFullYear();
+  let months = to.getMonth() - from.getMonth();
+  let days = to.getDate() - from.getDate();
+
+  if (days < 0) {
+    months -= 1;
+    const previousMonth = new Date(to.getFullYear(), to.getMonth(), 0);
+    days += previousMonth.getDate();
+  }
+
+  if (months < 0) {
+    years -= 1;
+    months += 12;
+  }
+
+  return `${years}y ${months}m ${days}d`;
+}
+
+function jsonObject(value: Prisma.JsonValue | null | undefined) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+  return value as Record<string, unknown>;
+}
+
+function legacyProgressPercent(data: Prisma.JsonValue | null | undefined) {
+  const payload = jsonObject(data);
+  const legacy = jsonObject(payload?._legacy as Prisma.JsonValue | null | undefined);
+  const progress = legacy?.progress;
+
+  if (typeof progress === "number" && Number.isFinite(progress)) {
+    return Math.round(progress);
+  }
+
+  if (typeof progress === "string") {
+    const parsed = Number(progress);
+    if (Number.isFinite(parsed)) {
+      return Math.round(parsed);
+    }
+  }
+
+  return null;
+}
+
+function assessmentProgressPercent(data: Prisma.JsonValue | null | undefined, type: number) {
+  const legacyProgress = legacyProgressPercent(data);
+  if (legacyProgress !== null) return legacyProgress;
+
+  const config = ASSESSMENT_CONFIGS[type];
+  const payload = jsonObject(data);
+  if (!config || !payload) return null;
+
+  const criteria = config.categories
+    .filter((category) => !category.isRedFlags)
+    .flatMap((category) => category.criteria);
+
+  if (criteria.length === 0) return null;
+
+  const answered = criteria.filter((criterion) => {
+    const value = payload[criterion.key];
+    return typeof value === "number" && value !== 0;
+  }).length;
+
+  return Math.round((answered / criteria.length) * 100);
+}
+
+function isEligibleForAssessment(
+  child: { dateOfBirth: Date | null; enrollmentDate: Date | null },
+  asOf: Date,
+  minDays: number,
+  maxDays: number
+) {
+  const currentAge = ageInDays(child.dateOfBirth, asOf);
+  if (currentAge === null || currentAge < minDays) return false;
+
+  const joiningAge = ageInDays(child.dateOfBirth, child.enrollmentDate ?? asOf);
+  return joiningAge === null || joiningAge <= maxDays;
+}
+
+function reviewStatusFromRecord(
+  record: { status: AssessmentStatus; data: Prisma.JsonValue | null },
+  type: number
+): { status: AssessmentReviewStatus; progress: number | null; rank: number } {
+  if (record.status === "DRAFT") {
+    return { status: "DRAFT", progress: null, rank: 2 };
+  }
+
+  const progress = assessmentProgressPercent(record.data, type);
+  if (progress !== null && progress < 100) {
+    return { status: "INCOMPLETE", progress, rank: 1 };
+  }
+
+  return { status: "COMPLETED", progress, rank: 0 };
 }
 
 // ─────────────────────────────────────────────
@@ -133,6 +299,225 @@ export async function getAssessments(params: GetAssessmentsParams) {
   } catch (error) {
     console.error("getAssessments error:", error);
     return { assessments: [], total: 0 };
+  }
+}
+
+// ─────────────────────────────────────────────
+// getAssessmentReview — Legacy-style report parity rows
+// ─────────────────────────────────────────────
+
+export async function getAssessmentReview(params: GetAssessmentReviewParams = {}) {
+  try {
+    const { organizationId: orgId } = await requireOrg();
+    const { assessmentType, classId, branchId } = params;
+
+    if (
+      assessmentType !== undefined &&
+      !VALID_ASSESSMENT_TYPES.includes(assessmentType as (typeof VALID_ASSESSMENT_TYPES)[number])
+    ) {
+      return {
+        rows: [],
+        summary: { completed: 0, incomplete: 0, drafts: 0, missing: 0, total: 0 },
+      };
+    }
+
+    const childWhere: Prisma.ChildWhereInput = {
+      isActive: true,
+      isDraft: false,
+      branch: { organizationId: orgId },
+    };
+
+    if (branchId) {
+      childWhere.branchId = branchId;
+    }
+    if (classId) {
+      childWhere.classId = classId;
+    }
+
+    const selectedTypes = assessmentType ? [assessmentType] : assessmentTypes;
+    const today = startOfToday();
+
+    const [children, assessments, scheduleRules] = await Promise.all([
+      db.child.findMany({
+        where: childWhere,
+        select: {
+          id: true,
+          childNumber: true,
+          firstName: true,
+          lastName: true,
+          photo: true,
+          dateOfBirth: true,
+          enrollmentDate: true,
+          classId: true,
+          branchId: true,
+          class: { select: { id: true, name: true } },
+          branch: { select: { id: true, name: true } },
+        },
+        orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+      }),
+      db.assessment.findMany({
+        where: {
+          assessmentType: { in: selectedTypes },
+          child: childWhere,
+        },
+        select: {
+          id: true,
+          childId: true,
+          assessmentType: true,
+          status: true,
+          data: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+      db.assessmentScheduleRule.findMany({
+        where: {
+          organizationId: orgId,
+          assessmentType: { in: selectedTypes },
+        },
+        select: {
+          assessmentType: true,
+          minimumAgeDays: true,
+          maximumAgeDays: true,
+        },
+      }),
+    ]);
+
+    const ruleByType = new Map(
+      scheduleRules.map((rule) => [
+        rule.assessmentType,
+        {
+          minDays: Number(
+            rule.minimumAgeDays ??
+              fallbackAssessmentWindows[rule.assessmentType]?.minDays ??
+              0
+          ),
+          maxDays: Number(
+            rule.maximumAgeDays ??
+              fallbackAssessmentWindows[rule.assessmentType]?.maxDays ??
+              Number.MAX_SAFE_INTEGER
+          ),
+        },
+      ])
+    );
+
+    const recordsByTypeChild = new Map<string, typeof assessments>();
+    for (const assessment of assessments) {
+      const key = `${assessment.assessmentType}:${assessment.childId}`;
+      const current = recordsByTypeChild.get(key) ?? [];
+      current.push(assessment);
+      recordsByTypeChild.set(key, current);
+    }
+
+    const rows: AssessmentReviewRow[] = [];
+    const summary: AssessmentReviewSummary = {
+      completed: 0,
+      incomplete: 0,
+      drafts: 0,
+      missing: 0,
+      total: 0,
+    };
+
+    for (const type of selectedTypes) {
+      const window = ruleByType.get(type) ?? fallbackAssessmentWindows[type];
+
+      for (const child of children) {
+        const records = recordsByTypeChild.get(`${type}:${child.id}`) ?? [];
+        const rankedRecords = records
+          .map((record) => ({
+            record,
+            review: reviewStatusFromRecord(record, type),
+          }))
+          .sort((a, b) => {
+            if (a.review.rank !== b.review.rank) return a.review.rank - b.review.rank;
+            return b.record.createdAt.getTime() - a.record.createdAt.getTime();
+          });
+        const picked = rankedRecords[0] ?? null;
+
+        if (picked) {
+          rows.push({
+            assessmentType: type,
+            assessmentTypeName: ASSESSMENT_TYPE_NAMES[type] ?? `Type ${type}`,
+            childId: child.id,
+            assessmentId: picked.record.id,
+            childNumber: child.childNumber,
+            firstName: child.firstName,
+            lastName: child.lastName,
+            photo: child.photo,
+            branchId: child.branchId,
+            branchName: child.branch.name,
+            classId: child.classId,
+            className: child.class?.name ?? null,
+            currentAge: formatAge(child.dateOfBirth, today),
+            joiningAge: formatAge(child.dateOfBirth, child.enrollmentDate ?? today),
+            status: picked.review.status,
+            progress: picked.review.progress,
+            reportDate: picked.record.createdAt,
+            actionHref: `/assessments/${type}/${picked.record.id}`,
+          });
+
+          if (picked.review.status === "COMPLETED") summary.completed += 1;
+          if (picked.review.status === "INCOMPLETE") summary.incomplete += 1;
+          if (picked.review.status === "DRAFT") summary.drafts += 1;
+          continue;
+        }
+
+        if (!isEligibleForAssessment(child, today, window.minDays, window.maxDays)) {
+          continue;
+        }
+
+        rows.push({
+          assessmentType: type,
+          assessmentTypeName: ASSESSMENT_TYPE_NAMES[type] ?? `Type ${type}`,
+          childId: child.id,
+          assessmentId: null,
+          childNumber: child.childNumber,
+          firstName: child.firstName,
+          lastName: child.lastName,
+          photo: child.photo,
+          branchId: child.branchId,
+          branchName: child.branch.name,
+          classId: child.classId,
+          className: child.class?.name ?? null,
+          currentAge: formatAge(child.dateOfBirth, today),
+          joiningAge: formatAge(child.dateOfBirth, child.enrollmentDate ?? today),
+          status: "MISSING",
+          progress: null,
+          reportDate: null,
+          actionHref: `/assessments/${type}/new?childId=${child.id}`,
+        });
+        summary.missing += 1;
+      }
+    }
+
+    summary.total =
+      summary.completed + summary.incomplete + summary.drafts + summary.missing;
+
+    rows.sort((a, b) => {
+      const statusOrder: Record<AssessmentReviewStatus, number> = {
+        MISSING: 0,
+        INCOMPLETE: 1,
+        DRAFT: 2,
+        COMPLETED: 3,
+      };
+      if (statusOrder[a.status] !== statusOrder[b.status]) {
+        return statusOrder[a.status] - statusOrder[b.status];
+      }
+      if (a.assessmentType !== b.assessmentType) {
+        return a.assessmentType - b.assessmentType;
+      }
+      return `${a.lastName} ${a.firstName}`.localeCompare(
+        `${b.lastName} ${b.firstName}`
+      );
+    });
+
+    return { rows, summary };
+  } catch (error) {
+    console.error("getAssessmentReview error:", error);
+    return {
+      rows: [],
+      summary: { completed: 0, incomplete: 0, drafts: 0, missing: 0, total: 0 },
+    };
   }
 }
 

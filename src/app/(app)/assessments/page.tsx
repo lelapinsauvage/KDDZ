@@ -1,12 +1,13 @@
-import { getAssessments } from "@/lib/actions/assessments";
+import { getAssessmentReview, getAssessments } from "@/lib/actions/assessments";
 import { getClasses } from "@/lib/actions/classes";
 import { getBranches } from "@/lib/actions/branches";
 import { ASSESSMENT_TYPE_NAMES } from "@/lib/assessment-types";
 import AssessmentsListingClient from "./assessments-listing-client";
 
 export default async function AssessmentsPage() {
-  const [{ assessments }, classesResult, branchesResult] = await Promise.all([
+  const [{ assessments }, reviewResult, classesResult, branchesResult] = await Promise.all([
     getAssessments({ pageSize: 500 }),
+    getAssessmentReview(),
     getClasses(),
     getBranches(),
   ]);
@@ -39,9 +40,19 @@ export default async function AssessmentsPage() {
     date: a.createdAt.toISOString().split("T")[0],
   }));
 
+  const serializedReviewRows = reviewResult.rows.map((row) => ({
+    ...row,
+    childName: `${row.firstName} ${row.lastName}`,
+    classId: row.classId ?? "",
+    className: row.className ?? "Unassigned",
+    reportDate: row.reportDate?.toISOString().split("T")[0] ?? null,
+  }));
+
   return (
     <AssessmentsListingClient
       assessments={serializedAssessments}
+      reviewRows={serializedReviewRows}
+      reviewSummary={reviewResult.summary}
       classes={classes}
       branches={branches}
     />
