@@ -37,6 +37,7 @@ import {
   LayoutTemplate,
   ScrollText,
   Save,
+  Send,
   RotateCcw,
   Eye,
   EyeOff,
@@ -54,6 +55,7 @@ import {
   upsertNotificationTemplate,
   getSentNotifications,
   resendNotification,
+  sendTestNotification,
   type SentNotificationRow,
 } from "@/lib/actions/notification-templates";
 
@@ -233,7 +235,14 @@ function TemplatesTab({
 }) {
   const [templates, setTemplates] = useState(initialTemplates);
   const [isPending, startTransition] = useTransition();
+  const [isTestingPending, startTestingTransition] = useTransition();
   const [saved, setSaved] = useState(false);
+  const [testingCategory, setTestingCategory] = useState<string | null>(null);
+  const [testStatus, setTestStatus] = useState<{
+    category: string;
+    success: boolean;
+    message: string;
+  } | null>(null);
   const textareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
 
   const updateField = useCallback(
@@ -279,6 +288,26 @@ function TemplatesTab({
     });
   }
 
+  function handleSendTest(template: TemplateRow) {
+    setTestingCategory(template.category);
+    setTestStatus(null);
+    startTestingTransition(async () => {
+      const result = await sendTestNotification(template.category, {
+        enabled: template.enabled,
+        subject: template.subject,
+        body: template.body,
+      });
+      setTestingCategory(null);
+      setTestStatus({
+        category: template.category,
+        success: result.success,
+        message: result.success
+          ? "Test sent to your notifications."
+          : result.error ?? "Test send failed.",
+      });
+    });
+  }
+
   return (
     <div className="space-y-4">
       {templates.map((t) => {
@@ -303,12 +332,25 @@ function TemplatesTab({
                     {meta.label}
                   </CardTitle>
                 </div>
-                <Switch
-                  checked={t.enabled}
-                  onCheckedChange={(val) =>
-                    updateField(t.category, "enabled", val)
-                  }
-                />
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleSendTest(t)}
+                    disabled={!t.enabled || isTestingPending}
+                    className="h-8 gap-1.5"
+                  >
+                    <Send className="size-3.5" />
+                    {testingCategory === t.category ? "Sending..." : "Test"}
+                  </Button>
+                  <Switch
+                    checked={t.enabled}
+                    onCheckedChange={(val) =>
+                      updateField(t.category, "enabled", val)
+                    }
+                  />
+                </div>
               </div>
             </CardHeader>
 
@@ -361,6 +403,16 @@ function TemplatesTab({
                     </button>
                   ))}
                 </div>
+              )}
+
+              {testStatus?.category === t.category && (
+                <p
+                  className={`text-xs ${
+                    testStatus.success ? "text-emerald-600" : "text-red-600"
+                  }`}
+                >
+                  {testStatus.message}
+                </p>
               )}
             </CardContent>
           </Card>

@@ -58,7 +58,8 @@ This list is the first implementation backlog after the generated inventory/matr
    - Remaining work is exact activation/edit behavior, parent/custom notification families, and production send-job parity.
 
 8. **Actual notification sending**
-   - Modern app stores templates/logs and header notifications, but production send jobs are not complete.
+   - Modern app now has an in-app template dispatch path with variable rendering, sent-log visibility, resend, and per-template test send to the current user.
+   - Remaining work is idempotent cron/job generation per approved legacy family plus external push/email/SMS/WhatsApp providers after credential recovery or rotation.
 
 9. **Parent portal UI**
    - Parent APIs exist, but parent-facing pages are missing.

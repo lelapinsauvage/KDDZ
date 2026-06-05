@@ -22,6 +22,7 @@ const TEMPLATE_CATEGORIES = [
 ] as const;
 
 type TemplateCategory = (typeof TEMPLATE_CATEGORIES)[number];
+type TemplateVariables = Record<string, string | number | null | undefined>;
 
 const CATEGORY_DEFAULTS: Record<
   TemplateCategory,
@@ -59,6 +60,14 @@ const CATEGORY_DEFAULTS: Record<
     subject: "Control Notification",
     body: "Control check for [[child_name]] at [[branch_name]] on [[date]].",
   },
+};
+
+const TEST_VARIABLES: TemplateVariables = {
+  child_name: "Sample Child",
+  parent_name: "Sample Parent",
+  class_name: "Sample Class",
+  branch_name: "Sample Branch",
+  date: new Date().toISOString().slice(0, 10),
 };
 
 export interface TemplateRow {
@@ -146,6 +155,100 @@ export async function upsertNotificationTemplate(
   } catch (error) {
     console.error("Failed to upsert notification template:", error);
     return { success: false, error: "Failed to save template" };
+  }
+}
+
+function isTemplateCategory(category: string): category is TemplateCategory {
+  return TEMPLATE_CATEGORIES.includes(category as TemplateCategory);
+}
+
+function renderNotificationText(text: string, variables: TemplateVariables) {
+  return text.replace(
+    /(\[\[([a-zA-Z0-9_]+)\]\]|\{\{\s*([a-zA-Z0-9_]+)\s*\}\})/g,
+    (match, _token, squareKey: string | undefined, braceKey: string | undefined) => {
+      const key = squareKey ?? braceKey;
+      const value = key ? variables[key] : undefined;
+      return value === null || typeof value === "undefined" ? match : String(value);
+    },
+  );
+}
+
+async function createInAppNotifications(params: {
+  userIds: string[];
+  title: string;
+  body: string;
+  type: string;
+  category: string;
+}) {
+  if (params.userIds.length === 0) return 0;
+
+  const result = await db.notification.createMany({
+    data: params.userIds.map((userId) => ({
+      userId,
+      title: params.title,
+      body: params.body,
+      type: params.type,
+      category: params.category,
+      isRead: false,
+    })),
+  });
+
+  return result.count;
+}
+
+// ---------------------------------------------------------------------------
+// sendTestNotification
+// ---------------------------------------------------------------------------
+
+export async function sendTestNotification(
+  category: string,
+  template: { enabled: boolean; subject: string; body: string },
+): Promise<ActionResult<{ sentCount: number }>> {
+  try {
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
+
+    if (!isTemplateCategory(category)) {
+      return { success: false, error: "Unknown notification category" };
+    }
+
+    if (!template.enabled) {
+      return { success: false, error: "Template is disabled" };
+    }
+
+    const branch = ctx.branchId
+      ? await db.branch.findUnique({
+          where: { id: ctx.branchId },
+          select: { name: true },
+        })
+      : null;
+    const organization = await db.organization.findUnique({
+      where: { id: ctx.organizationId },
+      select: { name: true },
+    });
+
+    const defaults = CATEGORY_DEFAULTS[category];
+    const variables = {
+      ...TEST_VARIABLES,
+      branch_name: branch?.name ?? organization?.name ?? TEST_VARIABLES.branch_name,
+    };
+
+    const sentCount = await createInAppNotifications({
+      userIds: [ctx.userId],
+      title: renderNotificationText(template.subject || defaults.subject, variables),
+      body: renderNotificationText(template.body || defaults.body, variables),
+      type: "TEST",
+      category,
+    });
+
+    revalidatePath("/");
+    revalidatePath("/settings/notifications");
+
+    return { success: true, data: { sentCount } };
+  } catch (error) {
+    console.error("Failed to send test notification:", error);
+    return { success: false, error: "Failed to send test notification" };
   }
 }
 
