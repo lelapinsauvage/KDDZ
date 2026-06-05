@@ -1,5 +1,13 @@
 import type { EmployeeFormValues } from "@/lib/validations/employee";
 
+const DOCUMENT_TYPES = new Set([
+  "CONTRACT",
+  "MEDICAL_TEST",
+  "FIRST_AID",
+  "CERTIFICATE",
+  "ATTACHMENT",
+]);
+
 function fmtDate(d: unknown): string {
   if (!d) return "";
   try {
@@ -9,9 +17,16 @@ function fmtDate(d: unknown): string {
   }
 }
 
+function documentType(value: unknown): EmployeeFormValues["documents"][number]["type"] {
+  return typeof value === "string" && DOCUMENT_TYPES.has(value)
+    ? (value as EmployeeFormValues["documents"][number]["type"])
+    : "ATTACHMENT";
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function mapEmployeeToForm(emp: any): EmployeeFormValues & { id: string } {
   const address = emp.addresses?.[0];
+  const employeeDocuments = emp.documents ?? emp.attachments ?? [];
 
   return {
     id: emp.id,
@@ -69,9 +84,10 @@ export function mapEmployeeToForm(emp: any): EmployeeFormValues & { id: string }
       description: e.description ?? "",
     })),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    documents: (emp.documents ?? []).map((d: any) => ({
-      type: d.type,
-      title: d.title ?? "",
+    documents: employeeDocuments.map((d: any) => ({
+      id: d.id,
+      type: documentType(d.type),
+      title: d.title ?? d.filename ?? "",
       date: fmtDate(d.date),
       expiryDate: fmtDate(d.expiryDate),
       fileUrl: d.fileUrl ?? "",

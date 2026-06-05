@@ -23,7 +23,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - Payment receipt upload is now wired through the accounting quick-payment and child-accounting payment dialogs, storing browser-uploaded receipt URLs on `Payment.receiptFileUrl`.
    - Absence report attachments now upload through the presign route, preserve existing attachments on edit, and update `AbsenceAttachment` rows for additions/removals.
    - Daily report attachments now upload through the presign route, preserve existing attachments on edit, and update `DailyReportAttachment` rows for additions/removals.
-   - Employee document rows now upload through the presign route before save and persist URLs through the existing teacher/nurse/doctor document actions.
+   - Employee document rows now upload through the presign route before save and persist URLs through the existing teacher/nurse/doctor document actions; manager document rows now persist through `ManagerAttachment.fileUrl` and display on manager detail pages.
    - Call log and accident form dialogs now upload through the `form-attachment` scope and create `FormAttachment` rows.
    - Child enrollment/edit forms now upload profile photos and child documents, storing URLs on `Child.photo` and `ChildAttachment.fileUrl`.
    - Class add/edit dialogs now upload class images before save and persist URLs on `Class.imageUrl`.

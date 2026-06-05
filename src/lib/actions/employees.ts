@@ -45,6 +45,7 @@ interface ExperienceData {
 }
 
 interface DocumentData {
+  id?: string;
   type: "CONTRACT" | "MEDICAL_TEST" | "FIRST_AID" | "CERTIFICATE" | "ATTACHMENT";
   title?: string;
   date?: string;
@@ -119,6 +120,69 @@ function getDelegate(type: EmployeeType) {
 function toDate(value: Date | string | null | undefined): Date | undefined {
   if (!value) return undefined;
   return typeof value === "string" ? new Date(value) : value;
+}
+
+function documentsWithContent(documents: DocumentData[] | undefined) {
+  return (documents ?? []).filter((document) => document.title || document.fileUrl);
+}
+
+function employeeDocumentCreateData(document: DocumentData) {
+  return {
+    type: document.type,
+    title: document.title ?? null,
+    fileUrl: document.fileUrl || "pending",
+    date: toDate(document.date) ?? null,
+    expiryDate: toDate(document.expiryDate) ?? null,
+  };
+}
+
+function managerAttachmentCreateData(document: DocumentData) {
+  const title = document.title?.trim() || null;
+  const fileUrl = document.fileUrl?.trim() || "pending";
+  return {
+    title,
+    filename: title || fileUrl,
+    fileUrl,
+    type: document.type,
+    expiryDate: toDate(document.expiryDate) ?? null,
+    isActive: true,
+  };
+}
+
+async function syncManagerAttachments(
+  managerId: string,
+  documents: DocumentData[]
+) {
+  const submittedDocuments = documentsWithContent(documents);
+  const submittedIds = submittedDocuments
+    .map((document) => document.id)
+    .filter((id): id is string => Boolean(id));
+
+  await db.managerAttachment.updateMany({
+    where: {
+      managerId,
+      isActive: true,
+      ...(submittedIds.length ? { id: { notIn: submittedIds } } : {}),
+    },
+    data: { isActive: false },
+  });
+
+  for (const document of submittedDocuments) {
+    const data = managerAttachmentCreateData(document);
+    if (document.id) {
+      await db.managerAttachment.updateMany({
+        where: { id: document.id, managerId },
+        data,
+      });
+    } else {
+      await db.managerAttachment.create({
+        data: {
+          managerId,
+          ...data,
+        },
+      });
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -202,11 +266,14 @@ export async function getEmployee(
     const { organizationId: orgId } = await requireOrg();
     const { model } = getDelegate(type);
 
-    // Manager model has fewer relations — no languages, experiences, documents
+    // Manager model has fewer relations; manager document uploads map to attachments.
     const include: Record<string, unknown> = {
       branch: true,
       addresses: true,
-      attachments: true,
+      attachments:
+        type === "manager"
+          ? { where: { isActive: true }, orderBy: { createdAt: "desc" } }
+          : true,
     };
     if (type !== "manager") {
       include.languages = true;
@@ -333,7 +400,8 @@ export async function createEmployee(
       }
     }
 
-    // Nested languages, experiences, documents — only on Teacher/Nurse/Doctor
+    // Nested languages and experiences only exist on Teacher/Nurse/Doctor.
+    // Manager document uploads map to ManagerAttachment to match the legacy app.
     if (type !== "manager") {
       if (data.languages?.length) {
         createData.languages = {
@@ -360,16 +428,18 @@ export async function createEmployee(
       }
 
       if (data.documents?.length) {
-        createData.documents = {
-          create: data.documents
-            .filter((d) => d.title || d.fileUrl)
-            .map((d) => ({
-              type: d.type,
-              title: d.title ?? null,
-              fileUrl: d.fileUrl || "pending",
-              date: toDate(d.date) ?? null,
-              expiryDate: toDate(d.expiryDate) ?? null,
-            })),
+        const documents = documentsWithContent(data.documents);
+        if (documents.length) {
+          createData.documents = {
+            create: documents.map(employeeDocumentCreateData),
+          };
+        }
+      }
+    } else if (data.documents?.length) {
+      const documents = documentsWithContent(data.documents);
+      if (documents.length) {
+        createData.attachments = {
+          create: documents.map(managerAttachmentCreateData),
         };
       }
     }
@@ -410,6 +480,12 @@ export async function updateEmployee(
     });
     if (!existing || existing.branch.organizationId !== orgId) {
       return { success: false, error: `${type} not found` };
+    }
+    if (
+      data.branchId !== undefined &&
+      !(await verifyBranchAccess(data.branchId, orgId))
+    ) {
+      return { success: false, error: "Branch does not belong to your organization" };
     }
 
     // Build update payload — only include provided fields
@@ -494,7 +570,8 @@ export async function updateEmployee(
       }
     }
 
-    // Languages, experiences, documents — only on Teacher/Nurse/Doctor
+    // Languages and experiences only exist on Teacher/Nurse/Doctor.
+    // Manager document uploads are synced separately into ManagerAttachment.
     if (type !== "manager") {
       if (data.languages !== undefined) {
         updateData.languages = {
@@ -531,19 +608,12 @@ export async function updateEmployee(
       }
 
       if (data.documents !== undefined) {
+        const documents = documentsWithContent(data.documents);
         updateData.documents = {
           deleteMany: {},
-          ...(data.documents.length
+          ...(documents.length
             ? {
-                create: data.documents
-                  .filter((d) => d.title || d.fileUrl)
-                  .map((d) => ({
-                    type: d.type,
-                    title: d.title ?? null,
-                    fileUrl: d.fileUrl || "pending",
-                    date: toDate(d.date) ?? null,
-                    expiryDate: toDate(d.expiryDate) ?? null,
-                  })),
+                create: documents.map(employeeDocumentCreateData),
               }
             : {}),
         };
@@ -555,6 +625,10 @@ export async function updateEmployee(
       where: { id },
       data: updateData,
     });
+
+    if (type === "manager" && data.documents !== undefined) {
+      await syncManagerAttachments(id, data.documents);
+    }
 
     revalidatePath(path);
 
