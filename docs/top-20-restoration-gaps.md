@@ -63,6 +63,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - Assessment alarm generation now exposes the same manual/cron-safe path through `/alarms/assessments` and `/api/cron/assessment-alarms`.
    - Medicine alarm generation now restores the legacy 10-minute family as a cron-safe/manual path: it scans migrated `MedicalFormEntry` medication rows from submitted general medical forms, matches the current `HH:mm`, skips expired medication, creates idempotent `Alarm` rows, sends staff in-app notifications from the Medicine template, and exposes `/api/cron/medicine-alarms`.
    - Insurance alarm generation now restores the legacy expiry-window family as a cron-safe/manual path: it scans migrated and modern general medical-form insurance fields, creates idempotent `Alarm` rows, sends staff in-app notifications from the Insurance template, and exposes `/api/cron/insurance-alarms`.
+   - Vaccination alarm generation now restores the legacy DOB-offset reminder family as a cron-safe/manual path: it computes 1/3/7-day reminders from the legacy vaccine schedule, creates idempotent `Alarm` rows, sends staff in-app notifications from the Vaccinations template, and exposes `/api/cron/vaccination-alarms`.
    - Remaining work is idempotent cron/job generation for the other approved legacy families, hosted schedule configuration after production crontab confirmation, and external push/email/SMS/WhatsApp providers after credential recovery or rotation.
 
 9. **Parent portal UI**

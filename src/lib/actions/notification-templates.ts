@@ -50,7 +50,7 @@ const CATEGORY_DEFAULTS: Record<
   },
   VACCINATIONS: {
     subject: "Vaccination Due",
-    body: "Vaccination for [[child_name]] is due on [[date]]. Please remind [[parent_name]].",
+    body: "Vaccination [[vaccination_name]] for [[child_name]] is due on [[date]]. Please remind [[parent_name]].",
   },
   EXPIRATION: {
     subject: "Document Expiring",
@@ -73,6 +73,7 @@ const TEST_VARIABLES: TemplateVariables = {
   expiry_date: new Date().toISOString().slice(0, 10),
   days_until: 7,
   insurance_type: "Sample Insurance",
+  vaccination_name: "Sample Vaccine",
 };
 
 export interface TemplateRow {

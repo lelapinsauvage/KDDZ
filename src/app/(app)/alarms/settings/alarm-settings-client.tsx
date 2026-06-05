@@ -70,7 +70,7 @@ const ALARM_CONFIGS: AlarmConfig[] = [
     iconColor: "text-blue-500",
     settingKeyEnabled: "alarm.vaccination.enabled",
     settingKeyThreshold: "alarm.vaccination.threshold",
-    defaultThreshold: "14",
+    defaultThreshold: "7",
     thresholdLabel: "Days before due date to notify",
   },
   {

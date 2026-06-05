@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { type ColumnDef } from "@tanstack/react-table";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
@@ -12,9 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Syringe, ExternalLink } from "lucide-react";
+import { ExternalLink, RefreshCw, Syringe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { generateVaccinationAlarms } from "@/lib/actions/alarms";
 
 interface VaccinationAlarm {
   id: string;
@@ -22,9 +24,11 @@ interface VaccinationAlarm {
   childName: string;
   vaccine: string;
   dueDate: string;
-  daysOverdue: number;
+  daysUntilDue: number;
+  branchId: string;
   branch: string;
   className: string;
+  message: string;
 }
 
 interface VaccinationsClientProps {
@@ -33,12 +37,36 @@ interface VaccinationsClientProps {
 }
 
 export function VaccinationsClient({ vaccinations, branches }: VaccinationsClientProps) {
+  const router = useRouter();
   const [branchFilter, setBranchFilter] = useState("ALL");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationStatus, setGenerationStatus] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     if (branchFilter === "ALL") return vaccinations;
-    return vaccinations.filter((v) => v.branch === branchFilter);
+    return vaccinations.filter((v) => v.branchId === branchFilter);
   }, [branchFilter, vaccinations]);
+
+  async function handleGenerate() {
+    setIsGenerating(true);
+    setGenerationStatus(null);
+    const result = await generateVaccinationAlarms(
+      branchFilter === "ALL" ? undefined : branchFilter,
+    );
+    setIsGenerating(false);
+
+    if (result.success && result.data) {
+      const { remindersMatched, alarmsCreated, notificationsCreated, skippedExisting } =
+        result.data;
+      setGenerationStatus(
+        `Matched ${remindersMatched}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"} and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing.`,
+      );
+      router.refresh();
+      return;
+    }
+
+    setGenerationStatus(result.error ?? "Vaccination generation failed.");
+  }
 
   const columns: ColumnDef<VaccinationAlarm>[] = useMemo(
     () => [
@@ -53,6 +81,7 @@ export function VaccinationsClient({ vaccinations, branches }: VaccinationsClien
         ),
       },
       { accessorKey: "vaccine", header: "Vaccine" },
+      { accessorKey: "message", header: "Reminder" },
       {
         accessorKey: "dueDate",
         header: "Due Date",
@@ -64,13 +93,13 @@ export function VaccinationsClient({ vaccinations, branches }: VaccinationsClien
           }),
       },
       {
-        accessorKey: "daysOverdue",
+        accessorKey: "daysUntilDue",
         header: "Status",
         cell: ({ row }) => {
-          const days = row.original.daysOverdue;
+          const days = row.original.daysUntilDue;
           return (
-            <Badge className="bg-red-100 text-red-700">
-              {days} {days === 1 ? "day" : "days"} overdue
+            <Badge className="bg-amber-100 text-amber-700">
+              {days === 1 ? "Tomorrow" : `In ${days} days`}
             </Badge>
           );
         },
@@ -110,18 +139,31 @@ export function VaccinationsClient({ vaccinations, branches }: VaccinationsClien
             <SelectContent>
               <SelectItem value="ALL">All Branches</SelectItem>
               {branches.map((b) => (
-                <SelectItem key={b.id} value={b.name}>
+                <SelectItem key={b.id} value={b.id}>
                   {b.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleGenerate}
+            disabled={isGenerating}
+            className="gap-2"
+          >
+            <RefreshCw className={`size-4 ${isGenerating ? "animate-spin" : ""}`} />
+            {isGenerating ? "Generating..." : "Generate"}
+          </Button>
+          {generationStatus && (
+            <span className="text-sm text-muted-foreground">{generationStatus}</span>
+          )}
         </div>
         {filtered.length > 0 ? (
           <DataTable columns={columns} data={filtered} searchKey="childName" searchPlaceholder="Search children..." />
         ) : (
           <div className="rounded-lg border bg-card p-8 text-center text-sm text-muted-foreground">
-            No overdue vaccinations found.
+            No vaccination reminders found.
           </div>
         )}
       </div>
