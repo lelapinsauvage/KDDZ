@@ -7,6 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import {
+  StaffAttachmentsSection,
+  type StaffAttachment,
+} from "@/components/employees/staff-attachments-section";
+import {
   Table,
   TableBody,
   TableCell,
@@ -48,6 +52,7 @@ interface DoctorData {
   isActive: boolean;
   branch: { id: string; name: string };
   addresses: Address[];
+  attachments: StaffAttachment[];
 }
 
 interface DoctorDetailClientProps {
@@ -119,6 +124,7 @@ export function DoctorDetailClient({ doctor, recentVisits }: DoctorDetailClientP
         <Tabs defaultValue="info">
           <TabsList>
             <TabsTrigger value="info">Information</TabsTrigger>
+            <TabsTrigger value="attachments">Attachments</TabsTrigger>
             <TabsTrigger value="visits">Recent Visits</TabsTrigger>
           </TabsList>
 
@@ -182,6 +188,10 @@ export function DoctorDetailClient({ doctor, recentVisits }: DoctorDetailClientP
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="attachments">
+            <StaffAttachmentsSection attachments={doctor.attachments} />
           </TabsContent>
 
           <TabsContent value="visits">

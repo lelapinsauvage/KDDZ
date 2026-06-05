@@ -7,6 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import {
+  StaffAttachmentsSection,
+  type StaffAttachment,
+} from "@/components/employees/staff-attachments-section";
+import {
   Table,
   TableBody,
   TableCell,
@@ -47,6 +51,7 @@ interface NurseData {
   isActive: boolean;
   branch: { id: string; name: string };
   addresses: Address[];
+  attachments: StaffAttachment[];
 }
 
 interface NurseDetailClientProps {
@@ -123,6 +128,7 @@ export function NurseDetailClient({ nurse, recentActivities }: NurseDetailClient
         <Tabs defaultValue="info">
           <TabsList>
             <TabsTrigger value="info">Information</TabsTrigger>
+            <TabsTrigger value="attachments">Attachments</TabsTrigger>
             <TabsTrigger value="activity">Recent Activity</TabsTrigger>
           </TabsList>
 
@@ -185,6 +191,10 @@ export function NurseDetailClient({ nurse, recentActivities }: NurseDetailClient
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="attachments">
+            <StaffAttachmentsSection attachments={nurse.attachments} />
           </TabsContent>
 
           <TabsContent value="activity">

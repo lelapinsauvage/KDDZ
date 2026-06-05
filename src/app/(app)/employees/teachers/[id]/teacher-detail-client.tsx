@@ -7,7 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Mail, Phone, MapPin, Calendar, GraduationCap, Building2, Pencil } from "lucide-react";
+import { Mail, Phone, Calendar, GraduationCap, Building2, Pencil } from "lucide-react";
+import {
+  StaffAttachmentsSection,
+  type StaffAttachment,
+} from "@/components/employees/staff-attachments-section";
 import { format } from "date-fns";
 
 interface Address {
@@ -15,13 +19,6 @@ interface Address {
   street: string | null;
   city: string | null;
   region: string | null;
-}
-
-interface Attachment {
-  id: string;
-  filename: string;
-  fileUrl: string;
-  type: string | null;
 }
 
 interface TeacherData {
@@ -39,7 +36,7 @@ interface TeacherData {
   isActive: boolean;
   branch: { id: string; name: string };
   addresses: Address[];
-  attachments: Attachment[];
+  attachments: StaffAttachment[];
 }
 
 interface TeacherDetailClientProps {
@@ -264,42 +261,7 @@ export function TeacherDetailClient({ teacher }: TeacherDetailClientProps) {
 
           {/* Attachments Tab */}
           <TabsContent value="attachments">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Attachments</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {teacher.attachments.length > 0 ? (
-                  <ul className="space-y-2">
-                    {teacher.attachments.map((att) => (
-                      <li key={att.id} className="flex items-center gap-2 text-sm">
-                        <span className="font-medium">{att.filename}</span>
-                        {att.type && <Badge variant="outline" className="text-[10px]">{att.type}</Badge>}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="size-12 rounded-full bg-muted/50 flex items-center justify-center mb-3">
-                      <MapPin className="size-5 text-muted-foreground" />
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-1">
-                      No attachments uploaded yet
-                    </p>
-                    <p className="text-xs text-[#a0a8b4] mb-4">
-                      Upload documents such as CV, certificates, or ID copies.
-                    </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="border-primary text-primary hover:bg-primary/5"
-                    >
-                      Upload File
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <StaffAttachmentsSection attachments={teacher.attachments} />
           </TabsContent>
         </Tabs>
       </div>

@@ -118,6 +118,13 @@ function getDelegate(type: EmployeeType) {
   }
 }
 
+function attachmentIncludeForEmployee(type: EmployeeType) {
+  if (type === "doctor" || type === "manager") {
+    return { where: { isActive: true }, orderBy: { createdAt: "desc" } };
+  }
+  return { orderBy: { createdAt: "desc" } };
+}
+
 function toDate(value: Date | string | null | undefined): Date | undefined {
   if (!value) return undefined;
   return typeof value === "string" ? new Date(value) : value;
@@ -271,10 +278,7 @@ export async function getEmployee(
     const include: Record<string, unknown> = {
       branch: true,
       addresses: true,
-      attachments:
-        type === "manager"
-          ? { where: { isActive: true }, orderBy: { createdAt: "desc" } }
-          : true,
+      attachments: attachmentIncludeForEmployee(type),
     };
     if (type !== "manager") {
       include.languages = true;

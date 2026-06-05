@@ -9,13 +9,15 @@ import { Button } from "@/components/ui/button";
 import {
   BarChart3,
   Building2,
-  ExternalLink,
-  FileText,
   Mail,
   MapPin,
   Pencil,
   Phone,
 } from "lucide-react";
+import {
+  StaffAttachmentsSection,
+  type StaffAttachment,
+} from "@/components/employees/staff-attachments-section";
 import { format } from "date-fns";
 
 interface Address {
@@ -28,15 +30,6 @@ interface Address {
 interface BranchStat {
   label: string;
   value: string;
-}
-
-interface Attachment {
-  id: string;
-  title: string | null;
-  filename: string;
-  fileUrl: string;
-  type: string | null;
-  expiryDate: string | null;
 }
 
 interface ManagerData {
@@ -54,7 +47,7 @@ interface ManagerData {
   isActive: boolean;
   branch: { id: string; name: string };
   addresses: Address[];
-  attachments: Attachment[];
+  attachments: StaffAttachment[];
 }
 
 interface ManagerDetailClientProps {
@@ -189,57 +182,7 @@ export function ManagerDetailClient({ manager, branchStats }: ManagerDetailClien
           </TabsContent>
 
           <TabsContent value="attachments">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <FileText className="h-4 w-4" /> Attachments
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {manager.attachments.length > 0 ? (
-                  <div className="divide-y rounded-md border">
-                    {manager.attachments.map((attachment) => (
-                      <div
-                        key={attachment.id}
-                        className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between"
-                      >
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <p className="truncate text-sm font-medium">
-                              {attachment.title || attachment.filename}
-                            </p>
-                            {attachment.type && (
-                              <Badge variant="outline" className="text-[10px]">
-                                {attachment.type}
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="mt-1 truncate text-xs text-muted-foreground">
-                            {attachment.filename}
-                            {attachment.expiryDate
-                              ? ` · Expires ${format(new Date(attachment.expiryDate), "MMM d, yyyy")}`
-                              : ""}
-                          </p>
-                        </div>
-                        <Button asChild variant="outline" size="sm" className="shrink-0">
-                          <a
-                            href={attachment.fileUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            <ExternalLink className="h-4 w-4" /> Open
-                          </a>
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="py-8 text-center text-sm text-muted-foreground">
-                    No attachments uploaded yet.
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <StaffAttachmentsSection attachments={manager.attachments} />
           </TabsContent>
 
           <TabsContent value="branch">
