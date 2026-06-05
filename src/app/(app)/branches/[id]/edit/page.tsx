@@ -28,6 +28,7 @@ export default async function BranchEditPage({ params }: Props) {
         phone: branch.phone ?? "",
         telephone: branch.telephone ?? "",
         email: branch.email ?? "",
+        imageUrl: branch.imageUrl ?? "",
         themeColor: branch.themeColor ?? "#1caf9a",
         isActive: branch.isActive ?? true,
       }}

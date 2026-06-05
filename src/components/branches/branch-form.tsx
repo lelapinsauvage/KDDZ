@@ -1,14 +1,16 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import {
   branchFormSchema,
   type BranchFormValues,
 } from "@/lib/validations/branch";
 import { createBranch, updateBranch } from "@/lib/actions/branches";
+import { uploadFileWithPresign } from "@/lib/uploads/client-upload";
 import { PageHeader } from "@/components/layout/page-header";
 import { FormSection } from "@/components/ui/form-section";
 import { Button } from "@/components/ui/button";
@@ -21,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Save, ArrowLeft, Building2 } from "lucide-react";
+import { Save, ArrowLeft, Building2, ImageIcon, X } from "lucide-react";
 import { toast } from "sonner";
 
 // ---------------------------------------------------------------------------
@@ -53,8 +55,12 @@ const COLOR_PRESETS = [
 
 export function BranchForm({ branch, hideHeader = false }: BranchFormProps) {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [isImageDragOver, setIsImageDragOver] = useState(false);
   const isEditing = !!branch;
 
   const form = useForm<BranchFormValues>({
@@ -66,6 +72,7 @@ export function BranchForm({ branch, hideHeader = false }: BranchFormProps) {
       phone: "",
       telephone: "",
       email: "",
+      imageUrl: "",
       themeColor: "#1caf9a",
       isActive: true,
     },
@@ -80,6 +87,57 @@ export function BranchForm({ branch, hideHeader = false }: BranchFormProps) {
   } = form;
 
   const selectedColor = watch("themeColor") || "#1caf9a";
+  const storedImageUrl = watch("imageUrl") || "";
+  const displayImageUrl = imagePreviewUrl || storedImageUrl;
+
+  function clearImageSelection() {
+    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    setImageFile(null);
+    setImagePreviewUrl(null);
+  }
+
+  function handleImageFile(file: File) {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Select an image file");
+      return;
+    }
+    clearImageSelection();
+    setImageFile(file);
+    setImagePreviewUrl(URL.createObjectURL(file));
+  }
+
+  function handleClearImage() {
+    clearImageSelection();
+    setValue("imageUrl", "", { shouldDirty: true });
+  }
+
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    };
+  }, [imagePreviewUrl]);
+
+  async function uploadSelectedBranchImage(branchId: string) {
+    if (!imageFile) return undefined;
+
+    try {
+      const uploaded = await uploadFileWithPresign({
+        branchId,
+        scope: "branch",
+        ownerId: branchId,
+        file: imageFile,
+      });
+      setValue("imageUrl", uploaded.publicUrl, { shouldDirty: true });
+      return uploaded.publicUrl;
+    } catch (uploadError) {
+      toast.error(
+        uploadError instanceof Error
+          ? uploadError.message
+          : "Failed to upload branch image",
+      );
+      return undefined;
+    }
+  }
 
   function onSubmit(data: BranchFormValues) {
     setError(null);
@@ -91,22 +149,74 @@ export function BranchForm({ branch, hideHeader = false }: BranchFormProps) {
         phone: data.phone || null,
         telephone: data.telephone || null,
         email: data.email || null,
+        imageUrl: data.imageUrl?.trim() || null,
         themeColor: data.themeColor || "#1caf9a",
         isActive: data.isActive,
       };
 
-      const result = isEditing
-        ? await updateBranch(branch!.id, payload)
-        : await createBranch(payload);
+      if (isEditing) {
+        let imageUrl = payload.imageUrl;
+        if (imageFile) {
+          const uploadedImageUrl = await uploadSelectedBranchImage(branch!.id);
+          if (!uploadedImageUrl) return;
+          imageUrl = uploadedImageUrl;
+        }
 
+        const result = await updateBranch(branch!.id, {
+          ...payload,
+          imageUrl,
+        });
+
+        if (!result.success) {
+          setError(result.error ?? "Something went wrong");
+          return;
+        }
+
+        clearImageSelection();
+        toast.success("Branch updated successfully");
+        router.push("/branches");
+        router.refresh();
+        return;
+      }
+
+      const result = await createBranch(payload);
       if (!result.success) {
         setError(result.error ?? "Something went wrong");
         return;
       }
 
-      toast.success(
-        isEditing ? "Branch updated successfully" : "Branch created successfully",
-      );
+      if (imageFile) {
+        const createdBranch = result.data as { id?: string } | undefined;
+        if (!createdBranch?.id) {
+          toast.error("Branch created, but image upload could not start");
+          router.push("/branches");
+          router.refresh();
+          return;
+        }
+
+        const uploadedImageUrl = await uploadSelectedBranchImage(createdBranch.id);
+        if (!uploadedImageUrl) {
+          toast.error("Branch created, but image upload failed");
+          router.push(`/branches/${createdBranch.id}/edit`);
+          router.refresh();
+          return;
+        }
+
+        const imageResult = await updateBranch(createdBranch.id, {
+          imageUrl: uploadedImageUrl,
+        });
+        if (!imageResult.success) {
+          toast.error(
+            imageResult.error ?? "Branch created, but image URL was not saved",
+          );
+          router.push(`/branches/${createdBranch.id}/edit`);
+          router.refresh();
+          return;
+        }
+      }
+
+      clearImageSelection();
+      toast.success("Branch created successfully");
       router.push("/branches");
       router.refresh();
     });
@@ -130,15 +240,87 @@ export function BranchForm({ branch, hideHeader = false }: BranchFormProps) {
           {/* ── Left sidebar ── */}
           <div className="space-y-4">
             <div className="rounded-sm border bg-card p-6 text-center shadow-sm">
+              <input type="hidden" {...register("imageUrl")} />
               <div
-                className="mx-auto flex size-28 items-center justify-center rounded-sm"
-                style={{ backgroundColor: `${selectedColor}20` }}
+                role="button"
+                tabIndex={0}
+                className={`group relative mx-auto flex size-32 cursor-pointer items-center justify-center overflow-hidden rounded-sm border-2 border-dashed transition-colors ${
+                  isImageDragOver
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:border-primary/40"
+                }`}
+                style={{
+                  backgroundColor: displayImageUrl
+                    ? undefined
+                    : `${selectedColor}20`,
+                }}
+                onClick={() => fileInputRef.current?.click()}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    fileInputRef.current?.click();
+                  }
+                }}
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  setIsImageDragOver(true);
+                }}
+                onDragLeave={() => setIsImageDragOver(false)}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  setIsImageDragOver(false);
+                  const file = event.dataTransfer.files[0];
+                  if (file) handleImageFile(file);
+                }}
               >
-                <Building2
-                  className="size-14"
-                  style={{ color: selectedColor }}
+                {displayImageUrl ? (
+                  <>
+                    <Image
+                      src={displayImageUrl}
+                      alt={watch("name") || "Branch"}
+                      fill
+                      sizes="128px"
+                      className="object-cover"
+                      unoptimized
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-2 top-2 flex size-7 items-center justify-center rounded-full bg-black/65 text-white opacity-0 transition-opacity hover:bg-black/80 group-hover:opacity-100 focus:opacity-100"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleClearImage();
+                      }}
+                      aria-label="Remove branch image"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center gap-2">
+                    <Building2
+                      className="size-12"
+                      style={{ color: selectedColor }}
+                    />
+                    <ImageIcon className="size-5 text-muted-foreground" />
+                  </div>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) handleImageFile(file);
+                    event.target.value = "";
+                  }}
                 />
               </div>
+              {imageFile && (
+                <p className="mx-auto mt-2 max-w-48 truncate text-xs text-muted-foreground">
+                  Selected: {imageFile.name}
+                </p>
+              )}
               <p className="mt-4 text-lg font-semibold text-foreground">
                 {watch("name") || "New Branch"}
               </p>

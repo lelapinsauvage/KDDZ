@@ -26,6 +26,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - Call log and accident form dialogs now upload through the `form-attachment` scope and create `FormAttachment` rows.
    - Child enrollment/edit forms now upload profile photos and child documents, storing URLs on `Child.photo` and `ChildAttachment.fileUrl`.
    - Class add/edit dialogs now upload class images before save and persist URLs on `Class.imageUrl`.
+   - Branch add/edit forms now upload branch images through the `branch` scope and persist URLs on `Branch.imageUrl`; new branches are created first so the upload can pass branch-level access checks, then immediately updated with the uploaded image URL.
    - Remaining work is child-history JSON snapshot URL patching, upload attach/update actions for the remaining non-compliance surfaces, local multipart upload support if needed, and replacement of the remaining upload placeholders.
 
 4. **Full data reconciliation**
