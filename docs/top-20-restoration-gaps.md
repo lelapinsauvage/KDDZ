@@ -76,7 +76,8 @@ This list is the first implementation backlog after the generated inventory/matr
    - Remaining work is exact legacy parity for fields that no longer exist one-to-one in the modern schema: daily report numeric progress, call draft status, and legacy `db_curr` year switching for medical visits.
 
 14. **Accounting monthly matrix**
-   - Modern accounting/payment flows exist, but the old `accounting.php` month/category matrix must be restored or explicitly approved as changed.
+   - `/accounting` now restores the legacy `accounting.php` Oct-Sep school-year matrix with category tabs, child number/first/last/branch/class columns, active-child zero rows, branch/class/search/year filters, month totals, and payment-dialog prefill from matrix cells.
+   - Remaining work is exact legacy parity for payment detail/update/delete/history modals and the invoice/receipt print field audit tracked below.
 
 15. **Invoice/receipt parity**
    - Runtime payment receipt upload now stores files on `Payment.receiptFileUrl`; modern invoice route exists, but legacy `invo.php` print details still need exact field/layout audit.

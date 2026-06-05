@@ -10,6 +10,7 @@ export const quickPaymentSchema = z.object({
   date: z.string().optional(),
   coverageFromMonth: z.number().min(1).max(12).optional(),
   coverageToMonth: z.number().min(1).max(12).optional(),
+  coverageYear: z.number().int().min(1900).max(2200).optional(),
   receiptFilename: z.string().max(240).optional(),
   receiptFileUrl: z.string().max(2048).optional(),
 });

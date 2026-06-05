@@ -565,9 +565,11 @@ export async function getChildrenForPayment(): Promise<ActionResult> {
       where: { isActive: true, isDraft: false, branch: { organizationId: orgId } },
       select: {
         id: true,
+        childNumber: true,
         firstName: true,
         lastName: true,
         branchId: true,
+        classId: true,
         branch: { select: { name: true } },
         class: { select: { name: true } },
       },
@@ -609,6 +611,7 @@ export async function recordPayment(
       date,
       coverageFromMonth,
       coverageToMonth,
+      coverageYear,
       receiptFilename,
       receiptFileUrl,
     } = parsed.data;
@@ -626,7 +629,7 @@ export async function recordPayment(
       return { success: false, error: "Child not found" };
     }
 
-    const currentYear = new Date().getFullYear();
+    const coverageStartYear = coverageYear ?? getCurrentAcademicStartYear();
     const payment = await db.payment.create({
       data: {
         childId,
@@ -634,10 +637,10 @@ export async function recordPayment(
         currency: currency ?? "USD",
         date: date ? new Date(date) : new Date(),
         dateFrom: coverageFromMonth
-          ? new Date(currentYear, coverageFromMonth - 1, 1)
+          ? new Date(getCoverageMonthYear(coverageFromMonth, coverageStartYear), coverageFromMonth - 1, 1)
           : null,
         dateTo: coverageToMonth
-          ? new Date(currentYear, coverageToMonth, 0)
+          ? new Date(getCoverageMonthYear(coverageToMonth, coverageStartYear), coverageToMonth, 0)
           : null,
         month: coverageFromMonth ?? null,
         method,
@@ -664,4 +667,13 @@ export async function recordPayment(
     console.error("Failed to record payment:", error);
     return { success: false, error: "Failed to record payment" };
   }
+}
+
+function getCurrentAcademicStartYear() {
+  const now = new Date();
+  return now.getMonth() + 1 >= 10 ? now.getFullYear() : now.getFullYear() - 1;
+}
+
+function getCoverageMonthYear(month: number, academicStartYear: number) {
+  return month >= 10 ? academicStartYear : academicStartYear + 1;
 }

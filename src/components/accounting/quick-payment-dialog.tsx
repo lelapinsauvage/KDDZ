@@ -63,6 +63,7 @@ import {
 
 interface ChildOption {
   id: string;
+  childNumber?: string | null;
   firstName: string;
   lastName: string;
   branchId: string;
@@ -77,6 +78,7 @@ interface QuickPaymentDialogProps {
   preselectedChildId?: string;
   preselectedCategory?: string;
   preselectedMonth?: number;
+  preselectedYear?: number;
 }
 
 // ── Constants ──
@@ -98,6 +100,9 @@ const categories = [
 ];
 
 const monthOptions = [
+  { value: 10, label: "October" },
+  { value: 11, label: "November" },
+  { value: 12, label: "December" },
   { value: 1, label: "January" },
   { value: 2, label: "February" },
   { value: 3, label: "March" },
@@ -107,13 +112,15 @@ const monthOptions = [
   { value: 7, label: "July" },
   { value: 8, label: "August" },
   { value: 9, label: "September" },
-  { value: 10, label: "October" },
-  { value: 11, label: "November" },
-  { value: 12, label: "December" },
 ];
 
 function toISODate(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function getCurrentAcademicStartYear() {
+  const now = new Date();
+  return now.getMonth() + 1 >= 10 ? now.getFullYear() : now.getFullYear() - 1;
 }
 
 // ── Component ──
@@ -125,6 +132,7 @@ export function QuickPaymentDialog({
   preselectedChildId,
   preselectedCategory,
   preselectedMonth,
+  preselectedYear,
 }: QuickPaymentDialogProps) {
   const [isPending, startTransition] = useTransition();
   const [comboboxOpen, setComboboxOpen] = useState(false);
@@ -152,6 +160,7 @@ export function QuickPaymentDialog({
       date: toISODate(new Date()),
       coverageFromMonth: preselectedMonth,
       coverageToMonth: preselectedMonth,
+      coverageYear: preselectedYear ?? getCurrentAcademicStartYear(),
     },
   });
 
@@ -178,10 +187,11 @@ export function QuickPaymentDialog({
         date: toISODate(new Date()),
         coverageFromMonth: preselectedMonth,
         coverageToMonth: preselectedMonth,
+        coverageYear: preselectedYear ?? getCurrentAcademicStartYear(),
       });
       setAttachment(null);
     }
-  }, [open, preselectedChildId, preselectedCategory, preselectedMonth, reset]);
+  }, [open, preselectedChildId, preselectedCategory, preselectedMonth, preselectedYear, reset]);
 
   function onSubmit(data: QuickPaymentInput) {
     startTransition(async () => {
@@ -239,6 +249,8 @@ export function QuickPaymentDialog({
           onSubmit={handleSubmit(onSubmit)}
           className="flex flex-col gap-5 px-4 pb-4"
         >
+          <input type="hidden" {...register("coverageYear", { valueAsNumber: true })} />
+
           {/* ── Child Info ── */}
           <div className="space-y-2">
             <Label>Child</Label>
@@ -246,6 +258,11 @@ export function QuickPaymentDialog({
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="gap-1.5 py-1.5 px-3 text-sm">
                   {selectedChild.firstName} {selectedChild.lastName}
+                  {selectedChild.childNumber && (
+                    <span className="text-muted-foreground ml-1">
+                      #{selectedChild.childNumber}
+                    </span>
+                  )}
                   {selectedChild.branch && (
                     <span className="text-muted-foreground ml-1">
                       — {selectedChild.branch.name}

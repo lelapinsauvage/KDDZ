@@ -8,7 +8,7 @@ export default async function AccountingPage() {
   await requireRole("ADMIN", "MANAGER");
   const [paymentsResult, summaryResult, branchesResult, classesResult, childrenResult] =
     await Promise.all([
-      getPayments({ pageSize: 500 }),
+      getPayments({ pageSize: 5000 }),
       getPaymentsSummary(),
       getBranches(),
       getClasses(),
@@ -100,9 +100,11 @@ export default async function AccountingPage() {
     childrenResult.success && childrenResult.data
       ? (childrenResult.data as Array<{
           id: string;
+          childNumber: string | null;
           firstName: string;
           lastName: string;
           branchId: string;
+          classId: string | null;
           branch: { name: string } | null;
           class: { name: string } | null;
         }>)

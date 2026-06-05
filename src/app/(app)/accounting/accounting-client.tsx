@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from "react";
 import {
-
   DollarSign,
   Clock,
   AlertTriangle,
@@ -15,6 +14,14 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import { QuickPaymentDialog } from "@/components/accounting/quick-payment-dialog";
 import { getInitialsFromName, getPastelAvatarColor } from "@/components/children/children-columns";
@@ -57,9 +64,11 @@ interface SummaryData {
 
 interface ChildOption {
   id: string;
+  childNumber?: string | null;
   firstName: string;
   lastName: string;
   branchId: string;
+  classId?: string | null;
   branch: { name: string } | null;
   class: { name: string } | null;
 }
@@ -83,7 +92,20 @@ const FEE_TABS = [
   { value: "OTHER", label: "Other" },
 ];
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const SCHOOL_YEAR_MONTHS = [
+  { month: 10, label: "Oct" },
+  { month: 11, label: "Nov" },
+  { month: 12, label: "Dec" },
+  { month: 1, label: "Jan" },
+  { month: 2, label: "Feb" },
+  { month: 3, label: "Mar" },
+  { month: 4, label: "Apr" },
+  { month: 5, label: "May" },
+  { month: 6, label: "Jun" },
+  { month: 7, label: "Jul" },
+  { month: 8, label: "Aug" },
+  { month: 9, label: "Sep" },
+];
 
 // ── Helpers ──
 
@@ -91,57 +113,148 @@ function formatCurrency(amount: number) {
   return `$${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+function currentAcademicStartYear() {
+  const now = new Date();
+  return now.getMonth() + 1 >= 10 ? now.getFullYear() : now.getFullYear() - 1;
+}
+
+function academicStartForPayment(payment: PaymentRow, month: number) {
+  const anchor = payment.dateFrom ?? payment.date;
+  const year = new Date(`${anchor}T00:00:00`).getFullYear();
+  return month >= 10 ? year : year - 1;
+}
+
+function childName(child: ChildOption) {
+  return `${child.firstName} ${child.lastName}`;
+}
+
 // ── Component ──
 
 export function AccountingClient({
   payments,
   summary,
+  branches,
+  classes,
   childrenList,
 }: AccountingClientProps) {
   const [activeTab, setActiveTab] = useState("ALL");
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState(currentAcademicStartYear());
+  const [searchTerm, setSearchTerm] = useState("");
+  const [branchFilter, setBranchFilter] = useState("ALL");
+  const [classFilter, setClassFilter] = useState("ALL");
   const [quickDialogOpen, setQuickDialogOpen] = useState(false);
   const [selectedCell, setSelectedCell] = useState<{ childId: string; month: number } | null>(null);
 
+  const academicYearOptions = useMemo(() => {
+    const years = new Set<number>([currentAcademicStartYear()]);
+    for (const payment of payments) {
+      const month = payment.month ?? (new Date(`${payment.date}T00:00:00`).getMonth() + 1);
+      years.add(academicStartForPayment(payment, month));
+    }
+    return Array.from(years).sort((a, b) => b - a);
+  }, [payments]);
+
   // Filter payments by active tab category
   const tabPayments = useMemo(() => {
-    if (activeTab === "ALL") return payments;
-    return payments.filter((p) => p.category === activeTab);
-  }, [payments, activeTab]);
+    return payments.filter((payment) => {
+      if (activeTab !== "ALL" && payment.category !== activeTab) return false;
+      const month = payment.month ?? (new Date(`${payment.date}T00:00:00`).getMonth() + 1);
+      return academicStartForPayment(payment, month) === selectedAcademicYear;
+    });
+  }, [payments, activeTab, selectedAcademicYear]);
 
-  // Build monthly grid: rows = children, columns = months 1-12
+  const filteredChildren = useMemo(() => {
+    const needle = searchTerm.trim().toLowerCase();
+    return childrenList.filter((child) => {
+      if (branchFilter !== "ALL" && child.branchId !== branchFilter) return false;
+      if (classFilter !== "ALL" && child.classId !== classFilter) return false;
+      if (!needle) return true;
+      return [
+        child.childNumber ?? "",
+        child.firstName,
+        child.lastName,
+        child.branch?.name ?? "",
+        child.class?.name ?? "",
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(needle);
+    });
+  }, [branchFilter, childrenList, classFilter, searchTerm]);
+
+  // Build legacy monthly grid: rows = active children, columns = Oct-Sep.
   const monthlyGrid = useMemo(() => {
     const childMap = new Map<
       string,
-      { childId: string; childName: string; months: number[]; total: number }
+      {
+        childId: string;
+        childNumber: string | null;
+        childName: string;
+        firstName: string;
+        lastName: string;
+        branchName: string;
+        className: string;
+        months: number[];
+        total: number;
+      }
     >();
+
+    for (const child of filteredChildren) {
+      childMap.set(child.id, {
+        childId: child.id,
+        childNumber: child.childNumber ?? null,
+        childName: childName(child),
+        firstName: child.firstName,
+        lastName: child.lastName,
+        branchName: child.branch?.name ?? "",
+        className: child.class?.name ?? "",
+        months: Array(SCHOOL_YEAR_MONTHS.length).fill(0) as number[],
+        total: 0,
+      });
+    }
 
     for (const p of tabPayments) {
       const monthNum = p.month ?? (new Date(p.date).getMonth() + 1);
       if (!childMap.has(p.childId)) {
+        if (branchFilter !== "ALL" && p.branchId !== branchFilter) continue;
+        if (classFilter !== "ALL" && p.classId !== classFilter) continue;
+        if (searchTerm.trim()) {
+          const needle = searchTerm.trim().toLowerCase();
+          const haystack = [p.childName, p.branchName, p.className].join(" ").toLowerCase();
+          if (!haystack.includes(needle)) continue;
+        }
         childMap.set(p.childId, {
           childId: p.childId,
+          childNumber: null,
           childName: p.childName,
-          months: Array(12).fill(0) as number[],
+          firstName: p.childName.split(" ")[0] ?? p.childName,
+          lastName: p.childName.split(" ").slice(1).join(" "),
+          branchName: p.branchName,
+          className: p.className,
+          months: Array(SCHOOL_YEAR_MONTHS.length).fill(0) as number[],
           total: 0,
         });
       }
       const entry = childMap.get(p.childId)!;
-      if (monthNum >= 1 && monthNum <= 12) {
-        entry.months[monthNum - 1] += p.amount;
+      const monthIndex = SCHOOL_YEAR_MONTHS.findIndex((item) => item.month === monthNum);
+      if (monthIndex >= 0) {
+        entry.months[monthIndex] += p.amount;
       }
       entry.total += p.amount;
     }
 
     return Array.from(childMap.values()).sort((a, b) =>
-      a.childName.localeCompare(b.childName),
+      `${a.branchName} ${a.className} ${a.childName}`.localeCompare(
+        `${b.branchName} ${b.className} ${b.childName}`,
+      ),
     );
-  }, [tabPayments]);
+  }, [branchFilter, classFilter, filteredChildren, searchTerm, tabPayments]);
 
   // Grand totals per month
   const monthTotals = useMemo(() => {
-    const totals = Array(12).fill(0) as number[];
+    const totals = Array(SCHOOL_YEAR_MONTHS.length).fill(0) as number[];
     for (const row of monthlyGrid) {
-      for (let i = 0; i < 12; i++) {
+      for (let i = 0; i < SCHOOL_YEAR_MONTHS.length; i++) {
         totals[i] += row.months[i];
       }
     }
@@ -150,8 +263,8 @@ export function AccountingClient({
 
   const grandTotal = monthTotals.reduce((a, b) => a + b, 0);
 
-  function handleCellClick(childId: string, monthIndex: number) {
-    setSelectedCell({ childId, month: monthIndex + 1 });
+  function handleCellClick(childId: string, month: number) {
+    setSelectedCell({ childId, month });
     setQuickDialogOpen(true);
   }
 
@@ -240,25 +353,125 @@ export function AccountingClient({
           </div>
         </Tabs>
 
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[180px_1fr_220px_220px]">
+          <Select
+            value={selectedAcademicYear.toString()}
+            onValueChange={(value) => setSelectedAcademicYear(Number(value))}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {academicYearOptions.map((year) => (
+                <SelectItem key={year} value={year.toString()}>
+                  {year}-{year + 1}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Input
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Filter child, branch, or class"
+          />
+          <Select
+            value={branchFilter}
+            onValueChange={(value) => {
+              setBranchFilter(value);
+              setClassFilter("ALL");
+            }}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Branch" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All branches</SelectItem>
+              {branches.map((branch) => (
+                <SelectItem key={branch.id} value={branch.id}>
+                  {branch.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={classFilter} onValueChange={setClassFilter}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Class" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All classes</SelectItem>
+              {classes
+                .filter(
+                  (cls) =>
+                    branchFilter === "ALL" ||
+                    childrenList.some(
+                      (child) =>
+                        child.classId === cls.id &&
+                        child.branchId === branchFilter,
+                    ),
+                )
+                .map((cls) => (
+                  <SelectItem key={cls.id} value={cls.id}>
+                    {cls.name}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* ── Monthly Grid DataTable ── */}
         {monthlyGrid.length > 0 ? (
-          <div className="overflow-hidden rounded-lg border bg-card">
+          <div className="overflow-hidden rounded-sm border bg-card">
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-sm">
                 <thead>
                   <tr>
-                    <th className="sticky left-0 z-10 bg-muted/80 backdrop-blur-sm min-w-[200px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground border-r shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
-                      Child Name
+                    <th
+                      colSpan={5}
+                      className="sticky left-0 z-10 border-r bg-muted px-4 py-2 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                    >
+                      Child Info
                     </th>
-                    {MONTHS.map((m) => (
+                    <th
+                      colSpan={3}
+                      className="bg-muted px-3 py-2 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                    >
+                      {selectedAcademicYear}
+                    </th>
+                    <th
+                      colSpan={9}
+                      className="bg-muted px-3 py-2 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                    >
+                      {selectedAcademicYear + 1}
+                    </th>
+                    <th className="border-l bg-muted px-3 py-2 text-center text-xs font-bold uppercase tracking-wide text-foreground">
+                      Total
+                    </th>
+                  </tr>
+                  <tr>
+                    <th className="sticky left-0 z-10 min-w-[92px] border-r bg-muted/80 px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
+                      #
+                    </th>
+                    <th className="min-w-[140px] bg-muted/80 px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      First Name
+                    </th>
+                    <th className="min-w-[140px] bg-muted/80 px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Last Name
+                    </th>
+                    <th className="min-w-[120px] bg-muted/80 px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Branch
+                    </th>
+                    <th className="min-w-[120px] border-r bg-muted/80 px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Class
+                    </th>
+                    {SCHOOL_YEAR_MONTHS.map((m) => (
                       <th
-                        key={m}
-                        className="min-w-[100px] px-3 py-3 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground bg-muted/80"
+                        key={m.month}
+                        className="min-w-[96px] bg-muted/80 px-3 py-3 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground"
                       >
-                        {m}
+                        {m.label}
                       </th>
                     ))}
-                    <th className="min-w-[110px] px-3 py-3 text-center text-xs font-bold uppercase tracking-wide text-foreground bg-muted/80 border-l">
+                    <th className="min-w-[110px] border-l bg-muted/80 px-3 py-3 text-center text-xs font-bold uppercase tracking-wide text-foreground">
                       Total
                     </th>
                   </tr>
@@ -269,7 +482,12 @@ export function AccountingClient({
                       key={row.childId}
                       className="border-t transition-colors hover:bg-accent/30"
                     >
-                      <td className="sticky left-0 z-10 bg-card px-4 py-2.5 border-r shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
+                      <td className="sticky left-0 z-10 border-r bg-card px-3 py-2.5 font-medium shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
+                        <a href={`/children/${row.childId}/accounting`} className="hover:text-primary">
+                          {row.childNumber ?? "—"}
+                        </a>
+                      </td>
+                      <td className="px-3 py-2.5">
                         <a
                           href={`/children/${row.childId}/accounting`}
                           className="flex items-center gap-2.5 font-medium hover:text-primary transition-colors"
@@ -280,25 +498,32 @@ export function AccountingClient({
                             {getInitialsFromName(row.childName)}
                           </div>
                           <span className="truncate max-w-[140px]">
-                            {row.childName}
+                            {row.firstName}
                           </span>
                         </a>
                       </td>
-                      {row.months.map((amount, monthIdx) => (
-                        <td
-                          key={monthIdx}
-                          className="px-3 py-2.5 text-center tabular-nums cursor-pointer transition-colors hover:bg-primary/5"
-                          onClick={() => handleCellClick(row.childId, monthIdx)}
-                        >
-                          {amount > 0 ? (
-                            <span className="font-medium text-foreground">
-                              {formatCurrency(amount)}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground/30">—</span>
-                          )}
-                        </td>
-                      ))}
+                      <td className="px-3 py-2.5">{row.lastName || "—"}</td>
+                      <td className="px-3 py-2.5">{row.branchName || "—"}</td>
+                      <td className="border-r px-3 py-2.5">{row.className || "—"}</td>
+                      {SCHOOL_YEAR_MONTHS.map((monthDef, monthIdx) => {
+                        const amount = row.months[monthIdx] ?? 0;
+
+                        return (
+                          <td
+                            key={monthDef.month}
+                            className="px-3 py-2.5 text-center tabular-nums cursor-pointer transition-colors hover:bg-primary/5"
+                            onClick={() => handleCellClick(row.childId, monthDef.month)}
+                          >
+                            {amount > 0 ? (
+                              <span className="font-medium text-foreground">
+                                {formatCurrency(amount)}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground/30">—</span>
+                            )}
+                          </td>
+                        );
+                      })}
                       <td className="px-3 py-2.5 text-center font-bold tabular-nums border-l text-foreground">
                         {formatCurrency(row.total)}
                       </td>
@@ -307,7 +532,10 @@ export function AccountingClient({
 
                   {/* ── Grand Total Row ── */}
                   <tr className="border-t-2 border-border bg-muted/50 font-semibold">
-                    <td className="sticky left-0 z-10 bg-muted/50 px-4 py-3 border-r shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] text-xs uppercase tracking-wide text-muted-foreground">
+                    <td
+                      colSpan={5}
+                      className="sticky left-0 z-10 border-r bg-muted/50 px-4 py-3 text-xs uppercase tracking-wide text-muted-foreground shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]"
+                    >
                       Grand Total
                     </td>
                     {monthTotals.map((total, idx) => (
@@ -334,8 +562,8 @@ export function AccountingClient({
                 title="No payments found"
                 description={
                   activeTab === "ALL"
-                    ? "No payments have been recorded yet. Click 'Record Payment' to get started."
-                    : `No ${FEE_TABS.find((t) => t.value === activeTab)?.label.toLowerCase()} payments have been recorded yet.`
+                    ? "No active children match the current filters."
+                    : `No active children match the current filters for ${FEE_TABS.find((t) => t.value === activeTab)?.label.toLowerCase()}.`
                 }
               />
             </CardContent>
@@ -354,6 +582,7 @@ export function AccountingClient({
         preselectedChildId={selectedCell?.childId}
         preselectedCategory={dialogCategory}
         preselectedMonth={selectedCell?.month}
+        preselectedYear={selectedAcademicYear}
       />
     </>
   );
