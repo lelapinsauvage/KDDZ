@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireOrg, requireOrgSafe } from "@/lib/require-org";
+import type { Prisma } from "@/generated/prisma/client";
 
 type ActionResult<T = unknown> = {
   success: boolean;
@@ -505,6 +506,7 @@ export interface LegacyNotificationSettingRow {
   settingKey: string;
   settingValue: string | null;
   description: string | null;
+  legacyData: unknown;
 }
 
 export interface LegacyNotificationNatureRow {
@@ -609,7 +611,7 @@ export async function getLegacyNotificationSettings(): Promise<
         { legacyTable: "asc" },
         { settingKey: "asc" },
       ],
-      take: 500,
+      take: 1000,
     });
 
     return {
@@ -623,6 +625,7 @@ export async function getLegacyNotificationSettings(): Promise<
         settingKey: setting.settingKey,
         settingValue: setting.settingValue,
         description: setting.description,
+        legacyData: setting.legacyData,
       })),
     };
   } catch (error) {
@@ -630,6 +633,96 @@ export async function getLegacyNotificationSettings(): Promise<
     return {
       success: false,
       error: "Failed to fetch legacy notification settings",
+    };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// updateLegacyNotificationChannelSetting
+// ---------------------------------------------------------------------------
+
+type LegacyNotificationChannel = "alarms" | "email" | "whatsapp" | "sms";
+
+const LEGACY_NOTIFICATION_CHANNELS = new Set<string>([
+  "alarms",
+  "email",
+  "whatsapp",
+  "sms",
+]);
+
+function isLegacyNotificationChannel(
+  value: string,
+): value is LegacyNotificationChannel {
+  return LEGACY_NOTIFICATION_CHANNELS.has(value);
+}
+
+function legacyRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? { ...(value as Record<string, unknown>) }
+    : {};
+}
+
+export async function updateLegacyNotificationChannelSetting(
+  id: string,
+  channel: string,
+  enabled: boolean,
+): Promise<ActionResult<LegacyNotificationSettingRow>> {
+  try {
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+
+    if (!isLegacyNotificationChannel(channel)) {
+      return { success: false, error: "Unknown notification channel" };
+    }
+
+    const setting = await db.legacySetting.findUnique({ where: { id } });
+    if (!setting || setting.legacyTable !== "t_notification_setting") {
+      return { success: false, error: "Legacy notification setting not found" };
+    }
+
+    const currentData = legacyRecord(setting.legacyData);
+    const currentValue = Number(currentData[channel]);
+    if (!Number.isFinite(currentValue)) {
+      return { success: false, error: "Legacy channel is not present on this row" };
+    }
+    if (currentValue === -1) {
+      return { success: false, error: "Legacy channel is locked for this row" };
+    }
+
+    const nextData = {
+      ...currentData,
+      [channel]: enabled ? 1 : 0,
+    };
+
+    const updated = await db.legacySetting.update({
+      where: { id },
+      data: {
+        legacyData: nextData as Prisma.InputJsonValue,
+        settingValue: JSON.stringify(nextData),
+      },
+    });
+
+    revalidatePath("/settings/notifications");
+
+    return {
+      success: true,
+      data: {
+        id: updated.id,
+        sourceDatabase: updated.sourceDatabase,
+        legacyTable: updated.legacyTable,
+        legacyId: updated.legacyId,
+        scope: updated.scope,
+        settingKey: updated.settingKey,
+        settingValue: updated.settingValue,
+        description: updated.description,
+        legacyData: updated.legacyData,
+      },
+    };
+  } catch (error) {
+    console.error("Failed to update legacy notification channel:", error);
+    return {
+      success: false,
+      error: "Failed to update legacy notification channel",
     };
   }
 }

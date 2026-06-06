@@ -64,6 +64,7 @@ import {
   getSentNotifications,
   resendNotification,
   sendTestNotification,
+  updateLegacyNotificationChannelSetting,
   type SentNotificationRow,
 } from "@/lib/actions/notification-templates";
 
@@ -288,6 +289,15 @@ interface NotificationSettingsClientProps {
   initialLegacyNatures: LegacyNotificationNatureRow[];
   initialLegacyLogs: LegacyNotificationLogRow[];
 }
+
+type LegacyChannelKey = "alarms" | "email" | "whatsapp" | "sms";
+
+const LEGACY_CHANNELS: Array<{ key: LegacyChannelKey; label: string }> = [
+  { key: "alarms", label: "System Alerts" },
+  { key: "email", label: "Emails" },
+  { key: "whatsapp", label: "Whatsapp" },
+  { key: "sms", label: "SMS" },
+];
 
 // ---------------------------------------------------------------------------
 // Component
@@ -799,6 +809,14 @@ function LegacyTab({
   natures: LegacyNotificationNatureRow[];
   logs: LegacyNotificationLogRow[];
 }) {
+  const [legacySettings, setLegacySettings] = useState(settings);
+  const [channelMessage, setChannelMessage] = useState<{
+    success: boolean;
+    text: string;
+  } | null>(null);
+  const [pendingChannel, setPendingChannel] = useState<string | null>(null);
+  const [isChannelPending, startChannelTransition] = useTransition();
+
   function formatDate(iso: string) {
     return new Date(iso).toLocaleDateString("en-US", {
       year: "numeric",
@@ -827,6 +845,90 @@ function LegacyTab({
     return Number.isFinite(numericValue) ? statusLabel(numericValue) : value;
   }
 
+  function isNumericStatusValue(value: string | null) {
+    if (value === null || value.trim() === "") return false;
+    return Number.isFinite(Number(value));
+  }
+
+  function parseJsonObject(value: string | null) {
+    if (!value) return null;
+    try {
+      const parsed = JSON.parse(value) as unknown;
+      return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+        ? (parsed as Record<string, unknown>)
+        : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function settingData(setting: LegacyNotificationSettingRow) {
+    const raw = setting.legacyData;
+    if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+      return raw as Record<string, unknown>;
+    }
+    return parseJsonObject(setting.settingValue);
+  }
+
+  function channelValue(
+    setting: LegacyNotificationSettingRow,
+    channel: LegacyChannelKey,
+  ) {
+    const data = settingData(setting);
+    if (!data) return null;
+    const value = Number(data[channel]);
+    return Number.isFinite(value) ? value : null;
+  }
+
+  function channelName(setting: LegacyNotificationSettingRow) {
+    const data = settingData(setting);
+    const name = data?.name;
+    return typeof name === "string" && name.trim() !== ""
+      ? name.trim()
+      : setting.settingKey;
+  }
+
+  function hasChannelMatrix(setting: LegacyNotificationSettingRow) {
+    return (
+      setting.legacyTable === "t_notification_setting" &&
+      LEGACY_CHANNELS.some(({ key }) => channelValue(setting, key) !== null)
+    );
+  }
+
+  const channelSettings = legacySettings.filter(hasChannelMatrix);
+
+  function handleChannelToggle(
+    setting: LegacyNotificationSettingRow,
+    channel: LegacyChannelKey,
+    enabled: boolean,
+  ) {
+    const pendingKey = `${setting.id}:${channel}`;
+    setPendingChannel(pendingKey);
+    setChannelMessage(null);
+    startChannelTransition(async () => {
+      const result = await updateLegacyNotificationChannelSetting(
+        setting.id,
+        channel,
+        enabled,
+      );
+      if (result.success && result.data) {
+        setLegacySettings((prev) =>
+          prev.map((row) => (row.id === result.data!.id ? result.data! : row)),
+        );
+        setChannelMessage({
+          success: true,
+          text: "Legacy channel updated.",
+        });
+      } else {
+        setChannelMessage({
+          success: false,
+          text: result.error ?? "Legacy channel update failed.",
+        });
+      }
+      setPendingChannel(null);
+    });
+  }
+
   return (
     <div className="space-y-4">
       <div className="grid gap-3 md:grid-cols-3">
@@ -836,7 +938,9 @@ function LegacyTab({
               <div className="text-xs font-medium uppercase tracking-normal">
                 Settings
               </div>
-              <div className="mt-1 text-2xl font-semibold">{settings.length}</div>
+              <div className="mt-1 text-2xl font-semibold">
+                {legacySettings.length}
+              </div>
             </div>
             <Database className="size-5" />
           </div>
@@ -867,6 +971,105 @@ function LegacyTab({
 
       <Card>
         <CardHeader>
+          <CardTitle className="text-base">
+            Legacy Notifications/Alerts Control
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="overflow-x-auto rounded-md border">
+            <Table className="min-w-[840px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="bg-secondary/40 px-4 py-3 text-xs font-medium uppercase text-muted-foreground">
+                    Source
+                  </TableHead>
+                  <TableHead className="bg-secondary/40 px-4 py-3 text-xs font-medium uppercase text-muted-foreground">
+                    Notification
+                  </TableHead>
+                  {LEGACY_CHANNELS.map((channel) => (
+                    <TableHead
+                      key={channel.key}
+                      className="bg-secondary/40 px-4 py-3 text-center text-xs font-medium uppercase text-muted-foreground"
+                    >
+                      {channel.label}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {channelSettings.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={6}
+                      className="h-24 text-center text-muted-foreground"
+                    >
+                      No legacy channel controls found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  channelSettings.map((setting) => (
+                    <TableRow key={`channels-${setting.id}`}>
+                      <TableCell className="px-4 py-3 text-xs text-muted-foreground">
+                        {setting.sourceDatabase}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-sm font-medium">
+                        {channelName(setting)}
+                      </TableCell>
+                      {LEGACY_CHANNELS.map((channel) => {
+                        const value = channelValue(setting, channel.key);
+                        const isLocked = value === -1 || value === null;
+                        const pendingKey = `${setting.id}:${channel.key}`;
+                        return (
+                          <TableCell
+                            key={channel.key}
+                            className="px-4 py-3 text-center"
+                          >
+                            {isLocked ? (
+                              <Badge variant="outline">Unavailable</Badge>
+                            ) : (
+                              <div className="inline-flex items-center gap-2">
+                                <Switch
+                                  checked={value === 1}
+                                  disabled={
+                                    isChannelPending &&
+                                    pendingChannel === pendingKey
+                                  }
+                                  onCheckedChange={(checked) =>
+                                    handleChannelToggle(
+                                      setting,
+                                      channel.key,
+                                      checked,
+                                    )
+                                  }
+                                />
+                                <span className="min-w-14 text-left text-xs text-muted-foreground">
+                                  {value === 1 ? "Enabled" : "Disabled"}
+                                </span>
+                              </div>
+                            )}
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          {channelMessage && (
+            <p
+              className={`text-xs ${
+                channelMessage.success ? "text-emerald-600" : "text-red-600"
+              }`}
+            >
+              {channelMessage.text}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle className="text-base">Legacy Settings</CardTitle>
         </CardHeader>
         <CardContent>
@@ -889,7 +1092,7 @@ function LegacyTab({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {settings.length === 0 ? (
+                {legacySettings.length === 0 ? (
                   <TableRow>
                     <TableCell
                       colSpan={4}
@@ -899,7 +1102,7 @@ function LegacyTab({
                     </TableCell>
                   </TableRow>
                 ) : (
-                  settings.map((setting) => (
+                  legacySettings.map((setting) => (
                     <TableRow key={setting.id}>
                       <TableCell className="px-4 py-3 text-xs text-muted-foreground">
                         {setting.sourceDatabase}
@@ -913,7 +1116,8 @@ function LegacyTab({
                         {setting.settingKey}
                       </TableCell>
                       <TableCell className="max-w-[360px] px-4 py-3 text-sm text-muted-foreground">
-                        {setting.legacyTable === "t_notification_setting" ? (
+                        {setting.legacyTable === "t_notification_setting" &&
+                        isNumericStatusValue(setting.settingValue) ? (
                           <Badge variant="secondary">
                             {settingStatusLabel(setting.settingValue)}
                           </Badge>

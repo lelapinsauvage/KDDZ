@@ -16525,8 +16525,8 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/classes/ajaxtoggle.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/settings/notifications",
+    "status": "partial - legacy ajax toggle behavior restored against migrated rows; active sender enforcement remains",
     "legacyTablesMentioned": [
       "t_notification_setting"
     ],
@@ -16535,7 +16535,7 @@
       "id",
       "toggle"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "The modern `updateLegacyNotificationChannelSetting` server action replaces the legacy `classes/ajaxtoggle.php` POST path for `alarms`, `email`, `whatsapp`, and `sms`, validates the channel, blocks legacy `-1` locked values, and updates the migrated `t_notification_setting` row. Remaining work is connecting those stored switches to all notification generation and external delivery providers."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/classes/edit_level.class.php",
@@ -16824,11 +16824,11 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-control.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/settings/notifications",
+    "status": "partial - legacy notification channel control matrix restored; sender enforcement remains",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "/settings/notifications Legacy tab now restores the legacy Notifications/Alerts Control matrix from migrated `t_notification_setting` rows, with System Alerts, Emails, Whatsapp, and SMS switches. Values of `-1` render as unavailable, and editable toggles update the preserved `LegacySetting.legacyData`/`settingValue` row. Remaining work is enforcing these channel switches across every modern generator/provider send path."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-forgot.php",
