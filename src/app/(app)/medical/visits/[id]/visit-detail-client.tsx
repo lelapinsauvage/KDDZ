@@ -1,19 +1,30 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { useForm, Controller } from "react-hook-form";
-import { z } from "zod/v4";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import {
+  Activity,
+  ArrowLeft,
+  Ear,
+  Eye,
+  HeartPulse,
+  Loader2,
+  Save,
+  Send,
+  Stethoscope,
+  User,
+} from "lucide-react";
+
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -22,741 +33,792 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
-  ArrowLeft,
-  Save,
-  Send,
-  Loader2,
-  CheckCircle2,
-  Heart,
-  Eye,
-  Ear,
-  Activity,
-  Sparkles,
-} from "lucide-react";
-import { createMedicalForm, updateMedicalForm } from "@/lib/actions/medical";
-import {
   MedicalAttachmentsSection,
   type MedicalAttachmentValue,
   type MedicalChildOption,
   useMedicalAttachments,
 } from "@/components/medical/medical-attachments-section";
+import { createMedicalForm, updateMedicalForm } from "@/lib/actions/medical";
 
-// ---------------------------------------------------------------------------
-// Zod schema — comprehensive physical exam
-// ---------------------------------------------------------------------------
+export type VisitStatus = "DRAFT" | "SUBMITTED" | "REVIEWED";
+type BusyAction = "draft" | "submit" | null;
 
-const acuityOptions = ["6/6", "6/9", "6/12", "6/18", "6/24", "6/36", "6/60"] as const;
-const earCondition = ["Normal", "Mild", "Moderate", "Severe"] as const;
-const systemStatus = ["Normal", "Abnormal"] as const;
-
-const visitFormSchema = z.object({
-  // -- Visit info
-  childId: z.string().min(1, "Child is required"),
-  visitDate: z.string().min(1, "Visit date is required"),
-  doctor: z.string().min(1, "Doctor is required"),
-
-  // -- 1. Vitals
-  heightCm: z.string().optional(),
-  weightKg: z.string().optional(),
-  bloodPressure: z.string().optional(),
-  vitalsNotes: z.string().optional(),
-
-  // -- 2. Eyes
-  withGlasses: z.boolean().optional(),
-  leftEye: z.string().optional(),
-  rightEye: z.string().optional(),
-  crookedEyes: z.string().optional(),
-  eyesNotes: z.string().optional(),
-
-  // -- 3. Ears
-  waxLeft: z.string().optional(),
-  waxRight: z.string().optional(),
-  drumLeft: z.string().optional(),
-  drumRight: z.string().optional(),
-  hearingLeft: z.string().optional(),
-  hearingRight: z.string().optional(),
-  earsNotes: z.string().optional(),
-
-  // -- 4. Systems
-  noseThroat: z.string().optional(),
-  thyroid: z.string().optional(),
-  lymphNodes: z.string().optional(),
-  heartArterial: z.string().optional(),
-  respiratory: z.string().optional(),
-  motorSystem: z.string().optional(),
-  abdomenGenitals: z.string().optional(),
-  systemsNotes: z.string().optional(),
-
-  // -- 5. Skin / Hair / Nails
-  liceLupus: z.string().optional(),
-  dermatitis: z.string().optional(),
-  skinAllergy: z.string().optional(),
-  hair: z.string().optional(),
-  nails: z.string().optional(),
-  skinNotes: z.string().optional(),
-});
-
-type VisitFormValues = z.infer<typeof visitFormSchema>;
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-const SECTIONS = [
-  {
-    id: "vitals",
-    label: "Vitals",
-    fields: ["heightCm", "weightKg", "bloodPressure"] as const,
-  },
-  {
-    id: "eyes",
-    label: "Eyes",
-    fields: ["leftEye", "rightEye", "crookedEyes"] as const,
-  },
-  {
-    id: "ears",
-    label: "Ears",
-    fields: ["waxLeft", "waxRight", "drumLeft", "drumRight", "hearingLeft", "hearingRight"] as const,
-  },
-  {
-    id: "systems",
-    label: "Systems",
-    fields: ["noseThroat", "thyroid", "lymphNodes", "heartArterial", "respiratory", "motorSystem", "abdomenGenitals"] as const,
-  },
-  {
-    id: "skin",
-    label: "Skin / Hair / Nails",
-    fields: ["liceLupus", "dermatitis", "skinAllergy", "hair", "nails"] as const,
-  },
-] as const;
-
-function isSectionComplete(values: VisitFormValues, fields: readonly string[]): boolean {
-  return fields.every((f) => {
-    const val = values[f as keyof VisitFormValues];
-    if (typeof val === "boolean") return true;
-    return val !== undefined && val !== "";
-  });
+export interface VisitFormValues {
+  childId: string;
+  visitDate: string;
+  height: string;
+  weight: string;
+  bp: string;
+  leye: string;
+  reye: string;
+  leyewg: boolean;
+  eyeprob: string;
+  creye: string;
+  earwl: string;
+  earwr: string;
+  eardl: string;
+  eardr: string;
+  earhl: string;
+  earhr: string;
+  earprob: string;
+  nose: string;
+  noseprob: string;
+  thyriod: string;
+  thprob: string;
+  lymph: string;
+  lymphprob: string;
+  heart: string;
+  arterial: string;
+  heartprob: string;
+  resp: string;
+  respprob: string;
+  bone: string;
+  joint: string;
+  backbone: string;
+  muscle: string;
+  motor: string;
+  abdomen: string;
+  enlarged: string;
+  tumor: string;
+  genitals: string;
+  abdoprob: string;
+  lice: string;
+  derma: string;
+  skin: string;
+  hair: string;
+  nails: string;
+  skinprob: string;
+  status: VisitStatus;
 }
 
-function getStatusBadge(status: string) {
-  switch (status) {
-    case "DRAFT":
-      return (
-        <Badge variant="outline" className="border-gray-300 text-gray-600">
-          Draft
-        </Badge>
-      );
-    case "SUBMITTED":
-      return (
-        <Badge className="bg-blue-50 text-blue-700 border-blue-200">
-          Submitted
-        </Badge>
-      );
-    case "REVIEWED":
-      return (
-        <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
-          Reviewed
-        </Badge>
-      );
-    default:
-      return <Badge variant="outline">{status}</Badge>;
-  }
+interface VisitChildOption extends MedicalChildOption {
+  legacyId: number | null;
+  childNumber: string;
+  dateOfBirth: string;
+  gender: string;
+  photo: string | null;
+  branchName: string;
+  branchLegacyId: number | null;
+  classId: string | null;
+  className: string;
+  classLegacyId: number | null;
 }
-
-// ---------------------------------------------------------------------------
-// Reusable field components
-// ---------------------------------------------------------------------------
-
-function FormSelect({
-  label,
-  value,
-  onValueChange,
-  options,
-  placeholder = "Select...",
-}: {
-  label: string;
-  value: string | undefined;
-  onValueChange: (v: string) => void;
-  options: readonly string[];
-  placeholder?: string;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <Label className="text-sm font-medium">{label}</Label>
-      <Select value={value || ""} onValueChange={onValueChange}>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder={placeholder} />
-        </SelectTrigger>
-        <SelectContent>
-          {options.map((opt) => (
-            <SelectItem key={opt} value={opt}>
-              {opt}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Props
-// ---------------------------------------------------------------------------
 
 interface VisitDetailClientProps {
   isNew: boolean;
   formId: string | null;
-  initialData: VisitFormValues;
-  status: "DRAFT" | "SUBMITTED" | "REVIEWED";
-  childrenList: MedicalChildOption[];
+  formData: VisitFormValues;
+  initialData: Record<string, unknown>;
+  childrenList: VisitChildOption[];
   initialAttachments: MedicalAttachmentValue[];
+  legacyFormId?: number | null;
 }
 
-// ---------------------------------------------------------------------------
-// Main component
-// ---------------------------------------------------------------------------
+type StringVisitField = Exclude<keyof VisitFormValues, "leyewg" | "status">;
+
+const normalAbnormalOptions = ["Normal", "Abnormal"];
+const earOptions = ["Good", "Fair", "Bad"];
+const yesNoOptions = ["Yes", "No"];
+
+const requiredSubmitFields: StringVisitField[] = [
+  "childId",
+  "visitDate",
+  "height",
+  "weight",
+  "bp",
+  "leye",
+  "reye",
+  "earwl",
+  "earwr",
+  "eardl",
+  "eardr",
+  "earhl",
+  "earhr",
+  "nose",
+  "thyriod",
+  "lymph",
+  "heart",
+  "arterial",
+  "resp",
+  "bone",
+  "joint",
+  "backbone",
+  "muscle",
+  "abdomen",
+  "enlarged",
+  "tumor",
+  "genitals",
+  "lice",
+  "derma",
+  "skin",
+  "hair",
+  "nails",
+];
+
+function childPhotoSrc(photo: string | null) {
+  if (!photo || photo === "default.jpg") return "";
+  if (/^https?:\/\//i.test(photo) || photo.startsWith("/")) return photo;
+  if (photo.includes("/")) return `/${photo.replace(/^\/+/, "")}`;
+  return `/images/EmpPhoto/${photo}`;
+}
+
+function legacyNumber(data: Record<string, unknown>, key: string) {
+  const value = data[key];
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+}
+
+function statusBadge(status: VisitStatus) {
+  if (status === "DRAFT") {
+    return <Badge className="border-transparent bg-[#c29d0b] text-white">Draft</Badge>;
+  }
+  if (status === "REVIEWED") {
+    return <Badge className="border-transparent bg-[#327ad5] text-white">Reviewed</Badge>;
+  }
+  return <Badge className="border-transparent bg-[#008200] text-white">Submitted</Badge>;
+}
+
+function inputClass(isMissing: boolean) {
+  return isMissing
+    ? "border-destructive bg-destructive/5 text-destructive focus-visible:ring-destructive"
+    : "";
+}
+
+function parsePositiveNumber(value: string) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0;
+}
+
+interface LegacyInputProps {
+  label: string;
+  field: StringVisitField;
+  values: VisitFormValues;
+  missingFields: Set<string>;
+  disabled: boolean;
+  required?: boolean;
+  type?: string;
+  step?: string;
+  list?: string;
+  placeholder?: string;
+  onChange: (field: StringVisitField, value: string) => void;
+}
+
+function LegacyInput({
+  label,
+  field,
+  values,
+  missingFields,
+  disabled,
+  required = false,
+  type = "text",
+  step,
+  list,
+  placeholder = "Select/Add",
+  onChange,
+}: LegacyInputProps) {
+  return (
+    <div className="space-y-2">
+      <Label>
+        {label} {required ? <span className="text-destructive">*</span> : null}
+      </Label>
+      <Input
+        type={type}
+        step={step}
+        list={list}
+        value={values[field]}
+        placeholder={placeholder}
+        disabled={disabled}
+        className={inputClass(missingFields.has(field))}
+        onChange={(event) => onChange(field, event.target.value)}
+      />
+    </div>
+  );
+}
+
+interface SectionProps {
+  title: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}
+
+function VisitSection({ title, icon, children }: SectionProps) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          {icon}
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>{children}</CardContent>
+    </Card>
+  );
+}
+
+function ChildPhoto({
+  src,
+  alt,
+}: {
+  src: string;
+  alt: string;
+}) {
+  const [failed, setFailed] = useState(false);
+
+  if (!src || failed) {
+    return (
+      <div className="flex size-24 items-center justify-center rounded-full border bg-muted">
+        <User className="size-8 text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative size-24 overflow-hidden rounded-full border bg-muted">
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        sizes="96px"
+        className="object-cover"
+        unoptimized
+        onError={() => setFailed(true)}
+      />
+    </div>
+  );
+}
 
 export function VisitDetailClient({
   isNew,
   formId,
+  formData,
   initialData,
-  status,
   childrenList,
   initialAttachments,
+  legacyFormId,
 }: VisitDetailClientProps) {
   const router = useRouter();
-  const [isSaving, setIsSaving] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [values, setValues] = useState<VisitFormValues>(formData);
+  const [status, setStatus] = useState<VisitStatus>(formData.status);
+  const [busyAction, setBusyAction] = useState<BusyAction>(null);
+  const [missingFields, setMissingFields] = useState<Set<string>>(new Set());
   const attachments = useMedicalAttachments(initialAttachments);
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    control,
-    formState: { errors },
-  } = useForm<VisitFormValues>({
-    resolver: zodResolver(visitFormSchema),
-    defaultValues: initialData,
-  });
-
-  const watchedValues = watch();
-  const selectedChildName =
-    childrenList.find((c) => c.id === watchedValues.childId)?.name ?? "";
-
-  // Compute completion per section
-  const sectionCompletion = useMemo(
-    () =>
-      SECTIONS.map((s) => ({
-        id: s.id,
-        complete: isSectionComplete(watchedValues, s.fields as unknown as string[]),
-      })),
-    [watchedValues],
+  const selectedChild = useMemo(
+    () => childrenList.find((child) => child.id === values.childId) ?? null,
+    [childrenList, values.childId],
   );
+  const selectedChildPhoto = childPhotoSrc(selectedChild?.photo ?? null);
+  const busy = busyAction !== null;
+  const canSaveDraft = status === "DRAFT";
 
-  const buildPayload = (data: VisitFormValues, formStatus: "DRAFT" | "SUBMITTED") => {
-    const { childId, ...rest } = data;
+  function clearMissing(keys: string[]) {
+    setMissingFields((current) => {
+      const next = new Set(current);
+      keys.forEach((key) => next.delete(key));
+      return next;
+    });
+  }
+
+  function setField(field: StringVisitField, value: string) {
+    setValues((current) => ({ ...current, [field]: value }));
+    clearMissing([field]);
+  }
+
+  function setWithGlasses(checked: boolean) {
+    setValues((current) => ({ ...current, leyewg: checked }));
+  }
+
+  function rawVisitPayload(nextStatus: VisitStatus) {
+    const child = childrenList.find((item) => item.id === values.childId) ?? selectedChild;
+    const formNumber =
+      legacyFormId ?? legacyNumber(initialData, "form_id") ?? legacyNumber(initialData, "_oldId");
+    const isDraft = nextStatus === "DRAFT" ? 1 : 0;
+
     return {
-      childId,
-      formType: "VISITS" as const,
-      status: formStatus,
-      data: rest,
+      ...initialData,
+      child_id: child?.legacyId ?? legacyNumber(initialData, "child_id"),
+      branch_id: child?.branchLegacyId ?? legacyNumber(initialData, "branch_id"),
+      class_id: child?.classLegacyId ?? legacyNumber(initialData, "class_id"),
+      form_id: formNumber,
+      modernChildId: values.childId,
+      modernBranchId: child?.branchId ?? null,
+      modernClassId: child?.classId ?? null,
+      formdate: values.visitDate,
+      visit_date: values.visitDate,
+      visitDate: values.visitDate,
+      height: values.height,
+      weight: values.weight,
+      bp: values.bp,
+      leye: values.leye,
+      reye: values.reye,
+      leyewg: values.leyewg ? 1 : 0,
+      reyewg: 0,
+      eyeprob: values.eyeprob,
+      creye: values.creye,
+      earwl: values.earwl,
+      earwr: values.earwr,
+      eardl: values.eardl,
+      eardr: values.eardr,
+      earhl: values.earhl,
+      earhr: values.earhr,
+      earprob: values.earprob,
+      nose: values.nose,
+      noseprob: values.noseprob,
+      thyriod: values.thyriod,
+      thprob: values.thprob,
+      lymph: values.lymph,
+      lymphprob: values.lymphprob,
+      heart: values.heart,
+      arterial: values.arterial,
+      heartprob: values.heartprob,
+      resp: values.resp,
+      respprob: values.respprob,
+      bone: values.bone,
+      joint: values.joint,
+      backbone: values.backbone,
+      muscle: values.muscle,
+      motor: values.motor,
+      abdomen: values.abdomen,
+      enlarged: values.enlarged,
+      tumor: values.tumor,
+      genitals: values.genitals,
+      abdoprob: values.abdoprob,
+      lice: values.lice,
+      derma: values.derma,
+      skin: values.skin,
+      hair: values.hair,
+      nails: values.nails,
+      skinprob: values.skinprob,
+      heightCm: values.height,
+      weightKg: values.weight,
+      bloodPressure: values.bp,
+      withGlasses: values.leyewg,
+      leftEye: values.leye,
+      rightEye: values.reye,
+      crookedEyes: values.creye,
+      eyesNotes: values.eyeprob,
+      waxLeft: values.earwl,
+      waxRight: values.earwr,
+      drumLeft: values.eardl,
+      drumRight: values.eardr,
+      hearingLeft: values.earhl,
+      hearingRight: values.earhr,
+      earsNotes: values.earprob,
+      noseThroat: values.nose,
+      thyroid: values.thyriod,
+      lymphNodes: values.lymph,
+      respiratory: values.resp,
+      motorSystem: values.motor,
+      abdomenGenitals: values.abdoprob,
+      liceLupus: values.lice,
+      dermatitis: values.derma,
+      skinAllergy: values.skin,
+      skinNotes: values.skinprob,
+      is_rep_draft: isDraft,
+      legacyVisitValues: {
+        ...values,
+        formdate: values.visitDate,
+        leyewg: values.leyewg ? 1 : 0,
+        reyewg: 0,
+      },
     };
-  };
+  }
 
-  const onSaveDraft = async (data: VisitFormValues) => {
-    setIsSaving(true);
+  function validateSubmit() {
+    const missing = new Set<string>();
+
+    requiredSubmitFields.forEach((field) => {
+      if (!values[field].trim()) missing.add(field);
+    });
+
+    const invalidGeneral =
+      !values.bp.trim() ||
+      !parsePositiveNumber(values.height) ||
+      !parsePositiveNumber(values.weight);
+
+    if (!parsePositiveNumber(values.height)) missing.add("height");
+    if (!parsePositiveNumber(values.weight)) missing.add("weight");
+    if (!values.bp.trim()) missing.add("bp");
+
+    setMissingFields(missing);
+
+    if (missing.size > 0) {
+      toast.error(
+        invalidGeneral
+          ? "Please fill all general info with correct data."
+          : "Please fill the mandatory fields marked in red.",
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  async function save(nextStatus: VisitStatus) {
+    if (!values.childId) {
+      setMissingFields(new Set(["childId"]));
+      toast.error("Select a child before saving the medical visit form.");
+      return;
+    }
+    if (nextStatus === "SUBMITTED" && !validateSubmit()) return;
+
+    setBusyAction(nextStatus === "DRAFT" ? "draft" : "submit");
     try {
       const attachmentPayload = await attachments.resolveAttachmentPayload({
         childrenList,
-        childId: data.childId,
+        childId: values.childId,
         formId,
       });
       if (!attachmentPayload) return;
-      const payload = {
-        ...buildPayload(data, "DRAFT"),
-        attachments: attachmentPayload,
-        ...(!isNew
-          ? { removeAttachmentIds: attachments.removedAttachmentIds }
-          : {}),
-      };
+
       const result = isNew
-        ? await createMedicalForm(payload)
-        : await updateMedicalForm(formId!, payload);
+        ? await createMedicalForm({
+            childId: values.childId,
+            formType: "VISITS",
+            status: nextStatus,
+            data: rawVisitPayload(nextStatus),
+            attachments: attachmentPayload,
+          })
+        : await updateMedicalForm(formId!, {
+            childId: values.childId,
+            formType: "VISITS",
+            status: nextStatus,
+            data: rawVisitPayload(nextStatus),
+            attachments: attachmentPayload,
+            removeAttachmentIds: attachments.removedAttachmentIds,
+          });
 
-      if (result.error) {
+      if ("error" in result && result.error) {
         toast.error(result.error);
-      } else {
-        toast.success("Visit saved as draft.");
-        router.push("/medical/visits");
+        return;
       }
-    } catch {
-      toast.error("Failed to save visit.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
-  const onSubmitForm = async (data: VisitFormValues) => {
-    setIsSubmitting(true);
-    try {
-      const attachmentPayload = await attachments.resolveAttachmentPayload({
-        childrenList,
-        childId: data.childId,
-        formId,
-      });
-      if (!attachmentPayload) return;
-      const payload = {
-        ...buildPayload(data, "SUBMITTED"),
-        attachments: attachmentPayload,
-        ...(!isNew
-          ? { removeAttachmentIds: attachments.removedAttachmentIds }
-          : {}),
-      };
-      const result = isNew
-        ? await createMedicalForm(payload)
-        : await updateMedicalForm(formId!, payload);
+      setStatus(nextStatus);
+      setValues((current) => ({ ...current, status: nextStatus }));
+      toast.success(nextStatus === "DRAFT" ? "Medical visit saved as draft." : "Medical visit has been saved.");
 
-      if (result.error) {
-        toast.error(result.error);
+      if (isNew && "formId" in result && result.formId) {
+        router.push(`/medical/visits/${result.formId}`);
       } else {
-        toast.success("Visit submitted successfully.");
-        router.push("/medical/visits");
+        router.refresh();
       }
-    } catch {
-      toast.error("Failed to submit visit.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to save medical visit.");
     } finally {
-      setIsSubmitting(false);
+      setBusyAction(null);
     }
-  };
-
-  const busy = isSaving || isSubmitting;
+  }
 
   return (
     <>
       <PageHeader
-        title={isNew ? "New Physical Exam" : "Physical Exam"}
+        title="Medical Visit"
         breadcrumbs={[
           { label: "Medical", href: "/medical/general" },
           { label: "Visits", href: "/medical/visits" },
-          { label: isNew ? "New" : selectedChildName || "Details" },
+          { label: isNew ? "New Medical Visit" : selectedChild?.name ?? "Medical Visit" },
         ]}
       />
 
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Top bar */}
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <Link href="/medical/visits">
-            <Button variant="outline" size="sm">
+      <datalist id="visit-normal-abnormal">
+        {normalAbnormalOptions.map((option) => (
+          <option key={option} value={option} />
+        ))}
+      </datalist>
+      <datalist id="visit-ear-options">
+        {earOptions.map((option) => (
+          <option key={option} value={option} />
+        ))}
+      </datalist>
+      <datalist id="visit-yes-no">
+        {yesNoOptions.map((option) => (
+          <option key={option} value={option} />
+        ))}
+      </datalist>
+
+      <div className="space-y-6 p-4 md:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/medical/visits">
               <ArrowLeft className="size-4" />
               Back to List
-            </Button>
-          </Link>
-          <div className="flex items-center gap-3">
-            {getStatusBadge(status)}
-            <Button
-              variant="outline"
-              onClick={handleSubmit(onSaveDraft)}
-              disabled={busy}
-            >
-              {isSaving ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Save className="size-4" />
-              )}
-              Save Draft
-            </Button>
-            <Button
-              variant="default"
-              className="text-primary-foreground"
-              onClick={handleSubmit(onSubmitForm)}
-              disabled={busy}
-            >
-              {isSubmitting ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Send className="size-4" />
-              )}
-              Submit
+            </Link>
+          </Button>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {statusBadge(status)}
+            {canSaveDraft ? (
+              <Button type="button" variant="outline" disabled={busy} onClick={() => save("DRAFT")}>
+                {busyAction === "draft" ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+                Save As Draft
+              </Button>
+            ) : null}
+            <Button type="button" disabled={busy} onClick={() => save("SUBMITTED")}>
+              {busyAction === "submit" ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+              Save Changes
             </Button>
           </div>
         </div>
 
-        <form className="space-y-4 md:space-y-6">
-          {/* Visit header info */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Visit Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <div className="space-y-1.5">
-                  <Label>Child</Label>
+        <Card>
+          <CardContent className="grid gap-4 p-4 md:grid-cols-[1fr_220px] md:p-5">
+            <div className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>
+                    Child <span className="text-destructive">*</span>
+                  </Label>
                   <Select
-                    value={watchedValues.childId}
-                    onValueChange={(val) => setValue("childId", val)}
+                    value={values.childId}
+                    disabled={!isNew || busy}
+                    onValueChange={(value) => setField("childId", value)}
                   >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a child" />
+                    <SelectTrigger className={inputClass(missingFields.has("childId"))}>
+                      <SelectValue placeholder="Choose Child" />
                     </SelectTrigger>
                     <SelectContent>
                       {childrenList.map((child) => (
                         <SelectItem key={child.id} value={child.id}>
-                          {child.name}
+                          {child.childNumber} - {child.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  {errors.childId && (
-                    <p className="text-xs text-red-500">{errors.childId.message}</p>
-                  )}
                 </div>
-                <div className="space-y-1.5">
-                  <Label>Visit Date</Label>
-                  <Input type="date" {...register("visitDate")} />
-                  {errors.visitDate && (
-                    <p className="text-xs text-red-500">{errors.visitDate.message}</p>
-                  )}
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Doctor</Label>
-                  <Input placeholder="e.g. Dr. Antoine Karam" {...register("doctor")} />
-                  {errors.doctor && (
-                    <p className="text-xs text-red-500">{errors.doctor.message}</p>
-                  )}
+                <div className="space-y-2">
+                  <Label>Class</Label>
+                  <Input value={selectedChild?.className ?? ""} readOnly />
                 </div>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Physical Exam Accordion */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Physical Examination</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Complete each section of the physical exam. A checkmark appears when all fields are filled.
+              <div className="grid gap-4 md:grid-cols-4">
+                <div className="rounded-sm border bg-muted/30 p-3">
+                  <p className="text-xs text-muted-foreground">Child #</p>
+                  <p className="font-medium">{selectedChild?.childNumber ?? "-"}</p>
+                </div>
+                <div className="rounded-sm border bg-muted/30 p-3">
+                  <p className="text-xs text-muted-foreground">Branch</p>
+                  <p className="font-medium">{selectedChild?.branchName ?? "-"}</p>
+                </div>
+                <div className="rounded-sm border bg-muted/30 p-3">
+                  <p className="text-xs text-muted-foreground">Gender</p>
+                  <p className="font-medium">{selectedChild?.gender ?? "-"}</p>
+                </div>
+                <div className="rounded-sm border bg-muted/30 p-3">
+                  <p className="text-xs text-muted-foreground">Form #</p>
+                  <p className="font-medium">{legacyFormId ?? (isNew ? "New" : "-")}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center justify-center gap-2 rounded-sm border bg-muted/20 p-4">
+              <ChildPhoto src={selectedChildPhoto} alt={selectedChild?.name ?? "Child"} />
+              <p className="text-center text-sm font-medium">{selectedChild?.name ?? "No child selected"}</p>
+              <p className="text-center text-xs text-muted-foreground">
+                DOB: {selectedChild?.dateOfBirth || "-"}
               </p>
-            </CardHeader>
-            <CardContent>
-              <Accordion type="multiple" defaultValue={["vitals"]} className="w-full">
-                {/* ── 1. Vitals ── */}
-                <AccordionItem value="vitals">
-                  <AccordionTrigger className="text-base">
-                    <span className="flex items-center gap-2">
-                      <Heart className="size-4 text-rose-500" />
-                      Vitals
-                      {sectionCompletion.find((s) => s.id === "vitals")?.complete && (
-                        <CheckCircle2 className="size-4 text-emerald-500" />
-                      )}
-                    </span>
-                  </AccordionTrigger>
-                  <AccordionContent className="space-y-4 px-1">
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                      <div className="space-y-1.5">
-                        <Label>Height (cm)</Label>
-                        <Input
-                          type="number"
-                          step="0.1"
-                          placeholder="e.g. 95"
-                          {...register("heightCm")}
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label>Weight (kg)</Label>
-                        <Input
-                          type="number"
-                          step="0.1"
-                          placeholder="e.g. 14.5"
-                          {...register("weightKg")}
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label>Blood Pressure (mmHg)</Label>
-                        <Input
-                          placeholder="e.g. 100/60"
-                          {...register("bloodPressure")}
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>Other Problems / Additional Notes</Label>
-                      <Textarea
-                        rows={2}
-                        placeholder="Any notes about vitals..."
-                        {...register("vitalsNotes")}
-                      />
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
+            </div>
+          </CardContent>
+        </Card>
 
-                {/* ── 2. Eyes ── */}
-                <AccordionItem value="eyes">
-                  <AccordionTrigger className="text-base">
-                    <span className="flex items-center gap-2">
-                      <Eye className="size-4 text-blue-500" />
-                      Eyes
-                      {sectionCompletion.find((s) => s.id === "eyes")?.complete && (
-                        <CheckCircle2 className="size-4 text-emerald-500" />
-                      )}
-                    </span>
-                  </AccordionTrigger>
-                  <AccordionContent className="space-y-4 px-1">
-                    <div className="flex items-center gap-3">
-                      <Controller
-                        name="withGlasses"
-                        control={control}
-                        render={({ field }) => (
-                          <Checkbox
-                            checked={field.value ?? false}
-                            onCheckedChange={(checked) => field.onChange(checked === true)}
-                          />
-                        )}
-                      />
-                      <Label>With Glasses</Label>
-                    </div>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                      <FormSelect
-                        label="Left Eye"
-                        value={watchedValues.leftEye}
-                        onValueChange={(v) => setValue("leftEye", v)}
-                        options={acuityOptions}
-                        placeholder="Acuity..."
-                      />
-                      <FormSelect
-                        label="Right Eye"
-                        value={watchedValues.rightEye}
-                        onValueChange={(v) => setValue("rightEye", v)}
-                        options={acuityOptions}
-                        placeholder="Acuity..."
-                      />
-                      <FormSelect
-                        label="Crooked Eyes"
-                        value={watchedValues.crookedEyes}
-                        onValueChange={(v) => setValue("crookedEyes", v)}
-                        options={["Yes", "No"]}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>Other Problems / Additional Notes</Label>
-                      <Textarea
-                        rows={2}
-                        placeholder="Any notes about eyes..."
-                        {...register("eyesNotes")}
-                      />
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
+        <VisitSection title="General Info" icon={<Stethoscope className="size-4 text-[#327ad5]" />}>
+          <div className="grid gap-4 md:grid-cols-4">
+            <LegacyInput
+              label="Visit Date"
+              field="visitDate"
+              type="date"
+              required
+              values={values}
+              missingFields={missingFields}
+              disabled={busy}
+              placeholder=""
+              onChange={setField}
+            />
+            <LegacyInput
+              label="Height (CM)"
+              field="height"
+              type="number"
+              step="0.1"
+              required
+              values={values}
+              missingFields={missingFields}
+              disabled={busy}
+              placeholder="CM"
+              onChange={setField}
+            />
+            <LegacyInput
+              label="Weight (KG)"
+              field="weight"
+              type="number"
+              step="0.1"
+              required
+              values={values}
+              missingFields={missingFields}
+              disabled={busy}
+              placeholder="KG"
+              onChange={setField}
+            />
+            <LegacyInput
+              label="Blood Pressure"
+              field="bp"
+              required
+              values={values}
+              missingFields={missingFields}
+              disabled={busy}
+              placeholder="mm"
+              onChange={setField}
+            />
+          </div>
+        </VisitSection>
 
-                {/* ── 3. Ears ── */}
-                <AccordionItem value="ears">
-                  <AccordionTrigger className="text-base">
-                    <span className="flex items-center gap-2">
-                      <Ear className="size-4 text-amber-500" />
-                      Ears
-                      {sectionCompletion.find((s) => s.id === "ears")?.complete && (
-                        <CheckCircle2 className="size-4 text-emerald-500" />
-                      )}
-                    </span>
-                  </AccordionTrigger>
-                  <AccordionContent className="space-y-4 px-1">
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                      <FormSelect
-                        label="Wax — Left Ear"
-                        value={watchedValues.waxLeft}
-                        onValueChange={(v) => setValue("waxLeft", v)}
-                        options={earCondition}
-                      />
-                      <FormSelect
-                        label="Wax — Right Ear"
-                        value={watchedValues.waxRight}
-                        onValueChange={(v) => setValue("waxRight", v)}
-                        options={earCondition}
-                      />
-                      <FormSelect
-                        label="Drum — Left Ear"
-                        value={watchedValues.drumLeft}
-                        onValueChange={(v) => setValue("drumLeft", v)}
-                        options={earCondition}
-                      />
-                      <FormSelect
-                        label="Drum — Right Ear"
-                        value={watchedValues.drumRight}
-                        onValueChange={(v) => setValue("drumRight", v)}
-                        options={earCondition}
-                      />
-                      <FormSelect
-                        label="Hearing — Left Ear"
-                        value={watchedValues.hearingLeft}
-                        onValueChange={(v) => setValue("hearingLeft", v)}
-                        options={earCondition}
-                      />
-                      <FormSelect
-                        label="Hearing — Right Ear"
-                        value={watchedValues.hearingRight}
-                        onValueChange={(v) => setValue("hearingRight", v)}
-                        options={earCondition}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>Other Problems / Additional Notes</Label>
-                      <Textarea
-                        rows={2}
-                        placeholder="Any notes about ears..."
-                        {...register("earsNotes")}
-                      />
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
+        <VisitSection title="Eyes" icon={<Eye className="size-4 text-[#7239ea]" />}>
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 rounded-sm border bg-muted/20 p-3">
+              <Checkbox
+                checked={values.leyewg}
+                disabled={busy}
+                onCheckedChange={(checked) => setWithGlasses(checked === true)}
+              />
+              <Label>With Glasses</Label>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <LegacyInput
+                label="Left Eye"
+                field="leye"
+                list="visit-normal-abnormal"
+                required
+                values={values}
+                missingFields={missingFields}
+                disabled={busy}
+                onChange={setField}
+              />
+              <LegacyInput
+                label="Right Eye"
+                field="reye"
+                list="visit-normal-abnormal"
+                required
+                values={values}
+                missingFields={missingFields}
+                disabled={busy}
+                onChange={setField}
+              />
+              <LegacyInput
+                label="Other Problems"
+                field="eyeprob"
+                values={values}
+                missingFields={missingFields}
+                disabled={busy}
+                placeholder=""
+                onChange={setField}
+              />
+              <LegacyInput
+                label="Crooked Eyes"
+                field="creye"
+                values={values}
+                missingFields={missingFields}
+                disabled={busy}
+                placeholder=""
+                onChange={setField}
+              />
+            </div>
+          </div>
+        </VisitSection>
 
-                {/* ── 4. Systems ── */}
-                <AccordionItem value="systems">
-                  <AccordionTrigger className="text-base">
-                    <span className="flex items-center gap-2">
-                      <Activity className="size-4 text-violet-500" />
-                      Systems
-                      {sectionCompletion.find((s) => s.id === "systems")?.complete && (
-                        <CheckCircle2 className="size-4 text-emerald-500" />
-                      )}
-                    </span>
-                  </AccordionTrigger>
-                  <AccordionContent className="space-y-4 px-1">
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                      <FormSelect
-                        label="Nose / Throat (Paranasal Sinuses)"
-                        value={watchedValues.noseThroat}
-                        onValueChange={(v) => setValue("noseThroat", v)}
-                        options={systemStatus}
-                      />
-                      <FormSelect
-                        label="Thyroid"
-                        value={watchedValues.thyroid}
-                        onValueChange={(v) => setValue("thyroid", v)}
-                        options={systemStatus}
-                      />
-                      <FormSelect
-                        label="Lymph Nodes"
-                        value={watchedValues.lymphNodes}
-                        onValueChange={(v) => setValue("lymphNodes", v)}
-                        options={systemStatus}
-                      />
-                      <FormSelect
-                        label="Heart & Arterial System"
-                        value={watchedValues.heartArterial}
-                        onValueChange={(v) => setValue("heartArterial", v)}
-                        options={systemStatus}
-                      />
-                      <FormSelect
-                        label="Respiratory"
-                        value={watchedValues.respiratory}
-                        onValueChange={(v) => setValue("respiratory", v)}
-                        options={systemStatus}
-                      />
-                      <FormSelect
-                        label="Motor System (Bones, Joints, Backbone, Muscles)"
-                        value={watchedValues.motorSystem}
-                        onValueChange={(v) => setValue("motorSystem", v)}
-                        options={systemStatus}
-                      />
-                      <FormSelect
-                        label="Abdomen — Genitals"
-                        value={watchedValues.abdomenGenitals}
-                        onValueChange={(v) => setValue("abdomenGenitals", v)}
-                        options={systemStatus}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>Other Problems / Additional Notes</Label>
-                      <Textarea
-                        rows={2}
-                        placeholder="Any notes about systems..."
-                        {...register("systemsNotes")}
-                      />
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
+        <VisitSection title="Ears" icon={<Ear className="size-4 text-[#d48706]" />}>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <LegacyInput label="Wax Left" field="earwl" list="visit-ear-options" required values={values} missingFields={missingFields} disabled={busy} onChange={setField} />
+            <LegacyInput label="Wax Right" field="earwr" list="visit-ear-options" required values={values} missingFields={missingFields} disabled={busy} onChange={setField} />
+            <LegacyInput label="Drum Left" field="eardl" list="visit-ear-options" required values={values} missingFields={missingFields} disabled={busy} onChange={setField} />
+            <LegacyInput label="Drum Right" field="eardr" list="visit-ear-options" required values={values} missingFields={missingFields} disabled={busy} onChange={setField} />
+            <LegacyInput label="Hearing Left" field="earhl" list="visit-ear-options" required values={values} missingFields={missingFields} disabled={busy} onChange={setField} />
+            <LegacyInput label="Hearing Right" field="earhr" list="visit-ear-options" required values={values} missingFields={missingFields} disabled={busy} onChange={setField} />
+            <div className="md:col-span-2">
+              <LegacyInput label="Other Problems" field="earprob" values={values} missingFields={missingFields} disabled={busy} placeholder="" onChange={setField} />
+            </div>
+          </div>
+        </VisitSection>
 
-                {/* ── 5. Skin / Hair / Nails ── */}
-                <AccordionItem value="skin">
-                  <AccordionTrigger className="text-base">
-                    <span className="flex items-center gap-2">
-                      <Sparkles className="size-4 text-pink-500" />
-                      Skin / Hair / Nails
-                      {sectionCompletion.find((s) => s.id === "skin")?.complete && (
-                        <CheckCircle2 className="size-4 text-emerald-500" />
-                      )}
-                    </span>
-                  </AccordionTrigger>
-                  <AccordionContent className="space-y-4 px-1">
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                      <FormSelect
-                        label="Lice / Lupus"
-                        value={watchedValues.liceLupus}
-                        onValueChange={(v) => setValue("liceLupus", v)}
-                        options={systemStatus}
-                      />
-                      <FormSelect
-                        label="Dermatitis"
-                        value={watchedValues.dermatitis}
-                        onValueChange={(v) => setValue("dermatitis", v)}
-                        options={systemStatus}
-                      />
-                      <FormSelect
-                        label="Skin Allergy"
-                        value={watchedValues.skinAllergy}
-                        onValueChange={(v) => setValue("skinAllergy", v)}
-                        options={systemStatus}
-                      />
-                      <FormSelect
-                        label="Hair"
-                        value={watchedValues.hair}
-                        onValueChange={(v) => setValue("hair", v)}
-                        options={systemStatus}
-                      />
-                      <FormSelect
-                        label="Nails"
-                        value={watchedValues.nails}
-                        onValueChange={(v) => setValue("nails", v)}
-                        options={systemStatus}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>Other Problems / Additional Notes</Label>
-                      <Textarea
-                        rows={2}
-                        placeholder="Any notes about skin, hair, nails..."
-                        {...register("skinNotes")}
-                      />
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </CardContent>
-          </Card>
+        <VisitSection title="Nose and Throat" icon={<Activity className="size-4 text-[#008200]" />}>
+          <div className="grid gap-4 md:grid-cols-2">
+            <LegacyInput label="Nose and Throat" field="nose" list="visit-normal-abnormal" required values={values} missingFields={missingFields} disabled={busy} onChange={setField} />
+            <LegacyInput label="Other Problems" field="noseprob" values={values} missingFields={missingFields} disabled={busy} placeholder="" onChange={setField} />
+          </div>
+        </VisitSection>
 
-          <MedicalAttachmentsSection
-            existingAttachments={attachments.existingAttachments}
-            pendingAttachments={attachments.pendingAttachments}
-            disabled={busy}
-            onExistingTitleChange={attachments.updateExistingAttachmentTitle}
-            onRemoveExisting={attachments.removeExistingAttachment}
-            onAddPending={attachments.addPendingAttachments}
-            onPendingTitleChange={attachments.updatePendingAttachmentTitle}
-            onRemovePending={attachments.removePendingAttachment}
-          />
-        </form>
+        <VisitSection title="Thyriod" icon={<Activity className="size-4 text-[#327ad5]" />}>
+          <div className="grid gap-4 md:grid-cols-2">
+            <LegacyInput label="Thyriod" field="thyriod" list="visit-normal-abnormal" required values={values} missingFields={missingFields} disabled={busy} onChange={setField} />
+            <LegacyInput label="Other Notes" field="thprob" values={values} missingFields={missingFields} disabled={busy} placeholder="" onChange={setField} />
+          </div>
+        </VisitSection>
+
+        <VisitSection title="Lymph nodes" icon={<Activity className="size-4 text-[#7239ea]" />}>
+          <div className="grid gap-4 md:grid-cols-2">
+            <LegacyInput label="Lymph nodes" field="lymph" list="visit-normal-abnormal" required values={values} missingFields={missingFields} disabled={busy} onChange={setField} />
+            <LegacyInput label="Other Problems" field="lymphprob" values={values} missingFields={missingFields} disabled={busy} placeholder="" onChange={setField} />
+          </div>
+        </VisitSection>
+
+        <VisitSection title="Heart And Arterial System" icon={<HeartPulse className="size-4 text-[#d64690]" />}>
+          <div className="grid gap-4 md:grid-cols-3">
+            <LegacyInput label="Heart" field="heart" list="visit-normal-abnormal" required values={values} missingFields={missingFields} disabled={busy} onChange={setField} />
+            <LegacyInput label="Arterial System" field="arterial" list="visit-normal-abnormal" required values={values} missingFields={missingFields} disabled={busy} onChange={setField} />
+            <LegacyInput label="Other Problems" field="heartprob" values={values} missingFields={missingFields} disabled={busy} placeholder="" onChange={setField} />
+          </div>
+        </VisitSection>
+
+        <VisitSection title="Respiratory" icon={<Activity className="size-4 text-[#008200]" />}>
+          <div className="grid gap-4 md:grid-cols-2">
+            <LegacyInput label="Respiratory" field="resp" list="visit-normal-abnormal" required values={values} missingFields={missingFields} disabled={busy} onChange={setField} />
+            <LegacyInput label="Other Problems" field="respprob" values={values} missingFields={missingFields} disabled={busy} placeholder="" onChange={setField} />
+          </div>
+        </VisitSection>
+
+        <VisitSection title="Motor System" icon={<Activity className="size-4 text-[#7239ea]" />}>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+            <LegacyInput label="Bones" field="bone" list="visit-normal-abnormal" required values={values} missingFields={missingFields} disabled={busy} onChange={setField} />
+            <LegacyInput label="Joints" field="joint" list="visit-normal-abnormal" required values={values} missingFields={missingFields} disabled={busy} onChange={setField} />
+            <LegacyInput label="Backbone" field="backbone" list="visit-normal-abnormal" required values={values} missingFields={missingFields} disabled={busy} onChange={setField} />
+            <LegacyInput label="Muscles" field="muscle" list="visit-normal-abnormal" required values={values} missingFields={missingFields} disabled={busy} onChange={setField} />
+            <LegacyInput label="Additional Notes" field="motor" values={values} missingFields={missingFields} disabled={busy} placeholder="" onChange={setField} />
+          </div>
+        </VisitSection>
+
+        <VisitSection title="Abdomen - Genitals" icon={<Activity className="size-4 text-[#d48706]" />}>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+            <LegacyInput label="Abdomen" field="abdomen" list="visit-normal-abnormal" required values={values} missingFields={missingFields} disabled={busy} onChange={setField} />
+            <LegacyInput label="Enlarged" field="enlarged" list="visit-normal-abnormal" required values={values} missingFields={missingFields} disabled={busy} onChange={setField} />
+            <LegacyInput label="Tumor" field="tumor" list="visit-normal-abnormal" required values={values} missingFields={missingFields} disabled={busy} onChange={setField} />
+            <LegacyInput label="Genitals" field="genitals" list="visit-normal-abnormal" required values={values} missingFields={missingFields} disabled={busy} onChange={setField} />
+            <LegacyInput label="Other Problems" field="abdoprob" values={values} missingFields={missingFields} disabled={busy} placeholder="" onChange={setField} />
+          </div>
+        </VisitSection>
+
+        <VisitSection title="Skin - Hair - Nails" icon={<Activity className="size-4 text-[#d64690]" />}>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
+            <LegacyInput label="Lice - Lupus" field="lice" list="visit-yes-no" required values={values} missingFields={missingFields} disabled={busy} onChange={setField} />
+            <LegacyInput label="Dermatitis" field="derma" list="visit-yes-no" required values={values} missingFields={missingFields} disabled={busy} onChange={setField} />
+            <LegacyInput label="Skin Alergy" field="skin" list="visit-yes-no" required values={values} missingFields={missingFields} disabled={busy} onChange={setField} />
+            <LegacyInput label="Hair" field="hair" list="visit-yes-no" required values={values} missingFields={missingFields} disabled={busy} onChange={setField} />
+            <LegacyInput label="Nails" field="nails" list="visit-yes-no" required values={values} missingFields={missingFields} disabled={busy} onChange={setField} />
+            <LegacyInput label="Additional Notes" field="skinprob" values={values} missingFields={missingFields} disabled={busy} placeholder="" onChange={setField} />
+          </div>
+        </VisitSection>
+
+        <MedicalAttachmentsSection
+          existingAttachments={attachments.existingAttachments}
+          pendingAttachments={attachments.pendingAttachments}
+          disabled={busy}
+          onExistingTitleChange={attachments.updateExistingAttachmentTitle}
+          onRemoveExisting={attachments.removeExistingAttachment}
+          onAddPending={attachments.addPendingAttachments}
+          onPendingTitleChange={attachments.updatePendingAttachmentTitle}
+          onRemovePending={attachments.removePendingAttachment}
+        />
       </div>
     </>
   );

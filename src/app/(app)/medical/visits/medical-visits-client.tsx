@@ -1,12 +1,26 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useMemo, useState, useTransition } from "react";
 import { type ColumnDef } from "@tanstack/react-table";
+import { format } from "date-fns";
+import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import {
+  CalendarCheck,
+  Eye,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Search,
+  Stethoscope,
+  Trash2,
+  User,
+} from "lucide-react";
+
 import { PageHeader } from "@/components/layout/page-header";
-import { DataTable, SortableHeader } from "@/components/shared/data-table";
+import { DataTable } from "@/components/shared/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,7 +32,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle, CardAction } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,25 +49,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Plus,
-  Search,
-  Eye,
-  Pencil,
-  Trash2,
-  Loader2,
-  CalendarCheck,
-} from "lucide-react";
 import { deleteMedicalForm } from "@/lib/actions/medical";
-import { getInitials, getPastelAvatarColor } from "@/components/children/children-columns";
 
-// --- Types ---
-
-interface VisitRow {
+export interface MedicalVisitRow {
   id: string;
+  legacyFormId: number | null;
   childId: string;
+  childNumber: string;
+  photo: string | null;
   firstName: string;
   lastName: string;
+  childName: string;
   dateOfBirth: string | null;
   gender: string | null;
   branchId: string;
@@ -56,29 +68,96 @@ interface VisitRow {
   className: string;
   schoolYearId: string | null;
   yearLabel: string;
+  visitDate: string;
   createdAt: string;
 }
 
-function formatDate(date: string | null) {
-  if (!date) return "-";
-  const d = new Date(date);
-  const day = String(d.getDate()).padStart(2, "0");
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const year = d.getFullYear();
-  return `${day}/${month}/${year}`;
-}
-
-// --- Props ---
-
 interface MedicalVisitsClientProps {
-  visits: VisitRow[];
+  visits: MedicalVisitRow[];
   total: number;
   branches: Array<{ id: string; name: string }>;
   classes: Array<{ id: string; name: string; branchId: string }>;
   schoolYears: Array<{ id: string; label: string }>;
 }
 
-// --- Page Component ---
+function childPhotoSrc(photo: string | null) {
+  if (!photo || photo === "default.jpg") return "";
+  if (/^https?:\/\//i.test(photo) || photo.startsWith("/")) return photo;
+  if (photo.includes("/")) return `/${photo.replace(/^\/+/, "")}`;
+  return `/images/EmpPhoto/${photo}`;
+}
+
+function formatDate(date: string | null) {
+  if (!date) return "-";
+  const isoDate = date.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const parsed = isoDate
+    ? new Date(Number(isoDate[1]), Number(isoDate[2]) - 1, Number(isoDate[3]))
+    : new Date(date);
+  if (Number.isNaN(parsed.getTime())) return date;
+  return format(parsed, "MMM d, yyyy");
+}
+
+function formatGender(gender: string | null) {
+  if (!gender) return "-";
+  const normalized = gender.toLowerCase();
+  if (normalized === "male" || normalized === "boy") return "Male";
+  if (normalized === "female" || normalized === "girl") return "Female";
+  return gender;
+}
+
+function genderBadgeClass(gender: string | null) {
+  const normalized = formatGender(gender).toLowerCase();
+  if (normalized === "male") return "bg-[#327ad5] text-white border-transparent";
+  if (normalized === "female") return "bg-[#d64690] text-white border-transparent";
+  return "bg-[#707070] text-white border-transparent";
+}
+
+function dateInRange(value: string, from: string, to: string) {
+  if (!from && !to) return true;
+  if (!value) return false;
+
+  const current = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(current.getTime())) return true;
+
+  if (from) {
+    const min = new Date(`${from}T00:00:00`);
+    if (!Number.isNaN(min.getTime()) && current < min) return false;
+  }
+
+  if (to) {
+    const max = new Date(`${to}T23:59:59`);
+    if (!Number.isNaN(max.getTime()) && current > max) return false;
+  }
+
+  return true;
+}
+
+function ChildPhoto({ visit }: { visit: MedicalVisitRow }) {
+  const [failed, setFailed] = useState(false);
+  const src = childPhotoSrc(visit.photo);
+
+  if (!src || failed) {
+    return (
+      <div className="flex size-10 items-center justify-center rounded-full border bg-muted">
+        <User className="size-4 text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative size-10 overflow-hidden rounded-full border bg-muted">
+      <Image
+        src={src}
+        alt={visit.childName}
+        fill
+        sizes="40px"
+        className="object-cover"
+        unoptimized
+        onError={() => setFailed(true)}
+      />
+    </div>
+  );
+}
 
 export function MedicalVisitsClient({
   visits,
@@ -87,144 +166,153 @@ export function MedicalVisitsClient({
   schoolYears,
 }: MedicalVisitsClientProps) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
   const [branchFilter, setBranchFilter] = useState("all");
   const [classFilter, setClassFilter] = useState("all");
   const [yearFilter, setYearFilter] = useState("all");
   const [genderFilter, setGenderFilter] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleDelete = async () => {
-    if (!deleteId) return;
-    setIsDeleting(true);
-    try {
-      const result = await deleteMedicalForm(deleteId);
-      if (result.error) {
-        toast.error(result.error);
-      } else {
-        toast.success("Visit record deleted successfully.");
-        router.refresh();
-      }
-    } catch {
-      toast.error("Failed to delete visit record.");
-    } finally {
-      setIsDeleting(false);
-      setDeleteId(null);
+  const filteredClasses = useMemo(
+    () =>
+      branchFilter === "all"
+        ? classes
+        : classes.filter((classItem) => classItem.branchId === branchFilter),
+    [branchFilter, classes],
+  );
+
+  const filteredData = useMemo(() => {
+    let data = [...visits].sort((left, right) => {
+      const rightId = right.legacyFormId ?? Number.NEGATIVE_INFINITY;
+      const leftId = left.legacyFormId ?? Number.NEGATIVE_INFINITY;
+      if (rightId !== leftId) return rightId - leftId;
+      return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+    });
+
+    if (search) {
+      const lower = search.toLowerCase();
+      data = data.filter((visit) =>
+        [
+          visit.legacyFormId,
+          visit.childNumber,
+          visit.firstName,
+          visit.lastName,
+          visit.dateOfBirth,
+          visit.branchName,
+          visit.className,
+          visit.yearLabel,
+          formatGender(visit.gender),
+          visit.visitDate,
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(lower),
+      );
     }
-  };
 
-  // --- Columns (matching old PHP: Image, F Name, L Name, DOB, Branch, Class, Year, Gender, Created Date, Action) ---
+    if (branchFilter !== "all") {
+      data = data.filter((visit) => visit.branchId === branchFilter);
+    }
 
-  const columns: ColumnDef<VisitRow>[] = [
+    if (classFilter !== "all") {
+      data = data.filter((visit) => visit.classId === classFilter);
+    }
+
+    if (yearFilter !== "all") {
+      data = data.filter((visit) => visit.schoolYearId === yearFilter);
+    }
+
+    if (genderFilter !== "all") {
+      data = data.filter((visit) => formatGender(visit.gender).toLowerCase() === genderFilter);
+    }
+
+    data = data.filter((visit) => dateInRange(visit.visitDate, dateFrom, dateTo));
+
+    return data;
+  }, [visits, search, branchFilter, classFilter, yearFilter, genderFilter, dateFrom, dateTo]);
+
+  function handleDelete() {
+    if (!deleteId) return;
+    startTransition(async () => {
+      const result = await deleteMedicalForm(deleteId);
+      if (result.success) {
+        toast.success("Medical visit form deleted successfully.");
+        router.refresh();
+      } else {
+        toast.error(result.error || "Failed to delete medical visit form.");
+      }
+      setDeleteId(null);
+    });
+  }
+
+  const columns: ColumnDef<MedicalVisitRow>[] = [
     {
-      id: "avatar",
+      accessorKey: "legacyFormId",
+      header: "#",
+      cell: ({ row }) => <span className="text-sm font-medium">{row.original.legacyFormId ?? "-"}</span>,
+    },
+    {
+      accessorKey: "photo",
       header: "Image",
-      cell: ({ row }) => {
-        const { firstName, lastName } = row.original;
-        const fullName = `${firstName} ${lastName}`;
-        return (
-          <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${getPastelAvatarColor(fullName)}`}>
-            {getInitials(firstName, lastName)}
-          </div>
-        );
-      },
+      cell: ({ row }) => <ChildPhoto visit={row.original} />,
       enableSorting: false,
     },
     {
       accessorKey: "firstName",
-      header: ({ column }) => (
-        <SortableHeader column={column}>First Name</SortableHeader>
-      ),
+      header: "F Name",
       cell: ({ row }) => (
-        <Link
-          href={`/medical/visits/${row.original.id}`}
-          className="font-medium text-foreground hover:text-primary hover:underline"
-        >
+        <Link href={`/medical/visits/${row.original.id}`} className="font-medium hover:underline">
           {row.original.firstName}
         </Link>
       ),
     },
     {
       accessorKey: "lastName",
-      header: ({ column }) => (
-        <SortableHeader column={column}>Last Name</SortableHeader>
-      ),
-      cell: ({ row }) => (
-        <span className="text-foreground">{row.original.lastName}</span>
-      ),
+      header: "L Name",
     },
     {
       accessorKey: "dateOfBirth",
-      header: ({ column }) => (
-        <SortableHeader column={column}>DOB</SortableHeader>
-      ),
+      header: "DOB",
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">
-          {formatDate(row.original.dateOfBirth)}
-        </span>
+        <span className="text-sm text-muted-foreground">{formatDate(row.original.dateOfBirth)}</span>
       ),
     },
     {
       accessorKey: "branchName",
-      header: ({ column }) => (
-        <SortableHeader column={column}>Branch</SortableHeader>
-      ),
+      header: "Branch",
       cell: ({ row }) => (
-        <span className="text-muted-foreground">{row.original.branchName || "-"}</span>
+        <Badge variant="secondary" className="bg-muted/50 text-muted-foreground font-normal">
+          {row.original.branchName}
+        </Badge>
       ),
     },
     {
       accessorKey: "className",
-      header: ({ column }) => (
-        <SortableHeader column={column}>Class</SortableHeader>
-      ),
-      cell: ({ row }) => {
-        const name = row.original.className;
-        if (!name) return <span className="text-muted-foreground">-</span>;
-        return <Badge className="bg-[#7239ea] text-white border-transparent font-normal">{name}</Badge>;
-      },
+      header: "Class",
+      cell: ({ row }) => <span className="text-sm">{row.original.className || "-"}</span>,
     },
     {
       accessorKey: "yearLabel",
-      header: ({ column }) => (
-        <SortableHeader column={column}>Year</SortableHeader>
-      ),
-      cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">
-          {row.original.yearLabel || "-"}
-        </span>
-      ),
+      header: "Year",
+      cell: ({ row }) => <span className="text-sm">{row.original.yearLabel || "-"}</span>,
     },
     {
       accessorKey: "gender",
-      header: ({ column }) => (
-        <SortableHeader column={column}>Gender</SortableHeader>
+      header: "Gender",
+      cell: ({ row }) => (
+        <Badge className={genderBadgeClass(row.original.gender)}>
+          {formatGender(row.original.gender)}
+        </Badge>
       ),
-      cell: ({ row }) => {
-        const gender = row.original.gender;
-        if (!gender) return <span className="text-muted-foreground">-</span>;
-        return (
-          <div className="flex items-center gap-1.5">
-            <span
-              className={`inline-block size-2 rounded-full ${
-                gender === "MALE" ? "bg-[#4F46E5]" : "bg-[#E11D48]"
-              }`}
-            />
-            <span className="text-sm">{gender === "MALE" ? "Boy" : "Girl"}</span>
-          </div>
-        );
-      },
     },
     {
-      accessorKey: "createdAt",
-      header: ({ column }) => (
-        <SortableHeader column={column}>Created Date</SortableHeader>
-      ),
+      accessorKey: "visitDate",
+      header: "Date",
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">
-          {formatDate(row.original.createdAt)}
-        </span>
+        <span className="text-sm text-muted-foreground">{formatDate(row.original.visitDate)}</span>
       ),
     },
     {
@@ -233,179 +321,170 @@ export function MedicalVisitsClient({
       cell: ({ row }) => {
         const visit = row.original;
         return (
-          <div className="flex items-center gap-0.5">
-            <Button variant="ghost" size="sm" className="size-8 p-0" asChild>
-              <Link href={`/medical/visits/${visit.id}`}>
-                <Eye className="size-4 text-muted-foreground" />
-                <span className="sr-only">View</span>
-              </Link>
-            </Button>
-            <Button variant="ghost" size="sm" className="size-8 p-0" asChild>
-              <Link href={`/medical/visits/${visit.id}`}>
-                <Pencil className="size-4 text-muted-foreground" />
-                <span className="sr-only">Edit</span>
-              </Link>
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="size-8 p-0 text-muted-foreground hover:text-destructive"
-              onClick={() => setDeleteId(visit.id)}
-            >
-              <Trash2 className="size-4" />
-              <span className="sr-only">Delete</span>
-            </Button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon-sm">
+                <MoreHorizontal className="size-4" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <Link href={`/medical/visits/${visit.id}`}>
+                  <Eye className="size-4" />
+                  View
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={`/medical/visits/${visit.id}`}>
+                  <Pencil className="size-4" />
+                  Edit
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem variant="destructive" onClick={() => setDeleteId(visit.id)}>
+                <Trash2 className="size-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         );
       },
       enableSorting: false,
     },
   ];
 
-  const filteredData = useMemo(() => {
-    let data = visits;
-
-    if (search) {
-      const lower = search.toLowerCase();
-      data = data.filter(
-        (v) =>
-          v.firstName.toLowerCase().includes(lower) ||
-          v.lastName.toLowerCase().includes(lower)
-      );
-    }
-
-    if (branchFilter !== "all") {
-      data = data.filter((v) => v.branchId === branchFilter);
-    }
-
-    if (classFilter !== "all") {
-      data = data.filter((v) => v.classId === classFilter);
-    }
-
-    if (yearFilter !== "all") {
-      data = data.filter((v) => v.schoolYearId === yearFilter);
-    }
-
-    if (genderFilter !== "all") {
-      data = data.filter((v) => v.gender === genderFilter);
-    }
-
-    return data;
-  }, [visits, search, branchFilter, classFilter, yearFilter, genderFilter]);
-
   return (
     <>
       <PageHeader
-        title="Doctor Visits"
+        title="Medical Visit"
         breadcrumbs={[
-          { label: "Health", href: "/medical/general" },
+          { label: "Medical", href: "/medical/general" },
           { label: "Visits" },
         ]}
+        actions={
+          <Button asChild>
+            <Link href="/medical/visits/new">
+              <Plus className="size-4" />
+              New Child Medical Visit Form
+            </Link>
+          </Button>
+        }
       />
-      <Card className="m-4 md:m-6">
-        <CardHeader>
-          <CardTitle className="text-lg">Doctor Visits</CardTitle>
-          <CardAction>
-            <Button asChild>
-              <Link href="/medical/visits/new">
-                <Plus className="mr-1 size-4" />
-                Add New
-              </Link>
-            </Button>
-          </CardAction>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Toolbar */}
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <div className="relative max-w-sm flex-1 min-w-0">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search by name..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-              />
-            </div>
 
-            <Select value={branchFilter} onValueChange={setBranchFilter}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="All Branches" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Branches</SelectItem>
-                {branches.map((b) => (
-                  <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={classFilter} onValueChange={setClassFilter}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="All Classes" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Classes</SelectItem>
-                {classes.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={yearFilter} onValueChange={setYearFilter}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="All Years" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Years</SelectItem>
-                {schoolYears.map((y) => (
-                  <SelectItem key={y.id} value={y.id}>{y.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={genderFilter} onValueChange={setGenderFilter}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="All Genders" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Genders</SelectItem>
-                <SelectItem value="MALE">Boy</SelectItem>
-                <SelectItem value="FEMALE">Girl</SelectItem>
-              </SelectContent>
-            </Select>
+      <div className="space-y-4 p-4 md:p-6">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <div className="relative max-w-sm flex-1 min-w-0">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search medical visits..."
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              className="pl-9"
+            />
           </div>
 
-          {filteredData.length === 0 ? (
-            <EmptyState
-              icon={CalendarCheck}
-              title="No doctor visits found"
-              description="No doctor visit records match your current filters."
-            />
-          ) : (
-            <DataTable columns={columns} data={filteredData} />
-          )}
-        </CardContent>
-      </Card>
+          <Select value={branchFilter} onValueChange={setBranchFilter}>
+            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[160px]">
+              <SelectValue placeholder="All Branches" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Branches</SelectItem>
+              {branches.map((branch) => (
+                <SelectItem key={branch.id} value={branch.id}>
+                  {branch.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+          <Select value={classFilter} onValueChange={setClassFilter}>
+            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[160px]">
+              <SelectValue placeholder="All Classes" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Classes</SelectItem>
+              {filteredClasses.map((classItem) => (
+                <SelectItem key={classItem.id} value={classItem.id}>
+                  {classItem.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={yearFilter} onValueChange={setYearFilter}>
+            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[150px]">
+              <SelectValue placeholder="All Years" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Years</SelectItem>
+              {schoolYears.map((year) => (
+                <SelectItem key={year.id} value={year.id}>
+                  {year.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={genderFilter} onValueChange={setGenderFilter}>
+            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[150px]">
+              <SelectValue placeholder="All Genders" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Genders</SelectItem>
+              <SelectItem value="male">Male</SelectItem>
+              <SelectItem value="female">Female</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <CalendarCheck className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="date"
+                value={dateFrom}
+                aria-label="Date from"
+                onChange={(event) => setDateFrom(event.target.value)}
+                className="w-[150px] pl-9"
+              />
+            </div>
+            <Input
+              type="date"
+              value={dateTo}
+              aria-label="Date to"
+              onChange={(event) => setDateTo(event.target.value)}
+              className="w-[150px]"
+            />
+          </div>
+        </div>
+
+        {filteredData.length === 0 ? (
+          <EmptyState
+            icon={Stethoscope}
+            title="No medical visit forms found"
+            description="No medical visit forms match your current filters."
+          />
+        ) : (
+          <DataTable columns={columns} data={filteredData} />
+        )}
+      </div>
+
+      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Visit Record</AlertDialogTitle>
+            <AlertDialogTitle>Delete Medical Visit Form</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this visit record? This action cannot be
-              undone.
+              Are you sure you want to delete this medical visit form? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={isDeleting}
+              disabled={isPending}
             >
-              {isDeleting && <Loader2 className="size-4 animate-spin" />}
-              Delete
+              {isPending ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

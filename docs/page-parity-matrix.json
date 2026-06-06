@@ -127,7 +127,7 @@
     "legacyPhp": "Front/templates/admin/Medical_form3.php",
     "legacyJs": "Front/templates/admin/js/Medical_form3.js",
     "modernRoute": "/medical/visits/[id]",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "restored - legacy medical visit form workflow restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -137,7 +137,7 @@
       "id",
       "tid"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored the legacy Medical Visit workflow: child profile context, visit date, height, weight, blood pressure, Eyes with With Glasses and Normal/Abnormal datalist values, Ears with Good/Fair/Bad values, Nose and Throat, Thyriod, Lymph nodes, Heart And Arterial System, Respiratory, Motor System, Abdomen - Genitals, Skin - Hair - Nails with Yes/No values, optional problem/note fields, permissive Save As Draft mapped to DRAFT/`is_rep_draft = 1`, submitted Save mapped to SUBMITTED/`is_rep_draft = 0`, preservation of all `t_form_3` keys in `MedicalForm.data`, and titled attachments with `images/MedForms` fallback previews. Remaining work is final logged-in visual smoke after local database/runtime state is clean."
   },
   {
     "legacyPhp": "Front/templates/admin/Medical_form4.php",
@@ -197,13 +197,13 @@
     "legacyPhp": "Front/templates/admin/Medical_forms3.php",
     "legacyJs": "Front/templates/admin/js/Medical_forms3.js",
     "modernRoute": "/medical/visits",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "restored - legacy medical visit roster restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored the legacy Medical Visit Listing with form #, child image fallback, F Name, L Name, DOB, Branch, Class, Year, Gender, Date, view/edit/delete actions, New Child Medical Visit Form, branch/class/year/gender/search/date filters, and form_id descending sort over migrated visit forms. Remaining work is final logged-in visual smoke after local database/runtime state is clean."
   },
   {
     "legacyPhp": "Front/templates/admin/Medical_forms4.php",
