@@ -42,6 +42,7 @@ interface BranchData {
 interface MonthlyBranchClientProps {
   branchDataMap: Record<string, BranchData>;
   branchOptions: { id: string; name: string }[];
+  initialBranchId: string;
 }
 
 const statIcons = [
@@ -54,9 +55,12 @@ const statIcons = [
 export default function MonthlyBranchClient({
   branchDataMap,
   branchOptions,
+  initialBranchId,
 }: MonthlyBranchClientProps) {
   const firstBranchId = branchOptions[0]?.id ?? "";
-  const [selectedBranchId, setSelectedBranchId] = useState(firstBranchId);
+  const [selectedBranchId, setSelectedBranchId] = useState(
+    initialBranchId || firstBranchId
+  );
 
   const branchData = branchDataMap[selectedBranchId];
   const stats = branchData?.stats;

@@ -26,8 +26,8 @@
   {
     "legacyPhp": "Front/templates/admin/Branch_Dashboard.php",
     "legacyJs": "Front/templates/admin/js/Branch_Dashboard.js",
-    "modernRoute": "/branches/[id]/dashboard",
-    "status": "partial - legacy branch KPI rows/charts restored; date-range drilldown audit remains",
+    "modernRoute": "/Branch_Dashboard.php, /branches/[id]/dashboard",
+    "status": "partial - legacy branch bridge and KPI rows/charts restored; date-range drilldown audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -35,7 +35,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Restored branch-scoped dashboard KPI groups for Total Classes, Total Active Children, staff counts, attendance, absence, missing daily/absence reports, payments, accidents, calls, medical reports, assessment totals/missing/drafts, plus branch-scoped children-per-class, gender, and attendance charts. Remaining work is exact legacy date-range/scholastic-year switching and modal drilldown table parity from Branch_Dashboard.js."
+    "verification": "Restored branch-scoped dashboard KPI groups for Total Classes, Total Active Children, staff counts, attendance, absence, missing daily/absence reports, payments, accidents, calls, medical reports, assessment totals/missing/drafts, plus branch-scoped children-per-class, gender, and attendance charts. `/Branch_Dashboard.php?id=` now resolves raw numeric, UUID, and encrypted legacy branch ids into the modern branch dashboard. Remaining work is exact legacy date-range/scholastic-year switching and modal drilldown table parity from Branch_Dashboard.js."
   },
   {
     "legacyPhp": "Front/templates/admin/Child_Details.php",
@@ -263,8 +263,8 @@
   {
     "legacyPhp": "Front/templates/admin/Monthly_report_b.php",
     "legacyJs": "",
-    "modernRoute": "/reports/monthly-branch",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "/Monthly_report_b.php, /reports/monthly-branch",
+    "status": "partial - legacy branch redirect restored; monthly field/action audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -272,7 +272,7 @@
     "requestFieldsMentioned": [
       "brid"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/Monthly_report_b.php?brid=` now resolves raw numeric, UUID, and encrypted legacy branch ids into `/reports/monthly-branch?branch=...`, and the modern page initializes the requested branch selection. Remaining work is exact legacy monthly attendance date picker/table/export parity."
   },
   {
     "legacyPhp": "Front/templates/admin/Msg_list.php",
@@ -1166,8 +1166,8 @@
   {
     "legacyPhp": "Front/templates/admin/childrenperbranch.php",
     "legacyJs": "Front/templates/admin/js/childrenperbranch.js",
-    "modernRoute": "/branches/[id]/children",
-    "status": "partial - branch-scoped children listing restored; bulk/export visual audit remains",
+    "modernRoute": "/childrenperbranch.php, /branches/[id]/children",
+    "status": "partial - branch-scoped children listing and legacy branch bridge restored; bulk/export visual audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -1175,7 +1175,7 @@
     "requestFieldsMentioned": [
       "brid"
     ],
-    "verification": "Restored the branch-dashboard entry point for `childrenperbranch.php` as `/branches/[id]/children`, with legacy title shape `Active Children For {branch} Branch`, branch-locked listing, S.N./image/F Name/L Name/DOB/Branch/Class/Status/Gender/Date/Action columns, branch class reassignment dropdown limited to classes in the same branch, status toggle, New Child, dashboard, print/view, edit, deactivate actions, legacy filters, and 10/20/50/100/150 page sizes. Remaining work is the legacy checkbox bulk branch/class modal behavior, exact TableTools copy/PDF/XLS/print visual parity, and any live refresh behavior."
+    "verification": "Restored the branch-dashboard entry point for `childrenperbranch.php` as `/branches/[id]/children`, with legacy title shape `Active Children For {branch} Branch`, branch-locked listing, S.N./image/F Name/L Name/DOB/Branch/Class/Status/Gender/Date/Action columns, branch class reassignment dropdown limited to classes in the same branch, status toggle, New Child, dashboard, print/view, edit, deactivate actions, legacy filters, and 10/20/50/100/150 page sizes. `/childrenperbranch.php?brid=` now resolves raw numeric, UUID, and encrypted legacy branch ids into that modern branch page. Remaining work is the legacy checkbox bulk branch/class modal behavior, exact TableTools copy/PDF/XLS/print visual parity, and any live refresh behavior."
   },
   {
     "legacyPhp": "Front/templates/admin/class.php",
@@ -15997,8 +15997,8 @@
   {
     "legacyPhp": "Front/templates/admin/classesperbranch.php",
     "legacyJs": "Front/templates/admin/js/classesperbranch.js",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/classesperbranch.php, /branches/[id]/classes",
+    "status": "partial - branch-scoped route bridge restored; class table parity audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -16006,7 +16006,7 @@
     "requestFieldsMentioned": [
       "brid"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/classesperbranch.php?brid=` now resolves raw numeric, UUID, and encrypted legacy branch ids into the modern branch-scoped classes listing. Remaining work is exact legacy `classesperbranch.php` table/action/export parity against `classesperbranch.js`."
   },
   {
     "legacyPhp": "Front/templates/admin/dailyreport.php",
@@ -16330,15 +16330,15 @@
   {
     "legacyPhp": "Front/templates/admin/printFoodCal.php",
     "legacyJs": "",
-    "modernRoute": "/food/calendar/print",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "/printFoodCal.php, /food/calendar/print",
+    "status": "partial - legacy print link bridge restored; food calendar visual audit remains",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [
       "brid",
       "month",
       "year"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/printFoodCal.php?brid=&month=&year=` now resolves raw numeric, UUID, and encrypted legacy branch ids into the modern print calendar, initializes branch/month/year from the legacy URL, and triggers the print dialog for the bridge route. Remaining work is exact legacy FullCalendar print layout parity."
   },
   {
     "legacyPhp": "Front/templates/admin/regions.php",

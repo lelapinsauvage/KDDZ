@@ -5,13 +5,13 @@ interface PageProps {
   searchParams: Promise<{ brid?: string }>;
 }
 
-export default async function LegacyBranchCallsRedirect({
+export default async function LegacyClassesPerBranchRedirect({
   searchParams,
 }: PageProps) {
   const { brid } = await searchParams;
 
   if (!brid?.trim()) {
-    redirect("/calls");
+    redirect("/classes");
   }
 
   const branchId = await resolveLegacyBranchId(brid);
@@ -19,5 +19,5 @@ export default async function LegacyBranchCallsRedirect({
     notFound();
   }
 
-  redirect(`/calls?branch=${encodeURIComponent(branchId)}`);
+  redirect(`/branches/${encodeURIComponent(branchId)}/classes`);
 }

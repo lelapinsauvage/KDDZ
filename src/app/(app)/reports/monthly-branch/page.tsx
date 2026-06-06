@@ -3,6 +3,10 @@ import { getClasses } from "@/lib/actions/classes";
 import { getDailyReports } from "@/lib/actions/daily-reports";
 import MonthlyBranchClient from "./monthly-branch-client";
 
+interface PageProps {
+  searchParams: Promise<{ branch?: string }>;
+}
+
 interface BranchRow {
   id: string;
   name: string;
@@ -21,7 +25,8 @@ interface ClassRow {
   _count: { children: number };
 }
 
-export default async function MonthlyBranchReportPage() {
+export default async function MonthlyBranchReportPage({ searchParams }: PageProps) {
+  const params = await searchParams;
   const [branchesResult, classesResult] = await Promise.all([
     getBranches(),
     getClasses(),
@@ -111,11 +116,17 @@ export default async function MonthlyBranchReportPage() {
   await Promise.all(branchPromises);
 
   const branchOptions = branches.map((b) => ({ id: b.id, name: b.name }));
+  const requestedBranchId = params.branch?.trim();
+  const initialBranchId =
+    requestedBranchId && branchOptions.some((b) => b.id === requestedBranchId)
+      ? requestedBranchId
+      : branchOptions[0]?.id ?? "";
 
   return (
     <MonthlyBranchClient
       branchDataMap={branchDataMap}
       branchOptions={branchOptions}
+      initialBranchId={initialBranchId}
     />
   );
 }

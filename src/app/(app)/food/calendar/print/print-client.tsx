@@ -72,6 +72,7 @@ interface PrintClientProps {
   initialBranchId: string;
   initialYear: number;
   initialMonth: number;
+  autoPrint: boolean;
 }
 
 export default function PrintClient({
@@ -80,6 +81,7 @@ export default function PrintClient({
   initialBranchId,
   initialYear,
   initialMonth,
+  autoPrint,
 }: PrintClientProps) {
   const [year, setYear] = useState(initialYear);
   const [month, setMonth] = useState(initialMonth);
@@ -99,6 +101,12 @@ export default function PrintClient({
       }
     });
   }, [branch, year, month]);
+
+  useEffect(() => {
+    if (!autoPrint) return;
+    const timeout = window.setTimeout(() => window.print(), 250);
+    return () => window.clearTimeout(timeout);
+  }, [autoPrint]);
 
   const prevMonth = useCallback(() => {
     if (month <= 1) {
