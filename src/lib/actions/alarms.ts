@@ -34,6 +34,10 @@ import {
   generatePaymentAlarmsForOrganization,
   type PaymentGenerationSummary,
 } from "@/lib/jobs/payment-alarms";
+import {
+  generateHolidayAlarmsForOrganization,
+  type HolidayGenerationSummary,
+} from "@/lib/jobs/holiday-alarms";
 
 export type { AssessmentDueAlarm, AssessmentGenerationSummary } from "@/lib/jobs/assessment-alarms";
 export type { MedicineGenerationSummary } from "@/lib/jobs/medicine-alarms";
@@ -43,6 +47,7 @@ export type {
   VaccinationGenerationSummary,
 } from "@/lib/jobs/vaccination-alarms";
 export type { PaymentGenerationSummary } from "@/lib/jobs/payment-alarms";
+export type { HolidayGenerationSummary } from "@/lib/jobs/holiday-alarms";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -304,6 +309,38 @@ export async function generatePaymentAlarms(
 }
 
 // ---------------------------------------------------------------------------
+// generateHolidayAlarms
+// ---------------------------------------------------------------------------
+
+export async function generateHolidayAlarms(
+  branchId?: string,
+): Promise<ActionResult<HolidayGenerationSummary>> {
+  try {
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
+
+    if (branchId && !(await verifyBranchAccess(branchId, ctx.organizationId))) {
+      return { success: false, error: "Branch not found in your organization" };
+    }
+
+    const summary = await generateHolidayAlarmsForOrganization({
+      organizationId: ctx.organizationId,
+      branchId,
+    });
+
+    revalidatePath("/alarms");
+    revalidatePath("/alarms/events");
+    revalidatePath("/");
+
+    return { success: true, data: summary };
+  } catch (error) {
+    console.error("Failed to generate holiday alarms:", error);
+    return { success: false, error: "Failed to generate holiday alarms" };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // getAlarms
 // ---------------------------------------------------------------------------
 
@@ -316,7 +353,10 @@ export async function getAlarms(
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {
-      branch: { organizationId: orgId },
+      OR: [
+        { branch: { organizationId: orgId } },
+        { branchId: null },
+      ],
     };
 
     if (type) where.type = type;
@@ -726,9 +766,22 @@ export async function getAlarmOverviewCounts(): Promise<ActionResult> {
         where: { type: "MEDICINE", isActive: true, branch: { organizationId: orgId } },
       }),
       // Events: upcoming active events
-      db.event.count({
-        where: { isActive: true, date: { gte: today }, branch: { organizationId: orgId } },
-      }),
+      Promise.all([
+        db.event.count({
+          where: {
+            isActive: true,
+            date: { gte: today },
+            OR: [{ branch: { organizationId: orgId } }, { branchId: null }],
+          },
+        }),
+        db.alarm.count({
+          where: {
+            type: "EVENT",
+            isActive: true,
+            OR: [{ branch: { organizationId: orgId } }, { branchId: null }],
+          },
+        }),
+      ]).then(([events, alarms]) => events + alarms),
       // Insurance: active alarms
       db.alarm.count({
         where: { type: "INSURANCE", isActive: true, branch: { organizationId: orgId } },
