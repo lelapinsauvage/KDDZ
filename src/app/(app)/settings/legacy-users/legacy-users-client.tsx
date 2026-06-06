@@ -102,6 +102,7 @@ type LegacyUsersClientProps = {
   initialError?: string | null;
   initialQuery?: string;
   initialCreateOpen?: boolean;
+  initialEditLegacyId?: number | null;
 };
 
 function groupKey(sourceDatabase: string, recordType: LegacyUserRecordType) {
@@ -125,6 +126,22 @@ function createEmptyForm(group: LegacyAdminUserGroup | null): LegacyUserFormStat
     sites: "0",
     classes: "0",
     isRestricted: false,
+  };
+}
+
+function formFromUser(user: LegacyAdminUserRow): LegacyUserFormState {
+  return {
+    sourceDatabase: user.sourceDatabase,
+    recordType: user.recordType,
+    name: user.name,
+    username: user.username,
+    email: user.email,
+    password: "",
+    password2: "",
+    levelIds: user.levelIds,
+    sites: user.sites || "0",
+    classes: user.classes || "0",
+    isRestricted: user.isRestricted,
   };
 }
 
@@ -334,20 +351,36 @@ export function LegacyUsersClient({
   initialError = null,
   initialQuery = "",
   initialCreateOpen = false,
+  initialEditLegacyId = null,
 }: LegacyUsersClientProps) {
-  const [users, setUsers] = useState(() => sortUsers(initialData.users));
+  const sortedInitialUsers = useMemo(
+    () => sortUsers(initialData.users),
+    [initialData.users],
+  );
+  const initialEditUser =
+    initialEditLegacyId !== null
+      ? (sortedInitialUsers.find((user) => user.legacyId === initialEditLegacyId) ??
+        null)
+      : null;
+  const [users, setUsers] = useState(sortedInitialUsers);
   const [query, setQuery] = useState(initialQuery);
   const [activeGroupKey, setActiveGroupKey] = useState(ALL_GROUPS_KEY);
   const [message, setMessage] = useState<MessageState>(
     initialError ? { type: "error", text: initialError } : null,
   );
   const [dialogOpen, setDialogOpen] = useState(
-    initialCreateOpen && initialData.groups.length > 0,
+    Boolean(initialEditUser) || (initialCreateOpen && initialData.groups.length > 0),
   );
-  const [dialogMode, setDialogMode] = useState<DialogMode>("create");
-  const [editingUser, setEditingUser] = useState<LegacyAdminUserRow | null>(null);
+  const [dialogMode, setDialogMode] = useState<DialogMode>(
+    initialEditUser ? "edit" : "create",
+  );
+  const [editingUser, setEditingUser] = useState<LegacyAdminUserRow | null>(
+    initialEditUser,
+  );
   const [form, setForm] = useState<LegacyUserFormState>(() =>
-    createEmptyForm(initialData.groups[0] ?? null),
+    initialEditUser
+      ? formFromUser(initialEditUser)
+      : createEmptyForm(initialData.groups[0] ?? null),
   );
   const [deleteTarget, setDeleteTarget] = useState<LegacyAdminUserRow | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -444,19 +477,7 @@ export function LegacyUsersClient({
   function openEditDialog(user: LegacyAdminUserRow) {
     setDialogMode("edit");
     setEditingUser(user);
-    setForm({
-      sourceDatabase: user.sourceDatabase,
-      recordType: user.recordType,
-      name: user.name,
-      username: user.username,
-      email: user.email,
-      password: "",
-      password2: "",
-      levelIds: user.levelIds,
-      sites: user.sites || "0",
-      classes: user.classes || "0",
-      isRestricted: user.isRestricted,
-    });
+    setForm(formFromUser(user));
     setMessage(null);
     setDialogOpen(true);
   }

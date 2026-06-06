@@ -17137,7 +17137,7 @@
       "user"
     ],
     "requestFieldsMentioned": [],
-    "verification": "`/settings/legacy-users` restores the admin user detail/edit workflow in a modern modal, including migrated source database/table identity, legacy levels, restricted flag, branch/class access stored back as `usites`/`uclasses`, optional password reset, read-only migrated profile values, latest login audit fields, and soft delete. `/users.php?uid=` and `/users/admin/users.php?uid=` bridge to the restored roster with the legacy id prefilled as the search query. Remaining work is editable profile custom fields, integration rows, full timestamp history, and exact edit-dialog auto-open by legacy id.",
+    "verification": "`/settings/legacy-users` restores the admin user detail/edit workflow in a modern modal, including migrated source database/table identity, legacy levels, restricted flag, branch/class access stored back as `usites`/`uclasses`, optional password reset, read-only migrated profile values, latest login audit fields, and soft delete. `/users.php?uid=` and `/users/admin/users.php?uid=` bridge to the restored roster with the legacy id prefilled as the search query and auto-open the matching edit modal when that legacy id is present in the migrated data. Remaining work is editable profile custom fields, integration rows, and full timestamp history.",
     "legacyTables": [
       "login_users",
       "login_users_man",

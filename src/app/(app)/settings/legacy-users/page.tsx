@@ -27,8 +27,12 @@ export default async function LegacyUsersPage({ searchParams }: PageProps) {
     getLegacyAdminUsers(),
     searchParams,
   ]);
+  const legacyUserParam = firstParam(params.uid) ?? firstParam(params.user);
   const initialQuery =
-    firstParam(params.q) ?? firstParam(params.uid) ?? firstParam(params.user) ?? "";
+    firstParam(params.q) ?? legacyUserParam ?? "";
+  const initialEditLegacyId = legacyUserParam
+    ? Number.parseInt(legacyUserParam, 10)
+    : null;
 
   return (
     <LegacyUsersClient
@@ -44,6 +48,9 @@ export default async function LegacyUsersPage({ searchParams }: PageProps) {
       initialError={usersResult.success ? null : (usersResult.error ?? null)}
       initialQuery={initialQuery}
       initialCreateOpen={firstParam(params.new) === "1"}
+      initialEditLegacyId={
+        Number.isInteger(initialEditLegacyId) ? initialEditLegacyId : null
+      }
     />
   );
 }
