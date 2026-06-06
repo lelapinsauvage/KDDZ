@@ -95,6 +95,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - `/api/parent/calendar/holidays` now covers both `ws/holcalendar.php` and `ws/holcalendarOLD.php` with legacy `POST usites` compatibility, active-only rows, `description`/`date` fields, and repeated-holiday current-year adjustment.
    - `/api/parent/login` now restores `ws/login.php` JSON/form login compatibility, failed-login defaults, numeric legacy `id`/`usites`, parent report URL with persisted token, md5-prefixed legacy password verification, and a modern `childId` field for the PWA.
    - `/api/parent/messages/[childId]`, `/api/parent/messages/thread/[threadId]`, and `/api/parent/messages` now restore `messagesList.php`, `message.php`, and `sendMessage.php` compatibility for legacy POST fields, grouped thread headers, numeric thread ids, SQL datetime strings, legacy sender values, send feedback, and admin/teacher recipient fan-out.
+   - `/api/parent/push-token` now restores `ws/pnotifications.php` compatibility for unauthenticated native `cid` registration, token reactivation, global legacy delete/show fallback, authenticated PWA registration/delete/show, legacy OS mapping, and legacy result strings.
 
 11. **Top-level calls module**
    - `/calls` now restores the global call management surface with search, branch/class/date/type filters, pagination, child links, delete actions, runtime call logging, attachment upload, and migrated `callparent`/`callcauses` reason options.
