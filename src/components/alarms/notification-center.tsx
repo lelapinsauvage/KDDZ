@@ -24,6 +24,8 @@ import type { ActionableAlarm, ActionableAlarmGroups } from "@/lib/actions/notif
 
 interface NotificationCenterProps {
   data: ActionableAlarmGroups;
+  showHeader?: boolean;
+  bodyClassName?: string;
 }
 
 const typeConfig: Record<string, { icon: LucideIcon; color: string; bg: string; label: string; href: string }> = {
@@ -53,7 +55,11 @@ function groupAlarmsByType(alarms: ActionableAlarm[]) {
   return groups;
 }
 
-export function NotificationCenter({ data }: NotificationCenterProps) {
+export function NotificationCenter({
+  data,
+  showHeader = true,
+  bodyClassName = "space-y-5 p-4 md:p-6",
+}: NotificationCenterProps) {
   const allAlarms = [...data.critical, ...data.warning, ...data.info];
   const grouped = groupAlarmsByType(allAlarms);
 
@@ -67,11 +73,13 @@ export function NotificationCenter({ data }: NotificationCenterProps) {
 
   return (
     <>
-      <PageHeader
-        title="Notifications"
-        breadcrumbs={[{ label: "Notifications" }]}
-      />
-      <div className="space-y-5 p-4 md:p-6">
+      {showHeader && (
+        <PageHeader
+          title="Notifications"
+          breadcrumbs={[{ label: "Notifications" }]}
+        />
+      )}
+      <div className={bodyClassName}>
         {/* Summary */}
         <div className="flex items-center gap-3">
           <div className="flex size-10 items-center justify-center rounded-sm bg-primary/10">

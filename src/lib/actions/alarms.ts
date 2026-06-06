@@ -96,6 +96,7 @@ const MEDICINE_RECEIPT_SOURCE = "custom_notifications_medicine";
 const PAYMENT_RECEIPT_SOURCE = "custom_notifications_payments";
 const VACCINATION_RECEIPT_SOURCE = "custom_notifications_vaccinations";
 const GENERAL_RECEIPT_SOURCE = "custom_notifications";
+const GENERAL_PARENT_RECEIPT_SOURCE = "custom_notifications_parents";
 const EVENT_RECEIPT_SOURCE = "custom_notifications_events";
 const EVENT_PARENT_RECEIPT_SOURCE = "custom_notifications_events_parents";
 const REQUEST_RECEIPT_SOURCE = "custom_notifications_requests";
@@ -1441,6 +1442,21 @@ const CONTRACT_ALARM_CONFIG: StaffReceiptAlarmConfig = {
   historyTypeFromLegacy: () => "Alert",
 };
 
+const GENERAL_ALARM_CONFIG: StaffReceiptAlarmConfig = {
+  type: "EVENT",
+  sourceTable: GENERAL_RECEIPT_SOURCE,
+  sourceTables: [GENERAL_RECEIPT_SOURCE, GENERAL_PARENT_RECEIPT_SOURCE],
+  route: "/alarms",
+  familyLabel: "general",
+  defaultActionHref: "/alarms",
+  actionHrefFromAlarm: (_alarm, legacyData) => {
+    const href = jsonString(legacyData.href);
+    return href?.startsWith("/") ? href : "/alarms";
+  },
+  historyRecipientTypes: ["USER", "PARENT_USER", "CHILD"],
+  includeCurrentUserInHistory: false,
+};
+
 const REQUEST_ALARM_CONFIG: StaffReceiptAlarmConfig = {
   type: "REQUEST",
   sourceTable: REQUEST_RECEIPT_SOURCE,
@@ -2045,6 +2061,30 @@ export async function markAllVaccinationAlarmsViewed(): Promise<
   ActionResult<{ count: number }>
 > {
   return markAllStaffReceiptAlarmsViewed(VACCINATION_ALARM_CONFIG);
+}
+
+export async function getGeneralAlarmNotifications(
+  params: { pageSize?: number } = {},
+): Promise<ActionResult> {
+  return getStaffReceiptAlarmNotifications(GENERAL_ALARM_CONFIG, params);
+}
+
+export async function getGeneralAlarmHistory(
+  params: { pageSize?: number } = {},
+): Promise<ActionResult> {
+  return getStaffReceiptAlarmHistory(GENERAL_ALARM_CONFIG, params);
+}
+
+export async function markGeneralAlarmViewed(
+  alarmId: string,
+): Promise<ActionResult<{ count: number }>> {
+  return markStaffReceiptAlarmViewed(alarmId, GENERAL_ALARM_CONFIG);
+}
+
+export async function markAllGeneralAlarmsViewed(): Promise<
+  ActionResult<{ count: number }>
+> {
+  return markAllStaffReceiptAlarmsViewed(GENERAL_ALARM_CONFIG);
 }
 
 export async function getRequestAlarmNotifications(

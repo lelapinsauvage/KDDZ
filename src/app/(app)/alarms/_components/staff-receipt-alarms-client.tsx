@@ -62,6 +62,7 @@ import {
   markAllBirthdayAlarmsViewed,
   markAllContractAlarmsViewed,
   markAllEventAlarmsViewed,
+  markAllGeneralAlarmsViewed,
   markAllInsuranceAlarmsViewed,
   markAllMedicineAlarmsViewed,
   markAllOtherAlarmsViewed,
@@ -72,6 +73,7 @@ import {
   markBirthdayAlarmViewed,
   markContractAlarmViewed,
   markEventAlarmViewed,
+  markGeneralAlarmViewed,
   markInsuranceAlarmViewed,
   markMedicineAlarmViewed,
   markOtherAlarmViewed,
@@ -116,6 +118,7 @@ interface StaffReceiptAlarmsClientProps {
     | "birthday"
     | "contract"
     | "event"
+    | "general"
     | "insurance"
     | "medicine"
     | "other"
@@ -200,6 +203,20 @@ const familyCopy: Record<StaffReceiptAlarmsClientProps["family"], FamilyCopy> = 
     generationFailure: "Event generation failed.",
     icon: CalendarDays,
     iconClass: "text-teal-600",
+  },
+  general: {
+    title: "Notifications Listing",
+    description: "General notifications sent to staff and parents",
+    breadcrumb: "General",
+    historyTitle: "Sent Alarms",
+    searchPlaceholder: "Search general alarms...",
+    historyPlaceholder: "Search sent alarms...",
+    emptyTitle: "No general notifications",
+    emptyDescription:
+      "General notifications matching the current filters will appear here.",
+    generationFailure: "General alarm generation is not available.",
+    icon: Bell,
+    iconClass: "text-primary",
   },
   insurance: {
     title: "Insurance Notifications Listing",
@@ -398,6 +415,9 @@ async function generateForFamily(
   if (family === "birthday") return generateBirthdayAlarms(branchId);
   if (family === "contract") return generateContractAlarms(branchId);
   if (family === "event") return generateEventAlarms(branchId);
+  if (family === "general") {
+    return { success: false, error: "General alarm generation is not available." };
+  }
   if (family === "insurance") return generateInsuranceAlarms(branchId);
   if (family === "other") {
     return { success: false, error: "Other alarm generation is not available." };
@@ -418,6 +438,7 @@ async function markViewedForFamily(
   if (family === "birthday") return markBirthdayAlarmViewed(alarmId);
   if (family === "contract") return markContractAlarmViewed(alarmId);
   if (family === "event") return markEventAlarmViewed(alarmId);
+  if (family === "general") return markGeneralAlarmViewed(alarmId);
   if (family === "insurance") return markInsuranceAlarmViewed(alarmId);
   if (family === "other") return markOtherAlarmViewed(alarmId);
   if (family === "payment") return markPaymentAlarmViewed(alarmId);
@@ -433,6 +454,7 @@ async function markAllViewedForFamily(
   if (family === "birthday") return markAllBirthdayAlarmsViewed();
   if (family === "contract") return markAllContractAlarmsViewed();
   if (family === "event") return markAllEventAlarmsViewed();
+  if (family === "general") return markAllGeneralAlarmsViewed();
   if (family === "insurance") return markAllInsuranceAlarmsViewed();
   if (family === "other") return markAllOtherAlarmsViewed();
   if (family === "payment") return markAllPaymentAlarmsViewed();
