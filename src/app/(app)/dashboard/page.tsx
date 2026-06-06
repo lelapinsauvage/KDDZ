@@ -29,7 +29,6 @@ import {
   UserX,
   Phone,
   Ambulance,
-  DollarSign,
 } from "lucide-react";
 
 interface PageProps {
@@ -118,6 +117,24 @@ function resolveDashboardSelection(
 
 function emptyDashboardDrilldowns(): DashboardDrilldowns {
   return {
+    payments: {
+      title: "Payments Details",
+      columns: [
+        "date",
+        "number",
+        "name",
+        "lastName",
+        "amount",
+        "for",
+        "type",
+        "from",
+        "to",
+        "remarks",
+        "action",
+        "attachment",
+      ],
+      rows: [],
+    },
     missingDailyReports: {
       title: "Missing Daily Reports",
       columns: ["number", "name", "date", "action"],
@@ -358,12 +375,14 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           Operations
         </h3>
         <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-3">
-          <StatCard
+          <DashboardDrilldownCard
             title="Accounting"
             value={`$${metrics.totalPayments.toLocaleString()}`}
-            icon={DollarSign}
+            iconName="dollarSign"
             color="emerald"
-            href={withDashboardFilters("/accounting")}
+            drilldownKind="payments"
+            filters={drilldownFilters}
+            drilldown={drilldowns.payments}
           />
           <StatCard
             title="Accidents"

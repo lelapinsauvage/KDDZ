@@ -8,7 +8,7 @@ import {
   ASSESSMENT_TYPE_NAMES,
   VALID_ASSESSMENT_TYPES,
 } from "@/lib/assessment-types";
-import type { MedicalFormType, Prisma } from "@/generated/prisma/client";
+import type { MedicalFormType, PaymentMethod, Prisma } from "@/generated/prisma/client";
 
 // ── Types ──────────────────────────────────────────
 
@@ -684,6 +684,7 @@ export interface DailyComplianceStats {
 }
 
 export type DashboardDrilldownKind =
+  | "payments"
   | "missingDailyReports"
   | "missingAbsentReports"
   | "medicalReports"
@@ -696,18 +697,33 @@ export type DashboardDrilldownKind =
 export type DashboardDrilldownColumn =
   | "number"
   | "name"
+  | "lastName"
+  | "amount"
   | "type"
+  | "for"
   | "date"
+  | "from"
+  | "to"
+  | "remarks"
+  | "attachment"
   | "action";
 
 export interface DashboardDrilldownRow {
   id: string;
   number: string;
   name: string;
+  lastName?: string;
+  amount?: string;
   type?: string;
+  for?: string;
   date?: string;
+  from?: string;
+  to?: string;
+  remarks?: string;
+  attachmentHref?: string | null;
+  attachmentLabel?: string | null;
   href: string;
-  actionLabel: "Create" | "Edit" | "View";
+  actionLabel: "Create" | "Edit" | "View" | "Print";
 }
 
 export interface DashboardDrilldown {
@@ -912,13 +928,16 @@ export async function getDashboardDrilldowns(
     complianceDetails,
     medicalDrilldowns,
     assessmentDrilldowns,
+    paymentDrilldown,
   ] = await Promise.all([
     getDailyComplianceDetails(orgId, branchId, range),
     getMedicalDrilldowns(orgId, branchId, range),
     getAssessmentDrilldowns(orgId, branchId, range),
+    getPaymentDrilldown(orgId, branchId, range),
   ]);
 
   return {
+    payments: paymentDrilldown,
     missingDailyReports: {
       title: "Missing Daily Reports",
       columns: ["number", "name", "date", "action"],
@@ -946,6 +965,10 @@ export async function getDashboardDrilldown(
   const { organizationId: orgId } = await requireOrg();
   const branchId = session?.user?.branchId ?? null;
   const range = normalizeDashboardFilters(metricFiltersFromRequest(filters));
+
+  if (kind === "payments") {
+    return getPaymentDrilldown(orgId, branchId, range);
+  }
 
   if (kind === "missingDailyReports" || kind === "missingAbsentReports") {
     const details = await getDailyComplianceDetails(orgId, branchId, range);
@@ -1225,6 +1248,120 @@ async function getAssessmentDrilldowns(
       rows: draftRows,
     },
   } satisfies Record<"reports" | "missing" | "drafts", DashboardDrilldown>;
+}
+
+const paymentMethodLabels: Record<PaymentMethod, string> = {
+  CASH: "Cash",
+  CHECK: "Cheque",
+  CREDIT_CARD: "Credit Card",
+  TRANSFER: "by Bank Transfer",
+};
+
+function monthName(month: number | null) {
+  if (!month || month < 1 || month > 12) return "-";
+  return new Date(1990, month - 1, 1).toLocaleString("en-US", { month: "long" });
+}
+
+function formatPaymentAmount(amount: { toString(): string }, currency: string) {
+  const value = Number(amount.toString());
+  if (currency === "LBP") return `LL ${value.toLocaleString("en-US")}`;
+  return `$${value.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
+async function getPaymentDrilldown(
+  orgId: string,
+  branchId: string | null | undefined,
+  range: NormalizedDashboardFilters
+): Promise<DashboardDrilldown> {
+  const childFilter = childScope(orgId, branchId, range.schoolYearId);
+  const payments = await db.payment.findMany({
+    where: {
+      status: "PAID",
+      deletedAt: null,
+      date: dateRangeWhere(range),
+      child: childFilter,
+    },
+    select: {
+      id: true,
+      amount: true,
+      currency: true,
+      date: true,
+      dateFrom: true,
+      dateTo: true,
+      month: true,
+      method: true,
+      notes: true,
+      receiptFilename: true,
+      receiptFileUrl: true,
+      legacyImageFilename: true,
+      child: {
+        select: {
+          id: true,
+          childNumber: true,
+          legacyId: true,
+          firstName: true,
+          lastName: true,
+        },
+      },
+    },
+    orderBy: [{ date: "asc" }, { createdAt: "asc" }],
+  });
+
+  const rows = payments
+    .sort((a, b) => {
+      const aNumber = displayChildNumber(a.child);
+      const bNumber = displayChildNumber(b.child);
+      return (
+        aNumber.localeCompare(bNumber, undefined, { numeric: true }) ||
+        a.date.getTime() - b.date.getTime()
+      );
+    })
+    .map((payment): DashboardDrilldownRow => {
+      const attachmentLabel =
+        payment.receiptFileUrl
+          ? "View Attachment"
+          : payment.receiptFilename ?? payment.legacyImageFilename ?? null;
+
+      return {
+        id: `payment:${payment.id}`,
+        number: displayChildNumber(payment.child),
+        name: payment.child.firstName,
+        lastName: payment.child.lastName,
+        amount: formatPaymentAmount(payment.amount, payment.currency),
+        for: monthName(payment.month),
+        type: paymentMethodLabels[payment.method],
+        date: dateKey(payment.date),
+        from: payment.dateFrom ? dateKey(payment.dateFrom) : "-",
+        to: payment.dateTo ? dateKey(payment.dateTo) : "-",
+        remarks: payment.notes?.trim() || "-",
+        attachmentHref: payment.receiptFileUrl,
+        attachmentLabel,
+        href: `/accounting/invoice/${payment.id}`,
+        actionLabel: "Print",
+      };
+    });
+
+  return {
+    title: "Payments Details",
+    columns: [
+      "date",
+      "number",
+      "name",
+      "lastName",
+      "amount",
+      "for",
+      "type",
+      "from",
+      "to",
+      "remarks",
+      "action",
+      "attachment",
+    ],
+    rows,
+  };
 }
 
 // ── Action Center Metrics (9-Grid) ───────────────

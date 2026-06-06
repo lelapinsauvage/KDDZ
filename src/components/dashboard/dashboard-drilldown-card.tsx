@@ -9,6 +9,7 @@ import {
   ArrowRight,
   ClipboardCheck,
   ClipboardList,
+  DollarSign,
   Eye,
   FileEdit,
   FileText,
@@ -16,6 +17,7 @@ import {
   FileWarning,
   HeartPulse,
   Pencil,
+  Printer,
   Stethoscope,
 } from "lucide-react";
 import type {
@@ -53,6 +55,7 @@ type DashboardDrilldownIconName =
   | "alertTriangle"
   | "clipboardCheck"
   | "clipboardList"
+  | "dollarSign"
   | "fileEdit"
   | "fileText"
   | "fileWarning"
@@ -63,6 +66,7 @@ const cardIcons: Record<DashboardDrilldownIconName, LucideIcon> = {
   alertTriangle: AlertTriangle,
   clipboardCheck: ClipboardCheck,
   clipboardList: ClipboardList,
+  dollarSign: DollarSign,
   fileEdit: FileEdit,
   fileText: FileText,
   fileWarning: FileWarning,
@@ -73,14 +77,22 @@ const cardIcons: Record<DashboardDrilldownIconName, LucideIcon> = {
 const columnLabels: Record<DashboardDrilldownColumn, string> = {
   number: "#",
   name: "Name",
+  lastName: "Last Name",
+  amount: "Amount",
   type: "Type",
+  for: "For",
   date: "Date",
+  from: "From",
+  to: "To",
+  remarks: "Remarks",
+  attachment: "Attachment",
   action: "Action",
 };
 
 function actionIcon(label: DashboardDrilldownRow["actionLabel"]) {
   if (label === "Create") return FilePlus;
   if (label === "Edit") return Pencil;
+  if (label === "Print") return Printer;
   return Eye;
 }
 
@@ -102,7 +114,11 @@ function buildColumns(
               variant={row.original.actionLabel === "Create" ? "default" : "outline"}
               className="h-8"
             >
-              <Link href={row.original.href}>
+              <Link
+                href={row.original.href}
+                target={row.original.actionLabel === "Print" ? "_blank" : undefined}
+                rel={row.original.actionLabel === "Print" ? "noreferrer" : undefined}
+              >
                 <ActionIcon className="size-3.5" />
                 {row.original.actionLabel}
               </Link>
@@ -111,6 +127,36 @@ function buildColumns(
         },
         enableSorting: false,
         enableHiding: false,
+      };
+    }
+
+    if (drilldownColumn === "attachment") {
+      return {
+        id: "attachment",
+        header: columnLabels.attachment,
+        cell: ({ row }) => {
+          if (!row.original.attachmentLabel) {
+            return <span className="text-muted-foreground">-</span>;
+          }
+
+          if (!row.original.attachmentHref) {
+            return (
+              <span className="max-w-40 truncate text-xs text-muted-foreground">
+                {row.original.attachmentLabel}
+              </span>
+            );
+          }
+
+          return (
+            <Button asChild size="sm" variant="ghost" className="h-8">
+              <a href={row.original.attachmentHref} target="_blank" rel="noreferrer">
+                <FileText className="size-3.5" />
+                View
+              </a>
+            </Button>
+          );
+        },
+        enableSorting: false,
       };
     }
 
@@ -124,7 +170,13 @@ function buildColumns(
       cell: ({ row }) => {
         const value = row.original[drilldownColumn];
         return (
-          <span className={drilldownColumn === "name" ? "font-medium" : ""}>
+          <span
+            className={[
+              drilldownColumn === "name" ? "font-medium" : "",
+              drilldownColumn === "amount" ? "font-semibold tabular-nums" : "",
+              drilldownColumn === "remarks" ? "block max-w-56 truncate" : "",
+            ].filter(Boolean).join(" ")}
+          >
             {value || "N/A"}
           </span>
         );
@@ -205,7 +257,11 @@ export function DashboardDrilldownCard({
         </button>
       </DialogTrigger>
 
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-5xl">
+      <DialogContent
+        className={`max-h-[90vh] overflow-y-auto ${
+          currentDrilldown.columns.length > 8 ? "sm:max-w-[1180px]" : "sm:max-w-5xl"
+        }`}
+      >
         <DialogHeader>
           <DialogTitle>{currentDrilldown.title}</DialogTitle>
           <DialogDescription>
