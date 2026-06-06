@@ -155,6 +155,29 @@ function renderNotificationText(
   );
 }
 
+function chooseLegacySettingValue(
+  rows: Array<{
+    sourceDatabase: string;
+    settingKey: string;
+    settingValue: string | null;
+  }>,
+  key: string,
+) {
+  const candidates = rows.filter(
+    (row) => row.settingKey === key && row.settingValue?.trim(),
+  );
+  if (candidates.length === 0) return null;
+
+  return (
+    candidates.find((row) =>
+      row.sourceDatabase.toLowerCase().includes("users29sept"),
+    ) ??
+    candidates.find((row) => row.sourceDatabase.toLowerCase().includes("29sept")) ??
+    candidates.find((row) => !row.sourceDatabase.toLowerCase().includes("2018")) ??
+    candidates[0]
+  ).settingValue;
+}
+
 function emptySummary(): ContractGenerationSummary {
   return {
     branchesScanned: 0,
@@ -813,7 +836,7 @@ export async function generateContractAlarmsForOrganization(params: {
     new Set(candidates.map((candidate) => candidate.staff.userId).filter(Boolean) as string[]),
   );
 
-  const [users, template] = await Promise.all([
+  const [users, templates, legacyTemplateRows] = await Promise.all([
     db.user.findMany({
       where: {
         isActive: true,
@@ -826,15 +849,23 @@ export async function generateContractAlarmsForOrganization(params: {
       },
       select: { id: true, branchId: true, role: true },
     }),
-    db.notificationTemplate.findUnique({
+    db.notificationTemplate.findMany({
       where: {
-        organizationId_category: {
-          organizationId: params.organizationId,
-          category: "CONTRACT",
-        },
+        organizationId: params.organizationId,
+        category: { in: ["CONTRACT", "EXPIRATION"] },
+      },
+    }),
+    db.legacySetting.findMany({
+      where: {
+        legacyTable: { in: ["login_settings", "login_settings_man"] },
+        settingKey: { in: ["email-expiring-subj", "email-expiring-msg"] },
       },
     }),
   ]);
+  const template =
+    templates.find((row) => row.category === "CONTRACT") ??
+    templates.find((row) => row.category === "EXPIRATION") ??
+    null;
 
   const adminUserIds = users
     .filter((user) => user.branchId === null && user.role === "ADMIN")
@@ -849,8 +880,14 @@ export async function generateContractAlarmsForOrganization(params: {
   }
 
   const templateEnabled = template?.enabled ?? true;
-  const subjectTemplate = template?.subject || "Staff Document Expiring";
-  const bodyTemplate = template?.body || "[[message]]";
+  const subjectTemplate =
+    template?.subject ||
+    chooseLegacySettingValue(legacyTemplateRows, "email-expiring-subj") ||
+    "Expiring Documents";
+  const bodyTemplate =
+    template?.body ||
+    chooseLegacySettingValue(legacyTemplateRows, "email-expiring-msg") ||
+    "[[message]]";
 
   for (const candidate of candidates) {
     if (candidateExists(candidate, existingKeys, looseExistingKeys)) {
@@ -914,8 +951,10 @@ export async function generateContractAlarmsForOrganization(params: {
       message: candidate.message,
       staff_name: legacyName(candidate.staff.firstName, candidate.staff.lastName),
       staff_type: candidate.staffKind,
+      person_name: legacyName(candidate.staff.firstName, candidate.staff.lastName),
       document_type: candidate.documentType,
       document_title: candidate.documentTitle ?? candidate.documentType,
+      document_name: candidate.documentTitle ?? candidate.documentType,
       branch_name: candidate.staff.branchName,
       date: candidate.expiryKey,
       expiry_date: candidate.expiryKey,

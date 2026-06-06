@@ -47,6 +47,7 @@ interface PaymentTemplateConfig {
   subject: string;
   body: string;
   enabled: boolean;
+  legacySubjectKey: string;
   legacySettingKey: string;
 }
 
@@ -64,6 +65,7 @@ const PAYMENT_TEMPLATE_CATEGORIES = [
 const LEGACY_PAYMENT_SETTING_KEYS = [
   "account-remind-before",
   "account-remind-after",
+  "email-accounting-subj",
   "email-accounting-msg-paid",
   "email-accounting-msg-before",
   "email-accounting-msg-after",
@@ -227,9 +229,10 @@ function defaultPaymentTemplate(alarmType: PaymentAlarmLegacyType): PaymentTempl
   if (alarmType === "Before") {
     return {
       category: "PAYMENT_BEFORE",
-      subject: "Payment Due Soon",
+      subject: "Payment Due Date",
       body: "Dear Mr and Mrs [[family_name]], your payment ([[fees]]) is due on [[payment_date]].",
       enabled: true,
+      legacySubjectKey: "email-accounting-subj",
       legacySettingKey: "email-accounting-msg-before",
     };
   }
@@ -237,18 +240,20 @@ function defaultPaymentTemplate(alarmType: PaymentAlarmLegacyType): PaymentTempl
   if (alarmType === "After") {
     return {
       category: "PAYMENT_AFTER",
-      subject: "Payment Overdue",
+      subject: "Payment Due Date",
       body: "Dear Mr and Mrs [[family_name]], your [[fees]] payment was due on [[payment_date]].",
       enabled: true,
+      legacySubjectKey: "email-accounting-subj",
       legacySettingKey: "email-accounting-msg-after",
     };
   }
 
   return {
     category: "PAYMENT",
-    subject: "Payment Reminder",
+    subject: "Payment Due Date",
     body: "Payment reminder for [[family_name]]: [[fees]] due on [[payment_date]].",
     enabled: true,
+    legacySubjectKey: "email-accounting-subj",
     legacySettingKey: "email-accounting-msg-paid",
   };
 }
@@ -262,9 +267,13 @@ function resolveTemplate(
   const modern = templateByCategory.get(defaults.category);
   return {
     category: defaults.category,
-    subject: modern?.subject || defaults.subject,
+    subject:
+      modern?.subject ||
+      legacySettings.get(defaults.legacySubjectKey) ||
+      defaults.subject,
     body: modern?.body || legacySettings.get(defaults.legacySettingKey) || defaults.body,
     enabled: modern?.enabled ?? defaults.enabled,
+    legacySubjectKey: defaults.legacySubjectKey,
     legacySettingKey: defaults.legacySettingKey,
   };
 }

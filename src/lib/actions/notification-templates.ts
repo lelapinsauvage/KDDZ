@@ -20,8 +20,15 @@ const TEMPLATE_CATEGORIES = [
   "PAYMENT",
   "PAYMENT_BEFORE",
   "PAYMENT_AFTER",
-  "EXPIRATION",
+  "CONTRACT",
   "CONTROL",
+  "WELCOME",
+  "NEW_USER_NOTIFICATION",
+  "FORGOT_REQUEST",
+  "FORGOT_SUCCESS",
+  "ADD_USER",
+  "ACCOUNT_UPDATE_VERIFY",
+  "ACCOUNT_UPDATE_SUCCESS",
   "ACTIVATION_RESEND",
   "ACTIVATION_ACTIVATED",
 ] as const;
@@ -34,48 +41,76 @@ const CATEGORY_DEFAULTS: Record<
   { subject: string; body: string }
 > = {
   BIRTHDAY: {
-    subject: "Happy Birthday!",
-    body: "Happy Birthday, [[child_name]]! Wishing you a wonderful day from everyone at [[branch_name]].",
+    subject: "Happy Birthday",
+    body: "The sweetest greetings to {{child_name}} the most adorable child ! May your special day be filled with the moments of endless joy and fun!",
   },
   MISSING_REPORTS: {
-    subject: "Missing Daily Report",
-    body: "Daily report for [[child_name]] in [[class_name]] on [[date]] has not been submitted yet.",
+    subject: "Missing Report",
+    body: "Dear Parents, The {{report_name}} of your child {{child_name}} is missing . we need to be provided with that report. Regards, The Administration",
   },
   MEDICINE: {
-    subject: "Medicine Reminder",
-    body: "Reminder: [[child_name]] needs [[med_name]] at [[med_time]]. Please check the medical records.",
+    subject: "Medication",
+    body: "Dear Parents, Don't forget to follow up with {{child_name}} medication {{med_name}} on time {{med_time}}. Regards, The administration.",
   },
   INSURANCE: {
-    subject: "Insurance Expiring",
-    body: "Insurance for [[child_name]] expires on [[date]]. Please notify [[parent_name]] to renew.",
+    subject: "Insurance",
+    body: "Dear Parents, The Insurance of  {{child_name}} will expire on {{expiry_date}}. Please do not forget to renew it on time. Regards, The Administration",
   },
   ASSESSMENT: {
-    subject: "Assessment Due",
-    body: "Assessment for [[child_name]] is due on [[date]]. Please complete it before the deadline.",
+    subject: "Assessment",
+    body: "Dear Parents, The assessment report of {{child_name}} is done. you can read it on his account. Regards, The Administration",
   },
   VACCINATIONS: {
-    subject: "Vaccination Due",
-    body: "Vaccination [[vaccination_name]] for [[child_name]] is due on [[date]]. Please remind [[parent_name]].",
+    subject: "Vaccination",
+    body: "Dear Parents, Please do not forget to do the following vaccine {{vaccination_name}} to  {{child_name}} within {{x_days}} Day(s). The Administration",
   },
   PAYMENT: {
-    subject: "Payment Reminder",
-    body: "Payment reminder for [[family_name]]: [[fees]] due on [[payment_date]].",
+    subject: "Payment Due Date",
+    body: "Dear Mr and Mrs {{family_name}}, Thank you for your payment for ({{fees}}) fees!",
   },
   PAYMENT_BEFORE: {
-    subject: "Payment Due Soon",
-    body: "Dear Mr and Mrs [[family_name]], your payment ([[fees]]) is due on [[payment_date]].",
+    subject: "Payment Due Date",
+    body: "Dear Mr and Mrs  {{family_name}}, A Kind reminder .Please note that your Barbar Payment ({{fees}}) is due on {{payment_date}}.",
   },
   PAYMENT_AFTER: {
-    subject: "Payment Overdue",
-    body: "Dear Mr and Mrs [[family_name]], your [[fees]] payment was due on [[payment_date]].",
+    subject: "Payment Due Date",
+    body: "Dear Mr and Mrs {{family_name}}, Your Barbar {{fees}} Payment was due on {{payment_date}}.",
   },
-  EXPIRATION: {
-    subject: "Document Expiring",
-    body: "A document for [[child_name]] at [[branch_name]] expires on [[date]]. Contact [[parent_name]] for renewal.",
+  CONTRACT: {
+    subject: "Expiring Documents",
+    body: "Dear {{person_name}}, Your document of {{document_name}} will expire on {{expiry_date}}. please renew it as soon as possible. Regards, The Administration",
   },
   CONTROL: {
     subject: "Control Notification",
-    body: "Control check for [[child_name]] at [[branch_name]] on [[date]].",
+    body: "Control check for {{child_name}} at {{branch_name}} on {{date}}.",
+  },
+  WELCOME: {
+    subject: "Thanks for signing up with Jigowatt :)",
+    body: "Hello {{full_name}} !\n\nThanks for registering at {{site_address}}. Here are your account details:\n\nName: {{full_name}}\nUsername: {{username}}\nEmail: {{email}}\nPassword: *hidden*\n\nYou will first have to activate your account by clicking on the following link:\n\n{{activate}}",
+  },
+  NEW_USER_NOTIFICATION: {
+    subject: "New user registration",
+    body: "A new user has registered at {{site_address}}.\n\nName: {{full_name}}\nUsername: {{username}}\nEmail: {{email}}",
+  },
+  FORGOT_REQUEST: {
+    subject: "Lost your password at Jigowatt?",
+    body: "Hi {{full_name}},\n\nYour username is <strong>{{username}}</strong>.\n\nTo reset your password at Jigowatt, please click the following password reset link:\n{{reset}}\n\nSee you soon!",
+  },
+  FORGOT_SUCCESS: {
+    subject: "Your password has been reset at Jigowatt",
+    body: "Welcome back, {{full_name}} !\n\nI'm just letting you know your password at {{site_address}} has been successfully changed.\n\nHopefully you were the one that requested this password reset !\n\nCheers",
+  },
+  ADD_USER: {
+    subject: "You're registered with Jigowatt !",
+    body: "Hello {{full_name}} !\n\nYou're now registered at {{site_address}}. Here are your account details:\n\nName: {{full_name}}\nUsername: {{username}}\nEmail: {{email}}\nPassword: {{password}}",
+  },
+  ACCOUNT_UPDATE_VERIFY: {
+    subject: "Confirm your account changes",
+    body: "Hi {{full_name}} !\n\nYou ( {{username}} ) requested a change to update your password or email. Click the link below to confirm this change.\n\n{{confirm}}\n\nThanks!\n{{site_address}}",
+  },
+  ACCOUNT_UPDATE_SUCCESS: {
+    subject: "Your account has been updated",
+    body: "Hello {{full_name}},\n\nYour account details at {{site_address}} has been updated.\n\nYour username: {{username}}\n\nSee you around!",
   },
   ACTIVATION_RESEND: {
     subject: "Activation Link",
@@ -99,20 +134,96 @@ const TEST_VARIABLES: TemplateVariables = {
   days_until: 7,
   insurance_type: "Sample Insurance",
   vaccination_name: "Sample Vaccine",
+  x_days: 7,
+  report_name: "Daily Report",
   family_name: "Sample Family",
   fees: "Monthly, Bus",
   payment_date: new Date().toISOString().slice(0, 10),
   amount: "100.00",
   currency: "USD",
+  person_name: "Sample Staff",
+  document_name: "Contract",
   site_address: process.env.NEXT_PUBLIC_SITE_URL ?? "https://kiddzonline.com/",
   full_name: "Sample User",
   username: "sampleuser",
+  email: "sample@example.com",
+  password: "sample-password",
+  reset: "https://kiddzonline.com/forgot?key=sample",
+  confirm: "https://kiddzonline.com/profile?confirm=sample",
   activate: "https://kiddzonline.com/activate.php?key=sample",
 };
 
-const LEGACY_ACTIVATION_TEMPLATE_KEYS: Partial<
+const LEGACY_TEMPLATE_KEYS: Partial<
   Record<TemplateCategory, { subject: string; body: string }>
 > = {
+  BIRTHDAY: {
+    subject: "email-birthday-subj",
+    body: "email-birthday-msg",
+  },
+  MISSING_REPORTS: {
+    subject: "email-missingReport-subj",
+    body: "email-missingReport-msg",
+  },
+  MEDICINE: {
+    subject: "email-medication-subject",
+    body: "email-medication-msg",
+  },
+  INSURANCE: {
+    subject: "email-insurance-subj",
+    body: "email-insurance-msg",
+  },
+  ASSESSMENT: {
+    subject: "email-assessment-subj",
+    body: "email-assessment-msg",
+  },
+  VACCINATIONS: {
+    subject: "email-vaccinations-subj",
+    body: "email-vaccinations-msg",
+  },
+  PAYMENT: {
+    subject: "email-accounting-subj",
+    body: "email-accounting-msg-paid",
+  },
+  PAYMENT_BEFORE: {
+    subject: "email-accounting-subj",
+    body: "email-accounting-msg-before",
+  },
+  PAYMENT_AFTER: {
+    subject: "email-accounting-subj",
+    body: "email-accounting-msg-after",
+  },
+  CONTRACT: {
+    subject: "email-expiring-subj",
+    body: "email-expiring-msg",
+  },
+  WELCOME: {
+    subject: "email-welcome-subj",
+    body: "email-welcome-msg",
+  },
+  NEW_USER_NOTIFICATION: {
+    subject: "email-new-user-subj",
+    body: "email-new-user-msg",
+  },
+  FORGOT_REQUEST: {
+    subject: "email-forgot-subj",
+    body: "email-forgot-msg",
+  },
+  FORGOT_SUCCESS: {
+    subject: "email-forgot-success-subj",
+    body: "email-forgot-success-msg",
+  },
+  ADD_USER: {
+    subject: "email-add-user-subj",
+    body: "email-add-user-msg",
+  },
+  ACCOUNT_UPDATE_VERIFY: {
+    subject: "email-acct-update-subj",
+    body: "email-acct-update-msg",
+  },
+  ACCOUNT_UPDATE_SUCCESS: {
+    subject: "email-acct-update-success-subj",
+    body: "email-acct-update-success-msg",
+  },
   ACTIVATION_RESEND: {
     subject: "email-activate-resend-subj",
     body: "email-activate-resend-msg",
@@ -122,6 +233,48 @@ const LEGACY_ACTIVATION_TEMPLATE_KEYS: Partial<
     body: "email-activate-msg",
   },
 };
+
+const LEGACY_TEMPLATE_SETTING_KEYS = Array.from(
+  new Set(
+    Object.values(LEGACY_TEMPLATE_KEYS).flatMap((keys) => [
+      keys.subject,
+      keys.body,
+    ]),
+  ),
+);
+
+function chooseLegacySettingValue(
+  rows: Array<{
+    sourceDatabase: string;
+    settingKey: string;
+    settingValue: string | null;
+  }>,
+  key: string,
+) {
+  const candidates = rows.filter(
+    (row) => row.settingKey === key && row.settingValue?.trim(),
+  );
+  if (candidates.length === 0) return null;
+
+  return (
+    candidates.find((row) =>
+      row.sourceDatabase.toLowerCase().includes("users29sept"),
+    ) ??
+    candidates.find((row) => row.sourceDatabase.toLowerCase().includes("29sept")) ??
+    candidates.find((row) => !row.sourceDatabase.toLowerCase().includes("2018")) ??
+    candidates[0]
+  ).settingValue;
+}
+
+function existingTemplateForCategory(
+  map: Map<string, TemplateRow>,
+  category: TemplateCategory,
+) {
+  if (category === "CONTRACT") {
+    return map.get("CONTRACT") ?? map.get("EXPIRATION");
+  }
+  return map.get(category);
+}
 
 export interface TemplateRow {
   id: string;
@@ -146,38 +299,31 @@ export async function getNotificationTemplates(): Promise<
       orderBy: { category: "asc" },
     });
 
-    const legacyActivationRows = await db.legacySetting.findMany({
+    const legacyTemplateRows = await db.legacySetting.findMany({
       where: {
         legacyTable: { in: ["login_settings", "login_settings_man"] },
         settingKey: {
-          in: [
-            "email-activate-resend-subj",
-            "email-activate-resend-msg",
-            "email-activate-subj",
-            "email-activate-msg",
-          ],
+          in: LEGACY_TEMPLATE_SETTING_KEYS,
         },
       },
-      orderBy: { updatedAt: "desc" },
+      orderBy: [
+        { sourceDatabase: "desc" },
+        { updatedAt: "desc" },
+      ],
     });
-    const legacyActivationSettings = new Map<string, string>();
-    for (const row of legacyActivationRows) {
-      if (!row.settingValue || legacyActivationSettings.has(row.settingKey)) continue;
-      legacyActivationSettings.set(row.settingKey, row.settingValue);
-    }
 
     const map = new Map(existing.map((t) => [t.category, t]));
 
     const rows: TemplateRow[] = TEMPLATE_CATEGORIES.map((cat) => {
-      const row = map.get(cat);
-      const legacyKeys = LEGACY_ACTIVATION_TEMPLATE_KEYS[cat];
+      const row = existingTemplateForCategory(map, cat);
+      const legacyKeys = LEGACY_TEMPLATE_KEYS[cat];
       const defaults = legacyKeys
         ? {
             subject:
-              legacyActivationSettings.get(legacyKeys.subject) ??
+              chooseLegacySettingValue(legacyTemplateRows, legacyKeys.subject) ??
               CATEGORY_DEFAULTS[cat].subject,
             body:
-              legacyActivationSettings.get(legacyKeys.body) ??
+              chooseLegacySettingValue(legacyTemplateRows, legacyKeys.body) ??
               CATEGORY_DEFAULTS[cat].body,
           }
         : CATEGORY_DEFAULTS[cat];

@@ -16759,31 +16759,31 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-Accounting.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/settings/notifications",
+    "status": "partial - legacy accounting reminder templates restored; reminder-day selectors remain audit-only",
     "legacyTablesMentioned": [
       "the"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "/settings/notifications now exposes Payment, Payment Before, and Payment After template cards backed by migrated `login_settings`/`login_settings_man` keys `email-accounting-subj`, `email-accounting-msg-before`, `email-accounting-msg-after`, and `email-accounting-msg-paid`. Payment alarm generation also falls back to the migrated shared accounting subject and body settings when no modern template row exists. The Legacy tab surfaces `account-remind-before`, `account-remind-after`, and `account-remind-paid` with source provenance. Remaining work is an editable modern selector for those reminder-day options and external provider delivery parity."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-Expiring.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/settings/notifications",
+    "status": "partial - legacy expiring document template restored for contract alarms; delivery audit remains",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "/settings/notifications now exposes a Contracts template card backed by migrated `email-expiring-subj` and `email-expiring-msg` rows. Contract alarm generation reads the `CONTRACT` template, keeps compatibility with prior `EXPIRATION` rows, and falls back to migrated `email-expiring-*` settings when no modern template exists. Remaining work is external email/SMS/WhatsApp provider delivery and exact legacy recipient targeting."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-acct-update.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/settings/notifications",
+    "status": "partial - legacy account update email templates restored; runtime delivery remains",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "/settings/notifications now exposes Verify Change and Account Updated template cards backed by migrated `email-acct-update-subj`, `email-acct-update-msg`, `email-acct-update-success-subj`, and `email-acct-update-success-msg` rows with legacy `{{site_address}}`, `{{full_name}}`, `{{username}}`, and `{{confirm}}` shortcodes. Remaining work is wiring these templates into any modern account-change confirmation email flow once provider config is recovered."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-activate.php",
@@ -16797,29 +16797,29 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-add-user.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/settings/notifications",
+    "status": "partial - legacy add-user email template restored; admin-created-user delivery remains",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "/settings/notifications now exposes an Add User template card backed by migrated `email-add-user-subj` and `email-add-user-msg` rows with `{{site_address}}`, `{{full_name}}`, `{{username}}`, and `{{password}}` shortcodes. Remaining work is wiring this template into the modern admin-created-user flow and external email delivery."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-assessment.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/settings/notifications",
+    "status": "partial - legacy assessment template fallback restored; delivery audit remains",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "/settings/notifications Assessment now falls back to migrated `email-assessment-subj` and `email-assessment-msg` rows and exposes the legacy `{{child_name}}` shortcode. Existing assessment alarm generation can use the saved modern template; remaining work is external parent/mobile delivery and exact recipient targeting."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-birthday.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/settings/notifications",
+    "status": "partial - legacy birthday template fallback restored; delivery audit remains",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "/settings/notifications Birthday now falls back to migrated `email-birthday-subj` and `email-birthday-msg` rows and exposes the legacy `{{child_name}}` shortcode. Existing birthday alarm generation can use the saved modern template; remaining work is external parent/mobile delivery and exact recipient targeting."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-control.php",
@@ -16833,56 +16833,56 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-forgot.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/settings/notifications",
+    "status": "partial - legacy forgot-password templates restored; runtime delivery remains",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "/settings/notifications now exposes Recover Request and Recovered template cards backed by migrated `email-forgot-subj`, `email-forgot-msg`, `email-forgot-success-subj`, and `email-forgot-success-msg` rows with `{{site_address}}`, `{{full_name}}`, `{{username}}`, and `{{reset}}` shortcodes. Remaining work is wiring these templates into the modern forgot/reset flow and external email delivery."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-insurance.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/settings/notifications",
+    "status": "partial - legacy insurance template fallback restored; delivery audit remains",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "/settings/notifications Insurance now falls back to migrated `email-insurance-subj` and `email-insurance-msg` rows and exposes legacy `{{child_name}}` and `{{expiry_date}}` shortcodes. Existing insurance alarm generation can use the saved modern template; remaining work is external parent/mobile delivery and exact recipient targeting."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-medication.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/settings/notifications",
+    "status": "partial - legacy medication template fallback restored; delivery audit remains",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "/settings/notifications Medicine now falls back to migrated `email-medication-subject` and `email-medication-msg` rows and exposes legacy `{{child_name}}`, `{{med_name}}`, and `{{med_time}}` shortcodes. Existing medicine alarm generation can use the saved modern template; remaining work is external parent/mobile delivery and exact recipient targeting."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-missingReports.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/settings/notifications",
+    "status": "partial - legacy missing-report template fallback restored; delivery audit remains",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "/settings/notifications Missing Reports now falls back to migrated `email-missingReport-subj` and `email-missingReport-msg` rows and exposes legacy `{{child_name}}` and `{{report_name}}` shortcodes. Remaining work is generator/delivery parity for any approved missing-report send jobs."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-vaccinations.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/settings/notifications",
+    "status": "partial - legacy vaccination template fallback restored; delivery audit remains",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "/settings/notifications Vaccinations now falls back to migrated `email-vaccinations-subj` and `email-vaccinations-msg` rows and exposes legacy `{{child_name}}`, `{{vaccination_name}}`, and `{{x_days}}` shortcodes. Existing vaccination alarm generation can use the saved modern template; remaining work is external parent/mobile delivery and exact recipient targeting."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-welcome.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/settings/notifications",
+    "status": "partial - legacy welcome and new-user notification templates restored; runtime delivery remains",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "/settings/notifications now exposes Welcome and New User Notice template cards backed by migrated `email-welcome-subj`, `email-welcome-msg`, `email-new-user-subj`, and `email-new-user-msg` rows with legacy account shortcodes. Remaining work is wiring welcome/admin-new-user notification behavior to modern signup/admin user flows and external email delivery."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/forbidden.php",
