@@ -50,7 +50,7 @@ import {
 } from "@/components/ui/command";
 import {
   getFoodCalendarMonth,
-  setFoodCalendarEntry,
+  setFoodCalendarDay,
   deleteFoodCalendarEntry,
 } from "@/lib/actions/food";
 import { toast } from "sonner";
@@ -238,6 +238,7 @@ export function FoodCalendarClient({
   const [dialogLunch, setDialogLunch] = useState("NONE");
   const [dialogSnack, setDialogSnack] = useState("NONE");
   const [dialogDessert, setDialogDessert] = useState("NONE");
+  const [applyTarget, setApplyTarget] = useState<"branch" | "all">("branch");
 
   const replaceCalendarUrl = useCallback(
     (branchId: string, nextYear: number, nextMonth: number) => {
@@ -342,9 +343,14 @@ export function FoodCalendarClient({
       setDialogLunch(dayData["LUNCH"]?.foodId ?? "NONE");
       setDialogSnack(dayData["SNACK"]?.foodId ?? "NONE");
       setDialogDessert(dayData["DESSERT"]?.foodId ?? "NONE");
+      setApplyTarget("branch");
       setDialogOpen(true);
     },
     [year, month, calendar]
+  );
+
+  const selectedDateHasMeals = Boolean(
+    selectedDate && Object.keys(calendar[selectedDate] ?? {}).length > 0
   );
 
   // Save day assignment
@@ -352,41 +358,45 @@ export function FoodCalendarClient({
     if (!branch || !selectedDate) return;
 
     startTransition(async () => {
-      const mealSelections: { type: MealType; foodId: string }[] = [
-        { type: "BREAKFAST", foodId: dialogBreakfast },
-        { type: "LUNCH", foodId: dialogLunch },
-        { type: "SNACK", foodId: dialogSnack },
-        { type: "DESSERT", foodId: dialogDessert },
+      const mealSelections: { mealType: MealType; foodId: string | null }[] = [
+        { mealType: "BREAKFAST", foodId: dialogBreakfast },
+        { mealType: "LUNCH", foodId: dialogLunch },
+        { mealType: "SNACK", foodId: dialogSnack },
+        { mealType: "DESSERT", foodId: dialogDessert },
       ];
 
-      for (const { type, foodId } of mealSelections) {
-        const existing = calendar[selectedDate]?.[type];
-        if (foodId === "NONE") {
-          if (existing?.id) {
-            await deleteFoodCalendarEntry(existing.id);
-          }
-        } else {
-          await setFoodCalendarEntry({
-            branchId: branch,
-            date: selectedDate,
-            mealType: type,
-            foodId,
-          });
-        }
+      const result = await setFoodCalendarDay({
+        branchId: branch,
+        date: selectedDate,
+        applyToAllBranches: applyTarget === "all" && !selectedDateHasMeals,
+        meals: mealSelections.map((meal) => ({
+          ...meal,
+          foodId: meal.foodId === "NONE" ? null : meal.foodId,
+        })),
+      });
+
+      if ("error" in result && result.error) {
+        toast.error(result.error);
+        return;
       }
 
       await fetchCalendar(branch, year, month);
       setDialogOpen(false);
-      toast.success("Meals updated");
+      toast.success(
+        result.branchCount && result.branchCount > 1
+          ? `Meals updated for ${result.branchCount} branches`
+          : "Meals updated"
+      );
     });
   }, [
     branch,
     selectedDate,
+    applyTarget,
+    selectedDateHasMeals,
     dialogBreakfast,
     dialogLunch,
     dialogSnack,
     dialogDessert,
-    calendar,
     year,
     month,
     fetchCalendar,
@@ -451,8 +461,6 @@ export function FoodCalendarClient({
     return weeks;
   }, [daysInMonth, firstDayOfWeek]);
 
-  const selectedDateHasMeals =
-    selectedDate && Object.keys(calendar[selectedDate] ?? {}).length > 0;
   const printHref = useMemo(
     () => buildPrintPath(branch, year, month),
     [branch, year, month]
@@ -736,6 +744,34 @@ export function FoodCalendarClient({
                 showNoneProminent
               />
             </div>
+
+            {!selectedDateHasMeals && branches.length > 1 && (
+              <fieldset className="space-y-2 rounded-sm border p-3">
+                <legend className="px-1 text-sm font-medium">Apply To</legend>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <label className="flex flex-1 items-center gap-2 rounded-sm border px-3 py-2 text-sm">
+                    <input
+                      type="radio"
+                      name="food-calendar-apply-target"
+                      value="branch"
+                      checked={applyTarget === "branch"}
+                      onChange={() => setApplyTarget("branch")}
+                    />
+                    This Branch
+                  </label>
+                  <label className="flex flex-1 items-center gap-2 rounded-sm border px-3 py-2 text-sm">
+                    <input
+                      type="radio"
+                      name="food-calendar-apply-target"
+                      value="all"
+                      checked={applyTarget === "all"}
+                      onChange={() => setApplyTarget("all")}
+                    />
+                    All Branches
+                  </label>
+                </div>
+              </fieldset>
+            )}
           </div>
 
           <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">

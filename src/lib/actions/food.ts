@@ -46,6 +46,16 @@ interface SetFoodCalendarEntryData {
   foodId: string;
 }
 
+interface SetFoodCalendarDayData {
+  branchId: string;
+  date: string; // ISO date
+  applyToAllBranches?: boolean;
+  meals: Array<{
+    mealType: MealType;
+    foodId: string | null;
+  }>;
+}
+
 interface FoodCalendarResult {
   [date: string]: {
     BREAKFAST?: FoodCalendarEntry;
@@ -65,6 +75,8 @@ interface FoodCalendarEntry {
     isActive: boolean;
   };
 }
+
+const VALID_MEAL_TYPES: MealType[] = ["BREAKFAST", "LUNCH", "DESSERT", "SNACK"];
 
 // ─────────────────────────────────────────────
 // getFoods — List food items
@@ -389,6 +401,110 @@ export async function setFoodCalendarEntry(input: SetFoodCalendarEntryData) {
   } catch (error) {
     console.error("setFoodCalendarEntry error:", error);
     return { error: "Failed to set food calendar entry" };
+  }
+}
+
+// ─────────────────────────────────────────────
+// setFoodCalendarDay — Save one calendar day, optionally for every branch
+// ─────────────────────────────────────────────
+
+export async function setFoodCalendarDay(input: SetFoodCalendarDayData) {
+  try {
+    const result = await requireOrgSafe();
+    if (!result.ok) return { error: result.error };
+    const { ctx } = result;
+
+    if (!input.branchId || !input.date || !Array.isArray(input.meals) || input.meals.length === 0) {
+      return { error: "branchId, date, and meals are required" };
+    }
+
+    if (!(await verifyBranchAccess(input.branchId, ctx.organizationId))) {
+      return { error: "Branch not found" };
+    }
+
+    const dateObj = new Date(input.date);
+    if (Number.isNaN(dateObj.getTime())) {
+      return { error: "Invalid date" };
+    }
+
+    const meals = input.meals.map((meal) => ({
+      mealType: meal.mealType,
+      foodId: typeof meal.foodId === "string" ? meal.foodId.trim() || null : null,
+    }));
+
+    if (meals.some((meal) => !VALID_MEAL_TYPES.includes(meal.mealType))) {
+      return { error: "Invalid meal type" };
+    }
+
+    const foodIds = Array.from(
+      new Set(meals.map((meal) => meal.foodId).filter(Boolean) as string[])
+    );
+
+    if (foodIds.length > 0) {
+      const foods = await db.food.findMany({
+        where: {
+          id: { in: foodIds },
+          organizationId: ctx.organizationId,
+        },
+        select: { id: true },
+      });
+      if (foods.length !== foodIds.length) {
+        return { error: "Food item not found" };
+      }
+    }
+
+    const targetBranchIds = input.applyToAllBranches
+      ? (
+          await db.branch.findMany({
+            where: { organizationId: ctx.organizationId },
+            select: { id: true },
+          })
+        ).map((branch) => branch.id)
+      : [input.branchId];
+
+    await db.$transaction(async (tx) => {
+      for (const meal of meals) {
+        if (!meal.foodId) {
+          await tx.foodCalendar.deleteMany({
+            where: {
+              branchId: { in: targetBranchIds },
+              date: dateObj,
+              mealType: meal.mealType,
+            },
+          });
+          continue;
+        }
+
+        for (const branchId of targetBranchIds) {
+          await tx.foodCalendar.upsert({
+            where: {
+              branchId_date_mealType: {
+                branchId,
+                date: dateObj,
+                mealType: meal.mealType,
+              },
+            },
+            update: {
+              foodId: meal.foodId,
+            },
+            create: {
+              branchId,
+              date: dateObj,
+              mealType: meal.mealType,
+              foodId: meal.foodId,
+            },
+          });
+        }
+      }
+    });
+
+    revalidatePath("/food");
+    revalidatePath("/food/calendar");
+    revalidatePath("/food/calendar/print");
+    return { success: true, branchCount: targetBranchIds.length };
+  } catch (error) {
+    console.error("setFoodCalendarDay error:", error);
+    return { error: "Failed to set food calendar day" };
   }
 }
 
