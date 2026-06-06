@@ -173,13 +173,13 @@
     "legacyPhp": "Front/templates/admin/Medical_forms1.php",
     "legacyJs": "Front/templates/admin/js/Medical_forms1.js",
     "modernRoute": "/medical/general",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "restored - legacy general form roster restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored the legacy General Form Listing with form #, child image fallback, F Name, L Name, DOB, Branch, Class, Year from `t_form_1.db_id`, Gender, Date, edit/view actions, New Child General Form, branch/class/year/gender/text/date filters, 10/20/50/100/150/All paging, export/print, and form_id descending sort over migrated general medical forms. Remaining work is `Medical_form1.php` create/edit/detail workflow parity and final logged-in visual smoke after local auth/runtime state is clean."
   },
   {
     "legacyPhp": "Front/templates/admin/Medical_forms2.php",
