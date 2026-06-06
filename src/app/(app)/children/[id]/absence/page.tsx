@@ -21,6 +21,7 @@ export default async function ChildAbsencePage({ params }: Props) {
     id: child.id,
     firstName: child.firstName,
     lastName: child.lastName,
+    photo: child.photo ?? null,
   };
 
   // Serialize dates and map to plain objects
@@ -30,6 +31,15 @@ export default async function ChildAbsencePage({ params }: Props) {
     reason: a.reason ?? null,
     status: a.status,
     createdBy: a.createdBy?.name ?? a.createdBy?.email ?? null,
+    absentFrom: a.absentFrom?.toISOString().slice(0, 10) ?? null,
+    absentTo: a.absentTo?.toISOString().slice(0, 10) ?? null,
+    hospitalName: a.hospitalName ?? null,
+    doctorName: a.doctorName ?? null,
+    attachments: (a.attachments ?? []).map((attachment) => ({
+      id: attachment.id,
+      filename: attachment.filename,
+      fileUrl: attachment.fileUrl,
+    })),
   }));
 
   return (

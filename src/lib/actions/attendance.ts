@@ -431,6 +431,9 @@ export async function getChildAbsences(childId: string) {
             email: true,
           },
         },
+        attachments: {
+          orderBy: { createdAt: "asc" },
+        },
       },
       orderBy: { date: "desc" },
     });

@@ -239,6 +239,7 @@ export async function createAbsenceReport(formData: FormData) {
     });
 
     revalidatePath("/absent-reports");
+    revalidatePath(`/children/${data.childId}/absence`);
     revalidatePath(`/absent-reports/${report.id}`);
     return { success: true, reportId: report.id };
   } catch (error) {
@@ -335,6 +336,7 @@ export async function updateAbsenceReport(id: string, formData: FormData) {
     });
 
     revalidatePath("/absent-reports");
+    revalidatePath(`/children/${data.childId}/absence`);
     revalidatePath(`/absent-reports/${id}`);
     return { success: true, reportId: report.id };
   } catch (error) {
@@ -373,6 +375,7 @@ export async function updateAbsenceReportStatus(
     });
 
     revalidatePath("/absent-reports");
+    revalidatePath(`/children/${existing.childId}/absence`);
     return { success: true };
   } catch (error) {
     console.error("updateAbsenceReportStatus error:", error);
@@ -404,6 +407,7 @@ export async function deleteAbsenceReport(id: string) {
     await db.absenceReport.delete({ where: { id } });
 
     revalidatePath("/absent-reports");
+    revalidatePath(`/children/${existing.childId}/absence`);
     return { success: true };
   } catch (error) {
     console.error("deleteAbsenceReport error:", error);
