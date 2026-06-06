@@ -98,8 +98,9 @@ This list is the first implementation backlog after the generated inventory/matr
    - `/api/parent/push-token` now restores `ws/pnotifications.php` compatibility for unauthenticated native `cid` registration, token reactivation, global legacy delete/show fallback, authenticated PWA registration/delete/show, legacy OS mapping, and legacy result strings.
 
 11. **Top-level calls module**
-   - `/calls` now restores the global call management surface with search, branch/class/date/type filters, pagination, child links, delete actions, runtime call logging, attachment upload, and migrated `callparent`/`callcauses` reason options.
-   - Remaining work is exact field/layout audit against `calls.php`, `call.php`, `bcalls.php`, and their JS files after the legacy sources are available for page-level comparison.
+   - `/calls` now restores the legacy `calls.php` / `bcalls.php` listing surface with child #, image, first/last name, call type, branch, class, cause, subject, date/time, action, branch/class/date/type/search filters, pagination, child links, delete actions, and new call report creation.
+   - Form 6 runtime persistence now preserves `t_form_6` provenance (`form_id`, child/branch/class/teacher ids, raw `legacyData` keys), imports both submitted and draft rows, stores `is_rep_draft`, uses migrated `callparent`/`callcauses` parent/subject choices, and supports Save As Draft versus submitted validation in both global and child call dialogs.
+   - Remaining work is final logged-in visual smoke after local database/runtime state is clean, existing attachment deletion from edit dialogs, and deciding whether to add a dedicated standalone `/calls/[id]` visual shell for old `call.php?fid=` URLs beyond the current child-call dialog workflow.
 
 12. **New academic year workflow**
    - `/settings/new-year` now restores the legacy optional/mandatory import selection UI, teacher reassignment table, child class progression table, legacy-style S.N. generation, and a transactional action that creates the next active `SchoolYear`, updates selected teachers/children, and snapshots child history.

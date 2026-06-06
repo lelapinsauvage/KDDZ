@@ -939,16 +939,20 @@
   {
     "legacyPhp": "Front/templates/admin/bcalls.php",
     "legacyJs": "Front/templates/admin/js/bcalls.js",
-    "modernRoute": "/children/[id]/calls",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "/calls",
+    "status": "partial - branch-scoped listing restored via branch filter; branch URL shell audit remains",
     "legacyTablesMentioned": [
+      "t_form_6",
+      "t_child",
+      "t_branch",
+      "t_class",
       "auto",
       "themeforest"
     ],
     "requestFieldsMentioned": [
       "brid"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored branch-compatible incoming/outgoing call listing through `/calls?branch=...` with legacy child #, image, F Name, L Name, Call Type, Branch, Class, Cause, Subject, Date, Action columns, teacher-backed Form 6 data, draft badges, delete action, and branch/class/date/type/search filters. Remaining work is final logged-in visual smoke and any dedicated `/branches/[id]/calls` URL alias if product wants old `bcalls.php?brid=` deep links."
   },
   {
     "legacyPhp": "Front/templates/admin/branch.php",
@@ -997,8 +1001,14 @@
     "legacyPhp": "Front/templates/admin/call.php",
     "legacyJs": "Front/templates/admin/js/call.js",
     "modernRoute": "/children/[id]/calls",
-    "status": "partial - legacy call report create/edit fields restored; draft/progress parity remains",
+    "status": "partial - legacy Form 6 create/edit data workflow restored; standalone visual shell remains",
     "legacyTablesMentioned": [
+      "t_form_6",
+      "t_form_attch",
+      "callparent",
+      "callcauses",
+      "t_teacher",
+      "t_child",
       "auto",
       "themeforest"
     ],
@@ -1006,19 +1016,25 @@
       "fid",
       "id"
     ],
-    "verification": "Restored legacy Call Type/Date/Time/Cause of Call/Subject/Remarks/Teacher/Attachments form fields in the child calls dialog, required validation matching `call.js`, editing existing call reports from the child calls table, existing attachment display, new attachment uploads on edit, org-safe update action, and route revalidation. Remaining work is true Save As Draft persistence, legacy f_progress/is_rep_draft flags, exact cause-to-subject datalist behavior, existing attachment deletion, and standalone `call.php?fid=` visual parity."
+    "verification": "Restored legacy Call Type, Date, Time, Cause of Call, Subject, Remarks, Teacher, and Attachments fields in the child/global call dialogs; submitted validation now matches `call.js` mandatory Form 6 fields while Save As Draft requires only a child, writes `isDraft`/`is_rep_draft`, preserves raw `t_form_6` keys in `legacyData`, uses migrated call parent/subject choices, resolves legacy teachers, edits existing call reports, displays existing attachments, uploads new attachments, and revalidates both child and global call routes. Remaining work is existing attachment deletion from edit dialogs, exact `f_progress` visual semantics if needed, and optional standalone `call.php?fid=` route parity."
   },
   {
     "legacyPhp": "Front/templates/admin/calls.php",
     "legacyJs": "Front/templates/admin/js/calls.js",
-    "modernRoute": "/children/[id]/calls",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "/calls",
+    "status": "restored - legacy incoming/outgoing call listing and Form 6 creation restored",
     "legacyTablesMentioned": [
+      "t_form_6",
+      "t_child",
+      "t_branch",
+      "t_class",
+      "callparent",
+      "callcauses",
       "auto",
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored the legacy Incoming/Outgoing Calls Listing with child #, image, F Name, L Name, Call Type, Branch, Class, Cause, Subject, Date, Action columns, form id descending sort, branch/class/type/date/search filters, pagination, New Call Report dialog, child selector, delete action, teacher-backed Form 6 save, Save As Draft versus submitted validation, migrated callparent/callcauses choices, child photo fallback, and legacy Form 6 provenance/draft import. Remaining work is final logged-in visual smoke after local database/runtime state is clean and exact TableTools export/print visual parity."
   },
   {
     "legacyPhp": "Front/templates/admin/child_absence.php",
@@ -1077,15 +1093,19 @@
     "legacyPhp": "Front/templates/admin/child_calls.php",
     "legacyJs": "Front/templates/admin/js/child_calls.js",
     "modernRoute": "/children/[id]/calls",
-    "status": "partial - legacy incoming/outgoing call tables and edit action restored; visual export audit remains",
+    "status": "partial - legacy incoming/outgoing call tables, edit, and draft status restored; visual export audit remains",
     "legacyTablesMentioned": [
+      "t_form_6",
+      "t_form_attch",
+      "callparent",
+      "callcauses",
       "auto",
       "themeforest"
     ],
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Restored child-specific Incoming and Outgoing sections, Date/Time/Cause/Pick up or Teacher/Subject/Remarks/Action/Attachment table columns, search/date/attachment filters, Excel/CSV export, print action, first-attachment open action with count badge, add call dialog, view details, edit existing reports, and delete confirmation. Remaining work is legacy image-preview modal behavior, DataTables TableTools visual/PDF export parity, and the call-report draft/progress fields tracked under `call.php`."
+    "verification": "Restored child-specific Incoming and Outgoing sections, Date/Time/Cause/Pick up or Teacher/Subject/Remarks/Action/Attachment table columns, search/date/attachment filters, Excel/CSV export, print action, first-attachment open action with count badge, add call dialog, view details, edit existing reports, draft badge/status, Save As Draft behavior via the Form 6 dialog, teacher-backed display, and delete confirmation. Remaining work is legacy image-preview modal behavior, existing attachment deletion from edit, and DataTables TableTools visual/PDF export parity."
   },
   {
     "legacyPhp": "Front/templates/admin/child_dashboard.php",

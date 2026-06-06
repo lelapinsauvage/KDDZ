@@ -1,7 +1,11 @@
 import { getBranches } from "@/lib/actions/branches";
-import { getCallCauseOptions, getCallChildOptions, getCallLogs } from "@/lib/actions/calls";
+import {
+  getCallCauseOptions,
+  getCallChildOptions,
+  getCallLogs,
+  getCallStaffOptions,
+} from "@/lib/actions/calls";
 import { getClasses } from "@/lib/actions/classes";
-import { getOrgStaffList } from "@/lib/actions/medical";
 import { FadeIn } from "@/components/ui/skeleton";
 import { CallsManagementClient } from "./calls-management-client";
 import type { CallDirection } from "@/generated/prisma/client";
@@ -58,7 +62,7 @@ export default async function CallsManagementPage({ searchParams }: PageProps) {
     }),
     getBranches(),
     getClasses(),
-    getOrgStaffList(),
+    getCallStaffOptions(),
     getCallCauseOptions(),
     getCallChildOptions(),
   ]);
@@ -72,10 +76,16 @@ export default async function CallsManagementPage({ searchParams }: PageProps) {
 
   const calls = callsResult.calls.map((call) => ({
     id: call.id,
+    legacyFormId: call.legacyId,
+    childNumber: call.child.childNumber ?? call.child.legacyId?.toString() ?? "-",
+    childPhoto: call.child.photo ?? null,
     date: call.date.toISOString().slice(0, 10),
     time: formatTime(call.time),
     direction: call.direction,
+    isDraft: call.isDraft,
     childId: call.child.id,
+    firstName: call.child.firstName,
+    lastName: call.child.lastName,
     childName: `${call.child.firstName} ${call.child.lastName}`.trim(),
     branchId: call.child.branchId,
     branchName: call.child.branch?.name ?? "",
@@ -92,8 +102,10 @@ export default async function CallsManagementPage({ searchParams }: PageProps) {
 
   const children = childOptions.map((child) => ({
     id: child.id,
+    childNumber: child.childNumber ?? child.legacyId?.toString() ?? "-",
     firstName: child.firstName,
     lastName: child.lastName,
+    photo: child.photo ?? null,
     branchId: child.branchId,
     classId: child.classId,
     branchName: child.branch?.name ?? "",

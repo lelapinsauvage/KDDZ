@@ -20,7 +20,10 @@
  *
  * Field mapping:
  *   form_id       → (old ID, mapped to UUID as call_log)
+ *   is_rep_draft  → isDraft
  *   child_id      → childId
+ *   branch_id     → legacyBranchId
+ *   class_id      → legacyClassId
  *   calltype      → direction (Incoming/Outgoing)
  *   accident_date → date
  *   accident_time → time
@@ -70,6 +73,8 @@ interface OldCall {
   subject: string;
   remarks: string;
   teacher_id: number;
+  branch_id: number;
+  class_id: number;
   datetime: string;
   active: number;
   is_rep_draft: number;
@@ -214,31 +219,29 @@ export async function migrateCalls(prisma: PrismaClient) {
   await migrateCallCauses(prisma, dryRun, categoriesByName);
 
   const oldRows = await queryMysql<OldCall>(
-    "SELECT * FROM t_form_6 WHERE active = 1 AND is_rep_draft = 0 ORDER BY form_id"
+    "SELECT * FROM t_form_6 WHERE active = 1 ORDER BY form_id"
   );
   log(`Found ${oldRows.length} call logs in old DB`);
 
+  const sourceDatabase = getMysqlConfig().database || "unknown";
   let migrated = 0;
   let skipped = 0;
   let errors = 0;
 
   for (const row of oldRows) {
     const childId = getMapping("child", row.child_id);
-    const date = parseDate(row.accident_date);
+    const legacyId = toInt(row.form_id);
+    const legacyKey = `${sourceDatabase}:t_form_6:${legacyId}`;
+    const date = parseDate(row.accident_date) ?? new Date();
 
-    if (!childId || !date) {
+    if (!childId || !legacyId) {
       errors++;
       continue;
     }
 
     const direction = mapDirection(row.calltype);
-    const existing = await prisma.callLog.findFirst({
-      where: {
-        childId,
-        date,
-        direction,
-        subject: cleanString(row.subject),
-      },
+    const existing = await prisma.callLog.findUnique({
+      where: { legacyKey },
     });
     if (existing) {
       setMapping("call_log", row.form_id, existing.id);
@@ -251,6 +254,13 @@ export async function migrateCalls(prisma: PrismaClient) {
       await prisma.callLog.create({
         data: {
           id,
+          sourceDatabase,
+          legacyKey,
+          legacyId,
+          legacyChildId: toInt(row.child_id),
+          legacyBranchId: toInt(row.branch_id),
+          legacyClassId: toInt(row.class_id),
+          legacyTeacherId: toInt(row.teacher_id),
           childId,
           direction,
           date,
@@ -260,6 +270,8 @@ export async function migrateCalls(prisma: PrismaClient) {
           remarks: cleanString(row.remarks),
           staffId: getMapping("teacher", row.teacher_id),
           createdById: getMapping("user", row.uby),
+          isDraft: toInt(row.is_rep_draft) === 1,
+          legacyData: JSON.parse(JSON.stringify(row)),
           createdAt: parseDate(row.datetime) ?? new Date(),
         },
       });

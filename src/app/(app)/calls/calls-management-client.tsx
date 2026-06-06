@@ -1,13 +1,13 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Eye,
   FileText,
   Filter,
-  Paperclip,
   Phone,
   PhoneIncoming,
   PhoneMissed,
@@ -16,6 +16,7 @@ import {
   Search,
   Trash2,
   Upload,
+  User,
   X,
 } from "lucide-react";
 import { createCallLog, deleteCallLog } from "@/lib/actions/calls";
@@ -53,10 +54,16 @@ type CallDirectionValue = "INCOMING" | "OUTGOING" | "MISSED";
 
 interface CallRow {
   id: string;
+  legacyFormId: number | null;
+  childNumber: string;
+  childPhoto: string | null;
   date: string;
   time: string | null;
   direction: CallDirectionValue;
+  isDraft: boolean;
   childId: string;
+  firstName: string;
+  lastName: string;
   childName: string;
   branchId: string;
   branchName: string;
@@ -86,6 +93,7 @@ interface StaffMember {
   id: string;
   name: string | null;
   email: string;
+  legacyId?: number | null;
 }
 
 interface CallCauseOption {
@@ -97,8 +105,10 @@ interface CallCauseOption {
 
 interface ChildOption {
   id: string;
+  childNumber: string;
   firstName: string;
   lastName: string;
+  photo: string | null;
   branchId: string;
   classId: string | null;
   branchName: string;
@@ -172,6 +182,40 @@ function formatDisplayDate(value: string) {
 
 function queryValue(value: string) {
   return value && value !== "ALL" ? value : "";
+}
+
+function childPhotoSrc(photo: string | null) {
+  if (!photo || photo === "default.jpg") return "";
+  if (/^https?:\/\//i.test(photo) || photo.startsWith("/")) return photo;
+  if (photo.includes("/")) return `/${photo.replace(/^\/+/, "")}`;
+  return `/images/EmpPhoto/${photo}`;
+}
+
+function ChildPhoto({ call }: { call: CallRow }) {
+  const [failed, setFailed] = useState(false);
+  const src = childPhotoSrc(call.childPhoto);
+
+  if (!src || failed) {
+    return (
+      <div className="flex size-10 items-center justify-center rounded-full border bg-muted">
+        <User className="size-4 text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative size-10 overflow-hidden rounded-full border bg-muted">
+      <Image
+        src={src}
+        alt={call.childName}
+        fill
+        sizes="40px"
+        className="object-cover"
+        unoptimized
+        onError={() => setFailed(true)}
+      />
+    </div>
+  );
 }
 
 export function CallsManagementClient({
@@ -251,11 +295,11 @@ export function CallsManagementClient({
   return (
     <>
       <PageHeader
-        title="Calls Management"
+        title="Calls Reports"
         breadcrumbs={[
           { label: "Home", href: "/dashboard" },
           { label: "Children Management", href: "/children" },
-          { label: "Calls Management" },
+          { label: "Calls Reports" },
         ]}
       />
 
@@ -275,7 +319,7 @@ export function CallsManagementClient({
           </div>
           <Button size="sm" onClick={() => setDialogOpen(true)}>
             <Plus className="mr-1.5 size-4" />
-            Log Call
+            New Call Report
           </Button>
         </div>
 
@@ -373,18 +417,19 @@ export function CallsManagementClient({
 
         <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
           <div className="overflow-x-auto">
-            <Table className="min-w-[980px]">
+            <Table className="min-w-[1120px]">
               <TableHeader>
                 <TableRow className="bg-muted/60 hover:bg-muted/60">
-                  <TableHead>Date</TableHead>
-                  <TableHead>Child</TableHead>
-                  <TableHead>Branch / Class</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Reason</TableHead>
+                  <TableHead>#</TableHead>
+                  <TableHead>Image</TableHead>
+                  <TableHead>F Name</TableHead>
+                  <TableHead>L Name</TableHead>
+                  <TableHead>Call Type</TableHead>
+                  <TableHead>Branch</TableHead>
+                  <TableHead>Class</TableHead>
+                  <TableHead>Cause</TableHead>
                   <TableHead>Subject</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Filed By</TableHead>
-                  <TableHead className="text-right">Files</TableHead>
+                  <TableHead>Date</TableHead>
                   <TableHead className="w-[92px] text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
@@ -395,34 +440,34 @@ export function CallsManagementClient({
                     const DirectionIcon = direction.icon;
                     return (
                       <TableRow key={call.id}>
+                        <TableCell className="font-medium">{call.childNumber}</TableCell>
                         <TableCell>
-                          <div className="font-medium">{formatDisplayDate(call.date)}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {call.time ?? "-"}
-                          </div>
+                          <ChildPhoto call={call} />
                         </TableCell>
                         <TableCell>
                           <Link
                             href={`/children/${call.childId}/calls`}
                             className="font-medium text-foreground hover:text-primary"
                           >
-                            {call.childName || "Child"}
+                            {call.firstName || "-"}
                           </Link>
                         </TableCell>
-                        <TableCell>
-                          <div>{call.branchName || "-"}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {call.className || "-"}
-                          </div>
-                        </TableCell>
+                        <TableCell>{call.lastName || "-"}</TableCell>
                         <TableCell>
                           <Badge className={direction.className}>
                             <DirectionIcon className="mr-1 size-3" />
                             {direction.label}
                           </Badge>
+                          {call.isDraft ? (
+                            <Badge variant="secondary" className="ml-1">
+                              Draft
+                            </Badge>
+                          ) : null}
                         </TableCell>
+                        <TableCell>{call.branchName || "-"}</TableCell>
+                        <TableCell>{call.className || "-"}</TableCell>
                         <TableCell>
-                          <span className="line-clamp-2 max-w-[180px]">
+                          <span className="line-clamp-2 max-w-[180px] text-sm">
                             {call.reason || "-"}
                           </span>
                         </TableCell>
@@ -435,21 +480,8 @@ export function CallsManagementClient({
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div>{call.contact || "-"}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {call.phone || "-"}
-                          </div>
-                        </TableCell>
-                        <TableCell>{call.createdBy ?? "-"}</TableCell>
-                        <TableCell className="text-right">
-                          {call.attachmentCount > 0 ? (
-                            <Badge variant="outline" className="gap-1">
-                              <Paperclip className="size-3" />
-                              {call.attachmentCount}
-                            </Badge>
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
+                          <div className="font-medium">{formatDisplayDate(call.date)}</div>
+                          <div className="text-xs text-muted-foreground">{call.time ?? "-"}</div>
                         </TableCell>
                         <TableCell>
                           <div className="flex justify-end gap-1">
@@ -475,7 +507,7 @@ export function CallsManagementClient({
                   })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={10} className="p-6">
+                    <TableCell colSpan={11} className="p-6">
                       <EmptyState
                         icon={Phone}
                         title="No call logs found"
@@ -574,6 +606,22 @@ function GlobalCallDialog({
 
   const selectedChild = childOptions.find((child) => child.id === childId);
   const causeOptions = callCauseOptions.length ? callCauseOptions : fallbackCallCauseOptions;
+  const causeParents = useMemo(() => {
+    const parents = new Map<string, string>();
+    for (const option of causeOptions) {
+      const value = option.category?.trim() || option.value.trim() || option.label.trim();
+      if (value && !parents.has(value)) {
+        parents.set(value, option.category?.trim() || option.label.trim());
+      }
+    }
+    return Array.from(parents, ([value, label]) => ({ value, label }));
+  }, [causeOptions]);
+  const subjectOptions = useMemo(() => {
+    return causeOptions
+      .filter((option) => !reason || option.category === reason || option.value === reason)
+      .map((option) => option.label)
+      .filter((label, index, labels) => label && labels.indexOf(label) === index);
+  }, [causeOptions, reason]);
 
   function resetForm() {
     setChildId("");
@@ -601,16 +649,27 @@ function GlobalCallDialog({
     );
   }
 
-  function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
+  function validateBeforeSave(isDraft: boolean) {
     if (!selectedChild) {
-      setError("Child is required");
+      return "Child is required";
+    }
+    if (isDraft) {
+      return null;
+    }
+    if (!direction || !date || !time || !reason.trim() || !subject.trim() || !staffId) {
+      return "Please fill the mandatory fields (red).";
+    }
+    return null;
+  }
+
+  function submitCall(isDraft: boolean) {
+    const validationError = validateBeforeSave(isDraft);
+    if (validationError) {
+      setError(validationError);
       return;
     }
-    if (!date) {
-      setError("Date is required");
-      return;
-    }
+
+    if (!selectedChild) return;
 
     setError("");
     startTransition(async () => {
@@ -642,12 +701,13 @@ function GlobalCallDialog({
       const result = await createCallLog({
         childId: selectedChild.id,
         direction,
-        date,
+        date: date || new Date().toISOString().slice(0, 10),
         time: time || undefined,
         reason: reason || undefined,
         subject: subject || undefined,
         remarks: remarks || undefined,
         staffId: staffId || undefined,
+        isDraft,
         attachments: uploadedAttachments,
       });
 
@@ -662,6 +722,11 @@ function GlobalCallDialog({
     });
   }
 
+  function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    submitCall(false);
+  }
+
   return (
     <Dialog
       open={open}
@@ -674,7 +739,7 @@ function GlobalCallDialog({
     >
       <DialogContent className="sm:max-w-[620px]">
         <DialogHeader>
-          <DialogTitle>Log Call</DialogTitle>
+          <DialogTitle>Create Call Report</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -689,7 +754,7 @@ function GlobalCallDialog({
               <SelectContent>
                 {childOptions.map((child) => (
                   <SelectItem key={child.id} value={child.id}>
-                    {child.firstName} {child.lastName} - {child.branchName}
+                    {child.childNumber}: {child.firstName} {child.lastName} - {child.branchName}
                     {child.className ? ` / ${child.className}` : ""}
                   </SelectItem>
                 ))}
@@ -719,21 +784,21 @@ function GlobalCallDialog({
               <Input type="date" value={date} onChange={(event) => setDate(event.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>Time</Label>
+              <Label className={!time ? "text-destructive" : undefined}>Time *</Label>
               <Input type="time" value={time} onChange={(event) => setTime(event.target.value)} />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label>Cause of Call</Label>
+            <Label className={!reason ? "text-destructive" : undefined}>Cause of Call *</Label>
             <Select value={reason} onValueChange={setReason}>
               <SelectTrigger>
                 <SelectValue placeholder="Select cause" />
               </SelectTrigger>
               <SelectContent>
-                {causeOptions.map((option) => (
-                  <SelectItem key={option.id} value={option.value}>
-                    {option.category ? `${option.category} - ${option.label}` : option.label}
+                {causeParents.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -741,8 +806,17 @@ function GlobalCallDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label>Subject</Label>
-            <Input value={subject} onChange={(event) => setSubject(event.target.value)} />
+            <Label className={!subject ? "text-destructive" : undefined}>Subject *</Label>
+            <Input
+              value={subject}
+              onChange={(event) => setSubject(event.target.value)}
+              list="call-subject-options"
+            />
+            <datalist id="call-subject-options">
+              {subjectOptions.map((option) => (
+                <option key={option} value={option} />
+              ))}
+            </datalist>
           </div>
 
           <div className="space-y-1.5">
@@ -755,7 +829,9 @@ function GlobalCallDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label>Teacher Who Filled Report</Label>
+            <Label className={!staffId ? "text-destructive" : undefined}>
+              Teacher Who Filled Report *
+            </Label>
             <Select value={staffId} onValueChange={setStaffId}>
               <SelectTrigger>
                 <SelectValue placeholder="Select teacher" />
@@ -825,7 +901,15 @@ function GlobalCallDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending ? "Saving..." : "Save Call Log"}
+              {isPending ? "Saving..." : "Save Call Report"}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={isPending}
+              onClick={() => submitCall(true)}
+            >
+              {isPending ? "Saving..." : "Save As Draft"}
             </Button>
           </div>
         </form>

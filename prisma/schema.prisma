@@ -2026,28 +2026,44 @@ model CallCauseCategory {
 }
 
 model CallLog {
-  id          String        @id @default(uuid()) @db.Uuid
-  childId     String        @db.Uuid
-  direction   CallDirection
-  date        DateTime      @db.Date
-  time        DateTime?     @db.Time(6)
-  contact     String?
-  phone       String?
-  subject     String?
-  reason      String?       @db.Text
-  remarks     String?       @db.Text
-  staffId     String?       @db.Uuid
-  createdById String?       @db.Uuid
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id              String        @id @default(uuid()) @db.Uuid
+  sourceDatabase  String?
+  legacyKey       String?       @unique
+  legacyId        Int?
+  legacyChildId   Int?
+  legacyBranchId  Int?
+  legacyClassId   Int?
+  legacyTeacherId Int?
+  childId         String        @db.Uuid
+  direction       CallDirection
+  date            DateTime      @db.Date
+  time            DateTime?     @db.Time(6)
+  contact         String?
+  phone           String?
+  subject         String?
+  reason          String?       @db.Text
+  remarks         String?       @db.Text
+  staffId         String?       @db.Uuid
+  createdById     String?       @db.Uuid
+  isDraft         Boolean       @default(false)
+  legacyData      Json?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   child       Child            @relation(fields: [childId], references: [id], onDelete: Cascade)
   createdBy   User?            @relation("CallLogCreator", fields: [createdById], references: [id], onDelete: SetNull)
   attachments FormAttachment[]
 
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyChildId])
+  @@index([legacyBranchId])
+  @@index([legacyClassId])
+  @@index([legacyTeacherId])
   @@index([childId])
   @@index([date])
   @@index([direction])
+  @@index([isDraft])
   @@index([createdById])
   @@map("call_logs")
 }

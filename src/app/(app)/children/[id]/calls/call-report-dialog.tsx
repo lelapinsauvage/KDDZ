@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   Dialog,
@@ -38,6 +38,7 @@ export interface CallDialogInitialCall {
   reason: string;
   subject: string;
   remarks: string;
+  isDraft: boolean;
   staffId: string;
   attachments: Array<{
     id: string;
@@ -108,7 +109,27 @@ export function CallReportDialog({
   const [attachments, setAttachments] = useState<File[]>([]);
   const [error, setError] = useState("");
   const causeOptions = callCauseOptions.length ? callCauseOptions : CALL_CAUSE_OPTIONS;
+  const causeParents = useMemo(() => {
+    const parents = new Map<string, string>();
+    for (const option of causeOptions) {
+      const value = option.category?.trim() || option.value.trim() || option.label.trim();
+      if (value && !parents.has(value)) {
+        parents.set(value, option.category?.trim() || option.label.trim());
+      }
+    }
+    return Array.from(parents, ([value, label]) => ({ value, label }));
+  }, [causeOptions]);
+  const subjectOptions = useMemo(() => {
+    return causeOptions
+      .filter(
+        (option) =>
+          !causeOfCall || option.category === causeOfCall || option.value === causeOfCall,
+      )
+      .map((option) => option.label)
+      .filter((label, index, labels) => label && labels.indexOf(label) === index);
+  }, [causeOptions, causeOfCall]);
   const isEditing = Boolean(initialCall);
+  const canSaveDraft = !initialCall || initialCall.isDraft;
 
   function resetForm() {
     setDirection(initialCall ? normalizeDirection(initialCall.direction) : "INCOMING");
@@ -135,31 +156,35 @@ export function CallReportDialog({
     );
   }
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-
+  function validateBeforeSave(isDraft: boolean) {
+    if (isDraft) {
+      return null;
+    }
     if (!direction) {
-      setError("Call type is required");
-      return;
+      return "Call type is required";
     }
     if (!date) {
-      setError("Date is required");
-      return;
+      return "Date is required";
     }
     if (!time) {
-      setError("Time is required");
-      return;
+      return "Time is required";
     }
     if (!causeOfCall.trim()) {
-      setError("Cause of call is required");
-      return;
+      return "Cause of call is required";
     }
     if (!subject.trim()) {
-      setError("Subject is required");
-      return;
+      return "Subject is required";
     }
     if (!teacherId) {
-      setError("Teacher is required");
+      return "Teacher is required";
+    }
+    return null;
+  }
+
+  function submitCall(isDraft: boolean) {
+    const validationError = validateBeforeSave(isDraft);
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
@@ -194,12 +219,13 @@ export function CallReportDialog({
       const payload = {
         childId,
         direction,
-        date,
+        date: date || todayDate(),
         time,
         reason: causeOfCall.trim(),
         subject: subject.trim(),
         remarks: remarks.trim() || undefined,
         staffId: teacherId,
+        isDraft,
         attachments: uploadedAttachments,
       };
 
@@ -217,6 +243,11 @@ export function CallReportDialog({
       resetForm();
       router.refresh();
     });
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    submitCall(false);
   }
 
   return (
@@ -286,9 +317,9 @@ export function CallReportDialog({
                 <SelectValue placeholder="Select cause..." />
               </SelectTrigger>
               <SelectContent>
-                {causeOptions.map((opt) => (
-                  <SelectItem key={opt.id ?? opt.value} value={opt.value}>
-                    {opt.category ? `${opt.category} - ${opt.label}` : opt.label}
+                {causeParents.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -302,8 +333,14 @@ export function CallReportDialog({
               id="call-subject"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
+              list="child-call-subject-options"
               placeholder="Brief subject of the call..."
             />
+            <datalist id="child-call-subject-options">
+              {subjectOptions.map((option) => (
+                <option key={option} value={option} />
+              ))}
+            </datalist>
           </div>
 
           {/* Remarks */}
@@ -426,6 +463,16 @@ export function CallReportDialog({
             <Button type="submit" disabled={isPending}>
               {isPending ? "Saving..." : "Save Call Report"}
             </Button>
+            {canSaveDraft ? (
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={isPending}
+                onClick={() => submitCall(true)}
+              >
+                {isPending ? "Saving..." : "Save As Draft"}
+              </Button>
+            ) : null}
           </div>
         </form>
       </DialogContent>

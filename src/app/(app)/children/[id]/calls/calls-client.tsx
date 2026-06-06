@@ -73,6 +73,7 @@ interface CallRecord {
   date: string;
   time: string | null;
   direction: string;
+  isDraft: boolean;
   contact: string;
   phone: string;
   staffId: string;
@@ -353,7 +354,10 @@ export function CallsClient({ child, calls, staffList, callCauseOptions }: Props
         accessorKey: "subject",
         header: ({ column }) => <SortableHeader column={column}>Subject</SortableHeader>,
         cell: ({ row }) => (
-          <span className="block max-w-[220px] truncate">{display(row.original.subject)}</span>
+          <span className="flex max-w-[220px] items-center gap-1.5 truncate">
+            {row.original.isDraft ? <Badge variant="secondary">Draft</Badge> : null}
+            <span className="truncate">{display(row.original.subject)}</span>
+          </span>
         ),
       },
       {
