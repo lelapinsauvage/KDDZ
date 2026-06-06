@@ -1,8 +1,14 @@
 import { getEmployees } from "@/lib/actions/employees";
 import { mapEmployee } from "@/lib/map-employee";
 import { EmployeeListingClient } from "@/components/employees/employee-listing-client";
+import { normalizeLegacySearchQuery } from "@/lib/legacy-query";
 
-export default async function NursesListingPage() {
+export default async function NursesListingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string | string[] }>;
+}) {
+  const { q } = await searchParams;
   const result = await getEmployees("nurse", { pageSize: 100 });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -11,5 +17,11 @@ export default async function NursesListingPage() {
     mapEmployee(e, "nurse")
   );
 
-  return <EmployeeListingClient type="nurse" employees={employees} />;
+  return (
+    <EmployeeListingClient
+      type="nurse"
+      employees={employees}
+      initialSearchQuery={normalizeLegacySearchQuery(q)}
+    />
+  );
 }

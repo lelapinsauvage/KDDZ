@@ -307,11 +307,16 @@ export async function getEmployees(
 
     const skip = (page - 1) * pageSize;
 
+    const include: Record<string, unknown> = { branch: true };
+    if (type === "teacher") {
+      include.class = true;
+    }
+
     const [employees, total] = await Promise.all([
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (model as any).findMany({
         where,
-        include: { branch: true },
+        include,
         orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
         skip,
         take: pageSize,

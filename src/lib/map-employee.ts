@@ -8,6 +8,7 @@ import type { Employee, EmployeeType } from "@/components/employees/employee-col
 export function mapEmployee(raw: any, type: EmployeeType): Employee {
   return {
     id: raw.id,
+    legacyId: raw.legacyId ?? null,
     firstName: raw.firstName ?? "",
     lastName: raw.lastName ?? "",
     imageUrl: raw.imageUrl ?? null,
@@ -20,6 +21,7 @@ export function mapEmployee(raw: any, type: EmployeeType): Employee {
     nationality: raw.nationality ?? "",
     gender: raw.gender ?? "",
     branch: raw.branch?.name ?? "—",
+    className: raw.class?.name ?? "",
     specialization: raw.specialization ?? undefined,
     hireDate: raw.hireDate
       ? new Date(raw.hireDate).toISOString()

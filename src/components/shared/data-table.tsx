@@ -108,6 +108,7 @@ interface DataTableProps<TData, TValue> {
   isLoading?: boolean;
   onRowClick?: (row: TData) => void;
   bulkActions?: BulkAction<TData>[];
+  pageSizeOptions?: Array<number | "all">;
 }
 
 const GLOBAL_FILTER_ID = "__globalSearch";
@@ -163,6 +164,7 @@ export function DataTable<TData, TValue>({
   isLoading = false,
   onRowClick,
   bulkActions,
+  pageSizeOptions = [10, 20, 30, 50, 100],
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(() =>
@@ -226,6 +228,14 @@ export function DataTable<TData, TValue>({
 
   const selectedRows = table.getFilteredSelectedRowModel().rows;
   const hasSelection = selectedRows.length > 0;
+  const currentPageSize = table.getState().pagination.pageSize;
+  const pageSizeValue = pageSizeOptions.some(
+    (option) => option !== "all" && option === currentPageSize
+  )
+    ? `${currentPageSize}`
+    : pageSizeOptions.includes("all")
+      ? "all"
+      : `${currentPageSize}`;
   const activeFilters = useMemo(
     () => [
       ...(searchMode === "global" && String(globalFilter).trim()
@@ -598,20 +608,24 @@ export function DataTable<TData, TValue>({
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground">Rows:</span>
           <Select
-            value={`${table.getState().pagination.pageSize}`}
-            onValueChange={(value) => table.setPageSize(Number(value))}
+            value={pageSizeValue}
+            onValueChange={(value) =>
+              table.setPageSize(value === "all" ? data.length || 1 : Number(value))
+            }
           >
             <SelectTrigger className="h-8 w-[70px]">
               <SelectValue
-                placeholder={table.getState().pagination.pageSize}
+                placeholder={currentPageSize}
               />
             </SelectTrigger>
             <SelectContent side="top">
-              {[10, 20, 30, 50, 100].map((pageSize) => (
-                <SelectItem key={pageSize} value={`${pageSize}`}>
-                  {pageSize}
-                </SelectItem>
-              ))}
+              {pageSizeOptions.map((option) => {
+                return (
+                  <SelectItem key={option} value={option === "all" ? "all" : `${option}`}>
+                    {option === "all" ? "All" : option}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
 

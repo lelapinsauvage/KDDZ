@@ -19,6 +19,7 @@ export type EmployeeType = "teacher" | "nurse" | "doctor" | "manager";
 
 export interface Employee {
   id: string;
+  legacyId?: number | null;
   firstName: string;
   lastName: string;
   imageUrl?: string | null;
@@ -29,6 +30,7 @@ export interface Employee {
   nationality: string;
   gender: string;
   branch: string;
+  className?: string;
   specialization?: string;
   hireDate: string;
   createdAt: string;
@@ -78,8 +80,20 @@ export function createEmployeeColumns(
   return [
     // Avatar
     {
+      id: "serial",
+      header: ({ column }) => (
+        <SortableHeader column={column}>#</SortableHeader>
+      ),
+      accessorFn: (employee) => employee.legacyId ?? 0,
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          {row.original.legacyId ?? row.index + 1}
+        </span>
+      ),
+    },
+    {
       id: "avatar",
-      header: "",
+      header: "Image",
       cell: ({ row }) => {
         const employee = row.original;
         const fullName = `${employee.firstName} ${employee.lastName}`;
@@ -182,15 +196,29 @@ export function createEmployeeColumns(
       ),
     },
     // Mobile
-    {
-      accessorKey: "mobile",
-      header: "Mobile",
-      cell: ({ row }) => (
-        <span className="text-muted-foreground">
-          {row.original.mobile || "—"}
-        </span>
-      ),
-    },
+    ...(type === "teacher"
+      ? [
+          {
+            accessorKey: "className",
+            header: "Class",
+            cell: ({ row }) => (
+              <span className="text-muted-foreground">
+                {row.original.className || "—"}
+              </span>
+            ),
+          } satisfies ColumnDef<Employee>,
+        ]
+      : [
+          {
+            accessorKey: "mobile",
+            header: "Mobile",
+            cell: ({ row }) => (
+              <span className="text-muted-foreground">
+                {row.original.mobile || "—"}
+              </span>
+            ),
+          } satisfies ColumnDef<Employee>,
+        ]),
     // Nationality
     {
       accessorKey: "nationality",

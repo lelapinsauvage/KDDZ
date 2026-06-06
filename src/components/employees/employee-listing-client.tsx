@@ -21,46 +21,50 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle, CardAction } from "@/components/ui/card";
-import { Plus, Search, X } from "lucide-react";
+import { Plus, Printer, Search, Trash2, X } from "lucide-react";
 import { useState, useMemo, useCallback, useTransition } from "react";
 import { toast } from "sonner";
 import { ExportButton } from "@/components/shared/export-button";
 import type { ExportColumn } from "@/lib/export";
 
-const employeeExportColumns: ExportColumn[] = [
-  { header: "First Name", key: "firstName" },
-  { header: "Last Name", key: "lastName" },
-  {
-    header: "DOB",
-    key: "dateOfBirth",
-    transform: (v) => {
-      if (!v) return "";
-      const d = new Date(v as string);
-      return isNaN(d.getTime()) ? "" : d.toLocaleDateString("en-GB");
+function formatExportDate(v: unknown) {
+  if (!v) return "";
+  const d = new Date(v as string);
+  return isNaN(d.getTime()) ? "" : d.toLocaleDateString("en-GB");
+}
+
+function createEmployeeExportColumns(type: EmployeeType): ExportColumn[] {
+  return [
+    { header: "#", key: "legacyId" },
+    { header: "F Name", key: "firstName" },
+    { header: "L Name", key: "lastName" },
+    {
+      header: "DOB",
+      key: "dateOfBirth",
+      transform: formatExportDate,
     },
-  },
-  { header: "Branch", key: "branch" },
-  { header: "Mobile", key: "mobile" },
-  { header: "Nationality", key: "nationality" },
-  { header: "Gender", key: "gender" },
-  {
-    header: "Created Date",
-    key: "createdAt",
-    transform: (v) => {
-      if (!v) return "";
-      const d = new Date(v as string);
-      return isNaN(d.getTime()) ? "" : d.toLocaleDateString("en-GB");
+    { header: "Branch", key: "branch" },
+    type === "teacher"
+      ? { header: "Class", key: "className" }
+      : { header: "Mobile", key: "mobile" },
+    { header: "Nationality", key: "nationality" },
+    { header: "Gender", key: "gender" },
+    {
+      header: "Date",
+      key: "createdAt",
+      transform: formatExportDate,
     },
-  },
-  {
-    header: "Status",
-    key: "status",
-  },
-];
+    {
+      header: "Status",
+      key: "status",
+    },
+  ];
+}
 
 interface EmployeeListingClientProps {
   type: EmployeeType;
   employees: Employee[];
+  initialSearchQuery?: string;
 }
 
 const labels: Record<EmployeeType, { singular: string; plural: string }> = {
@@ -73,11 +77,13 @@ const labels: Record<EmployeeType, { singular: string; plural: string }> = {
 export function EmployeeListingClient({
   type,
   employees,
+  initialSearchQuery = "",
 }: EmployeeListingClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialSearchQuery);
+  const { singular, plural } = labels[type];
 
   const handleDeleteRequest = useCallback((id: string, name: string) => {
     setDeleteTarget({ id, name });
@@ -98,21 +104,57 @@ export function EmployeeListingClient({
     });
   }, [deleteTarget, type, router]);
 
+  const handleBulkDeactivate = useCallback((selectedEmployees: Employee[]) => {
+    if (selectedEmployees.length === 0 || isPending) return;
+
+    startTransition(async () => {
+      const results = await Promise.all(
+        selectedEmployees.map((employee) => deleteEmployee(type, employee.id))
+      );
+      const failed = results.filter((result) => !result.success);
+
+      if (failed.length) {
+        toast.error(
+          `${failed.length} ${failed.length === 1 ? "employee" : "employees"} could not be deactivated.`
+        );
+      } else {
+        toast.success(
+          `${selectedEmployees.length} ${selectedEmployees.length === 1 ? singular.toLowerCase() : plural.toLowerCase()} deactivated.`
+        );
+      }
+      router.refresh();
+    });
+  }, [isPending, plural, router, singular, type]);
+
+  const handlePrint = useCallback(() => {
+    window.print();
+  }, []);
+
   const columns = useMemo(
     () => createEmployeeColumns(type, { onDelete: handleDeleteRequest }),
     [type, handleDeleteRequest]
   );
-  const { singular, plural } = labels[type];
+  const exportColumns = useMemo(() => createEmployeeExportColumns(type), [type]);
 
   const filteredData = useMemo(() => {
     if (!search) return employees;
     const lower = search.toLowerCase();
-    return employees.filter(
-      (e) =>
-        e.firstName.toLowerCase().includes(lower) ||
-        e.lastName.toLowerCase().includes(lower) ||
-        (e.mobile && e.mobile.toLowerCase().includes(lower)) ||
-        (e.nationality && e.nationality.toLowerCase().includes(lower))
+    return employees.filter((employee) =>
+      [
+        employee.legacyId,
+        employee.firstName,
+        employee.lastName,
+        employee.dateOfBirth,
+        employee.branch,
+        employee.className,
+        employee.mobile,
+        employee.nationality,
+        employee.gender,
+        employee.createdAt,
+        employee.status,
+      ].some((value) =>
+        String(value ?? "").toLowerCase().includes(lower)
+      )
     );
   }, [search, employees]);
 
@@ -139,8 +181,8 @@ export function EmployeeListingClient({
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Toolbar */}
-          <div className="flex items-center gap-4">
-            <div className="relative max-w-sm flex-1">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+            <div className="relative min-w-[220px] flex-1 sm:max-w-sm">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder={`Search ${plural.toLowerCase()}...`}
@@ -161,13 +203,35 @@ export function EmployeeListingClient({
             <ExportButton
               filename={plural.toLowerCase()}
               sheetName={plural}
-              columns={employeeExportColumns}
+              columns={exportColumns}
               data={filteredData as unknown as Record<string, unknown>[]}
             />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={filteredData.length === 0}
+              onClick={handlePrint}
+            >
+              <Printer className="mr-1 size-4" />
+              Print
+            </Button>
           </div>
 
           {/* Data Table */}
-          <DataTable columns={columns} data={filteredData} />
+          <DataTable
+            columns={columns}
+            data={filteredData}
+            bulkActions={[
+              {
+                label: "Deactivate Selected",
+                icon: Trash2,
+                variant: "destructive",
+                onClick: handleBulkDeactivate,
+              },
+            ]}
+            pageSizeOptions={[10, 20, 50, 100, 150, "all"]}
+          />
         </CardContent>
       </Card>
 
