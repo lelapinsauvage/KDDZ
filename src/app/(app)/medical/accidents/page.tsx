@@ -2,6 +2,10 @@ import { getMedicalForms } from "@/lib/actions/medical";
 import { getBranches } from "@/lib/actions/branches";
 import { AccidentReportsClient, type AccidentReportRow } from "./accident-reports-client";
 
+interface PageProps {
+  searchParams: Promise<{ branch?: string }>;
+}
+
 function legacyString(data: Record<string, unknown>, ...keys: string[]) {
   for (const key of keys) {
     const value = data[key];
@@ -23,13 +27,18 @@ function legacyNumber(data: Record<string, unknown>, ...keys: string[]) {
   return null;
 }
 
-export default async function AccidentReportsPage() {
-  const [{ forms, total }, branchesResult] = await Promise.all([
-    getMedicalForms({ formType: "ACCIDENTS", pageSize: 500 }),
+export default async function AccidentReportsPage({ searchParams }: PageProps) {
+  const [{ branch: requestedBranchId }, branchesResult] = await Promise.all([
+    searchParams,
     getBranches(),
   ]);
-
   const branches = (branchesResult.data ?? []) as Array<{ id: string; name: string }>;
+  const scopedBranch = branches.find((branch) => branch.id === requestedBranchId);
+  const { forms, total } = await getMedicalForms({
+    formType: "ACCIDENTS",
+    pageSize: 500,
+    branchId: scopedBranch?.id,
+  });
 
   const serializedForms: AccidentReportRow[] = forms.map((form) => {
     const d = (form.data ?? {}) as Record<string, unknown>;
@@ -53,5 +62,13 @@ export default async function AccidentReportsPage() {
     };
   });
 
-  return <AccidentReportsClient reports={serializedForms} total={total} branches={branches} />;
+  return (
+    <AccidentReportsClient
+      reports={serializedForms}
+      total={total}
+      branches={branches}
+      initialBranchId={scopedBranch?.id}
+      branchScoped={Boolean(scopedBranch)}
+    />
+  );
 }

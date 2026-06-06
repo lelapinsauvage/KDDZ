@@ -53,6 +53,8 @@ interface AccidentReportsClientProps {
   reports: AccidentReportRow[];
   total: number;
   branches: Array<{ id: string; name: string }>;
+  initialBranchId?: string;
+  branchScoped?: boolean;
 }
 
 interface LegacyFilters {
@@ -161,9 +163,13 @@ export function AccidentReportsClient({
   reports,
   total,
   branches,
+  initialBranchId,
+  branchScoped = false,
 }: AccidentReportsClientProps) {
+  const lockedBranchId = branchScoped && initialBranchId ? initialBranchId : null;
+  const defaultBranchFilter = lockedBranchId ?? "ALL";
   const [searchQuery, setSearchQuery] = useState("");
-  const [branchFilter, setBranchFilter] = useState("ALL");
+  const [branchFilter, setBranchFilter] = useState(defaultBranchFilter);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<(typeof PAGE_SIZES)[number]>("10");
   const [legacyFilters, setLegacyFilters] = useState<LegacyFilters>({
@@ -190,8 +196,15 @@ export function AccidentReportsClient({
   );
 
   const uniqueClasses = useMemo(
-    () => Array.from(new Set(reports.map((report) => report.className))).filter((name) => name && name !== "—"),
-    [reports],
+    () =>
+      Array.from(
+        new Set(
+          reports
+            .filter((report) => branchFilter === "ALL" || report.branchId === branchFilter)
+            .map((report) => report.className)
+        )
+      ).filter((name) => name && name !== "—"),
+    [branchFilter, reports],
   );
 
   const filteredReports = useMemo(() => {
@@ -245,13 +258,14 @@ export function AccidentReportsClient({
   const draftCount = reports.filter((report) => report.status === "DRAFT").length;
 
   const activeFilters = useMemo(() => {
-    const pills: { key: string; label: string; value: string }[] = [];
+    const pills: { key: string; label: string; value: string; locked?: boolean }[] = [];
     if (searchQuery) pills.push({ key: "search", label: "Search", value: searchQuery });
     if (branchFilter !== "ALL") {
       pills.push({
         key: "branch",
         label: "Branch",
         value: branches.find((branch) => branch.id === branchFilter)?.name ?? branchFilter,
+        locked: Boolean(lockedBranchId),
       });
     }
     if (legacyFilters.formId) pills.push({ key: "formId", label: "Form #", value: legacyFilters.formId });
@@ -264,11 +278,11 @@ export function AccidentReportsClient({
     if (legacyFilters.createdFrom) pills.push({ key: "createdFrom", label: "Created from", value: legacyFilters.createdFrom });
     if (legacyFilters.createdTo) pills.push({ key: "createdTo", label: "Created to", value: legacyFilters.createdTo });
     return pills;
-  }, [branchFilter, branches, legacyFilters, searchQuery]);
+  }, [branchFilter, branches, legacyFilters, lockedBranchId, searchQuery]);
 
   function clearFilter(key: string) {
     if (key === "search") setSearchQuery("");
-    if (key === "branch") setBranchFilter("ALL");
+    if (key === "branch" && !lockedBranchId) setBranchFilter("ALL");
     if (key in legacyFilters) {
       setLegacyFilters((current) => ({ ...current, [key]: "" }));
     }
@@ -277,7 +291,7 @@ export function AccidentReportsClient({
 
   function clearAllFilters() {
     setSearchQuery("");
-    setBranchFilter("ALL");
+    setBranchFilter(defaultBranchFilter);
     setLegacyFilters({
       formId: "",
       firstName: "",
@@ -292,13 +306,18 @@ export function AccidentReportsClient({
     setPage(1);
   }
 
+  const scopedBranchName = lockedBranchId
+    ? branches.find((branch) => branch.id === lockedBranchId)?.name ?? "Branch"
+    : null;
+  const pageTitle = scopedBranchName ? `Accident Reports - ${scopedBranchName}` : "Accident Reports";
+
   return (
     <>
       <PageHeader
-        title="Accident Reports"
+        title={pageTitle}
         breadcrumbs={[
           { label: "Health", href: "/medical/general" },
-          { label: "Accident Reports" },
+          { label: pageTitle },
         ]}
         actions={
           <Button asChild>
@@ -390,9 +409,11 @@ export function AccidentReportsClient({
               <Select
                 value={branchFilter}
                 onValueChange={(value) => {
+                  if (lockedBranchId) return;
                   setBranchFilter(value);
                   setPage(1);
                 }}
+                disabled={Boolean(lockedBranchId)}
               >
                 <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[170px]">
                   <SelectValue placeholder="All Branches" />
@@ -518,13 +539,15 @@ export function AccidentReportsClient({
                 {activeFilters.map((filter) => (
                   <Badge key={filter.key} variant="secondary" className="gap-1 pl-2.5 pr-1 text-xs font-normal">
                     {filter.label}: <span className="font-medium">{filter.value}</span>
-                    <button
-                      type="button"
-                      onClick={() => clearFilter(filter.key)}
-                      className="ml-0.5 rounded-full p-0.5 hover:bg-muted-foreground/20"
-                    >
-                      <X className="size-3" />
-                    </button>
+                    {!filter.locked && (
+                      <button
+                        type="button"
+                        onClick={() => clearFilter(filter.key)}
+                        className="ml-0.5 rounded-full p-0.5 hover:bg-muted-foreground/20"
+                      >
+                        <X className="size-3" />
+                      </button>
+                    )}
                   </Badge>
                 ))}
                 <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-muted-foreground" onClick={clearAllFilters}>
