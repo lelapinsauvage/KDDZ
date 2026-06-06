@@ -67,6 +67,17 @@ function legacyTargetDate(legacyData: unknown) {
     : null;
 }
 
+function jsonReminderDays(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  return Array.from(
+    new Set(
+      value
+        .map((item) => Number(item))
+        .filter((item) => Number.isInteger(item) && item >= 1 && item <= 7),
+    ),
+  ).sort((a, b) => a - b);
+}
+
 function emptySummary(): HolidayGenerationSummary {
   return {
     branchesScanned: 0,
@@ -154,7 +165,13 @@ export async function generateHolidayAlarmsForOrganization(params: {
 
     const targetDate = nextHolidayOccurrence(holiday.date, holiday.repeated, today);
     const daysUntil = daysBetween(today, targetDate);
-    if (daysUntil !== holiday.daysBefore) {
+    const reminderDays = jsonReminderDays(holiday.notificationDaysBefore);
+    const configuredDays = reminderDays.length
+      ? reminderDays
+      : holiday.daysBefore > 0
+        ? [holiday.daysBefore]
+        : [];
+    if (!configuredDays.includes(daysUntil)) {
       summary.skippedOutsideWindow += 1;
       continue;
     }
@@ -165,7 +182,7 @@ export async function generateHolidayAlarmsForOrganization(params: {
       message,
       targetDate,
       targetDateKey: dateKey(targetDate),
-      daysBefore: holiday.daysBefore,
+      daysBefore: daysUntil,
       branchId: holiday.branchId,
       branchName: holiday.branch?.name ?? "All Branches",
       repeated: holiday.repeated,

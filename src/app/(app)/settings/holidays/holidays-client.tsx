@@ -70,6 +70,7 @@ interface Holiday {
   notificationTitle: string;
   notificationMessage: string;
   daysBefore: number;
+  notificationDaysBefore: number[];
   informTeachers: boolean;
   sendVia: string;
   branch: string;
@@ -121,6 +122,7 @@ const DEFAULT_VALUES: HolidayFormValues = {
   notificationTitle: "",
   notificationMessage: "",
   daysBefore: 0,
+  notificationDaysBefore: [],
   informTeachers: false,
   sendVia: "BOTH",
   branchId: null,
@@ -170,6 +172,12 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
       notificationTitle: h.notificationTitle,
       notificationMessage: h.notificationMessage,
       daysBefore: h.daysBefore,
+      notificationDaysBefore:
+        h.notificationDaysBefore.length > 0
+          ? h.notificationDaysBefore
+          : h.daysBefore > 0
+            ? [h.daysBefore]
+            : [],
       informTeachers: h.informTeachers,
       sendVia: h.sendVia,
       branchId: h.branchId,
@@ -189,6 +197,10 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
     }
 
     startTransition(async () => {
+      const notificationDaysBefore = Array.from(
+        new Set(values.notificationDaysBefore)
+      ).sort((a, b) => a - b);
+      const daysBefore = notificationDaysBefore[0] ?? 0;
       const branchId = values.branchId || null;
       const branchName = branchId
         ? (branches.find((b) => b.id === branchId)?.name ?? "—")
@@ -205,7 +217,8 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
           isActive: values.isActive,
           notificationTitle: values.notificationTitle || null,
           notificationMessage: values.notificationMessage || null,
-          daysBefore: values.daysBefore,
+          daysBefore,
+          notificationDaysBefore,
           informTeachers: values.informTeachers,
           sendVia: values.sendVia,
           branchId,
@@ -226,7 +239,8 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
               isActive: values.isActive,
               notificationTitle: values.notificationTitle,
               notificationMessage: values.notificationMessage,
-              daysBefore: values.daysBefore,
+              daysBefore,
+              notificationDaysBefore,
               informTeachers: values.informTeachers,
               sendVia: values.sendVia,
               branch: branchName,
@@ -248,7 +262,8 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
           isActive: values.isActive,
           notificationTitle: values.notificationTitle || null,
           notificationMessage: values.notificationMessage || null,
-          daysBefore: values.daysBefore,
+          daysBefore,
+          notificationDaysBefore,
           informTeachers: values.informTeachers,
           sendVia: values.sendVia,
           branchId,
@@ -268,7 +283,8 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                     isActive: values.isActive,
                     notificationTitle: values.notificationTitle,
                     notificationMessage: values.notificationMessage,
-                    daysBefore: values.daysBefore,
+                    daysBefore,
+                    notificationDaysBefore,
                     informTeachers: values.informTeachers,
                     sendVia: values.sendVia,
                     branch: branchName,
@@ -874,26 +890,33 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                   <label className="mb-1.5 block text-sm font-medium">Days Before</label>
                   <Controller
                     control={form.control}
-                    name="daysBefore"
+                    name="notificationDaysBefore"
                     render={({ field }) => (
-                      <Select
-                        value={String(field.value)}
-                        onValueChange={(v) => field.onChange(Number(v))}
-                      >
-                        <SelectTrigger className="w-48">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="0">None</SelectItem>
-                          <SelectItem value="1">1 Day</SelectItem>
-                          <SelectItem value="2">2 Days</SelectItem>
-                          <SelectItem value="3">3 Days</SelectItem>
-                          <SelectItem value="4">4 Days</SelectItem>
-                          <SelectItem value="5">5 Days</SelectItem>
-                          <SelectItem value="6">6 Days</SelectItem>
-                          <SelectItem value="7">7 Days</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                        {[1, 2, 3, 4, 5, 6, 7].map((day) => {
+                          const selected = field.value.includes(day);
+                          return (
+                            <label
+                              key={day}
+                              className="flex items-center gap-2 rounded-sm border px-3 py-2 text-sm"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selected}
+                                onChange={(event) => {
+                                  const next = event.target.checked
+                                    ? [...field.value, day]
+                                    : field.value.filter((value) => value !== day);
+                                  field.onChange(
+                                    Array.from(new Set(next)).sort((a, b) => a - b)
+                                  );
+                                }}
+                              />
+                              {day} {day === 1 ? "Day" : "Days"}
+                            </label>
+                          );
+                        })}
+                      </div>
                     )}
                   />
                 </div>

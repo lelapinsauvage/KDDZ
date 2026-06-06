@@ -2235,6 +2235,7 @@ model Holiday {
   notificationTitle   String?
   notificationMessage String?
   daysBefore          Int       @default(0)
+  notificationDaysBefore Json?
   informTeachers      Boolean   @default(false)
   sendVia             String    @default("BOTH") // WHATSAPP | SMS | BOTH
   branchId            String?   @db.Uuid

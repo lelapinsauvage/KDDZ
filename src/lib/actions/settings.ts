@@ -24,6 +24,7 @@ interface HolidayData {
   notificationTitle?: string | null;
   notificationMessage?: string | null;
   daysBefore?: number;
+  notificationDaysBefore?: number[] | null;
   informTeachers?: boolean;
   sendVia?: string;
   branchId?: string | null;
@@ -61,6 +62,18 @@ type ActionResult<T = unknown> = {
   error?: string;
   data?: T;
 };
+
+function normalizeNotificationDaysBefore(value?: number[] | null) {
+  if (!Array.isArray(value)) return [];
+  const days = Array.from(
+    new Set(
+      value
+        .map((day) => Number(day))
+        .filter((day) => Number.isInteger(day) && day >= 1 && day <= 7),
+    ),
+  ).sort((a, b) => a - b);
+  return days;
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -507,6 +520,12 @@ export async function createHoliday(data: HolidayData): Promise<ActionResult> {
       return { success: false, error: "Branch not found in your organization" };
     }
 
+    const notificationDaysBefore = normalizeNotificationDaysBefore(
+      data.notificationDaysBefore,
+    );
+    const daysBefore =
+      notificationDaysBefore?.[0] ?? data.daysBefore ?? 0;
+
     const holiday = await db.holiday.create({
       data: {
         name: data.name,
@@ -518,7 +537,8 @@ export async function createHoliday(data: HolidayData): Promise<ActionResult> {
         isActive: data.isActive ?? true,
         notificationTitle: data.notificationTitle ?? null,
         notificationMessage: data.notificationMessage ?? null,
-        daysBefore: data.daysBefore ?? 0,
+        daysBefore,
+        notificationDaysBefore,
         informTeachers: data.informTeachers ?? false,
         sendVia: data.sendVia ?? "BOTH",
         branchId: data.branchId ?? null,
@@ -565,6 +585,10 @@ export async function updateHoliday(
       return { success: false, error: "Branch not found in your organization" };
     }
 
+    const notificationDaysBefore = normalizeNotificationDaysBefore(
+      data.notificationDaysBefore,
+    );
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {};
 
@@ -577,7 +601,12 @@ export async function updateHoliday(
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
     if (data.notificationTitle !== undefined) updateData.notificationTitle = data.notificationTitle;
     if (data.notificationMessage !== undefined) updateData.notificationMessage = data.notificationMessage;
-    if (data.daysBefore !== undefined) updateData.daysBefore = data.daysBefore;
+    if (data.notificationDaysBefore !== undefined) {
+      updateData.notificationDaysBefore = notificationDaysBefore;
+      updateData.daysBefore = notificationDaysBefore?.[0] ?? 0;
+    } else if (data.daysBefore !== undefined) {
+      updateData.daysBefore = data.daysBefore;
+    }
     if (data.informTeachers !== undefined) updateData.informTeachers = data.informTeachers;
     if (data.sendVia !== undefined) updateData.sendVia = data.sendVia;
     if (data.branchId !== undefined) updateData.branchId = data.branchId;

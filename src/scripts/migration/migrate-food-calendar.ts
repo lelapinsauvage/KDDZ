@@ -91,16 +91,23 @@ function mapFoodCategory(type: string): "BREAKFAST" | "LUNCH" | "DESSERT" | "SNA
   return "SNACK";
 }
 
-function parseDaysBefore(value: string): number {
+function parseDaysBeforeList(value: string): number[] {
   const cleaned = cleanString(value);
-  if (!cleaned || cleaned === "null") return 0;
+  if (!cleaned || cleaned === "null") return [];
+  let rawValues: unknown[] = [cleaned];
   try {
     const parsed = JSON.parse(cleaned);
-    if (Array.isArray(parsed)) return toInt(parsed[0], 0);
+    rawValues = Array.isArray(parsed) ? parsed : [parsed];
   } catch {
-    // fall through
+    // Fall through to parsing the raw value.
   }
-  return toInt(cleaned, 0);
+  return Array.from(
+    new Set(
+      rawValues
+        .map((item) => toInt(item, 0))
+        .filter((item) => item >= 1 && item <= 7),
+    ),
+  ).sort((a, b) => a - b);
 }
 
 async function ensureDessertFood(
@@ -372,6 +379,7 @@ async function migrateHolidays(prisma: PrismaClient, dryRun: boolean) {
     }
 
     const id = generateUUID();
+    const notificationDaysBefore = parseDaysBeforeList(row.daysbefore);
     if (!dryRun) {
       await prisma.holiday.create({
         data: {
@@ -384,7 +392,8 @@ async function migrateHolidays(prisma: PrismaClient, dryRun: boolean) {
           isActive: toBool(row.active),
           notificationTitle: cleanString(row.subject),
           notificationMessage: cleanString(row.body),
-          daysBefore: parseDaysBefore(row.daysbefore),
+          daysBefore: notificationDaysBefore[0] ?? 0,
+          notificationDaysBefore,
           informTeachers: false,
           sendVia: "BOTH",
           createdAt: parseDate(row.datetime) ?? new Date(),

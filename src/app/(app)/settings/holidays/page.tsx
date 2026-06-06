@@ -2,6 +2,19 @@ import { getHolidays } from "@/lib/actions/settings";
 import { getBranches } from "@/lib/actions/branches";
 import { HolidaysClient } from "./holidays-client";
 
+function normalizeNotificationDaysBefore(value: unknown, fallback: number) {
+  if (Array.isArray(value)) {
+    return Array.from(
+      new Set(
+        value
+          .map((item) => Number(item))
+          .filter((item) => Number.isInteger(item) && item >= 1 && item <= 7),
+      ),
+    ).sort((a, b) => a - b);
+  }
+  return fallback > 0 ? [fallback] : [];
+}
+
 export default async function HolidayCalendarPage() {
   const [holidaysResult, branchesResult] = await Promise.all([
     getHolidays(),
@@ -25,6 +38,10 @@ export default async function HolidayCalendarPage() {
     notificationTitle: (h.notificationTitle ?? "") as string,
     notificationMessage: (h.notificationMessage ?? "") as string,
     daysBefore: (h.daysBefore ?? 0) as number,
+    notificationDaysBefore: normalizeNotificationDaysBefore(
+      h.notificationDaysBefore,
+      (h.daysBefore ?? 0) as number,
+    ),
     informTeachers: (h.informTeachers ?? false) as boolean,
     sendVia: (h.sendVia ?? "BOTH") as string,
     branch: h.branch ? (h.branch.name as string) : "All Branches",
