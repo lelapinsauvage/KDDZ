@@ -54,6 +54,8 @@ interface EmployeeOption {
 interface AttendanceLogsClientProps {
   logs: AttendanceLog[];
   employees: EmployeeOption[];
+  initialDateFrom?: string;
+  initialDateTo?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -63,12 +65,14 @@ interface AttendanceLogsClientProps {
 export function AttendanceLogsClient({
   logs: initialLogs,
   employees,
+  initialDateFrom,
+  initialDateTo,
 }: AttendanceLogsClientProps) {
   const [isPending, startTransition] = useTransition();
 
   const [logs, setLogs] = useState(initialLogs);
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
+  const [dateFrom, setDateFrom] = useState(initialDateFrom ?? "");
+  const [dateTo, setDateTo] = useState(initialDateTo ?? "");
   const [employeeFilter, setEmployeeFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
 
