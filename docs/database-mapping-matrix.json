@@ -667,9 +667,9 @@
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "t_manager_address",
     "legacyColumns": "taid:int(11) NOT NULL AUTO_INCREMENT, teacher_id:varchar(50) NOT NULL, muhafaza:varchar(50) CHARACTER SET utf8 NOT NULL, quadaa:varchar(50) CHARACTER SET utf8 NOT NULL, region:varchar(50) CHARACTER SET utf8 NOT NULL, city:varchar(50) CHARACTER SET utf8mb4 NOT NULL, street:varchar(50) CHARACTER SET utf8 NOT NULL, building:varchar(50) CHARACTER SET utf8 NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "ManagerAddress",
+    "status": "mapped - migrated by migrate-employees.ts",
+    "reconciliation": "Active manager addresses migrate after manager mapping; needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1635,9 +1635,9 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "t_manager_address",
     "legacyColumns": "taid:int(11) NOT NULL, teacher_id:varchar(50) NOT NULL, muhafaza:varchar(50) CHARACTER SET utf8 NOT NULL, quadaa:varchar(50) CHARACTER SET utf8 NOT NULL, region:varchar(50) CHARACTER SET utf8 NOT NULL, city:varchar(50) CHARACTER SET utf8mb4 NOT NULL, street:varchar(50) CHARACTER SET utf8 NOT NULL, building:varchar(50) CHARACTER SET utf8 NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "ManagerAddress",
+    "status": "mapped - migrated by migrate-employees.ts",
+    "reconciliation": "Active manager addresses migrate after manager mapping; needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -2475,9 +2475,9 @@
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "t_manager_address",
     "legacyColumns": "taid:int(11) NOT NULL AUTO_INCREMENT, teacher_id:varchar(50) NOT NULL, muhafaza:varchar(50) CHARACTER SET utf8 NOT NULL, quadaa:varchar(50) CHARACTER SET utf8 NOT NULL, region:varchar(50) CHARACTER SET utf8 NOT NULL, city:varchar(50) CHARACTER SET utf8mb4 NOT NULL, street:varchar(50) CHARACTER SET utf8 NOT NULL, building:varchar(50) CHARACTER SET utf8 NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "ManagerAddress",
+    "status": "mapped - migrated by migrate-employees.ts",
+    "reconciliation": "Active manager addresses migrate after manager mapping; needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
