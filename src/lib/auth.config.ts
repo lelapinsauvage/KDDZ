@@ -40,6 +40,8 @@ export const authConfig = {
       const isPublic =
         pathname.startsWith("/login") ||
         pathname.startsWith("/forgot") ||
+        pathname === "/activate.php" ||
+        pathname === "/users/activate.php" ||
         isParentPortal ||
         pathname.startsWith("/api/auth") ||
         pathname.startsWith("/api/cron") ||
