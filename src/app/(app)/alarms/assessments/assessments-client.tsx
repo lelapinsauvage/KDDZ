@@ -24,7 +24,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { generateAssessmentAlarms } from "@/lib/actions/alarms";
+import {
+  StaffReceiptAlarmsClient,
+  type StaffReceiptAlarm,
+  type StaffReceiptAlarmHistory,
+} from "../_components/staff-receipt-alarms-client";
 
 interface AssessmentDueAlarmEntry {
   id: string;
@@ -57,6 +68,8 @@ interface AssessmentsClientProps {
   dueAlarms: AssessmentDueAlarmEntry[];
   scheduledAssessments: ScheduledAssessmentEntry[];
   branches: { id: string; name: string }[];
+  notificationAlarms: StaffReceiptAlarm[];
+  notificationHistory: StaffReceiptAlarmHistory[];
 }
 
 function formatDate(iso: string) {
@@ -84,6 +97,8 @@ export function AssessmentsClient({
   dueAlarms,
   scheduledAssessments,
   branches,
+  notificationAlarms,
+  notificationHistory,
 }: AssessmentsClientProps) {
   const router = useRouter();
   const [branchFilter, setBranchFilter] = useState("ALL");
@@ -107,6 +122,7 @@ export function AssessmentsClient({
 
   const dueToday = dueAlarms.filter((alarm) => alarm.daysUntilDue === 0).length;
   const dueThisWeek = dueAlarms.filter((alarm) => alarm.daysUntilDue <= 7).length;
+  const unreadNotifications = notificationAlarms.filter((alarm) => !alarm.isRead).length;
 
   async function handleGenerate() {
     setIsGenerating(true);
@@ -332,110 +348,134 @@ export function AssessmentsClient({
         ]}
       />
 
-      <div className="space-y-4 p-4 md:p-6">
-        <div className="grid gap-3 sm:grid-cols-3">
-          <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-rose-700">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <div className="text-xs font-medium uppercase tracking-normal">Today</div>
-                <div className="mt-1 text-2xl font-semibold">{dueToday}</div>
+      <Tabs defaultValue="due" className="space-y-4 p-4 md:p-6">
+        <TabsList>
+          <TabsTrigger value="due">Due Reports</TabsTrigger>
+          <TabsTrigger value="notifications">
+            Notifications
+            {unreadNotifications > 0 && (
+              <Badge className="ml-1 bg-primary/10 text-primary">
+                {unreadNotifications}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="due" className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-rose-700">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-xs font-medium uppercase tracking-normal">Today</div>
+                  <div className="mt-1 text-2xl font-semibold">{dueToday}</div>
+                </div>
+                <FileWarning className="size-5" />
               </div>
-              <FileWarning className="size-5" />
             </div>
-          </div>
-          <div className="rounded-lg border border-orange-200 bg-orange-50 px-4 py-3 text-orange-700">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <div className="text-xs font-medium uppercase tracking-normal">7 Days</div>
-                <div className="mt-1 text-2xl font-semibold">{dueThisWeek}</div>
+            <div className="rounded-lg border border-orange-200 bg-orange-50 px-4 py-3 text-orange-700">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-xs font-medium uppercase tracking-normal">7 Days</div>
+                  <div className="mt-1 text-2xl font-semibold">{dueThisWeek}</div>
+                </div>
+                <CalendarClock className="size-5" />
               </div>
-              <CalendarClock className="size-5" />
             </div>
-          </div>
-          <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-700">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <div className="text-xs font-medium uppercase tracking-normal">Scheduled</div>
-                <div className="mt-1 text-2xl font-semibold">{scheduledAssessments.length}</div>
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-700">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-xs font-medium uppercase tracking-normal">Scheduled</div>
+                  <div className="mt-1 text-2xl font-semibold">{scheduledAssessments.length}</div>
+                </div>
+                <ClipboardCheck className="size-5" />
               </div>
-              <ClipboardCheck className="size-5" />
             </div>
           </div>
-        </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <Select value={branchFilter} onValueChange={setBranchFilter}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="All Branches" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All Branches</SelectItem>
-              {branches.map((branch) => (
-                <SelectItem key={branch.id} value={branch.id}>
-                  {branch.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex flex-wrap items-center gap-3">
+            <Select value={branchFilter} onValueChange={setBranchFilter}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="All Branches" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Branches</SelectItem>
+                {branches.map((branch) => (
+                  <SelectItem key={branch.id} value={branch.id}>
+                    {branch.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <Select value={urgencyFilter} onValueChange={setUrgencyFilter}>
-            <SelectTrigger className="w-full sm:w-[160px]">
-              <SelectValue placeholder="All Due Dates" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All Due Dates</SelectItem>
-              <SelectItem value="TODAY">Today</SelectItem>
-              <SelectItem value="WEEK">7 Days</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleGenerate}
-            disabled={isGenerating}
-            className="gap-2"
-          >
-            <RefreshCw className={`size-4 ${isGenerating ? "animate-spin" : ""}`} />
-            {isGenerating ? "Generating..." : "Generate"}
-          </Button>
-          {generationStatus && (
-            <span className="text-sm text-muted-foreground">{generationStatus}</span>
-          )}
-        </div>
+            <Select value={urgencyFilter} onValueChange={setUrgencyFilter}>
+              <SelectTrigger className="w-full sm:w-[160px]">
+                <SelectValue placeholder="All Due Dates" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Due Dates</SelectItem>
+                <SelectItem value="TODAY">Today</SelectItem>
+                <SelectItem value="WEEK">7 Days</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleGenerate}
+              disabled={isGenerating}
+              className="gap-2"
+            >
+              <RefreshCw className={`size-4 ${isGenerating ? "animate-spin" : ""}`} />
+              {isGenerating ? "Generating..." : "Generate"}
+            </Button>
+            {generationStatus && (
+              <span className="text-sm text-muted-foreground">{generationStatus}</span>
+            )}
+          </div>
 
-        <div className="rounded-lg border bg-card">
-          <div className="flex flex-wrap items-center gap-3 border-b px-4 py-3">
-            <div>
-              <h2 className="text-base font-semibold">Due Assessment Reports</h2>
-              <p className="text-xs text-muted-foreground">
-                {filteredDueAlarms.length} of {dueAlarms.length} reminders
-              </p>
+          <div className="rounded-lg border bg-card">
+            <div className="flex flex-wrap items-center gap-3 border-b px-4 py-3">
+              <div>
+                <h2 className="text-base font-semibold">Due Assessment Reports</h2>
+                <p className="text-xs text-muted-foreground">
+                  {filteredDueAlarms.length} of {dueAlarms.length} reminders
+                </p>
+              </div>
+            </div>
+            <div className="p-4">
+              <DataTable
+                columns={dueColumns}
+                data={filteredDueAlarms}
+                searchKey="childName"
+                searchPlaceholder="Search by child name..."
+              />
             </div>
           </div>
-          <div className="p-4">
-            <DataTable
-              columns={dueColumns}
-              data={filteredDueAlarms}
-              searchKey="childName"
-              searchPlaceholder="Search by child name..."
-            />
-          </div>
-        </div>
 
-        <div className="rounded-lg border bg-card">
-          <div className="border-b px-4 py-3">
-            <h2 className="text-base font-semibold">Scheduled Assessment Dates</h2>
+          <div className="rounded-lg border bg-card">
+            <div className="border-b px-4 py-3">
+              <h2 className="text-base font-semibold">Scheduled Assessment Dates</h2>
+            </div>
+            <div className="p-4">
+              <DataTable
+                columns={scheduledColumns}
+                data={filteredScheduledAssessments}
+                searchKey="assessmentTypeName"
+                searchPlaceholder="Search assessments..."
+              />
+            </div>
           </div>
-          <div className="p-4">
-            <DataTable
-              columns={scheduledColumns}
-              data={filteredScheduledAssessments}
-              searchKey="assessmentTypeName"
-              searchPlaceholder="Search assessments..."
-            />
-          </div>
-        </div>
-      </div>
+        </TabsContent>
+
+        <TabsContent value="notifications" className="space-y-4">
+          <StaffReceiptAlarmsClient
+            family="assessment"
+            alarms={notificationAlarms}
+            history={notificationHistory}
+            branches={branches}
+            showHeader={false}
+          />
+        </TabsContent>
+      </Tabs>
     </>
   );
 }

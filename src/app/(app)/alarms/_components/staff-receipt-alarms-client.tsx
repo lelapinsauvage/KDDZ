@@ -32,6 +32,7 @@ import {
 import {
   ExternalLink,
   Cake,
+  ClipboardCheck,
   Eye,
   FileClock,
   FileText,
@@ -44,14 +45,17 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import {
+  generateAssessmentAlarms,
   generateBirthdayAlarms,
   generateContractAlarms,
   generateInsuranceAlarms,
   generateMedicineAlarms,
+  markAllAssessmentAlarmsViewed,
   markAllBirthdayAlarmsViewed,
   markAllContractAlarmsViewed,
   markAllInsuranceAlarmsViewed,
   markAllMedicineAlarmsViewed,
+  markAssessmentAlarmViewed,
   markBirthdayAlarmViewed,
   markContractAlarmViewed,
   markInsuranceAlarmViewed,
@@ -87,10 +91,11 @@ export interface StaffReceiptAlarmHistory {
 }
 
 interface StaffReceiptAlarmsClientProps {
-  family: "birthday" | "contract" | "insurance" | "medicine";
+  family: "assessment" | "birthday" | "contract" | "insurance" | "medicine";
   alarms: StaffReceiptAlarm[];
   history: StaffReceiptAlarmHistory[];
   branches: { id: string; name: string }[];
+  showHeader?: boolean;
 }
 
 interface FamilyCopy {
@@ -108,6 +113,20 @@ interface FamilyCopy {
 }
 
 const familyCopy: Record<StaffReceiptAlarmsClientProps["family"], FamilyCopy> = {
+  assessment: {
+    title: "Assessment Notifications Listing",
+    description: "Assessment report reminders sent to staff",
+    breadcrumb: "Assessments",
+    historyTitle: "Sent Assessment Alarms",
+    searchPlaceholder: "Search assessment alarms...",
+    historyPlaceholder: "Search sent assessment alarms...",
+    emptyTitle: "No assessment notifications",
+    emptyDescription:
+      "Assessment reminders matching the current filters will appear here.",
+    generationFailure: "Assessment generation failed.",
+    icon: ClipboardCheck,
+    iconClass: "text-emerald-600",
+  },
   birthday: {
     title: "Birthdays Notifications Listing",
     description: "Birthday reminders sent to staff",
@@ -211,7 +230,7 @@ function formatGenerationStatus(
   family: StaffReceiptAlarmsClientProps["family"],
   data: unknown,
 ) {
-  if (family === "birthday") {
+  if (family === "assessment" || family === "birthday") {
     const alarmsCreated = metric(data, "alarmsCreated");
     const notificationsCreated = metric(data, "notificationsCreated");
     const skippedExisting = metric(data, "skippedExisting");
@@ -247,6 +266,7 @@ async function generateForFamily(
   family: StaffReceiptAlarmsClientProps["family"],
   branchId?: string,
 ) {
+  if (family === "assessment") return generateAssessmentAlarms(branchId);
   if (family === "birthday") return generateBirthdayAlarms(branchId);
   if (family === "contract") return generateContractAlarms(branchId);
   if (family === "insurance") return generateInsuranceAlarms(branchId);
@@ -257,6 +277,7 @@ async function markViewedForFamily(
   family: StaffReceiptAlarmsClientProps["family"],
   alarmId: string,
 ) {
+  if (family === "assessment") return markAssessmentAlarmViewed(alarmId);
   if (family === "birthday") return markBirthdayAlarmViewed(alarmId);
   if (family === "contract") return markContractAlarmViewed(alarmId);
   if (family === "insurance") return markInsuranceAlarmViewed(alarmId);
@@ -266,6 +287,7 @@ async function markViewedForFamily(
 async function markAllViewedForFamily(
   family: StaffReceiptAlarmsClientProps["family"],
 ) {
+  if (family === "assessment") return markAllAssessmentAlarmsViewed();
   if (family === "birthday") return markAllBirthdayAlarmsViewed();
   if (family === "contract") return markAllContractAlarmsViewed();
   if (family === "insurance") return markAllInsuranceAlarmsViewed();
@@ -277,6 +299,7 @@ export function StaffReceiptAlarmsClient({
   alarms,
   history,
   branches,
+  showHeader = true,
 }: StaffReceiptAlarmsClientProps) {
   const copy = familyCopy[family];
   const Icon = copy.icon;
@@ -567,30 +590,34 @@ export function StaffReceiptAlarmsClient({
     },
   ];
 
+  const markAllViewedButton = (
+    <Button
+      type="button"
+      size="sm"
+      onClick={markAllViewed}
+      disabled={isPending || unreadCount === 0}
+      className="gap-2"
+    >
+      <MailCheck className="size-4" />
+      Set All As Viewed
+    </Button>
+  );
+
   return (
     <>
-      <PageHeader
-        title={copy.title}
-        description={copy.description}
-        breadcrumbs={[
-          { label: "Notifications", href: "/alarms" },
-          { label: copy.breadcrumb },
-        ]}
-        actions={
-          <Button
-            type="button"
-            size="sm"
-            onClick={markAllViewed}
-            disabled={isPending || unreadCount === 0}
-            className="gap-2"
-          >
-            <MailCheck className="size-4" />
-            Set All As Viewed
-          </Button>
-        }
-      />
+      {showHeader && (
+        <PageHeader
+          title={copy.title}
+          description={copy.description}
+          breadcrumbs={[
+            { label: "Notifications", href: "/alarms" },
+            { label: copy.breadcrumb },
+          ]}
+          actions={markAllViewedButton}
+        />
+      )}
 
-      <div className="space-y-4 p-4 md:p-6">
+      <div className={showHeader ? "space-y-4 p-4 md:p-6" : "space-y-4"}>
         <Tabs defaultValue="teachers" className="space-y-4">
           <TabsList>
             <TabsTrigger value="teachers">
@@ -671,6 +698,7 @@ export function StaffReceiptAlarmsClient({
                 <RefreshCw className={`size-4 ${isGenerating ? "animate-spin" : ""}`} />
                 {isGenerating ? "Generating..." : "Generate"}
               </Button>
+              {!showHeader && markAllViewedButton}
               {generationStatus && (
                 <span className="text-sm text-muted-foreground">
                   {generationStatus}

@@ -1,20 +1,40 @@
 import {
+  getAssessmentAlarmHistory,
+  getAssessmentAlarmNotifications,
   getAssessmentDueAlarms,
   getUpcomingAssessments,
   type AssessmentDueAlarm,
 } from "@/lib/actions/alarms";
 import { getBranches } from "@/lib/actions/branches";
 import { ASSESSMENT_TYPE_NAMES } from "@/lib/assessment-types";
+import type {
+  StaffReceiptAlarm,
+  StaffReceiptAlarmHistory,
+} from "../_components/staff-receipt-alarms-client";
 import { AssessmentsClient } from "./assessments-client";
 
 export default async function AssessmentAlarmsPage() {
-  const [dueAlarmsResult, assessmentsResult, branchesResult] = await Promise.all([
+  const [
+    dueAlarmsResult,
+    assessmentsResult,
+    branchesResult,
+    notificationsResult,
+    historyResult,
+  ] = await Promise.all([
     getAssessmentDueAlarms(),
     getUpcomingAssessments(),
     getBranches(),
+    getAssessmentAlarmNotifications({ pageSize: 500 }),
+    getAssessmentAlarmHistory({ pageSize: 500 }),
   ]);
 
   const branches = ((branchesResult.data ?? []) as Array<{ id: string; name: string }>);
+  const notificationsData = (notificationsResult.success
+    ? notificationsResult.data
+    : null) as { alarms?: StaffReceiptAlarm[] } | null;
+  const historyData = (historyResult.success
+    ? historyResult.data
+    : null) as { history?: StaffReceiptAlarmHistory[] } | null;
 
   const rawDueAlarms = (dueAlarmsResult.success
     ? dueAlarmsResult.data ?? []
@@ -63,6 +83,8 @@ export default async function AssessmentAlarmsPage() {
       dueAlarms={dueAlarms}
       scheduledAssessments={scheduledAssessments}
       branches={branches}
+      notificationAlarms={notificationsData?.alarms ?? []}
+      notificationHistory={historyData?.history ?? []}
     />
   );
 }

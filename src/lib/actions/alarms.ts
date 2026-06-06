@@ -88,6 +88,7 @@ type ActionResult<T = unknown> = {
 };
 
 const MEDICAL_RECEIPT_SOURCE = "custom_notifications_medical";
+const ASSESSMENT_RECEIPT_SOURCE = "custom_notifications_assessment";
 const BIRTHDAY_RECEIPT_SOURCE = "custom_notifications_birthday";
 const CONTRACT_RECEIPT_SOURCE = "custom_notifications_contracts";
 const INSURANCE_RECEIPT_SOURCE = "custom_notifications_insurance";
@@ -180,6 +181,30 @@ function childMedicalHref(referenceId: string | null) {
 
 function childDashboardHref(referenceId: string | null) {
   return referenceId ? `/children/${referenceId}/dashboard` : "/children";
+}
+
+function assessmentTypeFromLegacyData(legacyData: Record<string, unknown>) {
+  const direct = jsonNumber(legacyData.assessmentType);
+  if (direct !== null) return direct;
+
+  const legacyType =
+    jsonString(legacyData.type) ?? jsonString(legacyData.legacyType);
+  const match = legacyType?.match(/t_assessment_(\d+)/);
+  return match ? Number(match[1]) : null;
+}
+
+function assessmentReportHref(
+  referenceId: string | null,
+  legacyData: Record<string, unknown>,
+) {
+  const assessmentType = assessmentTypeFromLegacyData(legacyData);
+  const childId = jsonString(legacyData.childId) ?? referenceId;
+
+  if (assessmentType && childId) {
+    return `/assessments/${assessmentType}/new?childId=${encodeURIComponent(childId)}`;
+  }
+  if (assessmentType) return `/assessments/${assessmentType}`;
+  return "/assessments";
 }
 
 function staffDetailHref(referenceId: string | null, referenceType: string | null) {
@@ -1115,6 +1140,17 @@ const MEDICINE_ALARM_CONFIG: StaffReceiptAlarmConfig = {
   historyTypeFromLegacy: () => "Alert",
 };
 
+const ASSESSMENT_ALARM_CONFIG: StaffReceiptAlarmConfig = {
+  type: "ASSESSMENT",
+  sourceTable: ASSESSMENT_RECEIPT_SOURCE,
+  route: "/alarms/assessments",
+  familyLabel: "assessment",
+  defaultActionHref: "/assessments",
+  actionHrefFromAlarm: (alarm, legacyData) =>
+    assessmentReportHref(alarm.referenceId, legacyData),
+  historyTypeFromLegacy: () => "Alert",
+};
+
 const BIRTHDAY_ALARM_CONFIG: StaffReceiptAlarmConfig = {
   type: "BIRTHDAY",
   sourceTable: BIRTHDAY_RECEIPT_SOURCE,
@@ -1182,6 +1218,30 @@ export async function markAllContractAlarmsViewed(): Promise<
   ActionResult<{ count: number }>
 > {
   return markAllStaffReceiptAlarmsViewed(CONTRACT_ALARM_CONFIG);
+}
+
+export async function getAssessmentAlarmNotifications(
+  params: { pageSize?: number } = {},
+): Promise<ActionResult> {
+  return getStaffReceiptAlarmNotifications(ASSESSMENT_ALARM_CONFIG, params);
+}
+
+export async function getAssessmentAlarmHistory(
+  params: { pageSize?: number } = {},
+): Promise<ActionResult> {
+  return getStaffReceiptAlarmHistory(ASSESSMENT_ALARM_CONFIG, params);
+}
+
+export async function markAssessmentAlarmViewed(
+  alarmId: string,
+): Promise<ActionResult<{ count: number }>> {
+  return markStaffReceiptAlarmViewed(alarmId, ASSESSMENT_ALARM_CONFIG);
+}
+
+export async function markAllAssessmentAlarmsViewed(): Promise<
+  ActionResult<{ count: number }>
+> {
+  return markAllStaffReceiptAlarmsViewed(ASSESSMENT_ALARM_CONFIG);
 }
 
 export async function getInsuranceAlarmNotifications(
