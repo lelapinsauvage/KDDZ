@@ -4,11 +4,15 @@ import { getChildren } from "@/lib/actions/children";
 import { getFoods } from "@/lib/actions/food";
 
 interface Props {
-  searchParams: Promise<{ childId?: string }>;
+  searchParams: Promise<{ childId?: string; date?: string }>;
+}
+
+function isDateOnly(value?: string) {
+  return Boolean(value && /^\d{4}-\d{2}-\d{2}$/.test(value));
 }
 
 export default async function NewDailyReportPage({ searchParams }: Props) {
-  const { childId } = await searchParams;
+  const { childId, date } = await searchParams;
 
   const [childrenResult, breakfastFoods, lunchFoods, dessertFoods] =
     await Promise.all([
@@ -31,7 +35,10 @@ export default async function NewDailyReportPage({ searchParams }: Props) {
     dessert: dessertFoods.foods.map((f) => ({ id: f.id, name: f.name })),
   };
 
-  const defaultValues = childId ? { childId } : undefined;
+  const defaultValues = {
+    ...(childId ? { childId } : {}),
+    ...(isDateOnly(date) ? { reportDate: date } : {}),
+  };
 
   return (
     <>
@@ -43,7 +50,11 @@ export default async function NewDailyReportPage({ searchParams }: Props) {
           { label: "New Report" },
         ]}
       />
-      <DailyReportForm childrenList={children} foods={foods} defaultValues={defaultValues} />
+      <DailyReportForm
+        childrenList={children}
+        foods={foods}
+        defaultValues={Object.keys(defaultValues).length ? defaultValues : undefined}
+      />
     </>
   );
 }
