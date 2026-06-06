@@ -3,7 +3,17 @@ import { db } from "@/lib/db";
 import { requireOrg } from "@/lib/require-org";
 import { ParentUsersClient } from "./parent-users-client";
 
-export default async function ParentUsersPage() {
+interface PageProps {
+  searchParams: Promise<{ createChildId?: string | string[] }>;
+}
+
+function firstParam(value?: string | string[]) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function ParentUsersPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const initialCreateChildId = firstParam(params.createChildId);
   const { organizationId: orgId } = await requireOrg();
 
   const [parentUsersResult, childrenWithoutAccount] = await Promise.all([
@@ -62,6 +72,7 @@ export default async function ParentUsersPage() {
     <ParentUsersClient
       usersWithAccount={serializedUsers}
       childrenWithoutAccount={serializedChildrenWithout}
+      initialCreateChildId={initialCreateChildId}
     />
   );
 }

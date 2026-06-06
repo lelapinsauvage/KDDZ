@@ -6,7 +6,6 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -17,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Save, KeyRound, Clock, Loader2, Phone, Mail, MessageCircle, User, Users, ExternalLink, Shield } from "lucide-react";
+import { toast } from "sonner";
 import {
   updateParentUser,
   resetParentPassword,
@@ -61,44 +61,72 @@ interface ParentUserDetailClientProps {
   childrenList: ChildOption[];
 }
 
-function formatWhatsAppUrl(phone: string): string {
+function formatWhatsAppUrl(phone: string, message?: string): string {
   const cleaned = phone.replace(/[\s\-\(\)\.+]/g, "");
-  return `https://wa.me/${cleaned}`;
+  const query = message ? `?text=${encodeURIComponent(message)}` : "";
+  return `https://wa.me/${cleaned}${query}`;
 }
 
 export function ParentUserDetailClient({ parentUser, childrenList }: ParentUserDetailClientProps) {
   const [username, setUsername] = useState(parentUser.username);
   const [childId, setChildId] = useState(parentUser.childId);
-  const [isActive, setIsActive] = useState(parentUser.isActive);
+  const [status, setStatus] = useState(parentUser.isActive ? "active" : "inactive");
+  const [password, setPassword] = useState("");
   const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   function handleSave() {
+    const trimmedUsername = username.trim();
+    if (!trimmedUsername) {
+      toast.error("Username is required.");
+      return;
+    }
+
     startTransition(async () => {
       const result = await updateParentUser(parentUser.id, {
-        username,
+        username: trimmedUsername,
         childId,
-        isActive,
+        isActive: status === "active",
       });
       if (result.success) {
+        if (password.trim()) {
+          const passwordResult = await resetParentPassword(parentUser.id, password);
+          if (!passwordResult.success) {
+            toast.error(passwordResult.error ?? "Failed to reset password.");
+            return;
+          }
+        }
+
         setSaved(true);
+        toast.success("Parent user has been updated.");
         setTimeout(() => setSaved(false), 2000);
+      } else {
+        toast.error(result.error ?? "Failed to update parent user.");
       }
     });
   }
 
   function handleResetPassword() {
-    const newPw = prompt("Enter new password:");
-    if (!newPw) return;
+    if (!password.trim()) {
+      toast.error("Enter a new password first.");
+      return;
+    }
 
     startTransition(async () => {
-      await resetParentPassword(parentUser.id, newPw);
-      alert("Password has been reset.");
+      const result = await resetParentPassword(parentUser.id, password);
+      if (result.success) {
+        toast.success("Password has been reset.");
+      } else {
+        toast.error(result.error ?? "Failed to reset password.");
+      }
     });
   }
 
   const initials = getInitials(parentUser.childFirstName || "?", parentUser.childLastName || "?");
   const avatarBg = getAvatarColor(parentUser.childName);
+  const credentialMessage = password.trim()
+    ? `Dear Parent, you can now login to your KiddzOnline account username: ${username.trim()} password: ${password.trim()} using the KiddzOnline Mobile App Or visit https://kiddzonline.com/Garderie_parent`
+    : "";
 
   return (
     <>
@@ -271,27 +299,60 @@ export function ParentUserDetailClient({ parentUser, childrenList }: ParentUserD
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-1.5">
+                <Label>Password</Label>
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Leave blank to keep current password"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Status</Label>
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">InActive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <Label>Password</Label>
-              <Button variant="outline" size="sm" onClick={handleResetPassword} disabled={isPending}>
+            <div className="flex flex-wrap items-center gap-2 rounded-lg border p-3">
+              <Button variant="outline" size="sm" onClick={handleResetPassword} disabled={isPending || !password.trim()}>
                 <KeyRound className="mr-1 size-3.5" />
                 Reset Password
               </Button>
+              {parentUser.parents
+                .filter((p) => p.phone)
+                .map((p, index) => (
+                  <Button
+                    key={`${p.phone}-${index}`}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={!credentialMessage}
+                    onClick={() => {
+                      if (!p.phone || !credentialMessage) return;
+                      window.open(
+                        formatWhatsAppUrl(p.phone, credentialMessage),
+                        "_blank",
+                        "noopener,noreferrer",
+                      );
+                    }}
+                  >
+                    <MessageCircle className="mr-1 size-3.5" />
+                    {p.name ? `WhatsApp ${p.name}` : "WhatsApp Parent"}
+                  </Button>
+                ))}
             </div>
-
-            <label className="flex items-center gap-3 text-sm">
-              <Checkbox
-                checked={isActive}
-                onCheckedChange={(v) => setIsActive(!!v)}
-              />
-              Account Active
-            </label>
 
             <div className="flex items-center gap-3 pt-2">
               <Button
-
                 className="text-primary-foreground"
                 onClick={handleSave}
                 disabled={isPending}
@@ -334,13 +395,13 @@ export function ParentUserDetailClient({ parentUser, childrenList }: ParentUserD
                 <span>Status:</span>
                 <Badge
                   className={
-                    parentUser.isActive
+                    status === "active"
                       ? "bg-[#059669]/15 text-[#059669]"
                       : "bg-gray-100 text-gray-600"
                   }
                 >
-                  <span className={`mr-1.5 inline-block size-1.5 rounded-full ${parentUser.isActive ? "bg-[#059669]" : "bg-gray-400"}`} />
-                  {parentUser.isActive ? "Active" : "Inactive"}
+                  <span className={`mr-1.5 inline-block size-1.5 rounded-full ${status === "active" ? "bg-[#059669]" : "bg-gray-400"}`} />
+                  {status === "active" ? "Active" : "Inactive"}
                 </Badge>
               </div>
             </div>

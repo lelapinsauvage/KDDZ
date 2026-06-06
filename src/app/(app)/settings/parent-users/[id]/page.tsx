@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getParentUser } from "@/lib/actions/parent-users";
 import { db } from "@/lib/db";
+import { requireOrg } from "@/lib/require-org";
 import { ParentUserDetailClient } from "./parent-user-detail-client";
 
 interface PageProps {
@@ -9,11 +10,12 @@ interface PageProps {
 
 export default async function ParentUserDetailPage({ params }: PageProps) {
   const { id } = await params;
+  const { organizationId: orgId } = await requireOrg();
 
   const [parentUserResult, children] = await Promise.all([
     getParentUser(id),
     db.child.findMany({
-      where: { isActive: true },
+      where: { isActive: true, branch: { organizationId: orgId } },
       select: { id: true, firstName: true, lastName: true },
       orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
     }),

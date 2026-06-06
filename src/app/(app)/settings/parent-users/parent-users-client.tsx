@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useTransition, useCallback } from "react";
+import { useCallback, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { type ColumnDef } from "@tanstack/react-table";
 import { PageHeader } from "@/components/layout/page-header";
@@ -17,6 +17,13 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Eye, KeyRound, Loader2, Pencil, Printer, Search, UserPlus, UserX, X } from "lucide-react";
 import { toast } from "sonner";
 import type { ExportColumn } from "@/lib/export";
@@ -58,6 +65,7 @@ interface ChildWithoutAccount {
 interface ParentUsersClientProps {
   usersWithAccount: ParentUser[];
   childrenWithoutAccount: ChildWithoutAccount[];
+  initialCreateChildId?: string;
 }
 
 const withAccountExportColumns: ExportColumn[] = [
@@ -83,7 +91,11 @@ const withoutAccountExportColumns: ExportColumn[] = [
 export function ParentUsersClient({
   usersWithAccount: initialUsers,
   childrenWithoutAccount: initialChildrenWithout,
+  initialCreateChildId,
 }: ParentUsersClientProps) {
+  const initialCreateChild = initialCreateChildId
+    ? initialChildrenWithout.find((c) => c.id === initialCreateChildId)
+    : undefined;
   const [users, setUsers] = useState(initialUsers);
   const [childrenWithout, setChildrenWithout] = useState(initialChildrenWithout);
   const [isPending, startTransition] = useTransition();
@@ -94,11 +106,12 @@ export function ParentUsersClient({
   const [searchWithout, setSearchWithout] = useState("");
 
   // Create-user dialog state
-  const [createOpen, setCreateOpen] = useState(false);
-  const [createChildId, setCreateChildId] = useState("");
-  const [createChildName, setCreateChildName] = useState("");
+  const [createOpen, setCreateOpen] = useState(Boolean(initialCreateChild));
+  const [createChildId, setCreateChildId] = useState(initialCreateChild?.id ?? "");
+  const [createChildName, setCreateChildName] = useState(initialCreateChild?.name ?? "");
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [newStatus, setNewStatus] = useState("active");
 
   // Reset-password dialog state
   const [resetPasswordDialog, setResetPasswordDialog] = useState<{ userId: string; childName: string } | null>(null);
@@ -139,6 +152,7 @@ export function ParentUsersClient({
     setCreateChildName(childName);
     setNewUsername("");
     setNewPassword("");
+    setNewStatus("active");
     setCreateOpen(true);
   }, []);
 
@@ -150,6 +164,7 @@ export function ParentUsersClient({
         username: newUsername.trim(),
         password: newPassword,
         childId: createChildId,
+        isActive: newStatus === "active",
       });
 
       if (result.success && result.data) {
@@ -168,7 +183,7 @@ export function ParentUsersClient({
             childLastName: child?.lastName ?? "",
             branchName: child?.branchName ?? "—",
             className: child?.className ?? "—",
-            status: "Active",
+            status: newStatus === "active" ? "Active" : "Inactive",
             createdAt: new Date().toISOString().split("T")[0],
           },
         ]);
@@ -563,6 +578,18 @@ export function ParentUsersClient({
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
               />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">Status</label>
+              <Select value={newStatus} onValueChange={setNewStatus}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">InActive</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter>

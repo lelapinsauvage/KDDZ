@@ -186,6 +186,11 @@ export async function createParentUser(
     if (!res.ok) return { success: false, error: res.error };
     const { organizationId: orgId } = res.ctx;
 
+    const username = data.username.trim();
+    if (!username) {
+      return { success: false, error: "Username is required" };
+    }
+
     if (!(await verifyChildAccess(data.childId, orgId))) {
       return { success: false, error: "Child not found in organization" };
     }
@@ -201,7 +206,7 @@ export async function createParentUser(
 
     const parentUser = await db.parentUser.create({
       data: {
-        username: data.username,
+        username,
         passwordHash,
         childId: data.childId,
         isActive: data.isActive ?? true,
@@ -256,8 +261,19 @@ export async function updateParentUser(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {};
 
-    if (data.username !== undefined) updateData.username = data.username;
-    if (data.childId !== undefined) updateData.childId = data.childId;
+    if (data.username !== undefined) {
+      const username = data.username.trim();
+      if (!username) {
+        return { success: false, error: "Username is required" };
+      }
+      updateData.username = username;
+    }
+    if (data.childId !== undefined) {
+      if (!(await verifyChildAccess(data.childId, orgId))) {
+        return { success: false, error: "Child not found in organization" };
+      }
+      updateData.childId = data.childId;
+    }
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
 
     const parentUser = await db.parentUser.update({

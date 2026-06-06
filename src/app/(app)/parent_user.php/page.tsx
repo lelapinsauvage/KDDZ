@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { resolveLegacyChildId } from "@/lib/legacy-child";
 import { resolveLegacyParentUserId } from "@/lib/legacy-parent-user";
 
 interface PageProps {
@@ -15,9 +16,16 @@ export default async function LegacyParentUserRedirect({
   }
 
   const parentUserId = await resolveLegacyParentUserId(fid, id);
-  if (!parentUserId) {
-    notFound();
+  if (parentUserId) {
+    redirect(`/settings/parent-users/${encodeURIComponent(parentUserId)}`);
   }
 
-  redirect(`/settings/parent-users/${encodeURIComponent(parentUserId)}`);
+  if (id?.trim()) {
+    const childId = await resolveLegacyChildId(id);
+    if (childId) {
+      redirect(`/settings/parent-users?createChildId=${encodeURIComponent(childId)}`);
+    }
+  }
+
+  notFound();
 }
