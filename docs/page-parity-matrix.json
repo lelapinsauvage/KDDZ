@@ -16833,11 +16833,11 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-forgot.php",
     "legacyJs": "",
-    "modernRoute": "/settings/notifications",
-    "status": "partial - legacy forgot-password templates restored; runtime delivery remains",
+    "modernRoute": "/settings/notifications, /forgot",
+    "status": "partial - legacy forgot-password templates wired into reset flow; external email delivery remains",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "/settings/notifications now exposes Recover Request and Recovered template cards backed by migrated `email-forgot-subj`, `email-forgot-msg`, `email-forgot-success-subj`, and `email-forgot-success-msg` rows with `{{site_address}}`, `{{full_name}}`, `{{username}}`, and `{{reset}}` shortcodes. Remaining work is wiring these templates into the modern forgot/reset flow and external email delivery."
+    "verification": "/settings/notifications exposes Recover Request and Recovered template cards backed by migrated `email-forgot-subj`, `email-forgot-msg`, `email-forgot-success-subj`, and `email-forgot-success-msg` rows with `{{site_address}}`, `{{full_name}}`, `{{username}}`, and `{{reset}}` shortcodes. The modern `/forgot` reset flow now renders those templates into the `LegacyAuthRecord` token metadata for request and success events. Remaining work is provider-backed email delivery."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-insurance.php",
@@ -17215,8 +17215,8 @@
   {
     "legacyPhp": "Front/templates/admin/users/classes/forgot.class.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/forgot",
+    "status": "partial - legacy forgot/reset token flow restored; external email delivery remains",
     "legacyTablesMentioned": [
       "an",
       "email",
@@ -17230,7 +17230,7 @@
       "reset",
       "usernamemail"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "/forgot now restores the legacy `Forgot` flow: username/email request field, account-exists validation, replacement of existing `forgot_pw` tokens, 32-character reset keys stored in `LegacyAuthRecord` as `login_confirm` rows, reset form for `?key=`, password confirmation/minimum-length validation, password update, token consumption, legacy success/error wording, and rendered migrated forgot/recovered email templates in token metadata. Remaining work is actual SMTP/provider delivery of those rendered emails."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/generic.class.php",
@@ -17746,8 +17746,8 @@
   {
     "legacyPhp": "Front/templates/admin/users/classes/login.class.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/login",
+    "status": "partial - legacy staff password verification restored; full login/session audit remains",
     "legacyTablesMentioned": [
       "actions_control",
       "if",
@@ -17771,7 +17771,7 @@
       "token",
       "username"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "/login now validates both modern bcrypt passwords and migrated legacy staff passwords stored as bcrypt(`md5:{legacy hash}`); successful legacy password login upgrades the user to direct bcrypt. Remaining work is full legacy session/action-control/year-selection/login-timestamp behavior audit."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/prereqs.php",
@@ -17885,13 +17885,13 @@
   {
     "legacyPhp": "Front/templates/admin/users/forgot.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/forgot",
+    "status": "partial - legacy forgot page restored; external email delivery remains",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [
       "usernamemail"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "/forgot now handles both legacy modes from `users/forgot.php`: POST-style username/email recovery requests and `?key=` password reset links. It preserves the legacy user-facing messages and reset fields while using modern server actions and `LegacyAuthRecord` token persistence. Remaining work is provider-backed email delivery."
   },
   {
     "legacyPhp": "Front/templates/admin/users/header.php",

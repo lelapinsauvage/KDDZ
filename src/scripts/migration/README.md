@@ -186,9 +186,10 @@ Message migration preserves legacy message notification provenance on `Message` 
 Old MySQL uses auto-increment integers. New PostgreSQL uses UUIDs. The migration maintains an in-memory mapping table (old int → new UUID) for FK resolution.
 
 ### Password Handling
-Old passwords are MD5 hashes. They are rehashed as `bcrypt(md5:ORIGINAL_HASH)`. The app should:
-1. On login: hash user input with MD5, prepend `md5:`, then verify with bcrypt
-2. After successful login: rehash directly with bcrypt for future logins
+Old passwords are MD5 hashes. They are rehashed as `bcrypt(md5:ORIGINAL_HASH)`. Modern staff login now:
+1. Verifies direct bcrypt passwords first
+2. Falls back to hashing the submitted password with MD5, prepending `md5:`, and verifying with bcrypt
+3. Rehashes successful legacy logins directly with bcrypt for future logins
 
 ### Login Audit
 Legacy timestamp tables are historical login audit trails, not active sessions. They are restored into `LegacyLoginTimestamp` with source database/table/id, legacy user id, IP address, timestamp, and the resolved modern `User` or `ParentUser` UUID when the user mapping exists.

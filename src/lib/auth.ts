@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { compare } from "bcryptjs";
+import { createHash } from "crypto";
+import { compare, hash } from "bcryptjs";
 import { authConfig } from "./auth.config";
 
 /**
@@ -37,9 +38,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
 
           const isPasswordValid = await compare(password, user.passwordHash);
+          const legacyMd5 = createHash("md5").update(password).digest("hex");
+          const isLegacyPasswordValid =
+            !isPasswordValid &&
+            (await compare(`md5:${legacyMd5}`, user.passwordHash));
 
-          if (!isPasswordValid) {
+          if (!isPasswordValid && !isLegacyPasswordValid) {
             return null;
+          }
+
+          if (isLegacyPasswordValid) {
+            await db.user.update({
+              where: { id: user.id },
+              data: { passwordHash: await hash(password, 12) },
+            });
           }
 
           return {
