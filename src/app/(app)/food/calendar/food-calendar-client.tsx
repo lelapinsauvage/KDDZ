@@ -99,6 +99,26 @@ function getFirstDayOfWeek(year: number, month: number): number {
   return new Date(year, month - 1, 1).getDay();
 }
 
+function buildCalendarPath(branchId: string, year: number, month: number): string {
+  const params = new URLSearchParams();
+  if (branchId) {
+    params.set("branch", branchId);
+  }
+  params.set("month", String(month).padStart(2, "0"));
+  params.set("year", String(year));
+  return `/food/calendar?${params.toString()}`;
+}
+
+function buildPrintPath(branchId: string, year: number, month: number): string {
+  const params = new URLSearchParams();
+  if (branchId) {
+    params.set("branch", branchId);
+  }
+  params.set("month", String(month).padStart(2, "0"));
+  params.set("year", String(year));
+  return `/food/calendar/print?${params.toString()}`;
+}
+
 // ── Searchable Combobox ─────────────────────────
 function MealCombobox({
   value,
@@ -219,6 +239,17 @@ export function FoodCalendarClient({
   const [dialogSnack, setDialogSnack] = useState("NONE");
   const [dialogDessert, setDialogDessert] = useState("NONE");
 
+  const replaceCalendarUrl = useCallback(
+    (branchId: string, nextYear: number, nextMonth: number) => {
+      window.history.replaceState(
+        null,
+        "",
+        buildCalendarPath(branchId, nextYear, nextMonth)
+      );
+    },
+    []
+  );
+
   const fetchCalendar = useCallback(
     async (branchId: string, y: number, m: number) => {
       if (!branchId) return;
@@ -257,10 +288,11 @@ export function FoodCalendarClient({
     }
     setMonth(newMonth);
     setYear(newYear);
+    replaceCalendarUrl(branch, newYear, newMonth);
     startTransition(() => {
       fetchCalendar(branch, newYear, newMonth);
     });
-  }, [branch, month, year, fetchCalendar, startTransition]);
+  }, [branch, month, year, fetchCalendar, replaceCalendarUrl, startTransition]);
 
   const nextMonth = useCallback(() => {
     let newMonth = month + 1;
@@ -271,19 +303,21 @@ export function FoodCalendarClient({
     }
     setMonth(newMonth);
     setYear(newYear);
+    replaceCalendarUrl(branch, newYear, newMonth);
     startTransition(() => {
       fetchCalendar(branch, newYear, newMonth);
     });
-  }, [branch, month, year, fetchCalendar, startTransition]);
+  }, [branch, month, year, fetchCalendar, replaceCalendarUrl, startTransition]);
 
   const handleBranchChange = useCallback(
     (newBranch: string) => {
       setBranch(newBranch);
+      replaceCalendarUrl(newBranch, year, month);
       startTransition(() => {
         fetchCalendar(newBranch, year, month);
       });
     },
-    [year, month, fetchCalendar, startTransition]
+    [year, month, fetchCalendar, replaceCalendarUrl, startTransition]
   );
 
   const goToToday = useCallback(() => {
@@ -292,10 +326,11 @@ export function FoodCalendarClient({
     const todayMonth = now.getMonth() + 1;
     setYear(todayYear);
     setMonth(todayMonth);
+    replaceCalendarUrl(branch, todayYear, todayMonth);
     startTransition(() => {
       fetchCalendar(branch, todayYear, todayMonth);
     });
-  }, [branch, fetchCalendar, startTransition]);
+  }, [branch, fetchCalendar, replaceCalendarUrl, startTransition]);
 
   // Open day assignment dialog
   const openDayDialog = useCallback(
@@ -418,6 +453,10 @@ export function FoodCalendarClient({
 
   const selectedDateHasMeals =
     selectedDate && Object.keys(calendar[selectedDate] ?? {}).length > 0;
+  const printHref = useMemo(
+    () => buildPrintPath(branch, year, month),
+    [branch, year, month]
+  );
 
   return (
     <>
@@ -428,7 +467,7 @@ export function FoodCalendarClient({
           { label: "Calendar" },
         ]}
         actions={
-          <Link href="/food/calendar/print">
+          <Link href={printHref}>
             <Button variant="outline">
               <Printer className="mr-1 size-4" />
               Print

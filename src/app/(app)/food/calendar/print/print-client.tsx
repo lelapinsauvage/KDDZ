@@ -66,6 +66,16 @@ function toISODate(year: number, month: number, day: number): string {
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
+function buildPrintPath(branchId: string, year: number, month: number): string {
+  const params = new URLSearchParams();
+  if (branchId) {
+    params.set("branch", branchId);
+  }
+  params.set("month", String(month).padStart(2, "0"));
+  params.set("year", String(year));
+  return `/food/calendar/print?${params.toString()}`;
+}
+
 interface PrintClientProps {
   branches: BranchOption[];
   initialCalendar: CalendarData;
@@ -90,6 +100,10 @@ export default function PrintClient({
   const [isPending, startTransition] = useTransition();
 
   const branchName = branches.find((b) => b.id === branch)?.name ?? "Branch";
+
+  useEffect(() => {
+    window.history.replaceState(null, "", buildPrintPath(branch, year, month));
+  }, [branch, year, month]);
 
   // Fetch when branch or month changes
   useEffect(() => {
