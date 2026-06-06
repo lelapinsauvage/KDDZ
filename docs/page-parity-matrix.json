@@ -16896,13 +16896,13 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/general-options.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/settings/notifications#legacy",
+    "status": "partial - migrated login_settings audit surface restored; editable/enforced auth options remain",
     "legacyTablesMentioned": [
       "password"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "The Notifications Hub Legacy tab now lists all migrated `login_settings` and `login_settings_man` rows, so legacy General Options values such as `admin_email`, `site_address`, `default_session`, default level, activation/login/registration toggles, password-encryption flags, redirect URLs, and related email template keys are visible with source database/table/key/value provenance. Remaining work is a dedicated modern admin-auth settings form, validation/save parity for `settings.class.php`, and deciding which legacy toggles should actively drive modern Auth.js/session behavior versus remain archived migration evidence."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/header.php",

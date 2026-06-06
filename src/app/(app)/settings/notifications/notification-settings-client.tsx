@@ -819,7 +819,7 @@ function LegacyTab({
                       colSpan={4}
                       className="h-24 text-center text-muted-foreground"
                     >
-                      No legacy notification settings found.
+                      No legacy settings found.
                     </TableCell>
                   </TableRow>
                 ) : (

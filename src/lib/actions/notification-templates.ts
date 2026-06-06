@@ -452,6 +452,7 @@ export async function getLegacyNotificationSettings(): Promise<
       where: {
         OR: [
           { legacyTable: "t_notification_setting" },
+          { legacyTable: { in: ["login_settings", "login_settings_man"] } },
           { settingKey: { startsWith: "email-" } },
           { settingKey: { startsWith: "account-remind-" } },
           { scope: "notification" },
