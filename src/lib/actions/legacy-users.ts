@@ -38,6 +38,7 @@ export type LegacyAdminUserRow = {
   lastLoginIp: string | null;
   loginCount: number;
   profileValues: LegacyAdminProfileValue[];
+  socialIntegrations: LegacyAdminSocialIntegration[];
 };
 
 export type LegacyAdminProfileValue = {
@@ -45,6 +46,11 @@ export type LegacyAdminProfileValue = {
   legacyId: number;
   label: string;
   value: string | null;
+};
+
+export type LegacyAdminSocialIntegration = {
+  provider: string;
+  identifier: string;
 };
 
 export type LegacyAdminLevelOption = {
@@ -121,6 +127,13 @@ const USER_CONFIG: Record<
     label: "Manager Users",
   },
 };
+
+const SOCIAL_LOGIN_PROVIDERS = [
+  "twitter",
+  "facebook",
+  "google",
+  "yahoo",
+] as const;
 
 function legacyObject(value: unknown): Prisma.InputJsonObject {
   if (value && typeof value === "object" && !Array.isArray(value)) {
@@ -258,6 +271,33 @@ function userProfileKey(
   return `${sourceDatabase}:${profileRecordTypeForUser(recordType)}:${legacyUserId}`;
 }
 
+function userSocialIntegrationKey(sourceDatabase: string, legacyUserId: number) {
+  return `${sourceDatabase}:login_user:${legacyUserId}`;
+}
+
+function socialProviderLabel(provider: string) {
+  return provider.charAt(0).toUpperCase() + provider.slice(1);
+}
+
+function socialIntegrationsFromLegacyData(
+  legacyData: unknown,
+): LegacyAdminSocialIntegration[] {
+  const data = legacyObject(legacyData);
+
+  return SOCIAL_LOGIN_PROVIDERS.flatMap((provider) => {
+    const raw = data[provider];
+    const value =
+      typeof raw === "string"
+        ? raw.trim()
+        : typeof raw === "number"
+          ? String(raw)
+          : "";
+
+    if (!value || value === "0") return [];
+    return [{ provider: socialProviderLabel(provider), identifier: value }];
+  });
+}
+
 async function getDefaultLevelId(
   sourceDatabase: string,
   recordType: LegacyUserRecordType,
@@ -313,6 +353,7 @@ function mapUserRow(params: {
     loginCount: number;
   } | null;
   profileValues?: LegacyAdminProfileValue[];
+  socialIntegrations?: LegacyAdminSocialIntegration[];
 }): LegacyAdminUserRow {
   const levelIds = parsePhpLevelIds(params.record.recordValue);
   const levelRecordType =
@@ -357,6 +398,7 @@ function mapUserRow(params: {
     lastLoginIp: params.loginAudit?.lastLoginIp ?? null,
     loginCount: params.loginAudit?.loginCount ?? 0,
     profileValues: params.profileValues ?? [],
+    socialIntegrations: params.socialIntegrations ?? [],
   };
 }
 
@@ -607,54 +649,74 @@ export async function getLegacyAdminUsers(): Promise<
       ),
     );
 
-    const [modernUsers, loginAuditRows, profileRecords] = await Promise.all([
-      userIds.length
-        ? db.user.findMany({
-          where: { id: { in: userIds } },
-          select: { id: true, role: true, isActive: true, name: true },
-        })
-        : Promise.resolve([]),
-      legacyUserIds.length
-        ? db.legacyLoginTimestamp.findMany({
-            where: {
-              sourceDatabase: { in: sourceDatabases },
-              legacyUserId: { in: legacyUserIds },
-              principalType: { in: ["USER", "MANAGER_USER"] },
-            },
-            orderBy: [{ occurredAt: "desc" }, { legacyId: "desc" }],
-            select: {
-              sourceDatabase: true,
-              legacyUserId: true,
-              principalType: true,
-              ipAddress: true,
-              occurredAt: true,
-            },
-          })
-        : Promise.resolve([]),
-      legacyUserIds.length
-        ? db.legacyAuthRecord.findMany({
-            where: {
-              sourceDatabase: { in: sourceDatabases },
-              legacyUserId: { in: legacyUserIds },
-              recordType: { in: ["profile_value", "manager_profile_value"] },
-            },
-            orderBy: [
-              { sourceDatabase: "asc" },
-              { legacyUserId: "asc" },
-              { legacyId: "asc" },
-            ],
-            select: {
-              id: true,
-              sourceDatabase: true,
-              legacyId: true,
-              legacyUserId: true,
-              recordType: true,
-              recordKey: true,
-              recordValue: true,
-            },
-          })
-        : Promise.resolve([]),
-    ]);
+    const [modernUsers, loginAuditRows, profileRecords, integrationRecords] =
+      await Promise.all([
+        userIds.length
+          ? db.user.findMany({
+              where: { id: { in: userIds } },
+              select: { id: true, role: true, isActive: true, name: true },
+            })
+          : Promise.resolve([]),
+        legacyUserIds.length
+          ? db.legacyLoginTimestamp.findMany({
+              where: {
+                sourceDatabase: { in: sourceDatabases },
+                legacyUserId: { in: legacyUserIds },
+                principalType: { in: ["USER", "MANAGER_USER"] },
+              },
+              orderBy: [{ occurredAt: "desc" }, { legacyId: "desc" }],
+              select: {
+                sourceDatabase: true,
+                legacyUserId: true,
+                principalType: true,
+                ipAddress: true,
+                occurredAt: true,
+              },
+            })
+          : Promise.resolve([]),
+        legacyUserIds.length
+          ? db.legacyAuthRecord.findMany({
+              where: {
+                sourceDatabase: { in: sourceDatabases },
+                legacyUserId: { in: legacyUserIds },
+                recordType: { in: ["profile_value", "manager_profile_value"] },
+              },
+              orderBy: [
+                { sourceDatabase: "asc" },
+                { legacyUserId: "asc" },
+                { legacyId: "asc" },
+              ],
+              select: {
+                id: true,
+                sourceDatabase: true,
+                legacyId: true,
+                legacyUserId: true,
+                recordType: true,
+                recordKey: true,
+                recordValue: true,
+              },
+            })
+          : Promise.resolve([]),
+        legacyUserIds.length
+          ? db.legacyAuthRecord.findMany({
+              where: {
+                sourceDatabase: { in: sourceDatabases },
+                legacyUserId: { in: legacyUserIds },
+                recordType: "social_integration",
+              },
+              orderBy: [
+                { sourceDatabase: "asc" },
+                { legacyUserId: "asc" },
+                { legacyId: "asc" },
+              ],
+              select: {
+                sourceDatabase: true,
+                legacyUserId: true,
+                legacyData: true,
+              },
+            })
+          : Promise.resolve([]),
+      ]);
     const modernById = new Map(modernUsers.map((user) => [user.id, user]));
     const auditByUser = new Map<
       string,
@@ -704,6 +766,17 @@ export async function getLegacyAdminUsers(): Promise<
       profilesByUser.set(key, values);
     }
 
+    const integrationsByUser = new Map<string, LegacyAdminSocialIntegration[]>();
+    for (const integration of integrationRecords) {
+      const legacyUserId = integration.legacyUserId;
+      if (!legacyUserId) continue;
+
+      integrationsByUser.set(
+        userSocialIntegrationKey(integration.sourceDatabase, legacyUserId),
+        socialIntegrationsFromLegacyData(integration.legacyData),
+      );
+    }
+
     return {
       success: true,
       data: {
@@ -721,6 +794,12 @@ export async function getLegacyAdminUsers(): Promise<
             profileValues: profilesByUser.get(
               userProfileKey(record.sourceDatabase, recordType, legacyUserId),
             ),
+            socialIntegrations:
+              recordType === "login_user"
+                ? integrationsByUser.get(
+                    userSocialIntegrationKey(record.sourceDatabase, legacyUserId),
+                  )
+                : undefined,
           });
         }),
         levels,
@@ -991,6 +1070,19 @@ export async function deleteLegacyAdminUser(
     if (!existing) return { success: false, error: "No such user!" };
 
     await db.$transaction(async (tx) => {
+      const legacyUserId = existing.legacyUserId ?? existing.legacyId;
+      const integrationRecords =
+        existing.recordType === "login_user"
+          ? await tx.legacyAuthRecord.findMany({
+              where: {
+                sourceDatabase: existing.sourceDatabase,
+                recordType: "social_integration",
+                legacyUserId,
+              },
+              select: { id: true, legacyData: true },
+            })
+          : [];
+
       await tx.legacyAuthRecord.update({
         where: { id: existing.id },
         data: {
@@ -1009,6 +1101,22 @@ export async function deleteLegacyAdminUser(
           data: { isActive: false },
         });
       }
+
+      await Promise.all(
+        integrationRecords.map((integration) =>
+          tx.legacyAuthRecord.update({
+            where: { id: integration.id },
+            data: {
+              recordType: "social_integration_deleted",
+              isDisabled: true,
+              legacyData: {
+                ...legacyObject(integration.legacyData),
+                deleted_from: "modern_legacy_user_admin",
+              },
+            },
+          }),
+        ),
+      );
     });
 
     revalidatePath("/settings/legacy-users");

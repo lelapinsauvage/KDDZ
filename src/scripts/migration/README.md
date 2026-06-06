@@ -135,7 +135,7 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_manager_attachments` | ManagerAttachment |
 | `login_users` | User, plus LegacyAuthRecord rows preserving serialized `user_level` targeting metadata |
 | `parent_login_users` | ParentUser, including raw `legacyData`, numeric legacy login ids, child-link `usites`, and existing token preservation for `ws/login.php` parity |
-| `login_confirm`, `login_confirm_man`, `login_profiles`, `login_profiles_man`, `login_profile_fields`, `login_profile_fields_man`, `login_levels`, `login_levels_man`, `parent_login_levels`, `login_users`, `login_users_man` | LegacyAuthRecord |
+| `login_confirm`, `login_confirm_man`, `login_profiles`, `login_profiles_man`, `login_profile_fields`, `login_profile_fields_man`, `login_levels`, `login_levels_man`, `parent_login_levels`, `login_integration`, `login_users`, `login_users_man` | LegacyAuthRecord |
 | `login_timestamps`, `login_timestamps_man`, `parent_login_timestamps` | LegacyLoginTimestamp |
 | `login_settings`, `parent_login_settings`, `login_settings_man`, `t_settings`, `t_notification_setting` | LegacySetting |
 | `system_actions`, `system_actions_man`, `actions_control`, `actions_control_man`, `users_control` | LegacyAccessControlRecord |
@@ -195,7 +195,7 @@ Old passwords are MD5 hashes. They are rehashed as `bcrypt(md5:ORIGINAL_HASH)`. 
 Legacy timestamp tables are historical login audit trails, not active sessions. They are restored into `LegacyLoginTimestamp` with source database/table/id, legacy user id, IP address, timestamp, and the resolved modern `User` or `ParentUser` UUID when the user mapping exists.
 
 ### Auth Metadata
-Legacy PHP auth metadata tables (`login_confirm`, `login_confirm_man`, `login_profiles`, `login_profiles_man`, `login_profile_fields`, `login_profile_fields_man`, `login_levels`, `login_levels_man`, `parent_login_levels`, `login_users`, and `login_users_man`) are preserved in `LegacyAuthRecord`. These rows are not active modern users; they keep confirmation tokens, profile field/value rows, login-level metadata, regular/manager-login serialized user-level payloads, optional resolved user UUIDs, and raw JSON. Confirmation rows with legacy `id = 0` use a composite source key so duplicate token rows are not dropped.
+Legacy PHP auth metadata tables (`login_confirm`, `login_confirm_man`, `login_profiles`, `login_profiles_man`, `login_profile_fields`, `login_profile_fields_man`, `login_levels`, `login_levels_man`, `parent_login_levels`, `login_integration`, `login_users`, and `login_users_man`) are preserved in `LegacyAuthRecord`. These rows are not active modern users; they keep confirmation tokens, profile field/value rows, login-level metadata, social-login identifiers, regular/manager-login serialized user-level payloads, optional resolved user UUIDs, and raw JSON. Confirmation rows with legacy `id = 0` use a composite source key so duplicate token rows are not dropped.
 
 ### Legacy Control Plane
 Legacy master/users control-plane tables are preserved without being enforced as modern RBAC yet. `system_actions*`, `actions_control*`, and `users_control` become `LegacyAccessControlRecord`; `t_garderies` becomes `LegacyGarderieRegistry`; master `notifications` rows are kept as `LegacySetting`; and `year_select`/`year_db` rows become `LegacyYearDatabase`.

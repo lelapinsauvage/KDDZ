@@ -395,6 +395,7 @@ const authTables = [
   "login_levels",
   "login_levels_man",
   "parent_login_levels",
+  "login_integration",
   "login_users_man",
 ];
 const settingsTables = [

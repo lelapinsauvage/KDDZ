@@ -60,6 +60,7 @@ import {
 import { cn } from "@/lib/utils";
 import {
   Database,
+  Link2,
   Pencil,
   Plus,
   Search,
@@ -241,6 +242,9 @@ function matchesQuery(user: LegacyAdminUserRow, query: string) {
     user.lastLoginIp ?? "",
     user.profileValues
       .map((profile) => `${profile.label} ${profile.value ?? ""}`)
+      .join(" "),
+    user.socialIntegrations
+      .map((integration) => `${integration.provider} ${integration.identifier}`)
       .join(" "),
   ]
     .join(" ")
@@ -450,6 +454,7 @@ export function LegacyUsersClient({
       users: users.length,
       restricted: users.filter((user) => user.isRestricted).length,
       linked: users.filter((user) => user.userId).length,
+      social: users.filter((user) => user.socialIntegrations.length > 0).length,
       sources: new Set(users.map((user) => user.sourceDatabase)).size,
     }),
     [users],
@@ -649,7 +654,7 @@ export function LegacyUsersClient({
           </div>
         ) : null}
 
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
           <div className="rounded-sm border border-border bg-background p-3">
             <div className="flex items-center gap-2 text-xs font-medium uppercase text-muted-foreground">
               <UsersRound className="size-4" />
@@ -670,6 +675,13 @@ export function LegacyUsersClient({
               Restricted
             </div>
             <p className="mt-2 text-2xl font-semibold">{totals.restricted}</p>
+          </div>
+          <div className="rounded-sm border border-border bg-background p-3">
+            <div className="flex items-center gap-2 text-xs font-medium uppercase text-muted-foreground">
+              <Link2 className="size-4" />
+              Social
+            </div>
+            <p className="mt-2 text-2xl font-semibold">{totals.social}</p>
           </div>
           <div className="rounded-sm border border-border bg-background p-3">
             <div className="flex items-center gap-2 text-xs font-medium uppercase text-muted-foreground">
@@ -723,6 +735,7 @@ export function LegacyUsersClient({
               <TableHead>User</TableHead>
               <TableHead>Levels</TableHead>
               <TableHead>Legacy Source</TableHead>
+              <TableHead>Social Links</TableHead>
               <TableHead>Branch/Class Access</TableHead>
               <TableHead>Login Audit</TableHead>
               <TableHead>Status</TableHead>
@@ -734,7 +747,7 @@ export function LegacyUsersClient({
             {filteredUsers.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={8}
+                  colSpan={9}
                   className="h-24 text-center text-muted-foreground"
                 >
                   No legacy users found.
@@ -799,6 +812,25 @@ export function LegacyUsersClient({
                             {user.profileValues.length} profile fields
                           </Badge>
                         ) : null}
+                      </div>
+                    </TableCell>
+                    <TableCell className="whitespace-normal">
+                      <div className="flex max-w-[220px] flex-wrap gap-1">
+                        {user.socialIntegrations.length > 0 ? (
+                          user.socialIntegrations.map((integration) => (
+                            <Badge
+                              key={`${integration.provider}:${integration.identifier}`}
+                              variant="outline"
+                            >
+                              <Link2 className="size-3" />
+                              {integration.provider}
+                            </Badge>
+                          ))
+                        ) : (
+                          <span className="text-xs text-muted-foreground">
+                            None
+                          </span>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="max-w-[320px] whitespace-normal">
@@ -1039,6 +1071,28 @@ export function LegacyUsersClient({
                       </div>
                       <div className="mt-1 break-words text-sm">
                         {profile.value || "-"}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {dialogMode === "edit" && editingUser?.socialIntegrations.length ? (
+              <div className="space-y-2">
+                <Label>Social Links</Label>
+                <div className="grid gap-2 rounded-sm border border-border p-3 md:grid-cols-2">
+                  {editingUser.socialIntegrations.map((integration) => (
+                    <div
+                      key={`${integration.provider}:${integration.identifier}`}
+                      className="rounded-sm border border-border/70 bg-muted/30 p-2"
+                    >
+                      <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+                        <Link2 className="size-3" />
+                        {integration.provider}
+                      </div>
+                      <div className="mt-1 break-all font-mono text-xs">
+                        {integration.identifier}
                       </div>
                     </div>
                   ))}

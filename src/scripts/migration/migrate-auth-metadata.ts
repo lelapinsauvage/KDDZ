@@ -73,6 +73,21 @@ interface OldLegacyLoginUser {
   uchild: string;
 }
 
+const SOCIAL_LOGIN_PROVIDERS = [
+  "twitter",
+  "facebook",
+  "google",
+  "yahoo",
+] as const;
+
+interface OldLoginIntegration {
+  user_id: number;
+  twitter?: string | null;
+  facebook?: string | null;
+  google?: string | null;
+  yahoo?: string | null;
+}
+
 function legacyData(row: object) {
   return JSON.parse(JSON.stringify(row));
 }
@@ -376,6 +391,61 @@ async function migrateLoginLevels(
   log(`${table}: ${migrated} migrated, ${skipped} skipped`);
 }
 
+async function migrateLoginIntegration(
+  prisma: PrismaClient,
+  sourceDatabase: string,
+  dryRun: boolean
+) {
+  const table = "login_integration";
+  if (!(await tableExists(table))) {
+    log(`${table}: table not present, skipping`);
+    return;
+  }
+
+  const rows = await queryMysql<OldLoginIntegration>(
+    "SELECT * FROM login_integration ORDER BY user_id"
+  );
+  log(`Found ${rows.length} rows in login_integration`);
+
+  let migrated = 0;
+  let skipped = 0;
+
+  for (const row of rows) {
+    const legacyUserId = toInt(row.user_id, 0);
+    if (!legacyUserId) {
+      skipped++;
+      continue;
+    }
+
+    const linkedProviders = SOCIAL_LOGIN_PROVIDERS.filter((provider) =>
+      cleanString(row[provider])
+    );
+
+    const result = await createRecord(
+      prisma,
+      {
+        sourceDatabase,
+        legacyTable: table,
+        legacyId: legacyUserId,
+        recordType: "social_integration",
+        userId: getMapping("user", legacyUserId),
+        legacyUserId,
+        recordKey: `user:${legacyUserId}`,
+        recordValue: linkedProviders.join(",") || null,
+        isDisabled: linkedProviders.length === 0,
+        legacyData: row,
+      },
+      dryRun
+    );
+
+    if (result === "migrated") migrated++;
+    else skipped++;
+    logProgress(migrated + skipped, rows.length, table);
+  }
+
+  log(`${table}: ${migrated} migrated, ${skipped} skipped`);
+}
+
 async function migrateManagerLoginUsers(
   prisma: PrismaClient,
   sourceDatabase: string,
@@ -521,6 +591,7 @@ export async function migrateAuthMetadata(prisma: PrismaClient) {
     dryRun
   );
   await migrateRegularLoginUsers(prisma, sourceDatabase, dryRun);
+  await migrateLoginIntegration(prisma, sourceDatabase, dryRun);
   await migrateManagerLoginUsers(prisma, sourceDatabase, dryRun);
 
   log(
