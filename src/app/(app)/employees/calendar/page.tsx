@@ -5,7 +5,7 @@ import { CalendarClient } from "./calendar-client";
 export default async function EmployeeCalendarPage({
   searchParams,
 }: {
-  searchParams: Promise<{ year?: string; month?: string }>;
+  searchParams: Promise<{ employeeId?: string; year?: string; month?: string }>;
 }) {
   const params = await searchParams;
   const now = new Date();
@@ -83,6 +83,7 @@ export default async function EmployeeCalendarPage({
     <CalendarClient
       employees={employees}
       events={events}
+      initialEmployeeId={params.employeeId}
       initialYear={year}
       initialMonth={month}
     />

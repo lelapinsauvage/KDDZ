@@ -65,6 +65,7 @@ interface CalendarEvent {
 interface CalendarClientProps {
   employees: EmployeeOption[];
   events: CalendarEvent[];
+  initialEmployeeId?: string;
   initialYear: number;
   initialMonth: number;
 }
@@ -112,6 +113,7 @@ function formatDate(year: number, month: number, day: number) {
 export function CalendarClient({
   employees,
   events: initialEvents,
+  initialEmployeeId,
   initialYear,
   initialMonth,
 }: CalendarClientProps) {
@@ -126,7 +128,11 @@ export function CalendarClient({
   const [events, setEvents] = useState<CalendarEvent[]>(initialEvents);
 
   // Filter by employee
-  const [employeeFilter, setEmployeeFilter] = useState("ALL");
+  const [employeeFilter, setEmployeeFilter] = useState(
+    initialEmployeeId && employees.some((employee) => employee.id === initialEmployeeId)
+      ? initialEmployeeId
+      : "ALL",
+  );
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
