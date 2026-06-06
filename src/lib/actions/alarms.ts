@@ -791,7 +791,7 @@ export interface AlarmCountItem {
 
 export async function getAlarmOverviewCounts(): Promise<ActionResult> {
   try {
-    const { organizationId: orgId } = await requireOrg();
+    const { userId, organizationId: orgId } = await requireOrg();
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -809,6 +809,7 @@ export async function getAlarmOverviewCounts(): Promise<ActionResult> {
       insuranceCount,
       paymentCount,
       requestCount,
+      messageCount,
       contractCount,
       otherCount,
     ] = await Promise.all([
@@ -873,6 +874,14 @@ export async function getAlarmOverviewCounts(): Promise<ActionResult> {
       db.alarm.count({
         where: { type: "REQUEST", isActive: true, branch: { organizationId: orgId } },
       }),
+      // Messages: unread message notifications for the current staff user
+      db.message.count({
+        where: {
+          recipientId: userId,
+          organizationId: orgId,
+          isRead: false,
+        },
+      }),
       // Contracts: active alarms
       db.alarm.count({
         where: { type: "CONTRACT", isActive: true, branch: { organizationId: orgId } },
@@ -893,6 +902,7 @@ export async function getAlarmOverviewCounts(): Promise<ActionResult> {
       { type: "INSURANCE", label: "Insurance", count: insuranceCount, href: "/alarms/insurance", color: "bg-blue-100 text-blue-600", icon: "Shield" },
       { type: "PAYMENT", label: "Payments", count: paymentCount, href: "/alarms/payments", color: "bg-amber-100 text-amber-600", icon: "DollarSign" },
       { type: "REQUEST", label: "Requests", count: requestCount, href: "/alarms/requests", color: "bg-blue-100 text-blue-600", icon: "MessageSquare" },
+      { type: "MESSAGE", label: "Messages", count: messageCount, href: "/alarms/msg", color: "bg-indigo-100 text-indigo-600", icon: "MessageSquare" },
       { type: "CONTRACT", label: "Contracts", count: contractCount, href: "/alarms/contracts", color: "bg-teal-100 text-teal-600", icon: "FileText" },
       { type: "OTHER", label: "Others", count: otherCount, href: "/alarms/others", color: "bg-orange-100 text-orange-600", icon: "Bell" },
     ];

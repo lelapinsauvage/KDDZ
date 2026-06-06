@@ -109,7 +109,8 @@ This list is the first implementation backlog after the generated inventory/matr
    - Remaining work is exact visual/action audit, holiday send-channel behavior, parent/mobile event delivery, and viewed/history parity.
 
 19. **Message delivery/read-state parity**
-   - Modern messages exist, but legacy `t_alarms_msg` and `custom_notifications_msg` delivery/read/reset behavior needs exact restoration.
+   - `/alarms/msg` now restores the legacy message notification listing with current-staff-user New/Viewed scoping, filters, row/bulk mark-viewed actions, Set All As Viewed, and idempotent migration provenance from `t_alarms_msg` plus per-recipient `custom_notifications_msg` delivery rows.
+   - Remaining work is exact legacy reply-thread visual audit, parent/mobile message feed compatibility, parent/mobile read reset behavior, and external push-on-message delivery if product confirms it was active in production.
 
 20. **Role and permission parity**
    - Legacy levels/actions/control tables are now preserved as metadata; remaining work is mapping them to modern roles and enforcing them in pages/actions.

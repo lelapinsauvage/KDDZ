@@ -178,6 +178,8 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_alarms_msg` | MessageThread, Message |
 | `custom_notifications_msg` | Message (per-recipient) |
 
+Message migration preserves legacy message notification provenance on `Message` rows: source database, stable `legacyKey`, legacy message/thread/sender/recipient ids, delivery user/type, `legacyNature`, `legacyHref`, and raw legacy row JSON. Each `custom_notifications_msg` delivery row becomes a separate recipient-scoped modern `Message`, so reconciliation expects recipient fan-out rather than a simple 1:1 count with `t_alarms_msg`.
+
 ## Key Design Decisions
 
 ### ID Mapping

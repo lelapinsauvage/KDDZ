@@ -17,6 +17,10 @@ interface MessageListParams {
   pageSize?: number;
 }
 
+interface MessageAlarmListParams extends MessageListParams {
+  nature?: string;
+}
+
 interface SendMessageData {
   recipientId: string;
   recipientType: RecipientType;
@@ -65,6 +69,20 @@ function roleToSenderType(role: string): SenderType {
       // NURSE, DOCTOR, MANAGER are staff — treat as ADMIN sender type
       return "ADMIN";
   }
+}
+
+function revalidateMessagePaths() {
+  revalidatePath("/messages");
+  revalidatePath("/messages/inbox");
+  revalidatePath("/messages/sent");
+  revalidatePath("/alarms");
+  revalidatePath("/alarms/msg");
+}
+
+function parseSubjectNature(subject: string | null): string | null {
+  if (!subject) return null;
+  const match = subject.match(/^\[([^\]]+)\]\s*/);
+  return match?.[1]?.trim() || null;
 }
 
 /**
@@ -230,6 +248,113 @@ export async function getInbox(
 }
 
 // ---------------------------------------------------------------------------
+// getMessageAlarms — legacy alarmsMsg.php parity
+// ---------------------------------------------------------------------------
+
+export async function getMessageAlarms(
+  params: MessageAlarmListParams = {},
+): Promise<ActionResult> {
+  try {
+    const { userId, organizationId: orgId } = await requireOrg();
+
+    const {
+      search,
+      readStatus = "all",
+      nature,
+      page = 1,
+      pageSize = 500,
+    } = params;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = {
+      recipientId: userId,
+      organizationId: orgId,
+    };
+
+    if (readStatus === "read") {
+      where.isRead = true;
+    } else if (readStatus === "unread") {
+      where.isRead = false;
+    }
+
+    if (nature && nature !== "ALL") {
+      where.legacyNature = nature;
+    }
+
+    if (search) {
+      where.OR = [
+        { subject: { contains: search, mode: "insensitive" } },
+        { body: { contains: search, mode: "insensitive" } },
+        { legacyNature: { contains: search, mode: "insensitive" } },
+      ];
+    }
+
+    const skip = (page - 1) * pageSize;
+
+    const [messages, total] = await Promise.all([
+      db.message.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: pageSize,
+      }),
+      db.message.count({ where }),
+    ]);
+
+    const senderEntries = messages.map((m) => ({
+      id: m.senderId,
+      type: m.senderType,
+    }));
+    const nameMap = await resolveNames(senderEntries);
+
+    const enriched = messages.map((msg) => {
+      const fallbackNature = parseSubjectNature(msg.subject);
+      return {
+        id: msg.id,
+        legacyId: msg.legacyId,
+        senderId: msg.senderId,
+        senderType: msg.senderType,
+        senderName: nameMap.get(msg.senderId) ?? "Unknown",
+        date: msg.createdAt instanceof Date
+          ? msg.createdAt.toISOString()
+          : String(msg.createdAt),
+        nature: msg.legacyNature ?? fallbackNature ?? "General",
+        subject: msg.subject,
+        body: msg.body,
+        isRead: msg.isRead,
+        status: msg.isRead ? "Viewed" : "New",
+        threadId: msg.threadId,
+        legacyHref: msg.legacyHref,
+        searchText: [
+          msg.legacyId,
+          nameMap.get(msg.senderId) ?? "Unknown",
+          msg.legacyNature ?? fallbackNature,
+          msg.subject,
+          msg.body,
+          msg.isRead ? "Viewed" : "New",
+        ]
+          .filter(Boolean)
+          .join(" "),
+      };
+    });
+
+    return {
+      success: true,
+      data: {
+        messages: enriched,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize),
+      },
+    };
+  } catch (error) {
+    console.error("Failed to fetch message notifications:", error);
+    return { success: false, error: "Failed to fetch message notifications" };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // getSentMessages
 // ---------------------------------------------------------------------------
 
@@ -350,6 +475,7 @@ export async function getMessageById(id: string): Promise<ActionResult> {
         where: { id },
         data: { isRead: true },
       });
+      revalidateMessagePaths();
     }
 
     const enriched = threadMessages.map((m) => ({
@@ -421,10 +547,11 @@ export async function sendMessage(
         body: data.body,
         threadId,
         organizationId: ctx.organizationId,
+        legacyNature: data.nature ?? null,
       },
     });
 
-    revalidatePath("/messages");
+    revalidateMessagePaths();
 
     return { success: true, data: message };
   } catch (error) {
@@ -480,10 +607,11 @@ export async function replyToMessage(
         body,
         threadId,
         organizationId: ctx.organizationId,
+        legacyNature: original.legacyNature,
       },
     });
 
-    revalidatePath("/messages");
+    revalidateMessagePaths();
 
     return { success: true, data: reply };
   } catch (error) {
@@ -512,7 +640,7 @@ export async function markAsRead(id: string): Promise<ActionResult> {
       data: { isRead: true },
     });
 
-    revalidatePath("/messages");
+    revalidateMessagePaths();
     return { success: true };
   } catch (error) {
     console.error("Failed to mark message as read:", error);
@@ -536,7 +664,7 @@ export async function markAsUnread(id: string): Promise<ActionResult> {
       data: { isRead: false },
     });
 
-    revalidatePath("/messages");
+    revalidateMessagePaths();
     return { success: true };
   } catch (error) {
     console.error("Failed to mark message as unread:", error);
@@ -559,11 +687,43 @@ export async function bulkMarkAsRead(ids: string[]): Promise<ActionResult> {
       data: { isRead: true },
     });
 
-    revalidatePath("/messages");
+    revalidateMessagePaths();
     return { success: true };
   } catch (error) {
     console.error("Failed to bulk mark as read:", error);
     return { success: false, error: "Failed to mark messages as read" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// markAllMessageNotificationsAsRead — legacy "Set All As Viewed"
+// ---------------------------------------------------------------------------
+
+export async function markAllMessageNotificationsAsRead(): Promise<
+  ActionResult<{ count: number }>
+> {
+  try {
+    const res = await requireOrgSafe();
+    if (!res.ok) return { success: false, error: res.error };
+    const { ctx } = res;
+
+    const result = await db.message.updateMany({
+      where: {
+        recipientId: ctx.userId,
+        organizationId: ctx.organizationId,
+        isRead: false,
+      },
+      data: { isRead: true },
+    });
+
+    revalidateMessagePaths();
+    return { success: true, data: { count: result.count } };
+  } catch (error) {
+    console.error("Failed to mark all message notifications as read:", error);
+    return {
+      success: false,
+      error: "Failed to mark all message notifications as read",
+    };
   }
 }
 
@@ -584,7 +744,7 @@ export async function deleteMessage(id: string): Promise<ActionResult> {
 
     await db.message.delete({ where: { id } });
 
-    revalidatePath("/messages");
+    revalidateMessagePaths();
     return { success: true };
   } catch (error) {
     console.error("Failed to delete message:", error);
@@ -611,7 +771,7 @@ export async function bulkDeleteMessages(
       },
     });
 
-    revalidatePath("/messages");
+    revalidateMessagePaths();
     return { success: true };
   } catch (error) {
     console.error("Failed to bulk delete messages:", error);
@@ -691,13 +851,14 @@ export async function sendClassMessage(
       body: data.body,
       threadId: thread.id,
       organizationId: ctx.organizationId,
+      legacyNature: data.nature ?? null,
     }));
 
     await db.message.createMany({
       data: messageCreateData,
     });
 
-    revalidatePath("/messages");
+    revalidateMessagePaths();
 
     return {
       success: true,
@@ -776,11 +937,12 @@ export async function sendBulkChildMessage(
       body: data.body,
       threadId: thread.id,
       organizationId: ctx.organizationId,
+      legacyNature: data.nature ?? null,
     }));
 
     await db.message.createMany({ data: messageCreateData });
 
-    revalidatePath("/messages");
+    revalidateMessagePaths();
 
     return {
       success: true,
@@ -823,10 +985,11 @@ export async function resendMessage(id: string): Promise<ActionResult> {
         body: original.body,
         threadId: original.threadId,
         organizationId: ctx.organizationId,
+        legacyNature: original.legacyNature,
       },
     });
 
-    revalidatePath("/messages");
+    revalidateMessagePaths();
     return { success: true, data: resent };
   } catch (error) {
     console.error("Failed to resend message:", error);

@@ -1015,7 +1015,7 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     expectation: "informational",
     evidence: "derived",
     notes:
-      "Message migration creates sender messages plus recipient delivery messages, so counts intentionally fan out.",
+      "Message rows keep sourceDatabase, legacyKey, legacyId, and legacyThreadId, but t_alarms_msg count is informational because custom_notifications_msg delivery rows intentionally fan out into multiple recipient messages.",
   }),
   weakRule({
     id: "messages.custom_notifications_msg",
@@ -1025,7 +1025,7 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     expectation: "informational",
     evidence: "derived",
     notes:
-      "custom_notifications_msg rows become per-recipient delivery messages when users resolve.",
+      "custom_notifications_msg rows become per-recipient Message rows with legacyKey and delivery user/type provenance; count is informational because source messages without delivery rows create a self-recipient fallback.",
   }),
 ];
 

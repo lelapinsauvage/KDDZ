@@ -49,6 +49,7 @@ const urgencyMap: Record<string, "critical" | "warning" | "info"> = {
   REQUEST: "warning",
   BIRTHDAY: "info",
   EVENT: "info",
+  MESSAGE: "info",
   OTHER: "info",
 };
 

@@ -6,10 +6,11 @@
  *     aid          → (old ID)
  *     sender       → senderId (user_id from login_users or parent_login_users)
  *     sender_type  → senderType (0 = ADMIN/TEACHER, 1 = PARENT)
- *     nature       → (category, not migrated)
+ *     nature       → legacyNature
  *     subject      → subject
  *     message      → body
  *     thread_id    → threadId (self-referencing: first msg sets thread_id = own aid)
+ *     href         → legacyHref
  *     curr_date    → createdAt
  *     datetime     → createdAt (fallback)
  *
@@ -21,16 +22,16 @@
  *
  * Strategy:
  *   1. Group messages by thread_id → create one MessageThread per unique thread_id
- *   2. For each message, create a Message record with sender/recipient info
- *   3. For each recipient in custom_notifications_msg, create a Message record
- *      (or if 1:many, use the first recipient as the primary)
+ *   2. Reuse existing migrated threads by legacy source/thread provenance
+ *   3. For each custom_notifications_msg delivery row, upsert one Message
+ *      record preserving recipient, viewed status, nature, href, and source row
  *
  * Prerequisites: Users must be migrated first.
  */
 
 import type { PrismaClient } from "@/generated/prisma/client";
 import { createPrismaClient } from "./lib/prisma-client";
-import { queryMysql, closeMysqlPool } from "./lib/mysql-client";
+import { queryMysql, closeMysqlPool, getMysqlConfig } from "./lib/mysql-client";
 import {
   generateUUID,
   setMapping,
@@ -75,9 +76,41 @@ function mapRecipientType(userType: number): RecipientType {
   return userType === 1 ? "PARENT" : "ADMIN";
 }
 
-export async function migrateMessages(prisma: PrismaClient) {
+function asDate(value: string | null | undefined): Date {
+  if (!value) return new Date();
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? new Date() : date;
+}
+
+function legacyMessageKey(
+  sourceDatabase: string,
+  messageId: number,
+  recipient: OldMsgRecipient | null,
+) {
+  if (!recipient) return `${sourceDatabase}:t_alarms_msg:${messageId}:self`;
+  return [
+    sourceDatabase,
+    "custom_notifications_msg",
+    messageId,
+    recipient.user_type,
+    recipient.cusntf_user_id,
+  ].join(":");
+}
+
+function legacyMessageData(
+  message: OldMessage,
+  recipient: OldMsgRecipient | null,
+) {
+  return JSON.parse(JSON.stringify({ message, recipient }));
+}
+
+export async function migrateMessages(
+  prisma: PrismaClient,
+  organizationId?: string,
+) {
   log("=== Migrating Messages ===");
   const dryRun = isDryRun();
+  const sourceDatabase = getMysqlConfig().database || "unknown";
 
   // Load all messages
   const allMessages = await queryMysql<OldMessage>(
@@ -116,7 +149,9 @@ export async function migrateMessages(prisma: PrismaClient) {
   log(`Found ${threadGroups.size} message threads`);
 
   let threadCount = 0;
+  let processedThreadCount = 0;
   let msgCount = 0;
+  let updatedCount = 0;
   let skippedThreads = 0;
 
   for (const [oldThreadId, messages] of threadGroups) {
@@ -124,32 +159,37 @@ export async function migrateMessages(prisma: PrismaClient) {
     messages.sort((a, b) => a.aid - b.aid);
     const firstMsg = messages[0];
 
-    // Idempotency: check if thread already migrated
-    const existingThread = await prisma.messageThread.findFirst({
-      where: { subject: firstMsg.subject || `Thread ${oldThreadId}` },
+    const existingThreadMessage = await prisma.message.findFirst({
+      where: {
+        sourceDatabase,
+        legacyThreadId: oldThreadId,
+        threadId: { not: null },
+      },
+      select: { threadId: true },
     });
-    if (existingThread) {
-      setMapping("thread", oldThreadId, existingThread.id);
+
+    const existingThreadId = existingThreadMessage?.threadId ?? null;
+    const threadId = existingThreadId ?? generateUUID();
+    if (existingThreadId) {
       skippedThreads++;
-      continue;
     }
 
-    const threadId = generateUUID();
-
-    if (!dryRun) {
-      await prisma.messageThread.create({
-        data: {
-          id: threadId,
-          subject: cleanString(firstMsg.subject),
-          createdAt: firstMsg.datetime
-            ? new Date(firstMsg.datetime)
-            : new Date(),
-        },
-      });
+    if (!existingThreadId) {
+      if (!dryRun) {
+        await prisma.messageThread.create({
+          data: {
+            id: threadId,
+            subject: cleanString(firstMsg.subject),
+            organizationId: organizationId ?? null,
+            createdAt: asDate(firstMsg.datetime || firstMsg.curr_date),
+          },
+        });
+      }
+      threadCount++;
     }
 
     setMapping("thread", oldThreadId, threadId);
-    threadCount++;
+    processedThreadCount++;
 
     // Create Message records for each message in this thread
     for (const msg of messages) {
@@ -164,24 +204,44 @@ export async function migrateMessages(prisma: PrismaClient) {
 
       if (recipients.length === 0) {
         // Message with no tracked recipients — create with a placeholder
+        const legacyKey = legacyMessageKey(sourceDatabase, msg.aid, null);
+        const data = {
+          sourceDatabase,
+          legacyKey,
+          legacyId: msg.aid,
+          legacyThreadId: msg.thread_id || msg.aid,
+          legacySenderId: msg.sender,
+          legacySenderType: msg.sender_type,
+          legacyRecipientId: null,
+          legacyRecipientType: null,
+          legacyDeliveryUserId: null,
+          legacyDeliveryUserType: null,
+          legacyNature: cleanString(msg.nature),
+          legacyHref: cleanString(msg.href),
+          legacyData: legacyMessageData(msg, null),
+          senderId,
+          senderType,
+          recipientId: senderId,
+          recipientType: senderType as RecipientType,
+          subject: cleanString(msg.subject),
+          body: msg.message || "",
+          threadId,
+          organizationId: organizationId ?? null,
+          isRead: true,
+          createdAt: asDate(msg.datetime || msg.curr_date),
+        };
+
+        const existing = dryRun
+          ? null
+          : await prisma.message.findUnique({ where: { legacyKey } });
         if (!dryRun) {
-          await prisma.message.create({
-            data: {
-              id: generateUUID(),
-              senderId,
-              senderType,
-              recipientId: senderId, // self-reference as fallback
-              recipientType: senderType as RecipientType,
-              subject: cleanString(msg.subject),
-              body: msg.message || "",
-              threadId,
-              isRead: true,
-              createdAt: msg.datetime
-                ? new Date(msg.datetime)
-                : new Date(),
-            },
+          await prisma.message.upsert({
+            where: { legacyKey },
+            update: data,
+            create: { id: generateUUID(), ...data },
           });
         }
+        if (existing) updatedCount++;
         msgCount++;
       } else {
         // Create one Message per recipient
@@ -191,35 +251,54 @@ export async function migrateMessages(prisma: PrismaClient) {
             recipType === "PARENT" ? "parent_user" : "user";
           const recipientId =
             getMapping(recipMapping, recip.cusntf_user_id) || generateUUID();
+          const legacyKey = legacyMessageKey(sourceDatabase, msg.aid, recip);
+          const data = {
+            sourceDatabase,
+            legacyKey,
+            legacyId: msg.aid,
+            legacyThreadId: msg.thread_id || msg.aid,
+            legacySenderId: msg.sender,
+            legacySenderType: msg.sender_type,
+            legacyRecipientId: recip.cusntf_user_id,
+            legacyRecipientType: recip.user_type,
+            legacyDeliveryUserId: recip.cusntf_user_id,
+            legacyDeliveryUserType: recip.user_type,
+            legacyNature: cleanString(msg.nature),
+            legacyHref: cleanString(msg.href),
+            legacyData: legacyMessageData(msg, recip),
+            senderId,
+            senderType,
+            recipientId,
+            recipientType: recipType,
+            subject: cleanString(msg.subject),
+            body: msg.message || "",
+            threadId,
+            organizationId: organizationId ?? null,
+            isRead: toBool(recip.cusntf_is_viewed),
+            createdAt: asDate(msg.datetime || msg.curr_date),
+          };
+          const existing = dryRun
+            ? null
+            : await prisma.message.findUnique({ where: { legacyKey } });
 
           if (!dryRun) {
-            await prisma.message.create({
-              data: {
-                id: generateUUID(),
-                senderId,
-                senderType,
-                recipientId,
-                recipientType: recipType,
-                subject: cleanString(msg.subject),
-                body: msg.message || "",
-                threadId,
-                isRead: toBool(recip.cusntf_is_viewed),
-                createdAt: msg.datetime
-                  ? new Date(msg.datetime)
-                  : new Date(),
-              },
+            await prisma.message.upsert({
+              where: { legacyKey },
+              update: data,
+              create: { id: generateUUID(), ...data },
             });
           }
+          if (existing) updatedCount++;
           msgCount++;
         }
       }
     }
 
-    logProgress(threadCount, threadGroups.size, "Threads");
+    logProgress(processedThreadCount, threadGroups.size, "Threads");
   }
 
   log(
-    `Messages: ${threadCount} threads created, ${msgCount} messages created, ${skippedThreads} threads skipped${dryRun ? " [DRY RUN]" : ""}`
+    `Messages: ${threadCount} threads created, ${msgCount} messages upserted, ${updatedCount} messages updated, ${skippedThreads} threads reused${dryRun ? " [DRY RUN]" : ""}`
   );
   log(`=== Messages migration complete ===`);
 }
@@ -231,7 +310,10 @@ if (require.main === module) {
   (async () => {
     const prisma = createPrismaClient();
     try {
-      await migrateMessages(prisma);
+      const organization = await prisma.organization.findFirst({
+        select: { id: true },
+      });
+      await migrateMessages(prisma, organization?.id);
     } catch (err) {
       logError("Message migration failed", err);
       process.exit(1);

@@ -204,8 +204,8 @@ const steps: MigrationStep[] = [
   },
   {
     name: "23. Messages",
-    run: async (prisma) => {
-      await migrateMessages(prisma);
+    run: async (prisma, orgId) => {
+      await migrateMessages(prisma, orgId);
     },
   },
 ];

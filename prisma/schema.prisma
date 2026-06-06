@@ -2078,20 +2078,37 @@ model MessageThread {
 }
 
 model Message {
-  id             String        @id @default(uuid()) @db.Uuid
-  senderId       String        @db.Uuid
-  senderType     SenderType
-  recipientId    String        @db.Uuid
-  recipientType  RecipientType
-  subject        String?
-  body           String        @db.Text
-  threadId       String?       @db.Uuid
-  organizationId String?       @db.Uuid
-  isRead         Boolean       @default(false)
-  createdAt      DateTime      @default(now())
+  id                     String        @id @default(uuid()) @db.Uuid
+  sourceDatabase         String?
+  legacyKey              String?       @unique
+  legacyId               Int?
+  legacyThreadId         Int?
+  legacySenderId         Int?
+  legacySenderType       Int?
+  legacyRecipientId      Int?
+  legacyRecipientType    Int?
+  legacyDeliveryUserId   Int?
+  legacyDeliveryUserType Int?
+  legacyNature           String?
+  legacyHref             String?
+  legacyData             Json?
+  senderId               String        @db.Uuid
+  senderType             SenderType
+  recipientId            String        @db.Uuid
+  recipientType          RecipientType
+  subject                String?
+  body                   String        @db.Text
+  threadId               String?       @db.Uuid
+  organizationId         String?       @db.Uuid
+  isRead                 Boolean       @default(false)
+  createdAt              DateTime      @default(now())
 
   thread MessageThread? @relation(fields: [threadId], references: [id], onDelete: SetNull)
 
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyThreadId])
+  @@index([legacyDeliveryUserId, legacyDeliveryUserType])
   @@index([organizationId])
   @@index([senderId, senderType])
   @@index([recipientId, recipientType])
