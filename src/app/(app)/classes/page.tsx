@@ -6,7 +6,12 @@ import {
   type BranchOption,
 } from "@/components/classes/classes-client";
 
-export default async function ClassesManagementPage() {
+interface PageProps {
+  searchParams: Promise<{ edit?: string; new?: string }>;
+}
+
+export default async function ClassesManagementPage({ searchParams }: PageProps) {
+  const params = await searchParams;
   const [classesResult, branchesResult] = await Promise.all([
     getClasses(),
     getBranches(),
@@ -40,5 +45,12 @@ export default async function ClassesManagementPage() {
     name: b.name,
   }));
 
-  return <ClassesClient classes={classes} branches={branches} />;
+  return (
+    <ClassesClient
+      classes={classes}
+      branches={branches}
+      initialEditClassId={params.edit}
+      initialAddOpen={params.new === "1"}
+    />
+  );
 }

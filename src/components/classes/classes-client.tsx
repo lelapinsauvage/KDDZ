@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition, type Dispatch, type SetStateAction } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type Dispatch, type SetStateAction } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -71,6 +71,8 @@ interface ClassesClientProps {
   classes: ClassItem[];
   branches: BranchOption[];
   branchId?: string;
+  initialEditClassId?: string;
+  initialAddOpen?: boolean;
 }
 
 interface ClassFormState {
@@ -426,9 +428,19 @@ function ClassForm({
   );
 }
 
-export function ClassesClient({ classes, branches, branchId }: ClassesClientProps) {
+export function ClassesClient({
+  classes,
+  branches,
+  branchId,
+  initialEditClassId,
+  initialAddOpen = false,
+}: ClassesClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const initialEditTarget =
+    initialEditClassId
+      ? classes.find((cls) => cls.id === initialEditClassId) ?? null
+      : null;
 
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
   const [searchQuery, setSearchQuery] = useState("");
@@ -446,11 +458,13 @@ export function ClassesClient({ classes, branches, branchId }: ClassesClientProp
     createdTo: "",
   });
 
-  const [addOpen, setAddOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<ClassItem | null>(null);
+  const [addOpen, setAddOpen] = useState(initialAddOpen && !initialEditTarget);
+  const [editTarget, setEditTarget] = useState<ClassItem | null>(initialEditTarget);
   const [deleteTarget, setDeleteTarget] = useState<ClassItem | null>(null);
 
-  const [form, setForm] = useState<ClassFormState>(() => emptyForm(branchId));
+  const [form, setForm] = useState<ClassFormState>(() =>
+    initialEditTarget ? classToForm(initialEditTarget) : emptyForm(branchId)
+  );
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
 
@@ -522,17 +536,17 @@ export function ClassesClient({ classes, branches, branchId }: ClassesClientProp
     return pills;
   }, [branchFilter, branchId, branches, legacyFilters, searchQuery, statusFilter]);
 
+  const clearImageSelection = useCallback(() => {
+    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    setImageFile(null);
+    setImagePreviewUrl(null);
+  }, [imagePreviewUrl]);
+
   useEffect(() => {
     return () => {
       if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
     };
   }, [imagePreviewUrl]);
-
-  function clearImageSelection() {
-    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
-    setImageFile(null);
-    setImagePreviewUrl(null);
-  }
 
   function handleImageFileChange(file: File) {
     if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
@@ -551,11 +565,11 @@ export function ClassesClient({ classes, branches, branchId }: ClassesClientProp
     setAddOpen(true);
   }
 
-  function openEdit(cls: ClassItem) {
+  const openEdit = useCallback((cls: ClassItem) => {
     clearImageSelection();
     setForm(classToForm(cls));
     setEditTarget(cls);
-  }
+  }, [clearImageSelection]);
 
   function validateFormState() {
     if (!form.branchId) return "Branch is required";
