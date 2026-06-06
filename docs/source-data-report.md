@@ -297,9 +297,9 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie29sept.sql | custom_notifications_events | 4 | 0 | not covered yet / needs explicit decision |
 | kiddzonl_garderie29sept.sql | custom_notifications_events_parents | 4 | 0 | not covered yet / needs explicit decision |
 | kiddzonl_garderie29sept.sql | custom_notifications_holiday | 3 | 0 | not covered yet / needs explicit decision |
-| kiddzonl_garderie29sept.sql | custom_notifications_insurance_parents | 4 | 0 | not covered yet / needs explicit decision |
-| kiddzonl_garderie29sept.sql | custom_notifications_medical_parents | 4 | 0 | not covered yet / needs explicit decision |
-| kiddzonl_garderie29sept.sql | custom_notifications_medicine_parents | 3 | 0 | not covered yet / needs explicit decision |
+| kiddzonl_garderie29sept.sql | custom_notifications_insurance_parents | 4 | 0 | covered by migrate-alarms.ts |
+| kiddzonl_garderie29sept.sql | custom_notifications_medical_parents | 4 | 0 | covered by migrate-alarms.ts |
+| kiddzonl_garderie29sept.sql | custom_notifications_medicine_parents | 3 | 0 | covered by migrate-alarms.ts |
 | kiddzonl_garderie29sept.sql | custom_notifications_others | 3 | 0 | not covered yet / needs explicit decision |
 | kiddzonl_garderie29sept.sql | custom_notifications_others_parents | 3 | 0 | not covered yet / needs explicit decision |
 | kiddzonl_garderie29sept.sql | custom_notifications_parents | 3 | 0 | not covered yet / needs explicit decision |

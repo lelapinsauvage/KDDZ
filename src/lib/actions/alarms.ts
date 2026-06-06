@@ -88,11 +88,14 @@ type ActionResult<T = unknown> = {
 };
 
 const MEDICAL_RECEIPT_SOURCE = "custom_notifications_medical";
+const MEDICAL_PARENT_RECEIPT_SOURCE = "custom_notifications_medical_parents";
 const ASSESSMENT_RECEIPT_SOURCE = "custom_notifications_assessment";
 const BIRTHDAY_RECEIPT_SOURCE = "custom_notifications_birthday";
 const CONTRACT_RECEIPT_SOURCE = "custom_notifications_contracts";
 const INSURANCE_RECEIPT_SOURCE = "custom_notifications_insurance";
+const INSURANCE_PARENT_RECEIPT_SOURCE = "custom_notifications_insurance_parents";
 const MEDICINE_RECEIPT_SOURCE = "custom_notifications_medicine";
+const MEDICINE_PARENT_RECEIPT_SOURCE = "custom_notifications_medicine_parents";
 const PAYMENT_RECEIPT_SOURCE = "custom_notifications_payments";
 const VACCINATION_RECEIPT_SOURCE = "custom_notifications_vaccinations";
 const GENERAL_RECEIPT_SOURCE = "custom_notifications";
@@ -196,11 +199,26 @@ function medicalLegacyStatusLabel(status: number | null) {
   return "Alert";
 }
 
-function legacyNotificationTypeLabel(legacyData: Record<string, unknown>) {
-  const ntype = jsonNumber(legacyData.ntype);
+function legacyNotificationTypeLabelFromValue(ntype: number | null) {
   if (ntype === 1) return "Message";
   if (ntype === 2) return "Alert & Message";
-  return "Alert";
+  if (ntype === 0) return "Alert";
+  return null;
+}
+
+function legacyNotificationTypeLabel(legacyData: Record<string, unknown>) {
+  return legacyNotificationTypeLabelFromValue(jsonNumber(legacyData.ntype)) ?? "Alert";
+}
+
+function legacyNotificationTypeLabelFromSources(
+  legacyData: Record<string, unknown>,
+  receiptMetadata: Record<string, unknown>,
+) {
+  return (
+    legacyNotificationTypeLabelFromValue(jsonNumber(receiptMetadata.ntype)) ??
+    legacyNotificationTypeLabelFromValue(jsonNumber(legacyData.ntype)) ??
+    "Alert"
+  );
 }
 
 function childMedicalHref(referenceId: string | null) {
@@ -937,9 +955,17 @@ export async function getMedicalAlarmHistory(
 
     const receipts = await db.notificationReceipt.findMany({
       where: {
-        sourceTable: MEDICAL_RECEIPT_SOURCE,
-        recipientType: "USER",
-        NOT: { recipientId: userId },
+        OR: [
+          {
+            sourceTable: MEDICAL_RECEIPT_SOURCE,
+            recipientType: "USER",
+            NOT: { recipientId: userId },
+          },
+          {
+            sourceTable: MEDICAL_PARENT_RECEIPT_SOURCE,
+            recipientType: { in: ["PARENT_USER", "CHILD"] },
+          },
+        ],
         alarm: {
           is: {
             type: "MEDICAL",
@@ -954,22 +980,7 @@ export async function getMedicalAlarmHistory(
       take: pageSize,
     });
 
-    const recipientIds = Array.from(
-      new Set(
-        receipts
-          .map((receipt) => receipt.recipientId)
-          .filter((id): id is string => Boolean(id)),
-      ),
-    );
-    const users = recipientIds.length
-      ? await db.user.findMany({
-          where: { id: { in: recipientIds } },
-          select: { id: true, name: true, email: true },
-        })
-      : [];
-    const userNameById = new Map(
-      users.map((user) => [user.id, user.name || user.email]),
-    );
+    const recipientNameFor = await getReceiptRecipientNameResolver(receipts);
 
     const history = receipts.flatMap((receipt) => {
       if (!receipt.alarm) return [];
@@ -980,12 +991,16 @@ export async function getMedicalAlarmHistory(
       return [{
         id: receipt.id,
         legacyId,
-        type: "Alert",
+        type:
+          receipt.sourceTable === MEDICAL_PARENT_RECEIPT_SOURCE
+            ? "Message"
+            : "Alert",
         content: receipt.alarm.message ?? "",
-        time: receipt.alarm.createdAt.toISOString(),
-        to:
-          (receipt.recipientId && userNameById.get(receipt.recipientId)) ||
-          `Legacy user #${receipt.legacyRecipientId}`,
+        time:
+          receipt.sourceTable === MEDICAL_PARENT_RECEIPT_SOURCE
+            ? receiptCreatedAt(receipt, ["submit_time", "datetime"]).toISOString()
+            : receipt.alarm.createdAt.toISOString(),
+        to: recipientNameFor(receipt),
         seen: receipt.isRead ? "Yes" : "No",
         branch: receipt.alarm.branch?.name ?? "All Branches",
         legacyStatus: medicalLegacyStatusLabel(legacyStatus),
@@ -993,7 +1008,7 @@ export async function getMedicalAlarmHistory(
           legacyId,
           receipt.alarm.message,
           receipt.legacyRecipientId,
-          receipt.recipientId && userNameById.get(receipt.recipientId),
+          recipientNameFor(receipt),
           receipt.isRead ? "Yes" : "No",
           medicalLegacyStatusLabel(legacyStatus),
         ]
@@ -1232,10 +1247,11 @@ async function getStaffReceiptAlarmHistory(
     const history = receipts.flatMap((receipt) => {
       if (!receipt.alarm) return [];
       const legacyData = jsonRecord(receipt.alarm.legacyData);
+      const receiptMetadata = jsonRecord(receipt.metadata);
       const legacyId = jsonNumber(legacyData.aid) ?? receipt.legacyNotificationId;
       const type =
         config.historyTypeFromLegacy?.(legacyData) ??
-        legacyNotificationTypeLabel(legacyData);
+        legacyNotificationTypeLabelFromSources(legacyData, receiptMetadata);
       const recipientName = recipientNameFor(receipt);
 
       return [{
@@ -1359,21 +1375,24 @@ async function markAllStaffReceiptAlarmsViewed(
 const INSURANCE_ALARM_CONFIG: StaffReceiptAlarmConfig = {
   type: "INSURANCE",
   sourceTable: INSURANCE_RECEIPT_SOURCE,
+  sourceTables: [INSURANCE_RECEIPT_SOURCE, INSURANCE_PARENT_RECEIPT_SOURCE],
   route: "/alarms/insurance",
   familyLabel: "insurance",
   defaultActionHref: "/medical/general",
   actionHrefFromAlarm: (alarm) => childMedicalHref(alarm.referenceId),
+  historyRecipientTypes: ["USER", "PARENT_USER", "CHILD"],
   includeCurrentUserInHistory: true,
 };
 
 const MEDICINE_ALARM_CONFIG: StaffReceiptAlarmConfig = {
   type: "MEDICINE",
   sourceTable: MEDICINE_RECEIPT_SOURCE,
+  sourceTables: [MEDICINE_RECEIPT_SOURCE, MEDICINE_PARENT_RECEIPT_SOURCE],
   route: "/alarms/medicine",
   familyLabel: "medicine",
   defaultActionHref: "/medical/general",
   actionHrefFromAlarm: (alarm) => childMedicalHref(alarm.referenceId),
-  historyTypeFromLegacy: () => "Alert",
+  historyRecipientTypes: ["USER", "PARENT_USER", "CHILD"],
 };
 
 const PAYMENT_ALARM_CONFIG: StaffReceiptAlarmConfig = {

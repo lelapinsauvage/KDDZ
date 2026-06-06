@@ -923,9 +923,9 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "custom_notifications_insurance_parents",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0', ntype:int(11) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
+    "reconciliation": "Preserves parent insurance sent-history/read-state rows for `/alarms/insurance`, including legacy `ntype`; needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -939,9 +939,9 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "custom_notifications_medical_parents",
     "legacyColumns": "submit_time:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
+    "reconciliation": "Preserves parent medical sent-history/read-state rows for `/alarms/medical`, including legacy submit time; needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -955,9 +955,9 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "custom_notifications_medicine_parents",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
+    "reconciliation": "Preserves parent medicine sent-history/read-state rows for `/alarms/medicine`; needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
