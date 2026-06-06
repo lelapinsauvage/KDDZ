@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { compare } from "bcryptjs";
+import { createHash } from "crypto";
 import { z } from "zod/v4";
 import { db } from "@/lib/db";
 import {
@@ -16,6 +17,8 @@ const loginSchema = z.object({
 });
 
 const LOGIN_LOOKUP_TIMEOUT_MS = 5_000;
+const LEGACY_PARENT_REPORT_URL =
+  "https://kiddzonline.com/Garderie_parent/Front/templates/admin/users/login.php";
 
 class LoginLookupTimeoutError extends Error {
   constructor() {
@@ -34,6 +37,8 @@ function failedLogin(feedback = "") {
     url: "",
     urlLabel: "View Full Reports",
     feedback,
+    token: "",
+    childId: "",
   });
 }
 
@@ -58,16 +63,11 @@ export async function POST(request: NextRequest) {
     return jsonError("Too many login attempts", 429);
   }
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return jsonError("Invalid JSON", 400);
-  }
+  const body = await readRequestBody(request);
 
   const parsed = loginSchema.safeParse(body);
   if (!parsed.success) {
-    return failedLogin("Missing credentials");
+    return failedLogin();
   }
 
   const { name, pass } = parsed.data;
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
       return failedLogin();
     }
 
-    const isPasswordValid = await compare(pass, parentUser.passwordHash);
+    const isPasswordValid = await verifyPassword(pass, parentUser.passwordHash);
     if (!isPasswordValid) {
       return failedLogin();
     }
@@ -104,17 +104,24 @@ export async function POST(request: NextRequest) {
     );
 
     const child = parentUser.child;
+    const legacyId = parentUser.legacyId ?? parentUser.id;
+    const legacyChildId = parentUser.legacyChildId ?? child.legacyId ?? child.id;
+    const reportUrl = token
+      ? `${LEGACY_PARENT_REPORT_URL}?token=${encodeURIComponent(token)}`
+      : "";
 
     return jsonSuccess({
-      id: parentUser.id,
-      usites: child.id,
+      id: legacyId,
+      usites: legacyChildId,
       status: true,
       fname: child.firstName,
       lname: child.lastName,
-      url: "",
+      url: reportUrl,
       urlLabel: "View Full Reports",
       feedback: "",
-      token, // new field: the JWT for subsequent API calls
+      token,
+      childId: child.id,
+      modernParentUserId: parentUser.id,
     });
   } catch (error) {
     if (error instanceof LoginLookupTimeoutError) {
@@ -122,4 +129,38 @@ export async function POST(request: NextRequest) {
     }
     return failedLogin();
   }
+}
+
+async function verifyPassword(password: string, passwordHash: string) {
+  if (await compare(password, passwordHash)) return true;
+
+  const md5 = createHash("md5").update(password).digest("hex");
+  return compare(`md5:${md5}`, passwordHash);
+}
+
+async function readRequestBody(request: NextRequest) {
+  const contentType = request.headers.get("content-type") ?? "";
+
+  if (contentType.includes("application/json")) {
+    return request.json().catch(() => null);
+  }
+
+  if (
+    contentType.includes("application/x-www-form-urlencoded") ||
+    contentType.includes("multipart/form-data")
+  ) {
+    const form = await request.formData().catch(() => null);
+    if (!form) return null;
+    return Object.fromEntries(
+      [...form.entries()].map(([key, value]) => [
+        key,
+        typeof value === "string" ? value : value.name,
+      ])
+    );
+  }
+
+  const text = await request.text().catch(() => "");
+  if (!text.trim()) return null;
+
+  return Object.fromEntries(new URLSearchParams(text).entries());
 }

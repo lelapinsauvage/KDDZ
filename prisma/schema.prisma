@@ -621,18 +621,26 @@ model VerificationToken {
 }
 
 model ParentUser {
-  id           String   @id @default(uuid()) @db.Uuid
-  username     String   @unique
-  passwordHash String
-  token        String?
-  isActive     Boolean  @default(true)
-  childId      String   @db.Uuid
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id             String   @id @default(uuid()) @db.Uuid
+  sourceDatabase String?
+  legacyKey      String?  @unique
+  legacyId       Int?
+  legacyChildId  Int?
+  username       String   @unique
+  passwordHash   String
+  token          String?
+  isActive       Boolean  @default(true)
+  childId        String   @db.Uuid
+  legacyData     Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   child      Child       @relation(fields: [childId], references: [id], onDelete: Cascade)
   pushTokens PushToken[] @relation("ParentPushTokens")
 
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyChildId])
   @@index([childId])
   @@index([username])
   @@map("parent_users")

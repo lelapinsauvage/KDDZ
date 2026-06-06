@@ -134,7 +134,7 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_manager`, `t_manager_address` | Manager, ManagerAddress |
 | `t_manager_attachments` | ManagerAttachment |
 | `login_users` | User |
-| `parent_login_users` | ParentUser |
+| `parent_login_users` | ParentUser, including raw `legacyData`, numeric legacy login ids, child-link `usites`, and existing token preservation for `ws/login.php` parity |
 | `login_confirm`, `login_confirm_man`, `login_profiles`, `login_profiles_man`, `login_profile_fields`, `login_profile_fields_man`, `login_levels`, `login_levels_man`, `parent_login_levels`, `login_users_man` | LegacyAuthRecord |
 | `login_timestamps`, `login_timestamps_man`, `parent_login_timestamps` | LegacyLoginTimestamp |
 | `login_settings`, `parent_login_settings`, `login_settings_man`, `t_settings`, `t_notification_setting` | LegacySetting |

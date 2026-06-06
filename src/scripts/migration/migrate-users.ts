@@ -36,11 +36,12 @@
  * Prerequisites: Branches and Children must be migrated first.
  */
 
-import type { PrismaClient } from "@/generated/prisma/client";
+import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 import { createPrismaClient } from "./lib/prisma-client";
 import bcrypt from "bcryptjs";
-import { queryMysql, closeMysqlPool } from "./lib/mysql-client";
+import { queryMysql, closeMysqlPool, getMysqlConfig } from "./lib/mysql-client";
 import {
+  cleanString,
   generateUUID,
   setMapping,
   getMapping,
@@ -74,6 +75,7 @@ interface OldParentUser {
   name: string;
   email: string;
   password: string;
+  token?: string;
   timestamp: string;
   usites: string;
 }
@@ -104,6 +106,24 @@ function mapUserRole(userLevel: string): UserRole {
   // Fallback based on simple string check
   if (userLevel.includes("1")) return "ADMIN";
   return "TEACHER";
+}
+
+function parseLegacyInt(value: unknown): number | null {
+  const parsed = Number.parseInt(String(value ?? ""), 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+function parentUserLegacyData(
+  row: OldParentUser,
+  sourceDatabase: string
+): Prisma.InputJsonValue {
+  return {
+    sourceDatabase,
+    sourceTable: "parent_login_users",
+    ...Object.fromEntries(
+      Object.entries(row).map(([key, value]) => [key, value ?? null])
+    ),
+  } as Prisma.InputJsonValue;
 }
 
 /**
@@ -186,6 +206,7 @@ export async function migrateUsers(prisma: PrismaClient) {
 }
 
 async function migrateParentUsers(prisma: PrismaClient, dryRun: boolean) {
+  const sourceDatabase = getMysqlConfig().database || "unknown";
   const oldRows = await queryMysql<OldParentUser>(
     "SELECT * FROM parent_login_users ORDER BY user_id"
   );
@@ -198,25 +219,38 @@ async function migrateParentUsers(prisma: PrismaClient, dryRun: boolean) {
   for (const row of oldRows) {
     const username = row.username?.trim();
     if (!username) continue;
+    const legacyChildId = parseLegacyInt(row.usites);
 
     // Idempotency: check by username
     const existing = await prisma.parentUser.findUnique({
       where: { username },
     });
     if (existing) {
+      if (!dryRun && !existing.legacyData) {
+        await prisma.parentUser.update({
+          where: { id: existing.id },
+          data: {
+            sourceDatabase,
+            legacyKey: `${sourceDatabase}:parent_login_users:${row.user_id}`,
+            legacyId: row.user_id,
+            legacyChildId,
+            token: existing.token ?? cleanString(row.token),
+            legacyData: parentUserLegacyData(row, sourceDatabase),
+          },
+        });
+      }
       setMapping("parent_user", row.user_id, existing.id);
       skipped++;
       continue;
     }
 
-    // Parent users are linked to children via usites or other means
-    // In the old system, parent_login_users.usites often stores the branch,
-    // and the child link is through t_parents.parent_email matching
-    // For now, we try to find a child by matching parent email
     let childId: string | null = null;
+    if (row.usites && row.usites !== "0") {
+      childId = getMapping("child", row.usites);
+    }
 
     // Try to find a child whose parent has this email
-    if (row.email) {
+    if (!childId && row.email) {
       const parentRecord = await prisma.parent.findFirst({
         where: { email: row.email.trim() },
         select: { childId: true },
@@ -262,8 +296,14 @@ async function migrateParentUsers(prisma: PrismaClient, dryRun: boolean) {
           id: newId,
           username,
           passwordHash,
+          sourceDatabase,
+          legacyKey: `${sourceDatabase}:parent_login_users:${row.user_id}`,
+          legacyId: row.user_id,
+          legacyChildId,
+          token: cleanString(row.token),
           isActive: !toBool(row.restricted),
           childId,
+          legacyData: parentUserLegacyData(row, sourceDatabase),
           createdAt: row.timestamp ? new Date(row.timestamp) : new Date(),
         },
       });

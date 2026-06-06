@@ -16,6 +16,7 @@ const CHILD_NAME_KEY = "kiddzonline_parent_child_name";
 type LoginResponse = {
   id?: string | number;
   usites?: string | number;
+  childId?: string;
   status?: boolean;
   fname?: string;
   lname?: string;
@@ -58,14 +59,15 @@ export function ParentLoginClient() {
         return;
       }
 
-      if (!data.status || !data.token || !data.usites) {
+      const childId = data.childId || data.usites;
+      if (!data.status || !data.token || !childId) {
         setError(data.feedback || "Invalid username or password.");
         return;
       }
 
       const childName = [data.fname, data.lname].filter(Boolean).join(" ");
       window.localStorage.setItem(TOKEN_KEY, data.token);
-      window.localStorage.setItem(CHILD_ID_KEY, String(data.usites));
+      window.localStorage.setItem(CHILD_ID_KEY, String(childId));
       window.localStorage.setItem(CHILD_NAME_KEY, childName);
       router.replace("/parent");
     } catch {

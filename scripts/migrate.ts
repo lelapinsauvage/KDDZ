@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import "dotenv/config";
-import { PrismaClient } from "@/generated/prisma/client";
+import { PrismaClient, type Prisma } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
 import { hashSync } from "bcryptjs";
@@ -90,8 +90,10 @@ function parsePortion(s: string | null): string | null {
   }
 }
 
-function legacyRowData(row: any[], columns: string[]): Record<string, unknown> {
-  return Object.fromEntries(columns.map((column, index) => [column, row[index] ?? null]));
+function legacyRowData(row: any[], columns: string[]): Prisma.InputJsonValue {
+  return Object.fromEntries(
+    columns.map((column, index) => [column, row[index] ?? null])
+  ) as Prisma.InputJsonValue;
 }
 
 function parseGender(s: string | null): "MALE" | "FEMALE" | null {
@@ -1766,10 +1768,16 @@ async function migrateParentUsers(
       await prisma.parentUser.create({
         data: {
           id: getUUID("parent_login_users", oldId),
+          sourceDatabase: "kiddzonl_garderie",
+          legacyKey: `kiddzonl_garderie:parent_login_users:${oldId}`,
+          legacyId: oldId,
+          legacyChildId: childOldId,
           username: normalizedUsername,
           passwordHash: BCRYPT_HASH,
+          token: colStr(row, "token", columns),
           isActive: true,
           childId: getUUID("t_child", childOldId),
+          legacyData: legacyRowData(row, columns),
           createdAt: NOW,
           updatedAt: NOW,
         },

@@ -79,7 +79,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - Remaining work is idempotent cron/job generation for the other approved legacy families, hosted schedule configuration after production crontab confirmation, and external push/email/SMS/WhatsApp providers after credential recovery or rotation.
 
 9. **Parent portal UI**
-   - `/parent/login` now restores a parent-facing login screen backed by `/api/parent/login`, stores the parent JWT/child id client-side, and keeps failed-login responses in the legacy `{ status: false }` shape with a timeout guard for slow database lookups.
+   - `/parent/login` now restores a parent-facing login screen backed by `/api/parent/login`, stores the parent JWT and modern child UUID client-side, and keeps failed-login responses in the legacy `{ status: false }` shape with a timeout guard for slow database lookups.
    - `/parent` now restores the first parent PWA shell with child dashboard stats, latest daily report summary, payments, absence reports, message compose/list/thread replies, notifications, push subscription registration/unregistration, food calendar, and holidays using the existing `/api/parent/*` compatibility endpoints.
    - Legacy iOS/Android apps show the real parent feature set.
    - Remaining work is credentialed E2E with a known production-like parent login, exact native-app screen audit, external push provider delivery, offline/mobile polish, and final API contract verification.
@@ -93,6 +93,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - `/api/parent/calendar/food` now restores `ws/foodcalendar.php` POST `usites` compatibility, legacy branch id in the header, and raw migrated `t_food_calendar` date/dessert rows with breakfast/lunch names.
    - `/api/parent/notifications/[childId]` now restores dynamic `notifications_nature` ordering/names/active flags, `POST usites` compatibility, and mapped alarm/event/message/assessment notification groups.
    - `/api/parent/calendar/holidays` now covers both `ws/holcalendar.php` and `ws/holcalendarOLD.php` with legacy `POST usites` compatibility, active-only rows, `description`/`date` fields, and repeated-holiday current-year adjustment.
+   - `/api/parent/login` now restores `ws/login.php` JSON/form login compatibility, failed-login defaults, numeric legacy `id`/`usites`, parent report URL with persisted token, md5-prefixed legacy password verification, and a modern `childId` field for the PWA.
 
 11. **Top-level calls module**
    - `/calls` now restores the global call management surface with search, branch/class/date/type filters, pagination, child links, delete actions, runtime call logging, attachment upload, and migrated `callparent`/`callcauses` reason options.

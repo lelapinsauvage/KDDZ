@@ -17998,7 +17998,7 @@
     "legacyPhp": "Legacy parent mobile login / ws/login.php",
     "legacyJs": "",
     "modernRoute": "/parent/login",
-    "status": "partial - parent PWA login restored",
+    "status": "partial - legacy parent login contract restored",
     "legacyTablesMentioned": [
       "parent_login_users",
       "t_child"
@@ -18007,7 +18007,7 @@
       "name",
       "pass"
     ],
-    "verification": "Parent web login now posts to /api/parent/login, stores parent JWT and child id for /parent, and preserves legacy failed-login response shape with a timeout guard. Remaining work is credentialed E2E with a known parent login and exact native-app visual audit."
+    "verification": "Parent login now accepts JSON/form requests through /api/parent/login, verifies md5-prefixed legacy password hashes, returns legacy numeric id/usites plus the report URL/token shape, stores the modern childId for /parent, and preserves legacy failed-login defaults with a timeout guard. Remaining work is credentialed E2E with a known parent login and exact native-app visual audit."
   },
   {
     "legacyPhp": "Legacy parent mobile app / ws parent feature endpoints",

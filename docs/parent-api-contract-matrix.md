@@ -20,7 +20,7 @@ Parent web PWA status:
 | ws/holcalendar.php | usites | /api/parent/calendar/holidays | partial - used by /parent PWA; legacy POST usites, active-only rows, description/date fields, and repeated-date current-year adjustment restored | yes | yes |
 | ws/holcalendarOLD.php | usites | /api/parent/calendar/holidays | partial - legacy POST usites and active-only description/date array restored through the same holiday endpoint | no | no |
 | ws/insurance_alarms.php | pid | /api/parent/alarms/insurance | partial - legacy array shape, POST pid guard, legacy ids/status/datetime/date/href restored; verify parent delivery push | no | no |
-| ws/login.php | name, pass | /api/parent/login | partial - used by /parent/login PWA, verify JSON contract | yes | yes |
+| ws/login.php | name, pass | /api/parent/login | partial - JSON/form login restored with legacy failed shape, numeric `id`/`usites`, persisted token, parent report URL, md5-prefixed legacy password verification, and modern `childId` for the PWA; verify credentialed native parser tolerance | yes | yes |
 | ws/medicine_alarms.php | pid | /api/parent/alarms/medicine | partial - legacy array shape, POST pid guard, legacy ids/status/datetime/href restored; verify parent delivery push | no | no |
 | ws/message.php | usites (thread_id) | /api/parent/messages/thread/[threadId] | partial - used by /parent PWA, verify numeric-key thread JSON contract | no | no |
 | ws/messages.php | pid | /api/parent/messages/[childId] | partial - legacy file appears stale/misnamed; verify against iOS commented parser | yes | no |
