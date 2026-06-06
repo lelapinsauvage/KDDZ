@@ -1114,7 +1114,7 @@
     "legacyPhp": "Front/templates/admin/children.php",
     "legacyJs": "Front/templates/admin/js/children.js",
     "modernRoute": "/children",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "partial - legacy child roster columns, filters, status toggle, and actions restored; inline class/export audit remains",
     "legacyTablesMentioned": [
       "Form",
       "Selected",
@@ -1122,7 +1122,7 @@
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored the legacy Children Listing roster shape with S.N./child number, Image, F Name, L Name, DOB, Branch, Class, Status, Gender, Date, and Action columns; child photo fallback handling for migrated `images/EmpPhoto` filenames; legacy column filters for S.N., first name, last name, DOB, nationality, created-date from/to, branch, class, gender, and status; 10/20/50/100/150 page sizes; status badge active/inactive toggle via org-safe action; dashboard, print, edit, and deactivate actions; and child export with S.N. Remaining work is inline class reassignment parity from `toggleChildclass`, legacy checkbox bulk branch/class modal behavior, exact TableTools copy/PDF/XLS/print visual parity, and live WebSocket refresh behavior that was commented in legacy JS."
   },
   {
     "legacyPhp": "Front/templates/admin/children_drafts.php",

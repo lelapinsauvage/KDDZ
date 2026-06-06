@@ -14,6 +14,7 @@ import {
   TableIcon,
   X,
   Sparkles,
+  Filter,
 } from "lucide-react";
 import { ExportButton } from "@/components/shared/export-button";
 import type { ExportColumn } from "@/lib/export";
@@ -22,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardAction } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { getChildrenColumns, getInitials, getAvatarColor, type ChildRow } from "@/components/children/children-columns";
-import { deleteChild } from "@/lib/actions/children";
+import { deleteChild, toggleChildActive } from "@/lib/actions/children";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -91,6 +92,13 @@ interface Filters {
   class: string;
   gender: string;
   status: string;
+  childNumber: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  nationality: string;
+  createdFrom: string;
+  createdTo: string;
   page: number;
   pageSize: number;
   sort: string;
@@ -106,6 +114,7 @@ interface ChildrenPageClientProps {
 }
 
 const childrenExportColumns: ExportColumn[] = [
+  { header: "S.N.", key: "childNumber" },
   { header: "First Name", key: "firstName" },
   { header: "Last Name", key: "lastName" },
   {
@@ -149,6 +158,16 @@ const childrenExportColumns: ExportColumn[] = [
   { header: "Blood Type", key: "bloodType" },
 ];
 
+const legacyFilterKeys = [
+  "childNumber",
+  "firstName",
+  "lastName",
+  "dateOfBirth",
+  "nationality",
+  "createdFrom",
+  "createdTo",
+] as const;
+
 export function ChildrenPageClient({
   childrenList,
   total,
@@ -171,6 +190,15 @@ export function ChildrenPageClient({
 
   // Debounced search state (local, synced to URL on change)
   const [searchValue, setSearchValue] = useState(filters.search);
+  const [legacyFilters, setLegacyFilters] = useState(() => ({
+    childNumber: filters.childNumber,
+    firstName: filters.firstName,
+    lastName: filters.lastName,
+    dateOfBirth: filters.dateOfBirth,
+    nationality: filters.nationality,
+    createdFrom: filters.createdFrom,
+    createdTo: filters.createdTo,
+  }));
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   // ── URL param helpers ──────────────────────────
@@ -220,6 +248,27 @@ export function ChildrenPageClient({
     if (filters.status !== "ALL") {
       pills.push({ key: "status", label: "Status", value: filters.status.charAt(0) + filters.status.slice(1).toLowerCase() });
     }
+    if (filters.childNumber) {
+      pills.push({ key: "childNumber", label: "S.N.", value: filters.childNumber });
+    }
+    if (filters.firstName) {
+      pills.push({ key: "firstName", label: "F Name", value: filters.firstName });
+    }
+    if (filters.lastName) {
+      pills.push({ key: "lastName", label: "L Name", value: filters.lastName });
+    }
+    if (filters.dateOfBirth) {
+      pills.push({ key: "dateOfBirth", label: "DOB", value: filters.dateOfBirth });
+    }
+    if (filters.nationality) {
+      pills.push({ key: "nationality", label: "Nationality", value: filters.nationality });
+    }
+    if (filters.createdFrom) {
+      pills.push({ key: "createdFrom", label: "Created from", value: filters.createdFrom });
+    }
+    if (filters.createdTo) {
+      pills.push({ key: "createdTo", label: "Created to", value: filters.createdTo });
+    }
     return pills;
   }, [filters, branches, classes]);
 
@@ -228,6 +277,9 @@ export function ChildrenPageClient({
       if (key === "search") {
         setSearchValue("");
       }
+      if (legacyFilterKeys.includes(key as (typeof legacyFilterKeys)[number])) {
+        setLegacyFilters((current) => ({ ...current, [key]: "" }));
+      }
       updateParams({ [key]: "" });
     },
     [updateParams]
@@ -235,7 +287,29 @@ export function ChildrenPageClient({
 
   const clearAllFilters = useCallback(() => {
     setSearchValue("");
-    updateParams({ search: "", branch: "", class: "", gender: "", status: "" });
+    setLegacyFilters({
+      childNumber: "",
+      firstName: "",
+      lastName: "",
+      dateOfBirth: "",
+      nationality: "",
+      createdFrom: "",
+      createdTo: "",
+    });
+    updateParams({
+      search: "",
+      branch: "",
+      class: "",
+      gender: "",
+      status: "",
+      childNumber: "",
+      firstName: "",
+      lastName: "",
+      dateOfBirth: "",
+      nationality: "",
+      createdFrom: "",
+      createdTo: "",
+    });
   }, [updateParams]);
 
   // ── Handlers ───────────────────────────────────
@@ -285,6 +359,21 @@ export function ChildrenPageClient({
       updateParams({ status: value });
     },
     [updateParams]
+  );
+
+  const handleLegacyFilterChange = useCallback(
+    (key: keyof typeof legacyFilters, value: string) => {
+      setLegacyFilters((current) => ({ ...current, [key]: value }));
+    },
+    []
+  );
+
+  const applyLegacyFilters = useCallback(
+    (event?: React.FormEvent) => {
+      event?.preventDefault();
+      updateParams(legacyFilters);
+    },
+    [legacyFilters, updateParams]
   );
 
   const handlePageChange = useCallback(
@@ -349,11 +438,35 @@ export function ChildrenPageClient({
     });
   }, [deleteTarget, router]);
 
+  const handleToggleActive = useCallback(
+    (child: ChildRow) => {
+      const nextActive = child.isDraft ? true : !child.isActive;
+      startTransition(async () => {
+        const result = await toggleChildActive(child.id, nextActive);
+        if (result.success) {
+          toast.success(
+            `${child.firstName} ${child.lastName} marked as ${
+              nextActive ? "Active" : "Inactive"
+            }.`
+          );
+          router.refresh();
+        } else {
+          toast.error(result.error);
+        }
+      });
+    },
+    [router]
+  );
+
   // ── Table setup ────────────────────────────────
 
   const columns = useMemo(
-    () => getChildrenColumns({ onDelete: handleDeleteRequest }),
-    [handleDeleteRequest]
+    () =>
+      getChildrenColumns({
+        onDelete: handleDeleteRequest,
+        onToggleActive: handleToggleActive,
+      }),
+    [handleDeleteRequest, handleToggleActive]
   );
 
   const table = useReactTable({
@@ -509,6 +622,71 @@ export function ChildrenPageClient({
 
         </div>
 
+        <form
+          onSubmit={applyLegacyFilters}
+          className="grid gap-2 rounded border border-border/60 bg-muted/20 p-3 print:hidden sm:grid-cols-2 lg:grid-cols-[0.75fr_1fr_1fr_1fr_1fr_1fr_1fr_auto_auto]"
+        >
+          <Input
+            value={legacyFilters.childNumber}
+            onChange={(event) => handleLegacyFilterChange("childNumber", event.target.value)}
+            placeholder="S.N."
+            className="h-9"
+          />
+          <Input
+            value={legacyFilters.firstName}
+            onChange={(event) => handleLegacyFilterChange("firstName", event.target.value)}
+            placeholder="F Name"
+            className="h-9"
+          />
+          <Input
+            value={legacyFilters.lastName}
+            onChange={(event) => handleLegacyFilterChange("lastName", event.target.value)}
+            placeholder="L Name"
+            className="h-9"
+          />
+          <Input
+            type="date"
+            value={legacyFilters.dateOfBirth}
+            onChange={(event) => handleLegacyFilterChange("dateOfBirth", event.target.value)}
+            aria-label="Date of birth"
+            className="h-9"
+          />
+          <Input
+            value={legacyFilters.nationality}
+            onChange={(event) => handleLegacyFilterChange("nationality", event.target.value)}
+            placeholder="Nationality"
+            className="h-9"
+          />
+          <Input
+            type="date"
+            value={legacyFilters.createdFrom}
+            onChange={(event) => handleLegacyFilterChange("createdFrom", event.target.value)}
+            aria-label="Created from"
+            className="h-9"
+          />
+          <Input
+            type="date"
+            value={legacyFilters.createdTo}
+            onChange={(event) => handleLegacyFilterChange("createdTo", event.target.value)}
+            aria-label="Created to"
+            className="h-9"
+          />
+          <Button type="submit" variant="outline" size="sm" disabled={isPending}>
+            <Filter className="size-4" />
+            Apply
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={clearAllFilters}
+            disabled={isPending}
+          >
+            <X className="size-4" />
+            Clear
+          </Button>
+        </form>
+
         {/* ── Active Filter Pills ──────────────────── */}
         {activeFilters.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5 print:hidden">
@@ -610,7 +788,7 @@ export function ChildrenPageClient({
             /* Table View */
             <div className="overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm print:rounded-none print:border-gray-300 print:shadow-none">
               <div className="overflow-x-auto print:overflow-visible">
-                <Table className="min-w-[700px] print:min-w-0 print:w-full print:text-[11px]">
+                <Table className="min-w-[940px] print:min-w-0 print:w-full print:text-[11px]">
                   <TableHeader className="sticky top-0 z-10">
                     {table.getHeaderGroups().map((headerGroup) => (
                       <TableRow key={headerGroup.id} className="border-border/60 hover:bg-transparent">
@@ -705,7 +883,7 @@ export function ChildrenPageClient({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent side="top">
-                    {[10, 20, 30, 50, 100].map((size) => (
+                    {[10, 20, 50, 100, 150].map((size) => (
                       <SelectItem key={size} value={String(size)}>
                         {size}
                       </SelectItem>

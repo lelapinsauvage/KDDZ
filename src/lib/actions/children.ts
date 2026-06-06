@@ -16,6 +16,13 @@ interface GetChildrenParams {
   gender?: "MALE" | "FEMALE";
   status?: "ACTIVE" | "DRAFT" | "INACTIVE";
   search?: string;
+  childNumber?: string;
+  firstName?: string;
+  lastName?: string;
+  dateOfBirth?: string;
+  nationality?: string;
+  createdFrom?: string;
+  createdTo?: string;
   page?: number;
   pageSize?: number;
   sortBy?: string;
@@ -41,6 +48,14 @@ const removeAttachmentIdsSchema = z.array(z.string().uuid()).max(50);
 function parseTimeField(value: string | undefined): Date | null {
   if (!value) return null;
   return new Date(`1970-01-01T${value}`);
+}
+
+function parseDateStart(value: string): Date {
+  return new Date(`${value}T00:00:00.000Z`);
+}
+
+function parseDateEnd(value: string): Date {
+  return new Date(`${value}T23:59:59.999Z`);
 }
 
 function parseJsonPayload<T>(
@@ -111,6 +126,13 @@ export async function getChildren(params: GetChildrenParams = {}) {
     gender,
     status,
     search,
+    childNumber,
+    firstName,
+    lastName,
+    dateOfBirth,
+    nationality,
+    createdFrom,
+    createdTo,
     page = 1,
     pageSize = 20,
     sortBy,
@@ -127,6 +149,26 @@ export async function getChildren(params: GetChildrenParams = {}) {
     if (branchId) where.branchId = branchId;
     if (classId) where.classId = classId;
     if (gender) where.gender = gender;
+    if (childNumber?.trim()) {
+      where.childNumber = { contains: childNumber.trim(), mode: "insensitive" };
+    }
+    if (firstName?.trim()) {
+      where.firstName = { contains: firstName.trim(), mode: "insensitive" };
+    }
+    if (lastName?.trim()) {
+      where.lastName = { contains: lastName.trim(), mode: "insensitive" };
+    }
+    if (dateOfBirth?.trim()) {
+      where.dateOfBirth = parseDateStart(dateOfBirth.trim());
+    }
+    if (nationality?.trim()) {
+      where.nationality = { contains: nationality.trim(), mode: "insensitive" };
+    }
+    if (createdFrom || createdTo) {
+      where.createdAt = {};
+      if (createdFrom) where.createdAt.gte = parseDateStart(createdFrom);
+      if (createdTo) where.createdAt.lte = parseDateEnd(createdTo);
+    }
 
     if (status === "ACTIVE") {
       where.isActive = true;
@@ -140,15 +182,21 @@ export async function getChildren(params: GetChildrenParams = {}) {
 
     if (search && search.trim() !== "") {
       where.OR = [
+        { childNumber: { contains: search, mode: "insensitive" } },
         { firstName: { contains: search, mode: "insensitive" } },
         { lastName: { contains: search, mode: "insensitive" } },
+        { nationality: { contains: search, mode: "insensitive" } },
+        { branch: { name: { contains: search, mode: "insensitive" } } },
+        { class: { name: { contains: search, mode: "insensitive" } } },
       ];
     }
 
     const skip = (page - 1) * pageSize;
 
     const orderBy: Prisma.ChildOrderByWithRelationInput[] = [];
-    if (sortBy === "firstName") {
+    if (sortBy === "childNumber") {
+      orderBy.push({ childNumber: sortOrder });
+    } else if (sortBy === "firstName") {
       orderBy.push({ firstName: sortOrder });
     } else if (sortBy === "lastName") {
       orderBy.push({ lastName: sortOrder });
@@ -746,6 +794,41 @@ export async function deleteChild(
     console.error("deleteChild error:", error);
     const message =
       error instanceof Error ? error.message : "Failed to delete child";
+    return { success: false, error: message };
+  }
+}
+
+// ── toggleChildActive ──────────────────────────────
+
+export async function toggleChildActive(
+  id: string,
+  isActive: boolean
+): Promise<ActionResult> {
+  const result = await requireOrgSafe();
+  if (!result.ok) return { success: false, error: result.error };
+  const { ctx } = result;
+
+  try {
+    const childOk = await verifyChildAccess(id, ctx.organizationId);
+    if (!childOk) return { success: false, error: "Child not found" };
+
+    await db.child.update({
+      where: { id },
+      data: {
+        isActive,
+        isDraft: false,
+      },
+    });
+
+    revalidatePath("/children");
+    revalidatePath(`/children/${id}`);
+    revalidatePath(`/children/${id}/dashboard`);
+
+    return { success: true, id };
+  } catch (error) {
+    console.error("toggleChildActive error:", error);
+    const message =
+      error instanceof Error ? error.message : "Failed to update child status";
     return { success: false, error: message };
   }
 }

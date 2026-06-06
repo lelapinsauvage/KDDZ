@@ -2,7 +2,7 @@
 
 import { type ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { LayoutDashboard, Pencil, Printer, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,12 +18,14 @@ import { SortableHeader } from "@/components/shared/data-table";
 
 export interface ChildRow {
   id: string;
+  childNumber: string | null;
   firstName: string;
   lastName: string;
   dateOfBirth: Date | string | null;
   gender: "MALE" | "FEMALE" | null;
   nationality: string | null;
   bloodType: string | null;
+  photo: string | null;
   branchId: string;
   classId: string | null;
   isActive: boolean;
@@ -107,6 +109,13 @@ function formatDate(date: Date | string | null) {
   return `${day}/${month}/${year}`;
 }
 
+function childPhotoSrc(photo: string | null) {
+  if (!photo) return null;
+  if (/^https?:\/\//i.test(photo) || photo.startsWith("/")) return photo;
+  if (photo.includes("/")) return `/${photo.replace(/^\/+/, "")}`;
+  return `/images/EmpPhoto/${photo}`;
+}
+
 /** Calculate age in years and months from date of birth */
 function getAge(date: Date | string | null) {
   if (!date) return "";
@@ -170,17 +179,31 @@ const STATUS_CONFIG: Record<
 
 interface ChildrenColumnsOptions {
   onDelete?: (id: string, name: string) => void;
+  onToggleActive?: (child: ChildRow) => void;
 }
 
 export function getChildrenColumns(
   options: ChildrenColumnsOptions = {}
 ): ColumnDef<ChildRow>[] {
   return [
-    // Avatar — with tooltip showing extra info (hidden in print)
+    // Child number
     {
-      id: "avatar",
-      header: "",
-      meta: { className: "print:hidden" },
+      accessorKey: "childNumber",
+      header: ({ column }) => (
+        <SortableHeader column={column}>S.N.</SortableHeader>
+      ),
+      cell: ({ row }) => (
+        <span className="font-medium tabular-nums">
+          {row.original.childNumber || "-"}
+        </span>
+      ),
+    },
+
+    // Image
+    {
+      id: "image",
+      header: "Image",
+      enableSorting: false,
       cell: ({ row }) => {
         const child = row.original;
         const fullName = `${child.firstName} ${child.lastName}`;
@@ -188,42 +211,52 @@ export function getChildrenColumns(
         const bg = getAvatarColor(fullName);
         const age = getAge(child.dateOfBirth);
         const status = getStatus(child);
+        const photoSrc = childPhotoSrc(child.photo);
 
         return (
-          <div className="print:hidden">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div
-                    className={`flex size-9 items-center justify-center rounded-full text-xs font-bold text-white shadow-sm ${bg}`}
-                  >
-                    {initials}
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="max-w-[200px]">
-                  <p className="font-medium">{fullName}</p>
-                  {age && <p className="text-muted-foreground">Age: {age}</p>}
-                  {child.class?.name && (
-                    <p className="text-muted-foreground">Class: {child.class.name}</p>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  href={`/children/${child.id}`}
+                  className={`flex size-12 items-center justify-center overflow-hidden rounded-full text-xs font-bold text-white shadow-sm ${photoSrc ? "bg-muted" : bg}`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {photoSrc ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={photoSrc} alt="" className="size-full object-cover" />
+                  ) : (
+                    initials
                   )}
-                  {child.branch?.name && (
-                    <p className="text-muted-foreground">Branch: {child.branch.name}</p>
-                  )}
-                  <p className="text-muted-foreground">Status: {status.charAt(0) + status.slice(1).toLowerCase()}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="max-w-[200px]">
+                <p className="font-medium">{fullName}</p>
+                {child.childNumber && (
+                  <p className="text-muted-foreground">S.N.: {child.childNumber}</p>
+                )}
+                {age && <p className="text-muted-foreground">Age: {age}</p>}
+                {child.class?.name && (
+                  <p className="text-muted-foreground">Class: {child.class.name}</p>
+                )}
+                {child.branch?.name && (
+                  <p className="text-muted-foreground">Branch: {child.branch.name}</p>
+                )}
+                <p className="text-muted-foreground">
+                  Status: {status.charAt(0) + status.slice(1).toLowerCase()}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         );
       },
-      enableSorting: false,
     },
 
     // First Name
     {
       accessorKey: "firstName",
       header: ({ column }) => (
-        <SortableHeader column={column}>First Name</SortableHeader>
+        <SortableHeader column={column}>F Name</SortableHeader>
       ),
       cell: ({ row }) => {
         const child = row.original;
@@ -243,7 +276,7 @@ export function getChildrenColumns(
     {
       accessorKey: "lastName",
       header: ({ column }) => (
-        <SortableHeader column={column}>Last Name</SortableHeader>
+        <SortableHeader column={column}>L Name</SortableHeader>
       ),
       cell: ({ row }) => {
         const child = row.original;
@@ -307,19 +340,6 @@ export function getChildrenColumns(
       },
     },
 
-    // Nationality
-    {
-      accessorKey: "nationality",
-      header: ({ column }) => (
-        <SortableHeader column={column}>Nationality</SortableHeader>
-      ),
-      cell: ({ row }) => {
-        const nat = row.original.nationality;
-        if (!nat) return <span className="text-muted-foreground">-</span>;
-        return <span className="text-sm">{nat}</span>;
-      },
-    },
-
     // Gender
     {
       accessorKey: "gender",
@@ -367,7 +387,22 @@ export function getChildrenColumns(
         const { className, label } =
           STATUS_CONFIG[status] ?? STATUS_CONFIG.INACTIVE;
         return (
-          <Badge className={`border ${className}`}>
+          <Badge
+            role="button"
+            tabIndex={0}
+            className={`cursor-pointer border ${className}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              options.onToggleActive?.(row.original);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                event.stopPropagation();
+                options.onToggleActive?.(row.original);
+              }
+            }}
+          >
             {label}
           </Badge>
         );
@@ -378,7 +413,7 @@ export function getChildrenColumns(
       },
     },
 
-    // Actions (hidden in print)
+    // Actions
     {
       id: "actions",
       header: "",
@@ -388,13 +423,28 @@ export function getChildrenColumns(
         return (
           <div className="flex items-center gap-0.5 print:hidden">
             <Button variant="ghost" size="sm" className="size-8 p-0" asChild>
-              <Link href={`/children/${child.id}`} onClick={(e) => e.stopPropagation()}>
-                <Eye className="size-4 text-muted-foreground" />
-                <span className="sr-only">View</span>
+              <Link
+                href={`/children/${child.id}/dashboard`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <LayoutDashboard className="size-4 text-muted-foreground" />
+                <span className="sr-only">Dashboard</span>
               </Link>
             </Button>
             <Button variant="ghost" size="sm" className="size-8 p-0" asChild>
-              <Link href={`/children/${child.id}?edit=true`} onClick={(e) => e.stopPropagation()}>
+              <Link
+                href={`/children/${child.id}/print`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Printer className="size-4 text-muted-foreground" />
+                <span className="sr-only">Print</span>
+              </Link>
+            </Button>
+            <Button variant="ghost" size="sm" className="size-8 p-0" asChild>
+              <Link
+                href={`/children/${child.id}/edit`}
+                onClick={(e) => e.stopPropagation()}
+              >
                 <Pencil className="size-4 text-muted-foreground" />
                 <span className="sr-only">Edit</span>
               </Link>

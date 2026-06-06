@@ -11,6 +11,13 @@ interface PageProps {
     class?: string;
     gender?: string;
     status?: string;
+    childNumber?: string;
+    firstName?: string;
+    lastName?: string;
+    dateOfBirth?: string;
+    nationality?: string;
+    createdFrom?: string;
+    createdTo?: string;
     page?: string;
     pageSize?: string;
     sort?: string;
@@ -31,6 +38,13 @@ export default async function ChildrenListingPage({ searchParams }: PageProps) {
       classId: params.class && params.class !== "ALL" ? params.class : undefined,
       gender: params.gender && params.gender !== "ALL" ? (params.gender as "MALE" | "FEMALE") : undefined,
       status: params.status && params.status !== "ALL" ? (params.status as "ACTIVE" | "DRAFT" | "INACTIVE") : undefined,
+      childNumber: params.childNumber || undefined,
+      firstName: params.firstName || undefined,
+      lastName: params.lastName || undefined,
+      dateOfBirth: params.dateOfBirth || undefined,
+      nationality: params.nationality || undefined,
+      createdFrom: params.createdFrom || undefined,
+      createdTo: params.createdTo || undefined,
       page,
       pageSize,
       sortBy: params.sort || undefined,
@@ -64,6 +78,13 @@ export default async function ChildrenListingPage({ searchParams }: PageProps) {
           class: params.class ?? "ALL",
           gender: params.gender ?? "ALL",
           status: params.status ?? "ALL",
+          childNumber: params.childNumber ?? "",
+          firstName: params.firstName ?? "",
+          lastName: params.lastName ?? "",
+          dateOfBirth: params.dateOfBirth ?? "",
+          nationality: params.nationality ?? "",
+          createdFrom: params.createdFrom ?? "",
+          createdTo: params.createdTo ?? "",
           page,
           pageSize,
           sort: params.sort ?? "",
