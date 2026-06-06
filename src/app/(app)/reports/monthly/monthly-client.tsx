@@ -64,6 +64,11 @@ export interface MonthlyClassOption {
 }
 
 interface MonthlyClientProps {
+  title?: string;
+  breadcrumbLabel?: string;
+  basePath?: string;
+  showBranchColumn?: boolean;
+  lockBranch?: boolean;
   rows: MonthlyAttendanceRow[];
   branchOptions: MonthlyBranchOption[];
   classOptions: MonthlyClassOption[];
@@ -84,6 +89,7 @@ interface ColumnFilters {
   childNumber: string;
   firstName: string;
   lastName: string;
+  branchName: string;
   className: string;
 }
 
@@ -93,6 +99,7 @@ const EMPTY_FILTERS: ColumnFilters = {
   childNumber: "",
   firstName: "",
   lastName: "",
+  branchName: "",
   className: "",
 };
 
@@ -106,21 +113,24 @@ const statusStyles: Record<MonthlyAttendanceCellCode, string> = {
   "-": "bg-muted text-muted-foreground",
 };
 
-const exportColumns: ExportColumn[] = [
-  { header: "Child #", key: "childNumber" },
-  { header: "Name", key: "firstName" },
-  { header: "L Name", key: "lastName" },
-  { header: "Class", key: "className" },
-  ...dayColumns.map((day) => ({ header: String(day), key: `day${day}` })),
-  { header: "P/A", key: "presentAbsent" },
-];
+function buildExportColumns(includeBranch: boolean): ExportColumn[] {
+  return [
+    { header: "Child #", key: "childNumber" },
+    { header: "Name", key: "firstName" },
+    { header: "L Name", key: "lastName" },
+    ...(includeBranch ? [{ header: "Branch", key: "branchName" }] : []),
+    { header: "Class", key: "className" },
+    ...dayColumns.map((day) => ({ header: String(day), key: `day${day}` })),
+    { header: "P/A", key: "presentAbsent" },
+  ];
+}
 
 function matches(value: string | number | null | undefined, query: string) {
   if (!query.trim()) return true;
   return String(value ?? "").toLowerCase().includes(query.trim().toLowerCase());
 }
 
-function exportRows(rows: MonthlyAttendanceRow[]) {
+function exportRows(rows: MonthlyAttendanceRow[], includeBranch: boolean) {
   return rows.map((row) => {
     const data: Record<string, unknown> = {
       childNumber: row.childNumber,
@@ -129,6 +139,9 @@ function exportRows(rows: MonthlyAttendanceRow[]) {
       className: row.className,
       presentAbsent: `${row.presentCount} / ${row.absentCount}`,
     };
+    if (includeBranch) {
+      data.branchName = row.branchName;
+    }
     for (const cell of row.cells) {
       data[`day${cell.day}`] = cell.code;
     }
@@ -198,6 +211,11 @@ function SummaryPill({
 }
 
 export default function MonthlyClient({
+  title = "Monthly Attendance Report",
+  breadcrumbLabel,
+  basePath = "/reports/monthly",
+  showBranchColumn = false,
+  lockBranch = false,
   rows,
   branchOptions,
   classOptions,
@@ -215,6 +233,16 @@ export default function MonthlyClient({
   const [selectedClass, setSelectedClass] = useState(initialClassId ?? "ALL");
   const [query, setQuery] = useState(initialQuery);
   const [columnFilters, setColumnFilters] = useState<ColumnFilters>(EMPTY_FILTERS);
+  const exportColumns = useMemo(
+    () => buildExportColumns(showBranchColumn),
+    [showBranchColumn],
+  );
+  const emptyColSpan = showBranchColumn ? 37 : 36;
+  const filterGridClass = lockBranch
+    ? "grid flex-1 gap-3 sm:grid-cols-2 lg:grid-cols-[160px_190px_1fr]"
+    : "grid flex-1 gap-3 sm:grid-cols-2 lg:grid-cols-[160px_190px_190px_1fr]";
+  const branchLabel =
+    branchOptions.find((branch) => branch.id === selectedBranch)?.name ?? "Selected branch";
 
   const availableClasses = useMemo(() => {
     if (selectedBranch === "ALL") return classOptions;
@@ -227,6 +255,7 @@ export default function MonthlyClient({
       if (!matches(row.childNumber, columnFilters.childNumber)) return false;
       if (!matches(row.firstName, columnFilters.firstName)) return false;
       if (!matches(row.lastName, columnFilters.lastName)) return false;
+      if (!matches(row.branchName, columnFilters.branchName)) return false;
       if (!matches(row.className, columnFilters.className)) return false;
       if (!globalQuery) return true;
 
@@ -245,7 +274,10 @@ export default function MonthlyClient({
     });
   }, [columnFilters, query, rows]);
 
-  const filteredExportRows = useMemo(() => exportRows(filteredRows), [filteredRows]);
+  const filteredExportRows = useMemo(
+    () => exportRows(filteredRows, showBranchColumn),
+    [filteredRows, showBranchColumn],
+  );
   const filteredPresent = filteredRows.reduce((sum, row) => sum + row.presentCount, 0);
   const filteredAbsent = filteredRows.reduce((sum, row) => sum + row.absentCount, 0);
 
@@ -256,34 +288,38 @@ export default function MonthlyClient({
   function applyServerFilters() {
     const params = new URLSearchParams();
     params.set("month", selectedMonth);
-    if (selectedBranch !== "ALL") params.set("branch", selectedBranch);
+    const nextBranch = lockBranch ? initialBranchId ?? selectedBranch : selectedBranch;
+    if (nextBranch && nextBranch !== "ALL") params.set("branch", nextBranch);
     if (selectedClass !== "ALL") params.set("classId", selectedClass);
     if (query.trim()) params.set("q", query.trim());
-    router.push(`/reports/monthly?${params.toString()}`);
+    router.push(`${basePath}?${params.toString()}`);
   }
 
   function resetFilters() {
     setSelectedMonth(monthKey);
-    setSelectedBranch("ALL");
+    setSelectedBranch(lockBranch ? initialBranchId ?? "ALL" : "ALL");
     setSelectedClass("ALL");
     setQuery("");
     setColumnFilters(EMPTY_FILTERS);
-    router.push("/reports/monthly");
+    const params = new URLSearchParams();
+    if (lockBranch && initialBranchId) params.set("branch", initialBranchId);
+    const queryString = params.toString();
+    router.push(queryString ? `${basePath}?${queryString}` : basePath);
   }
 
   return (
     <>
       <PageHeader
-        title="Monthly Attendance Report"
+        title={title}
         breadcrumbs={[
           { label: "Reports", href: "/reports/monthly" },
-          { label: "Monthly Attendance Report" },
+          { label: breadcrumbLabel ?? title },
         ]}
       />
 
       <div className="space-y-4 p-4 md:p-6">
         <div className="flex flex-col gap-3 rounded border border-border/60 bg-card px-3 py-3 print:hidden lg:flex-row lg:items-end">
-          <div className="grid flex-1 gap-3 sm:grid-cols-2 lg:grid-cols-[160px_190px_190px_1fr]">
+          <div className={filterGridClass}>
             <label className="space-y-1">
               <span className="text-xs font-medium text-muted-foreground">Month</span>
               <Input
@@ -293,24 +329,31 @@ export default function MonthlyClient({
               />
             </label>
 
-            <label className="space-y-1">
-              <span className="text-xs font-medium text-muted-foreground">Branch</span>
-              <select
-                value={selectedBranch}
-                onChange={(event) => {
-                  setSelectedBranch(event.target.value);
-                  setSelectedClass("ALL");
-                }}
-                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-              >
-                <option value="ALL">All Branches</option>
-                {branchOptions.map((branch) => (
-                  <option key={branch.id} value={branch.id}>
-                    {branch.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {lockBranch ? (
+              <label className="space-y-1">
+                <span className="text-xs font-medium text-muted-foreground">Branch</span>
+                <Input value={branchLabel} readOnly className="bg-muted/50" />
+              </label>
+            ) : (
+              <label className="space-y-1">
+                <span className="text-xs font-medium text-muted-foreground">Branch</span>
+                <select
+                  value={selectedBranch}
+                  onChange={(event) => {
+                    setSelectedBranch(event.target.value);
+                    setSelectedClass("ALL");
+                  }}
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  <option value="ALL">All Branches</option>
+                  {branchOptions.map((branch) => (
+                    <option key={branch.id} value={branch.id}>
+                      {branch.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
 
             <label className="space-y-1">
               <span className="text-xs font-medium text-muted-foreground">Class</span>
@@ -398,7 +441,13 @@ export default function MonthlyClient({
 
         <div className="overflow-hidden rounded border border-border/60 bg-card print:rounded-none print:border-gray-300">
           <div className="overflow-x-auto">
-            <Table className="min-w-[1480px] print:min-w-0 print:text-[7px]">
+            <Table
+              className={
+                showBranchColumn
+                  ? "min-w-[1580px] print:min-w-0 print:text-[7px]"
+                  : "min-w-[1480px] print:min-w-0 print:text-[7px]"
+              }
+            >
               <TableHeader>
                 <TableRow className="border-border/60 hover:bg-transparent">
                   <TableHead className="sticky left-0 z-30 min-w-24 bg-muted/95 px-2 text-xs font-semibold uppercase text-muted-foreground print:static print:min-w-0">
@@ -410,6 +459,11 @@ export default function MonthlyClient({
                   <TableHead className="min-w-28 bg-muted/80 px-2 text-xs font-semibold uppercase text-muted-foreground">
                     L Name
                   </TableHead>
+                  {showBranchColumn ? (
+                    <TableHead className="min-w-28 bg-muted/80 px-2 text-xs font-semibold uppercase text-muted-foreground">
+                      Branch
+                    </TableHead>
+                  ) : null}
                   <TableHead className="min-w-28 bg-muted/80 px-2 text-xs font-semibold uppercase text-muted-foreground">
                     Class
                   </TableHead>
@@ -450,6 +504,16 @@ export default function MonthlyClient({
                       placeholder="L Name"
                     />
                   </TableHead>
+                  {showBranchColumn ? (
+                    <TableHead className="bg-card p-1">
+                      <Input
+                        value={columnFilters.branchName}
+                        onChange={(event) => updateFilter("branchName", event.target.value)}
+                        className="h-8 px-2 text-xs"
+                        placeholder="Branch"
+                      />
+                    </TableHead>
+                  ) : null}
                   <TableHead className="bg-card p-1">
                     <Input
                       value={columnFilters.className}
@@ -477,6 +541,11 @@ export default function MonthlyClient({
                       <TableCell className="px-2 text-sm print:px-1 print:text-[7px]">
                         {row.lastName}
                       </TableCell>
+                      {showBranchColumn ? (
+                        <TableCell className="px-2 text-sm print:px-1 print:text-[7px]">
+                          {row.branchName}
+                        </TableCell>
+                      ) : null}
                       <TableCell className="px-2 text-sm print:px-1 print:text-[7px]">
                         {row.className}
                       </TableCell>
@@ -492,7 +561,7 @@ export default function MonthlyClient({
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={36} className="h-24 text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={emptyColSpan} className="h-24 text-center text-sm text-muted-foreground">
                       No attendance rows match the current filters.
                     </TableCell>
                   </TableRow>

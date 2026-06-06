@@ -1,132 +1,67 @@
-import { getBranches } from "@/lib/actions/branches";
-import { getClasses } from "@/lib/actions/classes";
-import { getDailyReports } from "@/lib/actions/daily-reports";
-import MonthlyBranchClient from "./monthly-branch-client";
+import { notFound, redirect } from "next/navigation";
+import MonthlyClient from "../monthly/monthly-client";
+import {
+  firstParam,
+  loadMonthlyAttendance,
+  monthKeyFromDate,
+  normalizeMonthKey,
+} from "../monthly/monthly-data";
 
 interface PageProps {
-  searchParams: Promise<{ branch?: string }>;
-}
-
-interface BranchRow {
-  id: string;
-  name: string;
-  _count: {
-    classes: number;
-    children: number;
-    teachers: number;
-  };
-}
-
-interface ClassRow {
-  id: string;
-  name: string;
-  ageGroup: string | null;
-  branchId: string;
-  _count: { children: number };
+  searchParams: Promise<{
+    branch?: string | string[];
+    class?: string | string[];
+    classId?: string | string[];
+    from?: string | string[];
+    month?: string | string[];
+    p?: string | string[];
+    q?: string | string[];
+  }>;
 }
 
 export default async function MonthlyBranchReportPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const [branchesResult, classesResult] = await Promise.all([
-    getBranches(),
-    getClasses(),
-  ]);
+  const branchId = firstParam(params.branch)?.trim();
 
-  const branches: BranchRow[] = Array.isArray(branchesResult.data) ? branchesResult.data : [];
-  const allClasses: ClassRow[] = Array.isArray(classesResult.data) ? classesResult.data : [];
+  if (!branchId) {
+    redirect("/reports/monthly");
+  }
 
-  // For each branch, compute stats and per-class breakdown
-  const branchDataMap: Record<string, {
-    stats: {
-      id: string;
-      name: string;
-      children: number;
-      classes: number;
-      teachers: number;
-      attendanceRate: string;
-    };
-    classes: {
-      id: string;
-      className: string;
-      ageGroup: string;
-      children: number;
-      avgAttendance: string;
-      reportsSubmitted: number;
-      reportsPending: number;
-    }[];
-  }> = {};
+  const monthKey =
+    normalizeMonthKey(params.month) ??
+    normalizeMonthKey(params.from) ??
+    normalizeMonthKey(params.p) ??
+    monthKeyFromDate(new Date());
+  const classId = firstParam(params.classId)?.trim() || firstParam(params.class)?.trim() || null;
+  const initialQuery = firstParam(params.q)?.trim() ?? "";
 
-  // Fetch child counts and report counts per branch in parallel
-  const branchPromises = branches.map(async (branch) => {
-    const branchClasses = allClasses.filter((c) => c.branchId === branch.id);
+  const { rows, branchOptions, classOptions, totals, daysInMonth, monthLabel } =
+    await loadMonthlyAttendance({ branchId, classId, monthKey });
+  const selectedBranch = branchOptions.find((branch) => branch.id === branchId);
 
-    // Get daily reports counts for this branch
-    const [submittedResult, draftResult] = await Promise.all([
-      getDailyReports({ branchId: branch.id, status: "SUBMITTED", pageSize: 1 }),
-      getDailyReports({ branchId: branch.id, status: "DRAFT", pageSize: 1 }),
-    ]);
+  if (!selectedBranch) {
+    notFound();
+  }
 
-    const totalSubmitted = submittedResult.total ?? 0;
-    const totalDraft = draftResult.total ?? 0;
-    const totalReports = totalSubmitted + totalDraft;
-    const attendanceRate = totalReports > 0
-      ? `${Math.round((totalSubmitted / totalReports) * 100)}%`
-      : "N/A";
-
-    // Build per-class breakdown
-    const classBreakdowns = await Promise.all(
-      branchClasses.map(async (cls) => {
-        const [clsSubmitted, clsDraft] = await Promise.all([
-          getDailyReports({ classId: cls.id, status: "SUBMITTED", pageSize: 1 }),
-          getDailyReports({ classId: cls.id, status: "DRAFT", pageSize: 1 }),
-        ]);
-
-        const submitted = clsSubmitted.total ?? 0;
-        const draft = clsDraft.total ?? 0;
-        const clsTotal = submitted + draft;
-        const clsAttendance = clsTotal > 0
-          ? `${Math.round((submitted / clsTotal) * 100)}%`
-          : "N/A";
-
-        return {
-          id: cls.id,
-          className: cls.name,
-          ageGroup: cls.ageGroup ?? "N/A",
-          children: cls._count.children,
-          avgAttendance: clsAttendance,
-          reportsSubmitted: submitted,
-          reportsPending: draft,
-        };
-      })
-    );
-
-    branchDataMap[branch.id] = {
-      stats: {
-        id: branch.id,
-        name: branch.name,
-        children: branch._count.children,
-        classes: branch._count.classes,
-        teachers: branch._count.teachers,
-        attendanceRate,
-      },
-      classes: classBreakdowns,
-    };
-  });
-
-  await Promise.all(branchPromises);
-
-  const branchOptions = branches.map((b) => ({ id: b.id, name: b.name }));
-  const requestedBranchId = params.branch?.trim();
-  const initialBranchId =
-    requestedBranchId && branchOptions.some((b) => b.id === requestedBranchId)
-      ? requestedBranchId
-      : branchOptions[0]?.id ?? "";
+  const title = `Monthly Attendance Report For ${selectedBranch.name}`;
 
   return (
-    <MonthlyBranchClient
-      branchDataMap={branchDataMap}
+    <MonthlyClient
+      title={title}
+      breadcrumbLabel="Monthly Branch Attendance"
+      basePath="/reports/monthly-branch"
+      showBranchColumn
+      lockBranch
+      rows={rows}
       branchOptions={branchOptions}
-      initialBranchId={initialBranchId}
+      classOptions={classOptions}
+      totals={totals}
+      daysInMonth={daysInMonth}
+      monthKey={monthKey}
+      monthLabel={monthLabel}
+      initialBranchId={branchId}
+      initialClassId={classId}
+      initialQuery={initialQuery}
     />
   );
 }
