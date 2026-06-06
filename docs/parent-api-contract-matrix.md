@@ -28,7 +28,7 @@ Parent web PWA status:
 | ws/missingReports_alarms.php | pid | /api/parent/alarms/medical | partial - legacy array shape, POST pid guard, and migrated medical alarm field names restored; verify encrypted deep-link behavior | no | no |
 | ws/newassessment_alarms.php | pid | /api/parent/alarms/assessments | partial - POST pid guard and legacy child id restored; verify exact assessment message template | no | no |
 | ws/newdaily.php | usites | /api/parent/daily/[childId]/detailed | partial - used by /parent PWA, verify JSON contract | yes | no |
-| ws/notifications_master.php | usites | /api/parent/notifications/[childId] | partial - used by /parent PWA, verify JSON contract | yes | no |
+| ws/notifications_master.php | usites | /api/parent/notifications/[childId] | partial - dynamic `notifications_nature` ordering/names/active flags, POST `usites` guard, and mapped alarm/event/message/assessment detail groups restored; verify every production nature/table | yes | no |
 | ws/payments_alarms.php | pid | /api/parent/alarms/payments | partial - legacy array shape, POST pid guard, legacy ids/status/datetime/href restored; verify parent delivery push | no | no |
 | ws/pnotifications.php | cid, del, os, show, token | /api/parent/push-token | partial - JSON/form registration, parent-scoped show, legacy OS mapping, and soft-delete restored; verify native unauth contract | yes | no |
 | ws/sendMessage.php | message, subject, threadid, to, usites | /api/parent/messages | partial - used by /parent PWA, verify JSON contract | no | no |
