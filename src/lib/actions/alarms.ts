@@ -38,6 +38,10 @@ import {
   generateHolidayAlarmsForOrganization,
   type HolidayGenerationSummary,
 } from "@/lib/jobs/holiday-alarms";
+import {
+  generateContractAlarmsForOrganization,
+  type ContractGenerationSummary,
+} from "@/lib/jobs/contract-alarms";
 
 export type { AssessmentDueAlarm, AssessmentGenerationSummary } from "@/lib/jobs/assessment-alarms";
 export type { MedicineGenerationSummary } from "@/lib/jobs/medicine-alarms";
@@ -48,6 +52,7 @@ export type {
 } from "@/lib/jobs/vaccination-alarms";
 export type { PaymentGenerationSummary } from "@/lib/jobs/payment-alarms";
 export type { HolidayGenerationSummary } from "@/lib/jobs/holiday-alarms";
+export type { ContractGenerationSummary } from "@/lib/jobs/contract-alarms";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -337,6 +342,38 @@ export async function generateHolidayAlarms(
   } catch (error) {
     console.error("Failed to generate holiday alarms:", error);
     return { success: false, error: "Failed to generate holiday alarms" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// generateContractAlarms
+// ---------------------------------------------------------------------------
+
+export async function generateContractAlarms(
+  branchId?: string,
+): Promise<ActionResult<ContractGenerationSummary>> {
+  try {
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
+
+    if (branchId && !(await verifyBranchAccess(branchId, ctx.organizationId))) {
+      return { success: false, error: "Branch not found in your organization" };
+    }
+
+    const summary = await generateContractAlarmsForOrganization({
+      organizationId: ctx.organizationId,
+      branchId,
+    });
+
+    revalidatePath("/alarms");
+    revalidatePath("/alarms/contracts");
+    revalidatePath("/");
+
+    return { success: true, data: summary };
+  } catch (error) {
+    console.error("Failed to generate contract alarms:", error);
+    return { success: false, error: "Failed to generate contract alarms" };
   }
 }
 

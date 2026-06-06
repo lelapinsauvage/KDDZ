@@ -975,6 +975,7 @@ model TeacherAttachment {
   filename        String
   fileUrl         String
   type            String?
+  expiryDate      DateTime? @db.Date
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -1136,6 +1137,7 @@ model NurseAttachment {
   filename       String
   fileUrl        String
   type           String?
+  expiryDate     DateTime? @db.Date
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

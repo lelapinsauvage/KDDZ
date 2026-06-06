@@ -140,8 +140,8 @@ const ALARM_CONFIGS: AlarmConfig[] = [
     iconColor: "text-[#0B9178]",
     settingKeyEnabled: "alarm.contract.enabled",
     settingKeyThreshold: "alarm.contract.threshold",
-    defaultThreshold: "30",
-    thresholdLabel: "Days before expiry to notify",
+    defaultThreshold: "7",
+    thresholdLabel: "Maximum legacy reminder window",
   },
   {
     type: "OTHER",

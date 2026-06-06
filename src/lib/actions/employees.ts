@@ -193,10 +193,10 @@ function staffAttachmentCreateData(type: EmployeeType, document: DocumentData) {
     filename: title || fileUrl,
     fileUrl,
     type: document.type,
+    expiryDate: toDate(document.expiryDate) ?? null,
   };
   if (type === "doctor" || type === "manager") {
     data.title = title;
-    data.expiryDate = toDate(document.expiryDate) ?? null;
     data.isActive = true;
   }
   return data;

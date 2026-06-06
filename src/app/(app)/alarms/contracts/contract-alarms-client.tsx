@@ -1,10 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { type ColumnDef } from "@tanstack/react-table";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -12,8 +14,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FileText } from "lucide-react";
+import { FileText, RefreshCw } from "lucide-react";
 import { AlarmActionsCell } from "@/components/alarms/alarm-actions-cell";
+import { generateContractAlarms } from "@/lib/actions/alarms";
 
 interface ContractAlarm {
   id: string;
@@ -21,6 +24,7 @@ interface ContractAlarm {
   dueDate: string;
   daysLeft: number;
   status: "Expired" | "Expiring Soon" | "Active";
+  branchId: string;
   branch: string;
 }
 
@@ -35,13 +39,46 @@ const statusColors: Record<string, string> = {
   Active: "bg-[#059669]/15 text-[#059669]",
 };
 
-export function ContractAlarmsClient({ alarms }: ContractAlarmsClientProps) {
+export function ContractAlarmsClient({ alarms, branches }: ContractAlarmsClientProps) {
+  const router = useRouter();
+  const [branchFilter, setBranchFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationStatus, setGenerationStatus] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
-    if (statusFilter === "ALL") return alarms;
-    return alarms.filter((c) => c.status === statusFilter);
-  }, [statusFilter, alarms]);
+    return alarms.filter((c) => {
+      if (branchFilter !== "ALL" && c.branchId !== branchFilter) return false;
+      if (statusFilter !== "ALL" && c.status !== statusFilter) return false;
+      return true;
+    });
+  }, [branchFilter, statusFilter, alarms]);
+
+  async function handleGenerate() {
+    setIsGenerating(true);
+    setGenerationStatus(null);
+    const result = await generateContractAlarms(
+      branchFilter === "ALL" ? undefined : branchFilter,
+    );
+    setIsGenerating(false);
+
+    if (result.success && result.data) {
+      const {
+        documentsMatched,
+        alarmsCreated,
+        notificationsCreated,
+        skippedExisting,
+        skippedOutsideWindow,
+      } = result.data;
+      setGenerationStatus(
+        `Matched ${documentsMatched}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"} and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing, ${skippedOutsideWindow} outside window.`,
+      );
+      router.refresh();
+      return;
+    }
+
+    setGenerationStatus(result.error ?? "Contract generation failed.");
+  }
 
   const columns: ColumnDef<ContractAlarm>[] = useMemo(
     () => [
@@ -107,6 +144,19 @@ export function ContractAlarmsClient({ alarms }: ContractAlarmsClientProps) {
       />
       <div className="space-y-4 p-4 md:p-6">
         <div className="flex flex-wrap items-center gap-3">
+          <Select value={branchFilter} onValueChange={setBranchFilter}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="All Branches" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All Branches</SelectItem>
+              {branches.map((b) => (
+                <SelectItem key={b.id} value={b.id}>
+                  {b.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="All Statuses" />
@@ -118,6 +168,19 @@ export function ContractAlarmsClient({ alarms }: ContractAlarmsClientProps) {
               <SelectItem value="Active">Active</SelectItem>
             </SelectContent>
           </Select>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleGenerate}
+            disabled={isGenerating}
+            className="gap-2"
+          >
+            <RefreshCw className={`size-4 ${isGenerating ? "animate-spin" : ""}`} />
+            {isGenerating ? "Generating..." : "Generate"}
+          </Button>
+          {generationStatus && (
+            <span className="text-sm text-muted-foreground">{generationStatus}</span>
+          )}
         </div>
         {filtered.length > 0 ? (
           <DataTable columns={columns} data={filtered} searchKey="message" searchPlaceholder="Search contracts..." />

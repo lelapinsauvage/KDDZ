@@ -302,6 +302,7 @@ async function migrateTeacherAttachments(
             filename: row.att_title || row.url,
             fileUrl: row.url,
             type: cleanString(row.type),
+            expiryDate: parseDate(row.exp_date),
           },
         });
       }
@@ -322,6 +323,7 @@ async function migrateTeacherAttachments(
           filename: row.att_title || row.url,
           fileUrl: row.url,
           type: cleanString(row.type),
+          expiryDate: parseDate(row.exp_date),
         },
       });
     }
@@ -526,6 +528,7 @@ async function migrateNurses(prisma: PrismaClient, dryRun: boolean) {
             filename: row.att_title || row.url,
             fileUrl: row.url,
             type: cleanString(row.type),
+            expiryDate: parseDate(row.exp_date),
           },
         });
       }
@@ -546,6 +549,7 @@ async function migrateNurses(prisma: PrismaClient, dryRun: boolean) {
           filename: row.att_title || row.url,
           fileUrl: row.url,
           type: cleanString(row.type),
+          expiryDate: parseDate(row.exp_date),
         },
       });
     }

@@ -4,7 +4,7 @@ import { ContractAlarmsClient } from "./contract-alarms-client";
 
 export default async function ContractAlarmsPage() {
   const [alarmsResult, branchesResult] = await Promise.all([
-    getAlarms({ type: "CONTRACT" }),
+    getAlarms({ type: "CONTRACT", pageSize: 500 }),
     getBranches(),
   ]);
 
@@ -39,6 +39,7 @@ export default async function ContractAlarmsPage() {
       dueDate,
       daysLeft,
       status,
+      branchId: (a.branchId ?? "") as string,
       branch: (a.branch?.name ?? "—") as string,
     };
   });
