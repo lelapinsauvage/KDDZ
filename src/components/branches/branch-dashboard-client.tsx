@@ -3,14 +3,8 @@
 import {
   Ambulance,
   BookOpen,
-  ClipboardCheck,
-  ClipboardList,
-  DollarSign,
-  FileEdit,
   FileText,
-  FileWarning,
   GraduationCap,
-  HeartPulse,
   Phone,
   ShieldCheck,
   Stethoscope,
@@ -18,9 +12,14 @@ import {
   UserCog,
   UserX,
   Users,
-  AlertTriangle,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import type {
+  DashboardDrilldownRequestFilters,
+  DashboardDrilldowns,
+} from "@/lib/actions/dashboard";
+import { DashboardDrilldownCard } from "@/components/dashboard/dashboard-drilldown-card";
+import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { DemographicsSection } from "@/components/dashboard/demographics-section";
 import { StatCard } from "@/components/dashboard/stat-card";
 
@@ -62,26 +61,45 @@ interface ActionMetrics {
 
 export function BranchDashboardClient({
   branchId,
+  selectedRange,
+  selectedYearId,
+  drilldownFilters,
   stats,
   demographics,
   dailyStats,
   actionMetrics,
 }: {
   branchId: string;
+  selectedRange: { from: string; to: string };
+  selectedYearId: string | null;
+  drilldownFilters: DashboardDrilldownRequestFilters;
   stats: BranchStats;
   demographics: BranchDemographics;
   dailyStats: DailyStats;
   actionMetrics: ActionMetrics;
 }) {
   const color = stats.themeColor || "#1caf9a";
+  const drilldowns = emptyBranchDashboardDrilldowns();
   const attendanceBreakdown = [
     { name: "Present", value: dailyStats.totalAttendance },
     { name: "Absent", value: dailyStats.totalAbsence },
     { name: "Missing Report", value: dailyStats.missingDailyReports },
   ];
+  const filterQuery = new URLSearchParams({
+    from: selectedRange.from,
+    to: selectedRange.to,
+  });
+  if (selectedYearId) filterQuery.set("year", selectedYearId);
+  const filterSuffix = filterQuery.toString();
+  const withDashboardFilters = (href: string) =>
+    `${href}${href.includes("?") ? "&" : "?"}${filterSuffix}`;
 
   return (
     <div className="space-y-6 p-4 md:p-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+        <DashboardHeader selectedRange={selectedRange} selectedYearId={selectedYearId} />
+      </div>
+
       <section>
         <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
           Garderie Branch
@@ -92,42 +110,42 @@ export function BranchDashboardClient({
             value={stats.classCount}
             icon={BookOpen}
             color="sky"
-            href={`/branches/${branchId}/classes`}
+            href={withDashboardFilters(`/branches/${branchId}/classes`)}
           />
           <StatCard
             title="Total Active Children"
             value={stats.childrenCount}
             icon={Users}
             color="emerald"
-            href={`/branches/${branchId}/children`}
+            href={withDashboardFilters(`/branches/${branchId}/children`)}
           />
           <StatCard
             title="Teachers"
             value={stats.teacherCount}
             icon={GraduationCap}
             color="purple"
-            href={`/employees/teachers?branch=${branchId}`}
+            href={withDashboardFilters(`/employees/teachers?branch=${branchId}`)}
           />
           <StatCard
             title="Nurses"
             value={stats.nurseCount}
             icon={Stethoscope}
             color="rose"
-            href={`/employees/nurses?branch=${branchId}`}
+            href={withDashboardFilters(`/employees/nurses?branch=${branchId}`)}
           />
           <StatCard
             title="Doctors"
             value={stats.doctorCount}
             icon={Stethoscope}
             color="orange"
-            href={`/employees/doctors?branch=${branchId}`}
+            href={withDashboardFilters(`/employees/doctors?branch=${branchId}`)}
           />
           <StatCard
             title="Managers"
             value={stats.managerCount}
             icon={UserCog}
             color="blue"
-            href={`/employees/managers?branch=${branchId}`}
+            href={withDashboardFilters(`/employees/managers?branch=${branchId}`)}
           />
         </div>
       </section>
@@ -153,28 +171,32 @@ export function BranchDashboardClient({
             value={dailyStats.totalAttendance}
             icon={UserCheck}
             color="green"
-            href={`/daily-reports?branch=${branchId}&status=submitted`}
+            href={withDashboardFilters(`/daily-reports?branch=${branchId}&status=submitted`)}
           />
           <StatCard
             title="Total Absence"
             value={dailyStats.totalAbsence}
             icon={UserX}
             color="rose"
-            href={`/absent-reports?branch=${branchId}`}
+            href={withDashboardFilters(`/absent-reports?branch=${branchId}`)}
           />
-          <StatCard
+          <DashboardDrilldownCard
             title="Missing Daily Reports"
             value={dailyStats.missingDailyReports}
-            icon={FileWarning}
+            iconName="fileWarning"
             color="sky"
-            href={`/daily-reports?branch=${branchId}&status=missing`}
+            drilldownKind="missingDailyReports"
+            filters={drilldownFilters}
+            drilldown={drilldowns.missingDailyReports}
           />
-          <StatCard
+          <DashboardDrilldownCard
             title="Missing Absent Reports"
             value={dailyStats.missingAbsentReports}
-            icon={AlertTriangle}
+            iconName="alertTriangle"
             color="amber"
-            href={`/absent-reports?branch=${branchId}&status=missing`}
+            drilldownKind="missingAbsentReports"
+            filters={drilldownFilters}
+            drilldown={drilldowns.missingAbsentReports}
           />
         </div>
       </section>
@@ -184,26 +206,28 @@ export function BranchDashboardClient({
           Operations
         </h3>
         <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-3">
-          <StatCard
+          <DashboardDrilldownCard
             title="Total Payments"
             value={`$${actionMetrics.totalPayments.toLocaleString()}`}
-            icon={DollarSign}
+            iconName="dollarSign"
             color="green"
-            href={`/accounting?branch=${branchId}`}
+            drilldownKind="payments"
+            filters={drilldownFilters}
+            drilldown={drilldowns.payments}
           />
           <StatCard
             title="Accident Reports"
             value={actionMetrics.accidentReports}
             icon={Ambulance}
             color="orange"
-            href={`/medical/accidents?branch=${branchId}`}
+            href={withDashboardFilters(`/medical/accidents?branch=${branchId}`)}
           />
           <StatCard
             title="Incoming/Outgoing Calls"
             value={actionMetrics.loggedCalls}
             icon={Phone}
             color="sky"
-            href={`/calls?branch=${branchId}`}
+            href={withDashboardFilters(`/calls?branch=${branchId}`)}
           />
         </div>
       </section>
@@ -213,26 +237,32 @@ export function BranchDashboardClient({
           Medical Reports
         </h3>
         <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-3">
-          <StatCard
+          <DashboardDrilldownCard
             title="Total Medical Reports"
             value={actionMetrics.completedMedicalVisits}
-            icon={Stethoscope}
+            iconName="stethoscope"
             color="green"
-            href={`/medical/general?branch=${branchId}`}
+            drilldownKind="medicalReports"
+            filters={drilldownFilters}
+            drilldown={drilldowns.medicalReports}
           />
-          <StatCard
+          <DashboardDrilldownCard
             title="Missing Medical Reports"
             value={actionMetrics.missingMedicalVisits}
-            icon={HeartPulse}
+            iconName="heartPulse"
             color="rose"
-            href={`/medical/general?branch=${branchId}&status=missing`}
+            drilldownKind="missingMedicalReports"
+            filters={drilldownFilters}
+            drilldown={drilldowns.missingMedicalReports}
           />
-          <StatCard
+          <DashboardDrilldownCard
             title="Total Drafts"
             value={actionMetrics.pendingMedicalReports}
-            icon={FileEdit}
+            iconName="fileEdit"
             color="sky"
-            href={`/medical/general?branch=${branchId}&status=draft`}
+            drilldownKind="medicalDrafts"
+            filters={drilldownFilters}
+            drilldown={drilldowns.medicalDrafts}
           />
         </div>
       </section>
@@ -242,26 +272,32 @@ export function BranchDashboardClient({
           Assessments
         </h3>
         <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-3">
-          <StatCard
+          <DashboardDrilldownCard
             title="Total Assessments"
             value={actionMetrics.completedAssessments}
-            icon={ClipboardCheck}
+            iconName="clipboardCheck"
             color="green"
-            href={`/assessments?branch=${branchId}`}
+            drilldownKind="assessmentReports"
+            filters={drilldownFilters}
+            drilldown={drilldowns.assessmentReports}
           />
-          <StatCard
+          <DashboardDrilldownCard
             title="Missing Assessments"
             value={actionMetrics.missingAssessments}
-            icon={ClipboardList}
+            iconName="clipboardList"
             color="rose"
-            href={`/assessments?branch=${branchId}&status=missing`}
+            drilldownKind="missingAssessments"
+            filters={drilldownFilters}
+            drilldown={drilldowns.missingAssessments}
           />
-          <StatCard
+          <DashboardDrilldownCard
             title="Total Drafts"
             value={actionMetrics.pendingAssessments}
-            icon={FileText}
+            iconName="fileText"
             color="sky"
-            href={`/assessments?branch=${branchId}&status=draft`}
+            drilldownKind="assessmentDrafts"
+            filters={drilldownFilters}
+            drilldown={drilldowns.assessmentDrafts}
           />
         </div>
       </section>
@@ -334,4 +370,67 @@ export function BranchDashboardClient({
       </section>
     </div>
   );
+}
+
+function emptyBranchDashboardDrilldowns(): DashboardDrilldowns {
+  return {
+    payments: {
+      title: "Payments Details",
+      columns: [
+        "date",
+        "number",
+        "name",
+        "lastName",
+        "amount",
+        "for",
+        "type",
+        "from",
+        "to",
+        "remarks",
+        "action",
+        "attachment",
+      ],
+      rows: [],
+    },
+    missingDailyReports: {
+      title: "Missing Daily Reports",
+      columns: ["number", "name", "date", "action"],
+      rows: [],
+    },
+    missingAbsentReports: {
+      title: "Missing Absent Reports",
+      columns: ["number", "name", "date", "action"],
+      rows: [],
+    },
+    medicalReports: {
+      title: "Medical Reports",
+      columns: ["number", "name", "type", "date", "action"],
+      rows: [],
+    },
+    missingMedicalReports: {
+      title: "Missing Medical Reports",
+      columns: ["number", "name", "type", "action"],
+      rows: [],
+    },
+    medicalDrafts: {
+      title: "Medical Reports - Drafts",
+      columns: ["number", "name", "type", "date", "action"],
+      rows: [],
+    },
+    assessmentReports: {
+      title: "Assessment Reports",
+      columns: ["number", "name", "type", "date", "action"],
+      rows: [],
+    },
+    missingAssessments: {
+      title: "Missing Assessment Reports",
+      columns: ["number", "name", "type", "action"],
+      rows: [],
+    },
+    assessmentDrafts: {
+      title: "Assessment Reports - Drafts",
+      columns: ["number", "name", "type", "date", "action"],
+      rows: [],
+    },
+  };
 }

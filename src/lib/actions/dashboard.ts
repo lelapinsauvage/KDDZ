@@ -3,7 +3,7 @@
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { requireOrg } from "@/lib/require-org";
-import { getOrgBranchIds } from "@/lib/verify-org-access";
+import { getOrgBranchIds, verifyBranchAccess } from "@/lib/verify-org-access";
 import {
   ASSESSMENT_TYPE_NAMES,
   VALID_ASSESSMENT_TYPES,
@@ -70,6 +70,7 @@ export interface DashboardDrilldownRequestFilters {
   from?: string | null;
   to?: string | null;
   schoolYearId?: string | null;
+  branchId?: string | null;
 }
 
 interface NormalizedDashboardFilters {
@@ -963,8 +964,17 @@ export async function getDashboardDrilldown(
 ): Promise<DashboardDrilldown> {
   const session = await auth();
   const { organizationId: orgId } = await requireOrg();
-  const branchId = session?.user?.branchId ?? null;
+  const requestedBranchId = filters?.branchId?.trim() || null;
+  const sessionBranchId = session?.user?.branchId ?? null;
+  const branchId = sessionBranchId ?? requestedBranchId;
   const range = normalizeDashboardFilters(metricFiltersFromRequest(filters));
+
+  if (requestedBranchId && branchId === requestedBranchId) {
+    const hasBranchAccess = await verifyBranchAccess(requestedBranchId, orgId);
+    if (!hasBranchAccess) {
+      throw new Error("Branch not found");
+    }
+  }
 
   if (kind === "payments") {
     return getPaymentDrilldown(orgId, branchId, range);

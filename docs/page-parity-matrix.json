@@ -27,15 +27,18 @@
     "legacyPhp": "Front/templates/admin/Branch_Dashboard.php",
     "legacyJs": "Front/templates/admin/js/Branch_Dashboard.js",
     "modernRoute": "/Branch_Dashboard.php, /branches/[id]/dashboard",
-    "status": "partial - legacy branch bridge and KPI rows/charts restored; date-range drilldown audit remains",
+    "status": "partial - legacy branch bridge, KPI filters, payments modal, and drilldown modals restored; visual audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
     ],
     "requestFieldsMentioned": [
-      "id"
+      "from",
+      "id",
+      "to",
+      "year"
     ],
-    "verification": "Restored branch-scoped dashboard KPI groups for Total Classes, Total Active Children, staff counts, attendance, absence, missing daily/absence reports, payments, accidents, calls, medical reports, assessment totals/missing/drafts, plus branch-scoped children-per-class, gender, and attendance charts. `/Branch_Dashboard.php?id=` now resolves raw numeric, UUID, and encrypted legacy branch ids into the modern branch dashboard. Remaining work is exact legacy date-range/scholastic-year switching and modal drilldown table parity from Branch_Dashboard.js."
+    "verification": "Restored branch-scoped dashboard KPI groups for Total Classes, Total Active Children, staff counts, attendance, absence, missing daily/absence reports, payments, accidents, calls, medical reports, assessment totals/missing/drafts, plus branch-scoped children-per-class, gender, and attendance charts. `/Branch_Dashboard.php?id=` now resolves raw numeric, UUID, and encrypted legacy branch ids into the modern branch dashboard. The branch dashboard now restores legacy date range and scholastic-year switching through `/branches/[id]/dashboard?from=&to=&year=`, applies that range/year to KPI queries, preserves filter context in navigation links, and restores branch-scoped lazy modal drilldowns for legacy `getModal(type)` cards plus the `showmod()` Total Payments table with invoice print and receipt attachment actions. Remaining work is exact DataTables export/visual polish and final logged-in browser audit."
   },
   {
     "legacyPhp": "Front/templates/admin/Child_Details.php",
