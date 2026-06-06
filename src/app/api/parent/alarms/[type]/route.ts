@@ -114,7 +114,13 @@ async function handleRequest(
         return jsonError("Access denied", 403);
       }
     } else {
-      child = await resolveLegacyAlarmChild(requestedChildId);
+      const resolvedChild = await resolveLegacyAlarmChild(requestedChildId).catch(
+        () => "db-error" as const
+      );
+      if (resolvedChild === "db-error") {
+        return jsonError("Internal server error", 500);
+      }
+      child = resolvedChild;
       if (!child) {
         return jsonSuccess([makeHeader("", false, 0)]);
       }
@@ -388,7 +394,11 @@ async function optionalAuthenticateParent(request: NextRequest) {
   const parentUser = await db.parentUser.findUnique({
     where: { id: payload.sub, isActive: true },
     include: { child: true },
-  });
+  }).catch(() => "db-error" as const);
+
+  if (parentUser === "db-error") {
+    return { error: jsonError("Internal server error", 500) };
+  }
 
   if (!parentUser) {
     return { error: jsonError("Unauthorized", 401) };
