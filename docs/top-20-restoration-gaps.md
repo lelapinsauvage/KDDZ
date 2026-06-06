@@ -48,9 +48,9 @@ This list is the first implementation backlog after the generated inventory/matr
 6. **Assessments migration**
    - Legacy has `t_assessment_1` through `t_assessment_7` plus `new_assessment`.
    - Historical row migration is covered by `migrate-assessments.ts`.
-   - `/assessments` and `/assessments/[type]` now restore the legacy completed/incomplete/draft/missing review queues, using migrated `AssessmentScheduleRule` age windows, legacy `progress` payloads when present, active non-draft children, and direct create/open actions.
+   - `/assessments` and `/assessments/[type]` now restore the legacy completed/incomplete/draft/missing review queues, using migrated `AssessmentScheduleRule` age windows, legacy `progress` payloads when present, active non-draft children, direct create/open actions, and idempotent parent `new_assessment` markers when reports become non-draft.
    - `/alarms/assessments` now restores the child-level due queue for missing assessment reports needed within 15 days, alongside scheduled assessment dates, plus manual/server generation of idempotent staff-facing `Alarm` rows, in-app notifications from the Assessment template, current-user New/Viewed updates, and sent-history rows from `custom_notifications_assessment`.
-   - Remaining work is exact legacy parent-complete notification behavior, exact class-user targeting, parent/mobile delivery, and final per-question visual audit.
+   - Remaining work is exact class-user targeting, external parent/mobile delivery, and final per-question visual audit.
 
 7. **Notification logs/settings migration**
    - Legacy has many `custom_notifications_*`, `t_alarms_*`, `t_notification_setting`, and `t_notifications_log` tables.
@@ -86,7 +86,7 @@ This list is the first implementation backlog after the generated inventory/matr
 
 10. **Parent API response compatibility**
    - Legacy `ws/*.php`, iOS `WebFunctions.swift`, and Android `WebServiceFunctions.java` must be response-shape audited against modern `/api/parent/*`.
-   - `/api/parent/alarms/[type]` now restores the legacy mobile alarm array shape for birthday, medicine, insurance, vaccination, payment, missing-medical, assessment, event, and general alarm feeds, including unauthenticated native `POST pid` compatibility, migrated legacy ids/status/datetime/href fields, assessment `new_assessment` marker/template rendering, legacy medical field omission, `t_alarms` no-pid general-feed remapping, and legacy multi-branch event filtering.
+   - `/api/parent/alarms/[type]` now restores the legacy mobile alarm array shape for birthday, medicine, insurance, vaccination, payment, missing-medical, assessment, event, and general alarm feeds, including unauthenticated native `POST pid` compatibility, migrated legacy ids/status/datetime/href fields, assessment `new_assessment` marker/template rendering for migrated and modern non-draft reports, legacy medical field omission, `t_alarms` no-pid general-feed remapping, and legacy multi-branch event filtering.
    - `/api/parent/absence/[childId]` now restores `ws/absence.php` unauthenticated native POST `usites` compatibility, header/count shape, migrated absence legacy ids, and raw `t_absent_report` fields.
    - `/api/parent/daily/[childId]` and `/api/parent/daily/[childId]/detailed` now restore `ws/daily.php` and `ws/newdaily.php` unauthenticated native POST `usites` compatibility, legacy report ids/raw daily fields, flattened fever pairs, fever/milk arrays, and medication-name resolution from preserved medical-entry provenance.
    - `/api/parent/finance/[childId]` now restores `ws/finance.php` unauthenticated native POST `usites` compatibility, header/count shape, active payment filtering, and raw migrated `t_payments` response fields.

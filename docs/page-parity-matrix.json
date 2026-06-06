@@ -426,13 +426,13 @@
     "legacyPhp": "Front/templates/admin/alarmsAssessment.php",
     "legacyJs": "Front/templates/admin/js/alarmsAssessment.js",
     "modernRoute": "/alarms/assessments",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "partial - due queue, teacher generator, staff read-state, and sent history restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored active-child missing assessment reminders due within 15 days with direct create actions, plus manual/server action equivalent of Data::AlarmsAssessment() using AssessmentScheduleRule, idempotent child/type alarm creation, Assessment template rendering, staff in-app notifications, protected cron endpoint, current-user New/Viewed updates from custom_notifications_assessment, sent-history rows, and parent new_assessment marker generation for non-draft reports. Remaining work is exact class-user targeting, external parent/mobile delivery, and final visual audit."
   },
   {
     "legacyPhp": "Front/templates/admin/alarmsBirthday.php",

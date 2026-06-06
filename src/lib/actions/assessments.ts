@@ -1,9 +1,10 @@
 "use server";
 
+import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireOrg, requireOrgSafe } from "@/lib/require-org";
-import { verifyChildAccess, verifyBranchAccess } from "@/lib/verify-org-access";
+import { verifyBranchAccess } from "@/lib/verify-org-access";
 import type { InputJsonValue } from "@prisma/client/runtime/client";
 import type { AssessmentStatus, Prisma } from "@/generated/prisma/client";
 import {
@@ -96,6 +97,13 @@ export interface AssessmentReviewSummary {
 }
 
 const assessmentTypes = [...VALID_ASSESSMENT_TYPES];
+const PRESERVED_ASSESSMENT_DATA_KEYS = [
+  "_legacy",
+  "_legacyRaw",
+  "_legacyAssessmentType",
+  "_legacyNewAssessmentOnly",
+  "_legacyNewAssessmentMarkers",
+] as const;
 
 const fallbackAssessmentWindows: Record<number, { minDays: number; maxDays: number }> = {
   1: { minDays: 0, maxDays: 90 },
@@ -144,6 +152,125 @@ function jsonObject(value: Prisma.JsonValue | null | undefined) {
     return null;
   }
   return value as Record<string, unknown>;
+}
+
+async function findAssessmentChildForOrg(childId: string, orgId: string) {
+  return db.child.findFirst({
+    where: { id: childId, branch: { organizationId: orgId } },
+    select: { id: true, legacyId: true },
+  });
+}
+
+function shouldPublishNewAssessmentMarker(status: AssessmentStatus) {
+  return status !== "DRAFT";
+}
+
+function readStringValue(value: unknown) {
+  if (value === undefined || value === null) return null;
+  const stringValue = String(value);
+  return stringValue.length > 0 ? stringValue : null;
+}
+
+function legacyAssessmentReportId(data: Record<string, unknown>, assessmentId: string) {
+  const legacy = jsonObject(data._legacy as Prisma.JsonValue | null | undefined);
+  return (
+    readStringValue(legacy?.reportId) ??
+    readStringValue(legacy?.report_id) ??
+    readStringValue(data.reportId) ??
+    readStringValue(data.report_id) ??
+    assessmentId
+  );
+}
+
+function existingNewAssessmentMarkers(data: Record<string, unknown>) {
+  const markers: Record<string, unknown>[] = [];
+  const singleMarker = jsonObject(
+    data._legacyNewAssessmentOnly as Prisma.JsonValue | null | undefined
+  );
+  if (singleMarker) markers.push(singleMarker);
+
+  const markerList = data._legacyNewAssessmentMarkers;
+  if (Array.isArray(markerList)) {
+    markers.push(
+      ...markerList
+        .map((marker) => jsonObject(marker as Prisma.JsonValue | null | undefined))
+        .filter((marker): marker is Record<string, unknown> => marker !== null)
+    );
+  }
+
+  return markers;
+}
+
+function mergePreservedAssessmentData(
+  data: Record<string, unknown>,
+  previousData: Prisma.JsonValue | null | undefined
+) {
+  const previous = jsonObject(previousData);
+  if (!previous) return data;
+
+  const merged = { ...data };
+  for (const key of PRESERVED_ASSESSMENT_DATA_KEYS) {
+    if (merged[key] === undefined && previous[key] !== undefined) {
+      merged[key] = previous[key];
+    }
+  }
+
+  return merged;
+}
+
+function addNewAssessmentMarker(
+  data: Prisma.JsonValue | Record<string, unknown> | null | undefined,
+  params: {
+    assessmentId: string;
+    assessmentType: number;
+    childId: string;
+    legacyChildId: number | null;
+    now: Date;
+  }
+): InputJsonValue | undefined {
+  const payload =
+    data && typeof data === "object" && !Array.isArray(data)
+      ? { ...(data as Record<string, unknown>) }
+      : {};
+  const table = `t_assessment_${params.assessmentType}`;
+  const reportId = legacyAssessmentReportId(payload, params.assessmentId);
+  const hasMarker = existingNewAssessmentMarkers(payload).some(
+    (marker) =>
+      readStringValue(marker.table) === table &&
+      readStringValue(marker.reportId) === reportId
+  );
+
+  if (hasMarker) {
+    return JSON.parse(JSON.stringify(payload)) as InputJsonValue;
+  }
+
+  const marker = {
+    id: params.assessmentId,
+    datetime: formatSqlDateTime(params.now),
+    table,
+    reportId,
+    childId: params.legacyChildId ?? params.childId,
+    sent: false,
+    modernGenerated: true,
+  };
+  const currentMarkers = Array.isArray(payload._legacyNewAssessmentMarkers)
+    ? payload._legacyNewAssessmentMarkers
+    : [];
+
+  return JSON.parse(
+    JSON.stringify({
+      ...payload,
+      _legacyNewAssessmentMarkers: [...currentMarkers, marker],
+    })
+  ) as InputJsonValue;
+}
+
+function formatSqlDateTime(date: Date) {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return [
+    `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`,
+    `${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}:${pad(date.getUTCSeconds())}`,
+  ].join(" ");
 }
 
 function legacyProgressPercent(data: Prisma.JsonValue | null | undefined) {
@@ -577,17 +704,31 @@ export async function createAssessment(input: CreateAssessmentData) {
       return { error: "Invalid assessment type" };
     }
 
-    if (!(await verifyChildAccess(input.childId, orgId))) {
+    const child = await findAssessmentChildForOrg(input.childId, orgId);
+    if (!child) {
       return { error: "Access denied" };
     }
 
+    const assessmentId = randomUUID();
+    const status = input.status || "DRAFT";
+    const data = shouldPublishNewAssessmentMarker(status)
+      ? addNewAssessmentMarker(input.data, {
+          assessmentId,
+          assessmentType: input.assessmentType,
+          childId: child.id,
+          legacyChildId: child.legacyId,
+          now: new Date(),
+        })
+      : ((input.data as InputJsonValue) ?? undefined);
+
     const assessment = await db.assessment.create({
       data: {
+        id: assessmentId,
         childId: input.childId,
         assessmentType: input.assessmentType,
         schoolYearId: input.schoolYearId ?? null,
-        status: input.status || "DRAFT",
-        data: (input.data as InputJsonValue) ?? undefined,
+        status,
+        data,
         createdById: userId,
       },
     });
@@ -622,15 +763,35 @@ export async function updateAssessment(id: string, input: UpdateAssessmentData) 
     }
 
     const updateData: Prisma.AssessmentUpdateInput = {};
+    let targetChild = {
+      id: existing.child.id,
+      legacyId: existing.child.legacyId,
+    };
 
     if (input.childId !== undefined) {
+      const child = await findAssessmentChildForOrg(input.childId, orgId);
+      if (!child) return { error: "Access denied" };
+      targetChild = child;
       updateData.child = { connect: { id: input.childId } };
     }
     if (input.status !== undefined) {
       updateData.status = input.status;
     }
-    if (input.data !== undefined) {
-      updateData.data = input.data as InputJsonValue;
+    const finalStatus = input.status ?? existing.status;
+    const nextData =
+      input.data !== undefined
+        ? mergePreservedAssessmentData(input.data, existing.data)
+        : existing.data;
+    if (shouldPublishNewAssessmentMarker(finalStatus)) {
+      updateData.data = addNewAssessmentMarker(nextData, {
+        assessmentId: id,
+        assessmentType: existing.assessmentType,
+        childId: targetChild.id,
+        legacyChildId: targetChild.legacyId,
+        now: new Date(),
+      });
+    } else if (input.data !== undefined) {
+      updateData.data = nextData as InputJsonValue;
     }
 
     const assessment = await db.assessment.update({
