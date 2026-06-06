@@ -7,8 +7,15 @@ import {
 export default async function FoodListingPage() {
   const { foods } = await getFoods();
 
-  const serializedFoods: FoodItem[] = foods.map((food) => ({
+  const sortedFoods = [...foods].sort((a, b) => {
+    const dateDiff = b.createdAt.getTime() - a.createdAt.getTime();
+    if (dateDiff !== 0) return dateDiff;
+    return a.name.localeCompare(b.name);
+  });
+
+  const serializedFoods: FoodItem[] = sortedFoods.map((food, index) => ({
     id: food.id,
+    rowNumber: String(index + 1),
     name: food.name,
     category: food.category as FoodItem["category"],
     isActive: food.isActive,

@@ -12,6 +12,7 @@ import {
   Loader2,
   UtensilsCrossed,
   CalendarDays,
+  Printer,
   Coffee,
   Soup,
   Cake,
@@ -20,13 +21,13 @@ import {
 
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
+import { ExportButton } from "@/components/shared/export-button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -55,12 +56,14 @@ import {
 import { createFood, updateFood, deleteFood } from "@/lib/actions/food";
 import { FOOD_CATEGORY_COLORS } from "@/lib/food-colors";
 import { toast } from "sonner";
+import type { ExportColumn } from "@/lib/export";
 
 // ── Types ───────────────────────────────────────
 type FoodCategory = "BREAKFAST" | "LUNCH" | "DESSERT" | "SNACK";
 
 export interface FoodItem {
   id: string;
+  rowNumber: string;
   name: string;
   category: FoodCategory;
   isActive: boolean;
@@ -69,7 +72,7 @@ export interface FoodItem {
 
 // ── Category helpers ────────────────────────────
 const categoryLabels: Record<FoodCategory, string> = {
-  BREAKFAST: "Breakfast",
+  BREAKFAST: "BreakFast",
   LUNCH: "Lunch",
   DESSERT: "Dessert",
   SNACK: "Snack",
@@ -87,11 +90,54 @@ interface FoodListingClientProps {
   initialFoods: FoodItem[];
 }
 
+interface FoodFilters {
+  rowNumber: string;
+  category: string;
+  name: string;
+  active: string;
+  date: string;
+}
+
+const emptyFilters: FoodFilters = {
+  rowNumber: "",
+  category: "",
+  name: "",
+  active: "",
+  date: "",
+};
+
+const foodExportColumns: ExportColumn[] = [
+  { header: "#", key: "rowNumber" },
+  {
+    header: "Type",
+    key: "category",
+    transform: (value) => categoryLabels[value as FoodCategory] ?? String(value ?? ""),
+  },
+  { header: "Name", key: "name" },
+  {
+    header: "Active",
+    key: "isActive",
+    transform: (value) => (value ? "On" : "Off"),
+  },
+  {
+    header: "Date",
+    key: "createdAt",
+    transform: (value) => formatFoodDate(value),
+  },
+];
+
+function formatFoodDate(value: unknown) {
+  if (!value) return "";
+  const date = new Date(String(value));
+  return isNaN(date.getTime()) ? "" : date.toLocaleDateString("en-GB");
+}
+
 // ── Page Component ──────────────────────────────
 export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [categoryFilter, setCategoryFilter] = useState("ALL");
+  const [filters, setFilters] = useState<FoodFilters>(emptyFilters);
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -121,9 +167,40 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
   }, [initialFoods]);
 
   const filteredItems = useMemo(() => {
-    if (categoryFilter === "ALL") return initialFoods;
-    return initialFoods.filter((f) => f.category === categoryFilter);
-  }, [initialFoods, categoryFilter]);
+    const normalized = {
+      rowNumber: filters.rowNumber.trim().toLowerCase(),
+      category: filters.category.trim().toLowerCase(),
+      name: filters.name.trim().toLowerCase(),
+      active: filters.active.trim().toLowerCase(),
+      date: filters.date.trim().toLowerCase(),
+    };
+
+    return initialFoods.filter((food) => {
+      if (categoryFilter !== "ALL" && food.category !== categoryFilter) {
+        return false;
+      }
+
+      const status = food.isActive ? "on" : "off";
+      const date = formatFoodDate(food.createdAt).toLowerCase();
+
+      return (
+        (!normalized.rowNumber || food.rowNumber.toLowerCase().includes(normalized.rowNumber)) &&
+        (!normalized.category || categoryLabels[food.category].toLowerCase().includes(normalized.category)) &&
+        (!normalized.name || food.name.toLowerCase().includes(normalized.name)) &&
+        (!normalized.active || status.includes(normalized.active)) &&
+        (!normalized.date || date.includes(normalized.date))
+      );
+    });
+  }, [initialFoods, categoryFilter, filters]);
+
+  function updateFilter(key: keyof FoodFilters, value: string) {
+    setFilters((current) => ({ ...current, [key]: value }));
+  }
+
+  function clearFilters() {
+    setFilters(emptyFilters);
+    setCategoryFilter("ALL");
+  }
 
   function openAdd() {
     setDialogMode("add");
@@ -202,6 +279,15 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
   const foodColumns: ColumnDef<FoodItem>[] = useMemo(
     () => [
       {
+        accessorKey: "rowNumber",
+        header: "#",
+        cell: ({ row }) => (
+          <span className="font-mono text-sm text-muted-foreground">
+            {row.original.rowNumber}
+          </span>
+        ),
+      },
+      {
         accessorKey: "category",
         header: ({ column }) => (
           <Button
@@ -270,7 +356,7 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
                   : "bg-[#d64635] text-white border-transparent"
               }
             >
-              {active ? "Active" : "Inactive"}
+              {active ? "On" : "Off"}
             </Badge>
           );
         },
@@ -294,7 +380,7 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
           const d = new Date(val);
           return (
             <span className="text-sm text-muted-foreground">
-              {isNaN(d.getTime()) ? "—" : d.toLocaleDateString("en-GB")}
+              {isNaN(d.getTime()) ? "—" : formatFoodDate(val)}
             </span>
           );
         },
@@ -324,10 +410,10 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
   return (
     <>
       <PageHeader
-        title="Food Items"
+        title="Food Types"
         breadcrumbs={[
           { label: "Food", href: "/food" },
-          { label: "Items" },
+          { label: "Food Types" },
         ]}
         actions={
           <div className="flex items-center gap-2">
@@ -339,18 +425,30 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
             </Link>
             <Button onClick={openAdd}>
               <Plus className="mr-1 size-4" />
-              Add Food
+              New Food Type
             </Button>
           </div>
         }
       />
 
       <div className="space-y-6 p-4 md:p-6">
+        <div className="hidden print:block">
+          <h1 className="text-xl font-semibold">Food Listing</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {filteredItems.length} food types - Printed on{" "}
+            {new Date().toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </p>
+        </div>
+
         {/* Stats Row */}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {(
             [
-              { cat: "BREAKFAST" as FoodCategory, label: "Breakfast" },
+              { cat: "BREAKFAST" as FoodCategory, label: "BreakFast" },
               { cat: "LUNCH" as FoodCategory, label: "Lunch" },
               { cat: "DESSERT" as FoodCategory, label: "Dessert" },
               { cat: "SNACK" as FoodCategory, label: "Snack" },
@@ -385,24 +483,102 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
         </div>
 
         {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 print:hidden">
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
             <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="All Categories" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">All Categories</SelectItem>
-              <SelectItem value="BREAKFAST">Breakfast</SelectItem>
+              <SelectItem value="BREAKFAST">BreakFast</SelectItem>
               <SelectItem value="LUNCH">Lunch</SelectItem>
               <SelectItem value="DESSERT">Dessert</SelectItem>
               <SelectItem value="SNACK">Snack</SelectItem>
             </SelectContent>
           </Select>
 
+          <ExportButton
+            filename="food-types"
+            sheetName="Food Listing"
+            columns={foodExportColumns}
+            data={filteredItems as unknown as Record<string, unknown>[]}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={filteredItems.length === 0}
+            onClick={() => window.print()}
+          >
+            <Printer className="mr-1 size-4" />
+            Print
+          </Button>
+
           <div className="ml-auto text-sm text-muted-foreground">
             {filteredItems.length} of {totalItems} items
           </div>
         </div>
+
+        <Card className="print:hidden">
+          <CardContent className="grid gap-3 p-4 md:grid-cols-6">
+            <div className="space-y-1.5">
+              <Label htmlFor="food-filter-number">#</Label>
+              <Input
+                id="food-filter-number"
+                value={filters.rowNumber}
+                onChange={(event) => updateFilter("rowNumber", event.target.value)}
+                className="h-9"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="food-filter-type">Type</Label>
+              <Input
+                id="food-filter-type"
+                value={filters.category}
+                onChange={(event) => updateFilter("category", event.target.value)}
+                className="h-9"
+              />
+            </div>
+            <div className="space-y-1.5 md:col-span-2">
+              <Label htmlFor="food-filter-name">Name</Label>
+              <Input
+                id="food-filter-name"
+                value={filters.name}
+                onChange={(event) => updateFilter("name", event.target.value)}
+                className="h-9"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="food-filter-active">Active</Label>
+              <Input
+                id="food-filter-active"
+                value={filters.active}
+                onChange={(event) => updateFilter("active", event.target.value)}
+                placeholder="On / Off"
+                className="h-9"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="food-filter-date">Date</Label>
+              <Input
+                id="food-filter-date"
+                value={filters.date}
+                onChange={(event) => updateFilter("date", event.target.value)}
+                className="h-9"
+              />
+            </div>
+            <div className="flex items-end md:col-start-6">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-9 w-full"
+                onClick={clearFilters}
+              >
+                Clear
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {filteredItems.length === 0 ? (
           <EmptyState
@@ -414,8 +590,7 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
           <DataTable
             columns={foodColumns}
             data={filteredItems}
-            searchKey="name"
-            searchPlaceholder="Search food items..."
+            pageSizeOptions={[10, 20, 50, 100, 150, "all"]}
           />
         )}
       </div>
@@ -425,18 +600,36 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {dialogMode === "add" ? "Add Food Item" : "Edit Food Item"}
+              {dialogMode === "add" ? "Create Food" : "Update Food"}
             </DialogTitle>
             <DialogDescription>
               {dialogMode === "add"
-                ? "Add a new food item to the menu."
-                : "Update this food item."}
+                ? "Create a new food type."
+                : "Update this food type."}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="food-name">Name</Label>
+              <Label>Food Type</Label>
+              <Select
+                value={formCategory}
+                onValueChange={(v) => setFormCategory(v as FoodCategory)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="BREAKFAST">BreakFast</SelectItem>
+                  <SelectItem value="LUNCH">Lunch</SelectItem>
+                  <SelectItem value="DESSERT">Dessert</SelectItem>
+                  <SelectItem value="SNACK">Snack</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="food-name">Food</Label>
               <Input
                 id="food-name"
                 placeholder="e.g. Labne"
@@ -446,30 +639,19 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
             </div>
 
             <div className="space-y-2">
-              <Label>Category</Label>
+              <Label>Status</Label>
               <Select
-                value={formCategory}
-                onValueChange={(v) => setFormCategory(v as FoodCategory)}
+                value={formActive ? "On" : "Off"}
+                onValueChange={(value) => setFormActive(value === "On")}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="BREAKFAST">Breakfast</SelectItem>
-                  <SelectItem value="LUNCH">Lunch</SelectItem>
-                  <SelectItem value="DESSERT">Dessert</SelectItem>
-                  <SelectItem value="SNACK">Snack</SelectItem>
+                  <SelectItem value="On">On</SelectItem>
+                  <SelectItem value="Off">Off</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="food-active"
-                checked={formActive}
-                onCheckedChange={(checked) => setFormActive(checked === true)}
-              />
-              <Label htmlFor="food-active">Active</Label>
             </div>
           </div>
 
@@ -482,7 +664,7 @@ export function FoodListingClient({ initialFoods }: FoodListingClientProps) {
               disabled={!formName.trim() || isPending}
             >
               {isPending && <Loader2 className="mr-1 size-4 animate-spin" />}
-              {dialogMode === "add" ? "Add Food" : "Save Changes"}
+              {dialogMode === "add" ? "Create Food Type" : "Update Food Type"}
             </Button>
           </DialogFooter>
         </DialogContent>
