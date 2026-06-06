@@ -2,9 +2,10 @@
 
 import { useState, useMemo, useTransition, useCallback } from "react";
 import Link from "next/link";
-import { type ColumnDef} from "@tanstack/react-table";
+import { type ColumnDef } from "@tanstack/react-table";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
+import { ExportButton } from "@/components/shared/export-button";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,8 +17,9 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Pencil, KeyRound, UserX, Eye, Loader2, UserPlus } from "lucide-react";
+import { Eye, KeyRound, Loader2, Pencil, Printer, Search, UserPlus, UserX, X } from "lucide-react";
 import { toast } from "sonner";
+import type { ExportColumn } from "@/lib/export";
 import {
   createParentUser,
   toggleParentUserStatus,
@@ -32,6 +34,7 @@ import { getAvatarColor, getInitials } from "@/components/children/children-colu
 interface ParentUser {
   id: string;
   username: string;
+  childNumber: string;
   childName: string;
   childId: string;
   childFirstName: string;
@@ -44,6 +47,7 @@ interface ParentUser {
 
 interface ChildWithoutAccount {
   id: string;
+  childNumber: string;
   name: string;
   firstName: string;
   lastName: string;
@@ -55,6 +59,22 @@ interface ParentUsersClientProps {
   usersWithAccount: ParentUser[];
   childrenWithoutAccount: ChildWithoutAccount[];
 }
+
+const withAccountExportColumns: ExportColumn[] = [
+  { header: "#", key: "childNumber" },
+  { header: "Name", key: "childName" },
+  { header: "Username", key: "username" },
+  { header: "Status", key: "status" },
+  { header: "Branch", key: "branchName" },
+  { header: "Class", key: "className" },
+];
+
+const withoutAccountExportColumns: ExportColumn[] = [
+  { header: "#", key: "childNumber" },
+  { header: "Name", key: "name" },
+  { header: "Branch", key: "branchName" },
+  { header: "Class", key: "className" },
+];
 
 // ---------------------------------------------------------------------------
 // Component
@@ -91,8 +111,10 @@ export function ParentUsersClient({
     const q = searchWith.toLowerCase();
     return users.filter(
       (u) =>
+        u.childNumber.toLowerCase().includes(q) ||
         u.childName.toLowerCase().includes(q) ||
         u.username.toLowerCase().includes(q) ||
+        u.status.toLowerCase().includes(q) ||
         u.branchName.toLowerCase().includes(q) ||
         u.className.toLowerCase().includes(q)
     );
@@ -103,6 +125,7 @@ export function ParentUsersClient({
     const q = searchWithout.toLowerCase();
     return childrenWithout.filter(
       (c) =>
+        c.childNumber.toLowerCase().includes(q) ||
         c.name.toLowerCase().includes(q) ||
         c.branchName.toLowerCase().includes(q) ||
         c.className.toLowerCase().includes(q)
@@ -138,6 +161,7 @@ export function ParentUsersClient({
           {
             id: newUser.id,
             username: newUsername.trim(),
+            childNumber: child?.childNumber ?? "—",
             childName: child?.name ?? "—",
             childId: createChildId,
             childFirstName: child?.firstName ?? "",
@@ -153,7 +177,7 @@ export function ParentUsersClient({
         setCreateOpen(false);
         toast.success("Parent account created successfully.");
       } else {
-        toast.error("Failed to create parent account.");
+        toast.error(result.error ?? "Failed to create parent account.");
       }
     });
   }
@@ -169,6 +193,8 @@ export function ParentUsersClient({
               : u
           ) as ParentUser[]
         );
+      } else {
+        toast.error(result.error ?? "Failed to update parent account status.");
       }
     });
   }, []);
@@ -182,11 +208,11 @@ export function ParentUsersClient({
     if (!resetPasswordDialog || !resetPassword) return;
     const { userId } = resetPasswordDialog;
     startTransition(async () => {
-      try {
-        await resetParentPassword(userId, resetPassword);
+      const result = await resetParentPassword(userId, resetPassword);
+      if (result.success) {
         toast.success("Password has been reset.");
-      } catch {
-        toast.error("Failed to reset password.");
+      } else {
+        toast.error(result.error ?? "Failed to reset password.");
       }
       setResetPasswordDialog(null);
       setResetPassword("");
@@ -197,6 +223,15 @@ export function ParentUsersClient({
 
   const withAccountColumns: ColumnDef<ParentUser>[] = useMemo(
     () => [
+      {
+        accessorKey: "childNumber",
+        header: "#",
+        cell: ({ row }) => (
+          <span className="font-mono text-sm text-muted-foreground">
+            {row.original.childNumber || "—"}
+          </span>
+        ),
+      },
       {
         id: "name",
         header: "Name",
@@ -297,6 +332,15 @@ export function ParentUsersClient({
   const withoutAccountColumns: ColumnDef<ChildWithoutAccount>[] = useMemo(
     () => [
       {
+        accessorKey: "childNumber",
+        header: "#",
+        cell: ({ row }) => (
+          <span className="font-mono text-sm text-muted-foreground">
+            {row.original.childNumber || "—"}
+          </span>
+        ),
+      },
+      {
         id: "name",
         header: "Name",
         cell: ({ row }) => {
@@ -351,7 +395,7 @@ export function ParentUsersClient({
   return (
     <>
       <PageHeader
-        title="Parent Users"
+        title="Parent System Users Control"
         breadcrumbs={[
           { label: "Settings", href: "/settings/nursery" },
           { label: "Parent Users" },
@@ -359,6 +403,20 @@ export function ParentUsersClient({
       />
 
       <div className="space-y-6 p-4 md:p-6">
+        <div className="hidden print:block">
+          <h1 className="text-xl font-semibold">Parent System Users Control</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {filteredUsers.length} children with parent users,{" "}
+            {filteredChildrenWithout.length} children without parent users -
+            Printed on{" "}
+            {new Date().toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </p>
+        </div>
+
         {/* Table 1: Children WITH Parent User */}
         <Card>
           <CardContent className="space-y-3 p-4 md:p-6">
@@ -366,20 +424,55 @@ export function ParentUsersClient({
               <div className="flex size-6 items-center justify-center rounded bg-primary text-white text-xs font-bold">
                 1
               </div>
-              <h2 className="text-base font-semibold">Children with Parent Account</h2>
+              <h2 className="text-base font-semibold">Children With Parent User</h2>
               <Badge className="ml-1 bg-primary text-white">
                 {filteredUsers.length}
               </Badge>
             </div>
 
-            <Input
-              placeholder="Search by name, username, branch, or class..."
-              value={searchWith}
-              onChange={(e) => setSearchWith(e.target.value)}
-              className="max-w-sm"
-            />
+            <div className="flex flex-wrap items-center gap-2 print:hidden">
+              <div className="relative min-w-[220px] flex-1 sm:max-w-sm">
+                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search #, name, username, status, branch, or class..."
+                  value={searchWith}
+                  onChange={(e) => setSearchWith(e.target.value)}
+                  className="pl-9 pr-8"
+                />
+                {searchWith && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchWith("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+                    aria-label="Clear children with parent user search"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                )}
+              </div>
+              <ExportButton
+                filename="children-with-parent-users"
+                sheetName="Children With Parent User"
+                columns={withAccountExportColumns}
+                data={filteredUsers as unknown as Record<string, unknown>[]}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={filteredUsers.length === 0}
+                onClick={() => window.print()}
+              >
+                <Printer className="mr-1 size-4" />
+                Print
+              </Button>
+            </div>
 
-            <DataTable columns={withAccountColumns} data={filteredUsers} />
+            <DataTable
+              columns={withAccountColumns}
+              data={filteredUsers}
+              pageSizeOptions={[10, 20, 50, 100, 150, "all"]}
+            />
           </CardContent>
         </Card>
 
@@ -390,20 +483,55 @@ export function ParentUsersClient({
               <div className="flex size-6 items-center justify-center rounded bg-amber-500 text-white text-xs font-bold">
                 2
               </div>
-              <h2 className="text-base font-semibold">Children without Parent Account</h2>
+              <h2 className="text-base font-semibold">Children without Parent Users</h2>
               <Badge className="ml-1 bg-amber-500 text-white">
                 {filteredChildrenWithout.length}
               </Badge>
             </div>
 
-            <Input
-              placeholder="Search by name, branch, or class..."
-              value={searchWithout}
-              onChange={(e) => setSearchWithout(e.target.value)}
-              className="max-w-sm"
-            />
+            <div className="flex flex-wrap items-center gap-2 print:hidden">
+              <div className="relative min-w-[220px] flex-1 sm:max-w-sm">
+                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search #, name, branch, or class..."
+                  value={searchWithout}
+                  onChange={(e) => setSearchWithout(e.target.value)}
+                  className="pl-9 pr-8"
+                />
+                {searchWithout && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchWithout("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+                    aria-label="Clear children without parent users search"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                )}
+              </div>
+              <ExportButton
+                filename="children-without-parent-users"
+                sheetName="Children without Parent Users"
+                columns={withoutAccountExportColumns}
+                data={filteredChildrenWithout as unknown as Record<string, unknown>[]}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={filteredChildrenWithout.length === 0}
+                onClick={() => window.print()}
+              >
+                <Printer className="mr-1 size-4" />
+                Print
+              </Button>
+            </div>
 
-            <DataTable columns={withoutAccountColumns} data={filteredChildrenWithout} />
+            <DataTable
+              columns={withoutAccountColumns}
+              data={filteredChildrenWithout}
+              pageSizeOptions={[10, 20, 50, 100, 150, "all"]}
+            />
           </CardContent>
         </Card>
       </div>

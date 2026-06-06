@@ -16,6 +16,8 @@ export default async function ParentUsersPage() {
       },
       select: {
         id: true,
+        legacyId: true,
+        childNumber: true,
         firstName: true,
         lastName: true,
         branch: { select: { name: true } },
@@ -33,6 +35,7 @@ export default async function ParentUsersPage() {
   const serializedUsers = rawUsers.map((u) => ({
     id: u.id as string,
     username: u.username as string,
+    childNumber: (u.child?.childNumber ?? u.child?.legacyId ?? "—").toString(),
     childName: u.child
       ? `${u.child.firstName} ${u.child.lastName}`
       : "—",
@@ -47,6 +50,7 @@ export default async function ParentUsersPage() {
 
   const serializedChildrenWithout = childrenWithoutAccount.map((c) => ({
     id: c.id,
+    childNumber: (c.childNumber ?? c.legacyId ?? "—").toString(),
     name: `${c.firstName} ${c.lastName}`,
     firstName: c.firstName,
     lastName: c.lastName,
