@@ -33,6 +33,10 @@ type ActionResult =
   | { success: true; id: string }
   | { success: false; error: string };
 
+type BulkChildBranchClassResult =
+  | { success: true; updatedCount: number }
+  | { success: false; error: string };
+
 type ChildAttachmentInput = {
   id?: string;
   title?: string;
@@ -44,6 +48,7 @@ type ChildAttachmentInput = {
 // ── Helpers ───────────────────────────────────────
 
 const removeAttachmentIdsSchema = z.array(z.string().uuid()).max(50);
+const bulkChildIdsSchema = z.array(z.string().min(1)).min(1).max(250);
 
 function parseTimeField(value: string | undefined): Date | null {
   if (!value) return null;
@@ -888,6 +893,98 @@ export async function updateChildClass(
     console.error("updateChildClass error:", error);
     const message =
       error instanceof Error ? error.message : "Failed to update child class";
+    return { success: false, error: message };
+  }
+}
+
+// ── bulkUpdateChildrenBranchClass ─────────────────
+
+export async function bulkUpdateChildrenBranchClass(
+  childIds: string[],
+  branchId: string,
+  classId: string
+): Promise<BulkChildBranchClassResult> {
+  const result = await requireOrgSafe();
+  if (!result.ok) return { success: false, error: result.error };
+  const { ctx } = result;
+
+  const parsedChildIds = bulkChildIdsSchema.safeParse(
+    Array.from(new Set(childIds.map((id) => id.trim()).filter(Boolean)))
+  );
+  if (!parsedChildIds.success) {
+    return { success: false, error: "Select at least one child" };
+  }
+
+  if (!branchId.trim() || !classId.trim()) {
+    return { success: false, error: "Branch and class are required" };
+  }
+
+  try {
+    const targetClass = await db.class.findFirst({
+      where: {
+        id: classId,
+        branchId,
+        isActive: true,
+        branch: { organizationId: ctx.organizationId },
+      },
+      select: { id: true, branchId: true },
+    });
+    if (!targetClass) {
+      return { success: false, error: "Class not found for this branch" };
+    }
+
+    const children = await db.child.findMany({
+      where: {
+        id: { in: parsedChildIds.data },
+        branch: { organizationId: ctx.organizationId },
+      },
+      select: { id: true, branchId: true },
+    });
+
+    if (children.length !== parsedChildIds.data.length) {
+      return { success: false, error: "Some selected children were not found" };
+    }
+
+    const oldBranchIds = Array.from(new Set(children.map((child) => child.branchId)));
+    const updatedChildren = await db.$transaction(async (tx) => {
+      const updated = [];
+      for (const child of children) {
+        const updatedChild = await tx.child.update({
+          where: { id: child.id },
+          data: {
+            branchId: targetClass.branchId,
+            classId: targetClass.id,
+          },
+        });
+        await tx.childHistory.create({
+          data: {
+            childId: updatedChild.id,
+            snapshot: JSON.parse(JSON.stringify(updatedChild)),
+            changedBy: ctx.userId,
+            changeNote: "Child branch/class updated",
+          },
+        });
+        updated.push(updatedChild);
+      }
+      return updated;
+    });
+
+    revalidatePath("/children");
+    revalidatePath("/children/drafts");
+    for (const child of updatedChildren) {
+      revalidatePath(`/children/${child.id}`);
+      revalidatePath(`/children/${child.id}/dashboard`);
+    }
+    for (const id of new Set([...oldBranchIds, targetClass.branchId])) {
+      revalidatePath(`/branches/${id}/children`);
+      revalidatePath(`/branches/${id}/dashboard`);
+    }
+
+    return { success: true, updatedCount: updatedChildren.length };
+  } catch (error) {
+    console.error("bulkUpdateChildrenBranchClass error:", error);
+    const message =
+      error instanceof Error ? error.message : "Failed to update selected children";
     return { success: false, error: message };
   }
 }

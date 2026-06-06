@@ -12,16 +12,20 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  ArrowRightLeft,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { getChildrenColumns, type ChildRow } from "@/components/children/children-columns";
-import { deleteChild } from "@/lib/actions/children";
+import { bulkUpdateChildrenBranchClass, deleteChild } from "@/lib/actions/children";
 import { ExportButton } from "@/components/shared/export-button";
 import type { ExportColumn } from "@/lib/export";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -46,6 +50,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  type ColumnDef,
   type SortingState,
   flexRender,
   getCoreRowModel,
@@ -153,6 +158,10 @@ export function DraftsPageClient({
     id: string;
     name: string;
   } | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
+  const [bulkBranchId, setBulkBranchId] = useState("");
+  const [bulkClassId, setBulkClassId] = useState("");
 
   const [searchValue, setSearchValue] = useState(filters.search);
   const [legacyFilters, setLegacyFilters] = useState(() => ({
@@ -191,6 +200,18 @@ export function DraftsPageClient({
     if (filters.branch === "ALL") return classes;
     return classes.filter((c) => c.branchId === filters.branch);
   }, [filters.branch, classes]);
+
+  const pageChildIds = useMemo(
+    () => childrenList.map((child) => child.id),
+    [childrenList]
+  );
+  const selectedCount = selectedIds.size;
+  const allPageRowsSelected =
+    pageChildIds.length > 0 && pageChildIds.every((id) => selectedIds.has(id));
+  const somePageRowsSelected = pageChildIds.some((id) => selectedIds.has(id));
+  const bulkClassOptions = bulkBranchId
+    ? classes.filter((item) => item.branchId === bulkBranchId)
+    : [];
 
   const activeFilters = useMemo(() => {
     const pills: { key: string; label: string; value: string }[] = [];
@@ -311,6 +332,91 @@ export function DraftsPageClient({
     [updateParams]
   );
 
+  const toggleRowSelection = useCallback((id: string, checked: boolean) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (checked) {
+        next.add(id);
+      } else {
+        next.delete(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const togglePageSelection = useCallback(
+    (checked: boolean) => {
+      setSelectedIds((current) => {
+        const next = new Set(current);
+        for (const id of pageChildIds) {
+          if (checked) {
+            next.add(id);
+          } else {
+            next.delete(id);
+          }
+        }
+        return next;
+      });
+    },
+    [pageChildIds]
+  );
+
+  const openBulkDialog = useCallback(() => {
+    if (selectedIds.size === 0) {
+      toast.error("No children selected");
+      return;
+    }
+
+    const firstSelected = childrenList.find((child) => selectedIds.has(child.id));
+    const initialBranchId =
+      (filters.branch !== "ALL" ? filters.branch : firstSelected?.branchId) ??
+      branches[0]?.id ??
+      "";
+    const initialClassId =
+      firstSelected?.branchId === initialBranchId
+        ? firstSelected.classId ?? ""
+        : "";
+
+    setBulkBranchId(initialBranchId);
+    setBulkClassId(
+      initialClassId && classes.some((item) => item.id === initialClassId)
+        ? initialClassId
+        : ""
+    );
+    setBulkDialogOpen(true);
+  }, [branches, childrenList, classes, filters.branch, selectedIds]);
+
+  const handleBulkBranchChange = useCallback((branchId: string) => {
+    setBulkBranchId(branchId);
+    setBulkClassId("");
+  }, []);
+
+  const handleBulkUpdate = useCallback(() => {
+    const ids = Array.from(selectedIds);
+    if (!ids.length) {
+      toast.error("No children selected");
+      return;
+    }
+    if (!bulkBranchId || !bulkClassId) {
+      toast.error("Branch and class are required");
+      return;
+    }
+
+    startTransition(async () => {
+      const result = await bulkUpdateChildrenBranchClass(ids, bulkBranchId, bulkClassId);
+      if (result.success) {
+        toast.success(
+          `${result.updatedCount} ${result.updatedCount === 1 ? "draft" : "drafts"} updated.`
+        );
+        setSelectedIds(new Set());
+        setBulkDialogOpen(false);
+        router.refresh();
+      } else {
+        toast.error(result.error);
+      }
+    });
+  }, [bulkBranchId, bulkClassId, router, selectedIds]);
+
   // ── Sorting ────────────────────────────────────
 
   const sorting: SortingState = useMemo(
@@ -361,9 +467,42 @@ export function DraftsPageClient({
 
   // ── Table setup ────────────────────────────────
 
-  const columns = useMemo(
+  const selectionColumn = useMemo<ColumnDef<ChildRow>>(
+    () => ({
+      id: "select",
+      header: () => (
+        <Checkbox
+          checked={allPageRowsSelected || (somePageRowsSelected ? "indeterminate" : false)}
+          onCheckedChange={(checked) => togglePageSelection(checked === true)}
+          aria-label="Select all drafts in page"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={selectedIds.has(row.original.id)}
+          onCheckedChange={(checked) => toggleRowSelection(row.original.id, checked === true)}
+          aria-label={`Select ${row.original.firstName} ${row.original.lastName}`}
+          onClick={(event) => event.stopPropagation()}
+        />
+      ),
+      enableSorting: false,
+    }),
+    [
+      allPageRowsSelected,
+      selectedIds,
+      somePageRowsSelected,
+      togglePageSelection,
+      toggleRowSelection,
+    ]
+  );
+
+  const baseColumns = useMemo(
     () => getChildrenColumns({ onDelete: handleDeleteRequest, variant: "drafts" }),
     [handleDeleteRequest]
+  );
+  const columns = useMemo(
+    () => [selectionColumn, ...baseColumns],
+    [baseColumns, selectionColumn]
   );
 
   const table = useReactTable({
@@ -456,6 +595,17 @@ export function DraftsPageClient({
 
           {/* Spacer */}
           <div className="flex-1" />
+
+          <Button
+            type="button"
+            variant="outline"
+            onClick={openBulkDialog}
+            disabled={isPending}
+          >
+            <ArrowRightLeft className="size-4" />
+            Change Branch & Class
+            {selectedCount > 0 ? <span className="ml-1">({selectedCount})</span> : null}
+          </Button>
 
           <ExportButton
             filename="children_drafts"
@@ -686,6 +836,79 @@ export function DraftsPageClient({
           </div>
         </div>
       </div>
+
+      <Dialog
+        open={bulkDialogOpen}
+        onOpenChange={(open) => {
+          setBulkDialogOpen(open);
+          if (!open) {
+            setBulkBranchId("");
+            setBulkClassId("");
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change Branch & Class</DialogTitle>
+            <DialogDescription>
+              Update {selectedCount} selected {selectedCount === 1 ? "draft" : "drafts"}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div className="space-y-2">
+              <Label>Branch</Label>
+              <Select
+                value={bulkBranchId}
+                onValueChange={handleBulkBranchChange}
+                disabled={isPending}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select branch" />
+                </SelectTrigger>
+                <SelectContent>
+                  {branches.map((branch) => (
+                    <SelectItem key={branch.id} value={branch.id}>
+                      {branch.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Class</Label>
+              <Select
+                value={bulkClassId}
+                onValueChange={setBulkClassId}
+                disabled={!bulkBranchId || isPending}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select class" />
+                </SelectTrigger>
+                <SelectContent>
+                  {bulkClassOptions.map((item) => (
+                    <SelectItem key={item.id} value={item.id}>
+                      {item.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setBulkDialogOpen(false)}
+              disabled={isPending}
+            >
+              Close
+            </Button>
+            <Button onClick={handleBulkUpdate} disabled={isPending}>
+              {isPending ? <Loader2 className="size-4 animate-spin" /> : <ArrowRightLeft className="size-4" />}
+              Update
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Delete Confirmation Dialog ──────────── */}
       <Dialog
