@@ -939,8 +939,8 @@
   {
     "legacyPhp": "Front/templates/admin/bcalls.php",
     "legacyJs": "Front/templates/admin/js/bcalls.js",
-    "modernRoute": "/calls",
-    "status": "partial - branch-scoped listing restored via branch filter; branch URL shell audit remains",
+    "modernRoute": "/bcalls.php, /branches/[id]/calls, /calls",
+    "status": "partial - branch-scoped listing and legacy branch deep links restored; visual smoke remains",
     "legacyTablesMentioned": [
       "t_form_6",
       "t_child",
@@ -952,7 +952,7 @@
     "requestFieldsMentioned": [
       "brid"
     ],
-    "verification": "Restored branch-compatible incoming/outgoing call listing through `/calls?branch=...` with legacy child #, image, F Name, L Name, Call Type, Branch, Class, Cause, Subject, Date, Action columns, teacher-backed Form 6 data, draft badges, delete action, and branch/class/date/type/search filters. Remaining work is final logged-in visual smoke and any dedicated `/branches/[id]/calls` URL alias if product wants old `bcalls.php?brid=` deep links."
+    "verification": "Restored branch-compatible incoming/outgoing call listing through `/calls?branch=...` with legacy child #, image, F Name, L Name, Call Type, Branch, Class, Cause, Subject, Date, Action columns, teacher-backed Form 6 data, draft badges, standalone Form 6 open action, delete action, and branch/class/date/type/search filters. `/bcalls.php?brid=` now resolves raw numeric, UUID, and encrypted legacy branch ids into the modern branch filter, and `/branches/[id]/calls` redirects modern branch deep links to the same filtered listing. Remaining work is final logged-in visual smoke and exact TableTools export/print visual parity."
   },
   {
     "legacyPhp": "Front/templates/admin/branch.php",

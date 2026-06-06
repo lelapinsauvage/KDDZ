@@ -102,7 +102,8 @@ This list is the first implementation backlog after the generated inventory/matr
    - Form 6 runtime persistence now preserves `t_form_6` provenance (`form_id`, child/branch/class/teacher ids, raw `legacyData` keys), imports both submitted and draft rows, stores `is_rep_draft`, uses migrated `callparent`/`callcauses` parent/subject choices, and supports Save As Draft versus submitted validation in both global and child call dialogs.
    - Existing Form 6 attachments can now be removed from the child call edit dialog; updates soft-delete `FormAttachment` rows with `isActive = false` and global call listing attachment counts only include active files.
    - `/calls/[id]` now restores the standalone legacy `call.php?fid=` Form 6 shell with raw numeric, UUID, and encrypted legacy `fid` lookup, `id`/child disambiguation, legacy green/red `f_progress` status, child/branch/class context, edit/delete/print actions, active attachment preview/open controls, and a `/call.php` redirect bridge for old deep links.
-   - Remaining work is final logged-in visual smoke after local database/runtime state is clean and any dedicated `/branches/[id]/calls` URL alias if product wants old `bcalls.php?brid=` deep links.
+   - `/bcalls.php?brid=` now resolves raw numeric, UUID, and encrypted legacy branch ids into the modern branch-scoped `/calls?branch=...` listing, and `/branches/[id]/calls` aliases the same branch-filtered call surface.
+   - Remaining work is final logged-in visual smoke after local database/runtime state is clean and exact TableTools export/print visual parity.
 
 12. **New academic year workflow**
    - `/settings/new-year` now restores the legacy optional/mandatory import selection UI, teacher reassignment table, child class progression table, legacy-style S.N. generation, and a transactional action that creates the next active `SchoolYear`, updates selected teachers/children, and snapshots child history.
