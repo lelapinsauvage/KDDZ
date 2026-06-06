@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition, type ReactNode } from "react";
 import { PageHeader } from "@/components/layout/page-header";
+import { ExportButton } from "@/components/shared/export-button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -64,6 +65,7 @@ import {
   Link2,
   Pencil,
   Plus,
+  Printer,
   Search,
   ShieldCheck,
   Trash2,
@@ -71,8 +73,25 @@ import {
   UsersRound,
 } from "lucide-react";
 import { toast } from "sonner";
+import type { ExportColumn } from "@/lib/export";
 
 const ALL_GROUPS_KEY = "__all__";
+
+const legacyUserExportColumns: ExportColumn[] = [
+  { header: "Legacy ID", key: "legacyId" },
+  { header: "Username", key: "username" },
+  { header: "Name", key: "name" },
+  { header: "Email", key: "email" },
+  { header: "Levels", key: "levels" },
+  { header: "Source", key: "source" },
+  { header: "Branches", key: "branches" },
+  { header: "Classes", key: "classes" },
+  { header: "Social Links", key: "socialLinks" },
+  { header: "Last Login", key: "lastLogin" },
+  { header: "Login Count", key: "loginCount" },
+  { header: "Status", key: "status" },
+  { header: "Modern Account", key: "modernAccount" },
+];
 
 type MessageState = {
   type: "success" | "error";
@@ -412,6 +431,53 @@ export function LegacyUsersClient({
     });
   }, [activeGroupKey, query, users]);
 
+  const exportRows = useMemo<Record<string, unknown>[]>(() => {
+    return filteredUsers.map((user) => {
+      const group = getGroupForUser(initialData.groups, user);
+      const branchOptions: AccessOption[] = initialData.branches
+        .filter((branch) => branch.sourceDatabase === user.sourceDatabase)
+        .map((branch) => ({
+          id: branch.id,
+          legacyId: branch.legacyId,
+          label: branch.label,
+        }));
+      const classOptions: AccessOption[] = initialData.classes
+        .filter((classRecord) => classRecord.sourceDatabase === user.sourceDatabase)
+        .map((classRecord) => ({
+          id: classRecord.id,
+          legacyId: classRecord.legacyId,
+          label: classRecord.label,
+        }));
+
+      return {
+        legacyId: user.legacyId,
+        username: user.username,
+        name: user.name,
+        email: user.email,
+        levels: user.levelLabels.join(", "),
+        source: group ? groupLabel(group) : user.sourceDatabase,
+        branches: summarizeAccess(user.sites, branchOptions, "All"),
+        classes: summarizeAccess(user.classes, classOptions, "All"),
+        socialLinks: user.socialIntegrations
+          .map((integration) => `${integration.provider}: ${integration.identifier}`)
+          .join("; "),
+        lastLogin: formatLegacyDateTime(user.lastLoginAt),
+        loginCount: user.loginCount,
+        status: user.isRestricted ? "Restricted" : "Active",
+        modernAccount: user.userId
+          ? `${user.modernRole ?? "Linked"} / ${
+              user.modernActive ? "Enabled" : "Disabled"
+            }`
+          : "Legacy only",
+      };
+    });
+  }, [
+    filteredUsers,
+    initialData.branches,
+    initialData.classes,
+    initialData.groups,
+  ]);
+
   const activeFormGroup = useMemo(() => {
     return (
       initialData.groups.find(
@@ -696,7 +762,7 @@ export function LegacyUsersClient({
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 rounded-sm border border-border bg-background p-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-3 rounded-sm border border-border bg-background p-3 print:hidden lg:flex-row lg:items-center lg:justify-between">
           <div className="relative min-w-0 flex-1 lg:max-w-md">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -730,6 +796,22 @@ export function LegacyUsersClient({
                 <Badge variant="secondary">{groupCounts.get(group.key) ?? 0}</Badge>
               </Button>
             ))}
+            <ExportButton
+              filename="legacy-users"
+              sheetName="Legacy Users"
+              columns={legacyUserExportColumns}
+              data={exportRows}
+            />
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={filteredUsers.length === 0}
+              onClick={() => window.print()}
+            >
+              <Printer className="size-4" />
+              Print
+            </Button>
           </div>
         </div>
 
