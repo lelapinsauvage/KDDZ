@@ -8,10 +8,28 @@ import {
 
 interface Props {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{
+    ids?: string | string[];
+    name?: string | string[];
+    lname?: string | string[];
+    language?: string | string[];
+    dob?: string | string[];
+    maxStudents?: string | string[];
+    from?: string | string[];
+    to?: string | string[];
+    order_date_from?: string | string[];
+    order_date_to?: string | string[];
+    q?: string | string[];
+  }>;
 }
 
-export default async function BranchClassesPage({ params }: Props) {
+function firstParam(value?: string | string[]) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function BranchClassesPage({ params, searchParams }: Props) {
   const { id } = await params;
+  const query = await searchParams;
 
   const [classesResult, branchesResult] = await Promise.all([
     getClasses({ branchId: id }),
@@ -45,6 +63,26 @@ export default async function BranchClassesPage({ params }: Props) {
     id: b.id,
     name: b.name,
   }));
+  const branchName = branches.find((branch) => branch.id === id)?.name;
 
-  return <ClassesClient classes={classes} branches={branches} branchId={id} />;
+  return (
+    <ClassesClient
+      classes={classes}
+      branches={branches}
+      branchId={id}
+      branchName={branchName}
+      showBranchColumn
+      initialSearchQuery={firstParam(query.q)?.trim() ?? ""}
+      initialLegacyFilters={{
+        classNumber: firstParam(query.ids)?.trim() ?? "",
+        name: firstParam(query.name)?.trim() ?? "",
+        language: firstParam(query.language)?.trim() ?? firstParam(query.lname)?.trim() ?? "",
+        maxStudents: firstParam(query.maxStudents)?.trim() ?? firstParam(query.dob)?.trim() ?? "",
+        createdFrom:
+          firstParam(query.from)?.trim() ?? firstParam(query.order_date_from)?.trim() ?? "",
+        createdTo:
+          firstParam(query.to)?.trim() ?? firstParam(query.order_date_to)?.trim() ?? "",
+      }}
+    />
+  );
 }

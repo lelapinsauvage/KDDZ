@@ -71,6 +71,10 @@ interface ClassesClientProps {
   classes: ClassItem[];
   branches: BranchOption[];
   branchId?: string;
+  branchName?: string;
+  showBranchColumn?: boolean;
+  initialSearchQuery?: string;
+  initialLegacyFilters?: Partial<LegacyFilters>;
   initialEditClassId?: string;
   initialAddOpen?: boolean;
 }
@@ -103,18 +107,11 @@ const classExportColumns: ExportColumn[] = [
   { header: "Class", key: "name" },
   { header: "Language", key: "language" },
   { header: "Max Students", key: "maxStudents" },
-  { header: "Current Students", key: "studentCount" },
   { header: "Branch", key: "branchName" },
-  { header: "Camera Number", key: "cameraNumber" },
   {
     header: "Date",
     key: "createdAt",
     transform: (value) => formatDate(value as string | null),
-  },
-  {
-    header: "Status",
-    key: "isActive",
-    transform: (value) => (value ? "Active" : "Inactive"),
   },
 ];
 
@@ -432,6 +429,10 @@ export function ClassesClient({
   classes,
   branches,
   branchId,
+  branchName,
+  showBranchColumn,
+  initialSearchQuery = "",
+  initialLegacyFilters,
   initialEditClassId,
   initialAddOpen = false,
 }: ClassesClientProps) {
@@ -443,20 +444,24 @@ export function ClassesClient({
       : null;
 
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [branchFilter, setBranchFilter] = useState(branchId ?? "ALL");
   const [statusFilter, setStatusFilter] = useState<"ACTIVE" | "INACTIVE" | "ALL">("ACTIVE");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<(typeof PAGE_SIZES)[number]>("10");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [legacyFilters, setLegacyFilters] = useState<LegacyFilters>({
-    classNumber: "",
-    name: "",
-    language: "",
-    maxStudents: "",
-    createdFrom: "",
-    createdTo: "",
+    classNumber: initialLegacyFilters?.classNumber ?? "",
+    name: initialLegacyFilters?.name ?? "",
+    language: initialLegacyFilters?.language ?? "",
+    maxStudents: initialLegacyFilters?.maxStudents ?? "",
+    createdFrom: initialLegacyFilters?.createdFrom ?? "",
+    createdTo: initialLegacyFilters?.createdTo ?? "",
   });
+  const branchColumnVisible = showBranchColumn ?? !branchId;
+  const branchLabel =
+    branchName ?? branches.find((branch) => branch.id === branchId)?.name ?? "Selected Branch";
+  const tableColSpan = branchColumnVisible ? 9 : 8;
 
   const [addOpen, setAddOpen] = useState(initialAddOpen && !initialEditTarget);
   const [editTarget, setEditTarget] = useState<ClassItem | null>(initialEditTarget);
@@ -747,13 +752,26 @@ export function ClassesClient({
       )}
 
       <div className="hidden print:block print:mb-4 print:text-center">
-        <h1 className="text-2xl font-bold text-black">Classes Listing</h1>
+        <h1 className="text-2xl font-bold text-black">
+          {branchId ? `Classes Management For Branch: ${branchLabel}` : "Classes Listing"}
+        </h1>
         <p className="text-sm text-gray-500">
           {filteredClasses.length} classes - Printed on {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
         </p>
       </div>
 
       <div className="space-y-6 p-4 md:p-6 print:p-0">
+        {branchId && (
+          <div className="print:hidden">
+            <h2 className="text-xl font-semibold tracking-tight text-foreground">
+              Classes Management For Branch: {branchLabel}
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {branchLabel} Branch Classes Listing
+            </p>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 gap-4 print:hidden sm:grid-cols-3">
           <div className="overflow-hidden rounded bg-[#327ad5] shadow-sm">
             <div className="flex items-center justify-between px-4 py-3">
@@ -786,7 +804,9 @@ export function ClassesClient({
 
         <Card className="print:border-none print:shadow-none">
           <CardHeader className="print:hidden">
-            <CardTitle className="text-lg">Classes Listing</CardTitle>
+            <CardTitle className="text-lg">
+              {branchId ? `${branchLabel} Branch Classes Listing` : "Classes Listing"}
+            </CardTitle>
             <CardAction>
               <Button onClick={openAdd}>
                 <Plus className="mr-1 size-4" />
@@ -864,7 +884,7 @@ export function ClassesClient({
               </div>
 
               <ExportButton
-                filename="classes"
+                filename={branchId ? `classes_${branchLabel}` : "classes"}
                 sheetName="Classes"
                 columns={classExportColumns}
                 data={filteredClasses as unknown as Record<string, unknown>[]}
@@ -881,7 +901,11 @@ export function ClassesClient({
                 event.preventDefault();
                 setPage(1);
               }}
-              className="grid gap-2 rounded border border-border/60 bg-muted/20 p-3 print:hidden sm:grid-cols-2 lg:grid-cols-[0.75fr_1.2fr_1fr_1fr_1fr_1fr_auto_auto]"
+              className={
+                branchId
+                  ? "grid gap-2 rounded border border-border/60 bg-muted/20 p-3 print:hidden sm:grid-cols-2 lg:grid-cols-[0.75fr_1.2fr_1fr_1fr_1fr_1fr_1fr_auto_auto]"
+                  : "grid gap-2 rounded border border-border/60 bg-muted/20 p-3 print:hidden sm:grid-cols-2 lg:grid-cols-[0.75fr_1.2fr_1fr_1fr_1fr_1fr_auto_auto]"
+              }
             >
               <Input
                 value={legacyFilters.classNumber}
@@ -907,6 +931,14 @@ export function ClassesClient({
                 placeholder="Max Students"
                 className="h-9"
               />
+              {branchId && (
+                <Input
+                  value={branchLabel}
+                  readOnly
+                  aria-label="Branch"
+                  className="h-9 bg-muted/60"
+                />
+              )}
               <Input
                 type="date"
                 value={legacyFilters.createdFrom}
@@ -977,7 +1009,9 @@ export function ClassesClient({
                             <div className="flex items-start justify-between gap-2">
                               <div className="min-w-0">
                                 <p className="truncate text-sm font-semibold">{cls.name}</p>
-                                <p className="truncate text-xs text-muted-foreground">{branchId ? cls.language ?? "No language" : cls.branchName}</p>
+                                <p className="truncate text-xs text-muted-foreground">
+                                  {branchColumnVisible ? cls.branchName : cls.language ?? "No language"}
+                                </p>
                               </div>
                               <Badge className={`text-[10px] ${statusClass(cls.isActive)}`}>{cls.isActive ? "Active" : "Inactive"}</Badge>
                             </div>
@@ -1026,7 +1060,7 @@ export function ClassesClient({
                         <TableHead className="bg-muted/60 px-3 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Class</TableHead>
                         <TableHead className="bg-muted/60 px-3 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Language</TableHead>
                         <TableHead className="bg-muted/60 px-3 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Max Students</TableHead>
-                        {!branchId && <TableHead className="bg-muted/60 px-3 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Branch</TableHead>}
+                        {branchColumnVisible && <TableHead className="bg-muted/60 px-3 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Branch</TableHead>}
                         <TableHead className="bg-muted/60 px-3 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Date</TableHead>
                         <TableHead className="bg-muted/60 px-3 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-muted-foreground print:hidden">Action</TableHead>
                       </TableRow>
@@ -1034,13 +1068,13 @@ export function ClassesClient({
                     <TableBody>
                       {isPending ? (
                         <TableRow>
-                          <TableCell colSpan={branchId ? 8 : 9} className="h-24 text-center text-muted-foreground">
+                          <TableCell colSpan={tableColSpan} className="h-24 text-center text-muted-foreground">
                             Loading...
                           </TableCell>
                         </TableRow>
                       ) : paginatedClasses.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={branchId ? 8 : 9} className="h-32 text-center text-muted-foreground">
+                          <TableCell colSpan={tableColSpan} className="h-32 text-center text-muted-foreground">
                             No classes found
                           </TableCell>
                         </TableRow>
@@ -1062,7 +1096,7 @@ export function ClassesClient({
                             </TableCell>
                             <TableCell className="px-3 py-3 text-sm text-muted-foreground">{cls.language || "-"}</TableCell>
                             <TableCell className="px-3 py-3 text-sm text-muted-foreground">{cls.maxStudents}</TableCell>
-                            {!branchId && <TableCell className="px-3 py-3 text-sm text-muted-foreground">{cls.branchName}</TableCell>}
+                            {branchColumnVisible && <TableCell className="px-3 py-3 text-sm text-muted-foreground">{cls.branchName}</TableCell>}
                             <TableCell className="px-3 py-3 text-sm text-muted-foreground">{formatDate(cls.createdAt)}</TableCell>
                             <TableCell className="px-3 py-3 text-right print:hidden">
                               <div className="flex items-center justify-end gap-0.5">
