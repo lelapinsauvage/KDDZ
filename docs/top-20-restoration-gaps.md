@@ -144,6 +144,7 @@ This list is the first implementation backlog after the generated inventory/matr
 20. **Role and permission parity**
    - Legacy levels/actions/control tables are now preserved as metadata, and `/settings/access-control` now restores the admin-only staff/manager level action-grant matrix with selected-level batch saves into `LegacyAccessControlRecord`.
    - Legacy level create/edit/delete metadata workflows are restored with duplicate-name validation, redirect/welcome/disabled fields, admin-level protection, user-count delete blocking, and grant deactivation on deletion.
+   - `/settings/legacy-users` now restores the admin user-control surface over migrated `login_users` and `login_users_man` metadata, including source-filtered search, add/edit/delete, username/email duplicate validation, default-level fallback, serialized `user_level` persistence, restricted status, branch/class access (`usites`/`uclasses`), and modern account synchronization.
    - Remaining work is mapping these grants to modern roles/sessions and enforcing them in pages/actions.
 
 ## Execution Order

@@ -16,6 +16,7 @@ import {
   BellRing,
   Landmark,
   ShieldCheck,
+  UserCog,
 } from "lucide-react";
 
 const sections = [
@@ -117,6 +118,14 @@ const adminOnlySections = [
     icon: ShieldCheck,
     iconBg: "bg-emerald-100",
     iconColor: "text-emerald-700",
+  },
+  {
+    title: "Legacy Users",
+    description: "Migrated admin, staff, and manager accounts",
+    href: "/settings/legacy-users",
+    icon: UserCog,
+    iconBg: "bg-sky-100",
+    iconColor: "text-sky-700",
   },
 ];
 
