@@ -83,7 +83,7 @@
     "legacyPhp": "Front/templates/admin/Manager_Details.php",
     "legacyJs": "Front/templates/admin/js/Manager_Details.js",
     "modernRoute": "/employees/managers/[id]",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "restored - legacy general medical form workflow restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -91,7 +91,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored the legacy Medical Form - General Information workflow: child profile context, Saved Drs lookup, doctor address fields (`Dfname`, `Dlname`, Mouhafaza, Quadaa, Region, City, Street, Building, Telephone, Remarks, Latitude, Longitude), insurance Yes/No toggle with legacy insurance presets and expiry, disability/medical case/medication/surgical/allergy repeating rows with legacy datalist values and read-only current dates, medication time/expiry, permissive Save As Draft mapped to DRAFT/`is_rep_draft = 1`, submitted Save mapped to SUBMITTED/`is_rep_draft = 0`, preservation of `t_form_1`/`t_med_forms_info` keys in `MedicalForm.data`, imported entry hydration, and titled attachments with `images/MedForms` fallback previews. Remaining work is final logged-in visual smoke after local database/runtime state is clean."
   },
   {
     "legacyPhp": "Front/templates/admin/Medical_form1.php",
@@ -179,7 +179,7 @@
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Restored the legacy General Form Listing with form #, child image fallback, F Name, L Name, DOB, Branch, Class, Year from `t_form_1.db_id`, Gender, Date, edit/view actions, New Child General Form, branch/class/year/gender/text/date filters, 10/20/50/100/150/All paging, export/print, and form_id descending sort over migrated general medical forms. Remaining work is `Medical_form1.php` create/edit/detail workflow parity and final logged-in visual smoke after local auth/runtime state is clean."
+    "verification": "Restored the legacy General Form Listing with form #, child image fallback, F Name, L Name, DOB, Branch, Class, Year from `t_form_1.db_id`, Gender, Date, edit/view actions, New Child General Form, branch/class/year/gender/text/date filters, 10/20/50/100/150/All paging, export/print, and form_id descending sort over migrated general medical forms. Remaining work is final logged-in visual smoke after local auth/runtime state is clean."
   },
   {
     "legacyPhp": "Front/templates/admin/Medical_forms2.php",
