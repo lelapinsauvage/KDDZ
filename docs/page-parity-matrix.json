@@ -16366,13 +16366,13 @@
     "legacyPhp": "Front/templates/admin/settings.php",
     "legacyJs": "Front/templates/admin/js/settings.js",
     "modernRoute": "/settings.php, /profile?legacy=settings.php",
-    "status": "partial - legacy account password workflow and bridge restored; school-year date mutation remains",
+    "status": "partial - legacy account password and scholastic-year workflows restored; exact permission-map audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "`/settings.php` now redirects to the profile account-settings view, and `/profile` restores the legacy Change your password card with New Password, show/hide toggle, 5-character validation, save action for the current user, and success/error toasts. Remaining work is exact parity for the legacy `EditSchoolFromTo` start/end scholastic-year date updater from `settings.js`."
+    "verification": "`/settings.php` now redirects to the profile account-settings view, and `/profile` restores the legacy Change your password card with New Password, show/hide toggle, 5-character validation, save action for the current user, and success/error toasts. The legacy `EditSchoolFromTo` card is restored for admin/manager users with Change Scholastic Year, Start Date, End Date, Update, required start/end validation, active school-year prefill, org-scoped active `SchoolYear` mutation, and the legacy success/error copy from `settings.js`. Remaining work is exact `Check::protectPageOrFunction('EditSchoolFromTo','ACTION')` permission-map parity if imported legacy ACL data exposes a narrower action grant than the modern admin/manager guard."
   },
   {
     "legacyPhp": "Front/templates/admin/teachers.php",

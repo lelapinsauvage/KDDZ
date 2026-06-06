@@ -11,14 +11,25 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { changeCurrentUserPassword } from "@/lib/actions/profile";
-import { Eye, EyeOff, KeyRound, Loader2, Mail, Shield, User } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import {
+  changeCurrentUserPassword,
+  updateActiveSchoolYearDates,
+} from "@/lib/actions/profile";
+import { CalendarClock, Eye, EyeOff, KeyRound, Loader2, Mail, Shield, User } from "lucide-react";
 import { toast } from "sonner";
 
 interface ProfileUser {
   name: string;
   email: string;
   role: string;
+}
+
+interface ActiveSchoolYear {
+  id: string;
+  label: string;
+  startDate: string;
+  endDate: string;
 }
 
 function formatRole(role: string): string {
@@ -35,13 +46,24 @@ function formatRole(role: string): string {
 export function ProfileClient({
   user,
   legacySettings = false,
+  activeSchoolYear = null,
+  canEditSchoolYear = false,
 }: {
   user: ProfileUser;
   legacySettings?: boolean;
+  activeSchoolYear?: ActiveSchoolYear | null;
+  canEditSchoolYear?: boolean;
 }) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [schoolYearStartDate, setSchoolYearStartDate] = useState(
+    activeSchoolYear?.startDate ?? "",
+  );
+  const [schoolYearEndDate, setSchoolYearEndDate] = useState(
+    activeSchoolYear?.endDate ?? "",
+  );
+  const [isPasswordPending, startPasswordTransition] = useTransition();
+  const [isSchoolYearPending, startSchoolYearTransition] = useTransition();
   const initials = user.name
     ? user.name
         .split(" ")
@@ -61,7 +83,7 @@ export function ProfileClient({
       return;
     }
 
-    startTransition(async () => {
+    startPasswordTransition(async () => {
       const result = await changeCurrentUserPassword(password);
       if (!result.success) {
         toast.error(result.error ?? "Failed to update password");
@@ -71,6 +93,26 @@ export function ProfileClient({
       setPassword("");
       setShowPassword(false);
       toast.success("Password updated successfully");
+    });
+  }
+
+  function handleSchoolYearSave() {
+    if (!schoolYearStartDate || !schoolYearEndDate) {
+      toast.error("Please Fill both start & end dates");
+      return;
+    }
+
+    startSchoolYearTransition(async () => {
+      const result = await updateActiveSchoolYearDates(
+        schoolYearStartDate,
+        schoolYearEndDate,
+      );
+      if (!result.success) {
+        toast.error(result.error ?? "Failed to update scholastic year");
+        return;
+      }
+
+      toast.success("Dates updated successufly");
     });
   }
 
@@ -167,15 +209,59 @@ export function ProfileClient({
               <Button
                 type="button"
                 onClick={handlePasswordSave}
-                disabled={isPending}
+                disabled={isPasswordPending}
                 className="sm:w-32"
               >
-                {isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+                {isPasswordPending ? <Loader2 className="size-4 animate-spin" /> : null}
                 Change
               </Button>
             </div>
           </CardContent>
         </Card>
+
+        {legacySettings && canEditSchoolYear ? (
+          <Card className="rounded-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <CalendarClock className="size-4 text-primary" />
+                Change Scholastic Year
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid max-w-3xl gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
+                <div className="space-y-2">
+                  <Label htmlFor="legacy-start-date">Start Date</Label>
+                  <Input
+                    id="legacy-start-date"
+                    type="date"
+                    value={schoolYearStartDate}
+                    onChange={(event) => setSchoolYearStartDate(event.target.value)}
+                    aria-invalid={!schoolYearStartDate}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="legacy-end-date">End Date</Label>
+                  <Input
+                    id="legacy-end-date"
+                    type="date"
+                    value={schoolYearEndDate}
+                    onChange={(event) => setSchoolYearEndDate(event.target.value)}
+                    aria-invalid={!schoolYearEndDate}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  onClick={handleSchoolYearSave}
+                  disabled={isSchoolYearPending}
+                  className="sm:w-32"
+                >
+                  {isSchoolYearPending ? <Loader2 className="size-4 animate-spin" /> : null}
+                  Update
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : null}
       </div>
     </>
   );

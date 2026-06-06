@@ -5,6 +5,7 @@ import { hash } from "bcryptjs";
 
 import { db } from "@/lib/db";
 import { requireOrgSafe } from "@/lib/require-org";
+import { isAdminRole } from "@/lib/require-role";
 
 const MIN_PASSWORD_LENGTH = 5;
 
@@ -51,5 +52,70 @@ export async function changeCurrentUserPassword(
   } catch (error) {
     console.error("changeCurrentUserPassword error:", error);
     return { success: false, error: "Failed to update password" };
+  }
+}
+
+function parseDateOnly(value: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+export async function updateActiveSchoolYearDates(
+  startDate: string,
+  endDate: string,
+): Promise<ActionResult> {
+  const result = await requireOrgSafe();
+  if (!result.ok) return { success: false, error: result.error };
+  const { ctx } = result;
+
+  if (!isAdminRole(ctx.role)) {
+    return { success: false, error: "Forbidden: insufficient permissions" };
+  }
+
+  if (!startDate || !endDate) {
+    return { success: false, error: "Please Fill both start & end dates" };
+  }
+
+  const parsedStartDate = parseDateOnly(startDate);
+  const parsedEndDate = parseDateOnly(endDate);
+  if (!parsedStartDate || !parsedEndDate) {
+    return { success: false, error: "Please Fill both start & end dates" };
+  }
+
+  if (parsedEndDate < parsedStartDate) {
+    return { success: false, error: "End Date must be after Start Date" };
+  }
+
+  try {
+    const activeYear = await db.schoolYear.findFirst({
+      where: {
+        organizationId: ctx.organizationId,
+        isActive: true,
+      },
+      select: { id: true },
+      orderBy: { startDate: "desc" },
+    });
+
+    if (!activeYear) {
+      return { success: false, error: "Active scholastic year not found" };
+    }
+
+    await db.schoolYear.update({
+      where: { id: activeYear.id },
+      data: {
+        startDate: parsedStartDate,
+        endDate: parsedEndDate,
+      },
+    });
+
+    revalidatePath("/profile");
+    revalidatePath("/settings.php");
+    revalidatePath("/settings/school-years");
+
+    return { success: true };
+  } catch (error) {
+    console.error("updateActiveSchoolYearDates error:", error);
+    return { success: false, error: "Failed to update scholastic year" };
   }
 }
