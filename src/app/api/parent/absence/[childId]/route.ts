@@ -2,13 +2,12 @@ import { NextRequest } from "next/server";
 import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import {
-  authenticateParent,
   formatChildName,
   formatDate,
   jsonError,
   jsonSuccess,
   makeHeader,
-  verifyChildAccess,
+  verifyParentToken,
 } from "@/lib/parent-auth";
 
 type ParentAbsenceChild = {
@@ -20,7 +19,9 @@ type ParentAbsenceChild = {
 };
 
 type ParentAbsenceUser = {
+  id: string;
   childId: string;
+  legacyChildId: number | null;
   child: ParentAbsenceChild;
 };
 
@@ -58,24 +59,35 @@ async function handleRequest(
 ) {
   const { childId } = await params;
 
-  const auth = await authenticateParent(request);
-  if ("error" in auth) return auth.error;
-  const parentUser = auth.parentUser as ParentAbsenceUser;
-
-  if (!verifyChildAccess(parentUser, childId)) {
-    return jsonError("Access denied", 403);
-  }
-
-  if (request.method === "POST") {
-    const postedChildId = await readPostedChildId(request);
-    if (!postedChildId) return jsonSuccess([makeHeader("", false, 0)]);
-    if (!matchesChildId(parentUser.child, postedChildId)) {
-      return jsonError("Access denied", 403);
-    }
-  }
+  const postedChildId = request.method === "POST" ? await readPostedChildId(request) : null;
+  const auth = await optionalAuthenticateParent(request);
+  if (auth && "error" in auth) return auth.error;
+  const parentUser = auth?.parentUser;
 
   try {
-    const child = parentUser.child;
+    let child = parentUser?.child ?? null;
+
+    if (parentUser && !matchesParentUserChildId(parentUser, childId)) {
+      return jsonError("Access denied", 403);
+    }
+
+    if (request.method === "POST") {
+      if (!postedChildId) return jsonSuccess([makeHeader("", false, 0)]);
+
+      if (parentUser) {
+        if (!matchesParentUserChildId(parentUser, postedChildId)) {
+          return jsonError("Access denied", 403);
+        }
+      } else {
+        child = await resolveLegacyAbsenceChild(postedChildId);
+        if (!child) return jsonSuccess([makeHeader("", false, 0)]);
+      }
+    }
+
+    if (!child) {
+      return jsonError("Unauthorized", 401);
+    }
+
     const reports = await db.absenceReport.findMany({
       where: { childId: child.id },
       orderBy: [{ legacyId: "asc" }, { date: "desc" }],
@@ -124,7 +136,8 @@ async function readRequestBody(request: NextRequest) {
     contentType.includes("application/x-www-form-urlencoded") ||
     contentType.includes("multipart/form-data")
   ) {
-    const form = await request.formData();
+    const form = await request.formData().catch(() => null);
+    if (!form) return null;
     return Object.fromEntries(
       [...form.entries()].map(([key, value]) => [
         key,
@@ -133,11 +146,70 @@ async function readRequestBody(request: NextRequest) {
     );
   }
 
-  return null;
+  const text = await request.text().catch(() => "");
+  if (!text.trim()) return null;
+  return Object.fromEntries(new URLSearchParams(text).entries());
 }
 
-function matchesChildId(child: ParentAbsenceChild, postedChildId: string) {
-  return postedChildId === child.id || postedChildId === String(child.legacyId ?? "");
+async function optionalAuthenticateParent(request: NextRequest) {
+  const authHeader = request.headers.get("authorization");
+  const hasBearer = authHeader?.startsWith("Bearer ");
+  const payload = await verifyParentToken(request);
+
+  if (hasBearer && !payload) {
+    return { error: jsonError("Unauthorized", 401) };
+  }
+  if (!payload) return null;
+
+  const parentUser = await db.parentUser.findUnique({
+    where: { id: payload.sub, isActive: true },
+    include: { child: true },
+  }).catch(() => "db-error" as const);
+
+  if (parentUser === "db-error") {
+    return { error: jsonError("Internal server error", 500) };
+  }
+
+  if (!parentUser) {
+    return { error: jsonError("Unauthorized", 401) };
+  }
+
+  return { parentUser: parentUser as ParentAbsenceUser };
+}
+
+async function resolveLegacyAbsenceChild(childId: string) {
+  const legacyChildId = parseLegacyInt(childId);
+  const childWhere = [];
+
+  if (UUID_RE.test(childId)) {
+    childWhere.push({ id: childId });
+  }
+  if (legacyChildId !== null) {
+    childWhere.push({ legacyId: legacyChildId });
+  }
+
+  if (childWhere.length === 0) return null;
+
+  return db.child.findFirst({
+    where: { OR: childWhere },
+    select: {
+      id: true,
+      legacyId: true,
+      firstName: true,
+      middleName: true,
+      lastName: true,
+    },
+    orderBy: { createdAt: "asc" },
+  });
+}
+
+function matchesParentUserChildId(parentUser: ParentAbsenceUser, childId: string) {
+  return (
+    childId === parentUser.childId ||
+    childId === parentUser.child.id ||
+    childId === String(parentUser.legacyChildId ?? "") ||
+    childId === String(parentUser.child.legacyId ?? "")
+  );
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -153,3 +225,10 @@ function readString(data: Record<string, unknown> | null, keys: string[]) {
   }
   return null;
 }
+
+function parseLegacyInt(value: unknown): number | null {
+  const parsed = Number.parseInt(String(value ?? ""), 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;

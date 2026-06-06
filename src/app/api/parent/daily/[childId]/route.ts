@@ -1,18 +1,19 @@
 import { NextRequest } from "next/server";
 import {
-  authenticateParent,
   formatChildName,
   jsonError,
   jsonSuccess,
   makeHeader,
-  verifyChildAccess,
 } from "@/lib/parent-auth";
 import {
   loadParentDailyReports,
   mapLegacyDailyReport,
-  matchesParentDailyChildId,
+  matchesParentDailyUserChildId,
+  optionalAuthenticateParentDaily,
   readPostedParentDailyChildId,
+  resolveLegacyParentDailyChild,
   type ParentDailyChild,
+  type ParentDailyUser,
 } from "@/lib/parent-daily-contract";
 
 export async function GET(
@@ -35,27 +36,36 @@ async function handleRequest(
 ) {
   const { childId } = await params;
 
-  const auth = await authenticateParent(request);
-  if ("error" in auth) return auth.error;
-  const parentUser = auth.parentUser as {
-    childId: string;
-    child: ParentDailyChild;
-  };
-
-  if (!verifyChildAccess(parentUser, childId)) {
-    return jsonError("Access denied", 403);
-  }
-
-  if (request.method === "POST") {
-    const postedChildId = await readPostedParentDailyChildId(request);
-    if (!postedChildId) return jsonSuccess([makeHeader("", false, 0)]);
-    if (!matchesParentDailyChildId(parentUser.child, postedChildId)) {
-      return jsonError("Access denied", 403);
-    }
-  }
+  const postedChildId =
+    request.method === "POST" ? await readPostedParentDailyChildId(request) : null;
+  const auth = await optionalAuthenticateParentDaily(request);
+  if (auth && "error" in auth) return auth.error;
+  const parentUser = auth?.parentUser as ParentDailyUser | undefined;
 
   try {
-    const child = parentUser.child;
+    let child: ParentDailyChild | null = parentUser?.child ?? null;
+
+    if (parentUser && !matchesParentDailyUserChildId(parentUser, childId)) {
+      return jsonError("Access denied", 403);
+    }
+
+    if (request.method === "POST") {
+      if (!postedChildId) return jsonSuccess([makeHeader("", false, 0)]);
+
+      if (parentUser) {
+        if (!matchesParentDailyUserChildId(parentUser, postedChildId)) {
+          return jsonError("Access denied", 403);
+        }
+      } else {
+        child = await resolveLegacyParentDailyChild(postedChildId);
+        if (!child) return jsonSuccess([makeHeader("", false, 0)]);
+      }
+    }
+
+    if (!child) {
+      return jsonError("Unauthorized", 401);
+    }
+
     const reports = await loadParentDailyReports(child.id);
     const header = makeHeader(formatChildName(child), true, reports.length);
     return jsonSuccess([header, ...reports.map(mapLegacyDailyReport)]);

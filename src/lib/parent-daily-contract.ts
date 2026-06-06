@@ -1,7 +1,13 @@
 import { NextRequest } from "next/server";
 import type { PortionSize, Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
-import { formatDate, formatTime, mapPortionSize } from "@/lib/parent-auth";
+import {
+  formatDate,
+  formatTime,
+  jsonError,
+  mapPortionSize,
+  verifyParentToken,
+} from "@/lib/parent-auth";
 
 export type ParentDailyChild = {
   id: string;
@@ -9,6 +15,13 @@ export type ParentDailyChild = {
   firstName: string;
   middleName?: string | null;
   lastName: string;
+};
+
+export type ParentDailyUser = {
+  id: string;
+  childId: string;
+  legacyChildId: number | null;
+  child: ParentDailyChild;
 };
 
 type DailyReportForParent = {
@@ -52,6 +65,70 @@ export function matchesParentDailyChildId(
   postedChildId: string
 ) {
   return postedChildId === child.id || postedChildId === String(child.legacyId ?? "");
+}
+
+export function matchesParentDailyUserChildId(
+  parentUser: ParentDailyUser,
+  childId: string
+) {
+  return (
+    childId === parentUser.childId ||
+    childId === parentUser.child.id ||
+    childId === String(parentUser.legacyChildId ?? "") ||
+    childId === String(parentUser.child.legacyId ?? "")
+  );
+}
+
+export async function optionalAuthenticateParentDaily(request: NextRequest) {
+  const authHeader = request.headers.get("authorization");
+  const hasBearer = authHeader?.startsWith("Bearer ");
+  const payload = await verifyParentToken(request);
+
+  if (hasBearer && !payload) {
+    return { error: jsonError("Unauthorized", 401) };
+  }
+  if (!payload) return null;
+
+  const parentUser = await db.parentUser.findUnique({
+    where: { id: payload.sub, isActive: true },
+    include: { child: true },
+  }).catch(() => "db-error" as const);
+
+  if (parentUser === "db-error") {
+    return { error: jsonError("Internal server error", 500) };
+  }
+
+  if (!parentUser) {
+    return { error: jsonError("Unauthorized", 401) };
+  }
+
+  return { parentUser: parentUser as ParentDailyUser };
+}
+
+export async function resolveLegacyParentDailyChild(childId: string) {
+  const legacyChildId = parseLegacyInt(childId);
+  const childWhere = [];
+
+  if (UUID_RE.test(childId)) {
+    childWhere.push({ id: childId });
+  }
+  if (legacyChildId !== null) {
+    childWhere.push({ legacyId: legacyChildId });
+  }
+
+  if (childWhere.length === 0) return null;
+
+  return db.child.findFirst({
+    where: { OR: childWhere },
+    select: {
+      id: true,
+      legacyId: true,
+      firstName: true,
+      middleName: true,
+      lastName: true,
+    },
+    orderBy: { createdAt: "asc" },
+  });
 }
 
 export async function loadParentDailyReports(childId: string) {
@@ -232,7 +309,8 @@ async function readRequestBody(request: NextRequest) {
     contentType.includes("application/x-www-form-urlencoded") ||
     contentType.includes("multipart/form-data")
   ) {
-    const form = await request.formData();
+    const form = await request.formData().catch(() => null);
+    if (!form) return null;
     return Object.fromEntries(
       [...form.entries()].map(([key, value]) => [
         key,
@@ -241,7 +319,9 @@ async function readRequestBody(request: NextRequest) {
     );
   }
 
-  return null;
+  const text = await request.text().catch(() => "");
+  if (!text.trim()) return null;
+  return Object.fromEntries(new URLSearchParams(text).entries());
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -322,3 +402,10 @@ function parseMedicalEntryName(value: string | null) {
   const match = value?.match(/(?:^|;\s*)name:\s*([^;]+)/);
   return match?.[1]?.trim() || null;
 }
+
+function parseLegacyInt(value: unknown): number | null {
+  const parsed = Number.parseInt(String(value ?? ""), 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
