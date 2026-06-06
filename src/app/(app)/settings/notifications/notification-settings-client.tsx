@@ -43,6 +43,7 @@ import {
   EyeOff,
   Calendar,
   Database,
+  DollarSign,
   History,
   ListTree,
   type LucideIcon,
@@ -114,6 +115,13 @@ const CATEGORY_META: Record<string, CategoryMeta> = {
     bg: "bg-sky-50",
     border: "border-l-sky-500",
   },
+  PAYMENT: {
+    label: "Payment",
+    icon: DollarSign,
+    color: "text-amber-600",
+    bg: "bg-amber-50",
+    border: "border-l-amber-500",
+  },
   EXPIRATION: {
     label: "Expiration",
     icon: FileX,
@@ -136,6 +144,9 @@ const VARIABLE_CHIPS = [
   { code: "[[date]]", label: "Date" },
   { code: "[[branch_name]]", label: "Branch Name" },
   { code: "[[class_name]]", label: "Class Name" },
+  { code: "[[family_name]]", label: "Family Name" },
+  { code: "[[fees]]", label: "Fees" },
+  { code: "[[payment_date]]", label: "Payment Date" },
 ];
 
 const LOG_CATEGORIES = [
@@ -148,6 +159,7 @@ const LOG_CATEGORIES = [
   { value: "Birthdays", label: "Birthdays" },
   { value: "Events", label: "Events" },
   { value: "Insurance", label: "Insurance" },
+  { value: "Payments", label: "Payments" },
   { value: "Messages", label: "Messages" },
   { value: "Contracts", label: "Contracts" },
 ];

@@ -41,6 +41,7 @@ export default async function PaymentAlarmsPage() {
       dueDate,
       daysLeft,
       status,
+      branchId: (a.branch?.id ?? "") as string,
       branch: (a.branch?.name ?? "\u2014") as string,
     };
   });
@@ -74,6 +75,7 @@ export default async function PaymentAlarmsPage() {
   const overdueChildren = overdueData.overdueByChild.map((item) => ({
     childId: item.child.id,
     childName: `${item.child.firstName} ${item.child.lastName}`,
+    branchId: item.child.branch?.id ?? "",
     branchName: item.child.branch?.name ?? "\u2014",
     className: item.child.class?.name ?? "\u2014",
     totalOverdue: item.totalOverdue,

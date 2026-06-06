@@ -17,6 +17,7 @@ const TEMPLATE_CATEGORIES = [
   "INSURANCE",
   "ASSESSMENT",
   "VACCINATIONS",
+  "PAYMENT",
   "EXPIRATION",
   "CONTROL",
 ] as const;
@@ -52,6 +53,10 @@ const CATEGORY_DEFAULTS: Record<
     subject: "Vaccination Due",
     body: "Vaccination [[vaccination_name]] for [[child_name]] is due on [[date]]. Please remind [[parent_name]].",
   },
+  PAYMENT: {
+    subject: "Payment Reminder",
+    body: "Payment reminder for [[family_name]]: [[fees]] due on [[payment_date]].",
+  },
   EXPIRATION: {
     subject: "Document Expiring",
     body: "A document for [[child_name]] at [[branch_name]] expires on [[date]]. Contact [[parent_name]] for renewal.",
@@ -74,6 +79,11 @@ const TEST_VARIABLES: TemplateVariables = {
   days_until: 7,
   insurance_type: "Sample Insurance",
   vaccination_name: "Sample Vaccine",
+  family_name: "Sample Family",
+  fees: "Monthly, Bus",
+  payment_date: new Date().toISOString().slice(0, 10),
+  amount: "100.00",
+  currency: "USD",
 };
 
 export interface TemplateRow {

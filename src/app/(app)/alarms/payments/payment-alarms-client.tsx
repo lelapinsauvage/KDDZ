@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { type ColumnDef } from "@tanstack/react-table";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
@@ -13,10 +14,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DollarSign, AlertTriangle, Users, ExternalLink } from "lucide-react";
+import { AlertTriangle, DollarSign, ExternalLink, RefreshCw, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { AlarmActionsCell } from "@/components/alarms/alarm-actions-cell";
+import { generatePaymentAlarms } from "@/lib/actions/alarms";
 
 // ── Types ──
 
@@ -26,12 +28,14 @@ interface PaymentAlarm {
   dueDate: string;
   daysLeft: number;
   status: "Overdue" | "Upcoming" | "Active";
+  branchId: string;
   branch: string;
 }
 
 interface OverdueChild {
   childId: string;
   childName: string;
+  branchId: string;
   branchName: string;
   className: string;
   totalOverdue: number;
@@ -66,20 +70,46 @@ export function PaymentAlarmsClient({
   totalOverdue,
   totalOverdueCount,
 }: PaymentAlarmsClientProps) {
+  const router = useRouter();
   const [branchFilter, setBranchFilter] = useState("ALL");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationStatus, setGenerationStatus] = useState<string | null>(null);
 
   const filteredAlarms = useMemo(() => {
     if (branchFilter === "ALL") return alarms;
-    return alarms.filter((p) => p.branch === branchFilter);
+    return alarms.filter((p) => p.branchId === branchFilter);
   }, [branchFilter, alarms]);
 
   const filteredOverdue = useMemo(() => {
     if (branchFilter === "ALL") return overdueChildren;
-    return overdueChildren.filter(
-      (c) => branches.some((b) => b.name === c.branchName && b.id === branchFilter) ||
-             c.branchName === branchFilter,
+    return overdueChildren.filter((c) => c.branchId === branchFilter);
+  }, [branchFilter, overdueChildren]);
+
+  async function handleGenerate() {
+    setIsGenerating(true);
+    setGenerationStatus(null);
+    const result = await generatePaymentAlarms(
+      branchFilter === "ALL" ? undefined : branchFilter,
     );
-  }, [branchFilter, overdueChildren, branches]);
+    setIsGenerating(false);
+
+    if (result.success && result.data) {
+      const {
+        reminderGroupsMatched,
+        remindersMatched,
+        alarmsCreated,
+        skippedExisting,
+        parentRecipientsMatched,
+      } = result.data;
+      setGenerationStatus(
+        `Matched ${reminderGroupsMatched} group${reminderGroupsMatched === 1 ? "" : "s"} from ${remindersMatched} reminder${remindersMatched === 1 ? "" : "s"}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing; parent recipients ${parentRecipientsMatched}.`,
+      );
+      router.refresh();
+      return;
+    }
+
+    setGenerationStatus(result.error ?? "Payment generation failed.");
+  }
 
   const alarmColumns: ColumnDef<PaymentAlarm>[] = useMemo(
     () => [
@@ -237,6 +267,19 @@ export function PaymentAlarmsClient({
               ))}
             </SelectContent>
           </Select>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleGenerate}
+            disabled={isGenerating}
+            className="gap-2"
+          >
+            <RefreshCw className={`size-4 ${isGenerating ? "animate-spin" : ""}`} />
+            {isGenerating ? "Generating..." : "Generate"}
+          </Button>
+          {generationStatus && (
+            <span className="text-sm text-muted-foreground">{generationStatus}</span>
+          )}
         </div>
 
         {/* Overdue Payments by Child */}

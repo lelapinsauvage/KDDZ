@@ -30,6 +30,10 @@ import {
   type VaccinationDueAlarm,
   type VaccinationGenerationSummary,
 } from "@/lib/jobs/vaccination-alarms";
+import {
+  generatePaymentAlarmsForOrganization,
+  type PaymentGenerationSummary,
+} from "@/lib/jobs/payment-alarms";
 
 export type { AssessmentDueAlarm, AssessmentGenerationSummary } from "@/lib/jobs/assessment-alarms";
 export type { MedicineGenerationSummary } from "@/lib/jobs/medicine-alarms";
@@ -38,6 +42,7 @@ export type {
   VaccinationDueAlarm,
   VaccinationGenerationSummary,
 } from "@/lib/jobs/vaccination-alarms";
+export type { PaymentGenerationSummary } from "@/lib/jobs/payment-alarms";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -263,6 +268,38 @@ export async function getVaccinationDueAlarms(
   } catch (error) {
     console.error("Failed to fetch vaccination due alarms:", error);
     return { success: false, error: "Failed to fetch vaccination due alarms" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// generatePaymentAlarms
+// ---------------------------------------------------------------------------
+
+export async function generatePaymentAlarms(
+  branchId?: string,
+): Promise<ActionResult<PaymentGenerationSummary>> {
+  try {
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
+
+    if (branchId && !(await verifyBranchAccess(branchId, ctx.organizationId))) {
+      return { success: false, error: "Branch not found in your organization" };
+    }
+
+    const summary = await generatePaymentAlarmsForOrganization({
+      organizationId: ctx.organizationId,
+      branchId,
+    });
+
+    revalidatePath("/alarms");
+    revalidatePath("/alarms/payments");
+    revalidatePath("/");
+
+    return { success: true, data: summary };
+  } catch (error) {
+    console.error("Failed to generate payment alarms:", error);
+    return { success: false, error: "Failed to generate payment alarms" };
   }
 }
 
