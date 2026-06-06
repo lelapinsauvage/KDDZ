@@ -15,6 +15,7 @@ import {
   Bell,
   BellRing,
   Landmark,
+  ShieldCheck,
 } from "lucide-react";
 
 const sections = [
@@ -108,6 +109,14 @@ const adminOnlySections = [
     icon: Landmark,
     iconBg: "bg-violet-100",
     iconColor: "text-violet-600",
+  },
+  {
+    title: "Access Control",
+    description: "Legacy levels and action grants",
+    href: "/settings/access-control",
+    icon: ShieldCheck,
+    iconBg: "bg-emerald-100",
+    iconColor: "text-emerald-700",
   },
 ];
 

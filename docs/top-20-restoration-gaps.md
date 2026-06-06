@@ -142,7 +142,8 @@ This list is the first implementation backlog after the generated inventory/matr
    - Remaining work is exact legacy reply-thread visual audit, credentialed native send/open testing, parent/mobile read reset behavior, and external push-on-message delivery if product confirms it was active in production.
 
 20. **Role and permission parity**
-   - Legacy levels/actions/control tables are now preserved as metadata; remaining work is mapping them to modern roles and enforcing them in pages/actions.
+   - Legacy levels/actions/control tables are now preserved as metadata, and `/settings/access-control` now restores the admin-only staff/manager level action-grant matrix with selected-level batch saves into `LegacyAccessControlRecord`.
+   - Remaining work is mapping these grants to modern roles/sessions and enforcing them in pages/actions.
 
 ## Execution Order
 

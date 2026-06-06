@@ -16476,18 +16476,21 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/classes/LevelsControl.class.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/settings/access-control",
+    "status": "partial - legacy level action matrix restored; active enforcement remains",
     "legacyTablesMentioned": [
       "Levels",
       "actions_control",
+      "actions_control_man",
       "login_levels",
-      "system_actions"
+      "login_levels_man",
+      "system_actions",
+      "system_actions_man"
     ],
     "requestFieldsMentioned": [
       "LEVELS"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/settings/access-control` now restores the admin-only legacy level/action matrix over migrated `LegacyAuthRecord` levels and `LegacyAccessControlRecord` actions/grants, including staff and manager source databases, selected-level batch save, searchable action catalogue, inactive action badges, disabled level badges, legacy `No level selected!`/`Saved!` feedback, and grant persistence by soft-disabling stale rows then re-enabling/creating selected grants. Remaining work is wiring these restored grants into active modern page/action enforcement and session permission hydration."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/classes/add_level.class.php",
@@ -16934,11 +16937,20 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/level-control.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
-    "legacyTablesMentioned": [],
-    "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "modernRoute": "/settings/access-control",
+    "status": "partial - legacy level action matrix restored; active enforcement remains",
+    "legacyTablesMentioned": [
+      "actions_control",
+      "actions_control_man",
+      "login_levels",
+      "login_levels_man",
+      "system_actions",
+      "system_actions_man"
+    ],
+    "requestFieldsMentioned": [
+      "LEVELS"
+    ],
+    "verification": "`/settings/access-control` replaces the legacy `Modify levels` admin surface with source-database grouped staff/manager level tables, selected-level checkboxes, searchable action grants, select-all/clear controls, and batch save through `updateLegacyAccessControlLevels`. Remaining work is legacy create/edit level/user form parity and active `Check::protectPageOrFunction` enforcement against these grants."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/level-create.php",
