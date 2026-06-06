@@ -419,7 +419,7 @@ export async function getClassDashboard(
       }),
       db.callLog.findMany({
         where: { ...childFilter, date: { gte: today, lt: tomorrow } },
-        select: { id: true, childId: true },
+        select: { id: true, childId: true, isDraft: true },
       }),
       db.assessment.findMany({
         where: { ...childFilter, assessmentType: { in: assessmentTypes } },
@@ -499,13 +499,16 @@ export async function getClassDashboard(
 
     const medicalCategories = medicalBreakdownConfig.map((config) => {
       if (config.key === "calls") {
+        const submittedCalls = todayCalls.filter((call) => !call.isDraft).length;
+        const draftCalls = todayCalls.filter((call) => call.isDraft).length;
+
         return {
           key: config.key,
           label: config.label,
-          completed: todayCalls.length,
+          completed: submittedCalls,
           missing: null,
-          drafts: 0,
-          href: config.href,
+          drafts: draftCalls,
+          href: `${config.href}?class=${classId}`,
           createHref: config.createHref,
         };
       }

@@ -1197,13 +1197,16 @@
     "modernRoute": "/classes/[id]",
     "status": "restored - modern schema caveats",
     "legacyTablesMentioned": [
+      "t_form_6",
+      "t_daily_report",
+      "t_form_3",
       "auto",
       "themeforest"
     ],
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Restored class summary, seven-day birthdays, daily/absent rosters, medical/call breakdowns, assessment age-band counts/rows, class-message preselect, and child preselect for new assessments. Remaining caveats: legacy daily progress integer, call drafts, and `db_curr` year switch do not map one-to-one."
+    "verification": "Restored class summary, seven-day birthdays, daily/absent rosters, medical/call breakdowns, assessment age-band counts/rows, class-message preselect, and child preselect for new assessments. Call reports now match legacy `MED6REP`/`MED6REPD` semantics by counting today's non-draft Form 6 rows separately from today's drafts and linking to the class-scoped Calls listing. Remaining caveats: legacy daily progress integer and `db_curr` year switch do not map one-to-one."
   },
   {
     "legacyPhp": "Front/templates/admin/classes.php",
