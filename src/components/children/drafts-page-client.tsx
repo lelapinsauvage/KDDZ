@@ -6,6 +6,8 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import {
   Plus,
   Search,
+  X,
+  Filter,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -16,6 +18,8 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/page-header";
 import { getChildrenColumns, type ChildRow } from "@/components/children/children-columns";
 import { deleteChild } from "@/lib/actions/children";
+import { ExportButton } from "@/components/shared/export-button";
+import type { ExportColumn } from "@/lib/export";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -66,6 +70,13 @@ interface Filters {
   branch: string;
   class: string;
   gender: string;
+  childNumber: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  nationality: string;
+  createdFrom: string;
+  createdTo: string;
   page: number;
   pageSize: number;
   sort: string;
@@ -79,6 +90,52 @@ interface DraftsPageClientProps {
   classes: ClassItem[];
   filters: Filters;
 }
+
+const draftExportColumns: ExportColumn[] = [
+  { header: "S.N.", key: "childNumber" },
+  { header: "First Name", key: "firstName" },
+  { header: "Last Name", key: "lastName" },
+  {
+    header: "Date of Birth",
+    key: "dateOfBirth",
+    transform: (value) => {
+      if (!value) return "";
+      const date = new Date(value as string);
+      return Number.isNaN(date.getTime()) ? "" : date.toLocaleDateString("en-GB");
+    },
+  },
+  {
+    header: "Branch",
+    key: "branch",
+    transform: (value) => (value as { name: string } | null)?.name ?? "",
+  },
+  {
+    header: "Class",
+    key: "class",
+    transform: (value) => (value as { name: string } | null)?.name ?? "",
+  },
+  { header: "Nationality", key: "nationality" },
+  { header: "Gender", key: "gender" },
+  {
+    header: "Date",
+    key: "createdAt",
+    transform: (value) => {
+      if (!value) return "";
+      const date = new Date(value as string);
+      return Number.isNaN(date.getTime()) ? "" : date.toLocaleDateString("en-GB");
+    },
+  },
+];
+
+const legacyFilterKeys = [
+  "childNumber",
+  "firstName",
+  "lastName",
+  "dateOfBirth",
+  "nationality",
+  "createdFrom",
+  "createdTo",
+] as const;
 
 export function DraftsPageClient({
   childrenList,
@@ -98,6 +155,15 @@ export function DraftsPageClient({
   } | null>(null);
 
   const [searchValue, setSearchValue] = useState(filters.search);
+  const [legacyFilters, setLegacyFilters] = useState(() => ({
+    childNumber: filters.childNumber,
+    firstName: filters.firstName,
+    lastName: filters.lastName,
+    dateOfBirth: filters.dateOfBirth,
+    nationality: filters.nationality,
+    createdFrom: filters.createdFrom,
+    createdTo: filters.createdTo,
+  }));
 
   // ── URL param helpers ──────────────────────────
 
@@ -126,11 +192,74 @@ export function DraftsPageClient({
     return classes.filter((c) => c.branchId === filters.branch);
   }, [filters.branch, classes]);
 
+  const activeFilters = useMemo(() => {
+    const pills: { key: string; label: string; value: string }[] = [];
+    if (filters.search) pills.push({ key: "search", label: "Search", value: filters.search });
+    if (filters.branch !== "ALL") {
+      const branch = branches.find((item) => item.id === filters.branch);
+      pills.push({ key: "branch", label: "Branch", value: branch?.name ?? filters.branch });
+    }
+    if (filters.class !== "ALL") {
+      const klass = classes.find((item) => item.id === filters.class);
+      pills.push({ key: "class", label: "Class", value: klass?.name ?? filters.class });
+    }
+    if (filters.gender !== "ALL") {
+      pills.push({ key: "gender", label: "Gender", value: filters.gender === "MALE" ? "Male" : "Female" });
+    }
+    if (filters.childNumber) pills.push({ key: "childNumber", label: "S.N.", value: filters.childNumber });
+    if (filters.firstName) pills.push({ key: "firstName", label: "F Name", value: filters.firstName });
+    if (filters.lastName) pills.push({ key: "lastName", label: "L Name", value: filters.lastName });
+    if (filters.dateOfBirth) pills.push({ key: "dateOfBirth", label: "DOB", value: filters.dateOfBirth });
+    if (filters.nationality) pills.push({ key: "nationality", label: "Nationality", value: filters.nationality });
+    if (filters.createdFrom) pills.push({ key: "createdFrom", label: "Created from", value: filters.createdFrom });
+    if (filters.createdTo) pills.push({ key: "createdTo", label: "Created to", value: filters.createdTo });
+    return pills;
+  }, [branches, classes, filters]);
+
   // ── Handlers ───────────────────────────────────
 
   const handleSearchSubmit = useCallback(() => {
     updateParams({ search: searchValue });
   }, [searchValue, updateParams]);
+
+  const clearFilter = useCallback(
+    (key: string) => {
+      if (key === "search") {
+        setSearchValue("");
+      }
+      if (legacyFilterKeys.includes(key as (typeof legacyFilterKeys)[number])) {
+        setLegacyFilters((current) => ({ ...current, [key]: "" }));
+      }
+      updateParams({ [key]: "" });
+    },
+    [updateParams]
+  );
+
+  const clearAllFilters = useCallback(() => {
+    setSearchValue("");
+    setLegacyFilters({
+      childNumber: "",
+      firstName: "",
+      lastName: "",
+      dateOfBirth: "",
+      nationality: "",
+      createdFrom: "",
+      createdTo: "",
+    });
+    updateParams({
+      search: "",
+      branch: "",
+      class: "",
+      gender: "",
+      childNumber: "",
+      firstName: "",
+      lastName: "",
+      dateOfBirth: "",
+      nationality: "",
+      createdFrom: "",
+      createdTo: "",
+    });
+  }, [updateParams]);
 
   const handleBranchChange = useCallback(
     (value: string) => {
@@ -151,6 +280,21 @@ export function DraftsPageClient({
       updateParams({ gender: value });
     },
     [updateParams]
+  );
+
+  const handleLegacyFilterChange = useCallback(
+    (key: keyof typeof legacyFilters, value: string) => {
+      setLegacyFilters((current) => ({ ...current, [key]: value }));
+    },
+    []
+  );
+
+  const applyLegacyFilters = useCallback(
+    (event?: React.FormEvent) => {
+      event?.preventDefault();
+      updateParams(legacyFilters);
+    },
+    [legacyFilters, updateParams]
   );
 
   const handlePageChange = useCallback(
@@ -218,7 +362,7 @@ export function DraftsPageClient({
   // ── Table setup ────────────────────────────────
 
   const columns = useMemo(
-    () => getChildrenColumns({ onDelete: handleDeleteRequest }),
+    () => getChildrenColumns({ onDelete: handleDeleteRequest, variant: "drafts" }),
     [handleDeleteRequest]
   );
 
@@ -313,6 +457,13 @@ export function DraftsPageClient({
           {/* Spacer */}
           <div className="flex-1" />
 
+          <ExportButton
+            filename="children_drafts"
+            sheetName="Children Drafts"
+            columns={draftExportColumns}
+            data={childrenList as unknown as Record<string, unknown>[]}
+          />
+
           {/* Add Child button */}
           <Button
             asChild
@@ -325,10 +476,93 @@ export function DraftsPageClient({
           </Button>
         </div>
 
+        <form
+          onSubmit={applyLegacyFilters}
+          className="grid gap-2 rounded border border-border/60 bg-card p-3 sm:grid-cols-2 lg:grid-cols-[0.75fr_1fr_1fr_1fr_1fr_1fr_1fr_auto_auto]"
+        >
+          <Input
+            value={legacyFilters.childNumber}
+            onChange={(event) => handleLegacyFilterChange("childNumber", event.target.value)}
+            placeholder="S.N."
+            className="h-9"
+          />
+          <Input
+            value={legacyFilters.firstName}
+            onChange={(event) => handleLegacyFilterChange("firstName", event.target.value)}
+            placeholder="F Name"
+            className="h-9"
+          />
+          <Input
+            value={legacyFilters.lastName}
+            onChange={(event) => handleLegacyFilterChange("lastName", event.target.value)}
+            placeholder="L Name"
+            className="h-9"
+          />
+          <Input
+            type="date"
+            value={legacyFilters.dateOfBirth}
+            onChange={(event) => handleLegacyFilterChange("dateOfBirth", event.target.value)}
+            aria-label="Date of birth"
+            className="h-9"
+          />
+          <Input
+            value={legacyFilters.nationality}
+            onChange={(event) => handleLegacyFilterChange("nationality", event.target.value)}
+            placeholder="Nationality"
+            className="h-9"
+          />
+          <Input
+            type="date"
+            value={legacyFilters.createdFrom}
+            onChange={(event) => handleLegacyFilterChange("createdFrom", event.target.value)}
+            aria-label="Created from"
+            className="h-9"
+          />
+          <Input
+            type="date"
+            value={legacyFilters.createdTo}
+            onChange={(event) => handleLegacyFilterChange("createdTo", event.target.value)}
+            aria-label="Created to"
+            className="h-9"
+          />
+          <Button type="submit" variant="outline" size="sm" disabled={isPending}>
+            <Filter className="size-4" />
+            Apply
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={clearAllFilters}
+            disabled={isPending}
+          >
+            <X className="size-4" />
+            Clear
+          </Button>
+        </form>
+
+        {activeFilters.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="mr-1 text-xs font-medium text-muted-foreground">Filters:</span>
+            {activeFilters.map((filter) => (
+              <button
+                key={filter.key}
+                type="button"
+                onClick={() => clearFilter(filter.key)}
+                className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-2 py-1 text-xs text-primary"
+              >
+                <span className="font-medium">{filter.label}:</span>
+                {filter.value}
+                <X className="size-3" />
+              </button>
+            ))}
+          </div>
+        ) : null}
+
         {/* ── Data Table ──────────────────────────── */}
         <div className="space-y-4">
           <div className="overflow-x-auto rounded-md border bg-card">
-            <Table className="min-w-[700px]">
+            <Table className="min-w-[940px]">
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
@@ -399,7 +633,7 @@ export function DraftsPageClient({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent side="top">
-                  {[10, 20, 30, 50, 100].map((size) => (
+                  {[10, 20, 50, 100, 150].map((size) => (
                     <SelectItem key={size} value={String(size)}>
                       {size}
                     </SelectItem>

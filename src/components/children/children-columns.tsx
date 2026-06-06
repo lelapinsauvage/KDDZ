@@ -180,12 +180,14 @@ const STATUS_CONFIG: Record<
 interface ChildrenColumnsOptions {
   onDelete?: (id: string, name: string) => void;
   onToggleActive?: (child: ChildRow) => void;
+  variant?: "children" | "drafts";
 }
 
 export function getChildrenColumns(
   options: ChildrenColumnsOptions = {}
 ): ColumnDef<ChildRow>[] {
-  return [
+  const variant = options.variant ?? "children";
+  const columns: ColumnDef<ChildRow>[] = [
     // Child number
     {
       accessorKey: "childNumber",
@@ -339,7 +341,23 @@ export function getChildrenColumns(
         );
       },
     },
+  ];
 
+  if (variant === "drafts") {
+    columns.push({
+      accessorKey: "nationality",
+      header: ({ column }) => (
+        <SortableHeader column={column}>Nationality</SortableHeader>
+      ),
+      cell: ({ row }) => {
+        const nationality = row.original.nationality;
+        if (!nationality) return <span className="text-muted-foreground">-</span>;
+        return <span className="text-sm">{nationality}</span>;
+      },
+    });
+  }
+
+  columns.push(
     // Gender
     {
       accessorKey: "gender",
@@ -368,15 +386,16 @@ export function getChildrenColumns(
     {
       accessorKey: "createdAt",
       header: ({ column }) => (
-        <SortableHeader column={column}>Created</SortableHeader>
+        <SortableHeader column={column}>Date</SortableHeader>
       ),
       cell: ({ row }) => {
         return <span className="text-sm">{formatDate(row.original.createdAt)}</span>;
       },
     },
+  );
 
-    // Status — colored badge with icon
-    {
+  if (variant === "children") {
+    columns.push({
       accessorKey: "status",
       accessorFn: (row) => getStatus(row),
       header: ({ column }) => (
@@ -411,8 +430,10 @@ export function getChildrenColumns(
         if (!filterValue || filterValue === "ALL") return true;
         return getStatus(row.original) === filterValue;
       },
-    },
+    });
+  }
 
+  columns.push(
     // Actions
     {
       id: "actions",
@@ -422,24 +443,28 @@ export function getChildrenColumns(
         const child = row.original;
         return (
           <div className="flex items-center gap-0.5 print:hidden">
-            <Button variant="ghost" size="sm" className="size-8 p-0" asChild>
-              <Link
-                href={`/children/${child.id}/dashboard`}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <LayoutDashboard className="size-4 text-muted-foreground" />
-                <span className="sr-only">Dashboard</span>
-              </Link>
-            </Button>
-            <Button variant="ghost" size="sm" className="size-8 p-0" asChild>
-              <Link
-                href={`/children/${child.id}/print`}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Printer className="size-4 text-muted-foreground" />
-                <span className="sr-only">Print</span>
-              </Link>
-            </Button>
+            {variant === "children" ? (
+              <>
+                <Button variant="ghost" size="sm" className="size-8 p-0" asChild>
+                  <Link
+                    href={`/children/${child.id}/dashboard`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <LayoutDashboard className="size-4 text-muted-foreground" />
+                    <span className="sr-only">Dashboard</span>
+                  </Link>
+                </Button>
+                <Button variant="ghost" size="sm" className="size-8 p-0" asChild>
+                  <Link
+                    href={`/children/${child.id}/print`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Printer className="size-4 text-muted-foreground" />
+                    <span className="sr-only">Print</span>
+                  </Link>
+                </Button>
+              </>
+            ) : null}
             <Button variant="ghost" size="sm" className="size-8 p-0" asChild>
               <Link
                 href={`/children/${child.id}/edit`}
@@ -466,5 +491,7 @@ export function getChildrenColumns(
       },
       enableSorting: false,
     },
-  ];
+  );
+
+  return columns;
 }

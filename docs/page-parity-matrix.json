@@ -1128,7 +1128,7 @@
     "legacyPhp": "Front/templates/admin/children_drafts.php",
     "legacyJs": "Front/templates/admin/js/children_drafts.js",
     "modernRoute": "/children/drafts",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "partial - legacy draft roster restored; bulk modal/export visual audit remains",
     "legacyTablesMentioned": [
       "Form",
       "Selected",
@@ -1136,7 +1136,7 @@
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored `/children/drafts` as a real draft listing instead of a redirect, backed by `getDrafts`/`isDraft`, with legacy S.N./image/F Name/L Name/DOB/Branch/Class/Nationality/Gender/Date/Action columns, child photo fallback handling, S.N./first/last/DOB/nationality/created-date filters, branch/class/gender filters, 10/20/50/100/150 page sizes, export, New Child, edit, and deactivate actions. Remaining work is legacy checkbox bulk branch/class modal behavior, exact TableTools copy/PDF/XLS/print visual parity, and commented WebSocket refresh behavior."
   },
   {
     "legacyPhp": "Front/templates/admin/childrenperbranch.php",
