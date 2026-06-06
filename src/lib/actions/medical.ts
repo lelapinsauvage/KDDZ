@@ -138,6 +138,10 @@ export async function getMedicalForms(params: GetMedicalFormsParams = {}) {
           createdBy: {
             select: { id: true, name: true, email: true },
           },
+          attachments: {
+            where: { isActive: true },
+            orderBy: { createdAt: "asc" },
+          },
         },
         orderBy: { createdAt: "desc" },
         skip,
@@ -244,6 +248,10 @@ export async function createMedicalForm(input: CreateMedicalFormData) {
     });
 
     revalidatePath("/medical");
+    if (input.formType === "ACCIDENTS") {
+      revalidatePath("/medical/accidents");
+      revalidatePath(`/children/${input.childId}/accidents`);
+    }
     return { success: true, formId: form.id };
   } catch (error) {
     console.error("createMedicalForm error:", error);
@@ -360,6 +368,12 @@ export async function updateMedicalForm(id: string, input: UpdateMedicalFormData
     }
 
     revalidatePath("/medical");
+    const revalidatedChildId = input.childId ?? existing.childId;
+    const revalidatedFormType = input.formType ?? existing.formType;
+    if (revalidatedFormType === "ACCIDENTS") {
+      revalidatePath("/medical/accidents");
+      revalidatePath(`/children/${revalidatedChildId}/accidents`);
+    }
     return { success: true, formId: form.id };
   } catch (error) {
     console.error("updateMedicalForm error:", error);
@@ -391,6 +405,10 @@ export async function deleteMedicalForm(id: string) {
     await db.medicalForm.delete({ where: { id } });
 
     revalidatePath("/medical");
+    if (existing.formType === "ACCIDENTS") {
+      revalidatePath("/medical/accidents");
+      revalidatePath(`/children/${existing.childId}/accidents`);
+    }
     return { success: true };
   } catch (error) {
     console.error("deleteMedicalForm error:", error);
@@ -425,6 +443,8 @@ export async function deleteAccidentReport(id: string) {
     await db.medicalForm.delete({ where: { id } });
 
     revalidatePath("/medical");
+    revalidatePath("/medical/accidents");
+    revalidatePath(`/children/${existing.childId}/accidents`);
     return { success: true };
   } catch (error) {
     console.error("deleteAccidentReport error:", error);

@@ -1033,7 +1033,7 @@
     "legacyPhp": "Front/templates/admin/child_accident.php",
     "legacyJs": "Front/templates/admin/js/child_accident.js",
     "modernRoute": "/children/[id]/accidents",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "partial - legacy child accident table restored; visual export audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -1041,7 +1041,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored child-specific accident report header, Date/Time/Cause/Place/Specific Area/Cam #/First Aid/Teacher/Hospital/Treatment/Action/Attachment table columns, search/date/attachment filters, Excel/CSV export, first-attachment open action with count badge, new accident dialog, and view/edit/delete actions with confirmation. Remaining work is exact legacy image-preview modal behavior and DataTables TableTools visual/PDF export parity."
   },
   {
     "legacyPhp": "Front/templates/admin/child_accounting.php",
