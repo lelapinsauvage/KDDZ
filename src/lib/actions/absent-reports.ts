@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireOrg, requireOrgSafe } from "@/lib/require-org";
-import { verifyChildAccess } from "@/lib/verify-org-access";
 import { absenceReportSchema } from "@/lib/validations/absence-report";
 import type { AbsenceStatus, Prisma } from "@/generated/prisma/client";
 
@@ -48,6 +47,96 @@ function parseJsonPayload<T>(
   } catch {
     return fallback;
   }
+}
+
+function jsonRecord(value: Prisma.JsonValue | null | undefined): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+  return { ...value };
+}
+
+function optionalString(value: string | null | undefined) {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
+async function loadAbsenceFormContext(
+  organizationId: string,
+  childId: string,
+  teacherId: string | null,
+) {
+  const [child, teacher] = await Promise.all([
+    db.child.findUnique({
+      where: { id: childId },
+      include: {
+        branch: true,
+        class: true,
+      },
+    }),
+    teacherId
+      ? db.teacher.findFirst({
+          where: {
+            id: teacherId,
+            branch: { organizationId },
+          },
+          select: {
+            id: true,
+            legacyId: true,
+            firstName: true,
+            lastName: true,
+          },
+        })
+      : Promise.resolve(null),
+  ]);
+
+  if (!child || child.branch?.organizationId !== organizationId) {
+    return { error: "Invalid child" as const };
+  }
+  if (teacherId && !teacher) {
+    return { error: "Invalid teacher" as const };
+  }
+
+  return { child, teacher };
+}
+
+function buildAbsenceLegacyData(params: {
+  existing?: Prisma.JsonValue | null;
+  data: z.infer<typeof absenceReportSchema>;
+  child: {
+    id: string;
+    legacyId: number | null;
+    classId: string | null;
+    class: { legacyId: number | null } | null;
+  };
+  teacher: { id: string; legacyId: number | null; firstName: string; lastName: string } | null;
+}) {
+  const existing = jsonRecord(params.existing);
+  const teacherLegacyId = params.teacher?.legacyId ?? null;
+  const childLegacyId = params.child.legacyId ?? null;
+  const classLegacyId = params.child.class?.legacyId ?? null;
+  const isDraft = params.data.status === "PENDING" ? 1 : 0;
+  const attendHos = params.data.hospitalizedChoice || (params.data.hospitalized ? "Yes" : "No");
+
+  return {
+    ...existing,
+    child_id: childLegacyId ?? existing.child_id ?? params.child.id,
+    class_id: classLegacyId ?? existing.class_id ?? params.data.classId ?? params.child.classId ?? "",
+    teacher_id: teacherLegacyId ?? existing.teacher_id ?? params.data.teacherId ?? "",
+    teacher_name: params.teacher ? `${params.teacher.firstName} ${params.teacher.lastName}` : existing.teacher_name ?? "",
+    reportdate: params.data.date,
+    ab_reason: params.data.reason ?? "",
+    ab_from: params.data.absentFrom ?? "",
+    ab_to: params.data.absentTo ?? "",
+    attend_hos: attendHos,
+    hos_name: params.data.hospitalized ? params.data.hospitalName ?? "" : "",
+    dr_name: params.data.hospitalized ? params.data.doctorName ?? "" : "",
+    is_rep_draft: isDraft,
+    active: existing.active ?? 1,
+    modernChildId: params.child.id,
+    modernClassId: params.data.classId || params.child.classId || null,
+    modernTeacherId: params.teacher?.id ?? null,
+  };
 }
 
 // ─────────────────────────────────────────────
@@ -210,10 +299,10 @@ export async function createAbsenceReport(formData: FormData) {
       attachmentPayloadSchema,
       [],
     );
+    const teacherId = optionalString(data.teacherId);
 
-    // Verify child belongs to this org
-    const childOk = await verifyChildAccess(data.childId, ctx.organizationId);
-    if (!childOk) return { error: "Invalid child" };
+    const context = await loadAbsenceFormContext(ctx.organizationId, data.childId, teacherId);
+    if ("error" in context) return { error: context.error };
 
     const report = await db.absenceReport.create({
       data: {
@@ -226,6 +315,11 @@ export async function createAbsenceReport(formData: FormData) {
         hospitalName: data.hospitalized ? (data.hospitalName || null) : null,
         doctorName: data.hospitalized ? (data.doctorName || null) : null,
         status: data.status,
+        legacyData: buildAbsenceLegacyData({
+          data,
+          child: context.child,
+          teacher: context.teacher,
+        }),
         createdById: ctx.userId,
         attachments: attachments.length
           ? {
@@ -294,9 +388,10 @@ export async function updateAbsenceReport(id: string, formData: FormData) {
       removeAttachmentIdsSchema,
       [],
     );
+    const teacherId = optionalString(data.teacherId);
 
-    const childOk = await verifyChildAccess(data.childId, ctx.organizationId);
-    if (!childOk) return { error: "Invalid child" };
+    const context = await loadAbsenceFormContext(ctx.organizationId, data.childId, teacherId);
+    if ("error" in context) return { error: context.error };
 
     const report = await db.$transaction(async (tx) => {
       const updatedReport = await tx.absenceReport.update({
@@ -311,6 +406,12 @@ export async function updateAbsenceReport(id: string, formData: FormData) {
           hospitalName: data.hospitalized ? (data.hospitalName || null) : null,
           doctorName: data.hospitalized ? (data.doctorName || null) : null,
           status: data.status,
+          legacyData: buildAbsenceLegacyData({
+            existing: existing.legacyData,
+            data,
+            child: context.child,
+            teacher: context.teacher,
+          }),
         },
       });
 
