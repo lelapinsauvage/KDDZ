@@ -1,10 +1,12 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getClassDashboard } from "@/lib/actions/classes";
+import { getSchoolYears } from "@/lib/actions/school-years";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { FadeIn } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ClassDashboardYearSelector } from "./class-dashboard-year-selector";
 import {
   Table,
   TableBody,
@@ -36,6 +38,7 @@ import {
 
 interface Props {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<{ year?: string | string[] }>;
 }
 
 function statusBadge(status: string) {
@@ -72,15 +75,23 @@ function EmptyRow({ colSpan, label }: { colSpan: number; label: string }) {
   );
 }
 
-export default async function ClassDashboardPage({ params }: Props) {
+export default async function ClassDashboardPage({ params, searchParams }: Props) {
   const { id } = await params;
-  const result = await getClassDashboard(id);
+  const query = await searchParams;
+  const requestedYear = Array.isArray(query?.year) ? query?.year[0] : query?.year;
+  const [result, yearsResult] = await Promise.all([
+    getClassDashboard(id, { schoolYearId: requestedYear }),
+    getSchoolYears(),
+  ]);
 
   if (!result.success) {
     notFound();
   }
 
-  const { classInfo, dailyReports, medical, assessments } = result.data;
+  const { selectedSchoolYear, classInfo, dailyReports, medical, assessments } = result.data;
+  const schoolYears = ((yearsResult.data ?? []) as Array<{ id: string; label: string }>).map(
+    (year) => ({ id: year.id, label: year.label })
+  );
 
   return (
     <FadeIn className="space-y-6 p-4 md:p-6">
@@ -112,12 +123,18 @@ export default async function ClassDashboardPage({ params }: Props) {
               {classInfo.language && <span>{classInfo.language}</span>}
             </div>
           </div>
-          <Link
-            href={`/messages/compose/class?classId=${classInfo.id}`}
-            className="inline-flex h-9 items-center justify-center rounded-sm bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Message Portal
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <ClassDashboardYearSelector
+              years={schoolYears}
+              selectedYearId={selectedSchoolYear?.id ?? null}
+            />
+            <Link
+              href={`/messages/compose/class?classId=${classInfo.id}`}
+              className="inline-flex h-9 items-center justify-center rounded-sm bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              Message Portal
+            </Link>
+          </div>
         </div>
       </div>
 

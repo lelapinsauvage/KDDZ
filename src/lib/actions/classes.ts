@@ -16,6 +16,10 @@ import type { AgeUnit, MedicalFormType, Prisma } from "@/generated/prisma/client
 // ---------------------------------------------------------------------------
 
 export interface ClassDashboardData {
+  selectedSchoolYear: {
+    id: string;
+    label: string;
+  } | null;
   classInfo: {
     id: string;
     name: string;
@@ -246,6 +250,22 @@ function legacyDailyProgress(value: Prisma.JsonValue | null | undefined) {
   return null;
 }
 
+function legacyNumber(value: Prisma.JsonValue | null | undefined, ...keys: string[]) {
+  const payload = jsonObject(value);
+  if (!payload) return null;
+
+  for (const key of keys) {
+    const raw = payload[key];
+    if (typeof raw === "number" && Number.isFinite(raw)) return raw;
+    if (typeof raw === "string" && raw.trim() !== "") {
+      const parsed = Number(raw);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
+
+  return null;
+}
+
 function assessmentProgressPercent(data: Prisma.JsonValue | null | undefined, type: number) {
   const config = ASSESSMENT_CONFIGS[type];
   const payload = jsonObject(data);
@@ -278,8 +298,104 @@ function isEligibleForAssessment(
   return joiningAge === null || joiningAge <= maxDays;
 }
 
+function schoolYearLookupValues(label: string) {
+  const values = new Set([label]);
+  const startYear = label.match(/\b(\d{4})\b/)?.[1];
+  if (startYear) values.add(startYear);
+  return [...values];
+}
+
+async function resolveClassDashboardSchoolYear(
+  organizationId: string,
+  schoolYearId?: string | null
+) {
+  const selectedSchoolYear = schoolYearId
+    ? await db.schoolYear.findFirst({
+        where: { id: schoolYearId, organizationId },
+        select: { id: true, label: true, sourceDatabase: true },
+      })
+    : await db.schoolYear.findFirst({
+        where: { organizationId, isActive: true },
+        select: { id: true, label: true, sourceDatabase: true },
+        orderBy: { startDate: "desc" },
+      }) ??
+      (await db.schoolYear.findFirst({
+        where: { organizationId },
+        select: { id: true, label: true, sourceDatabase: true },
+        orderBy: { startDate: "desc" },
+      }));
+
+  if (!selectedSchoolYear) {
+    return { selectedSchoolYear: null, legacyMedicalVisitDbIds: [] as number[] };
+  }
+
+  if (!schoolYearId) {
+    const selectedYearDbs = await db.legacyYearDatabase.findMany({
+      where: {
+        legacyTable: "year_db",
+        isSelected: true,
+        ...(selectedSchoolYear.sourceDatabase
+          ? { sourceDatabase: selectedSchoolYear.sourceDatabase }
+          : {}),
+      },
+      select: { legacyId: true },
+    });
+    if (selectedYearDbs.length > 0) {
+      return {
+        selectedSchoolYear,
+        legacyMedicalVisitDbIds: selectedYearDbs.map((row) => row.legacyId),
+      };
+    }
+  }
+
+  const yearSelectRows = await db.legacyYearDatabase.findMany({
+    where: {
+      legacyTable: "year_select",
+      selectedYear: { in: schoolYearLookupValues(selectedSchoolYear.label) },
+      ...(selectedSchoolYear.sourceDatabase
+        ? { sourceDatabase: selectedSchoolYear.sourceDatabase }
+        : {}),
+    },
+    select: { legacyId: true },
+  });
+
+  const yearSelectIds = yearSelectRows.map((row) => row.legacyId);
+  if (yearSelectIds.length === 0) {
+    return { selectedSchoolYear, legacyMedicalVisitDbIds: [] as number[] };
+  }
+
+  const yearDbRows = await db.legacyYearDatabase.findMany({
+    where: {
+      legacyTable: "year_db",
+      legacyYearId: { in: yearSelectIds },
+      ...(selectedSchoolYear.sourceDatabase
+        ? { sourceDatabase: selectedSchoolYear.sourceDatabase }
+        : {}),
+    },
+    select: { legacyId: true },
+  });
+
+  return {
+    selectedSchoolYear,
+    legacyMedicalVisitDbIds: yearDbRows.map((row) => row.legacyId),
+  };
+}
+
+function matchesLegacyMedicalVisitYear(
+  data: Prisma.JsonValue | null | undefined,
+  legacyDbIds: number[]
+) {
+  if (legacyDbIds.length === 0) return true;
+
+  const legacyDbId = legacyNumber(data, "db_id");
+  if (legacyDbId === null) return true;
+
+  return legacyDbIds.includes(legacyDbId);
+}
+
 export async function getClassDashboard(
-  classId: string
+  classId: string,
+  params: { schoolYearId?: string | null } = {}
 ): Promise<{ success: true; data: ClassDashboardData } | { success: false; error: string }> {
   try {
     const { organizationId: orgId } = await requireOrg();
@@ -295,6 +411,9 @@ export async function getClassDashboard(
     if (!cls || cls.branch.organizationId !== orgId) {
       return { success: false, error: "Class not found" };
     }
+
+    const { selectedSchoolYear, legacyMedicalVisitDbIds } =
+      await resolveClassDashboardSchoolYear(orgId, params.schoolYearId);
 
     // Active children in this class
     const activeChildren = await db.child.findMany({
@@ -332,6 +451,7 @@ export async function getClassDashboard(
       return {
         success: true,
         data: {
+          selectedSchoolYear,
           classInfo: {
             id: cls.id,
             name: cls.name,
@@ -565,6 +685,12 @@ export async function getClassDashboard(
 
       const forms = medicalForms.filter((form) => {
         if (form.formType !== config.formType) return false;
+        if (
+          config.formType === "VISITS" &&
+          !matchesLegacyMedicalVisitYear(form.data, legacyMedicalVisitDbIds)
+        ) {
+          return false;
+        }
         if (config.todayOnly && (form.createdAt < today || form.createdAt >= tomorrow)) return false;
         if (config.sufferingOnly) {
           const data = jsonObject(form.data);
@@ -707,6 +833,7 @@ export async function getClassDashboard(
     return {
       success: true,
       data: {
+        selectedSchoolYear,
         classInfo: {
           id: cls.id,
           name: cls.name,

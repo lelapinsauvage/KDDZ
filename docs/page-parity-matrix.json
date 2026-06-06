@@ -1195,18 +1195,21 @@
     "legacyPhp": "Front/templates/admin/class_dashboard.php",
     "legacyJs": "Front/templates/admin/js/class_dashboard.js",
     "modernRoute": "/classes/[id]",
-    "status": "restored - modern schema caveats",
+    "status": "restored - import backfill caveat",
     "legacyTablesMentioned": [
       "t_form_6",
       "t_daily_report",
       "t_form_3",
+      "year_db",
+      "year_select",
       "auto",
       "themeforest"
     ],
     "requestFieldsMentioned": [
-      "id"
+      "id",
+      "db_curr"
     ],
-    "verification": "Restored class summary, seven-day birthdays, daily/absent rosters, medical/call breakdowns, assessment age-band counts/rows, class-message preselect, and child preselect for new assessments. Call reports now match legacy `MED6REP`/`MED6REPD` semantics by counting today's non-draft Form 6 rows separately from today's drafts and linking to the class-scoped Calls listing. Daily reports now match legacy `WREP`/`INCOMP`/`DREP` semantics by using preserved `d_progress_all` to separate completed, incomplete, and draft reports. Remaining caveat: legacy `db_curr` year switch for medical visits does not map one-to-one."
+    "verification": "Restored class summary, seven-day birthdays, daily/absent rosters, medical/call breakdowns, assessment age-band counts/rows, class-message preselect, and child preselect for new assessments. Call reports now match legacy `MED6REP`/`MED6REPD` semantics by counting today's non-draft Form 6 rows separately from today's drafts and linking to the class-scoped Calls listing. Daily reports now match legacy `WREP`/`INCOMP`/`DREP` semantics by using preserved `d_progress_all` to separate completed, incomplete, and draft reports. Medical visits now restore legacy `db_curr` behavior by resolving selected school years through `year_select`/`year_db` and filtering Form 3 by preserved `db_id`; pre-fix imports without `db_id` retain the existing unfiltered fallback until reimport/backfill."
   },
   {
     "legacyPhp": "Front/templates/admin/classes.php",

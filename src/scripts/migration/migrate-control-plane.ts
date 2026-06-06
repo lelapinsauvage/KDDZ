@@ -71,6 +71,7 @@ interface OldYearDatabase {
   dbname: string;
   selected: number;
   datetime: string | Date;
+  sel_year?: string | number | null;
 }
 
 function legacyData(row: object) {
@@ -489,7 +490,7 @@ async function migrateYearDatabases(
   }
 
   const rows = await queryMysql<OldYearDatabase>(
-    "SELECT * FROM year_db ORDER BY dbid"
+    "SELECT year_db.*, year_select.sel_year FROM year_db LEFT JOIN year_select ON year_select.yid = year_db.db_yid ORDER BY year_db.dbid"
   );
   log(`Found ${rows.length} rows in year_db`);
 
@@ -521,6 +522,7 @@ async function migrateYearDatabases(
           legacyKey: key,
           legacyId,
           legacyYearId: toInt(row.db_yid, 0) || null,
+          selectedYear: cleanString(row.sel_year),
           databaseName: cleanString(row.dbname),
           isSelected: toBool(row.selected),
           sourceCreatedAt: asDate(row.datetime),

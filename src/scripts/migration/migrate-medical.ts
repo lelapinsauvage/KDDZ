@@ -102,9 +102,7 @@ async function migrateFormTable(
         key !== "active" &&
         key !== "datetime" &&
         key !== "is_rep_draft" &&
-        key !== "f_progress" &&
-        key !== "uby" &&
-        key !== "db_id"
+        key !== "uby"
       ) {
         data[key] = val;
       }
