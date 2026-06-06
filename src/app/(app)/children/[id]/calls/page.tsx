@@ -35,7 +35,12 @@ export default async function ChildCallsPage({ params }: Props) {
     branchId: child.branchId,
     firstName: child.firstName,
     lastName: child.lastName,
+    photo: child.photo ?? null,
   };
+
+  const staffById = new Map(
+    staffList.map((staff) => [staff.id, staff.name ?? staff.email]),
+  );
 
   const calls = callsRaw.map((c) => ({
     id: c.id,
@@ -44,10 +49,16 @@ export default async function ChildCallsPage({ params }: Props) {
     direction: c.direction,
     contact: c.contact ?? "",
     phone: c.phone ?? "",
+    teacher: staffById.get(c.staffId ?? "") ?? "",
     subject: c.subject ?? "",
     reason: c.reason ?? "",
     remarks: c.remarks ?? "",
     createdBy: c.createdBy?.name ?? c.createdBy?.email ?? null,
+    attachments: (c.attachments ?? []).map((attachment) => ({
+      id: attachment.id,
+      filename: attachment.filename,
+      fileUrl: attachment.fileUrl,
+    })),
   }));
 
   return (

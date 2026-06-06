@@ -58,8 +58,12 @@ export async function getChildCallLogs(childId: string) {
         createdBy: {
           select: { id: true, name: true, email: true },
         },
+        attachments: {
+          where: { isActive: true },
+          orderBy: { createdAt: "asc" },
+        },
       },
-      orderBy: { date: "desc" },
+      orderBy: [{ date: "asc" }, { time: "asc" }, { createdAt: "asc" }],
     });
 
     return calls;
