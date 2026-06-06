@@ -39,6 +39,7 @@ interface CallLogMutationData {
     filename: string;
     fileUrl: string;
   }>;
+  removeAttachmentIds?: string[];
 }
 
 type CreateCallLogData = CallLogMutationData;
@@ -307,8 +308,9 @@ export async function getCallLogs(params: GetCallLogsParams = {}) {
           createdBy: {
             select: { id: true, name: true, email: true },
           },
-          _count: {
-            select: { attachments: true },
+          attachments: {
+            where: { isActive: true },
+            select: { id: true },
           },
         },
         orderBy: [{ legacyId: "desc" }, { date: "desc" }, { createdAt: "desc" }],
@@ -514,12 +516,24 @@ export async function updateCallLog(
       return { success: false, error: "Child not found" };
     }
 
-    await db.callLog.update({
-      where: { id },
-      data: {
-        ...callLogData(data, legacyContext, existing.legacyData),
-        attachments: callLogAttachmentData(data),
-      },
+    await db.$transaction(async (tx) => {
+      await tx.callLog.update({
+        where: { id },
+        data: {
+          ...callLogData(data, legacyContext, existing.legacyData),
+          attachments: callLogAttachmentData(data),
+        },
+      });
+
+      if (data.removeAttachmentIds?.length) {
+        await tx.formAttachment.updateMany({
+          where: {
+            callLogId: id,
+            id: { in: data.removeAttachmentIds },
+          },
+          data: { isActive: false },
+        });
+      }
     });
 
     revalidatePath(`/children/${existing.childId}/calls`);

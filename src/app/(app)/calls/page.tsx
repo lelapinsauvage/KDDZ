@@ -97,7 +97,7 @@ export default async function CallsManagementPage({ searchParams }: PageProps) {
     reason: call.reason ?? "",
     remarks: call.remarks ?? "",
     createdBy: call.createdBy?.name ?? call.createdBy?.email ?? null,
-    attachmentCount: call._count.attachments,
+    attachmentCount: call.attachments.length,
   }));
 
   const children = childOptions.map((child) => ({

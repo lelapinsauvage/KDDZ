@@ -106,6 +106,10 @@ export function CallReportDialog({
   const [subject, setSubject] = useState(() => initialCall?.subject ?? "");
   const [remarks, setRemarks] = useState(() => initialCall?.remarks ?? "");
   const [teacherId, setTeacherId] = useState(() => initialCall?.staffId ?? "");
+  const [existingAttachments, setExistingAttachments] = useState(
+    () => initialCall?.attachments ?? [],
+  );
+  const [removedAttachmentIds, setRemovedAttachmentIds] = useState<string[]>([]);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [error, setError] = useState("");
   const causeOptions = callCauseOptions.length ? callCauseOptions : CALL_CAUSE_OPTIONS;
@@ -139,6 +143,8 @@ export function CallReportDialog({
     setSubject(initialCall?.subject ?? "");
     setRemarks(initialCall?.remarks ?? "");
     setTeacherId(initialCall?.staffId ?? "");
+    setExistingAttachments(initialCall?.attachments ?? []);
+    setRemovedAttachmentIds([]);
     setAttachments([]);
     setError("");
   }
@@ -153,6 +159,15 @@ export function CallReportDialog({
   function removeAttachment(index: number) {
     setAttachments((current) =>
       current.filter((_, attachmentIndex) => attachmentIndex !== index),
+    );
+  }
+
+  function removeExistingAttachment(id: string) {
+    setExistingAttachments((current) =>
+      current.filter((attachment) => attachment.id !== id),
+    );
+    setRemovedAttachmentIds((current) =>
+      current.includes(id) ? current : [...current, id],
     );
   }
 
@@ -227,6 +242,7 @@ export function CallReportDialog({
         staffId: teacherId,
         isDraft,
         attachments: uploadedAttachments,
+        removeAttachmentIds: removedAttachmentIds,
       };
 
       const result =
@@ -375,12 +391,12 @@ export function CallReportDialog({
           {/* Attachments */}
           <div className="space-y-1.5">
             <Label>Attachments</Label>
-            {initialCall?.attachments.length ? (
+            {existingAttachments.length ? (
               <div className="space-y-2">
                 <p className="text-xs font-medium text-muted-foreground">
                   Existing attachments
                 </p>
-                {initialCall.attachments.map((attachment) => (
+                {existingAttachments.map((attachment) => (
                   <div
                     key={attachment.id}
                     className="flex items-center gap-2 rounded-md border bg-muted/30 p-2"
@@ -395,6 +411,17 @@ export function CallReportDialog({
                       {attachment.filename}
                     </a>
                     <ExternalLink className="size-3.5 shrink-0 text-muted-foreground" />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-7 shrink-0"
+                      disabled={isPending}
+                      aria-label={`Remove ${attachment.filename}`}
+                      onClick={() => removeExistingAttachment(attachment.id)}
+                    >
+                      <X className="size-3.5" />
+                    </Button>
                   </div>
                 ))}
               </div>

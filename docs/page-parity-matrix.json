@@ -1016,7 +1016,7 @@
       "fid",
       "id"
     ],
-    "verification": "Restored legacy Call Type, Date, Time, Cause of Call, Subject, Remarks, Teacher, and Attachments fields in the child/global call dialogs; submitted validation now matches `call.js` mandatory Form 6 fields while Save As Draft requires only a child, writes `isDraft`/`is_rep_draft`, preserves raw `t_form_6` keys in `legacyData`, uses migrated call parent/subject choices, resolves legacy teachers, edits existing call reports, displays existing attachments, uploads new attachments, and revalidates both child and global call routes. Remaining work is existing attachment deletion from edit dialogs, exact `f_progress` visual semantics if needed, and optional standalone `call.php?fid=` route parity."
+    "verification": "Restored legacy Call Type, Date, Time, Cause of Call, Subject, Remarks, Teacher, and Attachments fields in the child/global call dialogs; submitted validation now matches `call.js` mandatory Form 6 fields while Save As Draft requires only a child, writes `isDraft`/`is_rep_draft`, preserves raw `t_form_6` keys in `legacyData`, uses migrated call parent/subject choices, resolves legacy teachers, edits existing call reports, displays existing attachments, uploads new attachments, removes existing attachments from edit dialogs via `FormAttachment.isActive = false`, and revalidates both child and global call routes. Remaining work is exact `f_progress` visual semantics if needed and optional standalone `call.php?fid=` route parity."
   },
   {
     "legacyPhp": "Front/templates/admin/calls.php",
@@ -1105,7 +1105,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Restored child-specific Incoming and Outgoing sections, Date/Time/Cause/Pick up or Teacher/Subject/Remarks/Action/Attachment table columns, search/date/attachment filters, Excel/CSV export, print action, first-attachment open action with count badge, add call dialog, view details, edit existing reports, draft badge/status, Save As Draft behavior via the Form 6 dialog, teacher-backed display, and delete confirmation. Remaining work is legacy image-preview modal behavior, existing attachment deletion from edit, and DataTables TableTools visual/PDF export parity."
+    "verification": "Restored child-specific Incoming and Outgoing sections, Date/Time/Cause/Pick up or Teacher/Subject/Remarks/Action/Attachment table columns, search/date/attachment filters, Excel/CSV export, print action, first-attachment open action with count badge, add call dialog, view details, edit existing reports, draft badge/status, Save As Draft behavior via the Form 6 dialog, teacher-backed display, existing attachment removal from edit, and delete confirmation. Remaining work is legacy image-preview modal behavior and DataTables TableTools visual/PDF export parity."
   },
   {
     "legacyPhp": "Front/templates/admin/child_dashboard.php",
