@@ -16,6 +16,7 @@ export default async function ClassesManagementPage() {
   const rawClasses = (classesResult.data ?? []) as any[];
   const classes: ClassItem[] = rawClasses.map((cls) => ({
     id: cls.id,
+    legacyId: cls.legacyId ?? null,
     name: cls.name,
     branchId: cls.branchId,
     branchName: cls.branch?.name ?? "Unknown",
@@ -25,7 +26,7 @@ export default async function ClassesManagementPage() {
     ageFromUnit: cls.ageFromUnit ?? null,
     ageToUnit: cls.ageToUnit ?? null,
     cameraNumber: cls.cameraNumber ?? null,
-    maxStudents: cls.maxStudents ?? 0,
+    maxStudents: cls.maxStudents || cls.capacity || 0,
     studentCount: cls._count?.children ?? 0,
     imageUrl: cls.imageUrl ?? null,
     isActive: cls.isActive ?? true,

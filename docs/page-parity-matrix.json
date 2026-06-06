@@ -1156,7 +1156,7 @@
     "legacyPhp": "Front/templates/admin/class.php",
     "legacyJs": "Front/templates/admin/js/class.js",
     "modernRoute": "/classes/[id]",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "partial - legacy add/edit fields restored in class dialogs; dedicated edit-route audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -1164,13 +1164,13 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored the legacy class add/update field contract inside the modern Classes Listing dialogs: image upload/preview, Branch, Class Name, Class Language, Age From/To with Years/Months units, Camera Number, Max Number Of Students, active flag, required-field validation, and legacy-compatible save/update payloads. Remaining work is exact dedicated `class.php?id=...` route behavior because `/classes/[id]` is currently the class dashboard, plus exact Metronic form layout/toast timing and WebSocket refresh behavior that was commented in legacy JS."
   },
   {
     "legacyPhp": "Front/templates/admin/class_dashboard.php",
     "legacyJs": "Front/templates/admin/js/class_dashboard.js",
     "modernRoute": "/classes/[id]",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "restored - modern schema caveats",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -1178,19 +1178,19 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored class summary, seven-day birthdays, daily/absent rosters, medical/call breakdowns, assessment age-band counts/rows, class-message preselect, and child preselect for new assessments. Remaining caveats: legacy daily progress integer, call drafts, and `db_curr` year switch do not map one-to-one."
   },
   {
     "legacyPhp": "Front/templates/admin/classes.php",
     "legacyJs": "Front/templates/admin/js/classes.js",
     "modernRoute": "/classes",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "partial - legacy class roster, filters, export, page sizes, and soft delete restored; visual audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored the legacy Classes Listing as the default table view with active-class default scope, checkbox/S.N./Image/Class/Language/Max Students/Branch/Date/Action columns, migrated `images/ClassPhoto` filename fallback, search, branch/status filters, legacy S.N./Class/Language/Max Students/created-date filter row, 10/20/50/100/150/All page sizes, Excel/CSV export, print action, New Class, edit/update dialog, dashboard open action, and legacy-style soft deactivate. Fixed class import fidelity so `t_class.class_language`, `age_from`, `age_to`, `radiofrom`, `radioto`, `camera_number`, and `max_students` populate modern class fields. Remaining work is exact TableTools copy/PDF/XLS/print visual parity, any selected-row bulk behavior if revived, and final Browser visual smoke."
   },
   {
     "legacyPhp": "Front/templates/admin/classes/Connectter.php",

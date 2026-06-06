@@ -322,7 +322,7 @@ export async function getClassDashboard(
             branchName: cls.branch.name,
             language: cls.language,
             studentCount: activeStudentCount,
-            maxStudents: cls.maxStudents,
+            maxStudents: cls.maxStudents || cls.capacity,
             maleCount,
             femaleCount,
           },
@@ -673,7 +673,7 @@ export async function getClassDashboard(
           branchName: cls.branch.name,
           language: cls.language,
           studentCount: activeStudentCount,
-          maxStudents: cls.maxStudents,
+          maxStudents: cls.maxStudents || cls.capacity,
           maleCount,
           femaleCount,
         },
@@ -761,10 +761,21 @@ export async function getClasses(params: ClassListParams = {}) {
         branch: true,
         _count: { select: { children: true } },
       },
-      orderBy: { name: "asc" },
+      orderBy: [{ createdAt: "desc" }, { name: "asc" }],
     });
 
-    return { success: true as const, data: classes };
+    const sortedClasses = classes.sort((a, b) => {
+      if (a.legacyId != null && b.legacyId != null && a.legacyId !== b.legacyId) {
+        return b.legacyId - a.legacyId;
+      }
+      if (a.legacyId != null && b.legacyId == null) return -1;
+      if (a.legacyId == null && b.legacyId != null) return 1;
+      const createdDiff = b.createdAt.getTime() - a.createdAt.getTime();
+      if (createdDiff !== 0) return createdDiff;
+      return a.name.localeCompare(b.name);
+    });
+
+    return { success: true as const, data: sortedClasses };
   } catch (error) {
     console.error("Failed to fetch classes:", error);
     return { success: false as const, error: "Failed to fetch classes" };
@@ -827,6 +838,7 @@ export async function createClass(data: ClassData) {
         ageToUnit: data.ageToUnit ?? null,
         cameraNumber: data.cameraNumber ?? null,
         maxStudents: data.maxStudents ?? 0,
+        capacity: data.maxStudents ?? 0,
         imageUrl: data.imageUrl ?? null,
         isActive: data.isActive ?? true,
       },
@@ -878,7 +890,10 @@ export async function updateClass(id: string, data: Partial<ClassData>) {
     if (data.ageFromUnit !== undefined) updateData.ageFromUnit = data.ageFromUnit;
     if (data.ageToUnit !== undefined) updateData.ageToUnit = data.ageToUnit;
     if (data.cameraNumber !== undefined) updateData.cameraNumber = data.cameraNumber;
-    if (data.maxStudents !== undefined) updateData.maxStudents = data.maxStudents;
+    if (data.maxStudents !== undefined) {
+      updateData.maxStudents = data.maxStudents;
+      updateData.capacity = data.maxStudents;
+    }
     if (data.imageUrl !== undefined) updateData.imageUrl = data.imageUrl;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
     if (data.branchId !== undefined) {
@@ -921,7 +936,10 @@ export async function deleteClass(id: string) {
       return { success: false as const, error: "Class not found" };
     }
 
-    await db.class.delete({ where: { id } });
+    await db.class.update({
+      where: { id },
+      data: { isActive: false },
+    });
 
     revalidatePath("/classes");
     revalidatePath("/branches", "layout");
