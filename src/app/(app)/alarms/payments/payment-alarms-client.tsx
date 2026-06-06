@@ -97,12 +97,17 @@ export function PaymentAlarmsClient({
       const {
         reminderGroupsMatched,
         remindersMatched,
+        duePaymentGroupsMatched,
+        duePaymentsMatched,
         alarmsCreated,
+        paidAlarmsCreated,
+        beforeAlarmsCreated,
+        afterAlarmsCreated,
         skippedExisting,
         parentRecipientsMatched,
       } = result.data;
       setGenerationStatus(
-        `Matched ${reminderGroupsMatched} group${reminderGroupsMatched === 1 ? "" : "s"} from ${remindersMatched} reminder${remindersMatched === 1 ? "" : "s"}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing; parent recipients ${parentRecipientsMatched}.`,
+        `Matched ${reminderGroupsMatched} paid group${reminderGroupsMatched === 1 ? "" : "s"} from ${remindersMatched} reminder${remindersMatched === 1 ? "" : "s"} and ${duePaymentGroupsMatched} due group${duePaymentGroupsMatched === 1 ? "" : "s"} from ${duePaymentsMatched} payment${duePaymentsMatched === 1 ? "" : "s"}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"} (${paidAlarmsCreated} paid, ${beforeAlarmsCreated} before, ${afterAlarmsCreated} after); skipped ${skippedExisting} existing; parent recipients ${parentRecipientsMatched}.`,
       );
       router.refresh();
       return;

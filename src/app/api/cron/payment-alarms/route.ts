@@ -18,11 +18,17 @@ function emptySummary(): PaymentGenerationSummary {
     branchesScanned: 0,
     reminderGroupsMatched: 0,
     remindersMatched: 0,
+    duePaymentGroupsMatched: 0,
+    duePaymentsMatched: 0,
     alarmsCreated: 0,
+    paidAlarmsCreated: 0,
+    beforeAlarmsCreated: 0,
+    afterAlarmsCreated: 0,
     parentRecipientsMatched: 0,
     skippedExisting: 0,
     skippedDisabledBranches: 0,
     skippedMissingChild: 0,
+    skippedNoEligibleFees: 0,
   };
 }
 
@@ -33,11 +39,17 @@ function addSummary(
   total.branchesScanned += next.branchesScanned;
   total.reminderGroupsMatched += next.reminderGroupsMatched;
   total.remindersMatched += next.remindersMatched;
+  total.duePaymentGroupsMatched += next.duePaymentGroupsMatched;
+  total.duePaymentsMatched += next.duePaymentsMatched;
   total.alarmsCreated += next.alarmsCreated;
+  total.paidAlarmsCreated += next.paidAlarmsCreated;
+  total.beforeAlarmsCreated += next.beforeAlarmsCreated;
+  total.afterAlarmsCreated += next.afterAlarmsCreated;
   total.parentRecipientsMatched += next.parentRecipientsMatched;
   total.skippedExisting += next.skippedExisting;
   total.skippedDisabledBranches += next.skippedDisabledBranches;
   total.skippedMissingChild += next.skippedMissingChild;
+  total.skippedNoEligibleFees += next.skippedNoEligibleFees;
 }
 
 function isAuthorized(request: NextRequest) {

@@ -18,6 +18,8 @@ const TEMPLATE_CATEGORIES = [
   "ASSESSMENT",
   "VACCINATIONS",
   "PAYMENT",
+  "PAYMENT_BEFORE",
+  "PAYMENT_AFTER",
   "EXPIRATION",
   "CONTROL",
 ] as const;
@@ -56,6 +58,14 @@ const CATEGORY_DEFAULTS: Record<
   PAYMENT: {
     subject: "Payment Reminder",
     body: "Payment reminder for [[family_name]]: [[fees]] due on [[payment_date]].",
+  },
+  PAYMENT_BEFORE: {
+    subject: "Payment Due Soon",
+    body: "Dear Mr and Mrs [[family_name]], your payment ([[fees]]) is due on [[payment_date]].",
+  },
+  PAYMENT_AFTER: {
+    subject: "Payment Overdue",
+    body: "Dear Mr and Mrs [[family_name]], your [[fees]] payment was due on [[payment_date]].",
   },
   EXPIRATION: {
     subject: "Document Expiring",
@@ -386,6 +396,7 @@ export async function getLegacyNotificationSettings(): Promise<
         OR: [
           { legacyTable: "t_notification_setting" },
           { settingKey: { startsWith: "email-" } },
+          { settingKey: { startsWith: "account-remind-" } },
           { scope: "notification" },
         ],
       },

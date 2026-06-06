@@ -122,6 +122,20 @@ const CATEGORY_META: Record<string, CategoryMeta> = {
     bg: "bg-amber-50",
     border: "border-l-amber-500",
   },
+  PAYMENT_BEFORE: {
+    label: "Payment Before",
+    icon: DollarSign,
+    color: "text-yellow-700",
+    bg: "bg-yellow-50",
+    border: "border-l-yellow-500",
+  },
+  PAYMENT_AFTER: {
+    label: "Payment After",
+    icon: DollarSign,
+    color: "text-red-600",
+    bg: "bg-red-50",
+    border: "border-l-red-500",
+  },
   EXPIRATION: {
     label: "Expiration",
     icon: FileX,
@@ -160,6 +174,9 @@ const LOG_CATEGORIES = [
   { value: "Events", label: "Events" },
   { value: "Insurance", label: "Insurance" },
   { value: "Payments", label: "Payments" },
+  { value: "PAYMENT", label: "Payment" },
+  { value: "PAYMENT_BEFORE", label: "Payment Before" },
+  { value: "PAYMENT_AFTER", label: "Payment After" },
   { value: "Messages", label: "Messages" },
   { value: "Contracts", label: "Contracts" },
 ];
