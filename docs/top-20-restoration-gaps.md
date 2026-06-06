@@ -80,9 +80,9 @@ This list is the first implementation backlog after the generated inventory/matr
 
 9. **Parent portal UI**
    - `/parent/login` now restores a parent-facing login screen backed by `/api/parent/login`, stores the parent JWT/child id client-side, and keeps failed-login responses in the legacy `{ status: false }` shape with a timeout guard for slow database lookups.
-   - `/parent` now restores the first parent PWA shell with child dashboard stats, latest daily report summary, payments, absence reports, message compose/list, notifications, food calendar, and holidays using the existing `/api/parent/*` compatibility endpoints.
+   - `/parent` now restores the first parent PWA shell with child dashboard stats, latest daily report summary, payments, absence reports, message compose/list/thread replies, notifications, food calendar, and holidays using the existing `/api/parent/*` compatibility endpoints.
    - Legacy iOS/Android apps show the real parent feature set.
-   - Remaining work is credentialed E2E with a known production-like parent login, exact native-app screen audit, push subscription UI, detailed message-thread replies, offline/mobile polish, and final API contract verification.
+   - Remaining work is credentialed E2E with a known production-like parent login, exact native-app screen audit, push subscription UI, offline/mobile polish, and final API contract verification.
 
 10. **Parent API response compatibility**
    - Legacy `ws/*.php`, iOS `WebFunctions.swift`, and Android `WebServiceFunctions.java` must be response-shape audited against modern `/api/parent/*`.
@@ -120,7 +120,8 @@ This list is the first implementation backlog after the generated inventory/matr
 
 19. **Message delivery/read-state parity**
    - `/alarms/msg` now restores the legacy message notification listing with current-staff-user New/Viewed scoping, filters, row/bulk mark-viewed actions, Set All As Viewed, and idempotent migration provenance from `t_alarms_msg` plus per-recipient `custom_notifications_msg` delivery rows.
-   - Remaining work is exact legacy reply-thread visual audit, parent/mobile message feed compatibility, parent/mobile read reset behavior, and external push-on-message delivery if product confirms it was active in production.
+   - Parent message grouped list, thread detail, and replies are now wired into `/parent`, and `/api/parent/messages/thread/[threadId]` accepts either modern thread UUIDs or legacy numeric `t_alarms_msg.thread_id` values.
+   - Remaining work is exact legacy reply-thread visual audit, parent/mobile read reset behavior, and external push-on-message delivery if product confirms it was active in production.
 
 20. **Role and permission parity**
    - Legacy levels/actions/control tables are now preserved as metadata; remaining work is mapping them to modern roles and enforcing them in pages/actions.

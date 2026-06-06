@@ -17,6 +17,8 @@ const sendMessageSchema = z.object({
   message: z.string().min(1),
 });
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export async function POST(request: NextRequest) {
   // Rate limit: 20 messages per minute per IP
   const rlKey = getRateLimitKey(request, "messages");
@@ -96,10 +98,9 @@ export async function POST(request: NextRequest) {
     let thread: { id: string };
 
     if (threadid !== "0") {
-      // Reply to existing thread
-      const existingThread = await db.messageThread.findUnique({
-        where: { id: threadid },
-      });
+      // Reply to an existing thread. Legacy mobile passes numeric t_alarms_msg.thread_id;
+      // modern clients may pass the MessageThread UUID.
+      const existingThread = await resolveParentThread(threadid, parentUser.id);
       if (!existingThread) {
         return jsonSuccess({
           feedback: "Message Failed to Send",
@@ -129,7 +130,7 @@ export async function POST(request: NextRequest) {
 
     return jsonSuccess({
       feedback: "Message Sent",
-      threadid: thread.id,
+      threadid: threadid !== "0" ? threadid : thread.id,
     });
   } catch {
     return jsonSuccess({
@@ -137,4 +138,46 @@ export async function POST(request: NextRequest) {
       threadid: 0,
     });
   }
+}
+
+async function resolveParentThread(threadId: string, parentUserId: string) {
+  if (UUID_RE.test(threadId)) {
+    const thread = await db.messageThread.findUnique({
+      where: { id: threadId },
+      select: { id: true },
+    });
+    if (!thread) return null;
+
+    const hasAccess = await db.message.findFirst({
+      where: {
+        threadId: thread.id,
+        OR: [
+          { senderId: parentUserId, senderType: "PARENT" },
+          { recipientId: parentUserId, recipientType: "PARENT" },
+        ],
+      },
+      select: { id: true },
+    });
+    return hasAccess ? thread : null;
+  }
+
+  const legacyThreadId = Number(threadId);
+  if (!Number.isInteger(legacyThreadId)) return null;
+
+  const message = await db.message.findFirst({
+    where: {
+      legacyThreadId,
+      OR: [
+        { senderId: parentUserId, senderType: "PARENT" },
+        { recipientId: parentUserId, recipientType: "PARENT" },
+      ],
+    },
+    select: { threadId: true },
+  });
+  if (!message?.threadId) return null;
+
+  return db.messageThread.findUnique({
+    where: { id: message.threadId },
+    select: { id: true },
+  });
 }

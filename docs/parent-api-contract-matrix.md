@@ -5,7 +5,7 @@ Legacy native apps must keep working behaviorally through the modern parent API/
 Parent web PWA status:
 
 - `/parent/login` now uses `/api/parent/login`, persists the parent JWT and child id in browser storage, and keeps failed login responses in the legacy `status: false` shape.
-- `/parent` now consumes the daily detailed, finance, absence, messages, notifications, food calendar, holiday calendar, and send-message endpoints as the first parent-facing web shell.
+- `/parent` now consumes the daily detailed, finance, absence, grouped messages, message thread detail/reply, notifications, food calendar, holiday calendar, and send-message endpoints as the first parent-facing web shell.
 - Remaining contract work is a field-by-field audit against `ws/*.php`, iOS `WebFunctions.swift`, Android `WebServiceFunctions.java`, and a credentialed E2E run with a known parent login.
 
 | Legacy Endpoint | Request Fields | Modern Endpoint | Status | Referenced By iOS | Referenced By Android |
@@ -22,9 +22,9 @@ Parent web PWA status:
 | ws/insurance_alarms.php | pid | /api/parent/alarms/[type] | partial - verify JSON contract | no | no |
 | ws/login.php | name, pass | /api/parent/login | partial - used by /parent/login PWA, verify JSON contract | yes | yes |
 | ws/medicine_alarms.php | pid | /api/parent/alarms/[type] | partial - verify JSON contract | no | no |
-| ws/message.php | usites |  | unmapped | no | no |
-| ws/messages.php | pid | /api/parent/messages/[childId] | partial - used by /parent PWA, verify JSON contract | yes | no |
-| ws/messagesList.php | usites |  | unmapped | no | no |
+| ws/message.php | usites (thread_id) | /api/parent/messages/thread/[threadId] | partial - used by /parent PWA, verify numeric-key thread JSON contract | no | no |
+| ws/messages.php | pid | /api/parent/messages/[childId] | partial - legacy file appears stale/misnamed; verify against iOS commented parser | yes | no |
+| ws/messagesList.php | usites | /api/parent/messages/[childId] | partial - used by /parent PWA, verify grouped thread JSON contract | no | no |
 | ws/missingReports_alarms.php | pid | /api/parent/alarms/[type] | partial - verify JSON contract | no | no |
 | ws/newassessment_alarms.php | pid | /api/parent/alarms/[type] | partial - verify JSON contract | no | no |
 | ws/newdaily.php | usites | /api/parent/daily/[childId]/detailed | partial - used by /parent PWA, verify JSON contract | yes | no |

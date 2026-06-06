@@ -18029,6 +18029,6 @@
       "pid",
       "token"
     ],
-    "verification": "Parent web shell now consumes daily detailed reports, finance, absence, messages, notifications, food calendar, holiday calendar, and send-message APIs. Remaining work is push subscription UI, detailed thread replies, offline/mobile polish, and field-by-field native response audit."
+    "verification": "Parent web shell now consumes daily detailed reports, finance, absence, grouped messages, thread detail/replies, notifications, food calendar, holiday calendar, and send-message APIs. Remaining work is push subscription UI, offline/mobile polish, and field-by-field native response audit."
   }
 ]

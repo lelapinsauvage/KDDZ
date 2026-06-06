@@ -46,6 +46,8 @@ export async function GET(
       string,
       {
         threadId: string;
+        modernThreadId: string;
+        legacyThreadId: number | null;
         subject: string;
         lastMessage: string;
         lastSenderType: string;
@@ -62,7 +64,9 @@ export async function GET(
           msg.senderType === "PARENT" ? "You: " : "";
 
         threadMap.set(tid, {
-          threadId: tid,
+          threadId: msg.legacyThreadId ? String(msg.legacyThreadId) : tid,
+          modernThreadId: tid,
+          legacyThreadId: msg.legacyThreadId,
           subject: msg.thread?.subject ?? msg.subject ?? "",
           lastMessage: prefix + truncatedBody,
           lastSenderType: msg.senderType,
@@ -102,6 +106,8 @@ export async function GET(
     const items = threads.map((t) => ({
       datetime: t.datetime.toISOString(),
       thread_id: t.threadId,
+      modern_thread_id: t.modernThreadId,
+      legacy_thread_id: t.legacyThreadId,
       subject: t.subject,
       last_message: t.lastMessage,
       original_sender:

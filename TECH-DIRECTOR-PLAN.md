@@ -154,7 +154,7 @@ Build parent-facing UI as a PWA before rebuilding native apps:
 - Absence reports. First slice restored in `/parent` from `/api/parent/absence/[childId]`.
 - Payments. First slice restored in `/parent` from `/api/parent/finance/[childId]`.
 - Food and holiday calendar. First slice restored in `/parent` from `/api/parent/calendar/food` and `/api/parent/calendar/holidays`.
-- Messages. First slice restored in `/parent` with list and compose via `/api/parent/messages/[childId]` and `/api/parent/messages`.
+- Messages. First slice restored in `/parent` with list, thread detail, compose, and replies via `/api/parent/messages/[childId]`, `/api/parent/messages/thread/[threadId]`, and `/api/parent/messages`.
 - Notifications. First slice restored in `/parent` from `/api/parent/notifications/[childId]`.
 - Push subscription.
 

@@ -11,6 +11,7 @@ import {
   Loader2,
   LogOut,
   Mail,
+  MessageSquare,
   RefreshCw,
   Send,
   Stethoscope,
@@ -76,11 +77,25 @@ type AbsenceRow = {
 };
 
 type MessageRow = {
-  thread_id?: string;
+  thread_id?: string | number;
+  modern_thread_id?: string | null;
+  legacy_thread_id?: string | number | null;
   subject?: string;
   last_message?: string;
   original_sender?: string;
   datetime?: string;
+};
+
+type ThreadMessageRow = {
+  thread_id?: string | number;
+  modern_thread_id?: string | null;
+  legacy_thread_id?: string | number | null;
+  datetime?: string;
+  sender?: string | number;
+  sender_type?: string;
+  subject?: string;
+  message?: string;
+  is_read?: boolean;
 };
 
 type FoodRow = {
@@ -144,6 +159,18 @@ function splitLegacyList<T>(value: unknown): { header?: HeaderRow; rows: T[] } {
   };
 }
 
+function normalizeThreadMessages(value: unknown): ThreadMessageRow[] {
+  if (Array.isArray(value)) return value as ThreadMessageRow[];
+  if (!value || typeof value !== "object") return [];
+  return Object.entries(value as Record<string, unknown>)
+    .sort(([a], [b]) => Number(a) - Number(b))
+    .map(([, row]) => row as ThreadMessageRow);
+}
+
+function threadIdForMessage(message: MessageRow) {
+  return String(message.thread_id || message.modern_thread_id || "");
+}
+
 function flattenNotifications(value: unknown) {
   if (!value || typeof value !== "object") {
     return { info: undefined, rows: [] as { group: string; detail: NotificationDetail }[] };
@@ -198,6 +225,7 @@ export function ParentPortalClient() {
   const router = useRouter();
   const [token, setToken] = useState("");
   const [childId, setChildId] = useState("");
+  const [selectedMessage, setSelectedMessage] = useState<MessageRow | null>(null);
   const [data, setData] = useState<PortalData>(emptyPortalData);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -521,10 +549,28 @@ export function ParentPortalClient() {
           <TabsContent value="messages" className="mt-4">
             <DataPanel icon={Mail} title="Messages">
               <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
-                <ComposeMessage token={token} childId={childId} onSent={handleRefresh} />
+                {selectedMessage ? (
+                  <ParentMessageThread
+                    token={token}
+                    childId={childId}
+                    message={selectedMessage}
+                    onBack={() => setSelectedMessage(null)}
+                    onSent={handleRefresh}
+                  />
+                ) : (
+                  <ComposeMessage token={token} childId={childId} onSent={handleRefresh} />
+                )}
                 <div className="space-y-3">
                   {data.messages.map((message) => (
-                    <Card key={message.thread_id || `${message.subject}-${message.datetime}`} className="py-4">
+                    <Card
+                      key={threadIdForMessage(message) || `${message.subject}-${message.datetime}`}
+                      className={cn(
+                        "py-4",
+                        selectedMessage && threadIdForMessage(selectedMessage) === threadIdForMessage(message)
+                          ? "border-primary"
+                          : ""
+                      )}
+                    >
                       <CardContent className="px-4">
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                           <div>
@@ -534,6 +580,16 @@ export function ParentPortalClient() {
                           <div className="flex shrink-0 items-center gap-2">
                             <Badge variant="comms">{message.original_sender || "Administration"}</Badge>
                             <span className="text-xs text-muted-foreground">{formatDisplayDate(message.datetime)}</span>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setSelectedMessage(message)}
+                              disabled={!threadIdForMessage(message)}
+                            >
+                              <MessageSquare className="size-4" />
+                              Open
+                            </Button>
                           </div>
                         </div>
                       </CardContent>
@@ -697,6 +753,186 @@ function EmptyState({ label }: { label: string }) {
     <div className="border border-dashed border-border bg-[#fafafa] px-4 py-8 text-center text-sm text-muted-foreground">
       {label}
     </div>
+  );
+}
+
+function ParentMessageThread({
+  token,
+  childId,
+  message,
+  onBack,
+  onSent,
+}: {
+  token: string;
+  childId: string;
+  message: MessageRow;
+  onBack: () => void;
+  onSent: () => Promise<void>;
+}) {
+  const [threadMessages, setThreadMessages] = useState<ThreadMessageRow[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const threadId = threadIdForMessage(message);
+
+  const loadThread = useCallback(async () => {
+    if (!token || !threadId) return;
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch(`/api/parent/messages/thread/${encodeURIComponent(threadId)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) {
+        setError("Could not load this conversation.");
+        return;
+      }
+      const payload = await response.json();
+      setThreadMessages(normalizeThreadMessages(payload));
+    } catch {
+      setError("Could not load this conversation.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [threadId, token]);
+
+  useEffect(() => {
+    void loadThread();
+  }, [loadThread]);
+
+  async function handleSent() {
+    await onSent();
+    await loadThread();
+  }
+
+  return (
+    <section className="space-y-4 border border-border bg-[#fafafa] p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase text-muted-foreground">Conversation</p>
+          <h3 className="mt-1 font-semibold">{message.subject || "Message"}</h3>
+          <p className="mt-1 text-sm text-muted-foreground">{message.last_message || ""}</p>
+        </div>
+        <Button type="button" variant="outline" size="sm" onClick={onBack}>
+          New message
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="size-4 animate-spin" />
+          Loading conversation
+        </div>
+      ) : null}
+
+      {error ? (
+        <div className="border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {error}
+        </div>
+      ) : null}
+
+      <div className="max-h-[420px] space-y-3 overflow-y-auto pr-1">
+        {threadMessages.map((item, index) => {
+          const isParent = String(item.sender) === "1" || item.sender_type === "PARENT";
+          return (
+            <div
+              key={`${item.thread_id}-${item.datetime}-${index}`}
+              className={cn(
+                "border border-border bg-white p-3",
+                isParent ? "ml-6 border-primary/30" : "mr-6"
+              )}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <Badge variant={isParent ? "comms" : "secondary"}>
+                  {isParent ? "You" : "Administration"}
+                </Badge>
+                <span className="text-xs text-muted-foreground">{formatDisplayDate(item.datetime)}</span>
+              </div>
+              {item.subject ? <p className="mt-2 text-sm font-semibold">{item.subject}</p> : null}
+              <p className="mt-2 whitespace-pre-wrap text-sm">{item.message || ""}</p>
+            </div>
+          );
+        })}
+        {!isLoading && threadMessages.length === 0 ? <EmptyState label="No messages in this conversation" /> : null}
+      </div>
+
+      <ReplyMessageForm
+        token={token}
+        childId={childId}
+        threadId={threadId}
+        subject={message.subject || "Message"}
+        onSent={handleSent}
+      />
+    </section>
+  );
+}
+
+function ReplyMessageForm({
+  token,
+  childId,
+  threadId,
+  subject,
+  onSent,
+}: {
+  token: string;
+  childId: string;
+  threadId: string;
+  subject: string;
+  onSent: () => Promise<void>;
+}) {
+  const [message, setMessage] = useState("");
+  const [status, setStatus] = useState("");
+  const [isSending, setIsSending] = useState(false);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!token || !childId || !threadId || !message.trim()) return;
+    setStatus("");
+    setIsSending(true);
+
+    try {
+      const response = await fetch("/api/parent/messages", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          usites: childId,
+          to: "1",
+          threadid: threadId,
+          subject,
+          message,
+        }),
+      });
+
+      const data = (await response.json()) as { feedback?: string };
+      setStatus(data.feedback || (response.ok ? "Message Sent" : "Message Failed to Send"));
+      if (response.ok && data.feedback === "Message Sent") {
+        setMessage("");
+        await onSent();
+      }
+    } catch {
+      setStatus("Message Failed to Send");
+    } finally {
+      setIsSending(false);
+    }
+  }
+
+  return (
+    <form className="space-y-3 border-t border-border pt-4" onSubmit={handleSubmit}>
+      <Label htmlFor="message-reply">Reply</Label>
+      <Textarea id="message-reply" value={message} onChange={(event) => setMessage(event.target.value)} required />
+      {status ? (
+        <div className={cn("border px-3 py-2 text-sm", status === "Message Sent" ? "border-success/30 bg-success-light text-success-dark" : "border-destructive/30 bg-destructive/10 text-destructive")}>
+          {status}
+        </div>
+      ) : null}
+      <Button type="submit" disabled={isSending}>
+        {isSending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+        Reply
+      </Button>
+    </form>
   );
 }
 
