@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardAction } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { getChildrenColumns, getInitials, getAvatarColor, type ChildRow } from "@/components/children/children-columns";
-import { deleteChild, toggleChildActive } from "@/lib/actions/children";
+import { deleteChild, toggleChildActive, updateChildClass } from "@/lib/actions/children";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -111,6 +111,11 @@ interface ChildrenPageClientProps {
   branches: BranchItem[];
   classes: ClassItem[];
   filters: Filters;
+  title?: string;
+  printTitle?: string;
+  lockedBranchId?: string;
+  lockedBranchName?: string;
+  addChildHref?: string;
 }
 
 const childrenExportColumns: ExportColumn[] = [
@@ -174,6 +179,11 @@ export function ChildrenPageClient({
   branches,
   classes,
   filters,
+  title = "Children",
+  printTitle = title,
+  lockedBranchId,
+  lockedBranchName,
+  addChildHref = "/children/new",
 }: ChildrenPageClientProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -234,7 +244,7 @@ export function ChildrenPageClient({
   const activeFilters = useMemo(() => {
     const pills: { key: string; label: string; value: string }[] = [];
     if (filters.search) pills.push({ key: "search", label: "Search", value: filters.search });
-    if (filters.branch !== "ALL") {
+    if (filters.branch !== "ALL" && !lockedBranchId) {
       const b = branches.find((b) => b.id === filters.branch);
       pills.push({ key: "branch", label: "Branch", value: b?.name ?? filters.branch });
     }
@@ -270,10 +280,11 @@ export function ChildrenPageClient({
       pills.push({ key: "createdTo", label: "Created to", value: filters.createdTo });
     }
     return pills;
-  }, [filters, branches, classes]);
+  }, [filters, branches, classes, lockedBranchId]);
 
   const clearFilter = useCallback(
     (key: string) => {
+      if (key === "branch" && lockedBranchId) return;
       if (key === "search") {
         setSearchValue("");
       }
@@ -282,7 +293,7 @@ export function ChildrenPageClient({
       }
       updateParams({ [key]: "" });
     },
-    [updateParams]
+    [lockedBranchId, updateParams]
   );
 
   const clearAllFilters = useCallback(() => {
@@ -298,7 +309,7 @@ export function ChildrenPageClient({
     });
     updateParams({
       search: "",
-      branch: "",
+      branch: lockedBranchId ? lockedBranchId : "",
       class: "",
       gender: "",
       status: "",
@@ -310,7 +321,7 @@ export function ChildrenPageClient({
       createdFrom: "",
       createdTo: "",
     });
-  }, [updateParams]);
+  }, [lockedBranchId, updateParams]);
 
   // ── Handlers ───────────────────────────────────
 
@@ -335,9 +346,10 @@ export function ChildrenPageClient({
 
   const handleBranchChange = useCallback(
     (value: string) => {
+      if (lockedBranchId) return;
       updateParams({ branch: value, class: "" });
     },
-    [updateParams]
+    [lockedBranchId, updateParams]
   );
 
   const handleClassChange = useCallback(
@@ -458,6 +470,26 @@ export function ChildrenPageClient({
     [router]
   );
 
+  const handleChangeClass = useCallback(
+    async (child: ChildRow, classId: string) => {
+      const result = await updateChildClass(child.id, classId);
+      if (result.success) {
+        const nextClass = classes.find((item) => item.id === classId);
+        toast.success(
+          `${child.firstName} ${child.lastName} moved to ${
+            nextClass?.name ?? "the selected class"
+          }.`
+        );
+        router.refresh();
+        return true;
+      }
+
+      toast.error(result.error ?? "Failed to update child class");
+      return false;
+    },
+    [classes, router]
+  );
+
   // ── Table setup ────────────────────────────────
 
   const columns = useMemo(
@@ -465,8 +497,11 @@ export function ChildrenPageClient({
       getChildrenColumns({
         onDelete: handleDeleteRequest,
         onToggleActive: handleToggleActive,
+        onChangeClass: handleChangeClass,
+        classOptions: classes,
+        enableClassReassignment: true,
       }),
-    [handleDeleteRequest, handleToggleActive]
+    [classes, handleChangeClass, handleDeleteRequest, handleToggleActive]
   );
 
   const table = useReactTable({
@@ -490,7 +525,7 @@ export function ChildrenPageClient({
     <>
       {/* Print-only header */}
       <div className="hidden print:block print:mb-4 print:text-center">
-        <h1 className="text-2xl font-bold text-black">Children List</h1>
+        <h1 className="text-2xl font-bold text-black">{printTitle}</h1>
         <p className="text-sm text-gray-500">
           {total} children &mdash; Printed on {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
         </p>
@@ -498,10 +533,10 @@ export function ChildrenPageClient({
 
       <Card className="m-4 md:m-6 print:m-0 print:border-none print:shadow-none">
         <CardHeader className="print:hidden">
-          <CardTitle className="text-lg">Children</CardTitle>
+          <CardTitle className="text-lg">{title}</CardTitle>
           <CardAction>
             <Button asChild>
-              <Link href="/children/new">
+              <Link href={addChildHref}>
                 <Plus className="mr-1 size-4" />
                 Add Child
               </Link>
@@ -535,12 +570,16 @@ export function ChildrenPageClient({
           </div>
 
           {/* Branch filter */}
-          <Select value={filters.branch} onValueChange={handleBranchChange}>
+          <Select
+            value={lockedBranchId ? lockedBranchId : filters.branch}
+            onValueChange={handleBranchChange}
+            disabled={!!lockedBranchId}
+          >
             <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[180px]">
-              <SelectValue placeholder="All Branches" />
+              <SelectValue placeholder={lockedBranchName ?? "All Branches"} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">All Branches</SelectItem>
+              {!lockedBranchId ? <SelectItem value="ALL">All Branches</SelectItem> : null}
               {branches.map((b) => (
                 <SelectItem key={b.id} value={b.id}>
                   {b.name}
@@ -720,7 +759,7 @@ export function ChildrenPageClient({
           {viewMode === "cards" ? (
             /* Cards Grid */
             childrenList.length === 0 ? (
-              <ChildrenEmptyState />
+              <ChildrenEmptyState actionHref={addChildHref} />
             ) : (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {childrenList.map((child) => {
@@ -848,7 +887,7 @@ export function ChildrenPageClient({
                           colSpan={columns.length}
                           className="h-40 text-center"
                         >
-                          <ChildrenEmptyState />
+                          <ChildrenEmptyState actionHref={addChildHref} />
                         </TableCell>
                       </TableRow>
                     )}
@@ -975,13 +1014,13 @@ export function ChildrenPageClient({
 
 // ── Warm Empty State ─────────────────────────
 
-function ChildrenEmptyState() {
+function ChildrenEmptyState({ actionHref = "/children/new" }: { actionHref?: string }) {
   return (
     <EmptyState
       icon={Sparkles}
       title="No children found"
       description="Try adjusting your search or filters. Or start by enrolling a new child to the nursery."
-      action={{ label: "Enroll a Child", href: "/children/new", icon: Plus }}
+      action={{ label: "Enroll a Child", href: actionHref, icon: Plus }}
     />
   );
 }

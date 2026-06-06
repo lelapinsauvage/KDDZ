@@ -833,6 +833,65 @@ export async function toggleChildActive(
   }
 }
 
+// ── updateChildClass ─────────────────────────────
+
+export async function updateChildClass(
+  id: string,
+  classId: string
+): Promise<ActionResult> {
+  const result = await requireOrgSafe();
+  if (!result.ok) return { success: false, error: result.error };
+  const { ctx } = result;
+
+  try {
+    const child = await db.child.findFirst({
+      where: { id, branch: { organizationId: ctx.organizationId } },
+      select: { id: true, branchId: true },
+    });
+    if (!child) return { success: false, error: "Child not found" };
+
+    const targetClass = await db.class.findFirst({
+      where: {
+        id: classId,
+        branchId: child.branchId,
+        isActive: true,
+        branch: { organizationId: ctx.organizationId },
+      },
+      select: { id: true },
+    });
+    if (!targetClass) {
+      return { success: false, error: "Class not found for this branch" };
+    }
+
+    const updatedChild = await db.child.update({
+      where: { id },
+      data: { classId },
+    });
+
+    await db.childHistory.create({
+      data: {
+        childId: updatedChild.id,
+        snapshot: JSON.parse(JSON.stringify(updatedChild)),
+        changedBy: ctx.userId,
+        changeNote: "Child class updated",
+      },
+    });
+
+    revalidatePath("/children");
+    revalidatePath(`/children/${id}`);
+    revalidatePath(`/children/${id}/dashboard`);
+    revalidatePath(`/branches/${child.branchId}/children`);
+    revalidatePath(`/branches/${child.branchId}/dashboard`);
+
+    return { success: true, id };
+  } catch (error) {
+    console.error("updateChildClass error:", error);
+    const message =
+      error instanceof Error ? error.message : "Failed to update child class";
+    return { success: false, error: message };
+  }
+}
+
 // ── getDrafts ─────────────────────────────────────
 
 export async function getDrafts(params: Omit<GetChildrenParams, "status"> = {}) {

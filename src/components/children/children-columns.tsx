@@ -2,10 +2,18 @@
 
 import { type ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
+import { useState } from "react";
 import { LayoutDashboard, Pencil, Printer, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Tooltip,
   TooltipContent,
@@ -180,7 +188,72 @@ const STATUS_CONFIG: Record<
 interface ChildrenColumnsOptions {
   onDelete?: (id: string, name: string) => void;
   onToggleActive?: (child: ChildRow) => void;
+  onChangeClass?: (child: ChildRow, classId: string) => Promise<boolean>;
+  classOptions?: Array<{ id: string; name: string; branchId: string }>;
+  enableClassReassignment?: boolean;
   variant?: "children" | "drafts";
+}
+
+function ChildClassSelect({
+  child,
+  classOptions,
+  onChangeClass,
+}: {
+  child: ChildRow;
+  classOptions: Array<{ id: string; name: string; branchId: string }>;
+  onChangeClass: (child: ChildRow, classId: string) => Promise<boolean>;
+}) {
+  const [isSaving, setIsSaving] = useState(false);
+
+  const branchClassOptions = classOptions.filter(
+    (item) => item.branchId === child.branchId
+  );
+  const hasCurrentClass =
+    !child.classId || branchClassOptions.some((item) => item.id === child.classId);
+  const options =
+    hasCurrentClass || !child.class
+      ? branchClassOptions
+      : [
+          ...branchClassOptions,
+          { id: child.class.id, name: child.class.name, branchId: child.branchId },
+        ];
+
+  if (!options.length) {
+    const name = child.class?.name;
+    if (!name) return <span className="text-muted-foreground">-</span>;
+    return (
+      <Badge className={`font-medium border ${getClassColor(name)}`}>
+        {name}
+      </Badge>
+    );
+  }
+
+  return (
+    <Select
+      value={child.classId ?? undefined}
+      onValueChange={async (nextClassId) => {
+        if (!nextClassId || nextClassId === child.classId) return;
+        setIsSaving(true);
+        await onChangeClass(child, nextClassId);
+        setIsSaving(false);
+      }}
+      disabled={isSaving}
+    >
+      <SelectTrigger
+        className="h-8 w-[150px] bg-background"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <SelectValue placeholder="No class" />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((item) => (
+          <SelectItem key={item.id} value={item.id}>
+            {item.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
 }
 
 export function getChildrenColumns(
@@ -332,6 +405,21 @@ export function getChildrenColumns(
         <SortableHeader column={column}>Class</SortableHeader>
       ),
       cell: ({ row }) => {
+        if (
+          variant === "children" &&
+          options.enableClassReassignment &&
+          options.classOptions &&
+          options.onChangeClass
+        ) {
+          return (
+            <ChildClassSelect
+              child={row.original}
+              classOptions={options.classOptions}
+              onChangeClass={options.onChangeClass}
+            />
+          );
+        }
+
         const name = row.original.class?.name;
         if (!name) return <span className="text-muted-foreground">-</span>;
         return (
@@ -353,6 +441,45 @@ export function getChildrenColumns(
         const nationality = row.original.nationality;
         if (!nationality) return <span className="text-muted-foreground">-</span>;
         return <span className="text-sm">{nationality}</span>;
+      },
+    });
+  }
+
+  if (variant === "children") {
+    columns.push({
+      accessorKey: "status",
+      accessorFn: (row) => getStatus(row),
+      header: ({ column }) => (
+        <SortableHeader column={column}>Status</SortableHeader>
+      ),
+      cell: ({ row }) => {
+        const status = getStatus(row.original);
+        const { className, label } =
+          STATUS_CONFIG[status] ?? STATUS_CONFIG.INACTIVE;
+        return (
+          <Badge
+            role="button"
+            tabIndex={0}
+            className={`cursor-pointer border ${className}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              options.onToggleActive?.(row.original);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                event.stopPropagation();
+                options.onToggleActive?.(row.original);
+              }
+            }}
+          >
+            {label}
+          </Badge>
+        );
+      },
+      filterFn: (row, _columnId, filterValue) => {
+        if (!filterValue || filterValue === "ALL") return true;
+        return getStatus(row.original) === filterValue;
       },
     });
   }
@@ -393,45 +520,6 @@ export function getChildrenColumns(
       },
     },
   );
-
-  if (variant === "children") {
-    columns.push({
-      accessorKey: "status",
-      accessorFn: (row) => getStatus(row),
-      header: ({ column }) => (
-        <SortableHeader column={column}>Status</SortableHeader>
-      ),
-      cell: ({ row }) => {
-        const status = getStatus(row.original);
-        const { className, label } =
-          STATUS_CONFIG[status] ?? STATUS_CONFIG.INACTIVE;
-        return (
-          <Badge
-            role="button"
-            tabIndex={0}
-            className={`cursor-pointer border ${className}`}
-            onClick={(event) => {
-              event.stopPropagation();
-              options.onToggleActive?.(row.original);
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                event.stopPropagation();
-                options.onToggleActive?.(row.original);
-              }
-            }}
-          >
-            {label}
-          </Badge>
-        );
-      },
-      filterFn: (row, _columnId, filterValue) => {
-        if (!filterValue || filterValue === "ALL") return true;
-        return getStatus(row.original) === filterValue;
-      },
-    });
-  }
 
   columns.push(
     // Actions

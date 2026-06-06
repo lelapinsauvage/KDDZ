@@ -1114,7 +1114,7 @@
     "legacyPhp": "Front/templates/admin/children.php",
     "legacyJs": "Front/templates/admin/js/children.js",
     "modernRoute": "/children",
-    "status": "partial - legacy child roster columns, filters, status toggle, and actions restored; inline class/export audit remains",
+    "status": "partial - legacy child roster columns, filters, status toggle, class reassignment, and actions restored; bulk/export audit remains",
     "legacyTablesMentioned": [
       "Form",
       "Selected",
@@ -1122,7 +1122,7 @@
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Restored the legacy Children Listing roster shape with S.N./child number, Image, F Name, L Name, DOB, Branch, Class, Status, Gender, Date, and Action columns; child photo fallback handling for migrated `images/EmpPhoto` filenames; legacy column filters for S.N., first name, last name, DOB, nationality, created-date from/to, branch, class, gender, and status; 10/20/50/100/150 page sizes; status badge active/inactive toggle via org-safe action; dashboard, print, edit, and deactivate actions; and child export with S.N. Remaining work is inline class reassignment parity from `toggleChildclass`, legacy checkbox bulk branch/class modal behavior, exact TableTools copy/PDF/XLS/print visual parity, and live WebSocket refresh behavior that was commented in legacy JS."
+    "verification": "Restored the legacy Children Listing roster shape with S.N./child number, Image, F Name, L Name, DOB, Branch, Class, Status, Gender, Date, and Action columns; child photo fallback handling for migrated `images/EmpPhoto` filenames; legacy column filters for S.N., first name, last name, DOB, nationality, created-date from/to, branch, class, gender, and status; 10/20/50/100/150 page sizes; inline class reassignment backed by an org-safe `updateChildClass` action; status badge active/inactive toggle via org-safe action; dashboard, print, edit, and deactivate actions; and child export with S.N. Remaining work is legacy checkbox bulk branch/class modal behavior, exact TableTools copy/PDF/XLS/print visual parity, and live WebSocket refresh behavior that was commented in legacy JS."
   },
   {
     "legacyPhp": "Front/templates/admin/children_drafts.php",
@@ -1141,8 +1141,8 @@
   {
     "legacyPhp": "Front/templates/admin/childrenperbranch.php",
     "legacyJs": "Front/templates/admin/js/childrenperbranch.js",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/branches/[id]/children",
+    "status": "partial - branch-scoped children listing restored; bulk/export visual audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -1150,7 +1150,7 @@
     "requestFieldsMentioned": [
       "brid"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored the branch-dashboard entry point for `childrenperbranch.php` as `/branches/[id]/children`, with legacy title shape `Active Children For {branch} Branch`, branch-locked listing, S.N./image/F Name/L Name/DOB/Branch/Class/Status/Gender/Date/Action columns, branch class reassignment dropdown limited to classes in the same branch, status toggle, New Child, dashboard, print/view, edit, deactivate actions, legacy filters, and 10/20/50/100/150 page sizes. Remaining work is the legacy checkbox bulk branch/class modal behavior, exact TableTools copy/PDF/XLS/print visual parity, and any live refresh behavior."
   },
   {
     "legacyPhp": "Front/templates/admin/class.php",

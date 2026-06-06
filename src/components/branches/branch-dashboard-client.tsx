@@ -99,7 +99,7 @@ export function BranchDashboardClient({
             value={stats.childrenCount}
             icon={Users}
             color="emerald"
-            href={`/children?branch=${branchId}`}
+            href={`/branches/${branchId}/children`}
           />
           <StatCard
             title="Teachers"
