@@ -6,6 +6,24 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -16,22 +34,37 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import {
+  createLegacyAccessLevel,
+  deleteLegacyAccessLevel,
   type LegacyAccessControlGroup,
   updateLegacyAccessControlLevels,
+  updateLegacyAccessLevel,
 } from "@/lib/actions/legacy-access-control";
 import {
   CheckSquare,
   Database,
   Eraser,
+  Pencil,
+  Plus,
   Save,
   Search,
   ShieldCheck,
   Square,
+  Trash2,
 } from "lucide-react";
 
 type MessageState = {
   type: "success" | "error";
   text: string;
+} | null;
+
+type LevelDialogMode = "create" | "edit";
+
+type DeleteLevelTarget = {
+  groupKey: string;
+  id: string;
+  label: string;
+  legacyId: number;
 } | null;
 
 type AccessControlClientProps = {
@@ -78,6 +111,20 @@ export function AccessControlClient({
     initialError ? { type: "error", text: initialError } : null,
   );
   const [savingGroupKey, setSavingGroupKey] = useState<string | null>(null);
+  const [levelDialogOpen, setLevelDialogOpen] = useState(false);
+  const [levelDialogMode, setLevelDialogMode] =
+    useState<LevelDialogMode>("create");
+  const [levelDialogGroupKey, setLevelDialogGroupKey] = useState<string | null>(
+    null,
+  );
+  const [editingLevelId, setEditingLevelId] = useState<string | null>(null);
+  const [levelName, setLevelName] = useState("");
+  const [levelRedirect, setLevelRedirect] = useState("");
+  const [levelWelcomeEmail, setLevelWelcomeEmail] = useState(false);
+  const [levelDisabled, setLevelDisabled] = useState(false);
+  const [levelSaving, setLevelSaving] = useState(false);
+  const [deleteLevelTarget, setDeleteLevelTarget] =
+    useState<DeleteLevelTarget>(null);
   const [, startTransition] = useTransition();
 
   const totals = useMemo(
@@ -138,6 +185,179 @@ export function AccessControlClient({
         };
       }),
     );
+  }
+
+  function openCreateLevel(group: LegacyAccessControlGroup) {
+    setLevelDialogMode("create");
+    setLevelDialogGroupKey(group.key);
+    setEditingLevelId(null);
+    setLevelName("");
+    setLevelRedirect("");
+    setLevelWelcomeEmail(false);
+    setLevelDisabled(false);
+    setLevelDialogOpen(true);
+    setMessage(null);
+  }
+
+  function openEditLevel(
+    group: LegacyAccessControlGroup,
+    level: LegacyAccessControlGroup["levels"][number],
+  ) {
+    setLevelDialogMode("edit");
+    setLevelDialogGroupKey(group.key);
+    setEditingLevelId(level.id);
+    setLevelName(level.label);
+    setLevelRedirect(level.redirect ?? "");
+    setLevelWelcomeEmail(level.welcomeEmail);
+    setLevelDisabled(level.isDisabled);
+    setLevelDialogOpen(true);
+    setMessage(null);
+  }
+
+  function closeLevelDialog() {
+    if (levelSaving) return;
+    setLevelDialogOpen(false);
+  }
+
+  function saveLevel() {
+    const group = groups.find((candidate) => candidate.key === levelDialogGroupKey);
+    const trimmedName = levelName.trim();
+
+    if (!group) {
+      setMessage({ type: "error", text: "Legacy level group not found" });
+      return;
+    }
+    if (!trimmedName) {
+      setMessage({ type: "error", text: "You must enter a level name." });
+      return;
+    }
+
+    setLevelSaving(true);
+    setMessage(null);
+
+    startTransition(() => {
+      void (async () => {
+        try {
+          const result =
+            levelDialogMode === "create"
+              ? await createLegacyAccessLevel({
+                  sourceDatabase: group.sourceDatabase,
+                  levelRecordType: group.levelRecordType,
+                  levelName: trimmedName,
+                  redirect: levelRedirect,
+                })
+              : await updateLegacyAccessLevel({
+                  levelRecordId: editingLevelId ?? "",
+                  levelName: trimmedName,
+                  redirect: levelRedirect,
+                  welcomeEmail: levelWelcomeEmail,
+                  isDisabled: levelDisabled,
+                });
+
+          const levelData = result.data;
+
+          if (result.success && levelData) {
+            setGroups((current) =>
+              current.map((candidate) => {
+                if (candidate.key !== group.key) return candidate;
+
+                const nextLevel =
+                  levelDialogMode === "edit"
+                    ? {
+                        ...levelData,
+                        selectedActionIds:
+                          candidate.levels.find(
+                            (level) => level.id === levelData.id,
+                          )?.selectedActionIds ?? [],
+                      }
+                    : levelData;
+
+                const nextLevels =
+                  levelDialogMode === "create"
+                    ? [...candidate.levels, nextLevel].sort(
+                        (a, b) => a.legacyId - b.legacyId,
+                      )
+                    : candidate.levels.map((level) =>
+                        level.id === nextLevel.id ? nextLevel : level,
+                      );
+
+                return { ...candidate, levels: nextLevels };
+              }),
+            );
+            setLevelDialogOpen(false);
+            setMessage({
+              type: "success",
+              text:
+                levelDialogMode === "create"
+                  ? `Successfully added level ${trimmedName} to the database.`
+                  : `Information updated for level ${trimmedName}.`,
+            });
+          } else {
+            setMessage({
+              type: "error",
+              text: result.error ?? "Failed to save level",
+            });
+          }
+        } catch (error) {
+          console.error("Failed to save level:", error);
+          setMessage({ type: "error", text: "Failed to save level" });
+        } finally {
+          setLevelSaving(false);
+        }
+      })();
+    });
+  }
+
+  function confirmDeleteLevel() {
+    if (!deleteLevelTarget) return;
+
+    setLevelSaving(true);
+    setMessage(null);
+
+    startTransition(() => {
+      void (async () => {
+        try {
+          const result = await deleteLegacyAccessLevel({
+            levelRecordId: deleteLevelTarget.id,
+          });
+
+          if (result.success) {
+            setGroups((current) =>
+              current.map((group) =>
+                group.key === deleteLevelTarget.groupKey
+                  ? {
+                      ...group,
+                      levels: group.levels.filter(
+                        (level) => level.id !== deleteLevelTarget.id,
+                      ),
+                    }
+                  : group,
+              ),
+            );
+            setSelectedLevels((current) => {
+              const next = { ...current };
+              delete next[levelKey(deleteLevelTarget.groupKey, deleteLevelTarget.legacyId)];
+              return next;
+            });
+            setMessage({
+              type: "success",
+              text: `Level ${deleteLevelTarget.label} removed from database.`,
+            });
+            setDeleteLevelTarget(null);
+          } else {
+            setMessage({
+              type: "error",
+              text: result.error ?? "Failed to delete level",
+            });
+          }
+        } catch (error) {
+          console.error("Failed to delete level:", error);
+          setMessage({ type: "error", text: "Failed to delete level" });
+        } finally {
+          setLevelSaving(false);
+        }
+      })();
+    });
   }
 
   function saveSelectedLevels(group: LegacyAccessControlGroup) {
@@ -297,6 +517,16 @@ export function AccessControlClient({
                       type="button"
                       variant="outline"
                       size="sm"
+                      onClick={() => openCreateLevel(group)}
+                      title="Create level"
+                    >
+                      <Plus className="size-4" />
+                      New level
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
                       onClick={() => setGroupSelected(group, true)}
                       title="Select all levels"
                     >
@@ -331,6 +561,7 @@ export function AccessControlClient({
                     <TableRow>
                       <TableHead className="w-[84px]">Update</TableHead>
                       <TableHead className="w-[220px]">Level</TableHead>
+                      <TableHead className="w-[140px]">Manage</TableHead>
                       <TableHead className="min-w-[620px]">
                         Allowed Actions
                       </TableHead>
@@ -369,10 +600,65 @@ export function AccessControlClient({
                                 <span className="text-xs text-muted-foreground">
                                   {level.legacyTable}
                                 </span>
+                                <Badge variant="secondary">
+                                  {level.userCount} users
+                                </Badge>
+                                {level.legacyId === 1 ? (
+                                  <Badge variant="destructive">Admin</Badge>
+                                ) : null}
+                                {level.welcomeEmail ? (
+                                  <Badge variant="info">Welcome</Badge>
+                                ) : null}
                                 {level.isDisabled ? (
                                   <Badge variant="warning">Disabled</Badge>
                                 ) : null}
                               </div>
+                              {level.redirect ? (
+                                <p
+                                  className="max-w-[260px] truncate text-xs text-muted-foreground"
+                                  title={level.redirect}
+                                >
+                                  {level.redirect}
+                                </p>
+                              ) : null}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
+                                onClick={() => openEditLevel(group, level)}
+                                title="Edit level"
+                              >
+                                <Pencil className="size-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
+                                onClick={() =>
+                                  setDeleteLevelTarget({
+                                    groupKey: group.key,
+                                    id: level.id,
+                                    label: level.label,
+                                    legacyId: level.legacyId,
+                                  })
+                                }
+                                disabled={
+                                  level.legacyId === 1 || level.userCount > 0
+                                }
+                                title={
+                                  level.legacyId === 1
+                                    ? "Admin level cannot be deleted"
+                                    : level.userCount > 0
+                                      ? "Level still has users"
+                                      : "Delete level"
+                                }
+                              >
+                                <Trash2 className="size-4" />
+                              </Button>
                             </div>
                           </TableCell>
                           <TableCell className="whitespace-normal">
@@ -447,6 +733,107 @@ export function AccessControlClient({
           })}
         </div>
       </div>
+
+      <Dialog open={levelDialogOpen} onOpenChange={setLevelDialogOpen}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>
+              {levelDialogMode === "create" ? "Create level" : "Update level"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="legacy-level-name">Name</Label>
+              <Input
+                id="legacy-level-name"
+                value={levelName}
+                onChange={(event) => setLevelName(event.target.value)}
+                disabled={levelSaving}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="legacy-level-redirect">Redirect</Label>
+              <Input
+                id="legacy-level-redirect"
+                value={levelRedirect}
+                onChange={(event) => setLevelRedirect(event.target.value)}
+                placeholder="eg, http://google.com"
+                disabled={levelSaving}
+              />
+            </div>
+            {levelDialogMode === "edit" ? (
+              <div className="grid gap-3 rounded-sm border border-[#e5e7eb] p-3">
+                <label className="flex items-start gap-2 text-sm">
+                  <Checkbox
+                    checked={levelWelcomeEmail}
+                    onCheckedChange={(checked) =>
+                      setLevelWelcomeEmail(checked === true)
+                    }
+                    disabled={levelSaving}
+                  />
+                  <span>Send welcome email when users join this level</span>
+                </label>
+                <label className="flex items-start gap-2 text-sm">
+                  <Checkbox
+                    checked={levelDisabled}
+                    onCheckedChange={(checked) =>
+                      setLevelDisabled(checked === true)
+                    }
+                    disabled={levelSaving || levelName.trim() === "Admin"}
+                  />
+                  <span>Prevent this level from accessing secure content</span>
+                </label>
+              </div>
+            ) : null}
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={closeLevelDialog}
+              disabled={levelSaving}
+            >
+              Cancel
+            </Button>
+            <Button type="button" onClick={saveLevel} disabled={levelSaving}>
+              <Save className="size-4" />
+              {levelSaving
+                ? "Saving"
+                : levelDialogMode === "create"
+                  ? "Create level"
+                  : "Update"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog
+        open={Boolean(deleteLevelTarget)}
+        onOpenChange={(open) => {
+          if (!open && !levelSaving) setDeleteLevelTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete level</AlertDialogTitle>
+            <AlertDialogDescription>
+              Remove {deleteLevelTarget?.label ?? "this level"} from the legacy
+              level list.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={levelSaving}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteLevel}
+              disabled={levelSaving}
+              className="bg-[#d64635] text-white hover:bg-[#c13d2e]"
+            >
+              <Trash2 className="size-4" />
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

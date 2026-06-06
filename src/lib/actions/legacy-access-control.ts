@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/require-role";
 
@@ -18,6 +19,7 @@ type LegacyAccessActionRecordType = "system_action" | "manager_system_action";
 type LegacyAccessGrantRecordType =
   | "level_action_grant"
   | "manager_level_action_grant";
+type LegacyAccessUserRecordType = "login_user" | "manager_login_user";
 
 export type LegacyAccessActionRow = {
   id: string;
@@ -37,7 +39,10 @@ export type LegacyAccessLevelRow = {
   legacyTable: string;
   legacyId: number;
   label: string;
+  redirect: string | null;
+  welcomeEmail: boolean;
   isDisabled: boolean;
+  userCount: number;
   selectedActionIds: number[];
 };
 
@@ -62,10 +67,27 @@ export type UpdateLegacyAccessControlLevelsInput = {
   }>;
 };
 
+export type CreateLegacyAccessLevelInput = {
+  sourceDatabase: string;
+  levelRecordType: LegacyAccessLevelRecordType;
+  levelName: string;
+  redirect?: string | null;
+};
+
+export type UpdateLegacyAccessLevelInput = {
+  levelRecordId: string;
+  levelName: string;
+  redirect?: string | null;
+  welcomeEmail?: boolean;
+  isDisabled?: boolean;
+};
+
 type AccessConfig = {
   levelRecordType: LegacyAccessLevelRecordType;
   actionRecordType: LegacyAccessActionRecordType;
   grantRecordType: LegacyAccessGrantRecordType;
+  userRecordType: LegacyAccessUserRecordType;
+  levelTable: "login_levels" | "login_levels_man";
   grantTable: "actions_control" | "actions_control_man";
   title: string;
 };
@@ -75,6 +97,8 @@ const ACCESS_CONFIGS: AccessConfig[] = [
     levelRecordType: "login_level",
     actionRecordType: "system_action",
     grantRecordType: "level_action_grant",
+    userRecordType: "login_user",
+    levelTable: "login_levels",
     grantTable: "actions_control",
     title: "Staff Levels",
   },
@@ -82,6 +106,8 @@ const ACCESS_CONFIGS: AccessConfig[] = [
     levelRecordType: "manager_login_level",
     actionRecordType: "manager_system_action",
     grantRecordType: "manager_level_action_grant",
+    userRecordType: "manager_login_user",
+    levelTable: "login_levels_man",
     grantTable: "actions_control_man",
     title: "Manager Levels",
   },
@@ -95,6 +121,44 @@ function uniqueNumbers(values: number[]) {
         .filter((value) => Number.isInteger(value) && value > 0),
     ),
   );
+}
+
+function parsePhpLevelIds(serialized: string | null) {
+  if (!serialized) return [];
+  return Array.from(serialized.matchAll(/s:\d+:"(\d+)"/g))
+    .map((match) => Number.parseInt(match[1], 10))
+    .filter((value) => Number.isFinite(value));
+}
+
+function inputString(value: string | null | undefined) {
+  const trimmed = value?.trim() ?? "";
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function legacyObject(value: unknown): Prisma.InputJsonObject {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Prisma.InputJsonObject;
+  }
+  return {};
+}
+
+function levelLegacyData(params: {
+  existing?: unknown;
+  legacyId: number;
+  levelName: string;
+  redirect: string | null;
+  welcomeEmail: boolean;
+  isDisabled: boolean;
+}) {
+  return {
+    ...legacyObject(params.existing),
+    id: params.legacyId,
+    level_name: params.levelName,
+    level_disabled: params.isDisabled ? 1 : 0,
+    redirect: params.redirect,
+    welcome_email: params.welcomeEmail ? 1 : 0,
+    updated_from: "modern_legacy_level_admin",
+  } satisfies Prisma.InputJsonObject;
 }
 
 function configForLevelType(levelRecordType: LegacyAccessLevelRecordType) {
@@ -112,13 +176,61 @@ function grantLegacyKey(
   return `${sourceDatabase}:${table}:${legacyLevelId}:${legacyActionId}`;
 }
 
+async function countUsersForLegacyLevel(
+  sourceDatabase: string,
+  userRecordType: LegacyAccessUserRecordType,
+  legacyLevelId: number,
+) {
+  const users = await db.legacyAuthRecord.findMany({
+    where: {
+      sourceDatabase,
+      recordType: userRecordType,
+    },
+    select: { recordValue: true },
+  });
+
+  return users.reduce((count, user) => {
+    return parsePhpLevelIds(user.recordValue).includes(legacyLevelId)
+      ? count + 1
+      : count;
+  }, 0);
+}
+
+function levelRowFromRecord(params: {
+  record: {
+    id: string;
+    sourceDatabase: string;
+    legacyTable: string;
+    legacyId: number;
+    recordKey: string | null;
+    redirect: string | null;
+    welcomeEmail: boolean | null;
+    isDisabled: boolean | null;
+  };
+  selectedActionIds?: number[];
+  userCount?: number;
+}): LegacyAccessLevelRow {
+  return {
+    id: params.record.id,
+    sourceDatabase: params.record.sourceDatabase,
+    legacyTable: params.record.legacyTable,
+    legacyId: params.record.legacyId,
+    label: params.record.recordKey ?? `Level ${params.record.legacyId}`,
+    redirect: params.record.redirect ?? null,
+    welcomeEmail: params.record.welcomeEmail ?? false,
+    isDisabled: params.record.isDisabled ?? false,
+    userCount: params.userCount ?? 0,
+    selectedActionIds: params.selectedActionIds ?? [],
+  };
+}
+
 export async function getLegacyAccessControlMatrix(): Promise<
   ActionResult<LegacyAccessControlGroup[]>
 > {
   try {
     await requireRole("ADMIN");
 
-    const [levels, actions, grants] = await Promise.all([
+    const [levels, actions, grants, users] = await Promise.all([
       db.legacyAuthRecord.findMany({
         where: {
           recordType: {
@@ -156,6 +268,18 @@ export async function getLegacyAccessControlMatrix(): Promise<
           { legacyLevelId: "asc" },
           { legacyActionId: "asc" },
         ],
+      }),
+      db.legacyAuthRecord.findMany({
+        where: {
+          recordType: {
+            in: ACCESS_CONFIGS.map((config) => config.userRecordType),
+          },
+        },
+        select: {
+          sourceDatabase: true,
+          recordType: true,
+          recordValue: true,
+        },
       }),
     ]);
 
@@ -227,17 +351,28 @@ export async function getLegacyAccessControlMatrix(): Promise<
               level.sourceDatabase === sourceDatabase &&
               level.recordType === config.levelRecordType,
           )
-          .map((level) => ({
-            id: level.id,
-            sourceDatabase: level.sourceDatabase,
-            legacyTable: level.legacyTable,
-            legacyId: level.legacyId,
-            label: level.recordKey ?? `Level ${level.legacyId}`,
-            isDisabled: level.isDisabled ?? false,
-            selectedActionIds: Array.from(
-              grantsByLevel.get(level.legacyId) ?? new Set<number>(),
-            ).sort((a, b) => a - b),
-          }));
+          .map((level) => {
+            const userCount = users.reduce((count, user) => {
+              if (
+                user.sourceDatabase !== sourceDatabase ||
+                user.recordType !== config.userRecordType
+              ) {
+                return count;
+              }
+
+              return parsePhpLevelIds(user.recordValue).includes(level.legacyId)
+                ? count + 1
+                : count;
+            }, 0);
+
+            return levelRowFromRecord({
+              record: level,
+              userCount,
+              selectedActionIds: Array.from(
+                grantsByLevel.get(level.legacyId) ?? new Set<number>(),
+              ).sort((a, b) => a - b),
+            });
+          });
 
         if (groupLevels.length === 0 && groupActions.length === 0) continue;
 
@@ -428,6 +563,263 @@ export async function updateLegacyAccessControlLevels(
         error instanceof Error
           ? error.message
           : "Failed to update legacy access control",
+    };
+  }
+}
+
+export async function createLegacyAccessLevel(
+  input: CreateLegacyAccessLevelInput,
+): Promise<ActionResult<LegacyAccessLevelRow>> {
+  try {
+    await requireRole("ADMIN");
+
+    const config = configForLevelType(input.levelRecordType);
+    if (!config) {
+      return { success: false, error: "Unknown legacy level type" };
+    }
+
+    const sourceDatabase = input.sourceDatabase.trim();
+    const levelName = input.levelName.trim();
+    const redirect = inputString(input.redirect);
+
+    if (!sourceDatabase) {
+      return { success: false, error: "Missing legacy source database" };
+    }
+    if (!levelName) {
+      return { success: false, error: "You must enter a level name." };
+    }
+
+    const existingLevels = await db.legacyAuthRecord.findMany({
+      where: {
+        sourceDatabase,
+        recordType: config.levelRecordType,
+      },
+      select: { recordKey: true },
+    });
+    const duplicate = existingLevels.some(
+      (level) =>
+        level.recordKey?.trim().toLowerCase() === levelName.toLowerCase(),
+    );
+
+    if (duplicate) {
+      return {
+        success: false,
+        error: `Level name ${levelName} already exists.`,
+      };
+    }
+
+    const maxLevel = await db.legacyAuthRecord.findFirst({
+      where: {
+        sourceDatabase,
+        recordType: config.levelRecordType,
+      },
+      orderBy: { legacyId: "desc" },
+      select: { legacyId: true },
+    });
+    const legacyId = (maxLevel?.legacyId ?? 0) + 1;
+    const legacyKey = `${sourceDatabase}:${config.levelTable}:${legacyId}`;
+
+    const created = await db.legacyAuthRecord.create({
+      data: {
+        sourceDatabase,
+        legacyTable: config.levelTable,
+        legacyKey,
+        legacyId,
+        recordType: config.levelRecordType,
+        recordKey: levelName,
+        redirect,
+        isDisabled: false,
+        welcomeEmail: false,
+        legacyData: levelLegacyData({
+          legacyId,
+          levelName,
+          redirect,
+          welcomeEmail: false,
+          isDisabled: false,
+        }),
+      },
+    });
+
+    revalidatePath("/settings/access-control");
+
+    return {
+      success: true,
+      data: levelRowFromRecord({ record: created }),
+    };
+  } catch (error) {
+    console.error("Failed to create legacy level:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to create legacy level",
+    };
+  }
+}
+
+export async function updateLegacyAccessLevel(
+  input: UpdateLegacyAccessLevelInput,
+): Promise<ActionResult<LegacyAccessLevelRow>> {
+  try {
+    await requireRole("ADMIN");
+
+    const levelName = input.levelName.trim();
+    const redirect = inputString(input.redirect);
+
+    if (!levelName) {
+      return { success: false, error: "You must enter a level name." };
+    }
+
+    const existing = await db.legacyAuthRecord.findUnique({
+      where: { id: input.levelRecordId },
+    });
+
+    if (!existing) {
+      return { success: false, error: "Level doesn't exist!" };
+    }
+
+    const config = configForLevelType(
+      existing.recordType as LegacyAccessLevelRecordType,
+    );
+    if (!config) {
+      return { success: false, error: "Unknown legacy level type" };
+    }
+
+    const siblingLevels = await db.legacyAuthRecord.findMany({
+      where: {
+        sourceDatabase: existing.sourceDatabase,
+        recordType: config.levelRecordType,
+      },
+      select: { id: true, recordKey: true },
+    });
+    const duplicate = siblingLevels.some(
+      (level) =>
+        level.id !== existing.id &&
+        level.recordKey?.trim().toLowerCase() === levelName.toLowerCase(),
+    );
+
+    if (duplicate) {
+      return {
+        success: false,
+        error: `Level name ${levelName} already exists.`,
+      };
+    }
+
+    const isAdminLevel = existing.legacyId === 1;
+    const isDisabled = isAdminLevel ? false : Boolean(input.isDisabled);
+    const welcomeEmail = Boolean(input.welcomeEmail);
+
+    const updated = await db.legacyAuthRecord.update({
+      where: { id: existing.id },
+      data: {
+        recordKey: levelName,
+        redirect,
+        welcomeEmail,
+        isDisabled,
+        legacyData: levelLegacyData({
+          existing: existing.legacyData,
+          legacyId: existing.legacyId,
+          levelName,
+          redirect,
+          welcomeEmail,
+          isDisabled,
+        }),
+      },
+    });
+
+    const userCount = await countUsersForLegacyLevel(
+      updated.sourceDatabase,
+      config.userRecordType,
+      updated.legacyId,
+    );
+
+    revalidatePath("/settings/access-control");
+
+    return {
+      success: true,
+      data: levelRowFromRecord({ record: updated, userCount }),
+    };
+  } catch (error) {
+    console.error("Failed to update legacy level:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to update legacy level",
+    };
+  }
+}
+
+export async function deleteLegacyAccessLevel(input: {
+  levelRecordId: string;
+}): Promise<ActionResult<{ id: string; legacyId: number }>> {
+  try {
+    await requireRole("ADMIN");
+
+    const existing = await db.legacyAuthRecord.findUnique({
+      where: { id: input.levelRecordId },
+    });
+
+    if (!existing) {
+      return { success: false, error: "Level doesn't exist!" };
+    }
+
+    const config = configForLevelType(
+      existing.recordType as LegacyAccessLevelRecordType,
+    );
+    if (!config) {
+      return { success: false, error: "Unknown legacy level type" };
+    }
+
+    if (existing.legacyId === 1) {
+      return { success: false, error: "The admin level cannot be deleted." };
+    }
+
+    const userCount = await countUsersForLegacyLevel(
+      existing.sourceDatabase,
+      config.userRecordType,
+      existing.legacyId,
+    );
+
+    if (userCount > 0) {
+      return {
+        success: false,
+        error: "This level still has users in it!",
+      };
+    }
+
+    await db.$transaction([
+      db.legacyAuthRecord.update({
+        where: { id: existing.id },
+        data: {
+          recordType: `${existing.recordType}_deleted`,
+          isDisabled: true,
+          legacyData: {
+            ...legacyObject(existing.legacyData),
+            deleted_from: "modern_legacy_level_admin",
+          },
+        },
+      }),
+      db.legacyAccessControlRecord.updateMany({
+        where: {
+          sourceDatabase: existing.sourceDatabase,
+          recordType: config.grantRecordType,
+          legacyLevelId: existing.legacyId,
+        },
+        data: { isActive: false },
+      }),
+    ]);
+
+    revalidatePath("/settings/access-control");
+
+    return {
+      success: true,
+      data: { id: existing.id, legacyId: existing.legacyId },
+    };
+  } catch (error) {
+    console.error("Failed to delete legacy level:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to delete legacy level",
     };
   }
 }
