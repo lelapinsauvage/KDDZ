@@ -88,6 +88,18 @@ type ActionResult<T = unknown> = {
 };
 
 const MEDICAL_RECEIPT_SOURCE = "custom_notifications_medical";
+const INSURANCE_RECEIPT_SOURCE = "custom_notifications_insurance";
+const MEDICINE_RECEIPT_SOURCE = "custom_notifications_medicine";
+
+interface StaffReceiptAlarmConfig {
+  type: AlarmType;
+  sourceTable: string;
+  route: string;
+  familyLabel: string;
+  defaultActionHref: string;
+  includeCurrentUserInHistory?: boolean;
+  historyTypeFromLegacy?: (legacyData: Record<string, unknown>) => string;
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -144,9 +156,26 @@ function medicalLegacyStatusLabel(status: number | null) {
   return "Alert";
 }
 
+function legacyNotificationTypeLabel(legacyData: Record<string, unknown>) {
+  const ntype = jsonNumber(legacyData.ntype);
+  if (ntype === 1) return "Message";
+  if (ntype === 2) return "Alert & Message";
+  return "Alert";
+}
+
+function childMedicalHref(referenceId: string | null) {
+  return referenceId ? `/children/${referenceId}/medical` : "/medical/general";
+}
+
 function revalidateMedicalAlarmPaths() {
   revalidatePath("/alarms");
   revalidatePath("/alarms/medical");
+  revalidatePath("/");
+}
+
+function revalidateStaffReceiptAlarmPaths(route: string) {
+  revalidatePath("/alarms");
+  revalidatePath(route);
   revalidatePath("/");
 }
 
@@ -773,6 +802,333 @@ export async function markAllMedicalAlarmsViewed(): Promise<
     console.error("Failed to mark all medical alarms viewed:", error);
     return { success: false, error: "Failed to mark all medical alarms viewed" };
   }
+}
+
+// ---------------------------------------------------------------------------
+// Staff receipt-backed alarm families
+// ---------------------------------------------------------------------------
+
+async function getStaffReceiptAlarmNotifications(
+  config: StaffReceiptAlarmConfig,
+  params: { pageSize?: number } = {},
+): Promise<ActionResult> {
+  try {
+    const { userId, organizationId: orgId } = await requireOrg();
+    const pageSize = params.pageSize ?? 500;
+
+    const receipts = await db.notificationReceipt.findMany({
+      where: {
+        sourceTable: config.sourceTable,
+        recipientId: userId,
+        recipientType: "USER",
+        alarm: {
+          is: {
+            type: config.type,
+            OR: [{ branch: { organizationId: orgId } }, { branchId: null }],
+          },
+        },
+      },
+      include: {
+        alarm: { include: { branch: true } },
+      },
+      orderBy: { legacyNotificationId: "desc" },
+      take: pageSize,
+    });
+
+    const alarms = receipts.flatMap((receipt) => {
+      if (!receipt.alarm) return [];
+      const legacyData = jsonRecord(receipt.alarm.legacyData);
+      const legacyId = jsonNumber(legacyData.aid) ?? receipt.legacyNotificationId;
+      const legacyHref = jsonString(legacyData.href);
+      const actionHref = legacyHref?.startsWith("/")
+        ? legacyHref
+        : receipt.alarm.referenceId
+          ? childMedicalHref(receipt.alarm.referenceId)
+          : config.defaultActionHref;
+
+      return [{
+        id: receipt.alarm.id,
+        receiptId: receipt.id,
+        legacyId,
+        details: receipt.alarm.message ?? "",
+        datetime: receipt.alarm.createdAt.toISOString(),
+        dueDate: receipt.alarm.dueDate
+          ? receipt.alarm.dueDate.toISOString().split("T")[0]
+          : null,
+        branchId: receipt.alarm.branchId,
+        branch: receipt.alarm.branch?.name ?? "All Branches",
+        status: receipt.isRead ? "Viewed" : "New",
+        isRead: receipt.isRead,
+        legacyHref,
+        actionHref,
+        searchText: [
+          legacyId,
+          receipt.alarm.message,
+          receipt.alarm.branch?.name,
+          receipt.isRead ? "Viewed" : "New",
+          config.familyLabel,
+        ]
+          .filter(Boolean)
+          .join(" "),
+      }];
+    });
+
+    return {
+      success: true,
+      data: {
+        alarms,
+        total: alarms.length,
+      },
+    };
+  } catch (error) {
+    console.error(`Failed to fetch ${config.familyLabel} alarm notifications:`, error);
+    return {
+      success: false,
+      error: `Failed to fetch ${config.familyLabel} alarm notifications`,
+    };
+  }
+}
+
+async function getStaffReceiptAlarmHistory(
+  config: StaffReceiptAlarmConfig,
+  params: { pageSize?: number } = {},
+): Promise<ActionResult> {
+  try {
+    const { userId, organizationId: orgId } = await requireOrg();
+    const pageSize = params.pageSize ?? 500;
+
+    const receipts = await db.notificationReceipt.findMany({
+      where: {
+        sourceTable: config.sourceTable,
+        recipientType: "USER",
+        ...(config.includeCurrentUserInHistory
+          ? {}
+          : { NOT: { recipientId: userId } }),
+        alarm: {
+          is: {
+            type: config.type,
+            OR: [{ branch: { organizationId: orgId } }, { branchId: null }],
+          },
+        },
+      },
+      include: {
+        alarm: { include: { branch: true } },
+      },
+      orderBy: { legacyNotificationId: "desc" },
+      take: pageSize,
+    });
+
+    const recipientIds = Array.from(
+      new Set(
+        receipts
+          .map((receipt) => receipt.recipientId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    );
+    const users = recipientIds.length
+      ? await db.user.findMany({
+          where: { id: { in: recipientIds } },
+          select: { id: true, name: true, email: true },
+        })
+      : [];
+    const userNameById = new Map(
+      users.map((user) => [user.id, user.name || user.email]),
+    );
+
+    const history = receipts.flatMap((receipt) => {
+      if (!receipt.alarm) return [];
+      const legacyData = jsonRecord(receipt.alarm.legacyData);
+      const legacyId = jsonNumber(legacyData.aid) ?? receipt.legacyNotificationId;
+      const type =
+        config.historyTypeFromLegacy?.(legacyData) ??
+        legacyNotificationTypeLabel(legacyData);
+
+      return [{
+        id: receipt.id,
+        legacyId,
+        type,
+        content: receipt.alarm.message ?? "",
+        time: receipt.alarm.createdAt.toISOString(),
+        to:
+          (receipt.recipientId && userNameById.get(receipt.recipientId)) ||
+          `Legacy user #${receipt.legacyRecipientId}`,
+        seen: receipt.isRead ? "Yes" : "No",
+        branch: receipt.alarm.branch?.name ?? "All Branches",
+        searchText: [
+          legacyId,
+          type,
+          receipt.alarm.message,
+          receipt.legacyRecipientId,
+          receipt.recipientId && userNameById.get(receipt.recipientId),
+          receipt.isRead ? "Yes" : "No",
+          config.familyLabel,
+        ]
+          .filter(Boolean)
+          .join(" "),
+      }];
+    });
+
+    return {
+      success: true,
+      data: {
+        history,
+        total: history.length,
+      },
+    };
+  } catch (error) {
+    console.error(`Failed to fetch ${config.familyLabel} alarm history:`, error);
+    return {
+      success: false,
+      error: `Failed to fetch ${config.familyLabel} alarm history`,
+    };
+  }
+}
+
+async function markStaffReceiptAlarmViewed(
+  alarmId: string,
+  config: StaffReceiptAlarmConfig,
+): Promise<ActionResult<{ count: number }>> {
+  try {
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
+
+    const alarm = await db.alarm.findUnique({
+      where: { id: alarmId },
+      include: { branch: true },
+    });
+    if (
+      !alarm ||
+      alarm.type !== config.type ||
+      (alarm.branch && alarm.branch.organizationId !== ctx.organizationId)
+    ) {
+      return { success: false, error: `${config.familyLabel} alarm not found` };
+    }
+
+    const update = await db.notificationReceipt.updateMany({
+      where: {
+        sourceTable: config.sourceTable,
+        alarmId,
+        recipientId: ctx.userId,
+        recipientType: "USER",
+        isRead: false,
+      },
+      data: { isRead: true },
+    });
+
+    revalidateStaffReceiptAlarmPaths(config.route);
+    return { success: true, data: { count: update.count } };
+  } catch (error) {
+    console.error(`Failed to mark ${config.familyLabel} alarm viewed:`, error);
+    return {
+      success: false,
+      error: `Failed to mark ${config.familyLabel} alarm viewed`,
+    };
+  }
+}
+
+async function markAllStaffReceiptAlarmsViewed(
+  config: StaffReceiptAlarmConfig,
+): Promise<ActionResult<{ count: number }>> {
+  try {
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
+
+    const update = await db.notificationReceipt.updateMany({
+      where: {
+        sourceTable: config.sourceTable,
+        recipientId: ctx.userId,
+        recipientType: "USER",
+        isRead: false,
+        alarm: {
+          is: {
+            type: config.type,
+            OR: [
+              { branch: { organizationId: ctx.organizationId } },
+              { branchId: null },
+            ],
+          },
+        },
+      },
+      data: { isRead: true },
+    });
+
+    revalidateStaffReceiptAlarmPaths(config.route);
+    return { success: true, data: { count: update.count } };
+  } catch (error) {
+    console.error(`Failed to mark all ${config.familyLabel} alarms viewed:`, error);
+    return {
+      success: false,
+      error: `Failed to mark all ${config.familyLabel} alarms viewed`,
+    };
+  }
+}
+
+const INSURANCE_ALARM_CONFIG: StaffReceiptAlarmConfig = {
+  type: "INSURANCE",
+  sourceTable: INSURANCE_RECEIPT_SOURCE,
+  route: "/alarms/insurance",
+  familyLabel: "insurance",
+  defaultActionHref: "/medical/general",
+  includeCurrentUserInHistory: true,
+};
+
+const MEDICINE_ALARM_CONFIG: StaffReceiptAlarmConfig = {
+  type: "MEDICINE",
+  sourceTable: MEDICINE_RECEIPT_SOURCE,
+  route: "/alarms/medicine",
+  familyLabel: "medicine",
+  defaultActionHref: "/medical/general",
+  historyTypeFromLegacy: () => "Alert",
+};
+
+export async function getInsuranceAlarmNotifications(
+  params: { pageSize?: number } = {},
+): Promise<ActionResult> {
+  return getStaffReceiptAlarmNotifications(INSURANCE_ALARM_CONFIG, params);
+}
+
+export async function getInsuranceAlarmHistory(
+  params: { pageSize?: number } = {},
+): Promise<ActionResult> {
+  return getStaffReceiptAlarmHistory(INSURANCE_ALARM_CONFIG, params);
+}
+
+export async function markInsuranceAlarmViewed(
+  alarmId: string,
+): Promise<ActionResult<{ count: number }>> {
+  return markStaffReceiptAlarmViewed(alarmId, INSURANCE_ALARM_CONFIG);
+}
+
+export async function markAllInsuranceAlarmsViewed(): Promise<
+  ActionResult<{ count: number }>
+> {
+  return markAllStaffReceiptAlarmsViewed(INSURANCE_ALARM_CONFIG);
+}
+
+export async function getMedicineAlarmNotifications(
+  params: { pageSize?: number } = {},
+): Promise<ActionResult> {
+  return getStaffReceiptAlarmNotifications(MEDICINE_ALARM_CONFIG, params);
+}
+
+export async function getMedicineAlarmHistory(
+  params: { pageSize?: number } = {},
+): Promise<ActionResult> {
+  return getStaffReceiptAlarmHistory(MEDICINE_ALARM_CONFIG, params);
+}
+
+export async function markMedicineAlarmViewed(
+  alarmId: string,
+): Promise<ActionResult<{ count: number }>> {
+  return markStaffReceiptAlarmViewed(alarmId, MEDICINE_ALARM_CONFIG);
+}
+
+export async function markAllMedicineAlarmsViewed(): Promise<
+  ActionResult<{ count: number }>
+> {
+  return markAllStaffReceiptAlarmsViewed(MEDICINE_ALARM_CONFIG);
 }
 
 // ---------------------------------------------------------------------------

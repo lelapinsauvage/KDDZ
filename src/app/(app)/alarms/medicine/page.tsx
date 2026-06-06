@@ -1,32 +1,37 @@
-import { getAlarms } from "@/lib/actions/alarms";
+import {
+  getMedicineAlarmHistory,
+  getMedicineAlarmNotifications,
+} from "@/lib/actions/alarms";
 import { getBranches } from "@/lib/actions/branches";
-import { MedicineAlarmsClient } from "./medicine-alarms-client";
+import {
+  StaffReceiptAlarmsClient,
+  type StaffReceiptAlarm,
+  type StaffReceiptAlarmHistory,
+} from "../_components/staff-receipt-alarms-client";
 
 export default async function MedicineAlarmsPage() {
-  const [alarmsResult, branchesResult] = await Promise.all([
-    getAlarms({ type: "MEDICINE" }),
+  const [alarmsResult, historyResult, branchesResult] = await Promise.all([
+    getMedicineAlarmNotifications({ pageSize: 500 }),
+    getMedicineAlarmHistory({ pageSize: 500 }),
     getBranches(),
   ]);
 
-  const branches = ((branchesResult.data ?? []) as Array<{ id: string; name: string }>);
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rawData = (alarmsResult.success ? (alarmsResult.data as any) : { alarms: [] });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rawAlarms = (rawData.alarms ?? []) as Array<any>;
-
-  const serializedAlarms = rawAlarms.map((a) => ({
-    id: a.id as string,
-    message: (a.message ?? "—") as string,
-    dueDate: a.dueDate ? (a.dueDate as Date).toISOString().split("T")[0] : "",
-    branchId: (a.branch?.id ?? "") as string,
-    branch: (a.branch?.name ?? "—") as string,
-    isActive: a.isActive as boolean,
-  }));
+  const branches = (branchesResult.data ?? []) as Array<{
+    id: string;
+    name: string;
+  }>;
+  const rawAlarmData = alarmsResult.success
+    ? (alarmsResult.data as { alarms?: StaffReceiptAlarm[] })
+    : { alarms: [] };
+  const rawHistoryData = historyResult.success
+    ? (historyResult.data as { history?: StaffReceiptAlarmHistory[] })
+    : { history: [] };
 
   return (
-    <MedicineAlarmsClient
-      alarms={serializedAlarms}
+    <StaffReceiptAlarmsClient
+      family="medicine"
+      alarms={rawAlarmData.alarms ?? []}
+      history={rawHistoryData.history ?? []}
       branches={branches}
     />
   );
