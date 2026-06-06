@@ -57,7 +57,7 @@ Generated from local source trees. This is a first-pass inventory and must be re
 | Front/templates/admin/alarmsInsurance.php | /alarms/insurance | yes |
 | Front/templates/admin/alarmsMedical.php | /alarms/medical | yes |
 | Front/templates/admin/alarmsMedicine.php | /alarms/medicine | yes |
-| Front/templates/admin/alarmsMsg.php | /alarms/msg | no |
+| Front/templates/admin/alarmsMsg.php | /alarms/msg | yes |
 | Front/templates/admin/alarmsOthers.php | /alarms/others | yes |
 | Front/templates/admin/alarmsPayments.php | /alarms/payments | yes |
 | Front/templates/admin/alarmsRequests.php | /alarms/requests | yes |

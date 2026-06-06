@@ -525,13 +525,13 @@
     "legacyPhp": "Front/templates/admin/alarmsMsg.php",
     "legacyJs": "Front/templates/admin/js/alarmsMsg.js",
     "modernRoute": "/alarms/msg",
-    "status": "missing - no route found",
+    "status": "partial - legacy message notification listing restored",
     "legacyTablesMentioned": [
-      "auto",
-      "themeforest"
+      "t_alarms_msg",
+      "custom_notifications_msg"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored #, From, Date, Nature, Subject, Message, Status, and Actions table, staff-user read scoping, New/Viewed status, status/nature/date/search filters, row mark-viewed action, bulk mark viewed, Set All As Viewed, sidebar entry, and migration provenance for t_alarms_msg plus custom_notifications_msg. Remaining work is exact legacy reply-thread visual audit, parent/mobile read reset, and external push delivery parity."
   },
   {
     "legacyPhp": "Front/templates/admin/alarmsOthers.php",
