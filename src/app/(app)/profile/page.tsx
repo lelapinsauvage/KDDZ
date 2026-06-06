@@ -3,12 +3,22 @@ import { auth } from "@/lib/auth";
 import { FadeIn } from "@/components/ui/skeleton";
 import { ProfileClient } from "./profile-client";
 
-export default async function ProfilePage() {
+interface PageProps {
+  searchParams: Promise<{ legacy?: string | string[] }>;
+}
+
+function firstParam(value?: string | string[]) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function ProfilePage({ searchParams }: PageProps) {
   const session = await auth();
 
   if (!session?.user) {
     redirect("/login");
   }
+  const params = await searchParams;
+  const legacySource = firstParam(params.legacy);
 
   const user = {
     name: session.user.name ?? "",
@@ -18,7 +28,10 @@ export default async function ProfilePage() {
 
   return (
     <FadeIn>
-      <ProfileClient user={user} />
+      <ProfileClient
+        user={user}
+        legacySettings={legacySource === "settings.php" || legacySource === "settings"}
+      />
     </FadeIn>
   );
 }
