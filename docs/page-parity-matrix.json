@@ -18038,8 +18038,12 @@
       "cid",
       "del",
       "os",
-      "show"
+      "show",
+      "threadid",
+      "to",
+      "subject",
+      "message"
     ],
-    "verification": "Parent web shell now consumes legacy-shaped daily/newdaily reports, finance/payment rows, absence reports, food calendar rows, grouped messages, thread detail/replies, dynamic `notifications_master`-style notification groups, legacy-shaped alarm feeds, push-token registration/unregistration, legacy-compatible active holiday calendar, and send-message APIs. Remaining work is exact production `notifications_nature` table audit, external push provider delivery, offline/mobile polish, and field-by-field native response audit."
+    "verification": "Parent web shell now consumes legacy-shaped daily/newdaily reports, finance/payment rows, absence reports, food calendar rows, grouped messages, numeric-key thread detail/replies, dynamic `notifications_master`-style notification groups, legacy-shaped alarm feeds, push-token registration/unregistration, legacy-compatible active holiday calendar, and send-message APIs with legacy numeric thread ids plus admin/teacher fan-out. Remaining work is exact production `notifications_nature` table audit, external push provider delivery, offline/mobile polish, and credentialed native response audit."
   }
 ]

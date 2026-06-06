@@ -1,15 +1,58 @@
 import { NextRequest } from "next/server";
+import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import {
   authenticateParent,
-  verifyChildAccess,
   formatChildName,
   makeHeader,
   jsonError,
   jsonSuccess,
 } from "@/lib/parent-auth";
 
+type ParentMessagesChild = {
+  id: string;
+  legacyId: number | null;
+  firstName: string;
+  middleName?: string | null;
+  lastName: string;
+};
+
+type ParentMessagesUser = {
+  id: string;
+  childId: string;
+  child: ParentMessagesChild;
+};
+
+type ParentMessageRow = {
+  id: string;
+  legacyThreadId: number | null;
+  legacyData: Prisma.JsonValue | null;
+  senderId: string;
+  senderType: string;
+  recipientId: string;
+  recipientType: string;
+  subject: string | null;
+  body: string;
+  threadId: string | null;
+  createdAt: Date;
+  thread: { subject: string | null } | null;
+};
+
 export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ childId: string }> }
+) {
+  return handleRequest(request, { params });
+}
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ childId: string }> }
+) {
+  return handleRequest(request, { params });
+}
+
+async function handleRequest(
   request: NextRequest,
   { params }: { params: Promise<{ childId: string }> }
 ) {
@@ -17,17 +60,22 @@ export async function GET(
 
   const auth = await authenticateParent(request);
   if ("error" in auth) return auth.error;
-  const { parentUser } = auth;
+  const parentUser = auth.parentUser as ParentMessagesUser;
 
-  if (!verifyChildAccess(parentUser, childId)) {
+  if (!matchesChildId(parentUser.child, childId)) {
     return jsonError("Access denied", 403);
   }
 
-  try {
-    const child = await db.child.findUnique({ where: { id: childId } });
-    if (!child) {
-      return jsonSuccess([makeHeader("", false, 0)]);
+  if (request.method === "POST") {
+    const postedChildId = await readPostedChildId(request);
+    if (!postedChildId) return jsonSuccess([makeHeader("", false, 0)]);
+    if (!matchesChildId(parentUser.child, postedChildId)) {
+      return jsonError("Access denied", 403);
     }
+  }
+
+  try {
+    const child = parentUser.child;
 
     // Find all messages where the parent is sender or recipient
     const messages = await db.message.findMany({
@@ -52,16 +100,15 @@ export async function GET(
         lastMessage: string;
         lastSenderType: string;
         datetime: Date;
+        datetimeText: string;
       }
     >();
 
-    for (const msg of messages) {
+    for (const msg of messages as ParentMessageRow[]) {
       const tid = msg.threadId ?? msg.id; // fallback to msg id if no thread
       if (!threadMap.has(tid)) {
-        const truncatedBody =
-          msg.body.length > 60 ? msg.body.slice(0, 60) + "..." : msg.body;
-        const prefix =
-          msg.senderType === "PARENT" ? "You: " : "";
+        const truncatedBody = `${msg.body.slice(0, 60)}...`;
+        const prefix = msg.senderType === "PARENT" ? "You: " : "";
 
         threadMap.set(tid, {
           threadId: msg.legacyThreadId ? String(msg.legacyThreadId) : tid,
@@ -71,6 +118,7 @@ export async function GET(
           lastMessage: prefix + truncatedBody,
           lastSenderType: msg.senderType,
           datetime: msg.createdAt,
+          datetimeText: messageDateTime(msg),
         });
       }
     }
@@ -104,18 +152,82 @@ export async function GET(
     const header = makeHeader(formatChildName(child), true, threads.length);
 
     const items = threads.map((t) => ({
-      datetime: t.datetime.toISOString(),
+      datetime: t.datetimeText,
       thread_id: t.threadId,
       modern_thread_id: t.modernThreadId,
       legacy_thread_id: t.legacyThreadId,
       subject: t.subject,
       last_message: t.lastMessage,
       original_sender:
-        originalSenderMap.get(t.threadId) ?? "Administration",
+        originalSenderMap.get(t.modernThreadId) ?? "Administration",
     }));
 
     return jsonSuccess([header, ...items]);
   } catch {
     return jsonError("Internal server error", 500);
   }
+}
+
+async function readPostedChildId(request: NextRequest) {
+  const body = await readRequestBody(request);
+  return readString(asRecord(body), ["usites", "pid", "child_id", "childId"]);
+}
+
+async function readRequestBody(request: NextRequest) {
+  const contentType = request.headers.get("content-type") ?? "";
+
+  if (contentType.includes("application/json")) {
+    return request.json().catch(() => null);
+  }
+
+  if (
+    contentType.includes("application/x-www-form-urlencoded") ||
+    contentType.includes("multipart/form-data")
+  ) {
+    const form = await request.formData().catch(() => null);
+    if (!form) return null;
+    return Object.fromEntries(
+      [...form.entries()].map(([key, value]) => [
+        key,
+        typeof value === "string" ? value : value.name,
+      ])
+    );
+  }
+
+  const text = await request.text().catch(() => "");
+  if (!text.trim()) return null;
+  return Object.fromEntries(new URLSearchParams(text).entries());
+}
+
+function matchesChildId(child: ParentMessagesChild, postedChildId: string) {
+  return postedChildId === child.id || postedChildId === String(child.legacyId ?? "");
+}
+
+function messageDateTime(message: ParentMessageRow) {
+  const legacy = asRecord(message.legacyData);
+  const legacyMessage = asRecord(legacy?.message);
+
+  return (
+    readString(legacyMessage, ["datetime"]) ??
+    readString(legacyMessage, ["curr_date"]) ??
+    formatSqlDateTime(message.createdAt)
+  );
+}
+
+function formatSqlDateTime(date: Date) {
+  return date.toISOString().slice(0, 19).replace("T", " ");
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function readString(data: Record<string, unknown> | null, keys: string[]) {
+  for (const key of keys) {
+    const value = data?.[key];
+    if (value !== undefined && value !== null) return String(value);
+  }
+  return null;
 }
