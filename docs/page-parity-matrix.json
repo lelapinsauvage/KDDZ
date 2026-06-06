@@ -143,8 +143,11 @@
     "legacyPhp": "Front/templates/admin/Medical_form4.php",
     "legacyJs": "Front/templates/admin/js/Medical_form4.js",
     "modernRoute": "/medical/vaccinations/[id]",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "restored - legacy vaccination form workflow restored",
     "legacyTablesMentioned": [
+      "t_form_4",
+      "t_form_attch",
+      "t_child",
       "auto",
       "themeforest"
     ],
@@ -152,7 +155,7 @@
       "fid",
       "id"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored the legacy Vaccination workflow: child profile context, Hepatiti's B/IPV/OPV/DPT-Hib-HepB/Measles/MMR/DPT/DT dose sections, all raw `t_form_4` date/administrator keys, legacy paired date/admin submitted validation, permissive Save As Draft mapped to DRAFT/`is_rep_draft = 1`, submitted Save mapped to SUBMITTED/`is_rep_draft = 0`, preservation of branch/class/child legacy ids in `MedicalForm.data`, and titled attachments with `images/MedForms` fallback previews. Remaining work is final logged-in visual smoke after local database/runtime state is clean."
   },
   {
     "legacyPhp": "Front/templates/admin/Medical_form5.php",
@@ -209,13 +212,15 @@
     "legacyPhp": "Front/templates/admin/Medical_forms4.php",
     "legacyJs": "Front/templates/admin/js/Medical_forms4.js",
     "modernRoute": "/medical/vaccinations",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "restored - legacy vaccination roster restored",
     "legacyTablesMentioned": [
+      "t_form_4",
+      "t_child",
       "auto",
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored the legacy Vaccination Form Listing with form #, child image fallback, F Name, L Name, DOB, Branch, Class, Nationality, Gender, Date, view/edit/delete actions, New Child Vaccination Form, branch/class/gender/search/date filters, and form_id descending sort over migrated vaccination forms. Remaining work is final logged-in visual smoke after local database/runtime state is clean."
   },
   {
     "legacyPhp": "Front/templates/admin/Medical_forms5.php",

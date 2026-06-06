@@ -1,83 +1,92 @@
-import { getVaccinations } from "@/lib/actions/medical";
 import { getBranches } from "@/lib/actions/branches";
-import { db } from "@/lib/db";
-import { requireOrg } from "@/lib/require-org";
-import { VaccinationsPageClient } from "./vaccinations-page-client";
+import { getClasses } from "@/lib/actions/classes";
+import { getMedicalForms } from "@/lib/actions/medical";
+import { VaccinationsPageClient, type VaccinationFormRow } from "./vaccinations-page-client";
+
+function stringValue(value: unknown) {
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "number" && Number.isFinite(value)) return value.toString();
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  return "";
+}
+
+function pickString(data: Record<string, unknown>, ...keys: string[]) {
+  for (const key of keys) {
+    const value = stringValue(data[key]);
+    if (value) return value;
+  }
+  return "";
+}
+
+function legacyNumber(data: Record<string, unknown>, ...keys: string[]) {
+  for (const key of keys) {
+    const value = data[key];
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string" && value.trim()) {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
+  return null;
+}
+
+function dateString(value: string) {
+  if (!value) return "";
+  const isoDate = value.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (isoDate) return isoDate[1];
+
+  const parsed = new Date(value);
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed.toISOString().split("T")[0];
+  }
+
+  return value;
+}
 
 export default async function VaccinationsPage() {
-  const { organizationId: orgId } = await requireOrg();
-
-  const [{ vaccinations, total }, branchesResult] = await Promise.all([
-    getVaccinations({ pageSize: 500 }),
+  const [{ forms, total }, branchesResult, classesResult] = await Promise.all([
+    getMedicalForms({ formType: "VACCINATIONS", pageSize: 500 }),
     getBranches(),
+    getClasses(),
   ]);
 
   const branches = (branchesResult.data ?? []) as Array<{ id: string; name: string }>;
+  const classes = (classesResult.data ?? []) as Array<{ id: string; name: string; branchId: string }>;
 
-  const serializedVaccinations = vaccinations.map((v) => {
-    let vacStatus: "Up to date" | "Overdue" | "Upcoming" = "Up to date";
-    if (v.nextDueDate) {
-      const now = new Date();
-      const dueDate = new Date(v.nextDueDate);
-      if (dueDate < now) {
-        vacStatus = "Overdue";
-      } else {
-        const sixtyDays = new Date();
-        sixtyDays.setDate(sixtyDays.getDate() + 60);
-        if (dueDate <= sixtyDays) {
-          vacStatus = "Upcoming";
-        }
-      }
-    }
+  const serializedForms: VaccinationFormRow[] = forms.map((form) => {
+    const data = (form.data ?? {}) as Record<string, unknown>;
+    const formDate =
+      dateString(pickString(data, "datetime", "created_at", "date")) ||
+      form.createdAt.toISOString().split("T")[0];
 
     return {
-      id: v.id,
-      childId: v.childId,
-      childName: `${v.child.firstName} ${v.child.lastName}`,
-      firstName: v.child.firstName,
-      lastName: v.child.lastName,
-      dateOfBirth: v.child.dateOfBirth?.toISOString().split("T")[0] ?? null,
-      nationality: v.child.nationality ?? "",
-      gender: v.child.gender as string | null,
-      vaccine: v.vaccineName,
-      dateGiven: v.dateGiven ? v.dateGiven.toISOString().split("T")[0] : null,
-      nextDue: v.nextDueDate ? v.nextDueDate.toISOString().split("T")[0] : null,
-      notes: v.notes ?? "",
-      vacStatus,
-      branchId: v.child.branchId,
-      branchName: v.child.branch?.name ?? "\u2014",
-      className: v.child.class?.name ?? "",
+      id: form.id,
+      legacyFormId: legacyNumber(data, "_oldId", "form_id", "id"),
+      childId: form.childId,
+      childNumber: form.child.childNumber ?? form.child.legacyId?.toString() ?? "-",
+      photo: form.child.photo ?? null,
+      firstName: form.child.firstName,
+      lastName: form.child.lastName,
+      childName: `${form.child.firstName} ${form.child.lastName}`,
+      dateOfBirth: form.child.dateOfBirth?.toISOString().split("T")[0] ?? null,
+      nationality: form.child.nationality ?? "",
+      gender: form.child.gender as string | null,
+      branchId: form.child.branchId,
+      branchName: form.child.branch?.name ?? "-",
+      classId: form.child.classId ?? null,
+      className: form.child.class?.name ?? "",
+      formDate,
+      status: form.status as "DRAFT" | "SUBMITTED" | "REVIEWED",
+      createdAt: form.createdAt.toISOString(),
     };
   });
 
-  // Fetch children with DOB for the timeline view
-  const childrenWithDob = await db.child.findMany({
-    where: { isActive: true, branch: { organizationId: orgId } },
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      dateOfBirth: true,
-      branchId: true,
-      branch: { select: { name: true } },
-    },
-    orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
-  });
-
-  const childrenForTimeline = childrenWithDob.map((c) => ({
-    id: c.id,
-    name: `${c.firstName} ${c.lastName}`,
-    dob: c.dateOfBirth ? c.dateOfBirth.toISOString().split("T")[0] : null,
-    branchId: c.branchId,
-    branchName: c.branch?.name ?? "\u2014",
-  }));
-
   return (
     <VaccinationsPageClient
-      vaccinations={serializedVaccinations}
+      forms={serializedForms}
       total={total}
       branches={branches}
-      childrenList={childrenForTimeline}
+      classes={classes}
     />
   );
 }
