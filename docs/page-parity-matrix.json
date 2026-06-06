@@ -16639,7 +16639,7 @@
       "subject",
       "to-levels"
     ],
-    "verification": "The modern `getLegacyEmailLevels` and `sendLegacyBulkEmail` actions replace the legacy `Send_email::displayLevels()` and `Send_email::sendMail()` flow for restored data: selected legacy levels are validated, manager-level users are matched from preserved `login_users_man` metadata, regular login levels map to modern roles where the original serialized `login_users.user_level` was collapsed during migration, recipients are deduped, and in-app notifications are created. Remaining work is exact regular-user serialized-level targeting if `login_users.user_level` is re-preserved and SMTP/BCC delivery."
+    "verification": "The modern `getLegacyEmailLevels` and `sendLegacyBulkEmail` actions replace the legacy `Send_email::displayLevels()` and `Send_email::sendMail()` flow for restored data: selected legacy levels are validated, regular and manager-level users are matched from preserved `login_users` / `login_users_man` serialized `user_level` metadata when the auth metadata migration has run, older imports fall back to modern role mapping, recipients are deduped, and in-app notifications are created. Remaining work is SMTP/BCC provider delivery."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/classes/settings.class.php",
@@ -16974,7 +16974,7 @@
     "status": "partial - legacy level-targeted bulk send form restored; SMTP BCC delivery remains",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "/settings/notifications now includes a Bulk Email tab matching the legacy Send email form: legacy login levels are loaded from migrated `login_levels` and `login_levels_man` metadata, disabled levels are blocked, subject/message fields are required, and selected groups are deduped before dispatch. Modern dispatch currently creates in-app `BULK_EMAIL` notifications for resolved users; remaining work is provider-backed SMTP delivery with true BCC semantics after credentials are recovered."
+    "verification": "/settings/notifications now includes a Bulk Email tab matching the legacy Send email form: legacy login levels are loaded from migrated `login_levels` and `login_levels_man` metadata, disabled levels are blocked, subject/message fields are required, selected groups are deduped, and restored `login_users` / `login_users_man` level payloads are used for exact targeting when available. Modern dispatch currently creates in-app `BULK_EMAIL` notifications for resolved users; remaining work is provider-backed SMTP delivery with true BCC semantics after credentials are recovered."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/settings.php",

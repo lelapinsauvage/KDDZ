@@ -711,23 +711,26 @@ export async function sendLegacyBulkEmail(params: {
       return { success: false, error: "No active legacy user groups found" };
     }
 
-    const roleTargets = new Set<UserRole>();
-    for (const level of levels) {
-      for (const role of rolesForLegacyLevel({
-        id: level.id,
-        sourceDatabase: level.sourceDatabase,
-        legacyTable: level.legacyTable,
-        legacyId: level.legacyId,
-        label: level.recordKey ?? `Level ${level.legacyId}`,
-        isDisabled: level.isDisabled ?? false,
-      })) {
-        roleTargets.add(role);
-      }
-    }
-
+    const selectedRegularLevels = levels.filter(
+      (level) => level.recordType === "login_level",
+    );
     const selectedManagerLevels = levels.filter(
       (level) => level.recordType === "manager_login_level",
     );
+
+    const regularRows = selectedRegularLevels.length
+      ? await db.legacyAuthRecord.findMany({
+          where: {
+            recordType: "login_user",
+            sourceDatabase: {
+              in: Array.from(
+                new Set(selectedRegularLevels.map((level) => level.sourceDatabase)),
+              ),
+            },
+            OR: [{ isDisabled: false }, { isDisabled: null }],
+          },
+        })
+      : [];
     const managerRows = selectedManagerLevels.length
       ? await db.legacyAuthRecord.findMany({
           where: {
@@ -742,13 +745,35 @@ export async function sendLegacyBulkEmail(params: {
         })
       : [];
 
+    const exactUserIds = new Set<string>();
     const managerLevelKeys = new Set(
       selectedManagerLevels.map(
         (level) => `${level.sourceDatabase}:${level.legacyId}`,
       ),
     );
-    const managerUserIds = new Set<string>();
+    const regularLevelKeys = new Set(
+      selectedRegularLevels.map(
+        (level) => `${level.sourceDatabase}:${level.legacyId}`,
+      ),
+    );
+    const exactRegularSources = new Set(
+      regularRows.map((row) => row.sourceDatabase),
+    );
+    const exactManagerSources = new Set(
+      managerRows.map((row) => row.sourceDatabase),
+    );
     const matchedEmails = new Set<string>();
+
+    for (const row of regularRows) {
+      const levelsForUser = parsePhpLevelIds(row.recordValue);
+      const matchesSelected = levelsForUser.some((levelId) =>
+        regularLevelKeys.has(`${row.sourceDatabase}:${levelId}`),
+      );
+      if (!matchesSelected) continue;
+      if (row.email) matchedEmails.add(row.email.toLowerCase());
+      if (row.userId) exactUserIds.add(row.userId);
+    }
+
     for (const row of managerRows) {
       const levelsForUser = parsePhpLevelIds(row.recordValue);
       const matchesSelected = levelsForUser.some((levelId) =>
@@ -756,10 +781,40 @@ export async function sendLegacyBulkEmail(params: {
       );
       if (!matchesSelected) continue;
       if (row.email) matchedEmails.add(row.email.toLowerCase());
-      if (row.userId) managerUserIds.add(row.userId);
+      if (row.userId) exactUserIds.add(row.userId);
     }
 
-    if (roleTargets.size === 0 && managerUserIds.size === 0) {
+    const fallbackLevels = levels.filter((level) => {
+      if (
+        level.recordType === "login_level" &&
+        exactRegularSources.has(level.sourceDatabase)
+      ) {
+        return false;
+      }
+      if (
+        level.recordType === "manager_login_level" &&
+        exactManagerSources.has(level.sourceDatabase)
+      ) {
+        return false;
+      }
+      return true;
+    });
+
+    const roleTargets = new Set<UserRole>();
+    for (const level of fallbackLevels) {
+      for (const role of rolesForLegacyLevel({
+        id: level.id,
+        sourceDatabase: level.sourceDatabase,
+        legacyTable: level.legacyTable,
+        legacyId: level.legacyId,
+        label: level.recordKey ?? `Level ${level.legacyId}`,
+        isDisabled: level.isDisabled ?? false,
+      })) {
+        roleTargets.add(role);
+      }
+    }
+
+    if (roleTargets.size === 0 && exactUserIds.size === 0) {
       return {
         success: true,
         data: {
@@ -776,7 +831,7 @@ export async function sendLegacyBulkEmail(params: {
         isActive: true,
         OR: [
           ...(roleTargets.size ? [{ role: { in: Array.from(roleTargets) } }] : []),
-          ...(managerUserIds.size ? [{ id: { in: Array.from(managerUserIds) } }] : []),
+          ...(exactUserIds.size ? [{ id: { in: Array.from(exactUserIds) } }] : []),
         ],
         AND: [
           {

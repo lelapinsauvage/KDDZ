@@ -2,8 +2,8 @@
  * Migration: legacy PHP auth metadata -> LegacyAuthRecord
  *
  * These rows are not active Auth.js users. They preserve pending confirmation
- * tokens, profile fields/values, login levels, manager-login metadata, and
- * parent-login level metadata from the old PHP login library.
+ * tokens, profile fields/values, login levels, regular/manager-login user
+ * metadata, and parent-login level metadata from the old PHP login library.
  *
  * Prerequisites: Users should be migrated first so records can resolve userId
  * where possible.
@@ -430,6 +430,62 @@ async function migrateManagerLoginUsers(
   log(`${table}: ${migrated} migrated, ${skipped} skipped`);
 }
 
+async function migrateRegularLoginUsers(
+  prisma: PrismaClient,
+  sourceDatabase: string,
+  dryRun: boolean
+) {
+  const table = "login_users";
+  if (!(await tableExists(table))) {
+    log(`${table}: table not present, skipping`);
+    return;
+  }
+
+  const rows = await queryMysql<OldLegacyLoginUser>(
+    "SELECT * FROM login_users ORDER BY user_id"
+  );
+  log(`Found ${rows.length} rows in login_users for auth metadata`);
+
+  let migrated = 0;
+  let skipped = 0;
+
+  for (const row of rows) {
+    const legacyId = toInt(row.user_id, 0);
+    if (!legacyId) {
+      skipped++;
+      continue;
+    }
+
+    const email = cleanString(row.email);
+    const result = await createRecord(
+      prisma,
+      {
+        sourceDatabase,
+        legacyTable: table,
+        legacyId,
+        recordType: "login_user",
+        userId:
+          getMapping("user", legacyId) ??
+          (await resolveUserByEmail(prisma, email)),
+        legacyUserId: legacyId,
+        username: cleanString(row.username),
+        email,
+        recordKey: cleanString(row.username) ?? `user:${legacyId}`,
+        recordValue: cleanString(row.user_level),
+        isDisabled: toBool(row.restricted),
+        legacyData: row,
+      },
+      dryRun
+    );
+
+    if (result === "migrated") migrated++;
+    else skipped++;
+    logProgress(migrated + skipped, rows.length, table);
+  }
+
+  log(`${table}: ${migrated} auth metadata rows migrated, ${skipped} skipped`);
+}
+
 export async function migrateAuthMetadata(prisma: PrismaClient) {
   log("=== Migrating Legacy Auth Metadata ===");
   const dryRun = isDryRun();
@@ -464,6 +520,7 @@ export async function migrateAuthMetadata(prisma: PrismaClient) {
     "parent_login_levels",
     dryRun
   );
+  await migrateRegularLoginUsers(prisma, sourceDatabase, dryRun);
   await migrateManagerLoginUsers(prisma, sourceDatabase, dryRun);
 
   log(
