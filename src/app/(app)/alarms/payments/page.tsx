@@ -1,16 +1,38 @@
-import { getAlarms } from "@/lib/actions/alarms";
+import {
+  getAlarms,
+  getPaymentAlarmHistory,
+  getPaymentAlarmNotifications,
+} from "@/lib/actions/alarms";
 import { getBranches } from "@/lib/actions/branches";
 import { getOverduePayments } from "@/lib/actions/payments";
+import type {
+  StaffReceiptAlarm,
+  StaffReceiptAlarmHistory,
+} from "../_components/staff-receipt-alarms-client";
 import { PaymentAlarmsClient } from "./payment-alarms-client";
 
 export default async function PaymentAlarmsPage() {
-  const [alarmsResult, branchesResult, overdueResult] = await Promise.all([
+  const [
+    alarmsResult,
+    branchesResult,
+    overdueResult,
+    notificationsResult,
+    historyResult,
+  ] = await Promise.all([
     getAlarms({ type: "PAYMENT" }),
     getBranches(),
     getOverduePayments(),
+    getPaymentAlarmNotifications({ pageSize: 500 }),
+    getPaymentAlarmHistory({ pageSize: 500 }),
   ]);
 
   const branches = ((branchesResult.data ?? []) as Array<{ id: string; name: string }>);
+  const notificationsData = (notificationsResult.success
+    ? notificationsResult.data
+    : null) as { alarms?: StaffReceiptAlarm[] } | null;
+  const historyData = (historyResult.success
+    ? historyResult.data
+    : null) as { history?: StaffReceiptAlarmHistory[] } | null;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rawData = (alarmsResult.success ? (alarmsResult.data as any) : { alarms: [] });
@@ -92,6 +114,8 @@ export default async function PaymentAlarmsPage() {
       overdueChildren={overdueChildren}
       totalOverdue={overdueData.totalOverdue}
       totalOverdueCount={overdueData.totalCount}
+      notificationAlarms={notificationsData?.alarms ?? []}
+      notificationHistory={historyData?.history ?? []}
     />
   );
 }

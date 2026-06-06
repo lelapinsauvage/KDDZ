@@ -33,6 +33,7 @@ import {
   ExternalLink,
   Cake,
   ClipboardCheck,
+  DollarSign,
   Eye,
   FileClock,
   FileText,
@@ -51,18 +52,21 @@ import {
   generateContractAlarms,
   generateInsuranceAlarms,
   generateMedicineAlarms,
+  generatePaymentAlarms,
   generateVaccinationAlarms,
   markAllAssessmentAlarmsViewed,
   markAllBirthdayAlarmsViewed,
   markAllContractAlarmsViewed,
   markAllInsuranceAlarmsViewed,
   markAllMedicineAlarmsViewed,
+  markAllPaymentAlarmsViewed,
   markAllVaccinationAlarmsViewed,
   markAssessmentAlarmViewed,
   markBirthdayAlarmViewed,
   markContractAlarmViewed,
   markInsuranceAlarmViewed,
   markMedicineAlarmViewed,
+  markPaymentAlarmViewed,
   markVaccinationAlarmViewed,
 } from "@/lib/actions/alarms";
 
@@ -79,6 +83,7 @@ export interface StaffReceiptAlarm {
   isRead: boolean;
   legacyHref: string | null;
   actionHref: string;
+  to?: string;
   searchText: string;
 }
 
@@ -101,6 +106,7 @@ interface StaffReceiptAlarmsClientProps {
     | "contract"
     | "insurance"
     | "medicine"
+    | "payment"
     | "vaccination";
   alarms: StaffReceiptAlarm[];
   history: StaffReceiptAlarmHistory[];
@@ -193,6 +199,21 @@ const familyCopy: Record<StaffReceiptAlarmsClientProps["family"], FamilyCopy> = 
     generationFailure: "Medicine generation failed.",
     icon: Pill,
     iconClass: "text-violet-500",
+  },
+  payment: {
+    title: "Payments Notifications Listing",
+    description: "Payment reminders sent to parents",
+    breadcrumb: "Payments",
+    historyTitle: "Sent Payment Alarms",
+    searchPlaceholder: "Search payment alarms...",
+    historyPlaceholder: "Search sent payment alarms...",
+    emptyTitle: "No payment notifications",
+    emptyDescription:
+      "Payment reminders matching the current filters will appear here.",
+    generationFailure: "Payment generation failed.",
+    icon: DollarSign,
+    iconClass: "text-amber-600",
+    listingLabel: "Recipients",
   },
   vaccination: {
     title: "Vaccinations Notifications Listing",
@@ -288,6 +309,14 @@ function formatGenerationStatus(
     return `Matched ${remindersMatched}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"} and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing.`;
   }
 
+  if (family === "payment") {
+    const reminderGroupsMatched = metric(data, "reminderGroupsMatched");
+    const duePaymentGroupsMatched = metric(data, "duePaymentGroupsMatched");
+    const alarmsCreated = metric(data, "alarmsCreated");
+    const skippedExisting = metric(data, "skippedExisting");
+    return `Matched ${reminderGroupsMatched} paid group${reminderGroupsMatched === 1 ? "" : "s"} and ${duePaymentGroupsMatched} due group${duePaymentGroupsMatched === 1 ? "" : "s"}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing.`;
+  }
+
   const entriesMatched = metric(data, "entriesMatched");
   const alarmsCreated = metric(data, "alarmsCreated");
   const notificationsCreated = metric(data, "notificationsCreated");
@@ -304,6 +333,7 @@ async function generateForFamily(
   if (family === "birthday") return generateBirthdayAlarms(branchId);
   if (family === "contract") return generateContractAlarms(branchId);
   if (family === "insurance") return generateInsuranceAlarms(branchId);
+  if (family === "payment") return generatePaymentAlarms(branchId);
   if (family === "vaccination") return generateVaccinationAlarms(branchId);
   return generateMedicineAlarms(branchId);
 }
@@ -316,6 +346,7 @@ async function markViewedForFamily(
   if (family === "birthday") return markBirthdayAlarmViewed(alarmId);
   if (family === "contract") return markContractAlarmViewed(alarmId);
   if (family === "insurance") return markInsuranceAlarmViewed(alarmId);
+  if (family === "payment") return markPaymentAlarmViewed(alarmId);
   if (family === "vaccination") return markVaccinationAlarmViewed(alarmId);
   return markMedicineAlarmViewed(alarmId);
 }
@@ -327,6 +358,7 @@ async function markAllViewedForFamily(
   if (family === "birthday") return markAllBirthdayAlarmsViewed();
   if (family === "contract") return markAllContractAlarmsViewed();
   if (family === "insurance") return markAllInsuranceAlarmsViewed();
+  if (family === "payment") return markAllPaymentAlarmsViewed();
   if (family === "vaccination") return markAllVaccinationAlarmsViewed();
   return markAllMedicineAlarmsViewed();
 }
@@ -391,6 +423,11 @@ export function StaffReceiptAlarmsClient({
       return true;
     });
   }, [history, historyDateFrom, historyDateTo, historySearch]);
+
+  const showRecipientColumn = useMemo(
+    () => alarms.some((alarm) => Boolean(alarm.to)),
+    [alarms],
+  );
 
   function resetAlarmFilters() {
     setStatusFilter("ALL");
@@ -490,6 +527,17 @@ export function StaffReceiptAlarmsClient({
         </div>
       ),
     },
+    ...(showRecipientColumn
+      ? ([
+          {
+            accessorKey: "to",
+            header: ({ column }) => (
+              <SortableHeader column={column}>To</SortableHeader>
+            ),
+            cell: ({ row }) => row.original.to ?? "-",
+          },
+        ] satisfies ColumnDef<StaffReceiptAlarm>[])
+      : []),
     {
       accessorKey: "datetime",
       header: ({ column }) => (

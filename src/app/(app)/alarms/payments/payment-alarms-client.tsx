@@ -14,11 +14,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { AlertTriangle, DollarSign, ExternalLink, RefreshCw, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { AlarmActionsCell } from "@/components/alarms/alarm-actions-cell";
 import { generatePaymentAlarms } from "@/lib/actions/alarms";
+import {
+  StaffReceiptAlarmsClient,
+  type StaffReceiptAlarm,
+  type StaffReceiptAlarmHistory,
+} from "../_components/staff-receipt-alarms-client";
 
 // ── Types ──
 
@@ -49,6 +60,8 @@ interface PaymentAlarmsClientProps {
   overdueChildren: OverdueChild[];
   totalOverdue: number;
   totalOverdueCount: number;
+  notificationAlarms: StaffReceiptAlarm[];
+  notificationHistory: StaffReceiptAlarmHistory[];
 }
 
 const statusColors: Record<string, string> = {
@@ -69,6 +82,8 @@ export function PaymentAlarmsClient({
   overdueChildren,
   totalOverdue,
   totalOverdueCount,
+  notificationAlarms,
+  notificationHistory,
 }: PaymentAlarmsClientProps) {
   const router = useRouter();
   const [branchFilter, setBranchFilter] = useState("ALL");
@@ -84,6 +99,7 @@ export function PaymentAlarmsClient({
     if (branchFilter === "ALL") return overdueChildren;
     return overdueChildren.filter((c) => c.branchId === branchFilter);
   }, [branchFilter, overdueChildren]);
+  const unreadNotifications = notificationAlarms.filter((alarm) => !alarm.isRead).length;
 
   async function handleGenerate() {
     setIsGenerating(true);
@@ -213,121 +229,142 @@ export function PaymentAlarmsClient({
           { label: "Payments" },
         ]}
       />
-      <div className="space-y-6 p-4 md:p-6">
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Card className="py-4">
-            <CardContent className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-red-100">
-                <AlertTriangle className="size-5 text-red-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Overdue</p>
-                <p className="text-xl font-semibold text-red-600">
-                  ${totalOverdue.toFixed(2)}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="py-4">
-            <CardContent className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-amber-100">
-                <DollarSign className="size-5 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Overdue Payments</p>
-                <p className="text-xl font-semibold text-foreground">
-                  {totalOverdueCount}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="py-4">
-            <CardContent className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-blue-100">
-                <Users className="size-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Children with Overdue</p>
-                <p className="text-xl font-semibold text-foreground">
-                  {overdueChildren.length}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
 
-        {/* Filters */}
-        <div className="flex flex-wrap items-center gap-3">
-          <Select value={branchFilter} onValueChange={setBranchFilter}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="All Branches" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All Branches</SelectItem>
-              {branches.map((b) => (
-                <SelectItem key={b.id} value={b.id}>
-                  {b.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleGenerate}
-            disabled={isGenerating}
-            className="gap-2"
-          >
-            <RefreshCw className={`size-4 ${isGenerating ? "animate-spin" : ""}`} />
-            {isGenerating ? "Generating..." : "Generate"}
-          </Button>
-          {generationStatus && (
-            <span className="text-sm text-muted-foreground">{generationStatus}</span>
-          )}
-        </div>
+      <Tabs defaultValue="dashboard" className="space-y-4 p-4 md:p-6">
+        <TabsList>
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="notifications">
+            Notifications
+            {unreadNotifications > 0 && (
+              <Badge className="ml-1 bg-primary/10 text-primary">
+                {unreadNotifications}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
 
-        {/* Overdue Payments by Child */}
-        {filteredOverdue.length > 0 && (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <AlertTriangle className="size-4 text-red-500" />
-                Children with Overdue Payments
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <DataTable
-                columns={overdueColumns}
-                data={filteredOverdue}
-                searchKey="childName"
-                searchPlaceholder="Search children..."
-              />
-            </CardContent>
-          </Card>
-        )}
-
-        {/* General Alarms */}
-        {filteredAlarms.length > 0 ? (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Payment Alarms</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <DataTable
-                columns={alarmColumns}
-                data={filteredAlarms}
-                searchKey="message"
-                searchPlaceholder="Search alarms..."
-              />
-            </CardContent>
-          </Card>
-        ) : filteredOverdue.length === 0 ? (
-          <div className="rounded-lg border bg-card p-8 text-center text-sm text-muted-foreground">
-            No payment alarms found.
+        <TabsContent value="dashboard" className="space-y-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <Card className="py-4">
+              <CardContent className="flex items-center gap-4">
+                <div className="flex size-10 items-center justify-center rounded-lg bg-red-100">
+                  <AlertTriangle className="size-5 text-red-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Overdue</p>
+                  <p className="text-xl font-semibold text-red-600">
+                    ${totalOverdue.toFixed(2)}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="py-4">
+              <CardContent className="flex items-center gap-4">
+                <div className="flex size-10 items-center justify-center rounded-lg bg-amber-100">
+                  <DollarSign className="size-5 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Overdue Payments</p>
+                  <p className="text-xl font-semibold text-foreground">
+                    {totalOverdueCount}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="py-4">
+              <CardContent className="flex items-center gap-4">
+                <div className="flex size-10 items-center justify-center rounded-lg bg-blue-100">
+                  <Users className="size-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Children with Overdue</p>
+                  <p className="text-xl font-semibold text-foreground">
+                    {overdueChildren.length}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        ) : null}
-      </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <Select value={branchFilter} onValueChange={setBranchFilter}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="All Branches" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Branches</SelectItem>
+                {branches.map((b) => (
+                  <SelectItem key={b.id} value={b.id}>
+                    {b.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleGenerate}
+              disabled={isGenerating}
+              className="gap-2"
+            >
+              <RefreshCw className={`size-4 ${isGenerating ? "animate-spin" : ""}`} />
+              {isGenerating ? "Generating..." : "Generate"}
+            </Button>
+            {generationStatus && (
+              <span className="text-sm text-muted-foreground">{generationStatus}</span>
+            )}
+          </div>
+
+          {filteredOverdue.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <AlertTriangle className="size-4 text-red-500" />
+                  Children with Overdue Payments
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <DataTable
+                  columns={overdueColumns}
+                  data={filteredOverdue}
+                  searchKey="childName"
+                  searchPlaceholder="Search children..."
+                />
+              </CardContent>
+            </Card>
+          )}
+
+          {filteredAlarms.length > 0 ? (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Payment Alarms</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <DataTable
+                  columns={alarmColumns}
+                  data={filteredAlarms}
+                  searchKey="message"
+                  searchPlaceholder="Search alarms..."
+                />
+              </CardContent>
+            </Card>
+          ) : filteredOverdue.length === 0 ? (
+            <div className="rounded-lg border bg-card p-8 text-center text-sm text-muted-foreground">
+              No payment alarms found.
+            </div>
+          ) : null}
+        </TabsContent>
+
+        <TabsContent value="notifications" className="space-y-4">
+          <StaffReceiptAlarmsClient
+            family="payment"
+            alarms={notificationAlarms}
+            history={notificationHistory}
+            branches={branches}
+            showHeader={false}
+          />
+        </TabsContent>
+      </Tabs>
     </>
   );
 }

@@ -93,6 +93,7 @@ const BIRTHDAY_RECEIPT_SOURCE = "custom_notifications_birthday";
 const CONTRACT_RECEIPT_SOURCE = "custom_notifications_contracts";
 const INSURANCE_RECEIPT_SOURCE = "custom_notifications_insurance";
 const MEDICINE_RECEIPT_SOURCE = "custom_notifications_medicine";
+const PAYMENT_RECEIPT_SOURCE = "custom_notifications_payments";
 const VACCINATION_RECEIPT_SOURCE = "custom_notifications_vaccinations";
 
 interface StaffReceiptAlarmLinkData {
@@ -114,8 +115,15 @@ interface StaffReceiptAlarmConfig {
   notificationRecipientTypes?: string[];
   historyRecipientTypes?: string[];
   collapseNotificationsByAlarm?: boolean;
+  includeNotificationRecipientSummary?: boolean;
   includeCurrentUserInHistory?: boolean;
   historyTypeFromLegacy?: (legacyData: Record<string, unknown>) => string;
+}
+
+interface ReceiptRecipientRef {
+  recipientType: string;
+  recipientId: string | null;
+  legacyRecipientId: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -256,6 +264,86 @@ function historyRecipientWhere(config: StaffReceiptAlarmConfig, userId: string) 
     recipientType: { in: recipientTypes },
     ...(config.includeCurrentUserInHistory ? {} : { NOT: { recipientId: userId } }),
   };
+}
+
+async function getReceiptRecipientNameResolver(receipts: ReceiptRecipientRef[]) {
+  const userRecipientIds = Array.from(
+    new Set(
+      receipts
+        .filter((receipt) => receipt.recipientType === "USER")
+        .map((receipt) => receipt.recipientId)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  );
+  const parentUserRecipientIds = Array.from(
+    new Set(
+      receipts
+        .filter((receipt) => receipt.recipientType === "PARENT_USER")
+        .map((receipt) => receipt.recipientId)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  );
+  const childRecipientIds = Array.from(
+    new Set(
+      receipts
+        .filter((receipt) => receipt.recipientType === "CHILD")
+        .map((receipt) => receipt.recipientId)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  );
+  const [users, parentUsers, children] = await Promise.all([
+    userRecipientIds.length
+      ? db.user.findMany({
+          where: { id: { in: userRecipientIds } },
+          select: { id: true, name: true, email: true },
+        })
+      : [],
+    parentUserRecipientIds.length
+      ? db.parentUser.findMany({
+          where: { id: { in: parentUserRecipientIds } },
+          select: {
+            id: true,
+            username: true,
+            child: { select: { firstName: true, lastName: true } },
+          },
+        })
+      : [],
+    childRecipientIds.length
+      ? db.child.findMany({
+          where: { id: { in: childRecipientIds } },
+          select: { id: true, firstName: true, lastName: true },
+        })
+      : [],
+  ]);
+
+  const userNameById = new Map(
+    users.map((user) => [user.id, user.name || user.email]),
+  );
+  const parentUserNameById = new Map(
+    parentUsers.map((parentUser) => [
+      parentUser.id,
+      `${parentUser.child.firstName} ${parentUser.child.lastName}`,
+    ]),
+  );
+  const childNameById = new Map(
+    children.map((child) => [child.id, `${child.firstName} ${child.lastName}`]),
+  );
+
+  return (receipt: ReceiptRecipientRef) =>
+    (receipt.recipientType === "USER" &&
+      receipt.recipientId &&
+      userNameById.get(receipt.recipientId)) ||
+    (receipt.recipientType === "PARENT_USER" &&
+      receipt.recipientId &&
+      parentUserNameById.get(receipt.recipientId)) ||
+    (receipt.recipientType === "CHILD" &&
+      receipt.recipientId &&
+      childNameById.get(receipt.recipientId)) ||
+    `Legacy ${receipt.recipientType} #${receipt.legacyRecipientId}`;
+}
+
+function childAccountingHref(referenceId: string | null) {
+  return referenceId ? `/children/${referenceId}/accounting` : "/accounting";
 }
 
 // ---------------------------------------------------------------------------
@@ -924,6 +1012,9 @@ async function getStaffReceiptAlarmNotifications(
           }, new Map<string, typeof receipts>()),
         ).map(([, group]) => group)
       : receipts.map((receipt) => [receipt]);
+    const recipientNameFor = config.includeNotificationRecipientSummary
+      ? await getReceiptRecipientNameResolver(receipts)
+      : null;
 
     const alarms = receiptGroups.flatMap((group) => {
       const receipt = group[0];
@@ -932,6 +1023,9 @@ async function getStaffReceiptAlarmNotifications(
       const legacyId = jsonNumber(legacyData.aid) ?? receipt.legacyNotificationId;
       const legacyHref = jsonString(legacyData.href);
       const isRead = group.every((item) => item.isRead);
+      const to = recipientNameFor
+        ? Array.from(new Set(group.map((item) => recipientNameFor(item)))).join(", ")
+        : undefined;
       const actionHref = legacyHref?.startsWith("/")
         ? legacyHref
         : config.actionHrefFromAlarm?.(receipt.alarm, legacyData) ??
@@ -952,10 +1046,12 @@ async function getStaffReceiptAlarmNotifications(
         isRead,
         legacyHref,
         actionHref,
+        to,
         searchText: [
           legacyId,
           receipt.alarm.message,
           receipt.alarm.branch?.name,
+          to,
           isRead ? "Viewed" : "New",
           config.familyLabel,
         ]
@@ -1006,66 +1102,7 @@ async function getStaffReceiptAlarmHistory(
       take: pageSize,
     });
 
-    const userRecipientIds = Array.from(
-      new Set(
-        receipts
-          .filter((receipt) => receipt.recipientType === "USER")
-          .map((receipt) => receipt.recipientId)
-          .filter((id): id is string => Boolean(id)),
-      ),
-    );
-    const parentUserRecipientIds = Array.from(
-      new Set(
-        receipts
-          .filter((receipt) => receipt.recipientType === "PARENT_USER")
-          .map((receipt) => receipt.recipientId)
-          .filter((id): id is string => Boolean(id)),
-      ),
-    );
-    const childRecipientIds = Array.from(
-      new Set(
-        receipts
-          .filter((receipt) => receipt.recipientType === "CHILD")
-          .map((receipt) => receipt.recipientId)
-          .filter((id): id is string => Boolean(id)),
-      ),
-    );
-    const [users, parentUsers, children] = await Promise.all([
-      userRecipientIds.length
-        ? db.user.findMany({
-            where: { id: { in: userRecipientIds } },
-            select: { id: true, name: true, email: true },
-          })
-        : [],
-      parentUserRecipientIds.length
-        ? db.parentUser.findMany({
-            where: { id: { in: parentUserRecipientIds } },
-            select: {
-              id: true,
-              username: true,
-              child: { select: { firstName: true, lastName: true } },
-            },
-          })
-        : [],
-      childRecipientIds.length
-        ? db.child.findMany({
-            where: { id: { in: childRecipientIds } },
-            select: { id: true, firstName: true, lastName: true },
-          })
-        : [],
-    ]);
-    const userNameById = new Map(
-      users.map((user) => [user.id, user.name || user.email]),
-    );
-    const parentUserNameById = new Map(
-      parentUsers.map((parentUser) => [
-        parentUser.id,
-        `${parentUser.child.firstName} ${parentUser.child.lastName}`,
-      ]),
-    );
-    const childNameById = new Map(
-      children.map((child) => [child.id, `${child.firstName} ${child.lastName}`]),
-    );
+    const recipientNameFor = await getReceiptRecipientNameResolver(receipts);
 
     const history = receipts.flatMap((receipt) => {
       if (!receipt.alarm) return [];
@@ -1074,16 +1111,7 @@ async function getStaffReceiptAlarmHistory(
       const type =
         config.historyTypeFromLegacy?.(legacyData) ??
         legacyNotificationTypeLabel(legacyData);
-      const recipientName =
-        (receipt.recipientType === "USER" &&
-          receipt.recipientId &&
-          userNameById.get(receipt.recipientId)) ||
-        (receipt.recipientType === "PARENT_USER" &&
-          receipt.recipientId &&
-          parentUserNameById.get(receipt.recipientId)) ||
-        (receipt.recipientType === "CHILD" &&
-          receipt.recipientId &&
-          childNameById.get(receipt.recipientId));
+      const recipientName = recipientNameFor(receipt);
 
       return [{
         id: receipt.id,
@@ -1091,7 +1119,7 @@ async function getStaffReceiptAlarmHistory(
         type,
         content: receipt.alarm.message ?? "",
         time: receipt.alarm.createdAt.toISOString(),
-        to: recipientName || `Legacy ${receipt.recipientType} #${receipt.legacyRecipientId}`,
+        to: recipientName,
         seen: receipt.isRead ? "Yes" : "No",
         branch: receipt.alarm.branch?.name ?? "All Branches",
         searchText: [
@@ -1221,6 +1249,25 @@ const MEDICINE_ALARM_CONFIG: StaffReceiptAlarmConfig = {
   defaultActionHref: "/medical/general",
   actionHrefFromAlarm: (alarm) => childMedicalHref(alarm.referenceId),
   historyTypeFromLegacy: () => "Alert",
+};
+
+const PAYMENT_ALARM_CONFIG: StaffReceiptAlarmConfig = {
+  type: "PAYMENT",
+  sourceTable: PAYMENT_RECEIPT_SOURCE,
+  route: "/alarms/payments",
+  familyLabel: "payment",
+  defaultActionHref: "/accounting",
+  actionHrefFromAlarm: (alarm) => childAccountingHref(alarm.referenceId),
+  currentUserOnly: false,
+  notificationRecipientTypes: ["PARENT_USER", "CHILD"],
+  historyRecipientTypes: ["PARENT_USER", "CHILD"],
+  collapseNotificationsByAlarm: true,
+  includeNotificationRecipientSummary: true,
+  includeCurrentUserInHistory: true,
+  historyTypeFromLegacy: (legacyData) =>
+    jsonString(legacyData.paymentAlarmType) ??
+    jsonString(legacyData.type) ??
+    "Payment",
 };
 
 const VACCINATION_ALARM_CONFIG: StaffReceiptAlarmConfig = {
@@ -1388,6 +1435,30 @@ export async function markAllMedicineAlarmsViewed(): Promise<
   ActionResult<{ count: number }>
 > {
   return markAllStaffReceiptAlarmsViewed(MEDICINE_ALARM_CONFIG);
+}
+
+export async function getPaymentAlarmNotifications(
+  params: { pageSize?: number } = {},
+): Promise<ActionResult> {
+  return getStaffReceiptAlarmNotifications(PAYMENT_ALARM_CONFIG, params);
+}
+
+export async function getPaymentAlarmHistory(
+  params: { pageSize?: number } = {},
+): Promise<ActionResult> {
+  return getStaffReceiptAlarmHistory(PAYMENT_ALARM_CONFIG, params);
+}
+
+export async function markPaymentAlarmViewed(
+  alarmId: string,
+): Promise<ActionResult<{ count: number }>> {
+  return markStaffReceiptAlarmViewed(alarmId, PAYMENT_ALARM_CONFIG);
+}
+
+export async function markAllPaymentAlarmsViewed(): Promise<
+  ActionResult<{ count: number }>
+> {
+  return markAllStaffReceiptAlarmsViewed(PAYMENT_ALARM_CONFIG);
 }
 
 export async function getVaccinationAlarmNotifications(
