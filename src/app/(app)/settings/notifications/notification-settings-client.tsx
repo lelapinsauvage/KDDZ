@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,6 +52,7 @@ import {
   BellPlus,
   MailCheck,
   MailPlus,
+  Mail,
   UserCheck,
   UserPlus,
   type LucideIcon,
@@ -59,11 +61,13 @@ import {
   type LegacyNotificationLogRow,
   type LegacyNotificationNatureRow,
   type LegacyNotificationSettingRow,
+  type LegacyEmailLevelRow,
   type TemplateRow,
   upsertNotificationTemplate,
   getSentNotifications,
   resendNotification,
   sendTestNotification,
+  sendLegacyBulkEmail,
   updateLegacyNotificationChannelSetting,
   type SentNotificationRow,
 } from "@/lib/actions/notification-templates";
@@ -288,6 +292,7 @@ interface NotificationSettingsClientProps {
   initialLegacySettings: LegacyNotificationSettingRow[];
   initialLegacyNatures: LegacyNotificationNatureRow[];
   initialLegacyLogs: LegacyNotificationLogRow[];
+  initialLegacyEmailLevels: LegacyEmailLevelRow[];
 }
 
 type LegacyChannelKey = "alarms" | "email" | "whatsapp" | "sms";
@@ -309,6 +314,7 @@ export function NotificationSettingsClient({
   initialLegacySettings,
   initialLegacyNatures,
   initialLegacyLogs,
+  initialLegacyEmailLevels,
 }: NotificationSettingsClientProps) {
   const [tab, setTab] = useState("templates");
 
@@ -332,6 +338,10 @@ export function NotificationSettingsClient({
               <ScrollText className="size-3.5" />
               Sent Logs
             </TabsTrigger>
+            <TabsTrigger value="bulk" className="gap-1.5">
+              <Mail className="size-3.5" />
+              Bulk Email
+            </TabsTrigger>
             <TabsTrigger value="legacy" className="gap-1.5">
               <Database className="size-3.5" />
               Legacy
@@ -344,6 +354,10 @@ export function NotificationSettingsClient({
 
           <TabsContent value="logs">
             <SentLogsTab initialLogs={initialLogs} />
+          </TabsContent>
+
+          <TabsContent value="bulk">
+            <BulkEmailTab initialLevels={initialLegacyEmailLevels} />
           </TabsContent>
 
           <TabsContent value="legacy">
@@ -571,7 +585,178 @@ function TemplatesTab({
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Tab B: Sent Logs
+// Tab B: Bulk Email
+// ═══════════════════════════════════════════════════════════════════════════
+
+function BulkEmailTab({
+  initialLevels,
+}: {
+  initialLevels: LegacyEmailLevelRow[];
+}) {
+  const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+  const [status, setStatus] = useState<{
+    success: boolean;
+    text: string;
+  } | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  function toggleLevel(id: string, checked: boolean) {
+    setSelectedLevels((prev) =>
+      checked ? Array.from(new Set([...prev, id])) : prev.filter((item) => item !== id),
+    );
+    setStatus(null);
+  }
+
+  function handleSend() {
+    setStatus(null);
+    startTransition(async () => {
+      const result = await sendLegacyBulkEmail({
+        levelIds: selectedLevels,
+        subject,
+        message,
+      });
+
+      if (result.success && result.data) {
+        setStatus({
+          success: true,
+          text: `Sent ${result.data.sentCount} in-app notification${result.data.sentCount === 1 ? "" : "s"} across ${result.data.selectedLevels} group${result.data.selectedLevels === 1 ? "" : "s"}.`,
+        });
+        if (result.data.sentCount > 0) {
+          setSubject("");
+          setMessage("");
+          setSelectedLevels([]);
+        }
+      } else {
+        setStatus({
+          success: false,
+          text: result.error ?? "Send failed.",
+        });
+      }
+    });
+  }
+
+  const activeLevels = initialLevels.filter((level) => !level.isDisabled);
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Send Email</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">To</Label>
+            <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+              {initialLevels.length === 0 ? (
+                <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+                  No legacy levels found.
+                </div>
+              ) : (
+                initialLevels.map((level) => {
+                  const checked = selectedLevels.includes(level.id);
+                  return (
+                    <label
+                      key={level.id}
+                      className={`flex min-h-16 items-start gap-3 rounded-md border px-3 py-2 ${
+                        level.isDisabled ? "opacity-50" : "cursor-pointer"
+                      }`}
+                    >
+                      <Checkbox
+                        checked={checked}
+                        disabled={level.isDisabled || isPending}
+                        onCheckedChange={(value) =>
+                          toggleLevel(level.id, value === true)
+                        }
+                        className="mt-0.5"
+                      />
+                      <span className="min-w-0">
+                        <span className="block text-sm font-medium">
+                          {level.label}
+                        </span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {level.sourceDatabase} / {level.legacyTable} #{level.legacyId}
+                        </span>
+                      </span>
+                    </label>
+                  );
+                })
+              )}
+            </div>
+            {activeLevels.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedLevels(activeLevels.map((level) => level.id))}
+                  disabled={isPending}
+                >
+                  Select All
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedLevels([])}
+                  disabled={isPending || selectedLevels.length === 0}
+                >
+                  Clear
+                </Button>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Subject</Label>
+            <Input
+              value={subject}
+              onChange={(event) => setSubject(event.target.value)}
+              disabled={isPending}
+              className="h-9 text-sm"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Message</Label>
+            <Textarea
+              value={message}
+              onChange={(event) => setMessage(event.target.value)}
+              disabled={isPending}
+              rows={5}
+              className="text-sm"
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              type="button"
+              onClick={handleSend}
+              disabled={isPending}
+              className="gap-2"
+            >
+              <Send className="size-4" />
+              {isPending ? "Sending..." : "Send now"}
+            </Button>
+            {status && (
+              <span
+                className={`text-sm ${
+                  status.success ? "text-emerald-600" : "text-red-600"
+                }`}
+              >
+                {status.text}
+              </span>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Tab C: Sent Logs
 // ═══════════════════════════════════════════════════════════════════════════
 
 function SentLogsTab({

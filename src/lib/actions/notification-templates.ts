@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireOrg, requireOrgSafe } from "@/lib/require-org";
 import type { Prisma } from "@/generated/prisma/client";
+import type { UserRole } from "@/generated/prisma/enums";
 
 type ActionResult<T = unknown> = {
   success: boolean;
@@ -497,6 +498,22 @@ export interface SentNotificationRow {
   userName: string | null;
 }
 
+export interface LegacyEmailLevelRow {
+  id: string;
+  sourceDatabase: string;
+  legacyTable: string;
+  legacyId: number;
+  label: string;
+  isDisabled: boolean;
+}
+
+export interface LegacyBulkEmailResult {
+  selectedLevels: number;
+  matchedRecipients: number;
+  sentCount: number;
+  skippedNoModernUser: number;
+}
+
 export interface LegacyNotificationSettingRow {
   id: string;
   sourceDatabase: string;
@@ -583,6 +600,236 @@ export async function getSentNotifications(params: {
   } catch (error) {
     console.error("Failed to fetch sent notifications:", error);
     return { success: false, error: "Failed to fetch sent notifications" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// getLegacyEmailLevels
+// ---------------------------------------------------------------------------
+
+export async function getLegacyEmailLevels(): Promise<
+  ActionResult<LegacyEmailLevelRow[]>
+> {
+  try {
+    await requireOrg();
+
+    const levels = await db.legacyAuthRecord.findMany({
+      where: {
+        recordType: { in: ["login_level", "manager_login_level"] },
+      },
+      orderBy: [
+        { sourceDatabase: "asc" },
+        { legacyTable: "asc" },
+        { legacyId: "asc" },
+      ],
+      take: 200,
+    });
+
+    return {
+      success: true,
+      data: levels.map((level) => ({
+        id: level.id,
+        sourceDatabase: level.sourceDatabase,
+        legacyTable: level.legacyTable,
+        legacyId: level.legacyId,
+        label: level.recordKey ?? `Level ${level.legacyId}`,
+        isDisabled: level.isDisabled ?? false,
+      })),
+    };
+  } catch (error) {
+    console.error("Failed to fetch legacy email levels:", error);
+    return { success: false, error: "Failed to fetch legacy email levels" };
+  }
+}
+
+function parsePhpLevelIds(serialized: string | null) {
+  if (!serialized) return [];
+  return Array.from(serialized.matchAll(/s:\d+:"(\d+)"/g))
+    .map((match) => Number.parseInt(match[1], 10))
+    .filter((value) => Number.isFinite(value));
+}
+
+function rolesForLegacyLevel(level: LegacyEmailLevelRow) {
+  const normalizedLabel = level.label.toLowerCase();
+  const roles = new Set<UserRole>();
+
+  if (
+    level.legacyId === 1 ||
+    level.legacyId === 4 ||
+    normalizedLabel.includes("admin") ||
+    normalizedLabel.includes("owner")
+  ) {
+    roles.add("ADMIN");
+  }
+  if (level.legacyId === 5 || normalizedLabel.includes("manager")) {
+    roles.add("MANAGER");
+  }
+  if (level.legacyId === 6 || normalizedLabel.includes("teacher")) {
+    roles.add("TEACHER");
+  }
+  if (normalizedLabel.includes("nurse")) roles.add("NURSE");
+  if (normalizedLabel.includes("doctor")) roles.add("DOCTOR");
+  if (
+    normalizedLabel.includes("accounting") ||
+    normalizedLabel.includes("operator")
+  ) {
+    roles.add("ADMIN");
+  }
+
+  return Array.from(roles);
+}
+
+export async function sendLegacyBulkEmail(params: {
+  levelIds: string[];
+  subject: string;
+  message: string;
+}): Promise<ActionResult<LegacyBulkEmailResult>> {
+  try {
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
+
+    const levelIds = Array.from(new Set(params.levelIds.filter(Boolean)));
+    const subject = params.subject.trim();
+    const message = params.message.trim();
+
+    if (levelIds.length === 0) {
+      return { success: false, error: "Please select a user group" };
+    }
+    if (!subject) return { success: false, error: "Subject is required" };
+    if (!message) return { success: false, error: "Message is required" };
+
+    const levels = await db.legacyAuthRecord.findMany({
+      where: {
+        id: { in: levelIds },
+        recordType: { in: ["login_level", "manager_login_level"] },
+        OR: [{ isDisabled: false }, { isDisabled: null }],
+      },
+    });
+
+    if (levels.length === 0) {
+      return { success: false, error: "No active legacy user groups found" };
+    }
+
+    const roleTargets = new Set<UserRole>();
+    for (const level of levels) {
+      for (const role of rolesForLegacyLevel({
+        id: level.id,
+        sourceDatabase: level.sourceDatabase,
+        legacyTable: level.legacyTable,
+        legacyId: level.legacyId,
+        label: level.recordKey ?? `Level ${level.legacyId}`,
+        isDisabled: level.isDisabled ?? false,
+      })) {
+        roleTargets.add(role);
+      }
+    }
+
+    const selectedManagerLevels = levels.filter(
+      (level) => level.recordType === "manager_login_level",
+    );
+    const managerRows = selectedManagerLevels.length
+      ? await db.legacyAuthRecord.findMany({
+          where: {
+            recordType: "manager_login_user",
+            sourceDatabase: {
+              in: Array.from(
+                new Set(selectedManagerLevels.map((level) => level.sourceDatabase)),
+              ),
+            },
+            OR: [{ isDisabled: false }, { isDisabled: null }],
+          },
+        })
+      : [];
+
+    const managerLevelKeys = new Set(
+      selectedManagerLevels.map(
+        (level) => `${level.sourceDatabase}:${level.legacyId}`,
+      ),
+    );
+    const managerUserIds = new Set<string>();
+    const matchedEmails = new Set<string>();
+    for (const row of managerRows) {
+      const levelsForUser = parsePhpLevelIds(row.recordValue);
+      const matchesSelected = levelsForUser.some((levelId) =>
+        managerLevelKeys.has(`${row.sourceDatabase}:${levelId}`),
+      );
+      if (!matchesSelected) continue;
+      if (row.email) matchedEmails.add(row.email.toLowerCase());
+      if (row.userId) managerUserIds.add(row.userId);
+    }
+
+    if (roleTargets.size === 0 && managerUserIds.size === 0) {
+      return {
+        success: true,
+        data: {
+          selectedLevels: levels.length,
+          matchedRecipients: matchedEmails.size,
+          sentCount: 0,
+          skippedNoModernUser: matchedEmails.size,
+        },
+      };
+    }
+
+    const users = await db.user.findMany({
+      where: {
+        isActive: true,
+        OR: [
+          ...(roleTargets.size ? [{ role: { in: Array.from(roleTargets) } }] : []),
+          ...(managerUserIds.size ? [{ id: { in: Array.from(managerUserIds) } }] : []),
+        ],
+        AND: [
+          {
+            OR: [
+              { organizationId: ctx.organizationId },
+              { organizationId: null },
+            ],
+          },
+        ],
+      },
+      select: { id: true, email: true },
+    });
+
+    const userIds = Array.from(new Set(users.map((user) => user.id)));
+    for (const user of users) {
+      if (user.email) matchedEmails.add(user.email.toLowerCase());
+    }
+
+    if (userIds.length === 0) {
+      return {
+        success: true,
+        data: {
+          selectedLevels: levels.length,
+          matchedRecipients: matchedEmails.size,
+          sentCount: 0,
+          skippedNoModernUser: matchedEmails.size,
+        },
+      };
+    }
+
+    const created = await createInAppNotifications({
+      userIds,
+      title: subject,
+      body: message,
+      type: "BULK_EMAIL",
+      category: "BULK_EMAIL",
+    });
+
+    revalidatePath("/");
+    revalidatePath("/settings/notifications");
+
+    return {
+      success: true,
+      data: {
+        selectedLevels: levels.length,
+        matchedRecipients: matchedEmails.size || userIds.length,
+        sentCount: created,
+        skippedNoModernUser: Math.max(0, matchedEmails.size - userIds.length),
+      },
+    };
+  } catch (error) {
+    console.error("Failed to send legacy bulk email:", error);
+    return { success: false, error: "Failed to send bulk email" };
   }
 }
 

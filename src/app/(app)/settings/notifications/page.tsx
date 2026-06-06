@@ -2,6 +2,7 @@ import {
   getLegacyNotificationLogs,
   getLegacyNotificationNatures,
   getLegacyNotificationSettings,
+  getLegacyEmailLevels,
   getNotificationTemplates,
   getSentNotifications,
 } from "@/lib/actions/notification-templates";
@@ -14,12 +15,14 @@ export default async function NotificationSettingsPage() {
     legacySettingsResult,
     legacyNaturesResult,
     legacyLogsResult,
+    legacyEmailLevelsResult,
   ] = await Promise.all([
     getNotificationTemplates(),
     getSentNotifications({}),
     getLegacyNotificationSettings(),
     getLegacyNotificationNatures(),
     getLegacyNotificationLogs(),
+    getLegacyEmailLevels(),
   ]);
 
   return (
@@ -29,6 +32,7 @@ export default async function NotificationSettingsPage() {
       initialLegacySettings={legacySettingsResult.data ?? []}
       initialLegacyNatures={legacyNaturesResult.data ?? []}
       initialLegacyLogs={legacyLogsResult.data ?? []}
+      initialLegacyEmailLevels={legacyEmailLevelsResult.data ?? []}
     />
   );
 }
