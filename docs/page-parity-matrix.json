@@ -16314,25 +16314,25 @@
   {
     "legacyPhp": "Front/templates/admin/payroll_det_data.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/payroll_det_data.php, /reports/monthly",
+    "status": "restored - legacy monthly attendance AJAX table fragment restored",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [
       "from"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/payroll_det_data.php` now accepts the legacy `from=YYYY-MM` POST/GET field and returns the old `#datatable_ajax` HTML fragment using the restored monthly attendance matrix data, including Child #/Name/L Name/Class/1-31/P-A columns, filter row, N/P/A/W/H badge semantics, and no-store HTML output for authenticated legacy callers."
   },
   {
     "legacyPhp": "Front/templates/admin/payroll_det_data_b.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/payroll_det_data_b.php, /reports/monthly-branch",
+    "status": "restored - legacy branch monthly attendance AJAX table fragment restored",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [
       "brid",
       "from"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/payroll_det_data_b.php` now accepts legacy `from=YYYY-MM` plus raw/UUID/encrypted `brid`, resolves it to the modern branch, and returns the branch-scoped `#datatable_ajax` HTML fragment with Child #/Name/L Name/Branch/Class/1-31/P-A columns, first-five-column filter inputs, N/P/A/W/H badge semantics, and no-store HTML output for authenticated legacy callers."
   },
   {
     "legacyPhp": "Front/templates/admin/printFoodCal.php",
