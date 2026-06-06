@@ -949,7 +949,7 @@
     "legacyPhp": "Front/templates/admin/branch.php",
     "legacyJs": "Front/templates/admin/js/branch.js",
     "modernRoute": "/branches/[id]/edit",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "partial - legacy branch form fields restored; visual/layout audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -957,13 +957,13 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored legacy branch create/update field fidelity for Branch Name, Branch Location, Branch Prefix, Mobile, Telephone, active state, and branch image upload/preview with migrated `images/BranchPhoto` filename fallback. Branch import now preserves `t_branch.prefix`, `mobile`, `tel`, `image`, active state, and legacy provenance. Remaining work is exact Metronic form layout/toast timing and uploaded file storage path parity."
   },
   {
     "legacyPhp": "Front/templates/admin/branches.php",
     "legacyJs": "Front/templates/admin/js/branches.js",
     "modernRoute": "/branches",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "partial - legacy branch roster, filters, export, page sizes, and soft delete restored; visual audit remains",
     "legacyTablesMentioned": [
       "Form",
       "Selected",
@@ -971,7 +971,7 @@
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored the legacy Branches Listing as the default table view with active-branch default scope, checkbox/S.N./Image/Branch/Location/Mobile/Info/Date/Action columns, migrated `images/BranchPhoto` filename fallback, global search, status filter, legacy S.N./Branch/Location/Mobile/created-date filter row, 10/20/50/100/150/All page sizes, Excel/CSV export, print action, New Branch, dashboard/view, edit, and legacy-style soft deactivate. Remaining work is exact TableTools copy/PDF/XLS/print visual parity and final Browser visual smoke."
   },
   {
     "legacyPhp": "Front/templates/admin/calendar.php",

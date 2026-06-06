@@ -50,10 +50,21 @@ export async function getBranches(): Promise<ActionResult> {
           },
         },
       },
-      orderBy: { name: "asc" },
+      orderBy: [{ createdAt: "desc" }, { name: "asc" }],
     });
 
-    return { success: true, data: branches };
+    const sortedBranches = branches.sort((a, b) => {
+      if (a.legacyId != null && b.legacyId != null && a.legacyId !== b.legacyId) {
+        return b.legacyId - a.legacyId;
+      }
+      if (a.legacyId != null && b.legacyId == null) return -1;
+      if (a.legacyId == null && b.legacyId != null) return 1;
+      const createdDiff = b.createdAt.getTime() - a.createdAt.getTime();
+      if (createdDiff !== 0) return createdDiff;
+      return a.name.localeCompare(b.name);
+    });
+
+    return { success: true, data: sortedBranches };
   } catch (error) {
     console.error("Failed to fetch branches:", error);
     return { success: false, error: "Failed to fetch branches" };

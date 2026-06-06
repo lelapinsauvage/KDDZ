@@ -4,12 +4,12 @@
  * Field mapping:
  *   t_branch.brid        → (old ID, mapped to UUID)
  *   t_branch.brname      → Branch.name
+ *   t_branch.prefix      → Branch.prefix
  *   t_branch.brlocation  → Branch.address
  *   t_branch.mobile      → Branch.phone
- *   t_branch.tel         → Branch.email (stored as secondary; old DB has no email field)
+ *   t_branch.tel         → Branch.telephone
  *   t_branch.active      → Branch.isActive
  *   t_branch.datetime    → Branch.createdAt
- *   t_branch.prefix      → (stored in metadata, not in new schema directly)
  *   t_branch.image       → Branch.imageUrl (legacy filename until storage import)
  *
  * Prerequisites: Organization must exist in new DB.
@@ -81,11 +81,23 @@ export async function migrateBranches(
         legacyId?: number;
         legacyTable?: string;
         imageUrl?: string;
+        name?: string;
+        prefix?: string | null;
+        address?: string | null;
+        phone?: string | null;
+        telephone?: string | null;
+        isActive?: boolean;
       } = {
         sourceDatabase,
         legacyKey: key,
         legacyId: row.brid,
         legacyTable: "t_branch",
+        name: row.brname,
+        prefix: row.prefix || null,
+        address: row.brlocation || null,
+        phone: row.mobile || null,
+        telephone: row.tel || null,
+        isActive: toBool(row.active),
       };
       if (imageUrl && existing.imageUrl !== imageUrl) {
         updateData.imageUrl = imageUrl;
@@ -118,8 +130,10 @@ export async function migrateBranches(
           legacyTable: "t_branch",
           organizationId,
           name: row.brname,
+          prefix: row.prefix || null,
           address: row.brlocation || null,
-          phone: row.mobile || row.tel || null,
+          phone: row.mobile || null,
+          telephone: row.tel || null,
           email: null,
           imageUrl,
           isActive: toBool(row.active),

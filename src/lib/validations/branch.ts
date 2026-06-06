@@ -3,8 +3,8 @@ import { z } from "zod";
 // ── Branch create/edit form schema ──
 export const branchFormSchema = z.object({
   name: z.string().min(1, "Branch name is required"),
-  prefix: z.string().default(""),
-  address: z.string().default(""),
+  prefix: z.string().min(1, "Branch prefix is required").default(""),
+  address: z.string().min(1, "Branch location is required").default(""),
   phone: z.string().default(""),
   telephone: z.string().default(""),
   email: z.string().email("Invalid email").or(z.literal("")).default(""),

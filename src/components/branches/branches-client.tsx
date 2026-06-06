@@ -1,91 +1,150 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Plus,
   Building2,
-  Phone,
-  Mail,
-  MapPin,
-  Users,
-  GraduationCap,
-  GitBranch,
-  MoreVertical,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   Eye,
+  Filter,
+  GraduationCap,
+  LayoutGrid,
+  MapPin,
   Pencil,
+  Phone,
+  Plus,
+  Printer,
+  Search,
+  TableIcon,
   Trash2,
+  Users,
+  X,
 } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
-import { Button } from "@/components/ui/button";
+import { ExportButton } from "@/components/shared/export-button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { deleteBranch } from "@/lib/actions/branches";
+import type { ExportColumn } from "@/lib/export";
 import { toast } from "sonner";
 
-// ── Branch shape coming from the server ──
 export interface BranchItem {
   id: string;
+  legacyId: number | null;
   name: string;
+  prefix: string | null;
   address: string | null;
   phone: string | null;
+  telephone: string | null;
   email: string | null;
+  imageUrl: string | null;
   isActive: boolean;
   themeColor: string | null;
   classCount: number;
   childrenCount: number;
   teacherCount: number;
   compliancePercentage: number | null;
+  createdAt: string;
 }
 
 interface BranchesClientProps {
   branches: BranchItem[];
 }
 
-function ComplianceBadge({ percentage }: { percentage: number | null }) {
-  if (percentage === null) {
-    return (
-      <Badge className="bg-muted text-muted-foreground border-border text-[10px]">
-        No data
-      </Badge>
-    );
-  }
-  if (percentage >= 80) {
-    return (
-      <Badge className="bg-[#059669]/15 text-[#047857] border-[#059669]/25 text-[10px]">
-        {percentage}% compliant
-      </Badge>
-    );
-  }
-  if (percentage >= 50) {
-    return (
-      <Badge className="bg-[#A0784C]/15 text-[#8B6537] border-[#A0784C]/25 text-[10px]">
-        {percentage}% compliant
-      </Badge>
-    );
-  }
+interface LegacyFilters {
+  branchNumber: string;
+  name: string;
+  location: string;
+  mobile: string;
+  createdFrom: string;
+  createdTo: string;
+}
+
+const PAGE_SIZES = ["10", "20", "50", "100", "150", "ALL"] as const;
+const DEFAULT_BRANCH_PHOTO = "/images/BranchPhoto/default.jpg";
+
+const branchExportColumns: ExportColumn[] = [
+  { header: "S.N.", key: "legacyId" },
+  { header: "Branch", key: "name" },
+  { header: "Location", key: "address" },
+  { header: "Mobile", key: "phone" },
+  { header: "Telephone", key: "telephone" },
+  { header: "Prefix", key: "prefix" },
+  {
+    header: "Date",
+    key: "createdAt",
+    transform: (value) => formatDate(value as string | null),
+  },
+  {
+    header: "Status",
+    key: "isActive",
+    transform: (value) => (value ? "Active" : "Inactive"),
+  },
+];
+
+function branchPhotoSrc(imageUrl: string | null) {
+  if (!imageUrl || imageUrl === "default.jpg") return DEFAULT_BRANCH_PHOTO;
+  if (/^https?:\/\//i.test(imageUrl) || imageUrl.startsWith("/")) return imageUrl;
+  if (imageUrl.includes("/")) return `/${imageUrl.replace(/^\/+/, "")}`;
+  return `/images/BranchPhoto/${imageUrl}`;
+}
+
+function formatDate(date: string | null) {
+  if (!date) return "-";
+  const d = new Date(date);
+  if (Number.isNaN(d.getTime())) return "-";
+  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
+function dateValue(date: string) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+function addOneDay(date: string) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + 1);
+  return d.getTime();
+}
+
+function statusClass(isActive: boolean) {
+  return isActive
+    ? "bg-[#008200] text-white border-transparent"
+    : "bg-[#d64635] text-white border-transparent";
+}
+
+function BranchThumbnail({ branch, size = "table" }: { branch: BranchItem; size?: "table" | "card" }) {
+  const [src, setSrc] = useState(branchPhotoSrc(branch.imageUrl));
+  const dimension = size === "card" ? "size-14" : "size-16";
+
   return (
-    <Badge className="bg-[#C17C5A]/15 text-[#A0613E] border-[#C17C5A]/25 text-[10px]">
-      {percentage}% compliant
-    </Badge>
+    <div className={`${dimension} overflow-hidden rounded-sm border bg-muted`}>
+      <Image
+        src={src}
+        alt={branch.name}
+        width={size === "card" ? 56 : 64}
+        height={size === "card" ? 56 : 64}
+        className="h-full w-full object-cover"
+        unoptimized
+        onError={() => {
+          if (src !== DEFAULT_BRANCH_PHOTO) setSrc(DEFAULT_BRANCH_PHOTO);
+        }}
+      />
+    </div>
   );
 }
 
@@ -93,10 +152,85 @@ export function BranchesClient({ branches }: BranchesClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [deleteTarget, setDeleteTarget] = useState<BranchItem | null>(null);
+  const [viewMode, setViewMode] = useState<"table" | "cards">("table");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"ACTIVE" | "INACTIVE" | "ALL">("ACTIVE");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<(typeof PAGE_SIZES)[number]>("10");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [legacyFilters, setLegacyFilters] = useState<LegacyFilters>({
+    branchNumber: "",
+    name: "",
+    location: "",
+    mobile: "",
+    createdFrom: "",
+    createdTo: "",
+  });
 
-  const totalBranches = branches.length;
-  const totalClasses = branches.reduce((sum, b) => sum + b.classCount, 0);
-  const totalStudents = branches.reduce((sum, b) => sum + b.childrenCount, 0);
+  const filteredBranches = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    const from = legacyFilters.createdFrom ? dateValue(legacyFilters.createdFrom) : null;
+    const to = legacyFilters.createdTo ? addOneDay(legacyFilters.createdTo) : null;
+
+    return branches.filter((branch) => {
+      if (statusFilter === "ACTIVE" && !branch.isActive) return false;
+      if (statusFilter === "INACTIVE" && branch.isActive) return false;
+
+      if (query) {
+        const haystack = [
+          branch.legacyId,
+          branch.name,
+          branch.address,
+          branch.phone,
+          branch.telephone,
+          branch.prefix,
+        ]
+          .filter((item) => item != null)
+          .join(" ")
+          .toLowerCase();
+        if (!haystack.includes(query)) return false;
+      }
+
+      if (legacyFilters.branchNumber) {
+        const value = String(branch.legacyId ?? "");
+        if (!value.includes(legacyFilters.branchNumber.trim())) return false;
+      }
+      if (legacyFilters.name && !branch.name.toLowerCase().includes(legacyFilters.name.toLowerCase())) return false;
+      if (legacyFilters.location && !(branch.address ?? "").toLowerCase().includes(legacyFilters.location.toLowerCase())) return false;
+      if (legacyFilters.mobile && !(branch.phone ?? "").includes(legacyFilters.mobile.trim())) return false;
+
+      const created = new Date(branch.createdAt).getTime();
+      if (from !== null && created < from) return false;
+      if (to !== null && created >= to) return false;
+
+      return true;
+    });
+  }, [branches, legacyFilters, searchQuery, statusFilter]);
+
+  const effectivePageSize = pageSize === "ALL" ? Math.max(filteredBranches.length, 1) : Number(pageSize);
+  const pageCount = Math.max(1, Math.ceil(filteredBranches.length / effectivePageSize));
+  const currentPage = Math.min(page, pageCount);
+  const paginatedBranches =
+    pageSize === "ALL"
+      ? filteredBranches
+      : filteredBranches.slice((currentPage - 1) * effectivePageSize, currentPage * effectivePageSize);
+
+  const totalBranches = filteredBranches.length;
+  const totalClasses = filteredBranches.reduce((sum, branch) => sum + branch.classCount, 0);
+  const totalStudents = filteredBranches.reduce((sum, branch) => sum + branch.childrenCount, 0);
+
+  const activeFilters = useMemo(() => {
+    const pills: { key: string; label: string; value: string }[] = [];
+    if (searchQuery) pills.push({ key: "search", label: "Search", value: searchQuery });
+    if (statusFilter !== "ACTIVE") pills.push({ key: "status", label: "Status", value: statusFilter === "ALL" ? "All" : "Inactive" });
+    if (legacyFilters.branchNumber) pills.push({ key: "branchNumber", label: "S.N.", value: legacyFilters.branchNumber });
+    if (legacyFilters.name) pills.push({ key: "name", label: "Branch", value: legacyFilters.name });
+    if (legacyFilters.location) pills.push({ key: "location", label: "Location", value: legacyFilters.location });
+    if (legacyFilters.mobile) pills.push({ key: "mobile", label: "Mobile", value: legacyFilters.mobile });
+    if (legacyFilters.createdFrom) pills.push({ key: "createdFrom", label: "Created from", value: legacyFilters.createdFrom });
+    if (legacyFilters.createdTo) pills.push({ key: "createdTo", label: "Created to", value: legacyFilters.createdTo });
+    return pills;
+  }, [legacyFilters, searchQuery, statusFilter]);
 
   function handleDelete() {
     if (!deleteTarget) return;
@@ -104,13 +238,64 @@ export function BranchesClient({ branches }: BranchesClientProps) {
       const result = await deleteBranch(deleteTarget.id);
       if (result.success) {
         toast.success(`"${deleteTarget.name}" has been deactivated`);
+        setSelectedIds((current) => {
+          const next = new Set(current);
+          next.delete(deleteTarget.id);
+          return next;
+        });
         router.refresh();
       } else {
-        toast.error(result.error ?? "Failed to delete branch");
+        toast.error(result.error ?? "Failed to deactivate branch");
       }
       setDeleteTarget(null);
     });
   }
+
+  function clearFilter(key: string) {
+    if (key === "search") setSearchQuery("");
+    if (key === "status") setStatusFilter("ACTIVE");
+    if (key in legacyFilters) {
+      setLegacyFilters((current) => ({ ...current, [key]: "" }));
+    }
+    setPage(1);
+  }
+
+  function clearAllFilters() {
+    setSearchQuery("");
+    setStatusFilter("ACTIVE");
+    setLegacyFilters({
+      branchNumber: "",
+      name: "",
+      location: "",
+      mobile: "",
+      createdFrom: "",
+      createdTo: "",
+    });
+    setPage(1);
+  }
+
+  function toggleSelectAllInPage(checked: boolean) {
+    const pageIds = paginatedBranches.map((branch) => branch.id);
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (checked) pageIds.forEach((id) => next.add(id));
+      else pageIds.forEach((id) => next.delete(id));
+      return next;
+    });
+  }
+
+  function toggleRow(id: string, checked: boolean) {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
+
+  const pageIds = paginatedBranches.map((branch) => branch.id);
+  const allPageRowsSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.has(id));
+  const somePageRowsSelected = pageIds.some((id) => selectedIds.has(id));
 
   return (
     <>
@@ -122,198 +307,411 @@ export function BranchesClient({ branches }: BranchesClientProps) {
         ]}
       />
 
-      <div className="space-y-6 p-4 md:p-6">
-        {/* Stats Row */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Card className="rounded-sm py-4 transition-all hover:shadow-md hover:-translate-y-0.5">
-            <CardContent className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-sm bg-[#A0784C]/10">
-                <GitBranch className="size-5 text-[#A0784C]" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Branches</p>
-                <p className="text-2xl font-semibold text-foreground">
-                  {totalBranches}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="rounded-sm py-4 transition-all hover:shadow-md hover:-translate-y-0.5">
-            <CardContent className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-sm bg-[#C17C5A]/10">
-                <GraduationCap className="size-5 text-[#C17C5A]" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Classes</p>
-                <p className="text-2xl font-semibold text-foreground">
-                  {totalClasses}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="rounded-sm py-4 transition-all hover:shadow-md hover:-translate-y-0.5">
-            <CardContent className="flex items-center gap-4">
-              <div className="flex size-10 items-center justify-center rounded-sm bg-[#059669]/10">
-                <Users className="size-5 text-[#059669]" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Students</p>
-                <p className="text-2xl font-semibold text-foreground">
-                  {totalStudents}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Add Branch button */}
-        <div className="flex justify-end">
-          <Link href="/branches/new">
-            <Button>
-              <Plus className="mr-1 size-4" />
-              Add Branch
-            </Button>
-          </Link>
-        </div>
-
-        {/* Branch Cards */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-          {branches.map((branch) => {
-            const color = branch.themeColor || "#A0784C";
-            return (
-              <Card key={branch.id} className="relative overflow-hidden rounded-sm transition-all hover:shadow-md hover:-translate-y-0.5">
-                {/* Color stripe */}
-                <div
-                  className="h-1.5"
-                  style={{ backgroundColor: color }}
-                />
-                <CardHeader className="flex-row items-center gap-3">
-                  <div
-                    className="flex size-10 items-center justify-center rounded-sm"
-                    style={{ backgroundColor: `${color}20` }}
-                  >
-                    <Building2 className="size-5" style={{ color }} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <CardTitle className="text-base truncate">
-                      {branch.name}
-                    </CardTitle>
-                    <ComplianceBadge
-                      percentage={branch.compliancePercentage}
-                    />
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Badge
-                      className={
-                        branch.isActive
-                          ? "bg-[#059669]/15 text-[#047857] border-[#059669]/25"
-                          : "bg-muted text-muted-foreground border-border"
-                      }
-                    >
-                      {branch.isActive ? "Active" : "Inactive"}
-                    </Badge>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-8"
-                        >
-                          <MoreVertical className="size-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() =>
-                            router.push(`/branches/${branch.id}`)
-                          }
-                        >
-                          <Eye className="mr-2 size-4" />
-                          View
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() =>
-                            router.push(`/branches/${branch.id}/edit`)
-                          }
-                        >
-                          <Pencil className="mr-2 size-4" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-red-600 focus:text-red-600"
-                          onClick={() => setDeleteTarget(branch)}
-                        >
-                          <Trash2 className="mr-2 size-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                    <MapPin className="mt-0.5 size-4 shrink-0" />
-                    {branch.address || "N/A"}
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Phone className="size-4 shrink-0" />
-                    {branch.phone || "N/A"}
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Mail className="size-4 shrink-0" />
-                    {branch.email || "N/A"}
-                  </div>
-
-                  <div className="border-t pt-3 mt-1">
-                    <div className="flex items-center justify-between">
-                      <div className="text-center flex-1">
-                        <p className="text-lg font-semibold text-foreground">
-                          {branch.classCount}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Active Classes
-                        </p>
-                      </div>
-                      <div className="h-8 w-px bg-border" />
-                      <div className="text-center flex-1">
-                        <p className="text-lg font-semibold text-foreground">
-                          {branch.childrenCount}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Total Students
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+      <div className="hidden print:block print:mb-4 print:text-center">
+        <h1 className="text-2xl font-bold text-black">Branches Listing</h1>
+        <p className="text-sm text-gray-500">
+          {filteredBranches.length} branches - Printed on {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+        </p>
       </div>
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog
-        open={!!deleteTarget}
-        onOpenChange={(open) => !open && setDeleteTarget(null)}
-      >
+      <div className="space-y-6 p-4 md:p-6 print:p-0">
+        <div className="grid grid-cols-1 gap-4 print:hidden sm:grid-cols-3">
+          <div className="overflow-hidden rounded bg-[#327ad5] shadow-sm">
+            <div className="flex items-center justify-between px-4 py-3">
+              <div className="space-y-0.5">
+                <p className="text-2xl font-bold text-white">{totalBranches}</p>
+                <p className="text-xs text-white/80">Total Branches</p>
+              </div>
+              <Building2 className="size-14 text-white/20" strokeWidth={1.2} />
+            </div>
+          </div>
+          <div className="overflow-hidden rounded bg-[#1caf9a] shadow-sm">
+            <div className="flex items-center justify-between px-4 py-3">
+              <div className="space-y-0.5">
+                <p className="text-2xl font-bold text-white">{totalClasses}</p>
+                <p className="text-xs text-white/80">Total Classes</p>
+              </div>
+              <GraduationCap className="size-14 text-white/20" strokeWidth={1.2} />
+            </div>
+          </div>
+          <div className="overflow-hidden rounded bg-[#008200] shadow-sm">
+            <div className="flex items-center justify-between px-4 py-3">
+              <div className="space-y-0.5">
+                <p className="text-2xl font-bold text-white">{totalStudents}</p>
+                <p className="text-xs text-white/80">Total Students</p>
+              </div>
+              <Users className="size-14 text-white/20" strokeWidth={1.2} />
+            </div>
+          </div>
+        </div>
+
+        <Card className="print:border-none print:shadow-none">
+          <CardHeader className="print:hidden">
+            <CardTitle className="text-lg">Branches Listing</CardTitle>
+            <CardAction>
+              <Button asChild>
+                <Link href="/branches/new">
+                  <Plus className="mr-1 size-4" />
+                  New Branch
+                </Link>
+              </Button>
+            </CardAction>
+          </CardHeader>
+          <CardContent className="space-y-4 print:p-0 print:space-y-0">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 print:hidden">
+              <div className="relative w-full sm:max-w-xs">
+                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search branches..."
+                  value={searchQuery}
+                  onChange={(event) => {
+                    setSearchQuery(event.target.value);
+                    setPage(1);
+                  }}
+                  className="pl-9 pr-8"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery("");
+                      setPage(1);
+                    }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                )}
+              </div>
+
+              <Select
+                value={statusFilter}
+                onValueChange={(value) => {
+                  setStatusFilter(value as "ACTIVE" | "INACTIVE" | "ALL");
+                  setPage(1);
+                }}
+              >
+                <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[150px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ACTIVE">Active</SelectItem>
+                  <SelectItem value="INACTIVE">Inactive</SelectItem>
+                  <SelectItem value="ALL">All Statuses</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <div className="flex-1" />
+
+              <div className="flex items-center rounded-lg border bg-muted/30 p-0.5">
+                <Button
+                  variant={viewMode === "table" ? "secondary" : "ghost"}
+                  size="icon-sm"
+                  onClick={() => setViewMode("table")}
+                  className="h-7 w-7"
+                >
+                  <TableIcon className="size-3.5" />
+                </Button>
+                <Button
+                  variant={viewMode === "cards" ? "secondary" : "ghost"}
+                  size="icon-sm"
+                  onClick={() => setViewMode("cards")}
+                  className="h-7 w-7"
+                >
+                  <LayoutGrid className="size-3.5" />
+                </Button>
+              </div>
+
+              <ExportButton
+                filename="branches"
+                sheetName="Branches"
+                columns={branchExportColumns}
+                data={filteredBranches as unknown as Record<string, unknown>[]}
+              />
+
+              <Button type="button" variant="outline" size="sm" onClick={() => window.print()}>
+                <Printer className="mr-1 size-4" />
+                Print
+              </Button>
+            </div>
+
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                setPage(1);
+              }}
+              className="grid gap-2 rounded border border-border/60 bg-muted/20 p-3 print:hidden sm:grid-cols-2 lg:grid-cols-[0.75fr_1.2fr_1.2fr_1fr_1fr_1fr_auto_auto]"
+            >
+              <Input
+                value={legacyFilters.branchNumber}
+                onChange={(event) => setLegacyFilters((current) => ({ ...current, branchNumber: event.target.value }))}
+                placeholder="S.N."
+                className="h-9"
+              />
+              <Input
+                value={legacyFilters.name}
+                onChange={(event) => setLegacyFilters((current) => ({ ...current, name: event.target.value }))}
+                placeholder="Branch"
+                className="h-9"
+              />
+              <Input
+                value={legacyFilters.location}
+                onChange={(event) => setLegacyFilters((current) => ({ ...current, location: event.target.value }))}
+                placeholder="Location"
+                className="h-9"
+              />
+              <Input
+                value={legacyFilters.mobile}
+                onChange={(event) => setLegacyFilters((current) => ({ ...current, mobile: event.target.value }))}
+                placeholder="Mobile"
+                className="h-9"
+              />
+              <Input
+                type="date"
+                value={legacyFilters.createdFrom}
+                onChange={(event) => setLegacyFilters((current) => ({ ...current, createdFrom: event.target.value }))}
+                aria-label="Created from"
+                className="h-9"
+              />
+              <Input
+                type="date"
+                value={legacyFilters.createdTo}
+                onChange={(event) => setLegacyFilters((current) => ({ ...current, createdTo: event.target.value }))}
+                aria-label="Created to"
+                className="h-9"
+              />
+              <Button type="submit" variant="outline" size="sm" disabled={isPending}>
+                <Filter className="size-4" />
+                Apply
+              </Button>
+              <Button type="button" variant="outline" size="sm" onClick={clearAllFilters} disabled={isPending}>
+                <X className="size-4" />
+                Clear
+              </Button>
+            </form>
+
+            {activeFilters.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5 print:hidden">
+                <span className="mr-1 text-xs font-medium text-muted-foreground">Filters:</span>
+                {activeFilters.map((filter) => (
+                  <Badge
+                    key={filter.key}
+                    variant="secondary"
+                    className="gap-1 border-primary/20 bg-primary/10 py-0.5 pl-2 pr-1 text-xs text-primary hover:bg-primary/15"
+                  >
+                    <span className="font-medium">{filter.label}:</span> {filter.value}
+                    <button type="button" onClick={() => clearFilter(filter.key)} className="ml-0.5 rounded-full p-0.5 transition-colors hover:bg-primary/20">
+                      <X className="size-3" />
+                    </button>
+                  </Badge>
+                ))}
+                <button type="button" onClick={clearAllFilters} className="ml-1 text-xs text-muted-foreground transition-colors hover:text-foreground">
+                  Clear all
+                </button>
+              </div>
+            )}
+
+            {viewMode === "cards" ? (
+              paginatedBranches.length === 0 ? (
+                <div className="flex flex-col items-center justify-center rounded-sm border border-dashed py-16">
+                  <Building2 className="size-10 text-muted-foreground/50" />
+                  <p className="mt-3 text-sm text-muted-foreground">No branches found</p>
+                  <Button asChild variant="outline" className="mt-4">
+                    <Link href="/branches/new">
+                      <Plus className="mr-1 size-4" />
+                      New Branch
+                    </Link>
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3">
+                  {paginatedBranches.map((branch) => (
+                    <Card key={branch.id} className="rounded-sm transition-all hover:shadow-md">
+                      <CardContent className="flex gap-3 py-4">
+                        <BranchThumbnail branch={branch} size="card" />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-semibold">{branch.name}</p>
+                              <p className="truncate text-xs text-muted-foreground">{branch.address || "No location"}</p>
+                            </div>
+                            <Badge className={`text-[10px] ${statusClass(branch.isActive)}`}>{branch.isActive ? "Active" : "Inactive"}</Badge>
+                          </div>
+                          <div className="mt-2 space-y-1 text-xs text-muted-foreground">
+                            <p className="flex items-center gap-1"><Phone className="size-3" />{branch.phone || "-"}</p>
+                            <p className="flex items-center gap-1"><MapPin className="size-3" />{branch.telephone || "-"}</p>
+                          </div>
+                          <div className="mt-3 flex items-center justify-between border-t pt-3 text-xs">
+                            <span><strong>{branch.classCount}</strong> classes / <strong>{branch.childrenCount}</strong> children</span>
+                            <div className="flex items-center gap-1">
+                              <Button asChild variant="ghost" size="icon-sm">
+                                <Link href={`/branches/${branch.id}`}>
+                                  <Eye className="size-4" />
+                                </Link>
+                              </Button>
+                              <Button asChild variant="ghost" size="icon-sm">
+                                <Link href={`/branches/${branch.id}/edit`}>
+                                  <Pencil className="size-4" />
+                                </Link>
+                              </Button>
+                              <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(branch)}>
+                                <Trash2 className="size-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )
+            ) : (
+              <div className="overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm print:rounded-none print:border-gray-300 print:shadow-none">
+                <div className="overflow-x-auto print:overflow-visible">
+                  <Table className="min-w-[980px] print:min-w-0 print:w-full print:text-[11px]">
+                    <TableHeader className="sticky top-0 z-10">
+                      <TableRow className="border-border/60 hover:bg-transparent">
+                        <TableHead className="w-[52px] bg-muted/60 px-3 py-3 print:hidden">
+                          <Checkbox
+                            checked={allPageRowsSelected || (somePageRowsSelected ? "indeterminate" : false)}
+                            onCheckedChange={(checked) => toggleSelectAllInPage(checked === true)}
+                          />
+                        </TableHead>
+                        <TableHead className="bg-muted/60 px-3 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">S.N.</TableHead>
+                        <TableHead className="bg-muted/60 px-3 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Image</TableHead>
+                        <TableHead className="bg-muted/60 px-3 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Branch</TableHead>
+                        <TableHead className="bg-muted/60 px-3 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Location</TableHead>
+                        <TableHead className="bg-muted/60 px-3 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Mobile</TableHead>
+                        <TableHead className="bg-muted/60 px-3 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Info</TableHead>
+                        <TableHead className="bg-muted/60 px-3 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Date</TableHead>
+                        <TableHead className="bg-muted/60 px-3 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-muted-foreground print:hidden">Action</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {isPending ? (
+                        <TableRow>
+                          <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
+                            Loading...
+                          </TableCell>
+                        </TableRow>
+                      ) : paginatedBranches.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={9} className="h-32 text-center text-muted-foreground">
+                            No branches found
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        paginatedBranches.map((branch, index) => (
+                          <TableRow key={branch.id} className="group border-border/40 transition-colors hover:bg-accent/40">
+                            <TableCell className="px-3 py-3 print:hidden">
+                              <Checkbox checked={selectedIds.has(branch.id)} onCheckedChange={(checked) => toggleRow(branch.id, checked === true)} />
+                            </TableCell>
+                            <TableCell className="px-3 py-3 text-sm font-medium">{branch.legacyId ?? (currentPage - 1) * effectivePageSize + index + 1}</TableCell>
+                            <TableCell className="px-3 py-3">
+                              <BranchThumbnail branch={branch} />
+                            </TableCell>
+                            <TableCell className="px-3 py-3">
+                              <div className="space-y-1">
+                                <p className="text-sm font-medium">{branch.name}</p>
+                                {!branch.isActive && <Badge className={`text-[10px] ${statusClass(branch.isActive)}`}>Inactive</Badge>}
+                                {branch.prefix && <p className="text-xs text-muted-foreground">Prefix: {branch.prefix}</p>}
+                              </div>
+                            </TableCell>
+                            <TableCell className="px-3 py-3 text-sm text-muted-foreground">{branch.address || "-"}</TableCell>
+                            <TableCell className="px-3 py-3 text-sm text-muted-foreground">{branch.phone || "-"}</TableCell>
+                            <TableCell className="px-3 py-3 text-sm text-muted-foreground">{branch.telephone || "-"}</TableCell>
+                            <TableCell className="px-3 py-3 text-sm text-muted-foreground">{formatDate(branch.createdAt)}</TableCell>
+                            <TableCell className="px-3 py-3 text-right print:hidden">
+                              <div className="flex items-center justify-end gap-0.5">
+                                <Button asChild variant="ghost" size="icon-sm">
+                                  <Link href={`/branches/${branch.id}`}>
+                                    <Eye className="size-4 text-muted-foreground" />
+                                  </Link>
+                                </Button>
+                                <Button asChild variant="ghost" size="icon-sm">
+                                  <Link href={`/branches/${branch.id}/edit`}>
+                                    <Pencil className="size-4 text-muted-foreground" />
+                                  </Link>
+                                </Button>
+                                <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(branch)}>
+                                  <Trash2 className="size-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            )}
+
+            {filteredBranches.length > 0 && (
+              <div className="flex flex-col gap-3 rounded-lg border border-border/40 bg-card/50 px-4 py-3 print:hidden sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Showing <span className="font-medium text-foreground">{Math.min((currentPage - 1) * effectivePageSize + 1, filteredBranches.length)}</span>
+                  {" "}-{" "}
+                  <span className="font-medium text-foreground">{Math.min(currentPage * effectivePageSize, filteredBranches.length)}</span>
+                  {" "}of <span className="font-medium text-foreground">{filteredBranches.length}</span> branches
+                  {selectedIds.size > 0 && <span className="ml-2">({selectedIds.size} selected)</span>}
+                </p>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Rows:</span>
+                  <Select
+                    value={pageSize}
+                    onValueChange={(value) => {
+                      setPageSize(value as (typeof PAGE_SIZES)[number]);
+                      setPage(1);
+                    }}
+                  >
+                    <SelectTrigger className="h-8 w-[82px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent side="top">
+                      {PAGE_SIZES.map((size) => (
+                        <SelectItem key={size} value={size}>
+                          {size === "ALL" ? "All" : size}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="flex items-center gap-1">
+                    <Button variant="outline" size="icon" className="size-9 border-border/60 sm:size-8" onClick={() => setPage(1)} disabled={currentPage <= 1}>
+                      <ChevronsLeft className="size-4" />
+                    </Button>
+                    <Button variant="outline" size="icon" className="size-9 border-border/60 sm:size-8" onClick={() => setPage(currentPage - 1)} disabled={currentPage <= 1}>
+                      <ChevronLeft className="size-4" />
+                    </Button>
+                    <span className="min-w-[5rem] text-center text-sm text-muted-foreground">
+                      <span className="font-medium text-foreground">{currentPage}</span> / {pageCount}
+                    </span>
+                    <Button variant="outline" size="icon" className="size-9 border-border/60 sm:size-8" onClick={() => setPage(currentPage + 1)} disabled={currentPage >= pageCount}>
+                      <ChevronRight className="size-4" />
+                    </Button>
+                    <Button variant="outline" size="icon" className="size-9 border-border/60 sm:size-8" onClick={() => setPage(pageCount)} disabled={currentPage >= pageCount}>
+                      <ChevronsRight className="size-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Branch</AlertDialogTitle>
+            <AlertDialogTitle>Deactivate Branch</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to deactivate{" "}
-              <strong>{deleteTarget?.name}</strong>? This will mark the branch
-              as inactive. It can be reactivated later.
+              Are you sure you want to deactivate <strong>{deleteTarget?.name}</strong>? This will hide the branch from the active listing.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isPending}
-              className="bg-destructive hover:bg-destructive/90"
-            >
-              {isPending ? "Deleting..." : "Delete"}
+            <AlertDialogAction onClick={handleDelete} disabled={isPending} className="bg-destructive hover:bg-destructive/90">
+              {isPending ? "Deactivating..." : "Deactivate"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

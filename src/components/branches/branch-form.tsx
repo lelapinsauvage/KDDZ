@@ -49,6 +49,15 @@ const COLOR_PRESETS = [
   "#1abc9c",
 ];
 
+const DEFAULT_BRANCH_PHOTO = "/images/BranchPhoto/default.jpg";
+
+function branchImageSrc(imageUrl: string) {
+  if (!imageUrl || imageUrl === "default.jpg") return DEFAULT_BRANCH_PHOTO;
+  if (/^https?:\/\//i.test(imageUrl) || imageUrl.startsWith("/")) return imageUrl;
+  if (imageUrl.includes("/")) return `/${imageUrl.replace(/^\/+/, "")}`;
+  return `/images/BranchPhoto/${imageUrl}`;
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -88,7 +97,7 @@ export function BranchForm({ branch, hideHeader = false }: BranchFormProps) {
 
   const selectedColor = watch("themeColor") || "#1caf9a";
   const storedImageUrl = watch("imageUrl") || "";
-  const displayImageUrl = imagePreviewUrl || storedImageUrl;
+  const displayImageUrl = imagePreviewUrl || (storedImageUrl ? branchImageSrc(storedImageUrl) : "");
 
   function clearImageSelection() {
     if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
@@ -282,6 +291,11 @@ export function BranchForm({ branch, hideHeader = false }: BranchFormProps) {
                       sizes="128px"
                       className="object-cover"
                       unoptimized
+                      onError={(event) => {
+                        if (!imagePreviewUrl && displayImageUrl !== DEFAULT_BRANCH_PHOTO) {
+                          event.currentTarget.src = DEFAULT_BRANCH_PHOTO;
+                        }
+                      }}
                     />
                     <button
                       type="button"
@@ -401,12 +415,19 @@ export function BranchForm({ branch, hideHeader = false }: BranchFormProps) {
                   )}
                 </div>
                 <div>
-                  <Label htmlFor="prefix">Prefix / Code</Label>
+                  <Label htmlFor="prefix">
+                    Prefix / Code <span className="text-red-500">*</span>
+                  </Label>
                   <Input
                     id="prefix"
                     {...register("prefix")}
                     placeholder="e.g. MB"
                   />
+                  {errors.prefix && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors.prefix.message}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="isActive">Status</Label>
@@ -466,12 +487,19 @@ export function BranchForm({ branch, hideHeader = false }: BranchFormProps) {
             <FormSection title="Location" color="yellow">
               <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <Label htmlFor="address">Address</Label>
+                  <Label htmlFor="address">
+                    Branch Location <span className="text-red-500">*</span>
+                  </Label>
                   <Input
                     id="address"
                     {...register("address")}
                     placeholder="Full address"
                   />
+                  {errors.address && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors.address.message}
+                    </p>
+                  )}
                 </div>
               </div>
             </FormSection>
