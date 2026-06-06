@@ -5,7 +5,7 @@ Legacy native apps must keep working behaviorally through the modern parent API/
 Parent web PWA status:
 
 - `/parent/login` now uses `/api/parent/login`, persists the parent JWT and child id in browser storage, and keeps failed login responses in the legacy `status: false` shape.
-- `/parent` now consumes the daily detailed, finance, absence, grouped messages, message thread detail/reply, notifications, food calendar, holiday calendar, and send-message endpoints as the first parent-facing web shell.
+- `/parent` now consumes the daily detailed, finance, absence, grouped messages, message thread detail/reply, notifications, push-token, food calendar, holiday calendar, and send-message endpoints as the first parent-facing web shell.
 - Remaining contract work is a field-by-field audit against `ws/*.php`, iOS `WebFunctions.swift`, Android `WebServiceFunctions.java`, and a credentialed E2E run with a known parent login.
 
 | Legacy Endpoint | Request Fields | Modern Endpoint | Status | Referenced By iOS | Referenced By Android |
@@ -30,6 +30,6 @@ Parent web PWA status:
 | ws/newdaily.php | usites | /api/parent/daily/[childId]/detailed | partial - used by /parent PWA, verify JSON contract | yes | no |
 | ws/notifications_master.php | usites | /api/parent/notifications/[childId] | partial - used by /parent PWA, verify JSON contract | yes | no |
 | ws/payments_alarms.php | pid | /api/parent/alarms/[type] | partial - verify JSON contract | no | no |
-| ws/pnotifications.php | cid, del, os, show, token | /api/parent/push-token | partial - verify JSON contract | yes | no |
+| ws/pnotifications.php | cid, del, os, show, token | /api/parent/push-token | partial - JSON/form registration, parent-scoped show, legacy OS mapping, and soft-delete restored; verify native unauth contract | yes | no |
 | ws/sendMessage.php | message, subject, threadid, to, usites | /api/parent/messages | partial - used by /parent PWA, verify JSON contract | no | no |
 | ws/vaccinations_alarms.php | pid | /api/parent/alarms/[type] | partial - verify JSON contract | no | no |

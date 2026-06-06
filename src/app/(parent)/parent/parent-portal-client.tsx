@@ -4,6 +4,8 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Bell,
+  BellOff,
+  BellRing,
   CalendarDays,
   ChefHat,
   CreditCard,
@@ -630,6 +632,7 @@ export function ParentPortalClient() {
 
           <TabsContent value="notifications" className="mt-4">
             <DataPanel icon={Bell} title="Notifications">
+              <ParentPushSubscription token={token} childId={childId} />
               <div className="grid gap-3 lg:grid-cols-2">
                 {data.notifications.map((item, index) => (
                   <NotificationItem key={`${item.group}-${item.detail.datetime}-${index}`} item={item} framed />
@@ -746,6 +749,218 @@ function NotificationItem({
       <CardContent className="px-4">{content}</CardContent>
     </Card>
   );
+}
+
+function ParentPushSubscription({
+  token,
+  childId,
+}: {
+  token: string;
+  childId: string;
+}) {
+  const [isSupported, setIsSupported] = useState(false);
+  const [permission, setPermission] = useState<NotificationPermission>("default");
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [status, setStatus] = useState("");
+  const [isBusy, setIsBusy] = useState(false);
+
+  const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const hasPushKey = Boolean(vapidPublicKey);
+
+  useEffect(() => {
+    const supported =
+      typeof window !== "undefined" &&
+      "Notification" in window &&
+      "serviceWorker" in navigator &&
+      "PushManager" in window;
+
+    setIsSupported(supported);
+    if (!supported) return;
+
+    setPermission(Notification.permission);
+    void navigator.serviceWorker
+      .getRegistration("/sw.js")
+      .then((registration) => registration?.pushManager.getSubscription())
+      .then((subscription) => {
+        setIsSubscribed(Boolean(subscription));
+      })
+      .catch(() => {
+        setIsSubscribed(false);
+      });
+  }, []);
+
+  async function enablePush() {
+    if (!isSupported || !token || !childId) return;
+    setIsBusy(true);
+    setStatus("");
+
+    try {
+      if (!vapidPublicKey) {
+        setStatus("Push key unavailable");
+        return;
+      }
+
+      const nextPermission = await Notification.requestPermission();
+      setPermission(nextPermission);
+      if (nextPermission !== "granted") {
+        setStatus("Notifications blocked");
+        return;
+      }
+
+      const registration =
+        (await navigator.serviceWorker.getRegistration("/sw.js")) ??
+        (await navigator.serviceWorker.register("/sw.js", { scope: "/" }));
+
+      const existing = await registration.pushManager.getSubscription();
+      const subscription =
+        existing ??
+        (await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+        }));
+
+      const subscriptionToken = JSON.stringify(subscription);
+      await persistParentPushToken(token, childId, subscriptionToken);
+      window.localStorage.setItem(parentPushTokenKey(childId), subscriptionToken);
+      setIsSubscribed(true);
+      setStatus("Push enabled");
+    } catch {
+      setStatus("Push setup failed");
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function disablePush() {
+    if (!token || !childId) return;
+    setIsBusy(true);
+    setStatus("");
+
+    try {
+      const registration = await navigator.serviceWorker.getRegistration("/sw.js");
+      const subscription = await registration?.pushManager.getSubscription();
+      const subscriptionToken =
+        subscription
+          ? JSON.stringify(subscription)
+          : window.localStorage.getItem(parentPushTokenKey(childId));
+
+      if (subscriptionToken) {
+        await removeParentPushToken(token, subscriptionToken);
+      }
+      await subscription?.unsubscribe();
+      window.localStorage.removeItem(parentPushTokenKey(childId));
+      setIsSubscribed(false);
+      setStatus("Push disabled");
+    } catch {
+      setStatus("Could not disable push");
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  let statusLabel = "Unavailable on this browser";
+  if (isSupported) {
+    statusLabel = hasPushKey
+      ? status || (isSubscribed ? "Enabled on this device" : "Not enabled on this device")
+      : "Push key unavailable";
+  }
+
+  return (
+    <section className="mb-4 flex flex-col gap-3 border border-border bg-[#fafafa] p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-start gap-3">
+        <span
+          className={cn(
+            "flex size-9 items-center justify-center rounded-sm",
+            isSubscribed ? "bg-success-light text-success-dark" : "bg-alerts-light text-alerts"
+          )}
+        >
+          {isSubscribed ? <BellRing className="size-4" /> : <Bell className="size-4" />}
+        </span>
+        <div>
+          <h3 className="font-semibold">Push alerts</h3>
+          <p className="text-sm text-muted-foreground">{statusLabel}</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        {permission === "denied" ? (
+          <Badge variant="warning">Blocked</Badge>
+        ) : null}
+        {isSubscribed ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={disablePush}
+            disabled={isBusy || !isSupported}
+          >
+            <BellOff className="size-4" />
+            Disable
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            size="sm"
+            onClick={enablePush}
+            disabled={isBusy || !isSupported || permission === "denied" || !hasPushKey}
+          >
+            {isBusy ? <Loader2 className="size-4 animate-spin" /> : <BellRing className="size-4" />}
+            Enable
+          </Button>
+        )}
+      </div>
+    </section>
+  );
+}
+
+async function persistParentPushToken(token: string, childId: string, subscriptionToken: string) {
+  const response = await fetch("/api/parent/push-token", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      cid: childId,
+      token: subscriptionToken,
+      os: "0",
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to save parent push token");
+  }
+}
+
+async function removeParentPushToken(token: string, subscriptionToken: string) {
+  const response = await fetch("/api/parent/push-token", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ del: subscriptionToken }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to remove parent push token");
+  }
+}
+
+function parentPushTokenKey(childId: string) {
+  return `kiddzonline_parent_push_token:${childId}`;
+}
+
+function urlBase64ToUint8Array(value: string) {
+  const padding = "=".repeat((4 - (value.length % 4)) % 4);
+  const base64 = (value + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  const output = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; i++) {
+    output[i] = rawData.charCodeAt(i);
+  }
+
+  return output;
 }
 
 function EmptyState({ label }: { label: string }) {

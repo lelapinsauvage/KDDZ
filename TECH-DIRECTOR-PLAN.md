@@ -156,7 +156,7 @@ Build parent-facing UI as a PWA before rebuilding native apps:
 - Food and holiday calendar. First slice restored in `/parent` from `/api/parent/calendar/food` and `/api/parent/calendar/holidays`.
 - Messages. First slice restored in `/parent` with list, thread detail, compose, and replies via `/api/parent/messages/[childId]`, `/api/parent/messages/thread/[threadId]`, and `/api/parent/messages`.
 - Notifications. First slice restored in `/parent` from `/api/parent/notifications/[childId]`.
-- Push subscription.
+- Push subscription. First slice restored in `/parent` with browser subscription controls, `/api/parent/push-token` JSON/form registration and soft-delete compatibility, and service-worker notification click handling. `NEXT_PUBLIC_VAPID_PUBLIC_KEY` and a sender/provider still need production configuration before external delivery.
 
 Use legacy iOS/Android as UX and API reference, but do not modernize those codebases directly unless app-store native requirements force it.
 

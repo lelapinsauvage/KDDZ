@@ -80,9 +80,9 @@ This list is the first implementation backlog after the generated inventory/matr
 
 9. **Parent portal UI**
    - `/parent/login` now restores a parent-facing login screen backed by `/api/parent/login`, stores the parent JWT/child id client-side, and keeps failed-login responses in the legacy `{ status: false }` shape with a timeout guard for slow database lookups.
-   - `/parent` now restores the first parent PWA shell with child dashboard stats, latest daily report summary, payments, absence reports, message compose/list/thread replies, notifications, food calendar, and holidays using the existing `/api/parent/*` compatibility endpoints.
+   - `/parent` now restores the first parent PWA shell with child dashboard stats, latest daily report summary, payments, absence reports, message compose/list/thread replies, notifications, push subscription registration/unregistration, food calendar, and holidays using the existing `/api/parent/*` compatibility endpoints.
    - Legacy iOS/Android apps show the real parent feature set.
-   - Remaining work is credentialed E2E with a known production-like parent login, exact native-app screen audit, push subscription UI, offline/mobile polish, and final API contract verification.
+   - Remaining work is credentialed E2E with a known production-like parent login, exact native-app screen audit, external push provider delivery, offline/mobile polish, and final API contract verification.
 
 10. **Parent API response compatibility**
    - Legacy `ws/*.php`, iOS `WebFunctions.swift`, and Android `WebServiceFunctions.java` must be response-shape audited against modern `/api/parent/*`.
