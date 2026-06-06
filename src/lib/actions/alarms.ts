@@ -88,8 +88,15 @@ type ActionResult<T = unknown> = {
 };
 
 const MEDICAL_RECEIPT_SOURCE = "custom_notifications_medical";
+const BIRTHDAY_RECEIPT_SOURCE = "custom_notifications_birthday";
+const CONTRACT_RECEIPT_SOURCE = "custom_notifications_contracts";
 const INSURANCE_RECEIPT_SOURCE = "custom_notifications_insurance";
 const MEDICINE_RECEIPT_SOURCE = "custom_notifications_medicine";
+
+interface StaffReceiptAlarmLinkData {
+  referenceId: string | null;
+  referenceType: string | null;
+}
 
 interface StaffReceiptAlarmConfig {
   type: AlarmType;
@@ -97,6 +104,10 @@ interface StaffReceiptAlarmConfig {
   route: string;
   familyLabel: string;
   defaultActionHref: string;
+  actionHrefFromAlarm?: (
+    alarm: StaffReceiptAlarmLinkData,
+    legacyData: Record<string, unknown>,
+  ) => string;
   includeCurrentUserInHistory?: boolean;
   historyTypeFromLegacy?: (legacyData: Record<string, unknown>) => string;
 }
@@ -165,6 +176,26 @@ function legacyNotificationTypeLabel(legacyData: Record<string, unknown>) {
 
 function childMedicalHref(referenceId: string | null) {
   return referenceId ? `/children/${referenceId}/medical` : "/medical/general";
+}
+
+function childDashboardHref(referenceId: string | null) {
+  return referenceId ? `/children/${referenceId}/dashboard` : "/children";
+}
+
+function staffDetailHref(referenceId: string | null, referenceType: string | null) {
+  if (!referenceId) return "/employees/teachers";
+  switch (referenceType) {
+    case "Teacher":
+      return `/employees/teachers/${referenceId}`;
+    case "Nurse":
+      return `/employees/nurses/${referenceId}`;
+    case "Doctor":
+      return `/employees/doctors/${referenceId}`;
+    case "Manager":
+      return `/employees/managers/${referenceId}`;
+    default:
+      return "/employees/teachers";
+  }
 }
 
 function revalidateMedicalAlarmPaths() {
@@ -842,9 +873,8 @@ async function getStaffReceiptAlarmNotifications(
       const legacyHref = jsonString(legacyData.href);
       const actionHref = legacyHref?.startsWith("/")
         ? legacyHref
-        : receipt.alarm.referenceId
-          ? childMedicalHref(receipt.alarm.referenceId)
-          : config.defaultActionHref;
+        : config.actionHrefFromAlarm?.(receipt.alarm, legacyData) ??
+          config.defaultActionHref;
 
       return [{
         id: receipt.alarm.id,
@@ -1071,6 +1101,7 @@ const INSURANCE_ALARM_CONFIG: StaffReceiptAlarmConfig = {
   route: "/alarms/insurance",
   familyLabel: "insurance",
   defaultActionHref: "/medical/general",
+  actionHrefFromAlarm: (alarm) => childMedicalHref(alarm.referenceId),
   includeCurrentUserInHistory: true,
 };
 
@@ -1080,8 +1111,78 @@ const MEDICINE_ALARM_CONFIG: StaffReceiptAlarmConfig = {
   route: "/alarms/medicine",
   familyLabel: "medicine",
   defaultActionHref: "/medical/general",
+  actionHrefFromAlarm: (alarm) => childMedicalHref(alarm.referenceId),
   historyTypeFromLegacy: () => "Alert",
 };
+
+const BIRTHDAY_ALARM_CONFIG: StaffReceiptAlarmConfig = {
+  type: "BIRTHDAY",
+  sourceTable: BIRTHDAY_RECEIPT_SOURCE,
+  route: "/alarms/birthdays",
+  familyLabel: "birthday",
+  defaultActionHref: "/children",
+  actionHrefFromAlarm: (alarm) => childDashboardHref(alarm.referenceId),
+  historyTypeFromLegacy: () => "Alert",
+};
+
+const CONTRACT_ALARM_CONFIG: StaffReceiptAlarmConfig = {
+  type: "CONTRACT",
+  sourceTable: CONTRACT_RECEIPT_SOURCE,
+  route: "/alarms/contracts",
+  familyLabel: "contract",
+  defaultActionHref: "/employees/teachers",
+  actionHrefFromAlarm: (alarm) =>
+    staffDetailHref(alarm.referenceId, alarm.referenceType),
+  historyTypeFromLegacy: () => "Alert",
+};
+
+export async function getBirthdayAlarmNotifications(
+  params: { pageSize?: number } = {},
+): Promise<ActionResult> {
+  return getStaffReceiptAlarmNotifications(BIRTHDAY_ALARM_CONFIG, params);
+}
+
+export async function getBirthdayAlarmHistory(
+  params: { pageSize?: number } = {},
+): Promise<ActionResult> {
+  return getStaffReceiptAlarmHistory(BIRTHDAY_ALARM_CONFIG, params);
+}
+
+export async function markBirthdayAlarmViewed(
+  alarmId: string,
+): Promise<ActionResult<{ count: number }>> {
+  return markStaffReceiptAlarmViewed(alarmId, BIRTHDAY_ALARM_CONFIG);
+}
+
+export async function markAllBirthdayAlarmsViewed(): Promise<
+  ActionResult<{ count: number }>
+> {
+  return markAllStaffReceiptAlarmsViewed(BIRTHDAY_ALARM_CONFIG);
+}
+
+export async function getContractAlarmNotifications(
+  params: { pageSize?: number } = {},
+): Promise<ActionResult> {
+  return getStaffReceiptAlarmNotifications(CONTRACT_ALARM_CONFIG, params);
+}
+
+export async function getContractAlarmHistory(
+  params: { pageSize?: number } = {},
+): Promise<ActionResult> {
+  return getStaffReceiptAlarmHistory(CONTRACT_ALARM_CONFIG, params);
+}
+
+export async function markContractAlarmViewed(
+  alarmId: string,
+): Promise<ActionResult<{ count: number }>> {
+  return markStaffReceiptAlarmViewed(alarmId, CONTRACT_ALARM_CONFIG);
+}
+
+export async function markAllContractAlarmsViewed(): Promise<
+  ActionResult<{ count: number }>
+> {
+  return markAllStaffReceiptAlarmsViewed(CONTRACT_ALARM_CONFIG);
+}
 
 export async function getInsuranceAlarmNotifications(
   params: { pageSize?: number } = {},

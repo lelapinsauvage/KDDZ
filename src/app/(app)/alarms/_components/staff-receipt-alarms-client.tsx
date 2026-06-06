@@ -31,8 +31,10 @@ import {
 } from "@/components/ui/tooltip";
 import {
   ExternalLink,
+  Cake,
   Eye,
   FileClock,
+  FileText,
   MailCheck,
   Pill,
   RefreshCw,
@@ -42,10 +44,16 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import {
+  generateBirthdayAlarms,
+  generateContractAlarms,
   generateInsuranceAlarms,
   generateMedicineAlarms,
+  markAllBirthdayAlarmsViewed,
+  markAllContractAlarmsViewed,
   markAllInsuranceAlarmsViewed,
   markAllMedicineAlarmsViewed,
+  markBirthdayAlarmViewed,
+  markContractAlarmViewed,
   markInsuranceAlarmViewed,
   markMedicineAlarmViewed,
 } from "@/lib/actions/alarms";
@@ -79,7 +87,7 @@ export interface StaffReceiptAlarmHistory {
 }
 
 interface StaffReceiptAlarmsClientProps {
-  family: "insurance" | "medicine";
+  family: "birthday" | "contract" | "insurance" | "medicine";
   alarms: StaffReceiptAlarm[];
   history: StaffReceiptAlarmHistory[];
   branches: { id: string; name: string }[];
@@ -100,6 +108,34 @@ interface FamilyCopy {
 }
 
 const familyCopy: Record<StaffReceiptAlarmsClientProps["family"], FamilyCopy> = {
+  birthday: {
+    title: "Birthdays Notifications Listing",
+    description: "Birthday reminders sent to staff",
+    breadcrumb: "Birthdays",
+    historyTitle: "Sent Birthday Alarms",
+    searchPlaceholder: "Search birthday alarms...",
+    historyPlaceholder: "Search sent birthday alarms...",
+    emptyTitle: "No birthday notifications",
+    emptyDescription:
+      "Birthday reminders matching the current filters will appear here.",
+    generationFailure: "Birthday generation failed.",
+    icon: Cake,
+    iconClass: "text-pink-500",
+  },
+  contract: {
+    title: "Contracts Notifications Listing",
+    description: "Staff document and contract expiry reminders",
+    breadcrumb: "Contracts",
+    historyTitle: "Sent Contracts Reminders",
+    searchPlaceholder: "Search contract alarms...",
+    historyPlaceholder: "Search sent contract reminders...",
+    emptyTitle: "No contract notifications",
+    emptyDescription:
+      "Staff contract and document reminders matching the current filters will appear here.",
+    generationFailure: "Contract generation failed.",
+    icon: FileText,
+    iconClass: "text-primary",
+  },
   insurance: {
     title: "Insurance Notifications Listing",
     description: "Alerts sent concerning expiring child insurance",
@@ -175,6 +211,22 @@ function formatGenerationStatus(
   family: StaffReceiptAlarmsClientProps["family"],
   data: unknown,
 ) {
+  if (family === "birthday") {
+    const alarmsCreated = metric(data, "alarmsCreated");
+    const notificationsCreated = metric(data, "notificationsCreated");
+    const skippedExisting = metric(data, "skippedExisting");
+    return `Created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"} and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing.`;
+  }
+
+  if (family === "contract") {
+    const documentsMatched = metric(data, "documentsMatched");
+    const alarmsCreated = metric(data, "alarmsCreated");
+    const notificationsCreated = metric(data, "notificationsCreated");
+    const skippedExisting = metric(data, "skippedExisting");
+    const skippedOutsideWindow = metric(data, "skippedOutsideWindow");
+    return `Matched ${documentsMatched}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"} and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing, ${skippedOutsideWindow} outside window.`;
+  }
+
   if (family === "insurance") {
     const formsMatched = metric(data, "formsMatched");
     const alarmsCreated = metric(data, "alarmsCreated");
@@ -195,6 +247,8 @@ async function generateForFamily(
   family: StaffReceiptAlarmsClientProps["family"],
   branchId?: string,
 ) {
+  if (family === "birthday") return generateBirthdayAlarms(branchId);
+  if (family === "contract") return generateContractAlarms(branchId);
   if (family === "insurance") return generateInsuranceAlarms(branchId);
   return generateMedicineAlarms(branchId);
 }
@@ -203,6 +257,8 @@ async function markViewedForFamily(
   family: StaffReceiptAlarmsClientProps["family"],
   alarmId: string,
 ) {
+  if (family === "birthday") return markBirthdayAlarmViewed(alarmId);
+  if (family === "contract") return markContractAlarmViewed(alarmId);
   if (family === "insurance") return markInsuranceAlarmViewed(alarmId);
   return markMedicineAlarmViewed(alarmId);
 }
@@ -210,6 +266,8 @@ async function markViewedForFamily(
 async function markAllViewedForFamily(
   family: StaffReceiptAlarmsClientProps["family"],
 ) {
+  if (family === "birthday") return markAllBirthdayAlarmsViewed();
+  if (family === "contract") return markAllContractAlarmsViewed();
   if (family === "insurance") return markAllInsuranceAlarmsViewed();
   return markAllMedicineAlarmsViewed();
 }
