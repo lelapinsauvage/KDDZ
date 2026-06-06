@@ -4,6 +4,7 @@ import { getHeaderAlarmCounts, getNotifications } from "./alarms";
 import { getUnreadMessageCount } from "./messages";
 import { db } from "@/lib/db";
 import { requireOrg } from "@/lib/require-org";
+import type { AlarmType } from "@/generated/prisma/enums";
 
 export interface HeaderNotification {
   id: string;
@@ -32,6 +33,23 @@ export interface HeaderAlarm {
   isCritical: boolean;
 }
 
+export interface HeaderLegacyBadgeItem {
+  id: string;
+  text: string;
+  datetime: string;
+  href: string;
+}
+
+export interface HeaderLegacyBadgeFamily {
+  key: "messages" | "medicine" | "birthdays" | "assessments" | "medical" | "general";
+  label: string;
+  emptyLabel: string;
+  seeAllLabel: string;
+  href: string;
+  count: number;
+  items: HeaderLegacyBadgeItem[];
+}
+
 export interface HeaderData {
   alarmCounts: {
     birthdays: number;
@@ -45,9 +63,90 @@ export interface HeaderData {
   recentMessages: HeaderMessage[];
   recentAlarms: HeaderAlarm[];
   hasCriticalAlarms: boolean;
+  legacyBadges: HeaderLegacyBadgeFamily[];
 }
 
 const CRITICAL_TYPES = new Set(["VACCINATION", "MEDICAL", "MEDICINE", "PAYMENT"]);
+
+interface LegacyReceiptFamilyConfig {
+  key: HeaderLegacyBadgeFamily["key"];
+  label: string;
+  emptyLabel: string;
+  seeAllLabel: string;
+  href: string;
+  sourceTable: string;
+  alarmType?: AlarmType;
+}
+
+const LEGACY_RECEIPT_FAMILIES: LegacyReceiptFamilyConfig[] = [
+  {
+    key: "medicine",
+    label: "Medication",
+    emptyLabel: "No New Alarms",
+    seeAllLabel: "See All Medication Alarms",
+    href: "/alarms/medicine",
+    sourceTable: "custom_notifications_medicine",
+    alarmType: "MEDICINE",
+  },
+  {
+    key: "birthdays",
+    label: "Birthdays",
+    emptyLabel: "No New Alarms",
+    seeAllLabel: "See All Birthdays Alarms",
+    href: "/alarms/birthdays",
+    sourceTable: "custom_notifications_birthday",
+    alarmType: "BIRTHDAY",
+  },
+  {
+    key: "assessments",
+    label: "Assessment",
+    emptyLabel: "No New Alarms",
+    seeAllLabel: "See All Assessment Alarms",
+    href: "/alarms/assessments",
+    sourceTable: "custom_notifications_assessment",
+    alarmType: "ASSESSMENT",
+  },
+  {
+    key: "medical",
+    label: "Medical",
+    emptyLabel: "No New Alarms",
+    seeAllLabel: "See All Reports Reminders",
+    href: "/alarms/medical",
+    sourceTable: "custom_notifications_medical",
+    alarmType: "MEDICAL",
+  },
+  {
+    key: "general",
+    label: "General",
+    emptyLabel: "No New Alarms",
+    seeAllLabel: "See All",
+    href: "/alarms",
+    sourceTable: "custom_notifications",
+  },
+];
+
+function emptyLegacyBadges(): HeaderLegacyBadgeFamily[] {
+  return [
+    {
+      key: "messages",
+      label: "Messages",
+      emptyLabel: "No New Messages",
+      seeAllLabel: "See All Messages",
+      href: "/alarms/msg",
+      count: 0,
+      items: [],
+    },
+    ...LEGACY_RECEIPT_FAMILIES.map((family) => ({
+      key: family.key,
+      label: family.label,
+      emptyLabel: family.emptyLabel,
+      seeAllLabel: family.seeAllLabel,
+      href: family.href,
+      count: 0,
+      items: [],
+    })),
+  ];
+}
 
 const EMPTY_HEADER: HeaderData = {
   alarmCounts: { birthdays: 0, assessments: 0, medical: 0, totalAlarms: 0 },
@@ -57,7 +156,122 @@ const EMPTY_HEADER: HeaderData = {
   recentMessages: [],
   recentAlarms: [],
   hasCriticalAlarms: false,
+  legacyBadges: emptyLegacyBadges(),
 };
+
+function jsonRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function jsonString(value: unknown): string | null {
+  return typeof value === "string" && value.trim() !== "" ? value : null;
+}
+
+function legacyAlarmHref(defaultHref: string, legacyData: unknown) {
+  const href = jsonString(jsonRecord(legacyData).href);
+  return href?.startsWith("/") ? href : defaultHref;
+}
+
+async function loadLegacyMessageBadge(userId: string, orgId: string) {
+  const [count, messages] = await Promise.all([
+    db.message.count({
+      where: {
+        recipientId: userId,
+        organizationId: orgId,
+        isRead: false,
+      },
+    }),
+    db.message.findMany({
+      where: {
+        recipientId: userId,
+        organizationId: orgId,
+        isRead: false,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 4,
+      select: {
+        id: true,
+        subject: true,
+        body: true,
+        createdAt: true,
+      },
+    }),
+  ]);
+
+  return {
+    key: "messages",
+    label: "Messages",
+    emptyLabel: "No New Messages",
+    seeAllLabel: "See All Messages",
+    href: "/alarms/msg",
+    count,
+    items: messages.map((message) => ({
+      id: message.id,
+      text: message.subject || message.body || "Message",
+      datetime: message.createdAt.toISOString(),
+      href: `/messages/inbox?id=${encodeURIComponent(message.id)}`,
+    })),
+  } satisfies HeaderLegacyBadgeFamily;
+}
+
+async function loadLegacyReceiptBadge(
+  config: LegacyReceiptFamilyConfig,
+  userId: string,
+  orgId: string,
+) {
+  const alarmFilter = {
+    ...(config.alarmType ? { type: config.alarmType } : {}),
+    OR: [{ branch: { organizationId: orgId } }, { branchId: null }],
+  };
+  const where = {
+    sourceTable: config.sourceTable,
+    recipientId: userId,
+    recipientType: "USER",
+    isRead: false,
+    alarm: { is: alarmFilter },
+  };
+
+  const [count, receipts] = await Promise.all([
+    db.notificationReceipt.count({ where }),
+    db.notificationReceipt.findMany({
+      where,
+      include: { alarm: true },
+      orderBy: { legacyNotificationId: "desc" },
+      take: 4,
+    }),
+  ]);
+
+  return {
+    key: config.key,
+    label: config.label,
+    emptyLabel: config.emptyLabel,
+    seeAllLabel: config.seeAllLabel,
+    href: config.href,
+    count,
+    items: receipts.flatMap((receipt) => {
+      if (!receipt.alarm) return [];
+      return [{
+        id: receipt.id,
+        text: receipt.alarm.message ?? config.label,
+        datetime: receipt.alarm.createdAt.toISOString(),
+        href: legacyAlarmHref(config.href, receipt.alarm.legacyData),
+      }];
+    }),
+  } satisfies HeaderLegacyBadgeFamily;
+}
+
+async function loadLegacyBadges(userId: string, orgId: string) {
+  const [messages, ...families] = await Promise.all([
+    loadLegacyMessageBadge(userId, orgId),
+    ...LEGACY_RECEIPT_FAMILIES.map((family) =>
+      loadLegacyReceiptBadge(family, userId, orgId),
+    ),
+  ]);
+
+  return [messages, ...families];
+}
 
 export async function getHeaderData(): Promise<HeaderData> {
   let userId: string;
@@ -70,7 +284,13 @@ export async function getHeaderData(): Promise<HeaderData> {
     return EMPTY_HEADER;
   }
 
-  const [alarmCountsResult, notificationsResult, messageCountResult, recentDbAlarms] =
+  const [
+    alarmCountsResult,
+    notificationsResult,
+    messageCountResult,
+    recentDbAlarms,
+    legacyBadges,
+  ] =
     await Promise.all([
       getHeaderAlarmCounts(),
       getNotifications({ limit: 8 }),
@@ -80,6 +300,7 @@ export async function getHeaderData(): Promise<HeaderData> {
         orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
         take: 5,
       }),
+      loadLegacyBadges(userId, orgId),
     ]);
 
   const today = new Date();
@@ -181,5 +402,6 @@ export async function getHeaderData(): Promise<HeaderData> {
     recentMessages,
     recentAlarms,
     hasCriticalAlarms,
+    legacyBadges,
   };
 }

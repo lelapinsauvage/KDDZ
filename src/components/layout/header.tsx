@@ -23,9 +23,15 @@ import { SidebarTrigger } from "@/components/ui/sidebar"
 import { ContextSwitcher } from "./context-switcher"
 import { InboxTray } from "./inbox-tray"
 import { NotificationDropdown } from "./notification-dropdown"
+import { LegacyAlarmBar } from "./legacy-alarm-bar"
 import { GlobalSearch } from "./global-search"
 import { getHeaderData } from "@/lib/actions/header"
-import type { HeaderNotification, HeaderMessage, HeaderAlarm } from "@/lib/actions/header"
+import type {
+  HeaderNotification,
+  HeaderMessage,
+  HeaderAlarm,
+  HeaderLegacyBadgeFamily,
+} from "@/lib/actions/header"
 
 export function Header() {
   const { data: session } = useSession()
@@ -40,6 +46,7 @@ export function Header() {
   const [alarmCounts, setAlarmCounts] = useState({ birthdays: 0, assessments: 0, medical: 0, totalAlarms: 0 })
   const [recentAlarms, setRecentAlarms] = useState<HeaderAlarm[]>([])
   const [hasCriticalAlarms, setHasCriticalAlarms] = useState(false)
+  const [legacyBadges, setLegacyBadges] = useState<HeaderLegacyBadgeFamily[]>([])
 
   useEffect(() => {
     getHeaderData().then((data) => {
@@ -50,6 +57,7 @@ export function Header() {
       setRecentMessages(data.recentMessages)
       setRecentAlarms(data.recentAlarms)
       setHasCriticalAlarms(data.hasCriticalAlarms)
+      setLegacyBadges(data.legacyBadges)
     })
   }, [])
 
@@ -98,22 +106,28 @@ export function Header() {
 
       {/* Right — notifications + inbox + user */}
       <div className="flex items-center gap-0.5 pr-2 md:pr-4">
+        <LegacyAlarmBar families={legacyBadges} />
+
         {/* Notification bell */}
-        <NotificationDropdown
-          notifications={notifications}
-          unreadCount={unreadNotificationCount}
-        />
+        <div className="xl:hidden">
+          <NotificationDropdown
+            notifications={notifications}
+            unreadCount={unreadNotificationCount}
+          />
+        </div>
 
         {/* Inbox tray */}
-        <InboxTray
-          notifications={notifications}
-          unreadNotificationCount={unreadNotificationCount}
-          unreadMessageCount={unreadMessageCount}
-          recentMessages={recentMessages}
-          alarmCounts={alarmCounts}
-          recentAlarms={recentAlarms}
-          hasCriticalAlarms={hasCriticalAlarms}
-        />
+        <div className="xl:hidden">
+          <InboxTray
+            notifications={notifications}
+            unreadNotificationCount={unreadNotificationCount}
+            unreadMessageCount={unreadMessageCount}
+            recentMessages={recentMessages}
+            alarmCounts={alarmCounts}
+            recentAlarms={recentAlarms}
+            hasCriticalAlarms={hasCriticalAlarms}
+          />
+        </div>
 
         {/* Divider */}
         <div className="mx-1.5 hidden h-6 w-px bg-white/15 sm:block" />
