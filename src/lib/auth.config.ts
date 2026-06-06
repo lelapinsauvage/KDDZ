@@ -38,6 +38,7 @@ export const authConfig = {
       const isPublic =
         pathname.startsWith("/login") ||
         pathname.startsWith("/forgot") ||
+        pathname.startsWith("/parent") ||
         pathname.startsWith("/api/auth") ||
         pathname.startsWith("/api/cron") ||
         pathname.startsWith("/api/parent");

@@ -17993,5 +17993,42 @@
       "p"
     ],
     "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+  },
+  {
+    "legacyPhp": "Legacy parent mobile login / ws/login.php",
+    "legacyJs": "",
+    "modernRoute": "/parent/login",
+    "status": "partial - parent PWA login restored",
+    "legacyTablesMentioned": [
+      "parent_login_users",
+      "t_child"
+    ],
+    "requestFieldsMentioned": [
+      "name",
+      "pass"
+    ],
+    "verification": "Parent web login now posts to /api/parent/login, stores parent JWT and child id for /parent, and preserves legacy failed-login response shape with a timeout guard. Remaining work is credentialed E2E with a known parent login and exact native-app visual audit."
+  },
+  {
+    "legacyPhp": "Legacy parent mobile app / ws parent feature endpoints",
+    "legacyJs": "",
+    "modernRoute": "/parent",
+    "status": "partial - parent PWA shell restored",
+    "legacyTablesMentioned": [
+      "t_child",
+      "t_daily_report",
+      "t_payments",
+      "t_absent_report",
+      "t_food_calendar",
+      "t_holiday",
+      "t_alarms",
+      "messages"
+    ],
+    "requestFieldsMentioned": [
+      "usites",
+      "pid",
+      "token"
+    ],
+    "verification": "Parent web shell now consumes daily detailed reports, finance, absence, messages, notifications, food calendar, holiday calendar, and send-message APIs. Remaining work is push subscription UI, detailed thread replies, offline/mobile polish, and field-by-field native response audit."
   }
 ]

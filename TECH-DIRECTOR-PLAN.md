@@ -148,14 +148,14 @@ Acceptance: a saved notification rule actually produces a notification and a sen
 
 Build parent-facing UI as a PWA before rebuilding native apps:
 
-- Login.
+- Login. First slice restored at `/parent/login` with `/api/parent/login`, parent JWT storage, child id storage, and legacy-style failed-login responses.
 - Child daily timeline.
-- Daily reports.
-- Absence reports.
-- Payments.
-- Food and holiday calendar.
-- Messages.
-- Notifications.
+- Daily reports. First slice restored in `/parent` from `/api/parent/daily/[childId]/detailed`.
+- Absence reports. First slice restored in `/parent` from `/api/parent/absence/[childId]`.
+- Payments. First slice restored in `/parent` from `/api/parent/finance/[childId]`.
+- Food and holiday calendar. First slice restored in `/parent` from `/api/parent/calendar/food` and `/api/parent/calendar/holidays`.
+- Messages. First slice restored in `/parent` with list and compose via `/api/parent/messages/[childId]` and `/api/parent/messages`.
+- Notifications. First slice restored in `/parent` from `/api/parent/notifications/[childId]`.
 - Push subscription.
 
 Use legacy iOS/Android as UX and API reference, but do not modernize those codebases directly unless app-store native requirements force it.

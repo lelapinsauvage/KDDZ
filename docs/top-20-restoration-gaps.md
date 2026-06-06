@@ -79,8 +79,10 @@ This list is the first implementation backlog after the generated inventory/matr
    - Remaining work is idempotent cron/job generation for the other approved legacy families, hosted schedule configuration after production crontab confirmation, and external push/email/SMS/WhatsApp providers after credential recovery or rotation.
 
 9. **Parent portal UI**
-   - Parent APIs exist, but parent-facing pages are missing.
+   - `/parent/login` now restores a parent-facing login screen backed by `/api/parent/login`, stores the parent JWT/child id client-side, and keeps failed-login responses in the legacy `{ status: false }` shape with a timeout guard for slow database lookups.
+   - `/parent` now restores the first parent PWA shell with child dashboard stats, latest daily report summary, payments, absence reports, message compose/list, notifications, food calendar, and holidays using the existing `/api/parent/*` compatibility endpoints.
    - Legacy iOS/Android apps show the real parent feature set.
+   - Remaining work is credentialed E2E with a known production-like parent login, exact native-app screen audit, push subscription UI, detailed message-thread replies, offline/mobile polish, and final API contract verification.
 
 10. **Parent API response compatibility**
    - Legacy `ws/*.php`, iOS `WebFunctions.swift`, and Android `WebServiceFunctions.java` must be response-shape audited against modern `/api/parent/*`.
