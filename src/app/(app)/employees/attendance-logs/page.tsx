@@ -6,17 +6,31 @@ import { AttendanceLogsClient } from "./attendance-logs-client";
 export default async function AttendanceLogsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string; q?: string | string[]; to?: string }>;
+  searchParams: Promise<{
+    cardId?: string | string[];
+    datetime?: string | string[];
+    from?: string;
+    id?: string | string[];
+    logDate?: string | string[];
+    logTime?: string | string[];
+    note?: string | string[];
+    q?: string | string[];
+    reader?: string | string[];
+    readerId?: string | string[];
+    status?: string | string[];
+    teacherNo?: string | string[];
+    to?: string;
+  }>;
 }) {
   const params = await searchParams;
   // Fetch logs and employees in parallel
   const [logsRes, teachersRes, nursesRes, doctorsRes, managersRes] =
     await Promise.all([
-      getAttendanceLogs({ pageSize: 200 }),
-      getEmployees("teacher", { pageSize: 200 }),
-      getEmployees("nurse", { pageSize: 200 }),
-      getEmployees("doctor", { pageSize: 200 }),
-      getEmployees("manager", { pageSize: 200 }),
+      getAttendanceLogs({ pageSize: 1000 }),
+      getEmployees("teacher", { pageSize: 1000 }),
+      getEmployees("nurse", { pageSize: 1000 }),
+      getEmployees("doctor", { pageSize: 1000 }),
+      getEmployees("manager", { pageSize: 1000 }),
     ]);
 
   type EmpRow = { id: string; firstName: string; lastName: string };
@@ -55,17 +69,62 @@ export default async function AttendanceLogsPage({
     });
   }
 
+  function formatDate(val: Date | string | null | undefined): string {
+    if (!val) return "";
+    const d = val instanceof Date ? val : new Date(val);
+    if (isNaN(d.getTime())) return "";
+    return d.toISOString().split("T")[0];
+  }
+
+  function readRecord(value: unknown): Record<string, unknown> {
+    if (!value) return {};
+    if (typeof value === "object" && !Array.isArray(value)) {
+      return value as Record<string, unknown>;
+    }
+    if (typeof value !== "string") return {};
+    try {
+      const parsed = JSON.parse(value);
+      return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+        ? (parsed as Record<string, unknown>)
+        : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function readText(record: Record<string, unknown>, key: string) {
+    const value = record[key];
+    if (value === null || value === undefined) return null;
+    const text = String(value).trim();
+    return text || null;
+  }
+
+  function readNumber(record: Record<string, unknown>, key: string) {
+    const value = record[key];
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value !== "string") return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
   const logs = rawLogs.map((log) => {
     const emp = empLookup.get(log.employeeId);
+    const noteRecord = readRecord(log.note);
+    const legacyData = readRecord(noteRecord.legacyData);
+    const legacyId =
+      readNumber(noteRecord, "legacyId") ?? readNumber(legacyData, "atid");
+    const date = formatDate(log.date);
+    const createdAt = log.createdAt instanceof Date
+      ? log.createdAt.toISOString()
+      : new Date(log.createdAt).toISOString();
+
     return {
       id: log.id,
+      legacyId,
       employeeId: log.employeeId,
       employeeType: log.employeeType ?? "teacher",
       employeeName: emp?.name ?? log.readerName ?? "Unknown",
-      date:
-        log.date instanceof Date
-          ? log.date.toISOString().split("T")[0]
-          : new Date(log.date).toISOString().split("T")[0],
+      date,
       timeIn: formatTime(log.timeIn),
       timeOut: formatTime(log.timeOut),
       status: log.status ?? null,
@@ -73,43 +132,41 @@ export default async function AttendanceLogsPage({
       readerName: log.readerName ?? null,
       cardId: log.cardId ?? null,
       note: log.note ?? null,
-      createdAt:
-        log.createdAt instanceof Date
-          ? log.createdAt.toISOString()
-          : new Date(log.createdAt).toISOString(),
+      legacyReaderId: readText(legacyData, "readerid") ?? log.readerId ?? null,
+      legacyReaderName: readText(legacyData, "readername") ?? log.readerName ?? null,
+      legacyDate: readText(legacyData, "tdate") ?? date,
+      legacyTime: readText(legacyData, "ttime") ?? formatTime(log.timeIn) ?? formatTime(log.timeOut),
+      legacyStatus: readText(noteRecord, "legacyStatus") ?? readText(legacyData, "status") ?? log.status ?? null,
+      legacyCardId: readText(legacyData, "cardid") ?? log.cardId ?? null,
+      legacyTeacherNo:
+        readText(noteRecord, "legacyTeacherName") ??
+        readText(legacyData, "teacher_id") ??
+        emp?.name ??
+        null,
+      legacyDefault: readText(noteRecord, "legacyDefault") ?? readText(legacyData, "tdefault"),
+      legacyDatetime: readText(legacyData, "datetime") ?? createdAt,
+      createdAt,
     };
   });
-
-  const employees = [
-    ...teacherList.map((e) => ({
-      id: e.id,
-      name: `${e.firstName} ${e.lastName}`,
-      role: "Teacher",
-    })),
-    ...nurseList.map((e) => ({
-      id: e.id,
-      name: `${e.firstName} ${e.lastName}`,
-      role: "Nurse",
-    })),
-    ...doctorList.map((e) => ({
-      id: e.id,
-      name: `${e.firstName} ${e.lastName}`,
-      role: "Doctor",
-    })),
-    ...managerList.map((e) => ({
-      id: e.id,
-      name: `${e.firstName} ${e.lastName}`,
-      role: "Manager",
-    })),
-  ];
 
   return (
     <AttendanceLogsClient
       logs={logs}
-      employees={employees}
       initialDateFrom={params.from}
       initialDateTo={params.to}
-      initialSearchQuery={normalizeLegacySearchQuery(params.q)}
+      initialFilters={{
+        q: normalizeLegacySearchQuery(params.q),
+        log: normalizeLegacySearchQuery(params.id),
+        readerId: normalizeLegacySearchQuery(params.readerId),
+        reader: normalizeLegacySearchQuery(params.reader),
+        logDate: normalizeLegacySearchQuery(params.logDate),
+        logTime: normalizeLegacySearchQuery(params.logTime),
+        status: normalizeLegacySearchQuery(params.status),
+        cardId: normalizeLegacySearchQuery(params.cardId),
+        teacherNo: normalizeLegacySearchQuery(params.teacherNo),
+        note: normalizeLegacySearchQuery(params.note),
+        datetime: normalizeLegacySearchQuery(params.datetime),
+      }}
     />
   );
 }
