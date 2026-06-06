@@ -60,6 +60,7 @@ import {
 import { cn } from "@/lib/utils";
 import {
   Database,
+  History,
   Link2,
   Pencil,
   Plus,
@@ -240,6 +241,9 @@ function matchesQuery(user: LegacyAdminUserRow, query: string) {
     user.classes,
     user.lastLoginAt ?? "",
     user.lastLoginIp ?? "",
+    user.loginHistory
+      .map((entry) => `${entry.occurredAt ?? ""} ${entry.ipAddress ?? ""}`)
+      .join(" "),
     user.profileValues
       .map((profile) => `${profile.label} ${profile.value ?? ""}`)
       .join(" "),
@@ -1096,6 +1100,41 @@ export function LegacyUsersClient({
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            ) : null}
+
+            {dialogMode === "edit" && editingUser?.loginHistory.length ? (
+              <div className="space-y-2">
+                <Label>Login History</Label>
+                <div className="max-h-56 overflow-y-auto rounded-sm border border-border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Time</TableHead>
+                        <TableHead>IP</TableHead>
+                        <TableHead>Source</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {editingUser.loginHistory.map((entry) => (
+                        <TableRow key={entry.id}>
+                          <TableCell className="whitespace-nowrap text-xs">
+                            <div className="flex items-center gap-2">
+                              <History className="size-3 text-muted-foreground" />
+                              {formatLegacyDateTime(entry.occurredAt)}
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-mono text-xs">
+                            {entry.ipAddress ?? "No IP"}
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {entry.legacyTable} #{entry.legacyId}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               </div>
             ) : null}

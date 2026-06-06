@@ -37,8 +37,17 @@ export type LegacyAdminUserRow = {
   lastLoginAt: string | null;
   lastLoginIp: string | null;
   loginCount: number;
+  loginHistory: LegacyAdminLoginHistoryEntry[];
   profileValues: LegacyAdminProfileValue[];
   socialIntegrations: LegacyAdminSocialIntegration[];
+};
+
+export type LegacyAdminLoginHistoryEntry = {
+  id: string;
+  legacyId: number;
+  legacyTable: string;
+  occurredAt: string | null;
+  ipAddress: string | null;
 };
 
 export type LegacyAdminProfileValue = {
@@ -352,6 +361,7 @@ function mapUserRow(params: {
     lastLoginIp: string | null;
     loginCount: number;
   } | null;
+  loginHistory?: LegacyAdminLoginHistoryEntry[];
   profileValues?: LegacyAdminProfileValue[];
   socialIntegrations?: LegacyAdminSocialIntegration[];
 }): LegacyAdminUserRow {
@@ -397,6 +407,7 @@ function mapUserRow(params: {
     lastLoginAt: params.loginAudit?.lastLoginAt?.toISOString() ?? null,
     lastLoginIp: params.loginAudit?.lastLoginIp ?? null,
     loginCount: params.loginAudit?.loginCount ?? 0,
+    loginHistory: params.loginHistory ?? [],
     profileValues: params.profileValues ?? [],
     socialIntegrations: params.socialIntegrations ?? [],
   };
@@ -666,7 +677,10 @@ export async function getLegacyAdminUsers(): Promise<
               },
               orderBy: [{ occurredAt: "desc" }, { legacyId: "desc" }],
               select: {
+                id: true,
                 sourceDatabase: true,
+                legacyTable: true,
+                legacyId: true,
                 legacyUserId: true,
                 principalType: true,
                 ipAddress: true,
@@ -722,6 +736,10 @@ export async function getLegacyAdminUsers(): Promise<
       string,
       { lastLoginAt: Date | null; lastLoginIp: string | null; loginCount: number }
     >();
+    const loginHistoryByUser = new Map<
+      string,
+      LegacyAdminLoginHistoryEntry[]
+    >();
 
     for (const row of loginAuditRows) {
       const recordType =
@@ -729,6 +747,16 @@ export async function getLegacyAdminUsers(): Promise<
           ? "manager_login_user"
           : "login_user";
       const key = userAuditKey(row.sourceDatabase, recordType, row.legacyUserId);
+      const history = loginHistoryByUser.get(key) ?? [];
+      history.push({
+        id: row.id,
+        legacyId: row.legacyId,
+        legacyTable: row.legacyTable,
+        occurredAt: row.occurredAt?.toISOString() ?? null,
+        ipAddress: row.ipAddress,
+      });
+      loginHistoryByUser.set(key, history);
+
       const current = auditByUser.get(key) ?? {
         lastLoginAt: null,
         lastLoginIp: null,
@@ -789,6 +817,9 @@ export async function getLegacyAdminUsers(): Promise<
             levelOptions: levels,
             modernUser: record.userId ? modernById.get(record.userId) : null,
             loginAudit: auditByUser.get(
+              userAuditKey(record.sourceDatabase, recordType, legacyUserId),
+            ),
+            loginHistory: loginHistoryByUser.get(
               userAuditKey(record.sourceDatabase, recordType, legacyUserId),
             ),
             profileValues: profilesByUser.get(
