@@ -118,7 +118,8 @@ This list is the first implementation backlog after the generated inventory/matr
    - Remaining work is exact logo/print stylesheet acceptance against production stationery.
 
 16. **Government/nursery compliance parity**
-   - Legacy `t_garderie`, `t_garderie_attachments`, `t_old_garderie`, and `t_garderie_doctor*` rows now have migration coverage, but `nurseryinfo.php` UI parity still needs exact page-level audit.
+   - Legacy `t_garderie`, `t_garderie_attachments`, `t_old_garderie`, and `t_garderie_doctor*` rows now have migration coverage, and `/settings/nursery` now restores the government compliance workflow as the first tab using migrated `BranchCompliance`, `BranchDocument`, and all staff groups for the Arabic Ministry form, completion state, staff compliance tables, and ministry attachment uploads.
+   - Remaining work is exact `nurseryinfo.php` / `nurseryinfo.js` visual audit, legacy finalization/progress semantics, and any branch-selection edge cases beyond the current branch.
 
 17. **Address hierarchy reference fields**
    - Legacy `t_mouhafaza`, `t_quadaa`, and `t_region` reference numbers and created dates are migrated and now displayed across `/settings/zones`, `/settings/areas`, and `/settings/regions`; `/settings/zones` restores Mouhafaza listing/modal labels, `/settings/areas` restores Quadaa listing/modal labels, and `/settings/regions` restores the legacy Region listing, field/date filters, Quadaa selector, create/update/delete labels, and parent-Quadaa reassignment.

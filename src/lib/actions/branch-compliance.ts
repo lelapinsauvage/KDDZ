@@ -84,7 +84,9 @@ export async function upsertCompliance(
     });
 
     revalidatePath(`/branches/${branchId}`);
+    revalidatePath(`/branches/${branchId}/compliance`);
     revalidatePath("/branches");
+    revalidatePath("/settings/nursery");
 
     return { success: true, data: compliance };
   } catch (error) {
@@ -168,6 +170,8 @@ export async function upsertDocument(
     }
 
     revalidatePath(`/branches/${branchId}`);
+    revalidatePath(`/branches/${branchId}/compliance`);
+    revalidatePath("/settings/nursery");
 
     return { success: true, data: doc };
   } catch (error) {
@@ -187,7 +191,7 @@ export async function getStaffForCompliance(branchId: string): Promise<ActionRes
       return { success: false, error: "Branch not found in organization" };
     }
 
-    const [teachers, nurses] = await Promise.all([
+    const [teachers, nurses, doctors, managers] = await Promise.all([
       db.teacher.findMany({
         where: { branchId },
         select: {
@@ -196,6 +200,7 @@ export async function getStaffForCompliance(branchId: string): Promise<ActionRes
           lastName: true,
           hireDate: true,
           documents: { select: { type: true, title: true, expiryDate: true } },
+          attachments: { select: { type: true, filename: true, expiryDate: true } },
         },
         orderBy: { lastName: "asc" },
       }),
@@ -207,14 +212,93 @@ export async function getStaffForCompliance(branchId: string): Promise<ActionRes
           lastName: true,
           hireDate: true,
           documents: { select: { type: true, title: true, expiryDate: true } },
+          attachments: { select: { type: true, filename: true, expiryDate: true } },
+        },
+        orderBy: { lastName: "asc" },
+      }),
+      db.doctor.findMany({
+        where: { branchId },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          hireDate: true,
+          documents: { select: { type: true, title: true, expiryDate: true } },
+          attachments: { select: { type: true, title: true, filename: true, expiryDate: true } },
+        },
+        orderBy: { lastName: "asc" },
+      }),
+      db.manager.findMany({
+        where: { branchId },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          hireDate: true,
+          attachments: { select: { type: true, title: true, filename: true, expiryDate: true } },
         },
         orderBy: { lastName: "asc" },
       }),
     ]);
 
     const staff = [
-      ...teachers.map((t) => ({ ...t, type: "teacher" })),
-      ...nurses.map((n) => ({ ...n, type: "nurse" })),
+      ...teachers.map((t) => ({
+        id: t.id,
+        firstName: t.firstName,
+        lastName: t.lastName,
+        hireDate: t.hireDate,
+        type: "teacher",
+        documents: [
+          ...t.documents,
+          ...t.attachments.map((a) => ({
+            type: a.type ?? "ATTACHMENT",
+            title: a.filename,
+            expiryDate: a.expiryDate,
+          })),
+        ],
+      })),
+      ...nurses.map((n) => ({
+        id: n.id,
+        firstName: n.firstName,
+        lastName: n.lastName,
+        hireDate: n.hireDate,
+        type: "nurse",
+        documents: [
+          ...n.documents,
+          ...n.attachments.map((a) => ({
+            type: a.type ?? "ATTACHMENT",
+            title: a.filename,
+            expiryDate: a.expiryDate,
+          })),
+        ],
+      })),
+      ...doctors.map((d) => ({
+        id: d.id,
+        firstName: d.firstName,
+        lastName: d.lastName,
+        hireDate: d.hireDate,
+        type: "doctor",
+        documents: [
+          ...d.documents,
+          ...d.attachments.map((a) => ({
+            type: a.type ?? "ATTACHMENT",
+            title: a.title ?? a.filename,
+            expiryDate: a.expiryDate,
+          })),
+        ],
+      })),
+      ...managers.map((m) => ({
+        id: m.id,
+        firstName: m.firstName,
+        lastName: m.lastName,
+        hireDate: m.hireDate,
+        type: "manager",
+        documents: m.attachments.map((a) => ({
+          type: a.type ?? "ATTACHMENT",
+          title: a.title ?? a.filename,
+          expiryDate: a.expiryDate,
+        })),
+      })),
     ];
 
     return { success: true, data: staff };

@@ -16213,7 +16213,7 @@
     "legacyPhp": "Front/templates/admin/nurseryinfo.php",
     "legacyJs": "Front/templates/admin/js/nurseryinfo.js",
     "modernRoute": "/settings/nursery",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "partial - government compliance workflow restored; exact legacy visual audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -16221,7 +16221,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "/settings/nursery now opens with a Government Compliance tab backed by migrated BranchCompliance, BranchDocument, and staff document data, reusing the legacy Arabic Ministry form sections, completion state, owner/identity/address/property/management/capacity/insurance fields, staff compliance tables, and ministry attachment uploads; existing operational nursery settings remain available in a second tab. Remaining work is exact legacy visual/finalization audit against nurseryinfo.php/nurseryinfo.js."
   },
   {
     "legacyPhp": "Front/templates/admin/nurses.php",

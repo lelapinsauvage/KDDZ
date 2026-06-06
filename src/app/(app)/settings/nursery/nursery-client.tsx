@@ -71,6 +71,7 @@ interface NurseryClientProps {
   branchId: string;
   initialSettings: Record<string, string>;
   provinces: Province[];
+  showHeader?: boolean;
 }
 
 function parseJsonArray(value: string | undefined): string[] {
@@ -81,7 +82,12 @@ function parseJsonArray(value: string | undefined): string[] {
   }
 }
 
-export default function NurseryClient({ branchId, initialSettings, provinces }: NurseryClientProps) {
+export default function NurseryClient({
+  branchId,
+  initialSettings,
+  provinces,
+  showHeader = true,
+}: NurseryClientProps) {
   const [isPending, startTransition] = useTransition();
 
   const {
@@ -181,13 +187,15 @@ export default function NurseryClient({ branchId, initialSettings, provinces }: 
 
   return (
     <>
-      <PageHeader
-        title="Nursery Configuration"
-        breadcrumbs={[
-          { label: "Settings", href: "/settings/nursery" },
-          { label: "Nursery" },
-        ]}
-      />
+      {showHeader && (
+        <PageHeader
+          title="Nursery Configuration"
+          breadcrumbs={[
+            { label: "Settings", href: "/settings/nursery" },
+            { label: "Nursery" },
+          ]}
+        />
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-4 md:p-6">
         {/* General Info */}
