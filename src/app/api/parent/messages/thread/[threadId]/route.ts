@@ -2,9 +2,9 @@ import { NextRequest } from "next/server";
 import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import {
-  authenticateParent,
   jsonError,
   jsonSuccess,
+  verifyParentToken,
 } from "@/lib/parent-auth";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -29,9 +29,11 @@ async function handleRequest(
 ) {
   const { threadId: routeThreadId } = await params;
 
-  const auth = await authenticateParent(request);
-  if ("error" in auth) return auth.error;
-  const { parentUser } = auth;
+  const auth = await optionalAuthenticateParent(request);
+  if (auth && "error" in auth) return auth.error;
+  if (request.method !== "POST" && !auth?.parentUser) {
+    return jsonError("Unauthorized", 401);
+  }
 
   try {
     const postedThreadId =
@@ -42,34 +44,39 @@ async function handleRequest(
       return jsonSuccess([]);
     }
 
-    const hasAccess = threadMessages.some(
-      (message) =>
-        (message.senderId === parentUser.id && message.senderType === "PARENT") ||
-        (message.recipientId === parentUser.id && message.recipientType === "PARENT")
-    );
+    const parentUser = auth?.parentUser;
+    if (parentUser) {
+      const hasAccess = threadMessages.some(
+        (message) =>
+          (message.senderId === parentUser.id && message.senderType === "PARENT") ||
+          (message.recipientId === parentUser.id && message.recipientType === "PARENT")
+      );
 
-    if (!hasAccess) {
-      return jsonError("Access denied", 403);
+      if (!hasAccess) {
+        return jsonError("Access denied", 403);
+      }
     }
 
     const uniqueMessages = dedupeMessages(threadMessages);
 
     // Mark parent-recipient rows in this thread as viewed, matching the mobile
     // read-on-open behavior without touching staff recipients.
-    const unreadParentIds = threadMessages
-      .filter(
-        (message) =>
-          message.recipientId === parentUser.id &&
-          message.recipientType === "PARENT" &&
-          !message.isRead
-      )
-      .map((message) => message.id);
+    if (parentUser) {
+      const unreadParentIds = threadMessages
+        .filter(
+          (message) =>
+            message.recipientId === parentUser.id &&
+            message.recipientType === "PARENT" &&
+            !message.isRead
+        )
+        .map((message) => message.id);
 
-    if (unreadParentIds.length > 0) {
-      await db.message.updateMany({
-        where: { id: { in: unreadParentIds } },
-        data: { isRead: true },
-      });
+      if (unreadParentIds.length > 0) {
+        await db.message.updateMany({
+          where: { id: { in: unreadParentIds } },
+          data: { isRead: true },
+        });
+      }
     }
 
     const payload = Object.fromEntries(
@@ -162,6 +169,32 @@ function dedupeMessages(messages: ThreadMessage[]) {
 async function readPostedThreadId(request: NextRequest) {
   const body = await readRequestBody(request);
   return readString(asRecord(body), ["usites", "thread_id", "threadid", "id"]);
+}
+
+async function optionalAuthenticateParent(request: NextRequest) {
+  const authHeader = request.headers.get("authorization");
+  const hasBearer = authHeader?.startsWith("Bearer ");
+  const payload = await verifyParentToken(request);
+
+  if (hasBearer && !payload) {
+    return { error: jsonError("Unauthorized", 401) };
+  }
+  if (!payload) return null;
+
+  const parentUser = await db.parentUser.findUnique({
+    where: { id: payload.sub, isActive: true },
+    include: { child: true },
+  }).catch(() => "db-error" as const);
+
+  if (parentUser === "db-error") {
+    return { error: jsonError("Internal server error", 500) };
+  }
+
+  if (!parentUser) {
+    return { error: jsonError("Unauthorized", 401) };
+  }
+
+  return { parentUser };
 }
 
 async function readRequestBody(request: NextRequest) {

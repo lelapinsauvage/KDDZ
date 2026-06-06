@@ -94,7 +94,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - `/api/parent/notifications/[childId]` now restores `ws/notifications_master.php` compatibility for unauthenticated native `POST usites`, authenticated PWA access, dynamic `notifications_nature` ordering/names/active flags, the eleven `notificationN` groups the iOS parser force-reads, exact production fallback natures, birthday parent rows, assessment parent rows, and mapped alarm/event/detail groups.
    - `/api/parent/calendar/holidays` now covers both `ws/holcalendar.php` and `ws/holcalendarOLD.php` with unauthenticated native `POST usites` compatibility, active-only rows, `description`/`date` fields, and repeated-holiday current-year adjustment.
    - `/api/parent/login` now restores `ws/login.php` JSON/form login compatibility, failed-login defaults, numeric legacy `id`/`usites`, parent report URL with persisted token, md5-prefixed legacy password verification, and a modern `childId` field for the PWA.
-   - `/api/parent/messages/[childId]`, `/api/parent/messages/thread/[threadId]`, and `/api/parent/messages` now restore `messagesList.php`, `message.php`, and `sendMessage.php` compatibility for legacy POST fields, grouped thread headers, numeric thread ids, SQL datetime strings, legacy sender values, send feedback, and admin/teacher recipient fan-out.
+   - `/api/parent/messages/[childId]`, `/api/parent/messages/thread/[threadId]`, and `/api/parent/messages` now restore `messagesList.php`, `message.php`, and `sendMessage.php` compatibility for unauthenticated native POST fields, grouped thread headers, numeric thread ids, SQL datetime strings, legacy sender values, send feedback, and admin/teacher recipient fan-out.
    - `/api/parent/push-token` now restores `ws/pnotifications.php` compatibility for unauthenticated native `cid` registration, token reactivation, global legacy delete/show fallback, authenticated PWA registration/delete/show, legacy OS mapping, and legacy result strings.
 
 11. **Top-level calls module**
@@ -130,7 +130,7 @@ This list is the first implementation backlog after the generated inventory/matr
 
 19. **Message delivery/read-state parity**
    - `/alarms/msg` now restores the legacy message notification listing with current-staff-user New/Viewed scoping, filters, row/bulk mark-viewed actions, Set All As Viewed, and idempotent migration provenance from `t_alarms_msg` plus per-recipient `custom_notifications_msg` delivery rows.
-   - Parent message grouped list, thread detail, compose, and replies are now wired into `/parent`; the parent APIs accept legacy POST/form bodies, preserve numeric thread ids and SQL datetime strings, dedupe migrated/runtime recipient fan-out for parent thread views, and send parent-originated messages to the legacy admin/teacher recipient sets.
+   - Parent message grouped list, thread detail, compose, and replies are now wired into `/parent`; the parent APIs accept unauthenticated native legacy POST/form bodies, preserve numeric thread ids and SQL datetime strings, dedupe migrated/runtime recipient fan-out for parent thread views, and send parent-originated messages to the legacy admin/teacher recipient sets.
    - Remaining work is exact legacy reply-thread visual audit, credentialed native send/open testing, parent/mobile read reset behavior, and external push-on-message delivery if product confirms it was active in production.
 
 20. **Role and permission parity**

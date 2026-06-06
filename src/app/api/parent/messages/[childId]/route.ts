@@ -2,11 +2,11 @@ import { NextRequest } from "next/server";
 import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import {
-  authenticateParent,
   formatChildName,
   makeHeader,
   jsonError,
   jsonSuccess,
+  verifyParentToken,
 } from "@/lib/parent-auth";
 
 type ParentMessagesChild = {
@@ -20,6 +20,7 @@ type ParentMessagesChild = {
 type ParentMessagesUser = {
   id: string;
   childId: string;
+  legacyChildId: number | null;
   child: ParentMessagesChild;
 };
 
@@ -58,23 +59,33 @@ async function handleRequest(
 ) {
   const { childId } = await params;
 
-  const auth = await authenticateParent(request);
-  if ("error" in auth) return auth.error;
-  const parentUser = auth.parentUser as ParentMessagesUser;
-
-  if (!matchesChildId(parentUser.child, childId)) {
-    return jsonError("Access denied", 403);
-  }
-
-  if (request.method === "POST") {
-    const postedChildId = await readPostedChildId(request);
-    if (!postedChildId) return jsonSuccess([makeHeader("", false, 0)]);
-    if (!matchesChildId(parentUser.child, postedChildId)) {
-      return jsonError("Access denied", 403);
-    }
-  }
+  const postedChildId = request.method === "POST" ? await readPostedChildId(request) : null;
+  const auth = await optionalAuthenticateParent(request);
+  if (auth && "error" in auth) return auth.error;
 
   try {
+    let parentUser = auth?.parentUser ?? null;
+    if (parentUser && !matchesParentUserChildId(parentUser, childId)) {
+      return jsonError("Access denied", 403);
+    }
+
+    if (request.method === "POST") {
+      if (!postedChildId) return jsonSuccess([makeHeader("", false, 0)]);
+
+      if (parentUser) {
+        if (!matchesParentUserChildId(parentUser, postedChildId)) {
+          return jsonError("Access denied", 403);
+        }
+      } else {
+        parentUser = await resolveLegacyParentMessageUser(postedChildId);
+        if (!parentUser) return jsonSuccess([makeHeader("", false, 0)]);
+      }
+    }
+
+    if (!parentUser) {
+      return jsonError("Unauthorized", 401);
+    }
+
     const child = parentUser.child;
 
     // Find all messages where the parent is sender or recipient
@@ -199,8 +210,81 @@ async function readRequestBody(request: NextRequest) {
   return Object.fromEntries(new URLSearchParams(text).entries());
 }
 
-function matchesChildId(child: ParentMessagesChild, postedChildId: string) {
-  return postedChildId === child.id || postedChildId === String(child.legacyId ?? "");
+async function optionalAuthenticateParent(request: NextRequest) {
+  const authHeader = request.headers.get("authorization");
+  const hasBearer = authHeader?.startsWith("Bearer ");
+  const payload = await verifyParentToken(request);
+
+  if (hasBearer && !payload) {
+    return { error: jsonError("Unauthorized", 401) };
+  }
+  if (!payload) return null;
+
+  const parentUser = await db.parentUser.findUnique({
+    where: { id: payload.sub, isActive: true },
+    include: { child: true },
+  }).catch(() => "db-error" as const);
+
+  if (parentUser === "db-error") {
+    return { error: jsonError("Internal server error", 500) };
+  }
+
+  if (!parentUser) {
+    return { error: jsonError("Unauthorized", 401) };
+  }
+
+  return { parentUser: parentUser as ParentMessagesUser };
+}
+
+async function resolveLegacyParentMessageUser(childId: string) {
+  const legacyChildId = parseLegacyInt(childId);
+  const childWhere = [];
+
+  if (UUID_RE.test(childId)) {
+    childWhere.push({ id: childId });
+  }
+  if (legacyChildId !== null) {
+    childWhere.push({ legacyId: legacyChildId });
+  }
+  if (childWhere.length === 0) return null;
+
+  const child = await db.child.findFirst({
+    where: { OR: childWhere },
+    select: {
+      id: true,
+      legacyId: true,
+      firstName: true,
+      middleName: true,
+      lastName: true,
+    },
+    orderBy: { createdAt: "asc" },
+  });
+  if (!child) return null;
+
+  const parentUser = await db.parentUser.findFirst({
+    where: {
+      OR: [
+        { childId: child.id },
+        ...(child.legacyId !== null ? [{ legacyChildId: child.legacyId }] : []),
+      ],
+    },
+    include: { child: true },
+    orderBy: { createdAt: "asc" },
+  });
+
+  return parentUser ? (parentUser as ParentMessagesUser) : null;
+}
+
+function matchesParentUserChildId(
+  parentUser: ParentMessagesUser,
+  childId: string
+) {
+  return (
+    childId === parentUser.childId ||
+    childId === parentUser.child.id ||
+    childId === String(parentUser.legacyChildId ?? "") ||
+    childId === String(parentUser.child.legacyId ?? "")
+  );
 }
 
 function messageDateTime(message: ParentMessageRow) {
@@ -231,3 +315,10 @@ function readString(data: Record<string, unknown> | null, keys: string[]) {
   }
   return null;
 }
+
+function parseLegacyInt(value: unknown): number | null {
+  const parsed = Number.parseInt(String(value ?? ""), 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;

@@ -3,11 +3,11 @@ import type { Prisma } from "@/generated/prisma/client";
 import { z } from "zod/v4";
 import { db } from "@/lib/db";
 import {
-  authenticateParent,
   checkRateLimit,
   getRateLimitKey,
   jsonError,
   jsonSuccess,
+  verifyParentToken,
 } from "@/lib/parent-auth";
 
 const legacyString = z.union([z.string(), z.number()]).transform(String);
@@ -33,6 +33,7 @@ type ParentMessageUser = {
   id: string;
   legacyId: number | null;
   childId: string;
+  legacyChildId: number | null;
   child: ParentMessageChild;
 };
 
@@ -48,12 +49,10 @@ export async function POST(request: NextRequest) {
     return jsonError("Too many requests", 429);
   }
 
-  const auth = await authenticateParent(request);
-  if ("error" in auth) return auth.error;
-  const parentUser = auth.parentUser as ParentMessageUser;
+  const auth = await optionalAuthenticateParent(request);
+  if (auth && "error" in auth) return auth.error;
 
   const body = await readRequestBody(request);
-
   const parsed = sendMessageSchema.safeParse(body);
   if (!parsed.success) {
     return jsonSuccess({
@@ -70,12 +69,18 @@ export async function POST(request: NextRequest) {
   } = parsed.data;
   const threadid = parsed.data.threadid || "0";
 
-  // Verify the parent has access to this child
-  if (!matchesChildId(parentUser.child, usites)) {
-    return jsonError("Access denied", 403);
-  }
-
   try {
+    let parentUser = auth?.parentUser ?? null;
+    const isAuthenticatedParent = Boolean(parentUser);
+    if (parentUser) {
+      if (!matchesParentUserChildId(parentUser, usites)) {
+        return jsonError("Access denied", 403);
+      }
+    } else {
+      parentUser = await resolveLegacyParentMessageUser(usites);
+      if (!parentUser) return failedSend();
+    }
+
     const recipients = await resolveRecipients(to, parentUser.child);
     if (recipients.length === 0) return failedSend();
 
@@ -85,7 +90,12 @@ export async function POST(request: NextRequest) {
     if (threadid !== "0") {
       // Reply to an existing thread. Legacy mobile passes numeric t_alarms_msg.thread_id;
       // modern clients may pass the MessageThread UUID.
-      const existingThread = await resolveParentThread(threadid, parentUser.id);
+      const existingThread = await resolveParentThread(
+        threadid,
+        parentUser.id,
+        isAuthenticatedParent,
+        subject
+      );
       if (!existingThread) return failedSend();
       thread = { id: existingThread.id };
       legacyThreadId = existingThread.legacyThreadId ?? await nextLegacyThreadId();
@@ -194,7 +204,12 @@ async function resolveRecipients(
   return [...recipients.values()];
 }
 
-async function resolveParentThread(threadId: string, parentUserId: string) {
+async function resolveParentThread(
+  threadId: string,
+  parentUserId: string,
+  requireParentAccess: boolean,
+  fallbackSubject: string
+) {
   if (UUID_RE.test(threadId)) {
     const thread = await db.messageThread.findUnique({
       where: { id: threadId },
@@ -202,19 +217,23 @@ async function resolveParentThread(threadId: string, parentUserId: string) {
     });
     if (!thread) return null;
 
-    const hasAccess = await db.message.findFirst({
+    const firstMessage = await db.message.findFirst({
       where: {
         threadId: thread.id,
-        OR: [
-          { senderId: parentUserId, senderType: "PARENT" },
-          { recipientId: parentUserId, recipientType: "PARENT" },
-        ],
+        ...(requireParentAccess
+          ? {
+              OR: [
+                { senderId: parentUserId, senderType: "PARENT" },
+                { recipientId: parentUserId, recipientType: "PARENT" },
+              ],
+            }
+          : {}),
       },
       orderBy: { createdAt: "asc" },
       select: { legacyThreadId: true },
     });
-    return hasAccess
-      ? { id: thread.id, legacyThreadId: hasAccess.legacyThreadId }
+    return firstMessage || !requireParentAccess
+      ? { id: thread.id, legacyThreadId: firstMessage?.legacyThreadId ?? null }
       : null;
   }
 
@@ -224,15 +243,26 @@ async function resolveParentThread(threadId: string, parentUserId: string) {
   const message = await db.message.findFirst({
     where: {
       legacyThreadId,
-      OR: [
-        { senderId: parentUserId, senderType: "PARENT" },
-        { recipientId: parentUserId, recipientType: "PARENT" },
-      ],
+      ...(requireParentAccess
+        ? {
+            OR: [
+              { senderId: parentUserId, senderType: "PARENT" },
+              { recipientId: parentUserId, recipientType: "PARENT" },
+            ],
+          }
+        : {}),
     },
     orderBy: { createdAt: "asc" },
     select: { threadId: true, legacyThreadId: true },
   });
-  if (!message?.threadId) return null;
+  if (!message?.threadId) {
+    if (requireParentAccess) return null;
+    const thread = await db.messageThread.create({
+      data: { subject: fallbackSubject },
+      select: { id: true },
+    });
+    return { id: thread.id, legacyThreadId };
+  }
 
   const thread = await db.messageThread.findUnique({
     where: { id: message.threadId },
@@ -281,6 +311,85 @@ async function readRequestBody(request: NextRequest) {
 
 function matchesChildId(child: ParentMessageChild, postedChildId: string) {
   return postedChildId === child.id || postedChildId === String(child.legacyId ?? "");
+}
+
+async function optionalAuthenticateParent(request: NextRequest) {
+  const authHeader = request.headers.get("authorization");
+  const hasBearer = authHeader?.startsWith("Bearer ");
+  const payload = await verifyParentToken(request);
+
+  if (hasBearer && !payload) {
+    return { error: jsonError("Unauthorized", 401) };
+  }
+  if (!payload) return null;
+
+  const parentUser = await db.parentUser.findUnique({
+    where: { id: payload.sub, isActive: true },
+    include: { child: true },
+  }).catch(() => "db-error" as const);
+
+  if (parentUser === "db-error") {
+    return { error: jsonError("Internal server error", 500) };
+  }
+
+  if (!parentUser) {
+    return { error: jsonError("Unauthorized", 401) };
+  }
+
+  return { parentUser: parentUser as ParentMessageUser };
+}
+
+async function resolveLegacyParentMessageUser(childId: string) {
+  const legacyChildId = parseLegacyInt(childId);
+  const childWhere = [];
+
+  if (UUID_RE.test(childId)) {
+    childWhere.push({ id: childId });
+  }
+  if (legacyChildId !== null) {
+    childWhere.push({ legacyId: legacyChildId });
+  }
+  if (childWhere.length === 0) return null;
+
+  const child = await db.child.findFirst({
+    where: { OR: childWhere },
+    select: {
+      id: true,
+      legacyId: true,
+      branchId: true,
+    },
+    orderBy: { createdAt: "asc" },
+  });
+  if (!child) return null;
+
+  const parentUser = await db.parentUser.findFirst({
+    where: {
+      OR: [
+        { childId: child.id },
+        ...(child.legacyId !== null ? [{ legacyChildId: child.legacyId }] : []),
+      ],
+    },
+    include: { child: true },
+    orderBy: { createdAt: "asc" },
+  });
+
+  return parentUser ? (parentUser as ParentMessageUser) : null;
+}
+
+function matchesParentUserChildId(
+  parentUser: ParentMessageUser,
+  childId: string
+) {
+  return (
+    childId === parentUser.childId ||
+    matchesChildId(parentUser.child, childId) ||
+    childId === String(parentUser.legacyChildId ?? "")
+  );
+}
+
+function parseLegacyInt(value: unknown): number | null {
+  const parsed = Number.parseInt(String(value ?? ""), 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 }
 
 function failedSend() {
