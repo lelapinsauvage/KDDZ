@@ -6,6 +6,7 @@
  *   teacher_id   → (old ID, mapped to UUID)
  *   f_name       → firstName
  *   l_name       → lastName
+ *   regnum       → registerNumber
  *   tel          → phone
  *   mobile       → mobile
  *   email        → email
@@ -14,7 +15,7 @@
  *   sel_branch   → branchId (FK via mapping)
  *   active       → isActive
  *   datetime     → createdAt
- *   Not migrated: m_name, regnum, martial, noc, sel_gender, has_medcase,
+ *   Not migrated: m_name, martial, noc, sel_gender, has_medcase,
  *     medcase, cnss, cnssnum, sec_degree, sec_degree_y, uni_degree,
  *     uni_degree_y, language skills (eng/fr/ar), remarks, classid,
  *     contract, medtest, firstaid, t_user_id, uby
@@ -63,6 +64,7 @@
  */
 
 import type {
+  AttendanceLogStatus,
   EmployeeEventStatus,
   ExperienceType,
   PrismaClient,
@@ -98,6 +100,7 @@ interface OldTeacher {
   m_name: string;
   dob: string;
   pob: string;
+  regnum: string;
   nationality: string;
   sel_gender: string;
   tel: string;
@@ -129,6 +132,7 @@ async function migrateTeachers(prisma: PrismaClient, dryRun: boolean) {
     }
 
     const imageUrl = cleanLegacyFileName(row.image);
+    const registerNumber = cleanString(row.regnum);
     const key = legacyKey(sourceDatabase, "t_teacher", row.teacher_id);
     const existingByKey = await prisma.teacher.findUnique({
       where: { legacyKey: key },
@@ -145,6 +149,7 @@ async function migrateTeachers(prisma: PrismaClient, dryRun: boolean) {
         legacyId?: number;
         legacyTable?: string;
         imageUrl?: string;
+        registerNumber?: string | null;
       } = {
         sourceDatabase,
         legacyKey: key,
@@ -153,6 +158,9 @@ async function migrateTeachers(prisma: PrismaClient, dryRun: boolean) {
       };
       if (imageUrl && existing.imageUrl !== imageUrl) {
         updateData.imageUrl = imageUrl;
+      }
+      if (existing.registerNumber !== registerNumber) {
+        updateData.registerNumber = registerNumber;
       }
       if (!dryRun) {
         await prisma.teacher.update({
@@ -176,6 +184,7 @@ async function migrateTeachers(prisma: PrismaClient, dryRun: boolean) {
           legacyTable: "t_teacher",
           firstName: row.f_name || "",
           lastName: row.l_name || "",
+          registerNumber,
           phone: cleanString(row.tel),
           mobile: cleanString(row.mobile),
           email: cleanString(row.email),
@@ -202,6 +211,8 @@ async function migrateTeachers(prisma: PrismaClient, dryRun: boolean) {
   await migrateTeacherExperiences(prisma, dryRun);
   // Teacher calendar status rows
   await migrateTeacherEmployeeEvents(prisma, dryRun);
+  // Teacher biometric/scanner attendance logs
+  await migrateTeacherAttendance(prisma, dryRun);
 }
 
 interface OldTeacherAddress {
@@ -510,6 +521,253 @@ async function migrateTeacherEmployeeEvents(
 
   log(
     `Teacher employee events: ${migrated} migrated, ${skipped} skipped, ${orphaned} orphaned`
+  );
+}
+
+interface OldTeacherAttendance {
+  atid: number;
+  readerid: string;
+  readername: string;
+  tdate: string;
+  ttime: string;
+  status: string;
+  cardid: string;
+  teacher_id: string;
+  tdefault: string;
+  datetime: string;
+  uby: number;
+  active: number;
+}
+
+type AttendanceTeacherMatch = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  branchId: string;
+};
+
+function normalizeAttendanceName(value: string | null | undefined): string {
+  const cleaned = cleanString(value);
+  if (!cleaned) return "";
+  return cleaned
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, " ")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function normalizeAttendanceCard(value: string | null | undefined): string | null {
+  const cleaned = cleanString(value);
+  if (!cleaned) return null;
+  const withoutLeadingZeroes = cleaned.replace(/^0+/, "");
+  return withoutLeadingZeroes || "0";
+}
+
+function parseAttendanceDate(value: string | null | undefined): Date | null {
+  const cleaned = cleanString(value);
+  if (!cleaned) return null;
+  const compact = cleaned.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if (compact) {
+    const date = new Date(
+      `${compact[1]}-${compact[2]}-${compact[3]}T00:00:00.000Z`
+    );
+    return isNaN(date.getTime()) ? null : date;
+  }
+  return parseDate(cleaned);
+}
+
+function parseAttendanceTime(value: string | null | undefined): Date | null {
+  const cleaned = cleanString(value);
+  if (!cleaned) return null;
+  if (/^\d{1,4}$/.test(cleaned)) {
+    const padded = cleaned.padStart(4, "0");
+    const hours = Number(padded.slice(0, 2));
+    const minutes = Number(padded.slice(2, 4));
+    if (hours > 23 || minutes > 59) return null;
+    return new Date(
+      `1970-01-01T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00.000Z`
+    );
+  }
+  const time = cleaned.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+  if (!time) return null;
+  const hours = Number(time[1]);
+  const minutes = Number(time[2]);
+  const seconds = time[3] ? Number(time[3]) : 0;
+  if (hours > 23 || minutes > 59 || seconds > 59) return null;
+  return new Date(
+    `1970-01-01T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.000Z`
+  );
+}
+
+function mapAttendanceStatus(
+  value: string | null | undefined,
+  time: Date | null
+): AttendanceLogStatus | null {
+  const normalized = cleanString(value)?.toLowerCase().trim() ?? "";
+  if (normalized === "out" || normalized === "exit" || normalized === "check_out") {
+    return "CHECK_OUT";
+  }
+  if (
+    normalized === "entry" ||
+    normalized === "in" ||
+    normalized === "check_in"
+  ) {
+    return time && time.getUTCHours() >= 12 ? "CHECK_OUT" : "CHECK_IN";
+  }
+  if (normalized === "late") return "LATE";
+  if (normalized === "early_leave" || normalized === "early leave") {
+    return "EARLY_LEAVE";
+  }
+  return null;
+}
+
+async function migrateTeacherAttendance(
+  prisma: PrismaClient,
+  dryRun: boolean
+) {
+  const rows = await queryMysql<OldTeacherAttendance>(
+    "SELECT * FROM t_teacher_attendance WHERE active = 1 ORDER BY atid"
+  );
+  log(`Found ${rows.length} teacher attendance rows in t_teacher_attendance`);
+
+  const sourceDatabase = getMysqlConfig().database || "unknown";
+  const teachers = await prisma.teacher.findMany({
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      branchId: true,
+    },
+  });
+  const teachersByName = new Map<string, AttendanceTeacherMatch[]>();
+  for (const teacher of teachers) {
+    const normalized = normalizeAttendanceName(
+      `${teacher.firstName} ${teacher.lastName}`
+    );
+    if (!normalized) continue;
+    const matches = teachersByName.get(normalized) ?? [];
+    matches.push(teacher);
+    teachersByName.set(normalized, matches);
+  }
+
+  const exactTeacherByName = new Map<string, AttendanceTeacherMatch>();
+  for (const [name, matches] of teachersByName.entries()) {
+    if (matches.length === 1) exactTeacherByName.set(name, matches[0]);
+  }
+
+  const teacherByCard = new Map<string, AttendanceTeacherMatch>();
+  const ambiguousCards = new Set<string>();
+  for (const row of rows) {
+    const card = normalizeAttendanceCard(row.cardid);
+    const name = normalizeAttendanceName(row.teacher_id);
+    const teacher = exactTeacherByName.get(name);
+    if (!card || !teacher || ambiguousCards.has(card)) continue;
+
+    const existing = teacherByCard.get(card);
+    if (existing && existing.id !== teacher.id) {
+      teacherByCard.delete(card);
+      ambiguousCards.add(card);
+      continue;
+    }
+    teacherByCard.set(card, teacher);
+  }
+
+  let migrated = 0;
+  let skipped = 0;
+  let orphaned = 0;
+
+  for (const row of rows) {
+    const legacyId = toInt(row.atid);
+    const key = legacyId
+      ? legacyKey(sourceDatabase, "t_teacher_attendance", legacyId)
+      : null;
+    const date = parseAttendanceDate(row.tdate);
+    const time = parseAttendanceTime(row.ttime);
+    const card = normalizeAttendanceCard(row.cardid);
+    const exactName = exactTeacherByName.get(
+      normalizeAttendanceName(row.teacher_id)
+    );
+    const cardMatch = card ? teacherByCard.get(card) : undefined;
+    const teacher = exactName ?? cardMatch;
+    const status = mapAttendanceStatus(row.status, time);
+
+    if (!legacyId || !key || !date || !time || !teacher) {
+      orphaned++;
+      continue;
+    }
+
+    const existingByKey = await prisma.teacherAttendance.findFirst({
+      where: {
+        note: {
+          contains: key,
+        },
+      },
+    });
+    if (existingByKey) {
+      setMapping("teacher_attendance", legacyId, existingByKey.id);
+      skipped++;
+      continue;
+    }
+
+    const isClockOut = status === "CHECK_OUT" || status === "EARLY_LEAVE";
+    const existing = await prisma.teacherAttendance.findFirst({
+      where: {
+        employeeId: teacher.id,
+        employeeType: "teacher",
+        date,
+        readerId: cleanString(row.readerid),
+        readerName: cleanString(row.readername),
+        cardId: cleanString(row.cardid),
+        ...(isClockOut ? { timeOut: time } : { timeIn: time }),
+      },
+    });
+    if (existing) {
+      setMapping("teacher_attendance", legacyId, existing.id);
+      skipped++;
+      continue;
+    }
+
+    const id = generateUUID();
+    if (!dryRun) {
+      await prisma.teacherAttendance.create({
+        data: {
+          id,
+          employeeId: teacher.id,
+          employeeType: "teacher",
+          date,
+          timeIn: isClockOut ? null : time,
+          timeOut: isClockOut ? time : null,
+          status,
+          readerId: cleanString(row.readerid),
+          readerName: cleanString(row.readername),
+          cardId: cleanString(row.cardid),
+          note: JSON.stringify({
+            legacyKey: key,
+            sourceDatabase,
+            sourceTable: "t_teacher_attendance",
+            legacyId,
+            legacyTeacherName: row.teacher_id,
+            legacyStatus: row.status,
+            legacyDefault: row.tdefault,
+            legacyCreatedBy: row.uby,
+            matchedBy: exactName ? "teacher_name" : "cardid_from_name_seed",
+            legacyData: row,
+          }),
+          branchId: teacher.branchId,
+          createdAt: parseDate(row.datetime) ?? new Date(),
+        },
+      });
+    }
+
+    setMapping("teacher_attendance", legacyId, id);
+    migrated++;
+    logProgress(migrated, rows.length, "Teacher Attendance");
+  }
+
+  log(
+    `Teacher attendance: ${migrated} migrated, ${skipped} skipped, ${orphaned} orphaned`
   );
 }
 

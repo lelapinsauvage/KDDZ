@@ -820,8 +820,8 @@
     "legacyTable": "t_teacher_attendance",
     "legacyColumns": "atid:int(11) NOT NULL AUTO_INCREMENT, readerid:varchar(50) NOT NULL, readername:varchar(50) CHARACTER SET utf8 NOT NULL, tdate:varchar(50) CHARACTER SET utf8 NOT NULL, ttime:varchar(50) CHARACTER SET utf8 NOT NULL, status:varchar(50) CHARACTER SET utf8mb4 NOT NULL, cardid:varchar(50) CHARACTER SET utf8 NOT NULL, teacher_id:varchar(50) CHARACTER SET utf8 NOT NULL, tdefault:varchar(50) CHARACTER SET utf8 NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:int(11) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1'",
     "modernDestination": "TeacherAttendance",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-employees.ts",
+    "reconciliation": "Legacy scanner rows migrate to TeacherAttendance with YYYYMMDD/HHMM time parsing, name-seeded card matching, legacy card/default/status metadata preserved in notes, and orphan rows counted when no teacher match exists."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1796,8 +1796,8 @@
     "legacyTable": "t_teacher_attendance",
     "legacyColumns": "atid:int(11) NOT NULL, readerid:varchar(50) NOT NULL, readername:varchar(50) CHARACTER SET utf8 NOT NULL, tdate:varchar(50) CHARACTER SET utf8 NOT NULL, ttime:varchar(50) CHARACTER SET utf8 NOT NULL, status:varchar(50) CHARACTER SET utf8mb4 NOT NULL, cardid:varchar(50) CHARACTER SET utf8 NOT NULL, teacher_id:varchar(50) CHARACTER SET utf8 NOT NULL, tdefault:varchar(50) CHARACTER SET utf8 NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:int(11) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1'",
     "modernDestination": "TeacherAttendance",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-employees.ts",
+    "reconciliation": "Legacy scanner rows migrate to TeacherAttendance with YYYYMMDD/HHMM time parsing, name-seeded card matching, legacy card/default/status metadata preserved in notes, and orphan rows counted when no teacher match exists."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -2628,8 +2628,8 @@
     "legacyTable": "t_teacher_attendance",
     "legacyColumns": "atid:int(11) NOT NULL AUTO_INCREMENT, readerid:varchar(50) NOT NULL, readername:varchar(50) CHARACTER SET utf8 NOT NULL, tdate:varchar(50) CHARACTER SET utf8 NOT NULL, ttime:varchar(50) CHARACTER SET utf8 NOT NULL, status:varchar(50) CHARACTER SET utf8mb4 NOT NULL, cardid:varchar(50) CHARACTER SET utf8 NOT NULL, teacher_id:varchar(50) CHARACTER SET utf8 NOT NULL, tdefault:varchar(50) CHARACTER SET utf8 NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:int(11) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1'",
     "modernDestination": "TeacherAttendance",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-employees.ts",
+    "reconciliation": "Legacy scanner rows migrate to TeacherAttendance with YYYYMMDD/HHMM time parsing, name-seeded card matching, legacy card/default/status metadata preserved in notes, and orphan rows counted when no teacher match exists."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",

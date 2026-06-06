@@ -313,7 +313,7 @@
     "legacyPhp": "Front/templates/admin/PA_logs.php",
     "legacyJs": "Front/templates/admin/js/pa_logs.js",
     "modernRoute": "/employees/attendance-logs",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "partial - legacy attendance logs migrate",
     "legacyTablesMentioned": [
       "Log",
       "auto",
@@ -324,7 +324,7 @@
       "q",
       "to"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy scanner rows now migrate to TeacherAttendance with reader/card/name/date/time/default metadata preserved. Remaining work is exact DataTables columns/export/filter visual/action parity."
   },
   {
     "legacyPhp": "Front/templates/admin/Teacher_Details.php",
@@ -921,7 +921,7 @@
     "legacyPhp": "Front/templates/admin/attendance.php",
     "legacyJs": "Front/templates/admin/js/attendance.js",
     "modernRoute": "/employees/attendance",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "partial - legacy scanner data migration restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -929,7 +929,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy t_teacher_attendance scanner rows now migrate through migrate-employees.ts. Remaining work is raw device CSV upload-format parity and exact field/action audit against attendance.php/attendance.js."
   },
   {
     "legacyPhp": "Front/templates/admin/bcalls.php",
