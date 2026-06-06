@@ -13,6 +13,10 @@ import {
   staffFilesFromRows,
 } from "@/components/employees/staff-attachments-section";
 import {
+  LegacyStaffSnapshot,
+  type LegacyStaffSnapshotStaff,
+} from "@/components/employees/legacy-staff-snapshot";
+import {
   Table,
   TableBody,
   TableCell,
@@ -23,13 +27,6 @@ import {
 import { Mail, Phone, MapPin, Stethoscope, Building2, Pencil } from "lucide-react";
 import { format } from "date-fns";
 
-interface Address {
-  id: string;
-  street: string | null;
-  city: string | null;
-  region: string | null;
-}
-
 interface RecentVisit {
   id: string;
   date: string;
@@ -38,22 +35,7 @@ interface RecentVisit {
   status: string;
 }
 
-interface DoctorData {
-  id: string;
-  firstName: string;
-  lastName: string;
-  imageUrl: string | null;
-  email: string | null;
-  phone: string | null;
-  mobile: string | null;
-  nationality: string | null;
-  dateOfBirth: string | null;
-  hireDate: string | null;
-  specialization: string | null;
-  licenseNumber: string | null;
-  isActive: boolean;
-  branch: { id: string; name: string };
-  addresses: Address[];
+interface DoctorData extends LegacyStaffSnapshotStaff {
   attachments: StaffAttachment[];
   documents?: StaffDocumentFile[];
 }
@@ -125,8 +107,9 @@ export function DoctorDetailClient({ doctor, recentVisits }: DoctorDetailClientP
         </Card>
 
         <Tabs defaultValue="info">
-          <TabsList>
+          <TabsList className="!h-auto !w-full flex-wrap justify-start">
             <TabsTrigger value="info">Information</TabsTrigger>
+            <TabsTrigger value="legacy">Legacy Profile</TabsTrigger>
             <TabsTrigger value="attachments">Attachments</TabsTrigger>
             <TabsTrigger value="visits">Recent Visits</TabsTrigger>
           </TabsList>
@@ -191,6 +174,10 @@ export function DoctorDetailClient({ doctor, recentVisits }: DoctorDetailClientP
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="legacy">
+            <LegacyStaffSnapshot role="Doctor" staff={doctor} />
           </TabsContent>
 
           <TabsContent value="attachments">

@@ -18,35 +18,18 @@ import {
   StaffAttachmentsSection,
   type StaffAttachment,
 } from "@/components/employees/staff-attachments-section";
+import {
+  LegacyStaffSnapshot,
+  type LegacyStaffSnapshotStaff,
+} from "@/components/employees/legacy-staff-snapshot";
 import { format } from "date-fns";
-
-interface Address {
-  id: string;
-  street: string | null;
-  city: string | null;
-  region: string | null;
-}
 
 interface BranchStat {
   label: string;
   value: string;
 }
 
-interface ManagerData {
-  id: string;
-  firstName: string;
-  lastName: string;
-  imageUrl: string | null;
-  email: string | null;
-  phone: string | null;
-  mobile: string | null;
-  nationality: string | null;
-  dateOfBirth: string | null;
-  hireDate: string | null;
-  specialization: string | null;
-  isActive: boolean;
-  branch: { id: string; name: string };
-  addresses: Address[];
+interface ManagerData extends LegacyStaffSnapshotStaff {
   attachments: StaffAttachment[];
 }
 
@@ -114,8 +97,9 @@ export function ManagerDetailClient({ manager, branchStats }: ManagerDetailClien
         </Card>
 
         <Tabs defaultValue="info">
-          <TabsList>
+          <TabsList className="!h-auto !w-full flex-wrap justify-start">
             <TabsTrigger value="info">Information</TabsTrigger>
+            <TabsTrigger value="legacy">Legacy Profile</TabsTrigger>
             <TabsTrigger value="attachments">Attachments</TabsTrigger>
             <TabsTrigger value="branch">Branch Overview</TabsTrigger>
           </TabsList>
@@ -179,6 +163,10 @@ export function ManagerDetailClient({ manager, branchStats }: ManagerDetailClien
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="legacy">
+            <LegacyStaffSnapshot role="Manager" staff={manager} />
           </TabsContent>
 
           <TabsContent value="attachments">

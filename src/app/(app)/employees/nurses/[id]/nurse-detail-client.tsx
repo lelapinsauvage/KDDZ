@@ -13,6 +13,10 @@ import {
   staffFilesFromRows,
 } from "@/components/employees/staff-attachments-section";
 import {
+  LegacyStaffSnapshot,
+  type LegacyStaffSnapshotStaff,
+} from "@/components/employees/legacy-staff-snapshot";
+import {
   Table,
   TableBody,
   TableCell,
@@ -23,13 +27,6 @@ import {
 import { Mail, Phone, MapPin, Heart, Building2, Pencil } from "lucide-react";
 import { format } from "date-fns";
 
-interface Address {
-  id: string;
-  street: string | null;
-  city: string | null;
-  region: string | null;
-}
-
 interface MedicalActivity {
   id: string;
   date: string;
@@ -38,21 +35,7 @@ interface MedicalActivity {
   status: string;
 }
 
-interface NurseData {
-  id: string;
-  firstName: string;
-  lastName: string;
-  imageUrl: string | null;
-  email: string | null;
-  phone: string | null;
-  mobile: string | null;
-  nationality: string | null;
-  dateOfBirth: string | null;
-  hireDate: string | null;
-  specialization: string | null;
-  isActive: boolean;
-  branch: { id: string; name: string };
-  addresses: Address[];
+interface NurseData extends LegacyStaffSnapshotStaff {
   attachments: StaffAttachment[];
   documents?: StaffDocumentFile[];
 }
@@ -129,8 +112,9 @@ export function NurseDetailClient({ nurse, recentActivities }: NurseDetailClient
         </Card>
 
         <Tabs defaultValue="info">
-          <TabsList>
+          <TabsList className="!h-auto !w-full flex-wrap justify-start">
             <TabsTrigger value="info">Information</TabsTrigger>
+            <TabsTrigger value="legacy">Legacy Profile</TabsTrigger>
             <TabsTrigger value="attachments">Attachments</TabsTrigger>
             <TabsTrigger value="activity">Recent Activity</TabsTrigger>
           </TabsList>
@@ -194,6 +178,10 @@ export function NurseDetailClient({ nurse, recentActivities }: NurseDetailClient
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="legacy">
+            <LegacyStaffSnapshot role="Nurse" staff={nurse} />
           </TabsContent>
 
           <TabsContent value="attachments">

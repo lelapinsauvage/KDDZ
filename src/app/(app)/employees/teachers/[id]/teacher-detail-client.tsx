@@ -14,30 +14,13 @@ import {
   type StaffDocumentFile,
   staffFilesFromRows,
 } from "@/components/employees/staff-attachments-section";
+import {
+  LegacyStaffSnapshot,
+  type LegacyStaffSnapshotStaff,
+} from "@/components/employees/legacy-staff-snapshot";
 import { format } from "date-fns";
 
-interface Address {
-  id: string;
-  street: string | null;
-  city: string | null;
-  region: string | null;
-}
-
-interface TeacherData {
-  id: string;
-  firstName: string;
-  lastName: string;
-  imageUrl: string | null;
-  email: string | null;
-  phone: string | null;
-  mobile: string | null;
-  nationality: string | null;
-  dateOfBirth: string | null;
-  hireDate: string | null;
-  specialization: string | null;
-  isActive: boolean;
-  branch: { id: string; name: string };
-  addresses: Address[];
+interface TeacherData extends LegacyStaffSnapshotStaff {
   attachments: StaffAttachment[];
   documents?: StaffDocumentFile[];
 }
@@ -140,9 +123,10 @@ export function TeacherDetailClient({ teacher }: TeacherDetailClientProps) {
 
         {/* Tabs Section */}
         <Tabs defaultValue="personal" className="space-y-4">
-          <TabsList variant="line">
+          <TabsList variant="line" className="!h-auto !w-full flex-wrap justify-start">
             <TabsTrigger value="personal">Personal Info</TabsTrigger>
             <TabsTrigger value="address">Address</TabsTrigger>
+            <TabsTrigger value="legacy">Legacy Profile</TabsTrigger>
             <TabsTrigger value="attachments">Attachments</TabsTrigger>
           </TabsList>
 
@@ -260,6 +244,10 @@ export function TeacherDetailClient({ teacher }: TeacherDetailClientProps) {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="legacy">
+            <LegacyStaffSnapshot role="Teacher" staff={teacher} />
           </TabsContent>
 
           {/* Attachments Tab */}
