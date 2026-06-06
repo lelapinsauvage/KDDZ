@@ -25,8 +25,8 @@ export default async function ChildDashboardPage({ params }: Props) {
     attendanceRecords,
     absences,
     { forms: medicalForms },
-    { vaccinations: _vaccinations },
-    accountingSummary,
+    { vaccinations },
+    _accountingSummary,
     dashboardStats,
   ] = await Promise.all([
     getDailyReports({ childId: id, pageSize: 100 }),
@@ -44,13 +44,6 @@ export default async function ChildDashboardPage({ params }: Props) {
   const absentDays = attendanceRecords.filter((r) => r.status === "ABSENT").length;
   const draftDays = attendanceRecords.filter((r) => r.status === "DRAFT").length;
   const noReportDays = totalDays - presentDays - absentDays - draftDays;
-
-  // Compute outstanding balance
-  const balanceStr = accountingSummary.balance > 0
-    ? `$${accountingSummary.balance.toFixed(2)}`
-    : accountingSummary.balance < 0
-      ? `-$${Math.abs(accountingSummary.balance).toFixed(2)}`
-      : "$0.00";
 
   // Get parent contacts
   const parents = (child.parents ?? []).map((p) => ({
@@ -88,6 +81,7 @@ export default async function ChildDashboardPage({ params }: Props) {
     diaperType: child.diaperType ?? null,
     milkType: child.milkType ?? null,
     milkPortions: child.milkPortions ?? null,
+    milkScoop: child.milkScoop ?? null,
     parents,
     motherPhone: motherParent?.phone ?? motherParent?.mobile ?? null,
     fatherPhone: fatherParent?.phone ?? fatherParent?.mobile ?? null,
@@ -104,9 +98,9 @@ export default async function ChildDashboardPage({ params }: Props) {
   const recentReports = allReportsRaw.slice(0, 10).map((r) => ({
     id: r.id,
     date: r.reportDate.toISOString().slice(0, 10),
-    breakfastPortion: r.breakfastPortion ?? null,
-    lunchPortion: r.lunchPortion ?? null,
-    dessertPortion: r.dessertPortion ?? null,
+    breakfast: r.breakfastFood?.name ?? r.breakfastPortion ?? null,
+    lunch: r.lunchFood?.name ?? r.lunchPortion ?? null,
+    dessert: r.dessert ?? r.dessertPortion ?? null,
     status: r.status,
     mood: r.mood ?? null,
   }));
@@ -116,16 +110,76 @@ export default async function ChildDashboardPage({ params }: Props) {
     id: a.id,
     date: a.date.toISOString().slice(0, 10),
     reason: a.reason ?? null,
+    absentFrom: a.absentFrom?.toISOString().slice(0, 10) ?? null,
+    absentTo: a.absentTo?.toISOString().slice(0, 10) ?? null,
     status: a.status,
   }));
 
-  // Map medical forms for table
-  const medicalList = medicalForms.map((m) => ({
-    id: m.id,
-    formType: m.formType,
-    status: m.status,
-    date: m.createdAt.toISOString().slice(0, 10),
-  }));
+  const medicalFormsForDashboard = medicalForms
+    .filter((form) => form.formType !== "ACCIDENTS")
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+  const latestMedicalByType = new Map<string, (typeof medicalFormsForDashboard)[number]>();
+  for (const form of medicalFormsForDashboard) {
+    if (!latestMedicalByType.has(form.formType)) {
+      latestMedicalByType.set(form.formType, form);
+    }
+  }
+
+  const medicalTypeConfig = [
+    { type: "GENERAL", label: "General Form", baseHref: "/medical/general" },
+    { type: "CONDITIONS", label: "Suffering Form", baseHref: "/medical/conditions" },
+    { type: "VISITS", label: "Medical Visit", baseHref: "/medical/visits" },
+  ];
+
+  const medicalList = medicalTypeConfig.map((item) => {
+    const form = latestMedicalByType.get(item.type);
+    if (!form) {
+      return {
+        id: item.type,
+        formType: item.label,
+        status: "PENDING",
+        date: null,
+        href: `${item.baseHref}/new?childId=${id}`,
+      };
+    }
+
+    return {
+      id: form.id,
+      formType: item.label,
+      status: form.status,
+      date: form.createdAt.toISOString().slice(0, 10),
+      href: `${item.baseHref}/${form.id}`,
+    };
+  });
+
+  const latestVaccination = vaccinations
+    .slice()
+    .sort((a, b) => {
+      const aDate = a.dateGiven ?? a.createdAt;
+      const bDate = b.dateGiven ?? b.createdAt;
+      return bDate.getTime() - aDate.getTime();
+    })[0];
+
+  medicalList.push(
+    latestVaccination
+      ? {
+          id: latestVaccination.id,
+          formType: "Vaccination Report",
+          status: "SUBMITTED",
+          date: (latestVaccination.dateGiven ?? latestVaccination.createdAt)
+            .toISOString()
+            .slice(0, 10),
+          href: `/medical/vaccinations/${latestVaccination.id}`,
+        }
+      : {
+          id: "VACCINATION",
+          formType: "Vaccination Report",
+          status: "PENDING",
+          date: null,
+          href: `/medical/vaccinations/new?childId=${id}`,
+        }
+  );
 
   // Map assessments for table
   const assessmentList = dashboardStats.assessments.map((a) => ({
@@ -136,9 +190,9 @@ export default async function ChildDashboardPage({ params }: Props) {
   }));
 
   // Compute medical stat breakdowns (MedicalFormStatus: DRAFT | SUBMITTED | REVIEWED)
-  const medicalPublished = medicalForms.filter((m) => m.status === "SUBMITTED" || m.status === "REVIEWED").length;
-  const medicalDrafts = medicalForms.filter((m) => m.status === "DRAFT").length;
-  const medicalMissing = medicalForms.length - medicalPublished - medicalDrafts;
+  const medicalPublished = medicalList.filter((m) => m.status === "SUBMITTED" || m.status === "REVIEWED").length;
+  const medicalDrafts = medicalList.filter((m) => m.status === "DRAFT").length;
+  const medicalMissing = medicalList.filter((m) => m.status === "PENDING").length;
 
   // Compute assessment stat breakdowns (AssessmentStatus: DRAFT | SUBMITTED | REVIEWED)
   const allAssessments = dashboardStats.assessments;

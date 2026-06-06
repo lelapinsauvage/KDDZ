@@ -84,7 +84,28 @@ function calculateAgeAtDate(dob: string, atDate: string): string {
   return `${years}y ${months}m`;
 }
 
-function formatDate(dateStr: string): string {
+function calculateDurationSince(dateStr: string): string {
+  const start = new Date(dateStr);
+  const now = new Date();
+  let years = now.getFullYear() - start.getFullYear();
+  let months = now.getMonth() - start.getMonth();
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+  if (now.getDate() < start.getDate()) {
+    months--;
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
+  }
+  if (years === 0) return `${months}m`;
+  return `${years}y ${months}m`;
+}
+
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return "—";
   const d = new Date(dateStr);
   return d.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
@@ -129,6 +150,7 @@ interface ChildData {
   diaperType: string | null;
   milkType: string | null;
   milkPortions: number | null;
+  milkScoop: number | null;
   parents: ParentInfo[];
   motherPhone: string | null;
   fatherPhone: string | null;
@@ -138,9 +160,9 @@ interface ChildData {
 interface ReportRow {
   id: string;
   date: string;
-  breakfastPortion: string | null;
-  lunchPortion: string | null;
-  dessertPortion: string | null;
+  breakfast: string | null;
+  lunch: string | null;
+  dessert: string | null;
   status: string;
   mood: string | null;
 }
@@ -149,6 +171,8 @@ interface AbsenceRow {
   id: string;
   date: string;
   reason: string | null;
+  absentFrom: string | null;
+  absentTo: string | null;
   status: string;
 }
 
@@ -156,7 +180,8 @@ interface MedicalRow {
   id: string;
   formType: string;
   status: string;
-  date: string;
+  date: string | null;
+  href: string;
 }
 
 interface AssessmentRow {
@@ -240,9 +265,9 @@ function InfoRow({ label, value, className }: { label: string; value: React.Reac
 
 const dailyReportColumns: ColumnDef<ReportRow>[] = [
   { accessorKey: "date", header: "Date", cell: ({ row }) => formatDate(row.original.date) },
-  { accessorKey: "breakfastPortion", header: "Breakfast", cell: ({ row }) => row.original.breakfastPortion ?? "—" },
-  { accessorKey: "lunchPortion", header: "Lunch", cell: ({ row }) => row.original.lunchPortion ?? "—" },
-  { accessorKey: "dessertPortion", header: "Dessert", cell: ({ row }) => row.original.dessertPortion ?? "—" },
+  { accessorKey: "breakfast", header: "Breakfast", cell: ({ row }) => row.original.breakfast ?? "—" },
+  { accessorKey: "lunch", header: "Lunch", cell: ({ row }) => row.original.lunch ?? "—" },
+  { accessorKey: "dessert", header: "Dessert", cell: ({ row }) => row.original.dessert ?? "—" },
   { accessorKey: "status", header: "Status", cell: ({ row }) => <StatusBadge status={row.original.status} /> },
   {
     id: "actions",
@@ -261,7 +286,8 @@ const dailyReportColumns: ColumnDef<ReportRow>[] = [
 const absenceColumns: ColumnDef<AbsenceRow>[] = [
   { accessorKey: "date", header: "Date", cell: ({ row }) => formatDate(row.original.date) },
   { accessorKey: "reason", header: "Reason", cell: ({ row }) => <span className="max-w-xs truncate block text-xs">{row.original.reason ?? "—"}</span> },
-  { accessorKey: "status", header: "Status", cell: ({ row }) => <StatusBadge status={row.original.status} /> },
+  { accessorKey: "absentFrom", header: "From", cell: ({ row }) => formatDate(row.original.absentFrom) },
+  { accessorKey: "absentTo", header: "To", cell: ({ row }) => formatDate(row.original.absentTo) },
   {
     id: "actions",
     header: "",
@@ -302,7 +328,7 @@ const medicalColumns: ColumnDef<MedicalRow>[] = [
     enableHiding: false,
     cell: ({ row }) => (
       <Button variant="ghost" size="icon-xs" asChild>
-        <Link href={`/medical/${row.original.formType.toLowerCase()}`}>
+        <Link href={row.original.href}>
           <Eye className="size-3.5" />
         </Link>
       </Button>
@@ -374,9 +400,17 @@ export function DashboardClient({
 
   // Medical year filter
   const [medicalYear, setMedicalYear] = useState<string>("all");
-  const medicalYears = [...new Set(medicalList.map((m) => m.date.slice(0, 4)))].sort().reverse();
+  const medicalYears = [
+    ...new Set(
+      medicalList
+        .map((m) => m.date?.slice(0, 4))
+        .filter((year): year is string => Boolean(year))
+    ),
+  ].sort().reverse();
   const filteredMedical =
-    medicalYear === "all" ? medicalList : medicalList.filter((m) => m.date.startsWith(medicalYear));
+    medicalYear === "all"
+      ? medicalList
+      : medicalList.filter((m) => m.date?.startsWith(medicalYear));
 
   // Parent names
   const mother = child.parents.find((p) => p.type === "MOTHER");
@@ -449,7 +483,10 @@ export function DashboardClient({
                   <InfoRow label="Date of Birth" value={formatDate(child.dateOfBirth)} />
                 )}
                 {child.enrollmentDate && (
-                  <InfoRow label="Enrollment" value={formatDate(child.enrollmentDate)} />
+                  <InfoRow label="Joining Date" value={formatDate(child.enrollmentDate)} />
+                )}
+                {child.enrollmentDate && (
+                  <InfoRow label="Joined From" value={calculateDurationSince(child.enrollmentDate)} />
                 )}
                 {child.gender && (
                   <InfoRow
@@ -514,6 +551,9 @@ export function DashboardClient({
                         {child.milkType}
                         {child.milkPortions != null && (
                           <span className="text-muted-foreground ml-1">({child.milkPortions} portions)</span>
+                        )}
+                        {child.milkScoop != null && (
+                          <span className="text-muted-foreground ml-1">({child.milkScoop} scoop)</span>
                         )}
                       </span>
                     }
@@ -647,15 +687,15 @@ export function DashboardClient({
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <StatCard title="Calls In/Out" value={stats.callsInOut} icon={Phone} color="purple" href={`/children/${id}/calls`} />
             <StatCard title="Accident Reports" value={stats.accidentReports} icon={ShieldAlert} color="rose" href={`/children/${id}/accidents`} />
-            <StatCard title="Total Payments" value={stats.totalPayments} icon={DollarSign} color="emerald" />
+            <StatCard title="Total Payments" value={stats.totalPayments} icon={DollarSign} color="emerald" href={`/children/${id}/accounting`} />
           </div>
 
           {/* ─── Row 2: Attendance Stats ───────────── */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatCard title="Attendance" value={stats.totalAttendance} icon={Calendar} color="emerald" href={`/children/${id}/attendance`} />
-            <StatCard title="Absence" value={stats.totalAbsence} icon={UserX} color="rose" />
-            <StatCard title="Missing Daily Rpt" value={stats.missingDailyReports} icon={FileQuestion} color="amber" />
-            <StatCard title="Missing Absent Rpt" value={stats.missingAbsentReports} icon={AlertTriangle} color="amber" />
+            <StatCard title="Attendance" value={stats.totalAttendance} icon={Calendar} color="emerald" href={`/children/${id}/report`} />
+            <StatCard title="Absence" value={stats.totalAbsence} icon={UserX} color="rose" href={`/children/${id}/absence`} />
+            <StatCard title="Missing Daily Rpt" value={stats.missingDailyReports} icon={FileQuestion} color="amber" href={`/children/${id}/report`} />
+            <StatCard title="Missing Absent Rpt" value={stats.missingAbsentReports} icon={AlertTriangle} color="amber" href={`/children/${id}/absence`} />
           </div>
 
           {/* ─── Attendance Pie Chart ──────────────── */}

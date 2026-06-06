@@ -69,7 +69,7 @@
     "legacyPhp": "Front/templates/admin/Doctor_Details.php",
     "legacyJs": "Front/templates/admin/js/Doctor_Details.js",
     "modernRoute": "/employees/doctors/[id]",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "partial - legacy dashboard fields, KPIs, summaries, and links restored; modal/year audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -77,7 +77,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored child dashboard parity for core profile fields and actions: child number, active status, nationality, branch, class, mother/father phone, gender, language, joining date, joined-from duration, joining/current age, bus, lunch, allergy, milk/portion/scoop, diapers, authorized pickup/emergency contacts, quick links for call report, accident report, child calendar, and message compose. Restored KPI navigation for calls, accidents, payments, daily reports, absence reports, missing daily/absent reports, medical report counts, and assessment counts; dashboard summaries now show legacy Breakfast/Lunch/Dessert food names with status/actions, Absence Date/Reason/From/To/Action, four medical rows including Vaccination Report, and assessment summaries. Remaining work is exact missing-report modal drilldowns from `getMissingReports`/`getMissingAbsentReports`, exact legacy school-year/database switch behavior from `db_curr`, and TableTools copy/PDF/XLS/print visual parity."
   },
   {
     "legacyPhp": "Front/templates/admin/Manager_Details.php",
