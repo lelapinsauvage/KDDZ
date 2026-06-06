@@ -16313,7 +16313,7 @@
     "legacyPhp": "Front/templates/admin/regions.php",
     "legacyJs": "Front/templates/admin/js/regions.js",
     "modernRoute": "/settings/regions",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "partial - Region listing/modal labels restored; export visual audit remains",
     "legacyTablesMentioned": [
       "Region",
       "auto",
@@ -16322,7 +16322,7 @@
     "requestFieldsMentioned": [
       "q"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored legacy Regions listing over migrated Region records with #, Name, Reference Number, Quadaa, Datetime, single Action column, field/date filters, New/Update Region dialogs requiring Quadaa, delete confirmation, and Region parent-Quadaa reassignment. Remaining work is final export/print visual audit."
   },
   {
     "legacyPhp": "Front/templates/admin/settings.php",

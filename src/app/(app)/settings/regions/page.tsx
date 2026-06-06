@@ -1,7 +1,25 @@
 import { getRegions } from "@/lib/actions/settings";
 import { RegionsClient } from "./regions-client";
 
-function formatDate(value: Date | string) {
+interface RegionData {
+  id: string;
+  name: string;
+  referenceNumber: string | null;
+  districtId: string;
+  createdAt: string | Date;
+}
+
+interface DistrictData {
+  id: string;
+  name: string;
+  regions: RegionData[];
+}
+
+interface ProvinceData {
+  districts: DistrictData[];
+}
+
+function formatDisplayDate(value: string | Date) {
   return new Date(value).toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
@@ -9,34 +27,34 @@ function formatDate(value: Date | string) {
   });
 }
 
+function formatDateFilterValue(value: string | Date) {
+  return new Date(value).toISOString().slice(0, 10);
+}
+
 export default async function RegionsManagementPage() {
   const result = await getRegions();
+  const provinces: ProvinceData[] = Array.isArray(result.data) ? result.data : [];
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const provinces = (result.success ? result.data : []) as Array<any>;
-
-  const serialized = provinces.map((prov) => ({
-    id: prov.id as string,
-    name: prov.name as string,
-    referenceNumber: (prov.referenceNumber ?? "") as string,
-    createdAt: formatDate(prov.createdAt as Date | string),
-    districts: (prov.districts ?? []).map((dist: { id: string; name: string; referenceNumber: string | null; provinceId: string; createdAt: Date | string; regions: Array<{ id: string; name: string; referenceNumber: string | null; districtId: string; createdAt: Date | string; _count?: { childAddresses: number } }>; _count?: { regions: number } }) => ({
-      id: dist.id,
-      name: dist.name,
-      referenceNumber: dist.referenceNumber ?? "",
-      provinceId: dist.provinceId,
-      createdAt: formatDate(dist.createdAt),
-      regions: (dist.regions ?? []).map((reg) => ({
-        id: reg.id,
-        name: reg.name,
-        referenceNumber: reg.referenceNumber ?? "",
-        districtId: reg.districtId,
-        createdAt: formatDate(reg.createdAt),
-        _count: reg._count,
-      })),
-      _count: dist._count,
+  const quadaaOptions = provinces.flatMap((province) =>
+    province.districts.map((district) => ({
+      id: district.id,
+      name: district.name,
     })),
-  }));
+  );
 
-  return <RegionsClient provinces={serialized} />;
+  const regions = provinces.flatMap((province) =>
+    province.districts.flatMap((district) =>
+      district.regions.map((region) => ({
+        id: region.id,
+        name: region.name,
+        referenceNumber: region.referenceNumber ?? "",
+        quadaa: district.name,
+        quadaaId: district.id,
+        createdAt: formatDisplayDate(region.createdAt),
+        createdDate: formatDateFilterValue(region.createdAt),
+      })),
+    ),
+  );
+
+  return <RegionsClient initialRegions={regions} quadaaOptions={quadaaOptions} />;
 }

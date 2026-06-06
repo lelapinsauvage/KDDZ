@@ -44,7 +44,7 @@ const sections = [
   },
   {
     title: "Regions",
-    description: "Geographic regions",
+    description: "Regions by Quadaa",
     href: "/settings/regions",
     icon: MapPin,
     iconBg: "bg-amber-100",

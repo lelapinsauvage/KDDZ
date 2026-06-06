@@ -121,8 +121,8 @@ This list is the first implementation backlog after the generated inventory/matr
    - Legacy `t_garderie`, `t_garderie_attachments`, `t_old_garderie`, and `t_garderie_doctor*` rows now have migration coverage, but `nurseryinfo.php` UI parity still needs exact page-level audit.
 
 17. **Address hierarchy reference fields**
-   - Legacy `t_mouhafaza`, `t_quadaa`, and `t_region` reference numbers and created dates are migrated and now displayed across `/settings/zones`, `/settings/areas`, and `/settings/regions`; `/settings/zones` now restores Mouhafaza listing/modal labels and `/settings/areas` restores Quadaa listing/modal labels, while location CRUD revalidates all three views.
-   - Remaining work is final DataTables filter/export visual audit against `Zones_Management.php`, `Areas.php`, `regions.php`, and `regions.js`.
+   - Legacy `t_mouhafaza`, `t_quadaa`, and `t_region` reference numbers and created dates are migrated and now displayed across `/settings/zones`, `/settings/areas`, and `/settings/regions`; `/settings/zones` restores Mouhafaza listing/modal labels, `/settings/areas` restores Quadaa listing/modal labels, and `/settings/regions` restores the legacy Region listing, field/date filters, Quadaa selector, create/update/delete labels, and parent-Quadaa reassignment.
+   - Remaining work is final DataTables export/print visual audit against `Zones_Management.php`, `Areas.php`, `regions.php`, and `regions.js`.
 
 18. **Food/holiday/event calendar nuances**
    - Food applications, holiday notification fields, event types, scheduled event notification metadata, and event notification receipt history now have migration coverage; `/settings/events` restores legacy custom subject/body, multi-branch targeting, and 1-10 day offset controls.

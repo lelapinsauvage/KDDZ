@@ -409,14 +409,26 @@ export async function updateRegion(
   id: string,
   name: string,
   referenceNumber?: string,
+  districtId?: string,
 ): Promise<ActionResult> {
   try {
     const result = await requireOrgSafe();
     if (!result.ok) return { success: false, error: result.error };
 
+    const data: {
+      name: string;
+      referenceNumber: string | null;
+      districtId?: string;
+    } = {
+      name,
+      referenceNumber: referenceNumber || null,
+    };
+
+    if (districtId) data.districtId = districtId;
+
     const region = await db.region.update({
       where: { id },
-      data: { name, referenceNumber: referenceNumber || null },
+      data,
     });
 
     revalidateLocationPages();
