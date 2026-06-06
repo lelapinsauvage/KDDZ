@@ -977,15 +977,16 @@
     "legacyPhp": "Front/templates/admin/calendar.php",
     "legacyJs": "Front/templates/admin/js/calendar.js",
     "modernRoute": "/employees/calendar",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "partial - legacy teacher status events migrate",
     "legacyTablesMentioned": [
       "auto",
-      "themeforest"
+      "themeforest",
+      "t_emp_status"
     ],
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Modern calendar route exists and legacy `t_emp_status` sick/absent/day_off/warning rows now migrate to `EmployeeEvent` with teacher links, status, date, and reference numbers. Remaining work is exact field/action audit against `calendar.php`/`calendar.js`, approval events, and final visual parity."
   },
   {
     "legacyPhp": "Front/templates/admin/call.php",

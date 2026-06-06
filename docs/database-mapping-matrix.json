@@ -499,9 +499,9 @@
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "t_emp_status",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, emp_id:int(11) NOT NULL, date:varchar(20) NOT NULL, status:varchar(50) NOT NULL, ref_nb:varchar(50) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:int(11) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', dateto:varchar(20) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "EmployeeEvent",
+    "status": "mapped - migrated by migrate-employees.ts",
+    "reconciliation": "Preserves teacher calendar status rows for `/employees/calendar` with sick/absent/day off/warning status and reference numbers; needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1467,9 +1467,9 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "t_emp_status",
     "legacyColumns": "id:int(11) NOT NULL, emp_id:int(11) NOT NULL, date:varchar(20) NOT NULL, status:varchar(50) NOT NULL, ref_nb:varchar(50) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:int(11) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', dateto:varchar(20) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "EmployeeEvent",
+    "status": "mapped - migrated by migrate-employees.ts",
+    "reconciliation": "Preserves teacher calendar status rows for `/employees/calendar` with sick/absent/day off/warning status and reference numbers; needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -2307,9 +2307,9 @@
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "t_emp_status",
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, emp_id:int(11) NOT NULL, date:varchar(20) NOT NULL, status:varchar(50) NOT NULL, ref_nb:varchar(50) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:int(11) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', dateto:varchar(20) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "EmployeeEvent",
+    "status": "mapped - migrated by migrate-employees.ts",
+    "reconciliation": "Preserves teacher calendar status rows for `/employees/calendar` with sick/absent/day off/warning status and reference numbers; needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",

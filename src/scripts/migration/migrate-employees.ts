@@ -62,7 +62,11 @@
  * Prerequisites: Branches must be migrated first.
  */
 
-import type { ExperienceType, PrismaClient } from "@/generated/prisma/client";
+import type {
+  EmployeeEventStatus,
+  ExperienceType,
+  PrismaClient,
+} from "@/generated/prisma/client";
 import { createPrismaClient } from "./lib/prisma-client";
 import { queryMysql, closeMysqlPool, getMysqlConfig } from "./lib/mysql-client";
 import {
@@ -196,6 +200,8 @@ async function migrateTeachers(prisma: PrismaClient, dryRun: boolean) {
   await migrateTeacherAttachments(prisma, dryRun);
   // Teacher experience/stage/workshop rows
   await migrateTeacherExperiences(prisma, dryRun);
+  // Teacher calendar status rows
+  await migrateTeacherEmployeeEvents(prisma, dryRun);
 }
 
 interface OldTeacherAddress {
@@ -394,6 +400,116 @@ async function migrateTeacherExperiences(
 
   log(
     `Teacher experiences: ${migrated} migrated, ${skipped} skipped, ${orphaned} orphaned`
+  );
+}
+
+interface OldTeacherEmployeeEvent {
+  id: number;
+  emp_id: number;
+  date: string;
+  status: string;
+  ref_nb: string;
+  datetime: string;
+  uby: number;
+  active: number;
+  dateto: string;
+}
+
+function mapEmployeeEventStatus(value: string): EmployeeEventStatus | null {
+  const normalized = value.toLowerCase().trim();
+  if (normalized === "sick") return "SICK";
+  if (normalized === "absent") return "ABSENT";
+  if (normalized === "day_off") return "DAY_OFF";
+  if (normalized === "warning") return "WARNING";
+  return null;
+}
+
+async function migrateTeacherEmployeeEvents(
+  prisma: PrismaClient,
+  dryRun: boolean
+) {
+  const rows = await queryMysql<OldTeacherEmployeeEvent>(
+    "SELECT * FROM t_emp_status WHERE active = 1 ORDER BY id"
+  );
+  log(`Found ${rows.length} teacher status rows in t_emp_status`);
+
+  const sourceDatabase = getMysqlConfig().database || "unknown";
+  let migrated = 0;
+  let skipped = 0;
+  let orphaned = 0;
+
+  for (const row of rows) {
+    const legacyId = toInt(row.id);
+    const legacyTeacherId = toInt(row.emp_id);
+    const teacherId = getMapping("teacher", legacyTeacherId);
+    const status = mapEmployeeEventStatus(row.status);
+    const date = parseDate(row.date);
+
+    if (!legacyId || !teacherId || !status || !date) {
+      orphaned++;
+      continue;
+    }
+
+    const key = legacyKey(sourceDatabase, "t_emp_status", legacyId);
+    const existingByKey = await prisma.employeeEvent.findFirst({
+      where: {
+        notes: {
+          contains: key,
+        },
+      },
+    });
+    const existing =
+      existingByKey ??
+      (await prisma.employeeEvent.findUnique({
+        where: {
+          employeeId_employeeType_date: {
+            employeeId: teacherId,
+            employeeType: "teacher",
+            date,
+          },
+        },
+      }));
+    if (existing) {
+      skipped++;
+      continue;
+    }
+
+    const teacher = await prisma.teacher.findUnique({
+      where: { id: teacherId },
+      select: { branchId: true },
+    });
+
+    if (!dryRun) {
+      await prisma.employeeEvent.create({
+        data: {
+          id: generateUUID(),
+          employeeId: teacherId,
+          employeeType: "teacher",
+          status,
+          date,
+          referenceNumber: cleanString(row.ref_nb),
+          notes: JSON.stringify({
+            legacyKey: key,
+            sourceDatabase,
+            sourceTable: "t_emp_status",
+            legacyId,
+            legacyTeacherId,
+            legacyStatus: row.status,
+            legacyCreatedBy: row.uby,
+            legacyData: row,
+          }),
+          branchId: teacher?.branchId ?? null,
+          createdAt: parseDate(row.datetime) ?? new Date(),
+        },
+      });
+    }
+
+    migrated++;
+    logProgress(migrated, rows.length, "Teacher Employee Events");
+  }
+
+  log(
+    `Teacher employee events: ${migrated} migrated, ${skipped} skipped, ${orphaned} orphaned`
   );
 }
 
