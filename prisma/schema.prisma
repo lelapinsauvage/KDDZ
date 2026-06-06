@@ -1526,6 +1526,7 @@ model DailyReport {
   runnyNose        Boolean           @default(false)
   vomit            Boolean           @default(false)
   remarks          String?           @db.Text
+  legacyData       Json?
   createdById      String?           @db.Uuid
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
@@ -1681,6 +1682,7 @@ model MedicalFormEntry {
   medicalFormId String   @db.Uuid
   field         String
   value         String?  @db.Text
+  legacyData    Json?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -1688,6 +1690,7 @@ model MedicalFormEntry {
 
   @@index([medicalFormId])
   @@index([field])
+  @@index([legacyData], type: Gin)
   @@map("medical_form_entries")
 }
 

@@ -12,7 +12,7 @@ Parent web PWA status:
 | --- | --- | --- | --- | --- | --- |
 | ws/absence.php | usites | /api/parent/absence/[childId] | partial - used by /parent PWA, verify JSON contract | yes | yes |
 | ws/birthdays_alarms.php | pid | /api/parent/alarms/birthdays | partial - legacy array shape, POST pid guard, legacy ids/status/datetime/href, and level-0 filtering restored; verify parent delivery push | no | no |
-| ws/daily.php | usites | /api/parent/daily/[childId] | partial - verify JSON contract | no | yes |
+| ws/daily.php | usites | /api/parent/daily/[childId] | partial - legacy POST `usites`, header/count, numeric report ids, raw daily field names, flattened fever pairs, first milk row, and food names restored; verify final native parser tolerance | no | yes |
 | ws/events_alarms.php | pid | /api/parent/alarms/events | partial - legacy event field names, POST pid guard, and multi-branch filtering restored; verify parent delivery push | no | no |
 | ws/finance.php | usites | /api/parent/finance/[childId] | partial - used by /parent PWA, verify JSON contract | yes | yes |
 | ws/foodcalendar.php | usites | /api/parent/calendar/food | partial - used by /parent PWA, verify JSON contract | yes | yes |
@@ -27,7 +27,7 @@ Parent web PWA status:
 | ws/messagesList.php | usites | /api/parent/messages/[childId] | partial - used by /parent PWA, verify grouped thread JSON contract | no | no |
 | ws/missingReports_alarms.php | pid | /api/parent/alarms/medical | partial - legacy array shape, POST pid guard, and migrated medical alarm field names restored; verify encrypted deep-link behavior | no | no |
 | ws/newassessment_alarms.php | pid | /api/parent/alarms/assessments | partial - POST pid guard and legacy child id restored; verify exact assessment message template | no | no |
-| ws/newdaily.php | usites | /api/parent/daily/[childId]/detailed | partial - used by /parent PWA, verify JSON contract | yes | no |
+| ws/newdaily.php | usites | /api/parent/daily/[childId]/detailed | partial - used by /parent PWA; legacy POST `usites`, raw extended daily fields, mapped dessert portion, fever/milk arrays, and `takenmeds_Arr` name resolution restored; verify final native parser tolerance | yes | no |
 | ws/notifications_master.php | usites | /api/parent/notifications/[childId] | partial - dynamic `notifications_nature` ordering/names/active flags, POST `usites` guard, and mapped alarm/event/message/assessment detail groups restored; verify every production nature/table | yes | no |
 | ws/payments_alarms.php | pid | /api/parent/alarms/payments | partial - legacy array shape, POST pid guard, legacy ids/status/datetime/href restored; verify parent delivery push | no | no |
 | ws/pnotifications.php | cid, del, os, show, token | /api/parent/push-token | partial - JSON/form registration, parent-scoped show, legacy OS mapping, and soft-delete restored; verify native unauth contract | yes | no |

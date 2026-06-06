@@ -90,6 +90,10 @@ function parsePortion(s: string | null): string | null {
   }
 }
 
+function legacyRowData(row: any[], columns: string[]): Record<string, unknown> {
+  return Object.fromEntries(columns.map((column, index) => [column, row[index] ?? null]));
+}
+
 function parseGender(s: string | null): "MALE" | "FEMALE" | null {
   if (!s) return null;
   const lower = s.toLowerCase().trim();
@@ -1182,6 +1186,7 @@ async function migrateDailyReports(
       runnyNose: false,
       vomit: false,
       createdAt: parseDate(colStr(row, "datetime", columns)) || NOW,
+      legacyData: legacyRowData(row, columns),
       updatedAt: NOW,
     });
   }

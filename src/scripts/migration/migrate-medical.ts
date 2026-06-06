@@ -201,6 +201,11 @@ async function migrateMedFormEntries(prisma: PrismaClient, dryRun: boolean) {
           medicalFormId,
           field,
           value,
+          legacyData: {
+            sourceDatabase: getMysqlConfig().database || "unknown",
+            sourceTable: "t_med_forms_info",
+            ...row,
+          },
         },
       });
     }

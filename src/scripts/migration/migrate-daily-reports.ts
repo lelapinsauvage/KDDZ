@@ -98,6 +98,28 @@ interface OldDailyReport {
   datetime: string;
   active: number;
   uby: number;
+  taken_meds?: string;
+  mood?: string;
+  mood2?: string;
+  constipation?: string | number;
+  sleep_from1?: string;
+  sleep_to1?: string;
+  sleep_from2?: string;
+  sleep_to2?: string;
+  cough?: string | number;
+  rnose?: string | number;
+  vomit?: string | number;
+  pantchecked?: string | number;
+  shirtchecked?: string | number;
+  tshirthecked?: string | number;
+  boxerchecked?: string | number;
+  sockschecked?: string | number;
+  brushchecked?: string | number;
+  towelchecked?: string | number;
+  diaperschecked?: string | number;
+  babybottlechecked?: string | number;
+  milkchecked?: string | number;
+  wipeschecked?: string | number;
 }
 
 interface OldFever {
@@ -162,6 +184,18 @@ export async function migrateDailyReports(prisma: PrismaClient) {
       where: { childId, reportDate },
     });
     if (existing) {
+      if (!dryRun && !existing.legacyData) {
+        await prisma.dailyReport.update({
+          where: { id: existing.id },
+          data: {
+            legacyData: {
+              sourceDatabase,
+              sourceTable: "t_daily_report",
+              ...row,
+            },
+          },
+        });
+      }
       setMapping("daily_report", row.report_id, existing.id);
       skipped++;
       continue;
@@ -192,7 +226,16 @@ export async function migrateDailyReports(prisma: PrismaClient) {
           stoolPotty: toInt(row.stool_pot),
           urineDiaper: toInt(row.ur_di),
           stoolDiaper: toInt(row.stool_di),
+          mood: cleanString(row.mood),
+          cough: toBool(row.cough ?? 0),
+          runnyNose: toBool(row.rnose ?? 0),
+          vomit: toBool(row.vomit ?? 0),
           remarks: cleanString(row.remarks),
+          legacyData: {
+            sourceDatabase,
+            sourceTable: "t_daily_report",
+            ...row,
+          },
           createdAt: row.datetime ? new Date(row.datetime) : new Date(),
         },
       });

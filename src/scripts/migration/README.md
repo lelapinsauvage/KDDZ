@@ -142,7 +142,7 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_garderies` | LegacyGarderieRegistry |
 | `notifications` | LegacySetting |
 | `year_select`, `year_db` | LegacyYearDatabase |
-| `t_daily_report` | DailyReport |
+| `t_daily_report` | DailyReport, including raw `legacyData` for parent mobile `daily.php`/`newdaily.php` parity |
 | `t_daily_fever` | DailyReportFever |
 | `t_daily_milk` | DailyReportMilk |
 | `t_daily_attachments` | DailyReportAttachment |
@@ -236,6 +236,8 @@ pnpm tsx src/scripts/migration/apply-legacy-file-urls.ts \
 ```
 
 The apply script updates only tables with strong legacy provenance. After rerunning migrations that include `20260601017000_add_legacy_file_provenance`, it rewrites branch/class/child/staff profile photos plus child, branch, teacher, nurse, doctor, manager, daily report, absence, payment, and form attachment URL fields by `sourceDatabase + legacyTable + legacyId`. Legacy `t_forms_attachments` exports use the `medical-form-document` rule and update `FormAttachment.fileUrl`; runtime-created form attachments use `form-attachment` for the same target. The script also patches `child-history-photo` entries inside legacy `ChildHistory.snapshot.image` JSON when the snapshot is a migrated `t_child_h` row and the current image value still matches the exported legacy filename.
+
+Daily report migrations also preserve the raw `t_daily_report` row on `DailyReport.legacyData`, and medical form info rows preserve `t_med_forms_info.medfid`/`medname` on `MedicalFormEntry.legacyData`. Those provenance fields are required for exact parent mobile daily-report responses, especially PHP-only fields and `newdaily.php` `takenmeds_Arr` name resolution.
 
 ### Count Reconciliation
 
