@@ -66,6 +66,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - Vaccination alarm generation now restores the legacy DOB-offset reminder family as a cron-safe/manual path: it computes 1/3/7-day reminders from the legacy vaccine schedule, creates idempotent `Alarm` rows, sends staff in-app notifications from the Vaccinations template, and exposes `/api/cron/vaccination-alarms`.
    - Payment alarm generation now restores the `newpayment`/`PaymentReminder` path from `Data::AlarmsPaidPayments()` and the `t_payments` before/after due reminder paths from `NotifyBeforePayment()`/`NotifyAfterPayment()` as cron-safe/manual generation that creates idempotent child-specific `Alarm` rows visible to parent payment feeds and exposes `/api/cron/payment-alarms`.
    - Holiday alarm generation now restores the `Data::AlarmsHoliday()` path as cron-safe/manual generation that creates idempotent `EVENT` alarms from active modern `Holiday` notification fields, sends staff in-app notifications, and exposes `/api/cron/holiday-alarms`.
+   - Scheduled event alarm generation now restores the `t_events.daysbefore` and legacy branch-list notification path as cron-safe/manual generation that creates idempotent branch-targeted `EVENT` alarms, sends staff in-app notifications, and exposes `/api/cron/event-alarms`.
    - Staff contract alarm generation now restores `Data::AlarmsTeachersContracts()`, `AlarmsManagersContracts()`, `AlarmsDoctorsContracts()`, and `AlarmsNurseContracts()` as cron-safe/manual generation: teacher/nurse legacy attachment expiry dates are preserved again, the job scans staff documents and attachments for the legacy 1/3/7-day absolute diff windows, creates idempotent `CONTRACT` alarms, sends staff in-app notifications, and exposes `/api/cron/contract-alarms`.
    - Remaining work is idempotent cron/job generation for the other approved legacy families, hosted schedule configuration after production crontab confirmation, and external push/email/SMS/WhatsApp providers after credential recovery or rotation.
 
@@ -104,7 +105,8 @@ This list is the first implementation backlog after the generated inventory/matr
    - Remaining work is final visual/action audit against `Zones_Management.php`, `Areas.php`, `regions.php`, and `regions.js`.
 
 18. **Food/holiday/event calendar nuances**
-   - Modern pages exist, but legacy tables include `t_food_apply`, holiday notification fields, send channels, repeat behavior, and event types that need exact mapping.
+   - Food applications, holiday notification fields, event types, and scheduled event notification metadata now have migration coverage; `/settings/events` restores legacy custom subject/body, multi-branch targeting, and 1-10 day offset controls.
+   - Remaining work is exact visual/action audit, holiday send-channel behavior, parent/mobile event delivery, and viewed/history parity.
 
 19. **Message delivery/read-state parity**
    - Modern messages exist, but legacy `t_alarms_msg` and `custom_notifications_msg` delivery/read/reset behavior needs exact restoration.

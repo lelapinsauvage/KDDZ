@@ -169,6 +169,7 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_food_apply` | FoodApplication |
 | `t_holiday` | Holiday |
 | `t_events_types` | EventType |
+| `t_events` | Event |
 | `t_alarms`, `t_alarms_*` (except `t_alarms_msg`) | Alarm |
 | `custom_notifications_*` delivery tables | NotificationReceipt |
 | `notifications_tokens` | PushToken |

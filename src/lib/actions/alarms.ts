@@ -39,6 +39,10 @@ import {
   type HolidayGenerationSummary,
 } from "@/lib/jobs/holiday-alarms";
 import {
+  generateEventAlarmsForOrganization,
+  type EventGenerationSummary,
+} from "@/lib/jobs/event-alarms";
+import {
   generateContractAlarmsForOrganization,
   type ContractGenerationSummary,
 } from "@/lib/jobs/contract-alarms";
@@ -52,6 +56,7 @@ export type {
 } from "@/lib/jobs/vaccination-alarms";
 export type { PaymentGenerationSummary } from "@/lib/jobs/payment-alarms";
 export type { HolidayGenerationSummary } from "@/lib/jobs/holiday-alarms";
+export type { EventGenerationSummary } from "@/lib/jobs/event-alarms";
 export type { ContractGenerationSummary } from "@/lib/jobs/contract-alarms";
 
 // ---------------------------------------------------------------------------
@@ -342,6 +347,39 @@ export async function generateHolidayAlarms(
   } catch (error) {
     console.error("Failed to generate holiday alarms:", error);
     return { success: false, error: "Failed to generate holiday alarms" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// generateEventAlarms
+// ---------------------------------------------------------------------------
+
+export async function generateEventAlarms(
+  branchId?: string,
+): Promise<ActionResult<EventGenerationSummary>> {
+  try {
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
+
+    if (branchId && !(await verifyBranchAccess(branchId, ctx.organizationId))) {
+      return { success: false, error: "Branch not found in your organization" };
+    }
+
+    const summary = await generateEventAlarmsForOrganization({
+      organizationId: ctx.organizationId,
+      branchId,
+    });
+
+    revalidatePath("/alarms");
+    revalidatePath("/alarms/events");
+    revalidatePath("/settings/events");
+    revalidatePath("/");
+
+    return { success: true, data: summary };
+  } catch (error) {
+    console.error("Failed to generate event alarms:", error);
+    return { success: false, error: "Failed to generate event alarms" };
   }
 }
 

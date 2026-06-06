@@ -4,6 +4,7 @@
  * Covers:
  *   t_attachments                  -> ChildAttachment
  *   t_events_types                 -> EventType
+ *   t_events                       -> Event
  *   t_garderie_doctor              -> Doctor
  *   t_garderie_doctor_attachments  -> DoctorAttachment
  *   t_manager_attachments          -> ManagerAttachment
@@ -44,6 +45,19 @@ interface OldEventType {
   event_name: string;
   default_subject: string;
   default_message: string;
+}
+
+interface OldEvent {
+  id: number;
+  submit_time: string | Date;
+  eventType: number;
+  edate: string;
+  custom_subject: string;
+  custom_body: string;
+  daysbefore: string;
+  uby: number;
+  branches: string;
+  active: number;
 }
 
 interface OldGarderieDoctor {
@@ -99,6 +113,27 @@ function asDate(value: unknown): Date | null {
     return isNaN(value.getTime()) ? null : value;
   }
   return parseDate(cleanString(value));
+}
+
+function parseJsonArray(value: string | null | undefined): unknown[] {
+  const cleaned = cleanString(value);
+  if (!cleaned) return [];
+  try {
+    const parsed = JSON.parse(cleaned);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function parseLegacyNumberList(value: string | null | undefined): number[] {
+  return Array.from(
+    new Set(
+      parseJsonArray(value)
+        .map((item) => toInt(item, 0))
+        .filter((item) => item > 0),
+    ),
+  );
 }
 
 async function tableExists(table: string): Promise<boolean> {
@@ -257,6 +292,111 @@ async function migrateEventTypes(
   log(
     `t_events_types: ${migrated} migrated, ${updated} updated, ${skipped} skipped`
   );
+}
+
+async function migrateEvents(
+  prisma: PrismaClient,
+  sourceDatabase: string,
+  organizationId: string,
+  dryRun: boolean
+) {
+  if (!(await tableExists("t_events"))) {
+    log("t_events: table not present, skipping");
+    return;
+  }
+
+  const rows = await queryMysql<OldEvent>("SELECT * FROM t_events ORDER BY id");
+  log(`Found ${rows.length} rows in t_events`);
+
+  let migrated = 0;
+  let updated = 0;
+  let skipped = 0;
+
+  for (const row of rows) {
+    const legacyId = toInt(row.id, 0);
+    if (!legacyId) {
+      skipped++;
+      continue;
+    }
+
+    const eventTypeId = getMapping("event_type", toInt(row.eventType, 0)) ?? null;
+    const eventType = eventTypeId
+      ? await prisma.eventType.findUnique({
+          where: { id: eventTypeId },
+          select: { name: true },
+        })
+      : null;
+    const legacyBranchIds = parseLegacyNumberList(row.branches);
+    const notificationBranchIds = legacyBranchIds
+      .map((legacyBranchId) => getMapping("branch", legacyBranchId))
+      .filter((branchId): branchId is string => Boolean(branchId));
+    const notificationDaysBefore = parseLegacyNumberList(row.daysbefore).filter(
+      (days) => days >= 1 && days <= 10
+    );
+    const customSubject = cleanString(row.custom_subject);
+    const customBody = cleanString(row.custom_body);
+    const eventDate = asDate(row.edate);
+    if (!eventDate) {
+      skipped++;
+      continue;
+    }
+
+    const key = legacyKey(sourceDatabase, "t_events", legacyId);
+    const data = {
+      sourceDatabase,
+      legacyKey: key,
+      legacyId,
+      organizationId,
+      title: eventType?.name ?? customSubject ?? `Event ${legacyId}`,
+      description: customBody,
+      customSubject,
+      customBody,
+      date: eventDate,
+      endDate: null,
+      eventTypeId,
+      branchId: notificationBranchIds.length === 1 ? notificationBranchIds[0] : null,
+      notificationBranchIds,
+      notificationDaysBefore,
+      isActive: toBool(row.active),
+      legacyData: legacyData({
+        ...row,
+        legacyBranchIds,
+        modernBranchIds: notificationBranchIds,
+        modernEventTypeId: eventTypeId,
+      }),
+      createdAt: asDate(row.submit_time) ?? new Date(),
+    };
+
+    const existingByKey = await prisma.event.findUnique({
+      where: { legacyKey: key },
+    });
+
+    if (!dryRun) {
+      if (existingByKey) {
+        await prisma.event.update({
+          where: { id: existingByKey.id },
+          data,
+        });
+        updated++;
+      } else {
+        const id = generateUUID();
+        await prisma.event.create({
+          data: { id, ...data },
+        });
+        setMapping("event", legacyId, id);
+        migrated++;
+      }
+    } else if (existingByKey) {
+      updated++;
+    } else {
+      migrated++;
+    }
+
+    if (existingByKey) setMapping("event", legacyId, existingByKey.id);
+    logProgress(migrated + updated + skipped, rows.length, "Events");
+  }
+
+  log(`t_events: ${migrated} migrated, ${updated} updated, ${skipped} skipped`);
 }
 
 async function migrateGarderieDoctors(
@@ -522,6 +662,7 @@ export async function migrateGarderieMisc(
 
   await migrateChildAttachments(prisma, sourceDatabase, dryRun);
   await migrateEventTypes(prisma, sourceDatabase, organizationId, dryRun);
+  await migrateEvents(prisma, sourceDatabase, organizationId, dryRun);
   await migrateGarderieDoctors(prisma, sourceDatabase, dryRun);
   await migrateGarderieDoctorAttachments(prisma, sourceDatabase, dryRun);
   await migrateManagerAttachments(prisma, sourceDatabase, dryRun);

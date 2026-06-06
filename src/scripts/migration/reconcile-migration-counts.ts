@@ -642,6 +642,14 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     notes: "Event type rows keep sourceDatabase and legacyKey.",
   }),
   provenancedRule({
+    id: "garderie_misc.t_events",
+    step: "9. Garderie Misc",
+    sourceTable: "t_events",
+    targetTable: "events",
+    notes:
+      "Event rows keep sourceDatabase, legacyKey, custom notification text, branch-list JSON, and day-offset metadata.",
+  }),
+  provenancedRule({
     id: "garderie_misc.t_garderie_doctor",
     step: "9. Garderie Misc",
     sourceTable: "t_garderie_doctor",

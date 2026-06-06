@@ -3,6 +3,12 @@ import { getBranches } from "@/lib/actions/branches";
 import { getAlarms } from "@/lib/actions/alarms";
 import { EventAlarmsClient } from "./event-alarms-client";
 
+function stringArray(value: unknown) {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string" && item.trim() !== "")
+    : [];
+}
+
 export default async function EventAlarmsPage() {
   const [eventsResult, branchesResult, alarmsResult] = await Promise.all([
     getEvents({ isActive: true }),
@@ -19,32 +25,51 @@ export default async function EventAlarmsPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rawAlarms = (rawAlarmData.alarms ?? []) as Array<any>;
 
+  const branchNameById = new Map(branches.map((branch) => [branch.id, branch.name]));
+
   const serializedAlarms = rawAlarms.map((a) => {
     const legacyData = (a.legacyData ?? {}) as Record<string, unknown>;
+    const isEventAlarm =
+      a.referenceType === "Event" ||
+      legacyData.sourceTable === "t_events" ||
+      legacyData.modernGenerator === "generateEventAlarms";
+    const branchId =
+      ((a.branch?.id ?? legacyData.targetBranchId ?? legacyData.branchId ?? "") as string);
     return {
       id: a.id as string,
-      title: ((legacyData.title as string | undefined) ?? "Holiday Reminder") as string,
+      title: ((legacyData.title as string | undefined) ??
+        (isEventAlarm ? "Event Reminder" : "Holiday Reminder")) as string,
       message: (a.message ?? "") as string,
       date: a.dueDate ? (a.dueDate as Date).toISOString().split("T")[0] : "",
-      type: "Holiday Reminder",
-      typeColor: "#0B9178",
-      source: "Holiday Alarm" as const,
-      branchId: (a.branch?.id ?? "") as string,
-      branch: (a.branch?.name ?? "All Branches") as string,
+      type: isEventAlarm ? "Event Reminder" : "Holiday Reminder",
+      typeColor: isEventAlarm ? "#2563EB" : "#0B9178",
+      source: isEventAlarm ? ("Event Alarm" as const) : ("Holiday Alarm" as const),
+      branchId,
+      branchIds: branchId ? [branchId] : [],
+      branch: ((a.branch?.name ?? legacyData.branchName) as string | undefined) ?? "All Branches",
     };
   });
 
-  const serializedEvents = rawEvents.map((e) => ({
-    id: e.id as string,
-    title: e.title as string,
-    message: (e.description ?? "") as string,
-    date: e.date ? (e.date as Date).toISOString().split("T")[0] : "",
-    type: (e.eventType?.name ?? "General") as string,
-    typeColor: (e.eventType?.color ?? "#0B9178") as string,
-    source: "Scheduled Event" as const,
-    branchId: (e.branch?.id ?? "") as string,
-    branch: (e.branch?.name ?? "All Branches") as string,
-  }));
+  const serializedEvents = rawEvents.map((e) => {
+    const branchIds = stringArray(e.notificationBranchIds);
+    const branchNames = branchIds
+      .map((id) => branchNameById.get(id))
+      .filter((name): name is string => Boolean(name));
+    return {
+      id: e.id as string,
+      title: (e.customSubject ?? e.title) as string,
+      message: (e.customBody ?? e.description ?? "") as string,
+      date: e.date ? (e.date as Date).toISOString().split("T")[0] : "",
+      type: (e.eventType?.name ?? "General") as string,
+      typeColor: (e.eventType?.color ?? "#0B9178") as string,
+      source: "Scheduled Event" as const,
+      branchId: (branchIds.length === 1 ? branchIds[0] : e.branch?.id ?? "") as string,
+      branchIds: branchIds.length ? branchIds : e.branch?.id ? [e.branch.id as string] : [],
+      branch: branchNames.length
+        ? branchNames.join(" & ")
+        : ((e.branch?.name ?? "All Branches") as string),
+    };
+  });
 
   return (
     <EventAlarmsClient

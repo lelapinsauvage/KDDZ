@@ -62,10 +62,14 @@ export type HolidayFormValues = z.infer<typeof holidaySchema>;
 export const eventSchema = z.object({
   title: z.string().min(1, "Event title is required"),
   description: z.string(),
+  customSubject: z.string(),
+  customBody: z.string().max(155, "Message must be 155 characters or less"),
   date: z.string().min(1, "Start date is required"),
   endDate: z.string(),
   eventTypeId: z.string().nullable(),
   branchId: z.string().nullable(),
+  notificationBranchIds: z.array(z.string()),
+  notificationDaysBefore: z.array(z.number().int().min(1).max(10)),
   isActive: z.boolean(),
 });
 

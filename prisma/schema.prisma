@@ -254,6 +254,7 @@ model Organization {
   foods                   Food[]
   assessmentScheduleRules AssessmentScheduleRule[]
   eventTypes              EventType[]
+  events                  Event[]
   notificationTemplates   NotificationTemplate[]
 
   @@map("organizations")
@@ -2128,21 +2129,34 @@ model EventType {
 }
 
 model Event {
-  id          String    @id @default(uuid()) @db.Uuid
-  title       String
-  description String?   @db.Text
-  date        DateTime  @db.Date
-  endDate     DateTime? @db.Date
-  eventTypeId String?   @db.Uuid
-  branchId    String?   @db.Uuid
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id                     String    @id @default(uuid()) @db.Uuid
+  sourceDatabase         String?
+  legacyKey              String?   @unique
+  legacyId               Int?
+  organizationId         String?   @db.Uuid
+  title                  String
+  description            String?   @db.Text
+  customSubject          String?   @db.Text
+  customBody             String?   @db.Text
+  date                   DateTime  @db.Date
+  endDate                DateTime? @db.Date
+  eventTypeId            String?   @db.Uuid
+  branchId               String?   @db.Uuid
+  notificationBranchIds  Json?
+  notificationDaysBefore Json?
+  isActive               Boolean   @default(true)
+  legacyData             Json?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
 
-  eventType EventType? @relation(fields: [eventTypeId], references: [id], onDelete: SetNull)
-  branch    Branch?    @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  eventType    EventType?    @relation(fields: [eventTypeId], references: [id], onDelete: SetNull)
+  branch       Branch?       @relation(fields: [branchId], references: [id], onDelete: SetNull)
 
   @@index([date])
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([organizationId])
   @@index([eventTypeId])
   @@index([branchId])
   @@index([isActive])

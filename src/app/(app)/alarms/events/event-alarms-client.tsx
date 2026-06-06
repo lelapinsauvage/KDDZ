@@ -17,7 +17,7 @@ import {
 import { CalendarDays, ExternalLink, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { AlarmActionsCell } from "@/components/alarms/alarm-actions-cell";
-import { generateHolidayAlarms } from "@/lib/actions/alarms";
+import { generateEventAlarms, generateHolidayAlarms } from "@/lib/actions/alarms";
 
 interface EventAlarm {
   id: string;
@@ -26,8 +26,9 @@ interface EventAlarm {
   date: string;
   type: string;
   typeColor: string;
-  source: "Holiday Alarm" | "Scheduled Event";
+  source: "Holiday Alarm" | "Event Alarm" | "Scheduled Event";
   branchId: string;
+  branchIds: string[];
   branch: string;
 }
 
@@ -39,21 +40,26 @@ interface EventAlarmsClientProps {
 export function EventAlarmsClient({ events, branches }: EventAlarmsClientProps) {
   const router = useRouter();
   const [branchFilter, setBranchFilter] = useState("ALL");
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatingJob, setGeneratingJob] = useState<"holiday" | "event" | null>(null);
   const [generationStatus, setGenerationStatus] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     if (branchFilter === "ALL") return events;
-    return events.filter((e) => e.branchId === branchFilter || e.branch === "All Branches");
+    return events.filter(
+      (e) =>
+        e.branchId === branchFilter ||
+        e.branchIds.includes(branchFilter) ||
+        e.branch === "All Branches",
+    );
   }, [branchFilter, events]);
 
-  async function handleGenerate() {
-    setIsGenerating(true);
+  async function handleGenerateHolidays() {
+    setGeneratingJob("holiday");
     setGenerationStatus(null);
     const result = await generateHolidayAlarms(
       branchFilter === "ALL" ? undefined : branchFilter,
     );
-    setIsGenerating(false);
+    setGeneratingJob(null);
 
     if (result.success && result.data) {
       const {
@@ -73,6 +79,32 @@ export function EventAlarmsClient({ events, branches }: EventAlarmsClientProps) 
     setGenerationStatus(result.error ?? "Holiday alarm generation failed.");
   }
 
+  async function handleGenerateEvents() {
+    setGeneratingJob("event");
+    setGenerationStatus(null);
+    const result = await generateEventAlarms(
+      branchFilter === "ALL" ? undefined : branchFilter,
+    );
+    setGeneratingJob(null);
+
+    if (result.success && result.data) {
+      const {
+        eventsMatched,
+        eventsScanned,
+        alarmsCreated,
+        notificationsCreated,
+        skippedExisting,
+      } = result.data;
+      setGenerationStatus(
+        `Matched ${eventsMatched} of ${eventsScanned} event${eventsScanned === 1 ? "" : "s"}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"} and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing.`,
+      );
+      router.refresh();
+      return;
+    }
+
+    setGenerationStatus(result.error ?? "Event alarm generation failed.");
+  }
+
   const columns: ColumnDef<EventAlarm>[] = useMemo(
     () => [
       {
@@ -88,7 +120,7 @@ export function EventAlarmsClient({ events, branches }: EventAlarmsClientProps) 
       {
         accessorKey: "message",
         header: "Details",
-        cell: ({ row }) => row.original.message || "\u2014",
+        cell: ({ row }) => row.original.message || "None",
       },
       {
         accessorKey: "date",
@@ -123,7 +155,7 @@ export function EventAlarmsClient({ events, branches }: EventAlarmsClientProps) 
         id: "actions",
         header: "Actions",
         cell: ({ row }) =>
-          row.original.source === "Holiday Alarm" ? (
+          row.original.source !== "Scheduled Event" ? (
             <AlarmActionsCell id={row.original.id} />
           ) : (
             <Button asChild variant="ghost" size="icon" className="size-8">
@@ -164,12 +196,22 @@ export function EventAlarmsClient({ events, branches }: EventAlarmsClientProps) 
           <Button
             type="button"
             variant="outline"
-            onClick={handleGenerate}
-            disabled={isGenerating}
+            onClick={handleGenerateHolidays}
+            disabled={generatingJob !== null}
             className="gap-2"
           >
-            <RefreshCw className={`size-4 ${isGenerating ? "animate-spin" : ""}`} />
-            {isGenerating ? "Generating..." : "Generate Holiday Alarms"}
+            <RefreshCw className={`size-4 ${generatingJob === "holiday" ? "animate-spin" : ""}`} />
+            {generatingJob === "holiday" ? "Generating..." : "Generate Holiday Alarms"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleGenerateEvents}
+            disabled={generatingJob !== null}
+            className="gap-2"
+          >
+            <RefreshCw className={`size-4 ${generatingJob === "event" ? "animate-spin" : ""}`} />
+            {generatingJob === "event" ? "Generating..." : "Generate Event Alarms"}
           </Button>
           {generationStatus && (
             <span className="text-sm text-muted-foreground">{generationStatus}</span>

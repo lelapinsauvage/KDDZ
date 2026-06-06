@@ -60,6 +60,8 @@ interface EventItem {
   id: string;
   title: string;
   description: string;
+  customSubject: string;
+  customBody: string;
   date: string;
   endDate: string | null;
   eventTypeId: string | null;
@@ -67,6 +69,8 @@ interface EventItem {
   eventTypeName: string;
   branchId: string | null;
   branchName: string;
+  notificationBranchIds: string[];
+  notificationDaysBefore: number[];
   isActive: boolean;
 }
 
@@ -74,6 +78,8 @@ interface EventTypeOption {
   id: string;
   name: string;
   color: string;
+  defaultSubject: string;
+  defaultMessage: string;
 }
 
 interface BranchOption {
@@ -94,6 +100,7 @@ const MONTH_NAMES = [
 ];
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const REMINDER_DAY_OPTIONS = Array.from({ length: 10 }, (_, index) => index + 1);
 
 function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month, 0).getDate();
@@ -132,10 +139,14 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
     defaultValues: {
       title: "",
       description: "",
+      customSubject: "",
+      customBody: "",
       date: "",
       endDate: "",
       eventTypeId: null,
       branchId: null,
+      notificationBranchIds: [],
+      notificationDaysBefore: [1, 3, 7],
       isActive: true,
     },
   });
@@ -147,10 +158,14 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
     form.reset({
       title: "",
       description: "",
+      customSubject: "",
+      customBody: "",
       date: presetDate ?? "",
       endDate: "",
       eventTypeId: null,
       branchId: null,
+      notificationBranchIds: [],
+      notificationDaysBefore: [1, 3, 7],
       isActive: true,
     });
     setDialogOpen(true);
@@ -162,10 +177,16 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
     form.reset({
       title: ev.title,
       description: ev.description,
+      customSubject: ev.customSubject,
+      customBody: ev.customBody,
       date: ev.date,
       endDate: ev.endDate ?? "",
       eventTypeId: ev.eventTypeId,
       branchId: ev.branchId,
+      notificationBranchIds: ev.notificationBranchIds,
+      notificationDaysBefore: ev.notificationDaysBefore.length
+        ? ev.notificationDaysBefore
+        : [1, 3, 7],
       isActive: ev.isActive,
     });
     setDialogOpen(true);
@@ -179,22 +200,36 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
   function onSubmit(values: EventFormValues) {
     startTransition(async () => {
       const eventTypeId = values.eventTypeId || null;
-      const branchId = values.branchId || null;
-      const branchName = branchId
-        ? (branches.find((b) => b.id === branchId)?.name ?? "—")
-        : "All Branches";
+      const notificationBranchIds = values.notificationBranchIds;
+      const branchId =
+        values.branchId ||
+        (notificationBranchIds.length === 1 ? notificationBranchIds[0] : null);
+      const selectedBranchNames = notificationBranchIds
+        .map((id) => branches.find((branch) => branch.id === id)?.name)
+        .filter((name): name is string => Boolean(name));
+      const branchName = selectedBranchNames.length
+        ? selectedBranchNames.join(" & ")
+        : branchId
+          ? (branches.find((b) => b.id === branchId)?.name ?? "Unknown")
+          : "All Branches";
       const eventType = eventTypeId
         ? eventTypes.find((et) => et.id === eventTypeId)
         : null;
+      const customSubject = values.customSubject || values.title;
+      const customBody = values.customBody || values.description || null;
 
       if (dialogMode === "add") {
         const result = await createEvent({
           title: values.title,
           description: values.description || null,
+          customSubject,
+          customBody,
           date: values.date,
           endDate: values.endDate || null,
           eventTypeId,
           branchId,
+          notificationBranchIds,
+          notificationDaysBefore: values.notificationDaysBefore,
           isActive: values.isActive,
         });
         if (result.success && result.data) {
@@ -206,13 +241,17 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
               id: newEv.id,
               title: values.title,
               description: values.description || "",
+              customSubject,
+              customBody: customBody || "",
               date: values.date,
               endDate: values.endDate || null,
               eventTypeId,
               eventTypeColor: eventType?.color ?? "#0B9178",
-              eventTypeName: eventType?.name ?? "—",
+              eventTypeName: eventType?.name ?? "No Type",
               branchId,
               branchName,
+              notificationBranchIds,
+              notificationDaysBefore: values.notificationDaysBefore,
               isActive: values.isActive,
             },
           ]);
@@ -224,10 +263,14 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
         const result = await updateEvent(editingId, {
           title: values.title,
           description: values.description || null,
+          customSubject,
+          customBody,
           date: values.date,
           endDate: values.endDate || null,
           eventTypeId,
           branchId,
+          notificationBranchIds,
+          notificationDaysBefore: values.notificationDaysBefore,
           isActive: values.isActive,
         });
         if (result.success) {
@@ -238,13 +281,17 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
                     ...e,
                     title: values.title,
                     description: values.description || "",
+                    customSubject,
+                    customBody: customBody || "",
                     date: values.date,
                     endDate: values.endDate || null,
                     eventTypeId,
                     eventTypeColor: eventType?.color ?? "#0B9178",
-                    eventTypeName: eventType?.name ?? "—",
+                    eventTypeName: eventType?.name ?? "No Type",
                     branchId,
                     branchName,
+                    notificationBranchIds,
+                    notificationDaysBefore: values.notificationDaysBefore,
                     isActive: values.isActive,
                   }
                 : e
@@ -256,6 +303,49 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
         }
       }
       setDialogOpen(false);
+    });
+  }
+
+  function handleEventTypeChange(value: string) {
+    const eventTypeId = value === "NONE" ? null : value;
+    form.setValue("eventTypeId", eventTypeId);
+
+    const eventType = eventTypes.find((option) => option.id === eventTypeId);
+    if (!eventType) return;
+
+    if (!form.getValues("title")) {
+      form.setValue("title", eventType.name);
+    }
+    if (!form.getValues("customSubject") && eventType.defaultSubject) {
+      form.setValue("customSubject", eventType.defaultSubject);
+    }
+    if (!form.getValues("customBody") && eventType.defaultMessage) {
+      form.setValue("customBody", eventType.defaultMessage);
+    }
+  }
+
+  function toggleBranch(branchId: string, checked: boolean) {
+    const selected = form.getValues("notificationBranchIds");
+    const next = checked
+      ? Array.from(new Set([...selected, branchId]))
+      : selected.filter((id) => id !== branchId);
+
+    form.setValue("notificationBranchIds", next, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    form.setValue("branchId", next.length === 1 ? next[0] : null);
+  }
+
+  function toggleReminderDay(day: number, checked: boolean) {
+    const selected = form.getValues("notificationDaysBefore");
+    const next = checked
+      ? Array.from(new Set([...selected, day])).sort((a, b) => a - b)
+      : selected.filter((selectedDay) => selectedDay !== day);
+
+    form.setValue("notificationDaysBefore", next, {
+      shouldDirty: true,
+      shouldValidate: true,
     });
   }
 
@@ -372,10 +462,22 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
       },
       {
         accessorKey: "branchName",
-        header: "Branch",
+        header: "Branches",
         cell: ({ row }) => (
           <span className="text-muted-foreground">{row.original.branchName}</span>
         ),
+      },
+      {
+        accessorKey: "notificationDaysBefore",
+        header: "Reminders",
+        cell: ({ row }) => {
+          const days = row.original.notificationDaysBefore;
+          return (
+            <span className="text-muted-foreground">
+              {days.length ? `${days.join(", ")} day(s)` : "None"}
+            </span>
+          );
+        },
       },
       {
         accessorKey: "isActive",
@@ -560,7 +662,7 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[640px]">
           <DialogHeader>
             <DialogTitle>
               {dialogMode === "add" ? "Add Event" : "Edit Event"}
@@ -585,6 +687,28 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
                 rows={3}
               />
             </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">Subject</label>
+                <Input
+                  placeholder="Notification subject"
+                  {...form.register("customSubject")}
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">Body</label>
+                <Textarea
+                  placeholder="Notification body"
+                  {...form.register("customBody")}
+                  rows={2}
+                />
+                {form.formState.errors.customBody && (
+                  <p className="mt-1 text-xs text-destructive">
+                    {form.formState.errors.customBody.message}
+                  </p>
+                )}
+              </div>
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-1.5 block text-sm font-medium">Start Date</label>
@@ -603,7 +727,7 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
                 <label className="mb-1.5 block text-sm font-medium">Event Type</label>
                 <Select
                   value={form.watch("eventTypeId") ?? "NONE"}
-                  onValueChange={(v) => form.setValue("eventTypeId", v === "NONE" ? null : v)}
+                  onValueChange={handleEventTypeChange}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -624,33 +748,57 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium">Branch</label>
-                <Select
-                  value={form.watch("branchId") ?? "ALL"}
-                  onValueChange={(v) => form.setValue("branchId", v === "ALL" ? null : v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">All Branches</SelectItem>
-                    {branches.map((b) => (
-                      <SelectItem key={b.id} value={b.id}>
-                        {b.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <label className="flex items-center gap-3 self-end pb-2 text-sm">
+                <Checkbox
+                  checked={form.watch("isActive")}
+                  onCheckedChange={(v) => form.setValue("isActive", !!v)}
+                />
+                Active
+              </label>
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium">Branches</label>
+              <div className="grid max-h-[152px] gap-2 overflow-auto rounded-md border p-3 md:grid-cols-2">
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={form.watch("notificationBranchIds").length === 0}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        form.setValue("notificationBranchIds", [], {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        });
+                        form.setValue("branchId", null);
+                      }
+                    }}
+                  />
+                  All Branches
+                </label>
+                {branches.map((branch) => (
+                  <label key={branch.id} className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={form.watch("notificationBranchIds").includes(branch.id)}
+                      onCheckedChange={(checked) => toggleBranch(branch.id, !!checked)}
+                    />
+                    {branch.name}
+                  </label>
+                ))}
               </div>
             </div>
-            <label className="flex items-center gap-3 text-sm">
-              <Checkbox
-                checked={form.watch("isActive")}
-                onCheckedChange={(v) => form.setValue("isActive", !!v)}
-              />
-              Active
-            </label>
+            <div>
+              <label className="mb-2 block text-sm font-medium">Days Before</label>
+              <div className="grid grid-cols-5 gap-2 rounded-md border p-3 sm:grid-cols-10">
+                {REMINDER_DAY_OPTIONS.map((day) => (
+                  <label key={day} className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={form.watch("notificationDaysBefore").includes(day)}
+                      onCheckedChange={(checked) => toggleReminderDay(day, !!checked)}
+                    />
+                    {day}
+                  </label>
+                ))}
+              </div>
+            </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                 Cancel

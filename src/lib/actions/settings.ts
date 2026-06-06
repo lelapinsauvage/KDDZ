@@ -37,10 +37,14 @@ interface EventTypeData {
 interface EventData {
   title: string;
   description?: string | null;
+  customSubject?: string | null;
+  customBody?: string | null;
   date: Date | string;
   endDate?: Date | string | null;
   eventTypeId?: string | null;
   branchId?: string | null;
+  notificationBranchIds?: string[] | null;
+  notificationDaysBefore?: number[] | null;
   isActive?: boolean;
 }
 
@@ -64,6 +68,36 @@ type ActionResult<T = unknown> = {
 
 function toDate(value: Date | string): Date {
   return typeof value === "string" ? new Date(value) : value;
+}
+
+function normalizeStringArray(value: string[] | null | undefined) {
+  return Array.from(
+    new Set((value ?? []).map((item) => item.trim()).filter(Boolean)),
+  );
+}
+
+function normalizeDaysBefore(value: number[] | null | undefined) {
+  return Array.from(
+    new Set(
+      (value ?? [])
+        .map((item) => Number(item))
+        .filter((item) => Number.isInteger(item) && item >= 1 && item <= 10),
+    ),
+  ).sort((a, b) => a - b);
+}
+
+function stringListFromJson(value: unknown) {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string" && item.trim() !== "")
+    : [];
+}
+
+async function verifyBranchListAccess(branchIds: string[], organizationId: string) {
+  if (branchIds.length === 0) return true;
+  const count = await db.branch.count({
+    where: { id: { in: branchIds }, organizationId },
+  });
+  return count === branchIds.length;
 }
 
 function revalidateLocationPages() {
@@ -728,14 +762,11 @@ export async function getEvents(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {
       OR: [
+        { organizationId: orgId },
         { branch: { organizationId: orgId } },
-        { branchId: null },
+        { organizationId: null, branchId: null },
       ],
     };
-
-    if (params.branchId) {
-      where.branchId = params.branchId;
-    }
 
     if (params.eventTypeId) {
       where.eventTypeId = params.eventTypeId;
@@ -760,7 +791,18 @@ export async function getEvents(
       orderBy: { date: "asc" },
     });
 
-    return { success: true, data: events };
+    const filteredEvents = params.branchId
+      ? events.filter((event) => {
+          const notificationBranchIds = stringListFromJson(event.notificationBranchIds);
+          return (
+            event.branchId === params.branchId ||
+            notificationBranchIds.includes(params.branchId!) ||
+            (!event.branchId && notificationBranchIds.length === 0)
+          );
+        })
+      : events;
+
+    return { success: true, data: filteredEvents };
   } catch (error) {
     console.error("Failed to fetch events:", error);
     return { success: false, error: "Failed to fetch events" };
@@ -777,18 +819,31 @@ export async function createEvent(data: EventData): Promise<ActionResult> {
     if (!result.ok) return { success: false, error: result.error };
     const { ctx } = result;
 
-    if (data.branchId && !(await verifyBranchAccess(data.branchId, ctx.organizationId))) {
+    const notificationBranchIds = normalizeStringArray(data.notificationBranchIds);
+    const notificationDaysBefore = normalizeDaysBefore(data.notificationDaysBefore);
+    const scopedBranchId =
+      data.branchId ?? (notificationBranchIds.length === 1 ? notificationBranchIds[0] : null);
+
+    if (scopedBranchId && !(await verifyBranchAccess(scopedBranchId, ctx.organizationId))) {
+      return { success: false, error: "Branch not found in your organization" };
+    }
+    if (!(await verifyBranchListAccess(notificationBranchIds, ctx.organizationId))) {
       return { success: false, error: "Branch not found in your organization" };
     }
 
     const event = await db.event.create({
       data: {
+        organizationId: ctx.organizationId,
         title: data.title,
         description: data.description ?? null,
+        customSubject: data.customSubject ?? data.title,
+        customBody: data.customBody ?? data.description ?? null,
         date: toDate(data.date),
         endDate: data.endDate ? toDate(data.endDate) : null,
         eventTypeId: data.eventTypeId ?? null,
-        branchId: data.branchId ?? null,
+        branchId: scopedBranchId,
+        notificationBranchIds,
+        notificationDaysBefore,
         isActive: data.isActive ?? true,
       },
     });
@@ -819,8 +874,9 @@ export async function updateEvent(
       where: {
         id,
         OR: [
+          { organizationId: ctx.organizationId },
           { branch: { organizationId: ctx.organizationId } },
-          { branchId: null },
+          { organizationId: null, branchId: null },
         ],
       },
       select: { id: true },
@@ -829,7 +885,27 @@ export async function updateEvent(
       return { success: false, error: "Event not found in your organization" };
     }
 
-    if (data.branchId && !(await verifyBranchAccess(data.branchId, ctx.organizationId))) {
+    const notificationBranchIds =
+      data.notificationBranchIds === undefined
+        ? undefined
+        : normalizeStringArray(data.notificationBranchIds);
+    const notificationDaysBefore =
+      data.notificationDaysBefore === undefined
+        ? undefined
+        : normalizeDaysBefore(data.notificationDaysBefore);
+    const scopedBranchId =
+      data.branchId ??
+      (notificationBranchIds && notificationBranchIds.length === 1
+        ? notificationBranchIds[0]
+        : data.branchId);
+
+    if (scopedBranchId && !(await verifyBranchAccess(scopedBranchId, ctx.organizationId))) {
+      return { success: false, error: "Branch not found in your organization" };
+    }
+    if (
+      notificationBranchIds &&
+      !(await verifyBranchListAccess(notificationBranchIds, ctx.organizationId))
+    ) {
       return { success: false, error: "Branch not found in your organization" };
     }
 
@@ -839,13 +915,24 @@ export async function updateEvent(
     if (data.title !== undefined) updateData.title = data.title;
     if (data.description !== undefined)
       updateData.description = data.description;
+    if (data.customSubject !== undefined)
+      updateData.customSubject = data.customSubject;
+    if (data.customBody !== undefined)
+      updateData.customBody = data.customBody;
     if (data.date !== undefined) updateData.date = toDate(data.date);
     if (data.endDate !== undefined)
       updateData.endDate = data.endDate ? toDate(data.endDate) : null;
     if (data.eventTypeId !== undefined)
       updateData.eventTypeId = data.eventTypeId;
-    if (data.branchId !== undefined) updateData.branchId = data.branchId;
+    if (data.branchId !== undefined || notificationBranchIds !== undefined) {
+      updateData.branchId = scopedBranchId ?? null;
+    }
+    if (notificationBranchIds !== undefined)
+      updateData.notificationBranchIds = notificationBranchIds;
+    if (notificationDaysBefore !== undefined)
+      updateData.notificationDaysBefore = notificationDaysBefore;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
+    updateData.organizationId = ctx.organizationId;
 
     const event = await db.event.update({
       where: { id },
@@ -875,8 +962,9 @@ export async function deleteEvent(id: string): Promise<ActionResult> {
       where: {
         id,
         OR: [
+          { organizationId: ctx.organizationId },
           { branch: { organizationId: ctx.organizationId } },
-          { branchId: null },
+          { organizationId: null, branchId: null },
         ],
       },
       select: { id: true },
