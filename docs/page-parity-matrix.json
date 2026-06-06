@@ -16435,7 +16435,7 @@
     "legacyPhp": "Front/templates/admin/users/activate.php",
     "legacyJs": "",
     "modernRoute": "/activate.php, /users/activate.php",
-    "status": "partial - legacy activation token flow restored; email resend delivery remains",
+    "status": "partial - legacy activation token flow and template surface restored; email resend delivery remains",
     "legacyTablesMentioned": [
       "an",
       "login_confirm"
@@ -16444,7 +16444,7 @@
       "key",
       "resend"
     ],
-    "verification": "`/activate.php?key=` and `/users/activate.php?key=` now consume migrated `LegacyAuthRecord` rows from legacy `login_confirm`/`login_confirm_man` with `recordType = new_user`, set the resolved modern `User` active and email-verified, retire the token as `new_user_activated` so repeat clicks fall through to the incorrect-link state, and restore the legacy success, incorrect link, already activated, pending activation, missing activation key, What to do now, and homepage copy. Signed-in users without a key see the legacy pending/already states, and `/activate.php?resend=1` resolves the pending token for display. Remaining work is wiring real legacy activation resend email delivery/templates (`email-activate-resend-*`, `email-activate-*`) through an SMTP/provider instead of the current no-mail fallback."
+    "verification": "`/activate.php?key=` and `/users/activate.php?key=` now consume migrated `LegacyAuthRecord` rows from legacy `login_confirm`/`login_confirm_man` with `recordType = new_user`, set the resolved modern `User` active and email-verified, retire the token as `new_user_activated` so repeat clicks fall through to the incorrect-link state, and restore the legacy success, incorrect link, already activated, pending activation, missing activation key, What to do now, and homepage copy. Signed-in users without a key see the legacy pending/already states, and `/activate.php?resend=1` resolves the pending token for display. The legacy activation email templates are now editable in `/settings/notifications` as Resend link and Activated, falling back to migrated `login_settings` keys `email-activate-resend-subj`, `email-activate-resend-msg`, `email-activate-subj`, and `email-activate-msg`. Remaining work is wiring real SMTP/provider delivery for resend and post-activation emails instead of the current no-mail fallback."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/assets/css/index.php",
@@ -16788,11 +16788,11 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-activate.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/settings/notifications",
+    "status": "partial - legacy activation email template fields restored in notification templates; delivery audit remains",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/settings/notifications` now includes activation template categories matching the legacy admin settings page: Resend link with Subject/body shortcodes `{{site_address}}`, `{{full_name}}`, `{{username}}`, `{{activate}}`, and Activated with Subject/body shortcodes `{{site_address}}`, `{{full_name}}`, `{{username}}`. Defaults fall back to migrated `LegacySetting` rows from `login_settings`/`login_settings_man` for `email-activate-resend-subj`, `email-activate-resend-msg`, `email-activate-subj`, and `email-activate-msg`, and Save All persists them as modern `NotificationTemplate` rows. Remaining work is full legacy admin auth settings tab parity and actual SMTP/provider send integration for activation emails."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-add-user.php",

@@ -22,6 +22,8 @@ const TEMPLATE_CATEGORIES = [
   "PAYMENT_AFTER",
   "EXPIRATION",
   "CONTROL",
+  "ACTIVATION_RESEND",
+  "ACTIVATION_ACTIVATED",
 ] as const;
 
 type TemplateCategory = (typeof TEMPLATE_CATEGORIES)[number];
@@ -75,6 +77,14 @@ const CATEGORY_DEFAULTS: Record<
     subject: "Control Notification",
     body: "Control check for [[child_name]] at [[branch_name]] on [[date]].",
   },
+  ACTIVATION_RESEND: {
+    subject: "Activation Link",
+    body: "Hello {{full_name}}, please activate your account: {{activate}}",
+  },
+  ACTIVATION_ACTIVATED: {
+    subject: "Account Activated",
+    body: "Hello {{full_name}}, your account at {{site_address}} has been activated.",
+  },
 };
 
 const TEST_VARIABLES: TemplateVariables = {
@@ -94,6 +104,23 @@ const TEST_VARIABLES: TemplateVariables = {
   payment_date: new Date().toISOString().slice(0, 10),
   amount: "100.00",
   currency: "USD",
+  site_address: process.env.NEXT_PUBLIC_SITE_URL ?? "https://kiddzonline.com/",
+  full_name: "Sample User",
+  username: "sampleuser",
+  activate: "https://kiddzonline.com/activate.php?key=sample",
+};
+
+const LEGACY_ACTIVATION_TEMPLATE_KEYS: Partial<
+  Record<TemplateCategory, { subject: string; body: string }>
+> = {
+  ACTIVATION_RESEND: {
+    subject: "email-activate-resend-subj",
+    body: "email-activate-resend-msg",
+  },
+  ACTIVATION_ACTIVATED: {
+    subject: "email-activate-subj",
+    body: "email-activate-msg",
+  },
 };
 
 export interface TemplateRow {
@@ -119,11 +146,41 @@ export async function getNotificationTemplates(): Promise<
       orderBy: { category: "asc" },
     });
 
+    const legacyActivationRows = await db.legacySetting.findMany({
+      where: {
+        legacyTable: { in: ["login_settings", "login_settings_man"] },
+        settingKey: {
+          in: [
+            "email-activate-resend-subj",
+            "email-activate-resend-msg",
+            "email-activate-subj",
+            "email-activate-msg",
+          ],
+        },
+      },
+      orderBy: { updatedAt: "desc" },
+    });
+    const legacyActivationSettings = new Map<string, string>();
+    for (const row of legacyActivationRows) {
+      if (!row.settingValue || legacyActivationSettings.has(row.settingKey)) continue;
+      legacyActivationSettings.set(row.settingKey, row.settingValue);
+    }
+
     const map = new Map(existing.map((t) => [t.category, t]));
 
     const rows: TemplateRow[] = TEMPLATE_CATEGORIES.map((cat) => {
       const row = map.get(cat);
-      const defaults = CATEGORY_DEFAULTS[cat];
+      const legacyKeys = LEGACY_ACTIVATION_TEMPLATE_KEYS[cat];
+      const defaults = legacyKeys
+        ? {
+            subject:
+              legacyActivationSettings.get(legacyKeys.subject) ??
+              CATEGORY_DEFAULTS[cat].subject,
+            body:
+              legacyActivationSettings.get(legacyKeys.body) ??
+              CATEGORY_DEFAULTS[cat].body,
+          }
+        : CATEGORY_DEFAULTS[cat];
       return {
         id: row?.id ?? "",
         category: cat,

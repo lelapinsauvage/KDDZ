@@ -46,6 +46,8 @@ import {
   DollarSign,
   History,
   ListTree,
+  MailCheck,
+  MailPlus,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -150,6 +152,20 @@ const CATEGORY_META: Record<string, CategoryMeta> = {
     bg: "bg-emerald-50",
     border: "border-l-emerald-500",
   },
+  ACTIVATION_RESEND: {
+    label: "Resend link",
+    icon: MailPlus,
+    color: "text-cyan-700",
+    bg: "bg-cyan-50",
+    border: "border-l-cyan-500",
+  },
+  ACTIVATION_ACTIVATED: {
+    label: "Activated",
+    icon: MailCheck,
+    color: "text-teal-700",
+    bg: "bg-teal-50",
+    border: "border-l-teal-500",
+  },
 };
 
 const VARIABLE_CHIPS = [
@@ -161,6 +177,10 @@ const VARIABLE_CHIPS = [
   { code: "[[family_name]]", label: "Family Name" },
   { code: "[[fees]]", label: "Fees" },
   { code: "[[payment_date]]", label: "Payment Date" },
+  { code: "{{site_address}}", label: "Site address" },
+  { code: "{{full_name}}", label: "Full name" },
+  { code: "{{username}}", label: "Username" },
+  { code: "{{activate}}", label: "Activation link" },
 ];
 
 const LOG_CATEGORIES = [
