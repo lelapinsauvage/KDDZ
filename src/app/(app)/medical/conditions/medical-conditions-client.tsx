@@ -1,9 +1,26 @@
 "use client";
 
-import { useState, useMemo, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { type ColumnDef } from "@tanstack/react-table";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {
+  Activity,
+  Eye,
+  FileCheck,
+  FileClock,
+  FileEdit,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+  User,
+} from "lucide-react";
+import { format } from "date-fns";
+import { toast } from "sonner";
+
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/shared/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -34,74 +51,68 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Plus,
-  Search,
-  MoreHorizontal,
-  Eye,
-  Pencil,
-  Trash2,
-  Heart,
-  ShieldCheck,
-  ShieldAlert,
-  AlertTriangle,
-  FileCheck,
-  FileClock,
-  FileEdit,
-} from "lucide-react";
-import { format } from "date-fns";
-import { toast } from "sonner";
 import { deleteMedicalForm } from "@/lib/actions/medical";
-import { getInitialsFromName, getPastelAvatarColor } from "@/components/children/children-columns";
-
-// --- Types ---
 
 type FormStatus = "DRAFT" | "SUBMITTED" | "REVIEWED";
 
-interface MedicalConditionRow {
+export interface MedicalConditionRow {
   id: string;
+  legacyFormId: number | null;
   childId: string;
+  childNumber: string;
+  photo: string | null;
+  firstName: string;
+  lastName: string;
   childName: string;
-  conditionType: string;
-  severity: string;
-  diagnosisDate: string;
+  dateOfBirth: string | null;
+  nationality: string;
+  gender: string | null;
+  assessmentDate: string;
+  generalHealth: string;
   status: FormStatus;
   branchId: string;
   branchName: string;
+  classId: string | null;
+  className: string;
+  createdAt: string;
 }
 
-// --- Badge Helpers ---
+interface MedicalConditionsClientProps {
+  conditions: MedicalConditionRow[];
+  total: number;
+  branches: Array<{ id: string; name: string }>;
+}
 
-function getSeverityBadge(severity: string) {
-  switch (severity) {
-    case "Mild":
-      return (
-        <Badge className="gap-1 bg-[var(--color-success-light)] text-[var(--color-success-dark)] border-[var(--color-success)]/20">
-          <ShieldCheck className="size-3" />
-          Mild
-        </Badge>
-      );
-    case "Moderate":
-      return (
-        <Badge className="gap-1 bg-[var(--color-warning-light)] text-[var(--color-warning-dark)] border-[var(--color-warning)]/20">
-          <ShieldAlert className="size-3" />
-          Moderate
-        </Badge>
-      );
-    case "Severe":
-      return (
-        <Badge className="gap-1 bg-[var(--color-error-light)] text-[var(--color-error-dark)] border-[var(--color-error)]/20">
-          <AlertTriangle className="size-3" />
-          Severe
-        </Badge>
-      );
-    default:
-      return (
-        <Badge variant="secondary">
-          {severity || "\u2014"}
-        </Badge>
-      );
-  }
+function childPhotoSrc(photo: string | null) {
+  if (!photo || photo === "default.jpg") return "";
+  if (/^https?:\/\//i.test(photo) || photo.startsWith("/")) return photo;
+  if (photo.includes("/")) return `/${photo.replace(/^\/+/, "")}`;
+  return `/images/EmpPhoto/${photo}`;
+}
+
+function formatDate(date: string | null) {
+  if (!date) return "-";
+  const isoDate = date.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const parsed = isoDate
+    ? new Date(Number(isoDate[1]), Number(isoDate[2]) - 1, Number(isoDate[3]))
+    : new Date(date);
+  if (Number.isNaN(parsed.getTime())) return date;
+  return format(parsed, "MMM d, yyyy");
+}
+
+function formatGender(gender: string | null) {
+  if (!gender) return "-";
+  const normalized = gender.toLowerCase();
+  if (normalized === "male" || normalized === "boy") return "Male";
+  if (normalized === "female" || normalized === "girl") return "Female";
+  return gender;
+}
+
+function genderBadgeClass(gender: string | null) {
+  const normalized = formatGender(gender).toLowerCase();
+  if (normalized === "male") return "bg-[#327ad5] text-white border-transparent";
+  if (normalized === "female") return "bg-[#d64690] text-white border-transparent";
+  return "bg-[#707070] text-white border-transparent";
 }
 
 function getStatusBadge(status: FormStatus) {
@@ -130,15 +141,32 @@ function getStatusBadge(status: FormStatus) {
   }
 }
 
-// --- Props ---
+function ChildPhoto({ condition }: { condition: MedicalConditionRow }) {
+  const [failed, setFailed] = useState(false);
+  const src = childPhotoSrc(condition.photo);
 
-interface MedicalConditionsClientProps {
-  conditions: MedicalConditionRow[];
-  total: number;
-  branches: Array<{ id: string; name: string }>;
+  if (!src || failed) {
+    return (
+      <div className="flex size-10 items-center justify-center rounded-full border bg-muted">
+        <User className="size-4 text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative size-10 overflow-hidden rounded-full border bg-muted">
+      <Image
+        src={src}
+        alt={condition.childName}
+        fill
+        sizes="40px"
+        className="object-cover"
+        unoptimized
+        onError={() => setFailed(true)}
+      />
+    </div>
+  );
 }
-
-// --- Page Component ---
 
 export function MedicalConditionsClient({
   conditions,
@@ -152,23 +180,41 @@ export function MedicalConditionsClient({
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const filteredData = useMemo(() => {
-    let data = conditions;
+    let data = [...conditions].sort((left, right) => {
+      const rightId = right.legacyFormId ?? Number.NEGATIVE_INFINITY;
+      const leftId = left.legacyFormId ?? Number.NEGATIVE_INFINITY;
+      if (rightId !== leftId) return rightId - leftId;
+      return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+    });
 
     if (search) {
       const lower = search.toLowerCase();
-      data = data.filter(
-        (c) =>
-          c.childName.toLowerCase().includes(lower) ||
-          c.conditionType.toLowerCase().includes(lower)
+      data = data.filter((condition) =>
+        [
+          condition.legacyFormId,
+          condition.childNumber,
+          condition.firstName,
+          condition.lastName,
+          condition.dateOfBirth,
+          condition.branchName,
+          condition.className,
+          condition.nationality,
+          formatGender(condition.gender),
+          condition.generalHealth,
+          condition.assessmentDate,
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(lower),
       );
     }
 
     if (statusFilter && statusFilter !== "all") {
-      data = data.filter((c) => c.status === statusFilter);
+      data = data.filter((condition) => condition.status === statusFilter);
     }
 
     if (branchFilter && branchFilter !== "all") {
-      data = data.filter((c) => c.branchId === branchFilter);
+      data = data.filter((condition) => condition.branchId === branchFilter);
     }
 
     return data;
@@ -179,63 +225,46 @@ export function MedicalConditionsClient({
     startTransition(async () => {
       const result = await deleteMedicalForm(deleteId);
       if (result.success) {
-        toast.success("Medical condition deleted successfully.");
+        toast.success("Suffering form deleted successfully.");
         router.refresh();
       } else {
-        toast.error(result.error || "Failed to delete medical condition.");
+        toast.error(result.error || "Failed to delete suffering form.");
       }
       setDeleteId(null);
     });
   }
 
-  // --- Column Definitions ---
-
   const columns: ColumnDef<MedicalConditionRow>[] = [
     {
-      accessorKey: "childName",
-      header: "Child Name",
-      cell: ({ row }) => {
-        const name = row.original.childName;
-        return (
-          <div className="flex items-center gap-2.5">
-            <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${getPastelAvatarColor(name)}`}>
-              {getInitialsFromName(name)}
-            </div>
-            <span className="font-medium text-foreground">{name}</span>
-          </div>
-        );
-      },
+      accessorKey: "legacyFormId",
+      header: "#",
+      cell: ({ row }) => <span className="text-sm font-medium">{row.original.legacyFormId ?? "-"}</span>,
     },
     {
-      accessorKey: "conditionType",
-      header: "Condition Type",
+      accessorKey: "photo",
+      header: "Image",
+      cell: ({ row }) => <ChildPhoto condition={row.original} />,
+      enableSorting: false,
+    },
+    {
+      accessorKey: "firstName",
+      header: "F Name",
       cell: ({ row }) => (
-        <Badge className="gap-1 bg-[var(--color-primary-100)] text-[var(--color-primary-700)] border-[var(--color-primary-700)]/20">
-          <Heart className="size-3" />
-          {row.original.conditionType || "\u2014"}
-        </Badge>
+        <Link href={`/medical/conditions/${row.original.id}`} className="font-medium hover:underline">
+          {row.original.firstName}
+        </Link>
       ),
     },
     {
-      accessorKey: "severity",
-      header: "Severity",
-      cell: ({ row }) => getSeverityBadge(row.original.severity),
+      accessorKey: "lastName",
+      header: "L Name",
     },
     {
-      accessorKey: "diagnosisDate",
-      header: "Diagnosis Date",
+      accessorKey: "dateOfBirth",
+      header: "DOB",
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">
-          {row.original.diagnosisDate
-            ? format(new Date(row.original.diagnosisDate), "MMM d, yyyy")
-            : "\u2014"}
-        </span>
+        <span className="text-sm text-muted-foreground">{formatDate(row.original.dateOfBirth)}</span>
       ),
-    },
-    {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }) => getStatusBadge(row.original.status),
     },
     {
       accessorKey: "branchName",
@@ -247,8 +276,49 @@ export function MedicalConditionsClient({
       ),
     },
     {
+      accessorKey: "className",
+      header: "Class",
+      cell: ({ row }) => <span className="text-sm">{row.original.className || "-"}</span>,
+    },
+    {
+      accessorKey: "nationality",
+      header: "Nationality",
+      cell: ({ row }) => <span className="text-sm">{row.original.nationality || "-"}</span>,
+    },
+    {
+      accessorKey: "gender",
+      header: "Gender",
+      cell: ({ row }) => (
+        <Badge className={genderBadgeClass(row.original.gender)}>
+          {formatGender(row.original.gender)}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: "assessmentDate",
+      header: "Date",
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground">{formatDate(row.original.assessmentDate)}</span>
+      ),
+    },
+    {
+      accessorKey: "generalHealth",
+      header: "General Health",
+      cell: ({ row }) => (
+        <Badge className="gap-1 bg-[var(--color-primary-100)] text-[var(--color-primary-700)] border-[var(--color-primary-700)]/20">
+          <Activity className="size-3" />
+          {row.original.generalHealth || "-"}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => getStatusBadge(row.original.status),
+    },
+    {
       id: "actions",
-      header: "",
+      header: "Action",
       cell: ({ row }) => {
         const condition = row.original;
         return (
@@ -291,29 +361,28 @@ export function MedicalConditionsClient({
   return (
     <>
       <PageHeader
-        title="Medical Conditions"
+        title="Suffering Form"
         breadcrumbs={[
-          { label: "Health", href: "/medical/general" },
+          { label: "Medical", href: "/medical/general" },
           { label: "Conditions" },
         ]}
         actions={
           <Button asChild>
             <Link href="/medical/conditions/new">
-              <Plus className="mr-1 size-4" />
-              Add New
+              <Plus className="size-4" />
+              New Child Suffering Form
             </Link>
           </Button>
         }
       />
       <div className="p-4 md:p-6 space-y-4">
-        {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <div className="relative max-w-sm flex-1 min-w-0">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search by child or condition..."
+              placeholder="Search suffering forms..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(event) => setSearch(event.target.value)}
               className="pl-9"
             />
           </div>
@@ -324,9 +393,9 @@ export function MedicalConditionsClient({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Branches</SelectItem>
-              {branches.map((b) => (
-                <SelectItem key={b.id} value={b.id}>
-                  {b.name}
+              {branches.map((branch) => (
+                <SelectItem key={branch.id} value={branch.id}>
+                  {branch.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -343,14 +412,13 @@ export function MedicalConditionsClient({
               <SelectItem value="REVIEWED">Reviewed</SelectItem>
             </SelectContent>
           </Select>
-
         </div>
 
         {filteredData.length === 0 ? (
           <EmptyState
-            icon={Heart}
-            title="No medical conditions found"
-            description="No medical conditions match your current filters."
+            icon={Activity}
+            title="No suffering forms found"
+            description="No suffering forms match your current filters."
           />
         ) : (
           <DataTable columns={columns} data={filteredData} />
@@ -360,9 +428,9 @@ export function MedicalConditionsClient({
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Medical Condition</AlertDialogTitle>
+            <AlertDialogTitle>Delete Suffering Form</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this medical condition record? This action cannot be undone.
+              Are you sure you want to delete this suffering form? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

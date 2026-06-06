@@ -97,7 +97,7 @@
     "legacyPhp": "Front/templates/admin/Medical_form1.php",
     "legacyJs": "Front/templates/admin/js/Medical_form1.js",
     "modernRoute": "/medical/general/[id]",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "restored - legacy general medical form workflow restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -106,13 +106,13 @@
       "fid",
       "id"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored the legacy Medical Form - General Information workflow: child profile context, Saved Drs lookup, doctor address fields (`Dfname`, `Dlname`, Mouhafaza, Quadaa, Region, City, Street, Building, Telephone, Remarks, Latitude, Longitude), insurance Yes/No toggle with legacy insurance presets and expiry, disability/medical case/medication/surgical/allergy repeating rows with legacy datalist values and read-only current dates, medication time/expiry, permissive Save As Draft mapped to DRAFT/`is_rep_draft = 1`, submitted Save mapped to SUBMITTED/`is_rep_draft = 0`, preservation of `t_form_1`/`t_med_forms_info` keys in `MedicalForm.data`, imported entry hydration, and titled attachments with `images/MedForms` fallback previews. Remaining work is final logged-in visual smoke after local database/runtime state is clean."
   },
   {
     "legacyPhp": "Front/templates/admin/Medical_form2.php",
     "legacyJs": "Front/templates/admin/js/Medical_form2.js",
     "modernRoute": "/medical/conditions/[id]",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "restored - legacy suffering form workflow restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -121,7 +121,7 @@
       "fid",
       "id"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored the legacy Medical Form - General Information / Suffering Form workflow: child profile context, assessment date, General Health select with legacy `Excellent/Good/Fair/Week` values, 13 repeating assessment sections (Hearing, Speaking, Sight, Respiration, Worms, Heart, Arteries, Urine, Epilepsy, Migraine, Eating Disorder, Chronic Blood Problems, Other Health Problems), legacy Yes/No result rows, legacy case datalists for Eating/Blood/Health, remarks/read-only dates, permissive Save As Draft mapped to DRAFT/`is_rep_draft = 1`, submitted Save mapped to SUBMITTED/`is_rep_draft = 0`, preservation of `t_form_2`/`t_med_forms_info` keys in `MedicalForm.data`, imported entry hydration, and titled attachments with `images/MedForms` fallback previews. Remaining work is final logged-in visual smoke after local database/runtime state is clean."
   },
   {
     "legacyPhp": "Front/templates/admin/Medical_form3.php",
@@ -185,13 +185,13 @@
     "legacyPhp": "Front/templates/admin/Medical_forms2.php",
     "legacyJs": "Front/templates/admin/js/Medical_forms2.js",
     "modernRoute": "/medical/conditions",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "restored - legacy suffering form roster restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored the legacy Suffering Form Listing with form #, child image fallback, F Name, L Name, DOB, Branch, Class, Nationality, Gender, Date, General Health, status, edit/view/delete actions, New Child Suffering Form, branch/status/search filters, and form_id descending sort over migrated condition medical forms. Remaining work is final logged-in visual smoke after local database/runtime state is clean."
   },
   {
     "legacyPhp": "Front/templates/admin/Medical_forms3.php",
