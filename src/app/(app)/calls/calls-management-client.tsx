@@ -486,7 +486,7 @@ export function CallsManagementClient({
                         <TableCell>
                           <div className="flex justify-end gap-1">
                             <Button asChild variant="ghost" size="icon" className="size-8">
-                              <Link href={`/children/${call.childId}/calls`} aria-label="Open call log">
+                              <Link href={`/calls/${call.id}`} aria-label="Open call report">
                                 <Eye className="size-4" />
                               </Link>
                             </Button>

@@ -1,5 +1,6 @@
 "use server";
 
+import { createDecipheriv, createHash } from "crypto";
 import { db } from "@/lib/db";
 import { requireOrg, requireOrgSafe } from "@/lib/require-org";
 import { verifyChildAccess } from "@/lib/verify-org-access";
@@ -49,6 +50,9 @@ type ActionResult =
   | { success: true; id: string }
   | { success: false; error: string };
 
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 function parseCallDate(value: string) {
   return new Date(`${value}T00:00:00.000Z`);
 }
@@ -81,6 +85,57 @@ function legacyCallType(direction: CallDirection) {
   if (direction === "OUTGOING") return "Outgoing";
   if (direction === "MISSED") return "Missed";
   return "Incoming";
+}
+
+function decodeMaybeURIComponent(value: string) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function parsePositiveInt(value: string) {
+  if (!/^\d+$/.test(value.trim())) return null;
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+function decryptLegacyNumericId(value: string) {
+  try {
+    const outerDecoded = Buffer.from(value, "base64").toString("utf8");
+    if (!outerDecoded) return null;
+
+    const keyHash = createHash("sha256").update("LeBarbarGard").digest("hex");
+    const key = Buffer.from(keyHash).subarray(0, 32);
+    const iv = Buffer.from(keyHash.slice(0, 16));
+    const decipher = createDecipheriv("aes-256-cbc", key, iv);
+    const decrypted =
+      decipher.update(outerDecoded, "base64", "utf8") + decipher.final("utf8");
+
+    return parsePositiveInt(decrypted);
+  } catch {
+    return null;
+  }
+}
+
+function legacyNumericCandidates(value?: string | null) {
+  const values = new Set<string>();
+  if (value?.trim()) {
+    values.add(value.trim());
+    values.add(decodeMaybeURIComponent(value.trim()));
+  }
+
+  const ids = new Set<number>();
+  for (const candidate of values) {
+    const direct = parsePositiveInt(candidate);
+    if (direct) ids.add(direct);
+
+    const decrypted = decryptLegacyNumericId(candidate);
+    if (decrypted) ids.add(decrypted);
+  }
+
+  return Array.from(ids);
 }
 
 function rawLegacyData(
@@ -327,6 +382,72 @@ export async function getCallLogs(params: GetCallLogsParams = {}) {
   }
 }
 
+// ── getCallLogDetail — standalone legacy Form 6 shell ──
+
+export async function getCallLogDetail(
+  identifier: string,
+  options: { legacyChildId?: string | null } = {},
+) {
+  try {
+    const { organizationId: orgId } = await requireOrg();
+    const normalizedIdentifier = decodeMaybeURIComponent(identifier.trim());
+    const legacyIds = legacyNumericCandidates(identifier);
+    const legacyChildIds = legacyNumericCandidates(options.legacyChildId);
+
+    const matches: Prisma.CallLogWhereInput[] = [];
+    if (UUID_PATTERN.test(normalizedIdentifier)) {
+      matches.push({ id: normalizedIdentifier });
+    }
+    if (legacyIds.length) {
+      matches.push({ legacyId: { in: legacyIds } });
+    }
+    if (normalizedIdentifier) {
+      matches.push({ legacyKey: normalizedIdentifier });
+    }
+
+    if (!matches.length) return null;
+
+    return await db.callLog.findFirst({
+      where: {
+        OR: matches,
+        child: {
+          branch: { organizationId: orgId },
+          ...(legacyChildIds.length
+            ? { legacyId: { in: legacyChildIds } }
+            : {}),
+        },
+      },
+      include: {
+        child: {
+          select: {
+            id: true,
+            legacyId: true,
+            childNumber: true,
+            photo: true,
+            firstName: true,
+            lastName: true,
+            branchId: true,
+            classId: true,
+            branch: { select: { id: true, name: true, legacyId: true } },
+            class: { select: { id: true, name: true, legacyId: true } },
+          },
+        },
+        createdBy: {
+          select: { id: true, name: true, email: true },
+        },
+        attachments: {
+          where: { isActive: true },
+          orderBy: { createdAt: "asc" },
+        },
+      },
+      orderBy: [{ sourceDatabase: "desc" }, { updatedAt: "desc" }],
+    });
+  } catch (error) {
+    console.error("getCallLogDetail error:", error);
+    return null;
+  }
+}
+
 // ── getCallStaffOptions — legacy teacher list for Form 6 ──
 
 export async function getCallStaffOptions() {
@@ -462,6 +583,7 @@ export async function createCallLog(
 
     revalidatePath(`/children/${data.childId}/calls`);
     revalidatePath("/calls");
+    revalidatePath(`/calls/${call.id}`);
 
     return { success: true, id: call.id };
   } catch (error) {
@@ -541,6 +663,7 @@ export async function updateCallLog(
       revalidatePath(`/children/${data.childId}/calls`);
     }
     revalidatePath("/calls");
+    revalidatePath(`/calls/${id}`);
 
     return { success: true, id };
   } catch (error) {
@@ -571,6 +694,7 @@ export async function deleteCallLog(id: string): Promise<ActionResult> {
 
     revalidatePath(`/children/${existing.childId}/calls`);
     revalidatePath("/calls");
+    revalidatePath(`/calls/${id}`);
 
     return { success: true, id };
   } catch (error) {

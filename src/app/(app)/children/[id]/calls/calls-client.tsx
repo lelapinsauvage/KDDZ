@@ -2,11 +2,13 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { type ColumnDef } from "@tanstack/react-table";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   Download,
   Eye,
+  ExternalLink,
   MoreHorizontal,
   Paperclip,
   Pencil,
@@ -384,6 +386,12 @@ export function CallsClient({ child, calls, staffList, callCauseOptions }: Props
               <DropdownMenuItem onClick={() => setDetailTarget(row.original)}>
                 <Eye className="mr-2 size-4" />
                 View
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={`/calls/${row.original.id}`}>
+                  <ExternalLink className="mr-2 size-4" />
+                  Open Form 6
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => openEditCallDialog(row.original)}>
                 <Pencil className="mr-2 size-4" />
