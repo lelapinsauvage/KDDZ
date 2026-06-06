@@ -1,9 +1,13 @@
 "use server";
 
 import { db } from "@/lib/db";
+import { auth } from "@/lib/auth";
 import { requireOrg } from "@/lib/require-org";
 import { getOrgBranchIds } from "@/lib/verify-org-access";
-import { VALID_ASSESSMENT_TYPES } from "@/lib/assessment-types";
+import {
+  ASSESSMENT_TYPE_NAMES,
+  VALID_ASSESSMENT_TYPES,
+} from "@/lib/assessment-types";
 import type { MedicalFormType, Prisma } from "@/generated/prisma/client";
 
 // ── Types ──────────────────────────────────────────
@@ -62,6 +66,12 @@ export interface DashboardMetricFilters {
   schoolYearId?: string | null;
 }
 
+export interface DashboardDrilldownRequestFilters {
+  from?: string | null;
+  to?: string | null;
+  schoolYearId?: string | null;
+}
+
 interface NormalizedDashboardFilters {
   start: Date;
   endExclusive: Date;
@@ -74,6 +84,18 @@ const medicalReportTypes = [
   "VISITS",
   "VACCINATIONS",
 ] satisfies MedicalFormType[];
+
+type LegacyMedicalReportType = (typeof medicalReportTypes)[number];
+
+const medicalReportConfig: Record<
+  LegacyMedicalReportType,
+  { label: string; baseHref: string }
+> = {
+  GENERAL: { label: "General Form", baseHref: "/medical/general" },
+  CONDITIONS: { label: "Suffering Form", baseHref: "/medical/conditions" },
+  VISITS: { label: "Medical Visit", baseHref: "/medical/visits" },
+  VACCINATIONS: { label: "Vaccination Report", baseHref: "/medical/vaccinations" },
+};
 
 const assessmentTypes = [...VALID_ASSESSMENT_TYPES];
 
@@ -135,6 +157,36 @@ function normalizeDashboardFilters(filters?: DashboardMetricFilters): Normalized
   };
 }
 
+function dateFromRequestKey(value?: string | null): Date | null {
+  const match = value?.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(year, month - 1, day);
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return startOfDay(date);
+}
+
+function metricFiltersFromRequest(
+  filters?: DashboardDrilldownRequestFilters
+): DashboardMetricFilters {
+  return {
+    startDate: dateFromRequestKey(filters?.from),
+    endDate: dateFromRequestKey(filters?.to),
+    schoolYearId: filters?.schoolYearId?.trim() || null,
+  };
+}
+
 function dateRangeWhere(range: NormalizedDashboardFilters) {
   return { gte: range.start, lt: range.endExclusive };
 }
@@ -166,6 +218,60 @@ function isEligibleForAssessment(
 
   const joiningAge = ageInDays(child.dateOfBirth, child.enrollmentDate ?? asOf);
   return joiningAge === null || joiningAge <= maxDays;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function displayChildNumber(child: { childNumber: string | null; legacyId?: number | null; id: string }) {
+  return child.childNumber?.trim() || child.legacyId?.toString() || child.id.slice(0, 8);
+}
+
+function displayChildName(child: {
+  firstName: string;
+  lastName: string;
+  class: { name: string } | null;
+}) {
+  const name = `${child.firstName} ${child.lastName}`.trim();
+  return child.class?.name ? `${name} (${child.class.name})` : name;
+}
+
+function hrefWithQuery(path: string, params: Record<string, string>) {
+  const query = new URLSearchParams(params);
+  return `${path}?${query.toString()}`;
+}
+
+function dateOnlyFromValue(value: unknown): string | null {
+  if (value instanceof Date) return dateKey(value);
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+
+    const dateOnlyMatch = trimmed.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (dateOnlyMatch) return dateOnlyMatch[1];
+
+    const parsed = new Date(trimmed);
+    if (!Number.isNaN(parsed.getTime())) return dateKey(parsed);
+  }
+
+  return null;
+}
+
+function dateFromData(data: unknown, keys: string[], fallback: Date) {
+  if (isRecord(data)) {
+    for (const key of keys) {
+      const value = dateOnlyFromValue(data[key]);
+      if (value) return value;
+    }
+  }
+
+  return dateKey(fallback);
+}
+
+function isLegacyMedicalReportType(type: MedicalFormType): type is LegacyMedicalReportType {
+  return medicalReportTypes.includes(type as LegacyMedicalReportType);
 }
 
 // ── Main briefing function ─────────────────────────
@@ -577,12 +683,63 @@ export interface DailyComplianceStats {
   missingAbsentReports: number;
 }
 
+export type DashboardDrilldownKind =
+  | "missingDailyReports"
+  | "missingAbsentReports"
+  | "medicalReports"
+  | "missingMedicalReports"
+  | "medicalDrafts"
+  | "assessmentReports"
+  | "missingAssessments"
+  | "assessmentDrafts";
+
+export type DashboardDrilldownColumn =
+  | "number"
+  | "name"
+  | "type"
+  | "date"
+  | "action";
+
+export interface DashboardDrilldownRow {
+  id: string;
+  number: string;
+  name: string;
+  type?: string;
+  date?: string;
+  href: string;
+  actionLabel: "Create" | "Edit" | "View";
+}
+
+export interface DashboardDrilldown {
+  title: string;
+  columns: DashboardDrilldownColumn[];
+  rows: DashboardDrilldownRow[];
+}
+
+export type DashboardDrilldowns = Record<DashboardDrilldownKind, DashboardDrilldown>;
+
 export async function getDailyComplianceStats(
   branchId?: string | null,
   filters?: DashboardMetricFilters
 ): Promise<DailyComplianceStats> {
   const { organizationId: orgId } = await requireOrg();
   const range = normalizeDashboardFilters(filters);
+  const details = await getDailyComplianceDetails(orgId, branchId, range, false);
+  return details.stats;
+}
+
+interface DailyComplianceDetails {
+  stats: DailyComplianceStats;
+  missingDailyRows: DashboardDrilldownRow[];
+  missingAbsentRows: DashboardDrilldownRow[];
+}
+
+async function getDailyComplianceDetails(
+  orgId: string,
+  branchId: string | null | undefined,
+  range: NormalizedDashboardFilters,
+  includeRows = true
+): Promise<DailyComplianceDetails> {
   const reportDateRange = dateRangeWhere(range);
   const childFilter = childScope(orgId, branchId, range.schoolYearId);
 
@@ -596,7 +753,16 @@ export async function getDailyComplianceStats(
   ] = await Promise.all([
     db.child.findMany({
       where: { isActive: true, isDraft: false, ...childFilter },
-      select: { id: true, enrollmentDate: true },
+      select: {
+        id: true,
+        childNumber: true,
+        legacyId: true,
+        firstName: true,
+        lastName: true,
+        enrollmentDate: true,
+        class: { select: { name: true } },
+      },
+      orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
     }),
     db.dailyReport.findMany({
       where: {
@@ -612,7 +778,7 @@ export async function getDailyComplianceStats(
       },
       select: { childId: true, date: true },
     }),
-    // Children marked absent in the range (via absence reports)
+    // Modern absence reports are the closest migrated equivalent to legacy absent daily rows.
     db.absenceReport.findMany({
       where: {
         date: reportDateRange,
@@ -620,7 +786,6 @@ export async function getDailyComplianceStats(
       },
       select: { childId: true, date: true, status: true },
     }),
-    // Absence reports that are submitted (not just pending)
     db.absenceReport.findMany({
       where: {
         date: reportDateRange,
@@ -662,6 +827,7 @@ export async function getDailyComplianceStats(
   const days = rangeDates(range.start, range.endExclusive);
   const holidayDateKeys = new Set<string>();
   const repeatedHolidayKeys = new Set<string>();
+
   for (const holiday of holidays) {
     if (holiday.repeated) {
       repeatedHolidayKeys.add(monthDayKey(holiday.date));
@@ -674,6 +840,8 @@ export async function getDailyComplianceStats(
     }
   }
 
+  const missingDailyRows: DashboardDrilldownRow[] = [];
+  const missingAbsentRows: DashboardDrilldownRow[] = [];
   let missingDailyReports = 0;
   let missingAbsentReports = 0;
 
@@ -688,21 +856,375 @@ export async function getDailyComplianceStats(
 
       const dayKey = dateKey(day);
       const key = `${child.id}:${dayKey}`;
+
       if (!reportedKeys.has(key) && !absentKeys.has(key)) {
         missingDailyReports++;
+
+        if (includeRows) {
+          missingDailyRows.push({
+            id: `missing-daily:${key}`,
+            number: displayChildNumber(child),
+            name: displayChildName(child),
+            date: dayKey,
+            href: hrefWithQuery("/daily-reports/new", { childId: child.id, date: dayKey }),
+            actionLabel: "Create",
+          });
+        }
       }
+
       if (absentKeys.has(key) && !absenceReportKeys.has(key)) {
         missingAbsentReports++;
+
+        if (includeRows) {
+          missingAbsentRows.push({
+            id: `missing-absent:${key}`,
+            number: displayChildNumber(child),
+            name: displayChildName(child),
+            date: dayKey,
+            href: hrefWithQuery("/absent-reports/new", { childId: child.id, date: dayKey }),
+            actionLabel: "Create",
+          });
+        }
       }
     }
   }
 
   return {
-    totalAttendance: reports.length,
-    totalAbsence: absences.length,
-    missingDailyReports,
-    missingAbsentReports,
+    stats: {
+      totalAttendance: reports.length,
+      totalAbsence: absences.length,
+      missingDailyReports,
+      missingAbsentReports,
+    },
+    missingDailyRows,
+    missingAbsentRows,
   };
+}
+
+export async function getDashboardDrilldowns(
+  branchId?: string | null,
+  filters?: DashboardMetricFilters
+): Promise<DashboardDrilldowns> {
+  const { organizationId: orgId } = await requireOrg();
+  const range = normalizeDashboardFilters(filters);
+
+  const [
+    complianceDetails,
+    medicalDrilldowns,
+    assessmentDrilldowns,
+  ] = await Promise.all([
+    getDailyComplianceDetails(orgId, branchId, range),
+    getMedicalDrilldowns(orgId, branchId, range),
+    getAssessmentDrilldowns(orgId, branchId, range),
+  ]);
+
+  return {
+    missingDailyReports: {
+      title: "Missing Daily Reports",
+      columns: ["number", "name", "date", "action"],
+      rows: complianceDetails.missingDailyRows,
+    },
+    missingAbsentReports: {
+      title: "Missing Absent Reports",
+      columns: ["number", "name", "date", "action"],
+      rows: complianceDetails.missingAbsentRows,
+    },
+    medicalReports: medicalDrilldowns.reports,
+    missingMedicalReports: medicalDrilldowns.missing,
+    medicalDrafts: medicalDrilldowns.drafts,
+    assessmentReports: assessmentDrilldowns.reports,
+    missingAssessments: assessmentDrilldowns.missing,
+    assessmentDrafts: assessmentDrilldowns.drafts,
+  };
+}
+
+export async function getDashboardDrilldown(
+  kind: DashboardDrilldownKind,
+  filters?: DashboardDrilldownRequestFilters
+): Promise<DashboardDrilldown> {
+  const session = await auth();
+  const { organizationId: orgId } = await requireOrg();
+  const branchId = session?.user?.branchId ?? null;
+  const range = normalizeDashboardFilters(metricFiltersFromRequest(filters));
+
+  if (kind === "missingDailyReports" || kind === "missingAbsentReports") {
+    const details = await getDailyComplianceDetails(orgId, branchId, range);
+    return kind === "missingDailyReports"
+      ? {
+          title: "Missing Daily Reports",
+          columns: ["number", "name", "date", "action"],
+          rows: details.missingDailyRows,
+        }
+      : {
+          title: "Missing Absent Reports",
+          columns: ["number", "name", "date", "action"],
+          rows: details.missingAbsentRows,
+        };
+  }
+
+  if (
+    kind === "medicalReports" ||
+    kind === "missingMedicalReports" ||
+    kind === "medicalDrafts"
+  ) {
+    const drilldowns = await getMedicalDrilldowns(orgId, branchId, range);
+    if (kind === "medicalReports") return drilldowns.reports;
+    if (kind === "missingMedicalReports") return drilldowns.missing;
+    return drilldowns.drafts;
+  }
+
+  const drilldowns = await getAssessmentDrilldowns(orgId, branchId, range);
+  if (kind === "assessmentReports") return drilldowns.reports;
+  if (kind === "missingAssessments") return drilldowns.missing;
+  return drilldowns.drafts;
+}
+
+async function getMedicalDrilldowns(
+  orgId: string,
+  branchId: string | null | undefined,
+  range: NormalizedDashboardFilters
+) {
+  const childFilter = childScope(orgId, branchId, range.schoolYearId);
+
+  const [activeChildren, forms] = await Promise.all([
+    db.child.findMany({
+      where: { isActive: true, isDraft: false, ...childFilter },
+      select: {
+        id: true,
+        childNumber: true,
+        legacyId: true,
+        firstName: true,
+        lastName: true,
+        class: { select: { name: true } },
+      },
+      orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+    }),
+    db.medicalForm.findMany({
+      where: { formType: { in: medicalReportTypes }, child: childFilter },
+      select: {
+        id: true,
+        childId: true,
+        formType: true,
+        status: true,
+        data: true,
+        createdAt: true,
+        child: {
+          select: {
+            id: true,
+            childNumber: true,
+            legacyId: true,
+            firstName: true,
+            lastName: true,
+            class: { select: { name: true } },
+          },
+        },
+      },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    }),
+  ]);
+
+  const covered = new Set<string>();
+  const reportRows: DashboardDrilldownRow[] = [];
+  const draftRows: DashboardDrilldownRow[] = [];
+  const dateKeys = [
+    "date",
+    "datetime",
+    "formDate",
+    "formdate",
+    "assessmentDate",
+    "assessment_date",
+    "visitDate",
+    "visit_date",
+    "vaccinationDate",
+    "vaccination_date",
+  ];
+
+  for (const form of forms) {
+    if (!isLegacyMedicalReportType(form.formType)) continue;
+
+    covered.add(`${form.formType}:${form.childId}`);
+    const config = medicalReportConfig[form.formType];
+    const row: DashboardDrilldownRow = {
+      id: `medical:${form.id}`,
+      number: displayChildNumber(form.child),
+      name: displayChildName(form.child),
+      type: config.label,
+      date: dateFromData(form.data, dateKeys, form.createdAt),
+      href: `${config.baseHref}/${form.id}`,
+      actionLabel: form.status === "DRAFT" ? "Edit" : "View",
+    };
+
+    if (form.status === "DRAFT") {
+      draftRows.push(row);
+    } else if (form.status === "SUBMITTED" || form.status === "REVIEWED") {
+      reportRows.push(row);
+    }
+  }
+
+  const missingRows: DashboardDrilldownRow[] = [];
+  for (const child of activeChildren) {
+    for (const type of medicalReportTypes) {
+      if (covered.has(`${type}:${child.id}`)) continue;
+
+      const config = medicalReportConfig[type];
+      missingRows.push({
+        id: `missing-medical:${type}:${child.id}`,
+        number: displayChildNumber(child),
+        name: displayChildName(child),
+        type: config.label,
+        href: hrefWithQuery(`${config.baseHref}/new`, { childId: child.id }),
+        actionLabel: "Create",
+      });
+    }
+  }
+
+  return {
+    reports: {
+      title: "Medical Reports",
+      columns: ["number", "name", "type", "date", "action"],
+      rows: reportRows,
+    },
+    missing: {
+      title: "Missing Medical Reports",
+      columns: ["number", "name", "type", "action"],
+      rows: missingRows,
+    },
+    drafts: {
+      title: "Medical Reports - Drafts",
+      columns: ["number", "name", "type", "date", "action"],
+      rows: draftRows,
+    },
+  } satisfies Record<"reports" | "missing" | "drafts", DashboardDrilldown>;
+}
+
+async function getAssessmentDrilldowns(
+  orgId: string,
+  branchId: string | null | undefined,
+  range: NormalizedDashboardFilters
+) {
+  const childFilter = childScope(orgId, branchId, range.schoolYearId);
+
+  const [activeChildren, assessments, scheduleRules] = await Promise.all([
+    db.child.findMany({
+      where: { isActive: true, isDraft: false, ...childFilter },
+      select: {
+        id: true,
+        childNumber: true,
+        legacyId: true,
+        firstName: true,
+        lastName: true,
+        dateOfBirth: true,
+        enrollmentDate: true,
+        class: { select: { name: true } },
+      },
+      orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+    }),
+    db.assessment.findMany({
+      where: {
+        assessmentType: { in: assessmentTypes },
+        child: childFilter,
+        ...(range.schoolYearId ? { schoolYearId: range.schoolYearId } : {}),
+      },
+      select: {
+        id: true,
+        childId: true,
+        assessmentType: true,
+        status: true,
+        data: true,
+        createdAt: true,
+        child: {
+          select: {
+            id: true,
+            childNumber: true,
+            legacyId: true,
+            firstName: true,
+            lastName: true,
+            class: { select: { name: true } },
+          },
+        },
+      },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    }),
+    db.assessmentScheduleRule.findMany({
+      where: { organizationId: orgId, assessmentType: { in: assessmentTypes } },
+      select: { assessmentType: true, minimumAgeDays: true, maximumAgeDays: true },
+    }),
+  ]);
+
+  const ruleByType = new Map(
+    scheduleRules.map((rule) => [
+      rule.assessmentType,
+      {
+        minDays: Number(rule.minimumAgeDays ?? fallbackAssessmentWindows[rule.assessmentType]?.minDays ?? 0),
+        maxDays: Number(
+          rule.maximumAgeDays ??
+            fallbackAssessmentWindows[rule.assessmentType]?.maxDays ??
+            Number.MAX_SAFE_INTEGER
+        ),
+      },
+    ])
+  );
+  const covered = new Set(assessments.map((assessment) => `${assessment.assessmentType}:${assessment.childId}`));
+  const reportRows: DashboardDrilldownRow[] = [];
+  const draftRows: DashboardDrilldownRow[] = [];
+  const dateKeys = ["date", "datetime", "assessmentDate", "assessment_date", "created_at"];
+
+  for (const assessment of assessments) {
+    const typeLabel =
+      ASSESSMENT_TYPE_NAMES[assessment.assessmentType] ?? `Type ${assessment.assessmentType}`;
+    const row: DashboardDrilldownRow = {
+      id: `assessment:${assessment.id}`,
+      number: displayChildNumber(assessment.child),
+      name: displayChildName(assessment.child),
+      type: typeLabel,
+      date: dateFromData(assessment.data, dateKeys, assessment.createdAt),
+      href: `/assessments/${assessment.assessmentType}/${assessment.id}`,
+      actionLabel: assessment.status === "DRAFT" ? "Edit" : "View",
+    };
+
+    if (assessment.status === "DRAFT") {
+      draftRows.push(row);
+    } else if (assessment.status === "SUBMITTED" || assessment.status === "REVIEWED") {
+      reportRows.push(row);
+    }
+  }
+
+  const today = startOfDay(new Date());
+  const missingRows: DashboardDrilldownRow[] = [];
+  for (const type of assessmentTypes) {
+    const window = ruleByType.get(type) ?? fallbackAssessmentWindows[type];
+    for (const child of activeChildren) {
+      if (!isEligibleForAssessment(child, today, window.minDays, window.maxDays)) continue;
+      if (covered.has(`${type}:${child.id}`)) continue;
+
+      missingRows.push({
+        id: `missing-assessment:${type}:${child.id}`,
+        number: displayChildNumber(child),
+        name: displayChildName(child),
+        type: ASSESSMENT_TYPE_NAMES[type] ?? `Type ${type}`,
+        href: hrefWithQuery(`/assessments/${type}/new`, { childId: child.id }),
+        actionLabel: "Create",
+      });
+    }
+  }
+
+  return {
+    reports: {
+      title: "Assessment Reports",
+      columns: ["number", "name", "type", "date", "action"],
+      rows: reportRows,
+    },
+    missing: {
+      title: "Missing Assessment Reports",
+      columns: ["number", "name", "type", "action"],
+      rows: missingRows,
+    },
+    drafts: {
+      title: "Assessment Reports - Drafts",
+      columns: ["number", "name", "type", "date", "action"],
+      rows: draftRows,
+    },
+  } satisfies Record<"reports" | "missing" | "drafts", DashboardDrilldown>;
 }
 
 // ── Action Center Metrics (9-Grid) ───────────────

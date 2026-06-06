@@ -12,7 +12,7 @@ export type StatCardColor =
   | "emerald"
   | "green";
 
-const colorStyles: Record<
+export const colorStyles: Record<
   StatCardColor,
   { bg: string; footer: string }
 > = {

@@ -10,10 +10,13 @@ import type {
   DashboardMetricFilters,
   DailyComplianceStats,
   ActionCenterMetrics as ActionCenterMetricsType,
+  DashboardDrilldowns,
+  DashboardDrilldownRequestFilters,
 } from "@/lib/actions/dashboard";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { DemographicsSection } from "@/components/dashboard/demographics-section";
 import { StatCard } from "@/components/dashboard/stat-card";
+import { DashboardDrilldownCard } from "@/components/dashboard/dashboard-drilldown-card";
 import { FadeIn } from "@/components/ui/skeleton";
 import {
   Sun,
@@ -24,17 +27,9 @@ import {
   Users,
   UserCheck,
   UserX,
-  FileWarning,
-  AlertTriangle,
   Phone,
   Ambulance,
   DollarSign,
-  Stethoscope,
-  HeartPulse,
-  FileEdit,
-  ClipboardCheck,
-  ClipboardList,
-  FileText,
 } from "lucide-react";
 
 interface PageProps {
@@ -121,6 +116,51 @@ function resolveDashboardSelection(
   };
 }
 
+function emptyDashboardDrilldowns(): DashboardDrilldowns {
+  return {
+    missingDailyReports: {
+      title: "Missing Daily Reports",
+      columns: ["number", "name", "date", "action"],
+      rows: [],
+    },
+    missingAbsentReports: {
+      title: "Missing Absent Reports",
+      columns: ["number", "name", "date", "action"],
+      rows: [],
+    },
+    medicalReports: {
+      title: "Medical Reports",
+      columns: ["number", "name", "type", "date", "action"],
+      rows: [],
+    },
+    missingMedicalReports: {
+      title: "Missing Medical Reports",
+      columns: ["number", "name", "type", "action"],
+      rows: [],
+    },
+    medicalDrafts: {
+      title: "Medical Reports - Drafts",
+      columns: ["number", "name", "type", "date", "action"],
+      rows: [],
+    },
+    assessmentReports: {
+      title: "Assessment Reports",
+      columns: ["number", "name", "type", "date", "action"],
+      rows: [],
+    },
+    missingAssessments: {
+      title: "Missing Assessment Reports",
+      columns: ["number", "name", "type", "action"],
+      rows: [],
+    },
+    assessmentDrafts: {
+      title: "Assessment Reports - Drafts",
+      columns: ["number", "name", "type", "date", "action"],
+      rows: [],
+    },
+  };
+}
+
 export default async function DashboardPage({ searchParams }: PageProps) {
   const session = await auth();
   const params = await searchParams;
@@ -139,6 +179,12 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     endDate: selection.endDate,
     schoolYearId: selection.schoolYearId,
   };
+  const drilldownFilters: DashboardDrilldownRequestFilters = {
+    from: selection.fromKey,
+    to: selection.toKey,
+    schoolYearId: selection.schoolYearId,
+  };
+  const drilldowns = emptyDashboardDrilldowns();
 
   const filterQuery = new URLSearchParams({
     from: selection.fromKey,
@@ -285,19 +331,23 @@ export default async function DashboardPage({ searchParams }: PageProps) {
             color="rose"
             href={withDashboardFilters("/absent-reports")}
           />
-          <StatCard
+          <DashboardDrilldownCard
             title="Missing Reports"
             value={compliance.missingDailyReports}
-            icon={FileWarning}
+            iconName="fileWarning"
             color="amber"
-            href={withDashboardFilters("/daily-reports?status=missing")}
+            drilldownKind="missingDailyReports"
+            filters={drilldownFilters}
+            drilldown={drilldowns.missingDailyReports}
           />
-          <StatCard
+          <DashboardDrilldownCard
             title="Missing Absence Reports"
             value={compliance.missingAbsentReports}
-            icon={AlertTriangle}
+            iconName="alertTriangle"
             color="amber"
-            href={withDashboardFilters("/absent-reports?status=missing")}
+            drilldownKind="missingAbsentReports"
+            filters={drilldownFilters}
+            drilldown={drilldowns.missingAbsentReports}
           />
         </div>
       </div>
@@ -338,26 +388,32 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           Medical Reports
         </h3>
         <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-3">
-          <StatCard
+          <DashboardDrilldownCard
             title="Medical Published"
             value={metrics.completedMedicalVisits}
-            icon={Stethoscope}
+            iconName="stethoscope"
             color="emerald"
-            href={withDashboardFilters("/medical/general")}
+            drilldownKind="medicalReports"
+            filters={drilldownFilters}
+            drilldown={drilldowns.medicalReports}
           />
-          <StatCard
+          <DashboardDrilldownCard
             title="Medical Missing"
             value={metrics.missingMedicalVisits}
-            icon={HeartPulse}
+            iconName="heartPulse"
             color="rose"
-            href={withDashboardFilters("/medical/general?status=missing")}
+            drilldownKind="missingMedicalReports"
+            filters={drilldownFilters}
+            drilldown={drilldowns.missingMedicalReports}
           />
-          <StatCard
+          <DashboardDrilldownCard
             title="Medical Drafts"
             value={metrics.pendingMedicalReports}
-            icon={FileEdit}
+            iconName="fileEdit"
             color="sky"
-            href={withDashboardFilters("/medical/general?status=draft")}
+            drilldownKind="medicalDrafts"
+            filters={drilldownFilters}
+            drilldown={drilldowns.medicalDrafts}
           />
         </div>
       </div>
@@ -368,26 +424,32 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           Assessments
         </h3>
         <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-3">
-          <StatCard
+          <DashboardDrilldownCard
             title="Assessments Published"
             value={metrics.completedAssessments}
-            icon={ClipboardCheck}
+            iconName="clipboardCheck"
             color="emerald"
-            href={withDashboardFilters("/assessments")}
+            drilldownKind="assessmentReports"
+            filters={drilldownFilters}
+            drilldown={drilldowns.assessmentReports}
           />
-          <StatCard
+          <DashboardDrilldownCard
             title="Assessments Missing"
             value={metrics.missingAssessments}
-            icon={ClipboardList}
+            iconName="clipboardList"
             color="rose"
-            href={withDashboardFilters("/assessments?status=missing")}
+            drilldownKind="missingAssessments"
+            filters={drilldownFilters}
+            drilldown={drilldowns.missingAssessments}
           />
-          <StatCard
+          <DashboardDrilldownCard
             title="Assessments Drafts"
             value={metrics.pendingAssessments}
-            icon={FileText}
+            iconName="fileText"
             color="sky"
-            href={withDashboardFilters("/assessments?status=draft")}
+            drilldownKind="assessmentDrafts"
+            filters={drilldownFilters}
+            drilldown={drilldowns.assessmentDrafts}
           />
         </div>
       </div>
