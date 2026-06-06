@@ -400,11 +400,16 @@ export async function getSentMessages(
 
     const enriched = messages.map((msg) => ({
       id: msg.id,
+      legacyId: msg.legacyId,
+      legacyThreadId: msg.legacyThreadId,
+      legacyNature: msg.legacyNature,
+      legacyHref: msg.legacyHref,
       senderId: msg.senderId,
       senderType: msg.senderType,
       recipientId: msg.recipientId,
       recipientType: msg.recipientType,
       recipientName: nameMap.get(msg.recipientId) ?? "Unknown",
+      nature: msg.legacyNature ?? parseSubjectNature(msg.subject) ?? "General",
       subject: msg.subject,
       body: msg.body,
       isRead: msg.isRead,
