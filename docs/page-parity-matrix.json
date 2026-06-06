@@ -41,7 +41,7 @@
     "legacyPhp": "Front/templates/admin/Child_Details.php",
     "legacyJs": "Front/templates/admin/js/Child_Details.js",
     "modernRoute": "/children/[id]",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "partial - legacy dossier landing restored; edit-form visual audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -49,7 +49,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored /children/[id] as a real child dossier instead of redirecting to dashboard, with legacy progress flag wording, photo/name/status summary, child info, general care, address, parents, brothers/sisters, authorized pickup, previous garderie history, accounting setup, attachments, current location, and direct edit/print/dashboard/workflow actions. Remaining work is exact edit-form visual/action audit against Child_Details.js dynamic validation, map picking, and legacy create/update/draft button behavior."
   },
   {
     "legacyPhp": "Front/templates/admin/Child_attend_det.php",

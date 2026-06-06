@@ -212,6 +212,9 @@ export async function getChild(id: string) {
         attachments: {
           orderBy: { createdAt: "desc" },
         },
+        previousGarderies: {
+          orderBy: [{ isActive: "desc" }, { createdAt: "desc" }],
+        },
       },
     });
 

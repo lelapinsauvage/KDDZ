@@ -13,6 +13,7 @@ import {
   Phone,
   FileText,
   UserPen,
+  IdCard,
 } from "lucide-react";
 
 interface Props {
@@ -21,6 +22,7 @@ interface Props {
 }
 
 const navItems = [
+  { label: "Details", href: "", icon: IdCard },
   { label: "Dashboard", href: "dashboard", icon: LayoutDashboard },
   { label: "Edit Profile", href: "edit", icon: UserPen },
   { label: "Attendance", href: "attendance", icon: Calendar },
