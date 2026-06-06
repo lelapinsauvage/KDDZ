@@ -43,9 +43,10 @@ interface AlarmConfig {
 
 interface ReceiptConfig {
   table: string;
-  alarmTable: string;
+  alarmTable?: string;
   category: string;
   recipientKind: RecipientKind;
+  targetMappingTable?: string;
 }
 
 interface OldPushToken {
@@ -198,7 +199,17 @@ const RECEIPT_CONFIGS: ReceiptConfig[] = [
   { table: "custom_notifications_assessment", alarmTable: "t_alarms_assessment", category: "assessment", recipientKind: "USER" },
   { table: "custom_notifications_payments", alarmTable: "t_alarms_payments", category: "payments", recipientKind: "CHILD" },
   { table: "custom_notifications_vaccinations", alarmTable: "t_alarms_vaccinations", category: "vaccinations", recipientKind: "CHILD" },
+  { table: "custom_notifications_events", category: "events", recipientKind: "USER", targetMappingTable: "event" },
+  { table: "custom_notifications_events_parents", category: "events_parents", recipientKind: "CHILD", targetMappingTable: "event" },
+  { table: "custom_notifications_holiday", category: "holiday", recipientKind: "USER", targetMappingTable: "holiday" },
 ];
+
+async function tableExists(table: string): Promise<boolean> {
+  const rows = await queryMysql<Record<string, unknown>>("SHOW TABLES LIKE ?", [
+    table,
+  ]);
+  return rows.length > 0;
+}
 
 function platformFromLegacy(os: number): PushPlatform {
   if (os === 1) return "ANDROID";
@@ -343,6 +354,11 @@ async function migrateNotificationReceipts(
   let totalSkipped = 0;
 
   for (const config of RECEIPT_CONFIGS) {
+    if (!(await tableExists(config.table))) {
+      log(`${config.table}: table not present, skipping receipts`);
+      continue;
+    }
+
     const rows = await queryMysql<Record<string, unknown>>(
       `SELECT * FROM ${config.table}`
     );
@@ -377,6 +393,26 @@ async function migrateNotificationReceipts(
         continue;
       }
 
+      const alarmId = config.alarmTable
+        ? getMapping(config.alarmTable, legacyNotificationId)
+        : null;
+      const targetMappingId = config.targetMappingTable
+        ? getMapping(config.targetMappingTable, legacyNotificationId)
+        : null;
+      const createdAt =
+        parseDate(row.submit_time as string) ??
+        parseDate(row.datetime as string) ??
+        null;
+      const metadata = {
+        ...row,
+        ...(targetMappingId
+          ? {
+              modernTargetId: targetMappingId,
+              modernTargetTable: config.targetMappingTable,
+            }
+          : {}),
+      };
+
       if (!dryRun) {
         await prisma.notificationReceipt.create({
           data: {
@@ -387,9 +423,10 @@ async function migrateNotificationReceipts(
             legacyRecipientId,
             recipientType,
             recipientId,
-            alarmId: getMapping(config.alarmTable, legacyNotificationId),
+            alarmId,
             isRead: toBool(row.cusntf_is_viewed),
-            metadata: JSON.parse(JSON.stringify(row)),
+            metadata: JSON.parse(JSON.stringify(metadata)),
+            ...(createdAt ? { createdAt } : {}),
           },
         });
       }

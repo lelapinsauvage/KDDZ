@@ -95,6 +95,9 @@ const INSURANCE_RECEIPT_SOURCE = "custom_notifications_insurance";
 const MEDICINE_RECEIPT_SOURCE = "custom_notifications_medicine";
 const PAYMENT_RECEIPT_SOURCE = "custom_notifications_payments";
 const VACCINATION_RECEIPT_SOURCE = "custom_notifications_vaccinations";
+const GENERAL_RECEIPT_SOURCE = "custom_notifications";
+const EVENT_RECEIPT_SOURCE = "custom_notifications_events";
+const EVENT_PARENT_RECEIPT_SOURCE = "custom_notifications_events_parents";
 
 interface StaffReceiptAlarmLinkData {
   referenceId: string | null;
@@ -154,6 +157,12 @@ function jsonNumber(value: unknown): number | null {
     return Number.isFinite(parsed) ? parsed : null;
   }
   return null;
+}
+
+function jsonStringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string" && item.trim() !== "")
+    : [];
 }
 
 function medicalSectionHref(legacyType: string | null, referenceId: string | null) {
@@ -344,6 +353,109 @@ async function getReceiptRecipientNameResolver(receipts: ReceiptRecipientRef[]) 
 
 function childAccountingHref(referenceId: string | null) {
   return referenceId ? `/children/${referenceId}/accounting` : "/accounting";
+}
+
+function receiptCreatedAt(
+  receipt: { metadata: unknown; createdAt: Date },
+  keys: string[],
+) {
+  const metadata = jsonRecord(receipt.metadata);
+  for (const key of keys) {
+    const value = jsonString(metadata[key]);
+    if (!value) continue;
+    const date = new Date(value);
+    if (!Number.isNaN(date.getTime())) return date;
+  }
+  return receipt.createdAt;
+}
+
+function legacyEventTypeLabel(
+  legacyData: Record<string, unknown>,
+  recipientType: string,
+) {
+  const value = jsonNumber(legacyData.eventType);
+  if (recipientType === "PARENT_USER" || recipientType === "CHILD") {
+    return value !== null && value > 1 ? "Alert" : "Message";
+  }
+  if (value === 1) return "Message";
+  if (value === 2) return "Alert & Message";
+  return "Alert";
+}
+
+function eventReceiptDetails(event: {
+  title: string;
+  description: string | null;
+  customSubject: string | null;
+  customBody: string | null;
+}) {
+  return event.customBody ?? event.description ?? event.customSubject ?? event.title;
+}
+
+function eventReceiptTitle(event: {
+  title: string;
+  customSubject: string | null;
+}) {
+  return event.customSubject ?? event.title;
+}
+
+function eventBranchIds(event: {
+  branchId: string | null;
+  notificationBranchIds: unknown;
+}) {
+  const configured = jsonStringArray(event.notificationBranchIds);
+  if (configured.length > 0) return configured;
+  return event.branchId ? [event.branchId] : [];
+}
+
+function eventBranchLabel(
+  event: {
+    branch: { name: string } | null;
+    branchId: string | null;
+    notificationBranchIds: unknown;
+  },
+  branchNameById: Map<string, string>,
+) {
+  const branchIds = eventBranchIds(event);
+  const branchNames = branchIds
+    .map((id) => branchNameById.get(id))
+    .filter((name): name is string => Boolean(name));
+  if (branchNames.length > 0) return branchNames.join(" & ");
+  return event.branch?.name ?? "All Branches";
+}
+
+async function getLegacyEventsByNotificationId(
+  organizationId: string,
+  legacyNotificationIds: number[],
+) {
+  const events = await db.event.findMany({
+    where: {
+      legacyId: { in: legacyNotificationIds },
+      OR: [
+        { organizationId },
+        { branch: { organizationId } },
+        { organizationId: null, branchId: null },
+      ],
+    },
+    include: { branch: true, eventType: true },
+  });
+  const branchIds = Array.from(
+    new Set(events.flatMap((event) => eventBranchIds(event))),
+  );
+  const branches = branchIds.length
+    ? await db.branch.findMany({
+        where: { id: { in: branchIds }, organizationId },
+        select: { id: true, name: true },
+      })
+    : [];
+
+  return {
+    eventByLegacyId: new Map(
+      events
+        .filter((event) => event.legacyId !== null)
+        .map((event) => [event.legacyId!, event]),
+    ),
+    branchNameById: new Map(branches.map((branch) => [branch.id, branch.name])),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -1316,6 +1428,414 @@ const CONTRACT_ALARM_CONFIG: StaffReceiptAlarmConfig = {
     staffDetailHref(alarm.referenceId, alarm.referenceType),
   historyTypeFromLegacy: () => "Alert",
 };
+
+export async function getEventAlarmNotifications(
+  params: { pageSize?: number } = {},
+): Promise<ActionResult> {
+  try {
+    const { userId, organizationId: orgId } = await requireOrg();
+    const pageSize = params.pageSize ?? 500;
+
+    const [alarmReceipts, eventReceipts] = await Promise.all([
+      db.notificationReceipt.findMany({
+        where: {
+          sourceTable: GENERAL_RECEIPT_SOURCE,
+          recipientId: userId,
+          recipientType: "USER",
+          alarm: {
+            is: {
+              type: "EVENT",
+              OR: [{ branch: { organizationId: orgId } }, { branchId: null }],
+            },
+          },
+        },
+        include: { alarm: { include: { branch: true } } },
+        orderBy: { legacyNotificationId: "desc" },
+        take: pageSize,
+      }),
+      db.notificationReceipt.findMany({
+        where: {
+          sourceTable: EVENT_RECEIPT_SOURCE,
+          recipientId: userId,
+          recipientType: "USER",
+        },
+        orderBy: { legacyNotificationId: "desc" },
+        take: pageSize,
+      }),
+    ]);
+
+    const { eventByLegacyId, branchNameById } =
+      await getLegacyEventsByNotificationId(
+        orgId,
+        eventReceipts.map((receipt) => receipt.legacyNotificationId),
+      );
+
+    const alarmRows = alarmReceipts.flatMap((receipt) => {
+      if (!receipt.alarm) return [];
+      const legacyData = jsonRecord(receipt.alarm.legacyData);
+      const legacyId = jsonNumber(legacyData.aid) ?? receipt.legacyNotificationId;
+      const legacyHref = jsonString(legacyData.href);
+      const actionHref =
+        receipt.alarm.referenceType === "Holiday"
+          ? "/settings/holidays"
+          : receipt.alarm.referenceType === "Event"
+            ? "/settings/events"
+            : "/alarms/events";
+
+      return [{
+        id: `alarm:${receipt.alarm.id}`,
+        receiptId: receipt.id,
+        legacyId,
+        details: receipt.alarm.message ?? "",
+        datetime: receipt.alarm.createdAt.toISOString(),
+        dueDate: receipt.alarm.dueDate
+          ? receipt.alarm.dueDate.toISOString().split("T")[0]
+          : null,
+        branchId: receipt.alarm.branchId,
+        branchIds: receipt.alarm.branchId ? [receipt.alarm.branchId] : [],
+        branch: receipt.alarm.branch?.name ?? "All Branches",
+        status: receipt.isRead ? "Viewed" : "New",
+        isRead: receipt.isRead,
+        legacyHref,
+        actionHref,
+        searchText: [
+          legacyId,
+          receipt.alarm.message,
+          receipt.alarm.branch?.name,
+          receipt.alarm.referenceType,
+          receipt.isRead ? "Viewed" : "New",
+          "event",
+        ]
+          .filter(Boolean)
+          .join(" "),
+      }];
+    });
+
+    const eventRows = eventReceipts.flatMap((receipt) => {
+      const event = eventByLegacyId.get(receipt.legacyNotificationId);
+      if (!event) return [];
+      const legacyData = jsonRecord(event.legacyData);
+      const branchIds = eventBranchIds(event);
+      const branch = eventBranchLabel(event, branchNameById);
+      const datetime = receiptCreatedAt(receipt, ["submit_time", "datetime"]);
+      const details = eventReceiptDetails(event);
+      const title = eventReceiptTitle(event);
+
+      return [{
+        id: `event:${event.id}`,
+        receiptId: receipt.id,
+        legacyId: event.legacyId ?? receipt.legacyNotificationId,
+        details,
+        datetime: datetime.toISOString(),
+        dueDate: event.date.toISOString().split("T")[0],
+        branchId: branchIds.length === 1 ? branchIds[0] : event.branchId,
+        branchIds,
+        branch,
+        status: receipt.isRead ? "Viewed" : "New",
+        isRead: receipt.isRead,
+        legacyHref: "alarmsEvents.php",
+        actionHref: "/settings/events",
+        searchText: [
+          event.legacyId ?? receipt.legacyNotificationId,
+          title,
+          details,
+          event.eventType?.name,
+          branch,
+          legacyEventTypeLabel(legacyData, receipt.recipientType),
+          receipt.isRead ? "Viewed" : "New",
+          "event",
+        ]
+          .filter(Boolean)
+          .join(" "),
+      }];
+    });
+
+    const alarms = [...alarmRows, ...eventRows]
+      .sort(
+        (a, b) =>
+          new Date(b.datetime).getTime() - new Date(a.datetime).getTime(),
+      )
+      .slice(0, pageSize);
+
+    return { success: true, data: { alarms, total: alarms.length } };
+  } catch (error) {
+    console.error("Failed to fetch event alarm notifications:", error);
+    return {
+      success: false,
+      error: "Failed to fetch event alarm notifications",
+    };
+  }
+}
+
+export async function getEventAlarmHistory(
+  params: { pageSize?: number } = {},
+): Promise<ActionResult> {
+  try {
+    const { userId, organizationId: orgId } = await requireOrg();
+    const pageSize = params.pageSize ?? 500;
+
+    const [alarmReceipts, eventReceipts] = await Promise.all([
+      db.notificationReceipt.findMany({
+        where: {
+          sourceTable: GENERAL_RECEIPT_SOURCE,
+          recipientType: "USER",
+          NOT: { recipientId: userId },
+          alarm: {
+            is: {
+              type: "EVENT",
+              OR: [{ branch: { organizationId: orgId } }, { branchId: null }],
+            },
+          },
+        },
+        include: { alarm: { include: { branch: true } } },
+        orderBy: { legacyNotificationId: "desc" },
+        take: pageSize,
+      }),
+      db.notificationReceipt.findMany({
+        where: {
+          OR: [
+            {
+              sourceTable: EVENT_RECEIPT_SOURCE,
+              recipientType: "USER",
+              NOT: { recipientId: userId },
+            },
+            {
+              sourceTable: EVENT_PARENT_RECEIPT_SOURCE,
+              recipientType: { in: ["PARENT_USER", "CHILD"] },
+            },
+          ],
+        },
+        orderBy: { legacyNotificationId: "desc" },
+        take: pageSize,
+      }),
+    ]);
+
+    const { eventByLegacyId, branchNameById } =
+      await getLegacyEventsByNotificationId(
+        orgId,
+        eventReceipts.map((receipt) => receipt.legacyNotificationId),
+      );
+    const recipientNameFor = await getReceiptRecipientNameResolver([
+      ...alarmReceipts,
+      ...eventReceipts,
+    ]);
+
+    const alarmHistory = alarmReceipts.flatMap((receipt) => {
+      if (!receipt.alarm) return [];
+      const legacyData = jsonRecord(receipt.alarm.legacyData);
+      const legacyId = jsonNumber(legacyData.aid) ?? receipt.legacyNotificationId;
+      const recipientName = recipientNameFor(receipt);
+
+      return [{
+        id: receipt.id,
+        legacyId,
+        type: legacyNotificationTypeLabel(legacyData),
+        content: receipt.alarm.message ?? "",
+        time: receipt.alarm.createdAt.toISOString(),
+        to: recipientName,
+        seen: receipt.isRead ? "Yes" : "No",
+        branch: receipt.alarm.branch?.name ?? "All Branches",
+        searchText: [
+          legacyId,
+          legacyNotificationTypeLabel(legacyData),
+          receipt.alarm.message,
+          recipientName,
+          receipt.isRead ? "Yes" : "No",
+          "event",
+        ]
+          .filter(Boolean)
+          .join(" "),
+      }];
+    });
+
+    const eventHistory = eventReceipts.flatMap((receipt) => {
+      const event = eventByLegacyId.get(receipt.legacyNotificationId);
+      if (!event) return [];
+      const legacyData = jsonRecord(event.legacyData);
+      const recipientName = recipientNameFor(receipt);
+      const branch = eventBranchLabel(event, branchNameById);
+      const type = legacyEventTypeLabel(legacyData, receipt.recipientType);
+      const timeKeys =
+        receipt.sourceTable === EVENT_PARENT_RECEIPT_SOURCE
+          ? ["datetime", "submit_time"]
+          : ["submit_time", "datetime"];
+      const time = receiptCreatedAt(receipt, timeKeys);
+      const content = eventReceiptDetails(event);
+
+      return [{
+        id: receipt.id,
+        legacyId: event.legacyId ?? receipt.legacyNotificationId,
+        type,
+        content,
+        time: time.toISOString(),
+        to: recipientName,
+        seen: receipt.isRead ? "Yes" : "No",
+        branch,
+        searchText: [
+          event.legacyId ?? receipt.legacyNotificationId,
+          type,
+          content,
+          recipientName,
+          branch,
+          receipt.isRead ? "Yes" : "No",
+          "event",
+        ]
+          .filter(Boolean)
+          .join(" "),
+      }];
+    });
+
+    const history = [...alarmHistory, ...eventHistory]
+      .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+      .slice(0, pageSize);
+
+    return { success: true, data: { history, total: history.length } };
+  } catch (error) {
+    console.error("Failed to fetch event alarm history:", error);
+    return { success: false, error: "Failed to fetch event alarm history" };
+  }
+}
+
+export async function markEventAlarmViewed(
+  targetId: string,
+): Promise<ActionResult<{ count: number }>> {
+  try {
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
+
+    if (targetId.startsWith("event:")) {
+      const eventId = targetId.slice("event:".length);
+      const event = await db.event.findFirst({
+        where: {
+          id: eventId,
+          OR: [
+            { organizationId: ctx.organizationId },
+            { branch: { organizationId: ctx.organizationId } },
+            { organizationId: null, branchId: null },
+          ],
+        },
+        select: { legacyId: true },
+      });
+      if (!event?.legacyId) {
+        return { success: false, error: "Event notification not found" };
+      }
+
+      const update = await db.notificationReceipt.updateMany({
+        where: {
+          sourceTable: EVENT_RECEIPT_SOURCE,
+          legacyNotificationId: event.legacyId,
+          recipientId: ctx.userId,
+          recipientType: "USER",
+          isRead: false,
+        },
+        data: { isRead: true },
+      });
+
+      revalidateStaffReceiptAlarmPaths("/alarms/events");
+      return { success: true, data: { count: update.count } };
+    }
+
+    const alarmId = targetId.startsWith("alarm:")
+      ? targetId.slice("alarm:".length)
+      : targetId;
+    const alarm = await db.alarm.findUnique({
+      where: { id: alarmId },
+      include: { branch: true },
+    });
+    if (
+      !alarm ||
+      alarm.type !== "EVENT" ||
+      (alarm.branch && alarm.branch.organizationId !== ctx.organizationId)
+    ) {
+      return { success: false, error: "Event alarm not found" };
+    }
+
+    const update = await db.notificationReceipt.updateMany({
+      where: {
+        sourceTable: GENERAL_RECEIPT_SOURCE,
+        alarmId,
+        recipientId: ctx.userId,
+        recipientType: "USER",
+        isRead: false,
+      },
+      data: { isRead: true },
+    });
+
+    revalidateStaffReceiptAlarmPaths("/alarms/events");
+    return { success: true, data: { count: update.count } };
+  } catch (error) {
+    console.error("Failed to mark event alarm viewed:", error);
+    return { success: false, error: "Failed to mark event alarm viewed" };
+  }
+}
+
+export async function markAllEventAlarmsViewed(): Promise<
+  ActionResult<{ count: number }>
+> {
+  try {
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
+
+    const [generalUpdate, events] = await Promise.all([
+      db.notificationReceipt.updateMany({
+        where: {
+          sourceTable: GENERAL_RECEIPT_SOURCE,
+          recipientId: ctx.userId,
+          recipientType: "USER",
+          isRead: false,
+          alarm: {
+            is: {
+              type: "EVENT",
+              OR: [
+                { branch: { organizationId: ctx.organizationId } },
+                { branchId: null },
+              ],
+            },
+          },
+        },
+        data: { isRead: true },
+      }),
+      db.event.findMany({
+        where: {
+          legacyId: { not: null },
+          OR: [
+            { organizationId: ctx.organizationId },
+            { branch: { organizationId: ctx.organizationId } },
+            { organizationId: null, branchId: null },
+          ],
+        },
+        select: { legacyId: true },
+      }),
+    ]);
+
+    const eventLegacyIds = events
+      .map((event) => event.legacyId)
+      .filter((legacyId): legacyId is number => legacyId !== null);
+    const eventUpdate = eventLegacyIds.length
+      ? await db.notificationReceipt.updateMany({
+          where: {
+            sourceTable: EVENT_RECEIPT_SOURCE,
+            legacyNotificationId: { in: eventLegacyIds },
+            recipientId: ctx.userId,
+            recipientType: "USER",
+            isRead: false,
+          },
+          data: { isRead: true },
+        })
+      : { count: 0 };
+
+    revalidateStaffReceiptAlarmPaths("/alarms/events");
+    return {
+      success: true,
+      data: { count: generalUpdate.count + eventUpdate.count },
+    };
+  } catch (error) {
+    console.error("Failed to mark all event alarms viewed:", error);
+    return { success: false, error: "Failed to mark all event alarms viewed" };
+  }
+}
 
 export async function getBirthdayAlarmNotifications(
   params: { pageSize?: number } = {},

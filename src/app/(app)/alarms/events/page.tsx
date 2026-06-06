@@ -1,6 +1,10 @@
 import { getEvents } from "@/lib/actions/settings";
 import { getBranches } from "@/lib/actions/branches";
-import { getAlarms } from "@/lib/actions/alarms";
+import {
+  getAlarms,
+  getEventAlarmHistory,
+  getEventAlarmNotifications,
+} from "@/lib/actions/alarms";
 import { EventAlarmsClient } from "./event-alarms-client";
 
 function stringArray(value: unknown) {
@@ -10,10 +14,18 @@ function stringArray(value: unknown) {
 }
 
 export default async function EventAlarmsPage() {
-  const [eventsResult, branchesResult, alarmsResult] = await Promise.all([
+  const [
+    eventsResult,
+    branchesResult,
+    alarmsResult,
+    notificationResult,
+    historyResult,
+  ] = await Promise.all([
     getEvents({ isActive: true }),
     getBranches(),
     getAlarms({ type: "EVENT", pageSize: 500 }),
+    getEventAlarmNotifications({ pageSize: 500 }),
+    getEventAlarmHistory({ pageSize: 500 }),
   ]);
 
   const branches = ((branchesResult.data ?? []) as Array<{ id: string; name: string }>);
@@ -24,6 +36,10 @@ export default async function EventAlarmsPage() {
   const rawAlarmData = (alarmsResult.success ? alarmsResult.data : { alarms: [] }) as any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rawAlarms = (rawAlarmData.alarms ?? []) as Array<any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const notificationData = (notificationResult.success ? notificationResult.data : {}) as any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const historyData = (historyResult.success ? historyResult.data : {}) as any;
 
   const branchNameById = new Map(branches.map((branch) => [branch.id, branch.name]));
 
@@ -75,6 +91,8 @@ export default async function EventAlarmsPage() {
     <EventAlarmsClient
       events={[...serializedAlarms, ...serializedEvents]}
       branches={branches}
+      notificationAlarms={notificationData.alarms ?? []}
+      notificationHistory={historyData.history ?? []}
     />
   );
 }

@@ -73,6 +73,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - `/alarms/insurance` and `/alarms/medicine` now restore legacy staff read-state from migrated `custom_notifications_insurance` and `custom_notifications_medicine` receipts, including Teachers New/Viewed filters, row/bulk/all mark-viewed actions, manual generation controls, and sent-reminder history tables.
    - `/alarms/vaccinations` now restores legacy receipt read-state from migrated `custom_notifications_vaccinations`, including collapsed New/Viewed status by alarm, row/bulk/all mark-viewed actions, manual generation controls, and sent-history rows for USER/PARENT_USER/CHILD receipts.
    - `/alarms/payments` now restores legacy receipt read-state from migrated `custom_notifications_payments`, including recipient To summaries, collapsed New/Viewed status by alarm, row/bulk/all mark-viewed actions, manual generation controls, and sent-history rows for PARENT_USER/CHILD receipts.
+   - `/alarms/events` now restores legacy event/holiday receipt read-state from migrated `custom_notifications`, `custom_notifications_events`, and `custom_notifications_events_parents`, including current-staff New/Viewed filters, row/bulk/all mark-viewed actions, and Sent Events Alarms history for staff and parent recipients.
    - Remaining work is idempotent cron/job generation for the other approved legacy families, hosted schedule configuration after production crontab confirmation, and external push/email/SMS/WhatsApp providers after credential recovery or rotation.
 
 9. **Parent portal UI**
@@ -110,8 +111,8 @@ This list is the first implementation backlog after the generated inventory/matr
    - Remaining work is final visual/action audit against `Zones_Management.php`, `Areas.php`, `regions.php`, and `regions.js`.
 
 18. **Food/holiday/event calendar nuances**
-   - Food applications, holiday notification fields, event types, and scheduled event notification metadata now have migration coverage; `/settings/events` restores legacy custom subject/body, multi-branch targeting, and 1-10 day offset controls.
-   - Remaining work is exact visual/action audit, holiday send-channel behavior, parent/mobile event delivery, and viewed/history parity.
+   - Food applications, holiday notification fields, event types, scheduled event notification metadata, and event notification receipt history now have migration coverage; `/settings/events` restores legacy custom subject/body, multi-branch targeting, and 1-10 day offset controls.
+   - Remaining work is exact visual/action audit, holiday send-channel behavior, and parent/mobile event delivery.
 
 19. **Message delivery/read-state parity**
    - `/alarms/msg` now restores the legacy message notification listing with current-staff-user New/Viewed scoping, filters, row/bulk mark-viewed actions, Set All As Viewed, and idempotent migration provenance from `t_alarms_msg` plus per-recipient `custom_notifications_msg` delivery rows.

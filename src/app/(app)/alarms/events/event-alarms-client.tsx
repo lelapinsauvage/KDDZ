@@ -14,10 +14,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { CalendarDays, ExternalLink, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { AlarmActionsCell } from "@/components/alarms/alarm-actions-cell";
 import { generateEventAlarms, generateHolidayAlarms } from "@/lib/actions/alarms";
+import {
+  StaffReceiptAlarmsClient,
+  type StaffReceiptAlarm,
+  type StaffReceiptAlarmHistory,
+} from "../_components/staff-receipt-alarms-client";
 
 interface EventAlarm {
   id: string;
@@ -35,9 +46,16 @@ interface EventAlarm {
 interface EventAlarmsClientProps {
   events: EventAlarm[];
   branches: { id: string; name: string }[];
+  notificationAlarms: StaffReceiptAlarm[];
+  notificationHistory: StaffReceiptAlarmHistory[];
 }
 
-export function EventAlarmsClient({ events, branches }: EventAlarmsClientProps) {
+export function EventAlarmsClient({
+  events,
+  branches,
+  notificationAlarms,
+  notificationHistory,
+}: EventAlarmsClientProps) {
   const router = useRouter();
   const [branchFilter, setBranchFilter] = useState("ALL");
   const [generatingJob, setGeneratingJob] = useState<"holiday" | "event" | null>(null);
@@ -179,51 +197,71 @@ export function EventAlarmsClient({ events, branches }: EventAlarmsClientProps) 
         ]}
       />
       <div className="space-y-4 p-4 md:p-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <Select value={branchFilter} onValueChange={setBranchFilter}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="All Branches" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All Branches</SelectItem>
-              {branches.map((b) => (
-                <SelectItem key={b.id} value={b.id}>
-                  {b.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleGenerateHolidays}
-            disabled={generatingJob !== null}
-            className="gap-2"
-          >
-            <RefreshCw className={`size-4 ${generatingJob === "holiday" ? "animate-spin" : ""}`} />
-            {generatingJob === "holiday" ? "Generating..." : "Generate Holiday Alarms"}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleGenerateEvents}
-            disabled={generatingJob !== null}
-            className="gap-2"
-          >
-            <RefreshCw className={`size-4 ${generatingJob === "event" ? "animate-spin" : ""}`} />
-            {generatingJob === "event" ? "Generating..." : "Generate Event Alarms"}
-          </Button>
-          {generationStatus && (
-            <span className="text-sm text-muted-foreground">{generationStatus}</span>
-          )}
-        </div>
-        {filtered.length > 0 ? (
-          <DataTable columns={columns} data={filtered} searchKey="title" searchPlaceholder="Search events..." />
-        ) : (
-          <div className="rounded-lg border bg-card p-8 text-center text-sm text-muted-foreground">
-            No upcoming events found.
-          </div>
-        )}
+        <Tabs defaultValue="dashboard" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dashboard" className="space-y-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <Select value={branchFilter} onValueChange={setBranchFilter}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="All Branches" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Branches</SelectItem>
+                  {branches.map((b) => (
+                    <SelectItem key={b.id} value={b.id}>
+                      {b.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleGenerateHolidays}
+                disabled={generatingJob !== null}
+                className="gap-2"
+              >
+                <RefreshCw className={`size-4 ${generatingJob === "holiday" ? "animate-spin" : ""}`} />
+                {generatingJob === "holiday" ? "Generating..." : "Generate Holiday Alarms"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleGenerateEvents}
+                disabled={generatingJob !== null}
+                className="gap-2"
+              >
+                <RefreshCw className={`size-4 ${generatingJob === "event" ? "animate-spin" : ""}`} />
+                {generatingJob === "event" ? "Generating..." : "Generate Event Alarms"}
+              </Button>
+              {generationStatus && (
+                <span className="text-sm text-muted-foreground">{generationStatus}</span>
+              )}
+            </div>
+            {filtered.length > 0 ? (
+              <DataTable columns={columns} data={filtered} searchKey="title" searchPlaceholder="Search events..." />
+            ) : (
+              <div className="rounded-lg border bg-card p-8 text-center text-sm text-muted-foreground">
+                No upcoming events found.
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="notifications">
+            <StaffReceiptAlarmsClient
+              family="event"
+              alarms={notificationAlarms}
+              history={notificationHistory}
+              branches={branches}
+              showHeader={false}
+              showGenerate={false}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </>
   );

@@ -32,6 +32,7 @@ import {
 import {
   ExternalLink,
   Cake,
+  CalendarDays,
   ClipboardCheck,
   DollarSign,
   Eye,
@@ -50,6 +51,7 @@ import {
   generateAssessmentAlarms,
   generateBirthdayAlarms,
   generateContractAlarms,
+  generateEventAlarms,
   generateInsuranceAlarms,
   generateMedicineAlarms,
   generatePaymentAlarms,
@@ -57,6 +59,7 @@ import {
   markAllAssessmentAlarmsViewed,
   markAllBirthdayAlarmsViewed,
   markAllContractAlarmsViewed,
+  markAllEventAlarmsViewed,
   markAllInsuranceAlarmsViewed,
   markAllMedicineAlarmsViewed,
   markAllPaymentAlarmsViewed,
@@ -64,6 +67,7 @@ import {
   markAssessmentAlarmViewed,
   markBirthdayAlarmViewed,
   markContractAlarmViewed,
+  markEventAlarmViewed,
   markInsuranceAlarmViewed,
   markMedicineAlarmViewed,
   markPaymentAlarmViewed,
@@ -78,6 +82,7 @@ export interface StaffReceiptAlarm {
   datetime: string;
   dueDate: string | null;
   branchId: string | null;
+  branchIds?: string[];
   branch: string;
   status: "Viewed" | "New";
   isRead: boolean;
@@ -104,6 +109,7 @@ interface StaffReceiptAlarmsClientProps {
     | "assessment"
     | "birthday"
     | "contract"
+    | "event"
     | "insurance"
     | "medicine"
     | "payment"
@@ -112,6 +118,7 @@ interface StaffReceiptAlarmsClientProps {
   history: StaffReceiptAlarmHistory[];
   branches: { id: string; name: string }[];
   showHeader?: boolean;
+  showGenerate?: boolean;
 }
 
 interface FamilyCopy {
@@ -171,6 +178,20 @@ const familyCopy: Record<StaffReceiptAlarmsClientProps["family"], FamilyCopy> = 
     generationFailure: "Contract generation failed.",
     icon: FileText,
     iconClass: "text-primary",
+  },
+  event: {
+    title: "Events Notifications Listing",
+    description: "Holiday and event reminders sent to staff and parents",
+    breadcrumb: "Events",
+    historyTitle: "Sent Events Alarms",
+    searchPlaceholder: "Search event alarms...",
+    historyPlaceholder: "Search sent event alarms...",
+    emptyTitle: "No event notifications",
+    emptyDescription:
+      "Event and holiday reminders matching the current filters will appear here.",
+    generationFailure: "Event generation failed.",
+    icon: CalendarDays,
+    iconClass: "text-teal-600",
   },
   insurance: {
     title: "Insurance Notifications Listing",
@@ -317,6 +338,14 @@ function formatGenerationStatus(
     return `Matched ${reminderGroupsMatched} paid group${reminderGroupsMatched === 1 ? "" : "s"} and ${duePaymentGroupsMatched} due group${duePaymentGroupsMatched === 1 ? "" : "s"}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing.`;
   }
 
+  if (family === "event") {
+    const eventsMatched = metric(data, "eventsMatched");
+    const alarmsCreated = metric(data, "alarmsCreated");
+    const notificationsCreated = metric(data, "notificationsCreated");
+    const skippedExisting = metric(data, "skippedExisting");
+    return `Matched ${eventsMatched}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"} and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing.`;
+  }
+
   const entriesMatched = metric(data, "entriesMatched");
   const alarmsCreated = metric(data, "alarmsCreated");
   const notificationsCreated = metric(data, "notificationsCreated");
@@ -332,6 +361,7 @@ async function generateForFamily(
   if (family === "assessment") return generateAssessmentAlarms(branchId);
   if (family === "birthday") return generateBirthdayAlarms(branchId);
   if (family === "contract") return generateContractAlarms(branchId);
+  if (family === "event") return generateEventAlarms(branchId);
   if (family === "insurance") return generateInsuranceAlarms(branchId);
   if (family === "payment") return generatePaymentAlarms(branchId);
   if (family === "vaccination") return generateVaccinationAlarms(branchId);
@@ -345,6 +375,7 @@ async function markViewedForFamily(
   if (family === "assessment") return markAssessmentAlarmViewed(alarmId);
   if (family === "birthday") return markBirthdayAlarmViewed(alarmId);
   if (family === "contract") return markContractAlarmViewed(alarmId);
+  if (family === "event") return markEventAlarmViewed(alarmId);
   if (family === "insurance") return markInsuranceAlarmViewed(alarmId);
   if (family === "payment") return markPaymentAlarmViewed(alarmId);
   if (family === "vaccination") return markVaccinationAlarmViewed(alarmId);
@@ -357,6 +388,7 @@ async function markAllViewedForFamily(
   if (family === "assessment") return markAllAssessmentAlarmsViewed();
   if (family === "birthday") return markAllBirthdayAlarmsViewed();
   if (family === "contract") return markAllContractAlarmsViewed();
+  if (family === "event") return markAllEventAlarmsViewed();
   if (family === "insurance") return markAllInsuranceAlarmsViewed();
   if (family === "payment") return markAllPaymentAlarmsViewed();
   if (family === "vaccination") return markAllVaccinationAlarmsViewed();
@@ -369,6 +401,7 @@ export function StaffReceiptAlarmsClient({
   history,
   branches,
   showHeader = true,
+  showGenerate = true,
 }: StaffReceiptAlarmsClientProps) {
   const copy = familyCopy[family];
   const Icon = copy.icon;
@@ -394,7 +427,11 @@ export function StaffReceiptAlarmsClient({
     const normalizedSearch = search.trim().toLowerCase();
     return alarms.filter((alarm) => {
       if (statusFilter !== "ALL" && alarm.status !== statusFilter) return false;
-      if (branchFilter !== "ALL" && alarm.branchId !== branchFilter) {
+      if (
+        branchFilter !== "ALL" &&
+        alarm.branchId !== branchFilter &&
+        !alarm.branchIds?.includes(branchFilter)
+      ) {
         return false;
       }
       if (!inDateRange(alarm.datetime, dateFrom, dateTo)) return false;
@@ -773,16 +810,18 @@ export function StaffReceiptAlarmsClient({
                 <RotateCcw className="size-4" />
                 Reset
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleGenerate}
-                disabled={isGenerating}
-                className="gap-2"
-              >
-                <RefreshCw className={`size-4 ${isGenerating ? "animate-spin" : ""}`} />
-                {isGenerating ? "Generating..." : "Generate"}
-              </Button>
+              {showGenerate && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleGenerate}
+                  disabled={isGenerating}
+                  className="gap-2"
+                >
+                  <RefreshCw className={`size-4 ${isGenerating ? "animate-spin" : ""}`} />
+                  {isGenerating ? "Generating..." : "Generate"}
+                </Button>
+              )}
               {!showHeader && markAllViewedButton}
               {generationStatus && (
                 <span className="text-sm text-muted-foreground">
