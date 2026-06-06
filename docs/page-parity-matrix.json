@@ -40,8 +40,8 @@
   {
     "legacyPhp": "Front/templates/admin/Child_Details.php",
     "legacyJs": "Front/templates/admin/js/Child_Details.js",
-    "modernRoute": "/children/[id]",
-    "status": "partial - legacy dossier landing restored; edit-form visual audit remains",
+    "modernRoute": "/Child_Details.php, /children/[id]",
+    "status": "partial - legacy dossier landing and child deep-link bridge restored; edit-form visual audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -49,13 +49,13 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Restored /children/[id] as a real child dossier instead of redirecting to dashboard, with legacy progress flag wording, photo/name/status summary, child info, general care, address, parents, brothers/sisters, authorized pickup, previous garderie history, accounting setup, attachments, current location, and direct edit/print/dashboard/workflow actions. Remaining work is exact edit-form visual/action audit against Child_Details.js dynamic validation, map picking, and legacy create/update/draft button behavior."
+    "verification": "Restored `/children/[id]` as a real child dossier instead of redirecting to dashboard, with legacy progress flag wording, photo/name/status summary, child info, general care, address, parents, brothers/sisters, authorized pickup, previous garderie history, accounting setup, attachments, current location, and direct edit/print/dashboard/workflow actions. `/Child_Details.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy child ids into the modern dossier page. Remaining work is exact edit-form visual/action audit against Child_Details.js dynamic validation, map picking, and legacy create/update/draft button behavior."
   },
   {
-    "legacyPhp": "Front/templates/admin/Child_attend_det.php",
+    "legacyPhp": "Front/templates/admin/child_attend_det.php",
     "legacyJs": "Front/templates/admin/js/child_attend_det.js",
-    "modernRoute": "/children/[id]/attendance",
-    "status": "partial - legacy attendance matrix restored; visual export audit remains",
+    "modernRoute": "/child_attend_det.php, /children/[id]/attendance",
+    "status": "partial - legacy attendance matrix and deep-link bridge restored; visual export audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -63,7 +63,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Restored the legacy school-year month/day attendance matrix with Month, day columns 1-31, P/A totals, P/A/N/W/H badge semantics, child header context, direct daily/absence report links, search/month/status filters, Excel/CSV export, and print action. Remaining work is final visual/export parity against DataTables TableTools PDF/print output and exact production school-year selector behavior."
+    "verification": "Restored the legacy school-year month/day attendance matrix with Month, day columns 1-31, P/A totals, P/A/N/W/H badge semantics, child header context, direct daily/absence report links, search/month/status filters, Excel/CSV export, and print action. `/child_attend_det.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy child ids into the modern attendance page. Remaining work is final visual/export parity against DataTables TableTools PDF/print output and exact production school-year selector behavior."
   },
   {
     "legacyPhp": "Front/templates/admin/Doctor_Details.php",
@@ -1039,8 +1039,8 @@
   {
     "legacyPhp": "Front/templates/admin/child_absence.php",
     "legacyJs": "Front/templates/admin/js/child_absence.js",
-    "modernRoute": "/children/[id]/absence",
-    "status": "partial - legacy child absence table restored; visual export audit remains",
+    "modernRoute": "/child_absence.php, /children/[id]/absence",
+    "status": "partial - legacy child absence table and deep-link bridge restored; visual export audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -1048,13 +1048,13 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Restored child-specific absence report header, Date/Reason/Absent From/To/Hospital/Dr. Name/Action/Attachment table columns, search/date/status filters, Excel/CSV export, first-attachment open action with count badge, new absence action, and view/edit/delete actions with confirmation. Remaining work is exact legacy image-preview modal behavior and DataTables TableTools visual/PDF export parity."
+    "verification": "Restored child-specific absence report header, Date/Reason/Absent From/To/Hospital/Dr. Name/Action/Attachment table columns, search/date/status filters, Excel/CSV export, first-attachment open action with count badge, new absence action, and view/edit/delete actions with confirmation. `/child_absence.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy child ids into the modern child absence page. Remaining work is exact legacy image-preview modal behavior and DataTables TableTools visual/PDF export parity."
   },
   {
     "legacyPhp": "Front/templates/admin/child_accident.php",
     "legacyJs": "Front/templates/admin/js/child_accident.js",
-    "modernRoute": "/children/[id]/accidents",
-    "status": "partial - legacy child accident table restored; visual export audit remains",
+    "modernRoute": "/child_accident.php, /children/[id]/accidents",
+    "status": "partial - legacy child accident table and deep-link bridge restored; visual export audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -1062,13 +1062,13 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Restored child-specific accident report header, Date/Time/Cause/Place/Specific Area/Cam #/First Aid/Teacher/Hospital/Treatment/Action/Attachment table columns, search/date/attachment filters, Excel/CSV export, first-attachment open action with count badge, new accident dialog, and view/edit/delete actions with confirmation. Remaining work is exact legacy image-preview modal behavior and DataTables TableTools visual/PDF export parity."
+    "verification": "Restored child-specific accident report header, Date/Time/Cause/Place/Specific Area/Cam #/First Aid/Teacher/Hospital/Treatment/Action/Attachment table columns, search/date/attachment filters, Excel/CSV export, first-attachment open action with count badge, new accident dialog, and view/edit/delete actions with confirmation. `/child_accident.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy child ids into the modern child accidents page. Remaining work is exact legacy image-preview modal behavior and DataTables TableTools visual/PDF export parity."
   },
   {
     "legacyPhp": "Front/templates/admin/child_accounting.php",
     "legacyJs": "Front/templates/admin/js/child_accounting.js",
-    "modernRoute": "/children/[id]/accounting",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "/child_accounting.php, /children/[id]/accounting",
+    "status": "partial - child accounting sections and deep-link bridge exist; table column/layout parity still needs final audit",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -1076,7 +1076,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/child_accounting.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy child ids into the modern child accounting page. Remaining work is exact legacy child #/name columns, category table layout, and attachment preview behavior against modern per-child context."
   },
   {
     "legacyPhp": "Front/templates/admin/child_attend_det_data.php",
@@ -1092,8 +1092,8 @@
   {
     "legacyPhp": "Front/templates/admin/child_calls.php",
     "legacyJs": "Front/templates/admin/js/child_calls.js",
-    "modernRoute": "/children/[id]/calls",
-    "status": "partial - legacy incoming/outgoing call tables, edit, and draft status restored; visual export audit remains",
+    "modernRoute": "/child_calls.php, /children/[id]/calls",
+    "status": "partial - legacy incoming/outgoing call tables, edit, draft status, and deep-link bridge restored; visual export audit remains",
     "legacyTablesMentioned": [
       "t_form_6",
       "t_form_attch",
@@ -1105,13 +1105,13 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Restored child-specific Incoming and Outgoing sections, Date/Time/Cause/Pick up or Teacher/Subject/Remarks/Action/Attachment table columns, search/date/attachment filters, Excel/CSV export, print action, first-attachment open action with count badge, add call dialog, view details, standalone Form 6 open action, edit existing reports, draft badge/status, Save As Draft behavior via the Form 6 dialog, teacher-backed display, existing attachment removal from edit, and delete confirmation. Remaining work is child-table inline legacy image-preview modal behavior and DataTables TableTools visual/PDF export parity."
+    "verification": "Restored child-specific Incoming and Outgoing sections, Date/Time/Cause/Pick up or Teacher/Subject/Remarks/Action/Attachment table columns, search/date/attachment filters, Excel/CSV export, print action, first-attachment open action with count badge, add call dialog, view details, standalone Form 6 open action, edit existing reports, draft badge/status, Save As Draft behavior via the Form 6 dialog, teacher-backed display, existing attachment removal from edit, and delete confirmation. `/child_calls.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy child ids into the modern child calls page. Remaining work is child-table inline legacy image-preview modal behavior and DataTables TableTools visual/PDF export parity."
   },
   {
     "legacyPhp": "Front/templates/admin/child_dashboard.php",
     "legacyJs": "Front/templates/admin/js/child_dashboard.js",
-    "modernRoute": "/children/[id]/dashboard",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "/child_dashboard.php, /children/[id]/dashboard",
+    "status": "partial - legacy dashboard fields, KPIs, summaries, links, and deep-link bridge restored; modal/year audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -1119,13 +1119,13 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored child dashboard parity for core profile fields and actions: child number, active status, nationality, branch, class, mother/father phone, gender, language, joining date, joined-from duration, joining/current age, bus, lunch, allergy, milk/portion/scoop, diapers, authorized pickup/emergency contacts, quick links for call report, accident report, child calendar, and message compose. Restored KPI navigation for calls, accidents, payments, daily reports, absence reports, missing daily/absent reports, medical report counts, and assessment counts; dashboard summaries now show legacy Breakfast/Lunch/Dessert food names with status/actions, Absence Date/Reason/From/To/Action, four medical rows including Vaccination Report, and assessment summaries. `/child_dashboard.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy child ids into the modern dashboard. Remaining work is exact missing-report modal drilldowns from getMissingReports/getMissingAbsentReports, exact legacy school-year/database switch behavior from db_curr, and TableTools copy/PDF/XLS/print visual parity."
   },
   {
     "legacyPhp": "Front/templates/admin/child_report.php",
     "legacyJs": "Front/templates/admin/js/child_report.js",
-    "modernRoute": "/children/[id]/report",
-    "status": "partial - legacy daily report matrix restored; grouped header audit remains",
+    "modernRoute": "/child_report.php, /children/[id]/report",
+    "status": "partial - legacy daily report matrix and deep-link bridge restored; grouped header audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -1133,7 +1133,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Restored child-specific daily report header, submitted-report filtering, Date/Breakfast Type/Breakfast Portion/Lunch Type/Lunch Portion/Dessert Type/Dessert Portion/Milk CC/Nap From/Nap To/Pot Urine/Pot Stool/Diaper Urine/Diaper Stool/Fever 1/Fever 1 Time/Fever 2/Fever 2 Time/Pant/Shirt/T-Shirt/Boxer/Socks/Actions matrix columns, search/date filters, Excel/CSV export, print action, child photo/name card, and view/edit/print actions. Remaining work is exact legacy two-row grouped table header, TableTools visual/PDF export parity, and food-name/clothing fidelity for records whose legacy data was not mapped into first-class fields."
+    "verification": "Restored child-specific daily report header, submitted-report filtering, Date/Breakfast Type/Breakfast Portion/Lunch Type/Lunch Portion/Dessert Type/Dessert Portion/Milk CC/Nap From/Nap To/Pot Urine/Pot Stool/Diaper Urine/Diaper Stool/Fever 1/Fever 1 Time/Fever 2/Fever 2 Time/Pant/Shirt/T-Shirt/Boxer/Socks/Actions matrix columns, search/date filters, Excel/CSV export, print action, child photo/name card, and view/edit/print actions. `/child_report.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy child ids into the modern child daily-report matrix. Remaining work is exact legacy two-row grouped table header, TableTools visual/PDF export parity, and food-name/clothing fidelity for records whose legacy data was not mapped into first-class fields."
   },
   {
     "legacyPhp": "Front/templates/admin/children.php",
