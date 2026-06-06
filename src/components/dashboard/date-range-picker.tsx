@@ -55,11 +55,37 @@ const presets: { label: string; getValue: () => DateRange }[] = [
     },
   },
   {
+    label: "Last Month",
+    getValue: () => {
+      const now = new Date();
+      const from = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const to = new Date(now.getFullYear(), now.getMonth(), 0);
+      return { from, to };
+    },
+  },
+  {
     label: "This Month",
     getValue: () => {
       const now = new Date();
       const from = new Date(now.getFullYear(), now.getMonth(), 1);
       return { from, to: now };
+    },
+  },
+  {
+    label: "This year",
+    getValue: () => {
+      const now = new Date();
+      const from = new Date(now.getFullYear(), 0, 1);
+      return { from, to: now };
+    },
+  },
+  {
+    label: "Last year",
+    getValue: () => {
+      const now = new Date();
+      const from = new Date(now.getFullYear() - 1, 0, 1);
+      const to = new Date(now.getFullYear() - 1, 11, 31);
+      return { from, to };
     },
   },
 ];

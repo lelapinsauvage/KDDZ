@@ -5,7 +5,9 @@ import {
   getDailyComplianceStats,
   getActionCenterMetrics,
 } from "@/lib/actions/dashboard";
+import { getSchoolYears } from "@/lib/actions/school-years";
 import type {
+  DashboardMetricFilters,
   DailyComplianceStats,
   ActionCenterMetrics as ActionCenterMetricsType,
 } from "@/lib/actions/dashboard";
@@ -35,8 +37,93 @@ import {
   FileText,
 } from "lucide-react";
 
-export default async function DashboardPage() {
+interface PageProps {
+  searchParams: Promise<{
+    from?: string | string[];
+    to?: string | string[];
+    year?: string | string[];
+  }>;
+}
+
+type DashboardSchoolYear = {
+  id: string;
+  label: string;
+  startDate: Date;
+  endDate: Date;
+  isActive: boolean;
+};
+
+function firstParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function startOfDay(value: Date): Date {
+  const date = new Date(value);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+function formatDateKey(value: Date): string {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const day = String(value.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function parseDateParam(value: string | string[] | undefined): Date | null {
+  const text = firstParam(value);
+  const match = text?.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(year, month - 1, day);
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return startOfDay(date);
+}
+
+function isUuid(value: string | undefined): value is string {
+  return Boolean(
+    value?.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)
+  );
+}
+
+function resolveDashboardSelection(
+  params: Awaited<PageProps["searchParams"]>,
+  schoolYears: DashboardSchoolYear[]
+) {
+  const today = startOfDay(new Date());
+  const rawFrom = parseDateParam(params.from) ?? today;
+  const rawTo = parseDateParam(params.to) ?? rawFrom;
+  const startDate = rawFrom <= rawTo ? rawFrom : rawTo;
+  const endDate = rawFrom <= rawTo ? rawTo : rawFrom;
+  const yearParam = firstParam(params.year);
+  const queryYearId = isUuid(yearParam) ? yearParam : null;
+  const fallbackYear = schoolYears.find((year) => year.isActive) ?? schoolYears[0] ?? null;
+  const selectedYear =
+    (queryYearId ? schoolYears.find((year) => year.id === queryYearId) : null) ??
+    fallbackYear;
+
+  return {
+    startDate,
+    endDate,
+    fromKey: formatDateKey(startDate),
+    toKey: formatDateKey(endDate),
+    schoolYearId: selectedYear?.id ?? null,
+  };
+}
+
+export default async function DashboardPage({ searchParams }: PageProps) {
   const session = await auth();
+  const params = await searchParams;
 
   if (session?.user?.role === "TEACHER") {
     redirect("/today");
@@ -44,15 +131,32 @@ export default async function DashboardPage() {
 
   const branchId = session?.user?.branchId ?? null;
   const isBranchLevel = branchId != null;
+  const yearsResult = await getSchoolYears();
+  const schoolYears = (yearsResult.data ?? []) as DashboardSchoolYear[];
+  const selection = resolveDashboardSelection(params, schoolYears);
+  const dashboardFilters: DashboardMetricFilters = {
+    startDate: selection.startDate,
+    endDate: selection.endDate,
+    schoolYearId: selection.schoolYearId,
+  };
+
+  const filterQuery = new URLSearchParams({
+    from: selection.fromKey,
+    to: selection.toKey,
+  });
+  if (selection.schoolYearId) filterQuery.set("year", selection.schoolYearId);
+  const filterSuffix = filterQuery.toString();
+  const withDashboardFilters = (href: string) =>
+    `${href}${href.includes("?") ? "&" : "?"}${filterSuffix}`;
 
   let demographics: Awaited<ReturnType<typeof getDashboardDemographics>>;
   let compliance: DailyComplianceStats;
   let metrics: ActionCenterMetricsType;
   try {
     [demographics, compliance, metrics] = await Promise.all([
-      getDashboardDemographics(),
-      getDailyComplianceStats(branchId),
-      getActionCenterMetrics(branchId),
+      getDashboardDemographics(branchId, { schoolYearId: selection.schoolYearId }),
+      getDailyComplianceStats(branchId, dashboardFilters),
+      getActionCenterMetrics(branchId, dashboardFilters),
     ]);
   } catch {
     demographics = {
@@ -114,7 +218,10 @@ export default async function DashboardPage() {
           </h1>
           <p className="text-xs text-muted-foreground/70">{todayFormatted}</p>
         </div>
-        <DashboardHeader />
+        <DashboardHeader
+          selectedRange={{ from: selection.fromKey, to: selection.toKey }}
+          selectedYearId={selection.schoolYearId}
+        />
       </div>
 
       {/* ── Row 1: Overview (Branches, Classes, Children) ── */}
@@ -131,7 +238,7 @@ export default async function DashboardPage() {
               value={demographics.totalBranches}
               icon={Building2}
               color="blue"
-              href="/branches"
+              href={withDashboardFilters("/branches")}
             />
           )}
           <StatCard
@@ -139,14 +246,14 @@ export default async function DashboardPage() {
             value={demographics.totalClasses}
             icon={BookOpen}
             color="sky"
-            href="/classes"
+            href={withDashboardFilters("/classes")}
           />
           <StatCard
             title="Total Children"
             value={demographics.totalActiveChildren}
             icon={Users}
             color="emerald"
-            href="/children"
+            href={withDashboardFilters("/children")}
           />
         </div>
       </div>
@@ -169,28 +276,28 @@ export default async function DashboardPage() {
             value={compliance.totalAttendance}
             icon={UserCheck}
             color="emerald"
-            href="/daily-reports?status=submitted"
+            href={withDashboardFilters("/daily-reports?status=submitted")}
           />
           <StatCard
             title="Total Absences"
             value={compliance.totalAbsence}
             icon={UserX}
             color="rose"
-            href="/absent-reports"
+            href={withDashboardFilters("/absent-reports")}
           />
           <StatCard
             title="Missing Reports"
             value={compliance.missingDailyReports}
             icon={FileWarning}
             color="amber"
-            href="/daily-reports?status=missing"
+            href={withDashboardFilters("/daily-reports?status=missing")}
           />
           <StatCard
             title="Missing Absence Reports"
             value={compliance.missingAbsentReports}
             icon={AlertTriangle}
             color="amber"
-            href="/absent-reports?status=missing"
+            href={withDashboardFilters("/absent-reports?status=missing")}
           />
         </div>
       </div>
@@ -206,21 +313,21 @@ export default async function DashboardPage() {
             value={`$${metrics.totalPayments.toLocaleString()}`}
             icon={DollarSign}
             color="emerald"
-            href="/accounting"
+            href={withDashboardFilters("/accounting")}
           />
           <StatCard
             title="Accidents"
             value={metrics.accidentReports}
             icon={Ambulance}
             color="rose"
-            href="/medical/accidents"
+            href={withDashboardFilters("/medical/accidents")}
           />
           <StatCard
             title="Phone Calls"
             value={metrics.loggedCalls}
             icon={Phone}
             color="sky"
-            href="/children?tab=calls"
+            href={withDashboardFilters("/children?tab=calls")}
           />
         </div>
       </div>
@@ -236,21 +343,21 @@ export default async function DashboardPage() {
             value={metrics.completedMedicalVisits}
             icon={Stethoscope}
             color="emerald"
-            href="/medical/general"
+            href={withDashboardFilters("/medical/general")}
           />
           <StatCard
             title="Medical Missing"
             value={metrics.missingMedicalVisits}
             icon={HeartPulse}
             color="rose"
-            href="/medical/general?status=missing"
+            href={withDashboardFilters("/medical/general?status=missing")}
           />
           <StatCard
             title="Medical Drafts"
             value={metrics.pendingMedicalReports}
             icon={FileEdit}
             color="sky"
-            href="/medical/general?status=draft"
+            href={withDashboardFilters("/medical/general?status=draft")}
           />
         </div>
       </div>
@@ -266,21 +373,21 @@ export default async function DashboardPage() {
             value={metrics.completedAssessments}
             icon={ClipboardCheck}
             color="emerald"
-            href="/assessments"
+            href={withDashboardFilters("/assessments")}
           />
           <StatCard
             title="Assessments Missing"
             value={metrics.missingAssessments}
             icon={ClipboardList}
             color="rose"
-            href="/assessments?status=missing"
+            href={withDashboardFilters("/assessments?status=missing")}
           />
           <StatCard
             title="Assessments Drafts"
             value={metrics.pendingAssessments}
             icon={FileText}
             color="sky"
-            href="/assessments?status=draft"
+            href={withDashboardFilters("/assessments?status=draft")}
           />
         </div>
       </div>

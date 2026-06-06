@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { requireOrg } from "@/lib/require-org";
 import { getOrgBranchIds } from "@/lib/verify-org-access";
+import type { MedicalFormType, Prisma } from "@/generated/prisma/client";
 
 // ── Types ──────────────────────────────────────────
 
@@ -52,6 +53,75 @@ export interface MorningBriefing {
     snack: string | null;
   };
   weeklyAttendance: Array<{ day: string; present: number; total: number }>;
+}
+
+export interface DashboardMetricFilters {
+  startDate?: Date | null;
+  endDate?: Date | null;
+  schoolYearId?: string | null;
+}
+
+interface NormalizedDashboardFilters {
+  start: Date;
+  endExclusive: Date;
+  schoolYearId: string | null;
+}
+
+function startOfDay(value: Date): Date {
+  const date = new Date(value);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+function addDays(value: Date, days: number): Date {
+  const date = new Date(value);
+  date.setDate(date.getDate() + days);
+  return date;
+}
+
+function dateKey(value: Date): string {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const day = String(value.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function rangeDateKeys(start: Date, endExclusive: Date): string[] {
+  const keys: string[] = [];
+  for (let day = new Date(start); day < endExclusive; day = addDays(day, 1)) {
+    keys.push(dateKey(day));
+  }
+  return keys;
+}
+
+function normalizeDashboardFilters(filters?: DashboardMetricFilters): NormalizedDashboardFilters {
+  const today = startOfDay(new Date());
+  const rawStart = filters?.startDate ? startOfDay(filters.startDate) : today;
+  const rawEnd = filters?.endDate ? startOfDay(filters.endDate) : rawStart;
+  const start = rawStart <= rawEnd ? rawStart : rawEnd;
+  const end = rawStart <= rawEnd ? rawEnd : rawStart;
+  const schoolYearId = filters?.schoolYearId?.trim() || null;
+
+  return {
+    start,
+    endExclusive: addDays(end, 1),
+    schoolYearId,
+  };
+}
+
+function dateRangeWhere(range: NormalizedDashboardFilters) {
+  return { gte: range.start, lt: range.endExclusive };
+}
+
+function childScope(
+  orgId: string,
+  branchId: string | null | undefined,
+  schoolYearId?: string | null
+): Prisma.ChildWhereInput {
+  return {
+    ...(branchId ? { branchId } : { branch: { organizationId: orgId } }),
+    ...(schoolYearId ? { schoolYearId } : {}),
+  };
 }
 
 // ── Main briefing function ─────────────────────────
@@ -397,28 +467,31 @@ export interface DashboardDemographics {
   genderStats: Array<{ name: string; value: number }>;
 }
 
-export async function getDashboardDemographics(branchId?: string | null): Promise<DashboardDemographics> {
+export async function getDashboardDemographics(
+  branchId?: string | null,
+  filters?: Pick<DashboardMetricFilters, "schoolYearId">
+): Promise<DashboardDemographics> {
   const { organizationId: orgId } = await requireOrg();
 
   const branchWhere = branchId ? { id: branchId, organizationId: orgId } : { organizationId: orgId };
   const classWhere = branchId ? { branchId } : { branch: { organizationId: orgId } };
-  const childBranchFilter = branchId ? { branchId } : { branch: { organizationId: orgId } };
+  const childFilter = childScope(orgId, branchId, filters?.schoolYearId);
 
   const [totalBranches, totalClasses, totalActiveChildren, classCounts, genderCounts] =
     await Promise.all([
       db.branch.count({ where: branchWhere }),
       db.class.count({ where: classWhere }),
       db.child.count({
-        where: { isActive: true, isDraft: false, ...childBranchFilter },
+        where: { isActive: true, isDraft: false, ...childFilter },
       }),
       db.child.groupBy({
         by: ["classId"],
-        where: { isActive: true, isDraft: false, ...childBranchFilter },
+        where: { isActive: true, isDraft: false, ...childFilter },
         _count: true,
       }),
       db.child.groupBy({
         by: ["gender"],
-        where: { isActive: true, isDraft: false, ...childBranchFilter },
+        where: { isActive: true, isDraft: false, ...childFilter },
         _count: true,
       }),
     ]);
@@ -461,87 +534,82 @@ export interface DailyComplianceStats {
 }
 
 export async function getDailyComplianceStats(
-  branchId?: string | null
+  branchId?: string | null,
+  filters?: DashboardMetricFilters
 ): Promise<DailyComplianceStats> {
   const { organizationId: orgId } = await requireOrg();
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
-  const branchFilter = branchId
-    ? { branchId }
-    : { branch: { organizationId: orgId } };
+  const range = normalizeDashboardFilters(filters);
+  const reportDateRange = dateRangeWhere(range);
+  const childFilter = childScope(orgId, branchId, range.schoolYearId);
 
   const [
     activeChildren,
-    todayReports,
-    todayAbsences,
+    reports,
+    absences,
     absentChildIds,
     absenceReportChildIds,
   ] = await Promise.all([
     db.child.findMany({
-      where: { isActive: true, isDraft: false, ...branchFilter },
+      where: { isActive: true, isDraft: false, ...childFilter },
       select: { id: true },
     }),
     db.dailyReport.findMany({
       where: {
-        reportDate: { gte: today, lt: tomorrow },
-        child: branchFilter,
+        reportDate: reportDateRange,
+        child: childFilter,
       },
-      select: { childId: true },
+      select: { childId: true, reportDate: true },
     }),
-    db.absenceReport.count({
-      where: {
-        date: { gte: today, lt: tomorrow },
-        child: branchFilter,
-      },
-    }),
-    // Children marked absent today (via absence reports)
     db.absenceReport.findMany({
       where: {
-        date: { gte: today, lt: tomorrow },
-        child: branchFilter,
+        date: reportDateRange,
+        child: childFilter,
       },
-      select: { childId: true, status: true },
+      select: { childId: true, date: true },
+    }),
+    // Children marked absent in the range (via absence reports)
+    db.absenceReport.findMany({
+      where: {
+        date: reportDateRange,
+        child: childFilter,
+      },
+      select: { childId: true, date: true, status: true },
     }),
     // Absence reports that are submitted (not just pending)
     db.absenceReport.findMany({
       where: {
-        date: { gte: today, lt: tomorrow },
+        date: reportDateRange,
         status: { in: ["APPROVED", "PENDING"] },
-        child: branchFilter,
+        child: childFilter,
       },
-      select: { childId: true },
+      select: { childId: true, date: true },
     }),
   ]);
 
-  const activeIds = new Set(activeChildren.map((c) => c.id));
-  const reportedIds = new Set(todayReports.map((r) => r.childId));
-  const absentIds = new Set(absentChildIds.map((a) => a.childId));
-  const absenceReportIds = new Set(absenceReportChildIds.map((a) => a.childId));
+  const activeIds = activeChildren.map((c) => c.id);
+  const reportedKeys = new Set(reports.map((r) => `${r.childId}:${dateKey(r.reportDate)}`));
+  const absentKeys = new Set(absentChildIds.map((a) => `${a.childId}:${dateKey(a.date)}`));
+  const absenceReportKeys = new Set(absenceReportChildIds.map((a) => `${a.childId}:${dateKey(a.date)}`));
+  const dayKeys = rangeDateKeys(range.start, range.endExclusive);
 
-  // Present children without a daily report
   let missingDailyReports = 0;
-  // Absent children without a formal absence report
   let missingAbsentReports = 0;
 
   for (const id of activeIds) {
-    if (!reportedIds.has(id) && !absentIds.has(id)) {
-      // Neither daily report nor absence — missing daily report
-      missingDailyReports++;
-    }
-    if (absentIds.has(id) && !absenceReportIds.has(id)) {
-      missingAbsentReports++;
+    for (const day of dayKeys) {
+      const key = `${id}:${day}`;
+      if (!reportedKeys.has(key) && !absentKeys.has(key)) {
+        missingDailyReports++;
+      }
+      if (absentKeys.has(key) && !absenceReportKeys.has(key)) {
+        missingAbsentReports++;
+      }
     }
   }
 
-  const totalAttendance = reportedIds.size;
-
   return {
-    totalAttendance,
-    totalAbsence: todayAbsences,
+    totalAttendance: reports.length,
+    totalAbsence: absences.length,
     missingDailyReports,
     missingAbsentReports,
   };
@@ -563,13 +631,17 @@ export interface ActionCenterMetrics {
 }
 
 export async function getActionCenterMetrics(
-  branchId?: string | null
+  branchId?: string | null,
+  filters?: DashboardMetricFilters
 ): Promise<ActionCenterMetrics> {
   const { organizationId: orgId } = await requireOrg();
-
-  const branchFilter = branchId
-    ? { branchId }
-    : { branch: { organizationId: orgId } };
+  const range = normalizeDashboardFilters(filters);
+  const rangeWhere = dateRangeWhere(range);
+  const childFilter = childScope(orgId, branchId, range.schoolYearId);
+  const assessmentWhere: Prisma.AssessmentWhereInput = {
+    child: childFilter,
+    ...(range.schoolYearId ? { schoolYearId: range.schoolYearId } : {}),
+  };
 
   const [
     paymentsAgg,
@@ -585,49 +657,49 @@ export async function getActionCenterMetrics(
   ] = await Promise.all([
     // 1. Total payments collected
     db.payment.aggregate({
-      where: { status: "PAID", deletedAt: null, child: branchFilter },
+      where: { status: "PAID", deletedAt: null, date: rangeWhere, child: childFilter },
       _sum: { amount: true },
     }).catch(() => ({ _sum: { amount: null } })),
 
     // 2. Accident reports
     db.medicalForm.count({
-      where: { formType: "ACCIDENTS", child: branchFilter },
+      where: { formType: "ACCIDENTS", createdAt: rangeWhere, child: childFilter },
     }),
 
     // 3. Logged calls
     db.callLog.count({
-      where: { child: branchFilter },
+      where: { date: rangeWhere, child: childFilter },
     }),
 
     // 4. Completed medical visits
     db.medicalForm.count({
-      where: { formType: "VISITS", status: "SUBMITTED", child: branchFilter },
+      where: { formType: "VISITS", status: "SUBMITTED", createdAt: rangeWhere, child: childFilter },
     }),
 
     // 5. Missing medical visits (active children without a submitted visit)
-    countMissingForType(orgId, branchId, "VISITS"),
+    countMissingForType(orgId, branchId, "VISITS", range),
 
     // 6. Completed assessments (SUBMITTED)
     db.assessment.count({
-      where: { status: "SUBMITTED", child: branchFilter },
+      where: { status: "SUBMITTED", createdAt: rangeWhere, ...assessmentWhere },
     }),
 
     // 7. Missing assessments (active children without a submitted assessment)
-    countMissingAssessments(orgId, branchId),
+    countMissingAssessments(orgId, branchId, range),
 
     // 8. Pending daily reports (DRAFT)
     db.dailyReport.count({
-      where: { status: "DRAFT", child: branchFilter },
+      where: { status: "DRAFT", reportDate: rangeWhere, child: childFilter },
     }),
 
     // 9. Pending medical reports (DRAFT)
     db.medicalForm.count({
-      where: { status: "DRAFT", child: branchFilter },
+      where: { status: "DRAFT", createdAt: rangeWhere, child: childFilter },
     }),
 
     // 10. Pending assessments (DRAFT)
     db.assessment.count({
-      where: { status: "DRAFT", child: branchFilter },
+      where: { status: "DRAFT", createdAt: rangeWhere, ...assessmentWhere },
     }),
   ]);
 
@@ -648,18 +720,17 @@ export async function getActionCenterMetrics(
 async function countMissingForType(
   orgId: string,
   branchId: string | null | undefined,
-  formType: string
+  formType: MedicalFormType,
+  range: NormalizedDashboardFilters
 ): Promise<number> {
-  const branchFilter = branchId
-    ? { branchId }
-    : { branch: { organizationId: orgId } };
+  const childFilter = childScope(orgId, branchId, range.schoolYearId);
 
   const [activeCount, submittedChildIds] = await Promise.all([
     db.child.count({
-      where: { isActive: true, isDraft: false, ...branchFilter },
+      where: { isActive: true, isDraft: false, ...childFilter },
     }),
     db.medicalForm.findMany({
-      where: { formType: formType as "VISITS", status: "SUBMITTED", child: branchFilter },
+      where: { formType, status: "SUBMITTED", createdAt: dateRangeWhere(range), child: childFilter },
       select: { childId: true },
       distinct: ["childId"],
     }),
@@ -670,18 +741,22 @@ async function countMissingForType(
 
 async function countMissingAssessments(
   orgId: string,
-  branchId: string | null | undefined
+  branchId: string | null | undefined,
+  range: NormalizedDashboardFilters
 ): Promise<number> {
-  const branchFilter = branchId
-    ? { branchId }
-    : { branch: { organizationId: orgId } };
+  const childFilter = childScope(orgId, branchId, range.schoolYearId);
 
   const [activeCount, assessedChildIds] = await Promise.all([
     db.child.count({
-      where: { isActive: true, isDraft: false, ...branchFilter },
+      where: { isActive: true, isDraft: false, ...childFilter },
     }),
     db.assessment.findMany({
-      where: { status: "SUBMITTED", child: branchFilter },
+      where: {
+        status: "SUBMITTED",
+        createdAt: dateRangeWhere(range),
+        child: childFilter,
+        ...(range.schoolYearId ? { schoolYearId: range.schoolYearId } : {}),
+      },
       select: { childId: true },
       distinct: ["childId"],
     }),
