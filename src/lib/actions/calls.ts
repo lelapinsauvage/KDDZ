@@ -20,7 +20,7 @@ interface GetCallLogsParams {
   pageSize?: number;
 }
 
-interface CreateCallLogData {
+interface CallLogMutationData {
   childId: string;
   direction: CallDirection;
   date: string;
@@ -38,9 +38,60 @@ interface CreateCallLogData {
   }>;
 }
 
+type CreateCallLogData = CallLogMutationData;
+type UpdateCallLogData = CallLogMutationData;
+
 type ActionResult =
   | { success: true; id: string }
   | { success: false; error: string };
+
+function parseCallDate(value: string) {
+  return new Date(`${value}T00:00:00.000Z`);
+}
+
+function parseCallTime(value?: string) {
+  if (!value) return null;
+  const [hours = "00", minutes = "00", seconds = "00"] = value.split(":");
+  return new Date(
+    `1970-01-01T${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}:${seconds.padStart(2, "0")}.000Z`,
+  );
+}
+
+function validateCallLogData(data: CallLogMutationData): string | null {
+  if (!data.childId) return "Child ID is required";
+  if (!data.direction) return "Direction is required";
+  if (!data.date) return "Date is required";
+  return null;
+}
+
+function callLogData(data: CallLogMutationData) {
+  return {
+    childId: data.childId,
+    direction: data.direction,
+    date: parseCallDate(data.date),
+    time: parseCallTime(data.time),
+    contact: data.contact || null,
+    phone: data.phone || null,
+    subject: data.subject || null,
+    reason: data.reason || null,
+    remarks: data.remarks || null,
+    staffId: data.staffId || null,
+  };
+}
+
+function callLogAttachmentData(data: CallLogMutationData) {
+  return data.attachments?.length
+    ? {
+        create: data.attachments.map((attachment) => ({
+          childId: data.childId,
+          formType: "CALL_LOG",
+          title: attachment.title ?? null,
+          filename: attachment.filename,
+          fileUrl: attachment.fileUrl,
+        })),
+      }
+    : undefined;
+}
 
 // ── getChildCallLogs ────────────────────────────
 
@@ -240,15 +291,8 @@ export async function createCallLog(
   const { ctx } = result;
 
   try {
-    if (!data.childId) {
-      return { success: false, error: "Child ID is required" };
-    }
-    if (!data.direction) {
-      return { success: false, error: "Direction is required" };
-    }
-    if (!data.date) {
-      return { success: false, error: "Date is required" };
-    }
+    const validationError = validateCallLogData(data);
+    if (validationError) return { success: false, error: validationError };
 
     if (!(await verifyChildAccess(data.childId, ctx.organizationId))) {
       return { success: false, error: "Child not found" };
@@ -256,28 +300,9 @@ export async function createCallLog(
 
     const call = await db.callLog.create({
       data: {
-        childId: data.childId,
-        direction: data.direction,
-        date: new Date(data.date),
-        time: data.time ? new Date(`1970-01-01T${data.time}`) : null,
-        contact: data.contact || null,
-        phone: data.phone || null,
-        subject: data.subject || null,
-        reason: data.reason || null,
-        remarks: data.remarks || null,
-        staffId: data.staffId || null,
+        ...callLogData(data),
         createdById: ctx.userId,
-        attachments: data.attachments?.length
-          ? {
-              create: data.attachments.map((attachment) => ({
-                childId: data.childId,
-                formType: "CALL_LOG",
-                title: attachment.title ?? null,
-                filename: attachment.filename,
-                fileUrl: attachment.fileUrl,
-              })),
-            }
-          : undefined,
+        attachments: callLogAttachmentData(data),
       },
     });
 
@@ -289,6 +314,64 @@ export async function createCallLog(
     console.error("createCallLog error:", error);
     const message =
       error instanceof Error ? error.message : "Failed to create call log";
+    return { success: false, error: message };
+  }
+}
+
+// ── updateCallLog ─────────────────────────────────
+
+export async function updateCallLog(
+  id: string,
+  data: UpdateCallLogData,
+): Promise<ActionResult> {
+  const result = await requireOrgSafe();
+  if (!result.ok) return { success: false, error: result.error };
+  const { ctx } = result;
+
+  try {
+    if (!id) {
+      return { success: false, error: "Call log ID is required" };
+    }
+
+    const validationError = validateCallLogData(data);
+    if (validationError) return { success: false, error: validationError };
+
+    const existing = await db.callLog.findUnique({
+      where: { id },
+      include: {
+        child: {
+          include: { branch: { select: { organizationId: true } } },
+        },
+      },
+    });
+
+    if (!existing || existing.child.branch.organizationId !== ctx.organizationId) {
+      return { success: false, error: "Call log not found" };
+    }
+
+    if (!(await verifyChildAccess(data.childId, ctx.organizationId))) {
+      return { success: false, error: "Child not found" };
+    }
+
+    await db.callLog.update({
+      where: { id },
+      data: {
+        ...callLogData(data),
+        attachments: callLogAttachmentData(data),
+      },
+    });
+
+    revalidatePath(`/children/${existing.childId}/calls`);
+    if (existing.childId !== data.childId) {
+      revalidatePath(`/children/${data.childId}/calls`);
+    }
+    revalidatePath("/calls");
+
+    return { success: true, id };
+  } catch (error) {
+    console.error("updateCallLog error:", error);
+    const message =
+      error instanceof Error ? error.message : "Failed to update call log";
     return { success: false, error: message };
   }
 }

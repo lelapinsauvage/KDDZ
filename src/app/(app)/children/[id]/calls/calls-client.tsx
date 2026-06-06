@@ -9,6 +9,7 @@ import {
   Eye,
   MoreHorizontal,
   Paperclip,
+  Pencil,
   Phone,
   PhoneIncoming,
   PhoneOutgoing,
@@ -74,6 +75,7 @@ interface CallRecord {
   direction: string;
   contact: string;
   phone: string;
+  staffId: string;
   teacher: string;
   subject: string;
   reason: string;
@@ -246,6 +248,7 @@ export function CallsClient({ child, calls, staffList, callCauseOptions }: Props
   const [isPending, startTransition] = useTransition();
   const [deleteTarget, setDeleteTarget] = useState<CallRecord | null>(null);
   const [detailTarget, setDetailTarget] = useState<CallRecord | null>(null);
+  const [editTarget, setEditTarget] = useState<CallRecord | null>(null);
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -307,6 +310,23 @@ export function CallsClient({ child, calls, staffList, callCauseOptions }: Props
     });
   }
 
+  function openNewCallDialog() {
+    setEditTarget(null);
+    setDialogOpen(true);
+  }
+
+  function openEditCallDialog(call: CallRecord) {
+    setEditTarget(call);
+    setDialogOpen(true);
+  }
+
+  function handleCallDialogOpenChange(open: boolean) {
+    setDialogOpen(open);
+    if (!open) {
+      setEditTarget(null);
+    }
+  }
+
   function columnsFor(staffHeader: string): ColumnDef<CallRecord>[] {
     return [
       {
@@ -360,6 +380,10 @@ export function CallsClient({ child, calls, staffList, callCauseOptions }: Props
               <DropdownMenuItem onClick={() => setDetailTarget(row.original)}>
                 <Eye className="mr-2 size-4" />
                 View
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => openEditCallDialog(row.original)}>
+                <Pencil className="mr-2 size-4" />
+                Edit
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="text-destructive focus:text-destructive"
@@ -445,7 +469,7 @@ export function CallsClient({ child, calls, staffList, callCauseOptions }: Props
               <Printer className="size-4" />
               Print
             </Button>
-            <Button size="sm" onClick={() => setDialogOpen(true)}>
+            <Button size="sm" onClick={openNewCallDialog}>
               <Plus className="size-4" />
               Add Call
             </Button>
@@ -541,12 +565,14 @@ export function CallsClient({ child, calls, staffList, callCauseOptions }: Props
       </div>
 
       <CallReportDialog
+        key={editTarget?.id ?? "new-call-report"}
         childId={id}
         branchId={child.branchId}
         open={dialogOpen}
-        onOpenChange={setDialogOpen}
+        onOpenChange={handleCallDialogOpenChange}
         staffList={staffList}
         callCauseOptions={callCauseOptions}
+        initialCall={editTarget}
       />
 
       <Dialog open={!!detailTarget} onOpenChange={(open) => !open && setDetailTarget(null)}>

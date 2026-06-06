@@ -19,9 +19,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createCallLog } from "@/lib/actions/calls";
+import { createCallLog, updateCallLog } from "@/lib/actions/calls";
 import { uploadFileWithPresign } from "@/lib/uploads/client-upload";
-import { FileText, Upload, X } from "lucide-react";
+import { ExternalLink, FileText, Upload, X } from "lucide-react";
 
 export interface CallCauseOption {
   id: string;
@@ -29,6 +29,24 @@ export interface CallCauseOption {
   label: string;
   category?: string;
 }
+
+export interface CallDialogInitialCall {
+  id: string;
+  direction: string;
+  date: string;
+  time: string | null;
+  reason: string;
+  subject: string;
+  remarks: string;
+  staffId: string;
+  attachments: Array<{
+    id: string;
+    filename: string;
+    fileUrl: string;
+  }>;
+}
+
+type CallDirectionValue = "INCOMING" | "OUTGOING";
 
 const CALL_CAUSE_OPTIONS: CallCauseOption[] = [
   { id: "health", value: "health", label: "Health Issue" },
@@ -49,6 +67,21 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   staffList: { id: string; name: string | null; email: string }[];
   callCauseOptions?: CallCauseOption[];
+  initialCall?: CallDialogInitialCall | null;
+}
+
+function todayDate() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function normalizeDirection(direction: string): CallDirectionValue {
+  return direction === "OUTGOING" ? "OUTGOING" : "INCOMING";
+}
+
+function attachmentHref(fileUrl: string) {
+  if (/^https?:\/\//i.test(fileUrl) || fileUrl.startsWith("/")) return fileUrl;
+  if (fileUrl.includes("/")) return `/${fileUrl.replace(/^\/+/, "")}`;
+  return `/images/MedForms/${fileUrl}`;
 }
 
 export function CallReportDialog({
@@ -58,29 +91,33 @@ export function CallReportDialog({
   onOpenChange,
   staffList,
   callCauseOptions = [],
+  initialCall = null,
 }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  const [direction, setDirection] = useState<"INCOMING" | "OUTGOING">("INCOMING");
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [time, setTime] = useState("");
-  const [causeOfCall, setCauseOfCall] = useState("");
-  const [subject, setSubject] = useState("");
-  const [remarks, setRemarks] = useState("");
-  const [teacherId, setTeacherId] = useState("");
+  const [direction, setDirection] = useState<CallDirectionValue>(() =>
+    initialCall ? normalizeDirection(initialCall.direction) : "INCOMING",
+  );
+  const [date, setDate] = useState(() => initialCall?.date || todayDate());
+  const [time, setTime] = useState(() => initialCall?.time ?? "");
+  const [causeOfCall, setCauseOfCall] = useState(() => initialCall?.reason ?? "");
+  const [subject, setSubject] = useState(() => initialCall?.subject ?? "");
+  const [remarks, setRemarks] = useState(() => initialCall?.remarks ?? "");
+  const [teacherId, setTeacherId] = useState(() => initialCall?.staffId ?? "");
   const [attachments, setAttachments] = useState<File[]>([]);
   const [error, setError] = useState("");
   const causeOptions = callCauseOptions.length ? callCauseOptions : CALL_CAUSE_OPTIONS;
+  const isEditing = Boolean(initialCall);
 
   function resetForm() {
-    setDirection("INCOMING");
-    setDate(new Date().toISOString().slice(0, 10));
-    setTime("");
-    setCauseOfCall("");
-    setSubject("");
-    setRemarks("");
-    setTeacherId("");
+    setDirection(initialCall ? normalizeDirection(initialCall.direction) : "INCOMING");
+    setDate(initialCall?.date || todayDate());
+    setTime(initialCall?.time ?? "");
+    setCauseOfCall(initialCall?.reason ?? "");
+    setSubject(initialCall?.subject ?? "");
+    setRemarks(initialCall?.remarks ?? "");
+    setTeacherId(initialCall?.staffId ?? "");
     setAttachments([]);
     setError("");
   }
@@ -101,8 +138,28 @@ export function CallReportDialog({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    if (!direction) {
+      setError("Call type is required");
+      return;
+    }
     if (!date) {
       setError("Date is required");
+      return;
+    }
+    if (!time) {
+      setError("Time is required");
+      return;
+    }
+    if (!causeOfCall.trim()) {
+      setError("Cause of call is required");
+      return;
+    }
+    if (!subject.trim()) {
+      setError("Subject is required");
+      return;
+    }
+    if (!teacherId) {
+      setError("Teacher is required");
       return;
     }
 
@@ -134,34 +191,47 @@ export function CallReportDialog({
         }
       }
 
-      const result = await createCallLog({
+      const payload = {
         childId,
         direction,
         date,
-        time: time || undefined,
-        reason: causeOfCall || undefined,
-        subject: subject || undefined,
-        remarks: remarks || undefined,
-        staffId: teacherId || undefined,
+        time,
+        reason: causeOfCall.trim(),
+        subject: subject.trim(),
+        remarks: remarks.trim() || undefined,
+        staffId: teacherId,
         attachments: uploadedAttachments,
-      });
+      };
+
+      const result =
+        initialCall
+          ? await updateCallLog(initialCall.id, payload)
+          : await createCallLog(payload);
 
       if (!result.success) {
         setError(result.error);
         return;
       }
 
-      resetForm();
       onOpenChange(false);
+      resetForm();
       router.refresh();
     });
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px]">
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen && !isPending) {
+          resetForm();
+        }
+        onOpenChange(nextOpen);
+      }}
+    >
+      <DialogContent className="sm:max-w-[620px]">
         <DialogHeader>
-          <DialogTitle>Log Call</DialogTitle>
+          <DialogTitle>{isEditing ? "Edit Call Report" : "New Call Report"}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -174,7 +244,7 @@ export function CallReportDialog({
             <Label>Call Type *</Label>
             <Select
               value={direction}
-              onValueChange={(v) => setDirection(v as "INCOMING" | "OUTGOING")}
+              onValueChange={(v) => setDirection(v as CallDirectionValue)}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -198,7 +268,7 @@ export function CallReportDialog({
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="call-time">Time</Label>
+              <Label htmlFor="call-time">Time *</Label>
               <Input
                 id="call-time"
                 type="time"
@@ -210,7 +280,7 @@ export function CallReportDialog({
 
           {/* Cause of Call */}
           <div className="space-y-1.5">
-            <Label>Cause of Call</Label>
+            <Label>Cause of Call *</Label>
             <Select value={causeOfCall} onValueChange={setCauseOfCall}>
               <SelectTrigger>
                 <SelectValue placeholder="Select cause..." />
@@ -227,7 +297,7 @@ export function CallReportDialog({
 
           {/* Subject */}
           <div className="space-y-1.5">
-            <Label htmlFor="call-subject">Subject</Label>
+            <Label htmlFor="call-subject">Subject *</Label>
             <Input
               id="call-subject"
               value={subject}
@@ -250,7 +320,7 @@ export function CallReportDialog({
 
           {/* Teacher who filled report */}
           <div className="space-y-1.5">
-            <Label>Teacher Who Filled Report</Label>
+            <Label>Teacher Who Filled Report *</Label>
             <Select value={teacherId} onValueChange={setTeacherId}>
               <SelectTrigger>
                 <SelectValue placeholder="Select teacher..." />
@@ -268,8 +338,35 @@ export function CallReportDialog({
           {/* Attachments */}
           <div className="space-y-1.5">
             <Label>Attachments</Label>
+            {initialCall?.attachments.length ? (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Existing attachments
+                </p>
+                {initialCall.attachments.map((attachment) => (
+                  <div
+                    key={attachment.id}
+                    className="flex items-center gap-2 rounded-md border bg-muted/30 p-2"
+                  >
+                    <FileText className="size-4 shrink-0 text-muted-foreground" />
+                    <a
+                      href={attachmentHref(attachment.fileUrl)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="min-w-0 flex-1 truncate text-sm hover:underline"
+                    >
+                      {attachment.filename}
+                    </a>
+                    <ExternalLink className="size-3.5 shrink-0 text-muted-foreground" />
+                  </div>
+                ))}
+              </div>
+            ) : null}
             {attachments.length > 0 && (
               <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">
+                  New attachments
+                </p>
                 {attachments.map((file, index) => (
                   <div
                     key={`${file.name}-${file.lastModified}-${index}`}
@@ -308,7 +405,10 @@ export function CallReportDialog({
                 multiple
                 accept="image/*,.pdf"
                 className="hidden"
-                onChange={(event) => addAttachments(event.target.files)}
+                onChange={(event) => {
+                  addAttachments(event.target.files);
+                  event.currentTarget.value = "";
+                }}
               />
             </label>
           </div>
@@ -324,7 +424,7 @@ export function CallReportDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending ? "Saving..." : "Save Call Log"}
+              {isPending ? "Saving..." : "Save Call Report"}
             </Button>
           </div>
         </form>

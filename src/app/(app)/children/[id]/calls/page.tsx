@@ -49,6 +49,7 @@ export default async function ChildCallsPage({ params }: Props) {
     direction: c.direction,
     contact: c.contact ?? "",
     phone: c.phone ?? "",
+    staffId: c.staffId ?? "",
     teacher: staffById.get(c.staffId ?? "") ?? "",
     subject: c.subject ?? "",
     reason: c.reason ?? "",

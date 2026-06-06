@@ -992,7 +992,7 @@
     "legacyPhp": "Front/templates/admin/call.php",
     "legacyJs": "Front/templates/admin/js/call.js",
     "modernRoute": "/children/[id]/calls",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "partial - legacy call report create/edit fields restored; draft/progress parity remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -1001,7 +1001,7 @@
       "fid",
       "id"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored legacy Call Type/Date/Time/Cause of Call/Subject/Remarks/Teacher/Attachments form fields in the child calls dialog, required validation matching `call.js`, editing existing call reports from the child calls table, existing attachment display, new attachment uploads on edit, org-safe update action, and route revalidation. Remaining work is true Save As Draft persistence, legacy f_progress/is_rep_draft flags, exact cause-to-subject datalist behavior, existing attachment deletion, and standalone `call.php?fid=` visual parity."
   },
   {
     "legacyPhp": "Front/templates/admin/calls.php",
@@ -1072,7 +1072,7 @@
     "legacyPhp": "Front/templates/admin/child_calls.php",
     "legacyJs": "Front/templates/admin/js/child_calls.js",
     "modernRoute": "/children/[id]/calls",
-    "status": "partial - legacy incoming/outgoing call tables restored; call form audit remains",
+    "status": "partial - legacy incoming/outgoing call tables and edit action restored; visual export audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -1080,7 +1080,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Restored child-specific Incoming and Outgoing sections, Date/Time/Cause/Pick up or Teacher/Subject/Remarks/Action/Attachment table columns, search/date/attachment filters, Excel/CSV export, print action, first-attachment open action with count badge, add call dialog, view details, and delete confirmation. Remaining work is exact `call.php` edit/detail form parity, legacy image-preview modal behavior, and DataTables TableTools visual/PDF export parity."
+    "verification": "Restored child-specific Incoming and Outgoing sections, Date/Time/Cause/Pick up or Teacher/Subject/Remarks/Action/Attachment table columns, search/date/attachment filters, Excel/CSV export, print action, first-attachment open action with count badge, add call dialog, view details, edit existing reports, and delete confirmation. Remaining work is legacy image-preview modal behavior, DataTables TableTools visual/PDF export parity, and the call-report draft/progress fields tracked under `call.php`."
   },
   {
     "legacyPhp": "Front/templates/admin/child_dashboard.php",
