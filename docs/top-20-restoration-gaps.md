@@ -109,7 +109,8 @@ This list is the first implementation backlog after the generated inventory/matr
 13. **Class dashboard depth**
    - `/classes/[id]` now restores the legacy `class_dashboard.php` depth for class capacity/gender summary, seven-day birthdays, daily report roster, absent report roster, medical/general/suffering/visits/vaccination/accident/call breakdowns, and seven assessment age-band summaries with eligible child rows.
    - Call report breakdown now matches legacy `MED6REP`/`MED6REPD` semantics by separating today's submitted Form 6 call reports from today's drafts and linking the class-scoped Calls listing.
-   - Remaining work is exact legacy parity for fields that do not map one-to-one yet: daily report numeric progress and legacy `db_curr` year switching for medical visits.
+   - Daily report counts now match legacy `WREP`/`INCOMP`/`DREP` semantics by reading preserved `t_daily_report.d_progress_all` from `DailyReport.legacyData` and separating completed, incomplete, and draft reports.
+   - Remaining work is exact legacy `db_curr` year switching for medical visits.
 
 14. **Accounting monthly matrix**
    - `/accounting` now restores the legacy `accounting.php` Oct-Sep school-year matrix with category tabs, child number/first/last/branch/class columns, active-child zero rows, branch/class/search/year filters, month totals, zero-cell payment-dialog prefill, nonzero-cell payment detail modal, print/edit/delete/attachment actions, and legacy-style soft delete.

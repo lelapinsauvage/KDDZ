@@ -57,7 +57,7 @@ export interface ClassDailyReportRow {
   firstName: string;
   lastName: string;
   attendanceStatus: string;
-  reportStatus: "No Report" | "Completed Report" | "Draft Report";
+  reportStatus: "No Report" | "Completed Report" | "Incomplete Report" | "Draft Report";
   actionHref: string;
 }
 
@@ -230,6 +230,22 @@ function jsonObject(value: Prisma.JsonValue | null | undefined) {
   return value as Record<string, unknown>;
 }
 
+function legacyDailyProgress(value: Prisma.JsonValue | null | undefined) {
+  const payload = jsonObject(value);
+  const raw = payload?.d_progress_all ?? payload?.progress ?? payload?.d_progress;
+
+  if (typeof raw === "number" && Number.isFinite(raw)) {
+    return Math.round(raw);
+  }
+
+  if (typeof raw === "string" && raw.trim() !== "") {
+    const parsed = Number(raw);
+    if (Number.isFinite(parsed)) return Math.round(parsed);
+  }
+
+  return null;
+}
+
 function assessmentProgressPercent(data: Prisma.JsonValue | null | undefined, type: number) {
   const config = ASSESSMENT_CONFIGS[type];
   const payload = jsonObject(data);
@@ -382,7 +398,7 @@ export async function getClassDashboard(
     ] = await Promise.all([
       db.dailyReport.findMany({
         where: { ...childFilter, reportDate: { gte: today, lt: tomorrow } },
-        select: { id: true, childId: true, status: true },
+        select: { id: true, childId: true, status: true, legacyData: true },
       }),
       db.absenceReport.findMany({
         where: {
@@ -441,23 +457,44 @@ export async function getClassDashboard(
     const reportedChildIds = new Set(todayReports.map((report) => report.childId));
     const withoutReport = activeChildIds.filter((id) => !reportedChildIds.has(id)).length;
 
-    const completed = todayReports.filter((report) => report.status === "SUBMITTED").length;
+    const completed = todayReports.filter((report) => {
+      if (report.status !== "SUBMITTED") return false;
+      const progress = legacyDailyProgress(report.legacyData);
+      return progress === null || progress >= 100;
+    }).length;
+    const incomplete = todayReports.filter((report) => {
+      if (report.status !== "SUBMITTED") return false;
+      const progress = legacyDailyProgress(report.legacyData);
+      return progress !== null && progress < 100;
+    }).length;
     const draftReports = todayReports.filter((report) => report.status === "DRAFT").length;
 
     const absenceChildIds = new Set(todayAbsenceReports.map((report) => report.childId));
     const dailyRows: ClassDailyReportRow[] = activeChildren.map((child) => {
       const report = reportByChildId.get(child.id);
       const hasAbsence = absenceChildIds.has(child.id);
+      const progress = legacyDailyProgress(report?.legacyData);
+      const isIncomplete = report?.status === "SUBMITTED" && progress !== null && progress < 100;
 
       const reportStatus =
-        report?.status === "SUBMITTED"
+        isIncomplete
+          ? "Incomplete Report"
+          : report?.status === "SUBMITTED"
           ? "Completed Report"
           : report?.status === "DRAFT"
             ? "Draft Report"
             : "No Report";
 
       const attendanceStatus =
-        hasAbsence ? "Absent" : report?.status === "SUBMITTED" ? "Present" : report?.status === "DRAFT" ? "Draft" : "-";
+        hasAbsence
+          ? "Absent"
+          : isIncomplete
+            ? "Incomplete"
+            : report?.status === "SUBMITTED"
+              ? "Present"
+              : report?.status === "DRAFT"
+                ? "Draft"
+                : "-";
 
       return {
         childId: child.id,
@@ -684,7 +721,7 @@ export async function getClassDashboard(
           birthdays,
           withoutReport,
           completed,
-          incomplete: 0,
+          incomplete,
           drafts: draftReports,
           rows: dailyRows,
           absentRows,

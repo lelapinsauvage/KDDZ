@@ -1206,7 +1206,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Restored class summary, seven-day birthdays, daily/absent rosters, medical/call breakdowns, assessment age-band counts/rows, class-message preselect, and child preselect for new assessments. Call reports now match legacy `MED6REP`/`MED6REPD` semantics by counting today's non-draft Form 6 rows separately from today's drafts and linking to the class-scoped Calls listing. Remaining caveats: legacy daily progress integer and `db_curr` year switch do not map one-to-one."
+    "verification": "Restored class summary, seven-day birthdays, daily/absent rosters, medical/call breakdowns, assessment age-band counts/rows, class-message preselect, and child preselect for new assessments. Call reports now match legacy `MED6REP`/`MED6REPD` semantics by counting today's non-draft Form 6 rows separately from today's drafts and linking to the class-scoped Calls listing. Daily reports now match legacy `WREP`/`INCOMP`/`DREP` semantics by using preserved `d_progress_all` to separate completed, incomplete, and draft reports. Remaining caveat: legacy `db_curr` year switch for medical visits does not map one-to-one."
   },
   {
     "legacyPhp": "Front/templates/admin/classes.php",
