@@ -159,7 +159,7 @@ export function Header() {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/settings">
+                <Link href="/settings.php">
                   <Settings className="mr-2 size-4" />
                   Settings
                 </Link>

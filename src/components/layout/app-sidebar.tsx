@@ -169,7 +169,7 @@ const adminNav: NavSection[] = [
       { title: "Branches Management", href: "/branches", icon: Building2 },
       { title: "Classes Management", href: "/classes", icon: School },
       { title: "Accounting Management", href: "/accounting", icon: DollarSign },
-      { title: "Monthly Attendance", href: "/attendance/heatmap", icon: CalendarDays },
+      { title: "Monthly Attendance", href: "/reports/monthly", icon: CalendarDays },
     ],
   },
   // "Classes" dynamic section inserted at runtime by getNavForRole
@@ -756,7 +756,7 @@ export function AppSidebar({ userRole, badges, classes }: AppSidebarProps) {
                   <Link href="/profile">Profile</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/settings">Settings</Link>
+                  <Link href="/settings.php">Settings</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>

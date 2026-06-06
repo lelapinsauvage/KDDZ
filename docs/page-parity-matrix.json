@@ -16172,13 +16172,13 @@
   {
     "legacyPhp": "Front/templates/admin/leftmenu.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "global app sidebar/header",
+    "status": "partial - legacy sidebar groups, class links, user settings bridge, and key menu targets restored; permission/visual audit remains",
     "legacyTablesMentioned": [
       "the"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Modern `AppSidebar` now mirrors the legacy left menu groups for Dashboard, Garderie Management, dynamic Classes, Messages, Children Management, Food Management, Employees Management, Setting/Address/Notifications, and New Academic Year; it uses migrated dynamic classes, notification/message badges, active route highlighting, and corrects legacy Monthly Attendance to `/reports/monthly`. The header/sidebar user Settings entries now use `/settings.php`, preserving the legacy account settings/password destination. Remaining work is exact `Check::protectPageOrFunction` permission-gating parity, per-branch food calendar submenu parity, and final Metronic visual/hover audit."
   },
   {
     "legacyPhp": "Front/templates/admin/managers.php",
