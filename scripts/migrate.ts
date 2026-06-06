@@ -125,6 +125,23 @@ function parsePaymentMethod(
   return "CASH";
 }
 
+function parsePaymentCategory(
+  s: string | null
+): "REGISTRATION" | "MONTHLY" | "BUS" | "XTRA_TIME" | "FOOD" | "OTHER" {
+  if (!s) return "OTHER";
+  const lower = s.toLowerCase().trim();
+  if (lower === "monthly" || lower === "1") return "MONTHLY";
+  if (lower === "reg" || lower === "registration" || lower === "2") {
+    return "REGISTRATION";
+  }
+  if (lower === "bus" || lower === "3") return "BUS";
+  if (lower === "xtra" || lower === "xtra_time" || lower === "4") {
+    return "XTRA_TIME";
+  }
+  if (lower === "food" || lower === "5") return "FOOD";
+  return "OTHER";
+}
+
 function parseUserRole(
   phpSerialized: string
 ): "ADMIN" | "TEACHER" | "NURSE" | "DOCTOR" | "MANAGER" {
@@ -1456,11 +1473,24 @@ async function migratePayments(
     records.push({
       id: randomUUID(),
       childId: getUUID("t_child", childOldId),
+      sourceDatabase: "kiddzonl_garderie",
+      legacyKey: `kiddzonl_garderie:t_payments:${colInt(row, "cpid", columns)}`,
+      legacyId: colInt(row, "cpid", columns),
+      legacyChildId: childOldId,
       amount: String(amount),
+      currency: colStr(row, "currency", columns) || "USD",
       date,
+      dateFrom: parseDate(colStr(row, "from", columns)),
+      dateTo: parseDate(colStr(row, "to", columns)),
+      month: colInt(row, "for", columns) || null,
       method: parsePaymentMethod(type),
+      category: parsePaymentCategory(target),
       reference: cheque || null,
-      notes: [target, notes].filter(Boolean).join(" - ") || null,
+      notes,
+      legacyImageFilename: colStr(row, "image", columns),
+      receiptFilename: colStr(row, "image", columns),
+      receiptFileUrl: colStr(row, "image", columns),
+      legacyData: legacyRowData(row, columns),
       createdAt: date,
       updatedAt: NOW,
     });
