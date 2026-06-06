@@ -2,13 +2,13 @@ import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import type { AlarmType, Prisma } from "@/generated/prisma/client";
 import {
-  authenticateParent,
   formatChildName,
   formatDate,
   formatDateTimeLong,
   makeHeader,
   jsonError,
   jsonSuccess,
+  verifyParentToken,
 } from "@/lib/parent-auth";
 
 const VALID_ALARM_TYPES: Record<string, AlarmType> = {
@@ -32,6 +32,13 @@ type ParentAlarmChild = {
   middleName: string | null;
   lastName: string;
   branchId: string;
+};
+
+type ParentAlarmUser = {
+  id: string;
+  childId: string;
+  legacyChildId: number | null;
+  child: ParentAlarmChild;
 };
 
 type ParentAlarm = {
@@ -77,28 +84,48 @@ async function handleRequest(
 ) {
   const { type } = await params;
 
-  const auth = await authenticateParent(request);
-  if ("error" in auth) return auth.error;
-  const { parentUser } = auth;
-
   const alarmType = VALID_ALARM_TYPES[type];
   if (!alarmType) {
     return jsonError("Invalid alarm type", 400);
   }
 
-  const child = parentUser.child;
-  if (request.method === "POST" && type !== "general") {
-    const body = await readRequestBody(request);
-    const postedChildId = readString(body, ["pid", "usites", "child_id", "childId"]);
+  const body = request.method === "POST" ? await readRequestBody(request) : null;
+  const postedChildId = readString(body, ["pid", "usites", "child_id", "childId"]);
+  const auth = await optionalAuthenticateParent(request);
+  if (auth && "error" in auth) return auth.error;
+
+  let child = auth?.parentUser.child ?? null;
+
+  if (type !== "general") {
     if (!postedChildId) {
-      return jsonSuccess([makeHeader("", false, 0)]);
+      if (request.method === "POST") {
+        return jsonSuccess([makeHeader("", false, 0)]);
+      }
+      if (!child) return jsonError("Unauthorized", 401);
     }
-    if (!matchesChildId(child, postedChildId)) {
-      return jsonError("Access denied", 403);
+
+    const requestedChildId = postedChildId ?? child?.id ?? "";
+    if (auth?.parentUser) {
+      if (!matchesChildId(auth.parentUser, requestedChildId)) {
+        return jsonError("Access denied", 403);
+      }
+    } else {
+      child = await resolveLegacyAlarmChild(requestedChildId);
+      if (!child) {
+        return jsonSuccess([makeHeader("", false, 0)]);
+      }
     }
   }
 
   try {
+    if (type === "general") {
+      return await handleGeneralAlarms();
+    }
+
+    if (!child) {
+      return jsonError("Unauthorized", 401);
+    }
+
     // Events have special handling — filter by branch
     if (type === "events") {
       return await handleEvents(child);
@@ -107,11 +134,6 @@ async function handleRequest(
     // Assessments have special handling — different response shape
     if (type === "assessments") {
       return await handleAssessments(child);
-    }
-
-    // General alarms — all alarms of type OTHER, optionally filtered by branch
-    if (type === "general") {
-      return await handleGeneralAlarms(child);
     }
 
     // Standard child-specific alarms
@@ -183,7 +205,7 @@ async function handleAssessments(child: ParentAlarmChild) {
   return jsonSuccess([header, ...items]);
 }
 
-async function handleGeneralAlarms(_child: ParentAlarmChild) {
+async function handleGeneralAlarms() {
   const alarms = await db.alarm.findMany({
     where: {
       type: "EVENT",
@@ -235,6 +257,12 @@ function mapChildAlarm(
 
   if (type === "insurance") {
     item.date = readValue(legacy, ["curr_date", "date"]) ?? formatDate(alarm.dueDate);
+  }
+
+  if (type === "medical") {
+    delete item.status;
+    delete item.href;
+    delete item["href "];
   }
 
   return item;
@@ -293,7 +321,8 @@ async function readRequestBody(request: NextRequest) {
     contentType.includes("application/x-www-form-urlencoded") ||
     contentType.includes("multipart/form-data")
   ) {
-    const form = await request.formData();
+    const form = await request.formData().catch(() => null);
+    if (!form) return null;
     return Object.fromEntries(
       [...form.entries()].map(([key, value]) => [
         key,
@@ -302,11 +331,67 @@ async function readRequestBody(request: NextRequest) {
     );
   }
 
-  return null;
+  const text = await request.text().catch(() => "");
+  if (!text.trim()) return null;
+  return Object.fromEntries(new URLSearchParams(text).entries());
 }
 
-function matchesChildId(child: ParentAlarmChild, postedChildId: string) {
-  return postedChildId === child.id || postedChildId === String(child.legacyId ?? "");
+async function optionalAuthenticateParent(request: NextRequest) {
+  const authHeader = request.headers.get("authorization");
+  const hasBearer = authHeader?.startsWith("Bearer ");
+  const payload = await verifyParentToken(request);
+
+  if (hasBearer && !payload) {
+    return { error: jsonError("Unauthorized", 401) };
+  }
+  if (!payload) return null;
+
+  const parentUser = await db.parentUser.findUnique({
+    where: { id: payload.sub, isActive: true },
+    include: { child: true },
+  });
+
+  if (!parentUser) {
+    return { error: jsonError("Unauthorized", 401) };
+  }
+
+  return { parentUser: parentUser as ParentAlarmUser };
+}
+
+async function resolveLegacyAlarmChild(childId: string) {
+  const legacyChildId = parseLegacyInt(childId);
+  const childWhere = [];
+
+  if (UUID_RE.test(childId)) {
+    childWhere.push({ id: childId });
+  }
+  if (legacyChildId !== null) {
+    childWhere.push({ legacyId: legacyChildId });
+  }
+
+  if (childWhere.length === 0) return null;
+
+  return db.child.findFirst({
+    where: { OR: childWhere },
+    select: {
+      id: true,
+      legacyId: true,
+      firstName: true,
+      middleName: true,
+      lastName: true,
+      branchId: true,
+    },
+    orderBy: { createdAt: "asc" },
+  });
+}
+
+function matchesChildId(parentUser: ParentAlarmUser, postedChildId: string) {
+  return (
+    postedChildId === parentUser.childId ||
+    postedChildId === parentUser.child.id ||
+    postedChildId === String(parentUser.legacyChildId ?? "") ||
+    postedChildId === String(parentUser.child.legacyId ?? "")
+  );
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -330,6 +415,11 @@ function readString(data: Record<string, unknown> | null, keys: string[]) {
   return stringValue.length > 0 ? stringValue : null;
 }
 
+function parseLegacyInt(value: unknown): number | null {
+  const parsed = Number.parseInt(String(value ?? ""), 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
 function jsonStringArray(value: Prisma.JsonValue | null) {
   return Array.isArray(value) ? value.map(String).filter(Boolean) : [];
 }
@@ -337,3 +427,5 @@ function jsonStringArray(value: Prisma.JsonValue | null) {
 function cleanLegacyLine(value: string) {
   return value.replace(/\r|\n/g, "");
 }
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;

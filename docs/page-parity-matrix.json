@@ -18044,6 +18044,6 @@
       "subject",
       "message"
     ],
-    "verification": "Parent web shell now consumes legacy-shaped daily/newdaily reports, finance/payment rows, absence reports, food calendar rows, grouped messages, numeric-key thread detail/replies, `notifications_master`-style eleven-group notification payloads with native unauth `usites` support, legacy-shaped alarm feeds, legacy unauth native and authenticated PWA push-token registration/unregistration, active holiday calendar, and send-message APIs with legacy numeric thread ids plus admin/teacher fan-out. Remaining work is external push provider delivery, offline/mobile polish, credentialed native response audit, and exact production `notifications_nature` acceptance after import."
+    "verification": "Parent web shell now consumes legacy-shaped daily/newdaily reports, finance/payment rows, absence reports, food calendar rows, grouped messages, numeric-key thread detail/replies, `notifications_master`-style eleven-group notification payloads with native unauth `usites` support, legacy-shaped alarm feeds with native unauth `pid` support and no-pid general feed support, legacy unauth native and authenticated PWA push-token registration/unregistration, active holiday calendar, and send-message APIs with legacy numeric thread ids plus admin/teacher fan-out. Remaining work is external push provider delivery, offline/mobile polish, credentialed native response audit, and exact production `notifications_nature` acceptance after import."
   }
 ]
