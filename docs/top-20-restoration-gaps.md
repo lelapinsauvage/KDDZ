@@ -74,6 +74,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - `/alarms/vaccinations` now restores legacy receipt read-state from migrated `custom_notifications_vaccinations`, including collapsed New/Viewed status by alarm, row/bulk/all mark-viewed actions, manual generation controls, and sent-history rows for USER/PARENT_USER/CHILD receipts.
    - `/alarms/payments` now restores legacy receipt read-state from migrated `custom_notifications_payments`, including recipient To summaries, collapsed New/Viewed status by alarm, row/bulk/all mark-viewed actions, manual generation controls, and sent-history rows for PARENT_USER/CHILD receipts.
    - `/alarms/events` now restores legacy event/holiday receipt read-state from migrated `custom_notifications`, `custom_notifications_events`, and `custom_notifications_events_parents`, including current-staff New/Viewed filters, row/bulk/all mark-viewed actions, and Sent Events Alarms history for staff and parent recipients.
+   - `/alarms/requests` and `/alarms/others` now restore legacy receipt read-state from migrated staff and parent delivery tables, including current-staff New/Viewed filters, row/bulk/all mark-viewed actions, and sent-history rows for USER/PARENT_USER/CHILD receipts.
    - Remaining work is idempotent cron/job generation for the other approved legacy families, hosted schedule configuration after production crontab confirmation, and external push/email/SMS/WhatsApp providers after credential recovery or rotation.
 
 9. **Parent portal UI**

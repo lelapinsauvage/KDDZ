@@ -12,8 +12,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { Bell } from "lucide-react";
 import { AlarmActionsCell } from "@/components/alarms/alarm-actions-cell";
+import {
+  StaffReceiptAlarmsClient,
+  type StaffReceiptAlarm,
+  type StaffReceiptAlarmHistory,
+} from "../_components/staff-receipt-alarms-client";
 
 interface OtherAlarm {
   id: string;
@@ -26,6 +37,8 @@ interface OtherAlarm {
 interface OtherAlarmsClientProps {
   alarms: OtherAlarm[];
   branches: { id: string; name: string }[];
+  notificationAlarms: StaffReceiptAlarm[];
+  notificationHistory: StaffReceiptAlarmHistory[];
 }
 
 const statusColors: Record<string, string> = {
@@ -33,7 +46,12 @@ const statusColors: Record<string, string> = {
   Resolved: "bg-[#059669]/15 text-[#059669]",
 };
 
-export function OtherAlarmsClient({ alarms, branches }: OtherAlarmsClientProps) {
+export function OtherAlarmsClient({
+  alarms,
+  branches,
+  notificationAlarms,
+  notificationHistory,
+}: OtherAlarmsClientProps) {
   const [branchFilter, setBranchFilter] = useState("ALL");
 
   const filtered = useMemo(() => {
@@ -94,28 +112,48 @@ export function OtherAlarmsClient({ alarms, branches }: OtherAlarmsClientProps) 
         ]}
       />
       <div className="space-y-4 p-4 md:p-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <Select value={branchFilter} onValueChange={setBranchFilter}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="All Branches" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All Branches</SelectItem>
-              {branches.map((b) => (
-                <SelectItem key={b.id} value={b.name}>
-                  {b.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        {filtered.length > 0 ? (
-          <DataTable columns={columns} data={filtered} searchKey="message" searchPlaceholder="Search alarms..." />
-        ) : (
-          <div className="rounded-lg border bg-card p-8 text-center text-sm text-muted-foreground">
-            No other alarms found.
-          </div>
-        )}
+        <Tabs defaultValue="dashboard" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dashboard" className="space-y-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <Select value={branchFilter} onValueChange={setBranchFilter}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="All Branches" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Branches</SelectItem>
+                  {branches.map((b) => (
+                    <SelectItem key={b.id} value={b.name}>
+                      {b.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {filtered.length > 0 ? (
+              <DataTable columns={columns} data={filtered} searchKey="message" searchPlaceholder="Search alarms..." />
+            ) : (
+              <div className="rounded-lg border bg-card p-8 text-center text-sm text-muted-foreground">
+                No other alarms found.
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="notifications">
+            <StaffReceiptAlarmsClient
+              family="other"
+              alarms={notificationAlarms}
+              history={notificationHistory}
+              branches={branches}
+              showHeader={false}
+              showGenerate={false}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </>
   );

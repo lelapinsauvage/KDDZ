@@ -1,14 +1,35 @@
-import { getAlarms } from "@/lib/actions/alarms";
+import {
+  getAlarms,
+  getOtherAlarmHistory,
+  getOtherAlarmNotifications,
+} from "@/lib/actions/alarms";
 import { getBranches } from "@/lib/actions/branches";
+import type {
+  StaffReceiptAlarm,
+  StaffReceiptAlarmHistory,
+} from "../_components/staff-receipt-alarms-client";
 import { OtherAlarmsClient } from "./other-alarms-client";
 
 export default async function OtherAlarmsPage() {
-  const [alarmsResult, branchesResult] = await Promise.all([
+  const [
+    alarmsResult,
+    branchesResult,
+    notificationResult,
+    historyResult,
+  ] = await Promise.all([
     getAlarms({ type: "OTHER" }),
     getBranches(),
+    getOtherAlarmNotifications(),
+    getOtherAlarmHistory(),
   ]);
 
   const branches = ((branchesResult.data ?? []) as Array<{ id: string; name: string }>);
+  const notificationData = (
+    notificationResult.success ? notificationResult.data : { alarms: [] }
+  ) as { alarms?: StaffReceiptAlarm[] };
+  const historyData = (
+    historyResult.success ? historyResult.data : { history: [] }
+  ) as { history?: StaffReceiptAlarmHistory[] };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rawData = (alarmsResult.success ? (alarmsResult.data as any) : { alarms: [] });
@@ -27,6 +48,8 @@ export default async function OtherAlarmsPage() {
     <OtherAlarmsClient
       alarms={serializedAlarms}
       branches={branches}
+      notificationAlarms={notificationData.alarms ?? []}
+      notificationHistory={historyData.history ?? []}
     />
   );
 }

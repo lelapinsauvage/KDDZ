@@ -98,6 +98,10 @@ const VACCINATION_RECEIPT_SOURCE = "custom_notifications_vaccinations";
 const GENERAL_RECEIPT_SOURCE = "custom_notifications";
 const EVENT_RECEIPT_SOURCE = "custom_notifications_events";
 const EVENT_PARENT_RECEIPT_SOURCE = "custom_notifications_events_parents";
+const REQUEST_RECEIPT_SOURCE = "custom_notifications_requests";
+const REQUEST_PARENT_RECEIPT_SOURCE = "custom_notifications_requests_parents";
+const OTHER_RECEIPT_SOURCE = "custom_notifications_others";
+const OTHER_PARENT_RECEIPT_SOURCE = "custom_notifications_others_parents";
 
 interface StaffReceiptAlarmLinkData {
   referenceId: string | null;
@@ -107,6 +111,7 @@ interface StaffReceiptAlarmLinkData {
 interface StaffReceiptAlarmConfig {
   type: AlarmType;
   sourceTable: string;
+  sourceTables?: string[];
   route: string;
   familyLabel: string;
   defaultActionHref: string;
@@ -255,6 +260,13 @@ function revalidateStaffReceiptAlarmPaths(route: string) {
   revalidatePath("/alarms");
   revalidatePath(route);
   revalidatePath("/");
+}
+
+function receiptSourceWhere(config: StaffReceiptAlarmConfig) {
+  const sourceTables = config.sourceTables ?? [config.sourceTable];
+  return sourceTables.length === 1
+    ? { sourceTable: sourceTables[0] }
+    : { sourceTable: { in: sourceTables } };
 }
 
 function notificationRecipientWhere(config: StaffReceiptAlarmConfig, userId: string) {
@@ -1097,7 +1109,7 @@ async function getStaffReceiptAlarmNotifications(
 
     const receipts = await db.notificationReceipt.findMany({
       where: {
-        sourceTable: config.sourceTable,
+        ...receiptSourceWhere(config),
         ...notificationRecipientWhere(config, userId),
         alarm: {
           is: {
@@ -1198,7 +1210,7 @@ async function getStaffReceiptAlarmHistory(
 
     const receipts = await db.notificationReceipt.findMany({
       where: {
-        sourceTable: config.sourceTable,
+        ...receiptSourceWhere(config),
         ...historyRecipientWhere(config, userId),
         alarm: {
           is: {
@@ -1287,7 +1299,7 @@ async function markStaffReceiptAlarmViewed(
 
     const update = await db.notificationReceipt.updateMany({
       where: {
-        sourceTable: config.sourceTable,
+        ...receiptSourceWhere(config),
         alarmId,
         ...notificationRecipientWhere(config, ctx.userId),
         isRead: false,
@@ -1316,7 +1328,7 @@ async function markAllStaffReceiptAlarmsViewed(
 
     const update = await db.notificationReceipt.updateMany({
       where: {
-        sourceTable: config.sourceTable,
+        ...receiptSourceWhere(config),
         ...notificationRecipientWhere(config, ctx.userId),
         isRead: false,
         alarm: {
@@ -1427,6 +1439,36 @@ const CONTRACT_ALARM_CONFIG: StaffReceiptAlarmConfig = {
   actionHrefFromAlarm: (alarm) =>
     staffDetailHref(alarm.referenceId, alarm.referenceType),
   historyTypeFromLegacy: () => "Alert",
+};
+
+const REQUEST_ALARM_CONFIG: StaffReceiptAlarmConfig = {
+  type: "REQUEST",
+  sourceTable: REQUEST_RECEIPT_SOURCE,
+  sourceTables: [REQUEST_RECEIPT_SOURCE, REQUEST_PARENT_RECEIPT_SOURCE],
+  route: "/alarms/requests",
+  familyLabel: "request",
+  defaultActionHref: "/alarms/requests",
+  actionHrefFromAlarm: (_alarm, legacyData) => {
+    const href = jsonString(legacyData.href);
+    return href?.startsWith("/") ? href : "/alarms/requests";
+  },
+  historyRecipientTypes: ["USER", "PARENT_USER", "CHILD"],
+  includeCurrentUserInHistory: false,
+};
+
+const OTHER_ALARM_CONFIG: StaffReceiptAlarmConfig = {
+  type: "OTHER",
+  sourceTable: OTHER_RECEIPT_SOURCE,
+  sourceTables: [OTHER_RECEIPT_SOURCE, OTHER_PARENT_RECEIPT_SOURCE],
+  route: "/alarms/others",
+  familyLabel: "other",
+  defaultActionHref: "/alarms/others",
+  actionHrefFromAlarm: (_alarm, legacyData) => {
+    const href = jsonString(legacyData.href);
+    return href?.startsWith("/") ? href : "/alarms/others";
+  },
+  historyRecipientTypes: ["USER", "PARENT_USER", "CHILD"],
+  includeCurrentUserInHistory: false,
 };
 
 export async function getEventAlarmNotifications(
@@ -2003,6 +2045,54 @@ export async function markAllVaccinationAlarmsViewed(): Promise<
   ActionResult<{ count: number }>
 > {
   return markAllStaffReceiptAlarmsViewed(VACCINATION_ALARM_CONFIG);
+}
+
+export async function getRequestAlarmNotifications(
+  params: { pageSize?: number } = {},
+): Promise<ActionResult> {
+  return getStaffReceiptAlarmNotifications(REQUEST_ALARM_CONFIG, params);
+}
+
+export async function getRequestAlarmHistory(
+  params: { pageSize?: number } = {},
+): Promise<ActionResult> {
+  return getStaffReceiptAlarmHistory(REQUEST_ALARM_CONFIG, params);
+}
+
+export async function markRequestAlarmViewed(
+  alarmId: string,
+): Promise<ActionResult<{ count: number }>> {
+  return markStaffReceiptAlarmViewed(alarmId, REQUEST_ALARM_CONFIG);
+}
+
+export async function markAllRequestAlarmsViewed(): Promise<
+  ActionResult<{ count: number }>
+> {
+  return markAllStaffReceiptAlarmsViewed(REQUEST_ALARM_CONFIG);
+}
+
+export async function getOtherAlarmNotifications(
+  params: { pageSize?: number } = {},
+): Promise<ActionResult> {
+  return getStaffReceiptAlarmNotifications(OTHER_ALARM_CONFIG, params);
+}
+
+export async function getOtherAlarmHistory(
+  params: { pageSize?: number } = {},
+): Promise<ActionResult> {
+  return getStaffReceiptAlarmHistory(OTHER_ALARM_CONFIG, params);
+}
+
+export async function markOtherAlarmViewed(
+  alarmId: string,
+): Promise<ActionResult<{ count: number }>> {
+  return markStaffReceiptAlarmViewed(alarmId, OTHER_ALARM_CONFIG);
+}
+
+export async function markAllOtherAlarmsViewed(): Promise<
+  ActionResult<{ count: number }>
+> {
+  return markAllStaffReceiptAlarmsViewed(OTHER_ALARM_CONFIG);
 }
 
 // ---------------------------------------------------------------------------

@@ -33,12 +33,14 @@ import {
   ExternalLink,
   Cake,
   CalendarDays,
+  Bell,
   ClipboardCheck,
   DollarSign,
   Eye,
   FileClock,
   FileText,
   MailCheck,
+  MessageSquare,
   Pill,
   RefreshCw,
   RotateCcw,
@@ -62,7 +64,9 @@ import {
   markAllEventAlarmsViewed,
   markAllInsuranceAlarmsViewed,
   markAllMedicineAlarmsViewed,
+  markAllOtherAlarmsViewed,
   markAllPaymentAlarmsViewed,
+  markAllRequestAlarmsViewed,
   markAllVaccinationAlarmsViewed,
   markAssessmentAlarmViewed,
   markBirthdayAlarmViewed,
@@ -70,7 +74,9 @@ import {
   markEventAlarmViewed,
   markInsuranceAlarmViewed,
   markMedicineAlarmViewed,
+  markOtherAlarmViewed,
   markPaymentAlarmViewed,
+  markRequestAlarmViewed,
   markVaccinationAlarmViewed,
 } from "@/lib/actions/alarms";
 
@@ -112,7 +118,9 @@ interface StaffReceiptAlarmsClientProps {
     | "event"
     | "insurance"
     | "medicine"
+    | "other"
     | "payment"
+    | "request"
     | "vaccination";
   alarms: StaffReceiptAlarm[];
   history: StaffReceiptAlarmHistory[];
@@ -221,6 +229,20 @@ const familyCopy: Record<StaffReceiptAlarmsClientProps["family"], FamilyCopy> = 
     icon: Pill,
     iconClass: "text-violet-500",
   },
+  other: {
+    title: "Others Notifications Listing",
+    description: "Other alerts sent to staff and parents",
+    breadcrumb: "Others",
+    historyTitle: "Sent Others Alarms",
+    searchPlaceholder: "Search other alarms...",
+    historyPlaceholder: "Search sent other alarms...",
+    emptyTitle: "No other notifications",
+    emptyDescription:
+      "Other reminders matching the current filters will appear here.",
+    generationFailure: "Other alarm generation is not available.",
+    icon: Bell,
+    iconClass: "text-orange-500",
+  },
   payment: {
     title: "Payments Notifications Listing",
     description: "Payment reminders sent to parents",
@@ -235,6 +257,20 @@ const familyCopy: Record<StaffReceiptAlarmsClientProps["family"], FamilyCopy> = 
     icon: DollarSign,
     iconClass: "text-amber-600",
     listingLabel: "Recipients",
+  },
+  request: {
+    title: "Requests Notifications Listing",
+    description: "Request alerts sent to staff and parents",
+    breadcrumb: "Requests",
+    historyTitle: "Sent Requests Alarms",
+    searchPlaceholder: "Search request alarms...",
+    historyPlaceholder: "Search sent request alarms...",
+    emptyTitle: "No request notifications",
+    emptyDescription:
+      "Request reminders matching the current filters will appear here.",
+    generationFailure: "Request alarm generation is not available.",
+    icon: MessageSquare,
+    iconClass: "text-blue-500",
   },
   vaccination: {
     title: "Vaccinations Notifications Listing",
@@ -363,7 +399,13 @@ async function generateForFamily(
   if (family === "contract") return generateContractAlarms(branchId);
   if (family === "event") return generateEventAlarms(branchId);
   if (family === "insurance") return generateInsuranceAlarms(branchId);
+  if (family === "other") {
+    return { success: false, error: "Other alarm generation is not available." };
+  }
   if (family === "payment") return generatePaymentAlarms(branchId);
+  if (family === "request") {
+    return { success: false, error: "Request alarm generation is not available." };
+  }
   if (family === "vaccination") return generateVaccinationAlarms(branchId);
   return generateMedicineAlarms(branchId);
 }
@@ -377,7 +419,9 @@ async function markViewedForFamily(
   if (family === "contract") return markContractAlarmViewed(alarmId);
   if (family === "event") return markEventAlarmViewed(alarmId);
   if (family === "insurance") return markInsuranceAlarmViewed(alarmId);
+  if (family === "other") return markOtherAlarmViewed(alarmId);
   if (family === "payment") return markPaymentAlarmViewed(alarmId);
+  if (family === "request") return markRequestAlarmViewed(alarmId);
   if (family === "vaccination") return markVaccinationAlarmViewed(alarmId);
   return markMedicineAlarmViewed(alarmId);
 }
@@ -390,7 +434,9 @@ async function markAllViewedForFamily(
   if (family === "contract") return markAllContractAlarmsViewed();
   if (family === "event") return markAllEventAlarmsViewed();
   if (family === "insurance") return markAllInsuranceAlarmsViewed();
+  if (family === "other") return markAllOtherAlarmsViewed();
   if (family === "payment") return markAllPaymentAlarmsViewed();
+  if (family === "request") return markAllRequestAlarmsViewed();
   if (family === "vaccination") return markAllVaccinationAlarmsViewed();
   return markAllMedicineAlarmsViewed();
 }

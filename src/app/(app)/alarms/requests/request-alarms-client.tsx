@@ -12,8 +12,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { MessageSquare } from "lucide-react";
 import { AlarmActionsCell } from "@/components/alarms/alarm-actions-cell";
+import {
+  StaffReceiptAlarmsClient,
+  type StaffReceiptAlarm,
+  type StaffReceiptAlarmHistory,
+} from "../_components/staff-receipt-alarms-client";
 
 interface RequestAlarm {
   id: string;
@@ -26,9 +37,16 @@ interface RequestAlarm {
 interface RequestAlarmsClientProps {
   alarms: RequestAlarm[];
   branches: { id: string; name: string }[];
+  notificationAlarms: StaffReceiptAlarm[];
+  notificationHistory: StaffReceiptAlarmHistory[];
 }
 
-export function RequestAlarmsClient({ alarms }: RequestAlarmsClientProps) {
+export function RequestAlarmsClient({
+  alarms,
+  branches,
+  notificationAlarms,
+  notificationHistory,
+}: RequestAlarmsClientProps) {
   const [statusFilter, setStatusFilter] = useState("ALL");
 
   const filtered = useMemo(() => {
@@ -90,25 +108,45 @@ export function RequestAlarmsClient({ alarms }: RequestAlarmsClientProps) {
         ]}
       />
       <div className="space-y-4 p-4 md:p-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="All Statuses" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All Statuses</SelectItem>
-              <SelectItem value="Active">Pending</SelectItem>
-              <SelectItem value="Resolved">Resolved</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        {filtered.length > 0 ? (
-          <DataTable columns={columns} data={filtered} searchKey="message" searchPlaceholder="Search requests..." />
-        ) : (
-          <div className="rounded-lg border bg-card p-8 text-center text-sm text-muted-foreground">
-            No request alarms found.
-          </div>
-        )}
+        <Tabs defaultValue="dashboard" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dashboard" className="space-y-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Statuses</SelectItem>
+                  <SelectItem value="Active">Pending</SelectItem>
+                  <SelectItem value="Resolved">Resolved</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {filtered.length > 0 ? (
+              <DataTable columns={columns} data={filtered} searchKey="message" searchPlaceholder="Search requests..." />
+            ) : (
+              <div className="rounded-lg border bg-card p-8 text-center text-sm text-muted-foreground">
+                No request alarms found.
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="notifications">
+            <StaffReceiptAlarmsClient
+              family="request"
+              alarms={notificationAlarms}
+              history={notificationHistory}
+              branches={branches}
+              showHeader={false}
+              showGenerate={false}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </>
   );
