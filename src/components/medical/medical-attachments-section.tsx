@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { ExternalLink, Paperclip, Upload, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ExternalLink, FileText, Paperclip, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +31,7 @@ export interface PendingMedicalAttachment {
   id: string;
   title: string;
   file: File;
+  previewUrl: string | null;
 }
 
 interface MedicalAttachmentsSectionProps {
@@ -42,6 +43,46 @@ interface MedicalAttachmentsSectionProps {
   onAddPending: (files: File[]) => void;
   onPendingTitleChange: (index: number, title: string) => void;
   onRemovePending: (index: number) => void;
+}
+
+function attachmentHref(fileUrl: string) {
+  if (/^https?:\/\//i.test(fileUrl) || fileUrl.startsWith("/")) return fileUrl;
+  if (fileUrl.includes("/")) return `/${fileUrl.replace(/^\/+/, "")}`;
+  return `/images/MedForms/${fileUrl}`;
+}
+
+function isImageLike(value: string) {
+  return /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(value);
+}
+
+function AttachmentPreview({
+  href,
+  filename,
+  linked = false,
+}: {
+  href: string | null;
+  filename: string;
+  linked?: boolean;
+}) {
+  const content = href && isImageLike(href) ? (
+    <div
+      className="h-24 w-28 rounded border bg-muted bg-cover bg-center"
+      style={{ backgroundImage: `url("${href}")` }}
+      aria-label={filename}
+    />
+  ) : (
+    <div className="flex h-24 w-28 items-center justify-center rounded border bg-muted">
+      <FileText className="size-7 text-muted-foreground" />
+    </div>
+  );
+
+  if (!linked || !href) return content;
+
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer" className="block">
+      {content}
+    </a>
+  );
 }
 
 export function MedicalAttachmentsSection({
@@ -96,8 +137,13 @@ export function MedicalAttachmentsSection({
             {existingAttachments.map((attachment, index) => (
               <div
                 key={attachment.id ?? attachment.fileUrl}
-                className="grid gap-2 rounded-sm border p-3 md:grid-cols-[1fr_auto]"
+                className="grid gap-3 rounded-sm border p-3 md:grid-cols-[112px_1fr_auto]"
               >
+                <AttachmentPreview
+                  href={attachmentHref(attachment.fileUrl)}
+                  filename={attachment.filename}
+                  linked
+                />
                 <div className="space-y-2">
                   <Label>Title</Label>
                   <Input
@@ -109,7 +155,7 @@ export function MedicalAttachmentsSection({
                     }
                   />
                   <a
-                    href={attachment.fileUrl}
+                    href={attachmentHref(attachment.fileUrl)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex max-w-full items-center gap-1 truncate text-xs text-primary hover:underline"
@@ -134,8 +180,12 @@ export function MedicalAttachmentsSection({
             {pendingAttachments.map((attachment, index) => (
               <div
                 key={attachment.id}
-                className="grid gap-2 rounded-sm border border-dashed p-3 md:grid-cols-[1fr_auto]"
+                className="grid gap-3 rounded-sm border border-dashed p-3 md:grid-cols-[112px_1fr_auto]"
               >
+                <AttachmentPreview
+                  href={attachment.previewUrl}
+                  filename={attachment.file.name}
+                />
                 <div className="space-y-2">
                   <Label>Title</Label>
                   <Input
@@ -176,6 +226,7 @@ export function appendPendingMedicalAttachments(
     id: crypto.randomUUID(),
     title: "",
     file,
+    previewUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : null,
   }));
 }
 
@@ -215,6 +266,19 @@ export function useMedicalAttachments(
     PendingMedicalAttachment[]
   >([]);
   const [removedAttachmentIds, setRemovedAttachmentIds] = useState<string[]>([]);
+  const pendingAttachmentsRef = useRef<PendingMedicalAttachment[]>([]);
+
+  useEffect(() => {
+    pendingAttachmentsRef.current = pendingAttachments;
+  }, [pendingAttachments]);
+
+  useEffect(() => {
+    return () => {
+      pendingAttachmentsRef.current.forEach((attachment) => {
+        if (attachment.previewUrl) URL.revokeObjectURL(attachment.previewUrl);
+      });
+    };
+  }, []);
 
   function addPendingAttachments(files: File[]) {
     setPendingAttachments((current) => [
@@ -250,9 +314,11 @@ export function useMedicalAttachments(
   }
 
   function removePendingAttachment(index: number) {
-    setPendingAttachments((current) =>
-      current.filter((_, attachmentIndex) => attachmentIndex !== index)
-    );
+    setPendingAttachments((current) => {
+      const removed = current[index];
+      if (removed?.previewUrl) URL.revokeObjectURL(removed.previewUrl);
+      return current.filter((_, attachmentIndex) => attachmentIndex !== index);
+    });
   }
 
   async function resolveAttachmentPayload(params: {

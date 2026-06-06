@@ -171,6 +171,7 @@ export async function getMedicalForm(id: string) {
         child: {
           include: {
             branch: true,
+            class: true,
           },
         },
         entries: true,

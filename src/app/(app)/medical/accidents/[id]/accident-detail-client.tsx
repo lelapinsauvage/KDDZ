@@ -1,196 +1,268 @@
 "use client";
 
-import { useState } from "react";
-import { useForm, Controller } from "react-hook-form";
-import { z } from "zod/v4";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useForm, type Path, type PathValue } from "react-hook-form";
 import { toast } from "sonner";
+import { ArrowLeft, Loader2, Save, Send, ShieldAlert, User } from "lucide-react";
+
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { ArrowLeft, Save, Send, Loader2 } from "lucide-react";
-import {
-  createMedicalForm,
-  updateMedicalForm,
-} from "@/lib/actions/medical";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   MedicalAttachmentsSection,
   type MedicalAttachmentValue,
   type MedicalChildOption,
   useMedicalAttachments,
 } from "@/components/medical/medical-attachments-section";
+import { createMedicalForm, updateMedicalForm } from "@/lib/actions/medical";
 
-// --- Schema ---
+type AccidentStatus = "DRAFT" | "SUBMITTED" | "REVIEWED";
 
-const accidentFormSchema = z.object({
-  childId: z.string().min(1, "Child is required"),
-  date: z.string().min(1, "Date is required"),
-  time: z.string().min(1, "Time is required"),
-  location: z.string().min(1, "Location is required"),
-  accidentCause: z.string().optional(),
-  description: z.string().min(1, "Description is required"),
-  injuryType: z.string().min(1, "Injury type is required"),
-  severity: z.string().min(1, "Severity is required"),
-  firstAidGiven: z.string().optional(),
-  emergencyHospital: z.boolean(),
-  treatment: z.string().optional(),
-  parentNotified: z.boolean(),
-  witnesses: z.string().optional(),
-  followUpNotes: z.string().optional(),
-  status: z.string(),
-});
-
-type AccidentFormValues = z.infer<typeof accidentFormSchema>;
-
-// --- Status badge ---
-
-function getStatusBadge(status: string) {
-  switch (status) {
-    case "DRAFT":
-      return (
-        <Badge variant="outline" className="border-gray-300 text-gray-600">
-          Draft
-        </Badge>
-      );
-    case "SUBMITTED":
-      return (
-        <Badge className="bg-blue-50 text-blue-700 border-blue-200">
-          Submitted
-        </Badge>
-      );
-    case "REVIEWED":
-      return (
-        <Badge className="bg-[#059669]/10 text-[#059669] border-[#059669]/20">
-          Reviewed
-        </Badge>
-      );
-    default:
-      return <Badge variant="outline">{status}</Badge>;
-  }
+export interface AccidentFormValues {
+  childId: string;
+  cause: string;
+  accidentDate: string;
+  accidentTime: string;
+  place: string;
+  area: string;
+  cameraNumber: string;
+  firstAid: string;
+  emergencyHospital: string;
+  treatment: string;
+  teacherId: string;
+  status: AccidentStatus;
 }
 
-// --- Constants ---
+interface AccidentChildOption extends MedicalChildOption {
+  legacyId: number | null;
+  childNumber: string;
+  photo: string | null;
+  branchName: string;
+  branchLegacyId: number | null;
+  classId: string | null;
+  className: string;
+  classLegacyId: number | null;
+}
 
-const LOCATIONS = [
-  "Classroom",
-  "Outdoor playground",
-  "Indoor play area",
-  "Hallway",
-  "Cafeteria",
-  "Bathroom",
-  "Stairs",
-  "Swing",
-  "Slide",
-  "Other",
-];
-
-const ACCIDENT_CAUSES = [
-  "Fall",
-  "Bite",
-  "Hitting",
-  "Collision",
-  "Other",
-];
-
-const INJURY_TYPES = [
-  "Scrape/Abrasion",
-  "Bump/Bruise",
-  "Cut/Laceration",
-  "Sprain/Strain",
-  "Bite",
-  "Burn",
-  "Fracture",
-  "Other",
-];
-
-const SEVERITIES = ["Minor", "Moderate", "Severe"];
-
-// --- Props ---
+interface TeacherOption {
+  id: string;
+  legacyId: number | null;
+  name: string;
+  branchId: string;
+}
 
 interface AccidentDetailClientProps {
   isNew: boolean;
   formId: string | null;
-  childId: string;
-  childName?: string;
   formData: AccidentFormValues;
-  childrenList: MedicalChildOption[];
+  initialData: Record<string, unknown>;
+  childrenList: AccidentChildOption[];
+  teacherList: TeacherOption[];
   initialAttachments: MedicalAttachmentValue[];
 }
 
-// --- Client Component ---
+const causePresets = [
+  "Fall (the child had fallen)",
+  "Bite (the child had a bite by a child)",
+  "Hiting (some baby hit the child)",
+  "Congnade (l'enfant s'est cong?)",
+];
+
+const placePresets = [
+  "in the class",
+  "On the floor",
+  "On the table",
+  "On the swing",
+  "By another child",
+  "Glass",
+  "On the slide",
+  "On the chair",
+  "in the toilet",
+];
+
+const firstAidPresets = [
+  "Water",
+  "Soap",
+  "Hydrogen peroxide",
+  "Adhesive",
+  "bandage",
+  "Ice pack",
+];
+
+const treatmentPresets = ["x-ray", "Stitch", "fracture"];
+
+const requiredSubmitFields: Array<{ key: keyof AccidentFormValues; label: string }> = [
+  { key: "cause", label: "Accident Cause" },
+  { key: "accidentDate", label: "Date" },
+  { key: "accidentTime", label: "Time" },
+  { key: "place", label: "The accident happened" },
+  { key: "area", label: "Specify Area" },
+  { key: "cameraNumber", label: "Camera Number" },
+  { key: "firstAid", label: "First Aid" },
+  { key: "emergencyHospital", label: "Emergency Hospital" },
+  { key: "treatment", label: "Treatment" },
+  { key: "teacherId", label: "Teacher" },
+];
+
+function childPhotoSrc(photo: string | null) {
+  if (!photo || photo === "default.jpg") return "";
+  if (/^https?:\/\//i.test(photo) || photo.startsWith("/")) return photo;
+  if (photo.includes("/")) return `/${photo.replace(/^\/+/, "")}`;
+  return `/images/EmpPhoto/${photo}`;
+}
+
+function legacyNumber(data: Record<string, unknown>, key: string) {
+  const value = data[key];
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+}
+
+function statusBadge(status: AccidentStatus) {
+  if (status === "DRAFT") {
+    return <Badge className="border-transparent bg-[#c29d0b] text-white">Draft</Badge>;
+  }
+  if (status === "REVIEWED") {
+    return <Badge className="border-transparent bg-[#327ad5] text-white">Reviewed</Badge>;
+  }
+  return <Badge className="border-transparent bg-[#008200] text-white">Submitted</Badge>;
+}
+
+function inputClass(isMissing: boolean) {
+  return isMissing
+    ? "border-destructive bg-destructive/5 text-destructive focus-visible:ring-destructive"
+    : "";
+}
 
 export function AccidentDetailClient({
   isNew,
   formId,
-  childId: _childId,
-  childName,
   formData,
+  initialData,
   childrenList,
+  teacherList,
   initialAttachments,
 }: AccidentDetailClientProps) {
   const router = useRouter();
-  const [isSaving, setIsSaving] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [busyAction, setBusyAction] = useState<"draft" | "submit" | null>(null);
+  const [missingFields, setMissingFields] = useState<Set<keyof AccidentFormValues>>(new Set());
   const attachments = useMedicalAttachments(initialAttachments);
 
   const {
     register,
-    handleSubmit,
     watch,
     setValue,
-    control,
-    formState: { errors },
+    getValues,
   } = useForm<AccidentFormValues>({
-    resolver: zodResolver(accidentFormSchema),
     defaultValues: formData,
   });
 
+  const selectedChildId = watch("childId");
   const currentStatus = watch("status");
-  const emergencyHospital = watch("emergencyHospital");
+  const selectedChild = useMemo(
+    () => childrenList.find((child) => child.id === selectedChildId) ?? null,
+    [childrenList, selectedChildId],
+  );
+  const selectedChildPhoto = childPhotoSrc(selectedChild?.photo ?? null);
 
-  // --- Build data payload ---
+  const visibleTeachers = useMemo(() => {
+    if (!selectedChild?.branchId) return teacherList;
+    const branchTeachers = teacherList.filter((teacher) => teacher.branchId === selectedChild.branchId);
+    return branchTeachers.length ? branchTeachers : teacherList;
+  }, [selectedChild?.branchId, teacherList]);
 
-  function buildPayload(data: AccidentFormValues) {
+  function clearMissing(field: keyof AccidentFormValues) {
+    setMissingFields((current) => {
+      if (!current.has(field)) return current;
+      const next = new Set(current);
+      next.delete(field);
+      return next;
+    });
+  }
+
+  function setField<K extends Path<AccidentFormValues>>(field: K, value: PathValue<AccidentFormValues, K>) {
+    setValue(field, value, { shouldDirty: true });
+    clearMissing(field as keyof AccidentFormValues);
+  }
+
+  function buildPayload(data: AccidentFormValues, status: AccidentStatus) {
+    const child = childrenList.find((item) => item.id === data.childId) ?? selectedChild;
+    const teacher = teacherList.find((item) => item.id === data.teacherId);
+
     return {
-      date: data.date,
-      time: data.time,
-      location: data.location,
-      accidentCause: data.accidentCause ?? "",
-      description: data.description,
-      injuryType: data.injuryType,
-      severity: data.severity,
-      firstAidGiven: data.firstAidGiven ?? "",
-      emergencyHospital: data.emergencyHospital,
-      treatment: data.treatment ?? "",
-      parentNotified: data.parentNotified,
-      witnesses: data.witnesses ?? "",
-      followUpNotes: data.followUpNotes ?? "",
+      ...initialData,
+      child_id: child?.legacyId ?? legacyNumber(initialData, "child_id"),
+      branch_id: child?.branchLegacyId ?? legacyNumber(initialData, "branch_id"),
+      class_id: child?.classLegacyId ?? legacyNumber(initialData, "class_id"),
+      teacher_id: teacher?.legacyId ?? legacyNumber(initialData, "teacher_id"),
+      modernChildId: data.childId,
+      modernBranchId: child?.branchId ?? null,
+      modernClassId: child?.classId ?? null,
+      modernTeacherId: data.teacherId,
+      cause: data.cause,
+      accidentCause: data.cause,
+      accident_date: data.accidentDate,
+      date: data.accidentDate,
+      accident_time: data.accidentTime,
+      time: data.accidentTime,
+      place: data.place,
+      location: data.place,
+      area: data.area,
+      specifyArea: data.area,
+      camnum: data.cameraNumber,
+      cameraNumber: data.cameraNumber,
+      firstaid: data.firstAid,
+      firstAid: data.firstAid,
+      firstAidGiven: data.firstAid,
+      em_hospital: data.emergencyHospital,
+      emergencyHospital: data.emergencyHospital === "Yes",
+      treatment: data.treatment,
+      is_rep_draft: status === "DRAFT" ? 1 : 0,
     };
   }
 
-  // --- Save Draft ---
+  function validateForSubmit(data: AccidentFormValues) {
+    const missing = new Set<keyof AccidentFormValues>();
+    if (!data.childId) missing.add("childId");
+    requiredSubmitFields.forEach((field) => {
+      if (!String(data[field.key] ?? "").trim()) missing.add(field.key);
+    });
+    setMissingFields(missing);
 
-  async function onSaveDraft(data: AccidentFormValues) {
-    setIsSaving(true);
+    if (missing.size > 0) {
+      const labels = requiredSubmitFields
+        .filter((field) => missing.has(field.key))
+        .map((field) => field.label)
+        .join(", ");
+      toast.error(`Please fill the mandatory fields: ${labels}`);
+      return false;
+    }
+    return true;
+  }
+
+  async function save(status: AccidentStatus) {
+    const data = getValues();
+    if (!data.childId) {
+      setMissingFields(new Set(["childId"]));
+      toast.error("Select a child before saving the accident report.");
+      return;
+    }
+    if (status === "SUBMITTED" && !validateForSubmit(data)) return;
+
+    const action = status === "DRAFT" ? "draft" : "submit";
+    setBusyAction(action);
+    setValue("status", status, { shouldDirty: true });
+
     try {
       const attachmentPayload = await attachments.resolveAttachmentPayload({
         childrenList,
@@ -199,370 +271,277 @@ export function AccidentDetailClient({
       });
       if (!attachmentPayload) return;
 
-      if (isNew) {
-        const result = await createMedicalForm({
-          childId: data.childId,
-          formType: "ACCIDENTS",
-          status: "DRAFT",
-          data: buildPayload(data),
-          attachments: attachmentPayload,
-        });
-        if ("error" in result && result.error) {
-          toast.error(result.error);
-        } else {
-          toast.success("Accident report saved as draft.");
-          router.push("/medical/accidents");
-        }
-      } else {
-        const result = await updateMedicalForm(formId!, {
-          childId: data.childId,
-          status: "DRAFT",
-          data: buildPayload(data),
-          attachments: attachmentPayload,
-          removeAttachmentIds: attachments.removedAttachmentIds,
-        });
-        if ("error" in result && result.error) {
-          toast.error(result.error);
-        } else {
-          toast.success("Accident report draft updated.");
-          router.push("/medical/accidents");
-        }
+      const payload = buildPayload(data, status);
+      const result = isNew
+        ? await createMedicalForm({
+            childId: data.childId,
+            formType: "ACCIDENTS",
+            status,
+            data: payload,
+            attachments: attachmentPayload,
+          })
+        : await updateMedicalForm(formId!, {
+            childId: data.childId,
+            formType: "ACCIDENTS",
+            status,
+            data: payload,
+            attachments: attachmentPayload,
+            removeAttachmentIds: attachments.removedAttachmentIds,
+          });
+
+      if ("error" in result && result.error) {
+        toast.error(result.error);
+        return;
       }
-    } catch {
-      toast.error("Failed to save accident report.");
+
+      toast.success(status === "DRAFT" ? "Accident report saved as draft." : "Accident report has been submitted.");
+      if (isNew && "formId" in result && result.formId) {
+        router.push(`/medical/accidents/${result.formId}`);
+      } else {
+        router.refresh();
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to save accident report.");
     } finally {
-      setIsSaving(false);
+      setBusyAction(null);
     }
   }
 
-  // --- Submit ---
-
-  async function onSubmit(data: AccidentFormValues) {
-    setIsSubmitting(true);
-    try {
-      const attachmentPayload = await attachments.resolveAttachmentPayload({
-        childrenList,
-        childId: data.childId,
-        formId,
-      });
-      if (!attachmentPayload) return;
-
-      if (isNew) {
-        const result = await createMedicalForm({
-          childId: data.childId,
-          formType: "ACCIDENTS",
-          status: "SUBMITTED",
-          data: buildPayload(data),
-          attachments: attachmentPayload,
-        });
-        if ("error" in result && result.error) {
-          toast.error(result.error);
-        } else {
-          toast.success("Accident report submitted.");
-          router.push("/medical/accidents");
-        }
-      } else {
-        const result = await updateMedicalForm(formId!, {
-          childId: data.childId,
-          status: "SUBMITTED",
-          data: buildPayload(data),
-          attachments: attachmentPayload,
-          removeAttachmentIds: attachments.removedAttachmentIds,
-        });
-        if ("error" in result && result.error) {
-          toast.error(result.error);
-        } else {
-          toast.success("Accident report submitted.");
-          router.push("/medical/accidents");
-        }
-      }
-    } catch {
-      toast.error("Failed to submit accident report.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  const busy = isSaving || isSubmitting;
+  const busy = busyAction !== null;
 
   return (
     <>
       <PageHeader
-        title={isNew ? "New Accident Report" : "Accident Report"}
+        title="Accident Report"
         breadcrumbs={[
           { label: "Medical", href: "/medical/general" },
-          { label: "Accidents", href: "/medical/accidents" },
-          { label: isNew ? "New" : (childName ?? "Detail") },
+          { label: "Accident Reports", href: "/medical/accidents" },
+          { label: isNew ? "New Accident Report" : selectedChild?.name ?? "Accident Report" },
         ]}
       />
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Top bar */}
-        <div className="flex items-center justify-between">
-          <Link href="/medical/accidents">
-            <Button variant="outline" size="sm">
+
+      <div className="space-y-6 p-4 md:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/medical/accidents">
               <ArrowLeft className="size-4" />
               Back to List
-            </Button>
-          </Link>
-          <div className="flex items-center gap-3">
-            {getStatusBadge(currentStatus)}
+            </Link>
+          </Button>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {statusBadge(currentStatus)}
             <Button
+              type="button"
               variant="outline"
-              onClick={handleSubmit(onSaveDraft)}
               disabled={busy}
+              onClick={() => save("DRAFT")}
             >
-              {isSaving ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Save className="size-4" />
-              )}
-              Save Draft
+              {busyAction === "draft" ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+              Save As Draft
             </Button>
             <Button
-              variant="default"
-              className="text-primary-foreground"
-              onClick={handleSubmit(onSubmit)}
+              type="button"
               disabled={busy}
+              onClick={() => save("SUBMITTED")}
             >
-              {isSubmitting ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Send className="size-4" />
-              )}
-              Submit
+              {busyAction === "submit" ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+              Save Accident Report
             </Button>
           </div>
         </div>
 
-        <form className="space-y-4 md:space-y-6">
-          {/* Card 1: Child & Timing */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Child & Timing</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <Card>
+          <CardContent className="grid gap-4 p-4 md:grid-cols-[1fr_220px] md:p-5">
+            <div className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>Child</Label>
+                  <Label>Child <span className="text-destructive">*</span></Label>
                   <Select
-                    value={watch("childId")}
-                    onValueChange={(val) => setValue("childId", val)}
+                    value={selectedChildId}
+                    disabled={!isNew || busy}
+                    onValueChange={(value) => setField("childId", value)}
                   >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a child" />
+                    <SelectTrigger className={inputClass(missingFields.has("childId"))}>
+                      <SelectValue placeholder="Select child" />
                     </SelectTrigger>
                     <SelectContent>
                       {childrenList.map((child) => (
                         <SelectItem key={child.id} value={child.id}>
-                          {child.name}
+                          {child.childNumber} - {child.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  {errors.childId && (
-                    <p className="text-xs text-red-500">{errors.childId.message}</p>
-                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label>Date of Accident</Label>
-                  <Input type="date" {...register("date")} />
-                  {errors.date && (
-                    <p className="text-xs text-red-500">{errors.date.message}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label>Time of Accident</Label>
-                  <Input type="time" {...register("time")} />
-                  {errors.time && (
-                    <p className="text-xs text-red-500">{errors.time.message}</p>
-                  )}
+                  <Label>Class</Label>
+                  <Input value={selectedChild?.className ?? ""} readOnly />
                 </div>
               </div>
-            </CardContent>
-          </Card>
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="rounded border bg-muted/30 p-3">
+                  <p className="text-xs text-muted-foreground">Child #</p>
+                  <p className="font-medium">{selectedChild?.childNumber ?? "—"}</p>
+                </div>
+                <div className="rounded border bg-muted/30 p-3">
+                  <p className="text-xs text-muted-foreground">Branch</p>
+                  <p className="font-medium">{selectedChild?.branchName ?? "—"}</p>
+                </div>
+                <div className="rounded border bg-muted/30 p-3">
+                  <p className="text-xs text-muted-foreground">Report</p>
+                  <p className="font-medium">{isNew ? "New" : "Existing"}</p>
+                </div>
+              </div>
+            </div>
 
-          {/* Card 2: Incident Details */}
+            <div className="flex flex-col items-center justify-center gap-2 rounded border bg-muted/20 p-4">
+              {selectedChildPhoto ? (
+                <div className="relative size-24 overflow-hidden rounded-full border bg-muted">
+                  <Image
+                    src={selectedChildPhoto}
+                    alt={selectedChild?.name ?? "Child"}
+                    fill
+                    sizes="96px"
+                    className="object-cover"
+                    unoptimized
+                  />
+                </div>
+              ) : (
+                <div className="flex size-24 items-center justify-center rounded-full border bg-muted">
+                  <User className="size-8 text-muted-foreground" />
+                </div>
+              )}
+              <p className="text-center text-sm font-medium">{selectedChild?.name ?? "Name"}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <form className="space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle>Incident Details</CardTitle>
+            <CardHeader className="border-b bg-[#d64635] text-white">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <ShieldAlert className="size-4" />
+                Accident Cause
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <div className="space-y-2">
-                  <Label>Location</Label>
-                  <Select
-                    value={watch("location")}
-                    onValueChange={(val) => setValue("location", val)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select location" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {LOCATIONS.map((loc) => (
-                        <SelectItem key={loc} value={loc}>
-                          {loc}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.location && (
-                    <p className="text-xs text-red-500">{errors.location.message}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label>Accident Cause</Label>
-                  <Select
-                    value={watch("accidentCause") ?? ""}
-                    onValueChange={(val) => setValue("accidentCause", val)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select cause" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ACCIDENT_CAUSES.map((cause) => (
-                        <SelectItem key={cause} value={cause}>
-                          {cause}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Injury Type</Label>
-                  <Select
-                    value={watch("injuryType")}
-                    onValueChange={(val) => setValue("injuryType", val)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select injury type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {INJURY_TYPES.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.injuryType && (
-                    <p className="text-xs text-red-500">{errors.injuryType.message}</p>
-                  )}
-                </div>
-              </div>
-              <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
-                <div className="space-y-2">
-                  <Label>Severity</Label>
-                  <Select
-                    value={watch("severity")}
-                    onValueChange={(val) => setValue("severity", val)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select severity" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SEVERITIES.map((sev) => (
-                        <SelectItem key={sev} value={sev}>
-                          {sev}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.severity && (
-                    <p className="text-xs text-red-500">{errors.severity.message}</p>
-                  )}
-                </div>
-              </div>
-              <div className="mt-4 space-y-2">
-                <Label>Description</Label>
-                <Textarea
-                  placeholder="Describe what happened in detail..."
-                  rows={4}
-                  {...register("description")}
+            <CardContent className="grid gap-4 p-4 md:grid-cols-3 md:p-5">
+              <div className="space-y-2">
+                <Label>Accident Cause <span className="text-destructive">*</span></Label>
+                <Input
+                  list="accident-cause-list"
+                  placeholder="Select/Add"
+                  className={inputClass(missingFields.has("cause"))}
+                  {...register("cause", { onChange: () => clearMissing("cause") })}
                 />
-                {errors.description && (
-                  <p className="text-xs text-red-500">{errors.description.message}</p>
-                )}
+              </div>
+              <div className="space-y-2">
+                <Label>Date <span className="text-destructive">*</span></Label>
+                <Input
+                  type="date"
+                  className={inputClass(missingFields.has("accidentDate"))}
+                  {...register("accidentDate", { onChange: () => clearMissing("accidentDate") })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Time <span className="text-destructive">*</span></Label>
+                <Input
+                  type="time"
+                  className={inputClass(missingFields.has("accidentTime"))}
+                  {...register("accidentTime", { onChange: () => clearMissing("accidentTime") })}
+                />
               </div>
             </CardContent>
           </Card>
 
-          {/* Card 3: First Aid & Response */}
           <Card>
-            <CardHeader>
-              <CardTitle>First Aid & Response</CardTitle>
+            <CardHeader className="border-b bg-[#327ad5] text-white">
+              <CardTitle className="text-base">Accident Details</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>First Aid Given</Label>
-                  <Textarea
-                    placeholder="e.g. Water, Soap, Hydrogen peroxide, Adhesive bandage, Ice pack..."
-                    rows={3}
-                    {...register("firstAidGiven")}
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <Controller
-                    name="emergencyHospital"
-                    control={control}
-                    render={({ field }) => (
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    )}
-                  />
-                  <Label className="cursor-pointer">Emergency Hospital Visit</Label>
-                </div>
-                {emergencyHospital && (
-                  <div className="space-y-2">
-                    <Label>Treatment at Hospital</Label>
-                    <Input
-                      placeholder="Describe the treatment received..."
-                      {...register("treatment")}
-                    />
-                  </div>
-                )}
+            <CardContent className="grid gap-4 p-4 md:grid-cols-3 md:p-5">
+              <div className="space-y-2">
+                <Label>The accident happened <span className="text-destructive">*</span></Label>
+                <Input
+                  list="accident-place-list"
+                  placeholder="Select/Add"
+                  className={inputClass(missingFields.has("place"))}
+                  {...register("place", { onChange: () => clearMissing("place") })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Specify Area <span className="text-destructive">*</span></Label>
+                <Input
+                  placeholder="Specify the area"
+                  className={inputClass(missingFields.has("area"))}
+                  {...register("area", { onChange: () => clearMissing("area") })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Camera Number <span className="text-destructive">*</span></Label>
+                <Input
+                  placeholder="Cam #"
+                  className={inputClass(missingFields.has("cameraNumber"))}
+                  {...register("cameraNumber", { onChange: () => clearMissing("cameraNumber") })}
+                />
               </div>
             </CardContent>
           </Card>
 
-          {/* Card 4: Notifications & Follow-up */}
           <Card>
-            <CardHeader>
-              <CardTitle>Notifications & Follow-up</CardTitle>
+            <CardHeader className="border-b bg-[#1caf9a] text-white">
+              <CardTitle className="text-base">First Aid</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <Controller
-                    name="parentNotified"
-                    control={control}
-                    render={({ field }) => (
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    )}
-                  />
-                  <Label className="cursor-pointer">Parent / Guardian Notified</Label>
-                </div>
-                <div className="space-y-2">
-                  <Label>Witnesses</Label>
-                  <Textarea
-                    placeholder="Names or descriptions of witnesses..."
-                    rows={2}
-                    {...register("witnesses")}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Follow-up Notes</Label>
-                  <Textarea
-                    placeholder="Any follow-up actions or observations..."
-                    rows={3}
-                    {...register("followUpNotes")}
-                  />
-                </div>
+            <CardContent className="grid gap-4 p-4 md:grid-cols-3 md:p-5">
+              <div className="space-y-2">
+                <Label>First Aid <span className="text-destructive">*</span></Label>
+                <Input
+                  list="first-aid-list"
+                  placeholder="Select/Add"
+                  className={inputClass(missingFields.has("firstAid"))}
+                  {...register("firstAid", { onChange: () => clearMissing("firstAid") })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Emergency Hospital <span className="text-destructive">*</span></Label>
+                <Select
+                  value={watch("emergencyHospital")}
+                  onValueChange={(value) => setField("emergencyHospital", value)}
+                >
+                  <SelectTrigger className={inputClass(missingFields.has("emergencyHospital"))}>
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Yes">Yes</SelectItem>
+                    <SelectItem value="No">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Treatment <span className="text-destructive">*</span></Label>
+                <Input
+                  list="treatment-list"
+                  placeholder="Select/Add"
+                  className={inputClass(missingFields.has("treatment"))}
+                  {...register("treatment", { onChange: () => clearMissing("treatment") })}
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label>The teacher who filled the report is <span className="text-destructive">*</span></Label>
+                <Select
+                  value={watch("teacherId")}
+                  onValueChange={(value) => setField("teacherId", value)}
+                >
+                  <SelectTrigger className={inputClass(missingFields.has("teacherId"))}>
+                    <SelectValue placeholder="Select Teacher" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {visibleTeachers.map((teacher) => (
+                      <SelectItem key={teacher.id} value={teacher.id}>
+                        {teacher.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>
@@ -578,6 +557,27 @@ export function AccidentDetailClient({
             onRemovePending={attachments.removePendingAttachment}
           />
         </form>
+
+        <datalist id="accident-cause-list">
+          {causePresets.map((cause) => (
+            <option key={cause} value={cause} />
+          ))}
+        </datalist>
+        <datalist id="accident-place-list">
+          {placePresets.map((place) => (
+            <option key={place} value={place} />
+          ))}
+        </datalist>
+        <datalist id="first-aid-list">
+          {firstAidPresets.map((firstAid) => (
+            <option key={firstAid} value={firstAid} />
+          ))}
+        </datalist>
+        <datalist id="treatment-list">
+          {treatmentPresets.map((treatment) => (
+            <option key={treatment} value={treatment} />
+          ))}
+        </datalist>
       </div>
     </>
   );
