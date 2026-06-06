@@ -25,6 +25,10 @@ const VALID_ALARM_TYPES: Record<string, AlarmType> = {
   requests: "REQUEST",
 };
 
+const ASSESSMENT_MESSAGE_SETTING_KEY = "email-assessment-msg";
+const DEFAULT_LEGACY_ASSESSMENT_MESSAGE =
+  "Dear Parents, The assessment report of {{child_name}} is done. you can read it on his account. Regards, The Administration";
+
 type ParentAlarmChild = {
   id: string;
   legacyId: number | null;
@@ -183,26 +187,61 @@ async function handleEvents(child: ParentAlarmChild) {
 }
 
 async function handleAssessments(child: ParentAlarmChild) {
-  const assessments = await db.assessment.findMany({
-    where: { childId: child.id },
-    orderBy: { createdAt: "desc" },
-  });
+  const [assessments, messageTemplate] = await Promise.all([
+    db.assessment.findMany({
+      where: { childId: child.id },
+      select: { id: true, data: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    loadLegacyAssessmentMessageTemplate(),
+  ]);
+
+  const assessmentMarkers = assessments
+    .flatMap((assessment) =>
+      extractAssessmentMarkers(assessment.data).map((marker) => ({
+        assessment,
+        marker,
+      }))
+    )
+    .sort(
+      (a, b) =>
+        assessmentMarkerTime(b.marker, b.assessment.createdAt) -
+        assessmentMarkerTime(a.marker, a.assessment.createdAt)
+    );
 
   const header = makeHeader(
     formatChildName(child),
     true,
-    assessments.length
+    assessmentMarkers.length
   );
 
-  const childName = formatChildName(child);
-  const items = assessments.map((a) => ({
-    id: a.id,
-    child_id: child.legacyId ?? child.id,
-    message: `New assessment available for ${childName}`,
-    datetime: formatDateTimeLong(a.createdAt),
+  const childName = formatLegacyAssessmentChildName(child);
+  const items = assessmentMarkers.map(({ assessment, marker }) => ({
+    id: readValue(marker, ["id"]) ?? assessment.id,
+    child_id:
+      readValue(marker, ["childId", "child_id"]) ?? child.legacyId ?? child.id,
+    message: renderLegacyAssessmentMessage(messageTemplate, childName),
+    datetime: formatLegacyAssessmentDatetime(marker, assessment.createdAt),
   }));
 
   return jsonSuccess([header, ...items]);
+}
+
+async function loadLegacyAssessmentMessageTemplate() {
+  const settings = await db.legacySetting.findMany({
+    where: {
+      legacyTable: "login_settings",
+      settingKey: ASSESSMENT_MESSAGE_SETTING_KEY,
+      settingValue: { not: null },
+    },
+    select: { sourceDatabase: true, settingValue: true },
+    orderBy: [{ sourceDatabase: "desc" }, { legacyId: "desc" }],
+  });
+
+  return (
+    chooseLegacySettingValue(settings) ??
+    DEFAULT_LEGACY_ASSESSMENT_MESSAGE
+  );
 }
 
 async function handleGeneralAlarms() {
@@ -392,6 +431,87 @@ function matchesChildId(parentUser: ParentAlarmUser, postedChildId: string) {
     postedChildId === String(parentUser.legacyChildId ?? "") ||
     postedChildId === String(parentUser.child.legacyId ?? "")
   );
+}
+
+function chooseLegacySettingValue(
+  rows: Array<{ sourceDatabase: string; settingValue: string | null }>
+) {
+  const candidates = rows.filter((row) => row.settingValue?.trim());
+  if (candidates.length === 0) return null;
+
+  return (
+    candidates.find((row) => row.sourceDatabase.toLowerCase().includes("29sept")) ??
+    candidates.find((row) => !row.sourceDatabase.toLowerCase().includes("2018")) ??
+    candidates[0]
+  ).settingValue!.trim();
+}
+
+function extractAssessmentMarkers(data: Prisma.JsonValue | null) {
+  const record = asRecord(data);
+  const markers: Record<string, unknown>[] = [];
+  const singleMarker = asRecord(record?._legacyNewAssessmentOnly);
+  if (singleMarker) markers.push(singleMarker);
+
+  const markerList = record?._legacyNewAssessmentMarkers;
+  if (Array.isArray(markerList)) {
+    markers.push(
+      ...markerList
+        .map(asRecord)
+        .filter((marker): marker is Record<string, unknown> => marker !== null)
+    );
+  }
+
+  return markers;
+}
+
+function renderLegacyAssessmentMessage(template: string, childName: string) {
+  return cleanLegacyLine(template.replaceAll("{{child_name}}", childName));
+}
+
+function formatLegacyAssessmentChildName(child: ParentAlarmChild) {
+  return [legacyUcFirst(child.firstName), legacyUcFirst(child.lastName)]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function legacyUcFirst(value: string | null | undefined) {
+  if (!value) return "";
+  return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
+}
+
+function formatLegacyAssessmentDatetime(
+  marker: Record<string, unknown>,
+  fallback: Date
+) {
+  const value = readValue(marker, ["datetime"]);
+  if (value instanceof Date) return formatSqlDateTime(value);
+  if (value !== null) {
+    const raw = String(value).trim();
+    if (raw) {
+      const sqlLike = raw.match(
+        /^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}:\d{2})/
+      );
+      if (sqlLike) return `${sqlLike[1]} ${sqlLike[2]}`;
+      const parsed = new Date(raw);
+      if (!Number.isNaN(parsed.getTime())) return formatSqlDateTime(parsed);
+      return raw;
+    }
+  }
+  return formatSqlDateTime(fallback);
+}
+
+function assessmentMarkerTime(marker: Record<string, unknown>, fallback: Date) {
+  const value = readValue(marker, ["datetime"]);
+  const parsed = value instanceof Date ? value : new Date(String(value ?? ""));
+  return Number.isNaN(parsed.getTime()) ? fallback.getTime() : parsed.getTime();
+}
+
+function formatSqlDateTime(date: Date) {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return [
+    `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`,
+    `${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}:${pad(date.getUTCSeconds())}`,
+  ].join(" ");
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
