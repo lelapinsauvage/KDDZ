@@ -13,10 +13,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { ExternalLink, RefreshCw, Syringe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { generateVaccinationAlarms } from "@/lib/actions/alarms";
+import {
+  StaffReceiptAlarmsClient,
+  type StaffReceiptAlarm,
+  type StaffReceiptAlarmHistory,
+} from "../_components/staff-receipt-alarms-client";
 
 interface VaccinationAlarm {
   id: string;
@@ -34,9 +45,16 @@ interface VaccinationAlarm {
 interface VaccinationsClientProps {
   vaccinations: VaccinationAlarm[];
   branches: { id: string; name: string }[];
+  notificationAlarms: StaffReceiptAlarm[];
+  notificationHistory: StaffReceiptAlarmHistory[];
 }
 
-export function VaccinationsClient({ vaccinations, branches }: VaccinationsClientProps) {
+export function VaccinationsClient({
+  vaccinations,
+  branches,
+  notificationAlarms,
+  notificationHistory,
+}: VaccinationsClientProps) {
   const router = useRouter();
   const [branchFilter, setBranchFilter] = useState("ALL");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -46,6 +64,7 @@ export function VaccinationsClient({ vaccinations, branches }: VaccinationsClien
     if (branchFilter === "ALL") return vaccinations;
     return vaccinations.filter((v) => v.branchId === branchFilter);
   }, [branchFilter, vaccinations]);
+  const unreadNotifications = notificationAlarms.filter((alarm) => !alarm.isRead).length;
 
   async function handleGenerate() {
     setIsGenerating(true);
@@ -130,43 +149,73 @@ export function VaccinationsClient({ vaccinations, branches }: VaccinationsClien
           { label: "Vaccinations" },
         ]}
       />
-      <div className="space-y-4 p-4 md:p-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <Select value={branchFilter} onValueChange={setBranchFilter}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="All Branches" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All Branches</SelectItem>
-              {branches.map((b) => (
-                <SelectItem key={b.id} value={b.id}>
-                  {b.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleGenerate}
-            disabled={isGenerating}
-            className="gap-2"
-          >
-            <RefreshCw className={`size-4 ${isGenerating ? "animate-spin" : ""}`} />
-            {isGenerating ? "Generating..." : "Generate"}
-          </Button>
-          {generationStatus && (
-            <span className="text-sm text-muted-foreground">{generationStatus}</span>
-          )}
-        </div>
-        {filtered.length > 0 ? (
-          <DataTable columns={columns} data={filtered} searchKey="childName" searchPlaceholder="Search children..." />
-        ) : (
-          <div className="rounded-lg border bg-card p-8 text-center text-sm text-muted-foreground">
-            No vaccination reminders found.
+
+      <Tabs defaultValue="due" className="space-y-4 p-4 md:p-6">
+        <TabsList>
+          <TabsTrigger value="due">Due Reminders</TabsTrigger>
+          <TabsTrigger value="notifications">
+            Notifications
+            {unreadNotifications > 0 && (
+              <Badge className="ml-1 bg-primary/10 text-primary">
+                {unreadNotifications}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="due" className="space-y-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <Select value={branchFilter} onValueChange={setBranchFilter}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="All Branches" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Branches</SelectItem>
+                {branches.map((b) => (
+                  <SelectItem key={b.id} value={b.id}>
+                    {b.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleGenerate}
+              disabled={isGenerating}
+              className="gap-2"
+            >
+              <RefreshCw className={`size-4 ${isGenerating ? "animate-spin" : ""}`} />
+              {isGenerating ? "Generating..." : "Generate"}
+            </Button>
+            {generationStatus && (
+              <span className="text-sm text-muted-foreground">{generationStatus}</span>
+            )}
           </div>
-        )}
-      </div>
+          {filtered.length > 0 ? (
+            <DataTable
+              columns={columns}
+              data={filtered}
+              searchKey="childName"
+              searchPlaceholder="Search children..."
+            />
+          ) : (
+            <div className="rounded-lg border bg-card p-8 text-center text-sm text-muted-foreground">
+              No vaccination reminders found.
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="notifications" className="space-y-4">
+          <StaffReceiptAlarmsClient
+            family="vaccination"
+            alarms={notificationAlarms}
+            history={notificationHistory}
+            branches={branches}
+            showHeader={false}
+          />
+        </TabsContent>
+      </Tabs>
     </>
   );
 }

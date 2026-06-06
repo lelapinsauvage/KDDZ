@@ -42,6 +42,7 @@ import {
   RotateCcw,
   Search,
   Shield,
+  Syringe,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -50,16 +51,19 @@ import {
   generateContractAlarms,
   generateInsuranceAlarms,
   generateMedicineAlarms,
+  generateVaccinationAlarms,
   markAllAssessmentAlarmsViewed,
   markAllBirthdayAlarmsViewed,
   markAllContractAlarmsViewed,
   markAllInsuranceAlarmsViewed,
   markAllMedicineAlarmsViewed,
+  markAllVaccinationAlarmsViewed,
   markAssessmentAlarmViewed,
   markBirthdayAlarmViewed,
   markContractAlarmViewed,
   markInsuranceAlarmViewed,
   markMedicineAlarmViewed,
+  markVaccinationAlarmViewed,
 } from "@/lib/actions/alarms";
 
 export interface StaffReceiptAlarm {
@@ -91,7 +95,13 @@ export interface StaffReceiptAlarmHistory {
 }
 
 interface StaffReceiptAlarmsClientProps {
-  family: "assessment" | "birthday" | "contract" | "insurance" | "medicine";
+  family:
+    | "assessment"
+    | "birthday"
+    | "contract"
+    | "insurance"
+    | "medicine"
+    | "vaccination";
   alarms: StaffReceiptAlarm[];
   history: StaffReceiptAlarmHistory[];
   branches: { id: string; name: string }[];
@@ -110,6 +120,7 @@ interface FamilyCopy {
   generationFailure: string;
   icon: LucideIcon;
   iconClass: string;
+  listingLabel?: string;
 }
 
 const familyCopy: Record<StaffReceiptAlarmsClientProps["family"], FamilyCopy> = {
@@ -183,6 +194,21 @@ const familyCopy: Record<StaffReceiptAlarmsClientProps["family"], FamilyCopy> = 
     icon: Pill,
     iconClass: "text-violet-500",
   },
+  vaccination: {
+    title: "Vaccinations Notifications Listing",
+    description: "Vaccination reminders sent to staff and parents",
+    breadcrumb: "Vaccinations",
+    historyTitle: "Sent Vaccination Alarms",
+    searchPlaceholder: "Search vaccination alarms...",
+    historyPlaceholder: "Search sent vaccination alarms...",
+    emptyTitle: "No vaccination notifications",
+    emptyDescription:
+      "Vaccination reminders matching the current filters will appear here.",
+    generationFailure: "Vaccination generation failed.",
+    icon: Syringe,
+    iconClass: "text-sky-600",
+    listingLabel: "Recipients",
+  },
 };
 
 const statusClasses: Record<string, string> = {
@@ -254,6 +280,14 @@ function formatGenerationStatus(
     return `Matched ${formsMatched}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"} and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing.`;
   }
 
+  if (family === "vaccination") {
+    const remindersMatched = metric(data, "remindersMatched");
+    const alarmsCreated = metric(data, "alarmsCreated");
+    const notificationsCreated = metric(data, "notificationsCreated");
+    const skippedExisting = metric(data, "skippedExisting");
+    return `Matched ${remindersMatched}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"} and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing.`;
+  }
+
   const entriesMatched = metric(data, "entriesMatched");
   const alarmsCreated = metric(data, "alarmsCreated");
   const notificationsCreated = metric(data, "notificationsCreated");
@@ -270,6 +304,7 @@ async function generateForFamily(
   if (family === "birthday") return generateBirthdayAlarms(branchId);
   if (family === "contract") return generateContractAlarms(branchId);
   if (family === "insurance") return generateInsuranceAlarms(branchId);
+  if (family === "vaccination") return generateVaccinationAlarms(branchId);
   return generateMedicineAlarms(branchId);
 }
 
@@ -281,6 +316,7 @@ async function markViewedForFamily(
   if (family === "birthday") return markBirthdayAlarmViewed(alarmId);
   if (family === "contract") return markContractAlarmViewed(alarmId);
   if (family === "insurance") return markInsuranceAlarmViewed(alarmId);
+  if (family === "vaccination") return markVaccinationAlarmViewed(alarmId);
   return markMedicineAlarmViewed(alarmId);
 }
 
@@ -291,6 +327,7 @@ async function markAllViewedForFamily(
   if (family === "birthday") return markAllBirthdayAlarmsViewed();
   if (family === "contract") return markAllContractAlarmsViewed();
   if (family === "insurance") return markAllInsuranceAlarmsViewed();
+  if (family === "vaccination") return markAllVaccinationAlarmsViewed();
   return markAllMedicineAlarmsViewed();
 }
 
@@ -621,7 +658,7 @@ export function StaffReceiptAlarmsClient({
         <Tabs defaultValue="teachers" className="space-y-4">
           <TabsList>
             <TabsTrigger value="teachers">
-              Teachers
+              {copy.listingLabel ?? "Teachers"}
               {unreadCount > 0 && (
                 <Badge className="ml-1 bg-primary/10 text-primary">
                   {unreadCount}

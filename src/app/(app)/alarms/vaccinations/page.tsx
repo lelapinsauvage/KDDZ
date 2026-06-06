@@ -1,14 +1,35 @@
-import { getVaccinationDueAlarms } from "@/lib/actions/alarms";
+import {
+  getVaccinationAlarmHistory,
+  getVaccinationAlarmNotifications,
+  getVaccinationDueAlarms,
+} from "@/lib/actions/alarms";
 import { getBranches } from "@/lib/actions/branches";
+import type {
+  StaffReceiptAlarm,
+  StaffReceiptAlarmHistory,
+} from "../_components/staff-receipt-alarms-client";
 import { VaccinationsClient } from "./vaccinations-client";
 
 export default async function VaccinationAlarmsPage() {
-  const [vaccinationsResult, branchesResult] = await Promise.all([
+  const [
+    vaccinationsResult,
+    branchesResult,
+    notificationsResult,
+    historyResult,
+  ] = await Promise.all([
     getVaccinationDueAlarms(),
     getBranches(),
+    getVaccinationAlarmNotifications({ pageSize: 500 }),
+    getVaccinationAlarmHistory({ pageSize: 500 }),
   ]);
 
   const branches = ((branchesResult.data ?? []) as Array<{ id: string; name: string }>);
+  const notificationsData = (notificationsResult.success
+    ? notificationsResult.data
+    : null) as { alarms?: StaffReceiptAlarm[] } | null;
+  const historyData = (historyResult.success
+    ? historyResult.data
+    : null) as { history?: StaffReceiptAlarmHistory[] } | null;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rawVaccinations = (vaccinationsResult.success ? vaccinationsResult.data : []) as Array<any>;
@@ -32,6 +53,8 @@ export default async function VaccinationAlarmsPage() {
     <VaccinationsClient
       vaccinations={serializedVaccinations}
       branches={branches}
+      notificationAlarms={notificationsData?.alarms ?? []}
+      notificationHistory={historyData?.history ?? []}
     />
   );
 }
