@@ -15,7 +15,7 @@ Parent web PWA status:
 | ws/daily.php | usites | /api/parent/daily/[childId] | partial - legacy POST `usites`, header/count, numeric report ids, raw daily field names, flattened fever pairs, first milk row, and food names restored; verify final native parser tolerance | no | yes |
 | ws/events_alarms.php | pid | /api/parent/alarms/events | partial - legacy event field names, POST pid guard, and multi-branch filtering restored; verify parent delivery push | no | no |
 | ws/finance.php | usites | /api/parent/finance/[childId] | partial - used by /parent PWA; legacy POST `usites`, header/count, raw `t_payments` fields, migrated legacy ids, and active-payment filtering restored; verify final native parser tolerance | yes | yes |
-| ws/foodcalendar.php | usites | /api/parent/calendar/food | partial - used by /parent PWA, verify JSON contract | yes | yes |
+| ws/foodcalendar.php | usites | /api/parent/calendar/food | partial - used by /parent PWA; legacy POST `usites`, header `branch_id`, raw `t_food_calendar` date/dessert fields, breakfast/lunch names, and migrated legacy ids restored; verify final native parser tolerance | yes | yes |
 | ws/general_alarms.php |  | /api/parent/alarms/general | partial - remapped to migrated `t_alarms` rows with legacy array shape and field names; verify production exposure expectations | no | no |
 | ws/holcalendar.php | usites | /api/parent/calendar/holidays | partial - used by /parent PWA; legacy POST usites, active-only rows, description/date fields, and repeated-date current-year adjustment restored | yes | yes |
 | ws/holcalendarOLD.php | usites | /api/parent/calendar/holidays | partial - legacy POST usites and active-only description/date array restored through the same holiday endpoint | no | no |

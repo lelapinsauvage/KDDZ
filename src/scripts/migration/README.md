@@ -165,7 +165,7 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `newpayment` | PaymentReminder |
 | `t_accounting` | AccountingEntry |
 | `t_food` | Food |
-| `t_food_calendar` | FoodCalendar |
+| `t_food_calendar` | FoodCalendar, including raw `legacyData` for parent mobile `foodcalendar.php` parity |
 | `t_food_apply` | FoodApplication |
 | `t_holiday` | Holiday |
 | `t_events_types` | EventType |

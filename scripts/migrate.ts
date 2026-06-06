@@ -1087,9 +1087,14 @@ async function migrateFoodCalendars(
         records.push({
           id: randomUUID(),
           branchId,
+          sourceDatabase: "kiddzonl_garderie",
+          legacyKey: `kiddzonl_garderie:t_food_calendar:${colInt(row, "hid", columns)}:BREAKFAST`,
+          legacyId: colInt(row, "hid", columns),
+          legacyBranchId: branchOldId,
           date,
           mealType: "BREAKFAST" as const,
           foodId: getUUID("t_food", bfid),
+          legacyData: legacyRowData(row, columns),
           createdAt: NOW,
           updatedAt: NOW,
         });
@@ -1105,9 +1110,14 @@ async function migrateFoodCalendars(
         records.push({
           id: randomUUID(),
           branchId,
+          sourceDatabase: "kiddzonl_garderie",
+          legacyKey: `kiddzonl_garderie:t_food_calendar:${colInt(row, "hid", columns)}:LUNCH`,
+          legacyId: colInt(row, "hid", columns),
+          legacyBranchId: branchOldId,
           date,
           mealType: "LUNCH" as const,
           foodId: getUUID("t_food", lnid),
+          legacyData: legacyRowData(row, columns),
           createdAt: NOW,
           updatedAt: NOW,
         });

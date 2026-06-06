@@ -1746,18 +1746,26 @@ model Food {
 }
 
 model FoodCalendar {
-  id        String   @id @default(uuid()) @db.Uuid
-  branchId  String   @db.Uuid
-  date      DateTime @db.Date
-  mealType  MealType
-  foodId    String   @db.Uuid
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(uuid()) @db.Uuid
+  branchId       String   @db.Uuid
+  sourceDatabase String?
+  legacyKey      String?  @unique
+  legacyId       Int?
+  legacyBranchId Int?
+  date           DateTime @db.Date
+  mealType       MealType
+  foodId         String   @db.Uuid
+  legacyData     Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
   food   Food   @relation(fields: [foodId], references: [id], onDelete: Cascade)
 
   @@unique([branchId, date, mealType])
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyBranchId])
   @@index([branchId])
   @@index([date])
   @@index([foodId])

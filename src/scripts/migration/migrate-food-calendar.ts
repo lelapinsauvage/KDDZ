@@ -10,7 +10,7 @@
  *   daily reports after "food for all"; those rows become FoodApplication.
  */
 
-import type { MealType, PrismaClient } from "@/generated/prisma/client";
+import type { MealType, Prisma, PrismaClient } from "@/generated/prisma/client";
 import { createPrismaClient } from "./lib/prisma-client";
 import { queryMysql, closeMysqlPool, getMysqlConfig } from "./lib/mysql-client";
 import {
@@ -139,6 +139,13 @@ async function createCalendarEntry(
   mealType: MealType,
   foodId: string | null,
   createdAt: Date,
+  legacy: {
+    sourceDatabase: string;
+    legacyKey: string;
+    legacyId: number;
+    legacyBranchId: number;
+    legacyData: Prisma.InputJsonValue;
+  },
   dryRun: boolean
 ) {
   if (!foodId) return false;
@@ -152,7 +159,15 @@ async function createCalendarEntry(
       },
     },
   });
-  if (existing) return false;
+  if (existing) {
+    if (!dryRun && !existing.legacyData) {
+      await prisma.foodCalendar.update({
+        where: { id: existing.id },
+        data: legacy,
+      });
+    }
+    return false;
+  }
 
   if (!dryRun) {
     await prisma.foodCalendar.create({
@@ -162,6 +177,7 @@ async function createCalendarEntry(
         date,
         mealType,
         foodId,
+        ...legacy,
         createdAt,
       },
     });
@@ -172,6 +188,7 @@ async function createCalendarEntry(
 export async function migrateFoodCalendar(prisma: PrismaClient, organizationId: string) {
   log("=== Migrating Food, Food Calendar & Holidays ===");
   const dryRun = isDryRun();
+  const sourceDatabase = getMysqlConfig().database || "unknown";
 
   const foods = await queryMysql<OldFood>(
     "SELECT * FROM t_food WHERE deleted = 0 ORDER BY fid"
@@ -250,6 +267,17 @@ export async function migrateFoodCalendar(prisma: PrismaClient, organizationId: 
         mealType,
         foodId,
         createdAt,
+        {
+          sourceDatabase,
+          legacyKey: `${sourceDatabase}:t_food_calendar:${row.hid}:${mealType}`,
+          legacyId: row.hid,
+          legacyBranchId: row.branch_id,
+          legacyData: {
+            sourceDatabase,
+            sourceTable: "t_food_calendar",
+            ...row,
+          } as Prisma.InputJsonValue,
+        },
         dryRun
       );
       if (created) calendarEntries++;

@@ -90,6 +90,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - `/api/parent/absence/[childId]` now restores `ws/absence.php` POST `usites` compatibility, header/count shape, migrated absence legacy ids, and raw `t_absent_report` fields.
    - `/api/parent/daily/[childId]` and `/api/parent/daily/[childId]/detailed` now restore `ws/daily.php` and `ws/newdaily.php` POST `usites` compatibility, legacy report ids/raw daily fields, flattened fever pairs, fever/milk arrays, and medication-name resolution from preserved medical-entry provenance.
    - `/api/parent/finance/[childId]` now restores `ws/finance.php` POST `usites` compatibility, header/count shape, active payment filtering, and raw migrated `t_payments` response fields.
+   - `/api/parent/calendar/food` now restores `ws/foodcalendar.php` POST `usites` compatibility, legacy branch id in the header, and raw migrated `t_food_calendar` date/dessert rows with breakfast/lunch names.
    - `/api/parent/notifications/[childId]` now restores dynamic `notifications_nature` ordering/names/active flags, `POST usites` compatibility, and mapped alarm/event/message/assessment notification groups.
    - `/api/parent/calendar/holidays` now covers both `ws/holcalendar.php` and `ws/holcalendarOLD.php` with legacy `POST usites` compatibility, active-only rows, `description`/`date` fields, and repeated-holiday current-year adjustment.
 
