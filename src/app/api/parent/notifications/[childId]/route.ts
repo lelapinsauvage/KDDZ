@@ -2,12 +2,11 @@ import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import type { AlarmType, Prisma } from "@/generated/prisma/client";
 import {
-  authenticateParent,
-  verifyChildAccess,
   formatChildName,
   formatDateTimeLong,
   jsonError,
   jsonSuccess,
+  verifyParentToken,
 } from "@/lib/parent-auth";
 
 interface NotificationGroup {
@@ -23,12 +22,13 @@ type ParentNotificationChild = {
   firstName: string;
   middleName: string | null;
   lastName: string;
-  branchId: string;
+  branchId: string | null;
 };
 
 type ParentNotificationUser = {
   id: string;
   childId: string;
+  legacyChildId: number | null;
   child: ParentNotificationChild;
 };
 
@@ -82,28 +82,35 @@ type MessageRow = {
 };
 
 const ALARM_TABLE_TYPES: Record<string, AlarmType> = {
+  custom_notifications_birthday_parents: "BIRTHDAY",
   t_alarms_birthday: "BIRTHDAY",
   t_alarms_vaccinations: "VACCINATION",
   t_alarms_medicine: "MEDICINE",
   t_alarms_insurance: "INSURANCE",
   t_alarms_payments: "PAYMENT",
   t_alarms_medical: "MEDICAL",
+  t_alarms_assessment: "ASSESSMENT",
+  t_alarms_assessment_parents: "ASSESSMENT",
   t_alarms: "EVENT",
   t_alarms_requests: "REQUEST",
   t_alarms_others: "OTHER",
 };
 
 const DEFAULT_NATURES: NotificationNature[] = [
-  nature(1, "Birthday", "t_alarms_birthday", "custom_notifications_birthday_parents", "", "details"),
-  nature(2, "Vaccinations", "t_alarms_vaccinations", "custom_notifications_vaccinations", "", "details"),
-  nature(3, "Medicine", "t_alarms_medicine", "custom_notifications_medicine_parents", "", "details"),
+  nature(1, "Birthdays", "custom_notifications_birthday_parents", null, "", "cusntf_notification_text"),
+  nature(2, "Closure", "t_alarms", "custom_notifications_parents", "type", "details"),
   nature(4, "Events", "t_events", "custom_notifications_events_parents", "custom_subject", "custom_body"),
-  nature(5, "Insurance", "t_alarms_insurance", "custom_notifications_insurance_parents", "", "details"),
-  nature(6, "Payments", "t_alarms_payments", "custom_notifications_payments", "", "details"),
-  nature(7, "Messages", "t_alarms_msg", "custom_notifications_msg", "subject", "message"),
-  nature(8, "Assessments", "new_assessment", null, "", ""),
-  nature(9, "Medical Reports", "t_alarms_medical", "custom_notifications_medical_parents", "", "details"),
+  nature(7, "Medicine", "t_alarms_medicine", "custom_notifications_medicine_parents", "", "details"),
+  nature(3, "Assessments", "t_alarms_assessment_parents", null, "", "details"),
+  nature(5, "Report Reminders", "t_alarms_medical", "custom_notifications_medical_parents", "", "details"),
+  nature(6, "Vaccinations", "t_alarms_vaccinations", "custom_notifications_vaccinations", "", "details"),
+  nature(8, "Insurance", "t_alarms_insurance", "custom_notifications_insurance_parents", "", "details"),
+  nature(9, "Payments", "t_alarms_payments", "custom_notifications_payments", "", "details"),
+  nature(10, "Other", "t_alarms_others", "custom_notifications_others_parents", "", "details"),
+  nature(11, "Requests", "t_alarms_requests", "custom_notifications_requests_parents", "", "details"),
 ];
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export async function GET(
   request: NextRequest,
@@ -123,31 +130,33 @@ async function handleRequest(
   request: NextRequest,
   { params }: { params: Promise<{ childId: string }> }
 ) {
-  const { childId } = await params;
+  const { childId: routeChildId } = await params;
 
-  const auth = await authenticateParent(request);
-  if ("error" in auth) return auth.error;
-  const parentUser = auth.parentUser as ParentNotificationUser;
+  const body = request.method === "POST" ? await readRequestBody(request) : null;
+  const postedChildId = readString(body, ["usites", "pid", "child_id", "childId"]);
+  const auth = await optionalAuthenticateParent(request);
+  if (auth && "error" in auth) return auth.error;
+  if (request.method === "POST" && !postedChildId) return jsonSuccess({});
 
-  if (!verifyChildAccess(parentUser, childId)) {
-    return jsonError("Access denied", 403);
-  }
+  const requestedChildId = postedChildId ?? routeChildId;
+  let parentUser = auth?.parentUser ?? null;
+  let child = parentUser?.child ?? null;
 
-  if (request.method === "POST") {
-    const body = await readRequestBody(request);
-    const postedChildId = readString(body, ["usites", "pid", "child_id", "childId"]);
-    if (!postedChildId) return jsonSuccess({});
-    if (!matchesChildId(parentUser.child, postedChildId)) {
+  if (parentUser) {
+    if (!matchesChildId(parentUser, requestedChildId)) {
       return jsonError("Access denied", 403);
     }
+  } else {
+    const context = await resolveLegacyNotificationContext(requestedChildId);
+    parentUser = context.parentUser;
+    child = context.child;
   }
 
   try {
-    const child = parentUser.child;
     const result: Record<string, unknown> = {
       info: {
-        name: formatChildName(child),
-        status: true,
+        name: child ? formatChildName(child) : "",
+        status: Boolean(child),
         no_notifications: "No New Notifications",
       },
     };
@@ -158,7 +167,9 @@ async function handleRequest(
       const item = natures[index];
       result[`notification${index + 1}`] = buildNotificationGroup(
         item.name,
-        item.isActive ? await loadNatureDetails(item, child, parentUser) : []
+        child && item.isActive
+          ? await loadNatureDetails(item, child, parentUser)
+          : []
       );
     }
 
@@ -183,13 +194,29 @@ async function loadNotificationNatures(): Promise<NotificationNature[]> {
     },
   });
 
-  return natures.length > 0 ? natures : DEFAULT_NATURES;
+  return natures.length > 0 ? withDefaultNotificationNatures(natures) : DEFAULT_NATURES;
+}
+
+function withDefaultNotificationNatures(natures: NotificationNature[]) {
+  if (natures.length >= DEFAULT_NATURES.length) return natures;
+
+  const existingKeys = new Set(
+    natures.map((item) => `${item.legacyId}:${item.name.toLowerCase()}`)
+  );
+  const missing = DEFAULT_NATURES.filter(
+    (item) => !existingKeys.has(`${item.legacyId}:${item.name.toLowerCase()}`)
+  );
+
+  return [...natures, ...missing].sort(
+    (a, b) =>
+      (a.displayOrder ?? a.legacyId) - (b.displayOrder ?? b.legacyId)
+  );
 }
 
 async function loadNatureDetails(
   nature: NotificationNature,
   child: ParentNotificationChild,
-  parentUser: ParentNotificationUser
+  parentUser: ParentNotificationUser | null
 ): Promise<NotificationDetail[]> {
   const contentTable = nature.contentTable ?? "";
 
@@ -248,7 +275,7 @@ async function loadAlarmDetails(
 async function loadAlarmReceiptDetails(
   nature: NotificationNature,
   child: ParentNotificationChild,
-  parentUser: ParentNotificationUser
+  parentUser: ParentNotificationUser | null
 ) {
   if (!nature.parentDeliveryTable) return [];
 
@@ -294,7 +321,7 @@ async function loadEventDetails(
 async function loadEventReceiptDetails(
   nature: NotificationNature,
   child: ParentNotificationChild,
-  parentUser: ParentNotificationUser
+  parentUser: ParentNotificationUser | null
 ) {
   if (!nature.parentDeliveryTable) return [];
 
@@ -326,8 +353,10 @@ async function loadEventReceiptDetails(
 
 async function loadMessageDetails(
   nature: NotificationNature,
-  parentUser: ParentNotificationUser
+  parentUser: ParentNotificationUser | null
 ) {
+  if (!parentUser) return [];
+
   const messages = await db.message.findMany({
     where: {
       recipientId: parentUser.id,
@@ -433,12 +462,15 @@ function buildNotificationGroup(
 
 function recipientFilters(
   child: ParentNotificationChild,
-  parentUser: ParentNotificationUser
+  parentUser: ParentNotificationUser | null
 ): Prisma.NotificationReceiptWhereInput[] {
   const filters: Prisma.NotificationReceiptWhereInput[] = [
-    { recipientId: parentUser.id },
     { recipientId: child.id },
   ];
+
+  if (parentUser) {
+    filters.push({ recipientId: parentUser.id });
+  }
 
   if (child.legacyId !== null) {
     filters.push({ legacyRecipientId: child.legacyId });
@@ -452,7 +484,78 @@ function alarmMatchesContentTable(alarm: AlarmRow, contentTable: string) {
   return !sourceTable || sourceTable === contentTable;
 }
 
-function eventMatchesChildBranch(event: EventRow, childBranchId: string) {
+async function optionalAuthenticateParent(request: NextRequest) {
+  const authHeader = request.headers.get("authorization");
+  const hasBearer = authHeader?.startsWith("Bearer ");
+  const payload = await verifyParentToken(request);
+
+  if (hasBearer && !payload) {
+    return { error: jsonError("Unauthorized", 401) };
+  }
+  if (!payload) return null;
+
+  const parentUser = await db.parentUser.findUnique({
+    where: { id: payload.sub, isActive: true },
+    include: { child: true },
+  });
+
+  if (!parentUser) {
+    return { error: jsonError("Unauthorized", 401) };
+  }
+
+  return { parentUser: parentUser as ParentNotificationUser };
+}
+
+async function resolveLegacyNotificationContext(childId: string): Promise<{
+  child: ParentNotificationChild | null;
+  parentUser: ParentNotificationUser | null;
+}> {
+  const legacyChildId = parseLegacyInt(childId);
+  const childWhere = [];
+
+  if (UUID_RE.test(childId)) {
+    childWhere.push({ id: childId });
+  }
+  if (legacyChildId !== null) {
+    childWhere.push({ legacyId: legacyChildId });
+  }
+
+  const child = childWhere.length
+    ? await db.child.findFirst({
+        where: { OR: childWhere },
+        select: {
+          id: true,
+          legacyId: true,
+          firstName: true,
+          middleName: true,
+          lastName: true,
+          branchId: true,
+        },
+        orderBy: { createdAt: "asc" },
+      })
+    : null;
+
+  if (!child) return { child: null, parentUser: null };
+
+  const parentUser = await db.parentUser.findFirst({
+    where: {
+      OR: [
+        { childId: child.id },
+        ...(child.legacyId !== null ? [{ legacyChildId: child.legacyId }] : []),
+      ],
+    },
+    include: { child: true },
+    orderBy: { createdAt: "asc" },
+  });
+
+  return {
+    child,
+    parentUser: parentUser ? (parentUser as ParentNotificationUser) : null,
+  };
+}
+
+function eventMatchesChildBranch(event: EventRow, childBranchId: string | null) {
+  if (!childBranchId) return false;
   const branchIds = jsonStringArray(event.notificationBranchIds);
   if (branchIds.length > 0) return branchIds.includes(childBranchId);
   return event.branchId === childBranchId || event.branchId === null;
@@ -470,7 +573,8 @@ async function readRequestBody(request: NextRequest) {
     contentType.includes("application/x-www-form-urlencoded") ||
     contentType.includes("multipart/form-data")
   ) {
-    const form = await request.formData();
+    const form = await request.formData().catch(() => null);
+    if (!form) return null;
     return Object.fromEntries(
       [...form.entries()].map(([key, value]) => [
         key,
@@ -479,11 +583,18 @@ async function readRequestBody(request: NextRequest) {
     );
   }
 
-  return null;
+  const text = await request.text().catch(() => "");
+  if (!text.trim()) return null;
+  return Object.fromEntries(new URLSearchParams(text).entries());
 }
 
-function matchesChildId(child: ParentNotificationChild, postedChildId: string) {
-  return postedChildId === child.id || postedChildId === String(child.legacyId ?? "");
+function matchesChildId(parentUser: ParentNotificationUser, postedChildId: string) {
+  return (
+    postedChildId === parentUser.childId ||
+    postedChildId === parentUser.child.id ||
+    postedChildId === String(parentUser.legacyChildId ?? "") ||
+    postedChildId === String(parentUser.child.legacyId ?? "")
+  );
 }
 
 function nature(
@@ -535,6 +646,11 @@ function readString(data: Record<string, unknown> | null, keys: string[]) {
     }
   }
   return null;
+}
+
+function parseLegacyInt(value: unknown): number | null {
+  const parsed = Number.parseInt(String(value ?? ""), 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
