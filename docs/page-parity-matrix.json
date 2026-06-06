@@ -16564,7 +16564,7 @@
       "redirect",
       "welcome_email"
     ],
-    "verification": "`/settings/access-control` now supports editing level name, redirect, welcome-email flag, and disabled flag, keeps legacy id `1` from being disabled/deleted, blocks deletion when migrated `login_users`/`login_users_man` metadata still references the level, and soft-deletes the level plus deactivates stale action grants when deletion is allowed. Remaining work is exact standalone `/levels.php?lid=` bridge and full existing-users table parity."
+    "verification": "`/settings/access-control` now supports editing level name, redirect, welcome-email flag, and disabled flag, keeps legacy id `1` from being disabled/deleted, blocks deletion when migrated `login_users`/`login_users_man` metadata still references the level, and soft-deletes the level plus deactivates stale action grants when deletion is allowed. `/users/admin/levels.php?lid=` and `/levels.php?lid=` now redirect into the modern access-control page with the legacy level id preserved as `level`. Remaining work is full existing-users table parity."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/classes/edit_user.class.php",
@@ -16722,8 +16722,8 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/levels.php",
     "legacyJs": "",
-    "modernRoute": "/settings/access-control",
-    "status": "partial - legacy level edit surface restored in settings matrix",
+    "modernRoute": "/users/admin/levels.php, /levels.php, /settings/access-control",
+    "status": "partial - legacy level edit surface and deep-link bridge restored",
     "legacyTablesMentioned": [
       "login_levels",
       "login_users"
@@ -16731,7 +16731,7 @@
     "requestFieldsMentioned": [
       "lid"
     ],
-    "verification": "`/settings/access-control` now provides the protected admin level edit/delete workflow inline for each migrated level, including name, redirect, welcome email, disabled state, admin-level protection, and delete guard when users still belong to the level. Remaining work is a direct `/users/admin/levels.php?lid=` or `/levels.php?lid=` compatibility redirect and the full existing-users table below the edit form."
+    "verification": "`/settings/access-control` now provides the protected admin level edit/delete workflow inline for each migrated level, including name, redirect, welcome email, disabled state, admin-level protection, and delete guard when users still belong to the level. `/users/admin/levels.php?lid=` and `/levels.php?lid=` redirect into `/settings/access-control?level=` for legacy deep links. Remaining work is the full existing-users table below the edit form."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/login.php",
