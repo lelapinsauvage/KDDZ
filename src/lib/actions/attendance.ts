@@ -12,6 +12,8 @@ interface AttendanceRecord {
   checkIn: string | null;
   checkOut: string | null;
   status: string;
+  dailyReportId?: string | null;
+  absenceReportId?: string | null;
 }
 
 interface CreateAbsenceData {
@@ -23,6 +25,79 @@ interface CreateAbsenceData {
 type ActionResult =
   | { success: true; id: string }
   | { success: false; error: string };
+
+export type ChildAttendanceCellCode = "P" | "A" | "N" | "W" | "H" | "" | "-";
+
+export interface ChildAttendanceMatrixCell {
+  day: number;
+  date: string | null;
+  code: ChildAttendanceCellCode;
+  label: string;
+  href: string | null;
+}
+
+export interface ChildAttendanceMatrixMonth {
+  monthKey: string;
+  monthLabel: string;
+  presentCount: number;
+  absentCount: number;
+  noReportCount: number;
+  cells: ChildAttendanceMatrixCell[];
+}
+
+export interface ChildAttendanceMatrix {
+  startDate: string;
+  endDate: string;
+  months: ChildAttendanceMatrixMonth[];
+  totals: {
+    present: number;
+    absent: number;
+    noReport: number;
+    weekends: number;
+    holidays: number;
+  };
+}
+
+function utcDate(year: number, month: number, day: number) {
+  return new Date(Date.UTC(year, month, day));
+}
+
+function normalizeUtcDay(date: Date) {
+  return utcDate(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+}
+
+function dateKey(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function monthKey(date: Date) {
+  return date.toISOString().slice(0, 7);
+}
+
+function daysInUtcMonth(year: number, month: number) {
+  return new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+}
+
+function addUtcMonths(date: Date, months: number) {
+  return utcDate(date.getUTCFullYear(), date.getUTCMonth() + months, 1);
+}
+
+function fallbackSchoolYear(today: Date) {
+  const year = today.getUTCMonth() >= 9
+    ? today.getUTCFullYear()
+    : today.getUTCFullYear() - 1;
+  return {
+    startDate: utcDate(year, 9, 1),
+    endDate: utcDate(year + 1, 8, 30),
+  };
+}
+
+function formatReportTime(date: Date | null) {
+  if (!date) return null;
+  const hours = String(date.getUTCHours()).padStart(2, "0");
+  const minutes = String(date.getUTCMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
 
 // ── getChildAttendance ────────────────────────────
 
@@ -55,8 +130,11 @@ export async function getChildAttendance(
       where,
       orderBy: { reportDate: "desc" },
       select: {
+        id: true,
         reportDate: true,
         status: true,
+        checkInTime: true,
+        checkOutTime: true,
       },
     });
 
@@ -72,11 +150,11 @@ export async function getChildAttendance(
 
     const absences = await db.absenceReport.findMany({
       where: absenceWhere,
-      select: { date: true },
+      select: { id: true, date: true },
     });
 
-    const absentDates = new Set(
-      absences.map((a) => a.date.toISOString().split("T")[0])
+    const absentDates = new Map(
+      absences.map((a) => [a.date.toISOString().split("T")[0], a.id])
     );
 
     // Map daily reports to attendance records
@@ -86,21 +164,26 @@ export async function getChildAttendance(
 
       return {
         date: dateStr,
-        checkIn: null, // DailyReport does not have checkIn/checkOut fields
-        checkOut: null,
+        checkIn: formatReportTime(report.checkInTime),
+        checkOut: formatReportTime(report.checkOutTime),
         status: isAbsent ? "ABSENT" : report.status === "SUBMITTED" ? "PRESENT" : "DRAFT",
+        dailyReportId: report.id,
+        absenceReportId: absentDates.get(dateStr) ?? null,
       };
     });
 
     // Add absent days that have no daily report
     for (const dateStr of absentDates) {
-      const hasReport = records.some((r) => r.date === dateStr);
+      const [date, absenceReportId] = dateStr;
+      const hasReport = records.some((r) => r.date === date);
       if (!hasReport) {
         records.push({
-          date: dateStr,
+          date,
           checkIn: null,
           checkOut: null,
           status: "ABSENT",
+          dailyReportId: null,
+          absenceReportId,
         });
       }
     }
@@ -112,6 +195,218 @@ export async function getChildAttendance(
   } catch (error) {
     console.error("getChildAttendance error:", error);
     return [];
+  }
+}
+
+// ── getChildAttendanceMatrix ─────────────────────
+// Legacy child_attend_det.php renders one row per month with day columns 1-31.
+
+export async function getChildAttendanceMatrix(
+  childId: string
+): Promise<ChildAttendanceMatrix> {
+  const empty: ChildAttendanceMatrix = {
+    startDate: "",
+    endDate: "",
+    months: [],
+    totals: { present: 0, absent: 0, noReport: 0, weekends: 0, holidays: 0 },
+  };
+
+  try {
+    const { organizationId: orgId } = await requireOrg();
+
+    const child = await db.child.findFirst({
+      where: { id: childId, branch: { organizationId: orgId } },
+      select: {
+        id: true,
+        branchId: true,
+        enrollmentDate: true,
+        schoolYear: {
+          select: { startDate: true, endDate: true },
+        },
+      },
+    });
+
+    if (!child) return empty;
+
+    const today = normalizeUtcDay(new Date());
+    const fallback = fallbackSchoolYear(today);
+    const startDate = normalizeUtcDay(child.schoolYear?.startDate ?? fallback.startDate);
+    const configuredEndDate = normalizeUtcDay(child.schoolYear?.endDate ?? fallback.endDate);
+    const endDate = today < configuredEndDate ? today : configuredEndDate;
+    const joiningDate = child.enrollmentDate
+      ? normalizeUtcDay(child.enrollmentDate)
+      : startDate;
+
+    const [dailyReports, absenceReports, holidays] = await Promise.all([
+      db.dailyReport.findMany({
+        where: {
+          childId,
+          reportDate: { gte: startDate, lte: endDate },
+        },
+        select: {
+          id: true,
+          reportDate: true,
+          status: true,
+        },
+      }),
+      db.absenceReport.findMany({
+        where: {
+          childId,
+          date: { gte: startDate, lte: endDate },
+          status: { not: "REJECTED" },
+        },
+        select: {
+          id: true,
+          date: true,
+        },
+      }),
+      db.holiday.findMany({
+        where: {
+          isActive: true,
+          OR: [
+            { branchId: null },
+            { branchId: child.branchId },
+          ],
+          date: { lte: endDate },
+        },
+        select: {
+          date: true,
+          endDate: true,
+          repeated: true,
+        },
+      }),
+    ]);
+
+    const reportsByDate = new Map(
+      dailyReports.map((report) => [dateKey(report.reportDate), report])
+    );
+    const absencesByDate = new Map(
+      absenceReports.map((absence) => [dateKey(absence.date), absence])
+    );
+
+    const oneTimeHolidayDates = new Set<string>();
+    const repeatedHolidayKeys = new Set<string>();
+    for (const holiday of holidays) {
+      if (holiday.repeated) {
+        repeatedHolidayKeys.add(dateKey(holiday.date).slice(5));
+        continue;
+      }
+
+      const holidayStart = normalizeUtcDay(holiday.date);
+      const holidayEnd = normalizeUtcDay(holiday.endDate ?? holiday.date);
+      for (
+        let cursor = holidayStart;
+        cursor <= holidayEnd;
+        cursor = utcDate(cursor.getUTCFullYear(), cursor.getUTCMonth(), cursor.getUTCDate() + 1)
+      ) {
+        oneTimeHolidayDates.add(dateKey(cursor));
+      }
+    }
+
+    const months: ChildAttendanceMatrixMonth[] = [];
+    const totals = { present: 0, absent: 0, noReport: 0, weekends: 0, holidays: 0 };
+
+    for (
+      let cursor = utcDate(startDate.getUTCFullYear(), startDate.getUTCMonth(), 1);
+      cursor <= endDate;
+      cursor = addUtcMonths(cursor, 1)
+    ) {
+      const year = cursor.getUTCFullYear();
+      const month = cursor.getUTCMonth();
+      const daysInMonth = daysInUtcMonth(year, month);
+      const cells: ChildAttendanceMatrixCell[] = [];
+      let presentCount = 0;
+      let absentCount = 0;
+      let noReportCount = 0;
+
+      for (let day = 1; day <= 31; day += 1) {
+        if (day > daysInMonth) {
+          cells.push({ day, date: null, code: "-", label: "No day", href: null });
+          continue;
+        }
+
+        const current = utcDate(year, month, day);
+        const key = dateKey(current);
+        const report = reportsByDate.get(key);
+        const absence = absencesByDate.get(key);
+        const isSunday = current.getUTCDay() === 0;
+        const isHoliday =
+          oneTimeHolidayDates.has(key) || repeatedHolidayKeys.has(key.slice(5));
+        let code: ChildAttendanceCellCode = "N";
+        let label = "No report";
+        let href: string | null = `/daily-reports/new?childId=${childId}&date=${key}`;
+
+        if (current >= today || current < joiningDate) {
+          code = "";
+          label = "Out of range";
+          href = null;
+        }
+
+        if (report?.status === "SUBMITTED") {
+          code = "P";
+          label = "Present";
+          href = `/daily-reports/${report.id}`;
+        }
+
+        if (absence) {
+          code = "A";
+          label = "Absent";
+          href = `/absent-reports/${absence.id}`;
+        }
+
+        if (isSunday) {
+          code = "W";
+          label = "Weekend";
+          href = null;
+        }
+
+        if (isHoliday) {
+          code = "H";
+          label = "Holiday";
+          href = null;
+        }
+
+        if (code === "P") {
+          presentCount += 1;
+          totals.present += 1;
+        } else if (code === "A") {
+          absentCount += 1;
+          totals.absent += 1;
+        } else if (code === "N") {
+          noReportCount += 1;
+          totals.noReport += 1;
+        } else if (code === "W") {
+          totals.weekends += 1;
+        } else if (code === "H") {
+          totals.holidays += 1;
+        }
+
+        cells.push({ day, date: key, code, label, href });
+      }
+
+      months.push({
+        monthKey: monthKey(cursor),
+        monthLabel: cursor.toLocaleDateString("en-US", {
+          month: "long",
+          year: "numeric",
+          timeZone: "UTC",
+        }).replace(" ", "-"),
+        presentCount,
+        absentCount,
+        noReportCount,
+        cells,
+      });
+    }
+
+    return {
+      startDate: dateKey(startDate),
+      endDate: dateKey(endDate),
+      months,
+      totals,
+    };
+  } catch (error) {
+    console.error("getChildAttendanceMatrix error:", error);
+    return empty;
   }
 }
 

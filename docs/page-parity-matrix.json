@@ -55,7 +55,7 @@
     "legacyPhp": "Front/templates/admin/Child_attend_det.php",
     "legacyJs": "Front/templates/admin/js/child_attend_det.js",
     "modernRoute": "/children/[id]/attendance",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "partial - legacy attendance matrix restored; visual export audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -63,7 +63,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored the legacy school-year month/day attendance matrix with Month, day columns 1-31, P/A totals, P/A/N/W/H badge semantics, child header context, direct daily/absence report links, search/month/status filters, Excel/CSV export, and print action. Remaining work is final visual/export parity against DataTables TableTools PDF/print output and exact production school-year selector behavior."
   },
   {
     "legacyPhp": "Front/templates/admin/Doctor_Details.php",

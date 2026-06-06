@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getChild } from "@/lib/actions/children";
-import { getChildAttendance } from "@/lib/actions/attendance";
+import { getChildAttendanceMatrix } from "@/lib/actions/attendance";
 import { AttendanceClient } from "./attendance-client";
 
 interface Props {
@@ -15,18 +15,19 @@ export default async function ChildAttendancePage({ params }: Props) {
     notFound();
   }
 
-  const attendance = await getChildAttendance(id);
+  const matrix = await getChildAttendanceMatrix(id);
 
   const childData = {
     id: child.id,
     firstName: child.firstName,
     lastName: child.lastName,
+    photo: child.photo ?? null,
   };
 
   return (
     <AttendanceClient
       child={childData}
-      attendance={attendance}
+      matrix={matrix}
     />
   );
 }
