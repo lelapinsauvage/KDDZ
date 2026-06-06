@@ -87,6 +87,7 @@ This list is the first implementation backlog after the generated inventory/matr
 10. **Parent API response compatibility**
    - Legacy `ws/*.php`, iOS `WebFunctions.swift`, and Android `WebServiceFunctions.java` must be response-shape audited against modern `/api/parent/*`.
    - `/api/parent/alarms/[type]` now restores the legacy mobile alarm array shape for birthday, medicine, insurance, vaccination, payment, missing-medical, assessment, event, and general alarm feeds, including `POST pid` compatibility, migrated legacy ids/status/datetime/href fields, `t_alarms` general-feed remapping, and legacy multi-branch event filtering.
+   - `/api/parent/calendar/holidays` now covers both `ws/holcalendar.php` and `ws/holcalendarOLD.php` with legacy `POST usites` compatibility, active-only rows, `description`/`date` fields, and repeated-holiday current-year adjustment.
 
 11. **Top-level calls module**
    - `/calls` now restores the global call management surface with search, branch/class/date/type filters, pagination, child links, delete actions, runtime call logging, attachment upload, and migrated `callparent`/`callcauses` reason options.

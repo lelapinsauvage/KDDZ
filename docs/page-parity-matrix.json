@@ -18040,6 +18040,6 @@
       "os",
       "show"
     ],
-    "verification": "Parent web shell now consumes daily detailed reports, finance, absence, grouped messages, thread detail/replies, notifications, legacy-shaped alarm feeds, push-token registration/unregistration, food calendar, holiday calendar, and send-message APIs. Remaining work is dynamic `notifications_master` parity, external push provider delivery, offline/mobile polish, and field-by-field native response audit."
+    "verification": "Parent web shell now consumes daily detailed reports, finance, absence, grouped messages, thread detail/replies, notifications, legacy-shaped alarm feeds, push-token registration/unregistration, food calendar, legacy-compatible active holiday calendar, and send-message APIs. Remaining work is dynamic `notifications_master` parity, external push provider delivery, offline/mobile polish, and field-by-field native response audit."
   }
 ]

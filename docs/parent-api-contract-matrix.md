@@ -17,8 +17,8 @@ Parent web PWA status:
 | ws/finance.php | usites | /api/parent/finance/[childId] | partial - used by /parent PWA, verify JSON contract | yes | yes |
 | ws/foodcalendar.php | usites | /api/parent/calendar/food | partial - used by /parent PWA, verify JSON contract | yes | yes |
 | ws/general_alarms.php |  | /api/parent/alarms/general | partial - remapped to migrated `t_alarms` rows with legacy array shape and field names; verify production exposure expectations | no | no |
-| ws/holcalendar.php | usites | /api/parent/calendar/holidays | partial - used by /parent PWA, verify JSON contract | yes | yes |
-| ws/holcalendarOLD.php | usites |  | unmapped | no | no |
+| ws/holcalendar.php | usites | /api/parent/calendar/holidays | partial - used by /parent PWA; legacy POST usites, active-only rows, description/date fields, and repeated-date current-year adjustment restored | yes | yes |
+| ws/holcalendarOLD.php | usites | /api/parent/calendar/holidays | partial - legacy POST usites and active-only description/date array restored through the same holiday endpoint | no | no |
 | ws/insurance_alarms.php | pid | /api/parent/alarms/insurance | partial - legacy array shape, POST pid guard, legacy ids/status/datetime/date/href restored; verify parent delivery push | no | no |
 | ws/login.php | name, pass | /api/parent/login | partial - used by /parent/login PWA, verify JSON contract | yes | yes |
 | ws/medicine_alarms.php | pid | /api/parent/alarms/medicine | partial - legacy array shape, POST pid guard, legacy ids/status/datetime/href restored; verify parent delivery push | no | no |
