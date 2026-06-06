@@ -115,7 +115,7 @@ const DEFAULT_VALUES: HolidayFormValues = {
   description: "",
   date: "",
   endDate: "",
-  repeated: false,
+  repeated: true,
   type: "HOLIDAY",
   isActive: true,
   notificationTitle: "",
@@ -183,6 +183,11 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
   }
 
   function onSubmit(values: HolidayFormValues) {
+    if (values.name.includes("'") || values.notificationMessage.includes("'")) {
+      toast.error("Apostrophes '' are not allowed");
+      return;
+    }
+
     startTransition(async () => {
       const branchId = values.branchId || null;
       const branchName = branchId
@@ -691,13 +696,13 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-[540px] rounded-sm">
           <DialogHeader>
-            <DialogTitle>{dialogMode === "add" ? "Add Holiday" : "Edit Holiday"}</DialogTitle>
+            <DialogTitle>{dialogMode === "add" ? "Create Holiday" : "Update Holiday"}</DialogTitle>
           </DialogHeader>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2 max-h-[70vh] overflow-y-auto pr-1">
             {/* Name */}
             <div>
-              <label className="mb-1.5 block text-sm font-medium">Holiday Name</label>
-              <Input placeholder="e.g. Independence Day" {...form.register("name")} />
+              <label className="mb-1.5 block text-sm font-medium">Description</label>
+              <Input placeholder="Description" {...form.register("name")} />
               {form.formState.errors.name && (
                 <p className="mt-1 text-xs text-destructive">{form.formState.errors.name.message}</p>
               )}
@@ -705,8 +710,8 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
 
             {/* Description */}
             <div>
-              <label className="mb-1.5 block text-sm font-medium">Description</label>
-              <Input placeholder="Brief description (optional)" {...form.register("description")} />
+              <label className="mb-1.5 block text-sm font-medium">Notes</label>
+              <Input placeholder="Notes" {...form.register("description")} />
             </div>
 
             {/* Type + Status row */}
@@ -759,17 +764,6 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                   <div className="inline-flex rounded-lg border bg-muted/30 p-0.5">
                     <button
                       type="button"
-                      onClick={() => field.onChange(false)}
-                      className={`rounded-md px-4 py-1.5 text-sm font-medium transition-all ${
-                        !field.value
-                          ? "bg-white text-foreground shadow-sm"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      One Time
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => field.onChange(true)}
                       className={`rounded-md px-4 py-1.5 text-sm font-medium transition-all ${
                         field.value
@@ -779,6 +773,17 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                     >
                       Repeated
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => field.onChange(false)}
+                      className={`rounded-md px-4 py-1.5 text-sm font-medium transition-all ${
+                        !field.value
+                          ? "bg-white text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      One Time
+                    </button>
                   </div>
                 )}
               />
@@ -787,7 +792,7 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
             {/* Dates */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-1.5 block text-sm font-medium">Start Date</label>
+                <label className="mb-1.5 block text-sm font-medium">Date</label>
                 <Input type="date" {...form.register("date")} />
                 {form.formState.errors.date && (
                   <p className="mt-1 text-xs text-destructive">{form.formState.errors.date.message}</p>
@@ -828,13 +833,13 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
 
             {/* Notification section */}
             <div className="border-t pt-4 mt-4">
-              <h4 className="text-sm font-semibold text-muted-foreground mb-3">Parent Notification</h4>
+              <h4 className="text-sm font-semibold text-muted-foreground mb-3">Notifications</h4>
 
               <div className="space-y-3">
                 <div>
                   <label className="mb-1.5 block text-sm font-medium">Notification Subject</label>
                   <Input
-                    placeholder="Notification subject (for emails)"
+                    placeholder="Notification Subject (For Emails)"
                     {...form.register("notificationTitle")}
                   />
                 </div>
@@ -846,7 +851,7 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                     render={({ field }) => (
                       <div>
                         <Textarea
-                          placeholder="Dear Parents, please note that the nursery will be closed..."
+                          placeholder="Notification Message"
                           rows={3}
                           maxLength={155}
                           value={field.value}
@@ -880,13 +885,13 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="0">None</SelectItem>
-                          <SelectItem value="1">1 Day Before</SelectItem>
-                          <SelectItem value="2">2 Days Before</SelectItem>
-                          <SelectItem value="3">3 Days Before</SelectItem>
-                          <SelectItem value="4">4 Days Before</SelectItem>
-                          <SelectItem value="5">5 Days Before</SelectItem>
-                          <SelectItem value="6">6 Days Before</SelectItem>
-                          <SelectItem value="7">7 Days Before</SelectItem>
+                          <SelectItem value="1">1 Day</SelectItem>
+                          <SelectItem value="2">2 Days</SelectItem>
+                          <SelectItem value="3">3 Days</SelectItem>
+                          <SelectItem value="4">4 Days</SelectItem>
+                          <SelectItem value="5">5 Days</SelectItem>
+                          <SelectItem value="6">6 Days</SelectItem>
+                          <SelectItem value="7">7 Days</SelectItem>
                         </SelectContent>
                       </Select>
                     )}
@@ -958,7 +963,7 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                   disabled={isPending}
                 >
                   {isPending && <Loader2 className="mr-1 size-4 animate-spin" />}
-                  {dialogMode === "add" ? "Add" : "Update"}
+                  {dialogMode === "add" ? "Create" : "Update"}
                 </Button>
               </div>
             </DialogFooter>
