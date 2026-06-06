@@ -438,13 +438,16 @@
     "legacyPhp": "Front/templates/admin/alarmsBirthday.php",
     "legacyJs": "Front/templates/admin/js/alarmsBirthday.js",
     "modernRoute": "/alarms/birthdays",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "partial - staff/parent read-state and sent history restored",
     "legacyTablesMentioned": [
       "auto",
-      "themeforest"
+      "themeforest",
+      "t_alarms_birthday",
+      "custom_notifications_birthday",
+      "custom_notifications_birthday_parents"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Modern page reads migrated `NotificationReceipt` rows from `custom_notifications_birthday` plus standalone parent rows from `custom_notifications_birthday_parents`, restores Teachers New/Viewed status, search/status/branch/date filters, row/bulk/all mark-viewed actions, Sent Birthday Alarms history for staff and parent recipients, and keeps the manual generator backed by the idempotent `Data::AlarmsBirthday()` parity job plus protected `/api/cron/birthday-alarms`. Remaining work is parent/mobile delivery and exact legacy class-user targeting."
   },
   {
     "legacyPhp": "Front/templates/admin/alarmsContracts.php",

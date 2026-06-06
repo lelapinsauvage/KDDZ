@@ -293,7 +293,7 @@ These tables have file/image/url/attachment columns and need explicit object-sto
 | kiddzonl_garderie29sept.sql | t_manager_attachments | 8 | 1 | covered by migrate-garderie-misc.ts |
 | kiddzonl_garderie29sept.sql | t_nurse_attachments | 8 | 1 | covered by migrate-employees.ts |
 | kiddzonl_garderie29sept.sql | custom_notifications_assessment | 3 | 0 | covered by migrate-alarms.ts |
-| kiddzonl_garderie29sept.sql | custom_notifications_birthday_parents | 6 | 0 | not covered yet / needs explicit decision |
+| kiddzonl_garderie29sept.sql | custom_notifications_birthday_parents | 6 | 0 | covered by migrate-alarms.ts |
 | kiddzonl_garderie29sept.sql | custom_notifications_events | 4 | 0 | not covered yet / needs explicit decision |
 | kiddzonl_garderie29sept.sql | custom_notifications_events_parents | 4 | 0 | not covered yet / needs explicit decision |
 | kiddzonl_garderie29sept.sql | custom_notifications_holiday | 3 | 0 | not covered yet / needs explicit decision |

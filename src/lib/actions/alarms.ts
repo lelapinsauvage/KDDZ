@@ -91,6 +91,7 @@ const MEDICAL_RECEIPT_SOURCE = "custom_notifications_medical";
 const MEDICAL_PARENT_RECEIPT_SOURCE = "custom_notifications_medical_parents";
 const ASSESSMENT_RECEIPT_SOURCE = "custom_notifications_assessment";
 const BIRTHDAY_RECEIPT_SOURCE = "custom_notifications_birthday";
+const BIRTHDAY_PARENT_RECEIPT_SOURCE = "custom_notifications_birthday_parents";
 const CONTRACT_RECEIPT_SOURCE = "custom_notifications_contracts";
 const INSURANCE_RECEIPT_SOURCE = "custom_notifications_insurance";
 const INSURANCE_PARENT_RECEIPT_SOURCE = "custom_notifications_insurance_parents";
@@ -1443,11 +1444,12 @@ const ASSESSMENT_ALARM_CONFIG: StaffReceiptAlarmConfig = {
 const BIRTHDAY_ALARM_CONFIG: StaffReceiptAlarmConfig = {
   type: "BIRTHDAY",
   sourceTable: BIRTHDAY_RECEIPT_SOURCE,
+  sourceTables: [BIRTHDAY_RECEIPT_SOURCE, BIRTHDAY_PARENT_RECEIPT_SOURCE],
   route: "/alarms/birthdays",
   familyLabel: "birthday",
   defaultActionHref: "/children",
   actionHrefFromAlarm: (alarm) => childDashboardHref(alarm.referenceId),
-  historyTypeFromLegacy: () => "Alert",
+  historyRecipientTypes: ["USER", "PARENT_USER", "CHILD"],
 };
 
 const CONTRACT_ALARM_CONFIG: StaffReceiptAlarmConfig = {

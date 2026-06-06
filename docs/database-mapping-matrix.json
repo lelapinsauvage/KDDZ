@@ -875,9 +875,9 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "custom_notifications_birthday_parents",
     "legacyColumns": "id:int(11) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, cusntf_notification_text:text NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0', ntype:int(11) NOT NULL",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "Alarm + NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
+    "reconciliation": "Preserves standalone parent birthday sent-history/read-state rows for `/alarms/birthdays`, including text, datetime, child recipient, and legacy `ntype`; needs source count, migrated count, skipped count, orphan report."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",

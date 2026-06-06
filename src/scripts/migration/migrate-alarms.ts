@@ -44,6 +44,7 @@ interface AlarmConfig {
 interface ReceiptConfig {
   table: string;
   alarmTable?: string;
+  notificationIdColumn?: string;
   category: string;
   recipientKind: RecipientKind;
   targetMappingTable?: string;
@@ -192,6 +193,13 @@ const ALARM_CONFIGS: AlarmConfig[] = [
 const RECEIPT_CONFIGS: ReceiptConfig[] = [
   { table: "custom_notifications", alarmTable: "t_alarms", category: "general", recipientKind: "USER" },
   { table: "custom_notifications_birthday", alarmTable: "t_alarms_birthday", category: "birthday", recipientKind: "USER" },
+  {
+    table: "custom_notifications_birthday_parents",
+    alarmTable: "custom_notifications_birthday_parents",
+    notificationIdColumn: "id",
+    category: "birthday_parents",
+    recipientKind: "CHILD",
+  },
   { table: "custom_notifications_contracts", alarmTable: "t_alarms_contracts", category: "contracts", recipientKind: "USER" },
   { table: "custom_notifications_insurance", alarmTable: "t_alarms_insurance", category: "insurance", recipientKind: "USER" },
   { table: "custom_notifications_insurance_parents", alarmTable: "t_alarms_insurance", category: "insurance_parents", recipientKind: "CHILD" },
@@ -352,6 +360,83 @@ async function resolveReceiptRecipient(
   };
 }
 
+async function migrateBirthdayParentAlarms(
+  prisma: PrismaClient,
+  dryRun: boolean
+) {
+  const table = "custom_notifications_birthday_parents";
+  if (!(await tableExists(table))) {
+    log(`${table}: table not present, skipping standalone parent alarms`);
+    return;
+  }
+
+  const rows = await queryMysql<Record<string, unknown>>(
+    `SELECT * FROM ${table} ORDER BY id`
+  );
+  log(`Found ${rows.length} standalone parent birthday rows in ${table}`);
+
+  let migrated = 0;
+  let skipped = 0;
+
+  for (const row of rows) {
+    const oldId = toInt(row.id);
+    const legacyChildId = toInt(row.cusntf_user_id);
+    const message = cleanString(row.cusntf_notification_text);
+    if (!oldId || !legacyChildId || !message) {
+      skipped++;
+      continue;
+    }
+
+    const referenceId = getMapping("child", legacyChildId);
+    const referenceType = "Child";
+    const createdAt = parseDate(row.datetime as string) ?? new Date();
+    const existing = await prisma.alarm.findFirst({
+      where: {
+        type: "BIRTHDAY",
+        referenceId,
+        referenceType,
+        message,
+        createdAt,
+      },
+    });
+    if (existing) {
+      setMapping(table, oldId, existing.id);
+      skipped++;
+      continue;
+    }
+
+    const id = generateUUID();
+    if (!dryRun) {
+      await prisma.alarm.create({
+        data: {
+          id,
+          type: "BIRTHDAY",
+          referenceId,
+          referenceType,
+          message,
+          dueDate: createdAt,
+          isActive: true,
+          branchId: await resolveBranchId(prisma, referenceId, referenceType),
+          legacyData: JSON.parse(
+            JSON.stringify({
+              sourceTable: table,
+              category: "birthday_parents",
+              ...row,
+            })
+          ),
+          createdAt,
+        },
+      });
+    }
+
+    setMapping(table, oldId, id);
+    migrated++;
+    logProgress(migrated, rows.length, table);
+  }
+
+  log(`${table}: ${migrated} migrated, ${skipped} skipped`);
+}
+
 async function migrateNotificationReceipts(
   prisma: PrismaClient,
   dryRun: boolean
@@ -373,7 +458,9 @@ async function migrateNotificationReceipts(
     log(`Found ${rows.length} rows in ${config.table}`);
 
     for (const row of rows) {
-      const legacyNotificationId = toInt(row.cusntf_notification_id);
+      const notificationIdColumn =
+        config.notificationIdColumn ?? "cusntf_notification_id";
+      const legacyNotificationId = toInt(row[notificationIdColumn]);
       const legacyRecipientId = toInt(row.cusntf_user_id);
       if (!legacyNotificationId || !legacyRecipientId) {
         totalSkipped++;
@@ -611,6 +698,7 @@ export async function migrateAlarms(prisma: PrismaClient) {
     await migrateAlarmTable(prisma, config, dryRun);
   }
 
+  await migrateBirthdayParentAlarms(prisma, dryRun);
   await migrateNotificationReceipts(prisma, dryRun);
   await migratePushTokens(prisma, dryRun);
   await migrateNotificationLogs(prisma, dryRun);
