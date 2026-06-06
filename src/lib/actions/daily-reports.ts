@@ -160,6 +160,11 @@ export async function getDailyReports(params: GetDailyReportsParams = {}) {
               email: true,
             },
           },
+          breakfastFood: true,
+          lunchFood: true,
+          fevers: { orderBy: { createdAt: "asc" } },
+          milks: { orderBy: { createdAt: "asc" } },
+          attachments: true,
         },
         orderBy: { reportDate: "desc" },
         skip,
@@ -324,6 +329,7 @@ export async function createDailyReport(formData: FormData) {
 
     revalidatePath("/daily-reports");
     revalidatePath(`/daily-reports/${report.id}`);
+    revalidatePath(`/children/${data.childId}/report`);
     return { success: true, reportId: report.id };
   } catch (error) {
     console.error("createDailyReport error:", error);
@@ -465,6 +471,10 @@ export async function updateDailyReport(id: string, formData: FormData) {
 
     revalidatePath("/daily-reports");
     revalidatePath(`/daily-reports/${id}`);
+    revalidatePath(`/children/${data.childId}/report`);
+    if (data.childId !== existing.childId) {
+      revalidatePath(`/children/${existing.childId}/report`);
+    }
     return { success: true, reportId: report.id };
   } catch (error) {
     console.error("updateDailyReport error:", error);
@@ -503,6 +513,7 @@ export async function submitDailyReport(id: string) {
     });
 
     revalidatePath("/daily-reports");
+    revalidatePath(`/children/${existing.childId}/report`);
     return { success: true };
   } catch (error) {
     console.error("submitDailyReport error:", error);
@@ -534,6 +545,7 @@ export async function deleteDailyReport(id: string) {
     await db.dailyReport.delete({ where: { id } });
 
     revalidatePath("/daily-reports");
+    revalidatePath(`/children/${existing.childId}/report`);
     return { success: true };
   } catch (error) {
     console.error("deleteDailyReport error:", error);
