@@ -163,6 +163,15 @@ function summarizeAccess(
     .join(", ");
 }
 
+function formatLegacyDateTime(value: string | null) {
+  if (!value) return "Never";
+  return value.replace("T", " ").slice(0, 16);
+}
+
+function loginCountLabel(count: number) {
+  return `${count} ${count === 1 ? "login" : "logins"}`;
+}
+
 function sortUsers(users: LegacyAdminUserRow[]) {
   return [...users].sort((a, b) => {
     const source = a.sourceDatabase.localeCompare(b.sourceDatabase);
@@ -211,6 +220,11 @@ function matchesQuery(user: LegacyAdminUserRow, query: string) {
     user.levelLabels.join(" "),
     user.sites,
     user.classes,
+    user.lastLoginAt ?? "",
+    user.lastLoginIp ?? "",
+    user.profileValues
+      .map((profile) => `${profile.label} ${profile.value ?? ""}`)
+      .join(" "),
   ]
     .join(" ")
     .toLowerCase()
@@ -689,6 +703,7 @@ export function LegacyUsersClient({
               <TableHead>Levels</TableHead>
               <TableHead>Legacy Source</TableHead>
               <TableHead>Branch/Class Access</TableHead>
+              <TableHead>Login Audit</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Modern Account</TableHead>
               <TableHead className="w-[92px] text-right">Actions</TableHead>
@@ -698,7 +713,7 @@ export function LegacyUsersClient({
             {filteredUsers.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={8}
                   className="h-24 text-center text-muted-foreground"
                 >
                   No legacy users found.
@@ -758,6 +773,11 @@ export function LegacyUsersClient({
                         <div className="font-mono text-xs text-muted-foreground">
                           {user.legacyTable}
                         </div>
+                        {user.profileValues.length > 0 ? (
+                          <Badge variant="outline">
+                            {user.profileValues.length} profile fields
+                          </Badge>
+                        ) : null}
                       </div>
                     </TableCell>
                     <TableCell className="max-w-[320px] whitespace-normal">
@@ -770,6 +790,19 @@ export function LegacyUsersClient({
                           <span className="font-medium">Classes: </span>
                           {summarizeAccess(user.classes, classOptions, "All")}
                         </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="whitespace-normal">
+                      <div className="space-y-1 text-xs">
+                        <div className="font-medium">
+                          {formatLegacyDateTime(user.lastLoginAt)}
+                        </div>
+                        <div className="text-muted-foreground">
+                          {user.lastLoginIp ?? "No IP"}
+                        </div>
+                        <Badge variant="outline">
+                          {loginCountLabel(user.loginCount)}
+                        </Badge>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -970,6 +1003,27 @@ export function LegacyUsersClient({
               />
               <span className="font-medium">Restricted</span>
             </label>
+
+            {dialogMode === "edit" && editingUser?.profileValues.length ? (
+              <div className="space-y-2">
+                <Label>Profile Values</Label>
+                <div className="grid max-h-44 gap-2 overflow-y-auto rounded-sm border border-border p-3 md:grid-cols-2">
+                  {editingUser.profileValues.map((profile) => (
+                    <div
+                      key={profile.id}
+                      className="rounded-sm border border-border/70 bg-muted/30 p-2"
+                    >
+                      <div className="truncate text-xs font-semibold text-muted-foreground">
+                        {profile.label}
+                      </div>
+                      <div className="mt-1 break-words text-sm">
+                        {profile.value || "-"}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
 
             <DialogFooter>
               <Button

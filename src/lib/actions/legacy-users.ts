@@ -34,6 +34,17 @@ export type LegacyAdminUserRow = {
   modernRole: UserRole | null;
   modernActive: boolean | null;
   registeredAt: string | null;
+  lastLoginAt: string | null;
+  lastLoginIp: string | null;
+  loginCount: number;
+  profileValues: LegacyAdminProfileValue[];
+};
+
+export type LegacyAdminProfileValue = {
+  id: string;
+  legacyId: number;
+  label: string;
+  value: string | null;
 };
 
 export type LegacyAdminLevelOption = {
@@ -221,6 +232,32 @@ function configForRecordType(recordType: LegacyUserRecordType) {
   return USER_CONFIG[recordType];
 }
 
+function auditPrincipalForRecordType(recordType: LegacyUserRecordType) {
+  return recordType === "manager_login_user" ? "MANAGER_USER" : "USER";
+}
+
+function profileRecordTypeForUser(recordType: LegacyUserRecordType) {
+  return recordType === "manager_login_user"
+    ? "manager_profile_value"
+    : "profile_value";
+}
+
+function userAuditKey(
+  sourceDatabase: string,
+  recordType: LegacyUserRecordType,
+  legacyUserId: number,
+) {
+  return `${sourceDatabase}:${auditPrincipalForRecordType(recordType)}:${legacyUserId}`;
+}
+
+function userProfileKey(
+  sourceDatabase: string,
+  recordType: LegacyUserRecordType,
+  legacyUserId: number,
+) {
+  return `${sourceDatabase}:${profileRecordTypeForUser(recordType)}:${legacyUserId}`;
+}
+
 async function getDefaultLevelId(
   sourceDatabase: string,
   recordType: LegacyUserRecordType,
@@ -270,6 +307,12 @@ function mapUserRow(params: {
     isActive: boolean;
     name: string | null;
   } | null;
+  loginAudit?: {
+    lastLoginAt: Date | null;
+    lastLoginIp: string | null;
+    loginCount: number;
+  } | null;
+  profileValues?: LegacyAdminProfileValue[];
 }): LegacyAdminUserRow {
   const levelIds = parsePhpLevelIds(params.record.recordValue);
   const levelRecordType =
@@ -310,6 +353,10 @@ function mapUserRow(params: {
       legacyString(params.record.legacyData, "timestamp") ||
       legacyString(params.record.legacyData, "created_at") ||
       null,
+    lastLoginAt: params.loginAudit?.lastLoginAt?.toISOString() ?? null,
+    lastLoginIp: params.loginAudit?.lastLoginIp ?? null,
+    loginCount: params.loginAudit?.loginCount ?? 0,
+    profileValues: params.profileValues ?? [],
   };
 }
 
@@ -549,24 +596,133 @@ export async function getLegacyAdminUsers(): Promise<
     const userIds = records
       .map((record) => record.userId)
       .filter((id): id is string => Boolean(id));
-    const modernUsers = userIds.length
-      ? await db.user.findMany({
+    const sourceDatabases = Array.from(
+      new Set(records.map((record) => record.sourceDatabase)),
+    );
+    const legacyUserIds = Array.from(
+      new Set(
+        records
+          .map((record) => record.legacyUserId ?? record.legacyId)
+          .filter((id) => Number.isInteger(id) && id > 0),
+      ),
+    );
+
+    const [modernUsers, loginAuditRows, profileRecords] = await Promise.all([
+      userIds.length
+        ? db.user.findMany({
           where: { id: { in: userIds } },
           select: { id: true, role: true, isActive: true, name: true },
         })
-      : [];
+        : Promise.resolve([]),
+      legacyUserIds.length
+        ? db.legacyLoginTimestamp.findMany({
+            where: {
+              sourceDatabase: { in: sourceDatabases },
+              legacyUserId: { in: legacyUserIds },
+              principalType: { in: ["USER", "MANAGER_USER"] },
+            },
+            orderBy: [{ occurredAt: "desc" }, { legacyId: "desc" }],
+            select: {
+              sourceDatabase: true,
+              legacyUserId: true,
+              principalType: true,
+              ipAddress: true,
+              occurredAt: true,
+            },
+          })
+        : Promise.resolve([]),
+      legacyUserIds.length
+        ? db.legacyAuthRecord.findMany({
+            where: {
+              sourceDatabase: { in: sourceDatabases },
+              legacyUserId: { in: legacyUserIds },
+              recordType: { in: ["profile_value", "manager_profile_value"] },
+            },
+            orderBy: [
+              { sourceDatabase: "asc" },
+              { legacyUserId: "asc" },
+              { legacyId: "asc" },
+            ],
+            select: {
+              id: true,
+              sourceDatabase: true,
+              legacyId: true,
+              legacyUserId: true,
+              recordType: true,
+              recordKey: true,
+              recordValue: true,
+            },
+          })
+        : Promise.resolve([]),
+    ]);
     const modernById = new Map(modernUsers.map((user) => [user.id, user]));
+    const auditByUser = new Map<
+      string,
+      { lastLoginAt: Date | null; lastLoginIp: string | null; loginCount: number }
+    >();
+
+    for (const row of loginAuditRows) {
+      const recordType =
+        row.principalType === "MANAGER_USER"
+          ? "manager_login_user"
+          : "login_user";
+      const key = userAuditKey(row.sourceDatabase, recordType, row.legacyUserId);
+      const current = auditByUser.get(key) ?? {
+        lastLoginAt: null,
+        lastLoginIp: null,
+        loginCount: 0,
+      };
+
+      current.loginCount += 1;
+      if (
+        row.occurredAt &&
+        (!current.lastLoginAt || row.occurredAt > current.lastLoginAt)
+      ) {
+        current.lastLoginAt = row.occurredAt;
+        current.lastLoginIp = row.ipAddress;
+      }
+      auditByUser.set(key, current);
+    }
+
+    const profilesByUser = new Map<string, LegacyAdminProfileValue[]>();
+    for (const profile of profileRecords) {
+      const legacyUserId = profile.legacyUserId;
+      if (!legacyUserId) continue;
+
+      const recordType =
+        profile.recordType === "manager_profile_value"
+          ? "manager_login_user"
+          : "login_user";
+      const key = userProfileKey(profile.sourceDatabase, recordType, legacyUserId);
+      const values = profilesByUser.get(key) ?? [];
+      values.push({
+        id: profile.id,
+        legacyId: profile.legacyId,
+        label: profile.recordKey ?? `Profile field ${profile.legacyId}`,
+        value: profile.recordValue,
+      });
+      profilesByUser.set(key, values);
+    }
 
     return {
       success: true,
       data: {
-        users: records.map((record) =>
-          mapUserRow({
+        users: records.map((record) => {
+          const legacyUserId = record.legacyUserId ?? record.legacyId;
+          const recordType = record.recordType as LegacyUserRecordType;
+
+          return mapUserRow({
             record,
             levelOptions: levels,
             modernUser: record.userId ? modernById.get(record.userId) : null,
-          }),
-        ),
+            loginAudit: auditByUser.get(
+              userAuditKey(record.sourceDatabase, recordType, legacyUserId),
+            ),
+            profileValues: profilesByUser.get(
+              userProfileKey(record.sourceDatabase, recordType, legacyUserId),
+            ),
+          });
+        }),
         levels,
         groups,
         branches,
