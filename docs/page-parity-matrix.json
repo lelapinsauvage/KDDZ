@@ -27,7 +27,7 @@
     "legacyPhp": "Front/templates/admin/Branch_Dashboard.php",
     "legacyJs": "Front/templates/admin/js/Branch_Dashboard.js",
     "modernRoute": "/branches/[id]/dashboard",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "partial - legacy branch KPI rows/charts restored; date-range drilldown audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -35,7 +35,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored branch-scoped dashboard KPI groups for Total Classes, Total Active Children, staff counts, attendance, absence, missing daily/absence reports, payments, accidents, calls, medical reports, assessment totals/missing/drafts, plus branch-scoped children-per-class, gender, and attendance charts. Remaining work is exact legacy date-range/scholastic-year switching and modal drilldown table parity from Branch_Dashboard.js."
   },
   {
     "legacyPhp": "Front/templates/admin/Child_Details.php",

@@ -397,24 +397,28 @@ export interface DashboardDemographics {
   genderStats: Array<{ name: string; value: number }>;
 }
 
-export async function getDashboardDemographics(): Promise<DashboardDemographics> {
+export async function getDashboardDemographics(branchId?: string | null): Promise<DashboardDemographics> {
   const { organizationId: orgId } = await requireOrg();
+
+  const branchWhere = branchId ? { id: branchId, organizationId: orgId } : { organizationId: orgId };
+  const classWhere = branchId ? { branchId } : { branch: { organizationId: orgId } };
+  const childBranchFilter = branchId ? { branchId } : { branch: { organizationId: orgId } };
 
   const [totalBranches, totalClasses, totalActiveChildren, classCounts, genderCounts] =
     await Promise.all([
-      db.branch.count({ where: { organizationId: orgId } }),
-      db.class.count({ where: { branch: { organizationId: orgId } } }),
+      db.branch.count({ where: branchWhere }),
+      db.class.count({ where: classWhere }),
       db.child.count({
-        where: { isActive: true, isDraft: false, branch: { organizationId: orgId } },
+        where: { isActive: true, isDraft: false, ...childBranchFilter },
       }),
       db.child.groupBy({
         by: ["classId"],
-        where: { isActive: true, isDraft: false, branch: { organizationId: orgId } },
+        where: { isActive: true, isDraft: false, ...childBranchFilter },
         _count: true,
       }),
       db.child.groupBy({
         by: ["gender"],
-        where: { isActive: true, isDraft: false, branch: { organizationId: orgId } },
+        where: { isActive: true, isDraft: false, ...childBranchFilter },
         _count: true,
       }),
     ]);

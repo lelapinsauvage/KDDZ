@@ -1,5 +1,10 @@
 import { notFound } from "next/navigation";
 import { getBranch } from "@/lib/actions/branches";
+import {
+  getActionCenterMetrics,
+  getDailyComplianceStats,
+  getDashboardDemographics,
+} from "@/lib/actions/dashboard";
 import { BranchDashboardClient } from "@/components/branches/branch-dashboard-client";
 
 interface Props {
@@ -9,7 +14,13 @@ interface Props {
 export default async function BranchDashboardPage({ params }: Props) {
   const { id } = await params;
 
-  const result = await getBranch(id);
+  const [result, demographics, dailyStats, actionMetrics] = await Promise.all([
+    getBranch(id),
+    getDashboardDemographics(id),
+    getDailyComplianceStats(id),
+    getActionCenterMetrics(id),
+  ]);
+
   if (!result.success || !result.data) {
     notFound();
   }
@@ -31,6 +42,9 @@ export default async function BranchDashboardPage({ params }: Props) {
         compliancePercentage: branch.compliance?.completionPercentage ?? 0,
         themeColor: branch.themeColor ?? "#1caf9a",
       }}
+      demographics={demographics}
+      dailyStats={dailyStats}
+      actionMetrics={actionMetrics}
     />
   );
 }
