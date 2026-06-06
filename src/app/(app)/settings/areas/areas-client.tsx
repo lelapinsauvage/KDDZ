@@ -48,14 +48,14 @@ interface Area {
   createdAt: string;
 }
 
-interface ZoneOption {
+interface MouhafazaOption {
   id: string;
   name: string;
 }
 
 interface AreasClientProps {
   initialAreas: Area[];
-  zoneOptions: ZoneOption[];
+  zoneOptions: MouhafazaOption[];
 }
 
 export function AreasClient({ initialAreas, zoneOptions }: AreasClientProps) {
@@ -110,9 +110,9 @@ export function AreasClient({ initialAreas, zoneOptions }: AreasClientProps) {
               }),
             },
           ]);
-          toast.success("Area created successfully.");
+          toast.success("Quadaa created successfully.");
         } else {
-          toast.error("Failed to create area.");
+          toast.error("Failed to create Quadaa.");
         }
       } else if (editingId) {
         const result = await updateDistrict(editingId, areaName.trim(), areaRef.trim() || undefined);
@@ -122,9 +122,9 @@ export function AreasClient({ initialAreas, zoneOptions }: AreasClientProps) {
               a.id === editingId ? { ...a, name: areaName.trim(), referenceNumber: areaRef.trim() } : a
             )
           );
-          toast.success("Area updated successfully.");
+          toast.success("Quadaa updated successfully.");
         } else {
-          toast.error("Failed to update area.");
+          toast.error("Failed to update Quadaa.");
         }
       }
       setDialogOpen(false);
@@ -137,9 +137,9 @@ export function AreasClient({ initialAreas, zoneOptions }: AreasClientProps) {
       const result = await deleteDistrict(deleteTarget.id);
       if (result.success) {
         setAreas((prev) => prev.filter((a) => a.id !== deleteTarget.id));
-        toast.success(`Area "${deleteTarget.name}" deleted.`);
+        toast.success(`Quadaa "${deleteTarget.name}" deleted.`);
       } else {
-        toast.error("Failed to delete area.");
+        toast.error("Failed to delete Quadaa.");
       }
       setDeleteTarget(null);
     });
@@ -148,25 +148,30 @@ export function AreasClient({ initialAreas, zoneOptions }: AreasClientProps) {
   const columns: ColumnDef<Area>[] = useMemo(
     () => [
       {
+        id: "rowNumber",
+        header: "#",
+        cell: ({ row }) => row.index + 1,
+      },
+      {
         accessorKey: "name",
         header: "Name",
         cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
       },
       {
         accessorKey: "referenceNumber",
-        header: "Ref. Number",
+        header: "Reference Number",
       },
       {
         accessorKey: "zone",
-        header: "Zone",
+        header: "Mouhafaza",
       },
       {
         accessorKey: "createdAt",
-        header: "Created Date",
+        header: "Datetime",
       },
       {
         id: "actions",
-        header: "Actions",
+        header: "Action",
         cell: ({ row }) => (
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="icon" className="size-8" onClick={() => openEdit(row.original)}>
@@ -190,33 +195,33 @@ export function AreasClient({ initialAreas, zoneOptions }: AreasClientProps) {
   return (
     <>
       <PageHeader
-        title="Areas Management"
+        title="Quadaa Management"
         breadcrumbs={[
           { label: "Settings", href: "/settings/nursery" },
-          { label: "Areas" },
+          { label: "Quadaa" },
         ]}
         actions={
           <Button onClick={openAdd}>
             <Plus className="mr-1 size-4" />
-            Add Area
+            New Quadaa
           </Button>
         }
       />
 
       <div className="space-y-4 p-4 md:p-6">
-        <DataTable columns={columns} data={areas} searchKey="name" searchPlaceholder="Search areas..." />
+        <DataTable columns={columns} data={areas} searchKey="name" searchPlaceholder="Search quadaa..." />
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{dialogMode === "add" ? "Add Area" : "Edit Area"}</DialogTitle>
+            <DialogTitle>{dialogMode === "add" ? "New Quadaa" : "Update Quadaa"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <Label className="mb-1.5">Area Name</Label>
+              <Label className="mb-1.5">Name</Label>
               <Input
-                placeholder="Area name"
+                placeholder="Name"
                 value={areaName}
                 onChange={(e) => setAreaName(e.target.value)}
               />
@@ -230,7 +235,7 @@ export function AreasClient({ initialAreas, zoneOptions }: AreasClientProps) {
               />
             </div>
             <div>
-              <Label className="mb-1.5">Zone</Label>
+              <Label className="mb-1.5">Mouhafaza</Label>
               <Select value={areaZoneId} onValueChange={setAreaZoneId}>
                 <SelectTrigger>
                   <SelectValue />
@@ -267,7 +272,7 @@ export function AreasClient({ initialAreas, zoneOptions }: AreasClientProps) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Area</AlertDialogTitle>
+            <AlertDialogTitle>Delete Quadaa</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete <strong>{deleteTarget?.name}</strong>? This action cannot be undone.
             </AlertDialogDescription>

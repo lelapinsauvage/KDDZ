@@ -12,7 +12,7 @@
     "legacyPhp": "Front/templates/admin/Areas.php",
     "legacyJs": "",
     "modernRoute": "/settings/areas",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "partial - Quadaa listing/modal labels restored; visual audit remains",
     "legacyTablesMentioned": [
       "Quadaa",
       "auto",
@@ -21,7 +21,7 @@
     "requestFieldsMentioned": [
       "q"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored legacy Quadaa wording, # column, Name, Reference Number, Mouhafaza, Datetime, single Action column, and create/update/delete modal labels over the migrated District records. Remaining work is final DataTables filter/export visual audit."
   },
   {
     "legacyPhp": "Front/templates/admin/Branch_Dashboard.php",
@@ -344,7 +344,7 @@
     "legacyPhp": "Front/templates/admin/Zones_Management.php",
     "legacyJs": "",
     "modernRoute": "/settings/zones",
-    "status": "partial - route exists, needs field/action audit",
+    "status": "partial - Mouhafaza listing/modal labels restored; visual audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -352,7 +352,7 @@
     "requestFieldsMentioned": [
       "q"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Restored legacy Mouhafaza wording, # column, Name, Ref. Number, Created Date, single Action column, and create/update/delete modal labels over the migrated Province records. Remaining work is final DataTables filter/export visual audit."
   },
   {
     "legacyPhp": "Front/templates/admin/absentreport.php",

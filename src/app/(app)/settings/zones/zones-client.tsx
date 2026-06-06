@@ -92,9 +92,9 @@ export function ZonesClient({ initialZones }: ZonesClientProps) {
               regionCount: 0,
             },
           ]);
-          toast.success("Zone created successfully.");
+          toast.success("Mouhafaza created successfully.");
         } else {
-          toast.error("Failed to create zone.");
+          toast.error("Failed to create Mouhafaza.");
         }
       } else if (editingId) {
         const result = await updateProvince(editingId, zoneName.trim(), zoneRef.trim() || undefined);
@@ -104,9 +104,9 @@ export function ZonesClient({ initialZones }: ZonesClientProps) {
               z.id === editingId ? { ...z, name: zoneName.trim(), referenceNumber: zoneRef.trim() } : z
             )
           );
-          toast.success("Zone updated successfully.");
+          toast.success("Mouhafaza updated successfully.");
         } else {
-          toast.error("Failed to update zone.");
+          toast.error("Failed to update Mouhafaza.");
         }
       }
       setDialogOpen(false);
@@ -119,9 +119,9 @@ export function ZonesClient({ initialZones }: ZonesClientProps) {
       const result = await deleteProvince(deleteTarget.id);
       if (result.success) {
         setZones((prev) => prev.filter((z) => z.id !== deleteTarget.id));
-        toast.success(`Zone "${deleteTarget.name}" deleted.`);
+        toast.success(`Mouhafaza "${deleteTarget.name}" deleted.`);
       } else {
-        toast.error("Failed to delete zone.");
+        toast.error("Failed to delete Mouhafaza.");
       }
       setDeleteTarget(null);
     });
@@ -129,6 +129,11 @@ export function ZonesClient({ initialZones }: ZonesClientProps) {
 
   const columns: ColumnDef<Zone>[] = useMemo(
     () => [
+      {
+        id: "rowNumber",
+        header: "#",
+        cell: ({ row }) => row.index + 1,
+      },
       {
         accessorKey: "name",
         header: "Name",
@@ -144,7 +149,7 @@ export function ZonesClient({ initialZones }: ZonesClientProps) {
       },
       {
         id: "actions",
-        header: "Actions",
+        header: "Action",
         cell: ({ row }) => (
           <div className="flex items-center gap-1">
             <Button variant="outline" size="icon" className="size-8" onClick={() => openEdit(row.original)}>
@@ -168,15 +173,15 @@ export function ZonesClient({ initialZones }: ZonesClientProps) {
   return (
     <>
       <PageHeader
-        title="Zones Management"
+        title="Mouhafazat"
         breadcrumbs={[
           { label: "Settings", href: "/settings/nursery" },
-          { label: "Zones" },
+          { label: "Mouhafazat" },
         ]}
         actions={
           <Button onClick={openAdd}>
             <Plus className="mr-1 size-4" />
-            Add Zone
+            New Mouhafaza
           </Button>
         }
       />
@@ -184,7 +189,7 @@ export function ZonesClient({ initialZones }: ZonesClientProps) {
       <div className="p-4 md:p-6">
         <Card>
           <CardContent className="p-0">
-            <DataTable columns={columns} data={zones} searchKey="name" searchPlaceholder="Search zones..." />
+            <DataTable columns={columns} data={zones} searchKey="name" searchPlaceholder="Search mouhafazat..." />
           </CardContent>
         </Card>
       </div>
@@ -192,13 +197,13 @@ export function ZonesClient({ initialZones }: ZonesClientProps) {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{dialogMode === "add" ? "Add Zone" : "Edit Zone"}</DialogTitle>
+            <DialogTitle>{dialogMode === "add" ? "Create Mouhafaza" : "Edit Mouhafaza"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <Label className="mb-1.5">Zone Name</Label>
+              <Label className="mb-1.5">Mouhafaza Name</Label>
               <Input
-                placeholder="Zone name"
+                placeholder="Mouhafaza name"
                 value={zoneName}
                 onChange={(e) => setZoneName(e.target.value)}
                 onKeyDown={(e) => {
@@ -240,7 +245,7 @@ export function ZonesClient({ initialZones }: ZonesClientProps) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Zone</AlertDialogTitle>
+            <AlertDialogTitle>Delete Mouhafaza</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete <strong>{deleteTarget?.name}</strong>? This action cannot be undone.
             </AlertDialogDescription>
