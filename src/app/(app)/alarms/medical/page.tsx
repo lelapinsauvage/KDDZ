@@ -1,32 +1,59 @@
-import { getAlarms } from "@/lib/actions/alarms";
-import { getBranches } from "@/lib/actions/branches";
+import {
+  getMedicalAlarmHistory,
+  getMedicalAlarmNotifications,
+} from "@/lib/actions/alarms";
 import { MedicalAlarmsClient } from "./medical-alarms-client";
 
+type MedicalAlarmRow = {
+  id: string;
+  receiptId: string;
+  legacyId: number;
+  details: string;
+  datetime: string;
+  dueDate: string | null;
+  branchId: string | null;
+  branch: string;
+  status: "Viewed" | "New";
+  isRead: boolean;
+  legacyType: string | null;
+  legacyStatus: string;
+  legacyHref: string | null;
+  actionHref: string;
+  searchText: string;
+};
+
+type MedicalHistoryRow = {
+  id: string;
+  legacyId: number;
+  type: string;
+  content: string;
+  time: string;
+  to: string;
+  seen: "Yes" | "No";
+  branch: string;
+  legacyStatus: string;
+  searchText: string;
+};
+
 export default async function MedicalAlarmsPage() {
-  const [alarmsResult, branchesResult] = await Promise.all([
-    getAlarms({ type: "MEDICAL" }),
-    getBranches(),
+  const [alarmsResult, historyResult] = await Promise.all([
+    getMedicalAlarmNotifications({ pageSize: 500 }),
+    getMedicalAlarmHistory({ pageSize: 500 }),
   ]);
 
-  const branches = ((branchesResult.data ?? []) as Array<{ id: string; name: string }>);
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rawData = (alarmsResult.success ? (alarmsResult.data as any) : { alarms: [] });
+  const rawAlarmData = (alarmsResult.success ? (alarmsResult.data as any) : { alarms: [] });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rawAlarms = (rawData.alarms ?? []) as Array<any>;
+  const rawHistoryData = (historyResult.success ? (historyResult.data as any) : { history: [] });
 
-  const serializedAlarms = rawAlarms.map((a) => ({
-    id: a.id as string,
-    message: (a.message ?? "—") as string,
-    dueDate: a.dueDate ? (a.dueDate as Date).toISOString().split("T")[0] : "",
-    branch: (a.branch?.name ?? "—") as string,
-    isActive: a.isActive as boolean,
-  }));
+  const alarms = (rawAlarmData.alarms ?? []) as MedicalAlarmRow[];
+
+  const history = (rawHistoryData.history ?? []) as MedicalHistoryRow[];
 
   return (
     <MedicalAlarmsClient
-      alarms={serializedAlarms}
-      branches={branches}
+      alarms={alarms}
+      history={history}
     />
   );
 }

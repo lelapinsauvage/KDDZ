@@ -87,6 +87,8 @@ type ActionResult<T = unknown> = {
   data?: T;
 };
 
+const MEDICAL_RECEIPT_SOURCE = "custom_notifications_medical";
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -96,6 +98,56 @@ function toDateOrNull(
 ): Date | null {
   if (!value) return null;
   return typeof value === "string" ? new Date(value) : value;
+}
+
+function jsonRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function jsonString(value: unknown): string | null {
+  return typeof value === "string" && value.trim() !== "" ? value : null;
+}
+
+function jsonNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function medicalSectionHref(legacyType: string | null, referenceId: string | null) {
+  const suffix = referenceId ? `?childId=${referenceId}` : "";
+  switch (legacyType) {
+    case "t_form_1":
+      return `/medical/general${suffix}`;
+    case "t_form_2":
+      return `/medical/suffering${suffix}`;
+    case "t_form_3":
+      return `/medical/visits${suffix}`;
+    case "t_form_4":
+      return `/medical/vaccinations${suffix}`;
+    case "t_form_5":
+      return `/medical/accidents${suffix}`;
+    default:
+      return `/medical/general${suffix}`;
+  }
+}
+
+function medicalLegacyStatusLabel(status: number | null) {
+  if (status === 0) return "Missing";
+  if (status === 1) return "Incomplete";
+  if (status === 2) return "Draft";
+  return "Alert";
+}
+
+function revalidateMedicalAlarmPaths() {
+  revalidatePath("/alarms");
+  revalidatePath("/alarms/medical");
+  revalidatePath("/");
 }
 
 // ---------------------------------------------------------------------------
@@ -464,6 +516,262 @@ export async function getAlarms(
   } catch (error) {
     console.error("Failed to fetch alarms:", error);
     return { success: false, error: "Failed to fetch alarms" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// getMedicalAlarmNotifications — legacy alarmsMedical.php staff listing
+// ---------------------------------------------------------------------------
+
+export async function getMedicalAlarmNotifications(
+  params: { pageSize?: number } = {},
+): Promise<ActionResult> {
+  try {
+    const { userId, organizationId: orgId } = await requireOrg();
+    const pageSize = params.pageSize ?? 500;
+
+    const receipts = await db.notificationReceipt.findMany({
+      where: {
+        sourceTable: MEDICAL_RECEIPT_SOURCE,
+        recipientId: userId,
+        recipientType: "USER",
+        alarm: {
+          is: {
+            type: "MEDICAL",
+            OR: [{ branch: { organizationId: orgId } }, { branchId: null }],
+          },
+        },
+      },
+      include: {
+        alarm: { include: { branch: true } },
+      },
+      orderBy: { legacyNotificationId: "desc" },
+      take: pageSize,
+    });
+
+    const alarms = receipts.flatMap((receipt) => {
+      if (!receipt.alarm) return [];
+      const legacyData = jsonRecord(receipt.alarm.legacyData);
+      const legacyId = jsonNumber(legacyData.aid) ?? receipt.legacyNotificationId;
+      const legacyType = jsonString(legacyData.type);
+      const legacyStatus = jsonNumber(legacyData.status);
+      const legacyHref = jsonString(legacyData.href);
+
+      return [{
+        id: receipt.alarm.id,
+        receiptId: receipt.id,
+        legacyId,
+        details: receipt.alarm.message ?? "",
+        datetime: receipt.alarm.createdAt.toISOString(),
+        dueDate: receipt.alarm.dueDate
+          ? receipt.alarm.dueDate.toISOString().split("T")[0]
+          : null,
+        branchId: receipt.alarm.branchId,
+        branch: receipt.alarm.branch?.name ?? "All Branches",
+        status: receipt.isRead ? "Viewed" : "New",
+        isRead: receipt.isRead,
+        legacyType,
+        legacyStatus: medicalLegacyStatusLabel(legacyStatus),
+        legacyHref,
+        actionHref: medicalSectionHref(legacyType, receipt.alarm.referenceId),
+        searchText: [
+          legacyId,
+          receipt.alarm.message,
+          receipt.alarm.branch?.name,
+          receipt.isRead ? "Viewed" : "New",
+          medicalLegacyStatusLabel(legacyStatus),
+          legacyType,
+        ]
+          .filter(Boolean)
+          .join(" "),
+      }];
+    });
+
+    return {
+      success: true,
+      data: {
+        alarms,
+        total: alarms.length,
+      },
+    };
+  } catch (error) {
+    console.error("Failed to fetch medical alarm notifications:", error);
+    return {
+      success: false,
+      error: "Failed to fetch medical alarm notifications",
+    };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// getMedicalAlarmHistory — legacy sent reports reminders
+// ---------------------------------------------------------------------------
+
+export async function getMedicalAlarmHistory(
+  params: { pageSize?: number } = {},
+): Promise<ActionResult> {
+  try {
+    const { userId, organizationId: orgId } = await requireOrg();
+    const pageSize = params.pageSize ?? 500;
+
+    const receipts = await db.notificationReceipt.findMany({
+      where: {
+        sourceTable: MEDICAL_RECEIPT_SOURCE,
+        recipientType: "USER",
+        NOT: { recipientId: userId },
+        alarm: {
+          is: {
+            type: "MEDICAL",
+            OR: [{ branch: { organizationId: orgId } }, { branchId: null }],
+          },
+        },
+      },
+      include: {
+        alarm: { include: { branch: true } },
+      },
+      orderBy: { legacyNotificationId: "desc" },
+      take: pageSize,
+    });
+
+    const recipientIds = Array.from(
+      new Set(
+        receipts
+          .map((receipt) => receipt.recipientId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    );
+    const users = recipientIds.length
+      ? await db.user.findMany({
+          where: { id: { in: recipientIds } },
+          select: { id: true, name: true, email: true },
+        })
+      : [];
+    const userNameById = new Map(
+      users.map((user) => [user.id, user.name || user.email]),
+    );
+
+    const history = receipts.flatMap((receipt) => {
+      if (!receipt.alarm) return [];
+      const legacyData = jsonRecord(receipt.alarm.legacyData);
+      const legacyId = jsonNumber(legacyData.aid) ?? receipt.legacyNotificationId;
+      const legacyStatus = jsonNumber(legacyData.status);
+
+      return [{
+        id: receipt.id,
+        legacyId,
+        type: "Alert",
+        content: receipt.alarm.message ?? "",
+        time: receipt.alarm.createdAt.toISOString(),
+        to:
+          (receipt.recipientId && userNameById.get(receipt.recipientId)) ||
+          `Legacy user #${receipt.legacyRecipientId}`,
+        seen: receipt.isRead ? "Yes" : "No",
+        branch: receipt.alarm.branch?.name ?? "All Branches",
+        legacyStatus: medicalLegacyStatusLabel(legacyStatus),
+        searchText: [
+          legacyId,
+          receipt.alarm.message,
+          receipt.legacyRecipientId,
+          receipt.recipientId && userNameById.get(receipt.recipientId),
+          receipt.isRead ? "Yes" : "No",
+          medicalLegacyStatusLabel(legacyStatus),
+        ]
+          .filter(Boolean)
+          .join(" "),
+      }];
+    });
+
+    return {
+      success: true,
+      data: {
+        history,
+        total: history.length,
+      },
+    };
+  } catch (error) {
+    console.error("Failed to fetch medical alarm history:", error);
+    return {
+      success: false,
+      error: "Failed to fetch medical alarm history",
+    };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// markMedicalAlarmViewed / markAllMedicalAlarmsViewed
+// ---------------------------------------------------------------------------
+
+export async function markMedicalAlarmViewed(
+  alarmId: string,
+): Promise<ActionResult<{ count: number }>> {
+  try {
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
+
+    const alarm = await db.alarm.findUnique({
+      where: { id: alarmId },
+      include: { branch: true },
+    });
+    if (
+      !alarm ||
+      alarm.type !== "MEDICAL" ||
+      (alarm.branch && alarm.branch.organizationId !== ctx.organizationId)
+    ) {
+      return { success: false, error: "Medical alarm not found" };
+    }
+
+    const update = await db.notificationReceipt.updateMany({
+      where: {
+        sourceTable: MEDICAL_RECEIPT_SOURCE,
+        alarmId,
+        recipientId: ctx.userId,
+        recipientType: "USER",
+        isRead: false,
+      },
+      data: { isRead: true },
+    });
+
+    revalidateMedicalAlarmPaths();
+    return { success: true, data: { count: update.count } };
+  } catch (error) {
+    console.error("Failed to mark medical alarm viewed:", error);
+    return { success: false, error: "Failed to mark medical alarm viewed" };
+  }
+}
+
+export async function markAllMedicalAlarmsViewed(): Promise<
+  ActionResult<{ count: number }>
+> {
+  try {
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
+
+    const update = await db.notificationReceipt.updateMany({
+      where: {
+        sourceTable: MEDICAL_RECEIPT_SOURCE,
+        recipientId: ctx.userId,
+        recipientType: "USER",
+        isRead: false,
+        alarm: {
+          is: {
+            type: "MEDICAL",
+            OR: [
+              { branch: { organizationId: ctx.organizationId } },
+              { branchId: null },
+            ],
+          },
+        },
+      },
+      data: { isRead: true },
+    });
+
+    revalidateMedicalAlarmPaths();
+    return { success: true, data: { count: update.count } };
+  } catch (error) {
+    console.error("Failed to mark all medical alarms viewed:", error);
+    return { success: false, error: "Failed to mark all medical alarms viewed" };
   }
 }
 
