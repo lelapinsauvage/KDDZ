@@ -16104,17 +16104,17 @@
   {
     "legacyPhp": "Front/templates/admin/forbidden.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/forbidden.php",
+    "status": "restored - legacy privilege-denied screen restored",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/forbidden.php` now renders the legacy standalone dark Forbidden screen with the original privilege warning copy."
   },
   {
     "legacyPhp": "Front/templates/admin/getmap.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/getmap.php",
+    "status": "restored - legacy geocode POST helper restored with secure Google Maps configuration",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [
       "address",
@@ -16123,7 +16123,7 @@
       "submit_address",
       "submit_coordinates"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/getmap.php` now accepts the legacy form POST fields for address geocoding and coordinate reverse-geocoding, preserves the legacy text responses for form callers, supports JSON callers, and replaces the old unauthenticated HTTP Google calls with HTTPS plus server-side `GOOGLE_MAPS_API_KEY`/`GOOGLE_GEOCODING_API_KEY`."
   },
   {
     "legacyPhp": "Front/templates/admin/holiday_calendar.php",
@@ -16276,11 +16276,11 @@
   {
     "legacyPhp": "Front/templates/admin/pages/forbidden.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/pages/forbidden.php",
+    "status": "restored - legacy privilege-denied alias restored",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/pages/forbidden.php` now renders the same standalone dark Forbidden screen as the root legacy forbidden page."
   },
   {
     "legacyPhp": "Front/templates/admin/parent_user.php",
@@ -16887,11 +16887,11 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/forbidden.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/users/admin/page/forbidden.php",
+    "status": "restored - legacy privilege-denied alias restored",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/users/admin/page/forbidden.php` now renders the same standalone dark Forbidden screen as the root legacy forbidden page."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/general-options.php",
