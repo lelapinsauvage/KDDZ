@@ -2,17 +2,38 @@ import { getFoodCalendarMonth, getFoods } from "@/lib/actions/food";
 import { getBranches } from "@/lib/actions/branches";
 import { FoodCalendarClient } from "./food-calendar-client";
 
-export default async function FoodCalendarPage() {
+interface PageProps {
+  searchParams: Promise<{ branch?: string; month?: string; year?: string }>;
+}
+
+function parseMonth(value?: string) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 1 && parsed <= 12 ? parsed : null;
+}
+
+function parseYear(value?: string) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 1970 && parsed <= 2100
+    ? parsed
+    : null;
+}
+
+export default async function FoodCalendarPage({ searchParams }: PageProps) {
+  const params = await searchParams;
   const branchesResult = await getBranches();
   const branches = (branchesResult.data ?? []) as Array<{
     id: string;
     name: string;
   }>;
 
-  const defaultBranchId = branches[0]?.id ?? "";
+  const requestedBranchId = params.branch?.trim();
+  const defaultBranchId =
+    requestedBranchId && branches.some((branch) => branch.id === requestedBranchId)
+      ? requestedBranchId
+      : branches[0]?.id ?? "";
   const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
+  const year = parseYear(params.year) ?? now.getFullYear();
+  const month = parseMonth(params.month) ?? now.getMonth() + 1;
 
   const [calendarResult, { foods }] = await Promise.all([
     defaultBranchId

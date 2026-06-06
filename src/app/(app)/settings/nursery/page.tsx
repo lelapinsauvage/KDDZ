@@ -7,12 +7,17 @@ import { BranchComplianceForm } from "@/components/branches/branch-compliance-fo
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import NurseryClient from "./nursery-client";
 
-export default async function NurseryInfoPage() {
+interface PageProps {
+  searchParams: Promise<{ branch?: string }>;
+}
+
+export default async function NurseryInfoPage({ searchParams }: PageProps) {
+  const params = await searchParams;
   const session = await auth();
   const userBranchId = session?.user?.branchId ?? null;
 
   // If user has no branch, try to get first branch
-  let branchId = userBranchId;
+  let branchId = params.branch?.trim() || userBranchId;
   if (!branchId) {
     const branchesResult = await getBranches();
     const branches = Array.isArray(branchesResult.data) ? branchesResult.data : [];

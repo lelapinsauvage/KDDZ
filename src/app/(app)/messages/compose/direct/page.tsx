@@ -3,7 +3,13 @@ import { getParentUsers } from "@/lib/actions/parent-users";
 import { DirectMessageClient } from "./direct-message-client";
 import type { RecipientType } from "@/generated/prisma/enums";
 
-export default async function DirectMessagePage() {
+interface PageProps {
+  searchParams: Promise<{ recipientId?: string }>;
+}
+
+export default async function DirectMessagePage({ searchParams }: PageProps) {
+  const { recipientId } = await searchParams;
+
   // Fetch individual recipients from DB
   const [teachersRes, nursesRes, doctorsRes, managersRes, parentRes] = await Promise.all([
     getEmployees("teacher", { isActive: true, pageSize: 200 }),
@@ -68,5 +74,15 @@ export default async function DirectMessagePage() {
     })),
   ];
 
-  return <DirectMessageClient recipients={recipients} />;
+  const defaultRecipientId =
+    recipientId && recipients.some((recipient) => recipient.id === recipientId)
+      ? recipientId
+      : undefined;
+
+  return (
+    <DirectMessageClient
+      recipients={recipients}
+      defaultRecipientId={defaultRecipientId}
+    />
+  );
 }

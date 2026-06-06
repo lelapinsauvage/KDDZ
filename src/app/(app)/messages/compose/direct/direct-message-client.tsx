@@ -28,11 +28,15 @@ interface Recipient {
 
 interface DirectMessageClientProps {
   recipients: Recipient[];
+  defaultRecipientId?: string;
 }
 
-export function DirectMessageClient({ recipients }: DirectMessageClientProps) {
+export function DirectMessageClient({
+  recipients,
+  defaultRecipientId,
+}: DirectMessageClientProps) {
   const router = useRouter();
-  const [recipient, setRecipient] = useState("");
+  const [recipient, setRecipient] = useState(defaultRecipientId ?? "");
   const [recipientSearch, setRecipientSearch] = useState("");
   const [nature, setNature] = useState("General");
   const [subject, setSubject] = useState("");

@@ -33,12 +33,14 @@ export const authConfig = {
     async authorized({ auth, request }) {
       const isLoggedIn = !!auth?.user;
       const { pathname } = request.nextUrl;
+      const isParentPortal =
+        pathname === "/parent" || pathname.startsWith("/parent/");
 
       // Public routes
       const isPublic =
         pathname.startsWith("/login") ||
         pathname.startsWith("/forgot") ||
-        pathname.startsWith("/parent") ||
+        isParentPortal ||
         pathname.startsWith("/api/auth") ||
         pathname.startsWith("/api/cron") ||
         pathname.startsWith("/api/parent");
