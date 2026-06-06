@@ -10,7 +10,7 @@ Parent web PWA status:
 
 | Legacy Endpoint | Request Fields | Modern Endpoint | Status | Referenced By iOS | Referenced By Android |
 | --- | --- | --- | --- | --- | --- |
-| ws/absence.php | usites | /api/parent/absence/[childId] | partial - used by /parent PWA, verify JSON contract | yes | yes |
+| ws/absence.php | usites | /api/parent/absence/[childId] | partial - used by /parent PWA; legacy POST `usites`, header/count, raw `t_absent_report` fields, and migrated legacy ids restored; verify final native parser tolerance | yes | yes |
 | ws/birthdays_alarms.php | pid | /api/parent/alarms/birthdays | partial - legacy array shape, POST pid guard, legacy ids/status/datetime/href, and level-0 filtering restored; verify parent delivery push | no | no |
 | ws/daily.php | usites | /api/parent/daily/[childId] | partial - legacy POST `usites`, header/count, numeric report ids, raw daily field names, flattened fever pairs, first milk row, and food names restored; verify final native parser tolerance | no | yes |
 | ws/events_alarms.php | pid | /api/parent/alarms/events | partial - legacy event field names, POST pid guard, and multi-branch filtering restored; verify parent delivery push | no | no |

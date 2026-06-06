@@ -105,6 +105,22 @@ export async function migrateAbsences(prisma: PrismaClient) {
       },
     });
     if (existing) {
+      if (!dryRun && !existing.legacyData) {
+        await prisma.absenceReport.update({
+          where: { id: existing.id },
+          data: {
+            sourceDatabase,
+            legacyKey: legacyKey(sourceDatabase, "t_absent_report", row.report_id),
+            legacyId: row.report_id,
+            legacyChildId: Number.parseInt(String(row.child_id), 10) || null,
+            legacyData: {
+              sourceDatabase,
+              sourceTable: "t_absent_report",
+              ...row,
+            },
+          },
+        });
+      }
       setMapping("absence_report", row.report_id, existing.id);
       skipped++;
       continue;
@@ -118,6 +134,10 @@ export async function migrateAbsences(prisma: PrismaClient) {
         data: {
           id: newId,
           childId,
+          sourceDatabase,
+          legacyKey: legacyKey(sourceDatabase, "t_absent_report", row.report_id),
+          legacyId: row.report_id,
+          legacyChildId: Number.parseInt(String(row.child_id), 10) || null,
           date,
           reason: cleanString(row.ab_reason),
           absentFrom: parseDate(row.ab_from),
@@ -126,6 +146,11 @@ export async function migrateAbsences(prisma: PrismaClient) {
           hospitalName: cleanString(row.hos_name),
           doctorName: cleanString(row.dr_name),
           status: toBool(row.is_rep_draft) ? "PENDING" : "APPROVED",
+          legacyData: {
+            sourceDatabase,
+            sourceTable: "t_absent_report",
+            ...row,
+          },
           createdById,
           createdAt: parseDate(row.datetime) ?? new Date(),
         },

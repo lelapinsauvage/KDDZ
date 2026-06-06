@@ -1314,9 +1314,21 @@ async function migrateAbsenceReports(
     records.push({
       id: randomUUID(),
       childId: getUUID("t_child", parseInt(childOldId, 10)),
+      sourceDatabase: "kiddzonl_garderie",
+      legacyKey: `kiddzonl_garderie:t_absent_report:${colInt(row, "report_id", columns)}`,
+      legacyId: colInt(row, "report_id", columns),
+      legacyChildId: parseInt(childOldId, 10),
       date,
       reason,
-      status: "APPROVED" as const,
+      absentFrom: parseDate(colStr(row, "ab_from", columns)),
+      absentTo: parseDate(colStr(row, "ab_to", columns)),
+      hospitalized: colBool(row, "attend_hos", columns),
+      hospitalName: colStr(row, "hos_name", columns),
+      doctorName: colStr(row, "dr_name", columns),
+      status: colBool(row, "is_rep_draft", columns)
+        ? ("PENDING" as const)
+        : ("APPROVED" as const),
+      legacyData: legacyRowData(row, columns),
       createdAt: parseDate(colStr(row, "datetime", columns)) || NOW,
       updatedAt: NOW,
     });

@@ -146,7 +146,7 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_daily_fever` | DailyReportFever |
 | `t_daily_milk` | DailyReportMilk |
 | `t_daily_attachments` | DailyReportAttachment |
-| `t_absent_report` | AbsenceReport |
+| `t_absent_report` | AbsenceReport, including raw `legacyData` for parent mobile `absence.php` parity |
 | `t_absent_attachments` | AbsenceAttachment |
 | `callparent` | CallCauseCategory |
 | `callcauses` | CallCause |

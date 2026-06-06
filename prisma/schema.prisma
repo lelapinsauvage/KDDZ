@@ -1604,24 +1604,32 @@ model DailyReportAttachment {
 // ─────────────────────────────────────────────
 
 model AbsenceReport {
-  id           String        @id @default(uuid()) @db.Uuid
-  childId      String        @db.Uuid
-  date         DateTime      @db.Date
-  reason       String?       @db.Text
-  absentFrom   DateTime?     @db.Date
-  absentTo     DateTime?     @db.Date
-  hospitalized Boolean       @default(false)
-  hospitalName String?
-  doctorName   String?
-  status       AbsenceStatus @default(PENDING)
-  createdById  String?       @db.Uuid
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id            String        @id @default(uuid()) @db.Uuid
+  childId       String        @db.Uuid
+  sourceDatabase String?
+  legacyKey     String?       @unique
+  legacyId      Int?
+  legacyChildId Int?
+  date          DateTime      @db.Date
+  reason        String?       @db.Text
+  absentFrom    DateTime?     @db.Date
+  absentTo      DateTime?     @db.Date
+  hospitalized  Boolean       @default(false)
+  hospitalName  String?
+  doctorName    String?
+  status        AbsenceStatus @default(PENDING)
+  legacyData    Json?
+  createdById   String?       @db.Uuid
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
   child       Child               @relation(fields: [childId], references: [id], onDelete: Cascade)
   createdBy   User?               @relation("AbsenceReportCreator", fields: [createdById], references: [id], onDelete: SetNull)
   attachments AbsenceAttachment[]
 
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyChildId])
   @@index([childId])
   @@index([date])
   @@index([status])
