@@ -68,8 +68,8 @@
   {
     "legacyPhp": "Front/templates/admin/Doctor_Details.php",
     "legacyJs": "Front/templates/admin/js/Doctor_Details.js",
-    "modernRoute": "/employees/doctors/[id]",
-    "status": "partial - legacy dashboard fields, KPIs, summaries, and links restored; modal/year audit remains",
+    "modernRoute": "/Doctor_Details.php, /employees/doctors/[id]",
+    "status": "partial - legacy doctor detail bridge restored; field/action audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -77,13 +77,13 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Restored child dashboard parity for core profile fields and actions: child number, active status, nationality, branch, class, mother/father phone, gender, language, joining date, joined-from duration, joining/current age, bus, lunch, allergy, milk/portion/scoop, diapers, authorized pickup/emergency contacts, quick links for call report, accident report, child calendar, and message compose. Restored KPI navigation for calls, accidents, payments, daily reports, absence reports, missing daily/absent reports, medical report counts, and assessment counts; dashboard summaries now show legacy Breakfast/Lunch/Dessert food names with status/actions, Absence Date/Reason/From/To/Action, four medical rows including Vaccination Report, and assessment summaries. Remaining work is exact missing-report modal drilldowns from `getMissingReports`/`getMissingAbsentReports`, exact legacy school-year/database switch behavior from `db_curr`, and TableTools copy/PDF/XLS/print visual parity."
+    "verification": "`/Doctor_Details.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy doctor ids into the modern doctor detail page. Remaining work is exact detail field/action audit against Doctor_Details.php/Doctor_Details.js."
   },
   {
     "legacyPhp": "Front/templates/admin/Manager_Details.php",
     "legacyJs": "Front/templates/admin/js/Manager_Details.js",
-    "modernRoute": "/employees/managers/[id]",
-    "status": "restored - legacy general medical form workflow restored",
+    "modernRoute": "/Manager_Details.php, /employees/managers/[id]",
+    "status": "partial - legacy manager detail bridge restored; field/action audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -91,7 +91,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Restored the legacy Medical Form - General Information workflow: child profile context, Saved Drs lookup, doctor address fields (`Dfname`, `Dlname`, Mouhafaza, Quadaa, Region, City, Street, Building, Telephone, Remarks, Latitude, Longitude), insurance Yes/No toggle with legacy insurance presets and expiry, disability/medical case/medication/surgical/allergy repeating rows with legacy datalist values and read-only current dates, medication time/expiry, permissive Save As Draft mapped to DRAFT/`is_rep_draft = 1`, submitted Save mapped to SUBMITTED/`is_rep_draft = 0`, preservation of `t_form_1`/`t_med_forms_info` keys in `MedicalForm.data`, imported entry hydration, and titled attachments with `images/MedForms` fallback previews. Remaining work is final logged-in visual smoke after local database/runtime state is clean."
+    "verification": "`/Manager_Details.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy manager ids into the modern manager detail page. Remaining work is exact detail field/action audit against Manager_Details.php/Manager_Details.js."
   },
   {
     "legacyPhp": "Front/templates/admin/Medical_form1.php",
@@ -303,8 +303,8 @@
   {
     "legacyPhp": "Front/templates/admin/Nurse_Details.php",
     "legacyJs": "Front/templates/admin/js/Nurse_Details.js",
-    "modernRoute": "/employees/nurses/[id]",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "/Nurse_Details.php, /employees/nurses/[id]",
+    "status": "partial - legacy nurse detail bridge restored; field/action audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -312,7 +312,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/Nurse_Details.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy nurse ids into the modern nurse detail page. Remaining work is exact detail field/action audit against Nurse_Details.php/Nurse_Details.js."
   },
   {
     "legacyPhp": "Front/templates/admin/PA_logs.php",
@@ -334,8 +334,8 @@
   {
     "legacyPhp": "Front/templates/admin/Teacher_Details.php",
     "legacyJs": "Front/templates/admin/js/Teacher_Details.js",
-    "modernRoute": "/employees/teachers/[id]",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "/Teacher_Details.php, /employees/teachers/[id]",
+    "status": "partial - legacy teacher detail bridge restored; field/action audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -343,7 +343,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/Teacher_Details.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy teacher ids into the modern teacher detail page. Remaining work is exact detail field/action audit against Teacher_Details.php/Teacher_Details.js."
   },
   {
     "legacyPhp": "Front/templates/admin/Zones_Management.php",
@@ -16052,14 +16052,14 @@
   {
     "legacyPhp": "Front/templates/admin/doctors.php",
     "legacyJs": "Front/templates/admin/js/doctors.js",
-    "modernRoute": "/employees/doctors",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "/doctors.php, /employees/doctors",
+    "status": "partial - legacy doctors listing bridge restored; field/action audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/doctors.php` now redirects to the modern doctors listing. Remaining work is exact roster columns, filters, bulk actions, exports, and modal behavior audit against doctors.php/doctors.js."
   },
   {
     "legacyPhp": "Front/templates/admin/exportdb.php",
@@ -16176,14 +16176,14 @@
   {
     "legacyPhp": "Front/templates/admin/managers.php",
     "legacyJs": "Front/templates/admin/js/managers.js",
-    "modernRoute": "/employees/managers",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "/managers.php, /employees/managers",
+    "status": "partial - legacy managers listing bridge restored; field/action audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/managers.php` now redirects to the modern managers listing. Remaining work is exact roster columns, filters, bulk actions, exports, and modal behavior audit against managers.php/managers.js."
   },
   {
     "legacyPhp": "Front/templates/admin/message_portal.php",
@@ -16257,14 +16257,14 @@
   {
     "legacyPhp": "Front/templates/admin/nurses.php",
     "legacyJs": "Front/templates/admin/js/nurses.js",
-    "modernRoute": "/employees/nurses",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "/nurses.php, /employees/nurses",
+    "status": "partial - legacy nurses listing bridge restored; field/action audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/nurses.php` now redirects to the modern nurses listing. Remaining work is exact roster columns, filters, bulk actions, exports, and modal behavior audit against nurses.php/nurses.js."
   },
   {
     "legacyPhp": "Front/templates/admin/pages/forbidden.php",
@@ -16370,8 +16370,8 @@
   {
     "legacyPhp": "Front/templates/admin/teachers.php",
     "legacyJs": "Front/templates/admin/js/teachers.js",
-    "modernRoute": "/employees/teachers",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "/teachers.php, /employees/teachers",
+    "status": "partial - legacy teachers listing bridge restored; field/action audit remains",
     "legacyTablesMentioned": [
       "Form",
       "Selected",
@@ -16379,7 +16379,7 @@
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/teachers.php` now redirects to the modern teachers listing. Remaining work is exact roster columns, filters, bulk actions, exports, and modal behavior audit against teachers.php/teachers.js."
   },
   {
     "legacyPhp": "Front/templates/admin/users/_install/footer.php",
