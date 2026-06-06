@@ -1,5 +1,11 @@
 import { redirect } from "next/navigation";
+import { withLegacySearchQuery } from "@/lib/legacy-query";
 
-export default function LegacyAreasRedirect() {
-  redirect("/settings/areas");
+interface PageProps {
+  searchParams: Promise<{ q?: string | string[] }>;
+}
+
+export default async function LegacyAreasRedirect({ searchParams }: PageProps) {
+  const { q } = await searchParams;
+  redirect(withLegacySearchQuery("/settings/areas", q));
 }

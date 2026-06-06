@@ -1,4 +1,5 @@
 import { getRegions } from "@/lib/actions/settings";
+import { normalizeLegacySearchQuery } from "@/lib/legacy-query";
 import { ZonesClient } from "./zones-client";
 
 interface ProvinceData {
@@ -14,7 +15,12 @@ interface ProvinceData {
   }[];
 }
 
-export default async function ZonesManagementPage() {
+export default async function ZonesManagementPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string | string[] }>;
+}) {
+  const params = await searchParams;
   const result = await getRegions();
   const provinces: ProvinceData[] = Array.isArray(result.data) ? result.data : [];
 
@@ -30,5 +36,10 @@ export default async function ZonesManagementPage() {
     regionCount: p.districts.reduce((sum, d) => sum + d._count.regions, 0),
   }));
 
-  return <ZonesClient initialZones={zones} />;
+  return (
+    <ZonesClient
+      initialZones={zones}
+      initialSearchQuery={normalizeLegacySearchQuery(params.q)}
+    />
+  );
 }

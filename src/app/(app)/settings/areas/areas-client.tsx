@@ -56,9 +56,10 @@ interface MouhafazaOption {
 interface AreasClientProps {
   initialAreas: Area[];
   zoneOptions: MouhafazaOption[];
+  initialSearchQuery?: string;
 }
 
-export function AreasClient({ initialAreas, zoneOptions }: AreasClientProps) {
+export function AreasClient({ initialAreas, zoneOptions, initialSearchQuery }: AreasClientProps) {
   const [areas, setAreas] = useState(initialAreas);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
@@ -209,7 +210,14 @@ export function AreasClient({ initialAreas, zoneOptions }: AreasClientProps) {
       />
 
       <div className="space-y-4 p-4 md:p-6">
-        <DataTable columns={columns} data={areas} searchKey="name" searchPlaceholder="Search quadaa..." />
+        <DataTable
+          columns={columns}
+          data={areas}
+          searchKey="name"
+          searchPlaceholder="Search quadaa..."
+          initialSearchValue={initialSearchQuery}
+          searchMode="global"
+        />
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

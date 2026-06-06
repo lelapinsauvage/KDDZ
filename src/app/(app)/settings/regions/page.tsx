@@ -1,4 +1,5 @@
 import { getRegions } from "@/lib/actions/settings";
+import { normalizeLegacySearchQuery } from "@/lib/legacy-query";
 import { RegionsClient } from "./regions-client";
 
 interface RegionData {
@@ -31,7 +32,12 @@ function formatDateFilterValue(value: string | Date) {
   return new Date(value).toISOString().slice(0, 10);
 }
 
-export default async function RegionsManagementPage() {
+export default async function RegionsManagementPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string | string[] }>;
+}) {
+  const resultParams = await searchParams;
   const result = await getRegions();
   const provinces: ProvinceData[] = Array.isArray(result.data) ? result.data : [];
 
@@ -56,5 +62,11 @@ export default async function RegionsManagementPage() {
     ),
   );
 
-  return <RegionsClient initialRegions={regions} quadaaOptions={quadaaOptions} />;
+  return (
+    <RegionsClient
+      initialRegions={regions}
+      quadaaOptions={quadaaOptions}
+      initialSearchQuery={normalizeLegacySearchQuery(resultParams.q)}
+    />
+  );
 }

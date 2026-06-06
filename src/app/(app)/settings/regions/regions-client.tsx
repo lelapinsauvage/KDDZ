@@ -57,6 +57,7 @@ interface QuadaaOption {
 interface RegionsClientProps {
   initialRegions: RegionRow[];
   quadaaOptions: QuadaaOption[];
+  initialSearchQuery?: string;
 }
 
 interface RegionFilters {
@@ -102,7 +103,11 @@ function includesFilter(value: string | number, filter: string) {
   return String(value).toLowerCase().includes(filter.trim().toLowerCase());
 }
 
-export function RegionsClient({ initialRegions, quadaaOptions }: RegionsClientProps) {
+export function RegionsClient({
+  initialRegions,
+  quadaaOptions,
+  initialSearchQuery,
+}: RegionsClientProps) {
   const [regions, setRegions] = useState(initialRegions);
   const [filters, setFilters] = useState<RegionFilters>(emptyFilters);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -358,6 +363,8 @@ export function RegionsClient({ initialRegions, quadaaOptions }: RegionsClientPr
           data={filteredRegions}
           searchKey="name"
           searchPlaceholder="Search regions..."
+          initialSearchValue={initialSearchQuery}
+          searchMode="global"
         />
       </div>
 

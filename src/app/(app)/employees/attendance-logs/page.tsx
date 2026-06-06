@@ -1,11 +1,12 @@
 import { getAttendanceLogs } from "@/lib/actions/employee-events";
 import { getEmployees } from "@/lib/actions/employees";
+import { normalizeLegacySearchQuery } from "@/lib/legacy-query";
 import { AttendanceLogsClient } from "./attendance-logs-client";
 
 export default async function AttendanceLogsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string; q?: string; to?: string }>;
+  searchParams: Promise<{ from?: string; q?: string | string[]; to?: string }>;
 }) {
   const params = await searchParams;
   // Fetch logs and employees in parallel
@@ -108,6 +109,7 @@ export default async function AttendanceLogsPage({
       employees={employees}
       initialDateFrom={params.from}
       initialDateTo={params.to}
+      initialSearchQuery={normalizeLegacySearchQuery(params.q)}
     />
   );
 }

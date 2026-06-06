@@ -56,6 +56,23 @@ interface AttendanceLogsClientProps {
   employees: EmployeeOption[];
   initialDateFrom?: string;
   initialDateTo?: string;
+  initialSearchQuery?: string;
+}
+
+function initialEmployeeFilter(employees: EmployeeOption[], query?: string) {
+  const normalizedQuery = query?.trim().toLowerCase();
+  if (!normalizedQuery) return "ALL";
+
+  const exactMatch = employees.find((employee) => {
+    const label = `${employee.name} (${employee.role})`.toLowerCase();
+    return (
+      employee.id.toLowerCase() === normalizedQuery ||
+      employee.name.toLowerCase() === normalizedQuery ||
+      label === normalizedQuery
+    );
+  });
+
+  return exactMatch?.id ?? "ALL";
 }
 
 // ---------------------------------------------------------------------------
@@ -67,13 +84,16 @@ export function AttendanceLogsClient({
   employees,
   initialDateFrom,
   initialDateTo,
+  initialSearchQuery,
 }: AttendanceLogsClientProps) {
   const [isPending, startTransition] = useTransition();
 
   const [logs, setLogs] = useState(initialLogs);
   const [dateFrom, setDateFrom] = useState(initialDateFrom ?? "");
   const [dateTo, setDateTo] = useState(initialDateTo ?? "");
-  const [employeeFilter, setEmployeeFilter] = useState("ALL");
+  const [employeeFilter, setEmployeeFilter] = useState(() =>
+    initialEmployeeFilter(employees, initialSearchQuery),
+  );
   const [statusFilter, setStatusFilter] = useState("ALL");
 
   // Edit dialog
@@ -322,6 +342,8 @@ export function AttendanceLogsClient({
             data={filteredLogs}
             searchKey="employeeName"
             searchPlaceholder="Search logs..."
+            initialSearchValue={initialSearchQuery}
+            searchMode="global"
           />
         ) : (
           <div className="py-12 text-center text-sm text-muted-foreground">

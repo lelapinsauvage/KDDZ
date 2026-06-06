@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -102,10 +102,52 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   searchKey?: string;
   searchPlaceholder?: string;
+  initialSearchValue?: string;
+  searchMode?: "column" | "global";
   emptyState?: React.ReactNode;
   isLoading?: boolean;
   onRowClick?: (row: TData) => void;
   bulkActions?: BulkAction<TData>[];
+}
+
+const GLOBAL_FILTER_ID = "__globalSearch";
+
+function collectSearchValues(value: unknown, depth = 0): string[] {
+  if (value === null || value === undefined) return [];
+  if (value instanceof Date) return [value.toISOString()];
+
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean"
+  ) {
+    return [String(value)];
+  }
+
+  if (Array.isArray(value)) {
+    return depth >= 2
+      ? []
+      : value.flatMap((item) => collectSearchValues(item, depth + 1));
+  }
+
+  if (typeof value === "object") {
+    return depth >= 2
+      ? []
+      : Object.values(value as Record<string, unknown>).flatMap((item) =>
+          collectSearchValues(item, depth + 1),
+        );
+  }
+
+  return [];
+}
+
+function rowMatchesGlobalSearch(row: unknown, filterValue: unknown) {
+  const query = String(filterValue ?? "").trim().toLowerCase();
+  if (!query) return true;
+
+  return collectSearchValues(row).some((value) =>
+    value.toLowerCase().includes(query),
+  );
 }
 
 // ── DataTable Component ───────────────────────
@@ -115,13 +157,22 @@ export function DataTable<TData, TValue>({
   data,
   searchKey,
   searchPlaceholder = "Search...",
+  initialSearchValue,
+  searchMode = "column",
   emptyState,
   isLoading = false,
   onRowClick,
   bulkActions,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(() =>
+    searchKey && searchMode === "column" && initialSearchValue
+      ? [{ id: searchKey, value: initialSearchValue }]
+      : [],
+  );
+  const [globalFilter, setGlobalFilter] = useState(
+    searchMode === "global" ? (initialSearchValue ?? "") : "",
+  );
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
@@ -163,17 +214,28 @@ export function DataTable<TData, TValue>({
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    globalFilterFn: (row, _columnId, filterValue) =>
+      rowMatchesGlobalSearch(row.original, filterValue),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
-    state: { sorting, columnFilters, columnVisibility, rowSelection },
+    state: { sorting, columnFilters, globalFilter, columnVisibility, rowSelection },
   });
 
   const selectedRows = table.getFilteredSelectedRowModel().rows;
   const hasSelection = selectedRows.length > 0;
-  const activeFilters = columnFilters.filter(
-    (f) => f.value !== "" && f.value !== undefined && f.value !== "ALL"
+  const activeFilters = useMemo(
+    () => [
+      ...(searchMode === "global" && String(globalFilter).trim()
+        ? [{ id: GLOBAL_FILTER_ID, value: globalFilter }]
+        : []),
+      ...columnFilters.filter(
+        (f) => f.value !== "" && f.value !== undefined && f.value !== "ALL",
+      ),
+    ],
+    [columnFilters, globalFilter, searchMode],
   );
 
   const toggleableColumns = table
@@ -186,6 +248,11 @@ export function DataTable<TData, TValue>({
 
   const removeFilter = useCallback(
     (columnId: string) => {
+      if (columnId === GLOBAL_FILTER_ID) {
+        setGlobalFilter("");
+        return;
+      }
+
       table.getColumn(columnId)?.setFilterValue(undefined);
     },
     [table]
@@ -264,11 +331,17 @@ export function DataTable<TData, TValue>({
             <Input
               placeholder={searchPlaceholder}
               value={
-                (table.getColumn(searchKey)?.getFilterValue() as string) ?? ""
+                searchMode === "global"
+                  ? globalFilter
+                  : ((table.getColumn(searchKey)?.getFilterValue() as string) ?? "")
               }
-              onChange={(e) =>
-                table.getColumn(searchKey)?.setFilterValue(e.target.value)
-              }
+              onChange={(e) => {
+                if (searchMode === "global") {
+                  setGlobalFilter(e.target.value);
+                } else {
+                  table.getColumn(searchKey)?.setFilterValue(e.target.value);
+                }
+              }}
               className="pl-9"
             />
           </div>
@@ -320,10 +393,13 @@ export function DataTable<TData, TValue>({
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-xs text-muted-foreground">Filters:</span>
           {activeFilters.map((filter) => {
-            const label = filter.id
-              .replace(/([A-Z])/g, " $1")
-              .replace(/^./, (s) => s.toUpperCase())
-              .trim();
+            const label =
+              filter.id === GLOBAL_FILTER_ID
+                ? "Search"
+                : filter.id
+                    .replace(/([A-Z])/g, " $1")
+                    .replace(/^./, (s) => s.toUpperCase())
+                    .trim();
             return (
               <Badge
                 key={filter.id}

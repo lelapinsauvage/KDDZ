@@ -43,9 +43,10 @@ interface Zone {
 
 interface ZonesClientProps {
   initialZones: Zone[];
+  initialSearchQuery?: string;
 }
 
-export function ZonesClient({ initialZones }: ZonesClientProps) {
+export function ZonesClient({ initialZones, initialSearchQuery }: ZonesClientProps) {
   const [zones, setZones] = useState(initialZones);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
@@ -189,7 +190,14 @@ export function ZonesClient({ initialZones }: ZonesClientProps) {
       <div className="p-4 md:p-6">
         <Card>
           <CardContent className="p-0">
-            <DataTable columns={columns} data={zones} searchKey="name" searchPlaceholder="Search mouhafazat..." />
+            <DataTable
+              columns={columns}
+              data={zones}
+              searchKey="name"
+              searchPlaceholder="Search mouhafazat..."
+              initialSearchValue={initialSearchQuery}
+              searchMode="global"
+            />
           </CardContent>
         </Card>
       </div>
