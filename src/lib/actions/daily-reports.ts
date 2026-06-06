@@ -25,6 +25,7 @@ interface GetDailyReportsParams {
 }
 
 const removeAttachmentIdsSchema = z.array(z.string().uuid()).max(50);
+const approveDailyReportsSchema = z.array(z.string().uuid()).min(1).max(200);
 
 function parseRemoveAttachmentIds(value: unknown): string[] {
   if (typeof value !== "string" || value.trim() === "") {
@@ -81,6 +82,28 @@ function dailyAttachmentCreates(
         "attachment",
       fileUrl: attachment.fileUrl!,
     }));
+}
+
+function legacyDailyValue(
+  legacyData: Prisma.JsonValue | null | undefined,
+  key: string,
+) {
+  if (!legacyData || typeof legacyData !== "object" || Array.isArray(legacyData)) {
+    return null;
+  }
+  const value = (legacyData as Record<string, unknown>)[key];
+  return typeof value === "string" ? value : null;
+}
+
+function isLegacyDraftApprovable(report: {
+  legacyData: Prisma.JsonValue | null;
+}) {
+  const legacyStatus = legacyDailyValue(report.legacyData, "status");
+  if (legacyStatus !== "present") return true;
+
+  const breakfastPortion = legacyDailyValue(report.legacyData, "breakf");
+  const lunchPortion = legacyDailyValue(report.legacyData, "lunchf");
+  return breakfastPortion !== "undefined" && lunchPortion !== "undefined";
 }
 
 // ─────────────────────────────────────────────
@@ -518,6 +541,67 @@ export async function submitDailyReport(id: string) {
   } catch (error) {
     console.error("submitDailyReport error:", error);
     return { error: "Failed to submit daily report" };
+  }
+}
+
+// ─────────────────────────────────────────────
+// approveDailyReports — Legacy bulk draft approval
+// ─────────────────────────────────────────────
+
+export async function approveDailyReports(ids: string[]) {
+  const result = await requireOrgSafe();
+  if (!result.ok) return { success: false, error: result.error };
+  const { ctx } = result;
+
+  const parsed = approveDailyReportsSchema.safeParse(ids);
+  if (!parsed.success) {
+    return { success: false, error: "Select at least one valid draft report" };
+  }
+
+  try {
+    const reports = await db.dailyReport.findMany({
+      where: {
+        id: { in: parsed.data },
+        status: "DRAFT",
+        child: { branch: { organizationId: ctx.organizationId } },
+      },
+      select: {
+        id: true,
+        childId: true,
+        legacyData: true,
+      },
+    });
+
+    const approvableIds = reports
+      .filter((report) => isLegacyDraftApprovable(report))
+      .map((report) => report.id);
+
+    if (!approvableIds.length) {
+      return {
+        success: false,
+        error: "No selected draft reports are complete enough to approve",
+      };
+    }
+
+    await db.dailyReport.updateMany({
+      where: { id: { in: approvableIds } },
+      data: { status: "SUBMITTED" },
+    });
+
+    revalidatePath("/daily-reports");
+    revalidatePath("/daily-reports/drafts");
+    for (const report of reports) {
+      revalidatePath(`/children/${report.childId}/report`);
+    }
+
+    return {
+      success: true,
+      approved: approvableIds.length,
+      skipped: reports.length - approvableIds.length,
+    };
+  } catch (error) {
+    console.error("approveDailyReports error:", error);
+    return { success: false, error: "Failed to approve draft reports" };
   }
 }
 
