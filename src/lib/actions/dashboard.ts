@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { requireOrg } from "@/lib/require-org";
 import { getOrgBranchIds } from "@/lib/verify-org-access";
+import { VALID_ASSESSMENT_TYPES } from "@/lib/assessment-types";
 import type { MedicalFormType, Prisma } from "@/generated/prisma/client";
 
 // ── Types ──────────────────────────────────────────
@@ -67,6 +68,25 @@ interface NormalizedDashboardFilters {
   schoolYearId: string | null;
 }
 
+const medicalReportTypes = [
+  "GENERAL",
+  "CONDITIONS",
+  "VISITS",
+  "VACCINATIONS",
+] satisfies MedicalFormType[];
+
+const assessmentTypes = [...VALID_ASSESSMENT_TYPES];
+
+const fallbackAssessmentWindows: Record<number, { minDays: number; maxDays: number }> = {
+  1: { minDays: 0, maxDays: 90 },
+  2: { minDays: 91, maxDays: 243 },
+  3: { minDays: 244, maxDays: 365 },
+  4: { minDays: 366, maxDays: 730 },
+  5: { minDays: 731, maxDays: 1095 },
+  6: { minDays: 1096, maxDays: 1460 },
+  7: { minDays: 1461, maxDays: 1825 },
+};
+
 function startOfDay(value: Date): Date {
   const date = new Date(value);
   date.setHours(0, 0, 0, 0);
@@ -86,12 +106,18 @@ function dateKey(value: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-function rangeDateKeys(start: Date, endExclusive: Date): string[] {
-  const keys: string[] = [];
+function monthDayKey(value: Date): string {
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const day = String(value.getDate()).padStart(2, "0");
+  return `${month}-${day}`;
+}
+
+function rangeDates(start: Date, endExclusive: Date): Date[] {
+  const dates: Date[] = [];
   for (let day = new Date(start); day < endExclusive; day = addDays(day, 1)) {
-    keys.push(dateKey(day));
+    dates.push(new Date(day));
   }
-  return keys;
+  return dates;
 }
 
 function normalizeDashboardFilters(filters?: DashboardMetricFilters): NormalizedDashboardFilters {
@@ -122,6 +148,24 @@ function childScope(
     ...(branchId ? { branchId } : { branch: { organizationId: orgId } }),
     ...(schoolYearId ? { schoolYearId } : {}),
   };
+}
+
+function ageInDays(dateOfBirth: Date | null, asOf: Date) {
+  if (!dateOfBirth) return null;
+  return Math.floor((asOf.getTime() - dateOfBirth.getTime()) / 86_400_000);
+}
+
+function isEligibleForAssessment(
+  child: { dateOfBirth: Date | null; enrollmentDate: Date | null },
+  asOf: Date,
+  minDays: number,
+  maxDays: number
+) {
+  const currentAge = ageInDays(child.dateOfBirth, asOf);
+  if (currentAge === null || currentAge < minDays) return false;
+
+  const joiningAge = ageInDays(child.dateOfBirth, child.enrollmentDate ?? asOf);
+  return joiningAge === null || joiningAge <= maxDays;
 }
 
 // ── Main briefing function ─────────────────────────
@@ -548,10 +592,11 @@ export async function getDailyComplianceStats(
     absences,
     absentChildIds,
     absenceReportChildIds,
+    holidays,
   ] = await Promise.all([
     db.child.findMany({
       where: { isActive: true, isDraft: false, ...childFilter },
-      select: { id: true },
+      select: { id: true, enrollmentDate: true },
     }),
     db.dailyReport.findMany({
       where: {
@@ -584,20 +629,65 @@ export async function getDailyComplianceStats(
       },
       select: { childId: true, date: true },
     }),
+    db.holiday.findMany({
+      where: {
+        isActive: true,
+        date: { lt: range.endExclusive },
+        AND: [
+          {
+            OR: [
+              { endDate: null },
+              { endDate: { gte: range.start } },
+            ],
+          },
+          {
+            OR: [
+              { branchId: null },
+              {
+                branch: branchId
+                  ? { id: branchId }
+                  : { organizationId: orgId },
+              },
+            ],
+          },
+        ],
+      },
+      select: { date: true, endDate: true, repeated: true },
+    }),
   ]);
 
-  const activeIds = activeChildren.map((c) => c.id);
   const reportedKeys = new Set(reports.map((r) => `${r.childId}:${dateKey(r.reportDate)}`));
   const absentKeys = new Set(absentChildIds.map((a) => `${a.childId}:${dateKey(a.date)}`));
   const absenceReportKeys = new Set(absenceReportChildIds.map((a) => `${a.childId}:${dateKey(a.date)}`));
-  const dayKeys = rangeDateKeys(range.start, range.endExclusive);
+  const days = rangeDates(range.start, range.endExclusive);
+  const holidayDateKeys = new Set<string>();
+  const repeatedHolidayKeys = new Set<string>();
+  for (const holiday of holidays) {
+    if (holiday.repeated) {
+      repeatedHolidayKeys.add(monthDayKey(holiday.date));
+      continue;
+    }
+
+    const holidayEnd = startOfDay(holiday.endDate ?? holiday.date);
+    for (let day = startOfDay(holiday.date); day <= holidayEnd; day = addDays(day, 1)) {
+      holidayDateKeys.add(dateKey(day));
+    }
+  }
 
   let missingDailyReports = 0;
   let missingAbsentReports = 0;
 
-  for (const id of activeIds) {
-    for (const day of dayKeys) {
-      const key = `${id}:${day}`;
+  for (const child of activeChildren) {
+    const enrollmentDate = child.enrollmentDate ? startOfDay(child.enrollmentDate) : null;
+
+    for (const day of days) {
+      if (day.getDay() === 0) continue;
+      if (holidayDateKeys.has(dateKey(day))) continue;
+      if (repeatedHolidayKeys.has(monthDayKey(day))) continue;
+      if (enrollmentDate && day < enrollmentDate) continue;
+
+      const dayKey = dateKey(day);
+      const key = `${child.id}:${dayKey}`;
       if (!reportedKeys.has(key) && !absentKeys.has(key)) {
         missingDailyReports++;
       }
@@ -642,6 +732,10 @@ export async function getActionCenterMetrics(
     child: childFilter,
     ...(range.schoolYearId ? { schoolYearId: range.schoolYearId } : {}),
   };
+  const medicalReportWhere: Prisma.MedicalFormWhereInput = {
+    formType: { in: medicalReportTypes },
+    child: childFilter,
+  };
 
   const [
     paymentsAgg,
@@ -663,25 +757,30 @@ export async function getActionCenterMetrics(
 
     // 2. Accident reports
     db.medicalForm.count({
-      where: { formType: "ACCIDENTS", createdAt: rangeWhere, child: childFilter },
+      where: {
+        formType: "ACCIDENTS",
+        status: { in: ["SUBMITTED", "REVIEWED"] },
+        createdAt: rangeWhere,
+        child: childFilter,
+      },
     }),
 
     // 3. Logged calls
     db.callLog.count({
-      where: { date: rangeWhere, child: childFilter },
+      where: { date: rangeWhere, isDraft: false, child: childFilter },
     }),
 
-    // 4. Completed medical visits
+    // 4. Completed medical reports
     db.medicalForm.count({
-      where: { formType: "VISITS", status: "SUBMITTED", createdAt: rangeWhere, child: childFilter },
+      where: { ...medicalReportWhere, status: { in: ["SUBMITTED", "REVIEWED"] } },
     }),
 
-    // 5. Missing medical visits (active children without a submitted visit)
-    countMissingForType(orgId, branchId, "VISITS", range),
+    // 5. Missing medical reports (active children without each legacy medical family)
+    countMissingMedicalReports(orgId, branchId, range),
 
     // 6. Completed assessments (SUBMITTED)
     db.assessment.count({
-      where: { status: "SUBMITTED", createdAt: rangeWhere, ...assessmentWhere },
+      where: { status: { in: ["SUBMITTED", "REVIEWED"] }, ...assessmentWhere },
     }),
 
     // 7. Missing assessments (active children without a submitted assessment)
@@ -694,12 +793,12 @@ export async function getActionCenterMetrics(
 
     // 9. Pending medical reports (DRAFT)
     db.medicalForm.count({
-      where: { status: "DRAFT", createdAt: rangeWhere, child: childFilter },
+      where: { ...medicalReportWhere, status: "DRAFT" },
     }),
 
     // 10. Pending assessments (DRAFT)
     db.assessment.count({
-      where: { status: "DRAFT", createdAt: rangeWhere, ...assessmentWhere },
+      where: { status: "DRAFT", ...assessmentWhere },
     }),
   ]);
 
@@ -717,26 +816,36 @@ export async function getActionCenterMetrics(
   };
 }
 
-async function countMissingForType(
+async function countMissingMedicalReports(
   orgId: string,
   branchId: string | null | undefined,
-  formType: MedicalFormType,
   range: NormalizedDashboardFilters
 ): Promise<number> {
   const childFilter = childScope(orgId, branchId, range.schoolYearId);
 
-  const [activeCount, submittedChildIds] = await Promise.all([
-    db.child.count({
+  const [activeChildren, forms] = await Promise.all([
+    db.child.findMany({
       where: { isActive: true, isDraft: false, ...childFilter },
+      select: { id: true },
     }),
     db.medicalForm.findMany({
-      where: { formType, status: "SUBMITTED", createdAt: dateRangeWhere(range), child: childFilter },
-      select: { childId: true },
-      distinct: ["childId"],
+      where: { formType: { in: medicalReportTypes }, child: childFilter },
+      select: { childId: true, formType: true },
     }),
   ]);
 
-  return Math.max(0, activeCount - submittedChildIds.length);
+  const covered = new Set(forms.map((form) => `${form.formType}:${form.childId}`));
+  let missing = 0;
+
+  for (const child of activeChildren) {
+    for (const type of medicalReportTypes) {
+      if (!covered.has(`${type}:${child.id}`)) {
+        missing++;
+      }
+    }
+  }
+
+  return missing;
 }
 
 async function countMissingAssessments(
@@ -746,23 +855,53 @@ async function countMissingAssessments(
 ): Promise<number> {
   const childFilter = childScope(orgId, branchId, range.schoolYearId);
 
-  const [activeCount, assessedChildIds] = await Promise.all([
-    db.child.count({
+  const [activeChildren, assessments, scheduleRules] = await Promise.all([
+    db.child.findMany({
       where: { isActive: true, isDraft: false, ...childFilter },
+      select: { id: true, dateOfBirth: true, enrollmentDate: true },
     }),
     db.assessment.findMany({
       where: {
-        status: "SUBMITTED",
-        createdAt: dateRangeWhere(range),
+        assessmentType: { in: assessmentTypes },
         child: childFilter,
         ...(range.schoolYearId ? { schoolYearId: range.schoolYearId } : {}),
       },
-      select: { childId: true },
-      distinct: ["childId"],
+      select: { childId: true, assessmentType: true },
+    }),
+    db.assessmentScheduleRule.findMany({
+      where: { organizationId: orgId, assessmentType: { in: assessmentTypes } },
+      select: { assessmentType: true, minimumAgeDays: true, maximumAgeDays: true },
     }),
   ]);
 
-  return Math.max(0, activeCount - assessedChildIds.length);
+  const ruleByType = new Map(
+    scheduleRules.map((rule) => [
+      rule.assessmentType,
+      {
+        minDays: Number(rule.minimumAgeDays ?? fallbackAssessmentWindows[rule.assessmentType]?.minDays ?? 0),
+        maxDays: Number(
+          rule.maximumAgeDays ??
+            fallbackAssessmentWindows[rule.assessmentType]?.maxDays ??
+            Number.MAX_SAFE_INTEGER
+        ),
+      },
+    ])
+  );
+  const assessed = new Set(assessments.map((assessment) => `${assessment.assessmentType}:${assessment.childId}`));
+  const today = startOfDay(new Date());
+  let missing = 0;
+
+  for (const type of assessmentTypes) {
+    const window = ruleByType.get(type) ?? fallbackAssessmentWindows[type];
+    for (const child of activeChildren) {
+      if (!isEligibleForAssessment(child, today, window.minDays, window.maxDays)) continue;
+      if (!assessed.has(`${type}:${child.id}`)) {
+        missing++;
+      }
+    }
+  }
+
+  return missing;
 }
 
 // ── Helpers ──────────────────────────────────────
