@@ -4,6 +4,7 @@ import { getHeaderAlarmCounts, getNotifications } from "./alarms";
 import { getUnreadMessageCount } from "./messages";
 import { db } from "@/lib/db";
 import { normalizeLegacyInternalHref } from "@/lib/legacy-href";
+import { getLegacyNotificationGateVisibility } from "@/lib/legacy-notification-gates";
 import { requireOrg } from "@/lib/require-org";
 import type { AlarmType } from "@/generated/prisma/enums";
 
@@ -126,15 +127,6 @@ const LEGACY_RECEIPT_FAMILIES: LegacyReceiptFamilyConfig[] = [
   },
 ];
 
-const LEGACY_ALARM_BAR_GATE_INDEX: Partial<
-  Record<LegacyReceiptFamilyConfig["key"], number>
-> = {
-  medicine: 0,
-  birthdays: 1,
-  assessments: 5,
-  medical: 7,
-};
-
 function emptyLegacyBadges(): HeaderLegacyBadgeFamily[] {
   return [
     {
@@ -177,46 +169,6 @@ function jsonRecord(value: unknown): Record<string, unknown> {
 
 function jsonString(value: unknown): string | null {
   return typeof value === "string" && value.trim() !== "" ? value : null;
-}
-
-function legacySettingRecord(
-  row: { legacyData: unknown; settingValue: string | null },
-) {
-  const data = jsonRecord(row.legacyData);
-  if (Object.keys(data).length > 0) return data;
-
-  const settingValue = row.settingValue?.trim();
-  if (!settingValue) return {};
-
-  try {
-    return jsonRecord(JSON.parse(settingValue));
-  } catch {
-    return {};
-  }
-}
-
-function legacyToggleEnabled(value: unknown, fallback = true) {
-  if (typeof value === "boolean") return value;
-  if (typeof value === "number") return value === 1;
-  if (typeof value === "string") {
-    const normalized = value.trim().toLowerCase();
-    if (["1", "true", "yes", "y", "on"].includes(normalized)) return true;
-    if (["0", "-1", "false", "no", "n", "off", ""].includes(normalized)) {
-      return false;
-    }
-  }
-  return fallback;
-}
-
-function legacyAlarmSettingEnabled(row: {
-  legacyData: unknown;
-  settingValue: string | null;
-}) {
-  const record = legacySettingRecord(row);
-  return legacyToggleEnabled(
-    record.alarms ?? record.status ?? row.settingValue,
-    true,
-  );
 }
 
 function legacyAlarmHref(defaultHref: string, legacyData: unknown) {
@@ -266,107 +218,32 @@ async function loadLegacyMessageBadge(userId: string, orgId: string) {
   } satisfies HeaderLegacyBadgeFamily;
 }
 
-type LegacyNotificationSettingRow = {
-  sourceDatabase: string;
-  legacyId: number;
-  settingValue: string | null;
-  legacyData: unknown;
-};
-
-async function loadOrganizationSourceDatabases(orgId: string) {
-  try {
-    const branches = await db.branch.findMany({
-      where: { organizationId: orgId, sourceDatabase: { not: null } },
-      select: { sourceDatabase: true },
-    });
-
-    return new Set(
-      branches.flatMap((branch) =>
-        branch.sourceDatabase ? [branch.sourceDatabase] : [],
-      ),
-    );
-  } catch {
-    return new Set<string>();
-  }
-}
-
-function sortLegacyNotificationRows(rows: LegacyNotificationSettingRow[]) {
-  return [...rows].sort((a, b) => {
-    const sourceCompare = a.sourceDatabase.localeCompare(b.sourceDatabase);
-    if (sourceCompare !== 0) return sourceCompare;
-    return a.legacyId - b.legacyId;
-  });
-}
-
-function chooseLegacyNotificationRows(
-  rows: LegacyNotificationSettingRow[],
-  sourceDatabases: Set<string>,
-) {
-  const exactRows = rows.filter((row) => sourceDatabases.has(row.sourceDatabase));
-  if (exactRows.length > 0) return sortLegacyNotificationRows(exactRows);
-
-  const rowsBySource = new Map<string, LegacyNotificationSettingRow[]>();
-  for (const row of rows) {
-    const sourceRows = rowsBySource.get(row.sourceDatabase) ?? [];
-    sourceRows.push(row);
-    rowsBySource.set(row.sourceDatabase, sourceRows);
-  }
-
-  const sources = Array.from(rowsBySource.keys());
-  const preferredSource =
-    sources.find((source) => source.toLowerCase().includes("users29sept")) ??
-    sources.find((source) => source.toLowerCase().includes("29sept")) ??
-    sources.find((source) => !source.toLowerCase().includes("2018")) ??
-    sources[0];
-
-  return preferredSource
-    ? sortLegacyNotificationRows(rowsBySource.get(preferredSource) ?? [])
-    : [];
-}
-
 async function loadLegacyAlarmBarGateKeys(orgId: string) {
-  try {
-    const [sourceDatabases, rows] = await Promise.all([
-      loadOrganizationSourceDatabases(orgId),
-      db.legacySetting.findMany({
-        where: { legacyTable: "t_notification_setting" },
-        orderBy: [{ sourceDatabase: "asc" }, { legacyId: "asc" }],
-        select: {
-          sourceDatabase: true,
-          legacyId: true,
-          settingValue: true,
-          legacyData: true,
-        },
-      }),
-    ]);
+  const gates = await getLegacyNotificationGateVisibility(orgId);
+  const visibleKeys = new Set<HeaderLegacyBadgeFamily["key"]>([
+    "messages",
+    "general",
+  ]);
 
-    if (rows.length === 0) return null;
+  if (gates.medicine) visibleKeys.add("medicine");
+  if (gates.birthdays) visibleKeys.add("birthdays");
+  if (gates.assessments) visibleKeys.add("assessments");
+  if (gates.medical) visibleKeys.add("medical");
 
-    const legacyRows = chooseLegacyNotificationRows(rows, sourceDatabases);
-    if (legacyRows.length === 0) return null;
+  return visibleKeys;
+}
 
-    const visibleKeys = new Set<HeaderLegacyBadgeFamily["key"]>([
-      "messages",
-      "general",
-    ]);
-
-    for (const family of LEGACY_RECEIPT_FAMILIES) {
-      const gateIndex = LEGACY_ALARM_BAR_GATE_INDEX[family.key];
-      if (gateIndex == null) {
-        visibleKeys.add(family.key);
-        continue;
-      }
-
-      const row = legacyRows[gateIndex];
-      if (!row || legacyAlarmSettingEnabled(row)) {
-        visibleKeys.add(family.key);
-      }
-    }
-
-    return visibleKeys;
-  } catch {
-    return null;
-  }
+async function loadVisibleLegacyReceiptBadges(
+  gateKeys: Set<HeaderLegacyBadgeFamily["key"]>,
+  userId: string,
+  orgId: string,
+) {
+  const visibleFamilies = LEGACY_RECEIPT_FAMILIES.filter((family) =>
+    gateKeys.has(family.key),
+  );
+  return Promise.all(
+    visibleFamilies.map((family) => loadLegacyReceiptBadge(family, userId, orgId)),
+  );
 }
 
 async function loadLegacyReceiptBadge(
@@ -420,13 +297,7 @@ async function loadLegacyBadges(userId: string, orgId: string) {
     loadLegacyMessageBadge(userId, orgId),
     loadLegacyAlarmBarGateKeys(orgId),
   ]);
-
-  const visibleFamilies = gateKeys
-    ? LEGACY_RECEIPT_FAMILIES.filter((family) => gateKeys.has(family.key))
-    : LEGACY_RECEIPT_FAMILIES;
-  const families = await Promise.all(
-    visibleFamilies.map((family) => loadLegacyReceiptBadge(family, userId, orgId)),
-  );
+  const families = await loadVisibleLegacyReceiptBadges(gateKeys, userId, orgId);
 
   return [messages, ...families];
 }

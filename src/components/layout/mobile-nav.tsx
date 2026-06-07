@@ -14,6 +14,7 @@ import {
 import { MobileMoreSheet } from "./mobile-more-sheet"
 import type { UserRole, SidebarClassInfo } from "./app-sidebar"
 import type { SidebarBadges } from "@/lib/actions/sidebar"
+import type { LegacyNotificationGateVisibility } from "@/lib/legacy-notification-gates"
 
 interface TabItem {
   label: string
@@ -60,9 +61,15 @@ interface MobileNavProps {
   userRole: UserRole
   classes?: SidebarClassInfo[]
   badges?: SidebarBadges
+  notificationGates?: LegacyNotificationGateVisibility | null
 }
 
-export function MobileNav({ userRole, classes, badges }: MobileNavProps) {
+export function MobileNav({
+  userRole,
+  classes,
+  badges,
+  notificationGates,
+}: MobileNavProps) {
   const pathname = usePathname()
   const tabs = getTabsForRole(userRole)
   const [moreOpen, setMoreOpen] = useState(false)
@@ -116,6 +123,7 @@ export function MobileNav({ userRole, classes, badges }: MobileNavProps) {
         userRole={userRole}
         classes={classes}
         badges={badges}
+        notificationGates={notificationGates}
       />
     </>
   )

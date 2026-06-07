@@ -73,6 +73,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import type { SidebarBadges } from "@/lib/actions/sidebar"
+import type {
+  LegacyNotificationGateKey,
+  LegacyNotificationGateVisibility,
+} from "@/lib/legacy-notification-gates"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -85,6 +89,7 @@ interface NavLeaf {
   href: string
   icon?: React.ComponentType<{ className?: string }>
   badgeKey?: keyof SidebarBadges
+  notificationGateKey?: LegacyNotificationGateKey
 }
 
 interface NavAccordionItem {
@@ -97,7 +102,13 @@ type NavItem = NavLeaf | NavAccordionItem
 
 /** Top-level section: either a flat link or an accordion with children */
 type NavSection =
-  | { label: string; icon: React.ComponentType<{ className?: string }>; href: string; badgeKey?: keyof SidebarBadges }
+  | {
+      label: string
+      icon: React.ComponentType<{ className?: string }>
+      href: string
+      badgeKey?: keyof SidebarBadges
+      notificationGateKey?: LegacyNotificationGateKey
+    }
   | { label: string; icon: React.ComponentType<{ className?: string }>; children: NavItem[] }
 
 function isAccordion(item: NavItem): item is NavAccordionItem {
@@ -154,6 +165,43 @@ function hasActiveChild(items: NavItem[], pathname: string, searchParams?: URLSe
 function sectionHasActiveChild(section: NavSection, pathname: string, searchParams?: URLSearchParams): boolean {
   if (isSectionAccordion(section)) return hasActiveChild(section.children, pathname, searchParams)
   return isLeafActive(section.href, pathname, searchParams)
+}
+
+function notificationGateAllows(
+  key: LegacyNotificationGateKey | undefined,
+  gates?: LegacyNotificationGateVisibility | null
+) {
+  return !key || !gates || gates[key] !== false
+}
+
+function filterNavItems(
+  items: NavItem[],
+  gates?: LegacyNotificationGateVisibility | null
+): NavItem[] {
+  return items.flatMap<NavItem>((item) => {
+    if (!isAccordion(item)) {
+      return notificationGateAllows(item.notificationGateKey, gates) ? [item] : []
+    }
+
+    const children = filterNavItems(item.children, gates)
+    return children.length > 0 ? [{ ...item, children }] : []
+  })
+}
+
+function filterNavSections(
+  sections: NavSection[],
+  gates?: LegacyNotificationGateVisibility | null
+): NavSection[] {
+  return sections.flatMap<NavSection>((section) => {
+    if (!isSectionAccordion(section)) {
+      return notificationGateAllows(section.notificationGateKey, gates)
+        ? [section]
+        : []
+    }
+
+    const children = filterNavItems(section.children, gates)
+    return children.length > 0 ? [{ ...section, children }] : []
+  })
 }
 
 // ---------------------------------------------------------------------------
@@ -254,15 +302,15 @@ const adminNav: NavSection[] = [
         title: "Notifications",
         icon: Bell,
         children: [
-          { title: "Overview", href: "/alarms", icon: Bell, badgeKey: "activeAlarms" },
-          { title: "Birthdays", href: "/alarms/birthdays", icon: Cake },
-          { title: "Assessments", href: "/alarms/assessments", icon: ClipboardList },
-          { title: "Vaccinations", href: "/alarms/vaccinations", icon: Syringe },
-          { title: "Medical", href: "/alarms/medical", icon: Stethoscope },
-          { title: "Medicine", href: "/alarms/medicine", icon: Pill },
-          { title: "Events", href: "/alarms/events", icon: CalendarDays },
-          { title: "Insurance", href: "/alarms/insurance", icon: Shield },
-          { title: "Payments", href: "/alarms/payments", icon: DollarSign },
+          { title: "Overview", href: "/alarms", icon: Bell, badgeKey: "activeAlarms", notificationGateKey: "general" },
+          { title: "Birthdays", href: "/alarms/birthdays", icon: Cake, notificationGateKey: "birthdays" },
+          { title: "Assessments", href: "/alarms/assessments", icon: ClipboardList, notificationGateKey: "assessments" },
+          { title: "Vaccinations", href: "/alarms/vaccinations", icon: Syringe, notificationGateKey: "vaccinations" },
+          { title: "Medical", href: "/alarms/medical", icon: Stethoscope, notificationGateKey: "medical" },
+          { title: "Medicine", href: "/alarms/medicine", icon: Pill, notificationGateKey: "medicine" },
+          { title: "Events", href: "/alarms/events", icon: CalendarDays, notificationGateKey: "events" },
+          { title: "Insurance", href: "/alarms/insurance", icon: Shield, notificationGateKey: "insurance" },
+          { title: "Payments", href: "/alarms/payments", icon: DollarSign, notificationGateKey: "payments" },
           { title: "Requests", href: "/alarms/requests", icon: Send },
           { title: "Messages", href: "/alarms/msg", icon: MessageSquare, badgeKey: "unreadMessages" },
           { title: "Others", href: "/alarms/others", icon: AlertTriangle },
@@ -297,7 +345,7 @@ const teacherNav: NavSection[] = [
     icon: Inbox,
     children: [
       { title: "Messages", href: "/messages/inbox", icon: Inbox, badgeKey: "unreadMessages" },
-      { title: "Notifications", href: "/alarms", icon: Bell, badgeKey: "activeAlarms" },
+      { title: "Notifications", href: "/alarms", icon: Bell, badgeKey: "activeAlarms", notificationGateKey: "general" },
     ],
   },
 ]
@@ -326,12 +374,16 @@ const nurseNav: NavSection[] = [
     icon: Inbox,
     children: [
       { title: "Messages", href: "/messages/inbox", icon: Inbox, badgeKey: "unreadMessages" },
-      { title: "Notifications", href: "/alarms", icon: Bell, badgeKey: "activeAlarms" },
+      { title: "Notifications", href: "/alarms", icon: Bell, badgeKey: "activeAlarms", notificationGateKey: "general" },
     ],
   },
 ]
 
-function getNavForRole(role: UserRole, classes?: SidebarClassInfo[]): NavSection[] {
+function getNavForRole(
+  role: UserRole,
+  classes?: SidebarClassInfo[],
+  notificationGates?: LegacyNotificationGateVisibility | null
+): NavSection[] {
   let sections: NavSection[]
   switch (role) {
     case "TEACHER":
@@ -390,7 +442,7 @@ function getNavForRole(role: UserRole, classes?: SidebarClassInfo[]): NavSection
     }
   }
 
-  return sections
+  return filterNavSections(sections, notificationGates)
 }
 
 // ---------------------------------------------------------------------------
@@ -601,16 +653,22 @@ interface AppSidebarProps {
   userRole: UserRole
   badges?: SidebarBadges
   classes?: SidebarClassInfo[]
+  notificationGates?: LegacyNotificationGateVisibility | null
 }
 
 const TABLET_MAX = 1024
 
-export function AppSidebar({ userRole, badges, classes }: AppSidebarProps) {
+export function AppSidebar({
+  userRole,
+  badges,
+  classes,
+  notificationGates,
+}: AppSidebarProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const { data: session } = useSession()
   const { setOpen } = useSidebar()
-  const sections = getNavForRole(userRole, classes)
+  const sections = getNavForRole(userRole, classes, notificationGates)
   const quickActions = getQuickActionsForRole(userRole)
   const userName = session?.user?.name || "User"
   const userInitial = userName.charAt(0).toUpperCase()

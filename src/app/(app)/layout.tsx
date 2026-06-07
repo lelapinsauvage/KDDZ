@@ -8,6 +8,7 @@ import { AppContextProvider } from "@/components/providers/app-context-provider"
 import { db } from "@/lib/db"
 import { auth } from "@/lib/auth"
 import { getSidebarBadges } from "@/lib/actions/sidebar"
+import { getLegacyNotificationGateVisibility } from "@/lib/legacy-notification-gates"
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
@@ -26,7 +27,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     orgId = firstOrg?.id ?? null
   }
 
-  const [branches, years, badges, classes] = await Promise.all([
+  const [branches, years, badges, classes, notificationGates] = await Promise.all([
     orgId
       ? db.branch.findMany({
           where: { organizationId: orgId },
@@ -49,6 +50,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           orderBy: [{ branch: { name: "asc" } }, { name: "asc" }],
         })
       : [],
+    orgId ? getLegacyNotificationGateVisibility(orgId) : null,
   ])
 
   const defaultBranchId = session?.user?.branchId ?? null
@@ -72,7 +74,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <Header />
 
         {/* Sidebar + main content area below header */}
-        <AppSidebar userRole={userRole} badges={badges} classes={classes} />
+        <AppSidebar
+          userRole={userRole}
+          badges={badges}
+          classes={classes}
+          notificationGates={notificationGates}
+        />
         <SidebarInset className="mt-[52px] flex min-h-[calc(100svh-52px)] flex-col">
           {/* Scrollable content area */}
           <div className="flex-1 bg-background pb-16 md:pb-0">
@@ -86,7 +93,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </SidebarInset>
 
         {/* Mobile bottom tab bar */}
-        <MobileNav userRole={userRole} classes={classes} badges={badges} />
+        <MobileNav
+          userRole={userRole}
+          classes={classes}
+          badges={badges}
+          notificationGates={notificationGates}
+        />
       </SidebarProvider>
     </AppContextProvider>
   )
