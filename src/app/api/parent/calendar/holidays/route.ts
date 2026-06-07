@@ -1,13 +1,13 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import {
-  formatDate,
   isPrismaConnectionError,
   makeHeader,
   jsonError,
   jsonSuccess,
   verifyParentToken,
 } from "@/lib/parent-auth";
+import { mapLegacyHoliday } from "@/lib/parent-native-list-contracts";
 
 type ParentHolidayUser = {
   childId: string;
@@ -51,10 +51,7 @@ async function handleRequest(request: NextRequest) {
 
     const header = makeHeader("", true, holidays.length);
 
-    const items = holidays.map((h) => ({
-      description: h.name || h.description || "",
-      date: formatHolidayDate(h.date, h.repeated),
-    }));
+    const items = holidays.map(mapLegacyHoliday);
 
     return jsonSuccess([header, ...items]);
   } catch (error) {
@@ -145,15 +142,4 @@ function readString(data: Record<string, unknown> | null, keys: string[]) {
     }
   }
   return null;
-}
-
-function formatHolidayDate(date: Date, repeated: boolean) {
-  if (!repeated) return formatDate(date);
-
-  const nextDate = new Date(date);
-  const currentYear = new Date().getFullYear();
-  if (nextDate.getUTCFullYear() !== currentYear) {
-    nextDate.setUTCFullYear(currentYear);
-  }
-  return formatDate(nextDate);
 }

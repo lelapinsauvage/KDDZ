@@ -1,14 +1,14 @@
 import { NextRequest } from "next/server";
-import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import {
   formatChildName,
-  formatDate,
+  isPrismaConnectionError,
   jsonError,
   jsonSuccess,
   makeHeader,
   verifyParentToken,
 } from "@/lib/parent-auth";
+import { mapLegacyFinancePayment } from "@/lib/parent-native-list-contracts";
 
 type ParentFinanceChild = {
   id: string;
@@ -23,19 +23,6 @@ type ParentFinanceUser = {
   childId: string;
   legacyChildId: number | null;
   child: ParentFinanceChild;
-};
-
-type PaymentRow = {
-  legacyId: number | null;
-  amount: unknown;
-  currency: string;
-  date: Date;
-  dateFrom: Date | null;
-  dateTo: Date | null;
-  method: string;
-  category: string;
-  notes: string | null;
-  legacyData: Prisma.JsonValue | null;
 };
 
 export async function GET(
@@ -93,26 +80,13 @@ async function handleRequest(
     });
 
     const header = makeHeader(formatChildName(child), true, payments.length);
-    return jsonSuccess([header, ...payments.map(mapFinancePayment)]);
-  } catch {
+    return jsonSuccess([header, ...payments.map(mapLegacyFinancePayment)]);
+  } catch (error) {
+    if (isPrismaConnectionError(error)) {
+      return jsonSuccess([makeHeader("", false, 0)]);
+    }
     return jsonError("Internal server error", 500);
   }
-}
-
-function mapFinancePayment(payment: PaymentRow) {
-  const legacy = asRecord(payment.legacyData);
-
-  return {
-    type: readString(legacy, ["type"]) ?? payment.method,
-    target: readString(legacy, ["target"]) ?? payment.category,
-    for: readString(legacy, ["for"]) ?? payment.notes ?? "",
-    year: readString(legacy, ["year"]) ?? String(payment.date.getUTCFullYear()),
-    from: readString(legacy, ["from"]) ?? formatDate(payment.dateFrom),
-    to: readString(legacy, ["to"]) ?? formatDate(payment.dateTo),
-    currency: readString(legacy, ["currency"]) ?? payment.currency,
-    datetime: readString(legacy, ["datetime"]) ?? formatDate(payment.date),
-    amount: readString(legacy, ["amount"]) ?? String(payment.amount),
-  };
 }
 
 async function readPostedChildId(request: NextRequest) {

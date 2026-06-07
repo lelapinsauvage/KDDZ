@@ -1,14 +1,14 @@
 import { NextRequest } from "next/server";
-import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import {
   formatChildName,
-  formatDate,
+  isPrismaConnectionError,
   jsonError,
   jsonSuccess,
   makeHeader,
   verifyParentToken,
 } from "@/lib/parent-auth";
+import { mapLegacyAbsenceReport } from "@/lib/parent-native-list-contracts";
 
 type ParentAbsenceChild = {
   id: string;
@@ -23,20 +23,6 @@ type ParentAbsenceUser = {
   childId: string;
   legacyChildId: number | null;
   child: ParentAbsenceChild;
-};
-
-type AbsenceReportRow = {
-  id: string;
-  legacyId: number | null;
-  date: Date;
-  reason: string | null;
-  absentFrom: Date | null;
-  absentTo: Date | null;
-  hospitalized: boolean;
-  hospitalName: string | null;
-  doctorName: string | null;
-  status: string;
-  legacyData: Prisma.JsonValue | null;
 };
 
 export async function GET(
@@ -94,29 +80,13 @@ async function handleRequest(
     });
 
     const header = makeHeader(formatChildName(child), true, reports.length);
-    return jsonSuccess([header, ...reports.map(mapAbsenceReport)]);
-  } catch {
+    return jsonSuccess([header, ...reports.map(mapLegacyAbsenceReport)]);
+  } catch (error) {
+    if (isPrismaConnectionError(error)) {
+      return jsonSuccess([makeHeader("", false, 0)]);
+    }
     return jsonError("Internal server error", 500);
   }
-}
-
-function mapAbsenceReport(report: AbsenceReportRow) {
-  const legacy = asRecord(report.legacyData);
-
-  return {
-    report_id: readString(legacy, ["report_id"]) ?? report.legacyId ?? report.id,
-    reportdate: readString(legacy, ["reportdate"]) ?? formatDate(report.date),
-    ab_reason: readString(legacy, ["ab_reason"]) ?? report.reason ?? "",
-    ab_from: readString(legacy, ["ab_from"]) ?? formatDate(report.absentFrom),
-    ab_to: readString(legacy, ["ab_to"]) ?? formatDate(report.absentTo),
-    attend_hos:
-      readString(legacy, ["attend_hos"]) ?? (report.hospitalized ? "1" : "0"),
-    hos_name: readString(legacy, ["hos_name"]) ?? report.hospitalName ?? "",
-    dr_name: readString(legacy, ["dr_name"]) ?? report.doctorName ?? "",
-    is_rep_draft:
-      readString(legacy, ["is_rep_draft"]) ??
-      (report.status === "PENDING" ? "1" : "0"),
-  };
 }
 
 async function readPostedChildId(request: NextRequest) {
