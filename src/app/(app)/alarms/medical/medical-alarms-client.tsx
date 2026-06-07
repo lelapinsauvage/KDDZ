@@ -33,13 +33,16 @@ import {
   Eye,
   FileClock,
   MailCheck,
+  RefreshCw,
   RotateCcw,
   Search,
   Stethoscope,
 } from "lucide-react";
 import {
+  generateMedicalAlarms,
   markAllMedicalAlarmsViewed,
   markMedicalAlarmViewed,
+  type MedicalGenerationSummary,
 } from "@/lib/actions/alarms";
 
 interface MedicalAlarm {
@@ -112,6 +115,19 @@ function inDateRange(value: string, from: string, to: string) {
   if (from && key < from) return false;
   if (to && key > to) return false;
   return true;
+}
+
+function metric(data: MedicalGenerationSummary | undefined, key: keyof MedicalGenerationSummary) {
+  return data?.[key] ?? 0;
+}
+
+function generationMessage(data: MedicalGenerationSummary | undefined) {
+  const reportsMatched = metric(data, "reportsMatched");
+  const alarmsCreated = metric(data, "alarmsCreated");
+  const receiptsCreated = metric(data, "receiptsCreated");
+  const notificationsCreated = metric(data, "notificationsCreated");
+  const skippedExisting = metric(data, "skippedExisting");
+  return `Matched ${reportsMatched}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"}, ${receiptsCreated} receipt${receiptsCreated === 1 ? "" : "s"}, and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing.`;
 }
 
 export function MedicalAlarmsClient({
@@ -251,6 +267,18 @@ export function MedicalAlarmsClient({
       }
       const count = result.data?.count ?? 0;
       toast.success(`${count} medical notification${count === 1 ? "" : "s"} marked viewed`);
+      router.refresh();
+    });
+  }
+
+  function generateReportsReminders() {
+    startTransition(async () => {
+      const result = await generateMedicalAlarms();
+      if (!result.success) {
+        toast.error(result.error ?? "Medical generation failed.");
+        return;
+      }
+      toast.success(generationMessage(result.data));
       router.refresh();
     });
   }
@@ -437,16 +465,29 @@ export function MedicalAlarmsClient({
           { label: "Medical" },
         ]}
         actions={
-          <Button
-            type="button"
-            size="sm"
-            onClick={markAllViewed}
-            disabled={isPending || unreadCount === 0}
-            className="gap-2"
-          >
-            <MailCheck className="size-4" />
-            Set All As Viewed
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={generateReportsReminders}
+              disabled={isPending}
+              className="gap-2"
+            >
+              <RefreshCw className="size-4" />
+              Generate
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={markAllViewed}
+              disabled={isPending || unreadCount === 0}
+              className="gap-2"
+            >
+              <MailCheck className="size-4" />
+              Set All As Viewed
+            </Button>
+          </div>
         }
       />
 

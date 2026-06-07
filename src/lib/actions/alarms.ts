@@ -17,6 +17,10 @@ import {
   type AssessmentGenerationSummary,
 } from "@/lib/jobs/assessment-alarms";
 import {
+  generateMedicalAlarmsForOrganization,
+  type MedicalGenerationSummary,
+} from "@/lib/jobs/medical-alarms";
+import {
   generateMedicineAlarmsForOrganization,
   type MedicineGenerationSummary,
 } from "@/lib/jobs/medicine-alarms";
@@ -49,6 +53,7 @@ import {
 import { normalizeLegacyInternalHref } from "@/lib/legacy-href";
 
 export type { AssessmentDueAlarm, AssessmentGenerationSummary } from "@/lib/jobs/assessment-alarms";
+export type { MedicalGenerationSummary } from "@/lib/jobs/medical-alarms";
 export type { MedicineGenerationSummary } from "@/lib/jobs/medicine-alarms";
 export type { InsuranceGenerationSummary } from "@/lib/jobs/insurance-alarms";
 export type {
@@ -552,6 +557,37 @@ export async function generateAssessmentAlarms(
   } catch (error) {
     console.error("Failed to generate assessment alarms:", error);
     return { success: false, error: "Failed to generate assessment alarms" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// generateMedicalAlarms
+// ---------------------------------------------------------------------------
+
+export async function generateMedicalAlarms(
+  branchId?: string,
+): Promise<ActionResult<MedicalGenerationSummary>> {
+  try {
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
+
+    if (branchId && !(await verifyBranchAccess(branchId, ctx.organizationId))) {
+      return { success: false, error: "Branch not found in your organization" };
+    }
+
+    const summary = await generateMedicalAlarmsForOrganization({
+      organizationId: ctx.organizationId,
+      branchId,
+    });
+
+    revalidateMedicalAlarmPaths();
+    revalidatePath("/");
+
+    return { success: true, data: summary };
+  } catch (error) {
+    console.error("Failed to generate medical alarms:", error);
+    return { success: false, error: "Failed to generate medical alarms" };
   }
 }
 
