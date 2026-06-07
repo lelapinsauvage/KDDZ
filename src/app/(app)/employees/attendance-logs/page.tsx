@@ -26,7 +26,7 @@ export default async function AttendanceLogsPage({
   // Fetch logs and employees in parallel
   const [logsRes, teachersRes, nursesRes, doctorsRes, managersRes] =
     await Promise.all([
-      getAttendanceLogs({ pageSize: 1000 }),
+      getAttendanceLogs({ pageSize: "all" }),
       getEmployees("teacher", { pageSize: 1000 }),
       getEmployees("nurse", { pageSize: 1000 }),
       getEmployees("doctor", { pageSize: 1000 }),
