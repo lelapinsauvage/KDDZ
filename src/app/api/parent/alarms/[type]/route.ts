@@ -5,6 +5,7 @@ import {
   formatChildName,
   formatDate,
   formatDateTimeLong,
+  isPrismaConnectionError,
   makeHeader,
   jsonError,
   jsonSuccess,
@@ -256,6 +257,9 @@ async function handleGeneralAlarms() {
       type: "EVENT",
     },
     orderBy: { createdAt: "desc" },
+  }).catch((error) => {
+    if (isPrismaConnectionError(error)) return [];
+    throw error;
   });
 
   const generalAlarms = alarms.filter((alarm) => {

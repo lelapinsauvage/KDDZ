@@ -169,6 +169,17 @@ export function makeHeader(
   return { name, status, count, ...extra };
 }
 
+export function isPrismaConnectionError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+
+  const code = (error as { code?: unknown }).code;
+  return (
+    code === "ECONNREFUSED" ||
+    code === "P1001" ||
+    code === "P1017"
+  );
+}
+
 // ─────────────────────────────────────────────
 // Rate Limiting (simple in-memory)
 // ─────────────────────────────────────────────

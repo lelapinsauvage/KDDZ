@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import {
   formatDate,
+  isPrismaConnectionError,
   makeHeader,
   jsonError,
   jsonSuccess,
@@ -56,7 +57,10 @@ async function handleRequest(request: NextRequest) {
     }));
 
     return jsonSuccess([header, ...items]);
-  } catch {
+  } catch (error) {
+    if (isPrismaConnectionError(error)) {
+      return jsonSuccess([makeHeader("", false, 0)]);
+    }
     return jsonError("Internal server error", 500);
   }
 }
