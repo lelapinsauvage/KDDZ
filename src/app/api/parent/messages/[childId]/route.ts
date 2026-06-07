@@ -88,17 +88,19 @@ async function handleRequest(
 
     const child = parentUser.child;
 
-    // Find all messages where the parent is sender or recipient
-    const messages = await db.message.findMany({
-      where: {
-        OR: [
-          { senderId: parentUser.id, senderType: "PARENT" },
-          { recipientId: parentUser.id, recipientType: "PARENT" },
-        ],
-      },
-      include: { thread: true },
-      orderBy: { createdAt: "desc" },
-    });
+    const legacyCompatibilityMode = request.method === "POST" && !auth?.parentUser;
+    const messages = legacyCompatibilityMode
+      ? await loadLegacyParentListMessages(parentUser.id)
+      : await db.message.findMany({
+          where: {
+            OR: [
+              { senderId: parentUser.id, senderType: "PARENT" },
+              { recipientId: parentUser.id, recipientType: "PARENT" },
+            ],
+          },
+          include: { thread: true },
+          orderBy: { createdAt: "desc" },
+        });
 
     // Group by threadId and get the latest message per thread
     const threadMap = new Map<
@@ -115,15 +117,17 @@ async function handleRequest(
       }
     >();
 
-    for (const msg of messages as ParentMessageRow[]) {
-      const tid = msg.threadId ?? msg.id; // fallback to msg id if no thread
+    const messageRows = messages as ParentMessageRow[];
+
+    for (const msg of messageRows) {
+      const tid = threadGroupKey(msg);
       if (!threadMap.has(tid)) {
         const truncatedBody = `${msg.body.slice(0, 60)}...`;
         const prefix = msg.senderType === "PARENT" ? "You: " : "";
 
         threadMap.set(tid, {
           threadId: msg.legacyThreadId ? String(msg.legacyThreadId) : tid,
-          modernThreadId: tid,
+          modernThreadId: msg.threadId ?? tid,
           legacyThreadId: msg.legacyThreadId,
           subject: msg.thread?.subject ?? msg.subject ?? "",
           lastMessage: prefix + truncatedBody,
@@ -134,24 +138,15 @@ async function handleRequest(
       }
     }
 
-    // Find original sender for each thread
-    const threadIds = [...threadMap.keys()];
-    const originalMessages =
-      threadIds.length > 0
-        ? await db.message.findMany({
-            where: { threadId: { in: threadIds } },
-            orderBy: { createdAt: "asc" },
-            distinct: ["threadId"],
-            select: { threadId: true, senderType: true },
-          })
-        : [];
-
     const originalSenderMap = new Map<string, string>();
-    for (const m of originalMessages) {
-      if (m.threadId) {
+    for (const msg of [...messageRows].sort(
+      (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
+    )) {
+      const tid = threadGroupKey(msg);
+      if (!originalSenderMap.has(tid)) {
         originalSenderMap.set(
-          m.threadId,
-          m.senderType === "PARENT" ? "Parent" : "Administration"
+          tid,
+          msg.senderType === "PARENT" ? "Parent" : "Administration"
         );
       }
     }
@@ -177,6 +172,49 @@ async function handleRequest(
   } catch {
     return jsonError("Internal server error", 500);
   }
+}
+
+async function loadLegacyParentListMessages(parentUserId: string) {
+  const deliveredMessages = await db.message.findMany({
+    where: {
+      recipientId: parentUserId,
+      recipientType: "PARENT",
+    },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      threadId: true,
+      legacyThreadId: true,
+    },
+  });
+
+  const threadIds = [
+    ...new Set(deliveredMessages.map((message) => message.threadId).filter(Boolean)),
+  ] as string[];
+  const legacyThreadIds = [
+    ...new Set(
+      deliveredMessages
+        .map((message) => message.legacyThreadId)
+        .filter((value): value is number => value !== null)
+    ),
+  ];
+  const standaloneIds = deliveredMessages
+    .filter((message) => !message.threadId && message.legacyThreadId === null)
+    .map((message) => message.id);
+
+  const threadConditions = [
+    ...(threadIds.length ? [{ threadId: { in: threadIds } }] : []),
+    ...(legacyThreadIds.length ? [{ legacyThreadId: { in: legacyThreadIds } }] : []),
+    ...(standaloneIds.length ? [{ id: { in: standaloneIds } }] : []),
+  ];
+
+  if (threadConditions.length === 0) return [];
+
+  return db.message.findMany({
+    where: { OR: threadConditions },
+    include: { thread: true },
+    orderBy: { createdAt: "desc" },
+  });
 }
 
 async function readPostedChildId(request: NextRequest) {
@@ -314,6 +352,12 @@ function readString(data: Record<string, unknown> | null, keys: string[]) {
     if (value !== undefined && value !== null) return String(value);
   }
   return null;
+}
+
+function threadGroupKey(message: ParentMessageRow) {
+  return message.threadId ?? (
+    message.legacyThreadId ? `legacy:${message.legacyThreadId}` : message.id
+  );
 }
 
 function parseLegacyInt(value: unknown): number | null {
