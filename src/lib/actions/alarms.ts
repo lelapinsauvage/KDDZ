@@ -126,6 +126,7 @@ interface StaffReceiptAlarmConfig {
   route: string;
   familyLabel: string;
   defaultActionHref: string;
+  preferActionHrefFromAlarm?: boolean;
   actionHrefFromAlarm?: (
     alarm: StaffReceiptAlarmLinkData,
     legacyData: Record<string, unknown>,
@@ -1207,10 +1208,14 @@ async function getStaffReceiptAlarmNotifications(
       const to = recipientNameFor
         ? Array.from(new Set(group.map((item) => recipientNameFor(item)))).join(", ")
         : undefined;
-      const actionHref =
-        normalizeLegacyInternalHref(legacyHref) ??
-        config.actionHrefFromAlarm?.(receipt.alarm, legacyData) ??
-        config.defaultActionHref;
+      const legacyActionHref = normalizeLegacyInternalHref(legacyHref);
+      const configuredActionHref = config.actionHrefFromAlarm?.(
+        receipt.alarm,
+        legacyData,
+      );
+      const actionHref = config.preferActionHrefFromAlarm
+        ? configuredActionHref ?? legacyActionHref ?? config.defaultActionHref
+        : legacyActionHref ?? configuredActionHref ?? config.defaultActionHref;
 
       return [{
         id: receipt.alarm.id,
@@ -1476,6 +1481,7 @@ const ASSESSMENT_ALARM_CONFIG: StaffReceiptAlarmConfig = {
   route: "/alarms/assessments",
   familyLabel: "assessment",
   defaultActionHref: "/assessments",
+  preferActionHrefFromAlarm: true,
   actionHrefFromAlarm: (alarm, legacyData) =>
     assessmentReportHref(alarm.referenceId, legacyData),
   historyTypeFromLegacy: () => "Alert",

@@ -360,7 +360,15 @@ function formatGenerationStatus(
     return "Legacy notification settings disable this alarm family; no alarms were generated.";
   }
 
-  if (family === "assessment" || family === "birthday") {
+  if (family === "assessment") {
+    const alarmsCreated = metric(data, "alarmsCreated");
+    const receiptsCreated = metric(data, "receiptsCreated");
+    const notificationsCreated = metric(data, "notificationsCreated");
+    const skippedExisting = metric(data, "skippedExisting");
+    return `Created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"}, ${receiptsCreated} receipt${receiptsCreated === 1 ? "" : "s"}, and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing.`;
+  }
+
+  if (family === "birthday") {
     const alarmsCreated = metric(data, "alarmsCreated");
     const notificationsCreated = metric(data, "notificationsCreated");
     const skippedExisting = metric(data, "skippedExisting");

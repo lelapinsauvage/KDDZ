@@ -493,13 +493,13 @@
     "legacyPhp": "Front/templates/admin/alarmsAssessment.php",
     "legacyJs": "Front/templates/admin/js/alarmsAssessment.js",
     "modernRoute": "/alarmsAssessment.php, /alarms/assessments",
-    "status": "partial - legacy assessment alarms bridge, due queue, generator, read-state, and sent history restored",
+    "status": "partial - legacy assessment alarms bridge, due queue, generator, read-state, sent history, and class targeting restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Restored active-child missing assessment reminders due within 15 days with direct create actions, plus manual/server action equivalent of `Data::AlarmsAssessment()` using `AssessmentScheduleRule`, idempotent child/type alarm creation, Assessment template rendering, staff in-app notifications, protected cron endpoint, current-user New/Viewed updates from `custom_notifications_assessment`, sent-history rows, and parent `new_assessment` marker generation for non-draft reports. `/alarmsAssessment.php` now redirects to the modern assessment alarms page. Remaining work is exact class-user targeting, external parent/mobile delivery, and final visual audit."
+    "verification": "Restored active-child missing assessment reminders due within 15 days with direct create actions, plus manual/server action equivalent of `Data::AlarmsAssessment()` using `AssessmentScheduleRule`, idempotent child/type alarm creation, legacy `custom_notifications_assessment` receipts targeted like `getusersperclass()` through imported `login_users.uclasses`, Assessment template rendering, staff in-app notifications, protected cron endpoint, current-user New/Viewed updates from receipt rows, sent-history rows, and parent `new_assessment` marker generation for non-draft reports. `/alarmsAssessment.php` now redirects to the modern assessment alarms page. Remaining work is external parent/mobile delivery and final visual audit."
   },
   {
     "legacyPhp": "Front/templates/admin/alarmsBirthday.php",

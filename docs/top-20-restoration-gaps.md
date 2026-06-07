@@ -49,8 +49,8 @@ This list is the first implementation backlog after the generated inventory/matr
    - Legacy has `t_assessment_1` through `t_assessment_7` plus `new_assessment`.
    - Historical row migration is covered by `migrate-assessments.ts`.
    - `/assessments` and `/assessments/[type]` now restore the legacy completed/incomplete/draft/missing review queues, using migrated `AssessmentScheduleRule` age windows, legacy `progress` payloads when present, active non-draft children, direct create/open actions, and idempotent parent `new_assessment` markers when reports become non-draft.
-   - `/alarms/assessments` now restores the child-level due queue for missing assessment reports needed within 15 days, alongside scheduled assessment dates, plus manual/server generation of idempotent staff-facing `Alarm` rows, in-app notifications from the Assessment template, current-user New/Viewed updates, and sent-history rows from `custom_notifications_assessment`.
-   - Remaining work is exact class-user targeting, external parent/mobile delivery, and final per-question visual audit.
+   - `/alarms/assessments` now restores the child-level due queue for missing assessment reports needed within 15 days, alongside scheduled assessment dates, plus manual/server generation of idempotent staff-facing `Alarm` rows, legacy `custom_notifications_assessment` receipt fanout through imported `login_users.uclasses`, in-app notifications from the Assessment template, current-user New/Viewed updates, and sent-history rows from `custom_notifications_assessment`.
+   - Remaining work is external parent/mobile delivery and final per-question visual audit.
 
 7. **Notification logs/settings migration**
    - Legacy has many `custom_notifications_*`, `t_alarms_*`, `t_notification_setting`, and `t_notifications_log` tables.

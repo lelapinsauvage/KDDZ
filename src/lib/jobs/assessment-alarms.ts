@@ -2,17 +2,22 @@ import { ASSESSMENT_TYPE_NAMES, VALID_ASSESSMENT_TYPES } from "@/lib/assessment-
 import { db } from "@/lib/db";
 import { isLegacyNotificationGateEnabled } from "@/lib/legacy-notification-gates";
 
+const ASSESSMENT_RECEIPT_SOURCE = "custom_notifications_assessment";
+
 export interface AssessmentDueAlarm {
   id: string;
   assessmentType: number;
   assessmentTypeName: string;
   childId: string;
   childNumber: string | null;
+  legacyChildId: number | null;
+  sourceDatabase: string | null;
   childName: string;
   branchId: string;
   branchName: string;
   classId: string | null;
   className: string | null;
+  legacyClassId: number | null;
   dueDate: Date;
   daysUntilDue: number;
   actionHref: string;
@@ -23,10 +28,18 @@ export interface AssessmentGenerationSummary {
   branchesScanned: number;
   childrenMatched: number;
   alarmsCreated: number;
+  receiptsCreated: number;
   notificationsCreated: number;
   skippedExisting: number;
   skippedDisabledBranches: number;
   skippedLegacyNotificationGate: boolean;
+}
+
+interface LegacyAssessmentRecipient {
+  userId: string;
+  legacyRecipientId: number;
+  legacySourceDatabase: string;
+  legacyClasses: string;
 }
 
 const assessmentTypes = [...VALID_ASSESSMENT_TYPES];
@@ -90,6 +103,21 @@ function asRecord(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
+function readString(data: Record<string, unknown> | null, key: string) {
+  const value = data?.[key];
+  return typeof value === "string" && value.trim() !== "" ? value.trim() : null;
+}
+
+function readNumber(data: Record<string, unknown> | null, key: string) {
+  const value = data?.[key];
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
 function assessmentTypeFromLegacyData(legacyData: unknown) {
   const data = asRecord(legacyData);
   const direct = data?.assessmentType;
@@ -127,11 +155,52 @@ function renderNotificationText(
   );
 }
 
+function legacyAssessmentHref(type: number, legacyChildId: number | null) {
+  const suffix = legacyChildId ? `?id=${legacyChildId}` : "";
+  return `assessment_${type}.php${suffix}`;
+}
+
+function legacyClassListAllows(legacyClasses: string, classLegacyId: number | null) {
+  const normalized = legacyClasses.trim();
+  if (!normalized || normalized === "0") return true;
+  if (classLegacyId === null) return false;
+
+  return normalized
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .includes(String(classLegacyId));
+}
+
+function legacySourceMatches(
+  recipient: LegacyAssessmentRecipient,
+  sourceDatabase: string | null,
+) {
+  return !sourceDatabase || recipient.legacySourceDatabase === sourceDatabase;
+}
+
+function recipientsForCandidate(
+  recipients: LegacyAssessmentRecipient[],
+  candidate: AssessmentDueAlarm,
+) {
+  const selected = new Map<string, LegacyAssessmentRecipient>();
+  for (const recipient of recipients) {
+    if (!legacySourceMatches(recipient, candidate.sourceDatabase)) continue;
+    if (!legacyClassListAllows(recipient.legacyClasses, candidate.legacyClassId)) {
+      continue;
+    }
+    if (!selected.has(recipient.userId)) selected.set(recipient.userId, recipient);
+  }
+
+  return Array.from(selected.values());
+}
+
 function emptySummary(): AssessmentGenerationSummary {
   return {
     branchesScanned: 0,
     childrenMatched: 0,
     alarmsCreated: 0,
+    receiptsCreated: 0,
     notificationsCreated: 0,
     skippedExisting: 0,
     skippedDisabledBranches: 0,
@@ -156,6 +225,8 @@ export async function getAssessmentDueAlarmCandidates(params: {
       where: childWhere,
       select: {
         id: true,
+        sourceDatabase: true,
+        legacyId: true,
         childNumber: true,
         firstName: true,
         lastName: true,
@@ -163,8 +234,8 @@ export async function getAssessmentDueAlarmCandidates(params: {
         enrollmentDate: true,
         branchId: true,
         classId: true,
-        branch: { select: { id: true, name: true } },
-        class: { select: { id: true, name: true } },
+        branch: { select: { id: true, name: true, sourceDatabase: true } },
+        class: { select: { id: true, name: true, legacyId: true, sourceDatabase: true } },
       },
       orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
     }),
@@ -244,11 +315,15 @@ export async function getAssessmentDueAlarmCandidates(params: {
         assessmentTypeName,
         childId: child.id,
         childNumber: child.childNumber,
+        legacyChildId: child.legacyId,
+        sourceDatabase:
+          child.sourceDatabase ?? child.class?.sourceDatabase ?? child.branch.sourceDatabase,
         childName,
         branchId: child.branchId,
         branchName: child.branch.name,
         classId: child.classId,
         className: child.class?.name ?? null,
+        legacyClassId: child.class?.legacyId ?? null,
         dueDate,
         daysUntilDue,
         actionHref: `/assessments/${type}/new?childId=${child.id}`,
@@ -316,26 +391,31 @@ export async function generateAssessmentAlarmsForOrganization(params: {
       referenceId: { in: candidates.map((candidate) => candidate.childId) },
       isActive: true,
     },
-    select: { referenceId: true, legacyData: true },
+    select: { id: true, referenceId: true, legacyData: true },
   });
-  const existingKeys = new Set<string>();
+  const existingByKey = new Map<
+    string,
+    { id: string; referenceId: string | null; legacyData: unknown }
+  >();
   for (const alarm of existingAlarms) {
     if (!alarm.referenceId) continue;
     const assessmentType = assessmentTypeFromLegacyData(alarm.legacyData);
-    if (assessmentType !== null) existingKeys.add(`${assessmentType}:${alarm.referenceId}`);
+    if (assessmentType !== null) {
+      existingByKey.set(`${assessmentType}:${alarm.referenceId}`, alarm);
+    }
   }
 
-  const [users, template] = await Promise.all([
+  const [users, template, maxReceipt] = await Promise.all([
     db.user.findMany({
       where: {
         isActive: true,
         organizationId: params.organizationId,
         OR: [
           { branchId: { in: enabledBranchIds } },
-          { branchId: null, role: "ADMIN" },
+          { branchId: null },
         ],
       },
-      select: { id: true, branchId: true, role: true },
+      select: { id: true },
     }),
     db.notificationTemplate.findUnique({
       where: {
@@ -345,17 +425,43 @@ export async function generateAssessmentAlarmsForOrganization(params: {
         },
       },
     }),
+    db.notificationReceipt.aggregate({
+      where: { sourceTable: ASSESSMENT_RECEIPT_SOURCE },
+      _max: { legacyNotificationId: true },
+    }),
   ]);
 
-  const branchAdminIds = users
-    .filter((user) => user.branchId === null && user.role === "ADMIN")
-    .map((user) => user.id);
-  const userIdsByBranch = new Map<string, string[]>();
-  for (const user of users) {
-    if (!user.branchId) continue;
-    const branchUsers = userIdsByBranch.get(user.branchId) ?? [];
-    branchUsers.push(user.id);
-    userIdsByBranch.set(user.branchId, branchUsers);
+  const userIds = users.map((user) => user.id);
+  const legacyAuthRows = userIds.length
+    ? await db.legacyAuthRecord.findMany({
+        where: {
+          legacyTable: "login_users",
+          userId: { in: userIds },
+          isDisabled: { not: true },
+        },
+        select: {
+          sourceDatabase: true,
+          userId: true,
+          legacyId: true,
+          legacyUserId: true,
+          legacyData: true,
+        },
+        orderBy: [
+          { sourceDatabase: "asc" },
+          { legacyId: "asc" },
+        ],
+      })
+    : [];
+
+  const legacyRecipients: LegacyAssessmentRecipient[] = [];
+  for (const row of legacyAuthRows) {
+    if (!row.userId) continue;
+    legacyRecipients.push({
+      userId: row.userId,
+      legacyRecipientId: row.legacyUserId ?? row.legacyId,
+      legacySourceDatabase: row.sourceDatabase,
+      legacyClasses: readString(asRecord(row.legacyData), "uclasses") ?? "0",
+    });
   }
 
   const templateEnabled = template?.enabled ?? true;
@@ -363,48 +469,130 @@ export async function generateAssessmentAlarmsForOrganization(params: {
   const bodyTemplate =
     template?.body ||
     "Assessment for [[child_name]] is due on [[date]]. Please complete it before the deadline.";
+  const maxExistingAlarmLegacyId = existingAlarms.reduce((max, alarm) => {
+    const legacyId = readNumber(asRecord(alarm.legacyData), "aid") ?? 0;
+    return Math.max(max, legacyId);
+  }, 0);
+  let nextLegacyNotificationId =
+    Math.max(maxReceipt._max.legacyNotificationId ?? 0, maxExistingAlarmLegacyId) + 1;
 
   for (const candidate of candidates) {
     const dedupeKey = `${candidate.assessmentType}:${candidate.childId}`;
-    if (existingKeys.has(dedupeKey)) {
-      summary.skippedExisting += 1;
-      continue;
+    const existingAlarm = existingByKey.get(dedupeKey);
+    let legacyNotificationId = existingAlarm
+      ? readNumber(asRecord(existingAlarm.legacyData), "aid")
+      : null;
+    if (legacyNotificationId === null) {
+      legacyNotificationId = nextLegacyNotificationId++;
     }
 
-    await db.alarm.create({
-      data: {
-        type: "ASSESSMENT",
+    let alarmId = existingAlarm?.id ?? null;
+    if (existingAlarm) {
+      summary.skippedExisting += 1;
+      if (readNumber(asRecord(existingAlarm.legacyData), "aid") === null) {
+        await db.alarm.update({
+          where: { id: existingAlarm.id },
+          data: {
+            legacyData: {
+              ...(asRecord(existingAlarm.legacyData) ?? {}),
+              aid: legacyNotificationId,
+              sourceDeliveryTable: ASSESSMENT_RECEIPT_SOURCE,
+              legacyChildId: candidate.legacyChildId,
+              legacyClassId: candidate.legacyClassId,
+              legacyClassAccess: "login_users.uclasses",
+              href: legacyAssessmentHref(
+                candidate.assessmentType,
+                candidate.legacyChildId,
+              ),
+            },
+          },
+        });
+      }
+    } else {
+      const alarm = await db.alarm.create({
+        data: {
+          type: "ASSESSMENT",
+          referenceId: candidate.childId,
+          referenceType: "Child",
+          message: candidate.message,
+          dueDate: candidate.dueDate,
+          branchId: candidate.branchId,
+          isActive: true,
+          legacyData: {
+            aid: legacyNotificationId,
+            sourceTable: "t_alarms_assessment",
+            sourceDeliveryTable: ASSESSMENT_RECEIPT_SOURCE,
+            modernGenerator: "generateAssessmentAlarms",
+            legacyMethod: "Data::AlarmsAssessment",
+            legacyType: `t_assessment_${candidate.assessmentType}`,
+            assessmentType: candidate.assessmentType,
+            childId: candidate.childId,
+            legacyChildId: candidate.legacyChildId,
+            classId: candidate.classId,
+            legacyClassId: candidate.legacyClassId,
+            legacyClassAccess: "login_users.uclasses",
+            level: 1,
+            status: 0,
+            href: legacyAssessmentHref(candidate.assessmentType, candidate.legacyChildId),
+            actionHref: candidate.actionHref,
+            targetDate: dateKey(candidate.dueDate),
+          },
+        },
+      });
+      alarmId = alarm.id;
+      existingByKey.set(dedupeKey, {
+        id: alarm.id,
         referenceId: candidate.childId,
-        referenceType: "Child",
-        message: candidate.message,
-        dueDate: candidate.dueDate,
-        branchId: candidate.branchId,
-        isActive: true,
-        legacyData: {
-          sourceTable: "t_alarms_assessment",
-          modernGenerator: "generateAssessmentAlarms",
-          legacyMethod: "Data::AlarmsAssessment",
-          legacyType: `t_assessment_${candidate.assessmentType}`,
-          assessmentType: candidate.assessmentType,
-          childId: candidate.childId,
-          classId: candidate.classId,
-          level: 1,
-          status: 0,
-          href: `assessment_${candidate.assessmentType}.php`,
-          actionHref: candidate.actionHref,
-          targetDate: dateKey(candidate.dueDate),
+        legacyData: alarm.legacyData,
+      });
+      summary.alarmsCreated += 1;
+    }
+
+    const recipients = recipientsForCandidate(legacyRecipients, candidate);
+    if (!alarmId || recipients.length === 0) continue;
+
+    const existingReceipts = await db.notificationReceipt.findMany({
+      where: {
+        sourceTable: ASSESSMENT_RECEIPT_SOURCE,
+        legacyNotificationId,
+        recipientType: "USER",
+        legacyRecipientId: {
+          in: recipients.map((recipient) => recipient.legacyRecipientId),
         },
       },
+      select: { legacyRecipientId: true },
     });
-    existingKeys.add(dedupeKey);
-    summary.alarmsCreated += 1;
-
-    if (!templateEnabled) continue;
-
-    const recipientIds = Array.from(
-      new Set([...(userIdsByBranch.get(candidate.branchId) ?? []), ...branchAdminIds]),
+    const existingReceiptIds = new Set(
+      existingReceipts.map((receipt) => receipt.legacyRecipientId),
     );
-    if (recipientIds.length === 0) continue;
+    const newReceiptRecipients = recipients.filter(
+      (recipient) => !existingReceiptIds.has(recipient.legacyRecipientId),
+    );
+    if (newReceiptRecipients.length === 0) continue;
+
+    const receiptResult = await db.notificationReceipt.createMany({
+      data: newReceiptRecipients.map((recipient) => ({
+        sourceTable: ASSESSMENT_RECEIPT_SOURCE,
+        category: "assessment",
+        legacyNotificationId,
+        legacyRecipientId: recipient.legacyRecipientId,
+        recipientType: "USER",
+        recipientId: recipient.userId,
+        alarmId,
+        isRead: false,
+        metadata: {
+          modernGenerator: "generateAssessmentAlarms",
+          legacyMethod: "Data::AlarmsAssessment",
+          legacyClassId: candidate.legacyClassId,
+          legacyClasses: recipient.legacyClasses,
+          ntype: 0,
+        },
+      })),
+      skipDuplicates: true,
+    });
+    summary.receiptsCreated += receiptResult.count;
+
+    if (!templateEnabled || receiptResult.count === 0) continue;
 
     const variables = {
       child_name: candidate.childName,
@@ -415,8 +603,8 @@ export async function generateAssessmentAlarmsForOrganization(params: {
     };
 
     const notificationResult = await db.notification.createMany({
-      data: recipientIds.map((userId) => ({
-        userId,
+      data: newReceiptRecipients.map((recipient) => ({
+        userId: recipient.userId,
         title: renderNotificationText(subjectTemplate, variables),
         body: renderNotificationText(bodyTemplate, variables),
         type: "ASSESSMENT",

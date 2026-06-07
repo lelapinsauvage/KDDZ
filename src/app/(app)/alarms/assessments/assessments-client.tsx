@@ -141,9 +141,14 @@ export function AssessmentsClient({
         return;
       }
 
-      const { alarmsCreated, notificationsCreated, skippedExisting } = result.data;
+      const {
+        alarmsCreated,
+        receiptsCreated,
+        notificationsCreated,
+        skippedExisting,
+      } = result.data;
       setGenerationStatus(
-        `Created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"} and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing.`,
+        `Created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"}, ${receiptsCreated} receipt${receiptsCreated === 1 ? "" : "s"}, and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing.`,
       );
       router.refresh();
       return;
