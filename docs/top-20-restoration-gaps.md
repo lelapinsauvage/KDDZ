@@ -48,7 +48,7 @@ This list is the first implementation backlog after the generated inventory/matr
 6. **Assessments migration**
    - Legacy has `t_assessment_1` through `t_assessment_7` plus `new_assessment`.
    - Historical row migration is covered by `migrate-assessments.ts`.
-   - `/assessments` and `/assessments/[type]` now restore the legacy completed/incomplete/draft/missing review queues, using migrated `AssessmentScheduleRule` age windows, legacy `progress` payloads when present, active non-draft children, direct create/open actions, and idempotent parent `new_assessment` markers when reports become non-draft.
+   - `/assessments` and `/assessments/[type]` now restore the legacy completed/incomplete/draft/missing review queues, using migrated `AssessmentScheduleRule` age windows, uncapped migrated report loading, legacy `progress` payloads when present, active non-draft children, direct create/open actions, and idempotent parent `new_assessment` markers when reports become non-draft.
    - `/alarms/assessments` now restores the child-level due queue for missing assessment reports needed within 15 days, alongside scheduled assessment dates, plus manual/server generation of idempotent staff-facing `Alarm` rows, legacy `custom_notifications_assessment` receipt fanout through imported `login_users.uclasses`, in-app notifications from the Assessment template, current-user New/Viewed updates, and sent-history rows from `custom_notifications_assessment`.
    - Remaining work is external parent/mobile delivery and final per-question visual audit.
 

@@ -17,7 +17,7 @@ export default async function AssessmentListingPage({ params }: PageProps) {
   }
 
   const [{ assessments }, reviewResult, classesResult] = await Promise.all([
-    getAssessments({ assessmentType: typeNum, pageSize: 500 }),
+    getAssessments({ assessmentType: typeNum, pageSize: "all" }),
     getAssessmentReview({ assessmentType: typeNum }),
     getClasses(),
   ]);

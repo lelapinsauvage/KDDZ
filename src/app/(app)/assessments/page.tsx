@@ -6,7 +6,7 @@ import AssessmentsListingClient from "./assessments-listing-client";
 
 export default async function AssessmentsPage() {
   const [{ assessments }, reviewResult, classesResult, branchesResult] = await Promise.all([
-    getAssessments({ pageSize: 500 }),
+    getAssessments({ pageSize: "all" }),
     getAssessmentReview(),
     getClasses(),
     getBranches(),

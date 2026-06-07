@@ -706,7 +706,7 @@
       "id",
       "isdraft"
     ],
-    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, and schedule-rule eligibility for the 1-3 month bracket."
+    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 1-3 month bracket, and uncapped migrated assessment report loading for the restored review queues."
   },
   {
     "legacyPhp": "Front/templates/admin/assessment_2.php",
@@ -724,7 +724,7 @@
       "id",
       "isdraft"
     ],
-    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, and schedule-rule eligibility for the 4-7 month bracket."
+    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 4-7 month bracket, and uncapped migrated assessment report loading for the restored review queues."
   },
   {
     "legacyPhp": "Front/templates/admin/assessment_3.php",
@@ -742,7 +742,7 @@
       "id",
       "isdraft"
     ],
-    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, and schedule-rule eligibility for the 8-12 month bracket."
+    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 8-12 month bracket, and uncapped migrated assessment report loading for the restored review queues."
   },
   {
     "legacyPhp": "Front/templates/admin/assessment_4.php",
@@ -761,7 +761,7 @@
       "id",
       "isdraft"
     ],
-    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, and schedule-rule eligibility for the 12-24 month bracket."
+    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 12-24 month bracket, and uncapped migrated assessment report loading for the restored review queues."
   },
   {
     "legacyPhp": "Front/templates/admin/assessment_5.php",
@@ -780,7 +780,7 @@
       "id",
       "isdraft"
     ],
-    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, and schedule-rule eligibility for the 24-36 month bracket."
+    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 24-36 month bracket, and uncapped migrated assessment report loading for the restored review queues."
   },
   {
     "legacyPhp": "Front/templates/admin/assessment_6.php",
@@ -796,7 +796,7 @@
       "id",
       "isdraft"
     ],
-    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, and schedule-rule eligibility for the 3-4 year bracket."
+    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 3-4 year bracket, and uncapped migrated assessment report loading for the restored review queues."
   },
   {
     "legacyPhp": "Front/templates/admin/assessment_7.php",
@@ -813,7 +813,7 @@
       "id",
       "isdraft"
     ],
-    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, and schedule-rule eligibility for the 4-5 year bracket."
+    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 4-5 year bracket, and uncapped migrated assessment report loading for the restored review queues."
   },
   {
     "legacyPhp": "Front/templates/admin/assets/plugins/ckeditor/samples/assets/posteddata.php",

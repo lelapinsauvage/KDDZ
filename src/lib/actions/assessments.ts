@@ -25,7 +25,7 @@ interface GetAssessmentsParams {
   status?: AssessmentStatus;
   search?: string;
   page?: number;
-  pageSize?: number;
+  pageSize?: number | "all";
 }
 
 interface CreateAssessmentData {
@@ -399,7 +399,9 @@ export async function getAssessments(params: GetAssessmentsParams) {
       }
     }
 
-    const skip = (page - 1) * pageSize;
+    const paginated = pageSize !== "all";
+    const numericPageSize = paginated ? Math.max(1, pageSize) : undefined;
+    const skip = numericPageSize ? (page - 1) * numericPageSize : undefined;
 
     const [assessments, total] = await Promise.all([
       db.assessment.findMany({
@@ -416,8 +418,8 @@ export async function getAssessments(params: GetAssessmentsParams) {
           },
         },
         orderBy: { createdAt: "desc" },
-        skip,
-        take: pageSize,
+        ...(skip !== undefined ? { skip } : {}),
+        ...(numericPageSize !== undefined ? { take: numericPageSize } : {}),
       }),
       db.assessment.count({ where }),
     ]);
