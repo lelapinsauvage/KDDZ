@@ -16865,7 +16865,7 @@
       "update-form",
       "user-profiles-form"
     ],
-    "verification": "The legacy `user-profiles-form` profile-field add/update/delete semantics are restored at `/settings/legacy-users/profile-fields` over migrated `login_profile_fields` / `login_profile_fields_man`, including Section, Input type, Input label, Sign Up (`hide`/`require`/`optional`), Public, Delete, source database grouping, soft-delete provenance, and preserved orphan profile values. `/settings/legacy-auth` now restores the `general-options-form`, `denied-form`, `integration-form`, and `update-form` save semantics over migrated `login_settings` / `login_settings_man`: Admin email validation, Site address slash normalization, numeric Default session validation, serialized default/notify levels, site-control/new-user/password/redirect checkboxes, restricted signup domains, denied messages, social-login provider keys/toggles, captcha provider keys/radio choice, and update-check toggle. Legacy notification settings remain surfaced in `/settings/notifications`. Remaining work is deciding which imported login settings actively drive modern Auth.js/OAuth/captcha/runtime update-check behavior."
+    "verification": "The legacy `user-profiles-form` profile-field add/update/delete semantics are restored at `/settings/legacy-users/profile-fields` over migrated `login_profile_fields` / `login_profile_fields_man`, including Section, Input type, Input label, Sign Up (`hide`/`require`/`optional`), Public, Delete, source database grouping, soft-delete provenance, and preserved orphan profile values. `/settings/legacy-auth` now restores the `general-options-form`, `denied-form`, `integration-form`, and `update-form` save semantics over migrated `login_settings` / `login_settings_man`: Admin email validation, Site address slash normalization, numeric Default session validation, serialized default/notify levels, site-control/new-user/password/redirect checkboxes, restricted signup domains, denied messages, social-login provider keys/toggles, captcha provider keys/radio choice, and update-check toggle. Legacy notification settings remain surfaced in `/settings/notifications`. /settings/notifications now loads the full migrated LegacySetting set for notification, accounting reminder, and auth-email rows instead of sampling the first 1000. Remaining work is deciding which imported login settings actively drive modern Auth.js/OAuth/captcha/runtime update-check behavior."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/footer.php",
@@ -17052,7 +17052,7 @@
       "t_notification_setting"
     ],
     "requestFieldsMentioned": [],
-    "verification": "/settings/notifications Legacy tab now restores the legacy Notifications/Alerts Control matrix from migrated `t_notification_setting` rows, with System Alerts, Emails, Whatsapp, and SMS switches for the newer wide schema, plus older `mtype`/`status` rows where `mtype=1` controls WhatsApp and `mtype=2` controls SMS. Values of `-1` render as unavailable, and editable toggles update the preserved `LegacySetting.legacyData`/`settingValue` row. The restored alarm generators now enforce the legacy System Alerts switches for birthday, assessment, medical report, medicine, insurance, vaccination, payment, event, and holiday families. Remaining work is external email, WhatsApp, and SMS provider delivery/enforcement after credentials and providers are recovered."
+    "verification": "/settings/notifications Legacy tab now restores the legacy Notifications/Alerts Control matrix from migrated `t_notification_setting` rows, with System Alerts, Emails, Whatsapp, and SMS switches for the newer wide schema, plus older `mtype`/`status` rows where `mtype=1` controls WhatsApp and `mtype=2` controls SMS. Values of `-1` render as unavailable, and editable toggles update the preserved `LegacySetting.legacyData`/`settingValue` row. The restored alarm generators now enforce the legacy System Alerts switches for birthday, assessment, medical report, medicine, insurance, vaccination, payment, event, and holiday families. The Legacy tab now loads the full migrated notification-setting matrix instead of sampling the first 1000 LegacySetting rows. Remaining work is external email, WhatsApp, and SMS provider delivery/enforcement after credentials and providers are recovered."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-forgot.php",
@@ -17216,7 +17216,7 @@
     "status": "partial - legacy notification settings/natures/send logs visible in Legacy tab; custom notification send/edit workflows still need audit",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Compare legacy notification admin behavior with modern templates, logs, and send jobs."
+    "verification": "Compare legacy notification admin behavior with modern templates, logs, and send jobs. /settings/notifications now surfaces the full migrated Legacy tab settings set instead of a capped sample, including notification, reminder, and legacy auth-email rows."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/reports.php",

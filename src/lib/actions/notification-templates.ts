@@ -970,7 +970,6 @@ export async function getLegacyNotificationSettings(): Promise<
         { legacyTable: "asc" },
         { settingKey: "asc" },
       ],
-      take: 1000,
     });
 
     return {
