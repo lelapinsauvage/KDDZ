@@ -1101,7 +1101,7 @@ export async function updateCurrentUserLegacyProfile(
         recipients: [{ email, name }],
         subject: confirmationEmail.subject,
         body: confirmationEmail.body,
-        category: "ACCOUNT_UPDATE",
+        category: "ACCOUNT_UPDATE_VERIFY",
         metadata: {
           source: "legacy_profile_update_confirmation",
           tokenKey: confirmationEmail.key,
@@ -1281,7 +1281,7 @@ export async function confirmCurrentUserLegacyProfileUpdate(
       recipients: [{ email, name }],
       subject: successSubject,
       body: successBody,
-      category: "ACCOUNT_UPDATE",
+      category: "ACCOUNT_UPDATE_SUCCESS",
       metadata: {
         source: "legacy_profile_update_success",
         tokenId: token.id,

@@ -17001,11 +17001,11 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-acct-update.php",
     "legacyJs": "",
-    "modernRoute": "/settings/notifications",
-    "status": "partial - legacy account update email templates restored; runtime delivery remains",
+    "modernRoute": "/settings/notifications, /profile",
+    "status": "restored - legacy account update templates and profile confirmation delivery restored",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "/settings/notifications now exposes Verify Change and Account Updated template cards backed by migrated `email-acct-update-subj`, `email-acct-update-msg`, `email-acct-update-success-subj`, and `email-acct-update-success-msg` rows with legacy `{{site_address}}`, `{{full_name}}`, `{{username}}`, and `{{confirm}}` shortcodes. Remaining work is wiring these templates into any modern account-change confirmation email flow once provider config is recovered."
+    "verification": "/settings/notifications now exposes Verify Change and Account Updated template cards backed by migrated `email-acct-update-subj`, `email-acct-update-msg`, `email-acct-update-success-subj`, and `email-acct-update-success-msg` rows with legacy `{{site_address}}`, `{{full_name}}`, `{{username}}`, and `{{confirm}}` shortcodes. The restored `/profile` update flow renders the Verify Change template when email/password changes require `update_emailPw`, creates migrated-compatible `login_confirm` / `login_confirm_man` token rows, sends the confirmation email through the provider-neutral delivery bridge with the `ACCOUNT_UPDATE_VERIFY` category, stores delivery audit summaries on the token metadata, applies confirmed email/password changes from `?key=`, then renders and sends the Account Updated template with the `ACCOUNT_UPDATE_SUCCESS` category and persisted delivery audit data."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-activate.php",
