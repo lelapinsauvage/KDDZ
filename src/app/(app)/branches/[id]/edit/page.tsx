@@ -1,6 +1,8 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getBranch } from "@/lib/actions/branches";
 import { BranchForm } from "@/components/branches/branch-form";
+import { getLegacyBranchActionPermissions } from "@/lib/legacy-branch-action-permissions";
+import { requireOrg } from "@/lib/require-org";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -8,6 +10,11 @@ interface Props {
 
 export default async function BranchEditPage({ params }: Props) {
   const { id } = await params;
+  const ctx = await requireOrg();
+  const permissions = await getLegacyBranchActionPermissions(ctx);
+  if (!permissions.canUpdateBranch) {
+    redirect("/forbidden.php");
+  }
 
   const result = await getBranch(id);
   if (!result.success || !result.data) {

@@ -9,7 +9,11 @@ import {
   branchFormSchema,
   type BranchFormValues,
 } from "@/lib/validations/branch";
-import { createBranch, updateBranch } from "@/lib/actions/branches";
+import {
+  createBranch,
+  setNewBranchImage,
+  updateBranch,
+} from "@/lib/actions/branches";
 import { uploadFileWithPresign } from "@/lib/uploads/client-upload";
 import { PageHeader } from "@/components/layout/page-header";
 import { FormSection } from "@/components/ui/form-section";
@@ -211,9 +215,10 @@ export function BranchForm({ branch, hideHeader = false }: BranchFormProps) {
           return;
         }
 
-        const imageResult = await updateBranch(createdBranch.id, {
-          imageUrl: uploadedImageUrl,
-        });
+        const imageResult = await setNewBranchImage(
+          createdBranch.id,
+          uploadedImageUrl,
+        );
         if (!imageResult.success) {
           toast.error(
             imageResult.error ?? "Branch created, but image URL was not saved",

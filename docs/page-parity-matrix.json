@@ -1061,30 +1061,34 @@
   {
     "legacyPhp": "Front/templates/admin/branch.php",
     "legacyJs": "Front/templates/admin/js/branch.js",
-    "modernRoute": "/branch.php, /branches/[id]/edit",
-    "status": "partial - legacy branch edit bridge restored; visual/layout audit remains",
+    "modernRoute": "/branch.php, /branches/new, /branches/[id]/edit",
+    "status": "partial - legacy branch add/edit bridge and ACL restored; visual/layout audit remains",
     "legacyTablesMentioned": [
       "auto",
-      "themeforest"
+      "themeforest",
+      "system_actions",
+      "actions_control"
     ],
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Restored legacy branch create/update field fidelity for Branch Name, Branch Location, Branch Prefix, Mobile, Telephone, active state, and branch image upload/preview with migrated `images/BranchPhoto` filename fallback. Branch import now preserves `t_branch.prefix`, `mobile`, `tel`, `image`, active state, and legacy provenance. `/branch.php?id=` now resolves raw numeric, UUID, and encrypted legacy branch ids into the modern branch edit form. Remaining work is exact Metronic form layout/toast timing and uploaded file storage path parity."
+    "verification": "Restored legacy branch create/update field fidelity for Branch Name, Branch Location, Branch Prefix, Mobile, Telephone, active state, and branch image upload/preview with migrated `images/BranchPhoto` filename fallback. Branch import now preserves `t_branch.prefix`, `mobile`, `tel`, `image`, active state, and legacy provenance. Branch `addBranch` and `updateBranch` ACTION grants now deny `/branch.php` new/edit bridge entry and direct `/branches/new` or `/branches/[id]/edit` hits when the imported action catalogue is configured and not granted. `/branch.php` without `id` now resolves to the modern New Branch form, and `/branch.php?id=` resolves raw numeric, UUID, and encrypted legacy branch ids into the modern branch edit form. Remaining work is exact Metronic form layout/toast timing and uploaded file storage path parity."
   },
   {
     "legacyPhp": "Front/templates/admin/branches.php",
     "legacyJs": "Front/templates/admin/js/branches.js",
     "modernRoute": "/branches.php, /branches",
-    "status": "partial - legacy branch roster, filters, copy/PDF exports, page sizes, soft delete, and bridge restored; visual audit remains",
+    "status": "partial - legacy branch roster, filters, copy/PDF exports, page sizes, soft delete, ACL, and bridge restored; visual audit remains",
     "legacyTablesMentioned": [
       "Form",
       "Selected",
       "auto",
-      "themeforest"
+      "themeforest",
+      "system_actions",
+      "actions_control"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Restored the legacy Branches Listing as the default table view with active-branch default scope, checkbox/S.N./Image/Branch/Location/Mobile/Info/Date/Action columns, migrated `images/BranchPhoto` filename fallback, global search, status filter, legacy S.N./Branch/Location/Mobile/created-date filter row, 10/20/50/100/150/All page sizes, Copy/PDF/Excel/CSV export, print action, New Branch, dashboard/view, edit, and legacy-style soft deactivate. `/branches.php` now redirects to the modern branch roster. Remaining work is final Browser visual smoke and legacy print styling acceptance."
+    "verification": "Restored the legacy Branches Listing as the default table view with active-branch default scope, checkbox/S.N./Image/Branch/Location/Mobile/Info/Date/Action columns, migrated `images/BranchPhoto` filename fallback, global search, status filter, legacy S.N./Branch/Location/Mobile/created-date filter row, 10/20/50/100/150/All page sizes, Copy/PDF/Excel/CSV export, print action, New Branch, dashboard/view, edit, and legacy-style soft deactivate. Branch `addBranch`, `updateBranch`, and `deleteBranch` ACTION grants now hide New/Edit/Delete controls and deny direct create/update/deactivate server mutations when the imported action catalogue is configured and not granted. `/branches.php` now redirects to the modern branch roster. Remaining work is final Browser visual smoke and legacy print styling acceptance."
   },
   {
     "legacyPhp": "Front/templates/admin/calendar.php",
@@ -16647,7 +16651,7 @@
     "requestFieldsMentioned": [
       "LEVELS"
     ],
-    "verification": "`/settings/access-control` now restores the admin-only legacy level/action matrix over migrated `LegacyAuthRecord` levels and `LegacyAccessControlRecord` actions/grants, including staff and manager source databases, selected-level batch save, searchable action catalogue, inactive action badges, disabled level badges, legacy `No level selected!`/`Saved!` feedback, and grant persistence by soft-disabling stale rows then re-enabling/creating selected grants. `EditSchoolFromTo` is now enforced through the migrated grant bridge; `leftmenu.php` PAGE grants filter desktop/mobile navigation and deny direct guarded route hits through `/forbidden.php`; non-left-menu deep PAGE guards now cover branch/class/child dashboards, child accounting/calls/absence/accident/attendance, individual call/medical/assessment forms, message class compose, nursery compliance, and invoice/daily/absence detail bridges; child `addChild`/`updateChild`/`deleteChild` ACTION grants now protect child roster controls, direct child form routes, and child write actions; and class `addClass`/`updateClass`/`deleteClass` ACTION grants now protect class roster controls, class form bridge/query modal entry, and class write actions. Remaining work is wiring the other ACTION families and deciding whether to hydrate grant snapshots into sessions."
+    "verification": "`/settings/access-control` now restores the admin-only legacy level/action matrix over migrated `LegacyAuthRecord` levels and `LegacyAccessControlRecord` actions/grants, including staff and manager source databases, selected-level batch save, searchable action catalogue, inactive action badges, disabled level badges, legacy `No level selected!`/`Saved!` feedback, and grant persistence by soft-disabling stale rows then re-enabling/creating selected grants. `EditSchoolFromTo` is now enforced through the migrated grant bridge; `leftmenu.php` PAGE grants filter desktop/mobile navigation and deny direct guarded route hits through `/forbidden.php`; non-left-menu deep PAGE guards now cover branch/class/child dashboards, child accounting/calls/absence/accident/attendance, individual call/medical/assessment forms, message class compose, nursery compliance, and invoice/daily/absence detail bridges; child `addChild`/`updateChild`/`deleteChild` ACTION grants now protect child roster controls, direct child form routes, and child write actions; class `addClass`/`updateClass`/`deleteClass` ACTION grants now protect class roster controls, class form bridge/query modal entry, and class write actions; and branch `addBranch`/`updateBranch`/`deleteBranch` ACTION grants now protect branch roster controls, branch form bridge/direct form entry, and branch write actions. Remaining work is wiring the other ACTION families and deciding whether to hydrate grant snapshots into sessions."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/classes/add_level.class.php",
@@ -17166,7 +17170,7 @@
     "requestFieldsMentioned": [
       "LEVELS"
     ],
-    "verification": "`/settings/access-control` replaces the legacy `Modify levels` admin surface with source-database grouped staff/manager level tables, selected-level checkboxes, searchable action grants, select-all/clear controls, and batch save through `updateLegacyAccessControlLevels`. `EditSchoolFromTo` now uses those grants for active enforcement when migrated ACL data is present; left-menu PAGE grants filter desktop/mobile navigation and deny direct guarded route hits through `/forbidden.php`; non-left-menu deep PAGE guards now cover branch/class/child dashboards, child accounting/calls/absence/accident/attendance, individual call/medical/assessment forms, message class compose, nursery compliance, and invoice/daily/absence detail bridges; child `addChild`/`updateChild`/`deleteChild` ACTION grants now protect child roster controls, direct child form routes, and child write actions; and class `addClass`/`updateClass`/`deleteClass` ACTION grants now protect class roster controls, class form bridge/query modal entry, and class write actions. Remaining work is expanding active `Check::protectPageOrFunction` enforcement across the other ACTION guards/action controls."
+    "verification": "`/settings/access-control` replaces the legacy `Modify levels` admin surface with source-database grouped staff/manager level tables, selected-level checkboxes, searchable action grants, select-all/clear controls, and batch save through `updateLegacyAccessControlLevels`. `EditSchoolFromTo` now uses those grants for active enforcement when migrated ACL data is present; left-menu PAGE grants filter desktop/mobile navigation and deny direct guarded route hits through `/forbidden.php`; non-left-menu deep PAGE guards now cover branch/class/child dashboards, child accounting/calls/absence/accident/attendance, individual call/medical/assessment forms, message class compose, nursery compliance, and invoice/daily/absence detail bridges; child `addChild`/`updateChild`/`deleteChild` ACTION grants now protect child roster controls, direct child form routes, and child write actions; class `addClass`/`updateClass`/`deleteClass` ACTION grants now protect class roster controls, class form bridge/query modal entry, and class write actions; and branch `addBranch`/`updateBranch`/`deleteBranch` ACTION grants now protect branch roster controls, branch form bridge/direct form entry, and branch write actions. Remaining work is expanding active `Check::protectPageOrFunction` enforcement across the other ACTION guards/action controls."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/level-create.php",

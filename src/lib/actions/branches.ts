@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireOrg, requireOrgSafe } from "@/lib/require-org";
+import { requireLegacyActionAllowed } from "@/lib/legacy-action-permissions";
 import { verifyBranchAccess } from "@/lib/verify-org-access";
 
 // ---------------------------------------------------------------------------
@@ -125,6 +126,9 @@ export async function createBranch(
   const { ctx } = result;
 
   try {
+    const permission = await requireLegacyActionAllowed(ctx, "addBranch");
+    if (!permission.ok) return { success: false, error: permission.error };
+
     const branch = await db.branch.create({
       data: {
         name: data.name,
@@ -162,6 +166,9 @@ export async function updateBranch(
   const { ctx } = result;
 
   try {
+    const permission = await requireLegacyActionAllowed(ctx, "updateBranch");
+    if (!permission.ok) return { success: false, error: permission.error };
+
     const hasAccess = await verifyBranchAccess(id, ctx.organizationId);
     if (!hasAccess) return { success: false, error: "Branch not found" };
 
@@ -194,6 +201,53 @@ export async function updateBranch(
   }
 }
 
+export async function setNewBranchImage(
+  id: string,
+  imageUrl: string,
+): Promise<ActionResult> {
+  const result = await requireOrgSafe();
+  if (!result.ok) return { success: false, error: result.error };
+  const { ctx } = result;
+
+  try {
+    const permission = await requireLegacyActionAllowed(ctx, "addBranch");
+    if (!permission.ok) return { success: false, error: permission.error };
+
+    const branch = await db.branch.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        organizationId: true,
+        imageUrl: true,
+        createdAt: true,
+      },
+    });
+
+    if (!branch || branch.organizationId !== ctx.organizationId) {
+      return { success: false, error: "Branch not found" };
+    }
+
+    const createdRecently =
+      Date.now() - branch.createdAt.getTime() <= 15 * 60 * 1000;
+    if (branch.imageUrl || !createdRecently) {
+      return { success: false, error: "Access denied" };
+    }
+
+    const updated = await db.branch.update({
+      where: { id },
+      data: { imageUrl },
+    });
+
+    revalidatePath("/branches");
+    revalidatePath(`/branches/${id}`);
+
+    return { success: true, data: updated };
+  } catch (error) {
+    console.error("Failed to set new branch image:", error);
+    return { success: false, error: "Failed to set branch image" };
+  }
+}
+
 // ---------------------------------------------------------------------------
 // deleteBranch (soft delete — set isActive=false)
 // ---------------------------------------------------------------------------
@@ -204,6 +258,9 @@ export async function deleteBranch(id: string): Promise<ActionResult> {
   const { ctx } = result;
 
   try {
+    const permission = await requireLegacyActionAllowed(ctx, "deleteBranch");
+    if (!permission.ok) return { success: false, error: permission.error };
+
     const hasAccess = await verifyBranchAccess(id, ctx.organizationId);
     if (!hasAccess) return { success: false, error: "Branch not found" };
 

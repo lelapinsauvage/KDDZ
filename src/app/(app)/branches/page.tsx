@@ -1,5 +1,7 @@
 import { requireRole } from "@/lib/require-role";
 import { getBranches } from "@/lib/actions/branches";
+import { getLegacyBranchActionPermissions } from "@/lib/legacy-branch-action-permissions";
+import { requireOrg } from "@/lib/require-org";
 import {
   BranchesClient,
   type BranchItem,
@@ -7,7 +9,11 @@ import {
 
 export default async function BranchesManagementPage() {
   await requireRole("ADMIN", "MANAGER");
-  const result = await getBranches();
+  const ctx = await requireOrg();
+  const [result, actionPermissions] = await Promise.all([
+    getBranches(),
+    getLegacyBranchActionPermissions(ctx),
+  ]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const raw = (result.data ?? []) as any[];
@@ -30,5 +36,10 @@ export default async function BranchesManagementPage() {
     createdAt: b.createdAt ? new Date(b.createdAt).toISOString() : new Date().toISOString(),
   }));
 
-  return <BranchesClient branches={branches} />;
+  return (
+    <BranchesClient
+      branches={branches}
+      actionPermissions={actionPermissions}
+    />
+  );
 }

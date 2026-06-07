@@ -37,6 +37,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { deleteBranch } from "@/lib/actions/branches";
+import type { LegacyBranchActionPermissions } from "@/lib/legacy-branch-action-permissions";
 import type { ExportColumn } from "@/lib/export";
 import { toast } from "sonner";
 
@@ -61,6 +62,7 @@ export interface BranchItem {
 
 interface BranchesClientProps {
   branches: BranchItem[];
+  actionPermissions?: LegacyBranchActionPermissions;
 }
 
 interface LegacyFilters {
@@ -148,9 +150,18 @@ function BranchThumbnail({ branch, size = "table" }: { branch: BranchItem; size?
   );
 }
 
-export function BranchesClient({ branches }: BranchesClientProps) {
+export function BranchesClient({
+  branches,
+  actionPermissions = {
+    canAddBranch: true,
+    canUpdateBranch: true,
+    canDeleteBranch: true,
+  },
+}: BranchesClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const { canAddBranch, canUpdateBranch, canDeleteBranch } =
+    actionPermissions;
   const [deleteTarget, setDeleteTarget] = useState<BranchItem | null>(null);
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
   const [searchQuery, setSearchQuery] = useState("");
@@ -234,6 +245,11 @@ export function BranchesClient({ branches }: BranchesClientProps) {
 
   function handleDelete() {
     if (!deleteTarget) return;
+    if (!canDeleteBranch) {
+      toast.error("Access denied");
+      return;
+    }
+
     startTransition(async () => {
       const result = await deleteBranch(deleteTarget.id);
       if (result.success) {
@@ -348,14 +364,16 @@ export function BranchesClient({ branches }: BranchesClientProps) {
         <Card className="print:border-none print:shadow-none">
           <CardHeader className="print:hidden">
             <CardTitle className="text-lg">Branches Listing</CardTitle>
-            <CardAction>
-              <Button asChild>
-                <Link href="/branches/new">
-                  <Plus className="mr-1 size-4" />
-                  New Branch
-                </Link>
-              </Button>
-            </CardAction>
+            {canAddBranch ? (
+              <CardAction>
+                <Button asChild>
+                  <Link href="/branches/new">
+                    <Plus className="mr-1 size-4" />
+                    New Branch
+                  </Link>
+                </Button>
+              </CardAction>
+            ) : null}
           </CardHeader>
           <CardContent className="space-y-4 print:p-0 print:space-y-0">
             <div className="flex flex-wrap items-center gap-2 sm:gap-3 print:hidden">
@@ -516,12 +534,14 @@ export function BranchesClient({ branches }: BranchesClientProps) {
                 <div className="flex flex-col items-center justify-center rounded-sm border border-dashed py-16">
                   <Building2 className="size-10 text-muted-foreground/50" />
                   <p className="mt-3 text-sm text-muted-foreground">No branches found</p>
-                  <Button asChild variant="outline" className="mt-4">
-                    <Link href="/branches/new">
-                      <Plus className="mr-1 size-4" />
-                      New Branch
-                    </Link>
-                  </Button>
+                  {canAddBranch ? (
+                    <Button asChild variant="outline" className="mt-4">
+                      <Link href="/branches/new">
+                        <Plus className="mr-1 size-4" />
+                        New Branch
+                      </Link>
+                    </Button>
+                  ) : null}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3">
@@ -549,14 +569,18 @@ export function BranchesClient({ branches }: BranchesClientProps) {
                                   <Eye className="size-4" />
                                 </Link>
                               </Button>
-                              <Button asChild variant="ghost" size="icon-sm">
-                                <Link href={`/branches/${branch.id}/edit`}>
-                                  <Pencil className="size-4" />
-                                </Link>
-                              </Button>
-                              <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(branch)}>
-                                <Trash2 className="size-4" />
-                              </Button>
+                              {canUpdateBranch ? (
+                                <Button asChild variant="ghost" size="icon-sm">
+                                  <Link href={`/branches/${branch.id}/edit`}>
+                                    <Pencil className="size-4" />
+                                  </Link>
+                                </Button>
+                              ) : null}
+                              {canDeleteBranch ? (
+                                <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(branch)}>
+                                  <Trash2 className="size-4" />
+                                </Button>
+                              ) : null}
                             </div>
                           </div>
                         </div>
@@ -628,14 +652,18 @@ export function BranchesClient({ branches }: BranchesClientProps) {
                                     <Eye className="size-4 text-muted-foreground" />
                                   </Link>
                                 </Button>
-                                <Button asChild variant="ghost" size="icon-sm">
-                                  <Link href={`/branches/${branch.id}/edit`}>
-                                    <Pencil className="size-4 text-muted-foreground" />
-                                  </Link>
-                                </Button>
-                                <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(branch)}>
-                                  <Trash2 className="size-4" />
-                                </Button>
+                                {canUpdateBranch ? (
+                                  <Button asChild variant="ghost" size="icon-sm">
+                                    <Link href={`/branches/${branch.id}/edit`}>
+                                      <Pencil className="size-4 text-muted-foreground" />
+                                    </Link>
+                                  </Button>
+                                ) : null}
+                                {canDeleteBranch ? (
+                                  <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(branch)}>
+                                    <Trash2 className="size-4" />
+                                  </Button>
+                                ) : null}
                               </div>
                             </TableCell>
                           </TableRow>
