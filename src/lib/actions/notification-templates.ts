@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireOrg, requireOrgSafe } from "@/lib/require-org";
+import { deliverEmail, type EmailDeliverySummary } from "@/lib/email-delivery";
 import type { Prisma } from "@/generated/prisma/client";
 import type { UserRole } from "@/generated/prisma/enums";
 
@@ -434,7 +435,7 @@ async function createInAppNotifications(params: {
 export async function sendTestNotification(
   category: string,
   template: { enabled: boolean; subject: string; body: string },
-): Promise<ActionResult<{ sentCount: number }>> {
+): Promise<ActionResult<{ sentCount: number; emailDelivery: EmailDeliverySummary }>> {
   try {
     const result = await requireOrgSafe();
     if (!result.ok) return { success: false, error: result.error };
@@ -464,19 +465,40 @@ export async function sendTestNotification(
       ...TEST_VARIABLES,
       branch_name: branch?.name ?? organization?.name ?? TEST_VARIABLES.branch_name,
     };
+    const renderedSubject = renderNotificationText(
+      template.subject || defaults.subject,
+      variables,
+    );
+    const renderedBody = renderNotificationText(
+      template.body || defaults.body,
+      variables,
+    );
 
     const sentCount = await createInAppNotifications({
       userIds: [ctx.userId],
-      title: renderNotificationText(template.subject || defaults.subject, variables),
-      body: renderNotificationText(template.body || defaults.body, variables),
+      title: renderedSubject,
+      body: renderedBody,
       type: "TEST",
       category,
+    });
+    const currentUser = await db.user.findUnique({
+      where: { id: ctx.userId },
+      select: { email: true, name: true },
+    });
+    const emailDelivery = await deliverEmail({
+      recipients: currentUser?.email
+        ? [{ email: currentUser.email, name: currentUser.name }]
+        : [],
+      subject: renderedSubject,
+      body: renderedBody,
+      category,
+      metadata: { source: "notification_test", userId: ctx.userId },
     });
 
     revalidatePath("/");
     revalidatePath("/settings/notifications");
 
-    return { success: true, data: { sentCount } };
+    return { success: true, data: { sentCount, emailDelivery } };
   } catch (error) {
     console.error("Failed to send test notification:", error);
     return { success: false, error: "Failed to send test notification" };
@@ -512,6 +534,7 @@ export interface LegacyBulkEmailResult {
   matchedRecipients: number;
   sentCount: number;
   skippedNoModernUser: number;
+  emailDelivery: EmailDeliverySummary;
 }
 
 export interface LegacyNotificationSettingRow {
@@ -763,6 +786,15 @@ export async function sendLegacyBulkEmail(params: {
       managerRows.map((row) => row.sourceDatabase),
     );
     const matchedEmails = new Set<string>();
+    const deliverBulkEmail = () =>
+      deliverEmail({
+        recipients: Array.from(matchedEmails).map((email) => ({ email })),
+        subject,
+        body: message,
+        category: "BULK_EMAIL",
+        metadata: { source: "legacy_bulk_email" },
+        mode: "bcc",
+      });
 
     for (const row of regularRows) {
       const levelsForUser = parsePhpLevelIds(row.recordValue);
@@ -822,6 +854,7 @@ export async function sendLegacyBulkEmail(params: {
           matchedRecipients: matchedEmails.size,
           sentCount: 0,
           skippedNoModernUser: matchedEmails.size,
+          emailDelivery: await deliverBulkEmail(),
         },
       };
     }
@@ -842,7 +875,7 @@ export async function sendLegacyBulkEmail(params: {
           },
         ],
       },
-      select: { id: true, email: true },
+      select: { id: true, email: true, name: true },
     });
 
     const userIds = Array.from(new Set(users.map((user) => user.id)));
@@ -858,6 +891,7 @@ export async function sendLegacyBulkEmail(params: {
           matchedRecipients: matchedEmails.size,
           sentCount: 0,
           skippedNoModernUser: matchedEmails.size,
+          emailDelivery: await deliverBulkEmail(),
         },
       };
     }
@@ -868,6 +902,28 @@ export async function sendLegacyBulkEmail(params: {
       body: message,
       type: "BULK_EMAIL",
       category: "BULK_EMAIL",
+    });
+    const recipientsByEmail = new Map<string, { email: string; name?: string | null }>(
+      Array.from(matchedEmails).map((email) => [email, { email }]),
+    );
+    for (const user of users) {
+      if (user.email) {
+        recipientsByEmail.set(user.email.toLowerCase(), {
+          email: user.email,
+          name: user.name,
+        });
+      }
+    }
+    const emailDelivery = await deliverEmail({
+      recipients: Array.from(recipientsByEmail.values()),
+      subject,
+      body: message,
+      category: "BULK_EMAIL",
+      metadata: {
+        source: "legacy_bulk_email",
+        selectedLevels: levels.length,
+      },
+      mode: "bcc",
     });
 
     revalidatePath("/");
@@ -880,6 +936,7 @@ export async function sendLegacyBulkEmail(params: {
         matchedRecipients: matchedEmails.size || userIds.length,
         sentCount: created,
         skippedNoModernUser: Math.max(0, matchedEmails.size - userIds.length),
+        emailDelivery,
       },
     };
   } catch (error) {
@@ -1165,6 +1222,7 @@ export async function resendNotification(id: string): Promise<ActionResult> {
 
     const existing = await db.notification.findFirst({
       where: { id, user: { organizationId: ctx.organizationId } },
+      include: { user: { select: { email: true, name: true } } },
     });
 
     if (!existing) {
@@ -1179,6 +1237,18 @@ export async function resendNotification(id: string): Promise<ActionResult> {
         type: existing.type,
         category: existing.category,
         isRead: false,
+      },
+    });
+    await deliverEmail({
+      recipients: existing.user.email
+        ? [{ email: existing.user.email, name: existing.user.name }]
+        : [],
+      subject: existing.title,
+      body: existing.body ?? "",
+      category: existing.category ?? undefined,
+      metadata: {
+        source: "notification_resend",
+        notificationId: existing.id,
       },
     });
 

@@ -72,6 +72,27 @@ import {
   type SentNotificationRow,
 } from "@/lib/actions/notification-templates";
 
+type EmailDeliveryStatus = {
+  configured: boolean;
+  deliveredCount: number;
+  skippedCount: number;
+  failedCount: number;
+  provider: string;
+};
+
+function externalEmailStatus(delivery?: EmailDeliveryStatus) {
+  if (!delivery) return "";
+  if (!delivery.configured) {
+    return delivery.skippedCount > 0
+      ? ` External email skipped for ${delivery.skippedCount} recipient${delivery.skippedCount === 1 ? "" : "s"}; provider is not configured.`
+      : "";
+  }
+  if (delivery.failedCount > 0) {
+    return ` External email sent to ${delivery.deliveredCount}, failed for ${delivery.failedCount}.`;
+  }
+  return ` External email sent to ${delivery.deliveredCount} via ${delivery.provider}.`;
+}
+
 // ---------------------------------------------------------------------------
 // Category metadata
 // ---------------------------------------------------------------------------
@@ -458,7 +479,7 @@ function TemplatesTab({
         category: template.category,
         success: result.success,
         message: result.success
-          ? "Test sent to your notifications."
+          ? `Test sent to your notifications.${externalEmailStatus(result.data?.emailDelivery)}`
           : result.error ?? "Test send failed.",
       });
     });
@@ -628,7 +649,7 @@ function BulkEmailTab({
       if (result.success && result.data) {
         setStatus({
           success: true,
-          text: `Sent ${result.data.sentCount} in-app notification${result.data.sentCount === 1 ? "" : "s"} across ${result.data.selectedLevels} group${result.data.selectedLevels === 1 ? "" : "s"}.`,
+          text: `Sent ${result.data.sentCount} in-app notification${result.data.sentCount === 1 ? "" : "s"} across ${result.data.selectedLevels} group${result.data.selectedLevels === 1 ? "" : "s"}.${externalEmailStatus(result.data.emailDelivery)}`,
         });
         if (result.data.sentCount > 0) {
           setSubject("");
