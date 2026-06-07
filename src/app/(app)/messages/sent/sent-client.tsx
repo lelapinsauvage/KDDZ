@@ -2,14 +2,27 @@
 
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ColumnDef } from "@tanstack/react-table";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
-import { DataTable } from "@/components/shared/data-table";
 import { ExportButton } from "@/components/shared/export-button";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,7 +40,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
   Eye,
   Inbox,
   MessageSquare,
@@ -61,6 +75,8 @@ interface SentMessage {
   createdAt: string;
 }
 
+type SentPageSize = number | "all";
+
 export interface SentFilters {
   q: string;
   id: string;
@@ -71,15 +87,18 @@ export interface SentFilters {
   subject: string;
   message: string;
   thread: string;
+  page: number;
+  pageSize: SentPageSize;
 }
 
 interface SentClientProps {
   messages: SentMessage[];
+  exportMessages: SentMessage[];
   total: number;
   initialFilters: SentFilters;
 }
 
-const EMPTY_FILTERS: SentFilters = {
+const EMPTY_TEXT_FILTERS = {
   q: "",
   id: "",
   to: "",
@@ -91,7 +110,9 @@ const EMPTY_FILTERS: SentFilters = {
   thread: "",
 };
 
-const FILTER_KEYS = Object.keys(EMPTY_FILTERS) as Array<keyof SentFilters>;
+const FILTER_KEYS = Object.keys(EMPTY_TEXT_FILTERS) as Array<
+  keyof typeof EMPTY_TEXT_FILTERS
+>;
 
 const AVATAR_COLORS = [
   "bg-violet-500",
@@ -158,75 +179,66 @@ function formatLegacyDateTime(value: string) {
   ].join(" ");
 }
 
-function dateBoundary(value: string, endOfDay = false) {
-  if (!value) return null;
-  const date = new Date(`${value}T${endOfDay ? "23:59:59.999" : "00:00:00.000"}`);
-  return Number.isNaN(date.getTime()) ? null : date;
-}
-
-function includesFilter(value: unknown, filter: string) {
-  if (!filter) return true;
-  return String(value ?? "").toLowerCase().includes(filter.toLowerCase());
-}
-
 function threadLabel(message: SentMessage) {
   if (message.legacyThreadId) return String(message.legacyThreadId);
   if (message.threadId) return message.threadId.slice(0, 8);
   return "-";
 }
 
-function messageSearchText(message: SentMessage, serial: number | string) {
-  return [
-    serial,
-    message.recipientName,
-    formatLegacyDateTime(message.createdAt),
-    message.nature,
-    message.legacyNature,
-    message.subject,
-    message.body,
-    threadLabel(message),
-    message.legacyHref,
-  ]
-    .filter(Boolean)
-    .join(" ");
-}
-
-function sortableHeader(label: string) {
-  return function Header({ column }: { column: { toggleSorting: (desc?: boolean) => void; getIsSorted: () => false | "asc" | "desc" } }) {
-    return (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="px-0"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        {label}
-        <ArrowUpDown className="ml-1 size-3" />
-      </Button>
-    );
-  };
-}
-
 export function SentClient({
   messages,
+  exportMessages,
   total,
   initialFilters,
 }: SentClientProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [filters, setFilters] = useState<SentFilters>({
-    ...EMPTY_FILTERS,
+    ...EMPTY_TEXT_FILTERS,
     ...initialFilters,
   });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  function updateFilter(key: keyof SentFilters, value: string) {
+  function replaceParams(updates: Record<string, string>) {
+    const params = new URLSearchParams(searchParams.toString());
+    for (const [key, value] of Object.entries(updates)) {
+      if (!value) {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    }
+    if (!("page" in updates)) {
+      params.delete("page");
+    }
+    const query = params.toString();
+    startTransition(() => {
+      router.replace(query ? `${pathname}?${query}` : pathname);
+    });
+  }
+
+  function updateFilter(key: keyof typeof EMPTY_TEXT_FILTERS, value: string) {
     setFilters((current) => ({ ...current, [key]: value }));
+    replaceParams({ [key]: value });
   }
 
   function clearFilters() {
-    setFilters({ ...EMPTY_FILTERS });
+    setFilters((current) => ({ ...current, ...EMPTY_TEXT_FILTERS, page: 1 }));
+    replaceParams({
+      q: "",
+      id: "",
+      to: "",
+      dateFrom: "",
+      dateTo: "",
+      nature: "",
+      subject: "",
+      message: "",
+      thread: "",
+      page: "",
+    });
   }
 
   function handleDelete() {
@@ -246,31 +258,23 @@ export function SentClient({
     });
   }
 
-  const filteredMessages = useMemo(() => {
-    const from = dateBoundary(filters.dateFrom);
-    const to = dateBoundary(filters.dateTo, true);
-
-    return messages.filter((message, index) => {
-      const serial = message.legacyId ?? index + 1;
-      const createdAt = parseDate(message.createdAt);
-
-      if (!includesFilter(serial, filters.id)) return false;
-      if (!includesFilter(message.recipientName, filters.to)) return false;
-      if (!includesFilter(message.nature, filters.nature)) return false;
-      if (!includesFilter(message.subject, filters.subject)) return false;
-      if (!includesFilter(message.body, filters.message)) return false;
-      if (!includesFilter(threadLabel(message), filters.thread)) return false;
-      if (from && (!createdAt || createdAt < from)) return false;
-      if (to && (!createdAt || createdAt > to)) return false;
-      if (!includesFilter(messageSearchText(message, serial), filters.q)) return false;
-
-      return true;
-    });
-  }, [filters, messages]);
-
+  const showAllRows = filters.pageSize === "all";
+  const numericPageSize =
+    typeof filters.pageSize === "number" ? filters.pageSize : Math.max(total, 1);
+  const pageCount = showAllRows
+    ? 1
+    : Math.max(1, Math.ceil(total / numericPageSize));
+  const pageStart = total === 0 ? 0 : (filters.page - 1) * numericPageSize + 1;
+  const pageEnd = showAllRows
+    ? total
+    : Math.min(total, filters.page * numericPageSize);
+  const visibleFallbackOffset = showAllRows
+    ? 0
+    : (filters.page - 1) * numericPageSize;
+  const exportSource = exportMessages.length ? exportMessages : messages;
   const exportRows = useMemo(
     () =>
-      filteredMessages.map((message, index) => ({
+      exportSource.map((message, index) => ({
         serial: message.legacyId ?? index + 1,
         to: message.recipientName,
         date: formatLegacyDateTime(message.createdAt),
@@ -279,149 +283,10 @@ export function SentClient({
         message: message.body,
         thread: threadLabel(message),
       })),
-    [filteredMessages],
+    [exportSource],
   );
 
   const hasFilters = FILTER_KEYS.some((key) => filters[key].trim() !== "");
-
-  const columns: ColumnDef<SentMessage>[] = [
-    {
-      accessorKey: "legacyId",
-      header: "#",
-      size: 70,
-      cell: ({ row }) => (
-        <span className="text-xs font-medium text-muted-foreground">
-          {row.original.legacyId ?? row.index + 1}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "recipientName",
-      header: sortableHeader("To"),
-      cell: ({ row }) => {
-        const message = row.original;
-        return (
-          <div className="flex min-w-[180px] items-center gap-2.5">
-            <div
-              className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white ${avatarColor(message.recipientName)}`}
-            >
-              {initials(message.recipientName)}
-            </div>
-            <span className="text-sm">{message.recipientName}</span>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "createdAt",
-      header: sortableHeader("Date"),
-      cell: ({ row }) => (
-        <span className="whitespace-nowrap text-xs text-muted-foreground">
-          {formatLegacyDateTime(row.original.createdAt) || "-"}
-        </span>
-      ),
-      sortingFn: (a, b) => {
-        return (
-          new Date(a.original.createdAt).getTime() -
-          new Date(b.original.createdAt).getTime()
-        );
-      },
-    },
-    {
-      accessorKey: "nature",
-      header: sortableHeader("Nature"),
-      cell: ({ row }) => {
-        const nature = row.original.nature || "General";
-        return (
-          <Badge
-            variant="secondary"
-            className={`text-xs font-normal ${NATURE_STYLES[nature.toLowerCase()] ?? ""}`}
-          >
-            {nature}
-          </Badge>
-        );
-      },
-    },
-    {
-      accessorKey: "subject",
-      header: sortableHeader("Subject"),
-      cell: ({ row }) => (
-        <Link
-          href={`/messages/${row.original.id}`}
-          className="block max-w-[260px] truncate text-sm text-foreground hover:underline"
-        >
-          {row.original.subject || "(No subject)"}
-        </Link>
-      ),
-    },
-    {
-      id: "message",
-      accessorFn: (row) => row.body,
-      header: "Message",
-      cell: ({ row }) => (
-        <p className="max-w-[340px] truncate text-sm text-muted-foreground">
-          {row.original.body || "-"}
-        </p>
-      ),
-    },
-    {
-      id: "thread",
-      accessorFn: (row) => threadLabel(row),
-      header: sortableHeader("Thread"),
-      cell: ({ row }) => (
-        <Link
-          href={`/messages/${row.original.id}`}
-          className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-        >
-          <MessageSquare className="size-3" />
-          {threadLabel(row.original)}
-        </Link>
-      ),
-    },
-    {
-      id: "actions",
-      header: "Actions",
-      size: 80,
-      cell: ({ row }) => {
-        const message = row.original;
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-8">
-                <MoreHorizontal className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href={`/messages/${message.id}`}>
-                  <Eye className="mr-2 size-4" />
-                  View
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                disabled={isPending}
-                onClick={() => handleResend(message.id)}
-              >
-                <RefreshCw className="mr-2 size-4" />
-                Resend
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                disabled={isPending}
-                className="text-red-600"
-                onClick={() => {
-                  setDeletingId(message.id);
-                  setDeleteDialogOpen(true);
-                }}
-              >
-                <Trash2 className="mr-2 size-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        );
-      },
-    },
-  ];
 
   return (
     <>
@@ -444,7 +309,7 @@ export function SentClient({
       <div className="space-y-4 p-4 md:p-6">
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-sm text-muted-foreground">
-            Showing {filteredMessages.length} of {total} sent{" "}
+            Showing {pageStart} - {pageEnd} of {total} sent{" "}
             {total === 1 ? "message" : "messages"}
           </p>
           <div className="ml-auto flex flex-wrap items-center gap-2">
@@ -464,7 +329,7 @@ export function SentClient({
               type="button"
               variant="outline"
               size="sm"
-              disabled={filteredMessages.length === 0}
+              disabled={messages.length === 0}
               onClick={() => window.print()}
             >
               <Printer className="mr-1 size-4" />
@@ -549,11 +414,199 @@ export function SentClient({
           </div>
         </div>
 
-        <DataTable
-          columns={columns}
-          data={filteredMessages}
-          pageSizeOptions={[10, 20, 50, 100, 1000]}
-        />
+        <div className="overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm">
+          <div className="overflow-x-auto">
+            <Table className="min-w-[900px]">
+              <TableHeader>
+                <TableRow className="border-border/60 hover:bg-transparent">
+                  <TableHead className="w-[72px] bg-muted/60">#</TableHead>
+                  <TableHead className="min-w-[220px] bg-muted/60">To</TableHead>
+                  <TableHead className="min-w-[160px] bg-muted/60">Date</TableHead>
+                  <TableHead className="min-w-[120px] bg-muted/60">Nature</TableHead>
+                  <TableHead className="min-w-[220px] bg-muted/60">Subject</TableHead>
+                  <TableHead className="min-w-[280px] bg-muted/60">Message</TableHead>
+                  <TableHead className="min-w-[120px] bg-muted/60">Thread</TableHead>
+                  <TableHead className="w-[92px] bg-muted/60 text-right">
+                    Actions
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {messages.length ? (
+                  messages.map((message, index) => {
+                    const serial =
+                      message.legacyId ?? visibleFallbackOffset + index + 1;
+                    const nature = message.nature || "General";
+
+                    return (
+                      <TableRow key={message.id} className="border-border/40">
+                        <TableCell>
+                          <span className="text-xs font-medium text-muted-foreground">
+                            {serial}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex min-w-[180px] items-center gap-2.5">
+                            <div
+                              className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white ${avatarColor(message.recipientName)}`}
+                            >
+                              {initials(message.recipientName)}
+                            </div>
+                            <span className="text-sm">{message.recipientName}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="whitespace-nowrap text-xs text-muted-foreground">
+                            {formatLegacyDateTime(message.createdAt) || "-"}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="secondary"
+                            className={`text-xs font-normal ${NATURE_STYLES[nature.toLowerCase()] ?? ""}`}
+                          >
+                            {nature}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Link
+                            href={`/messages/${message.id}`}
+                            className="block max-w-[260px] truncate text-sm text-foreground hover:underline"
+                          >
+                            {message.subject || "(No subject)"}
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          <p className="max-w-[340px] truncate text-sm text-muted-foreground">
+                            {message.body || "-"}
+                          </p>
+                        </TableCell>
+                        <TableCell>
+                          <Link
+                            href={`/messages/${message.id}`}
+                            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                          >
+                            <MessageSquare className="size-3" />
+                            {threadLabel(message)}
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex justify-end">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="size-8">
+                                  <MoreHorizontal className="size-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/messages/${message.id}`}>
+                                    <Eye className="mr-2 size-4" />
+                                    View
+                                  </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  disabled={isPending}
+                                  onClick={() => handleResend(message.id)}
+                                >
+                                  <RefreshCw className="mr-2 size-4" />
+                                  Resend
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  disabled={isPending}
+                                  className="text-red-600"
+                                  onClick={() => {
+                                    setDeletingId(message.id);
+                                    setDeleteDialogOpen(true);
+                                  }}
+                                >
+                                  <Trash2 className="mr-2 size-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={8} className="h-32 text-center">
+                      <div className="text-sm font-medium">No sent messages found</div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        No messages match the current filters.
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3 rounded-lg border border-border/40 bg-card/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted-foreground">
+            Showing <span className="font-medium text-foreground">{pageStart}</span>
+            {" - "}
+            <span className="font-medium text-foreground">{pageEnd}</span> of{" "}
+            <span className="font-medium text-foreground">{total}</span>
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <Select
+              value={`${filters.pageSize}`}
+              onValueChange={(value) => {
+                setFilters((current) => ({
+                  ...current,
+                  page: 1,
+                  pageSize: value === "all" ? "all" : Number(value),
+                }));
+                replaceParams({ pageSize: value, page: "1" });
+              }}
+            >
+              <SelectTrigger className="h-9 w-[82px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[10, 20, 50, 100, 1000].map((size) => (
+                  <SelectItem key={size} value={`${size}`}>
+                    {size}
+                  </SelectItem>
+                ))}
+                <SelectItem value="all">All</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={showAllRows || filters.page <= 1 || isPending}
+              onClick={() => {
+                const page = Math.max(1, filters.page - 1);
+                setFilters((current) => ({ ...current, page }));
+                replaceParams({ page: `${page}` });
+              }}
+            >
+              <ChevronLeft className="mr-1 size-4" />
+              Previous
+            </Button>
+            <span className="min-w-[84px] text-center text-sm text-muted-foreground">
+              Page {filters.page} of {pageCount}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={showAllRows || filters.page >= pageCount || isPending}
+              onClick={() => {
+                const page = Math.min(pageCount, filters.page + 1);
+                setFilters((current) => ({ ...current, page }));
+                replaceParams({ page: `${page}` });
+              }}
+            >
+              Next
+              <ChevronRight className="ml-1 size-4" />
+            </Button>
+          </div>
+        </div>
       </div>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

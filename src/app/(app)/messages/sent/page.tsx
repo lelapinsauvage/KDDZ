@@ -14,10 +14,27 @@ interface SentSearchParams {
   subject?: SearchValue;
   message?: SearchValue;
   thread?: SearchValue;
+  page?: SearchValue;
+  pageSize?: SearchValue;
 }
 
 function normalizeParam(value: SearchValue) {
   return normalizeLegacySearchQuery(value);
+}
+
+type SentPageSize = number | "all";
+
+const PAGE_SIZES = [10, 20, 50, 100, 1000];
+
+function parsePageSize(value: SearchValue): SentPageSize {
+  const normalized = normalizeParam(value);
+  if (normalized === "all") return "all";
+  const parsed = Number(normalized) || 10;
+  return PAGE_SIZES.includes(parsed) ? parsed : 10;
+}
+
+function parsePage(value: SearchValue) {
+  return Math.max(1, Number(normalizeParam(value)) || 1);
 }
 
 export default async function SentMessagesPage({
@@ -26,6 +43,8 @@ export default async function SentMessagesPage({
   searchParams: Promise<SentSearchParams>;
 }) {
   const params = await searchParams;
+  const page = parsePage(params.page);
+  const pageSize = parsePageSize(params.pageSize);
   const initialFilters = {
     q: normalizeParam(params.q),
     id: normalizeParam(params.id),
@@ -36,12 +55,33 @@ export default async function SentMessagesPage({
     subject: normalizeParam(params.subject),
     message: normalizeParam(params.message),
     thread: normalizeParam(params.thread),
+    page,
+    pageSize,
   };
 
-  const result = await getSentMessages({ pageSize: 1000 });
+  const listParams = {
+    search: initialFilters.q || undefined,
+    id: initialFilters.id || undefined,
+    to: initialFilters.to || undefined,
+    dateFrom: initialFilters.dateFrom || undefined,
+    dateTo: initialFilters.dateTo || undefined,
+    nature: initialFilters.nature || undefined,
+    subject: initialFilters.subject || undefined,
+    message: initialFilters.message || undefined,
+    thread: initialFilters.thread || undefined,
+    page,
+    pageSize,
+  };
+
+  const [result, exportResult] = await Promise.all([
+    getSentMessages(listParams),
+    getSentMessages({ ...listParams, page: 1, pageSize: "all" }),
+  ]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const data = result.data as any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const exportData = exportResult.data as any;
   const messages = (data?.messages ?? []) as Array<{
     id: string;
     legacyId: number | null;
@@ -60,11 +100,14 @@ export default async function SentMessagesPage({
     threadId: string | null;
     createdAt: string;
   }>;
+  const exportMessages = (exportData?.messages ?? []) as typeof messages;
   const total = (data?.total ?? 0) as number;
 
   return (
     <SentClient
+      key={JSON.stringify(initialFilters)}
       messages={messages}
+      exportMessages={exportMessages}
       total={total}
       initialFilters={initialFilters}
     />

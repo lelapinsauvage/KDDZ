@@ -17,6 +17,20 @@ interface MessageListParams {
   pageSize?: number;
 }
 
+interface SentMessageListParams {
+  search?: string;
+  id?: string;
+  to?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  nature?: string;
+  subject?: string;
+  message?: string;
+  thread?: string;
+  page?: number;
+  pageSize?: number | "all";
+}
+
 interface MessageAlarmListParams extends MessageListParams {
   nature?: string;
 }
@@ -83,6 +97,72 @@ function parseSubjectNature(subject: string | null): string | null {
   if (!subject) return null;
   const match = subject.match(/^\[([^\]]+)\]\s*/);
   return match?.[1]?.trim() || null;
+}
+
+function parseLegacyNumber(value: string | undefined): number | null {
+  const trimmed = value?.trim();
+  if (!trimmed || !/^\d+$/.test(trimmed)) return null;
+  const parsed = Number(trimmed);
+  return Number.isSafeInteger(parsed) ? parsed : null;
+}
+
+function parseLegacyDateBoundary(
+  value: string | undefined,
+  endOfDay = false,
+): Date | null {
+  if (!value) return null;
+  const date = new Date(
+    `${value}T${endOfDay ? "23:59:59.999" : "00:00:00.000"}`,
+  );
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function isUuid(value: string | undefined): value is string {
+  return Boolean(
+    value?.match(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    ),
+  );
+}
+
+const NO_RECIPIENT_MATCH = "00000000-0000-0000-0000-000000000000";
+
+async function findSentMessageRecipientIds(
+  search: string | undefined,
+  organizationId: string,
+) {
+  const query = search?.trim();
+  if (!query) return [];
+
+  const [users, parentUsers] = await Promise.all([
+    db.user.findMany({
+      where: {
+        organizationId,
+        OR: [
+          { name: { contains: query, mode: "insensitive" } },
+          { email: { contains: query, mode: "insensitive" } },
+        ],
+      },
+      select: { id: true },
+    }),
+    db.parentUser.findMany({
+      where: {
+        child: { branch: { organizationId } },
+        OR: [
+          { username: { contains: query, mode: "insensitive" } },
+          { child: { firstName: { contains: query, mode: "insensitive" } } },
+          { child: { lastName: { contains: query, mode: "insensitive" } } },
+        ],
+      },
+      select: { id: true },
+    }),
+  ]);
+
+  return [...users.map((user) => user.id), ...parentUsers.map((user) => user.id)];
+}
+
+function containsText(value: string) {
+  return { contains: value, mode: "insensitive" };
 }
 
 /**
@@ -359,34 +439,137 @@ export async function getMessageAlarms(
 // ---------------------------------------------------------------------------
 
 export async function getSentMessages(
-  params: MessageListParams = {},
+  params: SentMessageListParams = {},
 ): Promise<ActionResult> {
   try {
     const { userId, organizationId: orgId } = await requireOrg();
 
-    const { search, page = 1, pageSize = 50 } = params;
+    const {
+      search,
+      id,
+      to,
+      dateFrom,
+      dateTo,
+      nature,
+      subject,
+      message,
+      thread,
+      page = 1,
+      pageSize = 50,
+    } = params;
+    const normalizedPage = Math.max(1, page);
+    const paginated = pageSize !== "all";
+    const numericPageSize = paginated ? Math.max(1, pageSize) : undefined;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {
       senderId: userId,
       organizationId: orgId,
     };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const andConditions: any[] = [];
 
-    if (search) {
-      where.OR = [
-        { subject: { contains: search, mode: "insensitive" } },
-        { body: { contains: search, mode: "insensitive" } },
-      ];
+    const legacyId = parseLegacyNumber(id);
+    if (id) {
+      andConditions.push({
+        OR: [
+          ...(legacyId !== null ? [{ legacyId }] : []),
+          { legacyKey: containsText(id) },
+        ],
+      });
     }
 
-    const skip = (page - 1) * pageSize;
+    if (to) {
+      const recipientIds = await findSentMessageRecipientIds(to, orgId);
+      andConditions.push({
+        recipientId: { in: recipientIds.length ? recipientIds : [NO_RECIPIENT_MATCH] },
+      });
+    }
+
+    const fromDate = parseLegacyDateBoundary(dateFrom);
+    const toDate = parseLegacyDateBoundary(dateTo, true);
+    if (fromDate || toDate) {
+      andConditions.push({
+        createdAt: {
+          ...(fromDate ? { gte: fromDate } : {}),
+          ...(toDate ? { lte: toDate } : {}),
+        },
+      });
+    }
+
+    if (nature) {
+      andConditions.push({
+        OR: [
+          { legacyNature: containsText(nature) },
+          { subject: containsText(`[${nature}`) },
+          { subject: containsText(nature) },
+        ],
+      });
+    }
+
+    if (subject) {
+      andConditions.push({ subject: containsText(subject) });
+    }
+
+    if (message) {
+      andConditions.push({ body: containsText(message) });
+    }
+
+    const legacyThreadId = parseLegacyNumber(thread);
+    if (thread) {
+      andConditions.push({
+        OR: [
+          ...(legacyThreadId !== null ? [{ legacyThreadId }] : []),
+          ...(isUuid(thread) ? [{ threadId: thread }] : []),
+          { legacyHref: containsText(thread) },
+        ],
+      });
+    }
+
+    if (search) {
+      const globalRecipientIds = await findSentMessageRecipientIds(search, orgId);
+      const globalLegacyId = parseLegacyNumber(search);
+      const globalDate = parseLegacyDateBoundary(search);
+      andConditions.push({
+        OR: [
+          { subject: containsText(search) },
+          { body: containsText(search) },
+          { legacyNature: containsText(search) },
+          { legacyHref: containsText(search) },
+          { legacyKey: containsText(search) },
+          ...(globalLegacyId !== null
+            ? [{ legacyId: globalLegacyId }, { legacyThreadId: globalLegacyId }]
+            : []),
+          ...(isUuid(search) ? [{ threadId: search }] : []),
+          ...(globalDate
+            ? [
+                {
+                  createdAt: {
+                    gte: globalDate,
+                    lte: parseLegacyDateBoundary(search, true) ?? globalDate,
+                  },
+                },
+              ]
+            : []),
+          ...(globalRecipientIds.length
+            ? [{ recipientId: { in: globalRecipientIds } }]
+            : []),
+        ],
+      });
+    }
+
+    if (andConditions.length > 0) {
+      where.AND = andConditions;
+    }
+
+    const skip = numericPageSize ? (normalizedPage - 1) * numericPageSize : undefined;
 
     const [messages, total] = await Promise.all([
       db.message.findMany({
         where,
         orderBy: { createdAt: "desc" },
-        skip,
-        take: pageSize,
+        ...(skip !== undefined ? { skip } : {}),
+        ...(numericPageSize !== undefined ? { take: numericPageSize } : {}),
       }),
       db.message.count({ where }),
     ]);
@@ -425,9 +608,9 @@ export async function getSentMessages(
       data: {
         messages: enriched,
         total,
-        page,
+        page: normalizedPage,
         pageSize,
-        totalPages: Math.ceil(total / pageSize),
+        totalPages: numericPageSize ? Math.ceil(total / numericPageSize) : 1,
       },
     };
   } catch (error) {
