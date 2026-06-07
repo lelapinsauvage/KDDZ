@@ -16175,7 +16175,7 @@
     "legacyPhp": "Front/templates/admin/doctors.php",
     "legacyJs": "Front/templates/admin/js/doctors.js",
     "modernRoute": "/doctors.php, /employees/doctors",
-    "status": "partial - legacy doctors roster columns, q bridge, export/print, page sizes, and selected deactivate restored; form modal audit remains",
+    "status": "partial - legacy doctors roster columns, q bridge, copy/PDF exports, page sizes, and selected deactivate restored; form modal audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -16183,7 +16183,7 @@
     "requestFieldsMentioned": [
       "q"
     ],
-    "verification": "Restored the shared staff roster shape for doctors with legacy `#`, Image, F Name, L Name, DOB, Branch, Mobile, Nationality, Gender, Date, Status, and Action columns; 10/20/50/100/150/All page sizes; Excel/CSV export in legacy column order; print action; selected-row deactivation backed by the org-safe employee action; and `/doctors.php?q=` redirect hydration into the modern roster search across row values. Remaining work is exact TableTools copy/PDF visual parity and the legacy selected-employee form modal behavior from `doctors.js`."
+    "verification": "Restored the shared staff roster shape for doctors with legacy `#`, Image, F Name, L Name, DOB, Branch, Mobile, Nationality, Gender, Date, Status, and Action columns; 10/20/50/100/150/All page sizes; Copy/PDF/Excel/CSV export in legacy column order; print action; selected-row deactivation backed by the org-safe employee action; and `/doctors.php?q=` redirect hydration into the modern roster search across row values. Remaining work is the legacy selected-employee form modal behavior from `doctors.js`."
   },
   {
     "legacyPhp": "Front/templates/admin/exportdb.php",
@@ -16307,7 +16307,7 @@
     "legacyPhp": "Front/templates/admin/managers.php",
     "legacyJs": "Front/templates/admin/js/managers.js",
     "modernRoute": "/managers.php, /employees/managers",
-    "status": "partial - legacy managers roster columns, q bridge, export/print, page sizes, and selected deactivate restored; form modal audit remains",
+    "status": "partial - legacy managers roster columns, q bridge, copy/PDF exports, page sizes, and selected deactivate restored; form modal audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -16315,7 +16315,7 @@
     "requestFieldsMentioned": [
       "q"
     ],
-    "verification": "Restored the shared staff roster shape for managers with legacy `#`, Image, F Name, L Name, DOB, Branch, Mobile, Nationality, Gender, Date, Status, and Action columns; 10/20/50/100/150/All page sizes; Excel/CSV export in legacy column order; print action; selected-row deactivation backed by the org-safe employee action; and `/managers.php?q=` redirect hydration into the modern roster search across row values. Remaining work is exact TableTools copy/PDF visual parity and the legacy selected-employee form modal behavior from `managers.js`."
+    "verification": "Restored the shared staff roster shape for managers with legacy `#`, Image, F Name, L Name, DOB, Branch, Mobile, Nationality, Gender, Date, Status, and Action columns; 10/20/50/100/150/All page sizes; Copy/PDF/Excel/CSV export in legacy column order; print action; selected-row deactivation backed by the org-safe employee action; and `/managers.php?q=` redirect hydration into the modern roster search across row values. Remaining work is the legacy selected-employee form modal behavior from `managers.js`."
   },
   {
     "legacyPhp": "Front/templates/admin/message_portal.php",
@@ -16399,7 +16399,7 @@
     "legacyPhp": "Front/templates/admin/nurses.php",
     "legacyJs": "Front/templates/admin/js/nurses.js",
     "modernRoute": "/nurses.php, /employees/nurses",
-    "status": "partial - legacy nurses roster columns, q bridge, export/print, page sizes, and selected deactivate restored; form modal audit remains",
+    "status": "partial - legacy nurses roster columns, q bridge, copy/PDF exports, page sizes, and selected deactivate restored; form modal audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -16407,7 +16407,7 @@
     "requestFieldsMentioned": [
       "q"
     ],
-    "verification": "Restored the shared staff roster shape for nurses with legacy `#`, Image, F Name, L Name, DOB, Branch, Mobile, Nationality, Gender, Date, Status, and Action columns; 10/20/50/100/150/All page sizes; Excel/CSV export in legacy column order; print action; selected-row deactivation backed by the org-safe employee action; and `/nurses.php?q=` redirect hydration into the modern roster search across row values. Remaining work is exact TableTools copy/PDF visual parity and the legacy selected-employee form modal behavior from `nurses.js`."
+    "verification": "Restored the shared staff roster shape for nurses with legacy `#`, Image, F Name, L Name, DOB, Branch, Mobile, Nationality, Gender, Date, Status, and Action columns; 10/20/50/100/150/All page sizes; Copy/PDF/Excel/CSV export in legacy column order; print action; selected-row deactivation backed by the org-safe employee action; and `/nurses.php?q=` redirect hydration into the modern roster search across row values. Remaining work is the legacy selected-employee form modal behavior from `nurses.js`."
   },
   {
     "legacyPhp": "Front/templates/admin/pages/forbidden.php",
@@ -16514,7 +16514,7 @@
     "legacyPhp": "Front/templates/admin/teachers.php",
     "legacyJs": "Front/templates/admin/js/teachers.js",
     "modernRoute": "/teachers.php, /employees/teachers",
-    "status": "partial - legacy teachers roster columns, q bridge, export/print, page sizes, and selected deactivate restored; form modal audit remains",
+    "status": "partial - legacy teachers roster columns, q bridge, copy/PDF exports, page sizes, and selected deactivate restored; form modal audit remains",
     "legacyTablesMentioned": [
       "Form",
       "Selected",
@@ -16524,7 +16524,7 @@
     "requestFieldsMentioned": [
       "q"
     ],
-    "verification": "Restored the shared staff roster shape for teachers with legacy `#`, Image, F Name, L Name, DOB, Branch, Class, Nationality, Gender, Date, Status, and Action columns; teacher class is now included in the listing query; 10/20/50/100/150/All page sizes; Excel/CSV export in legacy column order; print action; selected-row deactivation backed by the org-safe employee action; and `/teachers.php?q=` redirect hydration into the modern roster search across row values. Remaining work is exact TableTools copy/PDF visual parity and the legacy selected-employee form modal behavior from `teachers.js`."
+    "verification": "Restored the shared staff roster shape for teachers with legacy `#`, Image, F Name, L Name, DOB, Branch, Class, Nationality, Gender, Date, Status, and Action columns; teacher class is now included in the listing query; 10/20/50/100/150/All page sizes; Copy/PDF/Excel/CSV export in legacy column order; print action; selected-row deactivation backed by the org-safe employee action; and `/teachers.php?q=` redirect hydration into the modern roster search across row values. Remaining work is the legacy selected-employee form modal behavior from `teachers.js`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/_install/footer.php",
