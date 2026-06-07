@@ -16844,7 +16844,7 @@
       "subject",
       "to-levels"
     ],
-    "verification": "The modern `getLegacyEmailLevels` and `sendLegacyBulkEmail` actions replace the legacy `Send_email::displayLevels()` and `Send_email::sendMail()` flow for restored data: selected legacy levels are validated, regular and manager-level users are matched from preserved `login_users` / `login_users_man` serialized `user_level` metadata when the auth metadata migration has run, older imports fall back to modern role mapping, recipients are deduped, in-app notifications are created, and external email is attempted through the provider-neutral `deliverEmail` bridge. Bulk delivery preserves the legacy BCC privacy intent by using BCC mode, individual Resend sends or a webhook payload, and explicit skipped/failed delivery counts. Configure with `EMAIL_DELIVERY_PROVIDER=webhook|resend`, `EMAIL_DELIVERY_WEBHOOK_URL` or `RESEND_API_KEY`, and `EMAIL_FROM`; remaining work is production SMTP/provider credential rollout plus auth-flow email wiring."
+    "verification": "The modern `getLegacyEmailLevels` and `sendLegacyBulkEmail` actions replace the legacy `Send_email::displayLevels()` and `Send_email::sendMail()` flow for restored data: selected legacy levels are validated, regular and manager-level users are matched from preserved `login_users` / `login_users_man` serialized `user_level` metadata when the auth metadata migration has run, older imports fall back to modern role mapping, recipients are deduped, in-app notifications are created, and external email is attempted through the provider-neutral `deliverEmail` bridge. Bulk delivery preserves the legacy BCC privacy intent by using BCC mode, individual Resend sends or a webhook payload, and explicit skipped/failed delivery counts. Configure with `EMAIL_DELIVERY_PROVIDER=webhook|resend`, `EMAIL_DELIVERY_WEBHOOK_URL` or `RESEND_API_KEY`, and `EMAIL_FROM`; remaining work is production SMTP/provider credential rollout plus auth-flow email wiring. Legacy bulk-email level selection now loads the full migrated login_levels/login_levels_man set instead of a capped sample."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/classes/settings.class.php",
@@ -17216,7 +17216,7 @@
     "status": "partial - legacy notification settings/natures/send logs visible in Legacy tab; custom notification send/edit workflows still need audit",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Compare legacy notification admin behavior with modern templates, logs, and send jobs. /settings/notifications now surfaces the full migrated Legacy tab settings set instead of a capped sample, including notification, reminder, and legacy auth-email rows."
+    "verification": "Compare legacy notification admin behavior with modern templates, logs, and send jobs. /settings/notifications now surfaces the full migrated Legacy tab settings set instead of a capped sample, including notification, reminder, and legacy auth-email rows. /settings/notifications now loads uncapped sent notification audit rows plus full migrated notification natures and legacy notification logs, with chunked child-name hydration for production-sized log imports."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/reports.php",
@@ -17243,7 +17243,7 @@
     "status": "partial - legacy level-targeted bulk send form and BCC provider delivery restored; credential rollout remains",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "/settings/notifications now includes a Bulk Email tab matching the legacy Send email form: legacy login levels are loaded from migrated `login_levels` and `login_levels_man` metadata, disabled levels are blocked, subject/message fields are required, selected groups are deduped, restored `login_users` / `login_users_man` level payloads are used for exact targeting when available, and modern dispatch creates in-app `BULK_EMAIL` notifications plus external email delivery attempts. The delivery helper uses BCC mode for legacy privacy, reports skipped sends when no provider is configured, and supports Resend or an email webhook through environment variables; remaining work is production credential rollout and final provider audit."
+    "verification": "/settings/notifications now includes a Bulk Email tab matching the legacy Send email form: legacy login levels are loaded from migrated `login_levels` and `login_levels_man` metadata, disabled levels are blocked, subject/message fields are required, selected groups are deduped, restored `login_users` / `login_users_man` level payloads are used for exact targeting when available, and modern dispatch creates in-app `BULK_EMAIL` notifications plus external email delivery attempts. The delivery helper uses BCC mode for legacy privacy, reports skipped sends when no provider is configured, and supports Resend or an email webhook through environment variables; remaining work is production credential rollout and final provider audit. The Bulk Email tab now loads the full migrated login level set instead of sampling the first 200 levels."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/settings.php",

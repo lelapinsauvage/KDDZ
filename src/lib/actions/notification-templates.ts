@@ -13,6 +13,8 @@ type ActionResult<T = unknown> = {
   data?: T;
 };
 
+const CHILD_LOOKUP_CHUNK_SIZE = 1000;
+
 const TEMPLATE_CATEGORIES = [
   "BIRTHDAY",
   "MISSING_REPORTS",
@@ -405,6 +407,21 @@ function renderNotificationText(text: string, variables: TemplateVariables) {
   );
 }
 
+async function getChildNamesById(childIds: string[]) {
+  const childNameById = new Map<string, string>();
+  for (let index = 0; index < childIds.length; index += CHILD_LOOKUP_CHUNK_SIZE) {
+    const chunk = childIds.slice(index, index + CHILD_LOOKUP_CHUNK_SIZE);
+    const children = await db.child.findMany({
+      where: { id: { in: chunk } },
+      select: { id: true, firstName: true, lastName: true },
+    });
+    for (const child of children) {
+      childNameById.set(child.id, `${child.firstName} ${child.lastName}`);
+    }
+  }
+  return childNameById;
+}
+
 async function createInAppNotifications(params: {
   userIds: string[];
   title: string;
@@ -605,7 +622,6 @@ export async function getSentNotifications(params: {
       where,
       include: { user: { select: { name: true } } },
       orderBy: { createdAt: "desc" },
-      take: 200,
     });
 
     const rows: SentNotificationRow[] = notifications.map((n) => ({
@@ -645,7 +661,6 @@ export async function getLegacyEmailLevels(): Promise<
         { legacyTable: "asc" },
         { legacyId: "asc" },
       ],
-      take: 200,
     });
 
     return {
@@ -1136,7 +1151,6 @@ export async function getLegacyNotificationNatures(): Promise<
         { displayOrder: "asc" },
         { name: "asc" },
       ],
-      take: 300,
     });
 
     return {
@@ -1175,19 +1189,12 @@ export async function getLegacyNotificationLogs(): Promise<
 
     const logs = await db.legacyNotificationLog.findMany({
       orderBy: { createdAt: "desc" },
-      take: 200,
     });
 
     const childIds = [...new Set(logs.map((log) => log.childId).filter(Boolean))] as string[];
-    const children = childIds.length
-      ? await db.child.findMany({
-          where: { id: { in: childIds } },
-          select: { id: true, firstName: true, lastName: true },
-        })
-      : [];
-    const childNameById = new Map(
-      children.map((child) => [child.id, `${child.firstName} ${child.lastName}`])
-    );
+    const childNameById = childIds.length
+      ? await getChildNamesById(childIds)
+      : new Map<string, string>();
 
     return {
       success: true,
