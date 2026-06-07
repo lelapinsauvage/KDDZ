@@ -404,7 +404,7 @@ This matrix is the execution source for page restoration. A route existing is no
 | Front/templates/admin/classes/bin/client.php |  |  | unknown - needs manual mapping |  | submit | Read PHP + JS, compare fields/columns/actions, then verify route. |
 | Front/templates/admin/classes/bin/push-server.php |  |  | unknown - needs manual mapping |  |  | Read PHP + JS, compare fields/columns/actions, then verify route. |
 | Front/templates/admin/classes/connect.php |  |  | unknown - needs manual mapping |  |  | Read PHP + JS, compare fields/columns/actions, then verify route. |
-| Front/templates/admin/classes/encrypt.php |  |  | unknown - needs manual mapping |  | id | Read PHP + JS, compare fields/columns/actions, then verify route. |
+| Front/templates/admin/classes/encrypt.php |  | /classes/encrypt.php | restored - legacy ID encryption endpoint restored |  | id | `/classes/encrypt.php` now accepts the legacy `id` field by POST/form, JSON, or query string and returns the same double-base64 AES-256-CBC text token produced by the PHP helper, with no-store plain-text output for authenticated legacy AJAX callers. |
 | Front/templates/admin/classes/imageRatio.class.php |  |  | unknown - needs manual mapping | 0, center |  | Read PHP + JS, compare fields/columns/actions, then verify route. |
 | Front/templates/admin/classes/lib/Bootstrap.php |  |  | unknown - needs manual mapping | its |  | Read PHP + JS, compare fields/columns/actions, then verify route. |
 | Front/templates/admin/classes/lib/DataTables.php |  |  | unknown - needs manual mapping |  |  | Read PHP + JS, compare fields/columns/actions, then verify route. |

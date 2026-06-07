@@ -4679,13 +4679,13 @@
   {
     "legacyPhp": "Front/templates/admin/classes/encrypt.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/classes/encrypt.php",
+    "status": "restored - legacy ID encryption endpoint restored",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/classes/encrypt.php` now accepts the legacy `id` field by POST/form, JSON, or query string and returns the same double-base64 AES-256-CBC text token produced by the PHP helper, with no-store plain-text output for authenticated legacy AJAX callers."
   },
   {
     "legacyPhp": "Front/templates/admin/classes/imageRatio.class.php",
