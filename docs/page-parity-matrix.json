@@ -16189,10 +16189,12 @@
     "legacyPhp": "Front/templates/admin/exportdb.php",
     "legacyJs": "",
     "modernRoute": "/exportdb.php, /settings/export",
-    "status": "partial - legacy export bridge restored; field/action audit remains",
-    "legacyTablesMentioned": [],
+    "status": "restored - legacy full SQL database export restored",
+    "legacyTablesMentioned": [
+      "all active database tables"
+    ],
     "requestFieldsMentioned": [],
-    "verification": "`/exportdb.php` now redirects to the modern settings export page. Remaining work is exact field/action audit against legacy export behavior."
+    "verification": "`/exportdb.php` now restores the legacy direct database backup behavior as an authenticated admin-only SQL download. The route uses native `pg_dump` when available and falls back to a built-in Postgres catalog/data exporter with schema DDL, enum types, table data, indexes, foreign keys, and sequence resets. `/settings/export` now exposes the same Full SQL Backup action alongside the modern CSV exports."
   },
   {
     "legacyPhp": "Front/templates/admin/food.php",

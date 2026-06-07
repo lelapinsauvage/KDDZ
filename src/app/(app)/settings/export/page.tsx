@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import {
   Download,
+  Database,
   Users,
   FileText,
   HeartPulse,
@@ -90,6 +91,15 @@ interface ExportCard {
 
 const exportCards: ExportCard[] = [
   {
+    id: "database",
+    title: "Full SQL Backup",
+    description: "Restorable database dump with schema and table data, matching the legacy export action.",
+    icon: <Database className="size-5 text-slate-700" />,
+    iconBg: "bg-slate-100",
+    formats: ["SQL"],
+    hasDateRange: false,
+  },
+  {
     id: "children",
     title: "Children Data",
     description: "All children records including personal info, classes, and parent contacts.",
@@ -158,6 +168,7 @@ function escapeCSV(value: string | number | null | undefined): string {
 
 export default function ExportDatabasePage() {
   const [selectedFormats, setSelectedFormats] = useState<Record<string, string>>({
+    database: "SQL",
     children: "CSV",
     "daily-reports": "CSV",
     medical: "CSV",
@@ -171,6 +182,11 @@ export default function ExportDatabasePage() {
   const [exporting, setExporting] = useState<string | null>(null);
 
   async function handleExport(cardId: string) {
+    if (cardId === "database") {
+      window.location.assign("/exportdb.php");
+      return;
+    }
+
     setExporting(cardId);
     try {
       switch (cardId) {
