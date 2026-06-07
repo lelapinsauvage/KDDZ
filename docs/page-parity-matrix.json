@@ -674,7 +674,7 @@
     "legacyPhp": "Front/templates/admin/alarmsVaccinations.php",
     "legacyJs": "Front/templates/admin/js/alarmsVaccinations.js",
     "modernRoute": "/alarmsVaccinations.php, /alarms/vaccinations",
-    "status": "partial - legacy vaccination alarms bridge, generator, receipt read-state, and sent history restored",
+    "status": "partial - legacy vaccination alarms bridge, generator, receipt read-state, sent history, and class targeting restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -685,7 +685,7 @@
       "t_alarms_vaccinations",
       "custom_notifications_vaccinations"
     ],
-    "verification": "Modern page shows legacy DOB-offset due reminders, filters by branch id, and exposes manual generation backed by the idempotent `Data::AlarmsVaccinations()` parity job plus protected `/api/cron/vaccination-alarms`; it now also reads migrated `NotificationReceipt` rows from `custom_notifications_vaccinations`, collapses delivery receipts by alarm for New/Viewed status, supports row/bulk/all mark-viewed, and shows sent vaccination history for USER/PARENT_USER/CHILD receipts. `/alarmsVaccinations.php` now redirects to the modern vaccination alarms page. Remaining audit is parent/mobile delivery parity, exact class-user targeting, and reconciliation with manual `Vaccination.nextDueDate` records."
+    "verification": "Modern page shows legacy DOB-offset due reminders, filters by branch id, and exposes manual generation backed by the idempotent `Data::AlarmsVaccinations()` parity job plus generated `custom_notifications_vaccinations` staff receipts targeted like `getusersperclassUsersDb()` through imported `login_users.uclasses` and protected `/api/cron/vaccination-alarms`; it now reads migrated and generated `NotificationReceipt` rows from `custom_notifications_vaccinations`, collapses delivery receipts by alarm for New/Viewed status, supports row/bulk/all mark-viewed, and shows sent vaccination history for USER/PARENT_USER/CHILD receipts. `/alarmsVaccinations.php` now redirects to the modern vaccination alarms page. Remaining audit is parent/mobile delivery parity and reconciliation with manual `Vaccination.nextDueDate` records."
   },
   {
     "legacyPhp": "Front/templates/admin/assessment_1.php",
@@ -17059,7 +17059,7 @@
     "status": "partial - legacy vaccination template fallback restored; delivery audit remains",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "/settings/notifications Vaccinations now falls back to migrated `email-vaccinations-subj` and `email-vaccinations-msg` rows and exposes legacy `{{child_name}}`, `{{vaccination_name}}`, and `{{x_days}}` shortcodes. Existing vaccination alarm generation can use the saved modern template; remaining work is external parent/mobile delivery and exact recipient targeting."
+    "verification": "/settings/notifications Vaccinations now falls back to migrated `email-vaccinations-subj` and `email-vaccinations-msg` rows and exposes legacy `{{child_name}}`, `{{vaccination_name}}`, and `{{x_days}}` shortcodes. Existing vaccination alarm generation can use the saved modern template and exact generated staff receipt targeting; remaining work is external parent/mobile delivery."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-welcome.php",

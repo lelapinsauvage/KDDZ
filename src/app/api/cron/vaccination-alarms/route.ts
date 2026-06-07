@@ -19,6 +19,7 @@ function emptySummary(): VaccinationGenerationSummary {
     childrenScanned: 0,
     remindersMatched: 0,
     alarmsCreated: 0,
+    receiptsCreated: 0,
     notificationsCreated: 0,
     skippedExisting: 0,
     skippedDisabledBranches: 0,
@@ -35,6 +36,7 @@ function addSummary(
   total.childrenScanned += next.childrenScanned;
   total.remindersMatched += next.remindersMatched;
   total.alarmsCreated += next.alarmsCreated;
+  total.receiptsCreated += next.receiptsCreated;
   total.notificationsCreated += next.notificationsCreated;
   total.skippedExisting += next.skippedExisting;
   total.skippedDisabledBranches += next.skippedDisabledBranches;

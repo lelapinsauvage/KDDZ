@@ -83,10 +83,16 @@ export function VaccinationsClient({
         return;
       }
 
-      const { remindersMatched, alarmsCreated, notificationsCreated, skippedExisting } =
+      const {
+        remindersMatched,
+        alarmsCreated,
+        receiptsCreated,
+        notificationsCreated,
+        skippedExisting,
+      } =
         result.data;
       setGenerationStatus(
-        `Matched ${remindersMatched}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"} and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing.`,
+        `Matched ${remindersMatched}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"}, ${receiptsCreated} receipt${receiptsCreated === 1 ? "" : "s"}, and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing.`,
       );
       router.refresh();
       return;

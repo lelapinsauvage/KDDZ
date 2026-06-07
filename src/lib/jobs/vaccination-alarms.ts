@@ -1,14 +1,19 @@
 import { db } from "@/lib/db";
 import { isLegacyNotificationGateEnabled } from "@/lib/legacy-notification-gates";
 
+const VACCINATION_RECEIPT_SOURCE = "custom_notifications_vaccinations";
+
 export interface VaccinationDueAlarm {
   id: string;
   childId: string;
+  sourceDatabase: string | null;
+  legacyChildId: number | null;
   childNumber: string | null;
   childName: string;
   branchId: string;
   branchName: string;
   classId: string | null;
+  legacyClassId: number | null;
   className: string | null;
   vaccineName: string;
   vaccineType: string;
@@ -24,11 +29,19 @@ export interface VaccinationGenerationSummary {
   childrenScanned: number;
   remindersMatched: number;
   alarmsCreated: number;
+  receiptsCreated: number;
   notificationsCreated: number;
   skippedExisting: number;
   skippedDisabledBranches: number;
   skippedLegacyNotificationGate: boolean;
   skippedMissingDob: number;
+}
+
+interface LegacyVaccinationRecipient {
+  userId: string;
+  legacyRecipientId: number;
+  legacySourceDatabase: string;
+  legacyClasses: string;
 }
 
 const legacyReminderDays = [1, 3, 7];
@@ -96,8 +109,62 @@ function asRecord(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
+function readString(data: Record<string, unknown> | null, key: string) {
+  const value = data?.[key];
+  if (typeof value === "string" && value.trim() !== "") return value.trim();
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  return null;
+}
+
+function readNumber(data: Record<string, unknown> | null, key: string) {
+  const value = data?.[key];
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
 function normalizeVaccineType(value: string | null | undefined) {
   return (value ?? "").trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function legacyVaccinationClassAllows(
+  legacyClasses: string,
+  classLegacyId: number | null,
+) {
+  const normalized = legacyClasses.trim();
+  if (!normalized || normalized === "0") return true;
+  if (classLegacyId === null) return false;
+
+  return normalized === String(classLegacyId);
+}
+
+function legacySourceMatches(
+  recipient: LegacyVaccinationRecipient,
+  sourceDatabase: string | null,
+) {
+  return !sourceDatabase || recipient.legacySourceDatabase === sourceDatabase;
+}
+
+function recipientsForVaccinationCandidate(
+  recipients: LegacyVaccinationRecipient[],
+  candidate: {
+    sourceDatabase: string | null;
+    legacyClassId: number | null;
+  },
+) {
+  const selected = new Map<string, LegacyVaccinationRecipient>();
+  for (const recipient of recipients) {
+    if (!legacySourceMatches(recipient, candidate.sourceDatabase)) continue;
+    if (!legacyVaccinationClassAllows(recipient.legacyClasses, candidate.legacyClassId)) {
+      continue;
+    }
+    if (!selected.has(recipient.userId)) selected.set(recipient.userId, recipient);
+  }
+
+  return Array.from(selected.values());
 }
 
 function parsePositiveInteger(value: string | undefined, fallback: number) {
@@ -165,6 +232,7 @@ function emptySummary(): VaccinationGenerationSummary {
     childrenScanned: 0,
     remindersMatched: 0,
     alarmsCreated: 0,
+    receiptsCreated: 0,
     notificationsCreated: 0,
     skippedExisting: 0,
     skippedDisabledBranches: 0,
@@ -217,14 +285,16 @@ export async function getVaccinationDueAlarmCandidates(params: {
     },
     select: {
       id: true,
+      sourceDatabase: true,
+      legacyId: true,
       childNumber: true,
       firstName: true,
       lastName: true,
       dateOfBirth: true,
       branchId: true,
       classId: true,
-      branch: { select: { id: true, name: true } },
-      class: { select: { id: true, name: true } },
+      branch: { select: { id: true, name: true, sourceDatabase: true } },
+      class: { select: { id: true, name: true, legacyId: true, sourceDatabase: true } },
     },
   });
 
@@ -246,11 +316,15 @@ export async function getVaccinationDueAlarmCandidates(params: {
         candidates.push({
           id: `${child.id}:${vaccineType}:${dose.level}`,
           childId: child.id,
+          sourceDatabase:
+            child.sourceDatabase ?? child.class?.sourceDatabase ?? child.branch.sourceDatabase,
+          legacyChildId: child.legacyId ?? null,
           childNumber: child.childNumber,
           childName,
           branchId: child.branchId,
           branchName: child.branch.name,
           classId: child.classId,
+          legacyClassId: child.class?.legacyId ?? null,
           className: child.class?.name ?? null,
           vaccineName: schedule.vaccineName,
           vaccineType,
@@ -335,25 +409,28 @@ export async function generateVaccinationAlarmsForOrganization(params: {
       referenceId: { in: candidates.map((candidate) => candidate.childId) },
       isActive: true,
     },
-    select: { referenceId: true, legacyData: true },
+    select: { id: true, referenceId: true, legacyData: true },
   });
-  const existingKeys = new Set<string>();
+  const existingByKey = new Map<
+    string,
+    { id: string; referenceId: string | null; legacyData: unknown }
+  >();
   for (const alarm of existingAlarms) {
     const key = legacyAlarmKey(alarm.legacyData, alarm.referenceId);
-    if (key) existingKeys.add(key);
+    if (key) existingByKey.set(key, alarm);
   }
 
-  const [users, template] = await Promise.all([
+  const [users, template, maxReceipt] = await Promise.all([
     db.user.findMany({
       where: {
         isActive: true,
         organizationId: params.organizationId,
         OR: [
           { branchId: { in: enabledBranchIds } },
-          { branchId: null, role: "ADMIN" },
+          { branchId: null },
         ],
       },
-      select: { id: true, branchId: true, role: true },
+      select: { id: true },
     }),
     db.notificationTemplate.findUnique({
       where: {
@@ -363,17 +440,43 @@ export async function generateVaccinationAlarmsForOrganization(params: {
         },
       },
     }),
+    db.notificationReceipt.aggregate({
+      where: { sourceTable: VACCINATION_RECEIPT_SOURCE },
+      _max: { legacyNotificationId: true },
+    }),
   ]);
 
-  const branchAdminIds = users
-    .filter((user) => user.branchId === null && user.role === "ADMIN")
-    .map((user) => user.id);
-  const userIdsByBranch = new Map<string, string[]>();
-  for (const user of users) {
-    if (!user.branchId) continue;
-    const branchUsers = userIdsByBranch.get(user.branchId) ?? [];
-    branchUsers.push(user.id);
-    userIdsByBranch.set(user.branchId, branchUsers);
+  const userIds = users.map((user) => user.id);
+  const legacyAuthRows = userIds.length
+    ? await db.legacyAuthRecord.findMany({
+        where: {
+          legacyTable: "login_users",
+          userId: { in: userIds },
+          isDisabled: { not: true },
+        },
+        select: {
+          sourceDatabase: true,
+          userId: true,
+          legacyId: true,
+          legacyUserId: true,
+          legacyData: true,
+        },
+        orderBy: [
+          { sourceDatabase: "asc" },
+          { legacyId: "asc" },
+        ],
+      })
+    : [];
+
+  const legacyRecipients: LegacyVaccinationRecipient[] = [];
+  for (const row of legacyAuthRows) {
+    if (!row.userId) continue;
+    legacyRecipients.push({
+      userId: row.userId,
+      legacyRecipientId: row.legacyUserId ?? row.legacyId,
+      legacySourceDatabase: row.sourceDatabase,
+      legacyClasses: readString(asRecord(row.legacyData), "uclasses") ?? "0",
+    });
   }
 
   const templateEnabled = template?.enabled ?? true;
@@ -381,52 +484,132 @@ export async function generateVaccinationAlarmsForOrganization(params: {
   const bodyTemplate =
     template?.body ||
     "Vaccination [[vaccination_name]] for [[child_name]] is due on [[date]]. Please remind [[parent_name]].";
+  const maxExistingAlarmLegacyId = existingAlarms.reduce((max, alarm) => {
+    const legacyId = readNumber(asRecord(alarm.legacyData), "aid") ?? 0;
+    return Math.max(max, legacyId);
+  }, 0);
+  let nextLegacyNotificationId =
+    Math.max(maxReceipt._max.legacyNotificationId ?? 0, maxExistingAlarmLegacyId) + 1;
 
   for (const candidate of candidates) {
     const key = `${candidate.childId}:${candidate.vaccineType}:${candidate.level}`;
-    if (existingKeys.has(key)) {
-      summary.skippedExisting += 1;
-      continue;
+    const existingAlarm = existingByKey.get(key);
+    let legacyNotificationId = existingAlarm
+      ? readNumber(asRecord(existingAlarm.legacyData), "aid")
+      : null;
+    if (legacyNotificationId === null) {
+      legacyNotificationId = nextLegacyNotificationId++;
     }
 
-    await db.alarm.create({
-      data: {
-        type: "VACCINATION",
+    let alarmId = existingAlarm?.id ?? null;
+    if (existingAlarm) {
+      summary.skippedExisting += 1;
+      if (readNumber(asRecord(existingAlarm.legacyData), "aid") === null) {
+        await db.alarm.update({
+          where: { id: existingAlarm.id },
+          data: {
+            legacyData: {
+              ...(asRecord(existingAlarm.legacyData) ?? {}),
+              aid: legacyNotificationId,
+              sourceDeliveryTable: VACCINATION_RECEIPT_SOURCE,
+              legacyChildId: candidate.legacyChildId,
+              legacyClassId: candidate.legacyClassId,
+              legacyClassAccess: "login_users.uclasses_exact",
+            },
+          },
+        });
+      }
+    }
+
+    if (!existingAlarm) {
+      const alarm = await db.alarm.create({
+        data: {
+          type: "VACCINATION",
+          referenceId: candidate.childId,
+          referenceType: "Child",
+          message: candidate.message,
+          dueDate: candidate.dueDate,
+          branchId: candidate.branchId,
+          isActive: true,
+          legacyData: {
+            aid: legacyNotificationId,
+            sourceTable: "t_alarms_vaccinations",
+            sourceDeliveryTable: VACCINATION_RECEIPT_SOURCE,
+            modernGenerator: "generateVaccinationAlarms",
+            legacyMethod: "Data::AlarmsVaccinations",
+            childId: candidate.childId,
+            legacyChildId: candidate.legacyChildId,
+            classId: candidate.classId,
+            legacyClassId: candidate.legacyClassId,
+            legacyClassAccess: "login_users.uclasses_exact",
+            vaccineName: candidate.vaccineName,
+            vaccineType: candidate.vaccineType,
+            type: candidate.vaccineType,
+            level: candidate.level,
+            offsetDays: candidate.offsetDays,
+            reminderDaysBefore: candidate.daysUntilDue,
+            dueDate: dateKey(candidate.dueDate),
+            href: "AlarmsVaccinations.php",
+          },
+        },
+      });
+      alarmId = alarm.id;
+      existingByKey.set(key, {
+        id: alarm.id,
         referenceId: candidate.childId,
-        referenceType: "Child",
-        message: candidate.message,
-        dueDate: candidate.dueDate,
-        branchId: candidate.branchId,
-        isActive: true,
-        legacyData: {
-          sourceTable: "t_alarms_vaccinations",
-          modernGenerator: "generateVaccinationAlarms",
-          legacyMethod: "Data::AlarmsVaccinations",
-          childId: candidate.childId,
-          classId: candidate.classId,
-          vaccineName: candidate.vaccineName,
-          vaccineType: candidate.vaccineType,
-          type: candidate.vaccineType,
-          level: candidate.level,
-          offsetDays: candidate.offsetDays,
-          reminderDaysBefore: candidate.daysUntilDue,
-          dueDate: dateKey(candidate.dueDate),
-          href: "AlarmsVaccinations.php",
+        legacyData: alarm.legacyData,
+      });
+      summary.alarmsCreated += 1;
+    }
+
+    const recipients = recipientsForVaccinationCandidate(legacyRecipients, {
+      sourceDatabase: candidate.sourceDatabase,
+      legacyClassId: candidate.legacyClassId,
+    });
+    if (!alarmId || recipients.length === 0) continue;
+
+    const existingReceipts = await db.notificationReceipt.findMany({
+      where: {
+        sourceTable: VACCINATION_RECEIPT_SOURCE,
+        legacyNotificationId,
+        recipientType: "USER",
+        legacyRecipientId: {
+          in: recipients.map((recipient) => recipient.legacyRecipientId),
         },
       },
+      select: { legacyRecipientId: true },
     });
-    existingKeys.add(key);
-    summary.alarmsCreated += 1;
-
-    if (!templateEnabled) continue;
-
-    const recipientIds = Array.from(
-      new Set([
-        ...(userIdsByBranch.get(candidate.branchId) ?? []),
-        ...branchAdminIds,
-      ]),
+    const existingReceiptIds = new Set(
+      existingReceipts.map((receipt) => receipt.legacyRecipientId),
     );
-    if (recipientIds.length === 0) continue;
+    const newReceiptRecipients = recipients.filter(
+      (recipient) => !existingReceiptIds.has(recipient.legacyRecipientId),
+    );
+    if (newReceiptRecipients.length === 0) continue;
+
+    const receiptResult = await db.notificationReceipt.createMany({
+      data: newReceiptRecipients.map((recipient) => ({
+        sourceTable: VACCINATION_RECEIPT_SOURCE,
+        category: "vaccinations",
+        legacyNotificationId,
+        legacyRecipientId: recipient.legacyRecipientId,
+        recipientType: "USER",
+        recipientId: recipient.userId,
+        alarmId,
+        isRead: false,
+        metadata: {
+          modernGenerator: "generateVaccinationAlarms",
+          legacyMethod: "Data::AlarmsVaccinations",
+          legacyClassId: candidate.legacyClassId,
+          legacyClasses: recipient.legacyClasses,
+          ntype: 0,
+        },
+      })),
+      skipDuplicates: true,
+    });
+    summary.receiptsCreated += receiptResult.count;
+
+    if (!templateEnabled || receiptResult.count === 0) continue;
 
     const variables = {
       child_name: candidate.childName,
@@ -440,8 +623,8 @@ export async function generateVaccinationAlarmsForOrganization(params: {
     const title = renderNotificationText(subjectTemplate, variables);
     const body = renderNotificationText(bodyTemplate, variables);
     const created = await db.notification.createMany({
-      data: recipientIds.map((userId) => ({
-        userId,
+      data: newReceiptRecipients.map((recipient) => ({
+        userId: recipient.userId,
         title,
         body,
         type: "VACCINATION",
