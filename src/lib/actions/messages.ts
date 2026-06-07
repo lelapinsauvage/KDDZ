@@ -279,6 +279,13 @@ async function adminRecipientIds(organizationId: string, senderId: string) {
   return admins.map((admin) => admin.id);
 }
 
+function isMessageParticipant(
+  message: { senderId: string; recipientId: string },
+  userId: string,
+) {
+  return message.senderId === userId || message.recipientId === userId;
+}
+
 /**
  * Resolve display names for a set of message rows.
  * Looks up Users (admin/teacher) and ParentUsers (parents) by ID.
@@ -921,8 +928,21 @@ export async function replyToMessage(
     if (!original || original.organizationId !== ctx.organizationId) {
       return { success: false, error: "Original message not found" };
     }
+    if (!isMessageParticipant(original, ctx.userId)) {
+      return { success: false, error: "Forbidden" };
+    }
 
     const senderType = roleToSenderType(ctx.role);
+    const replyRecipient =
+      original.senderId === ctx.userId
+        ? {
+            id: original.recipientId,
+            type: original.recipientType,
+          }
+        : {
+            id: original.senderId,
+            type: original.senderType as RecipientType,
+          };
 
     // Create thread if none exists
     let threadId = original.threadId;
@@ -942,8 +962,8 @@ export async function replyToMessage(
       data: {
         senderId: ctx.userId,
         senderType,
-        recipientId: original.senderId,
-        recipientType: original.senderType as RecipientType,
+        recipientId: replyRecipient.id,
+        recipientType: replyRecipient.type,
         subject: original.subject ? `Re: ${original.subject}` : null,
         body,
         threadId,
@@ -972,8 +992,15 @@ export async function markAsRead(id: string): Promise<ActionResult> {
     if (!res.ok) return { success: false, error: res.error };
     const { ctx } = res;
 
-    const message = await db.message.findUnique({ where: { id } });
-    if (!message || message.organizationId !== ctx.organizationId) {
+    const message = await db.message.findFirst({
+      where: {
+        id,
+        organizationId: ctx.organizationId,
+        recipientId: ctx.userId,
+      },
+      select: { id: true },
+    });
+    if (!message) {
       return { success: false, error: "Message not found" };
     }
 
@@ -996,8 +1023,15 @@ export async function markAsUnread(id: string): Promise<ActionResult> {
     if (!res.ok) return { success: false, error: res.error };
     const { ctx } = res;
 
-    const message = await db.message.findUnique({ where: { id } });
-    if (!message || message.organizationId !== ctx.organizationId) {
+    const message = await db.message.findFirst({
+      where: {
+        id,
+        organizationId: ctx.organizationId,
+        recipientId: ctx.userId,
+      },
+      select: { id: true },
+    });
+    if (!message) {
       return { success: false, error: "Message not found" };
     }
 
@@ -1079,8 +1113,15 @@ export async function deleteMessage(id: string): Promise<ActionResult> {
     if (!res.ok) return { success: false, error: res.error };
     const { ctx } = res;
 
-    const message = await db.message.findUnique({ where: { id } });
-    if (!message || message.organizationId !== ctx.organizationId) {
+    const message = await db.message.findFirst({
+      where: {
+        id,
+        organizationId: ctx.organizationId,
+        OR: [{ recipientId: ctx.userId }, { senderId: ctx.userId }],
+      },
+      select: { id: true },
+    });
+    if (!message) {
       return { success: false, error: "Message not found" };
     }
 
@@ -1359,8 +1400,14 @@ export async function resendMessage(id: string): Promise<ActionResult> {
     if (!res.ok) return { success: false, error: res.error };
     const { ctx } = res;
 
-    const original = await db.message.findUnique({ where: { id } });
-    if (!original || original.organizationId !== ctx.organizationId) {
+    const original = await db.message.findFirst({
+      where: {
+        id,
+        organizationId: ctx.organizationId,
+        senderId: ctx.userId,
+      },
+    });
+    if (!original) {
       return { success: false, error: "Message not found" };
     }
 
