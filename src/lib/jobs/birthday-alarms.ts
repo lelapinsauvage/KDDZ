@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { isLegacyNotificationGateEnabled } from "@/lib/legacy-notification-gates";
 
 export interface BirthdayGenerationSummary {
   branchesScanned: number;
@@ -7,6 +8,7 @@ export interface BirthdayGenerationSummary {
   notificationsCreated: number;
   skippedExisting: number;
   skippedDisabledBranches: number;
+  skippedLegacyNotificationGate: boolean;
 }
 
 function startOfToday() {
@@ -110,7 +112,13 @@ export async function generateBirthdayAlarmsForOrganization(params: {
     notificationsCreated: 0,
     skippedExisting: 0,
     skippedDisabledBranches: branchIds.length - enabledBranchIds.length,
+    skippedLegacyNotificationGate: false,
   };
+
+  if (!(await isLegacyNotificationGateEnabled(params.organizationId, "birthdays"))) {
+    summary.skippedLegacyNotificationGate = true;
+    return summary;
+  }
 
   if (enabledBranchIds.length === 0) return summary;
 

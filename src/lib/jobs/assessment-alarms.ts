@@ -1,5 +1,6 @@
 import { ASSESSMENT_TYPE_NAMES, VALID_ASSESSMENT_TYPES } from "@/lib/assessment-types";
 import { db } from "@/lib/db";
+import { isLegacyNotificationGateEnabled } from "@/lib/legacy-notification-gates";
 
 export interface AssessmentDueAlarm {
   id: string;
@@ -25,6 +26,7 @@ export interface AssessmentGenerationSummary {
   notificationsCreated: number;
   skippedExisting: number;
   skippedDisabledBranches: number;
+  skippedLegacyNotificationGate: boolean;
 }
 
 const assessmentTypes = [...VALID_ASSESSMENT_TYPES];
@@ -133,6 +135,7 @@ function emptySummary(): AssessmentGenerationSummary {
     notificationsCreated: 0,
     skippedExisting: 0,
     skippedDisabledBranches: 0,
+    skippedLegacyNotificationGate: false,
   };
 }
 
@@ -280,6 +283,11 @@ export async function generateAssessmentAlarmsForOrganization(params: {
 
   const summary = emptySummary();
   summary.branchesScanned = branchIds.length;
+
+  if (!(await isLegacyNotificationGateEnabled(params.organizationId, "assessments"))) {
+    summary.skippedLegacyNotificationGate = true;
+    return summary;
+  }
 
   const settings = await db.settings.findMany({
     where: {

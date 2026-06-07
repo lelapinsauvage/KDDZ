@@ -110,6 +110,14 @@ export function PaymentAlarmsClient({
     setIsGenerating(false);
 
     if (result.success && result.data) {
+      if (result.data.skippedLegacyNotificationGate) {
+        setGenerationStatus(
+          "Legacy notification settings disable payment alarms; no alarms were generated.",
+        );
+        router.refresh();
+        return;
+      }
+
       const {
         reminderGroupsMatched,
         remindersMatched,

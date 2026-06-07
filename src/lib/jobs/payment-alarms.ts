@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { isLegacyNotificationGateEnabled } from "@/lib/legacy-notification-gates";
 import type { PaymentCategory, PaymentStatus } from "@/generated/prisma/enums";
 
 type PaymentAlarmLegacyType = "Paid" | "Before" | "After";
@@ -16,6 +17,7 @@ export interface PaymentGenerationSummary {
   parentRecipientsMatched: number;
   skippedExisting: number;
   skippedDisabledBranches: number;
+  skippedLegacyNotificationGate: boolean;
   skippedMissingChild: number;
   skippedNoEligibleFees: number;
 }
@@ -160,6 +162,7 @@ function emptySummary(): PaymentGenerationSummary {
     parentRecipientsMatched: 0,
     skippedExisting: 0,
     skippedDisabledBranches: 0,
+    skippedLegacyNotificationGate: false,
     skippedMissingChild: 0,
     skippedNoEligibleFees: 0,
   };
@@ -303,6 +306,11 @@ export async function generatePaymentAlarmsForOrganization(params: {
 
   const summary = emptySummary();
   summary.branchesScanned = branchIds.length;
+
+  if (!(await isLegacyNotificationGateEnabled(params.organizationId, "payments"))) {
+    summary.skippedLegacyNotificationGate = true;
+    return summary;
+  }
 
   const [settings, legacySettingRows] = await Promise.all([
     db.settings.findMany({

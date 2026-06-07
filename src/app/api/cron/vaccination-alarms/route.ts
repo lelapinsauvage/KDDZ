@@ -22,6 +22,7 @@ function emptySummary(): VaccinationGenerationSummary {
     notificationsCreated: 0,
     skippedExisting: 0,
     skippedDisabledBranches: 0,
+    skippedLegacyNotificationGate: false,
     skippedMissingDob: 0,
   };
 }
@@ -37,6 +38,7 @@ function addSummary(
   total.notificationsCreated += next.notificationsCreated;
   total.skippedExisting += next.skippedExisting;
   total.skippedDisabledBranches += next.skippedDisabledBranches;
+  total.skippedLegacyNotificationGate ||= next.skippedLegacyNotificationGate;
   total.skippedMissingDob += next.skippedMissingDob;
 }
 

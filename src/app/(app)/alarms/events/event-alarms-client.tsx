@@ -80,6 +80,14 @@ export function EventAlarmsClient({
     setGeneratingJob(null);
 
     if (result.success && result.data) {
+      if (result.data.skippedLegacyNotificationGate) {
+        setGenerationStatus(
+          "Legacy notification settings disable event and holiday alarms; no alarms were generated.",
+        );
+        router.refresh();
+        return;
+      }
+
       const {
         holidaysMatched,
         holidaysScanned,
@@ -106,6 +114,14 @@ export function EventAlarmsClient({
     setGeneratingJob(null);
 
     if (result.success && result.data) {
+      if (result.data.skippedLegacyNotificationGate) {
+        setGenerationStatus(
+          "Legacy notification settings disable event and holiday alarms; no alarms were generated.",
+        );
+        router.refresh();
+        return;
+      }
+
       const {
         eventsMatched,
         eventsScanned,

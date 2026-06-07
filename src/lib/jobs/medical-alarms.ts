@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { encryptLegacyId } from "@/lib/legacy-id";
+import { isLegacyNotificationGateEnabled } from "@/lib/legacy-notification-gates";
 
 const MEDICAL_RECEIPT_SOURCE = "custom_notifications_medical";
 
@@ -19,6 +20,7 @@ export interface MedicalGenerationSummary {
   notificationsCreated: number;
   skippedExisting: number;
   skippedDisabledBranches: number;
+  skippedLegacyNotificationGate: boolean;
 }
 
 const REPORTS: MedicalReportConfig[] = [
@@ -110,6 +112,7 @@ function emptySummary(): MedicalGenerationSummary {
     notificationsCreated: 0,
     skippedExisting: 0,
     skippedDisabledBranches: 0,
+    skippedLegacyNotificationGate: false,
   };
 }
 
@@ -150,6 +153,11 @@ export async function generateMedicalAlarmsForOrganization(params: {
   });
   const branchIds = branchRows.map((branch) => branch.id);
   summary.branchesScanned = branchIds.length;
+
+  if (!(await isLegacyNotificationGateEnabled(params.organizationId, "medical"))) {
+    summary.skippedLegacyNotificationGate = true;
+    return summary;
+  }
 
   const settings = await db.settings.findMany({
     where: {

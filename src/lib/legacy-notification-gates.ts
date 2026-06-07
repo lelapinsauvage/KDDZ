@@ -177,3 +177,11 @@ export async function getLegacyNotificationGateVisibility(
     return DEFAULT_LEGACY_NOTIFICATION_GATES;
   }
 }
+
+export async function isLegacyNotificationGateEnabled(
+  orgId: string,
+  key: LegacyNotificationGateKey,
+) {
+  const gates = await getLegacyNotificationGateVisibility(orgId);
+  return gates[key] ?? true;
+}

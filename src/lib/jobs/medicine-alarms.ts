@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { isLegacyNotificationGateEnabled } from "@/lib/legacy-notification-gates";
 
 export interface MedicineGenerationSummary {
   branchesScanned: number;
@@ -7,6 +8,7 @@ export interface MedicineGenerationSummary {
   notificationsCreated: number;
   skippedExisting: number;
   skippedDisabledBranches: number;
+  skippedLegacyNotificationGate: boolean;
   skippedExpired: number;
   skippedMissingTime: number;
 }
@@ -162,6 +164,7 @@ function emptySummary(): MedicineGenerationSummary {
     notificationsCreated: 0,
     skippedExisting: 0,
     skippedDisabledBranches: 0,
+    skippedLegacyNotificationGate: false,
     skippedExpired: 0,
     skippedMissingTime: 0,
   };
@@ -188,6 +191,11 @@ export async function generateMedicineAlarmsForOrganization(params: {
 
   const summary = emptySummary();
   summary.branchesScanned = branchIds.length;
+
+  if (!(await isLegacyNotificationGateEnabled(params.organizationId, "medicine"))) {
+    summary.skippedLegacyNotificationGate = true;
+    return summary;
+  }
 
   const settings = await db.settings.findMany({
     where: {

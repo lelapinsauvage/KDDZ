@@ -122,6 +122,10 @@ function metric(data: MedicalGenerationSummary | undefined, key: keyof MedicalGe
 }
 
 function generationMessage(data: MedicalGenerationSummary | undefined) {
+  if (data?.skippedLegacyNotificationGate) {
+    return "Legacy notification settings disable medical report reminders; no alarms were generated.";
+  }
+
   const reportsMatched = metric(data, "reportsMatched");
   const alarmsCreated = metric(data, "alarmsCreated");
   const receiptsCreated = metric(data, "receiptsCreated");

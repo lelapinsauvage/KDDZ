@@ -16680,7 +16680,7 @@
     "legacyPhp": "Front/templates/admin/users/admin/classes/ajaxtoggle.php",
     "legacyJs": "",
     "modernRoute": "/settings/notifications",
-    "status": "partial - legacy ajax toggle behavior restored against migrated rows; active sender enforcement remains",
+    "status": "partial - legacy ajax toggle behavior and alarm-generator enforcement restored; external channel providers remain",
     "legacyTablesMentioned": [
       "t_notification_setting"
     ],
@@ -16689,7 +16689,7 @@
       "id",
       "toggle"
     ],
-    "verification": "The modern `updateLegacyNotificationChannelSetting` server action replaces the legacy `classes/ajaxtoggle.php` POST path for `alarms`, `email`, `whatsapp`, and `sms`, validates the channel, blocks legacy `-1` locked values, and updates migrated `t_notification_setting` rows across both the newer wide schema (`alarms`/`email`/`whatsapp`/`sms`) and the older `mtype`/`status` schema (`mtype=1` WhatsApp, `mtype=2` SMS). Remaining work is connecting those stored switches to all notification generation and external delivery providers."
+    "verification": "The modern `updateLegacyNotificationChannelSetting` server action replaces the legacy `classes/ajaxtoggle.php` POST path for `alarms`, `email`, `whatsapp`, and `sms`, validates the channel, blocks legacy `-1` locked values, and updates migrated `t_notification_setting` rows across both the newer wide schema (`alarms`/`email`/`whatsapp`/`sms`) and the older `mtype`/`status` schema (`mtype=1` WhatsApp, `mtype=2` SMS). Modern birthday, assessment, medical report, medicine, insurance, vaccination, payment, event, and holiday generators now read the preserved legacy alarm gates and skip creation with explicit UI/cron summary feedback when a family is disabled. Remaining work is enforcing recovered external email, WhatsApp, and SMS provider sends once those providers are restored."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/classes/edit_level.class.php",
@@ -17009,12 +17009,12 @@
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-control.php",
     "legacyJs": "",
     "modernRoute": "/settings/notifications",
-    "status": "partial - legacy notification channel control matrix restored; sender enforcement remains",
+    "status": "partial - legacy notification channel matrix and alarm gates restored; external providers remain",
     "legacyTablesMentioned": [
       "t_notification_setting"
     ],
     "requestFieldsMentioned": [],
-    "verification": "/settings/notifications Legacy tab now restores the legacy Notifications/Alerts Control matrix from migrated `t_notification_setting` rows, with System Alerts, Emails, Whatsapp, and SMS switches for the newer wide schema, plus older `mtype`/`status` rows where `mtype=1` controls WhatsApp and `mtype=2` controls SMS. Values of `-1` render as unavailable, and editable toggles update the preserved `LegacySetting.legacyData`/`settingValue` row. Remaining work is enforcing these channel switches across every modern generator/provider send path."
+    "verification": "/settings/notifications Legacy tab now restores the legacy Notifications/Alerts Control matrix from migrated `t_notification_setting` rows, with System Alerts, Emails, Whatsapp, and SMS switches for the newer wide schema, plus older `mtype`/`status` rows where `mtype=1` controls WhatsApp and `mtype=2` controls SMS. Values of `-1` render as unavailable, and editable toggles update the preserved `LegacySetting.legacyData`/`settingValue` row. The restored alarm generators now enforce the legacy System Alerts switches for birthday, assessment, medical report, medicine, insurance, vaccination, payment, event, and holiday families. Remaining work is external email, WhatsApp, and SMS provider delivery/enforcement after credentials and providers are recovered."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-forgot.php",

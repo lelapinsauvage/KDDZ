@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { isLegacyNotificationGateEnabled } from "@/lib/legacy-notification-gates";
 
 export interface InsuranceGenerationSummary {
   branchesScanned: number;
@@ -8,6 +9,7 @@ export interface InsuranceGenerationSummary {
   notificationsCreated: number;
   skippedExisting: number;
   skippedDisabledBranches: number;
+  skippedLegacyNotificationGate: boolean;
   skippedNoInsurance: number;
   skippedInvalidExpiry: number;
   skippedOutsideWindow: number;
@@ -133,6 +135,7 @@ function emptySummary(): InsuranceGenerationSummary {
     notificationsCreated: 0,
     skippedExisting: 0,
     skippedDisabledBranches: 0,
+    skippedLegacyNotificationGate: false,
     skippedNoInsurance: 0,
     skippedInvalidExpiry: 0,
     skippedOutsideWindow: 0,
@@ -158,6 +161,11 @@ export async function generateInsuranceAlarmsForOrganization(params: {
 
   const summary = emptySummary();
   summary.branchesScanned = branchIds.length;
+
+  if (!(await isLegacyNotificationGateEnabled(params.organizationId, "insurance"))) {
+    summary.skippedLegacyNotificationGate = true;
+    return summary;
+  }
 
   const settings = await db.settings.findMany({
     where: {

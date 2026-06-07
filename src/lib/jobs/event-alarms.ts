@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { isLegacyNotificationGateEnabled } from "@/lib/legacy-notification-gates";
 
 const DEFAULT_REMINDER_DAYS = [1, 3, 7];
 const DAY_MS = 86_400_000;
@@ -11,6 +12,7 @@ export interface EventGenerationSummary {
   notificationsCreated: number;
   skippedExisting: number;
   skippedDisabledBranches: number;
+  skippedLegacyNotificationGate: boolean;
   skippedMissingMessage: number;
   skippedOutsideWindow: number;
   skippedMissingBranches: number;
@@ -114,6 +116,7 @@ function emptySummary(): EventGenerationSummary {
     notificationsCreated: 0,
     skippedExisting: 0,
     skippedDisabledBranches: 0,
+    skippedLegacyNotificationGate: false,
     skippedMissingMessage: 0,
     skippedOutsideWindow: 0,
     skippedMissingBranches: 0,
@@ -149,6 +152,11 @@ export async function generateEventAlarmsForOrganization(params: {
 
   const summary = emptySummary();
   summary.branchesScanned = branchIds.length;
+
+  if (!(await isLegacyNotificationGateEnabled(params.organizationId, "events"))) {
+    summary.skippedLegacyNotificationGate = true;
+    return summary;
+  }
 
   const settings = await db.settings.findMany({
     where: {

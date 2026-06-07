@@ -347,10 +347,19 @@ function metric(data: unknown, key: string) {
   return typeof value === "number" && Number.isFinite(value) ? value : 0;
 }
 
+function flag(data: unknown, key: string) {
+  if (!data || typeof data !== "object") return false;
+  return (data as Record<string, unknown>)[key] === true;
+}
+
 function formatGenerationStatus(
   family: StaffReceiptAlarmsClientProps["family"],
   data: unknown,
 ) {
+  if (flag(data, "skippedLegacyNotificationGate")) {
+    return "Legacy notification settings disable this alarm family; no alarms were generated.";
+  }
+
   if (family === "assessment" || family === "birthday") {
     const alarmsCreated = metric(data, "alarmsCreated");
     const notificationsCreated = metric(data, "notificationsCreated");

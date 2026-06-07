@@ -22,6 +22,7 @@ function emptySummary(): HolidayGenerationSummary {
     notificationsCreated: 0,
     skippedExisting: 0,
     skippedDisabledBranches: 0,
+    skippedLegacyNotificationGate: false,
     skippedMissingMessage: 0,
     skippedOutsideWindow: 0,
   };
@@ -38,6 +39,7 @@ function addSummary(
   total.notificationsCreated += next.notificationsCreated;
   total.skippedExisting += next.skippedExisting;
   total.skippedDisabledBranches += next.skippedDisabledBranches;
+  total.skippedLegacyNotificationGate ||= next.skippedLegacyNotificationGate;
   total.skippedMissingMessage += next.skippedMissingMessage;
   total.skippedOutsideWindow += next.skippedOutsideWindow;
 }

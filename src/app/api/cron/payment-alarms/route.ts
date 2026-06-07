@@ -27,6 +27,7 @@ function emptySummary(): PaymentGenerationSummary {
     parentRecipientsMatched: 0,
     skippedExisting: 0,
     skippedDisabledBranches: 0,
+    skippedLegacyNotificationGate: false,
     skippedMissingChild: 0,
     skippedNoEligibleFees: 0,
   };
@@ -48,6 +49,7 @@ function addSummary(
   total.parentRecipientsMatched += next.parentRecipientsMatched;
   total.skippedExisting += next.skippedExisting;
   total.skippedDisabledBranches += next.skippedDisabledBranches;
+  total.skippedLegacyNotificationGate ||= next.skippedLegacyNotificationGate;
   total.skippedMissingChild += next.skippedMissingChild;
   total.skippedNoEligibleFees += next.skippedNoEligibleFees;
 }

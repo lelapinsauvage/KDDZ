@@ -22,6 +22,7 @@ function emptySummary(): InsuranceGenerationSummary {
     notificationsCreated: 0,
     skippedExisting: 0,
     skippedDisabledBranches: 0,
+    skippedLegacyNotificationGate: false,
     skippedNoInsurance: 0,
     skippedInvalidExpiry: 0,
     skippedOutsideWindow: 0,
@@ -39,6 +40,7 @@ function addSummary(
   total.notificationsCreated += next.notificationsCreated;
   total.skippedExisting += next.skippedExisting;
   total.skippedDisabledBranches += next.skippedDisabledBranches;
+  total.skippedLegacyNotificationGate ||= next.skippedLegacyNotificationGate;
   total.skippedNoInsurance += next.skippedNoInsurance;
   total.skippedInvalidExpiry += next.skippedInvalidExpiry;
   total.skippedOutsideWindow += next.skippedOutsideWindow;

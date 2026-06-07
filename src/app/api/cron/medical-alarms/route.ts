@@ -23,6 +23,7 @@ function emptySummary(): MedicalGenerationSummary {
     notificationsCreated: 0,
     skippedExisting: 0,
     skippedDisabledBranches: 0,
+    skippedLegacyNotificationGate: false,
   };
 }
 
@@ -38,6 +39,7 @@ function addSummary(
   total.notificationsCreated += next.notificationsCreated;
   total.skippedExisting += next.skippedExisting;
   total.skippedDisabledBranches += next.skippedDisabledBranches;
+  total.skippedLegacyNotificationGate ||= next.skippedLegacyNotificationGate;
 }
 
 function isAuthorized(request: NextRequest) {

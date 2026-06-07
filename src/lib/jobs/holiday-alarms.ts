@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { isLegacyNotificationGateEnabled } from "@/lib/legacy-notification-gates";
 
 export interface HolidayGenerationSummary {
   branchesScanned: number;
@@ -8,6 +9,7 @@ export interface HolidayGenerationSummary {
   notificationsCreated: number;
   skippedExisting: number;
   skippedDisabledBranches: number;
+  skippedLegacyNotificationGate: boolean;
   skippedMissingMessage: number;
   skippedOutsideWindow: number;
 }
@@ -87,6 +89,7 @@ function emptySummary(): HolidayGenerationSummary {
     notificationsCreated: 0,
     skippedExisting: 0,
     skippedDisabledBranches: 0,
+    skippedLegacyNotificationGate: false,
     skippedMissingMessage: 0,
     skippedOutsideWindow: 0,
   };
@@ -123,6 +126,11 @@ export async function generateHolidayAlarmsForOrganization(params: {
 
   const summary = emptySummary();
   summary.branchesScanned = branchIds.length;
+
+  if (!(await isLegacyNotificationGateEnabled(params.organizationId, "events"))) {
+    summary.skippedLegacyNotificationGate = true;
+    return summary;
+  }
 
   const settings = await db.settings.findMany({
     where: {

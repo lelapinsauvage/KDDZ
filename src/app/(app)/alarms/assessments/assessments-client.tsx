@@ -133,6 +133,14 @@ export function AssessmentsClient({
     setIsGenerating(false);
 
     if (result.success && result.data) {
+      if (result.data.skippedLegacyNotificationGate) {
+        setGenerationStatus(
+          "Legacy notification settings disable assessment alarms; no alarms were generated.",
+        );
+        router.refresh();
+        return;
+      }
+
       const { alarmsCreated, notificationsCreated, skippedExisting } = result.data;
       setGenerationStatus(
         `Created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"} and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing.`,

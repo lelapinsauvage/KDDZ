@@ -75,6 +75,14 @@ export function VaccinationsClient({
     setIsGenerating(false);
 
     if (result.success && result.data) {
+      if (result.data.skippedLegacyNotificationGate) {
+        setGenerationStatus(
+          "Legacy notification settings disable vaccination alarms; no alarms were generated.",
+        );
+        router.refresh();
+        return;
+      }
+
       const { remindersMatched, alarmsCreated, notificationsCreated, skippedExisting } =
         result.data;
       setGenerationStatus(

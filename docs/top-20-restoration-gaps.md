@@ -55,7 +55,8 @@ This list is the first implementation backlog after the generated inventory/matr
 7. **Notification logs/settings migration**
    - Legacy has many `custom_notifications_*`, `t_alarms_*`, `t_notification_setting`, and `t_notifications_log` tables.
    - Historical alarms, receipts, push tokens, and notification logs are covered by `migrate-alarms.ts`; migrated `t_notification_setting`, `notifications_nature`, and `t_notifications_log` rows are now visible in `/settings/notifications` under the Legacy tab for audit and parity review.
-   - Remaining work is exact activation/edit behavior, parent/custom notification families, and production send-job parity.
+   - Legacy `t_notification_setting` activation/edit behavior is restored for both the newer channel matrix schema and the older `mtype`/`status` schema, and restored alarm generators now enforce the System Alerts gates.
+   - Remaining work is parent/custom notification families and production external provider send-job parity.
 
 8. **Actual notification sending**
    - Modern app now has an in-app template dispatch path with variable rendering, sent-log visibility, resend, and per-template test send to the current user.
@@ -76,7 +77,8 @@ This list is the first implementation backlog after the generated inventory/matr
    - `/alarms/payments` now restores legacy receipt read-state from migrated `custom_notifications_payments`, including recipient To summaries, collapsed New/Viewed status by alarm, row/bulk/all mark-viewed actions, manual generation controls, and sent-history rows for PARENT_USER/CHILD receipts.
    - `/alarms/events` now restores legacy event/holiday receipt read-state from migrated `custom_notifications`, `custom_notifications_events`, and `custom_notifications_events_parents`, including current-staff New/Viewed filters, row/bulk/all mark-viewed actions, and Sent Events Alarms history for staff and parent recipients.
    - `/alarms`, `/alarms/requests`, and `/alarms/others` now restore legacy receipt read-state from migrated staff and parent delivery tables, including current-staff New/Viewed filters, row/bulk/all mark-viewed actions, and sent-history rows for USER/PARENT_USER/CHILD receipts.
-   - Remaining work is idempotent cron/job generation for the other approved legacy families, hosted schedule configuration after production crontab confirmation, and external push/email/SMS/WhatsApp providers after credential recovery or rotation.
+   - Restored alarm generators now respect the migrated legacy `t_notification_setting` System Alerts gates for birthday, assessment, missing medical report, medicine, insurance, vaccination, payment, event, and holiday families, with explicit skipped summaries for manual UI and cron calls.
+   - Remaining work is idempotent cron/job generation for any other approved legacy families, hosted schedule configuration after production crontab confirmation, and external push/email/SMS/WhatsApp providers after credential recovery or rotation.
 
 9. **Parent portal UI**
    - `/parent/login` now restores a parent-facing login screen backed by `/api/parent/login`, stores the parent JWT and modern child UUID client-side, and keeps failed-login responses in the legacy `{ status: false }` shape with a timeout guard for slow database lookups.

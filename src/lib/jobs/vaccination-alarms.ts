@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { isLegacyNotificationGateEnabled } from "@/lib/legacy-notification-gates";
 
 export interface VaccinationDueAlarm {
   id: string;
@@ -26,6 +27,7 @@ export interface VaccinationGenerationSummary {
   notificationsCreated: number;
   skippedExisting: number;
   skippedDisabledBranches: number;
+  skippedLegacyNotificationGate: boolean;
   skippedMissingDob: number;
 }
 
@@ -166,6 +168,7 @@ function emptySummary(): VaccinationGenerationSummary {
     notificationsCreated: 0,
     skippedExisting: 0,
     skippedDisabledBranches: 0,
+    skippedLegacyNotificationGate: false,
     skippedMissingDob: 0,
   };
 }
@@ -287,6 +290,11 @@ export async function generateVaccinationAlarmsForOrganization(params: {
 
   const summary = emptySummary();
   summary.branchesScanned = branchIds.length;
+
+  if (!(await isLegacyNotificationGateEnabled(params.organizationId, "vaccinations"))) {
+    summary.skippedLegacyNotificationGate = true;
+    return summary;
+  }
 
   const settingsByBranch = await getSettingsByBranch(branchIds);
   const enabledBranchIds = branchIds.filter((id) => {
