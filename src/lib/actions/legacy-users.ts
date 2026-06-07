@@ -769,7 +769,9 @@ async function getDefaultLevelId(
     orderBy: { legacyId: "asc" },
     select: { settingValue: true },
   });
-  const defaultLevelId = Number.parseInt(setting?.settingValue ?? "", 10);
+  const legacyLevelIds = parsePhpLevelIds(setting?.settingValue ?? null);
+  const defaultLevelId =
+    legacyLevelIds[0] ?? Number.parseInt(setting?.settingValue ?? "", 10);
 
   return Number.isInteger(defaultLevelId) && defaultLevelId > 0
     ? defaultLevelId

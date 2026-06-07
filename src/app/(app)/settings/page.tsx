@@ -12,6 +12,7 @@ import {
   Map,
   LayoutGrid,
   Users,
+  KeyRound,
   Bell,
   BellRing,
   Landmark,
@@ -135,6 +136,14 @@ const adminOnlySections = [
     icon: TextCursorInput,
     iconBg: "bg-teal-100",
     iconColor: "text-teal-700",
+  },
+  {
+    title: "Legacy Auth",
+    description: "Login sessions, redirects, and denied messages",
+    href: "/settings/legacy-auth",
+    icon: KeyRound,
+    iconBg: "bg-indigo-100",
+    iconColor: "text-indigo-700",
   },
 ];
 

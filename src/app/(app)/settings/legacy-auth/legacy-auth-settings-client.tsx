@@ -1,0 +1,793 @@
+"use client";
+
+import { useMemo, useState, useTransition, type ReactNode } from "react";
+import Link from "next/link";
+import { PageHeader } from "@/components/layout/page-header";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  type LegacyAuthGeneralSettingsInput,
+  type LegacyAuthDeniedSettingsInput,
+  type LegacyAuthLevelOption,
+  type LegacyAuthSettingsData,
+  type LegacyAuthSettingsSource,
+  updateLegacyAuthDeniedSettings,
+  updateLegacyAuthGeneralSettings,
+} from "@/lib/actions/legacy-auth-settings";
+import { cn } from "@/lib/utils";
+import { ArrowLeft, KeyRound, Save, ShieldAlert } from "lucide-react";
+import { toast } from "sonner";
+
+type LegacyAuthSettingsClientProps = {
+  initialData: LegacyAuthSettingsData;
+  initialError?: string | null;
+  initialTab?: string;
+};
+
+type MessageState = {
+  type: "success" | "error";
+  text: string;
+} | null;
+
+type GeneralFormState = Omit<
+  LegacyAuthGeneralSettingsInput,
+  "restrictSignupDomains"
+> & {
+  restrictSignupDomainsText: string;
+};
+
+type DeniedFormState = LegacyAuthDeniedSettingsInput;
+
+function settingValue(
+  data: LegacyAuthSettingsData,
+  source: LegacyAuthSettingsSource | null,
+  key: string,
+) {
+  if (!source) return "";
+  return (
+    data.settings.find(
+      (setting) =>
+        setting.sourceDatabase === source.sourceDatabase &&
+        setting.legacyTable === source.legacyTable &&
+        setting.settingKey === key,
+    )?.settingValue ?? ""
+  );
+}
+
+function isEnabled(value: string) {
+  return value === "1" || value.toLowerCase() === "true";
+}
+
+function parsePhpStringArray(value: string | null | undefined) {
+  if (!value) return [];
+  const matches = Array.from(value.matchAll(/s:\d+:"([^"]*)"/g)).map(
+    (match) => match[1],
+  );
+  if (matches.length) return matches;
+
+  return value
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+function parsePhpNumberArray(value: string | null | undefined) {
+  const serialized = parsePhpStringArray(value)
+    .map((part) => Number.parseInt(part, 10))
+    .filter((part) => Number.isInteger(part) && part > 0);
+  if (serialized.length) return serialized;
+
+  const direct = Number.parseInt(value ?? "", 10);
+  return Number.isInteger(direct) && direct > 0 ? [direct] : [];
+}
+
+function splitDomains(value: string) {
+  return value
+    .split(/[,\s]+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+function createGeneralForm(
+  data: LegacyAuthSettingsData,
+  source: LegacyAuthSettingsSource | null,
+): GeneralFormState {
+  const key = source?.key ?? "";
+  const get = (setting: string) => settingValue(data, source, setting);
+
+  return {
+    sourceKey: key,
+    adminEmail: get("admin_email"),
+    siteAddress: get("site_address"),
+    defaultSession: get("default_session") || "0",
+    defaultLevelIds: parsePhpNumberArray(get("default-level")),
+    customAvatarEnabled: isEnabled(get("custom-avatar-enable")),
+    emailAsUsernameEnabled: isEnabled(get("email-as-username-enable")),
+    disableRegistrationsEnabled: isEnabled(get("disable-registrations-enable")),
+    disableLoginsEnabled: isEnabled(get("disable-logins-enable")),
+    userActivationEnabled: isEnabled(get("user-activation-enable")),
+    emailWelcomeDisabled: isEnabled(get("email-welcome-disable")),
+    notifyNewUserEnabled: isEnabled(get("notify-new-user-enable")),
+    notifyNewUserLevelIds: parsePhpNumberArray(get("notify-new-users")),
+    restrictSignupDomainsText: parsePhpStringArray(
+      get("restrict-signups-by-email"),
+    ).join(", "),
+    passwordEncryptForceEnabled: isEnabled(get("pw-encrypt-force-enable")),
+    passwordEncryption: get("pw-encryption") === "SHA256" ? "SHA256" : "MD5",
+    guestRedirect: get("guest-redirect"),
+    newUserRedirect: get("new-user-redirect"),
+    signoutRedirectReferrerEnabled: isEnabled(
+      get("signout-redirect-referrer-enable"),
+    ),
+    signoutRedirectUrl: get("signout-redirect-url"),
+    signinRedirectReferrerEnabled: isEnabled(
+      get("signin-redirect-referrer-enable"),
+    ),
+    signinRedirectUrl: get("signin-redirect-url"),
+  };
+}
+
+function createDeniedForm(
+  data: LegacyAuthSettingsData,
+  source: LegacyAuthSettingsSource | null,
+): DeniedFormState {
+  const key = source?.key ?? "";
+  const get = (setting: string) => settingValue(data, source, setting);
+
+  return {
+    sourceKey: key,
+    blockMessageEnabled: isEnabled(get("block-msg-enable")),
+    blockMessage: get("block-msg"),
+    guestBlockMessageEnabled: isEnabled(get("block-msg-out-enable")),
+    guestBlockMessage: get("block-msg-out"),
+  };
+}
+
+function levelOptionsForSource(
+  data: LegacyAuthSettingsData,
+  source: LegacyAuthSettingsSource | null,
+) {
+  if (!source) return [];
+  return data.levels.filter(
+    (level) =>
+      level.sourceDatabase === source.sourceDatabase &&
+      level.recordType === source.levelRecordType,
+  );
+}
+
+function messageClass(message: MessageState) {
+  if (!message) return "";
+  return message.type === "success"
+    ? "border-[#b8dfd6] bg-[#eefaf7] text-[#0f6f61]"
+    : "border-[#f0c2bc] bg-[#fff3f1] text-[#9b2f24]";
+}
+
+export function LegacyAuthSettingsClient({
+  initialData,
+  initialError,
+  initialTab,
+}: LegacyAuthSettingsClientProps) {
+  const [data, setData] = useState(initialData);
+  const [sourceKey, setSourceKey] = useState(initialData.sources[0]?.key ?? "");
+  const selectedSource = useMemo(
+    () => data.sources.find((source) => source.key === sourceKey) ?? null,
+    [data.sources, sourceKey],
+  );
+  const [activeTab, setActiveTab] = useState(
+    initialTab === "denied" ? "denied" : "general",
+  );
+  const [message, setMessage] = useState<MessageState>(
+    initialError ? { type: "error", text: initialError } : null,
+  );
+  const [generalForm, setGeneralForm] = useState<GeneralFormState>(() =>
+    createGeneralForm(initialData, initialData.sources[0] ?? null),
+  );
+  const [deniedForm, setDeniedForm] = useState<DeniedFormState>(() =>
+    createDeniedForm(initialData, initialData.sources[0] ?? null),
+  );
+  const [isPending, startTransition] = useTransition();
+
+  const levels = useMemo(
+    () => levelOptionsForSource(data, selectedSource),
+    [data, selectedSource],
+  );
+
+  function handleSourceChange(nextSourceKey: string) {
+    const source =
+      data.sources.find((candidate) => candidate.key === nextSourceKey) ?? null;
+    setSourceKey(nextSourceKey);
+    setGeneralForm(createGeneralForm(data, source));
+    setDeniedForm(createDeniedForm(data, source));
+    setMessage(null);
+  }
+
+  function syncForms(nextData: LegacyAuthSettingsData, nextSourceKey = sourceKey) {
+    const source =
+      nextData.sources.find((candidate) => candidate.key === nextSourceKey) ??
+      null;
+    setData(nextData);
+    setSourceKey(source?.key ?? "");
+    setGeneralForm(createGeneralForm(nextData, source));
+    setDeniedForm(createDeniedForm(nextData, source));
+  }
+
+  function updateGeneral<K extends keyof GeneralFormState>(
+    key: K,
+    value: GeneralFormState[K],
+  ) {
+    setGeneralForm((current) => ({ ...current, [key]: value }));
+  }
+
+  function updateDenied<K extends keyof DeniedFormState>(
+    key: K,
+    value: DeniedFormState[K],
+  ) {
+    setDeniedForm((current) => ({ ...current, [key]: value }));
+  }
+
+  function toggleId(values: number[], id: number) {
+    return values.includes(id)
+      ? values.filter((value) => value !== id)
+      : [...values, id].sort((a, b) => a - b);
+  }
+
+  function saveGeneral() {
+    setMessage(null);
+    startTransition(async () => {
+      const result = await updateLegacyAuthGeneralSettings({
+        ...generalForm,
+        sourceKey,
+        restrictSignupDomains: splitDomains(
+          generalForm.restrictSignupDomainsText,
+        ),
+      });
+      if (result.success && result.data) {
+        syncForms(result.data);
+        setMessage({ type: "success", text: "Settings updated." });
+        toast.success("Settings updated.");
+        return;
+      }
+
+      const error = result.error ?? "Failed to update general options";
+      setMessage({ type: "error", text: error });
+      toast.error(error);
+    });
+  }
+
+  function saveDenied() {
+    setMessage(null);
+    startTransition(async () => {
+      const result = await updateLegacyAuthDeniedSettings({
+        ...deniedForm,
+        sourceKey,
+      });
+      if (result.success && result.data) {
+        syncForms(result.data);
+        setMessage({ type: "success", text: "Settings updated." });
+        toast.success("Settings updated.");
+        return;
+      }
+
+      const error = result.error ?? "Failed to update denied messages";
+      setMessage({ type: "error", text: error });
+      toast.error(error);
+    });
+  }
+
+  if (!data.sources.length) {
+    return (
+      <>
+        <PageHeader
+          title="Legacy Auth Settings"
+          breadcrumbs={[
+            { label: "Settings", href: "/settings" },
+            { label: "Legacy Auth Settings" },
+          ]}
+        />
+        <div className="p-4 md:p-6">
+          <div className="rounded-sm border border-border bg-background p-6 text-sm text-muted-foreground">
+            No legacy login settings found.
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <PageHeader
+        title="Legacy Auth Settings"
+        description="Migrated PHP login settings for sessions, access-denied copy, redirects, and new-user defaults"
+        breadcrumbs={[
+          { label: "Settings", href: "/settings" },
+          { label: "Legacy Auth Settings" },
+        ]}
+        actions={
+          <Button variant="outline" asChild>
+            <Link href="/settings">
+              <ArrowLeft className="size-4" />
+              Settings
+            </Link>
+          </Button>
+        }
+      />
+
+      <div className="space-y-4 p-4 md:p-6">
+        {message ? (
+          <div
+            className={cn(
+              "rounded-sm border px-3 py-2 text-sm",
+              messageClass(message),
+            )}
+          >
+            {message.text}
+          </div>
+        ) : null}
+
+        <div className="flex flex-col gap-3 rounded-sm border border-border bg-background p-3 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <KeyRound className="size-4" />
+              Source
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {selectedSource?.sourceDatabase} / {selectedSource?.legacyTable}
+            </div>
+          </div>
+          <Select value={sourceKey} onValueChange={handleSourceChange}>
+            <SelectTrigger className="w-full md:w-[320px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {data.sources.map((source) => (
+                <SelectItem key={source.key} value={source.key}>
+                  {source.sourceDatabase} / {source.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="general">General Options</TabsTrigger>
+            <TabsTrigger value="denied">Denied</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="general" className="mt-4">
+            <div className="space-y-6 rounded-sm border border-border bg-background p-4">
+              <div className="grid gap-4 md:grid-cols-3">
+                <Field label="Admin email" htmlFor="legacy-admin-email">
+                  <Input
+                    id="legacy-admin-email"
+                    type="email"
+                    value={generalForm.adminEmail}
+                    onChange={(event) =>
+                      updateGeneral("adminEmail", event.target.value)
+                    }
+                    disabled={isPending}
+                  />
+                </Field>
+                <Field label="Site address" htmlFor="legacy-site-address">
+                  <Input
+                    id="legacy-site-address"
+                    value={generalForm.siteAddress}
+                    onChange={(event) =>
+                      updateGeneral("siteAddress", event.target.value)
+                    }
+                    disabled={isPending}
+                  />
+                </Field>
+                <Field label="Default session" htmlFor="legacy-default-session">
+                  <Input
+                    id="legacy-default-session"
+                    type="number"
+                    min={0}
+                    value={generalForm.defaultSession}
+                    onChange={(event) =>
+                      updateGeneral("defaultSession", event.target.value)
+                    }
+                    disabled={isPending}
+                  />
+                </Field>
+              </div>
+
+              <LevelChecklist
+                label="Default level"
+                levels={levels}
+                selectedIds={generalForm.defaultLevelIds}
+                disabled={isPending}
+                onToggle={(id) =>
+                  updateGeneral(
+                    "defaultLevelIds",
+                    toggleId(generalForm.defaultLevelIds, id),
+                  )
+                }
+              />
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <CheckboxField
+                  label="Allow custom avatar uploads"
+                  checked={generalForm.customAvatarEnabled}
+                  disabled={isPending}
+                  onCheckedChange={(checked) =>
+                    updateGeneral("customAvatarEnabled", checked)
+                  }
+                />
+                <CheckboxField
+                  label="Use email addresses instead of usernames"
+                  checked={generalForm.emailAsUsernameEnabled}
+                  disabled={isPending}
+                  onCheckedChange={(checked) =>
+                    updateGeneral("emailAsUsernameEnabled", checked)
+                  }
+                />
+                <CheckboxField
+                  label="Disable registrations"
+                  checked={generalForm.disableRegistrationsEnabled}
+                  disabled={isPending}
+                  onCheckedChange={(checked) =>
+                    updateGeneral("disableRegistrationsEnabled", checked)
+                  }
+                />
+                <CheckboxField
+                  label="Disable logins"
+                  checked={generalForm.disableLoginsEnabled}
+                  disabled={isPending}
+                  onCheckedChange={(checked) =>
+                    updateGeneral("disableLoginsEnabled", checked)
+                  }
+                />
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-3 rounded-sm border border-border/70 p-3">
+                  <div className="text-sm font-semibold">New users</div>
+                  <CheckboxField
+                    label="Require email activation for new users"
+                    checked={generalForm.userActivationEnabled}
+                    disabled={isPending}
+                    onCheckedChange={(checked) =>
+                      updateGeneral("userActivationEnabled", checked)
+                    }
+                  />
+                  <CheckboxField
+                    label="Do not send the welcome email when a new user registers"
+                    checked={generalForm.emailWelcomeDisabled}
+                    disabled={isPending}
+                    onCheckedChange={(checked) =>
+                      updateGeneral("emailWelcomeDisabled", checked)
+                    }
+                  />
+                  <CheckboxField
+                    label="Notify a user group on new registrations"
+                    checked={generalForm.notifyNewUserEnabled}
+                    disabled={isPending}
+                    onCheckedChange={(checked) =>
+                      updateGeneral("notifyNewUserEnabled", checked)
+                    }
+                  />
+                  <LevelChecklist
+                    label="Notify levels"
+                    levels={levels}
+                    selectedIds={generalForm.notifyNewUserLevelIds}
+                    disabled={isPending}
+                    compact
+                    onToggle={(id) =>
+                      updateGeneral(
+                        "notifyNewUserLevelIds",
+                        toggleId(generalForm.notifyNewUserLevelIds, id),
+                      )
+                    }
+                  />
+                </div>
+
+                <div className="space-y-3 rounded-sm border border-border/70 p-3">
+                  <div className="text-sm font-semibold">Password encryption</div>
+                  <CheckboxField
+                    label="Force user to update password if not using selected encryption method"
+                    checked={generalForm.passwordEncryptForceEnabled}
+                    disabled={isPending}
+                    onCheckedChange={(checked) =>
+                      updateGeneral("passwordEncryptForceEnabled", checked)
+                    }
+                  />
+                  <Select
+                    value={generalForm.passwordEncryption}
+                    onValueChange={(value) =>
+                      updateGeneral(
+                        "passwordEncryption",
+                        value === "SHA256" ? "SHA256" : "MD5",
+                      )
+                    }
+                    disabled={isPending}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="MD5">MD5</SelectItem>
+                      <SelectItem value="SHA256">SHA256</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <Field
+                label="Restrict email domains"
+                htmlFor="legacy-restrict-domains"
+              >
+                <Input
+                  id="legacy-restrict-domains"
+                  value={generalForm.restrictSignupDomainsText}
+                  onChange={(event) =>
+                    updateGeneral(
+                      "restrictSignupDomainsText",
+                      event.target.value,
+                    )
+                  }
+                  disabled={isPending}
+                />
+              </Field>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field label="Guests redirect" htmlFor="legacy-guest-redirect">
+                  <Input
+                    id="legacy-guest-redirect"
+                    value={generalForm.guestRedirect}
+                    onChange={(event) =>
+                      updateGeneral("guestRedirect", event.target.value)
+                    }
+                    disabled={isPending}
+                  />
+                </Field>
+                <Field
+                  label="New users redirect"
+                  htmlFor="legacy-new-user-redirect"
+                >
+                  <Input
+                    id="legacy-new-user-redirect"
+                    value={generalForm.newUserRedirect}
+                    onChange={(event) =>
+                      updateGeneral("newUserRedirect", event.target.value)
+                    }
+                    disabled={isPending}
+                  />
+                </Field>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <RedirectBlock
+                  label="Sign out"
+                  checked={generalForm.signoutRedirectReferrerEnabled}
+                  url={generalForm.signoutRedirectUrl}
+                  disabled={isPending}
+                  onCheckedChange={(checked) =>
+                    updateGeneral("signoutRedirectReferrerEnabled", checked)
+                  }
+                  onUrlChange={(value) =>
+                    updateGeneral("signoutRedirectUrl", value)
+                  }
+                />
+                <RedirectBlock
+                  label="Sign in"
+                  checked={generalForm.signinRedirectReferrerEnabled}
+                  url={generalForm.signinRedirectUrl}
+                  disabled={isPending}
+                  onCheckedChange={(checked) =>
+                    updateGeneral("signinRedirectReferrerEnabled", checked)
+                  }
+                  onUrlChange={(value) =>
+                    updateGeneral("signinRedirectUrl", value)
+                  }
+                />
+              </div>
+
+              <div className="flex justify-end">
+                <Button onClick={saveGeneral} disabled={isPending}>
+                  <Save className="size-4" />
+                  {isPending ? "Saving..." : "Save General Options"}
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="denied" className="mt-4">
+            <div className="space-y-4 rounded-sm border border-border bg-background p-4">
+              <div className="flex items-center gap-2 text-sm font-semibold">
+                <ShieldAlert className="size-4" />
+                Denied
+              </div>
+              <div className="grid gap-4 lg:grid-cols-2">
+                <div className="space-y-3 rounded-sm border border-border/70 p-3">
+                  <CheckboxField
+                    label="Display message for registered users"
+                    checked={deniedForm.blockMessageEnabled}
+                    disabled={isPending}
+                    onCheckedChange={(checked) =>
+                      updateDenied("blockMessageEnabled", checked)
+                    }
+                  />
+                  <Textarea
+                    value={deniedForm.blockMessage}
+                    onChange={(event) =>
+                      updateDenied("blockMessage", event.target.value)
+                    }
+                    rows={6}
+                    disabled={isPending}
+                  />
+                </div>
+                <div className="space-y-3 rounded-sm border border-border/70 p-3">
+                  <CheckboxField
+                    label="Display message for guests"
+                    checked={deniedForm.guestBlockMessageEnabled}
+                    disabled={isPending}
+                    onCheckedChange={(checked) =>
+                      updateDenied("guestBlockMessageEnabled", checked)
+                    }
+                  />
+                  <Textarea
+                    value={deniedForm.guestBlockMessage}
+                    onChange={(event) =>
+                      updateDenied("guestBlockMessage", event.target.value)
+                    }
+                    rows={6}
+                    disabled={isPending}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <Button onClick={saveDenied} disabled={isPending}>
+                  <Save className="size-4" />
+                  {isPending ? "Saving..." : "Save Denied"}
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </>
+  );
+}
+
+function Field({
+  label,
+  htmlFor,
+  children,
+}: {
+  label: string;
+  htmlFor: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={htmlFor}>{label}</Label>
+      {children}
+    </div>
+  );
+}
+
+function CheckboxField({
+  label,
+  checked,
+  disabled,
+  onCheckedChange,
+}: {
+  label: string;
+  checked: boolean;
+  disabled?: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}) {
+  return (
+    <label className="flex min-h-10 items-center gap-2 rounded-sm border border-border/70 px-3 py-2 text-sm">
+      <Checkbox
+        checked={checked}
+        disabled={disabled}
+        onCheckedChange={(value) => onCheckedChange(value === true)}
+      />
+      <span className="font-medium">{label}</span>
+    </label>
+  );
+}
+
+function LevelChecklist({
+  label,
+  levels,
+  selectedIds,
+  disabled,
+  compact,
+  onToggle,
+}: {
+  label: string;
+  levels: LegacyAuthLevelOption[];
+  selectedIds: number[];
+  disabled?: boolean;
+  compact?: boolean;
+  onToggle: (id: number) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <div className="text-sm font-medium">{label}</div>
+      <div
+        className={cn(
+          "grid gap-2 rounded-sm border border-border/70 p-2",
+          compact ? "md:grid-cols-1" : "md:grid-cols-3",
+        )}
+      >
+        {levels.length ? (
+          levels.map((level) => (
+            <label
+              key={level.id}
+              className="flex min-h-9 items-center gap-2 rounded-sm px-2 text-sm hover:bg-muted/50"
+            >
+              <Checkbox
+                checked={selectedIds.includes(level.legacyId)}
+                disabled={disabled || level.isDisabled}
+                onCheckedChange={() => onToggle(level.legacyId)}
+              />
+              <span className="min-w-0 flex-1 truncate">{level.label}</span>
+              {level.isDisabled ? (
+                <Badge variant="outline" className="text-[10px]">
+                  Disabled
+                </Badge>
+              ) : null}
+            </label>
+          ))
+        ) : (
+          <div className="px-2 py-3 text-sm text-muted-foreground">
+            No legacy levels found.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function RedirectBlock({
+  label,
+  checked,
+  url,
+  disabled,
+  onCheckedChange,
+  onUrlChange,
+}: {
+  label: string;
+  checked: boolean;
+  url: string;
+  disabled?: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  onUrlChange: (value: string) => void;
+}) {
+  return (
+    <div className="space-y-3 rounded-sm border border-border/70 p-3">
+      <CheckboxField
+        label={`${label}: Redirect to referring page`}
+        checked={checked}
+        disabled={disabled}
+        onCheckedChange={onCheckedChange}
+      />
+      <Input
+        value={url}
+        onChange={(event) => onUrlChange(event.target.value)}
+        disabled={disabled}
+      />
+    </div>
+  );
+}

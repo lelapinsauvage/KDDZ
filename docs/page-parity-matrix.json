@@ -16694,8 +16694,8 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/classes/settings.class.php",
     "legacyJs": "",
-    "modernRoute": "/settings/notifications, /settings/legacy-users/profile-fields",
-    "status": "partial - legacy notification/profile-field settings restored; account/auth/update forms remain",
+    "modernRoute": "/settings/notifications, /settings/legacy-auth, /settings/legacy-users/profile-fields",
+    "status": "partial - legacy notification/profile/auth-field settings restored; integration/update forms remain",
     "legacyTablesMentioned": [
       "login_levels",
       "login_profile_fields",
@@ -16710,7 +16710,7 @@
       "update-form",
       "user-profiles-form"
     ],
-    "verification": "The legacy `user-profiles-form` profile-field add/update/delete semantics are restored at `/settings/legacy-users/profile-fields` over migrated `login_profile_fields` / `login_profile_fields_man`, including Section, Input type, Input label, Sign Up (`hide`/`require`/`optional`), Public, Delete, source database grouping, soft-delete provenance, and preserved orphan profile values. Legacy notification settings remain surfaced in `/settings/notifications`. Remaining work is dedicated validation/save parity for denied/general/integration/update auth settings forms and deciding which imported login settings actively drive modern Auth.js behavior."
+    "verification": "The legacy `user-profiles-form` profile-field add/update/delete semantics are restored at `/settings/legacy-users/profile-fields` over migrated `login_profile_fields` / `login_profile_fields_man`, including Section, Input type, Input label, Sign Up (`hide`/`require`/`optional`), Public, Delete, source database grouping, soft-delete provenance, and preserved orphan profile values. `/settings/legacy-auth` now restores the `general-options-form` and `denied-form` save semantics over migrated `login_settings` / `login_settings_man`: Admin email validation, Site address slash normalization, numeric Default session validation, serialized default/notify levels, site-control/new-user/password/redirect checkboxes, restricted signup domains, and registered-user/guest denied messages. Legacy notification settings remain surfaced in `/settings/notifications`. Remaining work is dedicated validation/save parity for integration and update settings forms plus deciding which imported login settings actively drive modern Auth.js behavior."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/footer.php",
@@ -16810,11 +16810,20 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/denied.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
-    "legacyTablesMentioned": [],
-    "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "modernRoute": "/users/admin/page/denied.php, /settings/legacy-auth?tab=denied",
+    "status": "restored - legacy denied-message settings restored",
+    "legacyTablesMentioned": [
+      "login_settings",
+      "login_settings_man"
+    ],
+    "requestFieldsMentioned": [
+      "block-msg",
+      "block-msg-enable",
+      "block-msg-out",
+      "block-msg-out-enable",
+      "denied-form"
+    ],
+    "verification": "`/settings/legacy-auth?tab=denied` restores the legacy Denied form for migrated staff and manager login settings with Display message toggles and textareas for registered users and guests, persisted back to `LegacySetting` rows as legacy `\"1\"`/`\"0\"` values plus preserved message text. `/users/admin/page/denied.php` redirects to the restored tab."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-Accounting.php",
@@ -16956,13 +16965,22 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/general-options.php",
     "legacyJs": "",
-    "modernRoute": "/settings/notifications#legacy",
-    "status": "partial - migrated login_settings audit surface restored; editable/enforced auth options remain",
+    "modernRoute": "/users/admin/page/general-options.php, /settings/legacy-auth?tab=general",
+    "status": "partial - legacy general auth options editable; active Auth.js enforcement audit remains",
     "legacyTablesMentioned": [
+      "login_levels",
+      "login_levels_man",
+      "login_settings",
+      "login_settings_man",
       "password"
     ],
-    "requestFieldsMentioned": [],
-    "verification": "The Notifications Hub Legacy tab now lists all migrated `login_settings` and `login_settings_man` rows, so legacy General Options values such as `admin_email`, `site_address`, `default_session`, default level, activation/login/registration toggles, password-encryption flags, redirect URLs, and related email template keys are visible with source database/table/key/value provenance. Remaining work is a dedicated modern admin-auth settings form, validation/save parity for `settings.class.php`, and deciding which legacy toggles should actively drive modern Auth.js/session behavior versus remain archived migration evidence."
+    "requestFieldsMentioned": [
+      "default-level",
+      "default_session",
+      "general-options-form",
+      "restrict-signups-by-email"
+    ],
+    "verification": "`/settings/legacy-auth?tab=general` restores the legacy General Options form over migrated staff and manager login settings: Admin email, Site address, Default session, Default level, site-control toggles, new-user activation/welcome/new-registration notification settings, restricted signup domains serialized like legacy PHP arrays, password encryption settings, and guest/new-user/sign-in/sign-out redirect options. Saves preserve legacy `option_name` / `option_value` metadata, create missing settings with next legacy ids, and the modern add-user default-level fallback now parses serialized legacy default levels. `/users/admin/page/general-options.php` redirects to the restored tab. Remaining work is deciding which imported legacy auth toggles should actively enforce modern Auth.js runtime behavior."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/header.php",
@@ -17055,11 +17073,14 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/settings.php",
     "legacyJs": "Front/templates/admin/js/settings.js",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
-    "legacyTablesMentioned": [],
+    "modernRoute": "/users/admin/page/settings.php, /settings/legacy-auth",
+    "status": "partial - legacy admin settings wrapper bridges to restored auth settings",
+    "legacyTablesMentioned": [
+      "login_settings",
+      "login_settings_man"
+    ],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/users/admin/page/settings.php` now redirects to `/settings/legacy-auth`, where General Options and Denied settings are editable against migrated `login_settings` / `login_settings_man`. Remaining work is integration/update subpage parity and exact old admin settings composition."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/update.php",
@@ -17137,11 +17158,14 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/settings.php",
     "legacyJs": "Front/templates/admin/js/settings.js",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
-    "legacyTablesMentioned": [],
+    "modernRoute": "/users/admin/settings.php, /settings/legacy-auth",
+    "status": "partial - legacy admin settings wrapper bridges to restored auth settings",
+    "legacyTablesMentioned": [
+      "login_settings",
+      "login_settings_man"
+    ],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/users/admin/settings.php` now redirects to `/settings/legacy-auth`, preserving a modern landing point for the legacy PHP-login admin settings area. Remaining work is integration/update subpage parity and exact old admin settings composition."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/users.php",
