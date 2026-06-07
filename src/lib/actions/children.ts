@@ -5,7 +5,7 @@ import { requireOrg, requireOrgSafe } from "@/lib/require-org";
 import { verifyBranchAccess, verifyChildAccess } from "@/lib/verify-org-access";
 import { revalidatePath } from "next/cache";
 import { childFormSchema, childDraftSchema } from "@/lib/validations/child";
-import { requireLegacyActionAllowed } from "@/lib/legacy-child-action-permissions";
+import { requireLegacyActionAllowed } from "@/lib/legacy-action-permissions";
 import type { Prisma } from "@/generated/prisma/client";
 import { z } from "zod";
 

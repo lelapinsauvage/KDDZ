@@ -1,5 +1,8 @@
 import { getClasses } from "@/lib/actions/classes";
 import { getBranches } from "@/lib/actions/branches";
+import { getLegacyClassActionPermissions } from "@/lib/legacy-class-action-permissions";
+import { requireOrg } from "@/lib/require-org";
+import { redirect } from "next/navigation";
 import {
   ClassesClient,
   type ClassItem,
@@ -12,6 +15,16 @@ interface PageProps {
 
 export default async function ClassesManagementPage({ searchParams }: PageProps) {
   const params = await searchParams;
+  const ctx = await requireOrg();
+  const actionPermissions = await getLegacyClassActionPermissions(ctx);
+
+  if (params.new === "1" && !actionPermissions.canAddClass) {
+    redirect("/forbidden.php");
+  }
+  if (params.edit && !actionPermissions.canUpdateClass) {
+    redirect("/forbidden.php");
+  }
+
   const [classesResult, branchesResult] = await Promise.all([
     getClasses(),
     getBranches(),
@@ -51,6 +64,7 @@ export default async function ClassesManagementPage({ searchParams }: PageProps)
       branches={branches}
       initialEditClassId={params.edit}
       initialAddOpen={params.new === "1"}
+      actionPermissions={actionPermissions}
     />
   );
 }

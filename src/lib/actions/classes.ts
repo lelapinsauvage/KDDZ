@@ -9,6 +9,7 @@ import {
   ASSESSMENT_TYPE_NAMES,
   VALID_ASSESSMENT_TYPES,
 } from "@/lib/assessment-types";
+import { requireLegacyActionAllowed } from "@/lib/legacy-action-permissions";
 import type { AgeUnit, MedicalFormType, Prisma } from "@/generated/prisma/client";
 
 // ---------------------------------------------------------------------------
@@ -990,6 +991,9 @@ export async function createClass(data: ClassData) {
     if (!result.ok) return { success: false as const, error: result.error };
     const { ctx } = result;
 
+    const permission = await requireLegacyActionAllowed(ctx, "addClass");
+    if (!permission.ok) return { success: false as const, error: permission.error };
+
     if (!(await verifyBranchAccess(data.branchId, ctx.organizationId))) {
       return { success: false as const, error: "Branch not found" };
     }
@@ -1030,6 +1034,9 @@ export async function updateClass(id: string, data: Partial<ClassData>) {
     const result = await requireOrgSafe();
     if (!result.ok) return { success: false as const, error: result.error };
     const { ctx } = result;
+
+    const permission = await requireLegacyActionAllowed(ctx, "updateClass");
+    if (!permission.ok) return { success: false as const, error: permission.error };
 
     const existing = await db.class.findUnique({
       where: { id },
@@ -1091,6 +1098,9 @@ export async function deleteClass(id: string) {
     const result = await requireOrgSafe();
     if (!result.ok) return { success: false as const, error: result.error };
     const { ctx } = result;
+
+    const permission = await requireLegacyActionAllowed(ctx, "deleteClass");
+    if (!permission.ok) return { success: false as const, error: permission.error };
 
     const existing = await db.class.findUnique({
       where: { id },

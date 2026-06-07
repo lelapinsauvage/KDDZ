@@ -1,5 +1,7 @@
 import { getClasses } from "@/lib/actions/classes";
 import { getBranches } from "@/lib/actions/branches";
+import { getLegacyClassActionPermissions } from "@/lib/legacy-class-action-permissions";
+import { requireOrg } from "@/lib/require-org";
 import {
   ClassesClient,
   type ClassItem,
@@ -30,10 +32,12 @@ function firstParam(value?: string | string[]) {
 export default async function BranchClassesPage({ params, searchParams }: Props) {
   const { id } = await params;
   const query = await searchParams;
+  const ctx = await requireOrg();
 
-  const [classesResult, branchesResult] = await Promise.all([
+  const [classesResult, branchesResult, actionPermissions] = await Promise.all([
     getClasses({ branchId: id }),
     getBranches(),
+    getLegacyClassActionPermissions(ctx),
   ]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -83,6 +87,7 @@ export default async function BranchClassesPage({ params, searchParams }: Props)
         createdTo:
           firstParam(query.to)?.trim() ?? firstParam(query.order_date_to)?.trim() ?? "",
       }}
+      actionPermissions={actionPermissions}
     />
   );
 }

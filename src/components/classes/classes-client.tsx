@@ -39,6 +39,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { createClass, deleteClass, updateClass } from "@/lib/actions/classes";
+import type { LegacyClassActionPermissions } from "@/lib/legacy-class-action-permissions";
 import { uploadFileWithPresign } from "@/lib/uploads/client-upload";
 import type { ExportColumn } from "@/lib/export";
 import { toast } from "sonner";
@@ -77,6 +78,7 @@ interface ClassesClientProps {
   initialLegacyFilters?: Partial<LegacyFilters>;
   initialEditClassId?: string;
   initialAddOpen?: boolean;
+  actionPermissions?: LegacyClassActionPermissions;
 }
 
 interface ClassFormState {
@@ -435,11 +437,17 @@ export function ClassesClient({
   initialLegacyFilters,
   initialEditClassId,
   initialAddOpen = false,
+  actionPermissions = {
+    canAddClass: true,
+    canUpdateClass: true,
+    canDeleteClass: true,
+  },
 }: ClassesClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const { canAddClass, canUpdateClass, canDeleteClass } = actionPermissions;
   const initialEditTarget =
-    initialEditClassId
+    canUpdateClass && initialEditClassId
       ? classes.find((cls) => cls.id === initialEditClassId) ?? null
       : null;
 
@@ -463,7 +471,9 @@ export function ClassesClient({
     branchName ?? branches.find((branch) => branch.id === branchId)?.name ?? "Selected Branch";
   const tableColSpan = branchColumnVisible ? 9 : 8;
 
-  const [addOpen, setAddOpen] = useState(initialAddOpen && !initialEditTarget);
+  const [addOpen, setAddOpen] = useState(
+    initialAddOpen && !initialEditTarget && canAddClass,
+  );
   const [editTarget, setEditTarget] = useState<ClassItem | null>(initialEditTarget);
   const [deleteTarget, setDeleteTarget] = useState<ClassItem | null>(null);
 
@@ -565,16 +575,18 @@ export function ClassesClient({
   }
 
   function openAdd() {
+    if (!canAddClass) return;
     clearImageSelection();
     setForm(emptyForm(branchId));
     setAddOpen(true);
   }
 
   const openEdit = useCallback((cls: ClassItem) => {
+    if (!canUpdateClass) return;
     clearImageSelection();
     setForm(classToForm(cls));
     setEditTarget(cls);
-  }, [clearImageSelection]);
+  }, [canUpdateClass, clearImageSelection]);
 
   function validateFormState() {
     if (!form.branchId) return "Branch is required";
@@ -625,6 +637,11 @@ export function ClassesClient({
   }
 
   function handleAdd() {
+    if (!canAddClass) {
+      toast.error("Access denied");
+      return;
+    }
+
     const validationError = validateFormState();
     if (validationError) {
       toast.error(validationError);
@@ -648,6 +665,11 @@ export function ClassesClient({
 
   function handleEdit() {
     if (!editTarget) return;
+    if (!canUpdateClass) {
+      toast.error("Access denied");
+      return;
+    }
+
     const validationError = validateFormState();
     if (validationError) {
       toast.error(validationError);
@@ -671,6 +693,11 @@ export function ClassesClient({
 
   function handleDelete() {
     if (!deleteTarget) return;
+    if (!canDeleteClass) {
+      toast.error("Access denied");
+      return;
+    }
+
     startTransition(async () => {
       const result = await deleteClass(deleteTarget.id);
       if (result.success) {
@@ -807,12 +834,14 @@ export function ClassesClient({
             <CardTitle className="text-lg">
               {branchId ? `${branchLabel} Branch Classes Listing` : "Classes Listing"}
             </CardTitle>
-            <CardAction>
-              <Button onClick={openAdd}>
-                <Plus className="mr-1 size-4" />
-                New Class
-              </Button>
-            </CardAction>
+            {canAddClass ? (
+              <CardAction>
+                <Button onClick={openAdd}>
+                  <Plus className="mr-1 size-4" />
+                  New Class
+                </Button>
+              </CardAction>
+            ) : null}
           </CardHeader>
           <CardContent className="space-y-4 print:p-0 print:space-y-0">
             <div className="flex flex-wrap items-center gap-2 sm:gap-3 print:hidden">
@@ -989,10 +1018,12 @@ export function ClassesClient({
                 <div className="flex flex-col items-center justify-center rounded-sm border border-dashed py-16">
                   <GraduationCap className="size-10 text-muted-foreground/50" />
                   <p className="mt-3 text-sm text-muted-foreground">No classes found</p>
-                  <Button variant="outline" className="mt-4" onClick={openAdd}>
-                    <Plus className="mr-1 size-4" />
-                    New Class
-                  </Button>
+                  {canAddClass ? (
+                    <Button variant="outline" className="mt-4" onClick={openAdd}>
+                      <Plus className="mr-1 size-4" />
+                      New Class
+                    </Button>
+                  ) : null}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -1028,12 +1059,16 @@ export function ClassesClient({
                                     <Eye className="size-4" />
                                   </Link>
                                 </Button>
-                                <Button variant="ghost" size="icon-sm" onClick={() => openEdit(cls)}>
-                                  <Pencil className="size-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(cls)}>
-                                  <Trash2 className="size-4" />
-                                </Button>
+                                {canUpdateClass ? (
+                                  <Button variant="ghost" size="icon-sm" onClick={() => openEdit(cls)}>
+                                    <Pencil className="size-4" />
+                                  </Button>
+                                ) : null}
+                                {canDeleteClass ? (
+                                  <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(cls)}>
+                                    <Trash2 className="size-4" />
+                                  </Button>
+                                ) : null}
                               </div>
                             </div>
                           </div>
@@ -1105,12 +1140,16 @@ export function ClassesClient({
                                     <Eye className="size-4 text-muted-foreground" />
                                   </Link>
                                 </Button>
-                                <Button variant="ghost" size="icon-sm" onClick={() => openEdit(cls)}>
-                                  <Pencil className="size-4 text-muted-foreground" />
-                                </Button>
-                                <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(cls)}>
-                                  <Trash2 className="size-4" />
-                                </Button>
+                                {canUpdateClass ? (
+                                  <Button variant="ghost" size="icon-sm" onClick={() => openEdit(cls)}>
+                                    <Pencil className="size-4 text-muted-foreground" />
+                                  </Button>
+                                ) : null}
+                                {canDeleteClass ? (
+                                  <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(cls)}>
+                                    <Trash2 className="size-4" />
+                                  </Button>
+                                ) : null}
                               </div>
                             </TableCell>
                           </TableRow>
