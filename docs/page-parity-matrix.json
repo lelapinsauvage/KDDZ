@@ -614,13 +614,13 @@
     "legacyPhp": "Front/templates/admin/alarmsMsg.php",
     "legacyJs": "Front/templates/admin/js/alarmsMsg.js",
     "modernRoute": "/alarmsMsg.php, /alarms/msg",
-    "status": "partial - legacy message alarms bridge and notification listing restored",
+    "status": "partial - legacy message alarms bridge, notification listing, mobile push, and channel delivery restored",
     "legacyTablesMentioned": [
       "t_alarms_msg",
       "custom_notifications_msg"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Restored `#`, From, Date, Nature, Subject, Message, Status, and Actions table, staff-user read scoping, New/Viewed status, status/nature/date/search filters, row mark-viewed action, bulk mark viewed, Set All As Viewed, sidebar entry, and migration provenance for `t_alarms_msg` plus `custom_notifications_msg`. Mobile-flagged staff-to-parent message sends now attempt provider-neutral OneSignal/webhook push delivery using stored active push tokens and audit skipped/failed/sent outcomes. `/alarmsMsg.php` now redirects to the modern message alarms page. Remaining work is exact legacy reply-thread visual audit, parent/mobile read reset, SMS/WhatsApp provider delivery, and production push credential rollout."
+    "verification": "Restored `#`, From, Date, Nature, Subject, Message, Status, and Actions table, staff-user read scoping, New/Viewed status, status/nature/date/search filters, row mark-viewed action, bulk mark viewed, Set All As Viewed, sidebar entry, and migration provenance for `t_alarms_msg` plus `custom_notifications_msg`. Mobile-flagged staff-to-parent message sends now attempt provider-neutral OneSignal/webhook push delivery using stored active push tokens and audit skipped/failed/sent outcomes. SMS/WhatsApp-flagged direct/class/bulk/reply/resend sends now attempt provider-neutral webhook delivery against deduped parent phone contacts and audit matched/skipped/failed/sent outcomes. `/alarmsMsg.php` now redirects to the modern message alarms page. Remaining work is exact legacy reply-thread visual audit, parent/mobile read reset, and production push/SMS/WhatsApp credential rollout."
   },
   {
     "legacyPhp": "Front/templates/admin/alarmsOthers.php",
@@ -16354,7 +16354,7 @@
     "legacyPhp": "Front/templates/admin/message_portal.php",
     "legacyJs": "Front/templates/admin/js/message_portal.js",
     "modernRoute": "/message_portal.php, /messages/compose",
-    "status": "partial - legacy bulk compose options, delivery audit, addTo* writes, selected-teacher fanout, and mobile push delivery restored",
+    "status": "partial - legacy bulk compose options, delivery audit, addTo* writes, selected-teacher fanout, mobile push, and SMS/WhatsApp webhook delivery restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -16362,13 +16362,13 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "`/message_portal.php` now redirects to the modern bulk compose page while preserving legacy recipient context when present. The modern bulk form now loads migrated `notifications_nature` rows with the legacy PHP fallback list, exposes Web/Mobile/SMS/WhatsApp delivery choices, saves the selected channel intent into `Message.legacyData`, shows that saved delivery audit in inbox, sent, and thread views, restores selected teacher recipients beside selected children, and restores legacy nature-specific `addTo*` side effects as transactional modern `Alarm`/`NotificationReceipt` writes, including real `Event` rows for Events and `Holiday` rows plus general alarms for General/Closure-style sends. Staff side-effect receipts now fan out to the selected teacher user ids instead of every branch staff user, preserving migrated `login_users` ids when available. Mobile-flagged bulk sends now attempt provider-neutral OneSignal/webhook push delivery using active parent push tokens. Remaining work is provider-backed SMS/WhatsApp delivery and final DataTables visual parity."
+    "verification": "`/message_portal.php` now redirects to the modern bulk compose page while preserving legacy recipient context when present. The modern bulk form now loads migrated `notifications_nature` rows with the legacy PHP fallback list, exposes Web/Mobile/SMS/WhatsApp delivery choices, saves the selected channel intent into `Message.legacyData`, shows that saved delivery audit in inbox, sent, and thread views, restores selected teacher recipients beside selected children, and restores legacy nature-specific `addTo*` side effects as transactional modern `Alarm`/`NotificationReceipt` writes, including real `Event` rows for Events and `Holiday` rows plus general alarms for General/Closure-style sends. Staff side-effect receipts now fan out to the selected teacher user ids instead of every branch staff user, preserving migrated `login_users` ids when available. Mobile-flagged bulk sends now attempt provider-neutral OneSignal/webhook push delivery using active parent push tokens, and SMS/WhatsApp-flagged bulk sends attempt provider-neutral webhook delivery using deduped parent `mobile`/`phone` contacts. Remaining work is final DataTables visual parity and production provider credential rollout."
   },
   {
     "legacyPhp": "Front/templates/admin/message_portal_class.php",
     "legacyJs": "Front/templates/admin/js/message_portal_class.js",
     "modernRoute": "/message_portal_class.php, /messages/compose/class",
-    "status": "partial - legacy class child selection/admin fanout, delivery audit, and mobile push delivery restored",
+    "status": "partial - legacy class child selection/admin fanout, delivery audit, mobile push, and SMS/WhatsApp webhook delivery restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -16376,13 +16376,13 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "`/message_portal_class.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy class ids into `/messages/compose/class?classId=...` so the modern class message form preselects the legacy class. The modern class form restores per-child selection, Select All Children, Select All Active, Unselect All, the Message Admin Only path, migrated legacy natures, and legacy admin-recipient fanout before optional parent fanout. Saved Web/Mobile/SMS/WhatsApp/Admin-only intent now appears as delivery audit badges in inbox, sent, and thread views. Mobile-flagged class sends now attempt provider-neutral OneSignal/webhook push delivery using active parent push tokens. Remaining work is final SMS/WhatsApp provider delivery decisions and visual audit against the old Metronic table."
+    "verification": "`/message_portal_class.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy class ids into `/messages/compose/class?classId=...` so the modern class message form preselects the legacy class. The modern class form restores per-child selection, Select All Children, Select All Active, Unselect All, the Message Admin Only path, migrated legacy natures, and legacy admin-recipient fanout before optional parent fanout. Saved Web/Mobile/SMS/WhatsApp/Admin-only intent now appears as delivery audit badges in inbox, sent, and thread views. Mobile-flagged class sends now attempt provider-neutral OneSignal/webhook push delivery using active parent push tokens, and SMS/WhatsApp-flagged class sends attempt provider-neutral webhook delivery using deduped parent `mobile`/`phone` contacts. Remaining work is production provider credential rollout and visual audit against the old Metronic table."
   },
   {
     "legacyPhp": "Front/templates/admin/message_portal_single.php",
     "legacyJs": "Front/templates/admin/js/message_portal_single.js",
     "modernRoute": "/message_portal_single.php, /messages/[id], /messages/compose/direct",
-    "status": "partial - legacy direct compose/thread access, mutation guards, delivery audit, and mobile push delivery restored; parent/mobile parser audit remains",
+    "status": "partial - legacy direct compose/thread access, mutation guards, delivery audit, mobile push, and SMS/WhatsApp webhook delivery restored; parent/mobile parser audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -16391,7 +16391,7 @@
       "id",
       "thread"
     ],
-    "verification": "`/message_portal_single.php?thread=` now resolves migrated legacy thread ids into the modern message thread view only when the current user is a sender or recipient; failed legacy thread validation redirects to `/forbidden.php` like legacy PHP. `/message_portal_single.php?id=` resolves legacy child ids into a preselected direct parent-recipient compose form. New direct parent messages now preserve legacy nature/channel intent in `Message.legacyData`, create the legacy-style admin copy fanout, attempt provider-neutral OneSignal/webhook push delivery for Mobile-flagged parent recipients, and show saved delivery badges in inbox, sent, and thread views, while `/messages/[id]` renders compact conversation bubbles closer to the old thread view. Reply/read/unread/delete/resend actions now enforce sender/recipient boundaries, Mobile-flagged replies attempt push delivery to parent recipients, replies opened from sent messages target the other participant instead of the current user, and parent/mobile legacy thread-open no-read-reset semantics are audited. Remaining work is credentialed native parser tolerance and provider-backed SMS/WhatsApp delivery."
+    "verification": "`/message_portal_single.php?thread=` now resolves migrated legacy thread ids into the modern message thread view only when the current user is a sender or recipient; failed legacy thread validation redirects to `/forbidden.php` like legacy PHP. `/message_portal_single.php?id=` resolves legacy child ids into a preselected direct parent-recipient compose form. New direct parent messages now preserve legacy nature/channel intent in `Message.legacyData`, create the legacy-style admin copy fanout, attempt provider-neutral OneSignal/webhook push delivery for Mobile-flagged parent recipients, attempt provider-neutral SMS/WhatsApp webhook delivery for flagged parent recipients using deduped `mobile`/`phone` contacts, and show saved delivery badges in inbox, sent, and thread views, while `/messages/[id]` renders compact conversation bubbles closer to the old thread view. Reply/read/unread/delete/resend actions now enforce sender/recipient boundaries, Mobile/SMS/WhatsApp-flagged replies and resends attempt parent delivery, replies opened from sent messages target the other participant instead of the current user, and parent/mobile legacy thread-open no-read-reset semantics are audited. Remaining work is credentialed native parser tolerance and production provider credential rollout."
   },
   {
     "legacyPhp": "Front/templates/admin/newyear.php",

@@ -3,8 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import {
+  channelDeliveryAuditData,
+  deliverParentChannelNotification,
+  type ChannelDeliverySummary,
+} from "@/lib/channel-delivery";
+import {
   deliverPushNotification,
   pushDeliveryAuditData,
+  type PushDeliverySummary,
 } from "@/lib/push-delivery";
 import { requireOrg, requireOrgSafe } from "@/lib/require-org";
 
@@ -376,8 +382,151 @@ function shouldDeliverMobile(delivery?: LegacyMessageDeliveryOptions | null) {
   return Boolean(delivery?.mobile);
 }
 
+function shouldDeliverSms(delivery?: LegacyMessageDeliveryOptions | null) {
+  return Boolean(delivery?.sms);
+}
+
+function shouldDeliverWhatsApp(delivery?: LegacyMessageDeliveryOptions | null) {
+  return Boolean(delivery?.whatsapp);
+}
+
 function messagePushTitle(subject: string | null) {
   return subject?.trim() || "New message";
+}
+
+type MessageChannelDelivery = Partial<
+  Record<"sms" | "whatsapp", ChannelDeliverySummary>
+>;
+
+type MessageExternalDeliveryResult = {
+  pushDelivery: PushDeliverySummary | null;
+  channelDelivery: MessageChannelDelivery;
+};
+
+function hasExternalDeliveryAudit(audit: MessageExternalDeliveryResult) {
+  return Boolean(
+    audit.pushDelivery || Object.keys(audit.channelDelivery).length > 0,
+  );
+}
+
+function externalDeliveryAuditJson(
+  audit: MessageExternalDeliveryResult,
+): Prisma.InputJsonObject {
+  const channelDelivery = {
+    ...(audit.channelDelivery.sms
+      ? {
+          sms: channelDeliveryAuditData(
+            audit.channelDelivery.sms,
+          ) as Prisma.InputJsonValue,
+        }
+      : {}),
+    ...(audit.channelDelivery.whatsapp
+      ? {
+          whatsapp: channelDeliveryAuditData(
+            audit.channelDelivery.whatsapp,
+          ) as Prisma.InputJsonValue,
+        }
+      : {}),
+  };
+
+  return {
+    ...(audit.pushDelivery
+      ? {
+          pushDelivery: pushDeliveryAuditData(
+            audit.pushDelivery,
+          ) as Prisma.InputJsonValue,
+        }
+      : {}),
+    ...(Object.keys(channelDelivery).length > 0 ? { channelDelivery } : {}),
+  };
+}
+
+function mergeExternalDeliveryAudit(
+  legacyData: Prisma.JsonValue | Prisma.InputJsonValue | null | undefined,
+  audit: MessageExternalDeliveryResult,
+): Prisma.InputJsonObject {
+  const base = isJsonRecord(legacyData)
+    ? (Object.fromEntries(Object.entries(legacyData)) as Record<
+        string,
+        Prisma.InputJsonValue | null
+      >)
+    : {};
+  return {
+    ...base,
+    ...externalDeliveryAuditJson(audit),
+  };
+}
+
+async function attemptMessageExternalDelivery(params: {
+  delivery?: LegacyMessageDeliveryOptions | null;
+  parentUserIds: string[];
+  subject: string | null;
+  body: string;
+  metadata: Record<string, string | number | boolean | null | undefined>;
+}): Promise<MessageExternalDeliveryResult> {
+  const parentUserIds = Array.from(new Set(params.parentUserIds.filter(Boolean)));
+  if (parentUserIds.length === 0) {
+    return { pushDelivery: null, channelDelivery: {} };
+  }
+
+  const [pushDelivery, smsDelivery, whatsappDelivery] = await Promise.all([
+    shouldDeliverMobile(params.delivery)
+      ? deliverPushNotification({
+          recipientParentUserIds: parentUserIds,
+          title: messagePushTitle(params.subject),
+          body: params.body,
+          category: "MESSAGE",
+          metadata: params.metadata,
+        })
+      : Promise.resolve(null),
+    shouldDeliverSms(params.delivery)
+      ? deliverParentChannelNotification({
+          channel: "sms",
+          recipientParentUserIds: parentUserIds,
+          subject: params.subject,
+          body: params.body,
+          category: "MESSAGE",
+          metadata: params.metadata,
+        })
+      : Promise.resolve(null),
+    shouldDeliverWhatsApp(params.delivery)
+      ? deliverParentChannelNotification({
+          channel: "whatsapp",
+          recipientParentUserIds: parentUserIds,
+          subject: params.subject,
+          body: params.body,
+          category: "MESSAGE",
+          metadata: params.metadata,
+        })
+      : Promise.resolve(null),
+  ]);
+
+  const channelDelivery: MessageChannelDelivery = {};
+  if (smsDelivery) channelDelivery.sms = smsDelivery;
+  if (whatsappDelivery) channelDelivery.whatsapp = whatsappDelivery;
+
+  return { pushDelivery, channelDelivery };
+}
+
+async function updateMessagesExternalDeliveryAudit(params: {
+  where: Prisma.MessageWhereInput;
+  audit: MessageExternalDeliveryResult;
+}) {
+  if (!hasExternalDeliveryAudit(params.audit)) return;
+  const messages = await db.message.findMany({
+    where: params.where,
+    select: { id: true, legacyData: true },
+  });
+  await Promise.all(
+    messages.map((message) =>
+      db.message.update({
+        where: { id: message.id },
+        data: {
+          legacyData: mergeExternalDeliveryAudit(message.legacyData, params.audit),
+        },
+      }),
+    ),
+  );
 }
 
 function legacyMessageData(params: {
@@ -958,6 +1107,26 @@ function legacyDeliveryAudit(
   if (delivery.sms === true) channels.push("SMS");
   if (delivery.whatsapp === true) channels.push("WhatsApp");
 
+  const pendingExternal = new Set(
+    Array.isArray(data.externalDeliveryPending)
+      ? data.externalDeliveryPending.filter(
+          (channel): channel is string => typeof channel === "string",
+        )
+      : [],
+  );
+  if (isJsonRecord(data.pushDelivery)) {
+    pendingExternal.delete("mobile");
+  }
+  const channelDelivery = isJsonRecord(data.channelDelivery)
+    ? data.channelDelivery
+    : null;
+  if (isJsonRecord(channelDelivery?.sms)) {
+    pendingExternal.delete("sms");
+  }
+  if (isJsonRecord(channelDelivery?.whatsapp)) {
+    pendingExternal.delete("whatsapp");
+  }
+
   const recipientScope =
     typeof data.recipientScope === "string" ? data.recipientScope : null;
   const scope =
@@ -974,9 +1143,7 @@ function legacyDeliveryAudit(
   return {
     channels,
     scope,
-    pendingExternal:
-      Array.isArray(data.externalDeliveryPending) &&
-      data.externalDeliveryPending.some(Boolean),
+    pendingExternal: pendingExternal.size > 0,
   };
 }
 
@@ -1620,26 +1787,26 @@ export async function sendMessage(
           })),
         });
       }
-      if (shouldDeliverMobile(data.delivery)) {
-        const pushDelivery = await deliverPushNotification({
-          recipientParentUserIds: [data.recipientId],
-          title: messagePushTitle(subjectLine),
-          body: data.body,
-          category: "MESSAGE",
-          metadata: {
-            source: "legacy_message_portal_single",
-            messageId: message.id,
-            threadId,
-            nature: data.nature ?? null,
-          },
-        });
+      const externalDelivery = await attemptMessageExternalDelivery({
+        delivery: data.delivery,
+        parentUserIds: [data.recipientId],
+        subject: subjectLine,
+        body: data.body,
+        metadata: {
+          source: "legacy_message_portal_single",
+          messageId: message.id,
+          threadId,
+          nature: data.nature ?? null,
+        },
+      });
+      if (hasExternalDeliveryAudit(externalDelivery)) {
         returnedMessage = await db.message.update({
           where: { id: message.id },
           data: {
-            legacyData: {
-              ...messageLegacyData,
-              pushDelivery: pushDeliveryAuditData(pushDelivery),
-            },
+            legacyData: mergeExternalDeliveryAudit(
+              messageLegacyData,
+              externalDelivery,
+            ),
           },
         });
       }
@@ -1720,32 +1887,37 @@ export async function replyToMessage(
       },
     });
     const originalDelivery = legacyDeliveryAudit(original.legacyData);
-    const returnedReply =
-      replyRecipient.type === "PARENT" &&
-      originalDelivery.channels.includes("Mobile")
-        ? await db.message.update({
-            where: { id: reply.id },
-            data: {
-              legacyData: {
-                ...(isJsonRecord(replyLegacyData) ? replyLegacyData : {}),
-                pushDelivery: pushDeliveryAuditData(
-                  await deliverPushNotification({
-                    recipientParentUserIds: [replyRecipient.id],
-                    title: messagePushTitle(reply.subject),
-                    body,
-                    category: "MESSAGE",
-                    metadata: {
-                      source: "legacy_message_reply",
-                      messageId: reply.id,
-                      threadId,
-                      nature: original.legacyNature ?? null,
-                    },
-                  }),
-                ),
-              },
+    const replyDelivery: LegacyMessageDeliveryOptions = {
+      mobile: originalDelivery.channels.includes("Mobile"),
+      sms: originalDelivery.channels.includes("SMS"),
+      whatsapp: originalDelivery.channels.includes("WhatsApp"),
+    };
+    const externalDelivery =
+      replyRecipient.type === "PARENT"
+        ? await attemptMessageExternalDelivery({
+            delivery: replyDelivery,
+            parentUserIds: [replyRecipient.id],
+            subject: reply.subject,
+            body,
+            metadata: {
+              source: "legacy_message_reply",
+              messageId: reply.id,
+              threadId,
+              nature: original.legacyNature ?? null,
             },
           })
-        : reply;
+        : { pushDelivery: null, channelDelivery: {} };
+    const returnedReply = hasExternalDeliveryAudit(externalDelivery)
+      ? await db.message.update({
+          where: { id: reply.id },
+          data: {
+            legacyData: mergeExternalDeliveryAudit(
+              replyLegacyData,
+              externalDelivery,
+            ),
+          },
+        })
+      : reply;
 
     revalidateMessagePaths();
 
@@ -2057,21 +2229,31 @@ export async function sendClassMessage(
     await db.message.createMany({
       data: messageCreateData,
     });
-    const pushDelivery =
-      !adminOnly && shouldDeliverMobile(data.delivery)
-        ? await deliverPushNotification({
-            recipientParentUserIds: Array.from(parentUserIds),
-            title: messagePushTitle(subjectLine),
-            body: data.body,
-            category: "MESSAGE",
-            metadata: {
-              source: "legacy_message_portal_class",
-              threadId: thread.id,
-              classId: data.classId,
-              nature: data.nature ?? null,
-            },
-          })
-        : null;
+    const parentIds = Array.from(parentUserIds);
+    const externalDelivery = !adminOnly
+      ? await attemptMessageExternalDelivery({
+          delivery: data.delivery,
+          parentUserIds: parentIds,
+          subject: subjectLine,
+          body: data.body,
+          metadata: {
+            source: "legacy_message_portal_class",
+            threadId: thread.id,
+            classId: data.classId,
+            nature: data.nature ?? null,
+          },
+        })
+      : { pushDelivery: null, channelDelivery: {} };
+    await updateMessagesExternalDeliveryAudit({
+      where: {
+        threadId: thread.id,
+        senderId: ctx.userId,
+        recipientType: "PARENT",
+        recipientId: { in: parentIds },
+        organizationId: ctx.organizationId,
+      },
+      audit: externalDelivery,
+    });
 
     revalidateMessagePaths();
 
@@ -2083,7 +2265,8 @@ export async function sendClassMessage(
         adminRecipientCount: adminIds.length,
         selectedChildCount: selectedChildIds.length || children.length,
         adminOnly,
-        pushDelivery,
+        pushDelivery: externalDelivery.pushDelivery,
+        channelDelivery: externalDelivery.channelDelivery,
       },
     };
   } catch (error) {
@@ -2224,19 +2407,28 @@ export async function sendBulkChildMessage(
 
       return { threadId: thread.id, sideEffectSummary };
     });
-    const pushDelivery = shouldDeliverMobile(data.delivery)
-      ? await deliverPushNotification({
-          recipientParentUserIds: Array.from(parentUserIds),
-          title: messagePushTitle(subjectLine),
-          body: data.body,
-          category: "MESSAGE",
-          metadata: {
-            source: "legacy_message_portal_bulk",
-            threadId: writeResult.threadId,
-            nature: data.nature ?? null,
-          },
-        })
-      : null;
+    const parentIds = Array.from(parentUserIds);
+    const externalDelivery = await attemptMessageExternalDelivery({
+      delivery: data.delivery,
+      parentUserIds: parentIds,
+      subject: subjectLine,
+      body: data.body,
+      metadata: {
+        source: "legacy_message_portal_bulk",
+        threadId: writeResult.threadId,
+        nature: data.nature ?? null,
+      },
+    });
+    await updateMessagesExternalDeliveryAudit({
+      where: {
+        threadId: writeResult.threadId,
+        senderId: ctx.userId,
+        recipientType: "PARENT",
+        recipientId: { in: parentIds },
+        organizationId: ctx.organizationId,
+      },
+      audit: externalDelivery,
+    });
 
     revalidateMessagePaths();
 
@@ -2248,7 +2440,8 @@ export async function sendBulkChildMessage(
         childCount: children.length,
         teacherCount: validTeacherUserIds.length,
         sideEffectSummary: writeResult.sideEffectSummary,
-        pushDelivery,
+        pushDelivery: externalDelivery.pushDelivery,
+        channelDelivery: externalDelivery.channelDelivery,
       },
     };
   } catch (error) {
@@ -2279,6 +2472,12 @@ export async function resendMessage(id: string): Promise<ActionResult> {
     }
 
     const senderType = roleToSenderType(ctx.role);
+    const originalDelivery = legacyDeliveryAudit(original.legacyData);
+    const resendDelivery: LegacyMessageDeliveryOptions = {
+      mobile: originalDelivery.channels.includes("Mobile"),
+      sms: originalDelivery.channels.includes("SMS"),
+      whatsapp: originalDelivery.channels.includes("WhatsApp"),
+    };
 
     const resent = await db.message.create({
       data: {
@@ -2294,9 +2493,35 @@ export async function resendMessage(id: string): Promise<ActionResult> {
         legacyData: jsonForCreate(original.legacyData),
       },
     });
+    const externalDelivery =
+      original.recipientType === "PARENT"
+        ? await attemptMessageExternalDelivery({
+            delivery: resendDelivery,
+            parentUserIds: [original.recipientId],
+            subject: original.subject,
+            body: original.body,
+            metadata: {
+              source: "legacy_message_resend",
+              messageId: resent.id,
+              threadId: original.threadId ?? null,
+              nature: original.legacyNature ?? null,
+            },
+          })
+        : { pushDelivery: null, channelDelivery: {} };
+    const returnedMessage = hasExternalDeliveryAudit(externalDelivery)
+      ? await db.message.update({
+          where: { id: resent.id },
+          data: {
+            legacyData: mergeExternalDeliveryAudit(
+              resent.legacyData,
+              externalDelivery,
+            ),
+          },
+        })
+      : resent;
 
     revalidateMessagePaths();
-    return { success: true, data: resent };
+    return { success: true, data: returnedMessage };
   } catch (error) {
     console.error("Failed to resend message:", error);
     return { success: false, error: "Failed to resend message" };

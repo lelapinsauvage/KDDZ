@@ -142,7 +142,8 @@ This list is the first implementation backlog after the generated inventory/matr
    - `/alarms/msg` now restores the legacy message notification listing with current-staff-user New/Viewed scoping, filters, row/bulk mark-viewed actions, Set All As Viewed, and idempotent migration provenance from `t_alarms_msg` plus per-recipient `custom_notifications_msg` delivery rows.
    - Parent message grouped list, thread detail, compose, and replies are now wired into `/parent`; the parent APIs accept unauthenticated native legacy POST/form bodies, preserve numeric thread ids and SQL datetime strings, dedupe migrated/runtime recipient fan-out for parent thread views, and send parent-originated messages to the legacy admin/teacher recipient sets.
    - Mobile-flagged staff-to-parent direct, class, bulk, and reply messages now attempt provider-neutral OneSignal/webhook push delivery against active parent push tokens, returning or storing skipped/failed/sent summaries.
-   - Remaining work is exact legacy reply-thread visual audit, credentialed native send/open testing, parent/mobile read reset behavior, SMS/WhatsApp provider delivery, and production push credential rollout.
+   - SMS/WhatsApp-flagged staff-to-parent direct, class, bulk, reply, and resend messages now attempt provider-neutral webhook delivery against deduped parent `mobile`/`phone` contacts, returning or storing matched/skipped/failed/sent summaries.
+   - Remaining work is exact legacy reply-thread visual audit, credentialed native send/open testing, parent/mobile read reset behavior, and production push/SMS/WhatsApp credential rollout.
 
 20. **Role and permission parity**
    - Legacy levels/actions/control tables are now preserved as metadata, and `/settings/access-control` now restores the admin-only staff/manager level action-grant matrix with selected-level batch saves into `LegacyAccessControlRecord`.
