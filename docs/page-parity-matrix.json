@@ -1075,7 +1075,7 @@
     "legacyPhp": "Front/templates/admin/branches.php",
     "legacyJs": "Front/templates/admin/js/branches.js",
     "modernRoute": "/branches.php, /branches",
-    "status": "partial - legacy branch roster, filters, export, page sizes, soft delete, and bridge restored; visual audit remains",
+    "status": "partial - legacy branch roster, filters, copy/PDF exports, page sizes, soft delete, and bridge restored; visual audit remains",
     "legacyTablesMentioned": [
       "Form",
       "Selected",
@@ -1083,7 +1083,7 @@
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Restored the legacy Branches Listing as the default table view with active-branch default scope, checkbox/S.N./Image/Branch/Location/Mobile/Info/Date/Action columns, migrated `images/BranchPhoto` filename fallback, global search, status filter, legacy S.N./Branch/Location/Mobile/created-date filter row, 10/20/50/100/150/All page sizes, Excel/CSV export, print action, New Branch, dashboard/view, edit, and legacy-style soft deactivate. `/branches.php` now redirects to the modern branch roster. Remaining work is exact TableTools copy/PDF/XLS/print visual parity and final Browser visual smoke."
+    "verification": "Restored the legacy Branches Listing as the default table view with active-branch default scope, checkbox/S.N./Image/Branch/Location/Mobile/Info/Date/Action columns, migrated `images/BranchPhoto` filename fallback, global search, status filter, legacy S.N./Branch/Location/Mobile/created-date filter row, 10/20/50/100/150/All page sizes, Copy/PDF/Excel/CSV export, print action, New Branch, dashboard/view, edit, and legacy-style soft deactivate. `/branches.php` now redirects to the modern branch roster. Remaining work is final Browser visual smoke and legacy print styling acceptance."
   },
   {
     "legacyPhp": "Front/templates/admin/calendar.php",
@@ -1248,7 +1248,7 @@
     "legacyPhp": "Front/templates/admin/children.php",
     "legacyJs": "Front/templates/admin/js/children.js",
     "modernRoute": "/children.php, /children",
-    "status": "partial - legacy child roster, bulk branch/class modal, filters, status toggle, actions, and bridge restored; export audit remains",
+    "status": "partial - legacy child roster, bulk branch/class modal, filters, status toggle, copy/PDF exports, actions, and bridge restored; live refresh audit remains",
     "legacyTablesMentioned": [
       "Form",
       "Selected",
@@ -1256,13 +1256,13 @@
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Restored the legacy Children Listing roster shape with S.N./child number, Image, F Name, L Name, DOB, Branch, Class, Status, Gender, Date, and Action columns; child photo fallback handling for migrated `images/EmpPhoto` filenames; legacy column filters for S.N., first name, last name, DOB, nationality, created-date from/to, branch, class, gender, and status; 10/20/50/100/150 page sizes; inline class reassignment backed by an org-safe `updateChildClass` action; checkbox select-all-in-page selection; Change Branch & Class modal for selected children backed by an org-safe bulk action with target branch/class validation and history snapshots; status badge active/inactive toggle via org-safe action; dashboard, print, edit, and deactivate actions; and child export with S.N. `/children.php` now redirects to the modern child roster. Remaining work is exact TableTools copy/PDF/XLS/print visual parity and live WebSocket refresh behavior that was commented in legacy JS."
+    "verification": "Restored the legacy Children Listing roster shape with S.N./child number, Image, F Name, L Name, DOB, Branch, Class, Status, Gender, Date, and Action columns; child photo fallback handling for migrated `images/EmpPhoto` filenames; legacy column filters for S.N., first name, last name, DOB, nationality, created-date from/to, branch, class, gender, and status; 10/20/50/100/150 page sizes; inline class reassignment backed by an org-safe `updateChildClass` action; checkbox select-all-in-page selection; Change Branch & Class modal for selected children backed by an org-safe bulk action with target branch/class validation and history snapshots; status badge active/inactive toggle via org-safe action; dashboard, print, edit, and deactivate actions; and Copy/PDF/Excel/CSV child export with S.N. `/children.php` now redirects to the modern child roster. Remaining work is live WebSocket refresh behavior that was commented in legacy JS."
   },
   {
     "legacyPhp": "Front/templates/admin/children_drafts.php",
     "legacyJs": "Front/templates/admin/js/children_drafts.js",
     "modernRoute": "/children_drafts.php, /children/drafts",
-    "status": "partial - legacy draft roster, bulk branch/class modal, and bridge restored; export visual audit remains",
+    "status": "partial - legacy draft roster, bulk branch/class modal, copy/PDF exports, and bridge restored; live refresh audit remains",
     "legacyTablesMentioned": [
       "Form",
       "Selected",
@@ -1270,13 +1270,13 @@
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Restored `/children/drafts` as a real draft listing instead of a redirect, backed by `getDrafts`/`isDraft`, with legacy S.N./image/F Name/L Name/DOB/Branch/Class/Nationality/Gender/Date/Action columns, child photo fallback handling, S.N./first/last/DOB/nationality/created-date filters, branch/class/gender filters, 10/20/50/100/150 page sizes, export, New Child, edit, deactivate actions, checkbox select-all-in-page selection, and Change Branch & Class modal for selected drafts backed by the same org-safe bulk action without clearing draft status. `/children_drafts.php` now redirects to the modern draft child roster. Remaining work is exact TableTools copy/PDF/XLS/print visual parity and commented WebSocket refresh behavior."
+    "verification": "Restored `/children/drafts` as a real draft listing instead of a redirect, backed by `getDrafts`/`isDraft`, with legacy S.N./image/F Name/L Name/DOB/Branch/Class/Nationality/Gender/Date/Action columns, child photo fallback handling, S.N./first/last/DOB/nationality/created-date filters, branch/class/gender filters, 10/20/50/100/150 page sizes, Copy/PDF/Excel/CSV export, New Child, edit, deactivate actions, checkbox select-all-in-page selection, and Change Branch & Class modal for selected drafts backed by the same org-safe bulk action without clearing draft status. `/children_drafts.php` now redirects to the modern draft child roster. Remaining work is commented WebSocket refresh behavior."
   },
   {
     "legacyPhp": "Front/templates/admin/childrenperbranch.php",
     "legacyJs": "Front/templates/admin/js/childrenperbranch.js",
     "modernRoute": "/childrenperbranch.php, /branches/[id]/children",
-    "status": "partial - branch-scoped children listing, locked bulk class modal, and legacy branch bridge restored; export visual audit remains",
+    "status": "partial - branch-scoped children listing, locked bulk class modal, copy/PDF exports, and legacy branch bridge restored; live refresh audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -1284,7 +1284,7 @@
     "requestFieldsMentioned": [
       "brid"
     ],
-    "verification": "Restored the branch-dashboard entry point for `childrenperbranch.php` as `/branches/[id]/children`, with legacy title shape `Active Children For {branch} Branch`, branch-locked listing, S.N./image/F Name/L Name/DOB/Branch/Class/Status/Gender/Date/Action columns, branch class reassignment dropdown limited to classes in the same branch, status toggle, New Child, dashboard, print/view, edit, deactivate actions, legacy filters, checkbox select-all-in-page selection, locked-branch Change Branch & Class modal for selected children, and 10/20/50/100/150 page sizes. `/childrenperbranch.php?brid=` now resolves raw numeric, UUID, and encrypted legacy branch ids into that modern branch page. Remaining work is exact TableTools copy/PDF/XLS/print visual parity and any live refresh behavior."
+    "verification": "Restored the branch-dashboard entry point for `childrenperbranch.php` as `/branches/[id]/children`, with legacy title shape `Active Children For {branch} Branch`, branch-locked listing, S.N./image/F Name/L Name/DOB/Branch/Class/Status/Gender/Date/Action columns, branch class reassignment dropdown limited to classes in the same branch, status toggle, New Child, dashboard, print/view, edit, deactivate actions, legacy filters, Copy/PDF/Excel/CSV export, checkbox select-all-in-page selection, locked-branch Change Branch & Class modal for selected children, and 10/20/50/100/150 page sizes. `/childrenperbranch.php?brid=` now resolves raw numeric, UUID, and encrypted legacy branch ids into that modern branch page. Remaining work is any live refresh behavior."
   },
   {
     "legacyPhp": "Front/templates/admin/class.php",
@@ -1324,13 +1324,13 @@
     "legacyPhp": "Front/templates/admin/classes.php",
     "legacyJs": "Front/templates/admin/js/classes.js",
     "modernRoute": "/classes.php, /classes",
-    "status": "partial - legacy class roster bridge, filters, export, page sizes, and soft delete restored; visual audit remains",
+    "status": "partial - legacy class roster bridge, filters, copy/PDF exports, page sizes, and soft delete restored; visual audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Restored the legacy Classes Listing as the default table view with active-class default scope, checkbox/S.N./Image/Class/Language/Max Students/Branch/Date/Action columns, migrated `images/ClassPhoto` filename fallback, search, branch/status filters, legacy S.N./Class/Language/Max Students/created-date filter row, 10/20/50/100/150/All page sizes, Excel/CSV export, print action, New Class, edit/update dialog, dashboard open action, and legacy-style soft deactivate. `/classes.php` now redirects to the modern classes listing. Fixed class import fidelity so `t_class.class_language`, `age_from`, `age_to`, `radiofrom`, `radioto`, `camera_number`, and `max_students` populate modern class fields. Remaining work is exact TableTools copy/PDF/XLS/print visual parity, any selected-row bulk behavior if revived, and final Browser visual smoke."
+    "verification": "Restored the legacy Classes Listing as the default table view with active-class default scope, checkbox/S.N./Image/Class/Language/Max Students/Branch/Date/Action columns, migrated `images/ClassPhoto` filename fallback, search, branch/status filters, legacy S.N./Class/Language/Max Students/created-date filter row, 10/20/50/100/150/All page sizes, Copy/PDF/Excel/CSV export, print action, New Class, edit/update dialog, dashboard open action, and legacy-style soft deactivate. `/classes.php` now redirects to the modern classes listing. Fixed class import fidelity so `t_class.class_language`, `age_from`, `age_to`, `radiofrom`, `radioto`, `camera_number`, and `max_students` populate modern class fields. Remaining work is any selected-row bulk behavior if revived and final Browser visual smoke."
   },
   {
     "legacyPhp": "Front/templates/admin/classes/Connectter.php",
@@ -16437,7 +16437,7 @@
     "legacyPhp": "Front/templates/admin/parent_users.php",
     "legacyJs": "Front/templates/admin/js/parent_users.js",
     "modernRoute": "/parent_users.php, /settings/parent-users",
-    "status": "partial - legacy parent-users roster restored; detail/message audit remains",
+    "status": "partial - legacy parent-users roster and copy/PDF exports restored; detail/message audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -16445,7 +16445,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "`/parent_users.php` now redirects to the modern parent-users listing. The modern roster now restores the legacy `Parent System Users Control` surface with separate `Children With Parent User` and `Children without Parent Users` tables, `#` child-number column, Name, Username, Status, Branch, Class, Action columns, create-user action for children without accounts, active/inactive status toggles, password reset feedback, search filters, 10/20/50/100/150/All page sizes, and Excel/CSV export plus print actions. Remaining work is exact TableTools copy/PDF visual parity and the `parent_user.php` detail workflow audit for username/password/status validation plus SMS/WhatsApp credential messaging."
+    "verification": "`/parent_users.php` now redirects to the modern parent-users listing. The modern roster now restores the legacy `Parent System Users Control` surface with separate `Children With Parent User` and `Children without Parent Users` tables, `#` child-number column, Name, Username, Status, Branch, Class, Action columns, create-user action for children without accounts, active/inactive status toggles, password reset feedback, search filters, 10/20/50/100/150/All page sizes, and Copy/PDF/Excel/CSV export plus print actions. Remaining work is the `parent_user.php` detail workflow audit for username/password/status validation plus SMS/WhatsApp credential messaging."
   },
   {
     "legacyPhp": "Front/templates/admin/payroll_det_data.php",
