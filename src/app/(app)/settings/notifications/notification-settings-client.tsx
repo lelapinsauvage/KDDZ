@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useRef, useCallback } from "react";
+import { useEffect, useState, useTransition, useRef, useCallback } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -315,6 +315,8 @@ interface NotificationSettingsClientProps {
   initialLegacyNatures: LegacyNotificationNatureRow[];
   initialLegacyLogs: LegacyNotificationLogRow[];
   initialLegacyEmailLevels: LegacyEmailLevelRow[];
+  initialTab?: string;
+  initialTemplateCategory?: string;
 }
 
 type LegacyChannelKey = "alarms" | "email" | "whatsapp" | "sms";
@@ -329,6 +331,8 @@ const LEGACY_CHANNELS: Array<{ key: LegacyChannelKey; label: string }> = [
   { key: "whatsapp", label: "Whatsapp" },
   { key: "sms", label: "SMS" },
 ];
+
+const NOTIFICATION_TABS = new Set(["templates", "logs", "bulk", "legacy"]);
 
 const ACCOUNTING_REMINDER_META: Record<
   AccountingReminderKey,
@@ -391,8 +395,12 @@ export function NotificationSettingsClient({
   initialLegacyNatures,
   initialLegacyLogs,
   initialLegacyEmailLevels,
+  initialTab,
+  initialTemplateCategory,
 }: NotificationSettingsClientProps) {
-  const [tab, setTab] = useState("templates");
+  const [tab, setTab] = useState(
+    NOTIFICATION_TABS.has(initialTab ?? "") ? (initialTab as string) : "templates",
+  );
 
   return (
     <>
@@ -425,7 +433,10 @@ export function NotificationSettingsClient({
           </TabsList>
 
           <TabsContent value="templates">
-            <TemplatesTab initialTemplates={initialTemplates} />
+            <TemplatesTab
+              initialTemplates={initialTemplates}
+              initialCategory={initialTemplateCategory}
+            />
           </TabsContent>
 
           <TabsContent value="logs">
@@ -455,8 +466,10 @@ export function NotificationSettingsClient({
 
 function TemplatesTab({
   initialTemplates,
+  initialCategory,
 }: {
   initialTemplates: TemplateRow[];
+  initialCategory?: string;
 }) {
   const [templates, setTemplates] = useState(initialTemplates);
   const [isPending, startTransition] = useTransition();
@@ -469,6 +482,15 @@ function TemplatesTab({
     message: string;
   } | null>(null);
   const textareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
+  const targetCategory = initialCategory?.trim().toUpperCase();
+
+  useEffect(() => {
+    if (!targetCategory) return;
+    const element = document.getElementById(
+      `template-${targetCategory.toLowerCase()}`,
+    );
+    element?.scrollIntoView({ block: "start" });
+  }, [targetCategory]);
 
   const updateField = useCallback(
     (category: string, field: keyof TemplateRow, value: string | boolean) => {
@@ -543,6 +565,7 @@ function TemplatesTab({
         return (
           <Card
             key={t.category}
+            id={`template-${t.category.toLowerCase()}`}
             className={`overflow-hidden border-l-4 transition-all ${meta.border} ${!t.enabled ? "opacity-50" : ""}`}
           >
             <CardHeader className="pb-2">

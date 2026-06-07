@@ -1,5 +1,15 @@
 import { redirect } from "next/navigation";
+import {
+  legacyAdminSettingsRedirect,
+  type LegacyAdminSettingsSearchParams,
+} from "@/lib/legacy-admin-settings-redirect";
 
-export default function LegacyAdminSettingsRootRedirectPage() {
-  redirect("/settings/legacy-auth");
+interface PageProps {
+  searchParams: Promise<LegacyAdminSettingsSearchParams>;
+}
+
+export default async function LegacyAdminSettingsRootRedirectPage({
+  searchParams,
+}: PageProps) {
+  redirect(legacyAdminSettingsRedirect(await searchParams));
 }

@@ -8,7 +8,20 @@ import {
 } from "@/lib/actions/notification-templates";
 import { NotificationSettingsClient } from "./notification-settings-client";
 
-export default async function NotificationSettingsPage() {
+interface PageProps {
+  searchParams: Promise<{
+    tab?: string | string[];
+    template?: string | string[];
+  }>;
+}
+
+function firstParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function NotificationSettingsPage({
+  searchParams,
+}: PageProps) {
   const [
     templatesResult,
     logsResult,
@@ -16,6 +29,7 @@ export default async function NotificationSettingsPage() {
     legacyNaturesResult,
     legacyLogsResult,
     legacyEmailLevelsResult,
+    params,
   ] = await Promise.all([
     getNotificationTemplates(),
     getSentNotifications({}),
@@ -23,6 +37,7 @@ export default async function NotificationSettingsPage() {
     getLegacyNotificationNatures(),
     getLegacyNotificationLogs(),
     getLegacyEmailLevels(),
+    searchParams,
   ]);
 
   return (
@@ -33,6 +48,8 @@ export default async function NotificationSettingsPage() {
       initialLegacyNatures={legacyNaturesResult.data ?? []}
       initialLegacyLogs={legacyLogsResult.data ?? []}
       initialLegacyEmailLevels={legacyEmailLevelsResult.data ?? []}
+      initialTab={firstParam(params.tab)}
+      initialTemplateCategory={firstParam(params.template)}
     />
   );
 }

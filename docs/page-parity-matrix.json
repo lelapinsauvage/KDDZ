@@ -17248,14 +17248,22 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/settings.php",
     "legacyJs": "Front/templates/admin/js/settings.js",
-    "modernRoute": "/users/admin/page/settings.php, /settings/legacy-auth",
-    "status": "partial - legacy admin settings wrapper bridges to restored auth settings",
+    "modernRoute": "/users/admin/page/settings.php, /settings/legacy-auth, /settings/notifications, /settings/legacy-users",
+    "status": "partial - legacy admin settings wrapper maps old tabs to restored auth, notification, and user-admin surfaces",
     "legacyTablesMentioned": [
       "login_settings",
       "login_settings_man"
     ],
-    "requestFieldsMentioned": [],
-    "verification": "`/users/admin/page/settings.php` now redirects to `/settings/legacy-auth`, where General Options and Denied settings are editable against migrated `login_settings` / `login_settings_man`. Remaining work is integration/update subpage parity and exact old admin settings composition."
+    "requestFieldsMentioned": [
+      "hash",
+      "p",
+      "page",
+      "pane",
+      "section",
+      "tab",
+      "target"
+    ],
+    "verification": "`/users/admin/page/settings.php` now resolves legacy tab/page/hash query aliases for General, Denied, Integration, Update, notification/email templates, Bulk Email, User Profiles, Reports, User Control, and Add User into the restored modern settings pages. Email template aliases preserve focus with `/settings/notifications?tab=templates&template=...`. Remaining work is exact old admin settings shell composition and any active OAuth/captcha runtime behavior if those archived integrations are re-enabled."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/update.php",
@@ -17332,14 +17340,22 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/settings.php",
     "legacyJs": "Front/templates/admin/js/settings.js",
-    "modernRoute": "/users/admin/settings.php, /settings/legacy-auth",
-    "status": "partial - legacy admin settings wrapper bridges to restored auth settings",
+    "modernRoute": "/users/admin/settings.php, /settings/legacy-auth, /settings/notifications, /settings/legacy-users",
+    "status": "partial - legacy admin settings wrapper maps old tabs to restored auth, notification, and user-admin surfaces",
     "legacyTablesMentioned": [
       "login_settings",
       "login_settings_man"
     ],
-    "requestFieldsMentioned": [],
-    "verification": "`/users/admin/settings.php` now redirects to `/settings/legacy-auth`, preserving a modern landing point for the legacy PHP-login admin settings area. Remaining work is integration/update subpage parity and exact old admin settings composition."
+    "requestFieldsMentioned": [
+      "hash",
+      "p",
+      "page",
+      "pane",
+      "section",
+      "tab",
+      "target"
+    ],
+    "verification": "`/users/admin/settings.php` now resolves legacy tab/page/hash query aliases for General, Denied, Integration, Update, notification/email templates, Bulk Email, User Profiles, Reports, User Control, and Add User into the restored modern settings pages. Email template aliases preserve focus with `/settings/notifications?tab=templates&template=...`. Remaining work is exact old admin settings shell composition and any active OAuth/captcha runtime behavior if those archived integrations are re-enabled."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/users.php",
