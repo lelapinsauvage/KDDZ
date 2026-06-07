@@ -1737,6 +1737,7 @@ model Food {
   category       FoodCategory
   isActive       Boolean      @default(true)
   organizationId String?      @db.Uuid
+  deletedAt      DateTime?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
@@ -1750,6 +1751,7 @@ model Food {
   @@index([organizationId])
   @@index([category])
   @@index([isActive])
+  @@index([deletedAt])
   @@map("foods")
 }
 

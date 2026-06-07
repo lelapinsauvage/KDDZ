@@ -16200,14 +16200,14 @@
     "legacyPhp": "Front/templates/admin/food.php",
     "legacyJs": "Front/templates/admin/js/food.js",
     "modernRoute": "/food.php, /food",
-    "status": "partial - legacy food listing roster restored; delete/backfill audit remains",
+    "status": "partial - legacy food listing roster and soft delete restored; fid/export audit remains",
     "legacyTablesMentioned": [
       "Food",
       "auto",
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "`/food.php` now redirects to the modern food listing. The modern page now restores the legacy Food Types/Food Listing surface with `#`, Type, Name, Active, Date, and Action columns; BreakFast/Lunch/Dessert/Snack category labels; On/Off status wording; create/update Food Type modal fields for Food Type, Food, and Status; per-column filters plus Clear; 10/20/50/100/150/All page sizes; Excel/CSV export; print action; and newest-first default ordering approximating legacy `fid desc`. Remaining work is exact legacy `fid` preservation/backfill for the `#` column, TableTools copy/PDF visual parity, and delete semantics audit because legacy soft-deleted `t_food.deleted` while the modern schema currently has active/inactive plus hard delete."
+    "verification": "`/food.php` now redirects to the modern food listing. The modern page now restores the legacy Food Types/Food Listing surface with `#`, Type, Name, Active, Date, and Action columns; BreakFast/Lunch/Dessert/Snack category labels; On/Off status wording; create/update Food Type modal fields for Food Type, Food, and Status; per-column filters plus Clear; 10/20/50/100/150/All page sizes; Excel/CSV export; print action; and newest-first default ordering approximating legacy `fid desc`. Delete now uses a separate `Food.deletedAt` soft-delete marker so Active remains the legacy On/Off status while deleted food rows are hidden by default and historical calendar/report references are preserved. Remaining work is exact legacy `fid` preservation/backfill for the `#` column and TableTools copy/PDF visual parity."
   },
   {
     "legacyPhp": "Front/templates/admin/food_calendar.php",

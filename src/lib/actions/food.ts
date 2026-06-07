@@ -14,6 +14,7 @@ interface GetFoodsParams {
   category?: FoodCategory;
   isActive?: boolean;
   search?: string;
+  includeDeleted?: boolean;
 }
 
 interface CreateFoodData {
@@ -86,11 +87,15 @@ export async function getFoods(params: GetFoodsParams = {}) {
   try {
     const { organizationId: orgId } = await requireOrg();
 
-    const { category, isActive, search } = params;
+    const { category, isActive, search, includeDeleted } = params;
 
     const where: Prisma.FoodWhereInput = {
       organizationId: orgId,
     };
+
+    if (!includeDeleted) {
+      where.deletedAt = null;
+    }
 
     if (category) {
       where.category = category;
@@ -158,7 +163,7 @@ export async function updateFood(id: string, input: UpdateFoodData) {
     const { ctx } = result;
 
     const existing = await db.food.findUnique({ where: { id } });
-    if (!existing) {
+    if (!existing || existing.deletedAt) {
       return { error: "Food item not found" };
     }
     if (existing.organizationId !== ctx.organizationId) {
@@ -208,7 +213,10 @@ export async function deleteFood(id: string) {
       return { error: "Food item not found" };
     }
 
-    await db.food.delete({ where: { id } });
+    await db.food.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
 
     revalidatePath("/food");
     return { success: true };
