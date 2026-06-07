@@ -16695,7 +16695,7 @@
     "legacyPhp": "Front/templates/admin/users/admin/classes/settings.class.php",
     "legacyJs": "",
     "modernRoute": "/settings/notifications, /settings/legacy-auth, /settings/legacy-users/profile-fields",
-    "status": "partial - legacy notification/profile/auth-field settings restored; integration/update forms remain",
+    "status": "partial - legacy notification/profile/auth settings restored; runtime enforcement remains",
     "legacyTablesMentioned": [
       "login_levels",
       "login_profile_fields",
@@ -16710,7 +16710,7 @@
       "update-form",
       "user-profiles-form"
     ],
-    "verification": "The legacy `user-profiles-form` profile-field add/update/delete semantics are restored at `/settings/legacy-users/profile-fields` over migrated `login_profile_fields` / `login_profile_fields_man`, including Section, Input type, Input label, Sign Up (`hide`/`require`/`optional`), Public, Delete, source database grouping, soft-delete provenance, and preserved orphan profile values. `/settings/legacy-auth` now restores the `general-options-form` and `denied-form` save semantics over migrated `login_settings` / `login_settings_man`: Admin email validation, Site address slash normalization, numeric Default session validation, serialized default/notify levels, site-control/new-user/password/redirect checkboxes, restricted signup domains, and registered-user/guest denied messages. Legacy notification settings remain surfaced in `/settings/notifications`. Remaining work is dedicated validation/save parity for integration and update settings forms plus deciding which imported login settings actively drive modern Auth.js behavior."
+    "verification": "The legacy `user-profiles-form` profile-field add/update/delete semantics are restored at `/settings/legacy-users/profile-fields` over migrated `login_profile_fields` / `login_profile_fields_man`, including Section, Input type, Input label, Sign Up (`hide`/`require`/`optional`), Public, Delete, source database grouping, soft-delete provenance, and preserved orphan profile values. `/settings/legacy-auth` now restores the `general-options-form`, `denied-form`, `integration-form`, and `update-form` save semantics over migrated `login_settings` / `login_settings_man`: Admin email validation, Site address slash normalization, numeric Default session validation, serialized default/notify levels, site-control/new-user/password/redirect checkboxes, restricted signup domains, denied messages, social-login provider keys/toggles, captcha provider keys/radio choice, and update-check toggle. Legacy notification settings remain surfaced in `/settings/notifications`. Remaining work is deciding which imported login settings actively drive modern Auth.js/OAuth/captcha/runtime update-check behavior."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/footer.php",
@@ -17003,11 +17003,21 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/integration.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
-    "legacyTablesMentioned": [],
-    "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "modernRoute": "/users/admin/page/integration.php, /settings/legacy-auth?tab=integration",
+    "status": "partial - legacy integration settings editable; runtime provider enforcement remains",
+    "legacyTablesMentioned": [
+      "login_settings",
+      "login_settings_man"
+    ],
+    "requestFieldsMentioned": [
+      "integration-captcha",
+      "integration-facebook-enable",
+      "integration-google-enable",
+      "integration-twitter-enable",
+      "integration-yahoo-enable",
+      "integration-form"
+    ],
+    "verification": "`/settings/legacy-auth?tab=integration` restores the legacy Social login and Captcha signup settings over migrated staff and manager login settings: Twitter, Facebook, Google, Yahoo enable toggles, provider credential fields, captcha provider selection (`disableCaptcha`/`reCAPTCHA`/`playThru`), and reCAPTCHA/PlayThru key fields. Saves preserve legacy option rows and `/users/admin/page/integration.php` redirects to the restored tab. Remaining work is wiring these imported provider/captcha settings into active OAuth/captcha runtime behavior if those integrations are re-enabled."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/level-control.php",
@@ -17085,16 +17095,19 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/update.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/users/admin/page/update.php, /settings/legacy-auth?tab=update",
+    "status": "partial - legacy update-check toggle restored; remote changelog retired",
     "legacyTablesMentioned": [
       "available",
       "checking",
       "details",
       "is"
     ],
-    "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "requestFieldsMentioned": [
+      "update-check-enable",
+      "update-form"
+    ],
+    "verification": "`/settings/legacy-auth?tab=update` restores the legacy Check for updates toggle against migrated `login_settings` / `login_settings_man`, and `/users/admin/page/update.php` redirects to the restored tab. The old CodeCanyon changelog fetch remains intentionally archived because the provider endpoint is obsolete."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/user-add.php",

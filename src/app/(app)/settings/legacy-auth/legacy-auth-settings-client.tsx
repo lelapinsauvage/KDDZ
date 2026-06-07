@@ -25,11 +25,15 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   type LegacyAuthGeneralSettingsInput,
   type LegacyAuthDeniedSettingsInput,
+  type LegacyAuthIntegrationSettingsInput,
   type LegacyAuthLevelOption,
   type LegacyAuthSettingsData,
   type LegacyAuthSettingsSource,
+  type LegacyAuthUpdateSettingsInput,
   updateLegacyAuthDeniedSettings,
   updateLegacyAuthGeneralSettings,
+  updateLegacyAuthIntegrationSettings,
+  updateLegacyAuthUpdateSettings,
 } from "@/lib/actions/legacy-auth-settings";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, KeyRound, Save, ShieldAlert } from "lucide-react";
@@ -54,6 +58,8 @@ type GeneralFormState = Omit<
 };
 
 type DeniedFormState = LegacyAuthDeniedSettingsInput;
+type IntegrationFormState = LegacyAuthIntegrationSettingsInput;
+type UpdateFormState = LegacyAuthUpdateSettingsInput;
 
 function settingValue(
   data: LegacyAuthSettingsData,
@@ -160,6 +166,51 @@ function createDeniedForm(
   };
 }
 
+function createIntegrationForm(
+  data: LegacyAuthSettingsData,
+  source: LegacyAuthSettingsSource | null,
+): IntegrationFormState {
+  const key = source?.key ?? "";
+  const get = (setting: string) => settingValue(data, source, setting);
+  const captchaProvider = get("integration-captcha");
+
+  return {
+    sourceKey: key,
+    twitterEnabled: isEnabled(get("integration-twitter-enable")),
+    twitterKey: get("twitter-key"),
+    twitterSecret: get("twitter-secret"),
+    facebookEnabled: isEnabled(get("integration-facebook-enable")),
+    facebookAppId: get("facebook-app-id"),
+    facebookAppSecret: get("facebook-app-secret"),
+    googleEnabled: isEnabled(get("integration-google-enable")),
+    googleId: get("google-id"),
+    googleSecret: get("google-secret"),
+    yahooEnabled: isEnabled(get("integration-yahoo-enable")),
+    captchaProvider:
+      captchaProvider === "reCAPTCHA" || captchaProvider === "playThru"
+        ? captchaProvider
+        : "disableCaptcha",
+    recaptchaPublicKey: get("reCAPTCHA-public-key"),
+    recaptchaPrivateKey: get("reCAPTCHA-private-key"),
+    playThruPublisherKey: get("playThru-publisher-key"),
+    playThruScoringKey: get("playThru-scoring-key"),
+  };
+}
+
+function createUpdateForm(
+  data: LegacyAuthSettingsData,
+  source: LegacyAuthSettingsSource | null,
+): UpdateFormState {
+  const key = source?.key ?? "";
+
+  return {
+    sourceKey: key,
+    updateCheckEnabled: isEnabled(
+      settingValue(data, source, "update-check-enable"),
+    ),
+  };
+}
+
 function levelOptionsForSource(
   data: LegacyAuthSettingsData,
   source: LegacyAuthSettingsSource | null,
@@ -191,7 +242,9 @@ export function LegacyAuthSettingsClient({
     [data.sources, sourceKey],
   );
   const [activeTab, setActiveTab] = useState(
-    initialTab === "denied" ? "denied" : "general",
+    ["denied", "integration", "update"].includes(initialTab ?? "")
+      ? (initialTab as string)
+      : "general",
   );
   const [message, setMessage] = useState<MessageState>(
     initialError ? { type: "error", text: initialError } : null,
@@ -201,6 +254,13 @@ export function LegacyAuthSettingsClient({
   );
   const [deniedForm, setDeniedForm] = useState<DeniedFormState>(() =>
     createDeniedForm(initialData, initialData.sources[0] ?? null),
+  );
+  const [integrationForm, setIntegrationForm] =
+    useState<IntegrationFormState>(() =>
+      createIntegrationForm(initialData, initialData.sources[0] ?? null),
+    );
+  const [updateForm, setUpdateForm] = useState<UpdateFormState>(() =>
+    createUpdateForm(initialData, initialData.sources[0] ?? null),
   );
   const [isPending, startTransition] = useTransition();
 
@@ -215,6 +275,8 @@ export function LegacyAuthSettingsClient({
     setSourceKey(nextSourceKey);
     setGeneralForm(createGeneralForm(data, source));
     setDeniedForm(createDeniedForm(data, source));
+    setIntegrationForm(createIntegrationForm(data, source));
+    setUpdateForm(createUpdateForm(data, source));
     setMessage(null);
   }
 
@@ -226,6 +288,8 @@ export function LegacyAuthSettingsClient({
     setSourceKey(source?.key ?? "");
     setGeneralForm(createGeneralForm(nextData, source));
     setDeniedForm(createDeniedForm(nextData, source));
+    setIntegrationForm(createIntegrationForm(nextData, source));
+    setUpdateForm(createUpdateForm(nextData, source));
   }
 
   function updateGeneral<K extends keyof GeneralFormState>(
@@ -240,6 +304,20 @@ export function LegacyAuthSettingsClient({
     value: DeniedFormState[K],
   ) {
     setDeniedForm((current) => ({ ...current, [key]: value }));
+  }
+
+  function updateIntegration<K extends keyof IntegrationFormState>(
+    key: K,
+    value: IntegrationFormState[K],
+  ) {
+    setIntegrationForm((current) => ({ ...current, [key]: value }));
+  }
+
+  function updateUpdateForm<K extends keyof UpdateFormState>(
+    key: K,
+    value: UpdateFormState[K],
+  ) {
+    setUpdateForm((current) => ({ ...current, [key]: value }));
   }
 
   function toggleId(values: number[], id: number) {
@@ -286,6 +364,46 @@ export function LegacyAuthSettingsClient({
       }
 
       const error = result.error ?? "Failed to update denied messages";
+      setMessage({ type: "error", text: error });
+      toast.error(error);
+    });
+  }
+
+  function saveIntegration() {
+    setMessage(null);
+    startTransition(async () => {
+      const result = await updateLegacyAuthIntegrationSettings({
+        ...integrationForm,
+        sourceKey,
+      });
+      if (result.success && result.data) {
+        syncForms(result.data);
+        setMessage({ type: "success", text: "Settings updated." });
+        toast.success("Settings updated.");
+        return;
+      }
+
+      const error = result.error ?? "Failed to update integration settings";
+      setMessage({ type: "error", text: error });
+      toast.error(error);
+    });
+  }
+
+  function saveUpdateSettings() {
+    setMessage(null);
+    startTransition(async () => {
+      const result = await updateLegacyAuthUpdateSettings({
+        ...updateForm,
+        sourceKey,
+      });
+      if (result.success && result.data) {
+        syncForms(result.data);
+        setMessage({ type: "success", text: "Settings updated." });
+        toast.success("Settings updated.");
+        return;
+      }
+
+      const error = result.error ?? "Failed to update update settings";
       setMessage({ type: "error", text: error });
       toast.error(error);
     });
@@ -369,6 +487,8 @@ export function LegacyAuthSettingsClient({
           <TabsList>
             <TabsTrigger value="general">General Options</TabsTrigger>
             <TabsTrigger value="denied">Denied</TabsTrigger>
+            <TabsTrigger value="integration">Integration</TabsTrigger>
+            <TabsTrigger value="update">Update</TabsTrigger>
           </TabsList>
 
           <TabsContent value="general" className="mt-4">
@@ -657,6 +777,263 @@ export function LegacyAuthSettingsClient({
                 <Button onClick={saveDenied} disabled={isPending}>
                   <Save className="size-4" />
                   {isPending ? "Saving..." : "Save Denied"}
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="integration" className="mt-4">
+            <div className="space-y-6 rounded-sm border border-border bg-background p-4">
+              <div className="grid gap-4 lg:grid-cols-2">
+                <div className="space-y-3 rounded-sm border border-border/70 p-3">
+                  <div className="text-sm font-semibold">Twitter</div>
+                  <CheckboxField
+                    label="Enable"
+                    checked={integrationForm.twitterEnabled}
+                    disabled={isPending}
+                    onCheckedChange={(checked) =>
+                      updateIntegration("twitterEnabled", checked)
+                    }
+                  />
+                  <Field label="Consumer key" htmlFor="legacy-twitter-key">
+                    <Input
+                      id="legacy-twitter-key"
+                      value={integrationForm.twitterKey}
+                      onChange={(event) =>
+                        updateIntegration("twitterKey", event.target.value)
+                      }
+                      disabled={isPending}
+                    />
+                  </Field>
+                  <Field
+                    label="Consumer secret"
+                    htmlFor="legacy-twitter-secret"
+                  >
+                    <Input
+                      id="legacy-twitter-secret"
+                      value={integrationForm.twitterSecret}
+                      onChange={(event) =>
+                        updateIntegration("twitterSecret", event.target.value)
+                      }
+                      disabled={isPending}
+                    />
+                  </Field>
+                </div>
+
+                <div className="space-y-3 rounded-sm border border-border/70 p-3">
+                  <div className="text-sm font-semibold">Facebook</div>
+                  <CheckboxField
+                    label="Enable"
+                    checked={integrationForm.facebookEnabled}
+                    disabled={isPending}
+                    onCheckedChange={(checked) =>
+                      updateIntegration("facebookEnabled", checked)
+                    }
+                  />
+                  <Field label="App ID" htmlFor="legacy-facebook-app-id">
+                    <Input
+                      id="legacy-facebook-app-id"
+                      value={integrationForm.facebookAppId}
+                      onChange={(event) =>
+                        updateIntegration("facebookAppId", event.target.value)
+                      }
+                      disabled={isPending}
+                    />
+                  </Field>
+                  <Field
+                    label="App Secret"
+                    htmlFor="legacy-facebook-app-secret"
+                  >
+                    <Input
+                      id="legacy-facebook-app-secret"
+                      value={integrationForm.facebookAppSecret}
+                      onChange={(event) =>
+                        updateIntegration(
+                          "facebookAppSecret",
+                          event.target.value,
+                        )
+                      }
+                      disabled={isPending}
+                    />
+                  </Field>
+                </div>
+              </div>
+
+              <div className="grid gap-4 lg:grid-cols-2">
+                <div className="space-y-3 rounded-sm border border-border/70 p-3">
+                  <div className="text-sm font-semibold">OpenID Networks</div>
+                  <CheckboxField
+                    label="Google"
+                    checked={integrationForm.googleEnabled}
+                    disabled={isPending}
+                    onCheckedChange={(checked) =>
+                      updateIntegration("googleEnabled", checked)
+                    }
+                  />
+                  <Field label="Google App ID" htmlFor="legacy-google-id">
+                    <Input
+                      id="legacy-google-id"
+                      value={integrationForm.googleId}
+                      onChange={(event) =>
+                        updateIntegration("googleId", event.target.value)
+                      }
+                      disabled={isPending}
+                    />
+                  </Field>
+                  <Field label="Google App Secret" htmlFor="legacy-google-secret">
+                    <Input
+                      id="legacy-google-secret"
+                      value={integrationForm.googleSecret}
+                      onChange={(event) =>
+                        updateIntegration("googleSecret", event.target.value)
+                      }
+                      disabled={isPending}
+                    />
+                  </Field>
+                  <CheckboxField
+                    label="Yahoo"
+                    checked={integrationForm.yahooEnabled}
+                    disabled={isPending}
+                    onCheckedChange={(checked) =>
+                      updateIntegration("yahooEnabled", checked)
+                    }
+                  />
+                </div>
+
+                <div className="space-y-3 rounded-sm border border-border/70 p-3">
+                  <div className="text-sm font-semibold">Captcha signup</div>
+                  <Select
+                    value={integrationForm.captchaProvider}
+                    onValueChange={(value) =>
+                      updateIntegration(
+                        "captchaProvider",
+                        value === "reCAPTCHA" || value === "playThru"
+                          ? value
+                          : "disableCaptcha",
+                      )
+                    }
+                    disabled={isPending}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="disableCaptcha">
+                        Disable captcha
+                      </SelectItem>
+                      <SelectItem value="reCAPTCHA">reCAPTCHA</SelectItem>
+                      <SelectItem value="playThru">PlayThru</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <Field
+                      label="reCAPTCHA public key"
+                      htmlFor="legacy-recaptcha-public"
+                    >
+                      <Input
+                        id="legacy-recaptcha-public"
+                        value={integrationForm.recaptchaPublicKey}
+                        onChange={(event) =>
+                          updateIntegration(
+                            "recaptchaPublicKey",
+                            event.target.value,
+                          )
+                        }
+                        disabled={isPending}
+                      />
+                    </Field>
+                    <Field
+                      label="reCAPTCHA private key"
+                      htmlFor="legacy-recaptcha-private"
+                    >
+                      <Input
+                        id="legacy-recaptcha-private"
+                        value={integrationForm.recaptchaPrivateKey}
+                        onChange={(event) =>
+                          updateIntegration(
+                            "recaptchaPrivateKey",
+                            event.target.value,
+                          )
+                        }
+                        disabled={isPending}
+                      />
+                    </Field>
+                    <Field
+                      label="PlayThru publisher key"
+                      htmlFor="legacy-playthru-publisher"
+                    >
+                      <Input
+                        id="legacy-playthru-publisher"
+                        value={integrationForm.playThruPublisherKey}
+                        onChange={(event) =>
+                          updateIntegration(
+                            "playThruPublisherKey",
+                            event.target.value,
+                          )
+                        }
+                        disabled={isPending}
+                      />
+                    </Field>
+                    <Field
+                      label="PlayThru scoring key"
+                      htmlFor="legacy-playthru-scoring"
+                    >
+                      <Input
+                        id="legacy-playthru-scoring"
+                        value={integrationForm.playThruScoringKey}
+                        onChange={(event) =>
+                          updateIntegration(
+                            "playThruScoringKey",
+                            event.target.value,
+                          )
+                        }
+                        disabled={isPending}
+                      />
+                    </Field>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <Button onClick={saveIntegration} disabled={isPending}>
+                  <Save className="size-4" />
+                  {isPending ? "Saving..." : "Save Integration"}
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="update" className="mt-4">
+            <div className="space-y-4 rounded-sm border border-border bg-background p-4">
+              <div className="space-y-3 rounded-sm border border-border/70 p-3">
+                <div className="text-sm font-semibold">Update</div>
+                <CheckboxField
+                  label="Enable to automatically check for updates each time you load this page"
+                  checked={updateForm.updateCheckEnabled}
+                  disabled={isPending}
+                  onCheckedChange={(checked) =>
+                    updateUpdateForm("updateCheckEnabled", checked)
+                  }
+                />
+                <div className="grid gap-3 text-sm md:grid-cols-2">
+                  <div className="rounded-sm bg-muted/60 px-3 py-2">
+                    <div className="text-xs text-muted-foreground">
+                      Current version
+                    </div>
+                    <div className="font-medium">Legacy PHP Login</div>
+                  </div>
+                  <div className="rounded-sm bg-muted/60 px-3 py-2">
+                    <div className="text-xs text-muted-foreground">
+                      Latest changelog
+                    </div>
+                    <div className="font-medium">Archived provider check</div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <Button onClick={saveUpdateSettings} disabled={isPending}>
+                  <Save className="size-4" />
+                  {isPending ? "Saving..." : "Save Update"}
                 </Button>
               </div>
             </div>

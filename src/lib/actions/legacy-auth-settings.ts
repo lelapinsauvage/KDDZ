@@ -81,6 +81,30 @@ export type LegacyAuthDeniedSettingsInput = {
   guestBlockMessage: string;
 };
 
+export type LegacyAuthIntegrationSettingsInput = {
+  sourceKey: string;
+  twitterEnabled: boolean;
+  twitterKey: string;
+  twitterSecret: string;
+  facebookEnabled: boolean;
+  facebookAppId: string;
+  facebookAppSecret: string;
+  googleEnabled: boolean;
+  googleId: string;
+  googleSecret: string;
+  yahooEnabled: boolean;
+  captchaProvider: "disableCaptcha" | "reCAPTCHA" | "playThru";
+  recaptchaPublicKey: string;
+  recaptchaPrivateKey: string;
+  playThruPublisherKey: string;
+  playThruScoringKey: string;
+};
+
+export type LegacyAuthUpdateSettingsInput = {
+  sourceKey: string;
+  updateCheckEnabled: boolean;
+};
+
 const SOURCE_CONFIG: Record<
   LegacyAuthSettingsTable,
   {
@@ -260,7 +284,10 @@ function revalidateLegacyAuthSettingsPaths() {
   revalidatePath("/settings/legacy-users");
   revalidatePath("/users/admin/page/general-options.php");
   revalidatePath("/users/admin/page/denied.php");
+  revalidatePath("/users/admin/page/integration.php");
+  revalidatePath("/users/admin/page/update.php");
   revalidatePath("/users/admin/page/settings.php");
+  revalidatePath("/users/admin/settings.php");
 }
 
 export async function getLegacyAuthSettings(): Promise<
@@ -462,6 +489,81 @@ export async function updateLegacyAuthDeniedSettings(
         error instanceof Error
           ? error.message
           : "Failed to update legacy auth denied settings",
+    };
+  }
+}
+
+export async function updateLegacyAuthIntegrationSettings(
+  input: LegacyAuthIntegrationSettingsInput,
+): Promise<ActionResult<LegacyAuthSettingsData>> {
+  try {
+    await requireRole("ADMIN");
+    const source = sourceFromKey(input.sourceKey);
+    if (!source) return { success: false, error: "Unknown legacy settings source" };
+
+    const captchaProvider =
+      input.captchaProvider === "reCAPTCHA" || input.captchaProvider === "playThru"
+        ? input.captchaProvider
+        : "disableCaptcha";
+
+    await db.$transaction((tx) =>
+      upsertLegacySettings(tx, source, {
+        "integration-twitter-enable": boolValue(input.twitterEnabled),
+        "twitter-key": input.twitterKey.trim(),
+        "twitter-secret": input.twitterSecret.trim(),
+        "integration-facebook-enable": boolValue(input.facebookEnabled),
+        "facebook-app-id": input.facebookAppId.trim(),
+        "facebook-app-secret": input.facebookAppSecret.trim(),
+        "integration-google-enable": boolValue(input.googleEnabled),
+        "google-id": input.googleId.trim(),
+        "google-secret": input.googleSecret.trim(),
+        "integration-yahoo-enable": boolValue(input.yahooEnabled),
+        "integration-captcha": captchaProvider,
+        "reCAPTCHA-public-key": input.recaptchaPublicKey.trim(),
+        "reCAPTCHA-private-key": input.recaptchaPrivateKey.trim(),
+        "playThru-publisher-key": input.playThruPublisherKey.trim(),
+        "playThru-scoring-key": input.playThruScoringKey.trim(),
+      }),
+    );
+
+    revalidateLegacyAuthSettingsPaths();
+    return getLegacyAuthSettings();
+  } catch (error) {
+    console.error("Failed to update legacy auth integration settings:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to update legacy auth integration settings",
+    };
+  }
+}
+
+export async function updateLegacyAuthUpdateSettings(
+  input: LegacyAuthUpdateSettingsInput,
+): Promise<ActionResult<LegacyAuthSettingsData>> {
+  try {
+    await requireRole("ADMIN");
+    const source = sourceFromKey(input.sourceKey);
+    if (!source) return { success: false, error: "Unknown legacy settings source" };
+
+    await db.$transaction((tx) =>
+      upsertLegacySettings(tx, source, {
+        "update-check-enable": boolValue(input.updateCheckEnabled),
+      }),
+    );
+
+    revalidateLegacyAuthSettingsPaths();
+    return getLegacyAuthSettings();
+  } catch (error) {
+    console.error("Failed to update legacy auth update settings:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to update legacy auth update settings",
     };
   }
 }
