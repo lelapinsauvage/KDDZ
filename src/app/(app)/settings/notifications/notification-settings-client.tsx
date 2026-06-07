@@ -68,6 +68,7 @@ import {
   resendNotification,
   sendTestNotification,
   sendLegacyBulkEmail,
+  updateLegacyAccountingReminderSetting,
   updateLegacyNotificationChannelSetting,
   type SentNotificationRow,
 } from "@/lib/actions/notification-templates";
@@ -317,6 +318,10 @@ interface NotificationSettingsClientProps {
 }
 
 type LegacyChannelKey = "alarms" | "email" | "whatsapp" | "sms";
+type AccountingReminderKey =
+  | "account-remind-before"
+  | "account-remind-after"
+  | "account-remind-paid";
 
 const LEGACY_CHANNELS: Array<{ key: LegacyChannelKey; label: string }> = [
   { key: "alarms", label: "System Alerts" },
@@ -324,6 +329,49 @@ const LEGACY_CHANNELS: Array<{ key: LegacyChannelKey; label: string }> = [
   { key: "whatsapp", label: "Whatsapp" },
   { key: "sms", label: "SMS" },
 ];
+
+const ACCOUNTING_REMINDER_META: Record<
+  AccountingReminderKey,
+  {
+    label: string;
+    description: string;
+    editable: boolean;
+    options: Array<{ value: string; label: string }>;
+  }
+> = {
+  "account-remind-before": {
+    label: "Before due date",
+    description: "Legacy NotifyBeforePayment day offset",
+    editable: true,
+    options: [
+      { value: "1", label: "1 Day" },
+      { value: "3", label: "3 Days" },
+      { value: "7", label: "7 Days" },
+    ],
+  },
+  "account-remind-after": {
+    label: "After missed payment",
+    description: "Legacy NotifyAfterPayment day offset",
+    editable: true,
+    options: [
+      { value: "1", label: "1 Day" },
+      { value: "3", label: "3 Days" },
+      { value: "7", label: "7 Days" },
+      { value: "10", label: "10 Days" },
+      { value: "15", label: "15 Days" },
+    ],
+  },
+  "account-remind-paid": {
+    label: "Payment confirmation",
+    description: "Preserved legacy disabled selector",
+    editable: false,
+    options: [
+      { value: "1", label: "1 Day" },
+      { value: "3", label: "3 Days" },
+      { value: "7", label: "7 Days" },
+    ],
+  },
+};
 
 function legacyMtypeChannel(data: Record<string, unknown> | null) {
   const mtype = Number(data?.mtype);
@@ -1027,8 +1075,14 @@ function LegacyTab({
     success: boolean;
     text: string;
   } | null>(null);
+  const [reminderMessage, setReminderMessage] = useState<{
+    success: boolean;
+    text: string;
+  } | null>(null);
   const [pendingChannel, setPendingChannel] = useState<string | null>(null);
+  const [pendingReminder, setPendingReminder] = useState<string | null>(null);
   const [isChannelPending, startChannelTransition] = useTransition();
+  const [isReminderPending, startReminderTransition] = useTransition();
 
   function formatDate(iso: string) {
     return new Date(iso).toLocaleDateString("en-US", {
@@ -1112,7 +1166,40 @@ function LegacyTab({
     );
   }
 
+  function isAccountingReminderKey(value: string): value is AccountingReminderKey {
+    return value in ACCOUNTING_REMINDER_META;
+  }
+
+  function isAccountingReminderSetting(setting: LegacyNotificationSettingRow) {
+    return (
+      ["login_settings", "login_settings_man"].includes(setting.legacyTable) &&
+      isAccountingReminderKey(setting.settingKey)
+    );
+  }
+
+  function accountingReminderValue(setting: LegacyNotificationSettingRow) {
+    return setting.settingValue?.trim() || "1";
+  }
+
+  function accountingReminderOptions(setting: LegacyNotificationSettingRow) {
+    const key = setting.settingKey;
+    if (!isAccountingReminderKey(key)) return [];
+    const value = accountingReminderValue(setting);
+    const base = ACCOUNTING_REMINDER_META[key].options;
+    if (base.some((option) => option.value === value)) return base;
+    return [...base, { value, label: `${value} Day${value === "1" ? "" : "s"}` }];
+  }
+
   const channelSettings = legacySettings.filter(hasChannelMatrix);
+  const accountingReminderSettings = legacySettings
+    .filter(isAccountingReminderSetting)
+    .sort((a, b) => {
+      const sourceCompare = a.sourceDatabase.localeCompare(b.sourceDatabase);
+      if (sourceCompare !== 0) return sourceCompare;
+      const tableCompare = a.legacyTable.localeCompare(b.legacyTable);
+      if (tableCompare !== 0) return tableCompare;
+      return a.settingKey.localeCompare(b.settingKey);
+    });
 
   function handleChannelToggle(
     setting: LegacyNotificationSettingRow,
@@ -1143,6 +1230,43 @@ function LegacyTab({
         });
       }
       setPendingChannel(null);
+    });
+  }
+
+  function handleAccountingReminderChange(
+    setting: LegacyNotificationSettingRow,
+    value: string,
+  ) {
+    const key = setting.settingKey;
+    if (
+      !isAccountingReminderKey(key) ||
+      !ACCOUNTING_REMINDER_META[key].editable
+    ) {
+      return;
+    }
+
+    setPendingReminder(setting.id);
+    setReminderMessage(null);
+    startReminderTransition(async () => {
+      const result = await updateLegacyAccountingReminderSetting(
+        setting.id,
+        value,
+      );
+      if (result.success && result.data) {
+        setLegacySettings((prev) =>
+          prev.map((row) => (row.id === result.data!.id ? result.data! : row)),
+        );
+        setReminderMessage({
+          success: true,
+          text: "Legacy accounting reminder updated.",
+        });
+      } else {
+        setReminderMessage({
+          success: false,
+          text: result.error ?? "Legacy accounting reminder update failed.",
+        });
+      }
+      setPendingReminder(null);
     });
   }
 
@@ -1185,6 +1309,128 @@ function LegacyTab({
           </div>
         </div>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <DollarSign className="size-4 text-amber-600" />
+            Accounting Reminder Days
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="overflow-x-auto rounded-md border">
+            <Table className="min-w-[900px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="bg-secondary/40 px-4 py-3 text-xs font-medium uppercase text-muted-foreground">
+                    Source
+                  </TableHead>
+                  <TableHead className="bg-secondary/40 px-4 py-3 text-xs font-medium uppercase text-muted-foreground">
+                    Table
+                  </TableHead>
+                  <TableHead className="bg-secondary/40 px-4 py-3 text-xs font-medium uppercase text-muted-foreground">
+                    Reminder
+                  </TableHead>
+                  <TableHead className="bg-secondary/40 px-4 py-3 text-xs font-medium uppercase text-muted-foreground">
+                    Days
+                  </TableHead>
+                  <TableHead className="bg-secondary/40 px-4 py-3 text-xs font-medium uppercase text-muted-foreground">
+                    Legacy Key
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {accountingReminderSettings.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      className="h-24 text-center text-muted-foreground"
+                    >
+                      No legacy accounting reminder settings found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  accountingReminderSettings.map((setting) => {
+                    const key = setting.settingKey;
+                    if (!isAccountingReminderKey(key)) return null;
+                    const meta = ACCOUNTING_REMINDER_META[key];
+                    const value = accountingReminderValue(setting);
+                    const options = accountingReminderOptions(setting);
+                    const pending = pendingReminder === setting.id;
+
+                    return (
+                      <TableRow key={`accounting-reminder-${setting.id}`}>
+                        <TableCell className="px-4 py-3 text-xs text-muted-foreground">
+                          {setting.sourceDatabase}
+                        </TableCell>
+                        <TableCell className="px-4 py-3">
+                          <Badge variant="outline" className="font-mono text-xs">
+                            {setting.legacyTable}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="px-4 py-3">
+                          <div className="text-sm font-medium">{meta.label}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {meta.description}
+                          </div>
+                        </TableCell>
+                        <TableCell className="px-4 py-3">
+                          {meta.editable ? (
+                            <Select
+                              value={value}
+                              onValueChange={(nextValue) =>
+                                handleAccountingReminderChange(
+                                  setting,
+                                  nextValue,
+                                )
+                              }
+                              disabled={isReminderPending && pending}
+                            >
+                              <SelectTrigger className="h-9 w-36">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {options.map((option) => (
+                                  <SelectItem
+                                    key={`${setting.id}-${option.value}`}
+                                    value={option.value}
+                                  >
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary">
+                                {options.find((option) => option.value === value)
+                                  ?.label ?? shortValue(value)}
+                              </Badge>
+                              <Badge variant="outline">Locked</Badge>
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell className="px-4 py-3">
+                          <code className="text-xs">{setting.settingKey}</code>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          {reminderMessage && (
+            <p
+              className={`text-xs ${
+                reminderMessage.success ? "text-emerald-600" : "text-red-600"
+              }`}
+            >
+              {reminderMessage.text}
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

@@ -22,10 +22,22 @@ import { getLegacySystemActionPermissions } from "@/lib/legacy-system-action-per
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 
+function isExpiredIsoDate(value: string | null | undefined) {
+  return Boolean(value) && Date.parse(value as string) <= Date.now()
+}
+
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
   const requestHeaders = await headers()
   const currentPathname = requestHeaders.get("x-current-pathname")
+  const legacySessionExpiresAt = session?.user?.legacySessionExpiresAt
+  const legacySessionExpired = isExpiredIsoDate(legacySessionExpiresAt)
+
+  if (!session?.user?.id || legacySessionExpired) {
+    const callbackPath = currentPathname && currentPathname !== "/" ? currentPathname : "/dashboard"
+    redirect(`/login?callbackUrl=${encodeURIComponent(callbackPath)}`)
+  }
+
   const guardedLegacyPage = getLegacyPageNameForPath(currentPathname)
   let orgId = session?.user?.organizationId ?? null
 

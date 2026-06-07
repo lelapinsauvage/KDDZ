@@ -1136,6 +1136,91 @@ export async function updateLegacyNotificationChannelSetting(
 }
 
 // ---------------------------------------------------------------------------
+// updateLegacyAccountingReminderSetting
+// ---------------------------------------------------------------------------
+
+type LegacyAccountingReminderSettingKey =
+  | "account-remind-before"
+  | "account-remind-after";
+
+const LEGACY_ACCOUNTING_REMINDER_OPTIONS: Record<
+  LegacyAccountingReminderSettingKey,
+  Set<string>
+> = {
+  "account-remind-before": new Set(["1", "3", "7"]),
+  "account-remind-after": new Set(["1", "3", "7", "10", "15"]),
+};
+
+function isLegacyAccountingReminderSettingKey(
+  value: string,
+): value is LegacyAccountingReminderSettingKey {
+  return value in LEGACY_ACCOUNTING_REMINDER_OPTIONS;
+}
+
+export async function updateLegacyAccountingReminderSetting(
+  id: string,
+  value: string,
+): Promise<ActionResult<LegacyNotificationSettingRow>> {
+  try {
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+
+    const normalizedValue = value.trim();
+    const setting = await db.legacySetting.findUnique({ where: { id } });
+    if (
+      !setting ||
+      !["login_settings", "login_settings_man"].includes(setting.legacyTable) ||
+      !isLegacyAccountingReminderSettingKey(setting.settingKey)
+    ) {
+      return { success: false, error: "Legacy accounting reminder not found" };
+    }
+
+    if (
+      !LEGACY_ACCOUNTING_REMINDER_OPTIONS[setting.settingKey].has(normalizedValue)
+    ) {
+      return { success: false, error: "Unsupported legacy reminder day value" };
+    }
+
+    const updated = await db.legacySetting.update({
+      where: { id },
+      data: {
+        settingValue: normalizedValue,
+        legacyData: {
+          ...jsonRecord(setting.legacyData),
+          option_name: setting.settingKey,
+          option_value: normalizedValue,
+          updated_from: "modern_legacy_accounting_reminders",
+        },
+      },
+    });
+
+    revalidatePath("/settings/notifications");
+    revalidatePath("/alarms/payments");
+
+    return {
+      success: true,
+      data: {
+        id: updated.id,
+        sourceDatabase: updated.sourceDatabase,
+        legacyTable: updated.legacyTable,
+        legacyId: updated.legacyId,
+        scope: updated.scope,
+        settingKey: updated.settingKey,
+        settingValue: updated.settingValue,
+        description: updated.description,
+        legacyData: updated.legacyData,
+      },
+    };
+  } catch (error) {
+    console.error("Failed to update legacy accounting reminder:", error);
+    return {
+      success: false,
+      error: "Failed to update legacy accounting reminder",
+    };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // getLegacyNotificationNatures
 // ---------------------------------------------------------------------------
 
