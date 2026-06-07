@@ -161,6 +161,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - Teacher add/update/delete ACTION guards now hide teacher Add/Edit/Delete and bulk-deactivate controls, hide the detail Edit Profile action, protect `/employees/teachers/new` and `/employees/teachers/[id]/edit`, and deny direct create/update/deactivate mutations when imported `actions_control*` grants deny `addTeacher`, `updateTeacher`, or `deleteTeacher`.
    - Nursery compliance `Upnurseryinfo` ACTION guards now hide `/settings/nursery` and branch-compliance save/upload controls, deny direct compliance/document/nursery-settings server actions, and block compliance-document presign/local uploads when the imported action catalogue denies the legacy grant.
    - Holiday calendar `AddEditHolidays` ACTION guards now hide holiday add/edit/delete and calendar-cell create controls, and deny direct create/update/delete holiday server mutations when the imported action catalogue denies the legacy grant.
+   - Food calendar `AddFoodToCalendar`, `EditFoodCalendar`, and `FoodAllBranches` ACTION guards now hide blank-day create, existing-day edit/clear, and All Branches controls, and deny direct food-calendar mutations according to the current target day/branch state when the imported action catalogue denies the matching legacy grant.
    - Remaining work is expanding this grant bridge into the other ACTION families and deciding whether to hydrate grant snapshots into sessions.
 
 ## Execution Order

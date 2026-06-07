@@ -1,5 +1,7 @@
 import { getFoodCalendarMonth, getFoods } from "@/lib/actions/food";
 import { getBranches } from "@/lib/actions/branches";
+import { getLegacyFoodCalendarActionPermissions } from "@/lib/legacy-food-calendar-action-permissions";
+import { requireOrgSafe } from "@/lib/require-org";
 import { FoodCalendarClient } from "./food-calendar-client";
 
 interface PageProps {
@@ -20,6 +22,14 @@ function parseYear(value?: string) {
 
 export default async function FoodCalendarPage({ searchParams }: PageProps) {
   const params = await searchParams;
+  const orgResult = await requireOrgSafe();
+  const foodCalendarPermissions = orgResult.ok
+    ? await getLegacyFoodCalendarActionPermissions(orgResult.ctx)
+    : {
+        canAddFoodToCalendar: false,
+        canEditFoodCalendar: false,
+        canApplyFoodAllBranches: false,
+      };
   const branchesResult = await getBranches();
   const branches = (branchesResult.data ?? []) as Array<{
     id: string;
@@ -82,6 +92,7 @@ export default async function FoodCalendarPage({ searchParams }: PageProps) {
       initialMonth={month}
       initialCalendar={serializedCalendar}
       foods={serializedFoods}
+      permissions={foodCalendarPermissions}
     />
   );
 }

@@ -2,7 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
+import { requireLegacyActionAllowed } from "@/lib/legacy-action-permissions";
 import { requireOrg, requireOrgSafe } from "@/lib/require-org";
+import type { OrgContext } from "@/lib/require-org";
 import { verifyBranchAccess } from "@/lib/verify-org-access";
 import type { FoodCategory, MealType, Prisma } from "@/generated/prisma/client";
 
@@ -78,6 +80,13 @@ interface FoodCalendarEntry {
 }
 
 const VALID_MEAL_TYPES: MealType[] = ["BREAKFAST", "LUNCH", "DESSERT", "SNACK"];
+
+async function requireFoodCalendarAction(
+  ctx: OrgContext,
+  actionName: "AddFoodToCalendar" | "EditFoodCalendar" | "FoodAllBranches",
+) {
+  return requireLegacyActionAllowed(ctx, actionName);
+}
 
 // ─────────────────────────────────────────────
 // getFoods — List food items
@@ -378,12 +387,27 @@ export async function setFoodCalendarEntry(input: SetFoodCalendarEntryData) {
       return { error: "Branch not found" };
     }
 
+    const dateObj = new Date(input.date);
+    const existing = await db.foodCalendar.findUnique({
+      where: {
+        branchId_date_mealType: {
+          branchId: input.branchId,
+          date: dateObj,
+          mealType: input.mealType,
+        },
+      },
+      select: { id: true },
+    });
+    const permission = await requireFoodCalendarAction(
+      ctx,
+      existing ? "EditFoodCalendar" : "AddFoodToCalendar",
+    );
+    if (!permission.ok) return { error: permission.error };
+
     const food = await db.food.findUnique({ where: { id: input.foodId } });
     if (!food || food.organizationId !== ctx.organizationId) {
       return { error: "Food item not found" };
     }
-
-    const dateObj = new Date(input.date);
 
     const entry = await db.foodCalendar.upsert({
       where: {
@@ -461,6 +485,11 @@ export async function setFoodCalendarDay(input: SetFoodCalendarDayData) {
       }
     }
 
+    if (input.applyToAllBranches) {
+      const permission = await requireFoodCalendarAction(ctx, "FoodAllBranches");
+      if (!permission.ok) return { error: permission.error };
+    }
+
     const targetBranchIds = input.applyToAllBranches
       ? (
           await db.branch.findMany({
@@ -469,6 +498,18 @@ export async function setFoodCalendarDay(input: SetFoodCalendarDayData) {
           })
         ).map((branch) => branch.id)
       : [input.branchId];
+
+    const existingCount = await db.foodCalendar.count({
+      where: {
+        branchId: { in: targetBranchIds },
+        date: dateObj,
+      },
+    });
+    const permission = await requireFoodCalendarAction(
+      ctx,
+      existingCount > 0 ? "EditFoodCalendar" : "AddFoodToCalendar",
+    );
+    if (!permission.ok) return { error: permission.error };
 
     await db.$transaction(async (tx) => {
       for (const meal of meals) {
@@ -536,6 +577,9 @@ export async function deleteFoodCalendarEntry(id: string) {
     if (existing.branch.organizationId !== ctx.organizationId) {
       return { error: "Food calendar entry not found" };
     }
+
+    const permission = await requireFoodCalendarAction(ctx, "EditFoodCalendar");
+    if (!permission.ok) return { error: permission.error };
 
     await db.foodCalendar.delete({ where: { id } });
 

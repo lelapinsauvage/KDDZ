@@ -214,6 +214,11 @@ interface FoodCalendarClientProps {
   initialMonth: number;
   initialCalendar: CalendarData;
   foods: FoodOption[];
+  permissions?: {
+    canAddFoodToCalendar: boolean;
+    canEditFoodCalendar: boolean;
+    canApplyFoodAllBranches: boolean;
+  };
 }
 
 // ── Page Component ──────────────────────────────
@@ -224,6 +229,11 @@ export function FoodCalendarClient({
   initialMonth,
   initialCalendar,
   foods,
+  permissions = {
+    canAddFoodToCalendar: true,
+    canEditFoodCalendar: true,
+    canApplyFoodAllBranches: true,
+  },
 }: FoodCalendarClientProps) {
   const [year, setYear] = useState(initialYear);
   const [month, setMonth] = useState(initialMonth);
@@ -337,8 +347,16 @@ export function FoodCalendarClient({
   const openDayDialog = useCallback(
     (day: number) => {
       const dateKey = toISODate(year, month, day);
-      setSelectedDate(dateKey);
       const dayData = calendar[dateKey] ?? {};
+      const hasMeals = Object.keys(dayData).length > 0;
+      const canOpen = hasMeals
+        ? permissions.canEditFoodCalendar
+        : permissions.canAddFoodToCalendar;
+      if (!canOpen) {
+        toast.error("Access denied");
+        return;
+      }
+      setSelectedDate(dateKey);
       setDialogBreakfast(dayData["BREAKFAST"]?.foodId ?? "NONE");
       setDialogLunch(dayData["LUNCH"]?.foodId ?? "NONE");
       setDialogSnack(dayData["SNACK"]?.foodId ?? "NONE");
@@ -346,7 +364,7 @@ export function FoodCalendarClient({
       setApplyTarget("branch");
       setDialogOpen(true);
     },
-    [year, month, calendar]
+    [year, month, calendar, permissions]
   );
 
   const selectedDateHasMeals = Boolean(
@@ -356,6 +374,18 @@ export function FoodCalendarClient({
   // Save day assignment
   const handleSaveDay = useCallback(() => {
     if (!branch || !selectedDate) return;
+    if (selectedDateHasMeals && !permissions.canEditFoodCalendar) {
+      toast.error("Access denied");
+      return;
+    }
+    if (!selectedDateHasMeals && !permissions.canAddFoodToCalendar) {
+      toast.error("Access denied");
+      return;
+    }
+    if (applyTarget === "all" && !permissions.canApplyFoodAllBranches) {
+      toast.error("Access denied");
+      return;
+    }
 
     startTransition(async () => {
       const mealSelections: { mealType: MealType; foodId: string | null }[] = [
@@ -401,11 +431,16 @@ export function FoodCalendarClient({
     month,
     fetchCalendar,
     startTransition,
+    permissions,
   ]);
 
   // Clear all meals for the selected day
   const handleClearDay = useCallback(() => {
     if (!branch || !selectedDate) return;
+    if (!permissions.canEditFoodCalendar) {
+      toast.error("Access denied");
+      return;
+    }
 
     startTransition(async () => {
       const dayData = calendar[selectedDate] ?? {};
@@ -418,7 +453,7 @@ export function FoodCalendarClient({
       setDialogOpen(false);
       toast.success("Day cleared");
     });
-  }, [branch, selectedDate, calendar, year, month, fetchCalendar, startTransition]);
+  }, [branch, selectedDate, calendar, year, month, fetchCalendar, startTransition, permissions]);
 
   // Foods filtered by category for combobox options
   const foodsByCategory = useMemo(() => {
@@ -580,6 +615,9 @@ export function FoodCalendarClient({
                           const dateKey = toISODate(year, month, day);
                           const dayData = calendar[dateKey] ?? {};
                           const hasMeals = Object.keys(dayData).length > 0;
+                          const canOpenDay = hasMeals
+                            ? permissions.canEditFoodCalendar
+                            : permissions.canAddFoodToCalendar;
                           const isWeekend = dayIdx === 0 || dayIdx === 6;
                           const now = new Date();
                           const isToday =
@@ -591,11 +629,14 @@ export function FoodCalendarClient({
                             <td
                               key={dayIdx}
                               className={cn(
-                                "border-b border-r last:border-r-0 p-1.5 align-top h-[120px] cursor-pointer transition-colors hover:bg-primary/5 group",
+                                "border-b border-r last:border-r-0 p-1.5 align-top h-[120px] transition-colors group",
+                                canOpenDay && "cursor-pointer hover:bg-primary/5",
                                 isWeekend && !hasMeals && "bg-muted/10",
                                 isToday && "ring-2 ring-inset ring-primary/40"
                               )}
-                              onClick={() => openDayDialog(day)}
+                              onClick={() => {
+                                if (canOpenDay) openDayDialog(day);
+                              }}
                             >
                               <div className="flex items-start justify-between mb-1.5">
                                 <span
@@ -608,7 +649,7 @@ export function FoodCalendarClient({
                                 >
                                   {day}
                                 </span>
-                                {!hasMeals && (
+                                {canOpenDay && !hasMeals && (
                                   <span className="flex size-5 items-center justify-center rounded-full border border-dashed border-muted-foreground/30 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <Plus className="size-3" />
                                   </span>
@@ -663,9 +704,11 @@ export function FoodCalendarClient({
               </span>
             );
           })}
-          <span className="ml-2 text-muted-foreground">
-            Click a day to assign meals
-          </span>
+          {permissions.canAddFoodToCalendar || permissions.canEditFoodCalendar ? (
+            <span className="ml-2 text-muted-foreground">
+              Click a day to assign meals
+            </span>
+          ) : null}
         </div>
       </div>
 
@@ -745,7 +788,7 @@ export function FoodCalendarClient({
               />
             </div>
 
-            {!selectedDateHasMeals && branches.length > 1 && (
+            {!selectedDateHasMeals && branches.length > 1 && permissions.canApplyFoodAllBranches && (
               <fieldset className="space-y-2 rounded-sm border p-3">
                 <legend className="px-1 text-sm font-medium">Apply To</legend>
                 <div className="flex flex-col gap-2 sm:flex-row">
@@ -775,7 +818,7 @@ export function FoodCalendarClient({
           </div>
 
           <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">
-            {selectedDateHasMeals && (
+            {selectedDateHasMeals && permissions.canEditFoodCalendar && (
               <Button
                 variant="destructive"
                 onClick={handleClearDay}

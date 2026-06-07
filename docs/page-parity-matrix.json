@@ -16230,16 +16230,20 @@
     "legacyPhp": "Front/templates/admin/food_calendar.php",
     "legacyJs": "Front/templates/admin/js/food_calendar.js",
     "modernRoute": "/food_calendar.php, /food/calendar",
-    "status": "partial - legacy food calendar bridge, query state, print handoff, and all-branch apply restored; meal/action audit remains",
+    "status": "partial - legacy food calendar bridge, query state, print handoff, all-branch apply, and action guards restored; meal audit remains",
     "legacyTablesMentioned": [
       "BreakFast",
       "auto",
-      "themeforest"
+      "themeforest",
+      "actions_control",
+      "actions_control_man",
+      "system_actions",
+      "system_actions_man"
     ],
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "`/food_calendar.php?id=`/`brid=` now resolves raw numeric, UUID, and encrypted legacy branch ids into `/food/calendar?branch=...`, the modern page initializes and keeps branch/month/year query state as the user navigates, the Print action opens the visible branch/month/year like legacy `food_calendar.js`, and blank-day saves can apply Breakfast/Lunch/Snack/Dessert to This Branch or All Branches. Remaining work is exact FullCalendar visual behavior, legacy Early Dinner schema support, and permission-gated action visibility parity."
+    "verification": "`/food_calendar.php?id=`/`brid=` now resolves raw numeric, UUID, and encrypted legacy branch ids into `/food/calendar?branch=...`, the modern page initializes and keeps branch/month/year query state as the user navigates, the Print action opens the visible branch/month/year like legacy `food_calendar.js`, and blank-day saves can apply Breakfast/Lunch/Snack/Dessert to This Branch or All Branches. The legacy `AddFoodToCalendar`, `EditFoodCalendar`, and `FoodAllBranches` ACTION grants now hide blank-day create, existing-day edit/clear, and All Branches controls respectively, and direct food-calendar writes enforce add/edit/all-branch grants by current target state when the imported action catalogue is configured and not granted. Remaining work is exact FullCalendar visual behavior and legacy Early Dinner schema support."
   },
   {
     "legacyPhp": "Front/templates/admin/forbidden.php",
