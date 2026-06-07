@@ -2,11 +2,14 @@
   {
     "legacyPhp": "Front/templates/admin/AlarmBar.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
-    "legacyTablesMentioned": [],
+    "modernRoute": "/logout.php, /users/logout.php",
+    "status": "restored - legacy logout endpoint restored through shared PHP aliases",
+    "legacyTablesMentioned": [
+      "login_settings",
+      "login_settings_man"
+    ],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/logout.php` and `/users/logout.php` now clear the Auth.js session through the server sign-out path and preserve the legacy redirect decision: same-origin referrer when `signout-redirect-referrer-enable` is enabled, otherwise migrated `signout-redirect-url`, with unsafe/empty targets falling back to `/login`."
   },
   {
     "legacyPhp": "Front/templates/admin/Areas.php",
@@ -716,11 +719,14 @@
   {
     "legacyPhp": "Front/templates/admin/assets/plugins/ckeditor/samples/assets/posteddata.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
-    "legacyTablesMentioned": [],
+    "modernRoute": "/logout.php, /users/logout.php",
+    "status": "restored - legacy logout endpoint restored",
+    "legacyTablesMentioned": [
+      "login_settings",
+      "login_settings_man"
+    ],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/logout.php` and `/users/logout.php` now clear the Auth.js session through the server sign-out path and preserve the legacy redirect decision: same-origin referrer when `signout-redirect-referrer-enable` is enabled, otherwise migrated `signout-redirect-url`, with unsafe/empty targets falling back to `/login`."
   },
   {
     "legacyPhp": "Front/templates/admin/assets/plugins/ckeditor/samples/sample_posteddata.php",
