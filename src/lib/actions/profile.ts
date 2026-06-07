@@ -79,6 +79,15 @@ export type LegacyProfileConfirmationResult = {
   message: string;
 };
 
+export type LegacyPublicProfileData = {
+  username: string;
+  name: string;
+  email: string;
+  sourceDatabase: string;
+  legacyUserId: number;
+  profileFields: LegacyProfileFieldValue[];
+};
+
 function legacyObject(value: unknown): Prisma.InputJsonObject {
   if (value && typeof value === "object" && !Array.isArray(value)) {
     return value as Prisma.InputJsonObject;
@@ -710,6 +719,72 @@ export async function getCurrentLegacyProfile(): Promise<
     })),
     integrations,
   };
+}
+
+export async function getPublicLegacyProfile(
+  uid: string | number,
+): Promise<ActionResult<LegacyPublicProfileData>> {
+  const legacyUserId =
+    typeof uid === "number" ? uid : Number.parseInt(String(uid), 10);
+  if (!Number.isInteger(legacyUserId) || legacyUserId <= 0) {
+    return { success: false, error: "Sorry, that user does not exist." };
+  }
+
+  try {
+    const record = await db.legacyAuthRecord.findFirst({
+      where: {
+        recordType: "login_user",
+        OR: [{ legacyUserId }, { legacyId: legacyUserId }],
+      },
+      orderBy: [{ sourceDatabase: "desc" }, { legacyId: "desc" }],
+      select: {
+        sourceDatabase: true,
+        legacyId: true,
+        legacyUserId: true,
+        username: true,
+        email: true,
+        recordKey: true,
+        legacyData: true,
+      },
+    });
+
+    if (!record) {
+      return { success: false, error: "Sorry, that user does not exist." };
+    }
+
+    const settings = await legacySettings(record.sourceDatabase, [
+      "profile-public-enable",
+    ]);
+    if (!boolSetting(settings.get("profile-public-enable"))) {
+      return { success: false, error: "This profile is private." };
+    }
+
+    const resolvedLegacyUserId = record.legacyUserId ?? record.legacyId;
+    const profileFields = await buildLegacyProfileFields({
+      sourceDatabase: record.sourceDatabase,
+      recordType: "login_user",
+      legacyUserId: resolvedLegacyUserId,
+    });
+
+    return {
+      success: true,
+      data: {
+        username:
+          record.username ||
+          record.recordKey ||
+          legacyString(record.legacyData, "username") ||
+          `User ${resolvedLegacyUserId}`,
+        name: legacyString(record.legacyData, "name") || "Unnamed",
+        email: record.email || legacyString(record.legacyData, "email") || "",
+        sourceDatabase: record.sourceDatabase,
+        legacyUserId: resolvedLegacyUserId,
+        profileFields,
+      },
+    };
+  } catch (error) {
+    console.error("getPublicLegacyProfile error:", error);
+    return { success: false, error: "Unable to load public profile." };
+  }
 }
 
 export async function updateCurrentUserLegacyProfile(

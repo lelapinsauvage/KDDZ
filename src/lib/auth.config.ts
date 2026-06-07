@@ -43,6 +43,8 @@ export const authConfig = {
         pathname === "/signup" ||
         pathname === "/sign_up.php" ||
         pathname === "/users/sign_up.php" ||
+        pathname === "/profile.php" ||
+        pathname === "/users/profile.php" ||
         pathname === "/activate.php" ||
         pathname === "/users/activate.php" ||
         isParentPortal ||
