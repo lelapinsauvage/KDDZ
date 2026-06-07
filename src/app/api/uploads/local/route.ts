@@ -9,6 +9,7 @@ import {
   normalizeStorageKey,
   resolveLocalObjectPath,
 } from "@/lib/storage/object-storage";
+import { requireLegacyActionAllowed } from "@/lib/legacy-action-permissions";
 import { requireOrgSafe } from "@/lib/require-org";
 import { verifyBranchAccess } from "@/lib/verify-org-access";
 
@@ -45,6 +46,12 @@ function keyBelongsToBranch(params: {
     parts[uploadsIndex + 1] === params.organizationId &&
     parts[uploadsIndex + 2] === params.branchId
   );
+}
+
+function uploadScopeFromKey(key: string): string | null {
+  const parts = normalizeStorageKey(key).split("/");
+  const uploadsIndex = parts.lastIndexOf("uploads");
+  return uploadsIndex >= 0 ? parts[uploadsIndex + 3] ?? null : null;
 }
 
 export async function PUT(request: NextRequest) {
@@ -84,6 +91,11 @@ export async function PUT(request: NextRequest) {
     })
   ) {
     return jsonError("Upload key is outside the authorized branch", 403);
+  }
+
+  if (uploadScopeFromKey(key) === "compliance-document") {
+    const permission = await requireLegacyActionAllowed(auth.ctx, "Upnurseryinfo");
+    if (!permission.ok) return jsonError(permission.error, 403);
   }
 
   let storage;

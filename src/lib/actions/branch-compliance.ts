@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
+import { requireLegacyActionAllowed } from "@/lib/legacy-action-permissions";
 import { requireOrg, requireOrgSafe } from "@/lib/require-org";
 import { verifyBranchAccess } from "@/lib/verify-org-access";
 import { calculateCompletionPercentage } from "@/lib/validations/branch";
@@ -46,6 +47,9 @@ export async function upsertCompliance(
     const res = await requireOrgSafe();
     if (!res.ok) return { success: false, error: res.error };
     const { organizationId: orgId } = res.ctx;
+
+    const permission = await requireLegacyActionAllowed(res.ctx, "Upnurseryinfo");
+    if (!permission.ok) return { success: false, error: permission.error };
 
     if (!(await verifyBranchAccess(branchId, orgId))) {
       return { success: false, error: "Branch not found in organization" };
@@ -141,8 +145,21 @@ export async function upsertDocument(
     if (!res.ok) return { success: false, error: res.error };
     const { organizationId: orgId } = res.ctx;
 
+    const permission = await requireLegacyActionAllowed(res.ctx, "Upnurseryinfo");
+    if (!permission.ok) return { success: false, error: permission.error };
+
     if (!(await verifyBranchAccess(branchId, orgId))) {
       return { success: false, error: "Branch not found in organization" };
+    }
+
+    if (data.id) {
+      const existing = await db.branchDocument.findUnique({
+        where: { id: data.id },
+        select: { branchId: true },
+      });
+      if (!existing || existing.branchId !== branchId) {
+        return { success: false, error: "Document not found in branch" };
+      }
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

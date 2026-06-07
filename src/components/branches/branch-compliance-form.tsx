@@ -55,6 +55,7 @@ interface Props {
   initialData?: Record<string, any> | null;
   staff?: StaffMember[];
   documents?: ComplianceDocument[];
+  canUpdateNurseryInfo?: boolean;
 }
 
 const SECTION_KEYS = complianceSections.map((s) => s.id);
@@ -66,6 +67,7 @@ export function BranchComplianceForm({
   initialData,
   staff = [],
   documents = [],
+  canUpdateNurseryInfo = true,
 }: Props) {
   const [isPending, startTransition] = useTransition();
   const [activeTab, setActiveTab] = useState(SECTION_KEYS[0]);
@@ -138,6 +140,10 @@ export function BranchComplianceForm({
   );
 
   function onSubmit(data: BranchComplianceFormValues) {
+    if (!canUpdateNurseryInfo) {
+      toast.error("Access denied");
+      return;
+    }
     startTransition(async () => {
       const result = await upsertCompliance(branchId, data as Record<string, unknown>);
       if (result.success) {
@@ -237,11 +243,12 @@ export function BranchComplianceForm({
             </ul>
           </div>
 
-          {/* Save button */}
-          <Button type="submit" disabled={isPending} className="w-full">
-            <Save className="size-4" />
-            {isPending ? "جارٍ الحفظ..." : "حفظ البيانات"}
-          </Button>
+          {canUpdateNurseryInfo ? (
+            <Button type="submit" disabled={isPending} className="w-full">
+              <Save className="size-4" />
+              {isPending ? "جارٍ الحفظ..." : "حفظ البيانات"}
+            </Button>
+          ) : null}
         </div>
 
         {/* Right: Active section content */}
@@ -274,7 +281,11 @@ export function BranchComplianceForm({
             <StaffComplianceSection staff={staff} />
           )}
           {activeTab === "ministry-attachments" && (
-            <MinistryAttachmentsSection branchId={branchId} documents={documents} />
+            <MinistryAttachmentsSection
+              branchId={branchId}
+              documents={documents}
+              canUpdate={canUpdateNurseryInfo}
+            />
           )}
 
           {/* Navigation buttons */}
@@ -300,12 +311,12 @@ export function BranchComplianceForm({
               >
                 التالي
               </Button>
-            ) : (
+            ) : canUpdateNurseryInfo ? (
               <Button type="submit" disabled={isPending}>
                 <Save className="size-4" />
                 {isPending ? "جارٍ الحفظ..." : "حفظ البيانات"}
               </Button>
-            )}
+            ) : null}
           </div>
         </div>
       </div>

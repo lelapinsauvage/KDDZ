@@ -2,6 +2,8 @@ import { auth } from "@/lib/auth";
 import { getSettings, getRegions } from "@/lib/actions/settings";
 import { getBranch, getBranches } from "@/lib/actions/branches";
 import { getCompliance, getDocuments, getStaffForCompliance } from "@/lib/actions/branch-compliance";
+import { getLegacyNurseryActionPermissions } from "@/lib/legacy-nursery-action-permissions";
+import { requireOrgSafe } from "@/lib/require-org";
 import { PageHeader } from "@/components/layout/page-header";
 import { BranchComplianceForm } from "@/components/branches/branch-compliance-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,6 +16,10 @@ interface PageProps {
 export default async function NurseryInfoPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const session = await auth();
+  const orgResult = await requireOrgSafe();
+  const nurseryPermissions = orgResult.ok
+    ? await getLegacyNurseryActionPermissions(orgResult.ctx)
+    : { canUpdateNurseryInfo: false };
   const userBranchId = session?.user?.branchId ?? null;
 
   // If user has no branch, try to get first branch
@@ -84,6 +90,7 @@ export default async function NurseryInfoPage({ searchParams }: PageProps) {
               initialData={compliance}
               staff={staff}
               documents={documents}
+              canUpdateNurseryInfo={nurseryPermissions.canUpdateNurseryInfo}
             />
           ) : (
             <div className="p-4 md:p-6">
@@ -99,6 +106,7 @@ export default async function NurseryInfoPage({ searchParams }: PageProps) {
             initialSettings={settings}
             provinces={provinces}
             showHeader={false}
+            canUpdateNurseryInfo={nurseryPermissions.canUpdateNurseryInfo}
           />
         </TabsContent>
       </Tabs>

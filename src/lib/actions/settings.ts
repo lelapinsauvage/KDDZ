@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
+import { requireLegacyActionAllowed } from "@/lib/legacy-action-permissions";
 import { requireOrg, requireOrgSafe } from "@/lib/require-org";
 import { verifyBranchAccess } from "@/lib/verify-org-access";
 import {
@@ -198,6 +199,9 @@ export async function updateNurserySettings(
     const result = await requireOrgSafe();
     if (!result.ok) return { success: false, error: result.error };
     const { ctx } = result;
+
+    const permission = await requireLegacyActionAllowed(ctx, "Upnurseryinfo");
+    if (!permission.ok) return { success: false, error: permission.error };
 
     if (!(await verifyBranchAccess(branchId, ctx.organizationId))) {
       return { success: false, error: "Branch not found in your organization" };

@@ -11,6 +11,7 @@ import {
   objectKeyForStorageKey,
   publicUrlForObjectKey,
 } from "@/lib/storage/object-storage";
+import { requireLegacyActionAllowed } from "@/lib/legacy-action-permissions";
 import { requireOrgSafe } from "@/lib/require-org";
 import { verifyBranchAccess } from "@/lib/verify-org-access";
 
@@ -114,6 +115,11 @@ export async function POST(request: NextRequest) {
 
   if (!(await verifyBranchAccess(branchId, auth.ctx.organizationId))) {
     return jsonError("Branch not found in organization", 403);
+  }
+
+  if (scope === "compliance-document") {
+    const permission = await requireLegacyActionAllowed(auth.ctx, "Upnurseryinfo");
+    if (!permission.ok) return jsonError(permission.error, 403);
   }
 
   let storage;

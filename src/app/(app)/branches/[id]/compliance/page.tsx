@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { getBranch } from "@/lib/actions/branches";
 import { getCompliance, getDocuments, getStaffForCompliance } from "@/lib/actions/branch-compliance";
+import { getLegacyNurseryActionPermissions } from "@/lib/legacy-nursery-action-permissions";
+import { requireOrgSafe } from "@/lib/require-org";
 import { BranchComplianceForm } from "@/components/branches/branch-compliance-form";
 
 interface Props {
@@ -9,6 +11,10 @@ interface Props {
 
 export default async function BranchCompliancePage({ params }: Props) {
   const { id } = await params;
+  const orgResult = await requireOrgSafe();
+  const nurseryPermissions = orgResult.ok
+    ? await getLegacyNurseryActionPermissions(orgResult.ctx)
+    : { canUpdateNurseryInfo: false };
 
   const [branchResult, complianceResult, docsResult, staffResult] = await Promise.all([
     getBranch(id),
@@ -38,6 +44,7 @@ export default async function BranchCompliancePage({ params }: Props) {
       initialData={compliance}
       staff={staff}
       documents={documents}
+      canUpdateNurseryInfo={nurseryPermissions.canUpdateNurseryInfo}
     />
   );
 }

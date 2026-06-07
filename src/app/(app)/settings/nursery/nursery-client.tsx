@@ -72,6 +72,7 @@ interface NurseryClientProps {
   initialSettings: Record<string, string>;
   provinces: Province[];
   showHeader?: boolean;
+  canUpdateNurseryInfo?: boolean;
 }
 
 function parseJsonArray(value: string | undefined): string[] {
@@ -87,6 +88,7 @@ export default function NurseryClient({
   initialSettings,
   provinces,
   showHeader = true,
+  canUpdateNurseryInfo = true,
 }: NurseryClientProps) {
   const [isPending, startTransition] = useTransition();
 
@@ -175,6 +177,10 @@ export default function NurseryClient({
   }
 
   function onSubmit(values: NurserySettingsValues) {
+    if (!canUpdateNurseryInfo) {
+      toast.error("Access denied");
+      return;
+    }
     startTransition(async () => {
       const result = await updateNurserySettings(branchId, values);
       if (result.success) {
@@ -625,24 +631,25 @@ export default function NurseryClient({
           </CardContent>
         </Card>
 
-        {/* Save Button — sticky bar */}
-        <div className="sticky bottom-4 z-10">
-          <div className="flex items-center justify-end rounded-sm border bg-card px-5 py-3 shadow-sm">
-            <Button
-              type="submit"
-              size="lg"
-              className="text-primary-foreground px-8"
-              disabled={isPending}
-            >
-              {isPending ? (
-                <Loader2 className="mr-2 size-4 animate-spin" />
-              ) : (
-                <Save className="mr-2 size-4" />
-              )}
-              {isPending ? "Saving..." : "Save Settings"}
-            </Button>
+        {canUpdateNurseryInfo ? (
+          <div className="sticky bottom-4 z-10">
+            <div className="flex items-center justify-end rounded-sm border bg-card px-5 py-3 shadow-sm">
+              <Button
+                type="submit"
+                size="lg"
+                className="text-primary-foreground px-8"
+                disabled={isPending}
+              >
+                {isPending ? (
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 size-4" />
+                )}
+                {isPending ? "Saving..." : "Save Settings"}
+              </Button>
+            </div>
           </div>
-        </div>
+        ) : null}
       </form>
     </>
   );

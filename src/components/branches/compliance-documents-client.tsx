@@ -51,6 +51,7 @@ interface Props {
   branchId: string;
   documents: Document[];
   themeColor?: string;
+  canUpdateNurseryInfo?: boolean;
 }
 
 function getStatusConfig(status: string, expiryDate: string | null) {
@@ -99,6 +100,7 @@ export function ComplianceDocumentsClient({
   branchId,
   documents,
   themeColor = "#1caf9a",
+  canUpdateNurseryInfo = true,
 }: Props) {
   const docsByType = new Map(documents.map((d) => [d.documentType, d]));
 
@@ -186,6 +188,7 @@ export function ComplianceDocumentsClient({
                         branchId={branchId}
                         reqDoc={reqDoc}
                         doc={doc}
+                        canUpdate={canUpdateNurseryInfo}
                       />
                     </div>
                   ) : (
@@ -194,6 +197,7 @@ export function ComplianceDocumentsClient({
                         branchId={branchId}
                         reqDoc={reqDoc}
                         doc={doc}
+                        canUpdate={canUpdateNurseryInfo}
                       />
                     </div>
                   )}
@@ -211,16 +215,22 @@ function DocumentUploadButton({
   branchId,
   reqDoc,
   doc,
+  canUpdate,
 }: {
   branchId: string;
   reqDoc: RequiredDocument;
   doc?: Document;
+  canUpdate: boolean;
 }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
   async function handleFile(file: File) {
+    if (!canUpdate) {
+      toast.error("Access denied");
+      return;
+    }
     setIsUploading(true);
     try {
       const uploaded = await uploadFileWithPresign({
@@ -252,6 +262,8 @@ function DocumentUploadButton({
       if (inputRef.current) inputRef.current.value = "";
     }
   }
+
+  if (!canUpdate) return null;
 
   return (
     <div className="mt-2">

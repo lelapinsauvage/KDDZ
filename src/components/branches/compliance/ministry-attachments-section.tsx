@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 interface Props {
   branchId: string;
   documents: ComplianceDocument[];
+  canUpdate?: boolean;
 }
 
 const REQUIRED_DOCS = [
@@ -75,7 +76,11 @@ const REQUIRED_DOCS = [
   },
 ] as const;
 
-export function MinistryAttachmentsSection({ branchId, documents }: Props) {
+export function MinistryAttachmentsSection({
+  branchId,
+  documents,
+  canUpdate = true,
+}: Props) {
   return (
     <div className="rounded-sm border bg-card p-6 shadow-sm" dir="rtl">
       <h3 className="mb-1 text-base font-semibold text-foreground">
@@ -96,6 +101,7 @@ export function MinistryAttachmentsSection({ branchId, documents }: Props) {
               label={req.label}
               color={req.color}
               existing={existing}
+              canUpdate={canUpdate}
             />
           );
         })}
@@ -110,12 +116,14 @@ function AttachmentRow({
   label,
   color,
   existing,
+  canUpdate,
 }: {
   branchId: string;
   docType: string;
   label: string;
   color: string;
   existing?: ComplianceDocument;
+  canUpdate: boolean;
 }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -134,6 +142,10 @@ function AttachmentRow({
   const isUploaded = existing?.status === "UPLOADED" || existing?.status === "VERIFIED";
 
   function handleSave() {
+    if (!canUpdate) {
+      toast.error("Access denied");
+      return;
+    }
     startTransition(async () => {
       const result = await upsertDocument(branchId, {
         id: documentId,
@@ -156,6 +168,10 @@ function AttachmentRow({
   }
 
   async function handleUpload(file: File) {
+    if (!canUpdate) {
+      toast.error("Access denied");
+      return;
+    }
     setIsUploading(true);
     try {
       const uploaded = await uploadFileWithPresign({
@@ -219,6 +235,7 @@ function AttachmentRow({
             onChange={(e) => setTitle(e.target.value)}
             dir="rtl"
             className="text-sm"
+            readOnly={!canUpdate}
           />
         </div>
         <div>
@@ -233,6 +250,7 @@ function AttachmentRow({
                 const file = event.target.files?.[0];
                 if (file) void handleUpload(file);
               }}
+              disabled={!canUpdate}
             />
             <Input
               value={filename}
@@ -240,17 +258,20 @@ function AttachmentRow({
               placeholder="اختر ملف..."
               dir="rtl"
               className="text-sm"
+              readOnly={!canUpdate}
             />
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="shrink-0"
-              disabled={isPending || isUploading}
-              onClick={() => inputRef.current?.click()}
-            >
-              <Upload className="size-4" />
-            </Button>
+            {canUpdate ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="shrink-0"
+                disabled={isPending || isUploading}
+                onClick={() => inputRef.current?.click()}
+              >
+                <Upload className="size-4" />
+              </Button>
+            ) : null}
           </div>
         </div>
         <div>
@@ -261,21 +282,24 @@ function AttachmentRow({
             onChange={(e) => setExpiryDate(e.target.value)}
             dir="ltr"
             className="text-sm"
+            disabled={!canUpdate}
           />
         </div>
       </div>
 
-      <div className="mt-3 flex justify-end">
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          disabled={isPending || isUploading}
-          onClick={handleSave}
-        >
-          {isPending || isUploading ? "جارٍ الحفظ..." : "حفظ"}
-        </Button>
-      </div>
+      {canUpdate ? (
+        <div className="mt-3 flex justify-end">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={isPending || isUploading}
+            onClick={handleSave}
+          >
+            {isPending || isUploading ? "جارٍ الحفظ..." : "حفظ"}
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }
