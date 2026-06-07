@@ -131,15 +131,23 @@ function toDate(value: Date | string | null | undefined): Date | undefined {
   return typeof value === "string" ? new Date(value) : value;
 }
 
-function documentsWithContent(documents: DocumentData[] | undefined) {
-  return (documents ?? []).filter((document) => document.title || document.fileUrl);
+function cleanDocumentFileUrl(value: string | null | undefined) {
+  const fileUrl = value?.trim();
+  return fileUrl && fileUrl !== "pending" ? fileUrl : undefined;
+}
+
+function documentsWithFiles(documents: DocumentData[] | undefined) {
+  return (documents ?? []).filter((document) =>
+    Boolean(cleanDocumentFileUrl(document.fileUrl))
+  );
 }
 
 function employeeDocumentCreateData(document: DocumentData) {
+  const fileUrl = cleanDocumentFileUrl(document.fileUrl)!;
   return {
     type: document.type,
     title: document.title ?? null,
-    fileUrl: document.fileUrl || "pending",
+    fileUrl,
     date: toDate(document.date) ?? null,
     expiryDate: toDate(document.expiryDate) ?? null,
   };
@@ -189,7 +197,7 @@ function staffAttachmentDelegate(type: EmployeeType) {
 
 function staffAttachmentCreateData(type: EmployeeType, document: DocumentData) {
   const title = document.title?.trim() || null;
-  const fileUrl = document.fileUrl?.trim() || "pending";
+  const fileUrl = cleanDocumentFileUrl(document.fileUrl)!;
   const data: Record<string, unknown> = {
     filename: title || fileUrl,
     fileUrl,
@@ -204,13 +212,13 @@ function staffAttachmentCreateData(type: EmployeeType, document: DocumentData) {
 }
 
 function attachmentDocuments(documents: DocumentData[] | undefined) {
-  return documentsWithContent(documents).filter(
+  return documentsWithFiles(documents).filter(
     (document) => documentRowSource(document.id) === "attachment"
   );
 }
 
 function modernDocumentRows(documents: DocumentData[] | undefined) {
-  return documentsWithContent(documents).filter(
+  return documentsWithFiles(documents).filter(
     (document) => documentRowSource(document.id) === "document"
   );
 }
