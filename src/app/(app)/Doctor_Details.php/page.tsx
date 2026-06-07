@@ -11,7 +11,7 @@ export default async function LegacyDoctorDetailsRedirect({
   const { id } = await searchParams;
 
   if (!id?.trim()) {
-    redirect("/employees/doctors");
+    redirect("/employees/doctors/new");
   }
 
   const doctorId = await resolveLegacyStaffId("doctor", id);

@@ -86,7 +86,7 @@
     "legacyPhp": "Front/templates/admin/Doctor_Details.php",
     "legacyJs": "Front/templates/admin/js/Doctor_Details.js",
     "modernRoute": "/Doctor_Details.php, /employees/doctors/[id]",
-    "status": "partial - legacy doctor detail bridge and field snapshot restored; edit-form action audit remains",
+    "status": "partial - legacy doctor detail bridge, no-id create bridge, and field snapshot restored; edit-form action audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -94,13 +94,13 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "`/Doctor_Details.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy doctor ids into the modern doctor detail page. The detail page now exposes a Legacy Profile snapshot with preserved legacy account provenance, Arabic name fields, register/license fields, contact/address, education/CNSS, placement, status, remarks, and language rows when present. Remaining work is exact legacy save/draft/profile-photo/action behavior audit against `Doctor_Details.php`/`Doctor_Details.js`."
+    "verification": "`/Doctor_Details.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy doctor ids into the modern doctor detail page, and no-id `/Doctor_Details.php` links from the legacy New Doctor button now open `/employees/doctors/new`. The detail page now exposes a Legacy Profile snapshot with preserved legacy account provenance, Arabic name fields, register/license fields, contact/address, education/CNSS, placement, status, remarks, and language rows when present. Remaining work is exact legacy save/draft/profile-photo/action behavior audit against `Doctor_Details.php`/`Doctor_Details.js`."
   },
   {
     "legacyPhp": "Front/templates/admin/Manager_Details.php",
     "legacyJs": "Front/templates/admin/js/Manager_Details.js",
     "modernRoute": "/Manager_Details.php, /employees/managers/[id]",
-    "status": "partial - legacy manager detail bridge and field snapshot restored; edit-form action audit remains",
+    "status": "partial - legacy manager detail bridge, no-id create bridge, and field snapshot restored; edit-form action audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -108,7 +108,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "`/Manager_Details.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy manager ids into the modern manager detail page. The detail page now exposes a Legacy Profile snapshot with preserved legacy account provenance, core identity, contact/address, placement, status, and attachment-visible document coverage. Remaining work is exact legacy save/draft/profile-photo/action behavior audit against `Manager_Details.php`/`Manager_Details.js` plus any manager-only legacy fields not yet represented first-class in the schema."
+    "verification": "`/Manager_Details.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy manager ids into the modern manager detail page, and no-id `/Manager_Details.php` links from the legacy New Manager button now open `/employees/managers/new`. The detail page now exposes a Legacy Profile snapshot with preserved legacy account provenance, core identity, contact/address, placement, status, and attachment-visible document coverage. Remaining work is exact legacy save/draft/profile-photo/action behavior audit against `Manager_Details.php`/`Manager_Details.js` plus any manager-only legacy fields not yet represented first-class in the schema."
   },
   {
     "legacyPhp": "Front/templates/admin/Medical_form1.php",
@@ -352,7 +352,7 @@
     "legacyPhp": "Front/templates/admin/Nurse_Details.php",
     "legacyJs": "Front/templates/admin/js/Nurse_Details.js",
     "modernRoute": "/Nurse_Details.php, /employees/nurses/[id]",
-    "status": "partial - legacy nurse detail bridge and field snapshot restored; edit-form action audit remains",
+    "status": "partial - legacy nurse detail bridge, no-id create bridge, and field snapshot restored; edit-form action audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -360,7 +360,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "`/Nurse_Details.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy nurse ids into the modern nurse detail page. The detail page now exposes a Legacy Profile snapshot with preserved legacy account provenance, core identity, contact/address, education/CNSS, placement, status, remarks, and language rows when present. Remaining work is exact legacy save/draft/profile-photo/action behavior audit against `Nurse_Details.php`/`Nurse_Details.js`."
+    "verification": "`/Nurse_Details.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy nurse ids into the modern nurse detail page, and no-id `/Nurse_Details.php` links from the legacy New Nurse button now open `/employees/nurses/new`. The detail page now exposes a Legacy Profile snapshot with preserved legacy account provenance, core identity, contact/address, education/CNSS, placement, status, remarks, and language rows when present. Remaining work is exact legacy save/draft/profile-photo/action behavior audit against `Nurse_Details.php`/`Nurse_Details.js`."
   },
   {
     "legacyPhp": "Front/templates/admin/PA_logs.php",
@@ -393,7 +393,7 @@
     "legacyPhp": "Front/templates/admin/Teacher_Details.php",
     "legacyJs": "Front/templates/admin/js/Teacher_Details.js",
     "modernRoute": "/Teacher_Details.php, /employees/teachers/[id]",
-    "status": "partial - legacy teacher detail bridge, field snapshot, and update ACL restored; edit-form behavior audit remains",
+    "status": "partial - legacy teacher detail bridge, no-id create bridge, field snapshot, and update ACL restored; edit-form behavior audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -401,7 +401,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "`/Teacher_Details.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy teacher ids into the modern teacher detail page. The detail page now exposes a Legacy Profile snapshot with preserved legacy account provenance, core identity, register number, contact/address, education/CNSS, placement/class/status, remarks, and language rows when present. The `updateTeacher` ACTION grant now hides the modern detail Edit Profile action and denies direct `/employees/teachers/[id]/edit` hits when the imported action catalogue is configured and not granted. Remaining work is exact legacy save/draft/profile-photo behavior audit against `Teacher_Details.php`/`Teacher_Details.js`."
+    "verification": "`/Teacher_Details.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy teacher ids into the modern teacher detail page, and no-id `/Teacher_Details.php` links from the legacy New Teacher button now open `/employees/teachers/new` where the `addTeacher` grant is enforced. The detail page now exposes a Legacy Profile snapshot with preserved legacy account provenance, core identity, register number, contact/address, education/CNSS, placement/class/status, remarks, and language rows when present. The `updateTeacher` ACTION grant now hides the modern detail Edit Profile action and denies direct `/employees/teachers/[id]/edit` hits when the imported action catalogue is configured and not granted. Remaining work is exact legacy save/draft/profile-photo behavior audit against `Teacher_Details.php`/`Teacher_Details.js`."
   },
   {
     "legacyPhp": "Front/templates/admin/Zones_Management.php",

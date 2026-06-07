@@ -11,7 +11,7 @@ export default async function LegacyTeacherDetailsRedirect({
   const { id } = await searchParams;
 
   if (!id?.trim()) {
-    redirect("/employees/teachers");
+    redirect("/employees/teachers/new");
   }
 
   const teacherId = await resolveLegacyStaffId("teacher", id);
