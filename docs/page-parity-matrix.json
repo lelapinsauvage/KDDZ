@@ -1092,14 +1092,20 @@
   },
   {
     "legacyPhp": "Front/templates/admin/child_attend_det_data.php",
-    "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
-    "legacyTablesMentioned": [],
+    "legacyJs": "Front/templates/admin/js/child_attend_det.js",
+    "modernRoute": "/child_attend_det_data.php, /children/[id]/attendance",
+    "status": "restored - legacy child attendance AJAX table fragment restored",
+    "legacyTablesMentioned": [
+      "t_child",
+      "t_daily_report",
+      "t_holiday",
+      "year_db",
+      "year_select"
+    ],
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/child_attend_det_data.php` now accepts the legacy `id` request field by GET or POST, resolves raw numeric, UUID, legacy key, and encrypted child ids, and returns the legacy `#datatable_ajax` HTML fragment with Month/1-31/P-A columns, N/P/A/W/H badge semantics, no-store HTML output, and legacy `.php` bridge links for daily and absence reports."
   },
   {
     "legacyPhp": "Front/templates/admin/child_calls.php",
