@@ -64,6 +64,7 @@ import { cn } from "@/lib/utils";
 import {
   ChevronLeft,
   ChevronRight,
+  BarChart3,
   Database,
   History,
   Link2,
@@ -870,6 +871,12 @@ export function LegacyUsersClient({
               <Link href="/settings/legacy-users/profile-fields">
                 <TextCursorInput className="size-4" />
                 Profile fields
+              </Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/settings/legacy-users/reports">
+                <BarChart3 className="size-4" />
+                Reports
               </Link>
             </Button>
             <Button

@@ -15,6 +15,7 @@ import {
   KeyRound,
   Bell,
   BellRing,
+  BarChart3,
   Landmark,
   ShieldCheck,
   TextCursorInput,
@@ -136,6 +137,14 @@ const adminOnlySections = [
     icon: TextCursorInput,
     iconBg: "bg-teal-100",
     iconColor: "text-teal-700",
+  },
+  {
+    title: "Legacy Reports",
+    description: "PHP-login registration and activity reports",
+    href: "/settings/legacy-users/reports",
+    icon: BarChart3,
+    iconBg: "bg-cyan-100",
+    iconColor: "text-cyan-700",
   },
   {
     title: "Legacy Auth",

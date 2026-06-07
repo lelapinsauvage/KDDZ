@@ -16667,18 +16667,20 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/classes/reports.class.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/settings/legacy-users/reports",
+    "status": "partial - legacy registration and top-user reports restored; visual parity remains",
     "legacyTablesMentioned": [
-      "integration",
       "login_integration",
-      "login_users"
+      "login_settings",
+      "login_timestamps",
+      "login_users",
+      "login_users_man"
     ],
     "requestFieldsMentioned": [
       "end_date",
       "start_date"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/settings/legacy-users/reports` restores the legacy PHP-login reports data contract over migrated auth metadata: source selector for staff/manager login tables, From/To date range, Total and Range registered counts, enabled social-provider totals from `integration-*-enable` settings, per-day New users and social series, login timestamp totals, and Top 10 users by login count. Remaining work is exact legacy Flot hover/checkbox styling if pixel parity is required."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/classes/send_email.class.php",
@@ -16750,18 +16752,19 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/index.php",
     "legacyJs": "Front/templates/admin/js/index.js",
-    "modernRoute": "/users/admin/index.php, /settings/access-control, /settings/legacy-users",
-    "status": "partial - legacy level/user admin surfaces restored; reports/settings remain",
+    "modernRoute": "/users/admin/index.php, /settings/access-control, /settings/legacy-users, /settings/legacy-users/reports",
+    "status": "partial - legacy level/user/reports admin surfaces restored; settings composition remains",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [
       "add_level",
       "add_user",
       "searchUsers"
     ],
-    "verification": "Legacy admin level creation/editing/action grants now live in `/settings/access-control`, and legacy admin user roster/create/edit/delete now lives in `/settings/legacy-users`. `/users/admin/index.php` bridges to the restored user admin surface. Remaining work is reports/settings/profile subpage parity and exact old dashboard composition.",
+    "verification": "Legacy admin level creation/editing/action grants now live in `/settings/access-control`, admin user roster/create/edit/delete lives in `/settings/legacy-users`, and the old Reports tab now lives in `/settings/legacy-users/reports`. `/users/admin/index.php` bridges to the restored user admin surface. Remaining work is exact old dashboard tab composition and any settings/profile wrapper polish not covered by direct modern routes.",
     "legacyTables": [
       "login_levels",
       "login_levels_man",
+      "login_timestamps",
       "login_users",
       "login_users_man"
     ],
@@ -17071,11 +17074,20 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/reports.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
-    "legacyTablesMentioned": [],
-    "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "modernRoute": "/users/admin/page/reports.php, /settings/legacy-users/reports",
+    "status": "partial - legacy reports page restored in modern dashboard",
+    "legacyTablesMentioned": [
+      "login_integration",
+      "login_settings",
+      "login_timestamps",
+      "login_users",
+      "login_users_man"
+    ],
+    "requestFieldsMentioned": [
+      "end_date",
+      "start_date"
+    ],
+    "verification": "`/users/admin/page/reports.php` redirects to `/settings/legacy-users/reports`, which restores the Registered Users totals/range report, enabled social-login series, and Most Frequent Users table/bar chart from the legacy PHP-login Reports tab. Remaining work is exact old AJAX fade/Flot UI behavior if needed."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/send-email.php",
