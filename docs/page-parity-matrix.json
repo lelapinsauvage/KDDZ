@@ -17374,8 +17374,8 @@
   {
     "legacyPhp": "Front/templates/admin/users/classes/check.class.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "middleware, Auth.js, route guards, settings/access-control",
+    "status": "mapped - legacy auth/page guard replaced by middleware and server guards",
     "legacyTablesMentioned": [
       "and",
       "his",
@@ -17384,25 +17384,25 @@
       "password"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "The Jigowatt Check/protect helpers are represented by Auth.js middleware, org-scoped server guards, role checks, disabled/activation redirects, and per-page permission rows. Exact imported legacy level/action parity remains tracked on protected feature rows and access-control settings."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/config.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": ".env, Prisma datasource, legacy auth import settings",
+    "status": "mapped - legacy auth database config replaced by environment config",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Hard-coded Jigowatt database credentials are retired. Modern runtime uses environment-managed Prisma datasource settings, and legacy auth/database metadata is handled by import scripts and LegacyAuthRecord rows."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/config.sample.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": ".env.example / deployment configuration",
+    "status": "mapped - sample legacy auth config retired",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "The sample PHP database config is not a runtime surface. Modern setup is represented by environment variables, Prisma configuration, and migration/import documentation."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/connect.class.php",
@@ -17980,11 +17980,11 @@
   {
     "legacyPhp": "Front/templates/admin/users/classes/prereqs.php",
     "legacyJs": "",
-    "modernRoute": "/disabled.php, /users/disabled.php",
-    "status": "restored - legacy disabled notice and contact form restored",
+    "modernRoute": "deployment/runtime health checks",
+    "status": "mapped - retired PHP extension prereq checker",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "`/disabled.php` and `/users/disabled.php` now render the legacy Oops, Access Denied copy, preserve the Disabled Message / Report a bug subject choices, validate the original name/email/subject/comments/sky-color verification messages, store successful submissions as `LegacyAuthRecord` rows with `recordType = disabled_contact`, and create admin in-app notifications while marking external email delivery unconfigured."
+    "verification": "The Jigowatt prereq checker only warned about PHP gettext/cURL/JSON extensions. Modern runtime requirements are handled by Node/package/deployment checks and build-time validation; no PHP prereq page or include is restored."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/profile.class.php",
@@ -18037,21 +18037,21 @@
   {
     "legacyPhp": "Front/templates/admin/users/classes/translate.class.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "modern UI copy and browser locale surfaces",
+    "status": "mapped - legacy gettext selector retired",
     "legacyTablesMentioned": [
       "or"
     ],
     "requestFieldsMentioned": [
       "lang"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "The Jigowatt gettext language selector is not restored as a standalone auth-shell component. Modern pages carry explicit UI copy; if full i18n is reintroduced, it should be implemented as a modern app-level locale layer rather than the old PHP gettext helper."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/upgrade.class.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "Prisma migrations and legacy import scripts",
+    "status": "mapped - legacy Jigowatt schema upgrader replaced by migrations",
     "legacyTablesMentioned": [
       "CURRENT_TIMESTAMP",
       "db",
@@ -18070,7 +18070,7 @@
     "requestFieldsMentioned": [
       "update"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "The old in-place PHP login schema upgrader is retired. Modern schema evolution uses Prisma migrations plus legacy import/backfill scripts for login settings, users, profile fields, confirmation tokens, and timestamps."
   },
   {
     "legacyPhp": "Front/templates/admin/users/disabled.php",
