@@ -2,7 +2,15 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, Baby, CheckSquare, GraduationCap, Lock, RefreshCw } from "lucide-react";
+import {
+  AlertTriangle,
+  Baby,
+  CheckSquare,
+  Download,
+  GraduationCap,
+  Lock,
+  RefreshCw,
+} from "lucide-react";
 import { toast } from "sonner";
 import { createNewAcademicYear } from "@/lib/actions/new-year";
 import { PageHeader } from "@/components/layout/page-header";
@@ -250,15 +258,23 @@ export function NewYearClient({ setup }: Props) {
       />
 
       <div className="space-y-6 p-4 md:p-6">
-        <div className="flex items-start gap-3 rounded-lg border border-amber-400/40 bg-amber-50 p-4 text-sm text-amber-900">
-          <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-600" />
-          <div>
-            <p className="font-semibold">Warning</p>
-            <p className="mt-1">
-              This creates a new active school year, deactivates the previous active year, updates
-              selected teacher and child class assignments, and records child history snapshots.
-            </p>
+        <div className="flex flex-col gap-3 rounded-lg border border-amber-400/40 bg-amber-50 p-4 text-sm text-amber-900 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-600" />
+            <div>
+              <p className="font-semibold">Warning</p>
+              <p className="mt-1">
+                This creates a new active school year, deactivates the previous active year, updates
+                selected teacher and child class assignments, and records child history snapshots.
+              </p>
+            </div>
           </div>
+          <Button type="button" variant="outline" size="sm" asChild>
+            <a href="/exportdb.php" target="_blank" rel="noreferrer">
+              <Download className="mr-1.5 size-4" />
+              Download Backup
+            </a>
+          </Button>
         </div>
 
         <Card>

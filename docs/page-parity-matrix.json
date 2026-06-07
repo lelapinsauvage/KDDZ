@@ -16364,13 +16364,22 @@
     "legacyPhp": "Front/templates/admin/newyear.php",
     "legacyJs": "Front/templates/admin/js/newyear.js",
     "modernRoute": "/newyear.php, /settings/new-year",
-    "status": "partial - legacy new-year bridge and transactional school-year create/reassignment/progression exists, physical DB archive/import parity remains",
+    "status": "partial - legacy backup warning, bridge, and transactional school-year progression restored; physical archive/import parity remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
     ],
-    "requestFieldsMentioned": [],
-    "verification": "`/newyear.php` now redirects to the modern New Academic Year setup. Verify against `ArchiveAndCreate` destructive legacy behavior before approving final parity."
+    "requestFieldsMentioned": [
+      "newdbname",
+      "optional",
+      "requiredimports",
+      "selectedTeacher",
+      "newClassTeacher",
+      "selectedChild",
+      "newClassChild",
+      "newChildSN"
+    ],
+    "verification": "`/newyear.php` redirects to the modern New Academic Year setup. The modern warning now restores the legacy recommendation to download a local database copy by linking directly to the restored `/exportdb.php` SQL backup. The setup page preserves optional/mandatory import selections, teacher reassignment, child class progression, legacy-style S.N. generation, and transactional school-year creation with child history snapshots. Remaining work is exact destructive `ArchiveAndCreate` physical database archive/truncate/import parity, which the modern flow intentionally avoids until cutover is explicitly approved."
   },
   {
     "legacyPhp": "Front/templates/admin/nurseryinfo.php",
