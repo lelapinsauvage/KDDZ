@@ -16731,23 +16731,23 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/footer.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "modern app/auth layouts",
+    "status": "mapped - internal admin footer include covered by modern shells",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy `users/admin/footer.php` only closed the admin Bootstrap shell, loaded Jigowatt admin scripts, and rendered a language selector footer. There is no standalone route to restore; modern admin/settings pages provide their own app shell and script bundles."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/header.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "modern app/auth layouts, /users/admin/users.php, /users/admin/levels.php",
+    "status": "mapped - internal admin header include covered by modern shells",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [
       "lid",
       "uid"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy `users/admin/header.php` only opened the admin Bootstrap shell/nav/breadcrumbs and exposed `uid`/`lid` breadcrumb values. The restored `/users/admin/users.php`, `/users/admin/levels.php`, `/settings/legacy-users`, and `/settings/access-control` routes cover those deep-link contexts in the modern app shell."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/home.php",
@@ -16818,11 +16818,11 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/admin.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "modern admin guards",
+    "status": "mapped - internal admin guard include covered by route guards",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy `users/admin/page/admin.php` only included `check.class.php`, called `protect(\"Admin\")`, and loaded admin helper functions. There is no standalone route to restore; modern admin settings/user-control routes are protected by `requireRole`/session checks."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/denied.php",
@@ -17002,11 +17002,11 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/header.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "modern app/auth layouts",
+    "status": "mapped - internal page header include covered by modern shells",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy `users/admin/page/header.php` only included `../header.php`; standalone page restoration is handled by the concrete admin page routes and the modern app/auth layouts."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/index.php",
@@ -18082,8 +18082,8 @@
   {
     "legacyPhp": "Front/templates/admin/users/footer.php",
     "legacyJs": "",
-    "modernRoute": "/login",
-    "status": "partial - legacy username/email sign-in form restored; remember/social visual audit remains",
+    "modernRoute": "modern auth layouts",
+    "status": "mapped - internal auth footer include covered by modern shells",
     "legacyTablesMentioned": [
       "login_integration",
       "login_settings"
@@ -18095,7 +18095,7 @@
       "token",
       "username"
     ],
-    "verification": "`/login` now accepts the legacy username-or-email credential shape, links failed restricted/disabled legacy identities to `/disabled.php`, keeps the existing forgot-password and signup flows, and relies on the restored `classes/login.class.php` server behavior for password validation and login audit. Remaining work is exact Stay signed in session lifetime, legacy social button/runtime behavior, and CSRF/token visual parity beyond Auth.js protection."
+    "verification": "Legacy `users/footer.php` only closed the public PHP-login Bootstrap shell, loaded Jigowatt scripts/background styling, and rendered the language selector footer. The restored auth pages (`/login`, `/signup`, `/forgot`, `/activate.php`, `/disabled.php`, `/profile`) provide their own modern shells; no standalone route is required."
   },
   {
     "legacyPhp": "Front/templates/admin/users/forgot.php",
@@ -18111,11 +18111,11 @@
   {
     "legacyPhp": "Front/templates/admin/users/header.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "modern auth layouts",
+    "status": "mapped - internal auth header include covered by modern shells",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy `users/header.php` only opened the public PHP-login Bootstrap shell and optional nav. The restored auth pages (`/login`, `/signup`, `/forgot`, `/activate.php`, `/disabled.php`, `/profile`) provide equivalent page shells and deep-link behavior directly."
   },
   {
     "legacyPhp": "Front/templates/admin/users/home.php",
