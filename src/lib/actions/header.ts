@@ -3,6 +3,7 @@
 import { getHeaderAlarmCounts, getNotifications } from "./alarms";
 import { getUnreadMessageCount } from "./messages";
 import { db } from "@/lib/db";
+import { normalizeLegacyInternalHref } from "@/lib/legacy-href";
 import { requireOrg } from "@/lib/require-org";
 import type { AlarmType } from "@/generated/prisma/enums";
 
@@ -171,7 +172,7 @@ function jsonString(value: unknown): string | null {
 
 function legacyAlarmHref(defaultHref: string, legacyData: unknown) {
   const href = jsonString(jsonRecord(legacyData).href);
-  return href?.startsWith("/") ? href : defaultHref;
+  return normalizeLegacyInternalHref(href) ?? defaultHref;
 }
 
 async function loadLegacyMessageBadge(userId: string, orgId: string) {

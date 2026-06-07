@@ -46,6 +46,7 @@ import {
   generateContractAlarmsForOrganization,
   type ContractGenerationSummary,
 } from "@/lib/jobs/contract-alarms";
+import { normalizeLegacyInternalHref } from "@/lib/legacy-href";
 
 export type { AssessmentDueAlarm, AssessmentGenerationSummary } from "@/lib/jobs/assessment-alarms";
 export type { MedicineGenerationSummary } from "@/lib/jobs/medicine-alarms";
@@ -896,6 +897,9 @@ export async function getMedicalAlarmNotifications(
       const legacyType = jsonString(legacyData.type);
       const legacyStatus = jsonNumber(legacyData.status);
       const legacyHref = jsonString(legacyData.href);
+      const actionHref =
+        normalizeLegacyInternalHref(legacyHref) ??
+        medicalSectionHref(legacyType, receipt.alarm.referenceId);
 
       return [{
         id: receipt.alarm.id,
@@ -913,7 +917,7 @@ export async function getMedicalAlarmNotifications(
         legacyType,
         legacyStatus: medicalLegacyStatusLabel(legacyStatus),
         legacyHref,
-        actionHref: medicalSectionHref(legacyType, receipt.alarm.referenceId),
+        actionHref,
         searchText: [
           legacyId,
           receipt.alarm.message,
@@ -1167,10 +1171,10 @@ async function getStaffReceiptAlarmNotifications(
       const to = recipientNameFor
         ? Array.from(new Set(group.map((item) => recipientNameFor(item)))).join(", ")
         : undefined;
-      const actionHref = legacyHref?.startsWith("/")
-        ? legacyHref
-        : config.actionHrefFromAlarm?.(receipt.alarm, legacyData) ??
-          config.defaultActionHref;
+      const actionHref =
+        normalizeLegacyInternalHref(legacyHref) ??
+        config.actionHrefFromAlarm?.(receipt.alarm, legacyData) ??
+        config.defaultActionHref;
 
       return [{
         id: receipt.alarm.id,
@@ -1472,7 +1476,7 @@ const GENERAL_ALARM_CONFIG: StaffReceiptAlarmConfig = {
   defaultActionHref: "/alarms",
   actionHrefFromAlarm: (_alarm, legacyData) => {
     const href = jsonString(legacyData.href);
-    return href?.startsWith("/") ? href : "/alarms";
+    return normalizeLegacyInternalHref(href) ?? "/alarms";
   },
   historyRecipientTypes: ["USER", "PARENT_USER", "CHILD"],
   includeCurrentUserInHistory: false,
@@ -1487,7 +1491,7 @@ const REQUEST_ALARM_CONFIG: StaffReceiptAlarmConfig = {
   defaultActionHref: "/alarms/requests",
   actionHrefFromAlarm: (_alarm, legacyData) => {
     const href = jsonString(legacyData.href);
-    return href?.startsWith("/") ? href : "/alarms/requests";
+    return normalizeLegacyInternalHref(href) ?? "/alarms/requests";
   },
   historyRecipientTypes: ["USER", "PARENT_USER", "CHILD"],
   includeCurrentUserInHistory: false,
@@ -1502,7 +1506,7 @@ const OTHER_ALARM_CONFIG: StaffReceiptAlarmConfig = {
   defaultActionHref: "/alarms/others",
   actionHrefFromAlarm: (_alarm, legacyData) => {
     const href = jsonString(legacyData.href);
-    return href?.startsWith("/") ? href : "/alarms/others";
+    return normalizeLegacyInternalHref(href) ?? "/alarms/others";
   },
   historyRecipientTypes: ["USER", "PARENT_USER", "CHILD"],
   includeCurrentUserInHistory: false,

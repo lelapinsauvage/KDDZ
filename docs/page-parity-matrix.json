@@ -575,7 +575,7 @@
     "legacyPhp": "Front/templates/admin/alarmsMedical.php",
     "legacyJs": "Front/templates/admin/js/alarmsMedical.js",
     "modernRoute": "/alarmsMedical.php, /alarms/medical",
-    "status": "partial - legacy medical alarms bridge and staff/parent read-state restored",
+    "status": "partial - legacy medical alarms bridge, deep links, and staff/parent read-state restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -585,7 +585,7 @@
       "custom_notifications_medical",
       "custom_notifications_medical_parents"
     ],
-    "verification": "Modern page now reads migrated `NotificationReceipt` rows for current-staff New/Viewed status, restores `#`, Alarm details, Alarm Time, Status, Actions, search/status/type/branch/date filters, row/bulk mark-viewed, Set All As Viewed, and Sent Reports Reminders history for staff and parent recipients. `/alarmsMedical.php` now redirects to the modern medical alarms page. Remaining work is exact legacy encrypted deep-link parity, parent/mobile delivery, and generator enablement decision."
+    "verification": "Modern page now reads migrated `NotificationReceipt` rows for current-staff New/Viewed status, restores `#`, Alarm details, Alarm Time, Status, Actions, search/status/type/branch/date filters, row/bulk mark-viewed, Set All As Viewed, and Sent Reports Reminders history for staff and parent recipients. Medical alarm action buttons and header badges now preserve migrated `Medical_form*.php?id=<encrypted-child-id>` hrefs through the modern legacy bridge routes. `/alarmsMedical.php` redirects to the modern medical alarms page. Remaining work is parent/mobile delivery and generator enablement decision."
   },
   {
     "legacyPhp": "Front/templates/admin/alarmsMedicine.php",
