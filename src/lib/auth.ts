@@ -4,6 +4,7 @@ import { createHash } from "crypto";
 import { compare, hash } from "bcryptjs";
 import { authConfig } from "./auth.config";
 import {
+  getLegacyLoginSessionContext,
   getLegacyLoginDisabledStatus,
   resolveStaffLoginIdentity,
 } from "./legacy-auth-identity";
@@ -166,6 +167,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             });
           }
 
+          const legacyLogin = await getLegacyLoginSessionContext(db, identity);
           await recordLegacyLoginTimestamp(db, user.id, request);
 
           return {
@@ -176,6 +178,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             role: user.role,
             branchId: user.branchId,
             organizationId: user.organizationId ?? user.branch?.organizationId ?? null,
+            legacyLogin,
           };
         } catch (error) {
           console.error("credentials authorize error:", error);

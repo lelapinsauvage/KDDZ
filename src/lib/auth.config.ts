@@ -19,6 +19,7 @@ export const authConfig = {
         token.branchId = user.branchId;
         token.organizationId = user.organizationId;
         token.picture = user.image;
+        token.legacyLogin = user.legacyLogin;
       }
       return token;
     },
@@ -29,6 +30,9 @@ export const authConfig = {
         session.user.branchId = token.branchId as string | null;
         session.user.organizationId = token.organizationId as string | null;
         session.user.image = token.picture as string | null;
+        session.user.legacyLogin = token.legacyLogin as
+          | typeof session.user.legacyLogin
+          | null;
       }
       return session;
     },

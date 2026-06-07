@@ -1,5 +1,14 @@
 import { type DefaultSession } from "next-auth";
 
+type LegacyLoginSessionContext = {
+  sourceDatabase: string;
+  legacyTable: string;
+  legacyUserId: number | null;
+  legacyDbId: number | null;
+  legacyDatabaseName: string | null;
+  legacySelectedYear: string | null;
+};
+
 declare module "next-auth" {
   interface Session {
     user: {
@@ -7,6 +16,7 @@ declare module "next-auth" {
       role: "ADMIN" | "TEACHER" | "NURSE" | "DOCTOR" | "MANAGER";
       branchId: string | null;
       organizationId: string | null;
+      legacyLogin: LegacyLoginSessionContext | null;
     } & DefaultSession["user"];
   }
 
@@ -14,6 +24,7 @@ declare module "next-auth" {
     role: "ADMIN" | "TEACHER" | "NURSE" | "DOCTOR" | "MANAGER";
     branchId: string | null;
     organizationId: string | null;
+    legacyLogin?: LegacyLoginSessionContext | null;
   }
 }
 
@@ -23,5 +34,6 @@ declare module "next-auth/jwt" {
     role: "ADMIN" | "TEACHER" | "NURSE" | "DOCTOR" | "MANAGER";
     branchId: string | null;
     organizationId: string | null;
+    legacyLogin?: LegacyLoginSessionContext | null;
   }
 }

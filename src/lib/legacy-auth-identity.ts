@@ -39,6 +39,15 @@ export type ResolvedStaffLoginIdentity = {
   legacy: LegacyLoginRecord | null;
 };
 
+export type LegacyLoginSessionContext = {
+  sourceDatabase: string;
+  legacyTable: string;
+  legacyUserId: number | null;
+  legacyDbId: number | null;
+  legacyDatabaseName: string | null;
+  legacySelectedYear: string | null;
+};
+
 export type LegacyLoginDisabledStatus =
   | { isDisabled: false; reason: null; levelName?: null }
   | {
@@ -82,6 +91,11 @@ export function legacyString(value: unknown, key: string) {
   return "";
 }
 
+function legacyNumber(value: unknown, key: string) {
+  const parsed = Number.parseInt(legacyString(value, key), 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
 export function parsePhpLevelIds(serialized: string | null | undefined) {
   if (!serialized?.trim()) return [];
 
@@ -100,6 +114,49 @@ export function parsePhpLevelIds(serialized: string | null | undefined) {
   }
 
   return Array.from(values).filter((value) => Number.isFinite(value));
+}
+
+export async function getLegacyLoginSessionContext(
+  db: AppDb,
+  identity: ResolvedStaffLoginIdentity | null,
+): Promise<LegacyLoginSessionContext | null> {
+  if (!identity) return null;
+  const record =
+    identity.legacy ??
+    (identity.user
+      ? await findLinkedLegacyLoginRecordForUser(db, identity.user.id)
+      : null);
+  if (!record) return null;
+
+  const legacyDbId = legacyNumber(record.legacyData, "db_id");
+  const yearDatabase = legacyDbId
+    ? await db.legacyYearDatabase.findFirst({
+        where: {
+          sourceDatabase: record.sourceDatabase,
+          legacyTable: "year_db",
+          legacyId: legacyDbId,
+        },
+        select: {
+          databaseName: true,
+          selectedYear: true,
+        },
+      })
+    : null;
+
+  return {
+    sourceDatabase: record.sourceDatabase,
+    legacyTable: record.legacyTable,
+    legacyUserId: record.legacyUserId ?? record.legacyId,
+    legacyDbId,
+    legacyDatabaseName:
+      yearDatabase?.databaseName ||
+      legacyString(record.legacyData, "dbname") ||
+      null,
+    legacySelectedYear:
+      yearDatabase?.selectedYear ||
+      legacyString(record.legacyData, "sel_year") ||
+      null,
+  };
 }
 
 function recordMatchesCredential(record: LegacyLoginRecord, credential: string) {
