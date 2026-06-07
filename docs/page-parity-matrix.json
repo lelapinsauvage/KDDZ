@@ -393,7 +393,7 @@
     "legacyPhp": "Front/templates/admin/Teacher_Details.php",
     "legacyJs": "Front/templates/admin/js/Teacher_Details.js",
     "modernRoute": "/Teacher_Details.php, /employees/teachers/[id]",
-    "status": "partial - legacy teacher detail bridge and field snapshot restored; edit-form action audit remains",
+    "status": "partial - legacy teacher detail bridge, field snapshot, and update ACL restored; edit-form behavior audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -401,7 +401,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "`/Teacher_Details.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy teacher ids into the modern teacher detail page. The detail page now exposes a Legacy Profile snapshot with preserved legacy account provenance, core identity, register number, contact/address, education/CNSS, placement/class/status, remarks, and language rows when present. Remaining work is exact legacy save/draft/profile-photo/action behavior audit against `Teacher_Details.php`/`Teacher_Details.js`."
+    "verification": "`/Teacher_Details.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy teacher ids into the modern teacher detail page. The detail page now exposes a Legacy Profile snapshot with preserved legacy account provenance, core identity, register number, contact/address, education/CNSS, placement/class/status, remarks, and language rows when present. The `updateTeacher` ACTION grant now hides the modern detail Edit Profile action and denies direct `/employees/teachers/[id]/edit` hits when the imported action catalogue is configured and not granted. Remaining work is exact legacy save/draft/profile-photo behavior audit against `Teacher_Details.php`/`Teacher_Details.js`."
   },
   {
     "legacyPhp": "Front/templates/admin/Zones_Management.php",
@@ -16535,17 +16535,21 @@
     "legacyPhp": "Front/templates/admin/teachers.php",
     "legacyJs": "Front/templates/admin/js/teachers.js",
     "modernRoute": "/teachers.php, /employees/teachers",
-    "status": "partial - legacy teachers roster columns, q bridge, copy/PDF exports, page sizes, and selected deactivate restored; form modal audit remains",
+    "status": "partial - legacy teachers roster columns, q bridge, copy/PDF exports, page sizes, selected deactivate, and ACL restored; form modal audit remains",
     "legacyTablesMentioned": [
       "Form",
       "Selected",
       "auto",
-      "themeforest"
+      "themeforest",
+      "actions_control",
+      "actions_control_man",
+      "system_actions",
+      "system_actions_man"
     ],
     "requestFieldsMentioned": [
       "q"
     ],
-    "verification": "Restored the shared staff roster shape for teachers with legacy `#`, Image, F Name, L Name, DOB, Branch, Class, Nationality, Gender, Date, Status, and Action columns; teacher class is now included in the listing query; 10/20/50/100/150/All page sizes; Copy/PDF/Excel/CSV export in legacy column order; print action; selected-row deactivation backed by the org-safe employee action; and `/teachers.php?q=` redirect hydration into the modern roster search across row values. Remaining work is the legacy selected-employee form modal behavior from `teachers.js`."
+    "verification": "Restored the shared staff roster shape for teachers with legacy `#`, Image, F Name, L Name, DOB, Branch, Class, Nationality, Gender, Date, Status, and Action columns; teacher class is now included in the listing query; 10/20/50/100/150/All page sizes; Copy/PDF/Excel/CSV export in legacy column order; print action; selected-row deactivation backed by the org-safe employee action; and `/teachers.php?q=` redirect hydration into the modern roster search across row values. Teacher `addTeacher`, `updateTeacher`, and `deleteTeacher` ACTION grants now hide Add/Edit/Delete and bulk-deactivate controls, protect direct new/edit form entry, and deny direct create/update/deactivate server mutations when the imported action catalogue is configured and not granted. Remaining work is the legacy selected-employee form modal behavior from `teachers.js`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/_install/footer.php",
@@ -16651,7 +16655,7 @@
     "requestFieldsMentioned": [
       "LEVELS"
     ],
-    "verification": "`/settings/access-control` now restores the admin-only legacy level/action matrix over migrated `LegacyAuthRecord` levels and `LegacyAccessControlRecord` actions/grants, including staff and manager source databases, selected-level batch save, searchable action catalogue, inactive action badges, disabled level badges, legacy `No level selected!`/`Saved!` feedback, and grant persistence by soft-disabling stale rows then re-enabling/creating selected grants. `EditSchoolFromTo` is now enforced through the migrated grant bridge; `leftmenu.php` PAGE grants filter desktop/mobile navigation and deny direct guarded route hits through `/forbidden.php`; non-left-menu deep PAGE guards now cover branch/class/child dashboards, child accounting/calls/absence/accident/attendance, individual call/medical/assessment forms, message class compose, nursery compliance, and invoice/daily/absence detail bridges; child `addChild`/`updateChild`/`deleteChild` ACTION grants now protect child roster controls, direct child form routes, and child write actions; class `addClass`/`updateClass`/`deleteClass` ACTION grants now protect class roster controls, class form bridge/query modal entry, and class write actions; and branch `addBranch`/`updateBranch`/`deleteBranch` ACTION grants now protect branch roster controls, branch form bridge/direct form entry, and branch write actions. Remaining work is wiring the other ACTION families and deciding whether to hydrate grant snapshots into sessions."
+    "verification": "`/settings/access-control` now restores the admin-only legacy level/action matrix over migrated `LegacyAuthRecord` levels and `LegacyAccessControlRecord` actions/grants, including staff and manager source databases, selected-level batch save, searchable action catalogue, inactive action badges, disabled level badges, legacy `No level selected!`/`Saved!` feedback, and grant persistence by soft-disabling stale rows then re-enabling/creating selected grants. `EditSchoolFromTo` is now enforced through the migrated grant bridge; `leftmenu.php` PAGE grants filter desktop/mobile navigation and deny direct guarded route hits through `/forbidden.php`; non-left-menu deep PAGE guards now cover branch/class/child dashboards, child accounting/calls/absence/accident/attendance, individual call/medical/assessment forms, message class compose, nursery compliance, and invoice/daily/absence detail bridges; child `addChild`/`updateChild`/`deleteChild` ACTION grants now protect child roster controls, direct child form routes, and child write actions; class `addClass`/`updateClass`/`deleteClass` ACTION grants now protect class roster controls, class form bridge/query modal entry, and class write actions; branch `addBranch`/`updateBranch`/`deleteBranch` ACTION grants now protect branch roster controls, branch form bridge/direct form entry, and branch write actions; and teacher `addTeacher`/`updateTeacher`/`deleteTeacher` ACTION grants now protect teacher roster/detail controls, direct teacher form entry, and teacher write actions. Remaining work is wiring the other ACTION families and deciding whether to hydrate grant snapshots into sessions."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/classes/add_level.class.php",
@@ -17170,7 +17174,7 @@
     "requestFieldsMentioned": [
       "LEVELS"
     ],
-    "verification": "`/settings/access-control` replaces the legacy `Modify levels` admin surface with source-database grouped staff/manager level tables, selected-level checkboxes, searchable action grants, select-all/clear controls, and batch save through `updateLegacyAccessControlLevels`. `EditSchoolFromTo` now uses those grants for active enforcement when migrated ACL data is present; left-menu PAGE grants filter desktop/mobile navigation and deny direct guarded route hits through `/forbidden.php`; non-left-menu deep PAGE guards now cover branch/class/child dashboards, child accounting/calls/absence/accident/attendance, individual call/medical/assessment forms, message class compose, nursery compliance, and invoice/daily/absence detail bridges; child `addChild`/`updateChild`/`deleteChild` ACTION grants now protect child roster controls, direct child form routes, and child write actions; class `addClass`/`updateClass`/`deleteClass` ACTION grants now protect class roster controls, class form bridge/query modal entry, and class write actions; and branch `addBranch`/`updateBranch`/`deleteBranch` ACTION grants now protect branch roster controls, branch form bridge/direct form entry, and branch write actions. Remaining work is expanding active `Check::protectPageOrFunction` enforcement across the other ACTION guards/action controls."
+    "verification": "`/settings/access-control` replaces the legacy `Modify levels` admin surface with source-database grouped staff/manager level tables, selected-level checkboxes, searchable action grants, select-all/clear controls, and batch save through `updateLegacyAccessControlLevels`. `EditSchoolFromTo` now uses those grants for active enforcement when migrated ACL data is present; left-menu PAGE grants filter desktop/mobile navigation and deny direct guarded route hits through `/forbidden.php`; non-left-menu deep PAGE guards now cover branch/class/child dashboards, child accounting/calls/absence/accident/attendance, individual call/medical/assessment forms, message class compose, nursery compliance, and invoice/daily/absence detail bridges; child `addChild`/`updateChild`/`deleteChild` ACTION grants now protect child roster controls, direct child form routes, and child write actions; class `addClass`/`updateClass`/`deleteClass` ACTION grants now protect class roster controls, class form bridge/query modal entry, and class write actions; branch `addBranch`/`updateBranch`/`deleteBranch` ACTION grants now protect branch roster controls, branch form bridge/direct form entry, and branch write actions; and teacher `addTeacher`/`updateTeacher`/`deleteTeacher` ACTION grants now protect teacher roster/detail controls, direct teacher form entry, and teacher write actions. Remaining work is expanding active `Check::protectPageOrFunction` enforcement across the other ACTION guards/action controls."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/level-create.php",

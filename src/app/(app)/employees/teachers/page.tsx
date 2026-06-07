@@ -2,6 +2,8 @@ import { getEmployees } from "@/lib/actions/employees";
 import { mapEmployee } from "@/lib/map-employee";
 import { EmployeeListingClient } from "@/components/employees/employee-listing-client";
 import { normalizeLegacySearchQuery } from "@/lib/legacy-query";
+import { getLegacyTeacherActionPermissions } from "@/lib/legacy-teacher-action-permissions";
+import { requireOrg } from "@/lib/require-org";
 
 export default async function TeachersListingPage({
   searchParams,
@@ -9,7 +11,11 @@ export default async function TeachersListingPage({
   searchParams: Promise<{ q?: string | string[] }>;
 }) {
   const { q } = await searchParams;
-  const result = await getEmployees("teacher", { pageSize: 100 });
+  const ctx = await requireOrg();
+  const [result, actionPermissions] = await Promise.all([
+    getEmployees("teacher", { pageSize: 100 }),
+    getLegacyTeacherActionPermissions(ctx),
+  ]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const raw = result.data as any;
@@ -22,6 +28,7 @@ export default async function TeachersListingPage({
       type="teacher"
       employees={employees}
       initialSearchQuery={normalizeLegacySearchQuery(q)}
+      actionPermissions={actionPermissions}
     />
   );
 }

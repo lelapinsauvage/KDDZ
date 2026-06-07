@@ -18,6 +18,7 @@ import {
   LegacyStaffSnapshot,
   type LegacyStaffSnapshotStaff,
 } from "@/components/employees/legacy-staff-snapshot";
+import type { LegacyTeacherActionPermissions } from "@/lib/legacy-teacher-action-permissions";
 import { format } from "date-fns";
 
 interface TeacherData extends LegacyStaffSnapshotStaff {
@@ -27,10 +28,15 @@ interface TeacherData extends LegacyStaffSnapshotStaff {
 
 interface TeacherDetailClientProps {
   teacher: TeacherData;
+  actionPermissions?: LegacyTeacherActionPermissions;
 }
 
-export function TeacherDetailClient({ teacher }: TeacherDetailClientProps) {
+export function TeacherDetailClient({
+  teacher,
+  actionPermissions,
+}: TeacherDetailClientProps) {
   const address = teacher.addresses[0] ?? null;
+  const canUpdateTeacher = actionPermissions?.canUpdateTeacher ?? true;
 
   return (
     <>
@@ -110,13 +116,14 @@ export function TeacherDetailClient({ teacher }: TeacherDetailClientProps) {
                 </div>
               </div>
 
-              {/* Edit Button */}
-              <Button asChild variant="outline" size="sm" className="shrink-0">
-                <Link href={`/employees/teachers/${teacher.id}/edit`}>
-                  <Pencil className="size-4" />
-                  Edit Profile
-                </Link>
-              </Button>
+              {canUpdateTeacher ? (
+                <Button asChild variant="outline" size="sm" className="shrink-0">
+                  <Link href={`/employees/teachers/${teacher.id}/edit`}>
+                    <Pencil className="size-4" />
+                    Edit Profile
+                  </Link>
+                </Button>
+              ) : null}
             </div>
           </CardContent>
         </Card>

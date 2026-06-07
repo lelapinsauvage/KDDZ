@@ -71,6 +71,8 @@ const ROLE_LABELS: Record<EmployeeType, string> = {
 
 interface EmployeeColumnsOptions {
   onDelete?: (id: string, name: string) => void;
+  canUpdate?: boolean;
+  canDelete?: boolean;
 }
 
 export function createEmployeeColumns(
@@ -279,6 +281,8 @@ export function createEmployeeColumns(
       header: "",
       cell: ({ row }) => {
         const employee = row.original;
+        const canUpdate = options.canUpdate !== false;
+        const canDelete = options.canDelete !== false;
         return (
           <div className="flex items-center gap-0.5">
             <Button variant="ghost" size="sm" className="size-8 p-0" asChild>
@@ -287,24 +291,28 @@ export function createEmployeeColumns(
                 <span className="sr-only">View</span>
               </Link>
             </Button>
-            <Button variant="ghost" size="sm" className="size-8 p-0" asChild>
-              <Link href={`${getDetailPath(employee.type, employee.id)}/edit`} onClick={(e) => e.stopPropagation()}>
-                <Pencil className="size-4 text-muted-foreground" />
-                <span className="sr-only">Edit</span>
-              </Link>
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="size-8 p-0 text-muted-foreground hover:text-destructive"
-              onClick={(e) => {
-                e.stopPropagation();
-                options.onDelete?.(employee.id, `${employee.firstName} ${employee.lastName}`);
-              }}
-            >
-              <Trash2 className="size-4" />
-              <span className="sr-only">Delete</span>
-            </Button>
+            {canUpdate ? (
+              <Button variant="ghost" size="sm" className="size-8 p-0" asChild>
+                <Link href={`${getDetailPath(employee.type, employee.id)}/edit`} onClick={(e) => e.stopPropagation()}>
+                  <Pencil className="size-4 text-muted-foreground" />
+                  <span className="sr-only">Edit</span>
+                </Link>
+              </Button>
+            ) : null}
+            {canDelete ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="size-8 p-0 text-muted-foreground hover:text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  options.onDelete?.(employee.id, `${employee.firstName} ${employee.lastName}`);
+                }}
+              >
+                <Trash2 className="size-4" />
+                <span className="sr-only">Delete</span>
+              </Button>
+            ) : null}
           </div>
         );
       },

@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import { getEmployee } from "@/lib/actions/employees";
+import { getLegacyTeacherActionPermissions } from "@/lib/legacy-teacher-action-permissions";
+import { requireOrg } from "@/lib/require-org";
 import { TeacherDetailClient } from "./teacher-detail-client";
 
 function serializeDates(obj: Record<string, unknown>): Record<string, unknown> {
@@ -31,7 +33,11 @@ export default async function TeacherDetailsPage({
 }) {
   const { id } = await params;
 
-  const result = await getEmployee("teacher", id);
+  const ctx = await requireOrg();
+  const [result, actionPermissions] = await Promise.all([
+    getEmployee("teacher", id),
+    getLegacyTeacherActionPermissions(ctx),
+  ]);
 
   if (!result.success || !result.data) {
     notFound();
@@ -40,5 +46,10 @@ export default async function TeacherDetailsPage({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const teacher = serializeDates(result.data as Record<string, unknown>) as any;
 
-  return <TeacherDetailClient teacher={teacher} />;
+  return (
+    <TeacherDetailClient
+      teacher={teacher}
+      actionPermissions={actionPermissions}
+    />
+  );
 }

@@ -1,8 +1,17 @@
+import { redirect } from "next/navigation";
 import { getBranches } from "@/lib/actions/branches";
 import { getClasses } from "@/lib/actions/classes";
 import { EmployeeFormClient } from "@/components/employees/employee-form-client";
+import { getLegacyTeacherActionPermissions } from "@/lib/legacy-teacher-action-permissions";
+import { requireOrg } from "@/lib/require-org";
 
 export default async function NewTeacherPage() {
+  const ctx = await requireOrg();
+  const permissions = await getLegacyTeacherActionPermissions(ctx);
+  if (!permissions.canAddTeacher) {
+    redirect("/forbidden.php");
+  }
+
   const [branchResult, classResult] = await Promise.all([
     getBranches(),
     getClasses(),

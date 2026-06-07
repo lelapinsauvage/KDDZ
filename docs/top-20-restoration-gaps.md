@@ -158,6 +158,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - Child add/update/delete ACTION guards now hide the matching roster/draft controls, protect direct new/edit routes, and deny direct server mutations for create/update/status/class/bulk/deactivate flows when imported `actions_control*` grants deny `addChild`, `updateChild`, or `deleteChild`.
    - Class add/update/delete ACTION guards now hide class roster and branch-class New/Edit/Delete controls, protect `/class.php` plus `/classes?new=1`/`?edit=` modal entry, and deny direct create/update/deactivate mutations when imported `actions_control*` grants deny `addClass`, `updateClass`, or `deleteClass`.
    - Branch add/update/delete ACTION guards now hide branch roster New/Edit/Delete controls, protect `/branch.php`, `/branches/new`, and `/branches/[id]/edit`, and deny direct create/update/deactivate mutations when imported `actions_control*` grants deny `addBranch`, `updateBranch`, or `deleteBranch`.
+   - Teacher add/update/delete ACTION guards now hide teacher Add/Edit/Delete and bulk-deactivate controls, hide the detail Edit Profile action, protect `/employees/teachers/new` and `/employees/teachers/[id]/edit`, and deny direct create/update/deactivate mutations when imported `actions_control*` grants deny `addTeacher`, `updateTeacher`, or `deleteTeacher`.
    - Remaining work is expanding this grant bridge into the other ACTION families and deciding whether to hydrate grant snapshots into sessions.
 
 ## Execution Order

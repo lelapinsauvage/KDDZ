@@ -1,9 +1,11 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getEmployee } from "@/lib/actions/employees";
 import { getBranches } from "@/lib/actions/branches";
 import { getClasses } from "@/lib/actions/classes";
 import { EmployeeFormClient } from "@/components/employees/employee-form-client";
 import { mapEmployeeToForm } from "@/components/employees/map-employee-to-form";
+import { getLegacyTeacherActionPermissions } from "@/lib/legacy-teacher-action-permissions";
+import { requireOrg } from "@/lib/require-org";
 
 export default async function EditTeacherPage({
   params,
@@ -11,6 +13,11 @@ export default async function EditTeacherPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const ctx = await requireOrg();
+  const permissions = await getLegacyTeacherActionPermissions(ctx);
+  if (!permissions.canUpdateTeacher) {
+    redirect("/forbidden.php");
+  }
 
   const [empResult, branchResult, classResult] = await Promise.all([
     getEmployee("teacher", id),

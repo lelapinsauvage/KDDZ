@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireOrg, requireOrgSafe } from "@/lib/require-org";
+import { requireLegacyActionAllowed } from "@/lib/legacy-action-permissions";
 import { verifyBranchAccess } from "@/lib/verify-org-access";
 
 // ---------------------------------------------------------------------------
@@ -403,7 +404,13 @@ export async function createEmployee(
   try {
     const result = await requireOrgSafe();
     if (!result.ok) return { success: false, error: result.error };
-    const { organizationId: orgId } = result.ctx;
+    const { ctx } = result;
+    const { organizationId: orgId } = ctx;
+
+    if (type === "teacher") {
+      const permission = await requireLegacyActionAllowed(ctx, "addTeacher");
+      if (!permission.ok) return { success: false, error: permission.error };
+    }
 
     if (!(await verifyBranchAccess(data.branchId, orgId))) {
       return { success: false, error: "Branch does not belong to your organization" };
@@ -551,9 +558,15 @@ export async function updateEmployee(
   try {
     const result = await requireOrgSafe();
     if (!result.ok) return { success: false, error: result.error };
-    const { organizationId: orgId } = result.ctx;
+    const { ctx } = result;
+    const { organizationId: orgId } = ctx;
 
     const { model, path } = getDelegate(type);
+
+    if (type === "teacher") {
+      const permission = await requireLegacyActionAllowed(ctx, "updateTeacher");
+      if (!permission.ok) return { success: false, error: permission.error };
+    }
 
     // Verify employee belongs to this org
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -734,9 +747,15 @@ export async function deleteEmployee(
   try {
     const result = await requireOrgSafe();
     if (!result.ok) return { success: false, error: result.error };
-    const { organizationId: orgId } = result.ctx;
+    const { ctx } = result;
+    const { organizationId: orgId } = ctx;
 
     const { model, path } = getDelegate(type);
+
+    if (type === "teacher") {
+      const permission = await requireLegacyActionAllowed(ctx, "deleteTeacher");
+      if (!permission.ok) return { success: false, error: permission.error };
+    }
 
     // Verify employee belongs to this org
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

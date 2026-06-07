@@ -26,6 +26,7 @@ import { useState, useMemo, useCallback, useTransition } from "react";
 import { toast } from "sonner";
 import { ExportButton } from "@/components/shared/export-button";
 import type { ExportColumn } from "@/lib/export";
+import type { LegacyTeacherActionPermissions } from "@/lib/legacy-teacher-action-permissions";
 
 function formatExportDate(v: unknown) {
   if (!v) return "";
@@ -65,6 +66,7 @@ interface EmployeeListingClientProps {
   type: EmployeeType;
   employees: Employee[];
   initialSearchQuery?: string;
+  actionPermissions?: LegacyTeacherActionPermissions;
 }
 
 const labels: Record<EmployeeType, { singular: string; plural: string }> = {
@@ -78,19 +80,37 @@ export function EmployeeListingClient({
   type,
   employees,
   initialSearchQuery = "",
+  actionPermissions,
 }: EmployeeListingClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [search, setSearch] = useState(initialSearchQuery);
   const { singular, plural } = labels[type];
+  const teacherActionPermissions = actionPermissions ?? {
+    canAddTeacher: true,
+    canUpdateTeacher: true,
+    canDeleteTeacher: true,
+  };
+  const canAdd = type !== "teacher" || teacherActionPermissions.canAddTeacher;
+  const canUpdate = type !== "teacher" || teacherActionPermissions.canUpdateTeacher;
+  const canDelete = type !== "teacher" || teacherActionPermissions.canDeleteTeacher;
 
   const handleDeleteRequest = useCallback((id: string, name: string) => {
+    if (!canDelete) {
+      toast.error("Access denied");
+      return;
+    }
     setDeleteTarget({ id, name });
-  }, []);
+  }, [canDelete]);
 
   const handleDeleteConfirm = useCallback(() => {
     if (!deleteTarget) return;
+    if (!canDelete) {
+      toast.error("Access denied");
+      setDeleteTarget(null);
+      return;
+    }
     const { id, name } = deleteTarget;
     setDeleteTarget(null);
     startTransition(async () => {
@@ -102,10 +122,14 @@ export function EmployeeListingClient({
         toast.error(result.error);
       }
     });
-  }, [deleteTarget, type, router]);
+  }, [canDelete, deleteTarget, type, router]);
 
   const handleBulkDeactivate = useCallback((selectedEmployees: Employee[]) => {
     if (selectedEmployees.length === 0 || isPending) return;
+    if (!canDelete) {
+      toast.error("Access denied");
+      return;
+    }
 
     startTransition(async () => {
       const results = await Promise.all(
@@ -124,15 +148,20 @@ export function EmployeeListingClient({
       }
       router.refresh();
     });
-  }, [isPending, plural, router, singular, type]);
+  }, [canDelete, isPending, plural, router, singular, type]);
 
   const handlePrint = useCallback(() => {
     window.print();
   }, []);
 
   const columns = useMemo(
-    () => createEmployeeColumns(type, { onDelete: handleDeleteRequest }),
-    [type, handleDeleteRequest]
+    () =>
+      createEmployeeColumns(type, {
+        onDelete: handleDeleteRequest,
+        canUpdate,
+        canDelete,
+      }),
+    [type, handleDeleteRequest, canUpdate, canDelete]
   );
   const exportColumns = useMemo(() => createEmployeeExportColumns(type), [type]);
 
@@ -171,12 +200,14 @@ export function EmployeeListingClient({
         <CardHeader>
           <CardTitle className="text-lg">{plural}</CardTitle>
           <CardAction>
-            <Button asChild>
-              <Link href={`/employees/${plural.toLowerCase()}/new`}>
-                <Plus className="mr-1 size-4" />
-                Add {singular}
-              </Link>
-            </Button>
+            {canAdd ? (
+              <Button asChild>
+                <Link href={`/employees/${plural.toLowerCase()}/new`}>
+                  <Plus className="mr-1 size-4" />
+                  Add {singular}
+                </Link>
+              </Button>
+            ) : null}
           </CardAction>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -222,14 +253,18 @@ export function EmployeeListingClient({
           <DataTable
             columns={columns}
             data={filteredData}
-            bulkActions={[
-              {
-                label: "Deactivate Selected",
-                icon: Trash2,
-                variant: "destructive",
-                onClick: handleBulkDeactivate,
-              },
-            ]}
+            bulkActions={
+              canDelete
+                ? [
+                    {
+                      label: "Deactivate Selected",
+                      icon: Trash2,
+                      variant: "destructive",
+                      onClick: handleBulkDeactivate,
+                    },
+                  ]
+                : []
+            }
             pageSizeOptions={[10, 20, 50, 100, 150, "all"]}
           />
         </CardContent>
