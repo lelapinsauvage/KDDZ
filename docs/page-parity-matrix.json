@@ -559,7 +559,7 @@
     "legacyPhp": "Front/templates/admin/alarmsInsurance.php",
     "legacyJs": "Front/templates/admin/js/alarmsInsurance.js",
     "modernRoute": "/alarmsInsurance.php, /alarms/insurance",
-    "status": "partial - legacy insurance alarms bridge, staff/parent read-state, and sent history restored",
+    "status": "partial - legacy insurance alarms bridge, staff/parent read-state, sent history, and class targeting restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -570,7 +570,7 @@
       "custom_notifications_insurance",
       "custom_notifications_insurance_parents"
     ],
-    "verification": "Modern page reads migrated `NotificationReceipt` rows from `custom_notifications_insurance` and `custom_notifications_insurance_parents`, restores Teachers New/Viewed status, search/status/branch/date filters, row/bulk/all mark-viewed actions, Sent Insurance Reminders history for staff and parent recipients, and keeps the manual generator backed by the idempotent `Data::AlarmsInsurance()` parity job plus protected `/api/cron/insurance-alarms`. `/alarmsInsurance.php` now redirects to the modern insurance alarms page. Remaining work is parent/mobile delivery and exact legacy class-user targeting."
+    "verification": "Modern page reads migrated and generated `NotificationReceipt` rows from `custom_notifications_insurance` and `custom_notifications_insurance_parents`, restores Teachers New/Viewed status, search/status/branch/date filters, row/bulk/all mark-viewed actions, Sent Insurance Reminders history for staff and parent recipients, and keeps the manual generator backed by the idempotent `Data::AlarmsInsurance()` parity job plus generated `custom_notifications_insurance` receipts targeted like `getusersperclassUsersDb()` through imported `login_users.uclasses` and protected `/api/cron/insurance-alarms`. `/alarmsInsurance.php` now redirects to the modern insurance alarms page. Remaining work is parent/mobile delivery."
   },
   {
     "legacyPhp": "Front/templates/admin/alarmsMedical.php",
@@ -17032,7 +17032,7 @@
     "status": "partial - legacy insurance template fallback restored; delivery audit remains",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "/settings/notifications Insurance now falls back to migrated `email-insurance-subj` and `email-insurance-msg` rows and exposes legacy `{{child_name}}` and `{{expiry_date}}` shortcodes. Existing insurance alarm generation can use the saved modern template; remaining work is external parent/mobile delivery and exact recipient targeting."
+    "verification": "/settings/notifications Insurance now falls back to migrated `email-insurance-subj` and `email-insurance-msg` rows and exposes legacy `{{child_name}}` and `{{expiry_date}}` shortcodes. Existing insurance alarm generation can use the saved modern template and exact generated staff receipt targeting; remaining work is external parent/mobile delivery."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-medication.php",

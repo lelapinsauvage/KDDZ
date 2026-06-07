@@ -1,11 +1,14 @@
 import { db } from "@/lib/db";
 import { isLegacyNotificationGateEnabled } from "@/lib/legacy-notification-gates";
 
+const INSURANCE_RECEIPT_SOURCE = "custom_notifications_insurance";
+
 export interface InsuranceGenerationSummary {
   branchesScanned: number;
   formsScanned: number;
   formsMatched: number;
   alarmsCreated: number;
+  receiptsCreated: number;
   notificationsCreated: number;
   skippedExisting: number;
   skippedDisabledBranches: number;
@@ -13,6 +16,13 @@ export interface InsuranceGenerationSummary {
   skippedNoInsurance: number;
   skippedInvalidExpiry: number;
   skippedOutsideWindow: number;
+}
+
+interface LegacyInsuranceRecipient {
+  userId: string;
+  legacyRecipientId: number;
+  legacySourceDatabase: string;
+  legacyClasses: string;
 }
 
 function startOfToday(now = new Date()) {
@@ -53,6 +63,18 @@ function readString(data: Record<string, unknown> | null, keys: string[]) {
   return null;
 }
 
+function readNumber(data: Record<string, unknown> | null, keys: string[]) {
+  for (const key of keys) {
+    const value = data?.[key];
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string" && value.trim() !== "") {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
+  return null;
+}
+
 function readBoolean(data: Record<string, unknown> | null, keys: string[]) {
   for (const key of keys) {
     const value = data?.[key];
@@ -65,6 +87,43 @@ function readBoolean(data: Record<string, unknown> | null, keys: string[]) {
     }
   }
   return false;
+}
+
+function legacyInsuranceClassAllows(
+  legacyClasses: string,
+  classLegacyId: number | null,
+) {
+  const normalized = legacyClasses.trim();
+  if (!normalized || normalized === "0") return true;
+  if (classLegacyId === null) return false;
+
+  return normalized === String(classLegacyId);
+}
+
+function legacySourceMatches(
+  recipient: LegacyInsuranceRecipient,
+  sourceDatabase: string | null,
+) {
+  return !sourceDatabase || recipient.legacySourceDatabase === sourceDatabase;
+}
+
+function recipientsForInsuranceCandidate(
+  recipients: LegacyInsuranceRecipient[],
+  candidate: {
+    sourceDatabase: string | null;
+    legacyClassId: number | null;
+  },
+) {
+  const selected = new Map<string, LegacyInsuranceRecipient>();
+  for (const recipient of recipients) {
+    if (!legacySourceMatches(recipient, candidate.sourceDatabase)) continue;
+    if (!legacyInsuranceClassAllows(recipient.legacyClasses, candidate.legacyClassId)) {
+      continue;
+    }
+    if (!selected.has(recipient.userId)) selected.set(recipient.userId, recipient);
+  }
+
+  return Array.from(selected.values());
 }
 
 function parseLegacyDate(value: string | null) {
@@ -132,6 +191,7 @@ function emptySummary(): InsuranceGenerationSummary {
     formsScanned: 0,
     formsMatched: 0,
     alarmsCreated: 0,
+    receiptsCreated: 0,
     notificationsCreated: 0,
     skippedExisting: 0,
     skippedDisabledBranches: 0,
@@ -212,12 +272,14 @@ export async function generateInsuranceAlarmsForOrganization(params: {
       child: {
         select: {
           id: true,
+          sourceDatabase: true,
+          legacyId: true,
           firstName: true,
           lastName: true,
           branchId: true,
           classId: true,
-          branch: { select: { id: true, name: true } },
-          class: { select: { id: true, name: true } },
+          branch: { select: { id: true, name: true, sourceDatabase: true } },
+          class: { select: { id: true, name: true, legacyId: true, sourceDatabase: true } },
         },
       },
     },
@@ -273,36 +335,45 @@ export async function generateInsuranceAlarmsForOrganization(params: {
       referenceId: { in: childIds },
       isActive: true,
     },
-    select: { referenceId: true, dueDate: true, message: true, legacyData: true },
+    select: { id: true, referenceId: true, dueDate: true, message: true, legacyData: true },
   });
 
-  const existingExpiryKeys = new Set<string>();
-  const existingMessageKeys = new Set<string>();
+  const existingByExpiryKey = new Map<
+    string,
+    { id: string; referenceId: string | null; message: string | null; legacyData: unknown }
+  >();
+  const existingByMessageKey = new Map<
+    string,
+    { id: string; referenceId: string | null; message: string | null; legacyData: unknown }
+  >();
   for (const alarm of existingAlarms) {
     if (!alarm.referenceId) continue;
     const expiryFromLegacy = legacyDataExpiryDate(alarm.legacyData);
     if (expiryFromLegacy) {
-      existingExpiryKeys.add(`${alarm.referenceId}:${expiryFromLegacy}`);
+      existingByExpiryKey.set(`${alarm.referenceId}:${expiryFromLegacy}`, alarm);
     }
     if (alarm.dueDate) {
-      existingExpiryKeys.add(`${alarm.referenceId}:${dateKey(alarm.dueDate)}`);
+      existingByExpiryKey.set(`${alarm.referenceId}:${dateKey(alarm.dueDate)}`, alarm);
     }
     if (alarm.message) {
-      existingMessageKeys.add(`${alarm.referenceId}:${normalizeText(alarm.message)}`);
+      existingByMessageKey.set(
+        `${alarm.referenceId}:${normalizeText(alarm.message)}`,
+        alarm,
+      );
     }
   }
 
-  const [users, template] = await Promise.all([
+  const [users, template, maxReceipt] = await Promise.all([
     db.user.findMany({
       where: {
         isActive: true,
         organizationId: params.organizationId,
         OR: [
           { branchId: { in: enabledBranchIds } },
-          { branchId: null, role: "ADMIN" },
+          { branchId: null },
         ],
       },
-      select: { id: true, branchId: true, role: true },
+      select: { id: true },
     }),
     db.notificationTemplate.findUnique({
       where: {
@@ -312,17 +383,43 @@ export async function generateInsuranceAlarmsForOrganization(params: {
         },
       },
     }),
+    db.notificationReceipt.aggregate({
+      where: { sourceTable: INSURANCE_RECEIPT_SOURCE },
+      _max: { legacyNotificationId: true },
+    }),
   ]);
 
-  const branchAdminIds = users
-    .filter((user) => user.branchId === null && user.role === "ADMIN")
-    .map((user) => user.id);
-  const userIdsByBranch = new Map<string, string[]>();
-  for (const user of users) {
-    if (!user.branchId) continue;
-    const branchUsers = userIdsByBranch.get(user.branchId) ?? [];
-    branchUsers.push(user.id);
-    userIdsByBranch.set(user.branchId, branchUsers);
+  const userIds = users.map((user) => user.id);
+  const legacyAuthRows = userIds.length
+    ? await db.legacyAuthRecord.findMany({
+        where: {
+          legacyTable: "login_users",
+          userId: { in: userIds },
+          isDisabled: { not: true },
+        },
+        select: {
+          sourceDatabase: true,
+          userId: true,
+          legacyId: true,
+          legacyUserId: true,
+          legacyData: true,
+        },
+        orderBy: [
+          { sourceDatabase: "asc" },
+          { legacyId: "asc" },
+        ],
+      })
+    : [];
+
+  const legacyRecipients: LegacyInsuranceRecipient[] = [];
+  for (const row of legacyAuthRows) {
+    if (!row.userId) continue;
+    legacyRecipients.push({
+      userId: row.userId,
+      legacyRecipientId: row.legacyUserId ?? row.legacyId,
+      legacySourceDatabase: row.sourceDatabase,
+      legacyClasses: readString(asRecord(row.legacyData), ["uclasses"]) ?? "0",
+    });
   }
 
   const templateEnabled = template?.enabled ?? true;
@@ -330,6 +427,12 @@ export async function generateInsuranceAlarmsForOrganization(params: {
   const bodyTemplate =
     template?.body ||
     "Insurance for [[child_name]] expires on [[date]]. Please notify [[parent_name]] to renew.";
+  const maxExistingAlarmLegacyId = existingAlarms.reduce((max, alarm) => {
+    const legacyId = readNumber(asRecord(alarm.legacyData), ["aid"]) ?? 0;
+    return Math.max(max, legacyId);
+  }, 0);
+  let nextLegacyNotificationId =
+    Math.max(maxReceipt._max.legacyNotificationId ?? 0, maxExistingAlarmLegacyId) + 1;
 
   for (const candidate of candidates) {
     const { form, expiryDate, expiryRaw, expiryKey, daysUntil, insuranceType } = candidate;
@@ -348,57 +451,143 @@ export async function generateInsuranceAlarmsForOrganization(params: {
     const message = renderNotificationText(bodyTemplate, variables);
     const expiryDedupeKey = `${child.id}:${expiryKey}`;
     const messageDedupeKey = `${child.id}:${normalizeText(message)}`;
-
-    if (
-      existingExpiryKeys.has(expiryDedupeKey) ||
-      existingMessageKeys.has(messageDedupeKey)
-    ) {
-      summary.skippedExisting += 1;
-      continue;
+    const existingAlarm =
+      existingByExpiryKey.get(expiryDedupeKey) ??
+      existingByMessageKey.get(messageDedupeKey);
+    let legacyNotificationId = existingAlarm
+      ? readNumber(asRecord(existingAlarm.legacyData), ["aid"])
+      : null;
+    if (legacyNotificationId === null) {
+      legacyNotificationId = nextLegacyNotificationId++;
     }
 
-    await db.alarm.create({
-      data: {
-        type: "INSURANCE",
+    const sourceDatabase =
+      child.sourceDatabase ?? child.class?.sourceDatabase ?? child.branch.sourceDatabase;
+    const legacyClassId = child.class?.legacyId ?? null;
+    const legacyChildId = child.legacyId ?? null;
+
+    let alarmId = existingAlarm?.id ?? null;
+    if (existingAlarm) {
+      summary.skippedExisting += 1;
+      if (readNumber(asRecord(existingAlarm.legacyData), ["aid"]) === null) {
+        await db.alarm.update({
+          where: { id: existingAlarm.id },
+          data: {
+            legacyData: {
+              ...(asRecord(existingAlarm.legacyData) ?? {}),
+              aid: legacyNotificationId,
+              sourceDeliveryTable: INSURANCE_RECEIPT_SOURCE,
+              legacyChildId,
+              legacyClassId,
+              legacyClassAccess: "login_users.uclasses_exact",
+            },
+          },
+        });
+      }
+    }
+
+    if (!existingAlarm) {
+      const alarm = await db.alarm.create({
+        data: {
+          type: "INSURANCE",
+          referenceId: child.id,
+          referenceType: "Child",
+          message,
+          dueDate: expiryDate,
+          branchId: child.branchId,
+          isActive: true,
+          legacyData: {
+            aid: legacyNotificationId,
+            sourceTable: "t_alarms_insurance",
+            sourceDeliveryTable: INSURANCE_RECEIPT_SOURCE,
+            modernGenerator: "generateInsuranceAlarms",
+            legacyMethod: "Data::AlarmsInsurance",
+            medicalFormId: form.id,
+            childId: child.id,
+            legacyChildId,
+            classId: child.classId,
+            legacyClassId,
+            legacyClassAccess: "login_users.uclasses_exact",
+            currDate: dateKey(today),
+            insuranceExpiryDate: expiryKey,
+            rawInsuranceExpiry: expiryRaw,
+            insuranceType,
+            daysUntil,
+            href: "alarmsInsurance.php",
+            windowEndDate: dateKey(addDays(today, maxWindow)),
+          },
+        },
+      });
+      alarmId = alarm.id;
+      existingByExpiryKey.set(expiryDedupeKey, {
+        id: alarm.id,
         referenceId: child.id,
-        referenceType: "Child",
         message,
-        dueDate: expiryDate,
-        branchId: child.branchId,
-        isActive: true,
-        legacyData: {
-          sourceTable: "t_alarms_insurance",
-          modernGenerator: "generateInsuranceAlarms",
-          legacyMethod: "Data::AlarmsInsurance",
-          medicalFormId: form.id,
-          childId: child.id,
-          classId: child.classId,
-          currDate: dateKey(today),
-          insuranceExpiryDate: expiryKey,
-          rawInsuranceExpiry: expiryRaw,
-          insuranceType,
-          daysUntil,
-          href: "alarmsInsurance.php",
-          windowEndDate: dateKey(addDays(today, maxWindow)),
+        legacyData: alarm.legacyData,
+      });
+      existingByMessageKey.set(messageDedupeKey, {
+        id: alarm.id,
+        referenceId: child.id,
+        message,
+        legacyData: alarm.legacyData,
+      });
+      summary.alarmsCreated += 1;
+    }
+
+    const recipients = recipientsForInsuranceCandidate(legacyRecipients, {
+      sourceDatabase,
+      legacyClassId,
+    });
+    if (!alarmId || recipients.length === 0) continue;
+
+    const existingReceipts = await db.notificationReceipt.findMany({
+      where: {
+        sourceTable: INSURANCE_RECEIPT_SOURCE,
+        legacyNotificationId,
+        recipientType: "USER",
+        legacyRecipientId: {
+          in: recipients.map((recipient) => recipient.legacyRecipientId),
         },
       },
+      select: { legacyRecipientId: true },
     });
-    existingExpiryKeys.add(expiryDedupeKey);
-    existingMessageKeys.add(messageDedupeKey);
-    summary.alarmsCreated += 1;
-
-    if (!templateEnabled) continue;
-
-    const recipientIds = Array.from(
-      new Set([...(userIdsByBranch.get(child.branchId) ?? []), ...branchAdminIds]),
+    const existingReceiptIds = new Set(
+      existingReceipts.map((receipt) => receipt.legacyRecipientId),
     );
-    if (recipientIds.length === 0) continue;
+    const newReceiptRecipients = recipients.filter(
+      (recipient) => !existingReceiptIds.has(recipient.legacyRecipientId),
+    );
+    if (newReceiptRecipients.length === 0) continue;
+
+    const receiptResult = await db.notificationReceipt.createMany({
+      data: newReceiptRecipients.map((recipient) => ({
+        sourceTable: INSURANCE_RECEIPT_SOURCE,
+        category: "insurance",
+        legacyNotificationId,
+        legacyRecipientId: recipient.legacyRecipientId,
+        recipientType: "USER",
+        recipientId: recipient.userId,
+        alarmId,
+        isRead: false,
+        metadata: {
+          modernGenerator: "generateInsuranceAlarms",
+          legacyMethod: "Data::AlarmsInsurance",
+          legacyClassId,
+          legacyClasses: recipient.legacyClasses,
+          ntype: 0,
+        },
+      })),
+      skipDuplicates: true,
+    });
+    summary.receiptsCreated += receiptResult.count;
+
+    if (!templateEnabled || receiptResult.count === 0) continue;
 
     const title = renderNotificationText(subjectTemplate, variables);
     const body = renderNotificationText(bodyTemplate, variables);
     const created = await db.notification.createMany({
-      data: recipientIds.map((userId) => ({
-        userId,
+      data: newReceiptRecipients.map((recipient) => ({
+        userId: recipient.userId,
         title,
         body,
         type: "INSURANCE",
