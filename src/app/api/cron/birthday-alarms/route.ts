@@ -18,6 +18,7 @@ function emptySummary(): BirthdayGenerationSummary {
     branchesScanned: 0,
     childrenMatched: 0,
     alarmsCreated: 0,
+    receiptsCreated: 0,
     notificationsCreated: 0,
     skippedExisting: 0,
     skippedDisabledBranches: 0,
@@ -32,6 +33,7 @@ function addSummary(
   total.branchesScanned += next.branchesScanned;
   total.childrenMatched += next.childrenMatched;
   total.alarmsCreated += next.alarmsCreated;
+  total.receiptsCreated += next.receiptsCreated;
   total.notificationsCreated += next.notificationsCreated;
   total.skippedExisting += next.skippedExisting;
   total.skippedDisabledBranches += next.skippedDisabledBranches;

@@ -505,7 +505,7 @@
     "legacyPhp": "Front/templates/admin/alarmsBirthday.php",
     "legacyJs": "Front/templates/admin/js/alarmsBirthday.js",
     "modernRoute": "/alarmsBirthday.php, /alarms/birthdays",
-    "status": "partial - legacy birthday alarms bridge, staff/parent read-state, and sent history restored",
+    "status": "partial - legacy birthday alarms bridge, staff/parent read-state, sent history, and class targeting restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -515,7 +515,7 @@
       "custom_notifications_birthday",
       "custom_notifications_birthday_parents"
     ],
-    "verification": "Modern page reads migrated `NotificationReceipt` rows from `custom_notifications_birthday` plus standalone parent rows from `custom_notifications_birthday_parents`, restores Teachers New/Viewed status, search/status/branch/date filters, row/bulk/all mark-viewed actions, Sent Birthday Alarms history for staff and parent recipients, and keeps the manual generator backed by the idempotent `Data::AlarmsBirthday()` parity job plus protected `/api/cron/birthday-alarms`. `/alarmsBirthday.php` now redirects to the modern birthday alarms page. Remaining work is parent/mobile delivery and exact legacy class-user targeting."
+    "verification": "Modern page reads migrated and generated `NotificationReceipt` rows from `custom_notifications_birthday` plus standalone parent rows from `custom_notifications_birthday_parents`, restores Teachers New/Viewed status, search/status/branch/date filters, row/bulk/all mark-viewed actions, Sent Birthday Alarms history for staff and parent recipients, and keeps the manual generator backed by the idempotent `Data::AlarmsBirthday()` parity job plus generated `custom_notifications_birthday` receipts targeted like `getusersperclassUsersDb()` through imported `login_users.uclasses` and protected `/api/cron/birthday-alarms`. `/alarmsBirthday.php` now redirects to the modern birthday alarms page. Remaining work is parent/mobile delivery."
   },
   {
     "legacyPhp": "Front/templates/admin/alarmsContracts.php",
@@ -17003,7 +17003,7 @@
     "status": "partial - legacy birthday template fallback restored; delivery audit remains",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "/settings/notifications Birthday now falls back to migrated `email-birthday-subj` and `email-birthday-msg` rows and exposes the legacy `{{child_name}}` shortcode. Existing birthday alarm generation can use the saved modern template; remaining work is external parent/mobile delivery and exact recipient targeting."
+    "verification": "/settings/notifications Birthday now falls back to migrated `email-birthday-subj` and `email-birthday-msg` rows and exposes the legacy `{{child_name}}` shortcode. Existing birthday alarm generation can use the saved modern template and exact generated staff receipt targeting; remaining work is external parent/mobile delivery."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-control.php",
