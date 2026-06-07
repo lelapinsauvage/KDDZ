@@ -27,10 +27,10 @@ export default async function AttendanceLogsPage({
   const [logsRes, teachersRes, nursesRes, doctorsRes, managersRes] =
     await Promise.all([
       getAttendanceLogs({ pageSize: "all" }),
-      getEmployees("teacher", { pageSize: 1000 }),
-      getEmployees("nurse", { pageSize: 1000 }),
-      getEmployees("doctor", { pageSize: 1000 }),
-      getEmployees("manager", { pageSize: 1000 }),
+      getEmployees("teacher", { pageSize: "all" }),
+      getEmployees("nurse", { pageSize: "all" }),
+      getEmployees("doctor", { pageSize: "all" }),
+      getEmployees("manager", { pageSize: "all" }),
     ]);
 
   type EmpRow = { id: string; firstName: string; lastName: string };

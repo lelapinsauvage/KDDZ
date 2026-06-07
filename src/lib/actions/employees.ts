@@ -16,7 +16,7 @@ interface EmployeeListParams {
   search?: string;
   isActive?: boolean;
   page?: number;
-  pageSize?: number;
+  pageSize?: number | "all";
 }
 
 interface AddressData {
@@ -285,6 +285,8 @@ export async function getEmployees(
       page = 1,
       pageSize = 20,
     } = params;
+    const paginated = pageSize !== "all";
+    const numericPageSize = paginated ? Math.max(1, pageSize) : undefined;
 
     // Build where clause — always scope to org
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -305,7 +307,7 @@ export async function getEmployees(
       ];
     }
 
-    const skip = (page - 1) * pageSize;
+    const skip = numericPageSize ? (page - 1) * numericPageSize : undefined;
 
     const include: Record<string, unknown> = { branch: true };
     if (type === "teacher") {
@@ -318,8 +320,8 @@ export async function getEmployees(
         where,
         include,
         orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
-        skip,
-        take: pageSize,
+        ...(skip !== undefined ? { skip } : {}),
+        ...(numericPageSize !== undefined ? { take: numericPageSize } : {}),
       }),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (model as any).count({ where }),
@@ -332,7 +334,7 @@ export async function getEmployees(
         total,
         page,
         pageSize,
-        totalPages: Math.ceil(total / pageSize),
+        totalPages: numericPageSize ? Math.ceil(total / numericPageSize) : 1,
       },
     };
   } catch (error) {
