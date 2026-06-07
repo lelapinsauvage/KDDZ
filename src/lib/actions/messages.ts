@@ -5,7 +5,11 @@ import { db } from "@/lib/db";
 import { requireOrg, requireOrgSafe } from "@/lib/require-org";
 
 import type { Prisma } from "@/generated/prisma/client";
-import type { SenderType, RecipientType } from "@/generated/prisma/enums";
+import type {
+  AlarmType,
+  SenderType,
+  RecipientType,
+} from "@/generated/prisma/enums";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -72,6 +76,20 @@ interface LegacyMessageDeliveryOptions {
 }
 
 type LegacyDeliveryChannel = "Web" | "Mobile" | "SMS" | "WhatsApp";
+
+interface LegacyMessageSideEffectConfig {
+  legacyNatureId: number;
+  names: string[];
+  family: string;
+  alarmType: AlarmType;
+  legacyMethod: string;
+  contentTable: string;
+  parentDeliveryTable: string | null;
+  staffDeliveryTable: string | null;
+  href: string;
+  createsHoliday?: boolean;
+  createsEvent?: boolean;
+}
 
 type ActionResult<T = unknown> = {
   success: boolean;
@@ -142,6 +160,140 @@ function isUuid(value: string | undefined): value is string {
 
 const NO_RECIPIENT_MATCH = "00000000-0000-0000-0000-000000000000";
 
+const LEGACY_MESSAGE_SIDE_EFFECTS: LegacyMessageSideEffectConfig[] = [
+  {
+    legacyNatureId: 1,
+    names: ["birthday", "birthdays"],
+    family: "Birthdays",
+    alarmType: "BIRTHDAY",
+    legacyMethod: "addToBirthdays",
+    contentTable: "t_alarms_birthday",
+    parentDeliveryTable: "custom_notifications_birthday_parents",
+    staffDeliveryTable: "custom_notifications_birthday",
+    href: "alarmsBirthday.php",
+  },
+  {
+    legacyNatureId: 2,
+    names: [
+      "general",
+      "closure",
+      "holiday",
+      "strike",
+      "day off",
+      "outside activities",
+      "inside activities",
+    ],
+    family: "General",
+    alarmType: "EVENT",
+    legacyMethod: "addToGeneral",
+    contentTable: "t_alarms",
+    parentDeliveryTable: "custom_notifications_parents",
+    staffDeliveryTable: "custom_notifications",
+    href: "alarms.php",
+    createsHoliday: true,
+  },
+  {
+    legacyNatureId: 3,
+    names: ["assessment", "assessments"],
+    family: "Assessments",
+    alarmType: "ASSESSMENT",
+    legacyMethod: "addToAssessments",
+    contentTable: "t_alarms_assessment",
+    parentDeliveryTable: "t_alarms_assessment_parents",
+    staffDeliveryTable: "custom_notifications_assessment",
+    href: "alarmsAssessment.php",
+  },
+  {
+    legacyNatureId: 4,
+    names: ["event", "events", "show", "celebration"],
+    family: "Events",
+    alarmType: "EVENT",
+    legacyMethod: "addToEvents",
+    contentTable: "t_events",
+    parentDeliveryTable: "custom_notifications_events_parents",
+    staffDeliveryTable: "custom_notifications_events",
+    href: "events.php",
+    createsEvent: true,
+  },
+  {
+    legacyNatureId: 5,
+    names: ["reports reminder", "reports reminders", "medical", "medical report"],
+    family: "Reports Reminders",
+    alarmType: "MEDICAL",
+    legacyMethod: "addToReportsReminders",
+    contentTable: "t_alarms_medical",
+    parentDeliveryTable: "custom_notifications_medical_parents",
+    staffDeliveryTable: "custom_notifications_medical",
+    href: "alarmsMedical.php",
+  },
+  {
+    legacyNatureId: 6,
+    names: ["vaccination", "vaccinations"],
+    family: "Vaccinations",
+    alarmType: "VACCINATION",
+    legacyMethod: "addToVaccinations",
+    contentTable: "t_alarms_vaccinations",
+    parentDeliveryTable: "custom_notifications_vaccinations",
+    staffDeliveryTable: null,
+    href: "AlarmsVaccinations.php",
+  },
+  {
+    legacyNatureId: 7,
+    names: ["medicine", "reports medicine"],
+    family: "Medicine",
+    alarmType: "MEDICINE",
+    legacyMethod: "addToMedicine",
+    contentTable: "t_alarms_medicine",
+    parentDeliveryTable: "custom_notifications_medicine_parents",
+    staffDeliveryTable: "custom_notifications_medicine",
+    href: "alarmsMedicine.php",
+  },
+  {
+    legacyNatureId: 8,
+    names: ["insurance"],
+    family: "Insurance",
+    alarmType: "INSURANCE",
+    legacyMethod: "addToInsurance",
+    contentTable: "t_alarms_insurance",
+    parentDeliveryTable: "custom_notifications_insurance_parents",
+    staffDeliveryTable: "custom_notifications_insurance",
+    href: "alarmsInsurance.php",
+  },
+  {
+    legacyNatureId: 9,
+    names: ["payment", "payments"],
+    family: "Payments",
+    alarmType: "PAYMENT",
+    legacyMethod: "addToPayments",
+    contentTable: "t_alarms_payments",
+    parentDeliveryTable: "custom_notifications_payments",
+    staffDeliveryTable: null,
+    href: "alarmsPayments.php",
+  },
+  {
+    legacyNatureId: 10,
+    names: ["other", "others", "red day"],
+    family: "Others",
+    alarmType: "OTHER",
+    legacyMethod: "addToOthers",
+    contentTable: "t_alarms_others",
+    parentDeliveryTable: "custom_notifications_others_parents",
+    staffDeliveryTable: "custom_notifications_others",
+    href: "alarmsInsurance.php",
+  },
+  {
+    legacyNatureId: 11,
+    names: ["request", "requests"],
+    family: "Requests",
+    alarmType: "REQUEST",
+    legacyMethod: "addToRequests",
+    contentTable: "t_alarms_requests",
+    parentDeliveryTable: "custom_notifications_requests_parents",
+    staffDeliveryTable: "custom_notifications_requests",
+    href: "alarmsInsurance.php",
+  },
+];
+
 async function findSentMessageRecipientIds(
   search: string | undefined,
   organizationId: string,
@@ -192,6 +344,7 @@ function normalizeLegacyDelivery(delivery?: LegacyMessageDeliveryOptions | null)
 
 function legacyMessageData(params: {
   sourcePage: string;
+  nature?: string | null;
   delivery?: LegacyMessageDeliveryOptions | null;
   classId?: string | null;
   childIds?: string[];
@@ -209,10 +362,46 @@ function legacyMessageData(params: {
     legacyPage: params.sourcePage,
     delivery,
     externalDeliveryPending,
+    sideEffectIntent: legacyMessageSideEffectIntent(params.nature),
     classId: params.classId ?? null,
     selectedChildIds: params.childIds ?? [],
     recipientScope: params.recipientScope ?? "primary",
   };
+}
+
+function legacyMessageSideEffectIntent(
+  nature?: string | null,
+): Prisma.InputJsonObject | null {
+  const config = findLegacyMessageSideEffect(nature);
+  if (!config) return null;
+
+  return {
+    status: "pending-modern-write",
+    legacyNatureId: config.legacyNatureId,
+    family: config.family,
+    alarmType: config.alarmType,
+    legacyMethod: config.legacyMethod,
+    contentTable: config.contentTable,
+    parentDeliveryTable: config.parentDeliveryTable,
+    staffDeliveryTable: config.staffDeliveryTable,
+    href: config.href,
+    createsHoliday: Boolean(config.createsHoliday),
+    createsEvent: Boolean(config.createsEvent),
+  };
+}
+
+function findLegacyMessageSideEffect(nature?: string | null) {
+  const normalized = nature?.trim().toLowerCase();
+  if (!normalized) return null;
+
+  const numericNature = /^\d+$/.test(normalized) ? Number(normalized) : null;
+  return (
+    LEGACY_MESSAGE_SIDE_EFFECTS.find(
+      (config) =>
+        config.legacyNatureId === numericNature ||
+        config.names.includes(normalized),
+    ) ?? null
+  );
 }
 
 function isJsonRecord(value: unknown): value is Record<string, unknown> {
@@ -870,6 +1059,7 @@ export async function sendMessage(
         legacyNature: data.nature ?? null,
         legacyData: legacyMessageData({
           sourcePage: "message_portal_single.php",
+          nature: data.nature,
           delivery: data.delivery,
         }),
       },
@@ -891,6 +1081,7 @@ export async function sendMessage(
             legacyNature: data.nature ?? null,
             legacyData: legacyMessageData({
               sourcePage: "message_portal_single.php",
+              nature: data.nature,
               delivery: data.delivery,
               recipientScope: "admin-copy",
             }),
@@ -1249,6 +1440,7 @@ export async function sendClassMessage(
       legacyNature: data.nature ?? null,
       legacyData: legacyMessageData({
         sourcePage: "message_portal_class.php",
+        nature: data.nature,
         delivery: data.delivery,
         classId: data.classId,
         childIds: selectedChildIds,
@@ -1269,6 +1461,7 @@ export async function sendClassMessage(
           legacyNature: data.nature ?? null,
           legacyData: legacyMessageData({
             sourcePage: "message_portal_class.php",
+            nature: data.nature,
             delivery: data.delivery,
             classId: data.classId,
             childIds: selectedChildIds,
@@ -1367,6 +1560,7 @@ export async function sendBulkChildMessage(
       legacyNature: data.nature ?? null,
       legacyData: legacyMessageData({
         sourcePage: "message_portal.php",
+        nature: data.nature,
         delivery: data.delivery,
         childIds: data.childIds,
       }),

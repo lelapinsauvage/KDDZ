@@ -16324,7 +16324,7 @@
     "legacyPhp": "Front/templates/admin/message_portal.php",
     "legacyJs": "Front/templates/admin/js/message_portal.js",
     "modernRoute": "/message_portal.php, /messages/compose",
-    "status": "partial - legacy bulk compose options and delivery audit restored; side effects/external delivery remain",
+    "status": "partial - legacy bulk compose options, delivery audit, and side-effect intent restored; writes/external delivery remain",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -16332,7 +16332,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "`/message_portal.php` now redirects to the modern bulk compose page while preserving legacy recipient context when present. The modern bulk form now loads migrated `notifications_nature` rows with the legacy PHP fallback list, exposes Web/Mobile/SMS/WhatsApp delivery choices, saves the selected channel intent into `Message.legacyData`, and shows that saved delivery audit in inbox, sent, and thread views. Remaining work is legacy teacher-only SMS/WhatsApp fanout, the old `addTo*` holiday/event/alarm side effects for nature-specific sends, provider-backed external delivery, and final DataTables visual parity."
+    "verification": "`/message_portal.php` now redirects to the modern bulk compose page while preserving legacy recipient context when present. The modern bulk form now loads migrated `notifications_nature` rows with the legacy PHP fallback list, exposes Web/Mobile/SMS/WhatsApp delivery choices, saves the selected channel intent into `Message.legacyData`, shows that saved delivery audit in inbox, sent, and thread views, and records the matching legacy `addTo*` side-effect family/tables for nature-specific sends. Remaining work is the actual modern alarm/event receipt writes for those `addTo*` side effects, legacy teacher-only SMS/WhatsApp fanout, provider-backed external delivery, and final DataTables visual parity."
   },
   {
     "legacyPhp": "Front/templates/admin/message_portal_class.php",
