@@ -12,7 +12,7 @@ export default async function ComposeMessagePage() {
   const [branchesRes, childrenRes, classesRes, naturesRes, rawTeachers] =
     await Promise.all([
       getBranches(),
-      getChildren({ status: "ACTIVE", pageSize: 500 }),
+      getChildren({ status: "ACTIVE", pageSize: "all" }),
       getClasses({ isActive: true }),
       getLegacyNotificationNatures(),
       db.teacher.findMany({
@@ -27,7 +27,6 @@ export default async function ComposeMessagePage() {
           class: { select: { id: true, name: true } },
         },
         orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
-        take: 500,
       }),
     ]);
 

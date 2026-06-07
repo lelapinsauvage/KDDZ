@@ -12,7 +12,7 @@ export default async function ClassMessagePage({ searchParams }: Props) {
   const { classId } = await searchParams;
   const [classesResult, childrenResult, naturesResult] = await Promise.all([
     getClasses({ isActive: true }),
-    getChildren({ pageSize: 1000 }),
+    getChildren({ pageSize: "all" }),
     getLegacyNotificationNatures(),
   ]);
 

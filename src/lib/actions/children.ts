@@ -25,7 +25,7 @@ interface GetChildrenParams {
   createdFrom?: string;
   createdTo?: string;
   page?: number;
-  pageSize?: number;
+  pageSize?: number | "all";
   sortBy?: string;
   sortOrder?: "asc" | "desc";
 }
@@ -197,7 +197,9 @@ export async function getChildren(params: GetChildrenParams = {}) {
       ];
     }
 
-    const skip = (page - 1) * pageSize;
+    const paginated = pageSize !== "all";
+    const numericPageSize = paginated ? Math.max(1, pageSize) : undefined;
+    const skip = numericPageSize ? (page - 1) * numericPageSize : undefined;
 
     const orderBy: Prisma.ChildOrderByWithRelationInput[] = [];
     if (sortBy === "childNumber") {
@@ -229,8 +231,8 @@ export async function getChildren(params: GetChildrenParams = {}) {
           branch: true,
         },
         orderBy,
-        skip,
-        take: pageSize,
+        ...(skip !== undefined ? { skip } : {}),
+        ...(numericPageSize !== undefined ? { take: numericPageSize } : {}),
       }),
       db.child.count({ where }),
     ]);

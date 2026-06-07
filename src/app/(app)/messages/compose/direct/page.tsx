@@ -21,11 +21,11 @@ export default async function DirectMessagePage({ searchParams }: PageProps) {
     parentRes,
     naturesRes,
   ] = await Promise.all([
-    getEmployees("teacher", { isActive: true, pageSize: 200 }),
-    getEmployees("nurse", { isActive: true, pageSize: 200 }),
-    getEmployees("doctor", { isActive: true, pageSize: 200 }),
-    getEmployees("manager", { isActive: true, pageSize: 200 }),
-    getParentUsers({ isActive: true, pageSize: 200 }),
+    getEmployees("teacher", { isActive: true, pageSize: "all" }),
+    getEmployees("nurse", { isActive: true, pageSize: "all" }),
+    getEmployees("doctor", { isActive: true, pageSize: "all" }),
+    getEmployees("manager", { isActive: true, pageSize: "all" }),
+    getParentUsers({ isActive: true, pageSize: "all" }),
     getLegacyNotificationNatures(),
   ]);
 

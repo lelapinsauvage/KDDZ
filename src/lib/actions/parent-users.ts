@@ -23,7 +23,7 @@ interface ParentUserListParams {
   search?: string;
   isActive?: boolean;
   page?: number;
-  pageSize?: number;
+  pageSize?: number | "all";
 }
 
 interface ParentUserData {
@@ -102,7 +102,9 @@ export async function getParentUsers(
       ];
     }
 
-    const skip = (page - 1) * pageSize;
+    const paginated = pageSize !== "all";
+    const numericPageSize = paginated ? Math.max(1, pageSize) : undefined;
+    const skip = numericPageSize ? (page - 1) * numericPageSize : undefined;
 
     const [parentUsers, total] = await Promise.all([
       db.parentUser.findMany({
@@ -132,8 +134,8 @@ export async function getParentUsers(
           },
         },
         orderBy: { username: "asc" },
-        skip,
-        take: pageSize,
+        ...(skip !== undefined ? { skip } : {}),
+        ...(numericPageSize !== undefined ? { take: numericPageSize } : {}),
       }),
       db.parentUser.count({ where }),
     ]);
@@ -145,7 +147,7 @@ export async function getParentUsers(
         total,
         page,
         pageSize,
-        totalPages: Math.ceil(total / pageSize),
+        totalPages: numericPageSize ? Math.ceil(total / numericPageSize) : 1,
       },
     };
   } catch (error) {
