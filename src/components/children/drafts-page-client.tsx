@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/page-header";
 import { getChildrenColumns, type ChildRow } from "@/components/children/children-columns";
 import { bulkUpdateChildrenBranchClass, deleteChild } from "@/lib/actions/children";
+import type { LegacyChildActionPermissions } from "@/lib/legacy-child-action-permissions";
 import { ExportButton } from "@/components/shared/export-button";
 import type { ExportColumn } from "@/lib/export";
 import { Button } from "@/components/ui/button";
@@ -94,6 +95,7 @@ interface DraftsPageClientProps {
   branches: BranchItem[];
   classes: ClassItem[];
   filters: Filters;
+  actionPermissions?: LegacyChildActionPermissions;
 }
 
 const draftExportColumns: ExportColumn[] = [
@@ -148,6 +150,11 @@ export function DraftsPageClient({
   branches,
   classes,
   filters,
+  actionPermissions = {
+    canAddChild: true,
+    canUpdateChild: true,
+    canDeleteChild: true,
+  },
 }: DraftsPageClientProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -162,6 +169,7 @@ export function DraftsPageClient({
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
   const [bulkBranchId, setBulkBranchId] = useState("");
   const [bulkClassId, setBulkClassId] = useState("");
+  const { canAddChild, canUpdateChild, canDeleteChild } = actionPermissions;
 
   const [searchValue, setSearchValue] = useState(filters.search);
   const [legacyFilters, setLegacyFilters] = useState(() => ({
@@ -497,12 +505,18 @@ export function DraftsPageClient({
   );
 
   const baseColumns = useMemo(
-    () => getChildrenColumns({ onDelete: handleDeleteRequest, variant: "drafts" }),
-    [handleDeleteRequest]
+    () =>
+      getChildrenColumns({
+        onDelete: handleDeleteRequest,
+        canUpdate: canUpdateChild,
+        canDelete: canDeleteChild,
+        variant: "drafts",
+      }),
+    [canDeleteChild, canUpdateChild, handleDeleteRequest]
   );
   const columns = useMemo(
-    () => [selectionColumn, ...baseColumns],
-    [baseColumns, selectionColumn]
+    () => (canUpdateChild ? [selectionColumn, ...baseColumns] : baseColumns),
+    [baseColumns, canUpdateChild, selectionColumn]
   );
 
   const table = useReactTable({
@@ -596,16 +610,18 @@ export function DraftsPageClient({
           {/* Spacer */}
           <div className="flex-1" />
 
-          <Button
-            type="button"
-            variant="outline"
-            onClick={openBulkDialog}
-            disabled={isPending}
-          >
-            <ArrowRightLeft className="size-4" />
-            Change Branch & Class
-            {selectedCount > 0 ? <span className="ml-1">({selectedCount})</span> : null}
-          </Button>
+          {canUpdateChild ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={openBulkDialog}
+              disabled={isPending}
+            >
+              <ArrowRightLeft className="size-4" />
+              Change Branch & Class
+              {selectedCount > 0 ? <span className="ml-1">({selectedCount})</span> : null}
+            </Button>
+          ) : null}
 
           <ExportButton
             filename="children_drafts"
@@ -614,16 +630,17 @@ export function DraftsPageClient({
             data={childrenList as unknown as Record<string, unknown>[]}
           />
 
-          {/* Add Child button */}
-          <Button
-            asChild
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
-          >
-            <Link href="/children/new">
-              <Plus className="mr-1 size-4" />
-              Add Child
-            </Link>
-          </Button>
+          {canAddChild ? (
+            <Button
+              asChild
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              <Link href="/children/new">
+                <Plus className="mr-1 size-4" />
+                Add Child
+              </Link>
+            </Button>
+          ) : null}
         </div>
 
         <form

@@ -31,6 +31,7 @@ import {
   toggleChildActive,
   updateChildClass,
 } from "@/lib/actions/children";
+import type { LegacyChildActionPermissions } from "@/lib/legacy-child-action-permissions";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -121,6 +122,7 @@ interface ChildrenPageClientProps {
   branches: BranchItem[];
   classes: ClassItem[];
   filters: Filters;
+  actionPermissions?: LegacyChildActionPermissions;
   title?: string;
   printTitle?: string;
   lockedBranchId?: string;
@@ -189,6 +191,11 @@ export function ChildrenPageClient({
   branches,
   classes,
   filters,
+  actionPermissions = {
+    canAddChild: true,
+    canUpdateChild: true,
+    canDeleteChild: true,
+  },
   title = "Children",
   printTitle = title,
   lockedBranchId,
@@ -211,6 +218,7 @@ export function ChildrenPageClient({
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
   const [bulkBranchId, setBulkBranchId] = useState("");
   const [bulkClassId, setBulkClassId] = useState("");
+  const { canAddChild, canUpdateChild, canDeleteChild } = actionPermissions;
 
   // Debounced search state (local, synced to URL on change)
   const [searchValue, setSearchValue] = useState(filters.search);
@@ -643,13 +651,22 @@ export function ChildrenPageClient({
         onToggleActive: handleToggleActive,
         onChangeClass: handleChangeClass,
         classOptions: classes,
-        enableClassReassignment: true,
+        enableClassReassignment: canUpdateChild,
+        canUpdate: canUpdateChild,
+        canDelete: canDeleteChild,
       }),
-    [classes, handleChangeClass, handleDeleteRequest, handleToggleActive]
+    [
+      canDeleteChild,
+      canUpdateChild,
+      classes,
+      handleChangeClass,
+      handleDeleteRequest,
+      handleToggleActive,
+    ]
   );
   const columns = useMemo(
-    () => [selectionColumn, ...baseColumns],
-    [baseColumns, selectionColumn]
+    () => (canUpdateChild ? [selectionColumn, ...baseColumns] : baseColumns),
+    [baseColumns, canUpdateChild, selectionColumn]
   );
 
   const table = useReactTable({
@@ -682,14 +699,16 @@ export function ChildrenPageClient({
       <Card className="m-4 md:m-6 print:m-0 print:border-none print:shadow-none">
         <CardHeader className="print:hidden">
           <CardTitle className="text-lg">{title}</CardTitle>
-          <CardAction>
-            <Button asChild>
-              <Link href={addChildHref}>
-                <Plus className="mr-1 size-4" />
-                Add Child
-              </Link>
-            </Button>
-          </CardAction>
+          {canAddChild ? (
+            <CardAction>
+              <Button asChild>
+                <Link href={addChildHref}>
+                  <Plus className="mr-1 size-4" />
+                  Add Child
+                </Link>
+              </Button>
+            </CardAction>
+          ) : null}
         </CardHeader>
         <CardContent className="space-y-4 print:p-0 print:space-y-0">
         {/* ── Toolbar ─────────────────────────────── */}
@@ -799,16 +818,18 @@ export function ChildrenPageClient({
             </Button>
           </div>
 
-          <Button
-            type="button"
-            variant="outline"
-            onClick={openBulkDialog}
-            disabled={isPending}
-          >
-            <ArrowRightLeft className="size-4" />
-            Change Branch & Class
-            {selectedCount > 0 ? <span className="ml-1">({selectedCount})</span> : null}
-          </Button>
+          {canUpdateChild ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={openBulkDialog}
+              disabled={isPending}
+            >
+              <ArrowRightLeft className="size-4" />
+              Change Branch & Class
+              {selectedCount > 0 ? <span className="ml-1">({selectedCount})</span> : null}
+            </Button>
+          ) : null}
 
           {/* Export */}
           <ExportButton
@@ -918,7 +939,10 @@ export function ChildrenPageClient({
           {viewMode === "cards" ? (
             /* Cards Grid */
             childrenList.length === 0 ? (
-              <ChildrenEmptyState actionHref={addChildHref} />
+              <ChildrenEmptyState
+                actionHref={addChildHref}
+                canAddChild={canAddChild}
+              />
             ) : (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {childrenList.map((child) => {
@@ -1046,7 +1070,10 @@ export function ChildrenPageClient({
                           colSpan={columns.length}
                           className="h-40 text-center"
                         >
-                          <ChildrenEmptyState actionHref={addChildHref} />
+                          <ChildrenEmptyState
+                            actionHref={addChildHref}
+                            canAddChild={canAddChild}
+                          />
                         </TableCell>
                       </TableRow>
                     )}
@@ -1246,13 +1273,23 @@ export function ChildrenPageClient({
 
 // ── Warm Empty State ─────────────────────────
 
-function ChildrenEmptyState({ actionHref = "/children/new" }: { actionHref?: string }) {
+function ChildrenEmptyState({
+  actionHref = "/children/new",
+  canAddChild = true,
+}: {
+  actionHref?: string;
+  canAddChild?: boolean;
+}) {
   return (
     <EmptyState
       icon={Sparkles}
       title="No children found"
       description="Try adjusting your search or filters. Or start by enrolling a new child to the nursery."
-      action={{ label: "Enroll a Child", href: actionHref, icon: Plus }}
+      action={
+        canAddChild
+          ? { label: "Enroll a Child", href: actionHref, icon: Plus }
+          : undefined
+      }
     />
   );
 }

@@ -4,6 +4,8 @@ import { getClasses } from "@/lib/actions/classes";
 import { getChildren } from "@/lib/actions/children";
 import { ChildrenPageClient } from "@/components/children/children-page-client";
 import { FadeIn } from "@/components/ui/skeleton";
+import { getLegacyChildActionPermissions } from "@/lib/legacy-child-action-permissions";
+import { requireOrg } from "@/lib/require-org";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -30,8 +32,15 @@ export default async function BranchChildrenPage({ params, searchParams }: PageP
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const page = Math.max(1, Number(query.page) || 1);
   const pageSize = Number(query.pageSize) || 20;
+  const ctx = await requireOrg();
 
-  const [branchResult, childrenResult, branchesResult, classesResult] =
+  const [
+    branchResult,
+    childrenResult,
+    branchesResult,
+    classesResult,
+    actionPermissions,
+  ] =
     await Promise.all([
       getBranch(id),
       getChildren({
@@ -54,6 +63,7 @@ export default async function BranchChildrenPage({ params, searchParams }: PageP
       }),
       getBranches(),
       getClasses(),
+      getLegacyChildActionPermissions(ctx),
     ]);
 
   if (!branchResult.success || !branchResult.data) {
@@ -76,6 +86,7 @@ export default async function BranchChildrenPage({ params, searchParams }: PageP
         total={childrenResult.total ?? 0}
         branches={branches}
         classes={classes}
+        actionPermissions={actionPermissions}
         title={title}
         printTitle={title}
         lockedBranchId={id}

@@ -1249,43 +1249,49 @@
     "legacyPhp": "Front/templates/admin/children.php",
     "legacyJs": "Front/templates/admin/js/children.js",
     "modernRoute": "/children.php, /children",
-    "status": "partial - legacy child roster, bulk branch/class modal, filters, status toggle, copy/PDF exports, actions, and bridge restored; live refresh audit remains",
+    "status": "partial - legacy child roster, bulk branch/class modal, filters, status toggle, copy/PDF exports, actions, ACL, and bridge restored; live refresh audit remains",
     "legacyTablesMentioned": [
       "Form",
       "Selected",
       "auto",
-      "themeforest"
+      "themeforest",
+      "system_actions",
+      "actions_control"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Restored the legacy Children Listing roster shape with S.N./child number, Image, F Name, L Name, DOB, Branch, Class, Status, Gender, Date, and Action columns; child photo fallback handling for migrated `images/EmpPhoto` filenames; legacy column filters for S.N., first name, last name, DOB, nationality, created-date from/to, branch, class, gender, and status; 10/20/50/100/150 page sizes; inline class reassignment backed by an org-safe `updateChildClass` action; checkbox select-all-in-page selection; Change Branch & Class modal for selected children backed by an org-safe bulk action with target branch/class validation and history snapshots; status badge active/inactive toggle via org-safe action; dashboard, print, edit, and deactivate actions; and Copy/PDF/Excel/CSV child export with S.N. `/children.php` now redirects to the modern child roster. Remaining work is live WebSocket refresh behavior that was commented in legacy JS."
+    "verification": "Restored the legacy Children Listing roster shape with S.N./child number, Image, F Name, L Name, DOB, Branch, Class, Status, Gender, Date, and Action columns; child photo fallback handling for migrated `images/EmpPhoto` filenames; legacy column filters for S.N., first name, last name, DOB, nationality, created-date from/to, branch, class, gender, and status; 10/20/50/100/150 page sizes; inline class reassignment backed by an org-safe `updateChildClass` action; checkbox select-all-in-page selection; Change Branch & Class modal for selected children backed by an org-safe bulk action with target branch/class validation and history snapshots; status badge active/inactive toggle via org-safe action; dashboard, print, edit, and deactivate actions; and Copy/PDF/Excel/CSV child export with S.N. Child `addChild`, `updateChild`, and `deleteChild` ACTION grants now hide New/Edit/status/class/bulk/deactivate controls and deny direct create/update/status/class/bulk/deactivate server mutations when the imported action catalogue is configured and not granted. `/children.php` now redirects to the modern child roster. Remaining work is live WebSocket refresh behavior that was commented in legacy JS."
   },
   {
     "legacyPhp": "Front/templates/admin/children_drafts.php",
     "legacyJs": "Front/templates/admin/js/children_drafts.js",
     "modernRoute": "/children_drafts.php, /children/drafts",
-    "status": "partial - legacy draft roster, bulk branch/class modal, copy/PDF exports, and bridge restored; live refresh audit remains",
+    "status": "partial - legacy draft roster, bulk branch/class modal, copy/PDF exports, ACL, and bridge restored; live refresh audit remains",
     "legacyTablesMentioned": [
       "Form",
       "Selected",
       "auto",
-      "themeforest"
+      "themeforest",
+      "system_actions",
+      "actions_control"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Restored `/children/drafts` as a real draft listing instead of a redirect, backed by `getDrafts`/`isDraft`, with legacy S.N./image/F Name/L Name/DOB/Branch/Class/Nationality/Gender/Date/Action columns, child photo fallback handling, S.N./first/last/DOB/nationality/created-date filters, branch/class/gender filters, 10/20/50/100/150 page sizes, Copy/PDF/Excel/CSV export, New Child, edit, deactivate actions, checkbox select-all-in-page selection, and Change Branch & Class modal for selected drafts backed by the same org-safe bulk action without clearing draft status. `/children_drafts.php` now redirects to the modern draft child roster. Remaining work is commented WebSocket refresh behavior."
+    "verification": "Restored `/children/drafts` as a real draft listing instead of a redirect, backed by `getDrafts`/`isDraft`, with legacy S.N./image/F Name/L Name/DOB/Branch/Class/Nationality/Gender/Date/Action columns, child photo fallback handling, S.N./first/last/DOB/nationality/created-date filters, branch/class/gender filters, 10/20/50/100/150 page sizes, Copy/PDF/Excel/CSV export, New Child, edit, deactivate actions, checkbox select-all-in-page selection, and Change Branch & Class modal for selected drafts backed by the same org-safe bulk action without clearing draft status. Child `addChild`, `updateChild`, and `deleteChild` ACTION grants now hide New/Edit/bulk/deactivate controls and deny direct create/update/bulk/deactivate mutations when the imported action catalogue is configured and not granted. `/children_drafts.php` now redirects to the modern draft child roster. Remaining work is commented WebSocket refresh behavior."
   },
   {
     "legacyPhp": "Front/templates/admin/childrenperbranch.php",
     "legacyJs": "Front/templates/admin/js/childrenperbranch.js",
     "modernRoute": "/childrenperbranch.php, /branches/[id]/children",
-    "status": "partial - branch-scoped children listing, locked bulk class modal, copy/PDF exports, and legacy branch bridge restored; live refresh audit remains",
+    "status": "partial - branch-scoped children listing, locked bulk class modal, copy/PDF exports, ACL, and legacy branch bridge restored; live refresh audit remains",
     "legacyTablesMentioned": [
       "auto",
-      "themeforest"
+      "themeforest",
+      "system_actions",
+      "actions_control"
     ],
     "requestFieldsMentioned": [
       "brid"
     ],
-    "verification": "Restored the branch-dashboard entry point for `childrenperbranch.php` as `/branches/[id]/children`, with legacy title shape `Active Children For {branch} Branch`, branch-locked listing, S.N./image/F Name/L Name/DOB/Branch/Class/Status/Gender/Date/Action columns, branch class reassignment dropdown limited to classes in the same branch, status toggle, New Child, dashboard, print/view, edit, deactivate actions, legacy filters, Copy/PDF/Excel/CSV export, checkbox select-all-in-page selection, locked-branch Change Branch & Class modal for selected children, and 10/20/50/100/150 page sizes. `/childrenperbranch.php?brid=` now resolves raw numeric, UUID, and encrypted legacy branch ids into that modern branch page. Remaining work is any live refresh behavior."
+    "verification": "Restored the branch-dashboard entry point for `childrenperbranch.php` as `/branches/[id]/children`, with legacy title shape `Active Children For {branch} Branch`, branch-locked listing, S.N./image/F Name/L Name/DOB/Branch/Class/Status/Gender/Date/Action columns, branch class reassignment dropdown limited to classes in the same branch, status toggle, New Child, dashboard, print/view, edit, deactivate actions, legacy filters, Copy/PDF/Excel/CSV export, checkbox select-all-in-page selection, locked-branch Change Branch & Class modal for selected children, and 10/20/50/100/150 page sizes. Child `addChild`, `updateChild`, and `deleteChild` ACTION grants now hide New/Edit/status/class/bulk/deactivate controls and deny the same branch-scoped child write mutations when the imported action catalogue is configured and not granted. `/childrenperbranch.php?brid=` now resolves raw numeric, UUID, and encrypted legacy branch ids into that modern branch page. Remaining work is any live refresh behavior."
   },
   {
     "legacyPhp": "Front/templates/admin/class.php",
@@ -16635,7 +16641,7 @@
     "requestFieldsMentioned": [
       "LEVELS"
     ],
-    "verification": "`/settings/access-control` now restores the admin-only legacy level/action matrix over migrated `LegacyAuthRecord` levels and `LegacyAccessControlRecord` actions/grants, including staff and manager source databases, selected-level batch save, searchable action catalogue, inactive action badges, disabled level badges, legacy `No level selected!`/`Saved!` feedback, and grant persistence by soft-disabling stale rows then re-enabling/creating selected grants. `EditSchoolFromTo` is now enforced through the migrated grant bridge; `leftmenu.php` PAGE grants filter desktop/mobile navigation and deny direct guarded route hits through `/forbidden.php`; and non-left-menu deep PAGE guards now cover branch/class/child dashboards, child accounting/calls/absence/accident/attendance, individual call/medical/assessment forms, message class compose, nursery compliance, and invoice/daily/absence detail bridges. Remaining work is wiring ACTION denial/action-button visibility and deciding whether to hydrate grant snapshots into sessions."
+    "verification": "`/settings/access-control` now restores the admin-only legacy level/action matrix over migrated `LegacyAuthRecord` levels and `LegacyAccessControlRecord` actions/grants, including staff and manager source databases, selected-level batch save, searchable action catalogue, inactive action badges, disabled level badges, legacy `No level selected!`/`Saved!` feedback, and grant persistence by soft-disabling stale rows then re-enabling/creating selected grants. `EditSchoolFromTo` is now enforced through the migrated grant bridge; `leftmenu.php` PAGE grants filter desktop/mobile navigation and deny direct guarded route hits through `/forbidden.php`; non-left-menu deep PAGE guards now cover branch/class/child dashboards, child accounting/calls/absence/accident/attendance, individual call/medical/assessment forms, message class compose, nursery compliance, and invoice/daily/absence detail bridges; and child `addChild`/`updateChild`/`deleteChild` ACTION grants now protect child roster controls, direct child form routes, and child write actions. Remaining work is wiring the other ACTION families and deciding whether to hydrate grant snapshots into sessions."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/classes/add_level.class.php",
@@ -17154,7 +17160,7 @@
     "requestFieldsMentioned": [
       "LEVELS"
     ],
-    "verification": "`/settings/access-control` replaces the legacy `Modify levels` admin surface with source-database grouped staff/manager level tables, selected-level checkboxes, searchable action grants, select-all/clear controls, and batch save through `updateLegacyAccessControlLevels`. `EditSchoolFromTo` now uses those grants for active enforcement when migrated ACL data is present; left-menu PAGE grants filter desktop/mobile navigation and deny direct guarded route hits through `/forbidden.php`; and non-left-menu deep PAGE guards now cover branch/class/child dashboards, child accounting/calls/absence/accident/attendance, individual call/medical/assessment forms, message class compose, nursery compliance, and invoice/daily/absence detail bridges. Remaining work is expanding active `Check::protectPageOrFunction` enforcement across ACTION guards/action controls."
+    "verification": "`/settings/access-control` replaces the legacy `Modify levels` admin surface with source-database grouped staff/manager level tables, selected-level checkboxes, searchable action grants, select-all/clear controls, and batch save through `updateLegacyAccessControlLevels`. `EditSchoolFromTo` now uses those grants for active enforcement when migrated ACL data is present; left-menu PAGE grants filter desktop/mobile navigation and deny direct guarded route hits through `/forbidden.php`; non-left-menu deep PAGE guards now cover branch/class/child dashboards, child accounting/calls/absence/accident/attendance, individual call/medical/assessment forms, message class compose, nursery compliance, and invoice/daily/absence detail bridges; and child `addChild`/`updateChild`/`deleteChild` ACTION grants now protect child roster controls, direct child form routes, and child write actions. Remaining work is expanding active `Check::protectPageOrFunction` enforcement across the other ACTION guards/action controls."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/level-create.php",

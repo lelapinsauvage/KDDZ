@@ -5,6 +5,7 @@ import { requireOrg, requireOrgSafe } from "@/lib/require-org";
 import { verifyBranchAccess, verifyChildAccess } from "@/lib/verify-org-access";
 import { revalidatePath } from "next/cache";
 import { childFormSchema, childDraftSchema } from "@/lib/validations/child";
+import { requireLegacyActionAllowed } from "@/lib/legacy-child-action-permissions";
 import type { Prisma } from "@/generated/prisma/client";
 import { z } from "zod";
 
@@ -289,6 +290,9 @@ export async function createChild(formData: FormData): Promise<ActionResult> {
   const { ctx } = result;
 
   try {
+    const permission = await requireLegacyActionAllowed(ctx, "addChild");
+    if (!permission.ok) return { success: false, error: permission.error };
+
     const raw = Object.fromEntries(formData.entries()) as Record<string, unknown>;
     const parsed = parseParentData(raw);
 
@@ -514,6 +518,9 @@ export async function updateChild(
   const { ctx } = result;
 
   try {
+    const permission = await requireLegacyActionAllowed(ctx, "updateChild");
+    if (!permission.ok) return { success: false, error: permission.error };
+
     // Verify child belongs to this org
     const childOk = await verifyChildAccess(id, ctx.organizationId);
     if (!childOk) return { success: false, error: "Child not found" };
@@ -781,6 +788,9 @@ export async function deleteChild(
   const { ctx } = result;
 
   try {
+    const permission = await requireLegacyActionAllowed(ctx, "deleteChild");
+    if (!permission.ok) return { success: false, error: permission.error };
+
     const childOk = await verifyChildAccess(id, ctx.organizationId);
     if (!childOk) return { success: false, error: "Child not found" };
 
@@ -814,6 +824,9 @@ export async function toggleChildActive(
   const { ctx } = result;
 
   try {
+    const permission = await requireLegacyActionAllowed(ctx, "updateChild");
+    if (!permission.ok) return { success: false, error: permission.error };
+
     const childOk = await verifyChildAccess(id, ctx.organizationId);
     if (!childOk) return { success: false, error: "Child not found" };
 
@@ -849,6 +862,9 @@ export async function updateChildClass(
   const { ctx } = result;
 
   try {
+    const permission = await requireLegacyActionAllowed(ctx, "updateChild");
+    if (!permission.ok) return { success: false, error: permission.error };
+
     const child = await db.child.findFirst({
       where: { id, branch: { organizationId: ctx.organizationId } },
       select: { id: true, branchId: true },
@@ -920,6 +936,9 @@ export async function bulkUpdateChildrenBranchClass(
   }
 
   try {
+    const permission = await requireLegacyActionAllowed(ctx, "updateChild");
+    if (!permission.ok) return { success: false, error: permission.error };
+
     const targetClass = await db.class.findFirst({
       where: {
         id: classId,

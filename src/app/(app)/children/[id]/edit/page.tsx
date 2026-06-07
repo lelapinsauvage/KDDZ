@@ -1,8 +1,10 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { ChildForm } from "@/components/children/child-form";
 import { getChild } from "@/lib/actions/children";
 import type { ChildFormValues } from "@/lib/validations/child";
+import { getLegacyChildActionPermissions } from "@/lib/legacy-child-action-permissions";
+import { requireOrg } from "@/lib/require-org";
 
 interface ChildDetailsPageProps {
   params: Promise<{ id: string }>;
@@ -63,6 +65,11 @@ function mapParent(parent: {
 
 export default async function ChildEditPage({ params }: ChildDetailsPageProps) {
   const { id } = await params;
+  const ctx = await requireOrg();
+  const permissions = await getLegacyChildActionPermissions(ctx);
+  if (!permissions.canUpdateChild) {
+    redirect("/forbidden.php");
+  }
 
   const child = await getChild(id);
 

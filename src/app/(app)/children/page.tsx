@@ -3,6 +3,8 @@ import { getBranches } from "@/lib/actions/branches";
 import { getClasses } from "@/lib/actions/classes";
 import { ChildrenPageClient } from "@/components/children/children-page-client";
 import { FadeIn } from "@/components/ui/skeleton";
+import { getLegacyChildActionPermissions } from "@/lib/legacy-child-action-permissions";
+import { requireOrg } from "@/lib/require-org";
 
 interface PageProps {
   searchParams: Promise<{
@@ -31,7 +33,14 @@ export default async function ChildrenListingPage({ searchParams }: PageProps) {
   const page = Math.max(1, Number(params.page) || 1);
   const pageSize = Number(params.pageSize) || 20;
 
-  const [childrenResult, branchesResult, classesResult] = await Promise.all([
+  const ctx = await requireOrg();
+
+  const [
+    childrenResult,
+    branchesResult,
+    classesResult,
+    actionPermissions,
+  ] = await Promise.all([
     getChildren({
       search: params.search || undefined,
       branchId: params.branch && params.branch !== "ALL" ? params.branch : undefined,
@@ -52,6 +61,7 @@ export default async function ChildrenListingPage({ searchParams }: PageProps) {
     }),
     getBranches(),
     getClasses(),
+    getLegacyChildActionPermissions(ctx),
   ]);
 
   const children = childrenResult.children ?? [];
@@ -72,6 +82,7 @@ export default async function ChildrenListingPage({ searchParams }: PageProps) {
         total={total}
         branches={branches}
         classes={classes}
+        actionPermissions={actionPermissions}
         filters={{
           search: params.search ?? "",
           branch: params.branch ?? "ALL",

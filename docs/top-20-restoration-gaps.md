@@ -155,7 +155,8 @@ This list is the first implementation backlog after the generated inventory/matr
    - Desktop and mobile navigation now batch-resolve the legacy `leftmenu.php` PAGE guards and hide guarded sidebar/tab/sheet entries when the signed-in user's migrated levels do not grant the matching `system_actions*` row; imports without a matching action row stay visible as a safe fallback.
    - The app shell now maps direct modern and legacy PHP URLs for the guarded `leftmenu.php` PAGE entries to the same grant decisions and redirects configured-but-denied hits to `/forbidden.php`.
    - Non-left-menu detail/deep PAGE guards from legacy `Check::protectPageOrFunction(...)` calls are now included in the same server route map, including branch/class/child dashboards, child accounting/calls/absence/accident/attendance, individual call/medical/assessment forms, message class compose, nursery compliance, and invoice/daily/absence detail bridges.
-   - Remaining work is expanding this grant bridge into ACTION denial/action-button visibility and deciding whether to hydrate grant snapshots into sessions.
+   - Child add/update/delete ACTION guards now hide the matching roster/draft controls, protect direct new/edit routes, and deny direct server mutations for create/update/status/class/bulk/deactivate flows when imported `actions_control*` grants deny `addChild`, `updateChild`, or `deleteChild`.
+   - Remaining work is expanding this grant bridge into the other ACTION families and deciding whether to hydrate grant snapshots into sessions.
 
 ## Execution Order
 

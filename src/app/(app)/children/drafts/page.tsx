@@ -3,6 +3,8 @@ import { getClasses } from "@/lib/actions/classes";
 import { getDrafts } from "@/lib/actions/children";
 import { DraftsPageClient } from "@/components/children/drafts-page-client";
 import { FadeIn } from "@/components/ui/skeleton";
+import { getLegacyChildActionPermissions } from "@/lib/legacy-child-action-permissions";
+import { requireOrg } from "@/lib/require-org";
 
 interface PageProps {
   searchParams: Promise<{
@@ -29,7 +31,14 @@ export default async function ChildrenDraftsPage({ searchParams }: PageProps) {
   const page = Math.max(1, Number(params.page) || 1);
   const pageSize = Number(params.pageSize) || 20;
 
-  const [draftsResult, branchesResult, classesResult] = await Promise.all([
+  const ctx = await requireOrg();
+
+  const [
+    draftsResult,
+    branchesResult,
+    classesResult,
+    actionPermissions,
+  ] = await Promise.all([
     getDrafts({
       search: params.search || undefined,
       branchId: params.branch && params.branch !== "ALL" ? params.branch : undefined,
@@ -49,6 +58,7 @@ export default async function ChildrenDraftsPage({ searchParams }: PageProps) {
     }),
     getBranches(),
     getClasses(),
+    getLegacyChildActionPermissions(ctx),
   ]);
 
   const branches = (branchesResult.success && branchesResult.data
@@ -65,6 +75,7 @@ export default async function ChildrenDraftsPage({ searchParams }: PageProps) {
         total={draftsResult.total ?? 0}
         branches={branches}
         classes={classes}
+        actionPermissions={actionPermissions}
         filters={{
           search: params.search ?? "",
           branch: params.branch ?? "ALL",

@@ -23,6 +23,12 @@ export type LegacyAccessPermissionRequest = {
   actionType?: "PAGE" | "ACTION" | string;
 };
 
+export function legacyAccessAllows(
+  decision: LegacyAccessPermissionDecision | null | undefined,
+) {
+  return !decision?.isConfigured || decision.isAllowed;
+}
+
 const LEGACY_ACCESS_CONFIGS: LegacyAccessConfig[] = [
   {
     userRecordType: "login_user",

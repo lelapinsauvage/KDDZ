@@ -191,6 +191,8 @@ interface ChildrenColumnsOptions {
   onChangeClass?: (child: ChildRow, classId: string) => Promise<boolean>;
   classOptions?: Array<{ id: string; name: string; branchId: string }>;
   enableClassReassignment?: boolean;
+  canUpdate?: boolean;
+  canDelete?: boolean;
   variant?: "children" | "drafts";
 }
 
@@ -407,6 +409,7 @@ export function getChildrenColumns(
       cell: ({ row }) => {
         if (
           variant === "children" &&
+          options.canUpdate !== false &&
           options.enableClassReassignment &&
           options.classOptions &&
           options.onChangeClass
@@ -456,16 +459,19 @@ export function getChildrenColumns(
         const status = getStatus(row.original);
         const { className, label } =
           STATUS_CONFIG[status] ?? STATUS_CONFIG.INACTIVE;
+        const canUpdate = options.canUpdate !== false;
         return (
           <Badge
-            role="button"
-            tabIndex={0}
-            className={`cursor-pointer border ${className}`}
+            role={canUpdate ? "button" : undefined}
+            tabIndex={canUpdate ? 0 : undefined}
+            className={`${canUpdate ? "cursor-pointer" : "cursor-default"} border ${className}`}
             onClick={(event) => {
               event.stopPropagation();
+              if (!canUpdate) return;
               options.onToggleActive?.(row.original);
             }}
             onKeyDown={(event) => {
+              if (!canUpdate) return;
               if (event.key === "Enter" || event.key === " ") {
                 event.preventDefault();
                 event.stopPropagation();
@@ -529,6 +535,8 @@ export function getChildrenColumns(
       meta: { className: "print:hidden" },
       cell: ({ row }) => {
         const child = row.original;
+        const canUpdate = options.canUpdate !== false;
+        const canDelete = options.canDelete !== false;
         return (
           <div className="flex items-center gap-0.5 print:hidden">
             {variant === "children" ? (
@@ -553,27 +561,31 @@ export function getChildrenColumns(
                 </Button>
               </>
             ) : null}
-            <Button variant="ghost" size="sm" className="size-8 p-0" asChild>
-              <Link
-                href={`/children/${child.id}/edit`}
-                onClick={(e) => e.stopPropagation()}
+            {canUpdate ? (
+              <Button variant="ghost" size="sm" className="size-8 p-0" asChild>
+                <Link
+                  href={`/children/${child.id}/edit`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Pencil className="size-4 text-muted-foreground" />
+                  <span className="sr-only">Edit</span>
+                </Link>
+              </Button>
+            ) : null}
+            {canDelete ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="size-8 p-0 text-muted-foreground hover:text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  options.onDelete?.(child.id, `${child.firstName} ${child.lastName}`);
+                }}
               >
-                <Pencil className="size-4 text-muted-foreground" />
-                <span className="sr-only">Edit</span>
-              </Link>
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="size-8 p-0 text-muted-foreground hover:text-destructive"
-              onClick={(e) => {
-                e.stopPropagation();
-                options.onDelete?.(child.id, `${child.firstName} ${child.lastName}`);
-              }}
-            >
-              <Trash2 className="size-4" />
-              <span className="sr-only">Delete</span>
-            </Button>
+                <Trash2 className="size-4" />
+                <span className="sr-only">Delete</span>
+              </Button>
+            ) : null}
           </div>
         );
       },
