@@ -81,6 +81,7 @@ interface LegacyMessageSideEffectConfig {
   legacyNatureId: number;
   names: string[];
   family: string;
+  category: string;
   alarmType: AlarmType;
   legacyMethod: string;
   contentTable: string;
@@ -119,11 +120,24 @@ function roleToSenderType(role: string): SenderType {
 }
 
 function revalidateMessagePaths() {
-  revalidatePath("/messages");
-  revalidatePath("/messages/inbox");
-  revalidatePath("/messages/sent");
-  revalidatePath("/alarms");
-  revalidatePath("/alarms/msg");
+  [
+    "/messages",
+    "/messages/inbox",
+    "/messages/sent",
+    "/alarms",
+    "/alarms/msg",
+    "/alarms/events",
+    "/alarms/birthdays",
+    "/alarms/insurance",
+    "/alarms/medicine",
+    "/alarms/requests",
+    "/alarms/others",
+    "/alarms/assessments",
+    "/alarms/payments",
+    "/alarms/vaccinations",
+    "/settings/events",
+    "/settings/holidays",
+  ].forEach((path) => revalidatePath(path));
 }
 
 function parseSubjectNature(subject: string | null): string | null {
@@ -165,6 +179,7 @@ const LEGACY_MESSAGE_SIDE_EFFECTS: LegacyMessageSideEffectConfig[] = [
     legacyNatureId: 1,
     names: ["birthday", "birthdays"],
     family: "Birthdays",
+    category: "birthday",
     alarmType: "BIRTHDAY",
     legacyMethod: "addToBirthdays",
     contentTable: "t_alarms_birthday",
@@ -184,6 +199,7 @@ const LEGACY_MESSAGE_SIDE_EFFECTS: LegacyMessageSideEffectConfig[] = [
       "inside activities",
     ],
     family: "General",
+    category: "general",
     alarmType: "EVENT",
     legacyMethod: "addToGeneral",
     contentTable: "t_alarms",
@@ -196,6 +212,7 @@ const LEGACY_MESSAGE_SIDE_EFFECTS: LegacyMessageSideEffectConfig[] = [
     legacyNatureId: 3,
     names: ["assessment", "assessments"],
     family: "Assessments",
+    category: "assessment",
     alarmType: "ASSESSMENT",
     legacyMethod: "addToAssessments",
     contentTable: "t_alarms_assessment",
@@ -207,6 +224,7 @@ const LEGACY_MESSAGE_SIDE_EFFECTS: LegacyMessageSideEffectConfig[] = [
     legacyNatureId: 4,
     names: ["event", "events", "show", "celebration"],
     family: "Events",
+    category: "event",
     alarmType: "EVENT",
     legacyMethod: "addToEvents",
     contentTable: "t_events",
@@ -219,6 +237,7 @@ const LEGACY_MESSAGE_SIDE_EFFECTS: LegacyMessageSideEffectConfig[] = [
     legacyNatureId: 5,
     names: ["reports reminder", "reports reminders", "medical", "medical report"],
     family: "Reports Reminders",
+    category: "medical",
     alarmType: "MEDICAL",
     legacyMethod: "addToReportsReminders",
     contentTable: "t_alarms_medical",
@@ -230,6 +249,7 @@ const LEGACY_MESSAGE_SIDE_EFFECTS: LegacyMessageSideEffectConfig[] = [
     legacyNatureId: 6,
     names: ["vaccination", "vaccinations"],
     family: "Vaccinations",
+    category: "vaccination",
     alarmType: "VACCINATION",
     legacyMethod: "addToVaccinations",
     contentTable: "t_alarms_vaccinations",
@@ -241,6 +261,7 @@ const LEGACY_MESSAGE_SIDE_EFFECTS: LegacyMessageSideEffectConfig[] = [
     legacyNatureId: 7,
     names: ["medicine", "reports medicine"],
     family: "Medicine",
+    category: "medicine",
     alarmType: "MEDICINE",
     legacyMethod: "addToMedicine",
     contentTable: "t_alarms_medicine",
@@ -252,6 +273,7 @@ const LEGACY_MESSAGE_SIDE_EFFECTS: LegacyMessageSideEffectConfig[] = [
     legacyNatureId: 8,
     names: ["insurance"],
     family: "Insurance",
+    category: "insurance",
     alarmType: "INSURANCE",
     legacyMethod: "addToInsurance",
     contentTable: "t_alarms_insurance",
@@ -263,6 +285,7 @@ const LEGACY_MESSAGE_SIDE_EFFECTS: LegacyMessageSideEffectConfig[] = [
     legacyNatureId: 9,
     names: ["payment", "payments"],
     family: "Payments",
+    category: "payment",
     alarmType: "PAYMENT",
     legacyMethod: "addToPayments",
     contentTable: "t_alarms_payments",
@@ -274,6 +297,7 @@ const LEGACY_MESSAGE_SIDE_EFFECTS: LegacyMessageSideEffectConfig[] = [
     legacyNatureId: 10,
     names: ["other", "others", "red day"],
     family: "Others",
+    category: "other",
     alarmType: "OTHER",
     legacyMethod: "addToOthers",
     contentTable: "t_alarms_others",
@@ -285,6 +309,7 @@ const LEGACY_MESSAGE_SIDE_EFFECTS: LegacyMessageSideEffectConfig[] = [
     legacyNatureId: 11,
     names: ["request", "requests"],
     family: "Requests",
+    category: "request",
     alarmType: "REQUEST",
     legacyMethod: "addToRequests",
     contentTable: "t_alarms_requests",
@@ -362,7 +387,10 @@ function legacyMessageData(params: {
     legacyPage: params.sourcePage,
     delivery,
     externalDeliveryPending,
-    sideEffectIntent: legacyMessageSideEffectIntent(params.nature),
+    sideEffectIntent:
+      params.sourcePage === "message_portal.php"
+        ? legacyMessageSideEffectIntent(params.nature)
+        : null,
     classId: params.classId ?? null,
     selectedChildIds: params.childIds ?? [],
     recipientScope: params.recipientScope ?? "primary",
@@ -376,7 +404,7 @@ function legacyMessageSideEffectIntent(
   if (!config) return null;
 
   return {
-    status: "pending-modern-write",
+    status: "writes-created-on-send",
     legacyNatureId: config.legacyNatureId,
     family: config.family,
     alarmType: config.alarmType,
@@ -402,6 +430,315 @@ function findLegacyMessageSideEffect(nature?: string | null) {
         config.names.includes(normalized),
     ) ?? null
   );
+}
+
+function startOfToday() {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+function sqlDateTime(date = new Date()) {
+  return date.toISOString().slice(0, 19).replace("T", " ");
+}
+
+async function nextLegacySideEffectId(
+  tx: Prisma.TransactionClient,
+  sourceTables: string[],
+) {
+  const [receiptMax, eventMax] = await Promise.all([
+    tx.notificationReceipt.aggregate({
+      where: { sourceTable: { in: sourceTables } },
+      _max: { legacyNotificationId: true },
+    }),
+    tx.event.aggregate({ _max: { legacyId: true } }),
+  ]);
+
+  return Math.max(
+    receiptMax._max.legacyNotificationId ?? 0,
+    eventMax._max.legacyId ?? 0,
+  ) + 1;
+}
+
+function sideEffectReceiptTables(config: LegacyMessageSideEffectConfig) {
+  return [
+    config.parentDeliveryTable,
+    config.staffDeliveryTable,
+  ].filter((table): table is string => Boolean(table));
+}
+
+async function createLegacyBulkMessageSideEffects(params: {
+  tx: Prisma.TransactionClient;
+  organizationId: string;
+  senderId: string;
+  threadId: string;
+  nature?: string | null;
+  subject: string | null;
+  body: string;
+  children: Array<{
+    id: string;
+    legacyId: number | null;
+    branchId: string;
+    classId: string | null;
+    parentUsers: Array<{
+      id: string;
+      legacyId: number | null;
+      legacyChildId: number | null;
+    }>;
+  }>;
+}) {
+  const config = findLegacyMessageSideEffect(params.nature);
+  if (!config) return null;
+
+  const sourceTables = sideEffectReceiptTables(config);
+  if (sourceTables.length === 0) return null;
+
+  const now = new Date();
+  const today = startOfToday();
+  const branchIds = Array.from(new Set(params.children.map((child) => child.branchId)));
+  const staffUsers = config.staffDeliveryTable
+    ? await params.tx.user.findMany({
+        where: {
+          organizationId: params.organizationId,
+          isActive: true,
+          OR: [
+            { branchId: { in: branchIds } },
+            { branchId: null, role: "ADMIN" },
+          ],
+        },
+        select: { id: true },
+      })
+    : [];
+
+  let nextLegacyId = await nextLegacySideEffectId(params.tx, sourceTables);
+  const summary = {
+    family: config.family,
+    alarmsCreated: 0,
+    eventsCreated: 0,
+    holidaysCreated: 0,
+    receiptsCreated: 0,
+  };
+
+  if (config.createsEvent) {
+    const legacyNotificationId = nextLegacyId++;
+    const event = await params.tx.event.create({
+      data: {
+        legacyId: legacyNotificationId,
+        organizationId: params.organizationId,
+        title: params.subject || config.family,
+        description: params.body,
+        customSubject: params.subject || config.family,
+        customBody: params.body,
+        date: today,
+        notificationBranchIds: branchIds,
+        notificationDaysBefore: [],
+        isActive: true,
+        legacyData: {
+          sourceTable: config.contentTable,
+          sourceDeliveryTable: config.staffDeliveryTable,
+          parentDeliveryTable: config.parentDeliveryTable,
+          modernGenerator: "sendBulkChildMessage",
+          legacyMethod: "Data::saveNewEvents",
+          legacyFollowupMethod: config.legacyMethod,
+          legacyNature: params.nature,
+          messageThreadId: params.threadId,
+          senderId: params.senderId,
+          eventType: 0,
+          Message: 1,
+          EventDate: today.toISOString().split("T")[0],
+          submit_time: sqlDateTime(now),
+        },
+      },
+    });
+    summary.eventsCreated += 1;
+
+    const receiptData = [
+      ...parentSideEffectReceipts({
+        config,
+        children: params.children,
+        legacyNotificationId,
+        alarmId: null,
+        metadata: {
+          modernTargetType: "Event",
+          modernTargetId: event.id,
+          datetime: sqlDateTime(now),
+          ntype: 1,
+        },
+      }),
+      ...staffSideEffectReceipts({
+        config,
+        users: staffUsers,
+        legacyNotificationId,
+        alarmId: null,
+        metadata: {
+          modernTargetType: "Event",
+          modernTargetId: event.id,
+          submit_time: sqlDateTime(now),
+          ntype: 1,
+        },
+      }),
+    ];
+    if (receiptData.length > 0) {
+      const receipts = await params.tx.notificationReceipt.createMany({
+        data: receiptData,
+        skipDuplicates: true,
+      });
+      summary.receiptsCreated += receipts.count;
+    }
+
+    return summary;
+  }
+
+  const holiday = config.createsHoliday
+    ? await params.tx.holiday.create({
+        data: {
+          name: params.subject || config.family,
+          description: params.body,
+          date: today,
+          type: params.nature?.toLowerCase().includes("strike")
+            ? "STRIKE"
+            : "HOLIDAY",
+          isActive: true,
+          notificationTitle: params.subject || config.family,
+          notificationMessage: params.body,
+          branchId: branchIds.length === 1 ? branchIds[0] : null,
+        },
+      })
+    : null;
+  if (holiday) summary.holidaysCreated += 1;
+
+  for (const child of params.children) {
+    const legacyNotificationId = nextLegacyId++;
+    const alarm = await params.tx.alarm.create({
+      data: {
+        type: config.alarmType,
+        referenceId: holiday?.id ?? child.id,
+        referenceType: holiday ? "Holiday" : "Child",
+        message: params.body,
+        dueDate: today,
+        branchId: child.branchId,
+        isActive: true,
+        legacyData: {
+          aid: legacyNotificationId,
+          sourceTable: config.contentTable,
+          sourceDeliveryTable: config.staffDeliveryTable,
+          parentDeliveryTable: config.parentDeliveryTable,
+          modernGenerator: "sendBulkChildMessage",
+          legacyMethod: config.legacyMethod,
+          legacyNature: params.nature,
+          legacyNatureId: config.legacyNatureId,
+          messageThreadId: params.threadId,
+          senderId: params.senderId,
+          childId: child.id,
+          legacyChildId: child.legacyId,
+          classId: child.classId,
+          type: params.subject || config.family,
+          details: params.body,
+          href: config.href,
+          level: config.legacyNatureId === 1 ? 0 : undefined,
+          ntype: 1,
+          datetime: sqlDateTime(now),
+        },
+      },
+    });
+    summary.alarmsCreated += 1;
+
+    const receiptData = [
+      ...parentSideEffectReceipts({
+        config,
+        children: [child],
+        legacyNotificationId,
+        alarmId: alarm.id,
+        metadata: {
+          modernTargetType: "Alarm",
+          modernTargetId: alarm.id,
+          datetime: sqlDateTime(now),
+          ntype: 1,
+        },
+      }),
+      ...staffSideEffectReceipts({
+        config,
+        users: staffUsers,
+        legacyNotificationId,
+        alarmId: alarm.id,
+        metadata: {
+          modernTargetType: "Alarm",
+          modernTargetId: alarm.id,
+          submit_time: sqlDateTime(now),
+          ntype: 1,
+        },
+      }),
+    ];
+    if (receiptData.length > 0) {
+      const receipts = await params.tx.notificationReceipt.createMany({
+        data: receiptData,
+        skipDuplicates: true,
+      });
+      summary.receiptsCreated += receipts.count;
+    }
+  }
+
+  return summary;
+}
+
+function parentSideEffectReceipts(params: {
+  config: LegacyMessageSideEffectConfig;
+  children: Array<{
+    id: string;
+    legacyId: number | null;
+    parentUsers: Array<{ legacyId: number | null; legacyChildId: number | null }>;
+  }>;
+  legacyNotificationId: number;
+  alarmId: string | null;
+  metadata: Prisma.InputJsonObject;
+}) {
+  if (!params.config.parentDeliveryTable) return [];
+
+  return params.children.map((child, index) => ({
+    sourceTable: params.config.parentDeliveryTable!,
+    category: params.config.category,
+    legacyNotificationId: params.legacyNotificationId,
+    legacyRecipientId:
+      child.legacyId ??
+      child.parentUsers[0]?.legacyChildId ??
+      child.parentUsers[0]?.legacyId ??
+      -(index + 1),
+    recipientType: "CHILD",
+    recipientId: child.id,
+    alarmId: params.alarmId,
+    isRead: false,
+    metadata: {
+      ...params.metadata,
+      legacyMethod: params.config.legacyMethod,
+      legacyNatureId: params.config.legacyNatureId,
+    },
+  }));
+}
+
+function staffSideEffectReceipts(params: {
+  config: LegacyMessageSideEffectConfig;
+  users: Array<{ id: string }>;
+  legacyNotificationId: number;
+  alarmId: string | null;
+  metadata: Prisma.InputJsonObject;
+}) {
+  if (!params.config.staffDeliveryTable) return [];
+
+  return params.users.map((user, index) => ({
+    sourceTable: params.config.staffDeliveryTable!,
+    category: params.config.category,
+    legacyNotificationId: params.legacyNotificationId,
+    legacyRecipientId: -(index + 1),
+    recipientType: "USER",
+    recipientId: user.id,
+    alarmId: params.alarmId,
+    isRead: false,
+    metadata: {
+      ...params.metadata,
+      legacyMethod: params.config.legacyMethod,
+      legacyNatureId: params.config.legacyNatureId,
+    },
+  }));
 }
 
 function isJsonRecord(value: unknown): value is Record<string, unknown> {
@@ -1520,7 +1857,7 @@ export async function sendBulkChildMessage(
       include: {
         parentUsers: {
           where: { isActive: true },
-          select: { id: true },
+          select: { id: true, legacyId: true, legacyChildId: true },
         },
       },
     });
@@ -1541,13 +1878,6 @@ export async function sendBulkChildMessage(
       ? `[${data.nature}] ${data.subject}`
       : data.subject ?? null;
 
-    const thread = await db.messageThread.create({
-      data: {
-        subject: subjectLine,
-        organizationId: ctx.organizationId,
-      },
-    });
-
     const messageCreateData = Array.from(parentUserIds).map((parentId) => ({
       senderId: ctx.userId,
       senderType,
@@ -1555,7 +1885,7 @@ export async function sendBulkChildMessage(
       recipientType: "PARENT" as RecipientType,
       subject: subjectLine,
       body: data.body,
-      threadId: thread.id,
+      threadId: null as string | null,
       organizationId: ctx.organizationId,
       legacyNature: data.nature ?? null,
       legacyData: legacyMessageData({
@@ -1566,16 +1896,44 @@ export async function sendBulkChildMessage(
       }),
     }));
 
-    await db.message.createMany({ data: messageCreateData });
+    const writeResult = await db.$transaction(async (tx) => {
+      const thread = await tx.messageThread.create({
+        data: {
+          subject: subjectLine,
+          organizationId: ctx.organizationId,
+        },
+      });
+
+      await tx.message.createMany({
+        data: messageCreateData.map((message) => ({
+          ...message,
+          threadId: thread.id,
+        })),
+      });
+
+      const sideEffectSummary = await createLegacyBulkMessageSideEffects({
+        tx,
+        organizationId: ctx.organizationId,
+        senderId: ctx.userId,
+        threadId: thread.id,
+        nature: data.nature,
+        subject: data.subject ?? subjectLine,
+        body: data.body,
+        children,
+      });
+
+      return { threadId: thread.id, sideEffectSummary };
+    });
 
     revalidateMessagePaths();
 
     return {
       success: true,
       data: {
-        threadId: thread.id,
+        threadId: writeResult.threadId,
         recipientCount: parentUserIds.size,
         childCount: children.length,
+        sideEffectSummary: writeResult.sideEffectSummary,
       },
     };
   } catch (error) {
