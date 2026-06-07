@@ -264,7 +264,6 @@ async function loadAlarmDetails(
       referenceType: "Child",
     },
     orderBy: { createdAt: "desc" },
-    take: 100,
   });
 
   return alarms
@@ -286,7 +285,6 @@ async function loadAlarmReceiptDetails(
     },
     include: { alarm: true },
     orderBy: { createdAt: "desc" },
-    take: 100,
   });
 
   return receipts.flatMap((receipt) => {
@@ -303,14 +301,17 @@ async function loadEventDetails(
   nature: NotificationNature,
   child: ParentNotificationChild
 ) {
+  const branchFilters = eventBranchCandidateFilters(child.branchId);
+  if (branchFilters.length === 0) return [];
+
   const now = new Date();
   const events = await db.event.findMany({
     where: {
       isActive: true,
       date: { lte: now },
+      OR: branchFilters,
     },
     orderBy: { date: "desc" },
-    take: 100,
   });
 
   return events
@@ -331,7 +332,6 @@ async function loadEventReceiptDetails(
       OR: recipientFilters(child, parentUser),
     },
     orderBy: { createdAt: "desc" },
-    take: 100,
   });
 
   const eventIds = receipts
@@ -363,7 +363,6 @@ async function loadMessageDetails(
       recipientType: "PARENT",
     },
     orderBy: { createdAt: "desc" },
-    take: 100,
   });
 
   return messages.map((message) => mapMessageDetail(message, nature));
@@ -376,7 +375,6 @@ async function loadAssessmentDetails(
   const assessments = await db.assessment.findMany({
     where: { childId: child.id },
     orderBy: { createdAt: "desc" },
-    take: 100,
   });
 
   const childName = formatChildName(child);
@@ -559,6 +557,23 @@ function eventMatchesChildBranch(event: EventRow, childBranchId: string | null) 
   const branchIds = jsonStringArray(event.notificationBranchIds);
   if (branchIds.length > 0) return branchIds.includes(childBranchId);
   return event.branchId === childBranchId || event.branchId === null;
+}
+
+function eventBranchCandidateFilters(
+  childBranchId: string | null
+): Prisma.EventWhereInput[] {
+  if (!childBranchId) return [];
+
+  return [
+    { branchId: childBranchId },
+    {
+      notificationBranchIds: { array_contains: [childBranchId] },
+    } as Prisma.EventWhereInput,
+    {
+      branchId: null,
+      notificationBranchIds: { equals: [] },
+    } as Prisma.EventWhereInput,
+  ];
 }
 
 async function readRequestBody(request: NextRequest) {
