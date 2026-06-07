@@ -56,7 +56,9 @@ function ForgotPasswordForm() {
       }
       setStatus({
         type: "success",
-        message: "We've emailed you password reset instructions. Check your email.",
+        message: result.data?.deliveryConfigured
+          ? "We've emailed you password reset instructions. Check your email."
+          : "Password reset instructions were created, but external email is not configured.",
         resetUrl: result.data?.resetUrl,
       });
     });

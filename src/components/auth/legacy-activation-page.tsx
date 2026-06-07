@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { deliverEmail, emailDeliveryAuditData } from "@/lib/email-delivery";
 
 type ActivationStatus =
   | "activated"
@@ -10,7 +11,9 @@ type ActivationStatus =
   | "already"
   | "pending"
   | "resend-missing"
-  | "resend-unavailable";
+  | "resend-sent"
+  | "resend-unconfigured"
+  | "resend-failed";
 
 interface ActivationState {
   status: ActivationStatus;
@@ -38,6 +41,73 @@ function adminAddress() {
   return process.env.LEGACY_ADMIN_EMAIL ?? process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? "the site admin";
 }
 
+function legacyObject(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? { ...(value as Record<string, unknown>) }
+    : {};
+}
+
+function legacyString(value: unknown, key: string) {
+  const raw = legacyObject(value)[key];
+  if (typeof raw === "string") return raw;
+  if (typeof raw === "number") return String(raw);
+  return "";
+}
+
+function renderTemplate(template: string, values: Record<string, string>) {
+  return template.replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, (match, key) => {
+    return values[key] ?? match;
+  });
+}
+
+function chooseSettingValue(
+  rows: Array<{
+    sourceDatabase: string;
+    settingKey: string;
+    settingValue: string | null;
+  }>,
+  sourceDatabase: string,
+  key: string,
+) {
+  const candidates = rows.filter(
+    (row) => row.settingKey === key && row.settingValue?.trim(),
+  );
+  if (candidates.length === 0) return null;
+
+  return (
+    candidates.find((row) => row.sourceDatabase === sourceDatabase) ??
+    candidates.find((row) =>
+      row.sourceDatabase.toLowerCase().includes("users29sept"),
+    ) ??
+    candidates.find((row) => row.sourceDatabase.toLowerCase().includes("29sept")) ??
+    candidates[0]
+  ).settingValue;
+}
+
+async function legacyTemplate(
+  sourceDatabase: string,
+  subjectKey: string,
+  bodyKey: string,
+) {
+  const rows = await db.legacySetting.findMany({
+    where: {
+      legacyTable: { in: ["login_settings", "login_settings_man"] },
+      settingKey: { in: [subjectKey, bodyKey] },
+    },
+    select: {
+      sourceDatabase: true,
+      settingKey: true,
+      settingValue: true,
+    },
+    orderBy: [{ sourceDatabase: "desc" }, { legacyId: "desc" }],
+  });
+
+  return {
+    subject: chooseSettingValue(rows, sourceDatabase, subjectKey),
+    body: chooseSettingValue(rows, sourceDatabase, bodyKey),
+  };
+}
+
 async function findPendingTokenForCurrentUser() {
   const session = await auth();
   if (!session?.user?.id && !session?.user?.email) return null;
@@ -52,9 +122,12 @@ async function findPendingTokenForCurrentUser() {
       ],
     },
     select: {
+      id: true,
+      sourceDatabase: true,
       recordKey: true,
       email: true,
       username: true,
+      legacyData: true,
     },
     orderBy: { createdAt: "desc" },
   });
@@ -72,9 +145,11 @@ async function activateByKey(key: string): Promise<ActivationState> {
     },
     select: {
       id: true,
+      sourceDatabase: true,
       userId: true,
       email: true,
       username: true,
+      legacyData: true,
     },
   });
 
@@ -96,6 +171,24 @@ async function activateByKey(key: string): Promise<ActivationState> {
           },
         })
       : null;
+  const template = await legacyTemplate(
+    record.sourceDatabase,
+    "email-activate-subj",
+    "email-activate-msg",
+  );
+  const values = {
+    site_address: siteAddress(),
+    full_name: user?.name ?? record.username ?? record.email ?? "user",
+    username: record.username ?? record.email ?? "user",
+  };
+  const subject = renderTemplate(
+    template.subject ?? "Your account has been activated",
+    values,
+  );
+  const body = renderTemplate(
+    template.body ?? "Your account has been activated.",
+    values,
+  );
 
   await db.$transaction([
     ...(user
@@ -116,6 +209,33 @@ async function activateByKey(key: string): Promise<ActivationState> {
       },
     }),
   ]);
+  if (user?.email) {
+    const emailDelivery = await deliverEmail({
+      recipients: [{ email: user.email, name: user.name }],
+      subject,
+      body,
+      category: "ACTIVATED",
+      metadata: {
+        source: "legacy_activation_success",
+        tokenId: record.id,
+      },
+    });
+    await db.legacyAuthRecord.update({
+      where: { id: record.id },
+      data: {
+        legacyData: {
+          ...legacyObject(record.legacyData),
+          activatedEmail: {
+            subject,
+            body,
+            deliveryConfigured: emailDelivery.configured,
+            emailDelivery: emailDeliveryAuditData(emailDelivery),
+          },
+          activatedAt: new Date().toISOString(),
+        },
+      },
+    });
+  }
 
   return {
     status: "activated",
@@ -150,8 +270,63 @@ async function resendState(): Promise<ActivationState | null> {
   const activationHref = `${siteAddress()}/activate.php?key=${encodeURIComponent(
     pending.recordKey,
   )}`;
+  const template = await legacyTemplate(
+    pending.sourceDatabase,
+    "email-activate-resend-subj",
+    "email-activate-resend-msg",
+  );
+  const values = {
+    site_address: siteAddress(),
+    full_name: pending.username ?? pending.email ?? "user",
+    username: pending.username ?? pending.email ?? "user",
+    activate: activationHref,
+  };
+  const subject = renderTemplate(
+    template.subject ||
+      legacyString(pending.legacyData, "emailSubject") ||
+      "Activate your account",
+    values,
+  );
+  const body = renderTemplate(
+    template.body ||
+      legacyString(pending.legacyData, "emailBody") ||
+      "Please activate your account by visiting {{activate}}",
+    values,
+  );
+  const emailDelivery = await deliverEmail({
+    recipients: pending.email
+      ? [{ email: pending.email, name: pending.username }]
+      : [],
+    subject,
+    body,
+    category: "ACTIVATION_RESEND",
+    metadata: {
+      source: "legacy_activation_resend",
+      tokenId: pending.id,
+    },
+  });
+  await db.legacyAuthRecord.update({
+    where: { id: pending.id },
+    data: {
+      legacyData: {
+        ...legacyObject(pending.legacyData),
+        resendEmail: {
+          subject,
+          body,
+          deliveryConfigured: emailDelivery.configured,
+          emailDelivery: emailDeliveryAuditData(emailDelivery),
+          sentAt: new Date().toISOString(),
+        },
+      },
+    },
+  });
+
   return {
-    status: "resend-unavailable",
+    status: !emailDelivery.configured
+      ? "resend-unconfigured"
+      : emailDelivery.failedCount > 0
+        ? "resend-failed"
+        : "resend-sent",
     activationHref,
   };
 }
@@ -242,10 +417,32 @@ function ActivationMessage({ state }: { state: ActivationState }) {
     );
   }
 
+  if (state.status === "resend-sent") {
+    return (
+      <>
+        <div className="rounded-sm border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+          Activation email resent.
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Please follow the link in your email to activate your account.
+        </p>
+      </>
+    );
+  }
+
+  const resendFailed = state.status === "resend-failed";
   return (
     <>
-      <div className="rounded-sm border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
-        Activation email delivery is not configured yet.
+      <div
+        className={
+          resendFailed
+            ? "rounded-sm border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700"
+            : "rounded-sm border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800"
+        }
+      >
+        {resendFailed
+          ? "Activation email delivery failed."
+          : "Activation email delivery is not configured yet."}
       </div>
       <p className="text-sm text-muted-foreground">
         Use your pending activation link directly:

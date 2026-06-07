@@ -4,6 +4,7 @@ import { randomBytes } from "crypto";
 import { revalidatePath } from "next/cache";
 import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
+import { deliverEmail, emailDeliveryAuditData } from "@/lib/email-delivery";
 import {
   getLegacyLoginDisabledStatus,
   legacyString,
@@ -128,12 +129,14 @@ export async function submitLegacyDisabledContact(
         role: "ADMIN",
         isActive: true,
       },
-      select: { id: true },
+      select: { id: true, email: true, name: true },
       take: 50,
     });
     const createdAt = new Date();
     const contactKey = randomBytes(10).toString("hex");
     const sourceDatabase = legacy?.sourceDatabase ?? "modern";
+    const notificationTitle = "Disabled account contact";
+    const notificationBody = `${name} (${email}) submitted: ${comments}`;
     const legacyData = {
       type: "disabled_contact",
       name,
@@ -147,8 +150,8 @@ export async function submitLegacyDisabledContact(
       inserted_from: "modern_disabled_php",
     } satisfies Prisma.InputJsonObject;
 
-    await db.$transaction(async (tx) => {
-      await tx.legacyAuthRecord.create({
+    const created = await db.$transaction(async (tx) => {
+      const contactRecord = await tx.legacyAuthRecord.create({
         data: {
           sourceDatabase,
           legacyTable: "disabled_contact",
@@ -169,13 +172,39 @@ export async function submitLegacyDisabledContact(
         await tx.notification.createMany({
           data: admins.map((admin) => ({
             userId: admin.id,
-            title: "Disabled account contact",
-            body: `${name} (${email}) submitted: ${comments}`,
+            title: notificationTitle,
+            body: notificationBody,
             type: "LEGACY_AUTH",
             category: "DISABLED_CONTACT",
           })),
         });
       }
+
+      return { contactRecordId: contactRecord.id };
+    });
+    const emailDelivery = await deliverEmail({
+      recipients: admins
+        .filter((admin) => Boolean(admin.email))
+        .map((admin) => ({ email: admin.email, name: admin.name })),
+      subject: `${subject}: ${name}`,
+      body: notificationBody,
+      category: "DISABLED_CONTACT",
+      metadata: {
+        source: "legacy_disabled_contact",
+        contactRecordId: created.contactRecordId,
+      },
+      mode: "bcc",
+    });
+
+    await db.legacyAuthRecord.update({
+      where: { id: created.contactRecordId },
+      data: {
+        legacyData: {
+          ...legacyData,
+          deliveryConfigured: emailDelivery.configured,
+          emailDelivery: emailDeliveryAuditData(emailDelivery),
+        },
+      },
     });
 
     revalidatePath("/disabled.php");
@@ -184,7 +213,7 @@ export async function submitLegacyDisabledContact(
     return {
       success: true,
       data: {
-        deliveryConfigured: false,
+        deliveryConfigured: emailDelivery.configured,
         adminNotifications: admins.length,
       },
     };

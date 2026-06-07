@@ -14,6 +14,17 @@ export type EmailDeliverySummary = {
   errors: string[];
 };
 
+export type EmailDeliveryAudit = {
+  provider: EmailDeliverySummary["provider"];
+  configured: boolean;
+  attemptedCount: number;
+  deliveredCount: number;
+  skippedCount: number;
+  failedCount: number;
+  mode: EmailDeliverySummary["mode"];
+  errors: string[];
+};
+
 type DeliverEmailParams = {
   recipients: EmailDeliveryRecipient[];
   subject: string;
@@ -322,4 +333,19 @@ export async function deliverEmail(
     metadata: params.metadata,
     mode,
   });
+}
+
+export function emailDeliveryAuditData(
+  summary: EmailDeliverySummary,
+): EmailDeliveryAudit {
+  return {
+    provider: summary.provider,
+    configured: summary.configured,
+    attemptedCount: summary.attemptedCount,
+    deliveredCount: summary.deliveredCount,
+    skippedCount: summary.skippedCount,
+    failedCount: summary.failedCount,
+    mode: summary.mode,
+    errors: summary.errors,
+  };
 }

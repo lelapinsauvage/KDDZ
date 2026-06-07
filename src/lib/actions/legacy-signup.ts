@@ -5,6 +5,7 @@ import { hash } from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
+import { deliverEmail, emailDeliveryAuditData } from "@/lib/email-delivery";
 
 type UserRole = "ADMIN" | "TEACHER" | "NURSE" | "DOCTOR" | "MANAGER";
 
@@ -674,6 +675,42 @@ export async function createLegacySignup(
     );
     const redirectTo = setting(context.settings, "new-user-redirect", "/dashboard") ||
       "/dashboard";
+    const shouldSendWelcome = !legacyBool(
+      setting(context.settings, "email-welcome-disable"),
+    );
+    const loginLegacyData = {
+      user_id: legacyUserId,
+      user_level: userLevel,
+      restricted: requireActivation ? 1 : 0,
+      username,
+      name,
+      email,
+      usites: "0",
+      uclasses: "0",
+      uchild: "0",
+      db_id: organizationId,
+      timestamp: new Date().toISOString(),
+      inserted_from: "modern_legacy_signup",
+      welcomeEmail: shouldSendWelcome
+        ? {
+            subject: welcomeSubject,
+            body: welcomeBody,
+            deliveryConfigured: false,
+          }
+        : null,
+    };
+    const activationLegacyData = key
+      ? {
+          type: "new_user",
+          username,
+          email,
+          activate,
+          emailSubject: welcomeSubject,
+          emailBody: welcomeBody,
+          deliveryConfigured: false,
+          inserted_from: "modern_legacy_signup",
+        }
+      : null;
 
     const created = await db.$transaction(async (tx) => {
       const user = await tx.user.create({
@@ -689,7 +726,7 @@ export async function createLegacySignup(
         select: { id: true },
       });
 
-      await tx.legacyAuthRecord.create({
+      const legacyRecord = await tx.legacyAuthRecord.create({
         data: {
           sourceDatabase,
           legacyTable: "login_users",
@@ -703,29 +740,7 @@ export async function createLegacySignup(
           recordKey: username,
           recordValue: userLevel,
           isDisabled: requireActivation,
-          legacyData: {
-            user_id: legacyUserId,
-            user_level: userLevel,
-            restricted: requireActivation ? 1 : 0,
-            username,
-            name,
-            email,
-            usites: "0",
-            uclasses: "0",
-            uchild: "0",
-            db_id: organizationId,
-            timestamp: new Date().toISOString(),
-            inserted_from: "modern_legacy_signup",
-            welcomeEmail: legacyBool(
-              setting(context.settings, "email-welcome-disable"),
-            )
-              ? null
-              : {
-                  subject: welcomeSubject,
-                  body: welcomeBody,
-                  deliveryConfigured: false,
-                },
-          },
+          legacyData: loginLegacyData,
         },
       });
 
@@ -737,8 +752,9 @@ export async function createLegacySignup(
         values: submittedValues,
       });
 
-      if (key) {
-        await tx.legacyAuthRecord.create({
+      let activationRecordId: string | null = null;
+      if (key && activationLegacyData) {
+        const activationRecord = await tx.legacyAuthRecord.create({
           data: {
             sourceDatabase,
             legacyTable: "login_confirm",
@@ -751,21 +767,14 @@ export async function createLegacySignup(
             email,
             recordKey: key,
             recordValue: activate,
-            legacyData: {
-              type: "new_user",
-              username,
-              email,
-              activate,
-              emailSubject: welcomeSubject,
-              emailBody: welcomeBody,
-              deliveryConfigured: false,
-              inserted_from: "modern_legacy_signup",
-            },
+            legacyData: activationLegacyData,
           },
         });
+        activationRecordId = activationRecord.id;
       }
 
       let adminNotificationRecipients = 0;
+      let adminRecipientIds: string[] = [];
       if (legacyBool(setting(context.settings, "notify-new-user-enable"))) {
         const recipientIds = await notifyRecipientsForLevels({
           tx,
@@ -774,6 +783,7 @@ export async function createLegacySignup(
           levels: context.levels,
           organizationId,
         });
+        adminRecipientIds = recipientIds;
         adminNotificationRecipients = recipientIds.length;
 
         if (recipientIds.length > 0) {
@@ -790,8 +800,92 @@ export async function createLegacySignup(
         }
       }
 
-      return { userId: user.id, adminNotificationRecipients };
+      return {
+        userId: user.id,
+        legacyRecordId: legacyRecord.id,
+        activationRecordId,
+        adminNotificationRecipients,
+        adminRecipientIds,
+      };
     });
+    const welcomeDelivery = shouldSendWelcome
+      ? await deliverEmail({
+          recipients: [{ email, name }],
+          subject: welcomeSubject,
+          body: welcomeBody,
+          category: requireActivation ? "ACTIVATION_RESEND" : "WELCOME",
+          metadata: {
+            source: "legacy_signup_welcome",
+            requiresActivation: requireActivation,
+            legacyUserId,
+          },
+        })
+      : null;
+    const adminUsers = created.adminRecipientIds.length
+      ? await db.user.findMany({
+          where: { id: { in: created.adminRecipientIds } },
+          select: { email: true, name: true },
+        })
+      : [];
+    const adminEmailDelivery =
+      adminUsers.length > 0
+        ? await deliverEmail({
+            recipients: adminUsers
+              .filter((user) => Boolean(user.email))
+              .map((user) => ({ email: user.email, name: user.name })),
+            subject: newUserSubject,
+            body: newUserBody,
+            category: "NEW_USER_NOTIFICATION",
+            metadata: {
+              source: "legacy_signup_admin_notice",
+              legacyUserId,
+            },
+            mode: "bcc",
+          })
+        : null;
+
+    await db.legacyAuthRecord.update({
+      where: { id: created.legacyRecordId },
+      data: {
+        legacyData: {
+          ...loginLegacyData,
+          welcomeEmail: shouldSendWelcome
+            ? {
+                subject: welcomeSubject,
+                body: welcomeBody,
+                deliveryConfigured: welcomeDelivery?.configured ?? false,
+                ...(welcomeDelivery
+                  ? { emailDelivery: emailDeliveryAuditData(welcomeDelivery) }
+                  : {}),
+              }
+            : null,
+          ...(adminEmailDelivery
+            ? {
+                newUserNotificationEmail: {
+                  subject: newUserSubject,
+                  body: newUserBody,
+                  deliveryConfigured: adminEmailDelivery.configured,
+                  emailDelivery: emailDeliveryAuditData(adminEmailDelivery),
+                },
+              }
+            : {}),
+        },
+      },
+    });
+    if (created.activationRecordId && activationLegacyData) {
+      await db.legacyAuthRecord.update({
+        where: { id: created.activationRecordId },
+        data: {
+          legacyData: {
+            ...activationLegacyData,
+            deliveryConfigured: welcomeDelivery?.configured ?? false,
+            ...(welcomeDelivery
+              ? { emailDelivery: emailDeliveryAuditData(welcomeDelivery) }
+              : {}),
+          },
+        },
+      });
+    }
 
     revalidatePath("/signup");
     revalidatePath("/settings/legacy-users");
@@ -805,7 +899,7 @@ export async function createLegacySignup(
         requiresActivation: requireActivation,
         activationUrl: activate || undefined,
         redirectTo,
-        welcomeDeliveryConfigured: false,
+        welcomeDeliveryConfigured: welcomeDelivery?.configured ?? false,
         adminNotificationRecipients: created.adminNotificationRecipients,
       },
     };

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { hash } from "bcryptjs";
 import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
+import { deliverEmail, emailDeliveryAuditData } from "@/lib/email-delivery";
 import { requireLegacyAdminPanelAccess } from "@/lib/legacy-system-action-permissions";
 
 type UserRole = "ADMIN" | "TEACHER" | "NURSE" | "DOCTOR" | "MANAGER";
@@ -301,6 +302,68 @@ function normalizeIds(values: number[]) {
 
 function validateEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function siteAddress() {
+  return (
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    process.env.NEXTAUTH_URL ??
+    "http://localhost:3001"
+  );
+}
+
+function renderTemplate(template: string, values: Record<string, string>) {
+  return template.replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, (match, key) => {
+    return values[key] ?? match;
+  });
+}
+
+function chooseSettingValue(
+  rows: Array<{
+    sourceDatabase: string;
+    settingKey: string;
+    settingValue: string | null;
+  }>,
+  sourceDatabase: string,
+  key: string,
+) {
+  const candidates = rows.filter(
+    (row) => row.settingKey === key && row.settingValue?.trim(),
+  );
+  if (candidates.length === 0) return null;
+
+  return (
+    candidates.find((row) => row.sourceDatabase === sourceDatabase) ??
+    candidates.find((row) =>
+      row.sourceDatabase.toLowerCase().includes("users29sept"),
+    ) ??
+    candidates.find((row) => row.sourceDatabase.toLowerCase().includes("29sept")) ??
+    candidates[0]
+  ).settingValue;
+}
+
+async function legacyEmailTemplate(
+  sourceDatabase: string,
+  subjectKey: string,
+  bodyKey: string,
+) {
+  const rows = await db.legacySetting.findMany({
+    where: {
+      legacyTable: { in: ["login_settings", "login_settings_man"] },
+      settingKey: { in: [subjectKey, bodyKey] },
+    },
+    select: {
+      sourceDatabase: true,
+      settingKey: true,
+      settingValue: true,
+    },
+    orderBy: [{ sourceDatabase: "desc" }, { legacyId: "desc" }],
+  });
+
+  return {
+    subject: chooseSettingValue(rows, sourceDatabase, subjectKey),
+    body: chooseSettingValue(rows, sourceDatabase, bodyKey),
+  };
 }
 
 function roleForLegacyLevels(
@@ -1902,6 +1965,27 @@ export async function createLegacyAdminUser(
     const legacyId = (maxUser?.legacyId ?? 0) + 1;
     const userLevel = serializePhpStringArray(validated.levelIds);
     const passwordHash = await hash(input.password ?? "", 12);
+    const template = await legacyEmailTemplate(
+      validated.sourceDatabase,
+      "email-add-user-subj",
+      "email-add-user-msg",
+    );
+    const templateValues = {
+      site_address: siteAddress(),
+      full_name: validated.name,
+      username: validated.username,
+      email: validated.email,
+      password: input.password ?? "",
+    };
+    const emailSubject = renderTemplate(
+      template.subject ?? "Your account has been created",
+      templateValues,
+    );
+    const emailBody = renderTemplate(
+      template.body ??
+        "Hello {{full_name}}, your account has been created.\n\nUsername: {{username}}\nPassword: {{password}}",
+      templateValues,
+    );
 
     const created = await db.$transaction(async (tx) => {
       const user = await tx.user.create({
@@ -1947,13 +2031,37 @@ export async function createLegacyAdminUser(
 
       return { user, legacyRecord };
     });
+    const emailDelivery = await deliverEmail({
+      recipients: [{ email: validated.email, name: validated.name }],
+      subject: emailSubject,
+      body: emailBody,
+      category: "ADD_USER",
+      metadata: {
+        source: "legacy_admin_add_user",
+        legacyUserId: legacyId,
+      },
+    });
+    const updatedLegacyRecord = await db.legacyAuthRecord.update({
+      where: { id: created.legacyRecord.id },
+      data: {
+        legacyData: {
+          ...legacyObject(created.legacyRecord.legacyData),
+          addUserEmail: {
+            subject: emailSubject,
+            body: emailBody,
+            deliveryConfigured: emailDelivery.configured,
+            emailDelivery: emailDeliveryAuditData(emailDelivery),
+          },
+        },
+      },
+    });
 
     revalidatePath("/settings/legacy-users");
 
     return {
       success: true,
       data: mapUserRow({
-        record: created.legacyRecord,
+        record: updatedLegacyRecord,
         levelOptions: levels,
         modernUser: created.user,
       }),

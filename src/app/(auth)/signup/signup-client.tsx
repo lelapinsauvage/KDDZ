@@ -343,7 +343,9 @@ function StatusMessage({ status }: { status: SignupStatus }) {
           <div className="min-w-0">
             <p className="font-medium">
               {status.data.requiresActivation
-                ? "Account created. Activation is required."
+                ? status.data.welcomeDeliveryConfigured
+                  ? "Account created. Check your email to activate it."
+                  : "Account created. Activation email delivery is not configured."
                 : "Account created."}
             </p>
             {status.data.requiresActivation && status.data.activationUrl ? (

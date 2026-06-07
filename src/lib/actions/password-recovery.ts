@@ -5,6 +5,11 @@ import { hash } from "bcryptjs";
 import { revalidatePath } from "next/cache";
 
 import { db } from "@/lib/db";
+import {
+  deliverEmail,
+  emailDeliveryAuditData,
+  type EmailDeliverySummary,
+} from "@/lib/email-delivery";
 
 type ActionResult<T = undefined> = {
   success: boolean;
@@ -185,6 +190,7 @@ export async function requestPasswordReset(
   ActionResult<{
     resetUrl?: string;
     deliveryConfigured: boolean;
+    emailDelivery: EmailDeliverySummary;
   }>
 > {
   const credential = usernamemail.trim();
@@ -219,6 +225,13 @@ export async function requestPasswordReset(
       "Please use the following link to reset your password: {{reset}}",
     values,
   );
+  const legacyData = {
+    type: "forgot_pw",
+    emailSubject: subject,
+    emailBody: body,
+    resetUrl: href,
+    deliveryConfigured: false,
+  };
 
   await db.$transaction([
     db.legacyAuthRecord.updateMany({
@@ -247,23 +260,44 @@ export async function requestPasswordReset(
         email: recoverable.user.email,
         recordKey: key,
         recordValue: href,
-        legacyData: {
-          type: "forgot_pw",
-          emailSubject: subject,
-          emailBody: body,
-          resetUrl: href,
-          deliveryConfigured: false,
-        },
+        legacyData,
       },
     }),
   ]);
+  const emailDelivery = await deliverEmail({
+    recipients: [{ email: recoverable.user.email, name: recoverable.user.name }],
+    subject,
+    body,
+    category: "PASSWORD_RECOVERY",
+    metadata: {
+      source: "legacy_password_recovery",
+      legacyTable,
+      recordType: "forgot_pw",
+    },
+  });
+
+  await db.legacyAuthRecord.updateMany({
+    where: {
+      legacyTable,
+      recordType: "forgot_pw",
+      recordKey: key,
+    },
+    data: {
+      legacyData: {
+        ...legacyData,
+        deliveryConfigured: emailDelivery.configured,
+        emailDelivery: emailDeliveryAuditData(emailDelivery),
+      },
+    },
+  });
 
   revalidatePath("/forgot");
 
   return {
     success: true,
     data: {
-      deliveryConfigured: false,
+      deliveryConfigured: emailDelivery.configured,
+      emailDelivery,
       resetUrl: showRecoveryLink() ? href : undefined,
     },
   };
@@ -334,6 +368,15 @@ export async function resetForgottenPassword(params: {
     full_name: user.name ?? record.username ?? user.email,
     username: record.username ?? user.email,
   };
+  const successSubject = renderTemplate(
+    template.subject ?? "Password reset complete",
+    values,
+  );
+  const successBody = renderTemplate(
+    template.body ?? "Your password has been successfully changed.",
+    values,
+  );
+  const usedAt = new Date().toISOString();
 
   await db.$transaction([
     db.user.update({
@@ -350,20 +393,38 @@ export async function resetForgottenPassword(params: {
         recordType: "forgot_pw_used",
         legacyData: {
           type: "forgot_pw",
-          emailSubject: renderTemplate(
-            template.subject ?? "Password reset complete",
-            values,
-          ),
-          emailBody: renderTemplate(
-            template.body ?? "Your password has been successfully changed.",
-            values,
-          ),
+          emailSubject: successSubject,
+          emailBody: successBody,
           deliveryConfigured: false,
-          usedAt: new Date().toISOString(),
+          usedAt,
         },
       },
     }),
   ]);
+  const emailDelivery = await deliverEmail({
+    recipients: [{ email: user.email, name: user.name }],
+    subject: successSubject,
+    body: successBody,
+    category: "PASSWORD_RECOVERY",
+    metadata: {
+      source: "legacy_password_reset_success",
+      tokenId: record.id,
+    },
+  });
+
+  await db.legacyAuthRecord.update({
+    where: { id: record.id },
+    data: {
+      legacyData: {
+        type: "forgot_pw",
+        emailSubject: successSubject,
+        emailBody: successBody,
+        deliveryConfigured: emailDelivery.configured,
+        emailDelivery: emailDeliveryAuditData(emailDelivery),
+        usedAt,
+      },
+    },
+  });
 
   revalidatePath("/forgot");
 

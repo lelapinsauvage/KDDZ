@@ -6,6 +6,7 @@ import { compare, hash } from "bcryptjs";
 import type { Prisma } from "@/generated/prisma/client";
 
 import { db } from "@/lib/db";
+import { deliverEmail, emailDeliveryAuditData } from "@/lib/email-delivery";
 import { getLegacyAccessPermissionDecision } from "@/lib/legacy-access-permissions";
 import { requireOrgSafe } from "@/lib/require-org";
 import { isAdminRole } from "@/lib/require-role";
@@ -889,7 +890,50 @@ export async function updateCurrentUserLegacyProfile(
           "email-acct-update-msg",
         )
       : null;
-    let confirmUrl: string | undefined;
+    const confirmationEmail = requiresConfirmation
+      ? (() => {
+          const key = randomBytes(16).toString("hex");
+          const href = profileConfirmUrl(key);
+          const values = {
+            site_address: siteAddress(),
+            full_name: name,
+            username,
+            confirm: href,
+          };
+          const subject = renderTemplate(
+            pendingTemplate?.subject ?? "Confirm account update",
+            values,
+          );
+          const body = renderTemplate(
+            pendingTemplate?.body ??
+              "Please confirm your account update by visiting {{confirm}}",
+            values,
+          );
+          const legacyTable = confirmLegacyTable(recordType);
+          const tokenLegacyData = {
+            username,
+            key,
+            email,
+            type: "update_emailPw",
+            data: passwordHash,
+            confirm: href,
+            emailSubject: subject,
+            emailBody: body,
+            deliveryConfigured: false,
+            inserted_from: "modern_profile",
+          };
+
+          return {
+            key,
+            href,
+            legacyTable,
+            subject,
+            body,
+            legacyData: tokenLegacyData,
+          };
+        })()
+      : null;
+    const confirmUrl = confirmationEmail?.href;
 
     await db.$transaction(async (tx) => {
       await tx.user.update({
@@ -922,56 +966,51 @@ export async function updateCurrentUserLegacyProfile(
         values: input.profileValues,
       });
 
-      if (!requiresConfirmation) return;
-
-      const key = randomBytes(16).toString("hex");
-      const href = profileConfirmUrl(key);
-      confirmUrl = href;
-      const values = {
-        site_address: siteAddress(),
-        full_name: name,
-        username,
-        confirm: href,
-      };
-      const subject = renderTemplate(
-        pendingTemplate?.subject ?? "Confirm account update",
-        values,
-      );
-      const body = renderTemplate(
-        pendingTemplate?.body ??
-          "Please confirm your account update by visiting {{confirm}}",
-        values,
-      );
-      const legacyTable = confirmLegacyTable(recordType);
+      if (!confirmationEmail) return;
 
       await tx.legacyAuthRecord.create({
         data: {
           sourceDatabase: legacyRecord.sourceDatabase,
-          legacyTable,
-          legacyKey: `${legacyRecord.sourceDatabase}:${legacyTable}:update_emailPw:${key}`,
+          legacyTable: confirmationEmail.legacyTable,
+          legacyKey: `${legacyRecord.sourceDatabase}:${confirmationEmail.legacyTable}:update_emailPw:${confirmationEmail.key}`,
           legacyId: 0,
           recordType: "update_emailPw",
           userId: user.id,
           legacyUserId,
           username,
           email,
-          recordKey: key,
+          recordKey: confirmationEmail.key,
           recordValue: passwordHash,
-          legacyData: {
-            username,
-            key,
-            email,
-            type: "update_emailPw",
-            data: passwordHash,
-            confirm: href,
-            emailSubject: subject,
-            emailBody: body,
-            deliveryConfigured: false,
-            inserted_from: "modern_profile",
-          },
+          legacyData: confirmationEmail.legacyData,
         },
       });
     });
+    if (confirmationEmail) {
+      const emailDelivery = await deliverEmail({
+        recipients: [{ email, name }],
+        subject: confirmationEmail.subject,
+        body: confirmationEmail.body,
+        category: "ACCOUNT_UPDATE",
+        metadata: {
+          source: "legacy_profile_update_confirmation",
+          tokenKey: confirmationEmail.key,
+        },
+      });
+      await db.legacyAuthRecord.updateMany({
+        where: {
+          legacyTable: confirmationEmail.legacyTable,
+          recordType: "update_emailPw",
+          recordKey: confirmationEmail.key,
+        },
+        data: {
+          legacyData: {
+            ...confirmationEmail.legacyData,
+            deliveryConfigured: emailDelivery.configured,
+            emailDelivery: emailDeliveryAuditData(emailDelivery),
+          },
+        },
+      });
+    }
 
     revalidatePath("/profile");
     revalidatePath("/profile.php");
@@ -1081,6 +1120,15 @@ export async function confirmCurrentUserLegacyProfileUpdate(
       full_name: name,
       username,
     };
+    const successSubject = renderTemplate(
+      template.subject ?? "Account details successfully changed",
+      values,
+    );
+    const successBody = renderTemplate(
+      template.body ?? "Account details successfully changed.",
+      values,
+    );
+    const usedAt = new Date().toISOString();
 
     await db.$transaction([
       db.user.update({
@@ -1110,20 +1158,38 @@ export async function confirmCurrentUserLegacyProfileUpdate(
           recordType: "update_emailPw_used",
           legacyData: {
             ...legacyObject(token.legacyData),
-            usedAt: new Date().toISOString(),
-            emailSubject: renderTemplate(
-              template.subject ?? "Account details successfully changed",
-              values,
-            ),
-            emailBody: renderTemplate(
-              template.body ?? "Account details successfully changed.",
-              values,
-            ),
+            usedAt,
+            emailSubject: successSubject,
+            emailBody: successBody,
             deliveryConfigured: false,
           },
         },
       }),
     ]);
+    const emailDelivery = await deliverEmail({
+      recipients: [{ email, name }],
+      subject: successSubject,
+      body: successBody,
+      category: "ACCOUNT_UPDATE",
+      metadata: {
+        source: "legacy_profile_update_success",
+        tokenId: token.id,
+      },
+    });
+
+    await db.legacyAuthRecord.update({
+      where: { id: token.id },
+      data: {
+        legacyData: {
+          ...legacyObject(token.legacyData),
+          usedAt,
+          emailSubject: successSubject,
+          emailBody: successBody,
+          deliveryConfigured: emailDelivery.configured,
+          emailDelivery: emailDeliveryAuditData(emailDelivery),
+        },
+      },
+    });
 
     revalidatePath("/profile");
     revalidatePath("/profile.php");
