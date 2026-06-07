@@ -12,7 +12,7 @@ export async function resolveLegacyMessageThreadMessageId(
 ) {
   if (!identifier?.trim()) return null;
 
-  const { organizationId } = await requireOrg();
+  const { userId, organizationId } = await requireOrg();
   const normalizedIdentifier = decodeMaybeURIComponent(identifier.trim());
   const legacyThreadIds = legacyNumericCandidates(identifier);
 
@@ -30,7 +30,11 @@ export async function resolveLegacyMessageThreadMessageId(
   const message = await db.message.findFirst({
     where: {
       organizationId,
-      OR: matches,
+      OR: [
+        { senderId: userId },
+        { recipientId: userId },
+      ],
+      AND: [{ OR: matches }],
     },
     orderBy: [{ createdAt: "asc" }, { legacyId: "asc" }],
     select: { id: true },

@@ -18,6 +18,9 @@ export default async function MessageDetailPage({ params }: PageProps) {
   const result = await getMessageById(id);
 
   if (!result.success || !result.data) {
+    if (result.error === "Forbidden") {
+      redirect("/forbidden.php");
+    }
     redirect("/messages/inbox");
   }
 

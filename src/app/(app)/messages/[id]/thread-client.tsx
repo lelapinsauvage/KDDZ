@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -254,48 +253,50 @@ export function ThreadClient({
           {threadMessages.map((msg) => {
             const isOwn = msg.senderId === currentUserId;
             return (
-              <Card
+              <div
                 key={msg.id}
                 className={
-                  isOwn ? "border-l-4 border-l-primary/50" : ""
+                  isOwn
+                    ? "rounded-md border border-primary/30 bg-primary/10 px-4 py-3"
+                    : "rounded-md border bg-muted/60 px-4 py-3"
                 }
               >
-                <CardContent className="py-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={`flex size-8 items-center justify-center rounded-full text-xs font-semibold text-white ${
-                          isOwn ? "bg-primary" : avatarColor(msg.senderName)
-                        }`}
-                      >
-                        {initials(msg.senderName)}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-foreground">
-                          {msg.senderName}
-                          {isOwn && (
-                            <span className="ml-1 text-xs text-muted-foreground">
-                              (You)
-                            </span>
-                          )}
-                        </p>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Clock className="size-3" />
-                          {formatDate(msg.createdAt)} at{" "}
-                          {formatTime(msg.createdAt)}
-                        </div>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <div
+                      className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white ${
+                        isOwn ? "bg-primary" : avatarColor(msg.senderName)
+                      }`}
+                    >
+                      {initials(msg.senderName)}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-foreground">
+                        {msg.senderName}
+                        {isOwn && (
+                          <span className="ml-1 text-xs text-muted-foreground">
+                            (You)
+                          </span>
+                        )}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        To: {msg.recipientName}
+                      </p>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Clock className="size-3" />
+                        {formatDate(msg.createdAt)} at{" "}
+                        {formatTime(msg.createdAt)}
                       </div>
                     </div>
-                    <Badge variant="outline" className="text-[10px]">
-                      {msg.senderType}
-                    </Badge>
                   </div>
-                  <Separator className="my-2" />
-                  <div className="prose prose-sm max-w-none text-sm text-foreground whitespace-pre-wrap">
-                    {msg.body}
-                  </div>
-                </CardContent>
-              </Card>
+                  <Badge variant="outline" className="shrink-0 text-[10px]">
+                    {msg.senderType}
+                  </Badge>
+                </div>
+                <div className="mt-3 whitespace-pre-wrap rounded-md bg-background/75 p-3 text-sm text-foreground">
+                  {msg.body}
+                </div>
+              </div>
             );
           })}
         </div>
@@ -314,7 +315,6 @@ export function ThreadClient({
             <div className="flex justify-end">
               <Button
                 onClick={handleReply}
-               
                 disabled={!replyBody.trim() || isPending}
               >
                 <Send className="mr-1 size-3.5" />

@@ -16352,7 +16352,7 @@
     "legacyPhp": "Front/templates/admin/message_portal_single.php",
     "legacyJs": "Front/templates/admin/js/message_portal_single.js",
     "modernRoute": "/message_portal_single.php, /messages/[id], /messages/compose/direct",
-    "status": "partial - legacy direct compose options/admin copy restored; reply/action audit remains",
+    "status": "partial - legacy direct compose/thread access restored; parent/mobile audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -16361,7 +16361,7 @@
       "id",
       "thread"
     ],
-    "verification": "`/message_portal_single.php?thread=` now resolves migrated legacy thread ids into the modern message thread view, and `/message_portal_single.php?id=` resolves legacy child ids into a preselected direct parent-recipient compose form. New direct parent messages now preserve legacy nature/channel intent in `Message.legacyData` and create the legacy-style admin copy fanout. Remaining work is exact thread forbidden-page behavior, reply bubble styling, parent/mobile read reset, and provider-backed SMS/WhatsApp delivery."
+    "verification": "`/message_portal_single.php?thread=` now resolves migrated legacy thread ids into the modern message thread view only when the current user is a sender or recipient; failed legacy thread validation redirects to `/forbidden.php` like legacy PHP. `/message_portal_single.php?id=` resolves legacy child ids into a preselected direct parent-recipient compose form. New direct parent messages now preserve legacy nature/channel intent in `Message.legacyData` and create the legacy-style admin copy fanout, while `/messages/[id]` renders compact conversation bubbles closer to the old thread view. Remaining work is parent/mobile read reset semantics and provider-backed SMS/WhatsApp delivery."
   },
   {
     "legacyPhp": "Front/templates/admin/newyear.php",

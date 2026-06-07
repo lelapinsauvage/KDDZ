@@ -14,7 +14,7 @@ export default async function LegacyDirectMessagePortalRedirect({
   if (thread?.trim()) {
     const messageId = await resolveLegacyMessageThreadMessageId(thread);
     if (!messageId) {
-      notFound();
+      redirect("/forbidden.php");
     }
     redirect(`/messages/${encodeURIComponent(messageId)}`);
   }

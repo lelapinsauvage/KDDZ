@@ -712,6 +712,14 @@ export async function getMessageById(id: string): Promise<ActionResult> {
       threadMessages = [message];
     }
 
+    const canViewThread = threadMessages.some(
+      (threadMessage) =>
+        threadMessage.senderId === userId || threadMessage.recipientId === userId,
+    );
+    if (!canViewThread) {
+      return { success: false, error: "Forbidden" };
+    }
+
     // Resolve all sender and recipient names
     const allIds: Array<{ id: string; type: string }> = [];
     for (const m of threadMessages) {
