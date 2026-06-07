@@ -134,6 +134,15 @@ function LoginForm() {
                 Forgot password?
               </a>
             </div>
+
+            <div className="text-center">
+              <a
+                href="/signup"
+                className="text-sm font-medium text-[#0B7464] transition-colors hover:text-[#0D5C50] hover:underline"
+              >
+                Create a new account
+              </a>
+            </div>
           </form>
 
           {/* Demo credentials */}

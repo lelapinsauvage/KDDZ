@@ -17987,21 +17987,24 @@
   {
     "legacyPhp": "Front/templates/admin/users/classes/signup.class.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/signup, /sign_up.php, /users/sign_up.php",
+    "status": "partial - legacy public signup restored; captcha/OAuth delivery remain",
     "legacyTablesMentioned": [
       "login_confirm",
-      "login_integration",
       "login_profile_fields",
-      "login_users",
-      "profile"
+      "login_profiles",
+      "login_settings",
+      "login_users"
     ],
     "requestFieldsMentioned": [
-      "new_social",
-      "recaptcha_challenge_field",
-      "recaptcha_response_field"
+      "email",
+      "name",
+      "password",
+      "password_confirm",
+      "username",
+      "p-*"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/signup` restores the legacy public account creation flow over migrated PHP-login metadata: disabled-registration guard, email-as-username mode, blocked email-domain validation from `restrict-signups-by-email`, default-level assignment from `default-level`, required/optional signup profile fields persisted to `login_profiles`, modern bcrypt user creation, activation-token creation in `login_confirm` when `user-activation-enable` is set, welcome/new-user template rendering, and in-app admin notification fanout for configured legacy notify levels. `/sign_up.php` and `/users/sign_up.php` bridge into the modern route. Remaining work is active reCAPTCHA/PlayThru enforcement, social `new_social` prefill/linking, and external SMTP delivery."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/translate.class.php",
@@ -18188,11 +18191,24 @@
   {
     "legacyPhp": "Front/templates/admin/users/sign_up.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
-    "legacyTablesMentioned": [],
-    "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "modernRoute": "/signup, /sign_up.php, /users/sign_up.php",
+    "status": "partial - legacy signup page restored in modern auth shell",
+    "legacyTablesMentioned": [
+      "login_confirm",
+      "login_profile_fields",
+      "login_profiles",
+      "login_settings",
+      "login_users"
+    ],
+    "requestFieldsMentioned": [
+      "email",
+      "name",
+      "password",
+      "password_confirm",
+      "username",
+      "p-*"
+    ],
+    "verification": "The legacy sign-up form now lives at `/signup`, with old PHP deep links `/sign_up.php` and `/users/sign_up.php` preserving query strings. It restores Full name, optional Username, Email, Password, Password again, visible signup profile fields, disabled-registration messaging, and activation-aware success behavior. Remaining work is exact legacy marketing side-copy and retired captcha/social widgets if those integrations are re-enabled."
   },
   {
     "legacyPhp": "Front/templates/admin/users/whoami.php",
