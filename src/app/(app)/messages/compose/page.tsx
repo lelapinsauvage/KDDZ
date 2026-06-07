@@ -1,16 +1,18 @@
 import { getBranches } from "@/lib/actions/branches";
 import { getChildren } from "@/lib/actions/children";
 import { getClasses } from "@/lib/actions/classes";
+import { getLegacyNotificationNatures } from "@/lib/actions/notification-templates";
+import { legacyNatureRowsToMessageOptions } from "@/lib/message-compose-options";
 import { ComposeClient } from "./compose-client";
 
 export default async function ComposeMessagePage() {
-  const [branchesRes, childrenRes, classesRes] = await Promise.all([
+  const [branchesRes, childrenRes, classesRes, naturesRes] = await Promise.all([
     getBranches(),
     getChildren({ status: "ACTIVE", pageSize: 500 }),
     getClasses({ isActive: true }),
+    getLegacyNotificationNatures(),
   ]);
 
-   
   const rawBranches = (branchesRes.data ?? []) as Array<{
     id: string;
     name: string;
@@ -54,8 +56,14 @@ export default async function ComposeMessagePage() {
     branchId: cls.branch.id,
     branchName: cls.branch.name,
   }));
+  const natures = legacyNatureRowsToMessageOptions(naturesRes.data);
 
   return (
-    <ComposeClient branches={branches} childrenList={children} classes={classes} />
+    <ComposeClient
+      branches={branches}
+      childrenList={children}
+      classes={classes}
+      natures={natures}
+    />
   );
 }

@@ -27,6 +27,12 @@ import {
   UserCheck,
 } from "lucide-react";
 import { sendBulkChildMessage } from "@/lib/actions/messages";
+import type { MessageNatureOption } from "@/lib/message-compose-options";
+import {
+  DEFAULT_LEGACY_DELIVERY_OPTIONS,
+  LegacyDeliveryOptionsField,
+  type LegacyDeliveryOptions,
+} from "./_components/legacy-delivery-options";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -59,6 +65,7 @@ interface ComposeClientProps {
   branches: Branch[];
   childrenList: ChildItem[];
   classes: ClassItem[];
+  natures: MessageNatureOption[];
 }
 
 // ---------------------------------------------------------------------------
@@ -90,17 +97,6 @@ function initials(first: string, last: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Nature types
-// ---------------------------------------------------------------------------
-
-const NATURES = [
-  { value: "General", label: "General" },
-  { value: "Urgent", label: "Urgent" },
-  { value: "Legal", label: "Legal" },
-  { value: "Event", label: "Event" },
-] as const;
-
-// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
@@ -108,6 +104,7 @@ export function ComposeClient({
   branches,
   childrenList: children,
   classes,
+  natures,
 }: ComposeClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -119,9 +116,12 @@ export function ComposeClient({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Right pane state
-  const [nature, setNature] = useState("General");
+  const [nature, setNature] = useState(natures[0]?.value ?? "General");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
+  const [delivery, setDelivery] = useState<LegacyDeliveryOptions>(
+    DEFAULT_LEGACY_DELIVERY_OPTIONS,
+  );
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [sentCount, setSentCount] = useState(0);
@@ -203,6 +203,7 @@ export function ComposeClient({
         subject: subject || null,
         body,
         nature,
+        delivery,
       });
 
       if (result.success) {
@@ -386,13 +387,21 @@ export function ComposeClient({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {NATURES.map((n) => (
+                    {natures.map((n) => (
                       <SelectItem key={n.value} value={n.value}>
                         {n.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">Sending Via</Label>
+                <LegacyDeliveryOptionsField
+                  value={delivery}
+                  onChange={setDelivery}
+                />
               </div>
 
               {/* Subject */}

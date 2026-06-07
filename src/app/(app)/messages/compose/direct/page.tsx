@@ -1,5 +1,7 @@
 import { getEmployees } from "@/lib/actions/employees";
 import { getParentUsers } from "@/lib/actions/parent-users";
+import { getLegacyNotificationNatures } from "@/lib/actions/notification-templates";
+import { legacyNatureRowsToMessageOptions } from "@/lib/message-compose-options";
 import { DirectMessageClient } from "./direct-message-client";
 import type { RecipientType } from "@/generated/prisma/enums";
 
@@ -11,12 +13,20 @@ export default async function DirectMessagePage({ searchParams }: PageProps) {
   const { recipientId } = await searchParams;
 
   // Fetch individual recipients from DB
-  const [teachersRes, nursesRes, doctorsRes, managersRes, parentRes] = await Promise.all([
+  const [
+    teachersRes,
+    nursesRes,
+    doctorsRes,
+    managersRes,
+    parentRes,
+    naturesRes,
+  ] = await Promise.all([
     getEmployees("teacher", { isActive: true, pageSize: 200 }),
     getEmployees("nurse", { isActive: true, pageSize: 200 }),
     getEmployees("doctor", { isActive: true, pageSize: 200 }),
     getEmployees("manager", { isActive: true, pageSize: 200 }),
     getParentUsers({ isActive: true, pageSize: 200 }),
+    getLegacyNotificationNatures(),
   ]);
 
   type EmployeeRow = { id: string; firstName: string; lastName: string };
@@ -78,10 +88,12 @@ export default async function DirectMessagePage({ searchParams }: PageProps) {
     recipientId && recipients.some((recipient) => recipient.id === recipientId)
       ? recipientId
       : undefined;
+  const natures = legacyNatureRowsToMessageOptions(naturesRes.data);
 
   return (
     <DirectMessageClient
       recipients={recipients}
+      natures={natures}
       defaultRecipientId={defaultRecipientId}
     />
   );

@@ -18,6 +18,12 @@ import {
 import { Send } from "lucide-react";
 import { sendMessage } from "@/lib/actions/messages";
 import type { RecipientType } from "@/generated/prisma/enums";
+import type { MessageNatureOption } from "@/lib/message-compose-options";
+import {
+  DEFAULT_LEGACY_DELIVERY_OPTIONS,
+  LegacyDeliveryOptionsField,
+  type LegacyDeliveryOptions,
+} from "../_components/legacy-delivery-options";
 
 interface Recipient {
   id: string;
@@ -28,19 +34,25 @@ interface Recipient {
 
 interface DirectMessageClientProps {
   recipients: Recipient[];
+  natures: MessageNatureOption[];
   defaultRecipientId?: string;
 }
 
 export function DirectMessageClient({
   recipients,
+  natures,
   defaultRecipientId,
 }: DirectMessageClientProps) {
   const router = useRouter();
   const [recipient, setRecipient] = useState(defaultRecipientId ?? "");
   const [recipientSearch, setRecipientSearch] = useState("");
-  const [nature, setNature] = useState("General");
+  const [nature, setNature] = useState(natures[0]?.value ?? "General");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
+  const [delivery, setDelivery] = useState<LegacyDeliveryOptions>({
+    ...DEFAULT_LEGACY_DELIVERY_OPTIONS,
+    mobile: false,
+  });
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -67,6 +79,7 @@ export function DirectMessageClient({
         subject: subject || null,
         body,
         nature,
+        delivery,
       });
 
       if (result.success) {
@@ -131,12 +144,21 @@ export function DirectMessageClient({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="General">General</SelectItem>
-                  <SelectItem value="Urgent">Urgent</SelectItem>
-                  <SelectItem value="Legal">Legal</SelectItem>
-                  <SelectItem value="Event">Event</SelectItem>
+                  {natures.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Sending Via</Label>
+              <LegacyDeliveryOptionsField
+                value={delivery}
+                onChange={setDelivery}
+              />
             </div>
 
             <div className="space-y-2">

@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -16,8 +17,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Send, Users } from "lucide-react";
+import { CheckSquare, Send, UserCheck, Users, XSquare } from "lucide-react";
 import { sendClassMessage } from "@/lib/actions/messages";
+import type { MessageNatureOption } from "@/lib/message-compose-options";
+import {
+  DEFAULT_LEGACY_DELIVERY_OPTIONS,
+  LegacyDeliveryOptionsField,
+  type LegacyDeliveryOptions,
+} from "../_components/legacy-delivery-options";
 
 interface ClassOption {
   id: string;
@@ -26,26 +33,95 @@ interface ClassOption {
   childCount: number;
 }
 
+interface ClassChild {
+  id: string;
+  firstName: string;
+  lastName: string;
+  isActive: boolean;
+  classId: string | null;
+}
+
 interface ClassMessageClientProps {
   classes: ClassOption[];
+  classChildrenList: ClassChild[];
+  natures: MessageNatureOption[];
   defaultClassId?: string;
 }
 
-export function ClassMessageClient({ classes, defaultClassId }: ClassMessageClientProps) {
+function activeChildIdsForClass(children: ClassChild[], classId: string) {
+  return new Set(
+    children
+      .filter((child) => child.classId === classId && child.isActive)
+      .map((child) => child.id),
+  );
+}
+
+export function ClassMessageClient({
+  classes,
+  classChildrenList,
+  natures,
+  defaultClassId,
+}: ClassMessageClientProps) {
   const router = useRouter();
   const [selectedClass, setSelectedClass] = useState(defaultClassId ?? "");
-  const [nature, setNature] = useState("General");
+  const [selectedChildIds, setSelectedChildIds] = useState<Set<string>>(
+    () => activeChildIdsForClass(classChildrenList, defaultClassId ?? ""),
+  );
+  const [nature, setNature] = useState(natures[0]?.value ?? "General");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
+  const [delivery, setDelivery] = useState<LegacyDeliveryOptions>(
+    { ...DEFAULT_LEGACY_DELIVERY_OPTIONS, mobile: false },
+  );
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [sentCount, setSentCount] = useState(0);
+  const [adminCount, setAdminCount] = useState(0);
 
   const selectedClassDetail = useMemo(() => {
     if (!selectedClass) return null;
     return classes.find((c) => c.id === selectedClass) ?? null;
   }, [selectedClass, classes]);
+
+  const classChildren = useMemo(
+    () => classChildrenList.filter((child) => child.classId === selectedClass),
+    [classChildrenList, selectedClass],
+  );
+
+  function handleClassChange(classId: string) {
+    setSelectedClass(classId);
+    setSelectedChildIds(activeChildIdsForClass(classChildrenList, classId));
+    setSuccess(false);
+    setError(null);
+  }
+
+  function toggleChild(id: string) {
+    setSelectedChildIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function selectAllChildren() {
+    setSelectedChildIds(new Set(classChildren.map((child) => child.id)));
+  }
+
+  function selectAllActive() {
+    setSelectedChildIds(
+      new Set(
+        classChildren
+          .filter((child) => child.isActive)
+          .map((child) => child.id),
+      ),
+    );
+  }
+
+  function unselectAll() {
+    setSelectedChildIds(new Set());
+  }
 
   function handleSend() {
     if (!selectedClass) return;
@@ -54,15 +130,18 @@ export function ClassMessageClient({ classes, defaultClassId }: ClassMessageClie
     startTransition(async () => {
       const result = await sendClassMessage({
         classId: selectedClass,
+        childIds: Array.from(selectedChildIds),
         subject: subject || null,
         body,
         nature,
+        delivery,
       });
 
       if (result.success) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const data = result.data as any;
         setSentCount(data?.recipientCount ?? 0);
+        setAdminCount(data?.adminRecipientCount ?? 0);
         setSuccess(true);
         setTimeout(() => router.push("/messages/sent"), 2000);
       } else {
@@ -70,6 +149,14 @@ export function ClassMessageClient({ classes, defaultClassId }: ClassMessageClie
       }
     });
   }
+
+  const canSend =
+    Boolean(selectedClass) &&
+    Boolean(subject) &&
+    Boolean(body) &&
+    (delivery.adminOnly || selectedChildIds.size > 0) &&
+    !isPending &&
+    !success;
 
   return (
     <>
@@ -91,7 +178,7 @@ export function ClassMessageClient({ classes, defaultClassId }: ClassMessageClie
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Class</Label>
-              <Select value={selectedClass} onValueChange={setSelectedClass}>
+              <Select value={selectedClass} onValueChange={handleClassChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a class..." />
                 </SelectTrigger>
@@ -126,6 +213,73 @@ export function ClassMessageClient({ classes, defaultClassId }: ClassMessageClie
               )}
             </div>
 
+            {selectedClassDetail && (
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-1.5">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={selectAllChildren}
+                  >
+                    <CheckSquare className="mr-1 size-3" />
+                    Select All Children
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={selectAllActive}
+                  >
+                    <UserCheck className="mr-1 size-3" />
+                    Select All Active
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={unselectAll}
+                  >
+                    <XSquare className="mr-1 size-3" />
+                    Unselect All
+                  </Button>
+                </div>
+
+                <div className="max-h-64 overflow-y-auto rounded-md border divide-y">
+                  {classChildren.length === 0 ? (
+                    <div className="p-5 text-center text-sm text-muted-foreground">
+                      No children found in this class.
+                    </div>
+                  ) : (
+                    classChildren.map((child) => {
+                      const checked = selectedChildIds.has(child.id);
+                      return (
+                        <label
+                          key={child.id}
+                          className={`flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-sm hover:bg-muted/50 ${
+                            checked ? "bg-primary/5" : ""
+                          }`}
+                        >
+                          <span className="flex min-w-0 items-center gap-3">
+                            <Checkbox
+                              checked={checked}
+                              onCheckedChange={() => toggleChild(child.id)}
+                            />
+                            <span className="truncate">
+                              {child.firstName} {child.lastName}
+                            </span>
+                          </span>
+                          <Badge variant={child.isActive ? "secondary" : "outline"}>
+                            {child.isActive ? "Active" : "Inactive"}
+                          </Badge>
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label>Nature</Label>
               <Select value={nature} onValueChange={setNature}>
@@ -133,12 +287,22 @@ export function ClassMessageClient({ classes, defaultClassId }: ClassMessageClie
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="General">General</SelectItem>
-                  <SelectItem value="Urgent">Urgent</SelectItem>
-                  <SelectItem value="Legal">Legal</SelectItem>
-                  <SelectItem value="Event">Event</SelectItem>
+                  {natures.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Sending Via</Label>
+              <LegacyDeliveryOptionsField
+                value={delivery}
+                onChange={setDelivery}
+                showAdminOnly
+              />
             </div>
 
             <div className="space-y-2">
@@ -164,7 +328,11 @@ export function ClassMessageClient({ classes, defaultClassId }: ClassMessageClie
             {success && (
               <p className="text-sm text-green-600">
                 Message sent to {sentCount} parent
-                {sentCount !== 1 ? "s" : ""} successfully! Redirecting...
+                {sentCount !== 1 ? "s" : ""}
+                {adminCount > 0
+                  ? ` and ${adminCount} admin${adminCount !== 1 ? "s" : ""}`
+                  : ""}{" "}
+                successfully! Redirecting...
               </p>
             )}
 
@@ -177,10 +345,7 @@ export function ClassMessageClient({ classes, defaultClassId }: ClassMessageClie
               </Button>
               <Button
                 onClick={handleSend}
-               
-                disabled={
-                  !selectedClass || !subject || !body || isPending || success
-                }
+                disabled={!canSend}
               >
                 <Send className="mr-1 size-3.5" />
                 {isPending ? "Sending..." : "Send to Class"}

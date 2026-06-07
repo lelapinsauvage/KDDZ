@@ -16324,7 +16324,7 @@
     "legacyPhp": "Front/templates/admin/message_portal.php",
     "legacyJs": "Front/templates/admin/js/message_portal.js",
     "modernRoute": "/message_portal.php, /messages/compose",
-    "status": "partial - legacy bulk message bridge restored; recipient/action audit remains",
+    "status": "partial - legacy bulk compose options restored; external delivery/side-effect audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -16332,13 +16332,13 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "`/message_portal.php` now redirects to the modern bulk compose page while preserving legacy recipient context when present. Remaining work is exact legacy child/teacher selection table, SMS/WhatsApp/push toggles, and send action parity."
+    "verification": "`/message_portal.php` now redirects to the modern bulk compose page while preserving legacy recipient context when present. The modern bulk form now loads migrated `notifications_nature` rows with the legacy PHP fallback list, exposes Web/Mobile/SMS/WhatsApp delivery choices, and saves the selected channel intent into `Message.legacyData` for audit. Remaining work is legacy teacher-only SMS/WhatsApp fanout, the old `addTo*` holiday/event/alarm side effects for nature-specific sends, provider-backed external delivery, and final DataTables visual parity."
   },
   {
     "legacyPhp": "Front/templates/admin/message_portal_class.php",
     "legacyJs": "Front/templates/admin/js/message_portal_class.js",
     "modernRoute": "/message_portal_class.php, /messages/compose/class",
-    "status": "partial - legacy class message bridge restored; recipient/action audit remains",
+    "status": "partial - legacy class child selection/admin fanout restored; external delivery audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -16346,13 +16346,13 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "`/message_portal_class.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy class ids into `/messages/compose/class?classId=...` so the modern class message form preselects the legacy class. Remaining work is exact child selection table, admin-only toggle, SMS/WhatsApp/push, and send action parity."
+    "verification": "`/message_portal_class.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy class ids into `/messages/compose/class?classId=...` so the modern class message form preselects the legacy class. The modern class form restores per-child selection, Select All Children, Select All Active, Unselect All, the Message Admin Only path, migrated legacy natures, and legacy admin-recipient fanout before optional parent fanout. Remaining work is final provider-backed external delivery decisions and visual audit against the old Metronic table."
   },
   {
     "legacyPhp": "Front/templates/admin/message_portal_single.php",
     "legacyJs": "Front/templates/admin/js/message_portal_single.js",
     "modernRoute": "/message_portal_single.php, /messages/[id], /messages/compose/direct",
-    "status": "partial - legacy direct/thread message bridge restored; reply/action audit remains",
+    "status": "partial - legacy direct compose options/admin copy restored; reply/action audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -16361,7 +16361,7 @@
       "id",
       "thread"
     ],
-    "verification": "`/message_portal_single.php?thread=` now resolves migrated legacy thread ids into the modern message thread view, and `/message_portal_single.php?id=` resolves legacy child ids into a preselected direct parent-recipient compose form. Remaining work is exact thread validation/forbidden behavior, SMS/WhatsApp toggles, reply styling, and external delivery parity."
+    "verification": "`/message_portal_single.php?thread=` now resolves migrated legacy thread ids into the modern message thread view, and `/message_portal_single.php?id=` resolves legacy child ids into a preselected direct parent-recipient compose form. New direct parent messages now preserve legacy nature/channel intent in `Message.legacyData` and create the legacy-style admin copy fanout. Remaining work is exact thread forbidden-page behavior, reply bubble styling, parent/mobile read reset, and provider-backed SMS/WhatsApp delivery."
   },
   {
     "legacyPhp": "Front/templates/admin/newyear.php",

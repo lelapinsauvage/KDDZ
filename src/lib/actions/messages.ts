@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireOrg, requireOrgSafe } from "@/lib/require-org";
 
+import type { Prisma } from "@/generated/prisma/client";
 import type { SenderType, RecipientType } from "@/generated/prisma/enums";
 
 // ---------------------------------------------------------------------------
@@ -42,13 +43,16 @@ interface SendMessageData {
   body: string;
   threadId?: string | null;
   nature?: string | null;
+  delivery?: LegacyMessageDeliveryOptions | null;
 }
 
 interface SendClassMessageData {
   classId: string;
+  childIds?: string[];
   subject?: string | null;
   body: string;
   nature?: string | null;
+  delivery?: LegacyMessageDeliveryOptions | null;
 }
 
 interface SendBulkChildMessageData {
@@ -56,6 +60,15 @@ interface SendBulkChildMessageData {
   subject?: string | null;
   body: string;
   nature?: string | null;
+  delivery?: LegacyMessageDeliveryOptions | null;
+}
+
+interface LegacyMessageDeliveryOptions {
+  web?: boolean;
+  mobile?: boolean;
+  sms?: boolean;
+  whatsapp?: boolean;
+  adminOnly?: boolean;
 }
 
 type ActionResult<T = unknown> = {
@@ -163,6 +176,59 @@ async function findSentMessageRecipientIds(
 
 function containsText(value: string) {
   return { contains: value, mode: "insensitive" };
+}
+
+function normalizeLegacyDelivery(delivery?: LegacyMessageDeliveryOptions | null) {
+  return {
+    web: delivery?.web !== false,
+    mobile: Boolean(delivery?.mobile),
+    sms: Boolean(delivery?.sms),
+    whatsapp: Boolean(delivery?.whatsapp),
+    adminOnly: Boolean(delivery?.adminOnly),
+  };
+}
+
+function legacyMessageData(params: {
+  sourcePage: string;
+  delivery?: LegacyMessageDeliveryOptions | null;
+  classId?: string | null;
+  childIds?: string[];
+  recipientScope?: string;
+}): Prisma.InputJsonObject {
+  const delivery = normalizeLegacyDelivery(params.delivery);
+  const externalDeliveryPending = [
+    delivery.mobile ? "mobile" : null,
+    delivery.sms ? "sms" : null,
+    delivery.whatsapp ? "whatsapp" : null,
+  ].filter((channel): channel is string => Boolean(channel));
+
+  return {
+    modernParitySource: "legacy-message-portal",
+    legacyPage: params.sourcePage,
+    delivery,
+    externalDeliveryPending,
+    classId: params.classId ?? null,
+    selectedChildIds: params.childIds ?? [],
+    recipientScope: params.recipientScope ?? "primary",
+  };
+}
+
+function jsonForCreate(value: Prisma.JsonValue | null | undefined) {
+  if (value === null || value === undefined) return undefined;
+  return value as Prisma.InputJsonValue;
+}
+
+async function adminRecipientIds(organizationId: string, senderId: string) {
+  const admins = await db.user.findMany({
+    where: {
+      organizationId,
+      role: "ADMIN",
+      id: { not: senderId },
+    },
+    select: { id: true },
+  });
+
+  return admins.map((admin) => admin.id);
 }
 
 /**
@@ -736,8 +802,36 @@ export async function sendMessage(
         threadId,
         organizationId: ctx.organizationId,
         legacyNature: data.nature ?? null,
+        legacyData: legacyMessageData({
+          sourcePage: "message_portal_single.php",
+          delivery: data.delivery,
+        }),
       },
     });
+
+    if (data.recipientType === "PARENT") {
+      const adminIds = await adminRecipientIds(ctx.organizationId, ctx.userId);
+      if (adminIds.length > 0) {
+        await db.message.createMany({
+          data: adminIds.map((adminId) => ({
+            senderId: ctx.userId,
+            senderType,
+            recipientId: adminId,
+            recipientType: "ADMIN" as RecipientType,
+            subject: subjectLine,
+            body: data.body,
+            threadId,
+            organizationId: ctx.organizationId,
+            legacyNature: data.nature ?? null,
+            legacyData: legacyMessageData({
+              sourcePage: "message_portal_single.php",
+              delivery: data.delivery,
+              recipientScope: "admin-copy",
+            }),
+          })),
+        });
+      }
+    }
 
     revalidateMessagePaths();
 
@@ -796,6 +890,7 @@ export async function replyToMessage(
         threadId,
         organizationId: ctx.organizationId,
         legacyNature: original.legacyNature,
+        legacyData: jsonForCreate(original.legacyData),
       },
     });
 
@@ -995,11 +1090,19 @@ export async function sendClassMessage(
       return { success: false, error: "Class not found" };
     }
 
-    // 1. Find all active children in the class
+    const selectedChildIds = data.childIds?.filter(Boolean) ?? [];
+    const adminOnly = Boolean(data.delivery?.adminOnly);
+    if (!adminOnly && selectedChildIds.length === 0 && data.childIds) {
+      return { success: false, error: "Select at least one child or Admin Only" };
+    }
+
+    // 1. Find active children in the class, narrowed to the legacy selection table when provided.
     const children = await db.child.findMany({
       where: {
         classId: data.classId,
-        isActive: true,
+        ...(selectedChildIds.length > 0
+          ? { id: { in: selectedChildIds } }
+          : { isActive: true }),
       },
       include: {
         parentUsers: {
@@ -1017,7 +1120,11 @@ export async function sendClassMessage(
       }
     }
 
-    if (parentUserIds.size === 0) {
+    const adminIds = await adminRecipientIds(ctx.organizationId, ctx.userId);
+    if (adminOnly && adminIds.length === 0) {
+      return { success: false, error: "No admin users found" };
+    }
+    if (!adminOnly && parentUserIds.size === 0) {
       return { success: false, error: "No parent users found for this class" };
     }
 
@@ -1029,18 +1136,47 @@ export async function sendClassMessage(
       },
     });
 
-    // 4. Create individual messages for each parent
-    const messageCreateData = Array.from(parentUserIds).map((parentId) => ({
+    // 4. Create individual messages for admins and selected children's parents.
+    const adminMessageData = adminIds.map((adminId) => ({
       senderId: ctx.userId,
       senderType,
-      recipientId: parentId,
-      recipientType: "PARENT" as RecipientType,
+      recipientId: adminId,
+      recipientType: "ADMIN" as RecipientType,
       subject: subjectLine,
       body: data.body,
       threadId: thread.id,
       organizationId: ctx.organizationId,
       legacyNature: data.nature ?? null,
+      legacyData: legacyMessageData({
+        sourcePage: "message_portal_class.php",
+        delivery: data.delivery,
+        classId: data.classId,
+        childIds: selectedChildIds,
+        recipientScope: "admin",
+      }),
     }));
+    const parentMessageData = adminOnly
+      ? []
+      : Array.from(parentUserIds).map((parentId) => ({
+          senderId: ctx.userId,
+          senderType,
+          recipientId: parentId,
+          recipientType: "PARENT" as RecipientType,
+          subject: subjectLine,
+          body: data.body,
+          threadId: thread.id,
+          organizationId: ctx.organizationId,
+          legacyNature: data.nature ?? null,
+          legacyData: legacyMessageData({
+            sourcePage: "message_portal_class.php",
+            delivery: data.delivery,
+            classId: data.classId,
+            childIds: selectedChildIds,
+            recipientScope: "parent",
+          }),
+        }));
+
+    const messageCreateData = [...adminMessageData, ...parentMessageData];
 
     await db.message.createMany({
       data: messageCreateData,
@@ -1053,6 +1189,9 @@ export async function sendClassMessage(
       data: {
         threadId: thread.id,
         recipientCount: parentUserIds.size,
+        adminRecipientCount: adminIds.length,
+        selectedChildCount: selectedChildIds.length || children.length,
+        adminOnly,
       },
     };
   } catch (error) {
@@ -1126,6 +1265,11 @@ export async function sendBulkChildMessage(
       threadId: thread.id,
       organizationId: ctx.organizationId,
       legacyNature: data.nature ?? null,
+      legacyData: legacyMessageData({
+        sourcePage: "message_portal.php",
+        delivery: data.delivery,
+        childIds: data.childIds,
+      }),
     }));
 
     await db.message.createMany({ data: messageCreateData });
@@ -1174,6 +1318,7 @@ export async function resendMessage(id: string): Promise<ActionResult> {
         threadId: original.threadId,
         organizationId: ctx.organizationId,
         legacyNature: original.legacyNature,
+        legacyData: jsonForCreate(original.legacyData),
       },
     });
 
