@@ -130,7 +130,6 @@ export async function submitLegacyDisabledContact(
         isActive: true,
       },
       select: { id: true, email: true, name: true },
-      take: 50,
     });
     const createdAt = new Date();
     const contactKey = randomBytes(10).toString("hex");

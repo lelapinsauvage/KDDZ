@@ -269,15 +269,15 @@ async function getSignupSources() {
     where: { legacyTable: "login_settings" },
     select: { sourceDatabase: true },
     orderBy: { sourceDatabase: "asc" },
-    take: 50,
+    distinct: ["sourceDatabase"],
   });
   if (settings.length > 0) return settings.map((row) => row.sourceDatabase);
 
   const levels = await db.legacyAuthRecord.findMany({
     where: { recordType: "login_level" },
     select: { sourceDatabase: true },
-    orderBy: [{ sourceDatabase: "asc" }, { legacyId: "asc" }],
-    take: 50,
+    orderBy: { sourceDatabase: "asc" },
+    distinct: ["sourceDatabase"],
   });
   return levels.map((row) => row.sourceDatabase);
 }

@@ -18138,7 +18138,7 @@
       "username",
       "p-*"
     ],
-    "verification": "`/signup` restores the legacy public account creation flow over migrated PHP-login metadata: disabled-registration guard, email-as-username mode, blocked email-domain validation from `restrict-signups-by-email`, default-level assignment from `default-level`, required/optional signup profile fields persisted to `login_profiles`, modern bcrypt user creation, activation-token creation in `login_confirm` when `user-activation-enable` is set, welcome/new-user template rendering, in-app admin notification fanout for configured legacy notify levels, provider-backed welcome/activation/admin-notice emails, and delivery audit summaries. `/sign_up.php` and `/users/sign_up.php` bridge into the modern route. Remaining work is active reCAPTCHA/PlayThru enforcement and social `new_social` prefill/linking."
+    "verification": "`/signup` restores the legacy public account creation flow over migrated PHP-login metadata: disabled-registration guard, email-as-username mode, blocked email-domain validation from `restrict-signups-by-email`, uncapped distinct migrated login source discovery, default-level assignment from `default-level`, required/optional signup profile fields persisted to `login_profiles`, modern bcrypt user creation, activation-token creation in `login_confirm` when `user-activation-enable` is set, welcome/new-user template rendering, in-app admin notification fanout for configured legacy notify levels, provider-backed welcome/activation/admin-notice emails, and delivery audit summaries. `/sign_up.php` and `/users/sign_up.php` bridge into the modern route. Remaining work is active reCAPTCHA/PlayThru enforcement and social `new_social` prefill/linking."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/translate.class.php",
@@ -18192,7 +18192,7 @@
       "subject",
       "verify"
     ],
-    "verification": "`/disabled.php` and `/users/disabled.php` now render the legacy Oops, Access Denied copy, preserve the Disabled Message / Report a bug subject choices, validate the original name/email/subject/comments/sky-color verification messages, store successful submissions as `LegacyAuthRecord` rows with `recordType = disabled_contact`, create admin in-app notifications, send provider-backed BCC admin email attempts, and store skipped/failed/sent delivery summaries on the contact record."
+    "verification": "`/disabled.php` and `/users/disabled.php` now render the legacy Oops, Access Denied copy, preserve the Disabled Message / Report a bug subject choices, validate the original name/email/subject/comments/sky-color verification messages, store successful submissions as `LegacyAuthRecord` rows with `recordType = disabled_contact`, create uncapped active-admin in-app notifications, send provider-backed BCC admin email attempts, and store skipped/failed/sent delivery summaries on the contact record."
   },
   {
     "legacyPhp": "Front/templates/admin/users/footer.php",
@@ -18374,7 +18374,7 @@
       "username",
       "p-*"
     ],
-    "verification": "The legacy sign-up form now lives at `/signup`, with old PHP deep links `/sign_up.php` and `/users/sign_up.php` preserving query strings. It restores Full name, optional Username, Email, Password, Password again, visible signup profile fields, disabled-registration messaging, and activation-aware success behavior. Remaining work is exact legacy marketing side-copy and retired captcha/social widgets if those integrations are re-enabled."
+    "verification": "The legacy sign-up form now lives at `/signup`, with old PHP deep links `/sign_up.php` and `/users/sign_up.php` preserving query strings. It restores Full name, optional Username, Email, Password, Password again, visible signup profile fields, uncapped migrated source discovery, disabled-registration messaging, and activation-aware success behavior. Remaining work is exact legacy marketing side-copy and retired captcha/social widgets if those integrations are re-enabled."
   },
   {
     "legacyPhp": "Front/templates/admin/users/whoami.php",
