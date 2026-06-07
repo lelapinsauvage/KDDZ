@@ -36,7 +36,7 @@ import {
   updateLegacyAuthUpdateSettings,
 } from "@/lib/actions/legacy-auth-settings";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, KeyRound, Save, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Info, KeyRound, Save, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 
 type LegacyAuthSettingsClientProps = {
@@ -1007,6 +1007,44 @@ export function LegacyAuthSettingsClient({
             <div className="space-y-4 rounded-sm border border-border bg-background p-4">
               <div className="space-y-3 rounded-sm border border-border/70 p-3">
                 <div className="text-sm font-semibold">Update</div>
+                <div
+                  className={cn(
+                    "flex gap-3 rounded-sm border p-3 text-sm",
+                    updateForm.updateCheckEnabled
+                      ? "border-blue-200 bg-blue-50 text-blue-950"
+                      : "border-amber-200 bg-amber-50 text-amber-950",
+                  )}
+                >
+                  {updateForm.updateCheckEnabled ? (
+                    <Info className="mt-0.5 size-4 shrink-0" />
+                  ) : (
+                    <ShieldAlert className="mt-0.5 size-4 shrink-0" />
+                  )}
+                  <div className="space-y-1">
+                    <div className="font-semibold">
+                      {updateForm.updateCheckEnabled
+                        ? "Archived provider check"
+                        : "Updates disabled"}
+                    </div>
+                    {updateForm.updateCheckEnabled ? (
+                      <p>
+                        The legacy CodeCanyon update feed is retired; release
+                        history now lives in Git and deployment records.
+                      </p>
+                    ) : (
+                      <div>
+                        <p>Two things may have happened:</p>
+                        <ol className="mt-1 list-decimal space-y-0.5 pl-5">
+                          <li>Update checking is disabled.</li>
+                          <li>
+                            The old provider endpoint is archived and no longer
+                            queried by the modern app.
+                          </li>
+                        </ol>
+                      </div>
+                    )}
+                  </div>
+                </div>
                 <CheckboxField
                   label="Enable to automatically check for updates each time you load this page"
                   checked={updateForm.updateCheckEnabled}
@@ -1024,11 +1062,23 @@ export function LegacyAuthSettingsClient({
                   </div>
                   <div className="rounded-sm bg-muted/60 px-3 py-2">
                     <div className="text-xs text-muted-foreground">
-                      Latest changelog
+                      Latest version
                     </div>
-                    <div className="font-medium">Archived provider check</div>
+                    <div className="font-medium">Provider archived</div>
                   </div>
                 </div>
+                <Field label="Latest changelog" htmlFor="legacy-update-changelog">
+                  <Textarea
+                    id="legacy-update-changelog"
+                    rows={5}
+                    value={
+                      updateForm.updateCheckEnabled
+                        ? "Legacy CodeCanyon changelog provider archived. Modern release notes are tracked through Git commits, pull requests, and deployment history."
+                        : "Update checking is disabled."
+                    }
+                    disabled
+                  />
+                </Field>
               </div>
               <div className="flex justify-end">
                 <Button onClick={saveUpdateSettings} disabled={isPending}>

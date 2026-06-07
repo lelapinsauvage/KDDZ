@@ -17218,7 +17218,7 @@
     "legacyPhp": "Front/templates/admin/users/admin/page/update.php",
     "legacyJs": "",
     "modernRoute": "/users/admin/page/update.php, /settings/legacy-auth?tab=update",
-    "status": "partial - legacy update-check toggle restored; remote changelog retired",
+    "status": "restored - legacy update settings restored with archived provider notice",
     "legacyTablesMentioned": [
       "available",
       "checking",
@@ -17229,7 +17229,7 @@
       "update-check-enable",
       "update-form"
     ],
-    "verification": "`/settings/legacy-auth?tab=update` restores the legacy Check for updates toggle against migrated `login_settings` / `login_settings_man`, and `/users/admin/page/update.php` redirects to the restored tab. The old CodeCanyon changelog fetch remains intentionally archived because the provider endpoint is obsolete."
+    "verification": "`/settings/legacy-auth?tab=update` restores the legacy Update fieldset shape with status notice, Check for updates toggle, Current version, Latest version, and Latest changelog fields against migrated `login_settings` / `login_settings_man`. `/users/admin/page/update.php` redirects to the restored tab. The old CodeCanyon changelog fetch is intentionally archived because the provider endpoint is obsolete."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/user-add.php",
