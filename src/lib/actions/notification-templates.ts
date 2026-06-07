@@ -958,10 +958,38 @@ function isLegacyNotificationChannel(
   return LEGACY_NOTIFICATION_CHANNELS.has(value);
 }
 
-function legacyRecord(value: unknown): Record<string, unknown> {
+function jsonRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
     ? { ...(value as Record<string, unknown>) }
     : {};
+}
+
+function parseLegacySettingValue(value: string | null): Record<string, unknown> {
+  if (!value?.trim()) return {};
+  try {
+    return jsonRecord(JSON.parse(value));
+  } catch {
+    return {};
+  }
+}
+
+function legacyRecord(
+  legacyData: unknown,
+  settingValue: string | null,
+): Record<string, unknown> {
+  return {
+    ...parseLegacySettingValue(settingValue),
+    ...jsonRecord(legacyData),
+  };
+}
+
+function legacyMtypeChannel(
+  data: Record<string, unknown>,
+): LegacyNotificationChannel | null {
+  const mtype = Number(data.mtype);
+  if (mtype === 1) return "whatsapp";
+  if (mtype === 2) return "sms";
+  return null;
 }
 
 export async function updateLegacyNotificationChannelSetting(
@@ -982,8 +1010,15 @@ export async function updateLegacyNotificationChannelSetting(
       return { success: false, error: "Legacy notification setting not found" };
     }
 
-    const currentData = legacyRecord(setting.legacyData);
-    const currentValue = Number(currentData[channel]);
+    const currentData = legacyRecord(setting.legacyData, setting.settingValue);
+    let targetKey: LegacyNotificationChannel | "status" = channel;
+    let currentValue = Number(currentData[channel]);
+
+    if (!Number.isFinite(currentValue) && legacyMtypeChannel(currentData) === channel) {
+      targetKey = "status";
+      currentValue = Number(currentData.status);
+    }
+
     if (!Number.isFinite(currentValue)) {
       return { success: false, error: "Legacy channel is not present on this row" };
     }
@@ -993,7 +1028,7 @@ export async function updateLegacyNotificationChannelSetting(
 
     const nextData = {
       ...currentData,
-      [channel]: enabled ? 1 : 0,
+      [targetKey]: enabled ? 1 : 0,
     };
 
     const updated = await db.legacySetting.update({

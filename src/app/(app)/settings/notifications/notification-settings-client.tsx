@@ -304,6 +304,13 @@ const LEGACY_CHANNELS: Array<{ key: LegacyChannelKey; label: string }> = [
   { key: "sms", label: "SMS" },
 ];
 
+function legacyMtypeChannel(data: Record<string, unknown> | null) {
+  const mtype = Number(data?.mtype);
+  if (mtype === 1) return "whatsapp";
+  if (mtype === 2) return "sms";
+  return null;
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -1062,15 +1069,19 @@ function LegacyTab({
     const data = settingData(setting);
     if (!data) return null;
     const value = Number(data[channel]);
-    return Number.isFinite(value) ? value : null;
+    if (Number.isFinite(value)) return value;
+    if (legacyMtypeChannel(data) !== channel) return null;
+    const status = Number(data.status);
+    return Number.isFinite(status) ? status : null;
   }
 
   function channelName(setting: LegacyNotificationSettingRow) {
     const data = settingData(setting);
     const name = data?.name;
-    return typeof name === "string" && name.trim() !== ""
-      ? name.trim()
-      : setting.settingKey;
+    if (typeof name === "string" && name.trim() !== "") return name.trim();
+    const mtypeChannel = legacyMtypeChannel(data);
+    const channel = LEGACY_CHANNELS.find((item) => item.key === mtypeChannel);
+    return channel?.label ?? setting.settingKey;
   }
 
   function hasChannelMatrix(setting: LegacyNotificationSettingRow) {
