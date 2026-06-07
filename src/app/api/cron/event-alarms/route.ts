@@ -19,6 +19,7 @@ function emptySummary(): EventGenerationSummary {
     eventsScanned: 0,
     eventsMatched: 0,
     alarmsCreated: 0,
+    receiptsCreated: 0,
     notificationsCreated: 0,
     skippedExisting: 0,
     skippedDisabledBranches: 0,
@@ -38,6 +39,7 @@ function addSummary(
   total.eventsScanned += next.eventsScanned;
   total.eventsMatched += next.eventsMatched;
   total.alarmsCreated += next.alarmsCreated;
+  total.receiptsCreated += next.receiptsCreated;
   total.notificationsCreated += next.notificationsCreated;
   total.skippedExisting += next.skippedExisting;
   total.skippedDisabledBranches += next.skippedDisabledBranches;

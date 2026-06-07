@@ -425,9 +425,10 @@ function formatGenerationStatus(
   if (family === "event") {
     const eventsMatched = metric(data, "eventsMatched");
     const alarmsCreated = metric(data, "alarmsCreated");
+    const receiptsCreated = metric(data, "receiptsCreated");
     const notificationsCreated = metric(data, "notificationsCreated");
     const skippedExisting = metric(data, "skippedExisting");
-    return `Matched ${eventsMatched}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"} and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing.`;
+    return `Matched ${eventsMatched}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"}, ${receiptsCreated} receipt${receiptsCreated === 1 ? "" : "s"}, and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing.`;
   }
 
   const entriesMatched = metric(data, "entriesMatched");

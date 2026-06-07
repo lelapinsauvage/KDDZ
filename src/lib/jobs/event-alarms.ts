@@ -3,12 +3,14 @@ import { isLegacyNotificationGateEnabled } from "@/lib/legacy-notification-gates
 
 const DEFAULT_REMINDER_DAYS = [1, 3, 7];
 const DAY_MS = 86_400_000;
+const EVENT_RECEIPT_SOURCE = "custom_notifications_events";
 
 export interface EventGenerationSummary {
   branchesScanned: number;
   eventsScanned: number;
   eventsMatched: number;
   alarmsCreated: number;
+  receiptsCreated: number;
   notificationsCreated: number;
   skippedExisting: number;
   skippedDisabledBranches: number;
@@ -33,6 +35,13 @@ interface EventCandidate {
   eventTypeName: string | null;
   eventTypeId: string | null;
   sourceDatabase: string | null;
+  legacyData: unknown;
+}
+
+interface LegacyEventRecipient {
+  userId: string;
+  legacyRecipientId: number;
+  legacySourceDatabase: string;
 }
 
 function startOfToday(now = new Date()) {
@@ -113,6 +122,7 @@ function emptySummary(): EventGenerationSummary {
     eventsScanned: 0,
     eventsMatched: 0,
     alarmsCreated: 0,
+    receiptsCreated: 0,
     notificationsCreated: 0,
     skippedExisting: 0,
     skippedDisabledBranches: 0,
@@ -131,6 +141,28 @@ function candidateKey(candidate: EventCandidate) {
     candidate.targetDateKey,
     candidate.branchId,
   ].join(":");
+}
+
+function legacySourceMatches(
+  recipient: LegacyEventRecipient,
+  sourceDatabase: string | null,
+) {
+  return !sourceDatabase || recipient.legacySourceDatabase === sourceDatabase;
+}
+
+function recipientsForEventCandidate(
+  recipients: LegacyEventRecipient[],
+  recipientIds: Set<string>,
+  sourceDatabase: string | null,
+) {
+  const selected = new Map<string, LegacyEventRecipient>();
+  for (const recipient of recipients) {
+    if (!recipientIds.has(recipient.userId)) continue;
+    if (!legacySourceMatches(recipient, sourceDatabase)) continue;
+    if (!selected.has(recipient.userId)) selected.set(recipient.userId, recipient);
+  }
+
+  return Array.from(selected.values());
 }
 
 export async function generateEventAlarmsForOrganization(params: {
@@ -264,6 +296,7 @@ export async function generateEventAlarmsForOrganization(params: {
         eventTypeName: event.eventType?.name ?? null,
         eventTypeId: event.eventType?.id ?? null,
         sourceDatabase: event.sourceDatabase,
+        legacyData: event.legacyData,
       });
     }
   }
@@ -279,34 +312,52 @@ export async function generateEventAlarmsForOrganization(params: {
       isActive: true,
     },
     select: {
+      id: true,
       referenceId: true,
       dueDate: true,
       branchId: true,
       legacyData: true,
     },
   });
-  const existingKeys = new Set<string>();
+  const existingByKey = new Map<string, (typeof existingAlarms)[number]>();
   for (const alarm of existingAlarms) {
     if (!alarm.referenceId || !alarm.branchId) continue;
     const daysBefore = existingDaysBefore(alarm.legacyData);
     const targetDate =
       existingTargetDate(alarm.legacyData) ?? (alarm.dueDate ? dateKey(alarm.dueDate) : null);
     if (daysBefore !== null && targetDate) {
-      existingKeys.add(`${alarm.referenceId}:${daysBefore}:${targetDate}:${alarm.branchId}`);
+      existingByKey.set(`${alarm.referenceId}:${daysBefore}:${targetDate}:${alarm.branchId}`, alarm);
     }
   }
 
-  const users = await db.user.findMany({
-    where: {
-      isActive: true,
-      organizationId: params.organizationId,
-      OR: [
-        { branchId: { in: enabledBranchIds } },
-        { branchId: null, role: "ADMIN" },
-      ],
-    },
-    select: { id: true, branchId: true, role: true },
-  });
+  const [users, maxReceipt, maxEventLegacyId] = await Promise.all([
+    db.user.findMany({
+      where: {
+        isActive: true,
+        organizationId: params.organizationId,
+        OR: [
+          { branchId: { in: enabledBranchIds } },
+          { branchId: null, role: "ADMIN" },
+        ],
+      },
+      select: { id: true, branchId: true, role: true },
+    }),
+    db.notificationReceipt.aggregate({
+      where: { sourceTable: EVENT_RECEIPT_SOURCE },
+      _max: { legacyNotificationId: true },
+    }),
+    db.event.aggregate({
+      where: {
+        legacyId: { not: null },
+        OR: [
+          { organizationId: params.organizationId },
+          { branch: { organizationId: params.organizationId } },
+          { organizationId: null, branchId: null },
+        ],
+      },
+      _max: { legacyId: true },
+    }),
+  ]);
 
   const adminUserIds = users
     .filter((user) => user.branchId === null && user.role === "ADMIN")
@@ -319,63 +370,212 @@ export async function generateEventAlarmsForOrganization(params: {
     userIdsByBranch.set(user.branchId, branchUsers);
   }
 
+  const userIds = users.map((user) => user.id);
+  const legacyAuthRows = userIds.length
+    ? await db.legacyAuthRecord.findMany({
+        where: {
+          legacyTable: "login_users",
+          userId: { in: userIds },
+          isDisabled: { not: true },
+        },
+        select: {
+          sourceDatabase: true,
+          userId: true,
+          legacyId: true,
+          legacyUserId: true,
+        },
+        orderBy: [
+          { sourceDatabase: "asc" },
+          { legacyId: "asc" },
+        ],
+      })
+    : [];
+  const legacyRecipients: LegacyEventRecipient[] = legacyAuthRows.flatMap((row) =>
+    row.userId
+      ? [{
+          userId: row.userId,
+          legacyRecipientId: row.legacyUserId ?? row.legacyId,
+          legacySourceDatabase: row.sourceDatabase,
+        }]
+      : [],
+  );
+  const maxExistingAlarmLegacyId = existingAlarms.reduce((max, alarm) => {
+    const legacyId = readNumber(asRecord(alarm.legacyData), ["legacyEventId", "aid"]) ?? 0;
+    return Math.max(max, legacyId);
+  }, 0);
+  let nextLegacyNotificationId =
+    Math.max(
+      maxReceipt._max.legacyNotificationId ?? 0,
+      maxEventLegacyId._max.legacyId ?? 0,
+      maxExistingAlarmLegacyId,
+    ) + 1;
+  const assignedEventLegacyIds = new Map<string, number>();
+
   for (const candidate of candidates) {
     const key = candidateKey(candidate);
-    if (existingKeys.has(key)) {
-      summary.skippedExisting += 1;
-      continue;
-    }
-
-    await db.alarm.create({
-      data: {
-        type: "EVENT",
-        referenceId: candidate.eventId,
-        referenceType: "Event",
-        message: candidate.message,
-        dueDate: candidate.targetDate,
-        branchId: candidate.branchId,
-        isActive: true,
-        legacyData: {
-          sourceTable: "t_events",
-          sourceDeliveryTable: "custom_notifications_events",
-          parentDeliveryTable: "custom_notifications_events_parents",
-          modernGenerator: "generateEventAlarms",
-          legacyMethod: "Data::saveNewEvents",
-          eventId: candidate.eventId,
-          legacyEventId: candidate.legacyId,
-          legacyKey: candidate.legacyKey,
-          sourceDatabase: candidate.sourceDatabase,
-          eventTypeId: candidate.eventTypeId,
-          eventTypeName: candidate.eventTypeName,
-          title: candidate.title,
-          customSubject: candidate.title,
-          customBody: candidate.message,
-          daysBefore: candidate.daysBefore,
-          level: candidate.daysBefore,
-          targetDate: candidate.targetDateKey,
-          eventDate: candidate.targetDateKey,
-          branchId: candidate.branchId,
-          targetBranchId: candidate.branchId,
-          branchName: candidate.branchName,
-          href: "alarmsEvents.php",
-        },
-      },
-    });
-    existingKeys.add(key);
-    summary.alarmsCreated += 1;
-
+    const existingAlarm = existingByKey.get(key);
     const recipientIds = new Set([
       ...(userIdsByBranch.get(candidate.branchId) ?? []),
       ...adminUserIds,
     ]);
+    const recipients = recipientsForEventCandidate(
+      legacyRecipients,
+      recipientIds,
+      candidate.sourceDatabase,
+    );
+
+    const alreadyAssignedEventLegacyId = assignedEventLegacyIds.has(candidate.eventId);
+    let legacyNotificationId =
+      candidate.legacyId ??
+      assignedEventLegacyIds.get(candidate.eventId) ??
+      (existingAlarm
+        ? readNumber(asRecord(existingAlarm.legacyData), ["legacyEventId", "aid"])
+        : null);
+    if (legacyNotificationId === null) {
+      legacyNotificationId = nextLegacyNotificationId++;
+    }
+    if (candidate.legacyId === null && !alreadyAssignedEventLegacyId) {
+      assignedEventLegacyIds.set(candidate.eventId, legacyNotificationId);
+      await db.event.update({
+        where: { id: candidate.eventId },
+        data: {
+          legacyId: legacyNotificationId,
+          legacyData: {
+            ...(asRecord(candidate.legacyData) ?? {}),
+            generatedLegacyId: legacyNotificationId,
+            sourceDeliveryTable: EVENT_RECEIPT_SOURCE,
+          },
+        },
+      });
+    }
+
+    let alarmId = existingAlarm?.id ?? null;
+    if (existingAlarm) {
+      summary.skippedExisting += 1;
+      const existingData = asRecord(existingAlarm.legacyData) ?? {};
+      if (
+        readNumber(existingData, ["legacyEventId", "aid"]) === null ||
+        existingData.sourceDeliveryTable !== EVENT_RECEIPT_SOURCE
+      ) {
+        await db.alarm.update({
+          where: { id: existingAlarm.id },
+          data: {
+            legacyData: {
+              ...existingData,
+              aid: legacyNotificationId,
+              legacyEventId: legacyNotificationId,
+              sourceDeliveryTable: EVENT_RECEIPT_SOURCE,
+              parentDeliveryTable: "custom_notifications_events_parents",
+            },
+          },
+        });
+      }
+    }
+
+    if (!existingAlarm) {
+      const alarm = await db.alarm.create({
+        data: {
+          type: "EVENT",
+          referenceId: candidate.eventId,
+          referenceType: "Event",
+          message: candidate.message,
+          dueDate: candidate.targetDate,
+          branchId: candidate.branchId,
+          isActive: true,
+          legacyData: {
+            aid: legacyNotificationId,
+            sourceTable: "t_events",
+            sourceDeliveryTable: EVENT_RECEIPT_SOURCE,
+            parentDeliveryTable: "custom_notifications_events_parents",
+            modernGenerator: "generateEventAlarms",
+            legacyMethod: "Data::saveNewEvents",
+            legacyFollowupMethod: "Data::addToEvents",
+            eventId: candidate.eventId,
+            legacyEventId: legacyNotificationId,
+            legacyKey: candidate.legacyKey,
+            sourceDatabase: candidate.sourceDatabase,
+            eventTypeId: candidate.eventTypeId,
+            eventTypeName: candidate.eventTypeName,
+            title: candidate.title,
+            customSubject: candidate.title,
+            customBody: candidate.message,
+            daysBefore: candidate.daysBefore,
+            level: candidate.daysBefore,
+            targetDate: candidate.targetDateKey,
+            eventDate: candidate.targetDateKey,
+            branchId: candidate.branchId,
+            targetBranchId: candidate.branchId,
+            branchName: candidate.branchName,
+            href: "alarmsEvents.php",
+          },
+        },
+      });
+      alarmId = alarm.id;
+      existingByKey.set(key, {
+        id: alarm.id,
+        referenceId: candidate.eventId,
+        dueDate: candidate.targetDate,
+        branchId: candidate.branchId,
+        legacyData: alarm.legacyData,
+      });
+      summary.alarmsCreated += 1;
+    }
+
     if (recipientIds.size === 0) {
       summary.skippedNoRecipients += 1;
       continue;
     }
+    if (!alarmId || recipients.length === 0) continue;
+
+    const existingReceipts = await db.notificationReceipt.findMany({
+      where: {
+        sourceTable: EVENT_RECEIPT_SOURCE,
+        legacyNotificationId,
+        recipientType: "USER",
+        legacyRecipientId: {
+          in: recipients.map((recipient) => recipient.legacyRecipientId),
+        },
+      },
+      select: { legacyRecipientId: true },
+    });
+    const existingReceiptIds = new Set(
+      existingReceipts.map((receipt) => receipt.legacyRecipientId),
+    );
+    const newReceiptRecipients = recipients.filter(
+      (recipient) => !existingReceiptIds.has(recipient.legacyRecipientId),
+    );
+    if (newReceiptRecipients.length === 0) continue;
+
+    const receiptResult = await db.notificationReceipt.createMany({
+      data: newReceiptRecipients.map((recipient) => ({
+        sourceTable: EVENT_RECEIPT_SOURCE,
+        category: "events",
+        legacyNotificationId,
+        legacyRecipientId: recipient.legacyRecipientId,
+        recipientType: "USER",
+        recipientId: recipient.userId,
+        alarmId,
+        isRead: false,
+        metadata: {
+          modernGenerator: "generateEventAlarms",
+          legacyMethod: "Data::saveNewEvents",
+          legacyFollowupMethod: "Data::addToEvents",
+          modernTargetType: "Event",
+          modernTargetId: candidate.eventId,
+          sourceDatabase: candidate.sourceDatabase,
+          targetBranchId: candidate.branchId,
+          daysBefore: candidate.daysBefore,
+          submit_time: new Date().toISOString(),
+          ntype: 0,
+        },
+      })),
+      skipDuplicates: true,
+    });
+    summary.receiptsCreated += receiptResult.count;
 
     const created = await db.notification.createMany({
-      data: Array.from(recipientIds).map((userId) => ({
-        userId,
+      data: newReceiptRecipients.map((recipient) => ({
+        userId: recipient.userId,
         title: candidate.title,
         body: candidate.message,
         type: "EVENT",

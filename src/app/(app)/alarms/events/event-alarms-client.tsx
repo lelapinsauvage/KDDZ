@@ -92,11 +92,12 @@ export function EventAlarmsClient({
         holidaysMatched,
         holidaysScanned,
         alarmsCreated,
+        receiptsCreated,
         notificationsCreated,
         skippedExisting,
       } = result.data;
       setGenerationStatus(
-        `Matched ${holidaysMatched} of ${holidaysScanned} holiday${holidaysScanned === 1 ? "" : "s"}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"} and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing.`,
+        `Matched ${holidaysMatched} of ${holidaysScanned} holiday${holidaysScanned === 1 ? "" : "s"}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"}, ${receiptsCreated} receipt${receiptsCreated === 1 ? "" : "s"}, and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing.`,
       );
       router.refresh();
       return;
@@ -126,11 +127,12 @@ export function EventAlarmsClient({
         eventsMatched,
         eventsScanned,
         alarmsCreated,
+        receiptsCreated,
         notificationsCreated,
         skippedExisting,
       } = result.data;
       setGenerationStatus(
-        `Matched ${eventsMatched} of ${eventsScanned} event${eventsScanned === 1 ? "" : "s"}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"} and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing.`,
+        `Matched ${eventsMatched} of ${eventsScanned} event${eventsScanned === 1 ? "" : "s"}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"}, ${receiptsCreated} receipt${receiptsCreated === 1 ? "" : "s"}, and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing.`,
       );
       router.refresh();
       return;

@@ -1,11 +1,14 @@
 import { db } from "@/lib/db";
 import { isLegacyNotificationGateEnabled } from "@/lib/legacy-notification-gates";
 
+const HOLIDAY_RECEIPT_SOURCE = "custom_notifications";
+
 export interface HolidayGenerationSummary {
   branchesScanned: number;
   holidaysScanned: number;
   holidaysMatched: number;
   alarmsCreated: number;
+  receiptsCreated: number;
   notificationsCreated: number;
   skippedExisting: number;
   skippedDisabledBranches: number;
@@ -22,9 +25,17 @@ interface HolidayCandidate {
   targetDateKey: string;
   daysBefore: number;
   branchId: string | null;
+  branchLegacyId: number | null;
   branchName: string;
+  sourceDatabase: string | null;
   repeated: boolean;
   type: string;
+}
+
+interface LegacyHolidayRecipient {
+  userId: string;
+  legacyRecipientId: number;
+  legacySourceDatabase: string;
 }
 
 function startOfToday(now = new Date()) {
@@ -61,6 +72,18 @@ function legacyAlarmLevel(legacyData: unknown) {
   return null;
 }
 
+function readNumber(data: Record<string, unknown> | null, keys: string[]) {
+  for (const key of keys) {
+    const value = data?.[key];
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string" && value.trim() !== "") {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
+  return null;
+}
+
 function legacyTargetDate(legacyData: unknown) {
   const data = asRecord(legacyData);
   const rawDate = data?.targetDate ?? data?.holidayDate ?? data?.notificationDate;
@@ -86,6 +109,7 @@ function emptySummary(): HolidayGenerationSummary {
     holidaysScanned: 0,
     holidaysMatched: 0,
     alarmsCreated: 0,
+    receiptsCreated: 0,
     notificationsCreated: 0,
     skippedExisting: 0,
     skippedDisabledBranches: 0,
@@ -106,6 +130,28 @@ function nextHolidayOccurrence(date: Date, repeated: boolean, today: Date) {
 
 function candidateKey(holidayId: string, daysBefore: number, targetDate: Date) {
   return `${holidayId}:${daysBefore}:${dateKey(targetDate)}`;
+}
+
+function legacySourceMatches(
+  recipient: LegacyHolidayRecipient,
+  sourceDatabase: string | null,
+) {
+  return !sourceDatabase || recipient.legacySourceDatabase === sourceDatabase;
+}
+
+function recipientsForHolidayCandidate(
+  recipients: LegacyHolidayRecipient[],
+  recipientIds: Set<string>,
+  sourceDatabase: string | null,
+) {
+  const selected = new Map<string, LegacyHolidayRecipient>();
+  for (const recipient of recipients) {
+    if (!recipientIds.has(recipient.userId)) continue;
+    if (!legacySourceMatches(recipient, sourceDatabase)) continue;
+    if (!selected.has(recipient.userId)) selected.set(recipient.userId, recipient);
+  }
+
+  return Array.from(selected.values());
 }
 
 export async function generateHolidayAlarmsForOrganization(params: {
@@ -153,7 +199,15 @@ export async function generateHolidayAlarmsForOrganization(params: {
       ...(params.branchId ? { OR: [{ branchId: params.branchId }, { branchId: null }] } : {}),
     },
     include: {
-      branch: { select: { id: true, name: true, organizationId: true } },
+      branch: {
+        select: {
+          id: true,
+          name: true,
+          organizationId: true,
+          sourceDatabase: true,
+          legacyId: true,
+        },
+      },
     },
     orderBy: [{ date: "asc" }, { createdAt: "asc" }],
   });
@@ -192,7 +246,9 @@ export async function generateHolidayAlarmsForOrganization(params: {
       targetDateKey: dateKey(targetDate),
       daysBefore: daysUntil,
       branchId: holiday.branchId,
+      branchLegacyId: holiday.branch?.legacyId ?? null,
       branchName: holiday.branch?.name ?? "All Branches",
+      sourceDatabase: holiday.branch?.sourceDatabase ?? null,
       repeated: holiday.repeated,
       type: holiday.type,
     });
@@ -208,30 +264,36 @@ export async function generateHolidayAlarmsForOrganization(params: {
       referenceId: { in: candidates.map((candidate) => candidate.id) },
       isActive: true,
     },
-    select: { referenceId: true, dueDate: true, legacyData: true },
+    select: { id: true, referenceId: true, dueDate: true, legacyData: true },
   });
-  const existingKeys = new Set<string>();
+  const existingByKey = new Map<string, (typeof existingAlarms)[number]>();
   for (const alarm of existingAlarms) {
     if (!alarm.referenceId) continue;
     const level = legacyAlarmLevel(alarm.legacyData);
     const targetDate =
       legacyTargetDate(alarm.legacyData) ?? (alarm.dueDate ? dateKey(alarm.dueDate) : null);
     if (level !== null && targetDate) {
-      existingKeys.add(`${alarm.referenceId}:${level}:${targetDate}`);
+      existingByKey.set(`${alarm.referenceId}:${level}:${targetDate}`, alarm);
     }
   }
 
-  const users = await db.user.findMany({
-    where: {
-      isActive: true,
-      organizationId: params.organizationId,
-      OR: [
-        { branchId: { in: enabledBranchIds } },
-        { branchId: null },
-      ],
-    },
-    select: { id: true, branchId: true, role: true },
-  });
+  const [users, maxReceipt] = await Promise.all([
+    db.user.findMany({
+      where: {
+        isActive: true,
+        organizationId: params.organizationId,
+        OR: [
+          { branchId: { in: enabledBranchIds } },
+          { branchId: null },
+        ],
+      },
+      select: { id: true, branchId: true, role: true },
+    }),
+    db.notificationReceipt.aggregate({
+      where: { sourceTable: HOLIDAY_RECEIPT_SOURCE },
+      _max: { legacyNotificationId: true },
+    }),
+  ]);
 
   const adminUserIds = users
     .filter((user) => user.branchId === null && user.role === "ADMIN")
@@ -244,53 +306,176 @@ export async function generateHolidayAlarmsForOrganization(params: {
     userIdsByBranch.set(user.branchId, branchUsers);
   }
 
+  const userIds = users.map((user) => user.id);
+  const legacyAuthRows = userIds.length
+    ? await db.legacyAuthRecord.findMany({
+        where: {
+          legacyTable: "login_users",
+          userId: { in: userIds },
+          isDisabled: { not: true },
+        },
+        select: {
+          sourceDatabase: true,
+          userId: true,
+          legacyId: true,
+          legacyUserId: true,
+        },
+        orderBy: [
+          { sourceDatabase: "asc" },
+          { legacyId: "asc" },
+        ],
+      })
+    : [];
+  const legacyRecipients: LegacyHolidayRecipient[] = legacyAuthRows.flatMap((row) =>
+    row.userId
+      ? [{
+          userId: row.userId,
+          legacyRecipientId: row.legacyUserId ?? row.legacyId,
+          legacySourceDatabase: row.sourceDatabase,
+        }]
+      : [],
+  );
+  const maxExistingAlarmLegacyId = existingAlarms.reduce((max, alarm) => {
+    const legacyId = readNumber(asRecord(alarm.legacyData), ["aid"]) ?? 0;
+    return Math.max(max, legacyId);
+  }, 0);
+  let nextLegacyNotificationId =
+    Math.max(maxReceipt._max.legacyNotificationId ?? 0, maxExistingAlarmLegacyId) + 1;
+
   for (const candidate of candidates) {
     const key = candidateKey(candidate.id, candidate.daysBefore, candidate.targetDate);
-    if (existingKeys.has(key)) {
-      summary.skippedExisting += 1;
-      continue;
+    const existingAlarm = existingByKey.get(key);
+    let legacyNotificationId = existingAlarm
+      ? readNumber(asRecord(existingAlarm.legacyData), ["aid"])
+      : null;
+    if (legacyNotificationId === null) {
+      legacyNotificationId = nextLegacyNotificationId++;
     }
 
     const recipientIds = candidate.branchId
-      ? Array.from(new Set([...(userIdsByBranch.get(candidate.branchId) ?? []), ...adminUserIds]))
-      : users.map((user) => user.id);
+      ? new Set([...(userIdsByBranch.get(candidate.branchId) ?? []), ...adminUserIds])
+      : new Set(users.map((user) => user.id));
+    const recipients = recipientsForHolidayCandidate(
+      legacyRecipients,
+      recipientIds,
+      candidate.sourceDatabase,
+    );
 
-    await db.alarm.create({
-      data: {
-        type: "EVENT",
+    let alarmId = existingAlarm?.id ?? null;
+    if (existingAlarm) {
+      summary.skippedExisting += 1;
+      const existingData = asRecord(existingAlarm.legacyData) ?? {};
+      if (
+        readNumber(existingData, ["aid"]) === null ||
+        existingData.sourceDeliveryTable !== HOLIDAY_RECEIPT_SOURCE
+      ) {
+        await db.alarm.update({
+          where: { id: existingAlarm.id },
+          data: {
+            legacyData: {
+              ...existingData,
+              aid: legacyNotificationId,
+              sourceDeliveryTable: HOLIDAY_RECEIPT_SOURCE,
+              sourceDatabase: candidate.sourceDatabase,
+              legacyBranchId: candidate.branchLegacyId,
+              recipientCount: recipientIds.size,
+            },
+          },
+        });
+      }
+    }
+
+    if (!existingAlarm) {
+      const alarm = await db.alarm.create({
+        data: {
+          type: "EVENT",
+          referenceId: candidate.id,
+          referenceType: "Holiday",
+          message: candidate.message,
+          dueDate: candidate.targetDate,
+          branchId: candidate.branchId,
+          isActive: true,
+          legacyData: {
+            aid: legacyNotificationId,
+            sourceTable: "t_alarms",
+            sourceHolidayTable: "t_holiday",
+            sourceDeliveryTable: HOLIDAY_RECEIPT_SOURCE,
+            modernGenerator: "generateHolidayAlarms",
+            legacyMethod: "Data::AlarmsHoliday",
+            holidayId: candidate.id,
+            title: candidate.name,
+            holidayType: candidate.type,
+            repeated: candidate.repeated,
+            level: candidate.daysBefore,
+            daysBefore: candidate.daysBefore,
+            targetDate: candidate.targetDateKey,
+            branchName: candidate.branchName,
+            sourceDatabase: candidate.sourceDatabase,
+            legacyBranchId: candidate.branchLegacyId,
+            recipientCount: recipientIds.size,
+            href: "alarms.php",
+          },
+        },
+      });
+      alarmId = alarm.id;
+      existingByKey.set(key, {
+        id: alarm.id,
         referenceId: candidate.id,
-        referenceType: "Holiday",
-        message: candidate.message,
         dueDate: candidate.targetDate,
-        branchId: candidate.branchId,
-        isActive: true,
-        legacyData: {
-          sourceTable: "t_alarms",
-          sourceHolidayTable: "t_holiday",
-          sourceDeliveryTable: "custom_notifications",
+        legacyData: alarm.legacyData,
+      });
+      summary.alarmsCreated += 1;
+    }
+
+    if (!alarmId || recipients.length === 0) continue;
+
+    const existingReceipts = await db.notificationReceipt.findMany({
+      where: {
+        sourceTable: HOLIDAY_RECEIPT_SOURCE,
+        legacyNotificationId,
+        recipientType: "USER",
+        legacyRecipientId: {
+          in: recipients.map((recipient) => recipient.legacyRecipientId),
+        },
+      },
+      select: { legacyRecipientId: true },
+    });
+    const existingReceiptIds = new Set(
+      existingReceipts.map((receipt) => receipt.legacyRecipientId),
+    );
+    const newReceiptRecipients = recipients.filter(
+      (recipient) => !existingReceiptIds.has(recipient.legacyRecipientId),
+    );
+    if (newReceiptRecipients.length === 0) continue;
+
+    const receiptResult = await db.notificationReceipt.createMany({
+      data: newReceiptRecipients.map((recipient) => ({
+        sourceTable: HOLIDAY_RECEIPT_SOURCE,
+        category: "general",
+        legacyNotificationId,
+        legacyRecipientId: recipient.legacyRecipientId,
+        recipientType: "USER",
+        recipientId: recipient.userId,
+        alarmId,
+        isRead: false,
+        metadata: {
           modernGenerator: "generateHolidayAlarms",
           legacyMethod: "Data::AlarmsHoliday",
           holidayId: candidate.id,
-          title: candidate.name,
-          holidayType: candidate.type,
-          repeated: candidate.repeated,
-          level: candidate.daysBefore,
-          daysBefore: candidate.daysBefore,
           targetDate: candidate.targetDateKey,
-          branchName: candidate.branchName,
-          recipientCount: recipientIds.length,
-          href: "alarms.php",
+          daysBefore: candidate.daysBefore,
+          sourceDatabase: candidate.sourceDatabase,
+          legacyBranchId: candidate.branchLegacyId,
+          ntype: 0,
         },
-      },
+      })),
+      skipDuplicates: true,
     });
-    existingKeys.add(key);
-    summary.alarmsCreated += 1;
-
-    if (recipientIds.length === 0) continue;
+    summary.receiptsCreated += receiptResult.count;
 
     const notificationResult = await db.notification.createMany({
-      data: recipientIds.map((userId) => ({
-        userId,
+      data: newReceiptRecipients.map((recipient) => ({
+        userId: recipient.userId,
         title: candidate.name,
         body: candidate.message,
         type: "EVENT",
