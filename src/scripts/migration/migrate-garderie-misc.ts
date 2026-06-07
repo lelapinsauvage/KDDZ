@@ -180,7 +180,13 @@ async function migrateChildAttachments(
     }
 
     const title = cleanString(row.att_title);
-    const fileUrl = cleanString(row.url) ?? "default.jpg";
+    const fileUrl = cleanLegacyFileName(row.url);
+    if (!fileUrl) {
+      skipped++;
+      logProgress(migrated + skipped, rows.length, "Child Attachments");
+      continue;
+    }
+
     if (!dryRun) {
       await prisma.childAttachment.create({
         data: {
@@ -548,7 +554,17 @@ async function migrateGarderieDoctorAttachments(
     }
 
     const title = cleanString(row.att_title);
-    const fileUrl = cleanString(row.url) ?? "default.jpg";
+    const fileUrl = cleanLegacyFileName(row.url);
+    if (!fileUrl) {
+      skipped++;
+      logProgress(
+        migrated + skipped,
+        rows.length,
+        "Garderie Doctor Attachments"
+      );
+      continue;
+    }
+
     if (!dryRun) {
       await prisma.doctorAttachment.create({
         data: {
@@ -621,7 +637,13 @@ async function migrateManagerAttachments(
     }
 
     const title = cleanString(row.att_title);
-    const fileUrl = cleanString(row.url) ?? "default.jpg";
+    const fileUrl = cleanLegacyFileName(row.url);
+    if (!fileUrl) {
+      skipped++;
+      logProgress(migrated + skipped, rows.length, "Manager Attachments");
+      continue;
+    }
+
     if (!dryRun) {
       await prisma.managerAttachment.create({
         data: {

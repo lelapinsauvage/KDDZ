@@ -29,6 +29,7 @@ import { createPrismaClient } from "./lib/prisma-client";
 import { queryMysql, closeMysqlPool, getMysqlConfig } from "./lib/mysql-client";
 import {
   cleanString,
+  cleanLegacyFileName,
   generateUUID,
   getMapping,
   isDryRun,
@@ -178,6 +179,12 @@ export async function migrateAbsences(prisma: PrismaClient) {
       attSkipped++;
       continue;
     }
+    const fileUrl = cleanLegacyFileName(a.url);
+    if (!fileUrl) {
+      attSkipped++;
+      continue;
+    }
+    const filename = cleanString(a.att_title) ?? fileUrl;
 
     const key = legacyKey(sourceDatabase, "t_absent_attachments", legacyId);
     const existing = await prisma.absenceAttachment.findUnique({
@@ -193,8 +200,8 @@ export async function migrateAbsences(prisma: PrismaClient) {
             legacyId,
             legacyTable: "t_absent_attachments",
             legacyAbsenceReportId,
-            filename: cleanString(a.att_title) ?? cleanString(a.url) ?? "attachment",
-            fileUrl: cleanString(a.url) ?? "missing",
+            filename,
+            fileUrl,
             createdAt: parseDate(a.datetime) ?? new Date(),
           },
         });
@@ -213,8 +220,8 @@ export async function migrateAbsences(prisma: PrismaClient) {
           legacyId,
           legacyTable: "t_absent_attachments",
           legacyAbsenceReportId,
-          filename: cleanString(a.att_title) ?? cleanString(a.url) ?? "attachment",
-          fileUrl: cleanString(a.url) ?? "missing",
+          filename,
+          fileUrl,
           createdAt: parseDate(a.datetime) ?? new Date(),
         },
       });

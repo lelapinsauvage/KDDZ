@@ -33,7 +33,8 @@ This list is the first implementation backlog after the generated inventory/matr
    - `apply-legacy-file-urls.ts` now patches legacy `ChildHistory.snapshot.image` JSON for `child-history-photo` entries when source database, child legacy id, source table, and legacy filename all match.
    - Legacy `t_forms_attachments` upload manifests now use the `medical-form-document` rule to rewrite imported medical form attachment files onto `FormAttachment.fileUrl`; runtime call/accident uploads still use the `form-attachment` scope for the same target table.
    - Medical general, condition, visit, accident, and suffering form screens now upload runtime attachments through the `medical-form` scope, load existing active attachments, and sync added/removed files through `FormAttachment.fileUrl`.
-   - Remaining work is upload attach/update actions for the remaining non-compliance surfaces and replacement of any remaining non-staff upload placeholders.
+   - Attachment migration scripts now skip no-file/default legacy rows instead of creating fake `default.jpg`, `missing`, or title-only file records for child, daily report, absence report, medical form, teacher, nurse, doctor, and manager attachment tables.
+   - Remaining work is upload attach/update actions for any remaining non-compliance surfaces and production-dump file audit cleanup after canonical media exports are available.
 
 4. **Full data reconciliation**
    - `reconcile-migration-counts.ts` now provides curated source/target count checks across the migration order and distinguishes strong provenance from weaker count-only evidence.

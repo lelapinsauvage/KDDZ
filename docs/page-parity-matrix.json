@@ -1506,7 +1506,7 @@
       "year_select"
     ],
     "requestFieldsMentioned": [],
-    "verification": "The monolithic legacy Data gateway is not restored as a standalone class. Its page/report behaviors are tracked and restored through individual parity rows, Prisma-backed server actions, migration scripts, report/PDF endpoints, and legacy bridge routes."
+    "verification": "The monolithic legacy Data gateway is not restored as a standalone class. Its page/report behaviors are tracked and restored through individual parity rows, Prisma-backed server actions, migration scripts, report/PDF endpoints, and legacy bridge routes. Legacy upload-handler attachment imports now skip no-file/default rows instead of creating fake file records for child, daily, absence, medical form, teacher, nurse, doctor, and manager attachment tables."
   },
   {
     "legacyPhp": "Front/templates/admin/classes/DataValidation.class.php",

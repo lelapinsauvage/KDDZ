@@ -29,6 +29,7 @@ import {
   isDryRun,
   toBool,
   toInt,
+  cleanLegacyFileName,
   cleanString,
   log,
   logError,
@@ -236,7 +237,12 @@ async function migrateFormAttachments(prisma: PrismaClient, dryRun: boolean) {
 
     const formType = cleanString(row.formtype) ?? "unknown";
     const legacyFormId = toInt(row.formid, 0) || null;
-    const filename = cleanString(row.url) ?? "default.jpg";
+    const fileUrl = cleanLegacyFileName(row.url);
+    if (!fileUrl) {
+      skipped++;
+      continue;
+    }
+    const filename = cleanString(row.att_title) ?? fileUrl;
     const id = generateUUID();
 
     if (!dryRun) {
@@ -261,7 +267,7 @@ async function migrateFormAttachments(prisma: PrismaClient, dryRun: boolean) {
           legacyBranchId: toInt(row.branch_id, 0) || null,
           title: cleanString(row.att_title),
           filename,
-          fileUrl: filename,
+          fileUrl,
           isActive: toBool(row.active),
           legacyData: JSON.parse(JSON.stringify(row)),
           createdAt: parseDate(row.datetime) ?? new Date(),

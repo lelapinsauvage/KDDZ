@@ -301,6 +301,12 @@ async function migrateTeacherAttachments(
     const legacyTeacherId = toInt(row.teacher_id);
     const teacherId = getMapping("teacher", legacyTeacherId);
     if (!teacherId || !legacyId) continue;
+    const fileUrl = cleanLegacyFileName(row.url);
+    if (!fileUrl) {
+      skipped++;
+      continue;
+    }
+    const filename = cleanString(row.att_title) ?? fileUrl;
 
     const key = legacyKey(sourceDatabase, "t_teacher_attachments", legacyId);
     const existing = await prisma.teacherAttachment.findUnique({
@@ -316,8 +322,8 @@ async function migrateTeacherAttachments(
             legacyId,
             legacyTable: "t_teacher_attachments",
             legacyTeacherId,
-            filename: row.att_title || row.url,
-            fileUrl: row.url,
+            filename,
+            fileUrl,
             type: cleanString(row.type),
             expiryDate: parseDate(row.exp_date),
           },
@@ -337,8 +343,8 @@ async function migrateTeacherAttachments(
           legacyId,
           legacyTable: "t_teacher_attachments",
           legacyTeacherId,
-          filename: row.att_title || row.url,
-          fileUrl: row.url,
+          filename,
+          fileUrl,
           type: cleanString(row.type),
           expiryDate: parseDate(row.exp_date),
         },
@@ -884,6 +890,12 @@ async function migrateNurses(prisma: PrismaClient, dryRun: boolean) {
     const legacyNurseId = toInt(row.teacher_id);
     const nurseId = getMapping("nurse", legacyNurseId);
     if (!nurseId || !legacyId) continue;
+    const fileUrl = cleanLegacyFileName(row.url);
+    if (!fileUrl) {
+      attSkipped++;
+      continue;
+    }
+    const filename = cleanString(row.att_title) ?? fileUrl;
 
     const key = legacyKey(sourceDatabase, "t_nurse_attachments", legacyId);
     const existing = await prisma.nurseAttachment.findUnique({
@@ -899,8 +911,8 @@ async function migrateNurses(prisma: PrismaClient, dryRun: boolean) {
             legacyId,
             legacyTable: "t_nurse_attachments",
             legacyNurseId,
-            filename: row.att_title || row.url,
-            fileUrl: row.url,
+            filename,
+            fileUrl,
             type: cleanString(row.type),
             expiryDate: parseDate(row.exp_date),
           },
@@ -920,8 +932,8 @@ async function migrateNurses(prisma: PrismaClient, dryRun: boolean) {
           legacyId,
           legacyTable: "t_nurse_attachments",
           legacyNurseId,
-          filename: row.att_title || row.url,
-          fileUrl: row.url,
+          filename,
+          fileUrl,
           type: cleanString(row.type),
           expiryDate: parseDate(row.exp_date),
         },

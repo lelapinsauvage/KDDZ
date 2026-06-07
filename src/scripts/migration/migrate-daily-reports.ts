@@ -62,6 +62,7 @@ import {
   toBool,
   toInt,
   toFloat,
+  cleanLegacyFileName,
   cleanString,
   log,
   logError,
@@ -313,6 +314,12 @@ export async function migrateDailyReports(prisma: PrismaClient) {
     const legacyDailyReportId = toInt(a.formid);
     const dailyReportId = getMapping("daily_report", legacyDailyReportId);
     if (!dailyReportId || !legacyId) continue;
+    const fileUrl = cleanLegacyFileName(a.url);
+    if (!fileUrl) {
+      attSkipped++;
+      continue;
+    }
+    const filename = cleanString(a.att_title) ?? fileUrl;
 
     const key = legacyKey(sourceDatabase, "t_daily_attachments", legacyId);
     const existing = await prisma.dailyReportAttachment.findUnique({
@@ -328,8 +335,8 @@ export async function migrateDailyReports(prisma: PrismaClient) {
             legacyId,
             legacyTable: "t_daily_attachments",
             legacyDailyReportId,
-            filename: a.att_title || a.url,
-            fileUrl: a.url,
+            filename,
+            fileUrl,
           },
         });
       }
@@ -347,8 +354,8 @@ export async function migrateDailyReports(prisma: PrismaClient) {
           legacyId,
           legacyTable: "t_daily_attachments",
           legacyDailyReportId,
-          filename: a.att_title || a.url,
-          fileUrl: a.url,
+          filename,
+          fileUrl,
         },
       });
     }
