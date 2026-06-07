@@ -3,7 +3,7 @@
     "legacyPhp": "Front/templates/admin/AlarmBar.php",
     "legacyJs": "",
     "modernRoute": "global app header",
-    "status": "partial - legacy alarm/message badge families restored; live push/visual audit remains",
+    "status": "partial - legacy alarm/message badge families and notification gates restored; live push/visual audit remains",
     "legacyTablesMentioned": [
       "t_alarms",
       "t_alarms_msg",
@@ -16,10 +16,11 @@
       "custom_notifications_medicine",
       "custom_notifications_birthday",
       "custom_notifications_assessment",
-      "custom_notifications_medical"
+      "custom_notifications_medical",
+      "t_notification_setting"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Restored the legacy top-right AlarmBar semantics in the modern desktop header: separate unread current-user badge families for Messages, Medication, Birthdays, Assessment, Medical report reminders, and General alarms; each family uses migrated unread receipt/message state, shows the latest four rows, keeps the legacy empty labels (`No New Messages` / `No New Alarms`), formats legacy-style dates, and links to `/alarms/msg`, `/alarms/medicine`, `/alarms/birthdays`, `/alarms/assessments`, `/alarms/medical`, and `/alarms`. Smaller layouts retain the combined inbox tray to avoid header overflow. Remaining work is exact Metronic dropdown styling/hover behavior, websocket/live badge refresh parity, notification-setting visibility gates from `$_SESSION['notif']`, and logged-in browser visual smoke after local database/runtime state is clean."
+    "verification": "Restored the legacy top-right AlarmBar semantics in the modern desktop header: separate unread current-user badge families for Messages, Medication, Birthdays, Assessment, Medical report reminders, and General alarms; each family uses migrated unread receipt/message state, shows the latest four rows, keeps the legacy empty labels (`No New Messages` / `No New Alarms`), formats legacy-style dates, and links to `/alarms/msg`, `/alarms/medicine`, `/alarms/birthdays`, `/alarms/assessments`, `/alarms/medical`, and `/alarms`. The header now reads migrated `t_notification_setting` rows in legacy PHP index order for `$_SESSION['notif']` and hides Medication, Birthdays, Assessment, and Medical report families when their old `alarms` toggle is off; Messages and General remain always visible like `AlarmBar.php`. Smaller layouts retain the combined inbox tray to avoid header overflow. Remaining work is exact Metronic dropdown styling/hover behavior, websocket/live badge refresh parity, and logged-in browser visual smoke after local database/runtime state is clean."
   },
   {
     "legacyPhp": "Front/templates/admin/Areas.php",
