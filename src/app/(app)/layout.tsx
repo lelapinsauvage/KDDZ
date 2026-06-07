@@ -15,7 +15,7 @@ import {
 import {
   getLegacyPageNameForPath,
   legacyPermissionAllows,
-  LEGACY_NAV_PAGE_NAMES,
+  LEGACY_GUARDED_PAGE_NAMES,
 } from "@/lib/legacy-page-guards"
 import { getLegacyNotificationGateVisibility } from "@/lib/legacy-notification-gates"
 import { headers } from "next/headers"
@@ -87,7 +87,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             branchId: defaultBranchId,
             role: userRole,
           },
-          LEGACY_NAV_PAGE_NAMES,
+          LEGACY_GUARDED_PAGE_NAMES,
           "PAGE"
         )
       : emptyLegacyPagePermissions,

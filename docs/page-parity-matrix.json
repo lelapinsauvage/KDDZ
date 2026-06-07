@@ -16622,7 +16622,7 @@
     "legacyPhp": "Front/templates/admin/users/admin/classes/LevelsControl.class.php",
     "legacyJs": "",
     "modernRoute": "/settings/access-control",
-    "status": "partial - legacy level action matrix restored; sidebar/server PAGE filtering and first action enforcement wired",
+    "status": "partial - legacy level action matrix restored; server/nav PAGE filtering and first action enforcement wired",
     "legacyTablesMentioned": [
       "Levels",
       "actions_control",
@@ -16635,7 +16635,7 @@
     "requestFieldsMentioned": [
       "LEVELS"
     ],
-    "verification": "`/settings/access-control` now restores the admin-only legacy level/action matrix over migrated `LegacyAuthRecord` levels and `LegacyAccessControlRecord` actions/grants, including staff and manager source databases, selected-level batch save, searchable action catalogue, inactive action badges, disabled level badges, legacy `No level selected!`/`Saved!` feedback, and grant persistence by soft-disabling stale rows then re-enabling/creating selected grants. `EditSchoolFromTo` is now enforced through the migrated grant bridge, and `leftmenu.php` PAGE grants now filter desktop/mobile navigation plus deny direct guarded route hits through `/forbidden.php`. Remaining work is wiring non-left-menu PAGE/ACTION denial and deciding whether to hydrate grant snapshots into sessions."
+    "verification": "`/settings/access-control` now restores the admin-only legacy level/action matrix over migrated `LegacyAuthRecord` levels and `LegacyAccessControlRecord` actions/grants, including staff and manager source databases, selected-level batch save, searchable action catalogue, inactive action badges, disabled level badges, legacy `No level selected!`/`Saved!` feedback, and grant persistence by soft-disabling stale rows then re-enabling/creating selected grants. `EditSchoolFromTo` is now enforced through the migrated grant bridge; `leftmenu.php` PAGE grants filter desktop/mobile navigation and deny direct guarded route hits through `/forbidden.php`; and non-left-menu deep PAGE guards now cover branch/class/child dashboards, child accounting/calls/absence/accident/attendance, individual call/medical/assessment forms, message class compose, nursery compliance, and invoice/daily/absence detail bridges. Remaining work is wiring ACTION denial/action-button visibility and deciding whether to hydrate grant snapshots into sessions."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/classes/add_level.class.php",
@@ -17142,7 +17142,7 @@
     "legacyPhp": "Front/templates/admin/users/admin/page/level-control.php",
     "legacyJs": "",
     "modernRoute": "/settings/access-control",
-    "status": "partial - legacy level action matrix restored; sidebar/server PAGE filtering and first action enforcement wired",
+    "status": "partial - legacy level action matrix restored; server/nav PAGE filtering and first action enforcement wired",
     "legacyTablesMentioned": [
       "actions_control",
       "actions_control_man",
@@ -17154,7 +17154,7 @@
     "requestFieldsMentioned": [
       "LEVELS"
     ],
-    "verification": "`/settings/access-control` replaces the legacy `Modify levels` admin surface with source-database grouped staff/manager level tables, selected-level checkboxes, searchable action grants, select-all/clear controls, and batch save through `updateLegacyAccessControlLevels`. `EditSchoolFromTo` now uses those grants for active enforcement when migrated ACL data is present, and left-menu PAGE grants now filter desktop/mobile navigation plus deny direct guarded route hits through `/forbidden.php`. Remaining work is expanding active `Check::protectPageOrFunction` enforcement across non-left-menu PAGE/ACTION guards."
+    "verification": "`/settings/access-control` replaces the legacy `Modify levels` admin surface with source-database grouped staff/manager level tables, selected-level checkboxes, searchable action grants, select-all/clear controls, and batch save through `updateLegacyAccessControlLevels`. `EditSchoolFromTo` now uses those grants for active enforcement when migrated ACL data is present; left-menu PAGE grants filter desktop/mobile navigation and deny direct guarded route hits through `/forbidden.php`; and non-left-menu deep PAGE guards now cover branch/class/child dashboards, child accounting/calls/absence/accident/attendance, individual call/medical/assessment forms, message class compose, nursery compliance, and invoice/daily/absence detail bridges. Remaining work is expanding active `Check::protectPageOrFunction` enforcement across ACTION guards/action controls."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/level-create.php",
@@ -17454,7 +17454,7 @@
       "password"
     ],
     "requestFieldsMentioned": [],
-    "verification": "The Jigowatt Check/protect helpers are represented by Auth.js middleware, org-scoped server guards, role checks, disabled/activation redirects, and per-page permission rows. Exact imported legacy level/action parity remains tracked on protected feature rows and access-control settings."
+    "verification": "The Jigowatt Check/protect helpers are represented by Auth.js middleware, org-scoped server guards, role checks, disabled/activation redirects, and per-page permission rows. The app shell now evaluates imported PAGE grants for both left-menu entries and non-left-menu deep/detail `Check::protectPageOrFunction(...)` calls before rendering guarded routes. Remaining exact imported legacy ACTION parity is tracked on protected feature rows and access-control settings."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/config.php",

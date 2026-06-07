@@ -34,15 +34,92 @@ export const LEGACY_NAV_PAGE_NAMES = [
   "newyear.php",
 ] as const;
 
-type LegacyNavPageName = (typeof LEGACY_NAV_PAGE_NAMES)[number];
+const LEGACY_EXTRA_GUARDED_PAGE_NAMES = [
+  "Branch_Dashboard.php",
+  "absentreport.php",
+  "assessment.php",
+  "call.php",
+  "child_absence.php",
+  "child_accident.php",
+  "child_accounting.php",
+  "child_attend_det.php",
+  "child_calls.php",
+  "child_dashboard.php",
+  "class_dashboard.php",
+  "medical_report.php",
+  "message_portal_class.php",
+  "nurseryinfo.php",
+] as const;
+
+export const LEGACY_GUARDED_PAGE_NAMES = [
+  ...LEGACY_NAV_PAGE_NAMES,
+  ...LEGACY_EXTRA_GUARDED_PAGE_NAMES,
+] as const;
+
+type LegacyGuardedPageName = (typeof LEGACY_GUARDED_PAGE_NAMES)[number];
 
 type LegacyPageRouteRule = {
-  legacyPage: LegacyNavPageName;
+  legacyPage: LegacyGuardedPageName;
   exact?: string[];
   prefixes?: string[];
+  patterns?: RegExp[];
 };
 
 const LEGACY_PAGE_ROUTE_RULES: LegacyPageRouteRule[] = [
+  {
+    legacyPage: "Branch_Dashboard.php",
+    exact: ["/Branch_Dashboard.php"],
+    patterns: [/^\/branches\/[^/]+\/dashboard$/],
+  },
+  {
+    legacyPage: "class_dashboard.php",
+    exact: ["/class_dashboard.php"],
+    patterns: [/^\/classes\/[^/]+$/],
+  },
+  {
+    legacyPage: "child_dashboard.php",
+    exact: ["/child_dashboard.php"],
+    patterns: [/^\/children\/[^/]+\/dashboard$/],
+  },
+  {
+    legacyPage: "child_attend_det.php",
+    exact: ["/child_attend_det.php", "/Child_attend_det.php"],
+    patterns: [/^\/children\/[^/]+\/attendance$/],
+  },
+  {
+    legacyPage: "child_accounting.php",
+    exact: ["/child_accounting.php"],
+    patterns: [/^\/children\/[^/]+\/accounting$/],
+  },
+  {
+    legacyPage: "child_calls.php",
+    exact: ["/child_calls.php"],
+    patterns: [/^\/children\/[^/]+\/calls$/],
+  },
+  {
+    legacyPage: "child_absence.php",
+    exact: ["/child_absence.php"],
+    patterns: [/^\/children\/[^/]+\/absence$/],
+  },
+  {
+    legacyPage: "child_accident.php",
+    exact: ["/child_accident.php"],
+    patterns: [/^\/children\/[^/]+\/accidents$/],
+  },
+  {
+    legacyPage: "absentreportsD.php",
+    exact: ["/absent-reports/drafts", "/absentreportsD.php"],
+    prefixes: ["/absent-reports/drafts/"],
+  },
+  {
+    legacyPage: "absentreport.php",
+    exact: ["/absentreport.php"],
+    patterns: [
+      /^\/absent-reports\/new$/,
+      /^\/absent-reports\/[^/]+$/,
+      /^\/absent-reports\/[^/]+\/edit$/,
+    ],
+  },
   {
     legacyPage: "children_drafts.php",
     exact: ["/children/drafts", "/children_drafts.php"],
@@ -53,18 +130,19 @@ const LEGACY_PAGE_ROUTE_RULES: LegacyPageRouteRule[] = [
     prefixes: ["/daily-reports/drafts/"],
   },
   {
-    legacyPage: "absentreportsD.php",
-    exact: ["/absentreportsD.php"],
-  },
-  {
     legacyPage: "message_portal_single.php",
     exact: ["/messages/compose/direct", "/message_portal_single.php"],
     prefixes: ["/messages/compose/direct/"],
   },
   {
+    legacyPage: "message_portal_class.php",
+    exact: ["/messages/compose/class", "/message_portal_class.php"],
+    prefixes: ["/messages/compose/class/"],
+  },
+  {
     legacyPage: "message_portal.php",
     exact: ["/messages/compose", "/message_portal.php"],
-    prefixes: ["/messages/compose/", "/messages/compose/class/"],
+    prefixes: ["/messages/compose/"],
   },
   {
     legacyPage: "Msg_list.php",
@@ -79,16 +157,36 @@ const LEGACY_PAGE_ROUTE_RULES: LegacyPageRouteRule[] = [
   {
     legacyPage: "accounting.php",
     exact: ["/accounting", "/child_accounting.php"],
-    prefixes: ["/accounting/"],
+  },
+  {
+    legacyPage: "children.php",
+    exact: ["/invo.php"],
+    patterns: [/^\/accounting\/invoice\/[^/]+$/],
+  },
+  {
+    legacyPage: "call.php",
+    exact: ["/call.php"],
+    patterns: [/^\/calls\/[^/]+$/],
   },
   {
     legacyPage: "calls.php",
-    exact: ["/calls", "/calls.php", "/call.php", "/bcalls.php", "/child_calls.php"],
+    exact: ["/calls", "/calls.php", "/bcalls.php"],
     prefixes: ["/calls/"],
   },
   {
+    legacyPage: "children.php",
+    exact: ["/dailyreport.php", "/child_report.php"],
+    patterns: [
+      /^\/daily-reports\/new$/,
+      /^\/daily-reports\/batch$/,
+      /^\/daily-reports\/[^/]+$/,
+      /^\/daily-reports\/[^/]+\/edit$/,
+      /^\/daily-reports\/[^/]+\/print$/,
+    ],
+  },
+  {
     legacyPage: "dailyreports.php",
-    exact: ["/daily-reports", "/dailyreport.php", "/child_report.php"],
+    exact: ["/daily-reports"],
     prefixes: ["/daily-reports/"],
   },
   {
@@ -97,18 +195,47 @@ const LEGACY_PAGE_ROUTE_RULES: LegacyPageRouteRule[] = [
     prefixes: ["/absent-reports/"],
   },
   {
-    legacyPage: "medical_reports.php",
+    legacyPage: "assessment.php",
     exact: [
-      "/medical",
+      "/assessments",
+      "/assessment_1.php",
+      "/assessment_2.php",
+      "/assessment_3.php",
+      "/assessment_4.php",
+      "/assessment_5.php",
+      "/assessment_6.php",
+      "/assessment_7.php",
+    ],
+    prefixes: ["/assessments/"],
+  },
+  {
+    legacyPage: "medical_report.php",
+    exact: [
       "/Medical_form1.php",
       "/Medical_form2.php",
       "/Medical_form3.php",
+      "/Medical_form4.php",
       "/Medical_form5.php",
+    ],
+    patterns: [
+      /^\/medical\/general\/[^/]+$/,
+      /^\/medical\/conditions\/[^/]+$/,
+      /^\/medical\/visits\/[^/]+$/,
+      /^\/medical\/vaccinations\/[^/]+$/,
+      /^\/medical\/accidents\/[^/]+$/,
+      /^\/medical\/suffering\/[^/]+$/,
+    ],
+  },
+  {
+    legacyPage: "medical_reports.php",
+    exact: [
+      "/medical",
       "/Medical_forms1.php",
       "/Medical_forms2.php",
       "/Medical_forms3.php",
+      "/Medical_forms4.php",
+      "/Medical_forms5.php",
       "/Medical_forms5b.php",
-      "/child_accident.php",
     ],
     prefixes: ["/medical/"],
   },
@@ -174,7 +301,14 @@ const LEGACY_PAGE_ROUTE_RULES: LegacyPageRouteRule[] = [
   },
   {
     legacyPage: "Address.php",
-    exact: ["/settings/regions", "/settings/zones", "/settings/areas", "/regions.php", "/Zones_Management.php", "/Areas.php"],
+    exact: [
+      "/settings/regions",
+      "/settings/zones",
+      "/settings/areas",
+      "/regions.php",
+      "/Zones_Management.php",
+      "/Areas.php",
+    ],
     prefixes: ["/settings/regions/", "/settings/zones/", "/settings/areas/"],
   },
   {
@@ -204,16 +338,17 @@ const LEGACY_PAGE_ROUTE_RULES: LegacyPageRouteRule[] = [
       "/branches",
       "/branches.php",
       "/branch.php",
-      "/Branch_Dashboard.php",
-      "/childrenperbranch.php",
-      "/classesperbranch.php",
     ],
-    prefixes: ["/branches/"],
+    patterns: [/^\/branches\/[^/]+$/, /^\/branches\/[^/]+\/edit$/],
   },
   {
     legacyPage: "classes.php",
-    exact: ["/classes", "/classes.php", "/class.php", "/class_dashboard.php"],
+    exact: ["/classes", "/classes.php", "/class.php", "/childrenperbranch.php", "/classesperbranch.php"],
     prefixes: ["/classes/"],
+    patterns: [
+      /^\/branches\/[^/]+\/children$/,
+      /^\/branches\/[^/]+\/classes$/,
+    ],
   },
   {
     legacyPage: "children.php",
@@ -225,6 +360,12 @@ const LEGACY_PAGE_ROUTE_RULES: LegacyPageRouteRule[] = [
       "/child_attend_det.php",
     ],
     prefixes: ["/children/"],
+  },
+  {
+    legacyPage: "nurseryinfo.php",
+    exact: ["/settings/nursery", "/nurseryinfo.php"],
+    prefixes: ["/settings/nursery/"],
+    patterns: [/^\/branches\/[^/]+\/compliance(?:\/.*)?$/],
   },
   {
     legacyPage: "index.php",
@@ -243,12 +384,15 @@ function normalizePathname(pathname: string | null | undefined) {
 
 export function getLegacyPageNameForPath(
   pathname: string | null | undefined,
-): LegacyNavPageName | null {
+): LegacyGuardedPageName | null {
   const normalizedPath = normalizePathname(pathname);
   if (!normalizedPath) return null;
 
   const match = LEGACY_PAGE_ROUTE_RULES.find((rule) => {
     if (rule.exact?.includes(normalizedPath)) return true;
+    if (rule.patterns?.some((pattern) => pattern.test(normalizedPath))) {
+      return true;
+    }
     return rule.prefixes?.some((prefix) => normalizedPath.startsWith(prefix));
   });
 
