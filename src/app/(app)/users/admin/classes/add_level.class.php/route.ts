@@ -1,8 +1,10 @@
 import { requireRole } from "@/lib/require-role";
 import {
   fieldValue,
+  getLegacyLevelSuggestions,
   hasLegacyFlag,
   isLegacyLevelNameAvailable,
+  legacyLevelSuggestionsResponse,
   legacyBooleanResponse,
   readLegacyValidationFields,
 } from "@/lib/legacy-auth-remote-validation";
@@ -15,6 +17,28 @@ async function handleLegacyAddLevelValidation(request: Request) {
   }
 
   const fields = await readLegacyValidationFields(request);
+  if (fieldValue(fields, "searchLevels")) {
+    return legacyLevelSuggestionsResponse(
+      await getLegacyLevelSuggestions({
+        search: fieldValue(fields, "searchLevels"),
+        sourceDatabase: fieldValue(
+          fields,
+          "sourceDatabase",
+          "source_database",
+          "db",
+        ),
+        levelRecordType: fieldValue(
+          fields,
+          "levelRecordType",
+          "level_record_type",
+          "recordType",
+          "record_type",
+          "table",
+        ),
+      }),
+    );
+  }
+
   if (!hasLegacyFlag(fields, "checklevel")) {
     return legacyBooleanResponse(false, 400);
   }

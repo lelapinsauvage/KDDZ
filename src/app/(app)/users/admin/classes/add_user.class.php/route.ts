@@ -1,10 +1,12 @@
 import { requireRole } from "@/lib/require-role";
 import {
   fieldValue,
+  getLegacyUserSuggestions,
   hasLegacyFlag,
   isLegacyEmailAvailable,
   isLegacyUsernameAvailable,
   legacyBooleanResponse,
+  legacyUserSuggestionsResponse,
   readLegacyValidationFields,
 } from "@/lib/legacy-auth-remote-validation";
 
@@ -23,6 +25,16 @@ async function handleLegacyAddUserValidation(request: Request) {
     "db",
   );
   const recordType = fieldValue(fields, "recordType", "record_type", "table");
+
+  if (fieldValue(fields, "searchUsers")) {
+    return legacyUserSuggestionsResponse(
+      await getLegacyUserSuggestions({
+        search: fieldValue(fields, "searchUsers"),
+        sourceDatabase,
+        recordType,
+      }),
+    );
+  }
 
   if (hasLegacyFlag(fields, "checkusername")) {
     return legacyBooleanResponse(
