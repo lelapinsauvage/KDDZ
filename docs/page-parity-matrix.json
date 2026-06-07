@@ -17931,7 +17931,7 @@
     "legacyPhp": "Front/templates/admin/users/classes/login.class.php",
     "legacyJs": "",
     "modernRoute": "/login",
-    "status": "partial - legacy staff password verification and login audit restored; full session/action-control audit remains",
+    "status": "partial - legacy username/email, disabled fallback, password verification, and login audit restored; full session/action-control audit remains",
     "legacyTablesMentioned": [
       "actions_control",
       "if",
@@ -17955,16 +17955,16 @@
       "token",
       "username"
     ],
-    "verification": "`/login` now validates both modern bcrypt passwords and migrated legacy staff passwords stored as bcrypt(`md5:{legacy hash}`); successful legacy password login upgrades the user to direct bcrypt. Successful linked PHP-login users now also append migrated-compatible `LegacyLoginTimestamp` rows for `login_timestamps` / `login_timestamps_man` when `profile-timestamps-enable` is enabled, preserving source database, legacy user id, IP, timestamp, and principal type for restored access-log/report screens. Remaining work is full legacy remember-me/session lifetime, action-control session grants, year-selection redirect, disabled-level redirect, and social-login runtime audit."
+    "verification": "`/login` now resolves migrated staff and manager PHP-login identities by username, email, or linked modern email before password verification; validates modern bcrypt passwords and migrated legacy passwords stored as bcrypt(`md5:{legacy hash}`); upgrades successful legacy-password logins to direct bcrypt; blocks legacy restricted users and users whose primary migrated `login_levels` / `login_levels_man` row is disabled by routing the failed sign-in to `/disabled.php`; and appends migrated-compatible `LegacyLoginTimestamp` rows for `login_timestamps` / `login_timestamps_man` when `profile-timestamps-enable` is enabled. Remaining work is full legacy remember-me/session lifetime, action-control session grants, year-selection redirect, and social-login runtime audit."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/prereqs.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/disabled.php, /users/disabled.php",
+    "status": "restored - legacy disabled notice and contact form restored",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/disabled.php` and `/users/disabled.php` now render the legacy Oops, Access Denied copy, preserve the Disabled Message / Report a bug subject choices, validate the original name/email/subject/comments/sky-color verification messages, store successful submissions as `LegacyAuthRecord` rows with `recordType = disabled_contact`, and create admin in-app notifications while marking external email delivery unconfigured."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/profile.class.php",
@@ -18071,11 +18071,20 @@
   {
     "legacyPhp": "Front/templates/admin/users/footer.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
-    "legacyTablesMentioned": [],
-    "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "modernRoute": "/login",
+    "status": "partial - legacy username/email sign-in form restored; remember/social visual audit remains",
+    "legacyTablesMentioned": [
+      "login_integration",
+      "login_settings"
+    ],
+    "requestFieldsMentioned": [
+      "login",
+      "password",
+      "remember",
+      "token",
+      "username"
+    ],
+    "verification": "`/login` now accepts the legacy username-or-email credential shape, links failed restricted/disabled legacy identities to `/disabled.php`, keeps the existing forgot-password and signup flows, and relies on the restored `classes/login.class.php` server behavior for password validation and login audit. Remaining work is exact Stay signed in session lifetime, legacy social button/runtime behavior, and CSRF/token visual parity beyond Auth.js protection."
   },
   {
     "legacyPhp": "Front/templates/admin/users/forgot.php",

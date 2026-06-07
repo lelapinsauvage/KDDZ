@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getLegacyLoginFailureRedirect } from "@/lib/actions/legacy-login";
 
 export default function LoginPage() {
   return (
@@ -37,7 +38,12 @@ function LoginForm() {
       });
 
       if (result?.error) {
-        setError("Invalid email or password");
+        const redirectResult = await getLegacyLoginFailureRedirect(email);
+        if (redirectResult.success && redirectResult.data?.redirectTo) {
+          router.push(redirectResult.data.redirectTo);
+          return;
+        }
+        setError("Invalid username/email or password");
       } else {
         router.push(callbackUrl);
         router.refresh();
@@ -93,11 +99,11 @@ function LoginForm() {
             )}
 
             <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-sm font-medium text-[#1A1D23]">Email</Label>
+              <Label htmlFor="email" className="text-sm font-medium text-[#1A1D23]">Username or email address</Label>
               <Input
                 id="email"
-                type="email"
-                placeholder="you@nursery.com"
+                type="text"
+                placeholder="Username or email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="h-11 rounded-lg border-[#E2E5E9] bg-white text-[#1A1D23] placeholder:text-[#6B7280] transition-all hover:border-[#C9CED4] focus:border-[#0B7464] focus:ring-[3px] focus:ring-[#0B7464]/15"

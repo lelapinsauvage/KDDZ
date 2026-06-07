@@ -3,6 +3,10 @@ import Credentials from "next-auth/providers/credentials";
 import { createHash } from "crypto";
 import { compare, hash } from "bcryptjs";
 import { authConfig } from "./auth.config";
+import {
+  getLegacyLoginDisabledStatus,
+  resolveStaffLoginIdentity,
+} from "./legacy-auth-identity";
 
 type AppDb = typeof import("./db").db;
 
@@ -118,7 +122,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Credentials({
       name: "credentials",
       credentials: {
-        email: { label: "Email", type: "email" },
+        email: { label: "Username or email", type: "text" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials, request) {
@@ -126,16 +130,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         }
 
-        const email = credentials.email as string;
+        const identifier = String(credentials.email).trim();
         const password = credentials.password as string;
 
         try {
           // Dynamic import to avoid loading Prisma at build time
           const { db } = await import("./db");
-          const user = await db.user.findUnique({
-            where: { email },
-            include: { branch: { select: { organizationId: true } } },
-          });
+          const identity = await resolveStaffLoginIdentity(db, identifier);
+          const disabledStatus = await getLegacyLoginDisabledStatus(
+            db,
+            identity,
+          );
+          if (disabledStatus.isDisabled) return null;
+
+          const user = identity?.user ?? null;
 
           if (!user || !user.isActive || !user.passwordHash) {
             return null;
@@ -168,7 +176,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             branchId: user.branchId,
             organizationId: user.organizationId ?? user.branch?.organizationId ?? null,
           };
-        } catch {
+        } catch (error) {
+          console.error("credentials authorize error:", error);
           return null;
         }
       },
