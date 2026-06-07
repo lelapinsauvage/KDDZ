@@ -152,11 +152,15 @@ async function handleRequest(
     child = context.child;
   }
 
+  if (!child) {
+    return jsonSuccess(buildEmptyNotificationPayload());
+  }
+
   try {
     const result: Record<string, unknown> = {
       info: {
-        name: child ? formatChildName(child) : "",
-        status: Boolean(child),
+        name: formatChildName(child),
+        status: true,
         no_notifications: "No New Notifications",
       },
     };
@@ -177,6 +181,22 @@ async function handleRequest(
   } catch {
     return jsonError("Internal server error", 500);
   }
+}
+
+function buildEmptyNotificationPayload() {
+  const result: Record<string, unknown> = {
+    info: {
+      name: "",
+      status: false,
+      no_notifications: "No New Notifications",
+    },
+  };
+
+  DEFAULT_NATURES.forEach((item, index) => {
+    result[`notification${index + 1}`] = buildNotificationGroup(item.name, []);
+  });
+
+  return result;
 }
 
 async function loadNotificationNatures(): Promise<NotificationNature[]> {
