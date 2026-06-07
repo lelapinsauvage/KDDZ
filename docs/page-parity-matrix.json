@@ -17931,7 +17931,7 @@
     "legacyPhp": "Front/templates/admin/users/classes/login.class.php",
     "legacyJs": "",
     "modernRoute": "/login",
-    "status": "partial - legacy staff password verification restored; full login/session audit remains",
+    "status": "partial - legacy staff password verification and login audit restored; full session/action-control audit remains",
     "legacyTablesMentioned": [
       "actions_control",
       "if",
@@ -17955,7 +17955,7 @@
       "token",
       "username"
     ],
-    "verification": "/login now validates both modern bcrypt passwords and migrated legacy staff passwords stored as bcrypt(`md5:{legacy hash}`); successful legacy password login upgrades the user to direct bcrypt. Remaining work is full legacy session/action-control/year-selection/login-timestamp behavior audit."
+    "verification": "`/login` now validates both modern bcrypt passwords and migrated legacy staff passwords stored as bcrypt(`md5:{legacy hash}`); successful legacy password login upgrades the user to direct bcrypt. Successful linked PHP-login users now also append migrated-compatible `LegacyLoginTimestamp` rows for `login_timestamps` / `login_timestamps_man` when `profile-timestamps-enable` is enabled, preserving source database, legacy user id, IP, timestamp, and principal type for restored access-log/report screens. Remaining work is full legacy remember-me/session lifetime, action-control session grants, year-selection redirect, disabled-level redirect, and social-login runtime audit."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/prereqs.php",
