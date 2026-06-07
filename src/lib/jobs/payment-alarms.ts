@@ -4,6 +4,8 @@ import type { PaymentCategory, PaymentStatus } from "@/generated/prisma/enums";
 
 type PaymentAlarmLegacyType = "Paid" | "Before" | "After";
 
+const PAYMENT_RECEIPT_SOURCE = "custom_notifications_payments";
+
 export interface PaymentGenerationSummary {
   branchesScanned: number;
   reminderGroupsMatched: number;
@@ -14,6 +16,7 @@ export interface PaymentGenerationSummary {
   paidAlarmsCreated: number;
   beforeAlarmsCreated: number;
   afterAlarmsCreated: number;
+  receiptsCreated: number;
   parentRecipientsMatched: number;
   skippedExisting: number;
   skippedDisabledBranches: number;
@@ -24,6 +27,7 @@ export interface PaymentGenerationSummary {
 
 interface PaymentAlarmCandidate {
   childId: string;
+  legacyChildId: number | null;
   childName: string;
   familyName: string;
   branchId: string;
@@ -41,7 +45,15 @@ interface PaymentAlarmCandidate {
   fees: string[];
   amountTotal: number;
   currency: string;
+  parentRecipients: PaymentParentRecipient[];
   parentUserCount: number;
+}
+
+interface PaymentParentRecipient {
+  parentUserId: string;
+  legacyRecipientId: number;
+  legacyChildId: number | null;
+  sourceDatabase: string | null;
 }
 
 interface PaymentTemplateConfig {
@@ -102,6 +114,16 @@ function asRecord(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
+function readNumber(data: Record<string, unknown> | null, key: string) {
+  const value = data?.[key];
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
 function reminderLegacyType(legacyData: unknown) {
   const data = asRecord(legacyData);
   const rawType = data?.paymentAlarmType ?? data?.type;
@@ -159,6 +181,7 @@ function emptySummary(): PaymentGenerationSummary {
     paidAlarmsCreated: 0,
     beforeAlarmsCreated: 0,
     afterAlarmsCreated: 0,
+    receiptsCreated: 0,
     parentRecipientsMatched: 0,
     skippedExisting: 0,
     skippedDisabledBranches: 0,
@@ -210,6 +233,30 @@ function isEligibleDuePaymentFee(
   if (category === "BUS") return isTruthyLegacyValue(child.busAttendance);
   if (category === "MONTHLY") return child.isActive && child.lunchIncluded;
   return true;
+}
+
+function parentRecipientsForPaymentChild(
+  parentUsers: Array<{
+    id: string;
+    legacyId: number | null;
+    legacyChildId: number | null;
+    sourceDatabase: string | null;
+  }>,
+) {
+  const recipients = new Map<number, PaymentParentRecipient>();
+  for (const parentUser of parentUsers) {
+    if (parentUser.legacyId === null) continue;
+    if (recipients.has(parentUser.legacyId)) continue;
+
+    recipients.set(parentUser.legacyId, {
+      parentUserId: parentUser.id,
+      legacyRecipientId: parentUser.legacyId,
+      legacyChildId: parentUser.legacyChildId,
+      sourceDatabase: parentUser.sourceDatabase,
+    });
+  }
+
+  return Array.from(recipients.values());
 }
 
 function chooseLegacySettingValue(
@@ -406,7 +453,15 @@ export async function generatePaymentAlarmsForOrganization(params: {
           include: {
             branch: { select: { id: true, name: true } },
             class: { select: { id: true, name: true } },
-            parentUsers: { where: { isActive: true }, select: { id: true } },
+            parentUsers: {
+              where: { isActive: true },
+              select: {
+                id: true,
+                legacyId: true,
+                legacyChildId: true,
+                sourceDatabase: true,
+              },
+            },
           },
         },
       },
@@ -430,7 +485,15 @@ export async function generatePaymentAlarmsForOrganization(params: {
           include: {
             branch: { select: { id: true, name: true } },
             class: { select: { id: true, name: true } },
-            parentUsers: { where: { isActive: true }, select: { id: true } },
+            parentUsers: {
+              where: { isActive: true },
+              select: {
+                id: true,
+                legacyId: true,
+                legacyChildId: true,
+                sourceDatabase: true,
+              },
+            },
           },
         },
       },
@@ -451,6 +514,7 @@ export async function generatePaymentAlarmsForOrganization(params: {
     const fee = categoryLabel(reminder.category);
     const amount = reminder.amount ? Number(reminder.amount) : 0;
     const currency = reminder.currency || "";
+    const parentRecipients = parentRecipientsForPaymentChild(reminder.child.parentUsers);
 
     if (existing) {
       existing.reminderIds.push(reminder.id);
@@ -463,6 +527,7 @@ export async function generatePaymentAlarmsForOrganization(params: {
 
     groups.set(key, {
       childId: reminder.childId,
+      legacyChildId: reminder.child.legacyId ?? null,
       childName: `${reminder.child.firstName} ${reminder.child.lastName}`,
       familyName: capitalize(reminder.child.lastName),
       branchId: reminder.child.branchId,
@@ -480,7 +545,8 @@ export async function generatePaymentAlarmsForOrganization(params: {
       fees: [fee],
       amountTotal: amount,
       currency,
-      parentUserCount: reminder.child.parentUsers.length,
+      parentRecipients,
+      parentUserCount: parentRecipients.length,
     });
   }
 
@@ -523,6 +589,7 @@ export async function generatePaymentAlarmsForOrganization(params: {
     const existing = groups.get(key);
     const fee = categoryLabel(payment.category);
     const amount = Number(payment.amount);
+    const parentRecipients = parentRecipientsForPaymentChild(payment.child.parentUsers);
 
     summary.duePaymentsMatched += 1;
 
@@ -537,6 +604,7 @@ export async function generatePaymentAlarmsForOrganization(params: {
 
     groups.set(key, {
       childId: payment.childId,
+      legacyChildId: payment.child.legacyId ?? null,
       childName: `${payment.child.firstName} ${payment.child.lastName}`,
       familyName: capitalize(payment.child.lastName),
       branchId: payment.child.branchId,
@@ -554,7 +622,8 @@ export async function generatePaymentAlarmsForOrganization(params: {
       fees: [fee],
       amountTotal: amount,
       currency: payment.currency,
-      parentUserCount: payment.child.parentUsers.length,
+      parentRecipients,
+      parentUserCount: parentRecipients.length,
     });
   }
 
@@ -575,25 +644,34 @@ export async function generatePaymentAlarmsForOrganization(params: {
       referenceId: { in: candidates.map((candidate) => candidate.childId) },
       isActive: true,
     },
-    select: { referenceId: true, dueDate: true, legacyData: true },
+    select: { id: true, referenceId: true, dueDate: true, legacyData: true },
   });
-  const existingKeys = new Set<string>();
+  const existingByKey = new Map<
+    string,
+    { id: string; referenceId: string | null; dueDate: Date | null; legacyData: unknown }
+  >();
   for (const alarm of existingAlarms) {
     if (!alarm.referenceId) continue;
     const type = reminderLegacyType(alarm.legacyData);
     const dueDate =
       reminderDueDate(alarm.legacyData) ?? (alarm.dueDate ? dateKey(alarm.dueDate) : null);
     if (type && dueDate) {
-      existingKeys.add(`${alarm.referenceId}:${type}:${dueDate}`);
+      existingByKey.set(`${alarm.referenceId}:${type}:${dueDate}`, alarm);
     }
   }
 
-  const templates = await db.notificationTemplate.findMany({
-    where: {
-      organizationId: params.organizationId,
-      category: { in: PAYMENT_TEMPLATE_CATEGORIES },
-    },
-  });
+  const [templates, maxReceipt] = await Promise.all([
+    db.notificationTemplate.findMany({
+      where: {
+        organizationId: params.organizationId,
+        category: { in: PAYMENT_TEMPLATE_CATEGORIES },
+      },
+    }),
+    db.notificationReceipt.aggregate({
+      where: { sourceTable: PAYMENT_RECEIPT_SOURCE },
+      _max: { legacyNotificationId: true },
+    }),
+  ]);
   const templateByCategory = new Map(
     templates.map((template) => [
       template.category,
@@ -604,12 +682,42 @@ export async function generatePaymentAlarmsForOrganization(params: {
       },
     ]),
   );
+  const maxExistingAlarmLegacyId = existingAlarms.reduce((max, alarm) => {
+    const legacyId = readNumber(asRecord(alarm.legacyData), "aid") ?? 0;
+    return Math.max(max, legacyId);
+  }, 0);
+  let nextLegacyNotificationId =
+    Math.max(maxReceipt._max.legacyNotificationId ?? 0, maxExistingAlarmLegacyId) + 1;
 
   for (const candidate of candidates) {
     const key = candidateKey(candidate.childId, candidate.dueDate, candidate.alarmType);
-    if (existingKeys.has(key)) {
+    const existingAlarm = existingByKey.get(key);
+    let legacyNotificationId = existingAlarm
+      ? readNumber(asRecord(existingAlarm.legacyData), "aid")
+      : null;
+    if (legacyNotificationId === null) {
+      legacyNotificationId = nextLegacyNotificationId++;
+    }
+
+    let alarmId = existingAlarm?.id ?? null;
+    if (existingAlarm) {
       summary.skippedExisting += 1;
-      continue;
+      if (readNumber(asRecord(existingAlarm.legacyData), "aid") === null) {
+        await db.alarm.update({
+          where: { id: existingAlarm.id },
+          data: {
+            legacyData: {
+              ...(asRecord(existingAlarm.legacyData) ?? {}),
+              aid: legacyNotificationId,
+              sourceDeliveryTable: PAYMENT_RECEIPT_SOURCE,
+              legacyChildId: candidate.legacyChildId,
+              legacyParentRecipientIds: candidate.parentRecipients.map(
+                (recipient) => recipient.legacyRecipientId,
+              ),
+            },
+          },
+        });
+      }
     }
 
     const template = resolveTemplate(
@@ -634,48 +742,107 @@ export async function generatePaymentAlarmsForOrganization(params: {
       ? renderNotificationText(template.body, variables)
       : `Payment ${candidate.alarmType.toLowerCase()} reminder for ${candidate.familyName}: ${feeList} due on ${candidate.dueDateKey}.`;
 
-    await db.alarm.create({
-      data: {
-        type: "PAYMENT",
+    if (!existingAlarm) {
+      const alarm = await db.alarm.create({
+        data: {
+          type: "PAYMENT",
+          referenceId: candidate.childId,
+          referenceType: "Child",
+          message,
+          dueDate: candidate.dueDate,
+          branchId: candidate.branchId,
+          isActive: true,
+          legacyData: {
+            aid: legacyNotificationId,
+            sourceTable: "t_alarms_payments",
+            sourceDeliveryTable: PAYMENT_RECEIPT_SOURCE,
+            sourceReminderTable:
+              candidate.alarmType === "Paid" ? "newpayment" : undefined,
+            sourcePaymentTable:
+              candidate.alarmType === "Paid" ? undefined : "t_payments",
+            modernGenerator: "generatePaymentAlarms",
+            legacyMethod: candidate.legacyMethod,
+            paymentAlarmType: candidate.alarmType,
+            childId: candidate.childId,
+            legacyChildId: candidate.legacyChildId,
+            classId: candidate.classId,
+            paymentReminderIds: candidate.reminderIds,
+            legacyPaymentReminderIds: candidate.legacyReminderIds,
+            paymentIds: candidate.paymentIds,
+            legacyPaymentIds: candidate.legacyPaymentIds,
+            fees: candidate.fees,
+            familyName: candidate.familyName,
+            paymentDate: candidate.dueDateKey,
+            amountTotal: candidate.amountTotal,
+            currency: candidate.currency,
+            parentRecipientCount: candidate.parentUserCount,
+            legacyParentRecipientIds: candidate.parentRecipients.map(
+              (recipient) => recipient.legacyRecipientId,
+            ),
+            templateCategory: template.category,
+            legacyTemplateSettingKey: template.legacySettingKey,
+            beforeDays: beforeDaysByBranch.get(candidate.branchId),
+            afterDays: afterDaysByBranch.get(candidate.branchId),
+            modernStatusFilter:
+              candidate.alarmType === "Paid" ? undefined : UNPAID_PAYMENT_STATUSES,
+            href: "alarmsPayments.php",
+          },
+        },
+      });
+      alarmId = alarm.id;
+      existingByKey.set(key, {
+        id: alarm.id,
         referenceId: candidate.childId,
-        referenceType: "Child",
-        message,
         dueDate: candidate.dueDate,
-        branchId: candidate.branchId,
-        isActive: true,
-        legacyData: {
-          sourceTable: "t_alarms_payments",
-          sourceReminderTable:
-            candidate.alarmType === "Paid" ? "newpayment" : undefined,
-          sourcePaymentTable:
-            candidate.alarmType === "Paid" ? undefined : "t_payments",
+        legacyData: alarm.legacyData,
+      });
+      incrementCreated(summary, candidate.alarmType);
+    }
+
+    if (!alarmId || candidate.parentRecipients.length === 0) continue;
+
+    const existingReceipts = await db.notificationReceipt.findMany({
+      where: {
+        sourceTable: PAYMENT_RECEIPT_SOURCE,
+        legacyNotificationId,
+        recipientType: "PARENT_USER",
+        legacyRecipientId: {
+          in: candidate.parentRecipients.map((recipient) => recipient.legacyRecipientId),
+        },
+      },
+      select: { legacyRecipientId: true },
+    });
+    const existingReceiptIds = new Set(
+      existingReceipts.map((receipt) => receipt.legacyRecipientId),
+    );
+    const newReceiptRecipients = candidate.parentRecipients.filter(
+      (recipient) => !existingReceiptIds.has(recipient.legacyRecipientId),
+    );
+    if (newReceiptRecipients.length === 0) continue;
+
+    const receiptResult = await db.notificationReceipt.createMany({
+      data: newReceiptRecipients.map((recipient) => ({
+        sourceTable: PAYMENT_RECEIPT_SOURCE,
+        category: "payments",
+        legacyNotificationId,
+        legacyRecipientId: recipient.legacyRecipientId,
+        recipientType: "PARENT_USER",
+        recipientId: recipient.parentUserId,
+        alarmId,
+        isRead: false,
+        metadata: {
           modernGenerator: "generatePaymentAlarms",
           legacyMethod: candidate.legacyMethod,
           paymentAlarmType: candidate.alarmType,
-          childId: candidate.childId,
-          classId: candidate.classId,
-          paymentReminderIds: candidate.reminderIds,
-          legacyPaymentReminderIds: candidate.legacyReminderIds,
-          paymentIds: candidate.paymentIds,
-          legacyPaymentIds: candidate.legacyPaymentIds,
-          fees: candidate.fees,
-          familyName: candidate.familyName,
-          paymentDate: candidate.dueDateKey,
-          amountTotal: candidate.amountTotal,
-          currency: candidate.currency,
-          parentRecipientCount: candidate.parentUserCount,
-          templateCategory: template.category,
-          legacyTemplateSettingKey: template.legacySettingKey,
-          beforeDays: beforeDaysByBranch.get(candidate.branchId),
-          afterDays: afterDaysByBranch.get(candidate.branchId),
-          modernStatusFilter:
-            candidate.alarmType === "Paid" ? undefined : UNPAID_PAYMENT_STATUSES,
-          href: "alarmsPayments.php",
+          legacyChildId: candidate.legacyChildId,
+          legacyParentChildId: recipient.legacyChildId,
+          parentSourceDatabase: recipient.sourceDatabase,
+          ntype: 0,
         },
-      },
+      })),
+      skipDuplicates: true,
     });
-    existingKeys.add(key);
-    incrementCreated(summary, candidate.alarmType);
+    summary.receiptsCreated += receiptResult.count;
   }
 
   return summary;

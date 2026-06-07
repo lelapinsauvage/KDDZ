@@ -638,7 +638,7 @@
     "legacyPhp": "Front/templates/admin/alarmsPayments.php",
     "legacyJs": "Front/templates/admin/js/alarmsPayments.js",
     "modernRoute": "/alarmsPayments.php, /alarms/payments",
-    "status": "partial - legacy payment alarms bridge, generators, receipt read-state, and sent history restored",
+    "status": "partial - legacy payment alarms bridge, generators, receipt read-state, sent history, and generated receipts restored",
     "legacyTablesMentioned": [
       "auto",
       "payment",
@@ -652,7 +652,7 @@
       "account-remind-before",
       "account-remind-after"
     ],
-    "verification": "Modern page lists migrated/current payment alarms and overdue children, filters by branch id, and exposes manual generation backed by the idempotent `Data::AlarmsPaidPayments()`/`PaymentReminder` paid path plus `NotifyBeforePayment()`/`NotifyAfterPayment()` due-payment paths from modern unpaid `Payment` rows; protected `/api/cron/payment-alarms` runs all three flows. It now also reads migrated `NotificationReceipt` rows from `custom_notifications_payments`, restores `#`, alarm details, To, alarm time, collapsed New/Viewed status, row/bulk/all mark-viewed, and sent payment history for PARENT_USER/CHILD receipts. `/alarmsPayments.php` now redirects to the modern payment alarms page. Remaining audit is parent/mobile delivery parity, exact generated receipt creation for new alarms, hosted schedule enablement, and final sent-state semantics."
+    "verification": "Modern page lists migrated/current payment alarms and overdue children, filters by branch id, and exposes manual generation backed by the idempotent `Data::AlarmsPaidPayments()`/`PaymentReminder` paid path plus `NotifyBeforePayment()`/`NotifyAfterPayment()` due-payment paths from modern unpaid `Payment` rows; protected `/api/cron/payment-alarms` runs all three flows and now writes generated `custom_notifications_payments` PARENT_USER receipts targeted from migrated `parent_login_users`. It reads migrated and generated `NotificationReceipt` rows from `custom_notifications_payments`, restores `#`, alarm details, To, alarm time, collapsed New/Viewed status, row/bulk/all mark-viewed, and sent payment history for PARENT_USER/CHILD receipts. `/alarmsPayments.php` now redirects to the modern payment alarms page. Remaining audit is parent/mobile delivery parity, hosted schedule enablement, and final sent-state semantics."
   },
   {
     "legacyPhp": "Front/templates/admin/alarmsRequests.php",

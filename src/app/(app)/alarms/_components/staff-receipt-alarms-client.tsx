@@ -417,8 +417,9 @@ function formatGenerationStatus(
     const reminderGroupsMatched = metric(data, "reminderGroupsMatched");
     const duePaymentGroupsMatched = metric(data, "duePaymentGroupsMatched");
     const alarmsCreated = metric(data, "alarmsCreated");
+    const receiptsCreated = metric(data, "receiptsCreated");
     const skippedExisting = metric(data, "skippedExisting");
-    return `Matched ${reminderGroupsMatched} paid group${reminderGroupsMatched === 1 ? "" : "s"} and ${duePaymentGroupsMatched} due group${duePaymentGroupsMatched === 1 ? "" : "s"}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing.`;
+    return `Matched ${reminderGroupsMatched} paid group${reminderGroupsMatched === 1 ? "" : "s"} and ${duePaymentGroupsMatched} due group${duePaymentGroupsMatched === 1 ? "" : "s"}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"} and ${receiptsCreated} receipt${receiptsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing.`;
   }
 
   if (family === "event") {
