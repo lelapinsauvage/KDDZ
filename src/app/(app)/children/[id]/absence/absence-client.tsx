@@ -26,6 +26,10 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable, SortableHeader } from "@/components/shared/data-table";
 import { ExportButton } from "@/components/shared/export-button";
+import {
+  AttachmentPreviewDialog,
+  type AttachmentPreviewItem,
+} from "@/components/shared/attachment-preview-dialog";
 import type { ExportColumn } from "@/lib/export";
 import {
   AlertDialog,
@@ -97,6 +101,20 @@ function display(value: string | null | undefined) {
   return value && value.trim() ? value : "-";
 }
 
+function attachmentHref(fileUrl: string) {
+  if (/^https?:\/\//i.test(fileUrl) || fileUrl.startsWith("/")) return fileUrl;
+  if (fileUrl.includes("/")) return `/${fileUrl.replace(/^\/+/, "")}`;
+  return `/images/MedForms/${fileUrl}`;
+}
+
+function previewItems(attachments: AbsenceAttachment[]): AttachmentPreviewItem[] {
+  return attachments.map((attachment) => ({
+    id: attachment.id,
+    filename: attachment.filename,
+    href: attachmentHref(attachment.fileUrl),
+  }));
+}
+
 function filenameFor(child: ChildData) {
   return `${child.firstName}_${child.lastName}_absence_reports`
     .replace(/[^a-z0-9_-]+/gi, "_")
@@ -151,6 +169,10 @@ export function AbsenceClient({ child, absences }: Props) {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [previewTarget, setPreviewTarget] = useState<{
+    title: string;
+    attachments: AttachmentPreviewItem[];
+  } | null>(null);
 
   const filteredAbsences = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -285,11 +307,20 @@ export function AbsenceClient({ child, absences }: Props) {
         }
         return (
           <div className="flex items-center gap-1.5">
-            <Button variant="outline" size="xs" asChild>
-              <a href={firstAttachment.fileUrl} target="_blank" rel="noreferrer">
-                <Paperclip className="size-3" />
-                View Attachment
-              </a>
+            <Button
+              variant="outline"
+              size="xs"
+              type="button"
+              title={firstAttachment.filename}
+              onClick={() =>
+                setPreviewTarget({
+                  title: `${row.original.date} Absence Attachment`,
+                  attachments: previewItems(row.original.attachments),
+                })
+              }
+            >
+              <Paperclip className="size-3" />
+              View Attachment
             </Button>
             {row.original.attachments.length > 1 ? (
               <Badge variant="secondary">+{row.original.attachments.length - 1}</Badge>
@@ -450,6 +481,13 @@ export function AbsenceClient({ child, absences }: Props) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AttachmentPreviewDialog
+        open={!!previewTarget}
+        onOpenChange={(open) => !open && setPreviewTarget(null)}
+        title={previewTarget?.title ?? "Absence Attachment"}
+        attachments={previewTarget?.attachments ?? []}
+      />
     </>
   );
 }

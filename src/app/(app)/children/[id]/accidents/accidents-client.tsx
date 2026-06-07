@@ -28,6 +28,10 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable, SortableHeader } from "@/components/shared/data-table";
 import { ExportButton } from "@/components/shared/export-button";
+import {
+  AttachmentPreviewDialog,
+  type AttachmentPreviewItem,
+} from "@/components/shared/attachment-preview-dialog";
 import type { ExportColumn } from "@/lib/export";
 import {
   AlertDialog,
@@ -164,6 +168,14 @@ function attachmentHref(fileUrl: string) {
   return `/images/MedForms/${fileUrl}`;
 }
 
+function previewItems(attachments: AccidentAttachment[]): AttachmentPreviewItem[] {
+  return attachments.map((attachment) => ({
+    id: attachment.id,
+    filename: attachment.filename,
+    href: attachmentHref(attachment.fileUrl),
+  }));
+}
+
 function exportRows(rows: AccidentRecord[]) {
   return rows.map((row) => ({
     date: row.date,
@@ -215,6 +227,10 @@ export function AccidentsClient({ child, accidents, staffList }: Props) {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [attachmentFilter, setAttachmentFilter] = useState("all");
+  const [previewTarget, setPreviewTarget] = useState<{
+    title: string;
+    attachments: AttachmentPreviewItem[];
+  } | null>(null);
 
   const filteredAccidents = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -362,16 +378,20 @@ export function AccidentsClient({ child, accidents, staffList }: Props) {
         }
         return (
           <div className="flex items-center gap-1.5">
-            <Button variant="outline" size="xs" asChild>
-              <a
-                href={attachmentHref(firstAttachment.fileUrl)}
-                target="_blank"
-                rel="noreferrer"
-                title={firstAttachment.filename}
-              >
-                <Paperclip className="size-3" />
-                View Attachment
-              </a>
+            <Button
+              variant="outline"
+              size="xs"
+              type="button"
+              title={firstAttachment.filename}
+              onClick={() =>
+                setPreviewTarget({
+                  title: `${row.original.date} Accident Attachment`,
+                  attachments: previewItems(row.original.attachments),
+                })
+              }
+            >
+              <Paperclip className="size-3" />
+              View Attachment
             </Button>
             {row.original.attachments.length > 1 ? (
               <Badge variant="secondary">+{row.original.attachments.length - 1}</Badge>
@@ -544,6 +564,13 @@ export function AccidentsClient({ child, accidents, staffList }: Props) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AttachmentPreviewDialog
+        open={!!previewTarget}
+        onOpenChange={(open) => !open && setPreviewTarget(null)}
+        title={previewTarget?.title ?? "Accident Attachment"}
+        attachments={previewTarget?.attachments ?? []}
+      />
     </>
   );
 }
