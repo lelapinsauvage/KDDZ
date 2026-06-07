@@ -42,6 +42,8 @@ import { bulkCreateAttendanceLogs } from "@/lib/actions/employee-events";
 
 interface EmployeeAttendance {
   id: string;
+  legacyId: number | null;
+  legacyKey: string | null;
   employeeName: string;
   role: string;
   branch: string;
@@ -59,6 +61,11 @@ interface AttendanceClientProps {
 }
 
 type AttendanceStatus = "present" | "absent" | "late";
+type AttendanceLogStatusValue =
+  | "CHECK_IN"
+  | "CHECK_OUT"
+  | "LATE"
+  | "EARLY_LEAVE";
 
 interface AttendanceEntry {
   employeeId: string;
@@ -66,6 +73,27 @@ interface AttendanceEntry {
   timeIn: string;
   timeOut: string;
   note: string;
+}
+
+interface AttendanceUploadLog {
+  employeeId: string;
+  employeeType: string;
+  date: string;
+  timeIn?: string;
+  timeOut?: string;
+  status?: AttendanceLogStatusValue;
+  readerId?: string;
+  readerName?: string;
+  cardId?: string;
+  note?: string;
+}
+
+interface CsvParseResult {
+  format: "legacy-scanner" | "current-template" | "mixed";
+  logs: AttendanceUploadLog[];
+  skipped: number;
+  unmatched: number;
+  invalid: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -78,6 +106,394 @@ const roleColors: Record<string, string> = {
   Doctor: "bg-purple-100 text-purple-700",
   Manager: "bg-amber-100 text-amber-700",
 };
+
+function cleanCell(value: string | undefined): string {
+  return (value ?? "").replace(/^\uFEFF/, "").trim();
+}
+
+function parseCsv(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cell = "";
+  let quoted = false;
+
+  for (let index = 0; index < text.length; index++) {
+    const char = text[index];
+    const next = text[index + 1];
+
+    if (char === "\"") {
+      if (quoted && next === "\"") {
+        cell += "\"";
+        index++;
+      } else {
+        quoted = !quoted;
+      }
+      continue;
+    }
+
+    if (char === "," && !quoted) {
+      row.push(cleanCell(cell));
+      cell = "";
+      continue;
+    }
+
+    if ((char === "\n" || char === "\r") && !quoted) {
+      if (char === "\r" && next === "\n") index++;
+      row.push(cleanCell(cell));
+      if (row.some((entry) => entry.length > 0)) rows.push(row);
+      row = [];
+      cell = "";
+      continue;
+    }
+
+    cell += char;
+  }
+
+  row.push(cleanCell(cell));
+  if (row.some((entry) => entry.length > 0)) rows.push(row);
+
+  return rows.filter((entry) => cleanCell(entry[0]).toLowerCase() !== "sep=,");
+}
+
+function normalizeAttendanceName(value: string | null | undefined): string {
+  const cleaned = cleanCell(value ?? undefined);
+  if (!cleaned) return "";
+  return cleaned
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, " ")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function normalizeAttendanceCard(value: string | null | undefined): string | null {
+  const cleaned = cleanCell(value ?? undefined);
+  if (!cleaned) return null;
+  const withoutLeadingZeroes = cleaned.replace(/^0+/, "");
+  return withoutLeadingZeroes || "0";
+}
+
+function normalizeHeader(value: string | undefined) {
+  return cleanCell(value).toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+function isHeaderRow(row: string[]) {
+  const cells = row.map(normalizeHeader);
+  return (
+    cells[0] === "readerid" ||
+    cells[0] === "employeename" ||
+    (cells[0] === "name" && cells[2] === "timein") ||
+    (cells[0] === "reader" && cells[1] === "readername")
+  );
+}
+
+function dateIso(year: string, month: string, day: string): string | null {
+  const normalized = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  const parsed = new Date(`${normalized}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.getTime())) return null;
+  if (
+    parsed.getUTCFullYear() !== Number(year) ||
+    parsed.getUTCMonth() + 1 !== Number(month) ||
+    parsed.getUTCDate() !== Number(day)
+  ) {
+    return null;
+  }
+  return normalized;
+}
+
+function parseLegacyDate(value: string | null | undefined): string | null {
+  const cleaned = cleanCell(value ?? undefined);
+  if (!cleaned || cleaned === "0" || cleaned === "0000-00-00") return null;
+
+  const compact = cleaned.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if (compact) return dateIso(compact[1], compact[2], compact[3]);
+
+  const iso = cleaned.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return dateIso(iso[1], iso[2], iso[3]);
+
+  const dmy = cleaned.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+  if (dmy) {
+    return dateIso(dmy[3], dmy[2], dmy[1]);
+  }
+
+  const ymd = cleaned.match(/^(\d{4})[/](\d{1,2})[/](\d{1,2})$/);
+  if (ymd) {
+    return dateIso(ymd[1], ymd[2], ymd[3]);
+  }
+
+  return null;
+}
+
+function parseLegacyTime(value: string | null | undefined): string | null {
+  const cleaned = cleanCell(value ?? undefined);
+  if (!cleaned || cleaned === "0") return null;
+
+  if (/^\d{1,4}$/.test(cleaned)) {
+    const padded = cleaned.padStart(4, "0");
+    const hours = Number(padded.slice(0, 2));
+    const minutes = Number(padded.slice(2, 4));
+    if (hours > 23 || minutes > 59) return null;
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`;
+  }
+
+  const match = cleaned.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+  if (!match) return null;
+
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  const seconds = Number(match[3] ?? "0");
+  if (hours > 23 || minutes > 59 || seconds > 59) return null;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function legacyTimeHour(value: string | null): number | null {
+  if (!value) return null;
+  const hour = Number(value.slice(0, 2));
+  return Number.isFinite(hour) ? hour : null;
+}
+
+function mapLegacyAttendanceStatus(
+  value: string | null | undefined,
+  time: string | null,
+): AttendanceLogStatusValue | undefined {
+  const normalized = cleanCell(value ?? undefined)
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
+  if (["out", "exit", "check_out", "checkout"].includes(normalized)) {
+    return "CHECK_OUT";
+  }
+  if (["entry", "in", "check_in", "checkin"].includes(normalized)) {
+    const hour = legacyTimeHour(time);
+    return hour !== null && hour >= 12 ? "CHECK_OUT" : "CHECK_IN";
+  }
+  if (normalized === "late") return "LATE";
+  if (normalized === "early_leave" || normalized === "earlyleave") {
+    return "EARLY_LEAVE";
+  }
+  return undefined;
+}
+
+function isClockOutStatus(status: AttendanceLogStatusValue | undefined) {
+  return status === "CHECK_OUT" || status === "EARLY_LEAVE";
+}
+
+function isLegacyScannerRow(row: string[]) {
+  return row.length >= 8 && Boolean(parseLegacyDate(row[2]) && parseLegacyTime(row[3]));
+}
+
+function uniqueNameMap(employees: EmployeeAttendance[]) {
+  const grouped = new Map<string, EmployeeAttendance[]>();
+  for (const employee of employees) {
+    const key = normalizeAttendanceName(employee.employeeName);
+    if (!key) continue;
+    const matches = grouped.get(key) ?? [];
+    matches.push(employee);
+    grouped.set(key, matches);
+  }
+
+  const unique = new Map<string, EmployeeAttendance>();
+  for (const [name, matches] of grouped.entries()) {
+    if (matches.length === 1) unique.set(name, matches[0]);
+  }
+  return unique;
+}
+
+function employeeTypeFor(role: string) {
+  return role.toLowerCase();
+}
+
+function buildCardSeedMap(
+  legacyRows: string[][],
+  exactTeacherByName: Map<string, EmployeeAttendance>,
+) {
+  const teacherByCard = new Map<string, EmployeeAttendance>();
+  const ambiguousCards = new Set<string>();
+
+  for (const row of legacyRows) {
+    const card = normalizeAttendanceCard(row[5]);
+    const teacher = exactTeacherByName.get(normalizeAttendanceName(row[6]));
+    if (!card || !teacher || ambiguousCards.has(card)) continue;
+
+    const existing = teacherByCard.get(card);
+    if (existing && existing.id !== teacher.id) {
+      teacherByCard.delete(card);
+      ambiguousCards.add(card);
+      continue;
+    }
+    teacherByCard.set(card, teacher);
+  }
+
+  return teacherByCard;
+}
+
+function legacyRawNote(params: {
+  row: string[];
+  matchedBy: string;
+  status?: AttendanceLogStatusValue;
+}) {
+  const [readerid, readername, tdate, ttime, status, cardid, teacherId, tdefault] =
+    params.row;
+  return JSON.stringify({
+    source: "runtime_legacy_attendance_upload",
+    sourceTable: "t_teacher_attendance",
+    legacyReaderId: cleanCell(readerid),
+    legacyReaderName: cleanCell(readername),
+    legacyDate: cleanCell(tdate),
+    legacyTime: cleanCell(ttime),
+    legacyStatus: cleanCell(status),
+    legacyCardId: cleanCell(cardid),
+    legacyTeacherName: cleanCell(teacherId),
+    legacyDefault: cleanCell(tdefault),
+    mappedStatus: params.status ?? null,
+    matchedBy: params.matchedBy,
+    legacyData: {
+      readerid: cleanCell(readerid),
+      readername: cleanCell(readername),
+      tdate: cleanCell(tdate),
+      ttime: cleanCell(ttime),
+      status: cleanCell(status),
+      cardid: cleanCell(cardid),
+      teacher_id: cleanCell(teacherId),
+      tdefault: cleanCell(tdefault),
+    },
+  });
+}
+
+function buildLegacyScannerLog(
+  row: string[],
+  employeesByLegacyId: Map<number, EmployeeAttendance>,
+  exactTeacherByName: Map<string, EmployeeAttendance>,
+  teacherByCard: Map<string, EmployeeAttendance>,
+): { log?: AttendanceUploadLog; invalid?: boolean; unmatched?: boolean } {
+  const date = parseLegacyDate(row[2]);
+  const time = parseLegacyTime(row[3]);
+  if (!date || !time) return { invalid: true };
+
+  const legacyTeacherNumber = Number(cleanCell(row[6]));
+  const legacyIdMatch = Number.isFinite(legacyTeacherNumber)
+    ? employeesByLegacyId.get(legacyTeacherNumber)
+    : undefined;
+  const exactName = exactTeacherByName.get(normalizeAttendanceName(row[6]));
+  const card = normalizeAttendanceCard(row[5]);
+  const cardMatch = card ? teacherByCard.get(card) : undefined;
+  const teacher = legacyIdMatch ?? exactName ?? cardMatch;
+  if (!teacher) return { unmatched: true };
+
+  const status = mapLegacyAttendanceStatus(row[4], time);
+  const matchedBy = legacyIdMatch
+    ? "legacy_id"
+    : exactName
+      ? "teacher_name"
+      : "cardid_from_name_seed";
+  const clockOut = isClockOutStatus(status);
+
+  return {
+    log: {
+      employeeId: teacher.id,
+      employeeType: "teacher",
+      date,
+      ...(clockOut ? { timeOut: time } : { timeIn: time }),
+      status,
+      readerId: cleanCell(row[0]) || undefined,
+      readerName: cleanCell(row[1]) || undefined,
+      cardId: cleanCell(row[5]) || undefined,
+      note: legacyRawNote({ row, matchedBy, status }),
+    },
+  };
+}
+
+function buildCurrentTemplateLog(
+  row: string[],
+  employeesByName: Map<string, EmployeeAttendance>,
+): { log?: AttendanceUploadLog; invalid?: boolean; unmatched?: boolean } {
+  const [name, dateValue, timeInValue, timeOutValue, statusValue, note] = row;
+  const employee = employeesByName.get(normalizeAttendanceName(name));
+  if (!employee) return { unmatched: true };
+
+  const date = parseLegacyDate(dateValue);
+  if (!date) return { invalid: true };
+
+  const timeIn = parseLegacyTime(timeInValue) ?? undefined;
+  const timeOut = parseLegacyTime(timeOutValue) ?? undefined;
+  const status = mapLegacyAttendanceStatus(statusValue, timeIn ?? timeOut ?? null);
+
+  return {
+    log: {
+      employeeId: employee.id,
+      employeeType: employeeTypeFor(employee.role),
+      date,
+      timeIn,
+      timeOut,
+      status: status ?? "CHECK_IN",
+      readerName: employee.employeeName,
+      note: cleanCell(note) || undefined,
+    },
+  };
+}
+
+function buildAttendanceLogsFromCsv(
+  rows: string[][],
+  employees: EmployeeAttendance[],
+): CsvParseResult {
+  const dataRows = rows.filter((row) => !isHeaderRow(row));
+  const legacyRows = dataRows.filter(isLegacyScannerRow);
+  const employeesByName = uniqueNameMap(employees);
+  const teachers = employees.filter((employee) => employee.role === "Teacher");
+  const exactTeacherByName = uniqueNameMap(teachers);
+  const employeesByLegacyId = new Map<number, EmployeeAttendance>();
+  for (const teacher of teachers) {
+    if (typeof teacher.legacyId === "number") {
+      employeesByLegacyId.set(teacher.legacyId, teacher);
+    }
+  }
+  const teacherByCard = buildCardSeedMap(legacyRows, exactTeacherByName);
+
+  let skipped = 0;
+  let unmatched = 0;
+  let invalid = 0;
+  let legacyCount = 0;
+  let templateCount = 0;
+  const logs: AttendanceUploadLog[] = [];
+
+  for (const row of dataRows) {
+    const parsed = isLegacyScannerRow(row)
+      ? buildLegacyScannerLog(
+          row,
+          employeesByLegacyId,
+          exactTeacherByName,
+          teacherByCard,
+        )
+      : buildCurrentTemplateLog(row, employeesByName);
+
+    if (parsed.log) {
+      logs.push(parsed.log);
+      if (isLegacyScannerRow(row)) {
+        legacyCount++;
+      } else {
+        templateCount++;
+      }
+      continue;
+    }
+
+    skipped++;
+    if (parsed.unmatched) unmatched++;
+    if (parsed.invalid) invalid++;
+  }
+
+  return {
+    format:
+      legacyCount > 0 && templateCount > 0
+        ? "mixed"
+        : legacyCount > 0
+          ? "legacy-scanner"
+          : "current-template",
+    logs,
+    skipped,
+    unmatched,
+    invalid,
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Component
@@ -206,10 +622,7 @@ export function AttendanceClient({
     const reader = new FileReader();
     reader.onload = (ev) => {
       const text = ev.target?.result as string;
-      const rows = text
-        .split("\n")
-        .map((row) => row.split(",").map((c) => c.trim()))
-        .filter((row) => row.some((c) => c.length > 0));
+      const rows = parseCsv(text);
       setCsvPreview(rows.slice(0, 10)); // Preview first 10 rows
       setCsvDialogOpen(true);
     };
@@ -223,70 +636,33 @@ export function AttendanceClient({
     const reader = new FileReader();
     reader.onload = (ev) => {
       const text = ev.target?.result as string;
-      const rows = text
-        .split("\n")
-        .map((row) => row.split(",").map((c) => c.trim()))
-        .filter((row) => row.some((c) => c.length > 0));
+      const rows = parseCsv(text);
+      const parsed = buildAttendanceLogsFromCsv(rows, employees);
 
-      // Expected CSV format: EmployeeName, Date, TimeIn, TimeOut, Status, Note
-      // Skip header row
-      const dataRows = rows.slice(1);
-
-      // Try to match employee names to IDs
-      const empMap = new Map<string, EmployeeAttendance>();
-      for (const emp of employees) {
-        empMap.set(emp.employeeName.toLowerCase(), emp);
-      }
-
-      const logs = dataRows
-        .map((row) => {
-          const [name, date, timeIn, timeOut, status, note] = row;
-          const emp = empMap.get(name?.toLowerCase() ?? "");
-          if (!emp || !date) return null;
-          return {
-            employeeId: emp.id,
-            employeeType: emp.role.toLowerCase(),
-            date,
-            timeIn: timeIn || undefined,
-            timeOut: timeOut || undefined,
-            status:
-              status?.toUpperCase() === "LATE"
-                ? ("LATE" as const)
-                : status?.toUpperCase() === "CHECK_OUT"
-                  ? ("CHECK_OUT" as const)
-                  : ("CHECK_IN" as const),
-            readerName: name,
-            note: note || undefined,
-          };
-        })
-        .filter(Boolean) as Array<{
-        employeeId: string;
-        employeeType: string;
-        date: string;
-        timeIn?: string;
-        timeOut?: string;
-        status: "CHECK_IN" | "CHECK_OUT" | "LATE";
-        readerName: string;
-        note?: string;
-      }>;
-
-      if (logs.length === 0) {
+      if (parsed.logs.length === 0) {
         setResultMessage({
           type: "error",
-          text: "No valid rows found. Ensure CSV format: EmployeeName, Date, TimeIn, TimeOut, Status, Note",
+          text:
+            parsed.skipped > 0
+              ? `No valid rows found. ${parsed.unmatched} unmatched, ${parsed.invalid} invalid.`
+              : "No valid rows found in the CSV file.",
         });
         setCsvDialogOpen(false);
         return;
       }
 
       startTransition(async () => {
-        const result = await bulkCreateAttendanceLogs(logs);
+        const result = await bulkCreateAttendanceLogs(parsed.logs);
         if (result.success) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const count = (result.data as any)?.count ?? 0;
+          const skipped =
+            parsed.skipped > 0
+              ? ` ${parsed.skipped} skipped (${parsed.unmatched} unmatched, ${parsed.invalid} invalid).`
+              : "";
           setResultMessage({
             type: "success",
-            text: `Successfully uploaded ${count} records from CSV`,
+            text: `Successfully uploaded ${count} ${parsed.format === "legacy-scanner" ? "legacy scanner" : "attendance"} records from CSV.${skipped}`,
           });
         } else {
           setResultMessage({
@@ -462,8 +838,9 @@ export function AttendanceClient({
                 Form Allowed: <span className="text-muted-foreground">CSV ONLY</span>
               </p>
               <p className="text-xs text-muted-foreground">
-                Expected CSV format: EmployeeName, Date (YYYY-MM-DD), TimeIn
-                (HH:MM), TimeOut (HH:MM), Status (CHECK_IN/LATE), Note
+                Legacy scanner columns: Reader ID, Reader Name, Date, Time,
+                Status, Card ID, Teacher, Default. Current template columns:
+                EmployeeName, Date, TimeIn, TimeOut, Status, Note.
               </p>
               <div className="flex items-center gap-3">
                 <input
