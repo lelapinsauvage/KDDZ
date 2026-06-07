@@ -16560,7 +16560,7 @@
     "legacyPhp": "Front/templates/admin/users/admin/classes/edit_level.class.php",
     "legacyJs": "",
     "modernRoute": "/settings/access-control",
-    "status": "partial - legacy level edit/delete restored over migrated metadata",
+    "status": "restored - legacy level edit/delete and existing-users table restored",
     "legacyTablesMentioned": [
       "actions_control",
       "actions_control_man",
@@ -16578,7 +16578,7 @@
       "redirect",
       "welcome_email"
     ],
-    "verification": "`/settings/access-control` now supports editing level name, redirect, welcome-email flag, and disabled flag, keeps legacy id `1` from being disabled/deleted, blocks deletion when migrated `login_users`/`login_users_man` metadata still references the level, and soft-deletes the level plus deactivates stale action grants when deletion is allowed. `/users/admin/levels.php?lid=` and `/levels.php?lid=` now redirect into the modern access-control page with the legacy level id preserved as `level`. Remaining work is full existing-users table parity."
+    "verification": "`/settings/access-control` now supports editing level name, redirect, welcome-email flag, and disabled flag, keeps legacy id `1` from being disabled/deleted, blocks deletion when migrated `login_users`/`login_users_man` metadata still references the level, soft-deletes the level plus deactivates stale action grants when deletion is allowed, and restores the existing-users drilldown for each level with Username, Name, Email, Registered Date, Last Login, and pagination. `/users/admin/levels.php?lid=` and `/levels.php?lid=` now redirect into the modern access-control page with the legacy level id preserved as `level`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/classes/edit_user.class.php",
@@ -16632,7 +16632,7 @@
     "legacyPhp": "Front/templates/admin/users/admin/classes/functions.php",
     "legacyJs": "Front/templates/admin/js/functions.js",
     "modernRoute": "/settings/access-control, /settings/legacy-users",
-    "status": "partial - legacy level and user listings restored; drilldown remains",
+    "status": "restored - legacy level/user listings and drilldowns restored",
     "legacyTablesMentioned": [
       "login_integration",
       "login_levels",
@@ -16648,7 +16648,7 @@
       "showLevels",
       "showUsers"
     ],
-    "verification": "`/settings/access-control` covers `user_levels()` semantics for level name, disabled/admin/welcome badges, redirect, and active user counts by parsing migrated serialized `user_level` payloads. `/settings/legacy-users` now covers the `displayUsers()`/`list_registered()` roster shape with username, name, email, source table, level badges, restricted/active state, modern-account link state, source filters, search, migrated profile-value counts, social-link badges from `login_integration`, latest login time/IP/count from `login_timestamps` / `login_timestamps_man`, full timestamp rows in the user edit modal, legacy `showUsers` page-size choices, numbered pagination, and filtered Excel/CSV export plus print. Remaining work is the `in_level()` drilldown table and exact old pagination visual styling if required."
+    "verification": "`/settings/access-control` covers `user_levels()` semantics for level name, disabled/admin/welcome badges, redirect, and active user counts by parsing migrated serialized `user_level` payloads, plus `in_level()` existing-users drilldowns with Username, Name, Email, Registered Date, Last Login, and pagination. `/settings/legacy-users` now covers the `displayUsers()`/`list_registered()` roster shape with username, name, email, source table, level badges, restricted/active state, modern-account link state, source filters, search, migrated profile-value counts, social-link badges from `login_integration`, latest login time/IP/count from `login_timestamps` / `login_timestamps_man`, full timestamp rows in the user edit modal, legacy `showUsers` page-size choices, numbered pagination, and filtered Excel/CSV export plus print. Remaining work is exact old pagination visual styling if required."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/classes/index.php",
@@ -16770,7 +16770,7 @@
     "legacyPhp": "Front/templates/admin/users/admin/levels.php",
     "legacyJs": "",
     "modernRoute": "/users/admin/levels.php, /levels.php, /settings/access-control",
-    "status": "partial - legacy level edit surface and deep-link bridge restored",
+    "status": "restored - legacy level edit surface and users drilldown restored",
     "legacyTablesMentioned": [
       "login_levels",
       "login_users"
@@ -16778,7 +16778,7 @@
     "requestFieldsMentioned": [
       "lid"
     ],
-    "verification": "`/settings/access-control` now provides the protected admin level edit/delete workflow inline for each migrated level, including name, redirect, welcome email, disabled state, admin-level protection, and delete guard when users still belong to the level. `/users/admin/levels.php?lid=` and `/levels.php?lid=` redirect into `/settings/access-control?level=` for legacy deep links. The legacy users table has moved to `/settings/legacy-users`; remaining work is last-login/profile/report subpanels."
+    "verification": "`/settings/access-control` now provides the protected admin level edit/delete workflow inline for each migrated level, including name, redirect, welcome email, disabled state, admin-level protection, delete guard when users still belong to the level, and the legacy existing-users table as a paged modal with username deep links into `/settings/legacy-users?uid=`. `/users/admin/levels.php?lid=` and `/levels.php?lid=` redirect into `/settings/access-control?level=` for legacy deep links."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/login.php",

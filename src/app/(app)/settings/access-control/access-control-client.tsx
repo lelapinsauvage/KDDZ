@@ -20,6 +20,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -37,13 +38,18 @@ import {
   createLegacyAccessLevel,
   deleteLegacyAccessLevel,
   type LegacyAccessControlGroup,
+  type LegacyAccessLevelUserRow,
+  getLegacyAccessLevelUsers,
   updateLegacyAccessControlLevels,
   updateLegacyAccessLevel,
 } from "@/lib/actions/legacy-access-control";
 import {
+  ChevronLeft,
+  ChevronRight,
   CheckSquare,
   Database,
   Eraser,
+  History,
   Pencil,
   Plus,
   Save,
@@ -51,6 +57,7 @@ import {
   ShieldCheck,
   Square,
   Trash2,
+  UsersRound,
 } from "lucide-react";
 
 type MessageState = {
@@ -67,13 +74,57 @@ type DeleteLevelTarget = {
   legacyId: number;
 } | null;
 
+type LevelUsersDialogState = {
+  groupTitle: string;
+  sourceDatabase: string;
+  levelLabel: string;
+  legacyLevelId: number;
+  users: LegacyAccessLevelUserRow[];
+} | null;
+
 type AccessControlClientProps = {
   initialGroups: LegacyAccessControlGroup[];
   initialError?: string | null;
 };
 
+const LEVEL_USERS_PAGE_SIZE = 10;
+
 function levelKey(groupKey: string, legacyLevelId: number) {
   return `${groupKey}:${legacyLevelId}`;
+}
+
+function formatLegacyDateTime(value: string | null) {
+  if (!value) return "-";
+  return value.replace("T", " ").slice(0, 16);
+}
+
+function paginationItems(currentPage: number, totalPages: number) {
+  const pages: Array<number | "ellipsis-start" | "ellipsis-end"> = [];
+  if (totalPages <= 9) {
+    for (let page = 1; page <= totalPages; page += 1) pages.push(page);
+    return pages;
+  }
+
+  if (currentPage <= 5) {
+    for (let page = 1; page <= 7; page += 1) pages.push(page);
+    pages.push("ellipsis-end", totalPages);
+    return pages;
+  }
+
+  if (currentPage >= totalPages - 4) {
+    pages.push(1, "ellipsis-start");
+    for (let page = totalPages - 6; page <= totalPages; page += 1) {
+      pages.push(page);
+    }
+    return pages;
+  }
+
+  pages.push(1, "ellipsis-start");
+  for (let page = currentPage - 2; page <= currentPage + 2; page += 1) {
+    pages.push(page);
+  }
+  pages.push("ellipsis-end", totalPages);
+  return pages;
 }
 
 function filterActions(
@@ -125,6 +176,10 @@ export function AccessControlClient({
   const [levelSaving, setLevelSaving] = useState(false);
   const [deleteLevelTarget, setDeleteLevelTarget] =
     useState<DeleteLevelTarget>(null);
+  const [levelUsersDialog, setLevelUsersDialog] =
+    useState<LevelUsersDialogState>(null);
+  const [levelUsersLoading, setLevelUsersLoading] = useState(false);
+  const [levelUsersPage, setLevelUsersPage] = useState(1);
   const [, startTransition] = useTransition();
 
   const totals = useMemo(
@@ -140,6 +195,34 @@ export function AccessControlClient({
       ),
     [groups],
   );
+  const levelUsersTotalPages = Math.max(
+    1,
+    Math.ceil((levelUsersDialog?.users.length ?? 0) / LEVEL_USERS_PAGE_SIZE),
+  );
+  const levelUsersPageForView = Math.min(
+    levelUsersPage,
+    levelUsersTotalPages,
+  );
+  const visibleLevelUsers = useMemo(() => {
+    const users = levelUsersDialog?.users ?? [];
+    const startIndex = (levelUsersPageForView - 1) * LEVEL_USERS_PAGE_SIZE;
+
+    return users.slice(startIndex, startIndex + LEVEL_USERS_PAGE_SIZE);
+  }, [levelUsersDialog?.users, levelUsersPageForView]);
+  const levelUserPageItems = useMemo(
+    () => paginationItems(levelUsersPageForView, levelUsersTotalPages),
+    [levelUsersPageForView, levelUsersTotalPages],
+  );
+  const levelUsersRange = useMemo(() => {
+    const count = levelUsersDialog?.users.length ?? 0;
+    if (count === 0) return { start: 0, end: 0 };
+
+    const start = (levelUsersPageForView - 1) * LEVEL_USERS_PAGE_SIZE + 1;
+    return {
+      start,
+      end: Math.min(start + LEVEL_USERS_PAGE_SIZE - 1, count),
+    };
+  }, [levelUsersDialog?.users.length, levelUsersPageForView]);
 
   function toggleSelected(groupKey: string, legacyLevelId: number) {
     const key = levelKey(groupKey, legacyLevelId);
@@ -212,6 +295,55 @@ export function AccessControlClient({
     setLevelDisabled(level.isDisabled);
     setLevelDialogOpen(true);
     setMessage(null);
+  }
+
+  function openLevelUsers(
+    group: LegacyAccessControlGroup,
+    level: LegacyAccessControlGroup["levels"][number],
+  ) {
+    setLevelUsersDialog({
+      groupTitle: group.title,
+      sourceDatabase: group.sourceDatabase,
+      levelLabel: level.label,
+      legacyLevelId: level.legacyId,
+      users: [],
+    });
+    setLevelUsersPage(1);
+    setLevelUsersLoading(true);
+    setMessage(null);
+
+    startTransition(async () => {
+      try {
+        const result = await getLegacyAccessLevelUsers({
+          sourceDatabase: group.sourceDatabase,
+          levelRecordType: group.levelRecordType,
+          legacyLevelId: level.legacyId,
+        });
+
+        if (result.success && result.data) {
+          setLevelUsersDialog({
+            groupTitle: group.title,
+            sourceDatabase: group.sourceDatabase,
+            levelLabel: result.data.levelLabel,
+            legacyLevelId: level.legacyId,
+            users: result.data.users,
+          });
+          return;
+        }
+
+        setLevelUsersDialog(null);
+        setMessage({
+          type: "error",
+          text: result.error ?? "Failed to fetch users in level",
+        });
+      } catch (error) {
+        console.error("Failed to fetch users in level:", error);
+        setLevelUsersDialog(null);
+        setMessage({ type: "error", text: "Failed to fetch users in level" });
+      } finally {
+        setLevelUsersLoading(false);
+      }
+    });
   }
 
   function closeLevelDialog() {
@@ -600,9 +732,16 @@ export function AccessControlClient({
                                 <span className="text-xs text-muted-foreground">
                                   {level.legacyTable}
                                 </span>
-                                <Badge variant="secondary">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="xs"
+                                  className="h-6 gap-1 px-2 text-xs"
+                                  onClick={() => openLevelUsers(group, level)}
+                                >
+                                  <UsersRound className="size-3" />
                                   {level.userCount} users
-                                </Badge>
+                                </Button>
                                 {level.legacyId === 1 ? (
                                   <Badge variant="destructive">Admin</Badge>
                                 ) : null}
@@ -802,6 +941,163 @@ export function AccessControlClient({
                 : levelDialogMode === "create"
                   ? "Create level"
                   : "Update"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(levelUsersDialog)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setLevelUsersDialog(null);
+            setLevelUsersPage(1);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>
+              {levelUsersDialog?.levelLabel ?? "Level users"}
+            </DialogTitle>
+            <DialogDescription>
+              {levelUsersDialog
+                ? `${levelUsersDialog.sourceDatabase} / ${levelUsersDialog.groupTitle} / #${levelUsersDialog.legacyLevelId}`
+                : "Legacy users in this level"}
+            </DialogDescription>
+          </DialogHeader>
+
+          {levelUsersLoading ? (
+            <div className="rounded-sm border border-[#e5e7eb] p-6 text-sm text-muted-foreground">
+              Loading users...
+            </div>
+          ) : levelUsersDialog?.users.length ? (
+            <div className="space-y-3">
+              <div className="overflow-hidden rounded-sm border border-[#e5e7eb]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Username</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Registered Date</TableHead>
+                      <TableHead>Last Login</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {visibleLevelUsers.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell className="whitespace-normal">
+                          <div className="space-y-1">
+                            <a
+                              href={`/settings/legacy-users?uid=${user.legacyId}`}
+                              className="font-semibold text-[#0f766e] hover:underline"
+                            >
+                              {user.username}
+                            </a>
+                            <div className="flex flex-wrap gap-1">
+                              <Badge variant="outline">#{user.legacyId}</Badge>
+                              {user.isRestricted ? (
+                                <Badge variant="warning">restricted</Badge>
+                              ) : null}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="whitespace-normal">
+                          {user.name || "-"}
+                        </TableCell>
+                        <TableCell className="whitespace-normal">
+                          {user.email || "-"}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap text-sm">
+                          {formatLegacyDateTime(user.registeredAt)}
+                        </TableCell>
+                        <TableCell className="whitespace-normal text-sm">
+                          <div className="flex items-center gap-2">
+                            <History className="size-3 text-muted-foreground" />
+                            <span>{formatLegacyDateTime(user.lastLoginAt)}</span>
+                          </div>
+                          {user.lastLoginIp ? (
+                            <div className="mt-1 font-mono text-xs text-muted-foreground">
+                              {user.lastLoginIp}
+                            </div>
+                          ) : null}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div className="text-sm text-muted-foreground">
+                  Showing {levelUsersRange.start}-{levelUsersRange.end} of{" "}
+                  {levelUsersDialog.users.length}
+                </div>
+                <div className="flex flex-wrap items-center gap-1">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={levelUsersPageForView <= 1}
+                    onClick={() => setLevelUsersPage(levelUsersPageForView - 1)}
+                  >
+                    <ChevronLeft className="size-4" />
+                    Previous
+                  </Button>
+                  {levelUserPageItems.map((item) =>
+                    typeof item === "number" ? (
+                      <Button
+                        key={item}
+                        type="button"
+                        size="sm"
+                        variant={
+                          item === levelUsersPageForView ? "default" : "outline"
+                        }
+                        className="min-w-9 px-2"
+                        onClick={() => setLevelUsersPage(item)}
+                      >
+                        {item}
+                      </Button>
+                    ) : (
+                      <span
+                        key={item}
+                        className="flex h-9 min-w-8 items-center justify-center text-muted-foreground"
+                      >
+                        ...
+                      </span>
+                    ),
+                  )}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={levelUsersPageForView >= levelUsersTotalPages}
+                    onClick={() => setLevelUsersPage(levelUsersPageForView + 1)}
+                  >
+                    Next
+                    <ChevronRight className="size-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-sm border border-[#e5e7eb] p-6 text-sm text-muted-foreground">
+              No users found!
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setLevelUsersDialog(null);
+                setLevelUsersPage(1);
+              }}
+              disabled={levelUsersLoading}
+            >
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>

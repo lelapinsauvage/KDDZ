@@ -58,6 +58,25 @@ export type LegacyAccessControlGroup = {
   grantCount: number;
 };
 
+export type LegacyAccessLevelUserRow = {
+  id: string;
+  sourceDatabase: string;
+  legacyTable: string;
+  legacyId: number;
+  username: string;
+  name: string;
+  email: string;
+  registeredAt: string | null;
+  lastLoginAt: string | null;
+  lastLoginIp: string | null;
+  isRestricted: boolean;
+};
+
+export type LegacyAccessLevelUsersData = {
+  levelLabel: string;
+  users: LegacyAccessLevelUserRow[];
+};
+
 export type UpdateLegacyAccessControlLevelsInput = {
   sourceDatabase: string;
   levelRecordType: LegacyAccessLevelRecordType;
@@ -142,6 +161,13 @@ function legacyObject(value: unknown): Prisma.InputJsonObject {
   return {};
 }
 
+function legacyString(value: unknown, key: string) {
+  const raw = legacyObject(value)[key];
+  if (typeof raw === "string") return raw;
+  if (typeof raw === "number") return String(raw);
+  return "";
+}
+
 function levelLegacyData(params: {
   existing?: unknown;
   legacyId: number;
@@ -174,6 +200,18 @@ function grantLegacyKey(
   legacyActionId: number,
 ) {
   return `${sourceDatabase}:${table}:${legacyLevelId}:${legacyActionId}`;
+}
+
+function auditPrincipalForUserType(recordType: LegacyAccessUserRecordType) {
+  return recordType === "manager_login_user" ? "MANAGER_USER" : "USER";
+}
+
+function registeredTimestamp(record: { legacyData: Prisma.JsonValue | null }) {
+  return (
+    legacyString(record.legacyData, "timestamp") ||
+    legacyString(record.legacyData, "created_at") ||
+    null
+  );
 }
 
 async function countUsersForLegacyLevel(
@@ -399,6 +437,136 @@ export async function getLegacyAccessControlMatrix(): Promise<
         error instanceof Error
           ? error.message
           : "Failed to fetch legacy access control matrix",
+    };
+  }
+}
+
+export async function getLegacyAccessLevelUsers(input: {
+  sourceDatabase: string;
+  levelRecordType: LegacyAccessLevelRecordType;
+  legacyLevelId: number;
+}): Promise<ActionResult<LegacyAccessLevelUsersData>> {
+  try {
+    await requireRole("ADMIN");
+
+    const config = configForLevelType(input.levelRecordType);
+    if (!config) {
+      return { success: false, error: "Unknown legacy level type" };
+    }
+
+    const sourceDatabase = input.sourceDatabase.trim();
+    const legacyLevelId = Number(input.legacyLevelId);
+    if (!sourceDatabase || !Number.isInteger(legacyLevelId) || legacyLevelId <= 0) {
+      return { success: false, error: "Missing legacy level" };
+    }
+
+    const level = await db.legacyAuthRecord.findFirst({
+      where: {
+        sourceDatabase,
+        recordType: config.levelRecordType,
+        legacyId: legacyLevelId,
+      },
+      select: {
+        recordKey: true,
+        legacyId: true,
+      },
+    });
+    if (!level) return { success: false, error: "No such legacy level!" };
+
+    const userRecords = await db.legacyAuthRecord.findMany({
+      where: {
+        sourceDatabase,
+        recordType: config.userRecordType,
+      },
+      select: {
+        id: true,
+        sourceDatabase: true,
+        legacyTable: true,
+        legacyId: true,
+        legacyUserId: true,
+        username: true,
+        email: true,
+        recordKey: true,
+        recordValue: true,
+        isDisabled: true,
+        legacyData: true,
+      },
+    });
+    const matchingUsers = userRecords
+      .filter((user) => parsePhpLevelIds(user.recordValue).includes(legacyLevelId))
+      .sort((a, b) => {
+        const aTime = Date.parse(registeredTimestamp(a) ?? "") || 0;
+        const bTime = Date.parse(registeredTimestamp(b) ?? "") || 0;
+        if (aTime !== bTime) return bTime - aTime;
+        return (b.legacyUserId ?? b.legacyId) - (a.legacyUserId ?? a.legacyId);
+      });
+    const legacyUserIds = matchingUsers
+      .map((user) => user.legacyUserId ?? user.legacyId)
+      .filter((value) => Number.isInteger(value) && value > 0);
+    const loginRows = legacyUserIds.length
+      ? await db.legacyLoginTimestamp.findMany({
+          where: {
+            sourceDatabase,
+            legacyUserId: { in: legacyUserIds },
+            principalType: auditPrincipalForUserType(config.userRecordType),
+          },
+          orderBy: [{ occurredAt: "desc" }, { legacyId: "desc" }],
+          select: {
+            legacyUserId: true,
+            occurredAt: true,
+            ipAddress: true,
+          },
+        })
+      : [];
+    const latestLoginByUser = new Map<
+      number,
+      { occurredAt: Date | null; ipAddress: string | null }
+    >();
+
+    for (const login of loginRows) {
+      if (!latestLoginByUser.has(login.legacyUserId)) {
+        latestLoginByUser.set(login.legacyUserId, {
+          occurredAt: login.occurredAt,
+          ipAddress: login.ipAddress,
+        });
+      }
+    }
+
+    return {
+      success: true,
+      data: {
+        levelLabel: level.recordKey ?? `Level ${level.legacyId}`,
+        users: matchingUsers.map((user) => {
+          const legacyId = user.legacyUserId ?? user.legacyId;
+          const latestLogin = latestLoginByUser.get(legacyId);
+
+          return {
+            id: user.id,
+            sourceDatabase: user.sourceDatabase,
+            legacyTable: user.legacyTable,
+            legacyId,
+            username:
+              user.username ??
+              user.recordKey ??
+              legacyString(user.legacyData, "username"),
+            name: legacyString(user.legacyData, "name"),
+            email: user.email ?? legacyString(user.legacyData, "email"),
+            registeredAt: registeredTimestamp(user),
+            lastLoginAt: latestLogin?.occurredAt?.toISOString() ?? null,
+            lastLoginIp: latestLogin?.ipAddress ?? null,
+            isRestricted: user.isDisabled ?? false,
+          };
+        }),
+      },
+    };
+  } catch (error) {
+    console.error("Failed to fetch legacy level users:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch legacy level users",
     };
   }
 }
