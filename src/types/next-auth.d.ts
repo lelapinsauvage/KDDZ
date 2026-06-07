@@ -9,6 +9,12 @@ type LegacyLoginSessionContext = {
   legacySelectedYear: string | null;
 };
 
+type LegacySessionMode =
+  | "remember"
+  | "default_session"
+  | "browser_session"
+  | "modern_default";
+
 declare module "next-auth" {
   interface Session {
     user: {
@@ -17,6 +23,8 @@ declare module "next-auth" {
       branchId: string | null;
       organizationId: string | null;
       legacyLogin: LegacyLoginSessionContext | null;
+      legacySessionMode: LegacySessionMode | null;
+      legacySessionExpiresAt: string | null;
     } & DefaultSession["user"];
   }
 
@@ -25,6 +33,8 @@ declare module "next-auth" {
     branchId: string | null;
     organizationId: string | null;
     legacyLogin?: LegacyLoginSessionContext | null;
+    legacySessionMode?: LegacySessionMode | null;
+    legacySessionExpiresAt?: string | null;
   }
 }
 
@@ -35,5 +45,7 @@ declare module "next-auth/jwt" {
     branchId: string | null;
     organizationId: string | null;
     legacyLogin?: LegacyLoginSessionContext | null;
+    legacySessionMode?: LegacySessionMode | null;
+    legacySessionExpiresAt?: string | null;
   }
 }

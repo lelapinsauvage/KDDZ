@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -25,6 +26,7 @@ function LoginForm() {
   const callbackUrl = searchParams.get("callbackUrl");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -37,6 +39,7 @@ function LoginForm() {
       const result = await signIn("credentials", {
         email,
         password,
+        remember: remember ? "1" : "0",
         redirect: false,
       });
 
@@ -132,6 +135,20 @@ function LoginForm() {
                 className="h-11 rounded-lg border-[#E2E5E9] bg-white text-[#1A1D23] placeholder:text-[#6B7280] transition-all hover:border-[#C9CED4] focus:border-[#0B7464] focus:ring-[3px] focus:ring-[#0B7464]/15"
                 required
               />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="remember"
+                checked={remember}
+                onCheckedChange={(checked) => setRemember(checked === true)}
+              />
+              <Label
+                htmlFor="remember"
+                className="text-sm font-medium text-[#4B5262]"
+              >
+                Stay signed in
+              </Label>
             </div>
 
             <Button

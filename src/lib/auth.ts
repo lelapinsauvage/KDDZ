@@ -6,14 +6,82 @@ import { authConfig } from "./auth.config";
 import {
   getLegacyLoginSessionContext,
   getLegacyLoginDisabledStatus,
+  type LegacyLoginSessionContext,
   resolveStaffLoginIdentity,
 } from "./legacy-auth-identity";
 
 type AppDb = typeof import("./db").db;
+const LEGACY_REMEMBER_SESSION_MS = 100 * 24 * 60 * 60 * 1000;
 
 function legacyBool(value: string | null | undefined) {
   if (!value) return false;
   return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
+}
+
+function credentialFlag(value: unknown) {
+  if (typeof value === "boolean") return value;
+  if (typeof value !== "string") return false;
+  return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
+}
+
+function legacySettingsTable(legacyLogin: LegacyLoginSessionContext | null) {
+  return legacyLogin?.legacyTable === "login_users_man"
+    ? "login_settings_man"
+    : "login_settings";
+}
+
+async function defaultSessionMinutes(
+  db: AppDb,
+  legacyLogin: LegacyLoginSessionContext | null,
+) {
+  if (!legacyLogin) return null;
+  const setting = await db.legacySetting.findFirst({
+    where: {
+      sourceDatabase: legacyLogin.sourceDatabase,
+      legacyTable: legacySettingsTable(legacyLogin),
+      settingKey: "default_session",
+    },
+    orderBy: [{ legacyId: "desc" }],
+    select: { settingValue: true },
+  });
+  const minutes = Number.parseInt(setting?.settingValue ?? "", 10);
+  return Number.isFinite(minutes) && minutes >= 0 ? minutes : null;
+}
+
+async function legacySessionPolicy(
+  db: AppDb,
+  legacyLogin: LegacyLoginSessionContext | null,
+  remember: boolean,
+) {
+  if (remember) {
+    return {
+      legacySessionMode: "remember" as const,
+      legacySessionExpiresAt: new Date(
+        Date.now() + LEGACY_REMEMBER_SESSION_MS,
+      ).toISOString(),
+    };
+  }
+
+  const minutes = await defaultSessionMinutes(db, legacyLogin);
+  if (minutes === null) {
+    return {
+      legacySessionMode: "modern_default" as const,
+      legacySessionExpiresAt: null,
+    };
+  }
+  if (minutes === 0) {
+    return {
+      legacySessionMode: "browser_session" as const,
+      legacySessionExpiresAt: null,
+    };
+  }
+
+  return {
+    legacySessionMode: "default_session" as const,
+    legacySessionExpiresAt: new Date(
+      Date.now() + minutes * 60 * 1000,
+    ).toISOString(),
+  };
 }
 
 function clientIpAddress(request: Request) {
@@ -125,6 +193,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       credentials: {
         email: { label: "Username or email", type: "text" },
         password: { label: "Password", type: "password" },
+        remember: { label: "Stay signed in", type: "checkbox" },
       },
       async authorize(credentials, request) {
         if (!credentials?.email || !credentials?.password) {
@@ -133,6 +202,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         const identifier = String(credentials.email).trim();
         const password = credentials.password as string;
+        const remember = credentialFlag(credentials.remember);
 
         try {
           // Dynamic import to avoid loading Prisma at build time
@@ -168,6 +238,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
 
           const legacyLogin = await getLegacyLoginSessionContext(db, identity);
+          const sessionPolicy = await legacySessionPolicy(
+            db,
+            legacyLogin,
+            remember,
+          );
           await recordLegacyLoginTimestamp(db, user.id, request);
 
           return {
@@ -179,6 +254,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             branchId: user.branchId,
             organizationId: user.organizationId ?? user.branch?.organizationId ?? null,
             legacyLogin,
+            ...sessionPolicy,
           };
         } catch (error) {
           console.error("credentials authorize error:", error);

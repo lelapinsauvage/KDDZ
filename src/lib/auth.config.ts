@@ -20,6 +20,8 @@ export const authConfig = {
         token.organizationId = user.organizationId;
         token.picture = user.image;
         token.legacyLogin = user.legacyLogin;
+        token.legacySessionMode = user.legacySessionMode;
+        token.legacySessionExpiresAt = user.legacySessionExpiresAt;
       }
       return token;
     },
@@ -33,11 +35,20 @@ export const authConfig = {
         session.user.legacyLogin = token.legacyLogin as
           | typeof session.user.legacyLogin
           | null;
+        session.user.legacySessionMode =
+          (token.legacySessionMode as typeof session.user.legacySessionMode) ??
+          null;
+        session.user.legacySessionExpiresAt =
+          (token.legacySessionExpiresAt as string | null | undefined) ?? null;
       }
       return session;
     },
     async authorized({ auth, request }) {
-      const isLoggedIn = !!auth?.user;
+      const legacySessionExpiresAt = auth?.user?.legacySessionExpiresAt;
+      const legacySessionExpired =
+        Boolean(legacySessionExpiresAt) &&
+        Date.parse(legacySessionExpiresAt as string) <= Date.now();
+      const isLoggedIn = !!auth?.user && !legacySessionExpired;
       const { pathname } = request.nextUrl;
       const isParentPortal =
         pathname === "/parent" || pathname.startsWith("/parent/");
