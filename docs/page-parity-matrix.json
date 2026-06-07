@@ -16535,7 +16535,7 @@
     "legacyPhp": "Front/templates/admin/teachers.php",
     "legacyJs": "Front/templates/admin/js/teachers.js",
     "modernRoute": "/teachers.php, /employees/teachers",
-    "status": "partial - legacy teachers roster columns, q bridge, copy/PDF exports, page sizes, selected deactivate, and ACL restored; form modal audit remains",
+    "status": "partial - legacy teachers roster columns, q bridge, copy/PDF exports, page sizes, selected deactivate, row actions, and ACL restored; form modal audit remains",
     "legacyTablesMentioned": [
       "Form",
       "Selected",
@@ -16549,7 +16549,7 @@
     "requestFieldsMentioned": [
       "q"
     ],
-    "verification": "Restored the shared staff roster shape for teachers with legacy `#`, Image, F Name, L Name, DOB, Branch, Class, Nationality, Gender, Date, Status, and Action columns; teacher class is now included in the listing query; 10/20/50/100/150/All page sizes; Copy/PDF/Excel/CSV export in legacy column order; print action; selected-row deactivation backed by the org-safe employee action; and `/teachers.php?q=` redirect hydration into the modern roster search across row values. Teacher `addTeacher`, `updateTeacher`, and `deleteTeacher` ACTION grants now hide Add/Edit/Delete and bulk-deactivate controls, protect direct new/edit form entry, and deny direct create/update/deactivate server mutations when the imported action catalogue is configured and not granted. Remaining work is the legacy selected-employee form modal behavior from `teachers.js`."
+    "verification": "Restored the shared staff roster shape for teachers with legacy `#`, Image, F Name, L Name, DOB, Branch, Class, Nationality, Gender, Date, Status, and Action columns; teacher class is now included in the listing query; 10/20/50/100/150/All page sizes; Copy/PDF/Excel/CSV export in legacy column order; print action; selected-row deactivation backed by the org-safe employee action; teacher-only calendar/profile PDF row actions through `/calendar.php?id=` and `/view.php?p=teacher&id=` using the migrated legacy id when available; and `/teachers.php?q=` redirect hydration into the modern roster search across row values. Teacher `addTeacher`, `updateTeacher`, and `deleteTeacher` ACTION grants now hide Add/Edit/Delete and bulk-deactivate controls, protect direct new/edit form entry, and deny direct create/update/deactivate server mutations when the imported action catalogue is configured and not granted. Remaining work is the legacy selected-employee form modal behavior from `teachers.js`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/_install/footer.php",

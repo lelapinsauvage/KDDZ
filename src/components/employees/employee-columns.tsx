@@ -2,7 +2,7 @@
 
 import { type ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { CalendarDays, Download, Eye, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,6 +46,10 @@ function getDetailPath(type: EmployeeType, id: string): string {
     manager: "managers",
   };
   return `/employees/${typeMap[type]}/${id}`;
+}
+
+function getLegacyIdOrModernId(employee: Employee): string {
+  return String(employee.legacyId ?? employee.id);
 }
 
 export const roleColors: Record<EmployeeType, string> = {
@@ -285,6 +289,32 @@ export function createEmployeeColumns(
         const canDelete = options.canDelete !== false;
         return (
           <div className="flex items-center gap-0.5">
+            {employee.type === "teacher" ? (
+              <>
+                <Button variant="ghost" size="sm" className="size-8 p-0" asChild>
+                  <Link
+                    href={`/calendar.php?id=${encodeURIComponent(getLegacyIdOrModernId(employee))}`}
+                    onClick={(e) => e.stopPropagation()}
+                    title="Calendar"
+                  >
+                    <CalendarDays className="size-4 text-muted-foreground" />
+                    <span className="sr-only">Calendar</span>
+                  </Link>
+                </Button>
+                <Button variant="ghost" size="sm" className="size-8 p-0" asChild>
+                  <Link
+                    href={`/view.php?p=teacher&id=${encodeURIComponent(getLegacyIdOrModernId(employee))}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    title="Download profile"
+                  >
+                    <Download className="size-4 text-muted-foreground" />
+                    <span className="sr-only">Download profile</span>
+                  </Link>
+                </Button>
+              </>
+            ) : null}
             <Button variant="ghost" size="sm" className="size-8 p-0" asChild>
               <Link href={getDetailPath(employee.type, employee.id)} onClick={(e) => e.stopPropagation()}>
                 <Eye className="size-4 text-muted-foreground" />
