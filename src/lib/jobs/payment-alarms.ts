@@ -702,12 +702,16 @@ export async function generatePaymentAlarmsForOrganization(params: {
     let alarmId = existingAlarm?.id ?? null;
     if (existingAlarm) {
       summary.skippedExisting += 1;
-      if (readNumber(asRecord(existingAlarm.legacyData), "aid") === null) {
+      const existingData = asRecord(existingAlarm.legacyData) ?? {};
+      if (
+        readNumber(existingData, "aid") === null ||
+        existingData.sourceDeliveryTable !== PAYMENT_RECEIPT_SOURCE
+      ) {
         await db.alarm.update({
           where: { id: existingAlarm.id },
           data: {
             legacyData: {
-              ...(asRecord(existingAlarm.legacyData) ?? {}),
+              ...existingData,
               aid: legacyNotificationId,
               sourceDeliveryTable: PAYMENT_RECEIPT_SOURCE,
               legacyChildId: candidate.legacyChildId,

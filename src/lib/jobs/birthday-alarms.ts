@@ -340,12 +340,16 @@ export async function generateBirthdayAlarmsForOrganization(params: {
     let alarmId = existingAlarm?.id ?? null;
     if (existingAlarm) {
       summary.skippedExisting += 1;
-      if (readNumber(asRecord(existingAlarm.legacyData), "aid") === null) {
+      const existingData = asRecord(existingAlarm.legacyData) ?? {};
+      if (
+        readNumber(existingData, "aid") === null ||
+        existingData.sourceDeliveryTable !== BIRTHDAY_RECEIPT_SOURCE
+      ) {
         await db.alarm.update({
           where: { id: existingAlarm.id },
           data: {
             legacyData: {
-              ...(asRecord(existingAlarm.legacyData) ?? {}),
+              ...existingData,
               aid: legacyNotificationId,
               sourceDeliveryTable: BIRTHDAY_RECEIPT_SOURCE,
               legacyChildId,
