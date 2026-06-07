@@ -3,7 +3,7 @@
     "legacyPhp": "Front/templates/admin/AlarmBar.php",
     "legacyJs": "",
     "modernRoute": "global app header",
-    "status": "partial - legacy alarm/message badge families and notification gates restored; live push/visual audit remains",
+    "status": "partial - legacy alarm/message badge families, notification gates, and manageSystem guard restored; live push/visual audit remains",
     "legacyTablesMentioned": [
       "t_alarms",
       "t_alarms_msg",
@@ -17,10 +17,14 @@
       "custom_notifications_birthday",
       "custom_notifications_assessment",
       "custom_notifications_medical",
-      "t_notification_setting"
+      "t_notification_setting",
+      "actions_control",
+      "actions_control_man",
+      "system_actions",
+      "system_actions_man"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Restored the legacy top-right AlarmBar semantics in the modern desktop header: separate unread current-user badge families for Messages, Medication, Birthdays, Assessment, Medical report reminders, and General alarms; each family uses migrated unread receipt/message state, shows the latest four rows, keeps the legacy empty labels (`No New Messages` / `No New Alarms`), formats legacy-style dates, and links to `/alarms/msg`, `/alarms/medicine`, `/alarms/birthdays`, `/alarms/assessments`, `/alarms/medical`, and `/alarms`. The header now reads migrated `t_notification_setting` rows in legacy PHP index order for `$_SESSION['notif']` and hides Medication, Birthdays, Assessment, and Medical report families when their old `alarms` toggle is off; Messages and General remain always visible like `AlarmBar.php`. Smaller layouts retain the combined inbox tray to avoid header overflow. Remaining work is exact Metronic dropdown styling/hover behavior, websocket/live badge refresh parity, and logged-in browser visual smoke after local database/runtime state is clean."
+    "verification": "Restored the legacy top-right AlarmBar semantics in the modern desktop header: separate unread current-user badge families for Messages, Medication, Birthdays, Assessment, Medical report reminders, and General alarms; each family uses migrated unread receipt/message state, shows the latest four rows, keeps the legacy empty labels (`No New Messages` / `No New Alarms`), formats legacy-style dates, and links to `/alarms/msg`, `/alarms/medicine`, `/alarms/birthdays`, `/alarms/assessments`, `/alarms/medical`, and `/alarms`. The header now reads migrated `t_notification_setting` rows in legacy PHP index order for `$_SESSION['notif']` and hides Medication, Birthdays, Assessment, and Medical report families when their old `alarms` toggle is off; Messages and General remain always visible like `AlarmBar.php`. The legacy `manageSystem` ACTION grant now controls the user-dropdown `Admin Panel` link, `/users/admin` bridge, restored legacy admin settings pages, admin AJAX validators, and direct legacy-admin server mutations when the imported action catalogue is configured and not granted. Smaller layouts retain the combined inbox tray to avoid header overflow. Remaining work is exact Metronic dropdown styling/hover behavior, websocket/live badge refresh parity, and logged-in browser visual smoke after local database/runtime state is clean."
   },
   {
     "legacyPhp": "Front/templates/admin/Areas.php",
@@ -16654,7 +16658,7 @@
     "legacyPhp": "Front/templates/admin/users/admin/classes/LevelsControl.class.php",
     "legacyJs": "",
     "modernRoute": "/settings/access-control",
-    "status": "partial - legacy level action matrix restored; PAGE filtering and active ACTION enforcement expanded",
+    "status": "partial - legacy level action matrix restored; PAGE filtering and active ACTION enforcement restored",
     "legacyTablesMentioned": [
       "Levels",
       "actions_control",
@@ -16667,7 +16671,7 @@
     "requestFieldsMentioned": [
       "LEVELS"
     ],
-    "verification": "`/settings/access-control` now restores the admin-only legacy level/action matrix over migrated `LegacyAuthRecord` levels and `LegacyAccessControlRecord` actions/grants, including staff and manager source databases, selected-level batch save, searchable action catalogue, inactive action badges, disabled level badges, legacy `No level selected!`/`Saved!` feedback, and grant persistence by soft-disabling stale rows then re-enabling/creating selected grants. `EditSchoolFromTo` is now enforced through the migrated grant bridge; `leftmenu.php` PAGE grants filter desktop/mobile navigation and deny direct guarded route hits through `/forbidden.php`; non-left-menu deep PAGE guards now cover branch/class/child dashboards, child accounting/calls/absence/accident/attendance, individual call/medical/assessment forms, message class compose, nursery compliance, and invoice/daily/absence detail bridges. Child, class, branch, and teacher add/update/delete ACTION grants now protect roster controls, direct form entry, and write mutations; nursery `Upnurseryinfo` protects nursery/compliance saves and compliance-document uploads; holiday `AddEditHolidays` protects holiday create/update/delete controls and writes; and food calendar `AddFoodToCalendar`, `EditFoodCalendar`, and `FoodAllBranches` protect blank-day create, existing-day edit/clear, and all-branch apply writes. Remaining work is expanding active enforcement to any remaining legacy ACTION guards and deciding whether to hydrate grant snapshots into sessions."
+    "verification": "`/settings/access-control` now restores the admin-only legacy level/action matrix over migrated `LegacyAuthRecord` levels and `LegacyAccessControlRecord` actions/grants, including staff and manager source databases, selected-level batch save, searchable action catalogue, inactive action badges, disabled level badges, legacy `No level selected!`/`Saved!` feedback, and grant persistence by soft-disabling stale rows then re-enabling/creating selected grants. `EditSchoolFromTo` is now enforced through the migrated grant bridge; `leftmenu.php` PAGE grants filter desktop/mobile navigation and deny direct guarded route hits through `/forbidden.php`; non-left-menu deep PAGE guards now cover branch/class/child dashboards, child accounting/calls/absence/accident/attendance, individual call/medical/assessment forms, message class compose, nursery compliance, and invoice/daily/absence detail bridges. Child, class, branch, and teacher add/update/delete ACTION grants now protect roster controls, direct form entry, and write mutations; nursery `Upnurseryinfo` protects nursery/compliance saves and compliance-document uploads; holiday `AddEditHolidays` protects holiday create/update/delete controls and writes; food calendar `AddFoodToCalendar`, `EditFoodCalendar`, and `FoodAllBranches` protect blank-day create, existing-day edit/clear, and all-branch apply writes; and `manageSystem` protects the header Admin Panel link plus restored legacy admin settings pages/actions. Remaining work is deciding whether to hydrate grant snapshots into sessions and auditing any missed legacy edge ACTION guards during final QA."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/classes/add_level.class.php",
@@ -17174,7 +17178,7 @@
     "legacyPhp": "Front/templates/admin/users/admin/page/level-control.php",
     "legacyJs": "",
     "modernRoute": "/settings/access-control",
-    "status": "partial - legacy level action matrix restored; PAGE filtering and active ACTION enforcement expanded",
+    "status": "partial - legacy level action matrix restored; PAGE filtering and active ACTION enforcement restored",
     "legacyTablesMentioned": [
       "actions_control",
       "actions_control_man",
@@ -17186,7 +17190,7 @@
     "requestFieldsMentioned": [
       "LEVELS"
     ],
-    "verification": "`/settings/access-control` replaces the legacy `Modify levels` admin surface with source-database grouped staff/manager level tables, selected-level checkboxes, searchable action grants, select-all/clear controls, and batch save through `updateLegacyAccessControlLevels`. `EditSchoolFromTo` now uses those grants for active enforcement when migrated ACL data is present; left-menu PAGE grants filter desktop/mobile navigation and deny direct guarded route hits through `/forbidden.php`; non-left-menu deep PAGE guards now cover branch/class/child dashboards, child accounting/calls/absence/accident/attendance, individual call/medical/assessment forms, message class compose, nursery compliance, and invoice/daily/absence detail bridges. Child, class, branch, and teacher add/update/delete ACTION grants now protect roster controls, direct form entry, and write mutations; nursery `Upnurseryinfo` protects nursery/compliance saves and compliance-document uploads; holiday `AddEditHolidays` protects holiday create/update/delete controls and writes; and food calendar `AddFoodToCalendar`, `EditFoodCalendar`, and `FoodAllBranches` protect blank-day create, existing-day edit/clear, and all-branch apply writes. Remaining work is expanding active `Check::protectPageOrFunction` enforcement across any remaining legacy ACTION guards/action controls."
+    "verification": "`/settings/access-control` replaces the legacy `Modify levels` admin surface with source-database grouped staff/manager level tables, selected-level checkboxes, searchable action grants, select-all/clear controls, and batch save through `updateLegacyAccessControlLevels`. `EditSchoolFromTo` now uses those grants for active enforcement when migrated ACL data is present; left-menu PAGE grants filter desktop/mobile navigation and deny direct guarded route hits through `/forbidden.php`; non-left-menu deep PAGE guards now cover branch/class/child dashboards, child accounting/calls/absence/accident/attendance, individual call/medical/assessment forms, message class compose, nursery compliance, and invoice/daily/absence detail bridges. Child, class, branch, and teacher add/update/delete ACTION grants now protect roster controls, direct form entry, and write mutations; nursery `Upnurseryinfo` protects nursery/compliance saves and compliance-document uploads; holiday `AddEditHolidays` protects holiday create/update/delete controls and writes; food calendar `AddFoodToCalendar`, `EditFoodCalendar`, and `FoodAllBranches` protect blank-day create, existing-day edit/clear, and all-branch apply writes; and `manageSystem` protects the header Admin Panel link plus restored legacy admin settings pages/actions. Remaining work is deciding whether to hydrate grant snapshots into sessions and auditing any missed legacy edge ACTION guards during final QA."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/level-create.php",

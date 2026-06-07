@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
-import { requireRole } from "@/lib/require-role";
+import { requireLegacyAdminPanelAccess } from "@/lib/legacy-system-action-permissions";
 
 export type ActionResult<T = unknown> = {
   success: boolean;
@@ -266,7 +266,7 @@ export async function getLegacyAccessControlMatrix(): Promise<
   ActionResult<LegacyAccessControlGroup[]>
 > {
   try {
-    await requireRole("ADMIN");
+    await requireLegacyAdminPanelAccess();
 
     const [levels, actions, grants, users] = await Promise.all([
       db.legacyAuthRecord.findMany({
@@ -447,7 +447,7 @@ export async function getLegacyAccessLevelUsers(input: {
   legacyLevelId: number;
 }): Promise<ActionResult<LegacyAccessLevelUsersData>> {
   try {
-    await requireRole("ADMIN");
+    await requireLegacyAdminPanelAccess();
 
     const config = configForLevelType(input.levelRecordType);
     if (!config) {
@@ -575,7 +575,7 @@ export async function updateLegacyAccessControlLevels(
   input: UpdateLegacyAccessControlLevelsInput,
 ): Promise<ActionResult<{ updatedLevels: number; activeGrants: number }>> {
   try {
-    await requireRole("ADMIN");
+    await requireLegacyAdminPanelAccess();
 
     const config = configForLevelType(input.levelRecordType);
     if (!config) {
@@ -739,7 +739,7 @@ export async function createLegacyAccessLevel(
   input: CreateLegacyAccessLevelInput,
 ): Promise<ActionResult<LegacyAccessLevelRow>> {
   try {
-    await requireRole("ADMIN");
+    await requireLegacyAdminPanelAccess();
 
     const config = configForLevelType(input.levelRecordType);
     if (!config) {
@@ -828,7 +828,7 @@ export async function updateLegacyAccessLevel(
   input: UpdateLegacyAccessLevelInput,
 ): Promise<ActionResult<LegacyAccessLevelRow>> {
   try {
-    await requireRole("ADMIN");
+    await requireLegacyAdminPanelAccess();
 
     const levelName = input.levelName.trim();
     const redirect = inputString(input.redirect);
@@ -920,7 +920,7 @@ export async function deleteLegacyAccessLevel(input: {
   levelRecordId: string;
 }): Promise<ActionResult<{ id: string; legacyId: number }>> {
   try {
-    await requireRole("ADMIN");
+    await requireLegacyAdminPanelAccess();
 
     const existing = await db.legacyAuthRecord.findUnique({
       where: { id: input.levelRecordId },

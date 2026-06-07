@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
-import { requireRole } from "@/lib/require-role";
+import { requireLegacyAdminPanelAccess } from "@/lib/legacy-system-action-permissions";
 
 type ActionResult<T = unknown> = {
   success: boolean;
@@ -294,7 +294,7 @@ export async function getLegacyAuthSettings(): Promise<
   ActionResult<LegacyAuthSettingsData>
 > {
   try {
-    await requireRole("ADMIN");
+    await requireLegacyAdminPanelAccess();
 
     const [settings, levelRecords] = await Promise.all([
       db.legacySetting.findMany({
@@ -381,7 +381,7 @@ export async function updateLegacyAuthGeneralSettings(
   input: LegacyAuthGeneralSettingsInput,
 ): Promise<ActionResult<LegacyAuthSettingsData>> {
   try {
-    await requireRole("ADMIN");
+    await requireLegacyAdminPanelAccess();
     const source = sourceFromKey(input.sourceKey);
     if (!source) return { success: false, error: "Unknown legacy settings source" };
 
@@ -466,7 +466,7 @@ export async function updateLegacyAuthDeniedSettings(
   input: LegacyAuthDeniedSettingsInput,
 ): Promise<ActionResult<LegacyAuthSettingsData>> {
   try {
-    await requireRole("ADMIN");
+    await requireLegacyAdminPanelAccess();
     const source = sourceFromKey(input.sourceKey);
     if (!source) return { success: false, error: "Unknown legacy settings source" };
 
@@ -497,7 +497,7 @@ export async function updateLegacyAuthIntegrationSettings(
   input: LegacyAuthIntegrationSettingsInput,
 ): Promise<ActionResult<LegacyAuthSettingsData>> {
   try {
-    await requireRole("ADMIN");
+    await requireLegacyAdminPanelAccess();
     const source = sourceFromKey(input.sourceKey);
     if (!source) return { success: false, error: "Unknown legacy settings source" };
 
@@ -544,7 +544,7 @@ export async function updateLegacyAuthUpdateSettings(
   input: LegacyAuthUpdateSettingsInput,
 ): Promise<ActionResult<LegacyAuthSettingsData>> {
   try {
-    await requireRole("ADMIN");
+    await requireLegacyAdminPanelAccess();
     const source = sourceFromKey(input.sourceKey);
     if (!source) return { success: false, error: "Unknown legacy settings source" };
 

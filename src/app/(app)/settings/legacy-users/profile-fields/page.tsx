@@ -1,13 +1,13 @@
 import { redirect } from "next/navigation";
 import { getLegacyProfileFields } from "@/lib/actions/legacy-users";
-import { requireRole } from "@/lib/require-role";
+import { requireLegacyAdminPanelAccess } from "@/lib/legacy-system-action-permissions";
 import { LegacyProfileFieldsClient } from "./profile-fields-client";
 
 export default async function LegacyProfileFieldsPage() {
   try {
-    await requireRole("ADMIN");
+    await requireLegacyAdminPanelAccess();
   } catch {
-    redirect("/dashboard");
+    redirect("/forbidden.php");
   }
 
   const fieldsResult = await getLegacyProfileFields();

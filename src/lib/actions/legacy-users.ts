@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { hash } from "bcryptjs";
 import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
-import { requireRole } from "@/lib/require-role";
+import { requireLegacyAdminPanelAccess } from "@/lib/legacy-system-action-permissions";
 
 type UserRole = "ADMIN" | "TEACHER" | "NURSE" | "DOCTOR" | "MANAGER";
 export type LegacyUserRecordType = "login_user" | "manager_login_user";
@@ -1356,7 +1356,7 @@ export async function getLegacyProfileFields(): Promise<
   ActionResult<LegacyAdminProfileFieldsData>
 > {
   try {
-    await requireRole("ADMIN");
+    await requireLegacyAdminPanelAccess();
 
     const [{ groups }, fieldRecords, valueRecords] = await Promise.all([
       getLevelsAndGroups(),
@@ -1465,7 +1465,7 @@ export async function createLegacyProfileField(
   input: LegacyAdminProfileFieldInput,
 ): Promise<ActionResult<LegacyAdminProfileFieldRow>> {
   try {
-    await requireRole("ADMIN");
+    await requireLegacyAdminPanelAccess();
     const validated = validateLegacyProfileFieldInput(input);
     if ("error" in validated) return { success: false, error: validated.error };
 
@@ -1524,7 +1524,7 @@ export async function updateLegacyProfileField(
   input: LegacyAdminProfileFieldInput,
 ): Promise<ActionResult<LegacyAdminProfileFieldRow>> {
   try {
-    await requireRole("ADMIN");
+    await requireLegacyAdminPanelAccess();
     const existing = await db.legacyAuthRecord.findUnique({
       where: { id: fieldId },
     });
@@ -1583,7 +1583,7 @@ export async function deleteLegacyProfileField(
   fieldId: string,
 ): Promise<ActionResult<{ id: string }>> {
   try {
-    await requireRole("ADMIN");
+    await requireLegacyAdminPanelAccess();
     const existing = await db.legacyAuthRecord.findUnique({
       where: { id: fieldId },
     });
@@ -1622,7 +1622,7 @@ export async function getLegacyAdminUsers(): Promise<
   ActionResult<LegacyAdminUsersData>
 > {
   try {
-    await requireRole("ADMIN");
+    await requireLegacyAdminPanelAccess();
 
     const [{ levels, groups }, { branches, classes }, records] =
       await Promise.all([
@@ -1865,7 +1865,7 @@ export async function createLegacyAdminUser(
   input: LegacyAdminUserInput,
 ): Promise<ActionResult<LegacyAdminUserRow>> {
   try {
-    const ctx = await requireRole("ADMIN");
+    const ctx = await requireLegacyAdminPanelAccess();
     const validated = await validateLegacyUserInput(input);
     if ("error" in validated) return { success: false, error: validated.error };
 
@@ -1975,7 +1975,7 @@ export async function updateLegacyAdminUser(
   input: LegacyAdminUserInput,
 ): Promise<ActionResult<LegacyAdminUserRow>> {
   try {
-    const ctx = await requireRole("ADMIN");
+    const ctx = await requireLegacyAdminPanelAccess();
     const existing = await db.legacyAuthRecord.findUnique({
       where: { id: legacyRecordId },
     });
@@ -2118,7 +2118,7 @@ export async function deleteLegacyAdminUser(
   legacyRecordId: string,
 ): Promise<ActionResult<{ id: string }>> {
   try {
-    await requireRole("ADMIN");
+    await requireLegacyAdminPanelAccess();
 
     const existing = await db.legacyAuthRecord.findUnique({
       where: { id: legacyRecordId },
@@ -2194,7 +2194,7 @@ export async function getDefaultLegacyAdminUserGroup(): Promise<
   ActionResult<LegacyAdminUserGroup | null>
 > {
   try {
-    await requireRole("ADMIN");
+    await requireLegacyAdminPanelAccess();
     const { groups } = await getLevelsAndGroups();
     return { success: true, data: firstGroup(groups) };
   } catch (error) {

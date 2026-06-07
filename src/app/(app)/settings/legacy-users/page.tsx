@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getLegacyAdminUsers } from "@/lib/actions/legacy-users";
-import { requireRole } from "@/lib/require-role";
+import { requireLegacyAdminPanelAccess } from "@/lib/legacy-system-action-permissions";
 import { LegacyUsersClient } from "./legacy-users-client";
 
 interface PageProps {
@@ -18,9 +18,9 @@ function firstParam(value: string | string[] | undefined) {
 
 export default async function LegacyUsersPage({ searchParams }: PageProps) {
   try {
-    await requireRole("ADMIN");
+    await requireLegacyAdminPanelAccess();
   } catch {
-    redirect("/dashboard");
+    redirect("/forbidden.php");
   }
 
   const [usersResult, params] = await Promise.all([

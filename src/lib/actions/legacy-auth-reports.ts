@@ -2,7 +2,7 @@
 
 import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
-import { requireRole } from "@/lib/require-role";
+import { requireLegacyAdminPanelAccess } from "@/lib/legacy-system-action-permissions";
 
 type ActionResult<T = unknown> = {
   success: boolean;
@@ -263,7 +263,7 @@ export async function getLegacyAuthReports(
   input: LegacyAuthReportsInput = {},
 ): Promise<ActionResult<LegacyAuthReportsData>> {
   try {
-    await requireRole("ADMIN");
+    await requireLegacyAdminPanelAccess();
 
     const now = new Date();
     const defaultStart = new Date(

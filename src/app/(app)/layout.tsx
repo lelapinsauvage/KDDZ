@@ -18,6 +18,7 @@ import {
   LEGACY_GUARDED_PAGE_NAMES,
 } from "@/lib/legacy-page-guards"
 import { getLegacyNotificationGateVisibility } from "@/lib/legacy-notification-gates"
+import { getLegacySystemActionPermissions } from "@/lib/legacy-system-action-permissions"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 
@@ -47,6 +48,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     string,
     LegacyAccessPermissionDecision
   > = {}
+  const emptyLegacySystemActionPermissions = { canManageSystem: false }
 
   const [
     branches,
@@ -55,6 +57,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     classes,
     notificationGates,
     legacyPagePermissions,
+    legacySystemActionPermissions,
   ] = await Promise.all([
     orgId
       ? db.branch.findMany({
@@ -91,6 +94,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           "PAGE"
         )
       : emptyLegacyPagePermissions,
+    orgId && session?.user?.id && userRole === "ADMIN"
+      ? getLegacySystemActionPermissions({
+          userId: session.user.id,
+          organizationId: orgId,
+          branchId: defaultBranchId,
+          role: userRole,
+        })
+      : emptyLegacySystemActionPermissions,
   ])
 
   if (
@@ -115,7 +126,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         }
       >
         {/* Fixed header spanning full width */}
-        <Header />
+        <Header canManageSystem={legacySystemActionPermissions.canManageSystem} />
 
         {/* Sidebar + main content area below header */}
         <AppSidebar

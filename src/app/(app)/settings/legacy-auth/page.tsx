@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getLegacyAuthSettings } from "@/lib/actions/legacy-auth-settings";
-import { requireRole } from "@/lib/require-role";
+import { requireLegacyAdminPanelAccess } from "@/lib/legacy-system-action-permissions";
 import { LegacyAuthSettingsClient } from "./legacy-auth-settings-client";
 
 interface PageProps {
@@ -17,9 +17,9 @@ export default async function LegacyAuthSettingsPage({
   searchParams,
 }: PageProps) {
   try {
-    await requireRole("ADMIN");
+    await requireLegacyAdminPanelAccess();
   } catch {
-    redirect("/dashboard");
+    redirect("/forbidden.php");
   }
 
   const [settingsResult, params] = await Promise.all([

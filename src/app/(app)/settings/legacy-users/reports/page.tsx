@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getLegacyAuthReports } from "@/lib/actions/legacy-auth-reports";
-import { requireRole } from "@/lib/require-role";
+import { requireLegacyAdminPanelAccess } from "@/lib/legacy-system-action-permissions";
 import { LegacyAuthReportsClient } from "./legacy-auth-reports-client";
 
 interface PageProps {
@@ -19,9 +19,9 @@ export default async function LegacyAuthReportsPage({
   searchParams,
 }: PageProps) {
   try {
-    await requireRole("ADMIN");
+    await requireLegacyAdminPanelAccess();
   } catch {
-    redirect("/dashboard");
+    redirect("/forbidden.php");
   }
 
   const params = await searchParams;

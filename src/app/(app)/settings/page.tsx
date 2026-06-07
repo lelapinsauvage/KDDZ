@@ -1,4 +1,5 @@
 import { requireRole } from "@/lib/require-role";
+import { getLegacySystemActionPermissions } from "@/lib/legacy-system-action-permissions";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
@@ -156,6 +157,14 @@ const adminOnlySections = [
   },
 ];
 
+const legacyAdminPanelSectionHrefs = new Set([
+  "/settings/access-control",
+  "/settings/legacy-users",
+  "/settings/legacy-users/profile-fields",
+  "/settings/legacy-users/reports",
+  "/settings/legacy-auth",
+]);
+
 export default async function SettingsPage() {
   let ctx;
   try {
@@ -163,8 +172,18 @@ export default async function SettingsPage() {
   } catch {
     redirect("/dashboard");
   }
-  const allSections =
-    ctx.role === "ADMIN" ? [...adminOnlySections, ...sections] : sections;
+  const canManageSystem =
+    ctx.role === "ADMIN"
+      ? (await getLegacySystemActionPermissions(ctx)).canManageSystem
+      : false;
+  const visibleAdminOnlySections =
+    ctx.role === "ADMIN"
+      ? adminOnlySections.filter(
+          (section) =>
+            canManageSystem || !legacyAdminPanelSectionHrefs.has(section.href),
+        )
+      : [];
+  const allSections = [...visibleAdminOnlySections, ...sections];
 
   return (
     <>

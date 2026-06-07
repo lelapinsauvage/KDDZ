@@ -1,4 +1,4 @@
-import { requireRole } from "@/lib/require-role";
+import { requireLegacyAdminPanelAccess } from "@/lib/legacy-system-action-permissions";
 import {
   fieldValue,
   getLegacyUserSuggestions,
@@ -12,7 +12,7 @@ import {
 
 async function handleLegacyAddUserValidation(request: Request) {
   try {
-    await requireRole("ADMIN");
+    await requireLegacyAdminPanelAccess();
   } catch {
     return legacyBooleanResponse(false, 403);
   }

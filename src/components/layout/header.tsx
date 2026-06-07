@@ -9,6 +9,7 @@ import {
   Settings,
   Search,
   ChevronDown,
+  Shield,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -33,7 +34,11 @@ import type {
   HeaderLegacyBadgeFamily,
 } from "@/lib/actions/header"
 
-export function Header() {
+interface HeaderProps {
+  canManageSystem?: boolean
+}
+
+export function Header({ canManageSystem = false }: HeaderProps) {
   const { data: session } = useSession()
   const userName = session?.user?.name || "User"
   const userInitial = userName.charAt(0).toUpperCase()
@@ -152,6 +157,14 @@ export function Header() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
+              {canManageSystem && (
+                <DropdownMenuItem asChild>
+                  <Link href="/users/admin">
+                    <Shield className="mr-2 size-4" />
+                    Admin Panel
+                  </Link>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem asChild>
                 <Link href="/profile">
                   <User className="mr-2 size-4" />
