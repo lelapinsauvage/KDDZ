@@ -119,7 +119,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - Remaining work is re-running/backfilling legacy imports that happened before `db_id` was preserved and final logged-in visual smoke.
 
 14. **Accounting monthly matrix**
-   - `/accounting` now restores the legacy `accounting.php` Oct-Sep school-year matrix with category tabs, child number/first/last/branch/class columns, active-child zero rows, branch/class/search/year filters, month totals, zero-cell payment-dialog prefill, nonzero-cell payment detail modal, print/edit/delete/attachment actions, and legacy-style soft delete.
+   - `/accounting` now restores the legacy `accounting.php` Oct-Sep school-year matrix with category tabs, child number/first/last/branch/class columns, active-child zero rows, uncapped org-scoped payment loading, branch/class/search/year filters, month totals, zero-cell payment-dialog prefill, nonzero-cell payment detail modal, print/edit/delete/attachment actions, and legacy-style soft delete.
    - Remaining work is exact visual audit for any legacy WebSocket refresh/status behavior that was commented out or environment-specific.
 
 15. **Invoice/receipt parity**

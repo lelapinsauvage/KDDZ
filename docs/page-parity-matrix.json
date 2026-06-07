@@ -475,7 +475,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "`/accounting.php` now redirects to the modern accounting matrix. Final visual audit only; legacy WebSocket refresh code was commented/environment-specific, and exact legacy `id` preselect behavior remains to confirm if production used it."
+    "verification": "`/accounting.php` now redirects to the modern accounting matrix, which loads the full uncapped org-scoped payment set before applying the Oct-Sep school-year/category matrix, totals, filters, payment details, print/edit/delete, attachment actions, and legacy-style soft delete behavior. Final visual audit only; legacy WebSocket refresh code was commented/environment-specific, and exact legacy `id` preselect behavior remains to confirm if production used it."
   },
   {
     "legacyPhp": "Front/templates/admin/alarms.php",
@@ -16215,7 +16215,7 @@
       "all active database tables"
     ],
     "requestFieldsMentioned": [],
-    "verification": "`/exportdb.php` now restores the legacy direct database backup behavior as an authenticated admin-only SQL download. The route uses native `pg_dump` when available and falls back to a built-in Postgres catalog/data exporter with schema DDL, enum types, table data, indexes, foreign keys, and sequence resets. `/settings/export` now exposes the same Full SQL Backup action alongside the modern CSV exports."
+    "verification": "`/exportdb.php` now restores the legacy direct database backup behavior as an authenticated admin-only SQL download. The route uses native `pg_dump` when available and falls back to a built-in Postgres catalog/data exporter with schema DDL, enum types, table data, indexes, foreign keys, and sequence resets. `/settings/export` now exposes the same Full SQL Backup action alongside uncapped CSV exports for children, employees, daily reports, medical records, and financial payments."
   },
   {
     "legacyPhp": "Front/templates/admin/food.php",

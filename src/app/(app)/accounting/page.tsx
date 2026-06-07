@@ -8,7 +8,7 @@ export default async function AccountingPage() {
   await requireRole("ADMIN", "MANAGER");
   const [paymentsResult, summaryResult, branchesResult, classesResult, childrenResult] =
     await Promise.all([
-      getPayments({ pageSize: 5000 }),
+      getPayments({ pageSize: "all" }),
       getPaymentsSummary(),
       getBranches(),
       getClasses(),

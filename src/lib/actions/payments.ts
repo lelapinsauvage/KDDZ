@@ -26,7 +26,7 @@ interface PaymentListParams {
   dateTo?: string;
   search?: string;
   page?: number;
-  pageSize?: number;
+  pageSize?: number | "all";
 }
 
 interface CreatePaymentData {
@@ -161,7 +161,9 @@ export async function getPayments(
       if (dateTo) where.date.lte = new Date(dateTo);
     }
 
-    const skip = (page - 1) * pageSize;
+    const paginated = pageSize !== "all";
+    const numericPageSize = paginated ? Math.max(1, pageSize) : undefined;
+    const skip = numericPageSize ? (page - 1) * numericPageSize : undefined;
 
     const [payments, total] = await Promise.all([
       db.payment.findMany({
@@ -178,8 +180,8 @@ export async function getPayments(
           },
         },
         orderBy: { date: "desc" },
-        skip,
-        take: pageSize,
+        ...(skip !== undefined ? { skip } : {}),
+        ...(numericPageSize !== undefined ? { take: numericPageSize } : {}),
       }),
       db.payment.count({ where }),
     ]);
@@ -191,7 +193,7 @@ export async function getPayments(
         total,
         page,
         pageSize,
-        totalPages: Math.ceil(total / pageSize),
+        totalPages: numericPageSize ? Math.ceil(total / numericPageSize) : 1,
       },
     };
   } catch (error) {

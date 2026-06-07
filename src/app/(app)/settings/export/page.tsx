@@ -191,7 +191,7 @@ export default function ExportDatabasePage() {
     try {
       switch (cardId) {
         case "children": {
-          const result = await getChildren({ pageSize: 10000 });
+          const result = await getChildren({ pageSize: "all" });
           const children = result.children ?? [];
           const headers = ["ID", "First Name", "Last Name", "Date of Birth", "Gender", "Branch", "Class", "Active", "Enrollment Date"];
           const rows = children.map((c: ExportChild) => [
@@ -213,7 +213,7 @@ export default function ExportDatabasePage() {
           const types = ["teacher", "nurse", "doctor", "manager"] as const;
           const allEmployees: ExportEmployee[] = [];
           for (const type of types) {
-            const result = await getEmployees(type, { pageSize: 10000 });
+            const result = await getEmployees(type, { pageSize: "all" });
             const data = result.data as Record<string, unknown> | undefined;
             const employees = (data?.employees ?? []) as ExportEmployee[];
             for (const emp of employees) {
@@ -276,7 +276,7 @@ export default function ExportDatabasePage() {
           const result = await getPayments({
             dateFrom: range?.from,
             dateTo: range?.to,
-            pageSize: 10000,
+            pageSize: "all",
           });
           const data = result.data as Record<string, unknown> | undefined;
           const payments = (data?.payments ?? []) as ExportPayment[];
