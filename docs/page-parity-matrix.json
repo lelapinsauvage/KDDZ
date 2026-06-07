@@ -16800,11 +16800,11 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/login.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/users/admin/login.php, /login?e=1",
+    "status": "restored - legacy admin-login redirect restored",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/users/admin/login.php` now preserves the legacy `header('Location: ../login.php?e=1')` behavior by redirecting unauthenticated users into the modern login page with the original `e=1` query flag."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/logout.php",
