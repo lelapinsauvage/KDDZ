@@ -23,11 +23,20 @@ interface PageProps {
   }>;
 }
 
+type CallsPageSize = number | "all";
+
 function parseDirection(value: string | undefined): CallDirection | undefined {
   if (value === "INCOMING" || value === "OUTGOING" || value === "MISSED") {
     return value;
   }
   return undefined;
+}
+
+function parsePageSize(value: string | undefined): CallsPageSize {
+  if (value === "all") return "all";
+  const parsed = Number(value) || 25;
+  if ([10, 20, 50, 100, 150].includes(parsed)) return parsed;
+  return 25;
 }
 
 function formatTime(date: Date | null): string | null {
@@ -40,26 +49,29 @@ function formatTime(date: Date | null): string | null {
 export default async function CallsManagementPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const page = Math.max(1, Number(params.page) || 1);
-  const pageSize = Math.min(100, Math.max(10, Number(params.pageSize) || 25));
+  const pageSize = parsePageSize(params.pageSize);
+  const listParams = {
+    search: params.search || undefined,
+    branchId: params.branch && params.branch !== "ALL" ? params.branch : undefined,
+    classId: params.class && params.class !== "ALL" ? params.class : undefined,
+    direction: parseDirection(params.direction),
+    dateFrom: params.dateFrom || undefined,
+    dateTo: params.dateTo || undefined,
+    page,
+    pageSize,
+  };
 
   const [
     callsResult,
+    exportCallsResult,
     branchesResult,
     classesResult,
     staffList,
     callCauseOptions,
     childOptions,
   ] = await Promise.all([
-    getCallLogs({
-      search: params.search || undefined,
-      branchId: params.branch && params.branch !== "ALL" ? params.branch : undefined,
-      classId: params.class && params.class !== "ALL" ? params.class : undefined,
-      direction: parseDirection(params.direction),
-      dateFrom: params.dateFrom || undefined,
-      dateTo: params.dateTo || undefined,
-      page,
-      pageSize,
-    }),
+    getCallLogs(listParams),
+    getCallLogs({ ...listParams, page: 1, pageSize: "all" }),
     getBranches(),
     getClasses(),
     getCallStaffOptions(),
@@ -74,7 +86,7 @@ export default async function CallsManagementPage({ searchParams }: PageProps) {
     ? classesResult.data
     : []) as Array<{ id: string; name: string; branchId: string }>;
 
-  const calls = callsResult.calls.map((call) => ({
+  const serializeCall = (call: (typeof callsResult.calls)[number]) => ({
     id: call.id,
     legacyFormId: call.legacyId,
     childNumber: call.child.childNumber ?? call.child.legacyId?.toString() ?? "-",
@@ -98,7 +110,10 @@ export default async function CallsManagementPage({ searchParams }: PageProps) {
     remarks: call.remarks ?? "",
     createdBy: call.createdBy?.name ?? call.createdBy?.email ?? null,
     attachmentCount: call.attachments.length,
-  }));
+  });
+
+  const calls = callsResult.calls.map(serializeCall);
+  const exportCalls = exportCallsResult.calls.map(serializeCall);
 
   const children = childOptions.map((child) => ({
     id: child.id,
@@ -116,6 +131,7 @@ export default async function CallsManagementPage({ searchParams }: PageProps) {
     <FadeIn>
       <CallsManagementClient
         calls={calls}
+        exportCalls={exportCalls}
         total={callsResult.total}
         branches={branches}
         classes={classes}

@@ -24,7 +24,7 @@ interface GetCallLogsParams {
   dateTo?: string;
   search?: string;
   page?: number;
-  pageSize?: number;
+  pageSize?: number | "all";
 }
 
 interface CallLogMutationData {
@@ -290,7 +290,9 @@ export async function getCallLogs(params: GetCallLogsParams = {}) {
       ];
     }
 
-    const skip = (page - 1) * pageSize;
+    const paginated = pageSize !== "all";
+    const skip = paginated ? (page - 1) * pageSize : undefined;
+    const take = paginated ? pageSize : undefined;
 
     const [calls, total] = await Promise.all([
       db.callLog.findMany({
@@ -319,8 +321,8 @@ export async function getCallLogs(params: GetCallLogsParams = {}) {
           },
         },
         orderBy: [{ legacyId: "desc" }, { date: "desc" }, { createdAt: "desc" }],
-        skip,
-        take: pageSize,
+        ...(skip === undefined ? {} : { skip }),
+        ...(take === undefined ? {} : { take }),
       }),
       db.callLog.count({ where }),
     ]);

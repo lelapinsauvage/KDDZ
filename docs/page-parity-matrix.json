@@ -1043,7 +1043,7 @@
     "legacyPhp": "Front/templates/admin/bcalls.php",
     "legacyJs": "Front/templates/admin/js/bcalls.js",
     "modernRoute": "/bcalls.php, /branches/[id]/calls, /calls",
-    "status": "partial - branch-scoped listing and legacy branch deep links restored; visual smoke remains",
+    "status": "partial - branch-scoped listing, legacy branch deep links, copy/PDF exports, and page sizes restored; visual smoke remains",
     "legacyTablesMentioned": [
       "t_form_6",
       "t_child",
@@ -1055,7 +1055,7 @@
     "requestFieldsMentioned": [
       "brid"
     ],
-    "verification": "Restored branch-compatible incoming/outgoing call listing through `/calls?branch=...` with legacy child #, image, F Name, L Name, Call Type, Branch, Class, Cause, Subject, Date, Action columns, teacher-backed Form 6 data, draft badges, standalone Form 6 open action, delete action, and branch/class/date/type/search filters. `/bcalls.php?brid=` now resolves raw numeric, UUID, and encrypted legacy branch ids into the modern branch filter, and `/branches/[id]/calls` redirects modern branch deep links to the same filtered listing. Remaining work is final logged-in visual smoke and exact TableTools export/print visual parity."
+    "verification": "Restored branch-compatible incoming/outgoing call listing through `/calls?branch=...` with legacy child #, image, F Name, L Name, Call Type, Branch, Class, Cause, Subject, Date, Action columns, teacher-backed Form 6 data, draft badges, standalone Form 6 open action, delete action, branch/class/date/type/search filters, legacy 10/20/50/100/150/All page-size choices, full-filtered Copy/PDF/Excel/CSV export, and print action. `/bcalls.php?brid=` now resolves raw numeric, UUID, and encrypted legacy branch ids into the modern branch filter, and `/branches/[id]/calls` redirects modern branch deep links to the same filtered listing. Remaining work is final logged-in visual smoke and legacy print styling acceptance."
   },
   {
     "legacyPhp": "Front/templates/admin/branch.php",
@@ -1125,7 +1125,7 @@
     "legacyPhp": "Front/templates/admin/calls.php",
     "legacyJs": "Front/templates/admin/js/calls.js",
     "modernRoute": "/calls.php, /calls",
-    "status": "restored - legacy incoming/outgoing call listing bridge and Form 6 creation restored",
+    "status": "restored - legacy incoming/outgoing call listing bridge, exports, page sizes, and Form 6 creation restored",
     "legacyTablesMentioned": [
       "t_form_6",
       "t_child",
@@ -1137,7 +1137,7 @@
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Restored the legacy Incoming/Outgoing Calls Listing with child #, image, F Name, L Name, Call Type, Branch, Class, Cause, Subject, Date, Action columns, form id descending sort, branch/class/type/date/search filters, pagination, New Call Report dialog, child selector, standalone Form 6 open action, delete action, teacher-backed Form 6 save, Save As Draft versus submitted validation, migrated callparent/callcauses choices, child photo fallback, and legacy Form 6 provenance/draft import. `/calls.php` now redirects to the modern calls listing. Remaining work is final logged-in visual smoke after local database/runtime state is clean and exact TableTools export/print visual parity."
+    "verification": "Restored the legacy Incoming/Outgoing Calls Listing with child #, image, F Name, L Name, Call Type, Branch, Class, Cause, Subject, Date, Action columns, form id descending sort, branch/class/type/date/search filters, legacy 10/20/50/100/150/All page-size choices, full-filtered Copy/PDF/Excel/CSV export, print action, New Call Report dialog, child selector, standalone Form 6 open action, delete action, teacher-backed Form 6 save, Save As Draft versus submitted validation, migrated callparent/callcauses choices, child photo fallback, and legacy Form 6 provenance/draft import. `/calls.php` now redirects to the modern calls listing. Remaining work is final logged-in visual smoke after local database/runtime state is clean and legacy print styling acceptance."
   },
   {
     "legacyPhp": "Front/templates/admin/child_absence.php",

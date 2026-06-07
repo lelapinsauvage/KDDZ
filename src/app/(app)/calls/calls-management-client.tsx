@@ -13,6 +13,7 @@ import {
   PhoneMissed,
   PhoneOutgoing,
   Plus,
+  Printer,
   Search,
   Trash2,
   Upload,
@@ -49,6 +50,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ExportButton } from "@/components/shared/export-button";
+import type { ExportColumn } from "@/lib/export";
 
 type CallDirectionValue = "INCOMING" | "OUTGOING" | "MISSED";
 
@@ -123,11 +126,12 @@ interface Filters {
   dateFrom: string;
   dateTo: string;
   page: number;
-  pageSize: number;
+  pageSize: number | "all";
 }
 
 interface Props {
   calls: CallRow[];
+  exportCalls: CallRow[];
   total: number;
   branches: BranchOption[];
   classes: ClassOption[];
@@ -168,6 +172,19 @@ const fallbackCallCauseOptions: CallCauseOption[] = [
   { id: "complaint", value: "complaint", label: "Complaint" },
   { id: "follow_up", value: "follow_up", label: "Follow Up" },
   { id: "other", value: "other", label: "Other" },
+];
+
+const callExportColumns: ExportColumn[] = [
+  { header: "#", key: "childNumber" },
+  { header: "F Name", key: "firstName" },
+  { header: "L Name", key: "lastName" },
+  { header: "Call Type", key: "callType" },
+  { header: "Branch", key: "branchName" },
+  { header: "Class", key: "className" },
+  { header: "Cause", key: "reason" },
+  { header: "Subject", key: "subject" },
+  { header: "Date", key: "dateDisplay" },
+  { header: "Status", key: "status" },
 ];
 
 function formatDisplayDate(value: string) {
@@ -220,6 +237,7 @@ function ChildPhoto({ call }: { call: CallRow }) {
 
 export function CallsManagementClient({
   calls,
+  exportCalls,
   total,
   branches,
   classes,
@@ -235,9 +253,23 @@ export function CallsManagementClient({
   const [searchDraft, setSearchDraft] = useState(filters.search);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const pageCount = Math.max(1, Math.ceil(total / filters.pageSize));
-  const pageStart = total === 0 ? 0 : (filters.page - 1) * filters.pageSize + 1;
-  const pageEnd = Math.min(total, filters.page * filters.pageSize);
+  const showAllRows = filters.pageSize === "all";
+  const numericPageSize =
+    typeof filters.pageSize === "number" ? filters.pageSize : Math.max(total, 1);
+  const pageCount = showAllRows ? 1 : Math.max(1, Math.ceil(total / numericPageSize));
+  const pageStart = total === 0 ? 0 : (filters.page - 1) * numericPageSize + 1;
+  const pageEnd = showAllRows ? total : Math.min(total, filters.page * numericPageSize);
+  const exportRows = exportCalls.length ? exportCalls : calls;
+  const exportData = useMemo(
+    () =>
+      exportRows.map((call) => ({
+        ...call,
+        callType: directionConfig[call.direction].label,
+        dateDisplay: `${formatDisplayDate(call.date)}${call.time ? ` ${call.time}` : ""}`,
+        status: call.isDraft ? "Draft" : "Submitted",
+      })),
+    [exportRows],
+  );
 
   const availableClasses = useMemo(() => {
     if (!queryValue(filters.branch)) return classes;
@@ -317,10 +349,40 @@ export function CallsManagementClient({
               </Badge>
             )}
           </div>
-          <Button size="sm" onClick={() => setDialogOpen(true)}>
-            <Plus className="mr-1.5 size-4" />
-            New Call Report
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <ExportButton
+              filename="calls"
+              sheetName="Calls Reports"
+              columns={callExportColumns}
+              data={exportData as Record<string, unknown>[]}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={calls.length === 0}
+              onClick={() => window.print()}
+            >
+              <Printer className="mr-1.5 size-4" />
+              Print
+            </Button>
+            <Button size="sm" onClick={() => setDialogOpen(true)}>
+              <Plus className="mr-1.5 size-4" />
+              New Call Report
+            </Button>
+          </div>
+        </div>
+
+        <div className="hidden print:block">
+          <h1 className="text-xl font-semibold">Calls Reports</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {exportRows.length} call{exportRows.length === 1 ? "" : "s"} - Printed on{" "}
+            {new Date().toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </p>
         </div>
 
         <div className="grid gap-3 rounded-md border bg-card p-3 md:grid-cols-[minmax(220px,1.4fr)_repeat(5,minmax(150px,1fr))_auto]">
@@ -537,17 +599,18 @@ export function CallsManagementClient({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {[10, 25, 50, 100].map((size) => (
+                {[10, 20, 50, 100, 150].map((size) => (
                   <SelectItem key={size} value={`${size}`}>
                     {size}
                   </SelectItem>
                 ))}
+                <SelectItem value="all">All</SelectItem>
               </SelectContent>
             </Select>
             <Button
               variant="outline"
               size="sm"
-              disabled={filters.page <= 1 || isPending}
+              disabled={showAllRows || filters.page <= 1 || isPending}
               onClick={() => replaceParams({ page: `${Math.max(1, filters.page - 1)}` })}
             >
               Previous
@@ -558,7 +621,7 @@ export function CallsManagementClient({
             <Button
               variant="outline"
               size="sm"
-              disabled={filters.page >= pageCount || isPending}
+              disabled={showAllRows || filters.page >= pageCount || isPending}
               onClick={() => replaceParams({ page: `${Math.min(pageCount, filters.page + 1)}` })}
             >
               Next
