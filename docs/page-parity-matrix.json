@@ -18288,15 +18288,22 @@
   {
     "legacyPhp": "Front/templates/admin/view.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
-    "legacyTablesMentioned": [],
+    "modernRoute": "/view.php, /api/pdf/child/[id], /api/pdf/employee/[id], /api/pdf/medical/[formType]/[id]",
+    "status": "restored - legacy PDF switchboard bridge restored",
+    "legacyTablesMentioned": [
+      "t_child",
+      "t_teacher",
+      "t_form_1",
+      "t_form_2",
+      "t_form_3",
+      "t_form_4"
+    ],
     "requestFieldsMentioned": [
       "fid",
       "id",
       "p"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/view.php` now restores the legacy PDF switchboard for `p=child`, `p=teacher`, `p=formone`, `p=formtwo`, `p=formthree`, and `p=formfour`: raw numeric, UUID, legacy key, and encrypted child/teacher/form ids resolve to the modern child, employee, and medical PDF endpoints. Unsupported or missing `p` values return not found instead of silently emitting an empty PHP page."
   },
   {
     "legacyPhp": "Legacy parent mobile login / ws/login.php",
