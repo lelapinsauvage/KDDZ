@@ -130,7 +130,7 @@ This list is the first implementation backlog after the generated inventory/matr
 
 17. **Address hierarchy reference fields**
    - Legacy `t_mouhafaza`, `t_quadaa`, and `t_region` reference numbers and created dates are migrated and now displayed across `/settings/zones`, `/settings/areas`, and `/settings/regions`; `/settings/zones` restores Mouhafaza listing/modal labels, `/settings/areas` restores Quadaa listing/modal labels, and `/settings/regions` restores the legacy Region listing, field/date filters, Quadaa selector, create/update/delete labels, and parent-Quadaa reassignment.
-   - Excel/CSV export and print controls are now restored on all three address hierarchy tables using the legacy column orders and excluding Action controls.
+   - Copy/PDF/Excel/CSV export and print controls are now restored on all three address hierarchy tables using the legacy column orders and excluding Action controls.
 
 18. **Food/holiday/event calendar nuances**
    - Food applications, holiday notification fields, event types, scheduled event notification metadata, and event notification receipt history now have migration coverage; `/settings/events` restores legacy custom subject/body, multi-branch targeting, and 1-10 day offset controls.
