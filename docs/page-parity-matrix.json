@@ -1244,17 +1244,17 @@
   {
     "legacyPhp": "Front/templates/admin/classes/Connectter.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "feature-specific notifications/revalidation",
+    "status": "mapped - retired websocket push client replaced by modern app refresh paths",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy Ratchet websocket publishing is not restored as a standalone runtime. The old live-refresh calls were mostly disabled/commented in legacy JS; modern behavior is covered by feature-specific mutations, revalidation, notification records, and page-level visual parity rows."
   },
   {
     "legacyPhp": "Front/templates/admin/classes/Data.class.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "feature-specific routes/actions",
+    "status": "mapped - legacy Data gateway replaced by feature-specific services",
     "legacyTablesMentioned": [
       "calendar",
       "callcauses",
@@ -1396,22 +1396,22 @@
       "year_select"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "The monolithic legacy Data gateway is not restored as a standalone class. Its page/report behaviors are tracked and restored through individual parity rows, Prisma-backed server actions, migration scripts, report/PDF endpoints, and legacy bridge routes."
   },
   {
     "legacyPhp": "Front/templates/admin/classes/DataValidation.class.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "server actions, zod/prisma validation",
+    "status": "mapped - legacy validation helper replaced by typed server validation",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Shared PHP validation helpers are covered by modern form schemas, server-action guards, Prisma constraints, and per-feature validation messages instead of a standalone DataValidation class."
   },
   {
     "legacyPhp": "Front/templates/admin/classes/FullPDFData.class.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/api/pdf/*, feature-specific report exports",
+    "status": "mapped - legacy PDF helper replaced by modern PDF/report endpoints",
     "legacyTablesMentioned": [
       "and",
       "old",
@@ -1442,22 +1442,22 @@
       "the"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "The legacy FullPDFData helper is represented by modern child, employee, medical, monthly report, and feature-specific PDF/export endpoints. Remaining exact PDF layout audits stay attached to the affected page/report rows rather than this helper file."
   },
   {
     "legacyPhp": "Front/templates/admin/classes/Mysql.class.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "Prisma database layer and migration scripts",
+    "status": "mapped - legacy MySQL wrapper replaced by Prisma",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "The raw mysqli wrapper is intentionally retired. Runtime data access now flows through Prisma and org-scoped server helpers, while legacy database reads are handled by migration/import scripts."
   },
   {
     "legacyPhp": "Front/templates/admin/classes/PHPExcel.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "xlsx/export helpers",
+    "status": "mapped - PHPExcel library replaced by modern export tooling",
     "legacyTablesMentioned": [
       "cellXf",
       "cells",
@@ -1469,7 +1469,7 @@
       "xfIndex"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "The PHPExcel root class is bundled third-party spreadsheet infrastructure, not a runtime route. Modern CSV/XLSX exports use Node/xlsx-based helpers and feature-specific export code."
   },
   {
     "legacyPhp": "Front/templates/admin/classes/PHPExcel/Autoloader.php",
@@ -4650,31 +4650,31 @@
   {
     "legacyPhp": "Front/templates/admin/classes/bin/client.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "feature-specific notifications/revalidation",
+    "status": "mapped - retired websocket test client",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [
       "submit"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "The Ratchet test client only posted sample websocket payloads. Modern runtime does not expose this developer test endpoint; live-update behavior is covered by feature rows and notification/revalidation code."
   },
   {
     "legacyPhp": "Front/templates/admin/classes/bin/push-server.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "feature-specific notifications/revalidation",
+    "status": "mapped - retired Ratchet push server",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "The standalone Ratchet/WAMP push server is retired in the modern app. Notification delivery, page refresh, and async jobs are handled by Next.js/server actions and feature-specific notification code."
   },
   {
     "legacyPhp": "Front/templates/admin/classes/connect.php",
     "legacyJs": "",
     "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "status": "mapped - retired DB2 menu connection sample",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "This file only tested the DB2 menu_lib connection and is not used by the Garderie runtime. No modern route is restored."
   },
   {
     "legacyPhp": "Front/templates/admin/classes/encrypt.php",
@@ -4690,14 +4690,14 @@
   {
     "legacyPhp": "Front/templates/admin/classes/imageRatio.class.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/api/uploads/*, /storage/[...key]",
+    "status": "mapped - legacy image resize helper replaced by upload/storage pipeline",
     "legacyTablesMentioned": [
       "0",
       "center"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy GD image resizing is replaced by the modern upload/storage flow, image fallbacks, and responsive object-fit rendering in feature pages. Exact migrated-image display parity remains tracked on the affected roster/detail rows."
   },
   {
     "legacyPhp": "Front/templates/admin/classes/lib/Bootstrap.php",
@@ -5053,36 +5053,36 @@
     "legacyPhp": "Front/templates/admin/classes/menu_lib.php",
     "legacyJs": "",
     "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "status": "mapped - retired DB2 menu helper",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "This IBM DB2 ODBC helper belongs to an unused menu sample and is not part of the modern Garderie runtime. No route is restored."
   },
   {
     "legacyPhp": "Front/templates/admin/classes/src/MyApp/chat.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "feature-specific notifications/revalidation",
+    "status": "mapped - retired Ratchet chat bridge",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "The Ratchet chat bridge only forwarded websocket messages into the legacy pusher. Modern feature refresh/notification behavior is implemented without this standalone PHP daemon."
   },
   {
     "legacyPhp": "Front/templates/admin/classes/src/MyApp/pusher.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "feature-specific notifications/revalidation",
+    "status": "mapped - retired Ratchet WAMP pusher",
     "legacyTablesMentioned": [
       "ZeroMQ"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "The legacy WAMP topic broadcaster is retired. Modern notifications and page updates are covered through database-backed notification actions, cron jobs, and per-feature revalidation paths."
   },
   {
     "legacyPhp": "Front/templates/admin/classes/ssp.class.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "feature-specific table data loaders",
+    "status": "mapped - DataTables server-side helper replaced by modern data loaders",
     "legacyTablesMentioned": [
       "Determine",
       "a",
@@ -5096,7 +5096,7 @@
       "order",
       "startdate"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "The generic DataTables SSP SQL builder is not restored as a standalone helper. Modern listings use Prisma-backed loaders, TanStack/client filtering, and feature-specific export code with parity tracked on each listing row."
   },
   {
     "legacyPhp": "Front/templates/admin/classes/vendor/autoload.php",
@@ -17407,22 +17407,22 @@
   {
     "legacyPhp": "Front/templates/admin/users/classes/connect.class.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "Auth.js, Prisma, legacy auth import helpers",
+    "status": "mapped - legacy auth database connector replaced",
     "legacyTablesMentioned": [
       "being"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "The Jigowatt auth MySQL connector is retired. Modern auth uses Auth.js/Prisma, with migrated login tables represented through LegacyAuthRecord, legacy auth actions, and admin settings pages."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/connect_user_db.class.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "Auth.js, Prisma, legacy auth import helpers",
+    "status": "mapped - legacy selected-user database connector replaced",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "The legacy per-user database connector is replaced by org-scoped Prisma access, imported legacy database metadata, and server-side organization guards."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/forgot.class.php",
