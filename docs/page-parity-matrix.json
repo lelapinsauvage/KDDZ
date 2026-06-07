@@ -16694,8 +16694,8 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/classes/settings.class.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/settings/notifications, /settings/legacy-users/profile-fields",
+    "status": "partial - legacy notification/profile-field settings restored; account/auth/update forms remain",
     "legacyTablesMentioned": [
       "login_levels",
       "login_profile_fields",
@@ -16710,7 +16710,7 @@
       "update-form",
       "user-profiles-form"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "The legacy `user-profiles-form` profile-field add/update/delete semantics are restored at `/settings/legacy-users/profile-fields` over migrated `login_profile_fields` / `login_profile_fields_man`, including Section, Input type, Input label, Sign Up (`hide`/`require`/`optional`), Public, Delete, source database grouping, soft-delete provenance, and preserved orphan profile values. Legacy notification settings remain surfaced in `/settings/notifications`. Remaining work is dedicated validation/save parity for denied/general/integration/update auth settings forms and deciding which imported login settings actively drive modern Auth.js behavior."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/footer.php",
@@ -17117,11 +17117,22 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/user-profiles.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
-    "legacyTablesMentioned": [],
-    "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "modernRoute": "/users/admin/page/user-profiles.php, /settings/legacy-users/profile-fields",
+    "status": "restored - legacy profile-field definition table restored",
+    "legacyTablesMentioned": [
+      "login_profile_fields",
+      "login_profile_fields_man"
+    ],
+    "requestFieldsMentioned": [
+      "profile-field_delete",
+      "profile-field_name",
+      "profile-field_public",
+      "profile-field_section",
+      "profile-field_signup",
+      "profile-field_type",
+      "user-profiles-form"
+    ],
+    "verification": "`/settings/legacy-users/profile-fields` restores the legacy User profiles table for migrated staff and manager auth metadata: source selector, section, input type, input label, Sign Up visibility (`hide`/`require`/`optional`), Public flag, profile-value counts, add/update dialogs, and Delete behavior mapped to non-destructive `LegacyAuthRecord` soft-delete while existing `login_profiles` / `login_profiles_man` values remain preserved. `/users/admin/page/user-profiles.php` redirects to the restored modern page."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/settings.php",

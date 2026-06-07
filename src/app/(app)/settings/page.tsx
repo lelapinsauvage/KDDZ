@@ -16,6 +16,7 @@ import {
   BellRing,
   Landmark,
   ShieldCheck,
+  TextCursorInput,
   UserCog,
 } from "lucide-react";
 
@@ -126,6 +127,14 @@ const adminOnlySections = [
     icon: UserCog,
     iconBg: "bg-sky-100",
     iconColor: "text-sky-700",
+  },
+  {
+    title: "Profile Fields",
+    description: "Legacy user profile sections and inputs",
+    href: "/settings/legacy-users/profile-fields",
+    icon: TextCursorInput,
+    iconBg: "bg-teal-100",
+    iconColor: "text-teal-700",
   },
 ];
 

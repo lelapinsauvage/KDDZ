@@ -10,8 +10,11 @@ type UserRole = "ADMIN" | "TEACHER" | "NURSE" | "DOCTOR" | "MANAGER";
 export type LegacyUserRecordType = "login_user" | "manager_login_user";
 type LegacyLevelRecordType = "login_level" | "manager_login_level";
 type LegacyProfileValueRecordType = "profile_value" | "manager_profile_value";
-type LegacyProfileFieldRecordType = "profile_field" | "manager_profile_field";
+export type LegacyProfileFieldRecordType =
+  | "profile_field"
+  | "manager_profile_field";
 export type LegacyProfileFieldType = "text_input" | "checkbox" | "textarea";
+export type LegacyProfileSignupMode = "hide" | "require" | "optional";
 
 type ActionResult<T = unknown> = {
   success: boolean;
@@ -62,7 +65,7 @@ export type LegacyAdminProfileValue = {
   fieldType: LegacyProfileFieldType;
   section: string;
   isPublic: boolean;
-  signup: boolean;
+  signup: LegacyProfileSignupMode;
   hasStoredValue: boolean;
 };
 
@@ -79,8 +82,29 @@ type LegacyAdminProfileFieldDefinition = {
   fieldType: LegacyProfileFieldType;
   section: string;
   isPublic: boolean;
-  signup: boolean;
+  signup: LegacyProfileSignupMode;
   recordType: LegacyProfileFieldRecordType;
+};
+
+export type LegacyAdminProfileFieldRow =
+  LegacyAdminProfileFieldDefinition & {
+    legacyTable: "login_profile_fields" | "login_profile_fields_man";
+    valueCount: number;
+  };
+
+export type LegacyAdminProfileFieldsData = {
+  groups: LegacyAdminUserGroup[];
+  fields: LegacyAdminProfileFieldRow[];
+};
+
+export type LegacyAdminProfileFieldInput = {
+  sourceDatabase: string;
+  recordType: LegacyProfileFieldRecordType;
+  section: string;
+  fieldType: LegacyProfileFieldType;
+  label: string;
+  signup: LegacyProfileSignupMode;
+  isPublic: boolean;
 };
 
 export type LegacyAdminProfileValueInput = {
@@ -170,6 +194,8 @@ const SOCIAL_LOGIN_PROVIDERS = [
   "google",
   "yahoo",
 ] as const;
+const PROFILE_FIELD_TYPES = ["text_input", "checkbox", "textarea"] as const;
+const PROFILE_SIGNUP_MODES = ["hide", "require", "optional"] as const;
 
 function legacyObject(value: unknown): Prisma.InputJsonObject {
   if (value && typeof value === "object" && !Array.isArray(value)) {
@@ -209,12 +235,34 @@ function legacyBoolean(value: unknown, key: string, fallback = false) {
   return fallback;
 }
 
-function normalizeProfileFieldType(value: string | null | undefined) {
+function normalizeProfileFieldType(
+  value: string | null | undefined,
+): LegacyProfileFieldType {
   const normalized = value?.trim();
   if (normalized === "checkbox" || normalized === "textarea") {
     return normalized;
   }
   return "text_input";
+}
+
+function normalizeProfileSignupMode(
+  value: string | boolean | null | undefined,
+): LegacyProfileSignupMode {
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "require" || normalized === "optional") {
+      return normalized;
+    }
+    if (normalized === "hide" || normalized === "0" || normalized === "") {
+      return "hide";
+    }
+    if (["1", "true", "yes", "on"].includes(normalized)) {
+      return "optional";
+    }
+  }
+
+  if (value === true) return "optional";
+  return "hide";
 }
 
 function parsePhpLevelIds(serialized: string | null) {
@@ -339,6 +387,36 @@ function profileLegacyTableForUser(recordType: LegacyUserRecordType) {
     : "login_profiles";
 }
 
+function profileFieldLegacyTableForRecordType(
+  recordType: LegacyProfileFieldRecordType,
+) {
+  return recordType === "manager_profile_field"
+    ? "login_profile_fields_man"
+    : "login_profile_fields";
+}
+
+function profileValueRecordTypeForField(
+  recordType: LegacyProfileFieldRecordType,
+): LegacyProfileValueRecordType {
+  return recordType === "manager_profile_field"
+    ? "manager_profile_value"
+    : "profile_value";
+}
+
+function profileSourceUserRecordType(
+  recordType: LegacyProfileFieldRecordType,
+): LegacyUserRecordType {
+  return recordType === "manager_profile_field"
+    ? "manager_login_user"
+    : "login_user";
+}
+
+function isProfileFieldRecordType(
+  recordType: string,
+): recordType is LegacyProfileFieldRecordType {
+  return recordType === "profile_field" || recordType === "manager_profile_field";
+}
+
 function profileGroupKey(
   sourceDatabase: string,
   recordType: LegacyUserRecordType,
@@ -431,6 +509,7 @@ function profileFieldFromRecord(
   record: LegacyProfileFieldRecord,
 ): LegacyAdminProfileFieldDefinition {
   const data = legacyObject(record.legacyData);
+  const signupRaw = data.signup;
   const label =
     legacyString(data, "label") ||
     record.recordKey ||
@@ -451,8 +530,25 @@ function profileFieldFromRecord(
     ),
     section: legacyString(data, "section") || "Profile",
     isPublic,
-    signup: legacyBoolean(data, "signup"),
+    signup: normalizeProfileSignupMode(
+      typeof signupRaw === "boolean" || typeof signupRaw === "string"
+        ? signupRaw
+        : legacyString(data, "signup"),
+    ),
     recordType: record.recordType as LegacyProfileFieldRecordType,
+  };
+}
+
+function profileFieldRowFromRecord(
+  record: LegacyProfileFieldRecord,
+  valueCount = 0,
+): LegacyAdminProfileFieldRow {
+  const field = profileFieldFromRecord(record);
+
+  return {
+    ...field,
+    legacyTable: profileFieldLegacyTableForRecordType(field.recordType),
+    valueCount,
   };
 }
 
@@ -597,7 +693,7 @@ function buildProfileValuesForLegacyUser(params: {
       fieldType: "text_input",
       section: "Legacy profile",
       isPublic: true,
-      signup: false,
+      signup: "hide",
       hasStoredValue: true,
     });
   }
@@ -783,7 +879,7 @@ async function saveLegacyProfileValues(
             fieldType: "text_input",
             section: "Legacy profile",
             isPublic: true,
-            signup: false,
+            signup: "hide",
             recordType: fieldRecordType,
           } satisfies LegacyAdminProfileFieldDefinition)
         : null);
@@ -1133,6 +1229,391 @@ async function validateLegacyUserInput(
     classes: input.classes?.trim() || "0",
     isRestricted: Boolean(input.isRestricted),
   };
+}
+
+function profileFieldCountKey(
+  sourceDatabase: string,
+  recordType: LegacyProfileFieldRecordType,
+  legacyId: number,
+) {
+  return `${sourceDatabase}:${recordType}:${legacyId}`;
+}
+
+function buildProfileFieldValueCounts(valueRecords: LegacyProfileValueRecord[]) {
+  const counts = new Map<string, number>();
+
+  for (const record of valueRecords) {
+    const fieldLegacyId = profileFieldLegacyIdFromValueRecord(record);
+    if (!fieldLegacyId) continue;
+
+    const userRecordType = userRecordTypeForProfileRecord(record.recordType);
+    const fieldRecordType = profileFieldRecordTypeForUser(userRecordType);
+    const key = profileFieldCountKey(
+      record.sourceDatabase,
+      fieldRecordType,
+      fieldLegacyId,
+    );
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+
+  return counts;
+}
+
+async function countProfileValuesForField(
+  sourceDatabase: string,
+  recordType: LegacyProfileFieldRecordType,
+  legacyId: number,
+) {
+  const valueRecords = await db.legacyAuthRecord.findMany({
+    where: {
+      sourceDatabase,
+      recordType: profileValueRecordTypeForField(recordType),
+    },
+    select: {
+      id: true,
+      sourceDatabase: true,
+      legacyId: true,
+      legacyUserId: true,
+      recordType: true,
+      recordKey: true,
+      recordValue: true,
+      legacyData: true,
+    },
+  });
+
+  return buildProfileFieldValueCounts(valueRecords).get(
+    profileFieldCountKey(sourceDatabase, recordType, legacyId),
+  ) ?? 0;
+}
+
+function validateLegacyProfileFieldInput(
+  input: LegacyAdminProfileFieldInput,
+  existing?: { sourceDatabase: string; recordType: string },
+) {
+  const sourceDatabase = (existing?.sourceDatabase ?? input.sourceDatabase).trim();
+  const recordType = existing?.recordType ?? input.recordType;
+  const section = input.section.trim();
+  const label = input.label.trim();
+  const fieldType = normalizeProfileFieldType(input.fieldType);
+  const signup = normalizeProfileSignupMode(input.signup);
+
+  if (!sourceDatabase) return { error: "Missing legacy source database" };
+  if (!isProfileFieldRecordType(recordType)) {
+    return { error: "Unknown legacy profile field type" };
+  }
+  if (!PROFILE_FIELD_TYPES.includes(fieldType)) {
+    return { error: "Unknown input type" };
+  }
+  if (!section) return { error: "Section name is required." };
+  if (!label) return { error: "Field name is required." };
+  if (!PROFILE_SIGNUP_MODES.includes(signup)) {
+    return { error: "Unknown sign-up visibility" };
+  }
+
+  return {
+    sourceDatabase,
+    recordType,
+    legacyTable: profileFieldLegacyTableForRecordType(recordType),
+    section,
+    label,
+    fieldType,
+    signup,
+    isPublic: Boolean(input.isPublic),
+  };
+}
+
+function legacyProfileFieldData(params: {
+  legacyId: number;
+  section: string;
+  fieldType: LegacyProfileFieldType;
+  label: string;
+  signup: LegacyProfileSignupMode;
+  isPublic: boolean;
+  existing?: Prisma.JsonValue | null;
+  marker: "inserted_from" | "updated_from";
+}): Prisma.InputJsonObject {
+  return {
+    ...legacyObject(params.existing),
+    id: params.legacyId,
+    section: params.section,
+    type: params.fieldType,
+    label: params.label,
+    public: params.isPublic ? 1 : 0,
+    signup: params.signup,
+    [params.marker]: "modern_legacy_profile_fields",
+  };
+}
+
+function revalidateLegacyProfileFieldPaths() {
+  revalidatePath("/settings/legacy-users/profile-fields");
+  revalidatePath("/settings/legacy-users");
+  revalidatePath("/users/admin/page/user-profiles.php");
+}
+
+export async function getLegacyProfileFields(): Promise<
+  ActionResult<LegacyAdminProfileFieldsData>
+> {
+  try {
+    await requireRole("ADMIN");
+
+    const [{ groups }, fieldRecords, valueRecords] = await Promise.all([
+      getLevelsAndGroups(),
+      db.legacyAuthRecord.findMany({
+        where: {
+          recordType: { in: ["profile_field", "manager_profile_field"] },
+        },
+        orderBy: [
+          { sourceDatabase: "asc" },
+          { recordType: "asc" },
+          { legacyId: "asc" },
+        ],
+        select: {
+          id: true,
+          sourceDatabase: true,
+          legacyId: true,
+          recordType: true,
+          recordKey: true,
+          recordValue: true,
+          isDisabled: true,
+          legacyData: true,
+        },
+      }),
+      db.legacyAuthRecord.findMany({
+        where: {
+          recordType: { in: ["profile_value", "manager_profile_value"] },
+        },
+        select: {
+          id: true,
+          sourceDatabase: true,
+          legacyId: true,
+          legacyUserId: true,
+          recordType: true,
+          recordKey: true,
+          recordValue: true,
+          legacyData: true,
+        },
+      }),
+    ]);
+
+    const groupMap = new Map(groups.map((group) => [group.key, group]));
+    const valueCounts = buildProfileFieldValueCounts(valueRecords);
+    const fields = fieldRecords
+      .filter(
+        (
+          record,
+        ): record is LegacyProfileFieldRecord & {
+          recordType: LegacyProfileFieldRecordType;
+        } => isProfileFieldRecordType(record.recordType),
+      )
+      .map((record) => {
+        const row = profileFieldRowFromRecord(
+          record,
+          valueCounts.get(
+            profileFieldCountKey(
+              record.sourceDatabase,
+              record.recordType,
+              record.legacyId,
+            ),
+          ) ?? 0,
+        );
+        const sourceRecordType = profileSourceUserRecordType(row.recordType);
+        const config = USER_CONFIG[sourceRecordType];
+        const key = profileGroupKey(row.sourceDatabase, sourceRecordType);
+        if (!groupMap.has(key)) {
+          groupMap.set(key, {
+            key,
+            sourceDatabase: row.sourceDatabase,
+            recordType: sourceRecordType,
+            label: config.label,
+            levelRecordType: config.levelRecordType,
+          });
+        }
+        return row;
+      })
+      .sort((a, b) => {
+        const source = a.sourceDatabase.localeCompare(b.sourceDatabase);
+        if (source !== 0) return source;
+        const type = a.recordType.localeCompare(b.recordType);
+        if (type !== 0) return type;
+        const section = a.section.localeCompare(b.section);
+        if (section !== 0) return section;
+        return a.legacyId - b.legacyId;
+      });
+
+    const sortedGroups = Array.from(groupMap.values()).sort((a, b) => {
+      const source = a.sourceDatabase.localeCompare(b.sourceDatabase);
+      if (source !== 0) return source;
+      return a.label.localeCompare(b.label);
+    });
+
+    return { success: true, data: { fields, groups: sortedGroups } };
+  } catch (error) {
+    console.error("Failed to fetch legacy profile fields:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch legacy profile fields",
+    };
+  }
+}
+
+export async function createLegacyProfileField(
+  input: LegacyAdminProfileFieldInput,
+): Promise<ActionResult<LegacyAdminProfileFieldRow>> {
+  try {
+    await requireRole("ADMIN");
+    const validated = validateLegacyProfileFieldInput(input);
+    if ("error" in validated) return { success: false, error: validated.error };
+
+    const maxField = await db.legacyAuthRecord.findFirst({
+      where: {
+        sourceDatabase: validated.sourceDatabase,
+        legacyTable: validated.legacyTable,
+      },
+      orderBy: { legacyId: "desc" },
+      select: { legacyId: true },
+    });
+    const legacyId = (maxField?.legacyId ?? 0) + 1;
+
+    const created = await db.legacyAuthRecord.create({
+      data: {
+        sourceDatabase: validated.sourceDatabase,
+        legacyTable: validated.legacyTable,
+        legacyKey: `${validated.sourceDatabase}:${validated.legacyTable}:${legacyId}`,
+        legacyId,
+        recordType: validated.recordType,
+        recordKey: validated.label,
+        recordValue: validated.fieldType,
+        isDisabled: !validated.isPublic,
+        legacyData: legacyProfileFieldData({
+          legacyId,
+          section: validated.section,
+          fieldType: validated.fieldType,
+          label: validated.label,
+          signup: validated.signup,
+          isPublic: validated.isPublic,
+          marker: "inserted_from",
+        }),
+      },
+    });
+
+    revalidateLegacyProfileFieldPaths();
+
+    return {
+      success: true,
+      data: profileFieldRowFromRecord(created),
+    };
+  } catch (error) {
+    console.error("Failed to create legacy profile field:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to create legacy profile field",
+    };
+  }
+}
+
+export async function updateLegacyProfileField(
+  fieldId: string,
+  input: LegacyAdminProfileFieldInput,
+): Promise<ActionResult<LegacyAdminProfileFieldRow>> {
+  try {
+    await requireRole("ADMIN");
+    const existing = await db.legacyAuthRecord.findUnique({
+      where: { id: fieldId },
+    });
+    if (!existing || !isProfileFieldRecordType(existing.recordType)) {
+      return { success: false, error: "No such profile field!" };
+    }
+
+    const validated = validateLegacyProfileFieldInput(input, existing);
+    if ("error" in validated) return { success: false, error: validated.error };
+
+    const updated = await db.legacyAuthRecord.update({
+      where: { id: existing.id },
+      data: {
+        legacyTable: validated.legacyTable,
+        recordType: validated.recordType,
+        recordKey: validated.label,
+        recordValue: validated.fieldType,
+        isDisabled: !validated.isPublic,
+        legacyData: legacyProfileFieldData({
+          legacyId: existing.legacyId,
+          section: validated.section,
+          fieldType: validated.fieldType,
+          label: validated.label,
+          signup: validated.signup,
+          isPublic: validated.isPublic,
+          existing: existing.legacyData,
+          marker: "updated_from",
+        }),
+      },
+    });
+    const valueCount = await countProfileValuesForField(
+      updated.sourceDatabase,
+      updated.recordType as LegacyProfileFieldRecordType,
+      updated.legacyId,
+    );
+
+    revalidateLegacyProfileFieldPaths();
+
+    return {
+      success: true,
+      data: profileFieldRowFromRecord(updated, valueCount),
+    };
+  } catch (error) {
+    console.error("Failed to update legacy profile field:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to update legacy profile field",
+    };
+  }
+}
+
+export async function deleteLegacyProfileField(
+  fieldId: string,
+): Promise<ActionResult<{ id: string }>> {
+  try {
+    await requireRole("ADMIN");
+    const existing = await db.legacyAuthRecord.findUnique({
+      where: { id: fieldId },
+    });
+    if (!existing || !isProfileFieldRecordType(existing.recordType)) {
+      return { success: false, error: "No such profile field!" };
+    }
+
+    await db.legacyAuthRecord.update({
+      where: { id: existing.id },
+      data: {
+        recordType: `${existing.recordType}_deleted`,
+        isDisabled: true,
+        legacyData: {
+          ...legacyObject(existing.legacyData),
+          deleted_from: "modern_legacy_profile_fields",
+        },
+      },
+    });
+
+    revalidateLegacyProfileFieldPaths();
+
+    return { success: true, data: { id: existing.id } };
+  } catch (error) {
+    console.error("Failed to delete legacy profile field:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to delete legacy profile field",
+    };
+  }
 }
 
 export async function getLegacyAdminUsers(): Promise<

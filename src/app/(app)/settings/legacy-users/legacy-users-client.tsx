@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState, useTransition, type ReactNode } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { ExportButton } from "@/components/shared/export-button";
@@ -71,6 +72,7 @@ import {
   Printer,
   Search,
   ShieldCheck,
+  TextCursorInput,
   Trash2,
   UserCog,
   UsersRound,
@@ -863,13 +865,21 @@ export function LegacyUsersClient({
           { label: "Legacy Users" },
         ]}
         actions={
-          <Button
-            onClick={openCreateDialog}
-            disabled={initialData.groups.length === 0}
-          >
-            <Plus className="size-4" />
-            Add user
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" asChild>
+              <Link href="/settings/legacy-users/profile-fields">
+                <TextCursorInput className="size-4" />
+                Profile fields
+              </Link>
+            </Button>
+            <Button
+              onClick={openCreateDialog}
+              disabled={initialData.groups.length === 0}
+            >
+              <Plus className="size-4" />
+              Add user
+            </Button>
+          </div>
         }
       />
 
