@@ -61,6 +61,8 @@ import {
 } from "@/lib/actions/legacy-users";
 import { cn } from "@/lib/utils";
 import {
+  ChevronLeft,
+  ChevronRight,
   Database,
   History,
   Link2,
@@ -77,6 +79,11 @@ import { toast } from "sonner";
 import type { ExportColumn } from "@/lib/export";
 
 const ALL_GROUPS_KEY = "__all__";
+const PAGE_SIZE_ALL = "all";
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100, 150] as const;
+
+type LegacyUsersPageSize = (typeof PAGE_SIZE_OPTIONS)[number] | typeof PAGE_SIZE_ALL;
+type PaginationItem = number | "ellipsis-start" | "ellipsis-end";
 
 const legacyUserExportColumns: ExportColumn[] = [
   { header: "Legacy ID", key: "legacyId" },
@@ -243,6 +250,41 @@ function groupProfileValues(profiles: LegacyAdminUserRow["profileValues"]) {
     section,
     values,
   }));
+}
+
+function paginationItems(currentPage: number, totalPages: number) {
+  const stages = 3;
+  const items: PaginationItem[] = [];
+
+  if (totalPages < 7 + stages * 2) {
+    for (let page = 1; page <= totalPages; page += 1) items.push(page);
+    return items;
+  }
+
+  if (currentPage < 1 + stages * 2) {
+    for (let page = 1; page < 4 + stages * 2; page += 1) items.push(page);
+    items.push("ellipsis-end", totalPages - 1, totalPages);
+    return items;
+  }
+
+  if (totalPages - stages * 2 > currentPage && currentPage > stages * 2) {
+    items.push(1, 2, "ellipsis-start");
+    for (
+      let page = currentPage - stages;
+      page <= currentPage + stages;
+      page += 1
+    ) {
+      items.push(page);
+    }
+    items.push("ellipsis-end", totalPages - 1, totalPages);
+    return items;
+  }
+
+  items.push(1, 2, "ellipsis-start");
+  for (let page = totalPages - (2 + stages * 2); page <= totalPages; page += 1) {
+    items.push(page);
+  }
+  return items;
 }
 
 function sortUsers(users: LegacyAdminUserRow[]) {
@@ -427,6 +469,8 @@ export function LegacyUsersClient({
   const [users, setUsers] = useState(sortedInitialUsers);
   const [query, setQuery] = useState(initialQuery);
   const [activeGroupKey, setActiveGroupKey] = useState(ALL_GROUPS_KEY);
+  const [pageSize, setPageSize] = useState<LegacyUsersPageSize>(10);
+  const [currentPage, setCurrentPage] = useState(1);
   const [message, setMessage] = useState<MessageState>(
     initialError ? { type: "error", text: initialError } : null,
   );
@@ -465,6 +509,35 @@ export function LegacyUsersClient({
       return groupMatches && matchesQuery(user, query);
     });
   }, [activeGroupKey, query, users]);
+  const totalPages =
+    pageSize === PAGE_SIZE_ALL
+      ? 1
+      : Math.max(1, Math.ceil(filteredUsers.length / pageSize));
+  const currentPageForView = Math.min(currentPage, totalPages);
+  const paginatedUsers = useMemo(() => {
+    if (pageSize === PAGE_SIZE_ALL) return filteredUsers;
+
+    const startIndex = (currentPageForView - 1) * pageSize;
+    return filteredUsers.slice(startIndex, startIndex + pageSize);
+  }, [currentPageForView, filteredUsers, pageSize]);
+  const pageItems = useMemo(
+    () => paginationItems(currentPageForView, totalPages),
+    [currentPageForView, totalPages],
+  );
+  const pageRange = useMemo(() => {
+    if (filteredUsers.length === 0) {
+      return { start: 0, end: 0 };
+    }
+    if (pageSize === PAGE_SIZE_ALL) {
+      return { start: 1, end: filteredUsers.length };
+    }
+
+    const start = (currentPageForView - 1) * pageSize + 1;
+    return {
+      start,
+      end: Math.min(start + pageSize - 1, filteredUsers.length),
+    };
+  }, [currentPageForView, filteredUsers.length, pageSize]);
 
   const exportRows = useMemo<Record<string, unknown>[]>(() => {
     return filteredUsers.map((user) => {
@@ -584,6 +657,25 @@ export function LegacyUsersClient({
         [String(fieldLegacyId)]: value,
       },
     }));
+  }
+
+  function updateQuery(value: string) {
+    setQuery(value);
+    setCurrentPage(1);
+  }
+
+  function updateActiveGroup(key: string) {
+    setActiveGroupKey(key);
+    setCurrentPage(1);
+  }
+
+  function updatePageSize(value: string) {
+    setPageSize(
+      value === PAGE_SIZE_ALL
+        ? PAGE_SIZE_ALL
+        : (Number(value) as LegacyUsersPageSize),
+    );
+    setCurrentPage(1);
   }
 
   function openCreateDialog() {
@@ -838,7 +930,7 @@ export function LegacyUsersClient({
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => updateQuery(event.target.value)}
               placeholder="Search username, name, email, ID, level"
               className="pl-9"
             />
@@ -848,7 +940,7 @@ export function LegacyUsersClient({
               type="button"
               size="sm"
               variant={activeGroupKey === ALL_GROUPS_KEY ? "default" : "outline"}
-              onClick={() => setActiveGroupKey(ALL_GROUPS_KEY)}
+              onClick={() => updateActiveGroup(ALL_GROUPS_KEY)}
             >
               <UsersRound className="size-4" />
               All
@@ -860,13 +952,37 @@ export function LegacyUsersClient({
                 type="button"
                 size="sm"
                 variant={activeGroupKey === group.key ? "default" : "outline"}
-                onClick={() => setActiveGroupKey(group.key)}
+                onClick={() => updateActiveGroup(group.key)}
               >
                 <Database className="size-4" />
                 {groupLabel(group)}
                 <Badge variant="secondary">{groupCounts.get(group.key) ?? 0}</Badge>
               </Button>
             ))}
+            <div className="flex items-center gap-2 rounded-sm border border-border px-2">
+              <Label
+                htmlFor="legacy-users-page-size"
+                className="text-xs text-muted-foreground"
+              >
+                Show
+              </Label>
+              <Select value={String(pageSize)} onValueChange={updatePageSize}>
+                <SelectTrigger
+                  id="legacy-users-page-size"
+                  className="h-8 w-[90px] border-0 px-1 shadow-none"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAGE_SIZE_OPTIONS.map((option) => (
+                    <SelectItem key={option} value={String(option)}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value={PAGE_SIZE_ALL}>All</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <ExportButton
               filename="legacy-users"
               sheetName="Legacy Users"
@@ -911,7 +1027,7 @@ export function LegacyUsersClient({
                 </TableCell>
               </TableRow>
             ) : (
-              filteredUsers.map((user) => {
+              paginatedUsers.map((user) => {
                 const group = getGroupForUser(initialData.groups, user);
                 const branchOptions: AccessOption[] = initialData.branches
                   .filter((branch) => branch.sourceDatabase === user.sourceDatabase)
@@ -1064,6 +1180,57 @@ export function LegacyUsersClient({
             )}
           </TableBody>
         </Table>
+
+        {filteredUsers.length > 0 ? (
+          <div className="flex flex-col gap-3 rounded-sm border border-border bg-background px-3 py-2 print:hidden md:flex-row md:items-center md:justify-between">
+            <div className="text-sm text-muted-foreground">
+              Showing {pageRange.start}-{pageRange.end} of {filteredUsers.length}
+            </div>
+            <div className="flex flex-wrap items-center gap-1">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={currentPageForView <= 1}
+                onClick={() => setCurrentPage(currentPageForView - 1)}
+              >
+                <ChevronLeft className="size-4" />
+                Previous
+              </Button>
+              {pageItems.map((item) =>
+                typeof item === "number" ? (
+                  <Button
+                    key={item}
+                    type="button"
+                    size="sm"
+                    variant={item === currentPageForView ? "default" : "outline"}
+                    className="min-w-9 px-2"
+                    onClick={() => setCurrentPage(item)}
+                  >
+                    {item}
+                  </Button>
+                ) : (
+                  <span
+                    key={item}
+                    className="flex h-9 min-w-8 items-center justify-center text-muted-foreground"
+                  >
+                    ...
+                  </span>
+                ),
+              )}
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={currentPageForView >= totalPages}
+                onClick={() => setCurrentPage(currentPageForView + 1)}
+              >
+                Next
+                <ChevronRight className="size-4" />
+              </Button>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
