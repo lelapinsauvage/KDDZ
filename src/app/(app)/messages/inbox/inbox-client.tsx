@@ -61,7 +61,14 @@ interface InboxMessage {
   body: string;
   isRead: boolean;
   threadId: string | null;
+  legacyDelivery: LegacyDeliveryAudit;
   createdAt: string;
+}
+
+interface LegacyDeliveryAudit {
+  channels: string[];
+  scope: string | null;
+  pendingExternal: boolean;
 }
 
 interface InboxClientProps {
@@ -109,6 +116,44 @@ const NATURE_STYLES: Record<string, string> = {
   Legal: "bg-[var(--color-warning-light)] text-[var(--color-warning-dark)] border-[var(--color-warning)]/20",
   Event: "bg-[var(--color-info-light)] text-[var(--color-info-dark)] border-[var(--color-info)]/20",
 };
+
+function DeliveryBadges({ audit }: { audit: LegacyDeliveryAudit }) {
+  const scope = audit.scope && audit.scope !== "Parent" ? audit.scope : null;
+
+  if (!audit.channels.length && !scope && !audit.pendingExternal) {
+    return <span className="text-xs text-muted-foreground">-</span>;
+  }
+
+  return (
+    <div className="flex max-w-[180px] flex-wrap gap-1">
+      {audit.channels.map((channel) => (
+        <Badge
+          key={channel}
+          variant="outline"
+          className="border-border bg-background px-1.5 py-0 text-[10px] font-normal"
+        >
+          {channel}
+        </Badge>
+      ))}
+      {scope && (
+        <Badge
+          variant="outline"
+          className="border-border bg-muted px-1.5 py-0 text-[10px] font-normal text-muted-foreground"
+        >
+          {scope}
+        </Badge>
+      )}
+      {audit.pendingExternal && (
+        <Badge
+          variant="outline"
+          className="border-amber-300 bg-amber-50 px-1.5 py-0 text-[10px] font-normal text-amber-700"
+        >
+          Pending
+        </Badge>
+      )}
+    </div>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Component
@@ -209,6 +254,11 @@ export function InboxClient({ messages, total }: InboxClientProps) {
           </Badge>
         );
       },
+    },
+    {
+      id: "delivery",
+      header: "Delivery",
+      cell: ({ row }) => <DeliveryBadges audit={row.original.legacyDelivery} />,
     },
     {
       accessorKey: "subject",

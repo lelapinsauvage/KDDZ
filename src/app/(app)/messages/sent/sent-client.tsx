@@ -72,7 +72,14 @@ interface SentMessage {
   body: string;
   isRead: boolean;
   threadId: string | null;
+  legacyDelivery: LegacyDeliveryAudit;
   createdAt: string;
+}
+
+interface LegacyDeliveryAudit {
+  channels: string[];
+  scope: string | null;
+  pendingExternal: boolean;
 }
 
 type SentPageSize = number | "all";
@@ -139,6 +146,7 @@ const sentExportColumns: ExportColumn[] = [
   { header: "To", key: "to" },
   { header: "Date", key: "date" },
   { header: "Nature", key: "nature" },
+  { header: "Delivery", key: "delivery" },
   { header: "Subject", key: "subject" },
   { header: "Message", key: "message" },
   { header: "Thread", key: "thread" },
@@ -183,6 +191,55 @@ function threadLabel(message: SentMessage) {
   if (message.legacyThreadId) return String(message.legacyThreadId);
   if (message.threadId) return message.threadId.slice(0, 8);
   return "-";
+}
+
+function deliveryLabel(audit: LegacyDeliveryAudit) {
+  const scope = audit.scope && audit.scope !== "Parent" ? audit.scope : null;
+  return [
+    ...audit.channels,
+    scope,
+    audit.pendingExternal ? "Pending" : null,
+  ]
+    .filter(Boolean)
+    .join(", ");
+}
+
+function DeliveryBadges({ audit }: { audit: LegacyDeliveryAudit }) {
+  const scope = audit.scope && audit.scope !== "Parent" ? audit.scope : null;
+
+  if (!audit.channels.length && !scope && !audit.pendingExternal) {
+    return <span className="text-xs text-muted-foreground">-</span>;
+  }
+
+  return (
+    <div className="flex max-w-[180px] flex-wrap gap-1">
+      {audit.channels.map((channel) => (
+        <Badge
+          key={channel}
+          variant="outline"
+          className="border-border bg-background px-1.5 py-0 text-[10px] font-normal"
+        >
+          {channel}
+        </Badge>
+      ))}
+      {scope && (
+        <Badge
+          variant="outline"
+          className="border-border bg-muted px-1.5 py-0 text-[10px] font-normal text-muted-foreground"
+        >
+          {scope}
+        </Badge>
+      )}
+      {audit.pendingExternal && (
+        <Badge
+          variant="outline"
+          className="border-amber-300 bg-amber-50 px-1.5 py-0 text-[10px] font-normal text-amber-700"
+        >
+          Pending
+        </Badge>
+      )}
+    </div>
+  );
 }
 
 export function SentClient({
@@ -279,6 +336,7 @@ export function SentClient({
         to: message.recipientName,
         date: formatLegacyDateTime(message.createdAt),
         nature: message.nature,
+        delivery: deliveryLabel(message.legacyDelivery),
         subject: message.subject ?? "",
         message: message.body,
         thread: threadLabel(message),
@@ -423,6 +481,7 @@ export function SentClient({
                   <TableHead className="min-w-[220px] bg-muted/60">To</TableHead>
                   <TableHead className="min-w-[160px] bg-muted/60">Date</TableHead>
                   <TableHead className="min-w-[120px] bg-muted/60">Nature</TableHead>
+                  <TableHead className="min-w-[170px] bg-muted/60">Delivery</TableHead>
                   <TableHead className="min-w-[220px] bg-muted/60">Subject</TableHead>
                   <TableHead className="min-w-[280px] bg-muted/60">Message</TableHead>
                   <TableHead className="min-w-[120px] bg-muted/60">Thread</TableHead>
@@ -467,6 +526,9 @@ export function SentClient({
                           >
                             {nature}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <DeliveryBadges audit={message.legacyDelivery} />
                         </TableCell>
                         <TableCell>
                           <Link
@@ -532,7 +594,7 @@ export function SentClient({
                   })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={8} className="h-32 text-center">
+                    <TableCell colSpan={9} className="h-32 text-center">
                       <div className="text-sm font-medium">No sent messages found</div>
                       <div className="mt-1 text-xs text-muted-foreground">
                         No messages match the current filters.

@@ -39,6 +39,11 @@ export default async function MessageDetailPage({ params }: PageProps) {
     body: string;
     isRead: boolean;
     threadId: string | null;
+    legacyDelivery: {
+      channels: string[];
+      scope: string | null;
+      pendingExternal: boolean;
+    };
     createdAt: string;
   };
 
@@ -54,6 +59,11 @@ export default async function MessageDetailPage({ params }: PageProps) {
     body: string;
     isRead: boolean;
     threadId: string | null;
+    legacyDelivery: {
+      channels: string[];
+      scope: string | null;
+      pendingExternal: boolean;
+    };
     createdAt: string;
   }>;
 

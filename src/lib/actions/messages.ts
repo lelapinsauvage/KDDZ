@@ -71,6 +71,8 @@ interface LegacyMessageDeliveryOptions {
   adminOnly?: boolean;
 }
 
+type LegacyDeliveryChannel = "Web" | "Mobile" | "SMS" | "WhatsApp";
+
 type ActionResult<T = unknown> = {
   success: boolean;
   error?: string;
@@ -210,6 +212,52 @@ function legacyMessageData(params: {
     classId: params.classId ?? null,
     selectedChildIds: params.childIds ?? [],
     recipientScope: params.recipientScope ?? "primary",
+  };
+}
+
+function isJsonRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function legacyDeliveryAudit(
+  legacyData: Prisma.JsonValue | null | undefined,
+) {
+  const data = isJsonRecord(legacyData) ? legacyData : null;
+  const delivery = isJsonRecord(data?.delivery) ? data.delivery : null;
+
+  if (!data || !delivery) {
+    return {
+      channels: [] as LegacyDeliveryChannel[],
+      scope: null,
+      pendingExternal: false,
+    };
+  }
+
+  const channels: LegacyDeliveryChannel[] = [];
+  if (delivery.web !== false) channels.push("Web");
+  if (delivery.mobile === true) channels.push("Mobile");
+  if (delivery.sms === true) channels.push("SMS");
+  if (delivery.whatsapp === true) channels.push("WhatsApp");
+
+  const recipientScope =
+    typeof data.recipientScope === "string" ? data.recipientScope : null;
+  const scope =
+    delivery.adminOnly === true
+      ? "Admin only"
+      : recipientScope === "admin-copy"
+        ? "Admin copy"
+        : recipientScope === "admin"
+          ? "Admin"
+          : recipientScope === "parent"
+            ? "Parent"
+            : null;
+
+  return {
+    channels,
+    scope,
+    pendingExternal:
+      Array.isArray(data.externalDeliveryPending) &&
+      data.externalDeliveryPending.some(Boolean),
   };
 }
 
@@ -371,6 +419,7 @@ export async function getInbox(
       body: msg.body,
       isRead: msg.isRead,
       threadId: msg.threadId,
+      legacyDelivery: legacyDeliveryAudit(msg.legacyData),
       createdAt:
         msg.createdAt instanceof Date
           ? msg.createdAt.toISOString()
@@ -663,6 +712,7 @@ export async function getSentMessages(
       body: msg.body,
       isRead: msg.isRead,
       threadId: msg.threadId,
+      legacyDelivery: legacyDeliveryAudit(msg.legacyData),
       createdAt:
         msg.createdAt instanceof Date
           ? msg.createdAt.toISOString()
@@ -752,6 +802,7 @@ export async function getMessageById(id: string): Promise<ActionResult> {
       body: m.body,
       isRead: m.isRead,
       threadId: m.threadId,
+      legacyDelivery: legacyDeliveryAudit(m.legacyData),
       createdAt:
         m.createdAt instanceof Date
           ? m.createdAt.toISOString()

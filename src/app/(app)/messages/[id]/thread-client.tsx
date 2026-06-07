@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
@@ -49,7 +49,14 @@ interface ThreadMessage {
   body: string;
   isRead: boolean;
   threadId: string | null;
+  legacyDelivery: LegacyDeliveryAudit;
   createdAt: string;
+}
+
+interface LegacyDeliveryAudit {
+  channels: string[];
+  scope: string | null;
+  pendingExternal: boolean;
 }
 
 interface ThreadClientProps {
@@ -77,6 +84,50 @@ function initials(name: string): string {
   const parts = name.trim().split(/\s+/);
   if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   return name.slice(0, 2).toUpperCase();
+}
+
+function DeliveryBadges({
+  audit,
+  empty = null,
+}: {
+  audit: LegacyDeliveryAudit;
+  empty?: ReactNode;
+}) {
+  const scope = audit.scope && audit.scope !== "Parent" ? audit.scope : null;
+
+  if (!audit.channels.length && !scope && !audit.pendingExternal) {
+    return empty;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {audit.channels.map((channel) => (
+        <Badge
+          key={channel}
+          variant="outline"
+          className="border-border bg-background px-1.5 py-0 text-[10px] font-normal"
+        >
+          {channel}
+        </Badge>
+      ))}
+      {scope && (
+        <Badge
+          variant="outline"
+          className="border-border bg-muted px-1.5 py-0 text-[10px] font-normal text-muted-foreground"
+        >
+          {scope}
+        </Badge>
+      )}
+      {audit.pendingExternal && (
+        <Badge
+          variant="outline"
+          className="border-amber-300 bg-amber-50 px-1.5 py-0 text-[10px] font-normal text-amber-700"
+        >
+          Pending
+        </Badge>
+      )}
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -243,6 +294,7 @@ export function ThreadClient({
                     {threadMessages.length} messages
                   </Badge>
                 )}
+                <DeliveryBadges audit={message.legacyDelivery} />
               </div>
             </div>
           </CardHeader>
@@ -289,9 +341,12 @@ export function ThreadClient({
                       </div>
                     </div>
                   </div>
-                  <Badge variant="outline" className="shrink-0 text-[10px]">
-                    {msg.senderType}
-                  </Badge>
+                  <div className="flex shrink-0 flex-wrap justify-end gap-1">
+                    <Badge variant="outline" className="text-[10px]">
+                      {msg.senderType}
+                    </Badge>
+                    <DeliveryBadges audit={msg.legacyDelivery} />
+                  </div>
                 </div>
                 <div className="mt-3 whitespace-pre-wrap rounded-md bg-background/75 p-3 text-sm text-foreground">
                   {msg.body}

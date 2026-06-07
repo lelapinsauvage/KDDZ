@@ -17,6 +17,11 @@ export default async function MessageInboxPage() {
     body: string;
     isRead: boolean;
     threadId: string | null;
+    legacyDelivery: {
+      channels: string[];
+      scope: string | null;
+      pendingExternal: boolean;
+    };
     createdAt: string;
   }>;
   const total = (data?.total ?? 0) as number;

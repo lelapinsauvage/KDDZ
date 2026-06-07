@@ -98,6 +98,11 @@ export default async function SentMessagesPage({
     body: string;
     isRead: boolean;
     threadId: string | null;
+    legacyDelivery: {
+      channels: string[];
+      scope: string | null;
+      pendingExternal: boolean;
+    };
     createdAt: string;
   }>;
   const exportMessages = (exportData?.messages ?? []) as typeof messages;
