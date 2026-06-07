@@ -1,5 +1,7 @@
 import { getHolidays } from "@/lib/actions/settings";
 import { getBranches } from "@/lib/actions/branches";
+import { getLegacyHolidayActionPermissions } from "@/lib/legacy-holiday-action-permissions";
+import { requireOrgSafe } from "@/lib/require-org";
 import { HolidaysClient } from "./holidays-client";
 
 function normalizeNotificationDaysBefore(value: unknown, fallback: number) {
@@ -16,6 +18,11 @@ function normalizeNotificationDaysBefore(value: unknown, fallback: number) {
 }
 
 export default async function HolidayCalendarPage() {
+  const orgResult = await requireOrgSafe();
+  const holidayPermissions = orgResult.ok
+    ? await getLegacyHolidayActionPermissions(orgResult.ctx)
+    : { canAddEditHolidays: false };
+
   const [holidaysResult, branchesResult] = await Promise.all([
     getHolidays(),
     getBranches(),
@@ -52,6 +59,7 @@ export default async function HolidayCalendarPage() {
     <HolidaysClient
       holidays={serializedHolidays}
       branches={branches}
+      canAddEditHolidays={holidayPermissions.canAddEditHolidays}
     />
   );
 }

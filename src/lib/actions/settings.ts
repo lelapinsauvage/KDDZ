@@ -520,6 +520,9 @@ export async function createHoliday(data: HolidayData): Promise<ActionResult> {
     if (!result.ok) return { success: false, error: result.error };
     const { ctx } = result;
 
+    const permission = await requireLegacyActionAllowed(ctx, "AddEditHolidays");
+    if (!permission.ok) return { success: false, error: permission.error };
+
     if (data.branchId && !(await verifyBranchAccess(data.branchId, ctx.organizationId))) {
       return { success: false, error: "Branch not found in your organization" };
     }
@@ -570,6 +573,9 @@ export async function updateHoliday(
     const result = await requireOrgSafe();
     if (!result.ok) return { success: false, error: result.error };
     const { ctx } = result;
+
+    const permission = await requireLegacyActionAllowed(ctx, "AddEditHolidays");
+    if (!permission.ok) return { success: false, error: permission.error };
 
     const existing = await db.holiday.findFirst({
       where: {
@@ -638,6 +644,9 @@ export async function deleteHoliday(id: string): Promise<ActionResult> {
     const result = await requireOrgSafe();
     if (!result.ok) return { success: false, error: result.error };
     const { ctx } = result;
+
+    const permission = await requireLegacyActionAllowed(ctx, "AddEditHolidays");
+    if (!permission.ok) return { success: false, error: permission.error };
 
     const existing = await db.holiday.findFirst({
       where: {

@@ -85,6 +85,7 @@ interface BranchOption {
 interface HolidaysClientProps {
   holidays: Holiday[];
   branches: BranchOption[];
+  canAddEditHolidays?: boolean;
 }
 
 // ── Calendar helpers ────────────────────────────
@@ -128,7 +129,11 @@ const DEFAULT_VALUES: HolidayFormValues = {
   branchId: null,
 };
 
-export function HolidaysClient({ holidays: initialHolidays, branches }: HolidaysClientProps) {
+export function HolidaysClient({
+  holidays: initialHolidays,
+  branches,
+  canAddEditHolidays = true,
+}: HolidaysClientProps) {
   const [holidays, setHolidays] = useState(initialHolidays);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
@@ -152,6 +157,10 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
   });
 
   function openAdd(presetDate?: string) {
+    if (!canAddEditHolidays) {
+      toast.error("Access denied");
+      return;
+    }
     setDialogMode("add");
     setEditingId(null);
     form.reset({ ...DEFAULT_VALUES, date: presetDate ?? "" });
@@ -159,6 +168,10 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
   }
 
   function openEdit(h: Holiday) {
+    if (!canAddEditHolidays) {
+      toast.error("Access denied");
+      return;
+    }
     setDialogMode("edit");
     setEditingId(h.id);
     form.reset({
@@ -186,11 +199,19 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
   }
 
   function openDelete(h: Holiday) {
+    if (!canAddEditHolidays) {
+      toast.error("Access denied");
+      return;
+    }
     setDeletingItem(h);
     setDeleteDialogOpen(true);
   }
 
   function onSubmit(values: HolidayFormValues) {
+    if (!canAddEditHolidays) {
+      toast.error("Access denied");
+      return;
+    }
     if (values.name.includes("'") || values.notificationMessage.includes("'")) {
       toast.error("Apostrophes '' are not allowed");
       return;
@@ -313,6 +334,10 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
 
   function handleDelete() {
     if (!deletingItem) return;
+    if (!canAddEditHolidays) {
+      toast.error("Access denied");
+      return;
+    }
     startTransition(async () => {
       const result = await deleteHoliday(deletingItem.id);
       if (result.success) {
@@ -444,83 +469,91 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
   }, [calendarWeeks, calYear, calMonth, holidaysByDate]);
 
   const columns: ColumnDef<Holiday>[] = useMemo(
-    () => [
-      {
-        accessorKey: "name",
-        header: "Holiday Name",
-        cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <CalendarDays className="size-4 text-primary" />
-            <span className="font-medium">{row.original.name}</span>
-            {!row.original.isActive && (
-              <Badge variant="outline" className="text-muted-foreground text-[10px]">Inactive</Badge>
-            )}
-          </div>
-        ),
-      },
-      {
-        accessorKey: "date",
-        header: "Date",
-        cell: ({ row }) => {
-          const start = new Date(row.original.date + "T00:00:00").toLocaleDateString("en-GB", {
-            day: "numeric", month: "short", year: "numeric",
-          });
-          if (row.original.endDate) {
-            const end = new Date(row.original.endDate + "T00:00:00").toLocaleDateString("en-GB", {
+    () => {
+      const baseColumns: ColumnDef<Holiday>[] = [
+        {
+          accessorKey: "name",
+          header: "Holiday Name",
+          cell: ({ row }) => (
+            <div className="flex items-center gap-2">
+              <CalendarDays className="size-4 text-primary" />
+              <span className="font-medium">{row.original.name}</span>
+              {!row.original.isActive && (
+                <Badge variant="outline" className="text-muted-foreground text-[10px]">Inactive</Badge>
+              )}
+            </div>
+          ),
+        },
+        {
+          accessorKey: "date",
+          header: "Date",
+          cell: ({ row }) => {
+            const start = new Date(row.original.date + "T00:00:00").toLocaleDateString("en-GB", {
               day: "numeric", month: "short", year: "numeric",
             });
-            return `${start} — ${end}`;
-          }
-          return start;
+            if (row.original.endDate) {
+              const end = new Date(row.original.endDate + "T00:00:00").toLocaleDateString("en-GB", {
+                day: "numeric", month: "short", year: "numeric",
+              });
+              return `${start} — ${end}`;
+            }
+            return start;
+          },
         },
-      },
-      {
-        accessorKey: "type",
-        header: "Type",
-        cell: ({ row }) => (
-          <Badge variant={row.original.type === "HOLIDAY" ? "default" : "secondary"} className="font-normal">
-            {row.original.type === "HOLIDAY" ? "Holiday" : "Strike"}
-          </Badge>
-        ),
-      },
-      {
-        accessorKey: "branch",
-        header: "Branch",
-        cell: ({ row }) => (
-          <Badge variant="secondary" className="font-normal">
-            {row.original.branch}
-          </Badge>
-        ),
-      },
-      {
-        id: "actions",
-        header: "Actions",
-        cell: ({ row }) => (
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-8"
-              onClick={() => openEdit(row.original)}
-              disabled={isPending}
-            >
-              <Pencil className="size-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-8 text-destructive"
-              onClick={() => openDelete(row.original)}
-              disabled={isPending}
-            >
-              <Trash2 className="size-4" />
-            </Button>
-          </div>
-        ),
-      },
-    ],
+        {
+          accessorKey: "type",
+          header: "Type",
+          cell: ({ row }) => (
+            <Badge variant={row.original.type === "HOLIDAY" ? "default" : "secondary"} className="font-normal">
+              {row.original.type === "HOLIDAY" ? "Holiday" : "Strike"}
+            </Badge>
+          ),
+        },
+        {
+          accessorKey: "branch",
+          header: "Branch",
+          cell: ({ row }) => (
+            <Badge variant="secondary" className="font-normal">
+              {row.original.branch}
+            </Badge>
+          ),
+        },
+      ];
+
+      if (!canAddEditHolidays) return baseColumns;
+
+      return [
+        ...baseColumns,
+        {
+          id: "actions",
+          header: "Actions",
+          cell: ({ row }) => (
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8"
+                onClick={() => openEdit(row.original)}
+                disabled={isPending}
+              >
+                <Pencil className="size-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8 text-destructive"
+                onClick={() => openDelete(row.original)}
+                disabled={isPending}
+              >
+                <Trash2 className="size-4" />
+              </Button>
+            </div>
+          ),
+        },
+      ];
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [holidays, isPending]
+    [canAddEditHolidays, holidays, isPending]
   );
 
   return (
@@ -553,14 +586,16 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                 List
               </Button>
             </div>
-            <Button
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
-              onClick={() => openAdd()}
-              disabled={isPending}
-            >
-              <Plus className="mr-1 size-4" />
-              Add Holiday
-            </Button>
+            {canAddEditHolidays ? (
+              <Button
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
+                onClick={() => openAdd()}
+                disabled={isPending}
+              >
+                <Plus className="mr-1 size-4" />
+                Add Holiday
+              </Button>
+            ) : null}
           </div>
         }
       />
@@ -633,10 +668,12 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                           return (
                             <td
                               key={dayIdx}
-                              className={`border-b border-r last:border-r-0 p-1.5 align-top h-[100px] cursor-pointer transition-colors hover:bg-primary/5 group ${
+                              className={`border-b border-r last:border-r-0 p-1.5 align-top h-[100px] transition-colors group ${
                                 isToday ? "ring-2 ring-inset ring-primary/40" : ""
-                              }`}
-                              onClick={() => openAdd(dateKey)}
+                              } ${canAddEditHolidays ? "cursor-pointer hover:bg-primary/5" : ""}`}
+                              onClick={() => {
+                                if (canAddEditHolidays) openAdd(dateKey);
+                              }}
                             >
                               <div className="flex items-start justify-between mb-1">
                                 <span
@@ -650,7 +687,7 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                                 >
                                   {day}
                                 </span>
-                                {!hasHolidays && (
+                                {canAddEditHolidays && !hasHolidays && (
                                   <span className="flex size-5 items-center justify-center rounded-full border border-dashed border-muted-foreground/30 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <Plus className="size-3" />
                                   </span>
@@ -666,12 +703,18 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                                     return (
                                       <div
                                         key={bar.holiday.id}
-                                        className={`truncate px-2 py-1 text-[11px] font-semibold leading-tight cursor-pointer transition-colors ${
+                                        className={`truncate px-2 py-1 text-[11px] font-semibold leading-tight transition-colors ${
                                           isMultiDay ? "rounded-lg" : "rounded-md"
                                         } ${
                                           isEvent
-                                            ? "bg-blue-500 text-white hover:bg-blue-600 shadow-sm shadow-blue-500/25"
-                                            : "bg-[#059669] text-white hover:bg-[#5A7A5E] shadow-sm shadow-[#059669]/25"
+                                            ? "bg-blue-500 text-white shadow-sm shadow-blue-500/25"
+                                            : "bg-[#059669] text-white shadow-sm shadow-[#059669]/25"
+                                        } ${
+                                          canAddEditHolidays
+                                            ? isEvent
+                                              ? "cursor-pointer hover:bg-blue-600"
+                                              : "cursor-pointer hover:bg-[#5A7A5E]"
+                                            : ""
                                         } ${!bar.holiday.isActive ? "opacity-40 line-through" : ""}`}
                                         style={
                                           isMultiDay
@@ -685,7 +728,7 @@ export function HolidaysClient({ holidays: initialHolidays, branches }: Holidays
                                         title={`${bar.holiday.name}${bar.holiday.endDate ? ` (${bar.holiday.date} — ${bar.holiday.endDate})` : ""}`}
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          openEdit(bar.holiday);
+                                          if (canAddEditHolidays) openEdit(bar.holiday);
                                         }}
                                       >
                                         {bar.holiday.name}
