@@ -1043,6 +1043,10 @@ async function migrateFoods(
     await prisma.food.create({
       data: {
         id: getUUID("t_food", oldId),
+        sourceDatabase: "kiddzonl_garderie",
+        legacyKey: `kiddzonl_garderie:t_food:${oldId}`,
+        legacyId: oldId,
+        legacyData: legacyRowData(row, columns),
         name,
         category: parseFoodCategory(type),
         isActive: active?.toLowerCase() === "on",

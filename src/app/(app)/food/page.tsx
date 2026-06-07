@@ -15,7 +15,8 @@ export default async function FoodListingPage() {
 
   const serializedFoods: FoodItem[] = sortedFoods.map((food, index) => ({
     id: food.id,
-    rowNumber: String(index + 1),
+    rowNumber: String(food.legacyId ?? index + 1),
+    legacyId: food.legacyId,
     name: food.name,
     category: food.category as FoodItem["category"],
     isActive: food.isActive,

@@ -64,6 +64,7 @@ type FoodCategory = "BREAKFAST" | "LUNCH" | "DESSERT" | "SNACK";
 export interface FoodItem {
   id: string;
   rowNumber: string;
+  legacyId: number | null;
   name: string;
   category: FoodCategory;
   isActive: boolean;

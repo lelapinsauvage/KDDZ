@@ -1737,6 +1737,10 @@ model Food {
   category       FoodCategory
   isActive       Boolean      @default(true)
   organizationId String?      @db.Uuid
+  sourceDatabase String?
+  legacyKey      String?      @unique
+  legacyId       Int?
+  legacyData     Json?
   deletedAt      DateTime?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
@@ -1749,6 +1753,8 @@ model Food {
   lunchApplications     FoodApplication[] @relation("FoodApplicationLunch")
 
   @@index([organizationId])
+  @@index([sourceDatabase])
+  @@index([legacyId])
   @@index([category])
   @@index([isActive])
   @@index([deletedAt])
