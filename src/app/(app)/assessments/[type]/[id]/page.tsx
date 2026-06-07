@@ -26,7 +26,7 @@ export default async function EditAssessmentPage({ params }: PageProps) {
 
   const [result, childrenResult] = await Promise.all([
     getAssessment(id),
-    getChildren({ status: "ACTIVE", pageSize: 500 }),
+    getChildren({ status: "ACTIVE", pageSize: "all" }),
   ]);
 
   if (result.error || !result.assessment) {

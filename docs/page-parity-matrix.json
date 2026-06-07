@@ -191,7 +191,7 @@
       "fid",
       "id"
     ],
-    "verification": "Restored the legacy Accident Report form fields and behavior: child profile context, cause/date/time, place/area/camera, first aid/emergency hospital/treatment/teacher, required submitted-save validation, permissive Save As Draft mapped to DRAFT/`is_rep_draft = 1`, submitted Save mapped to SUBMITTED/`is_rep_draft = 0`, legacy datalist values, teacher lookup, preservation of `t_form_5` keys (`child_id`, `branch_id`, `class_id`, `teacher_id`, `cause`, `accident_date`, `accident_time`, `place`, `area`, `camnum`, `firstaid`, `em_hospital`, `treatment`) in `MedicalForm.data`, and titled attachments with `images/MedForms` fallback previews. `/Medical_form5.php?fid=` now resolves raw numeric, UUID, and encrypted legacy Form 5 ids into the modern edit form; `/Medical_form5.php?id=` resolves raw numeric, UUID, legacy key, and encrypted child ids into a preselected new accident report. Remaining work is final logged-in visual smoke after local auth/runtime state is clean."
+    "verification": "Restored the legacy Accident Report form fields and behavior: child profile context, cause/date/time, place/area/camera, first aid/emergency hospital/treatment/teacher, required submitted-save validation, permissive Save As Draft mapped to DRAFT/`is_rep_draft = 1`, submitted Save mapped to SUBMITTED/`is_rep_draft = 0`, legacy datalist values, teacher lookup, preservation of `t_form_5` keys (`child_id`, `branch_id`, `class_id`, `teacher_id`, `cause`, `accident_date`, `accident_time`, `place`, `area`, `camnum`, `firstaid`, `em_hospital`, `treatment`) in `MedicalForm.data`, and titled attachments with `images/MedForms` fallback previews. `/Medical_form5.php?fid=` now resolves raw numeric, UUID, and encrypted legacy Form 5 ids into the modern edit form; `/Medical_form5.php?id=` resolves raw numeric, UUID, legacy key, and encrypted child ids into a preselected new accident report. Accident report teacher selectors now load uncapped active teachers for production-sized staffing rosters. Remaining work is final logged-in visual smoke after local auth/runtime state is clean."
   },
   {
     "legacyPhp": "Front/templates/admin/Medical_forms1.php",
@@ -436,7 +436,7 @@
       "id",
       "isdraft"
     ],
-    "verification": "Restored the legacy absent report workflow: child profile/class context, `reportdate`, required teacher/reason/from/to/hospital checks for submitted Save, permissive Save As Draft mapped to PENDING/`is_rep_draft = 1`, submitted Save mapped to APPROVED/`is_rep_draft = 0`, hospital Yes/No toggle with hospital/doctor fields, reason datalist values, titled attachments with legacy AbsDocs fallback, and preservation of legacy form keys (`teacher_id`, `class_id`, `ab_reason`, `ab_from`, `ab_to`, `attend_hos`, `hos_name`, `dr_name`) in `legacyData` on create/update. `/absentreport.php?fid=` now resolves raw numeric, UUID, legacy key, and encrypted legacy absent-report ids into the modern edit form; `/absentreport.php?id=` resolves raw numeric, UUID, legacy key, and encrypted child ids into a preselected new absent report, preserving `date=` when supplied and matching legacy's today-existing-report edit redirect when possible. Remaining work is final logged-in visual smoke after local auth/runtime state is clean."
+    "verification": "Restored the legacy absent report workflow: child profile/class context, `reportdate`, required teacher/reason/from/to/hospital checks for submitted Save, permissive Save As Draft mapped to PENDING/`is_rep_draft = 1`, submitted Save mapped to APPROVED/`is_rep_draft = 0`, hospital Yes/No toggle with hospital/doctor fields, reason datalist values, titled attachments with legacy AbsDocs fallback, and preservation of legacy form keys (`teacher_id`, `class_id`, `ab_reason`, `ab_from`, `ab_to`, `attend_hos`, `hos_name`, `dr_name`) in `legacyData` on create/update. `/absentreport.php?fid=` now resolves raw numeric, UUID, legacy key, and encrypted legacy absent-report ids into the modern edit form; `/absentreport.php?id=` resolves raw numeric, UUID, legacy key, and encrypted child ids into a preselected new absent report, preserving `date=` when supplied and matching legacy's today-existing-report edit redirect when possible. Absent report create/edit selectors now load uncapped active children and teachers for production-sized rosters. Remaining work is final logged-in visual smoke after local auth/runtime state is clean."
   },
   {
     "legacyPhp": "Front/templates/admin/absentreports.php",
@@ -706,7 +706,7 @@
       "id",
       "isdraft"
     ],
-    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 1-3 month bracket, and uncapped migrated assessment report loading for the restored review queues."
+    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 1-3 month bracket, and uncapped migrated assessment report loading for the restored review queues. Assessment create/edit child selectors now load uncapped active children for production-sized rosters."
   },
   {
     "legacyPhp": "Front/templates/admin/assessment_2.php",
@@ -724,7 +724,7 @@
       "id",
       "isdraft"
     ],
-    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 4-7 month bracket, and uncapped migrated assessment report loading for the restored review queues."
+    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 4-7 month bracket, and uncapped migrated assessment report loading for the restored review queues. Assessment create/edit child selectors now load uncapped active children for production-sized rosters."
   },
   {
     "legacyPhp": "Front/templates/admin/assessment_3.php",
@@ -742,7 +742,7 @@
       "id",
       "isdraft"
     ],
-    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 8-12 month bracket, and uncapped migrated assessment report loading for the restored review queues."
+    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 8-12 month bracket, and uncapped migrated assessment report loading for the restored review queues. Assessment create/edit child selectors now load uncapped active children for production-sized rosters."
   },
   {
     "legacyPhp": "Front/templates/admin/assessment_4.php",
@@ -761,7 +761,7 @@
       "id",
       "isdraft"
     ],
-    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 12-24 month bracket, and uncapped migrated assessment report loading for the restored review queues."
+    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 12-24 month bracket, and uncapped migrated assessment report loading for the restored review queues. Assessment create/edit child selectors now load uncapped active children for production-sized rosters."
   },
   {
     "legacyPhp": "Front/templates/admin/assessment_5.php",
@@ -780,7 +780,7 @@
       "id",
       "isdraft"
     ],
-    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 24-36 month bracket, and uncapped migrated assessment report loading for the restored review queues."
+    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 24-36 month bracket, and uncapped migrated assessment report loading for the restored review queues. Assessment create/edit child selectors now load uncapped active children for production-sized rosters."
   },
   {
     "legacyPhp": "Front/templates/admin/assessment_6.php",
@@ -796,7 +796,7 @@
       "id",
       "isdraft"
     ],
-    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 3-4 year bracket, and uncapped migrated assessment report loading for the restored review queues."
+    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 3-4 year bracket, and uncapped migrated assessment report loading for the restored review queues. Assessment create/edit child selectors now load uncapped active children for production-sized rosters."
   },
   {
     "legacyPhp": "Front/templates/admin/assessment_7.php",
@@ -813,7 +813,7 @@
       "id",
       "isdraft"
     ],
-    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 4-5 year bracket, and uncapped migrated assessment report loading for the restored review queues."
+    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 4-5 year bracket, and uncapped migrated assessment report loading for the restored review queues. Assessment create/edit child selectors now load uncapped active children for production-sized rosters."
   },
   {
     "legacyPhp": "Front/templates/admin/assets/plugins/ckeditor/samples/assets/posteddata.php",
@@ -16166,7 +16166,7 @@
       "id",
       "isdraft"
     ],
-    "verification": "The main and draft listings now link into the modern edit route with legacy child/report context preserved through migrated IDs and report dates. `/dailyreport.php?fid=` now resolves raw numeric, UUID, and encrypted legacy daily-report ids into the modern edit form; `/dailyreport.php?id=` resolves raw numeric, UUID, legacy key, and encrypted child ids into a preselected new daily report and preserves `date=` as the modern report date. Remaining work is exact `dailyreport.php` form layout/field validation/progress behavior, including the full food/sleep/health/clothes/attachments workflow audit against `dailyreport.js`."
+    "verification": "The main and draft listings now link into the modern edit route with legacy child/report context preserved through migrated IDs and report dates. `/dailyreport.php?fid=` now resolves raw numeric, UUID, and encrypted legacy daily-report ids into the modern edit form; `/dailyreport.php?id=` resolves raw numeric, UUID, legacy key, and encrypted child ids into a preselected new daily report and preserves `date=` as the modern report date. Daily report create/edit child selectors now load uncapped active children for production-sized rosters. Remaining work is exact `dailyreport.php` form layout/field validation/progress behavior, including the full food/sleep/health/clothes/attachments workflow audit against `dailyreport.js`."
   },
   {
     "legacyPhp": "Front/templates/admin/dailyreports.php",

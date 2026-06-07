@@ -16,7 +16,7 @@ export default async function NewDailyReportPage({ searchParams }: Props) {
 
   const [childrenResult, breakfastFoods, lunchFoods, dessertFoods] =
     await Promise.all([
-      getChildren({ status: "ACTIVE", pageSize: 500 }),
+      getChildren({ status: "ACTIVE", pageSize: "all" }),
       getFoods({ category: "BREAKFAST", isActive: true }),
       getFoods({ category: "LUNCH", isActive: true }),
       getFoods({ category: "DESSERT", isActive: true }),

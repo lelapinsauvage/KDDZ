@@ -34,8 +34,8 @@ export default async function EditAbsenceReportPage({ params }: Props) {
 
   const [result, childrenResult, teachersResult] = await Promise.all([
     getAbsenceReport(id),
-    getChildren({ status: "ACTIVE", pageSize: 500 }),
-    getEmployees("teacher", { isActive: true, pageSize: 500 }),
+    getChildren({ status: "ACTIVE", pageSize: "all" }),
+    getEmployees("teacher", { isActive: true, pageSize: "all" }),
   ]);
 
   if ("error" in result || !result.report) {

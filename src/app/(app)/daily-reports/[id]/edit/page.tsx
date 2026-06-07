@@ -23,7 +23,7 @@ export default async function EditDailyReportPage({ params }: Props) {
   const [result, childrenResult, breakfastFoods, lunchFoods, dessertFoods] =
     await Promise.all([
       getDailyReport(id),
-      getChildren({ status: "ACTIVE", pageSize: 500 }),
+      getChildren({ status: "ACTIVE", pageSize: "all" }),
       getFoods({ category: "BREAKFAST", isActive: true }),
       getFoods({ category: "LUNCH", isActive: true }),
       getFoods({ category: "DESSERT", isActive: true }),

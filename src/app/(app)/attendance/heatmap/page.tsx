@@ -29,7 +29,7 @@ export default async function AttendanceHeatmapPage({ searchParams }: Props) {
       getMonthlyAttendanceGrid(month, year, branchId, classId),
       getBranches(),
       getClasses(branchId ? { branchId } : {}),
-      getChildren({ status: "ACTIVE", pageSize: 500, branchId, classId }),
+      getChildren({ status: "ACTIVE", pageSize: "all", branchId, classId }),
       getFoods({ category: "BREAKFAST", isActive: true }),
       getFoods({ category: "LUNCH", isActive: true }),
       getFoods({ category: "DESSERT", isActive: true }),

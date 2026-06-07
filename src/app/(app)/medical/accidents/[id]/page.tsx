@@ -58,7 +58,7 @@ export default async function AccidentReportDetailPage({ params, searchParams }:
       },
       orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
     }),
-    getEmployees("teacher", { isActive: true, pageSize: 500 }),
+    getEmployees("teacher", { isActive: true, pageSize: "all" }),
   ]);
 
   const childOptions = children.map((c) => ({

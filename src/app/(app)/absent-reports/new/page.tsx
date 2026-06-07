@@ -10,8 +10,8 @@ interface Props {
 export default async function NewAbsenceReportPage({ searchParams }: Props) {
   const { childId, date } = await searchParams;
   const [childrenResult, teachersResult] = await Promise.all([
-    getChildren({ status: "ACTIVE", pageSize: 500 }),
-    getEmployees("teacher", { isActive: true, pageSize: 500 }),
+    getChildren({ status: "ACTIVE", pageSize: "all" }),
+    getEmployees("teacher", { isActive: true, pageSize: "all" }),
   ]);
 
   const children = (childrenResult.children ?? []).map((c) => ({

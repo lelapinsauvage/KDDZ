@@ -25,7 +25,7 @@ export default async function NewAssessmentPage({ params, searchParams }: PagePr
   const typeConfig = getAssessmentConfig(typeNum)!;
   const typeName = ASSESSMENT_TYPE_NAMES[typeNum];
 
-  const childrenResult = await getChildren({ status: "ACTIVE", pageSize: 500 });
+  const childrenResult = await getChildren({ status: "ACTIVE", pageSize: "all" });
   const children = (childrenResult.children ?? []).map((c) => ({
     id: c.id,
     name: `${c.firstName} ${c.lastName}`,
