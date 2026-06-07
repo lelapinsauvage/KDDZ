@@ -153,7 +153,8 @@ This list is the first implementation backlog after the generated inventory/matr
    - `/login` now resolves migrated staff/manager PHP-login identities by username or email, blocks restricted users and disabled primary legacy levels into `/disabled.php`, restores the disabled contact form at `/disabled.php` and `/users/disabled.php`, and appends migrated-compatible legacy login timestamp rows for linked PHP-login users when legacy profile timestamps are enabled.
    - `src/lib/legacy-access-permissions.ts` now maps the signed-in modern user back to migrated `login_users`/`login_users_man` levels, `system_actions*`, and active `actions_control*` grants; `/profile` and `updateActiveSchoolYearDates()` now enforce the legacy `Check::protectPageOrFunction('EditSchoolFromTo','ACTION')` permission when migrated ACL data is present, while retaining the admin/manager fallback when the legacy action catalogue is absent.
    - Desktop and mobile navigation now batch-resolve the legacy `leftmenu.php` PAGE guards and hide guarded sidebar/tab/sheet entries when the signed-in user's migrated levels do not grant the matching `system_actions*` row; imports without a matching action row stay visible as a safe fallback.
-   - Remaining work is expanding this grant bridge into server-side route/action denial for the remaining legacy PAGE/ACTION guards and deciding whether to hydrate grant snapshots into sessions.
+   - The app shell now maps direct modern and legacy PHP URLs for the guarded `leftmenu.php` PAGE entries to the same grant decisions and redirects configured-but-denied hits to `/forbidden.php`.
+   - Remaining work is expanding this grant bridge into non-left-menu PAGE/ACTION denial and deciding whether to hydrate grant snapshots into sessions.
 
 ## Execution Order
 

@@ -111,7 +111,7 @@ export async function getLegacyAccessPermissionDecision(
 
 export async function getLegacyAccessPermissionMap(
   ctx: OrgContext,
-  actionNames: string[],
+  actionNames: readonly string[],
   actionType: "PAGE" | "ACTION" | string = "PAGE",
 ): Promise<Record<string, LegacyAccessPermissionDecision>> {
   const decisions = await getLegacyAccessPermissionDecisions(

@@ -8,45 +8,24 @@ import { AppContextProvider } from "@/components/providers/app-context-provider"
 import { db } from "@/lib/db"
 import { auth } from "@/lib/auth"
 import { getSidebarBadges } from "@/lib/actions/sidebar"
-import { getLegacyAccessPermissionMap } from "@/lib/legacy-access-permissions"
+import {
+  getLegacyAccessPermissionMap,
+  type LegacyAccessPermissionDecision,
+} from "@/lib/legacy-access-permissions"
+import {
+  getLegacyPageNameForPath,
+  legacyPermissionAllows,
+  LEGACY_NAV_PAGE_NAMES,
+} from "@/lib/legacy-page-guards"
 import { getLegacyNotificationGateVisibility } from "@/lib/legacy-notification-gates"
-
-const LEGACY_NAV_PAGE_NAMES = [
-  "index.php",
-  "branches.php",
-  "classes.php",
-  "accounting.php",
-  "Monthly_report.php",
-  "message_portal.php",
-  "message_portal_single.php",
-  "Msg_list.php",
-  "children.php",
-  "children_drafts.php",
-  "calls.php",
-  "dailyreports.php",
-  "dailyreportsd.php",
-  "absentreports.php",
-  "absentreportsD.php",
-  "medical_reports.php",
-  "parent_users.php",
-  "food.php",
-  "food_calendar.php",
-  "nurses.php",
-  "doctors.php",
-  "managers.php",
-  "teachers.php",
-  "calendar.php",
-  "attendance.php",
-  "PA_logs.php",
-  "holiday_calendar.php",
-  "NotifCalendar.php",
-  "Address.php",
-  "Alarms.php",
-  "newyear.php",
-]
+import { headers } from "next/headers"
+import { redirect } from "next/navigation"
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
+  const requestHeaders = await headers()
+  const currentPathname = requestHeaders.get("x-current-pathname")
+  const guardedLegacyPage = getLegacyPageNameForPath(currentPathname)
   let orgId = session?.user?.organizationId ?? null
 
   // Fallback: if JWT is stale and missing orgId, look up from DB
@@ -64,6 +43,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const defaultBranchId = session?.user?.branchId ?? null
   const userRole = session?.user?.role ?? "TEACHER"
+  const emptyLegacyPagePermissions: Record<
+    string,
+    LegacyAccessPermissionDecision
+  > = {}
 
   const [
     branches,
@@ -107,8 +90,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           LEGACY_NAV_PAGE_NAMES,
           "PAGE"
         )
-      : {},
+      : emptyLegacyPagePermissions,
   ])
+
+  if (
+    guardedLegacyPage &&
+    !legacyPermissionAllows(legacyPagePermissions[guardedLegacyPage])
+  ) {
+    redirect("/forbidden.php")
+  }
 
   return (
     <AppContextProvider

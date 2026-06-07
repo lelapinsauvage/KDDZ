@@ -1,14 +1,20 @@
 import NextAuth from "next-auth";
 import { authConfig } from "@/lib/auth.config";
-import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 const { auth } = NextAuth(authConfig);
 
 // Next.js 16 requires a named `middleware` export or default export
-export default async function middleware(request: NextRequest) {
-  // @ts-expect-error — auth() wraps the request handler
-  return auth(request);
-}
+export default auth((request) => {
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-current-pathname", request.nextUrl.pathname);
+
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
+});
 
 export const config = {
   matcher: [
