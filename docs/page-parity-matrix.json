@@ -990,11 +990,11 @@
   {
     "legacyPhp": "Front/templates/admin/assets/plugins/jquery-validation/demo/captcha/index.php",
     "legacyJs": "Front/templates/admin/js/index.js",
-    "modernRoute": "/dashboard",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "",
+    "status": "mapped - retired bundled plugin demo/example",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy jQuery Validation captcha demo is a bundled plugin example, not a Garderie runtime page. Captcha behavior is tracked on auth-flow rows if it is re-enabled; no standalone route is restored."
   },
   {
     "legacyPhp": "Front/templates/admin/assets/plugins/jquery-validation/demo/captcha/newsession.php",
@@ -9007,11 +9007,11 @@
   {
     "legacyPhp": "Front/templates/admin/classes/vendor/dompdfnew/dompdf/lib/php-font-lib/index.php",
     "legacyJs": "Front/templates/admin/js/index.js",
-    "modernRoute": "/dashboard",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "",
+    "status": "mapped - bundled Composer vendor library file",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Third-party Dompdf/php-font-lib redirect/index file is vendor code. Modern PDF behavior is tracked on restored PDF/report endpoint rows; no standalone route is restored."
   },
   {
     "legacyPhp": "Front/templates/admin/classes/vendor/dompdfnew/dompdf/lib/php-font-lib/src/FontLib/AdobeFontMetrics.php",
@@ -16536,15 +16536,17 @@
   {
     "legacyPhp": "Front/templates/admin/users/_install/index.php",
     "legacyJs": "Front/templates/admin/js/index.js",
-    "modernRoute": "/dashboard",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "",
+    "status": "mapped - retired legacy installer entrypoint",
     "legacyTablesMentioned": [
-      "CURRENT_TIMESTAMP",
+      "login_confirm",
+      "login_integration",
       "login_levels",
+      "login_profiles",
       "login_settings",
       "login_users",
-      "this",
-      "your"
+      "login_profile_fields",
+      "login_timestamps"
     ],
     "requestFieldsMentioned": [
       "adminPass",
@@ -16556,7 +16558,7 @@
       "email",
       "scriptPath"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy Jigowatt installer directly created auth tables and wrote PHP config. Runtime installation is retired; modern schema and data restoration are handled by Prisma migrations, import scripts, and restored auth/settings rows, so no installer route is exposed."
   },
   {
     "legacyPhp": "Front/templates/admin/users/activate.php",
@@ -16576,29 +16578,29 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/assets/css/index.php",
     "legacyJs": "Front/templates/admin/js/index.js",
-    "modernRoute": "/dashboard",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "",
+    "status": "mapped - retired empty directory index placeholder",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy empty index.php only suppressed directory listing in asset/class/language folders. Modern routing serves no standalone page for these placeholders."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/assets/index.php",
     "legacyJs": "Front/templates/admin/js/index.js",
-    "modernRoute": "/dashboard",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "",
+    "status": "mapped - retired empty directory index placeholder",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy empty index.php only suppressed directory listing in asset/class/language folders. Modern routing serves no standalone page for these placeholders."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/assets/js/index.php",
     "legacyJs": "Front/templates/admin/js/index.js",
-    "modernRoute": "/dashboard",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "",
+    "status": "mapped - retired empty directory index placeholder",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy empty index.php only suppressed directory listing in asset/class/language folders. Modern routing serves no standalone page for these placeholders."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/classes/LevelsControl.class.php",
@@ -16752,11 +16754,11 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/classes/index.php",
     "legacyJs": "Front/templates/admin/js/index.js",
-    "modernRoute": "/dashboard",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "",
+    "status": "mapped - retired empty directory index placeholder",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy empty index.php only suppressed directory listing in asset/class/language folders. Modern routing serves no standalone page for these placeholders."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/classes/reports.class.php",
@@ -17093,11 +17095,11 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/index.php",
     "legacyJs": "Front/templates/admin/js/index.js",
-    "modernRoute": "/dashboard",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "",
+    "status": "mapped - retired empty directory index placeholder",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy empty index.php only suppressed directory listing in asset/class/language folders. Modern routing serves no standalone page for these placeholders."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/integration.php",
@@ -17311,47 +17313,47 @@
   {
     "legacyPhp": "Front/templates/admin/users/assets/css/index.php",
     "legacyJs": "Front/templates/admin/js/index.js",
-    "modernRoute": "/dashboard",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "",
+    "status": "mapped - retired empty directory index placeholder",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy empty index.php only suppressed directory listing in asset/class/language folders. Modern routing serves no standalone page for these placeholders."
   },
   {
     "legacyPhp": "Front/templates/admin/users/assets/img/index.php",
     "legacyJs": "Front/templates/admin/js/index.js",
-    "modernRoute": "/dashboard",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "",
+    "status": "mapped - retired empty directory index placeholder",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy empty index.php only suppressed directory listing in asset/class/language folders. Modern routing serves no standalone page for these placeholders."
   },
   {
     "legacyPhp": "Front/templates/admin/users/assets/index.php",
     "legacyJs": "Front/templates/admin/js/index.js",
-    "modernRoute": "/dashboard",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "",
+    "status": "mapped - retired empty directory index placeholder",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy empty index.php only suppressed directory listing in asset/class/language folders. Modern routing serves no standalone page for these placeholders."
   },
   {
     "legacyPhp": "Front/templates/admin/users/assets/js/index.php",
     "legacyJs": "Front/templates/admin/js/index.js",
-    "modernRoute": "/dashboard",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "",
+    "status": "mapped - retired empty directory index placeholder",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy empty index.php only suppressed directory listing in asset/class/language folders. Modern routing serves no standalone page for these placeholders."
   },
   {
     "legacyPhp": "Front/templates/admin/users/assets/uploads/index.php",
     "legacyJs": "Front/templates/admin/js/index.js",
-    "modernRoute": "/dashboard",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "",
+    "status": "mapped - retired empty directory index placeholder",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy empty index.php only suppressed directory listing in asset/class/language folders. Modern routing serves no standalone page for these placeholders."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/captcha/ayah-1.0.2/ayah.php",
@@ -17367,11 +17369,11 @@
   {
     "legacyPhp": "Front/templates/admin/users/classes/captcha/ayah-1.0.2/index.php",
     "legacyJs": "Front/templates/admin/js/index.js",
-    "modernRoute": "/dashboard",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "/login, /signup, /disabled.php",
+    "status": "mapped - retired third-party captcha library file",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy AYAH directory index is an empty third-party captcha placeholder. Captcha enforcement remains tracked on login/signup/disabled auth-flow rows if it is re-enabled; no standalone captcha route is restored."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/captcha/ayah-1.0.2/json.php",
@@ -17393,20 +17395,20 @@
   {
     "legacyPhp": "Front/templates/admin/users/classes/captcha/index.php",
     "legacyJs": "Front/templates/admin/js/index.js",
-    "modernRoute": "/dashboard",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "/login, /signup, /disabled.php",
+    "status": "mapped - retired third-party captcha library file",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy captcha directory index is an empty third-party placeholder. Captcha enforcement remains tracked on login/signup/disabled auth-flow rows if it is re-enabled; no standalone captcha route is restored."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/captcha/recaptcha-1.11/index.php",
     "legacyJs": "Front/templates/admin/js/index.js",
-    "modernRoute": "/dashboard",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "/login, /signup, /disabled.php",
+    "status": "mapped - retired third-party captcha library file",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy reCAPTCHA directory index is an empty third-party captcha placeholder. Captcha enforcement remains tracked on login/signup/disabled auth-flow rows if it is re-enabled; no standalone captcha route is restored."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/captcha/recaptcha-1.11/recaptchalib.php",
@@ -17545,11 +17547,11 @@
   {
     "legacyPhp": "Front/templates/admin/users/classes/index.php",
     "legacyJs": "Front/templates/admin/js/index.js",
-    "modernRoute": "/dashboard",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "",
+    "status": "mapped - retired empty directory index placeholder",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy empty index.php only suppressed directory listing in asset/class/language folders. Modern routing serves no standalone page for these placeholders."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/integration.class.php",
@@ -17982,20 +17984,20 @@
   {
     "legacyPhp": "Front/templates/admin/users/classes/integration/hybridauth/index.php",
     "legacyJs": "Front/templates/admin/js/index.js",
-    "modernRoute": "/dashboard",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "/login, /signup, /settings/legacy-auth",
+    "status": "mapped - retired HybridAuth third-party integration file",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy HybridAuth index is third-party OAuth integration bootstrap code. Modern OAuth behavior is tracked on login/signup/integration-settings rows if it is re-enabled; no standalone HybridAuth route is restored."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/integration/index.php",
     "legacyJs": "Front/templates/admin/js/index.js",
-    "modernRoute": "/dashboard",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "",
+    "status": "mapped - retired empty directory index placeholder",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy empty index.php only suppressed directory listing in asset/class/language folders. Modern routing serves no standalone page for these placeholders."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/login.class.php",
@@ -18182,56 +18184,56 @@
   {
     "legacyPhp": "Front/templates/admin/users/index.php",
     "legacyJs": "Front/templates/admin/js/index.js",
-    "modernRoute": "/dashboard",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "/users/index.php, /users/home.php",
+    "status": "restored - legacy auth index redirect restored",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/users/index.php` now preserves the legacy redirect to `/users/home.php`, whose restored legacy page renders the original empty PHP-login home message."
   },
   {
     "legacyPhp": "Front/templates/admin/users/languages/en_US/LC_MESSAGES/index.php",
     "legacyJs": "Front/templates/admin/js/index.js",
-    "modernRoute": "/dashboard",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "",
+    "status": "mapped - retired empty directory index placeholder",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy empty index.php only suppressed directory listing in asset/class/language folders. Modern routing serves no standalone page for these placeholders."
   },
   {
     "legacyPhp": "Front/templates/admin/users/languages/en_US/index.php",
     "legacyJs": "Front/templates/admin/js/index.js",
-    "modernRoute": "/dashboard",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "",
+    "status": "mapped - retired empty directory index placeholder",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy empty index.php only suppressed directory listing in asset/class/language folders. Modern routing serves no standalone page for these placeholders."
   },
   {
     "legacyPhp": "Front/templates/admin/users/languages/fr_FR/LC_MESSAGES/index.php",
     "legacyJs": "Front/templates/admin/js/index.js",
-    "modernRoute": "/dashboard",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "",
+    "status": "mapped - retired empty directory index placeholder",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy empty index.php only suppressed directory listing in asset/class/language folders. Modern routing serves no standalone page for these placeholders."
   },
   {
     "legacyPhp": "Front/templates/admin/users/languages/fr_FR/index.php",
     "legacyJs": "Front/templates/admin/js/index.js",
-    "modernRoute": "/dashboard",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "",
+    "status": "mapped - retired empty directory index placeholder",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy empty index.php only suppressed directory listing in asset/class/language folders. Modern routing serves no standalone page for these placeholders."
   },
   {
     "legacyPhp": "Front/templates/admin/users/languages/index.php",
     "legacyJs": "Front/templates/admin/js/index.js",
-    "modernRoute": "/dashboard",
-    "status": "partial - route exists, needs field/action audit",
+    "modernRoute": "",
+    "status": "mapped - retired empty directory index placeholder",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Legacy empty index.php only suppressed directory listing in asset/class/language folders. Modern routing serves no standalone page for these placeholders."
   },
   {
     "legacyPhp": "Front/templates/admin/users/login.php",
