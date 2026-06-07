@@ -11,6 +11,13 @@ interface MedicalReportConfig {
   reportName: string;
 }
 
+interface LegacyMedicalRecipient {
+  userId: string;
+  legacyRecipientId: number;
+  legacySourceDatabase: string;
+  legacyClasses: string;
+}
+
 export interface MedicalGenerationSummary {
   branchesScanned: number;
   childrenScanned: number;
@@ -81,6 +88,43 @@ function readNumber(data: Record<string, unknown> | null, keys: string[]) {
     }
   }
   return null;
+}
+
+function legacyMedicalClassAllows(
+  legacyClasses: string,
+  classLegacyId: number | null,
+) {
+  const normalized = legacyClasses.trim();
+  if (!normalized || normalized === "0") return true;
+  if (classLegacyId === null) return false;
+
+  return normalized === String(classLegacyId);
+}
+
+function legacySourceMatches(
+  recipient: LegacyMedicalRecipient,
+  sourceDatabase: string | null,
+) {
+  return !sourceDatabase || recipient.legacySourceDatabase === sourceDatabase;
+}
+
+function recipientsForMedicalCandidate(
+  recipients: LegacyMedicalRecipient[],
+  candidate: {
+    sourceDatabase: string | null;
+    legacyClassId: number | null;
+  },
+) {
+  const selected = new Map<string, LegacyMedicalRecipient>();
+  for (const recipient of recipients) {
+    if (!legacySourceMatches(recipient, candidate.sourceDatabase)) continue;
+    if (!legacyMedicalClassAllows(recipient.legacyClasses, candidate.legacyClassId)) {
+      continue;
+    }
+    if (!selected.has(recipient.userId)) selected.set(recipient.userId, recipient);
+  }
+
+  return Array.from(selected.values());
 }
 
 function renderNotificationText(
@@ -181,13 +225,14 @@ export async function generateMedicalAlarmsForOrganization(params: {
     },
     select: {
       id: true,
+      sourceDatabase: true,
       legacyId: true,
       firstName: true,
       lastName: true,
       branchId: true,
       classId: true,
-      branch: { select: { id: true, name: true } },
-      class: { select: { id: true, name: true, legacyId: true } },
+      branch: { select: { id: true, name: true, sourceDatabase: true } },
+      class: { select: { id: true, name: true, legacyId: true, sourceDatabase: true } },
     },
     orderBy: [{ branchId: "asc" }, { classId: "asc" }, { firstName: "asc" }],
   });
@@ -242,10 +287,10 @@ export async function generateMedicalAlarmsForOrganization(params: {
         organizationId: params.organizationId,
         OR: [
           { branchId: { in: enabledBranchIds } },
-          { branchId: null, role: "ADMIN" },
+          { branchId: null },
         ],
       },
-      select: { id: true, branchId: true, role: true },
+      select: { id: true },
     }),
     db.notificationTemplate.findUnique({
       where: {
@@ -263,29 +308,34 @@ export async function generateMedicalAlarmsForOrganization(params: {
 
   const legacyUsers = users.length
     ? await db.legacyAuthRecord.findMany({
-        where: { userId: { in: users.map((user) => user.id) } },
-        select: { userId: true, legacyId: true, legacyUserId: true },
-        orderBy: { legacyId: "asc" },
+        where: {
+          legacyTable: "login_users",
+          userId: { in: users.map((user) => user.id) },
+          isDisabled: { not: true },
+        },
+        select: {
+          sourceDatabase: true,
+          userId: true,
+          legacyId: true,
+          legacyUserId: true,
+          legacyData: true,
+        },
+        orderBy: [
+          { sourceDatabase: "asc" },
+          { legacyId: "asc" },
+        ],
       })
     : [];
-  const legacyRecipientIdByUserId = new Map<string, number>();
-  for (const record of legacyUsers) {
-    if (!record.userId || legacyRecipientIdByUserId.has(record.userId)) continue;
-    legacyRecipientIdByUserId.set(
-      record.userId,
-      record.legacyUserId ?? record.legacyId,
-    );
-  }
 
-  const branchAdminIds = users
-    .filter((user) => user.branchId === null && user.role === "ADMIN")
-    .map((user) => user.id);
-  const userIdsByBranch = new Map<string, string[]>();
-  for (const user of users) {
-    if (!user.branchId) continue;
-    const branchUsers = userIdsByBranch.get(user.branchId) ?? [];
-    branchUsers.push(user.id);
-    userIdsByBranch.set(user.branchId, branchUsers);
+  const legacyRecipients: LegacyMedicalRecipient[] = [];
+  for (const record of legacyUsers) {
+    if (!record.userId) continue;
+    legacyRecipients.push({
+      userId: record.userId,
+      legacyRecipientId: record.legacyUserId ?? record.legacyId,
+      legacySourceDatabase: record.sourceDatabase,
+      legacyClasses: readString(asRecord(record.legacyData), ["uclasses"]) ?? "0",
+    });
   }
 
   const templateEnabled = template?.enabled ?? true;
@@ -340,26 +390,28 @@ export async function generateMedicalAlarmsForOrganization(params: {
     existingAlarmKeys.add(key);
     summary.alarmsCreated += 1;
 
-    const recipientIds = Array.from(
-      new Set([...(userIdsByBranch.get(child.branchId) ?? []), ...branchAdminIds]),
-    );
-    if (recipientIds.length === 0) continue;
+    const recipients = recipientsForMedicalCandidate(legacyRecipients, {
+      sourceDatabase:
+        child.sourceDatabase ?? child.class?.sourceDatabase ?? child.branch.sourceDatabase,
+      legacyClassId: child.class?.legacyId ?? null,
+    });
+    if (recipients.length === 0) continue;
 
     const receiptResult = await db.notificationReceipt.createMany({
-      data: recipientIds.map((userId, index) => ({
+      data: recipients.map((recipient) => ({
         sourceTable: MEDICAL_RECEIPT_SOURCE,
         category: "medical",
         legacyNotificationId,
-        legacyRecipientId:
-          legacyRecipientIdByUserId.get(userId) ?? -(index + 1),
+        legacyRecipientId: recipient.legacyRecipientId,
         recipientType: "USER",
-        recipientId: userId,
+        recipientId: recipient.userId,
         alarmId: alarm.id,
         isRead: false,
         metadata: {
           modernGenerator: "generateMedicalAlarms",
           legacyMethod: "Data::AlarmsMedical",
           legacyClassId: child.class?.legacyId ?? null,
+          legacyClasses: recipient.legacyClasses,
           ntype: 0,
         },
       })),
@@ -367,11 +419,11 @@ export async function generateMedicalAlarmsForOrganization(params: {
     });
     summary.receiptsCreated += receiptResult.count;
 
-    if (!templateEnabled) continue;
+    if (!templateEnabled || receiptResult.count === 0) continue;
 
     const notificationResult = await db.notification.createMany({
-      data: recipientIds.map((userId) => ({
-        userId,
+      data: recipients.map((recipient) => ({
+        userId: recipient.userId,
         title: renderNotificationText(subjectTemplate, variables),
         body: message,
         type: "MEDICAL",
