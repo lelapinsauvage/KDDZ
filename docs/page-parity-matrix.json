@@ -16752,11 +16752,11 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/home.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/users/admin/home.php, /users/home.php",
+    "status": "restored - legacy admin home redirect restored",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/users/admin/home.php` now preserves the legacy `header(\"Location: ../home.php\")` behavior by redirecting to `/users/home.php`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/index.php",
@@ -18120,11 +18120,11 @@
   {
     "legacyPhp": "Front/templates/admin/users/home.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/users/home.php",
+    "status": "restored - legacy empty PHP-login home restored",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/users/home.php` now restores the legacy PHP-login home placeholder with the original `Nothing to show` warning text."
   },
   {
     "legacyPhp": "Front/templates/admin/users/index.php",
