@@ -11,8 +11,8 @@ import {
 
 export default async function MedicineAlarmsPage() {
   const [alarmsResult, historyResult, branchesResult] = await Promise.all([
-    getMedicineAlarmNotifications({ pageSize: 500 }),
-    getMedicineAlarmHistory({ pageSize: 500 }),
+    getMedicineAlarmNotifications({ pageSize: "all" }),
+    getMedicineAlarmHistory({ pageSize: "all" }),
     getBranches(),
   ]);
 

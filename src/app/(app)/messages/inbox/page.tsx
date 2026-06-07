@@ -2,7 +2,7 @@ import { getInbox } from "@/lib/actions/messages";
 import { InboxClient } from "./inbox-client";
 
 export default async function MessageInboxPage() {
-  const result = await getInbox({ pageSize: 500 });
+  const result = await getInbox({ pageSize: "all" });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const data = result.data as any;

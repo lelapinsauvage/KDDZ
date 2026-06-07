@@ -23,9 +23,9 @@ export default async function EventAlarmsPage() {
   ] = await Promise.all([
     getEvents({ isActive: true }),
     getBranches(),
-    getAlarms({ type: "EVENT", pageSize: 500 }),
-    getEventAlarmNotifications({ pageSize: 500 }),
-    getEventAlarmHistory({ pageSize: 500 }),
+    getAlarms({ type: "EVENT", pageSize: "all" }),
+    getEventAlarmNotifications({ pageSize: "all" }),
+    getEventAlarmHistory({ pageSize: "all" }),
   ]);
 
   const branches = ((branchesResult.data ?? []) as Array<{ id: string; name: string }>);

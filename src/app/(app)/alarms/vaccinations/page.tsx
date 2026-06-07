@@ -19,8 +19,8 @@ export default async function VaccinationAlarmsPage() {
   ] = await Promise.all([
     getVaccinationDueAlarms(),
     getBranches(),
-    getVaccinationAlarmNotifications({ pageSize: 500 }),
-    getVaccinationAlarmHistory({ pageSize: 500 }),
+    getVaccinationAlarmNotifications({ pageSize: "all" }),
+    getVaccinationAlarmHistory({ pageSize: "all" }),
   ]);
 
   const branches = ((branchesResult.data ?? []) as Array<{ id: string; name: string }>);

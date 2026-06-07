@@ -37,8 +37,8 @@ type MedicalHistoryRow = {
 
 export default async function MedicalAlarmsPage() {
   const [alarmsResult, historyResult] = await Promise.all([
-    getMedicalAlarmNotifications({ pageSize: 500 }),
-    getMedicalAlarmHistory({ pageSize: 500 }),
+    getMedicalAlarmNotifications({ pageSize: "all" }),
+    getMedicalAlarmHistory({ pageSize: "all" }),
   ]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

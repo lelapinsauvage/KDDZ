@@ -11,8 +11,8 @@ import {
 
 export default async function BirthdayAlarmsPage() {
   const [alarmsResult, historyResult, branchesResult] = await Promise.all([
-    getBirthdayAlarmNotifications({ pageSize: 500 }),
-    getBirthdayAlarmHistory({ pageSize: 500 }),
+    getBirthdayAlarmNotifications({ pageSize: "all" }),
+    getBirthdayAlarmHistory({ pageSize: "all" }),
     getBranches(),
   ]);
 

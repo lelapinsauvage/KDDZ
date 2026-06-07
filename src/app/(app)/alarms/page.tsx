@@ -21,8 +21,8 @@ export default async function AlarmsOverviewPage() {
   ] = await Promise.all([
     getActionableAlarms(),
     getBranches(),
-    getGeneralAlarmNotifications(),
-    getGeneralAlarmHistory(),
+    getGeneralAlarmNotifications({ pageSize: "all" }),
+    getGeneralAlarmHistory({ pageSize: "all" }),
   ]);
 
   const branches = (branchesResult.data ?? []) as Array<{

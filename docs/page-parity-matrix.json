@@ -491,7 +491,7 @@
       "custom_notifications",
       "custom_notifications_parents"
     ],
-    "verification": "Modern page preserves the actionable notification dashboard and adds a General Notifications tab reading migrated `NotificationReceipt` rows from legacy staff and parent delivery tables, restoring current-staff New/Viewed filters, row/bulk/all mark-viewed actions, Teachers Sent Alarms history, and Parents Sent Alarms history. `/alarms.php` now redirects to the modern general alarms dashboard. Remaining work is exact legacy `t_alarms.status` semantics, source workflow/sender audit, and final visual audit."
+    "verification": "Modern page preserves the actionable notification dashboard and adds a General Notifications tab reading migrated `NotificationReceipt` rows from legacy staff and parent delivery tables, restoring current-staff New/Viewed filters, row/bulk/all mark-viewed actions, Teachers Sent Alarms history, and Parents Sent Alarms history. `/alarms.php` now redirects to the modern general alarms dashboard. Alarm notification and sent-history loads now use uncapped server queries over migrated/generated receipts. Remaining work is exact legacy `t_alarms.status` semantics, source workflow/sender audit, and final visual audit."
   },
   {
     "legacyPhp": "Front/templates/admin/alarmsAssessment.php",
@@ -519,7 +519,7 @@
       "custom_notifications_birthday",
       "custom_notifications_birthday_parents"
     ],
-    "verification": "Modern page reads migrated and generated `NotificationReceipt` rows from `custom_notifications_birthday` plus standalone parent rows from `custom_notifications_birthday_parents`, restores Teachers New/Viewed status, search/status/branch/date filters, row/bulk/all mark-viewed actions, Sent Birthday Alarms history for staff and parent recipients, and keeps the manual generator backed by the idempotent `Data::AlarmsBirthday()` parity job plus generated `custom_notifications_birthday` receipts targeted like `getusersperclassUsersDb()` through imported `login_users.uclasses` and protected `/api/cron/birthday-alarms`. `/alarmsBirthday.php` now redirects to the modern birthday alarms page. Remaining work is parent/mobile delivery."
+    "verification": "Modern page reads migrated and generated `NotificationReceipt` rows from `custom_notifications_birthday` plus standalone parent rows from `custom_notifications_birthday_parents`, restores Teachers New/Viewed status, search/status/branch/date filters, row/bulk/all mark-viewed actions, Sent Birthday Alarms history for staff and parent recipients, and keeps the manual generator backed by the idempotent `Data::AlarmsBirthday()` parity job plus generated `custom_notifications_birthday` receipts targeted like `getusersperclassUsersDb()` through imported `login_users.uclasses` and protected `/api/cron/birthday-alarms`. `/alarmsBirthday.php` now redirects to the modern birthday alarms page. Alarm notification and sent-history loads now use uncapped server queries over migrated/generated receipts. Remaining work is parent/mobile delivery."
   },
   {
     "legacyPhp": "Front/templates/admin/alarmsContracts.php",
@@ -538,7 +538,7 @@
       "t_garderie_doctor_attachments",
       "t_nurse_attachments"
     ],
-    "verification": "Modern page reads migrated and generated `NotificationReceipt` rows from `custom_notifications_contracts`, restores Teachers New/Viewed status, search/status/branch/date filters, row/bulk/all mark-viewed actions, Sent Contracts Reminders history, and keeps manual generation backed by the idempotent staff attachment/document expiry job plus protected `/api/cron/contract-alarms`; generated receipts follow legacy `getUserAndBoss()` targeting through imported `login_users.usites/uclasses`. `/alarmsContracts.php` now redirects to the modern contract alarms page. Remaining work is parent/mobile delivery if required."
+    "verification": "Modern page reads migrated and generated `NotificationReceipt` rows from `custom_notifications_contracts`, restores Teachers New/Viewed status, search/status/branch/date filters, row/bulk/all mark-viewed actions, Sent Contracts Reminders history, and keeps manual generation backed by the idempotent staff attachment/document expiry job plus protected `/api/cron/contract-alarms`; generated receipts follow legacy `getUserAndBoss()` targeting through imported `login_users.usites/uclasses`. `/alarmsContracts.php` now redirects to the modern contract alarms page. Alarm notification and sent-history loads now use uncapped server queries over migrated/generated receipts. Remaining work is parent/mobile delivery if required."
   },
   {
     "legacyPhp": "Front/templates/admin/alarmsEvents.php",
@@ -557,7 +557,7 @@
       "custom_notifications_events",
       "custom_notifications_events_parents"
     ],
-    "verification": "Modern page lists scheduled events plus generated holiday/event reminder alarms, filters by branch id, keeps manual generation backed by idempotent `Data::AlarmsHoliday()` and `t_events.daysbefore` branch-list parity jobs plus protected `/api/cron/holiday-alarms` and `/api/cron/event-alarms`, writes generated `NotificationReceipt` rows for holiday `custom_notifications` and event `custom_notifications_events`, and keeps a Notifications tab that reads migrated and generated legacy holiday/general `custom_notifications` plus `custom_notifications_events`/parent receipts, restoring teacher New/Viewed filters, row/bulk/all mark-viewed actions, and Sent Events Alarms history for staff and parent recipients. `/alarmsEvents.php` now redirects to the modern event alarms page. Remaining work is hosted scheduling after production crontab confirmation plus external parent/mobile delivery and push parity."
+    "verification": "Modern page lists scheduled events plus generated holiday/event reminder alarms, filters by branch id, keeps manual generation backed by idempotent `Data::AlarmsHoliday()` and `t_events.daysbefore` branch-list parity jobs plus protected `/api/cron/holiday-alarms` and `/api/cron/event-alarms`, writes generated `NotificationReceipt` rows for holiday `custom_notifications` and event `custom_notifications_events`, and keeps a Notifications tab that reads migrated and generated legacy holiday/general `custom_notifications` plus `custom_notifications_events`/parent receipts, restoring teacher New/Viewed filters, row/bulk/all mark-viewed actions, and Sent Events Alarms history for staff and parent recipients. `/alarmsEvents.php` now redirects to the modern event alarms page. Active event/holiday alarms plus notification and sent-history loads now use uncapped server queries over migrated/generated records. Remaining work is hosted scheduling after production crontab confirmation plus external parent/mobile delivery and push parity."
   },
   {
     "legacyPhp": "Front/templates/admin/alarmsInsurance.php",
@@ -574,7 +574,7 @@
       "custom_notifications_insurance",
       "custom_notifications_insurance_parents"
     ],
-    "verification": "Modern page reads migrated and generated `NotificationReceipt` rows from `custom_notifications_insurance` and `custom_notifications_insurance_parents`, restores Teachers New/Viewed status, search/status/branch/date filters, row/bulk/all mark-viewed actions, Sent Insurance Reminders history for staff and parent recipients, and keeps the manual generator backed by the idempotent `Data::AlarmsInsurance()` parity job plus generated `custom_notifications_insurance` receipts targeted like `getusersperclassUsersDb()` through imported `login_users.uclasses` and protected `/api/cron/insurance-alarms`. `/alarmsInsurance.php` now redirects to the modern insurance alarms page. Remaining work is parent/mobile delivery."
+    "verification": "Modern page reads migrated and generated `NotificationReceipt` rows from `custom_notifications_insurance` and `custom_notifications_insurance_parents`, restores Teachers New/Viewed status, search/status/branch/date filters, row/bulk/all mark-viewed actions, Sent Insurance Reminders history for staff and parent recipients, and keeps the manual generator backed by the idempotent `Data::AlarmsInsurance()` parity job plus generated `custom_notifications_insurance` receipts targeted like `getusersperclassUsersDb()` through imported `login_users.uclasses` and protected `/api/cron/insurance-alarms`. `/alarmsInsurance.php` now redirects to the modern insurance alarms page. Alarm notification and sent-history loads now use uncapped server queries over migrated/generated receipts. Remaining work is parent/mobile delivery."
   },
   {
     "legacyPhp": "Front/templates/admin/alarmsMedical.php",
@@ -590,7 +590,7 @@
       "custom_notifications_medical",
       "custom_notifications_medical_parents"
     ],
-    "verification": "Modern page now reads migrated and generated `NotificationReceipt` rows for current-staff New/Viewed status, restores `#`, Alarm details, Alarm Time, Status, Actions, search/status/type/branch/date filters, row/bulk mark-viewed, Set All As Viewed, and Sent Reports Reminders history for staff and parent recipients. Medical alarm action buttons and header badges preserve migrated `Medical_form*.php?id=<encrypted-child-id>` hrefs through the modern legacy bridge routes, and the page now exposes an idempotent `Data::AlarmsMedical()` parity generator for missing General, Suffering, and Vaccination reports with generated/backfilled `custom_notifications_medical` receipts targeted like `getusersperclassUsersDb()` through imported `login_users.uclasses` plus protected `/api/cron/medical-alarms`. `/alarmsMedical.php` redirects to the modern medical alarms page. Remaining work is parent/mobile delivery."
+    "verification": "Modern page now reads migrated and generated `NotificationReceipt` rows for current-staff New/Viewed status, restores `#`, Alarm details, Alarm Time, Status, Actions, search/status/type/branch/date filters, row/bulk mark-viewed, Set All As Viewed, and Sent Reports Reminders history for staff and parent recipients. Medical alarm action buttons and header badges preserve migrated `Medical_form*.php?id=<encrypted-child-id>` hrefs through the modern legacy bridge routes, and the page now exposes an idempotent `Data::AlarmsMedical()` parity generator for missing General, Suffering, and Vaccination reports with generated/backfilled `custom_notifications_medical` receipts targeted like `getusersperclassUsersDb()` through imported `login_users.uclasses` plus protected `/api/cron/medical-alarms`. `/alarmsMedical.php` redirects to the modern medical alarms page. Alarm notification and sent-history loads now use uncapped server queries over migrated/generated receipts. Remaining work is parent/mobile delivery."
   },
   {
     "legacyPhp": "Front/templates/admin/alarmsMedicine.php",
@@ -608,7 +608,7 @@
       "custom_notifications_medicine",
       "custom_notifications_medicine_parents"
     ],
-    "verification": "Modern page reads migrated and generated `NotificationReceipt` rows from `custom_notifications_medicine` and `custom_notifications_medicine_parents`, restores Teachers New/Viewed status, search/status/branch/date filters, row/bulk/all mark-viewed actions, Sent Medicine Alarms history for staff and parent recipients, and keeps the manual generator backed by the idempotent `Data::AlarmsMedicine()` parity job plus generated `custom_notifications_medicine` receipts targeted like `getusersperclassUsersDb()` through imported `login_users.uclasses` and protected `/api/cron/medicine-alarms`. `/alarmsMedicine.php` now redirects to the modern medicine alarms page. Remaining work is parent/mobile delivery."
+    "verification": "Modern page reads migrated and generated `NotificationReceipt` rows from `custom_notifications_medicine` and `custom_notifications_medicine_parents`, restores Teachers New/Viewed status, search/status/branch/date filters, row/bulk/all mark-viewed actions, Sent Medicine Alarms history for staff and parent recipients, and keeps the manual generator backed by the idempotent `Data::AlarmsMedicine()` parity job plus generated `custom_notifications_medicine` receipts targeted like `getusersperclassUsersDb()` through imported `login_users.uclasses` and protected `/api/cron/medicine-alarms`. `/alarmsMedicine.php` now redirects to the modern medicine alarms page. Alarm notification and sent-history loads now use uncapped server queries over migrated/generated receipts. Remaining work is parent/mobile delivery."
   },
   {
     "legacyPhp": "Front/templates/admin/alarmsMsg.php",
@@ -620,7 +620,7 @@
       "custom_notifications_msg"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Restored `#`, From, Date, Nature, Subject, Message, Status, and Actions table, staff-user read scoping, New/Viewed status, status/nature/date/search filters, row mark-viewed action, bulk mark viewed, Set All As Viewed, sidebar entry, and migration provenance for `t_alarms_msg` plus `custom_notifications_msg`. Mobile-flagged staff-to-parent message sends now attempt provider-neutral OneSignal/webhook push delivery using stored active push tokens and audit skipped/failed/sent outcomes. SMS/WhatsApp-flagged direct/class/bulk/reply/resend sends now attempt provider-neutral webhook delivery against deduped parent phone contacts and audit matched/skipped/failed/sent outcomes. `/alarmsMsg.php` now redirects to the modern message alarms page. Remaining work is exact legacy reply-thread visual audit, parent/mobile read reset, and production push/SMS/WhatsApp credential rollout."
+    "verification": "Restored `#`, From, Date, Nature, Subject, Message, Status, and Actions table, staff-user read scoping, New/Viewed status, status/nature/date/search filters, row mark-viewed action, bulk mark viewed, Set All As Viewed, sidebar entry, and migration provenance for `t_alarms_msg` plus `custom_notifications_msg`. Mobile-flagged staff-to-parent message sends now attempt provider-neutral OneSignal/webhook push delivery using stored active push tokens and audit skipped/failed/sent outcomes. SMS/WhatsApp-flagged direct/class/bulk/reply/resend sends now attempt provider-neutral webhook delivery against deduped parent phone contacts and audit matched/skipped/failed/sent outcomes. `/alarmsMsg.php` now redirects to the modern message alarms page. Message notification loads now use uncapped server queries over restored message alarm rows. Remaining work is exact legacy reply-thread visual audit, parent/mobile read reset, and production push/SMS/WhatsApp credential rollout."
   },
   {
     "legacyPhp": "Front/templates/admin/alarmsOthers.php",
@@ -636,7 +636,7 @@
       "custom_notifications_others",
       "custom_notifications_others_parents"
     ],
-    "verification": "Modern page keeps the active other-alarm dashboard and adds a Notifications tab reading migrated `NotificationReceipt` rows from staff and parent legacy delivery tables, restoring New/Viewed filters, row/bulk/all mark-viewed actions, and Sent Others Alarms history for staff and parent recipients. `/alarmsOthers.php` now redirects to the modern other alarms page. Remaining work is source workflow/sender audit, exact parent-vs-teacher active table semantics, and final visual audit."
+    "verification": "Modern page keeps the active other-alarm dashboard and adds a Notifications tab reading migrated `NotificationReceipt` rows from staff and parent legacy delivery tables, restoring New/Viewed filters, row/bulk/all mark-viewed actions, and Sent Others Alarms history for staff and parent recipients. `/alarmsOthers.php` now redirects to the modern other alarms page. Active other alarms plus notification and sent-history loads now use uncapped server queries over migrated/generated records. Remaining work is source workflow/sender audit, exact parent-vs-teacher active table semantics, and final visual audit."
   },
   {
     "legacyPhp": "Front/templates/admin/alarmsPayments.php",
@@ -656,7 +656,7 @@
       "account-remind-before",
       "account-remind-after"
     ],
-    "verification": "Modern page lists migrated/current payment alarms and overdue children, filters by branch id, and exposes manual generation backed by the idempotent `Data::AlarmsPaidPayments()`/`PaymentReminder` paid path plus `NotifyBeforePayment()`/`NotifyAfterPayment()` due-payment paths from modern unpaid `Payment` rows; protected `/api/cron/payment-alarms` runs all three flows and now writes generated `custom_notifications_payments` PARENT_USER receipts targeted from migrated `parent_login_users`. It reads migrated and generated `NotificationReceipt` rows from `custom_notifications_payments`, restores `#`, alarm details, To, alarm time, collapsed New/Viewed status, row/bulk/all mark-viewed, and sent payment history for PARENT_USER/CHILD receipts. `/alarmsPayments.php` now redirects to the modern payment alarms page. Remaining audit is parent/mobile delivery parity, hosted schedule enablement, and final sent-state semantics."
+    "verification": "Modern page lists migrated/current payment alarms and overdue children, filters by branch id, and exposes manual generation backed by the idempotent `Data::AlarmsPaidPayments()`/`PaymentReminder` paid path plus `NotifyBeforePayment()`/`NotifyAfterPayment()` due-payment paths from modern unpaid `Payment` rows; protected `/api/cron/payment-alarms` runs all three flows and now writes generated `custom_notifications_payments` PARENT_USER receipts targeted from migrated `parent_login_users`. It reads migrated and generated `NotificationReceipt` rows from `custom_notifications_payments`, restores `#`, alarm details, To, alarm time, collapsed New/Viewed status, row/bulk/all mark-viewed, and sent payment history for PARENT_USER/CHILD receipts. `/alarmsPayments.php` now redirects to the modern payment alarms page. Active payment alarms plus notification and sent-history loads now use uncapped server queries over migrated/generated records. Remaining audit is parent/mobile delivery parity, hosted schedule enablement, and final sent-state semantics."
   },
   {
     "legacyPhp": "Front/templates/admin/alarmsRequests.php",
@@ -672,7 +672,7 @@
       "custom_notifications_requests",
       "custom_notifications_requests_parents"
     ],
-    "verification": "Modern page keeps the active request-alarm dashboard and adds a Notifications tab reading migrated `NotificationReceipt` rows from staff and parent legacy delivery tables, restoring New/Viewed filters, row/bulk/all mark-viewed actions, and Sent Requests Alarms history for staff and parent recipients. `/alarmsRequests.php` now redirects to the modern request alarms page. Remaining work is source workflow/sender audit, exact parent-vs-teacher active table semantics, and final visual audit."
+    "verification": "Modern page keeps the active request-alarm dashboard and adds a Notifications tab reading migrated `NotificationReceipt` rows from staff and parent legacy delivery tables, restoring New/Viewed filters, row/bulk/all mark-viewed actions, and Sent Requests Alarms history for staff and parent recipients. `/alarmsRequests.php` now redirects to the modern request alarms page. Active request alarms plus notification and sent-history loads now use uncapped server queries over migrated/generated records. Remaining work is source workflow/sender audit, exact parent-vs-teacher active table semantics, and final visual audit."
   },
   {
     "legacyPhp": "Front/templates/admin/alarmsVaccinations.php",
@@ -689,7 +689,7 @@
       "t_alarms_vaccinations",
       "custom_notifications_vaccinations"
     ],
-    "verification": "Modern page shows legacy DOB-offset due reminders, filters by branch id, and exposes manual generation backed by the idempotent `Data::AlarmsVaccinations()` parity job plus generated `custom_notifications_vaccinations` staff receipts targeted like `getusersperclassUsersDb()` through imported `login_users.uclasses` and protected `/api/cron/vaccination-alarms`; it now reads migrated and generated `NotificationReceipt` rows from `custom_notifications_vaccinations`, collapses delivery receipts by alarm for New/Viewed status, supports row/bulk/all mark-viewed, and shows sent vaccination history for USER/PARENT_USER/CHILD receipts. `/alarmsVaccinations.php` now redirects to the modern vaccination alarms page. Remaining audit is parent/mobile delivery parity and reconciliation with manual `Vaccination.nextDueDate` records."
+    "verification": "Modern page shows legacy DOB-offset due reminders, filters by branch id, and exposes manual generation backed by the idempotent `Data::AlarmsVaccinations()` parity job plus generated `custom_notifications_vaccinations` staff receipts targeted like `getusersperclassUsersDb()` through imported `login_users.uclasses` and protected `/api/cron/vaccination-alarms`; it now reads migrated and generated `NotificationReceipt` rows from `custom_notifications_vaccinations`, collapses delivery receipts by alarm for New/Viewed status, supports row/bulk/all mark-viewed, and shows sent vaccination history for USER/PARENT_USER/CHILD receipts. `/alarmsVaccinations.php` now redirects to the modern vaccination alarms page. Alarm notification and sent-history loads now use uncapped server queries over migrated/generated receipts. Remaining audit is parent/mobile delivery parity and reconciliation with manual `Vaccination.nextDueDate` records."
   },
   {
     "legacyPhp": "Front/templates/admin/assessment_1.php",

@@ -2,7 +2,7 @@ import { getMessageAlarms } from "@/lib/actions/messages";
 import { MessageAlarmsClient } from "./message-alarms-client";
 
 export default async function MessageAlarmsPage() {
-  const result = await getMessageAlarms({ pageSize: 500 });
+  const result = await getMessageAlarms({ pageSize: "all" });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const data = result.data as any;

@@ -29,7 +29,7 @@ interface MessageListParams {
   search?: string;
   readStatus?: "all" | "read" | "unread";
   page?: number;
-  pageSize?: number;
+  pageSize?: PageSize;
 }
 
 interface SentMessageListParams {
@@ -43,7 +43,7 @@ interface SentMessageListParams {
   message?: string;
   thread?: string;
   page?: number;
-  pageSize?: number | "all";
+  pageSize?: PageSize;
 }
 
 interface MessageAlarmListParams extends MessageListParams {
@@ -87,6 +87,12 @@ interface LegacyMessageDeliveryOptions {
 }
 
 type LegacyDeliveryChannel = "Web" | "Mobile" | "SMS" | "WhatsApp";
+
+type PageSize = number | "all";
+
+function numericPageSize(pageSize: PageSize | undefined, fallback: number) {
+  return pageSize === "all" ? undefined : Math.max(1, pageSize ?? fallback);
+}
 
 interface LegacyMessageSideEffectConfig {
   legacyNatureId: number;
@@ -1282,14 +1288,15 @@ export async function getInbox(
       ];
     }
 
-    const skip = (page - 1) * pageSize;
+    const resolvedPageSize = numericPageSize(pageSize, 50);
+    const skip = resolvedPageSize ? (page - 1) * resolvedPageSize : undefined;
 
     const [messages, total] = await Promise.all([
       db.message.findMany({
         where,
         orderBy: { createdAt: "desc" },
-        skip,
-        take: pageSize,
+        ...(skip !== undefined ? { skip } : {}),
+        ...(resolvedPageSize !== undefined ? { take: resolvedPageSize } : {}),
       }),
       db.message.count({ where }),
     ]);
@@ -1326,7 +1333,7 @@ export async function getInbox(
         total,
         page,
         pageSize,
-        totalPages: Math.ceil(total / pageSize),
+        totalPages: resolvedPageSize ? Math.ceil(total / resolvedPageSize) : 1,
       },
     };
   } catch (error) {
@@ -1377,14 +1384,15 @@ export async function getMessageAlarms(
       ];
     }
 
-    const skip = (page - 1) * pageSize;
+    const resolvedPageSize = numericPageSize(pageSize, 500);
+    const skip = resolvedPageSize ? (page - 1) * resolvedPageSize : undefined;
 
     const [messages, total] = await Promise.all([
       db.message.findMany({
         where,
         orderBy: { createdAt: "desc" },
-        skip,
-        take: pageSize,
+        ...(skip !== undefined ? { skip } : {}),
+        ...(resolvedPageSize !== undefined ? { take: resolvedPageSize } : {}),
       }),
       db.message.count({ where }),
     ]);
@@ -1433,7 +1441,7 @@ export async function getMessageAlarms(
         total,
         page,
         pageSize,
-        totalPages: Math.ceil(total / pageSize),
+        totalPages: resolvedPageSize ? Math.ceil(total / resolvedPageSize) : 1,
       },
     };
   } catch (error) {

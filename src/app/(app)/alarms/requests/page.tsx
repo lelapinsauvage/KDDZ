@@ -17,10 +17,10 @@ export default async function RequestAlarmsPage() {
     notificationResult,
     historyResult,
   ] = await Promise.all([
-    getAlarms({ type: "REQUEST" }),
+    getAlarms({ type: "REQUEST", pageSize: "all" }),
     getBranches(),
-    getRequestAlarmNotifications(),
-    getRequestAlarmHistory(),
+    getRequestAlarmNotifications({ pageSize: "all" }),
+    getRequestAlarmHistory({ pageSize: "all" }),
   ]);
 
   const branches = ((branchesResult.data ?? []) as Array<{ id: string; name: string }>);

@@ -19,11 +19,11 @@ export default async function PaymentAlarmsPage() {
     notificationsResult,
     historyResult,
   ] = await Promise.all([
-    getAlarms({ type: "PAYMENT" }),
+    getAlarms({ type: "PAYMENT", pageSize: "all" }),
     getBranches(),
     getOverduePayments(),
-    getPaymentAlarmNotifications({ pageSize: 500 }),
-    getPaymentAlarmHistory({ pageSize: 500 }),
+    getPaymentAlarmNotifications({ pageSize: "all" }),
+    getPaymentAlarmHistory({ pageSize: "all" }),
   ]);
 
   const branches = ((branchesResult.data ?? []) as Array<{ id: string; name: string }>);

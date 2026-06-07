@@ -24,8 +24,8 @@ export default async function AssessmentAlarmsPage() {
     getAssessmentDueAlarms(),
     getUpcomingAssessments(),
     getBranches(),
-    getAssessmentAlarmNotifications({ pageSize: 500 }),
-    getAssessmentAlarmHistory({ pageSize: 500 }),
+    getAssessmentAlarmNotifications({ pageSize: "all" }),
+    getAssessmentAlarmHistory({ pageSize: "all" }),
   ]);
 
   const branches = ((branchesResult.data ?? []) as Array<{ id: string; name: string }>);

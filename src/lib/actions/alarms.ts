@@ -74,7 +74,7 @@ interface AlarmListParams {
   branchId?: string;
   isActive?: boolean;
   page?: number;
-  pageSize?: number;
+  pageSize?: PageSize;
 }
 
 interface AlarmData {
@@ -92,6 +92,24 @@ type ActionResult<T = unknown> = {
   error?: string;
   data?: T;
 };
+
+type PageSize = number | "all";
+
+type ReceiptListParams = {
+  pageSize?: PageSize;
+};
+
+function numericPageSize(pageSize: PageSize | undefined, fallback: number) {
+  return pageSize === "all" ? undefined : Math.max(1, pageSize ?? fallback);
+}
+
+function takeForPageSize(
+  pageSize: PageSize | undefined,
+  fallback: number,
+): { take?: number } {
+  const take = numericPageSize(pageSize, fallback);
+  return take === undefined ? {} : { take };
+}
 
 const MEDICAL_RECEIPT_SOURCE = "custom_notifications_medical";
 const MEDICAL_PARENT_RECEIPT_SOURCE = "custom_notifications_medical_parents";
@@ -868,15 +886,16 @@ export async function getAlarms(
     if (branchId) where.branchId = branchId;
     if (typeof isActive === "boolean") where.isActive = isActive;
 
-    const skip = (page - 1) * pageSize;
+    const resolvedPageSize = numericPageSize(pageSize, 20);
+    const skip = resolvedPageSize ? (page - 1) * resolvedPageSize : undefined;
 
     const [alarms, total] = await Promise.all([
       db.alarm.findMany({
         where,
         include: { branch: true },
         orderBy: { dueDate: "asc" },
-        skip,
-        take: pageSize,
+        ...(skip !== undefined ? { skip } : {}),
+        ...(resolvedPageSize !== undefined ? { take: resolvedPageSize } : {}),
       }),
       db.alarm.count({ where }),
     ]);
@@ -888,7 +907,7 @@ export async function getAlarms(
         total,
         page,
         pageSize,
-        totalPages: Math.ceil(total / pageSize),
+        totalPages: resolvedPageSize ? Math.ceil(total / resolvedPageSize) : 1,
       },
     };
   } catch (error) {
@@ -902,11 +921,11 @@ export async function getAlarms(
 // ---------------------------------------------------------------------------
 
 export async function getMedicalAlarmNotifications(
-  params: { pageSize?: number } = {},
+  params: ReceiptListParams = {},
 ): Promise<ActionResult> {
   try {
     const { userId, organizationId: orgId } = await requireOrg();
-    const pageSize = params.pageSize ?? 500;
+    const take = takeForPageSize(params.pageSize, 500);
 
     const receipts = await db.notificationReceipt.findMany({
       where: {
@@ -924,7 +943,7 @@ export async function getMedicalAlarmNotifications(
         alarm: { include: { branch: true } },
       },
       orderBy: { legacyNotificationId: "desc" },
-      take: pageSize,
+      ...take,
     });
 
     const alarms = receipts.flatMap((receipt) => {
@@ -989,11 +1008,11 @@ export async function getMedicalAlarmNotifications(
 // ---------------------------------------------------------------------------
 
 export async function getMedicalAlarmHistory(
-  params: { pageSize?: number } = {},
+  params: ReceiptListParams = {},
 ): Promise<ActionResult> {
   try {
     const { userId, organizationId: orgId } = await requireOrg();
-    const pageSize = params.pageSize ?? 500;
+    const take = takeForPageSize(params.pageSize, 500);
 
     const receipts = await db.notificationReceipt.findMany({
       where: {
@@ -1019,7 +1038,7 @@ export async function getMedicalAlarmHistory(
         alarm: { include: { branch: true } },
       },
       orderBy: { legacyNotificationId: "desc" },
-      take: pageSize,
+      ...take,
     });
 
     const recipientNameFor = await getReceiptRecipientNameResolver(receipts);
@@ -1159,11 +1178,11 @@ export async function markAllMedicalAlarmsViewed(): Promise<
 
 async function getStaffReceiptAlarmNotifications(
   config: StaffReceiptAlarmConfig,
-  params: { pageSize?: number } = {},
+  params: ReceiptListParams = {},
 ): Promise<ActionResult> {
   try {
     const { userId, organizationId: orgId } = await requireOrg();
-    const pageSize = params.pageSize ?? 500;
+    const take = takeForPageSize(params.pageSize, 500);
 
     const receipts = await db.notificationReceipt.findMany({
       where: {
@@ -1180,7 +1199,7 @@ async function getStaffReceiptAlarmNotifications(
         alarm: { include: { branch: true } },
       },
       orderBy: { legacyNotificationId: "desc" },
-      take: pageSize,
+      ...take,
     });
 
     const receiptGroups = config.collapseNotificationsByAlarm
@@ -1264,11 +1283,11 @@ async function getStaffReceiptAlarmNotifications(
 
 async function getStaffReceiptAlarmHistory(
   config: StaffReceiptAlarmConfig,
-  params: { pageSize?: number } = {},
+  params: ReceiptListParams = {},
 ): Promise<ActionResult> {
   try {
     const { userId, organizationId: orgId } = await requireOrg();
-    const pageSize = params.pageSize ?? 500;
+    const take = takeForPageSize(params.pageSize, 500);
 
     const receipts = await db.notificationReceipt.findMany({
       where: {
@@ -1285,7 +1304,7 @@ async function getStaffReceiptAlarmHistory(
         alarm: { include: { branch: true } },
       },
       orderBy: { legacyNotificationId: "desc" },
-      take: pageSize,
+      ...take,
     });
 
     const recipientNameFor = await getReceiptRecipientNameResolver(receipts);
@@ -1555,11 +1574,12 @@ const OTHER_ALARM_CONFIG: StaffReceiptAlarmConfig = {
 };
 
 export async function getEventAlarmNotifications(
-  params: { pageSize?: number } = {},
+  params: ReceiptListParams = {},
 ): Promise<ActionResult> {
   try {
     const { userId, organizationId: orgId } = await requireOrg();
-    const pageSize = params.pageSize ?? 500;
+    const take = takeForPageSize(params.pageSize, 500);
+    const resultLimit = numericPageSize(params.pageSize, 500);
 
     const [alarmReceipts, eventReceipts] = await Promise.all([
       db.notificationReceipt.findMany({
@@ -1576,7 +1596,7 @@ export async function getEventAlarmNotifications(
         },
         include: { alarm: { include: { branch: true } } },
         orderBy: { legacyNotificationId: "desc" },
-        take: pageSize,
+        ...take,
       }),
       db.notificationReceipt.findMany({
         where: {
@@ -1585,7 +1605,7 @@ export async function getEventAlarmNotifications(
           recipientType: "USER",
         },
         orderBy: { legacyNotificationId: "desc" },
-        take: pageSize,
+        ...take,
       }),
     ]);
 
@@ -1680,7 +1700,7 @@ export async function getEventAlarmNotifications(
         (a, b) =>
           new Date(b.datetime).getTime() - new Date(a.datetime).getTime(),
       )
-      .slice(0, pageSize);
+      .slice(0, resultLimit);
 
     return { success: true, data: { alarms, total: alarms.length } };
   } catch (error) {
@@ -1693,11 +1713,12 @@ export async function getEventAlarmNotifications(
 }
 
 export async function getEventAlarmHistory(
-  params: { pageSize?: number } = {},
+  params: ReceiptListParams = {},
 ): Promise<ActionResult> {
   try {
     const { userId, organizationId: orgId } = await requireOrg();
-    const pageSize = params.pageSize ?? 500;
+    const take = takeForPageSize(params.pageSize, 500);
+    const resultLimit = numericPageSize(params.pageSize, 500);
 
     const [alarmReceipts, eventReceipts] = await Promise.all([
       db.notificationReceipt.findMany({
@@ -1714,7 +1735,7 @@ export async function getEventAlarmHistory(
         },
         include: { alarm: { include: { branch: true } } },
         orderBy: { legacyNotificationId: "desc" },
-        take: pageSize,
+        ...take,
       }),
       db.notificationReceipt.findMany({
         where: {
@@ -1731,7 +1752,7 @@ export async function getEventAlarmHistory(
           ],
         },
         orderBy: { legacyNotificationId: "desc" },
-        take: pageSize,
+        ...take,
       }),
     ]);
 
@@ -1812,7 +1833,7 @@ export async function getEventAlarmHistory(
 
     const history = [...alarmHistory, ...eventHistory]
       .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
-      .slice(0, pageSize);
+      .slice(0, resultLimit);
 
     return { success: true, data: { history, total: history.length } };
   } catch (error) {
@@ -1963,13 +1984,13 @@ export async function markAllEventAlarmsViewed(): Promise<
 }
 
 export async function getBirthdayAlarmNotifications(
-  params: { pageSize?: number } = {},
+  params: ReceiptListParams = {},
 ): Promise<ActionResult> {
   return getStaffReceiptAlarmNotifications(BIRTHDAY_ALARM_CONFIG, params);
 }
 
 export async function getBirthdayAlarmHistory(
-  params: { pageSize?: number } = {},
+  params: ReceiptListParams = {},
 ): Promise<ActionResult> {
   return getStaffReceiptAlarmHistory(BIRTHDAY_ALARM_CONFIG, params);
 }
@@ -1987,13 +2008,13 @@ export async function markAllBirthdayAlarmsViewed(): Promise<
 }
 
 export async function getContractAlarmNotifications(
-  params: { pageSize?: number } = {},
+  params: ReceiptListParams = {},
 ): Promise<ActionResult> {
   return getStaffReceiptAlarmNotifications(CONTRACT_ALARM_CONFIG, params);
 }
 
 export async function getContractAlarmHistory(
-  params: { pageSize?: number } = {},
+  params: ReceiptListParams = {},
 ): Promise<ActionResult> {
   return getStaffReceiptAlarmHistory(CONTRACT_ALARM_CONFIG, params);
 }
@@ -2011,13 +2032,13 @@ export async function markAllContractAlarmsViewed(): Promise<
 }
 
 export async function getAssessmentAlarmNotifications(
-  params: { pageSize?: number } = {},
+  params: ReceiptListParams = {},
 ): Promise<ActionResult> {
   return getStaffReceiptAlarmNotifications(ASSESSMENT_ALARM_CONFIG, params);
 }
 
 export async function getAssessmentAlarmHistory(
-  params: { pageSize?: number } = {},
+  params: ReceiptListParams = {},
 ): Promise<ActionResult> {
   return getStaffReceiptAlarmHistory(ASSESSMENT_ALARM_CONFIG, params);
 }
@@ -2035,13 +2056,13 @@ export async function markAllAssessmentAlarmsViewed(): Promise<
 }
 
 export async function getInsuranceAlarmNotifications(
-  params: { pageSize?: number } = {},
+  params: ReceiptListParams = {},
 ): Promise<ActionResult> {
   return getStaffReceiptAlarmNotifications(INSURANCE_ALARM_CONFIG, params);
 }
 
 export async function getInsuranceAlarmHistory(
-  params: { pageSize?: number } = {},
+  params: ReceiptListParams = {},
 ): Promise<ActionResult> {
   return getStaffReceiptAlarmHistory(INSURANCE_ALARM_CONFIG, params);
 }
@@ -2059,13 +2080,13 @@ export async function markAllInsuranceAlarmsViewed(): Promise<
 }
 
 export async function getMedicineAlarmNotifications(
-  params: { pageSize?: number } = {},
+  params: ReceiptListParams = {},
 ): Promise<ActionResult> {
   return getStaffReceiptAlarmNotifications(MEDICINE_ALARM_CONFIG, params);
 }
 
 export async function getMedicineAlarmHistory(
-  params: { pageSize?: number } = {},
+  params: ReceiptListParams = {},
 ): Promise<ActionResult> {
   return getStaffReceiptAlarmHistory(MEDICINE_ALARM_CONFIG, params);
 }
@@ -2083,13 +2104,13 @@ export async function markAllMedicineAlarmsViewed(): Promise<
 }
 
 export async function getPaymentAlarmNotifications(
-  params: { pageSize?: number } = {},
+  params: ReceiptListParams = {},
 ): Promise<ActionResult> {
   return getStaffReceiptAlarmNotifications(PAYMENT_ALARM_CONFIG, params);
 }
 
 export async function getPaymentAlarmHistory(
-  params: { pageSize?: number } = {},
+  params: ReceiptListParams = {},
 ): Promise<ActionResult> {
   return getStaffReceiptAlarmHistory(PAYMENT_ALARM_CONFIG, params);
 }
@@ -2107,13 +2128,13 @@ export async function markAllPaymentAlarmsViewed(): Promise<
 }
 
 export async function getVaccinationAlarmNotifications(
-  params: { pageSize?: number } = {},
+  params: ReceiptListParams = {},
 ): Promise<ActionResult> {
   return getStaffReceiptAlarmNotifications(VACCINATION_ALARM_CONFIG, params);
 }
 
 export async function getVaccinationAlarmHistory(
-  params: { pageSize?: number } = {},
+  params: ReceiptListParams = {},
 ): Promise<ActionResult> {
   return getStaffReceiptAlarmHistory(VACCINATION_ALARM_CONFIG, params);
 }
@@ -2131,13 +2152,13 @@ export async function markAllVaccinationAlarmsViewed(): Promise<
 }
 
 export async function getGeneralAlarmNotifications(
-  params: { pageSize?: number } = {},
+  params: ReceiptListParams = {},
 ): Promise<ActionResult> {
   return getStaffReceiptAlarmNotifications(GENERAL_ALARM_CONFIG, params);
 }
 
 export async function getGeneralAlarmHistory(
-  params: { pageSize?: number } = {},
+  params: ReceiptListParams = {},
 ): Promise<ActionResult> {
   return getStaffReceiptAlarmHistory(GENERAL_ALARM_CONFIG, params);
 }
@@ -2155,13 +2176,13 @@ export async function markAllGeneralAlarmsViewed(): Promise<
 }
 
 export async function getRequestAlarmNotifications(
-  params: { pageSize?: number } = {},
+  params: ReceiptListParams = {},
 ): Promise<ActionResult> {
   return getStaffReceiptAlarmNotifications(REQUEST_ALARM_CONFIG, params);
 }
 
 export async function getRequestAlarmHistory(
-  params: { pageSize?: number } = {},
+  params: ReceiptListParams = {},
 ): Promise<ActionResult> {
   return getStaffReceiptAlarmHistory(REQUEST_ALARM_CONFIG, params);
 }
@@ -2179,13 +2200,13 @@ export async function markAllRequestAlarmsViewed(): Promise<
 }
 
 export async function getOtherAlarmNotifications(
-  params: { pageSize?: number } = {},
+  params: ReceiptListParams = {},
 ): Promise<ActionResult> {
   return getStaffReceiptAlarmNotifications(OTHER_ALARM_CONFIG, params);
 }
 
 export async function getOtherAlarmHistory(
-  params: { pageSize?: number } = {},
+  params: ReceiptListParams = {},
 ): Promise<ActionResult> {
   return getStaffReceiptAlarmHistory(OTHER_ALARM_CONFIG, params);
 }

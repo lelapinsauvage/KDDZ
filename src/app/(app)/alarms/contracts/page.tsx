@@ -11,8 +11,8 @@ import {
 
 export default async function ContractAlarmsPage() {
   const [alarmsResult, historyResult, branchesResult] = await Promise.all([
-    getContractAlarmNotifications({ pageSize: 500 }),
-    getContractAlarmHistory({ pageSize: 500 }),
+    getContractAlarmNotifications({ pageSize: "all" }),
+    getContractAlarmHistory({ pageSize: "all" }),
     getBranches(),
   ]);
 
