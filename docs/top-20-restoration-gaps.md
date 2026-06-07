@@ -151,7 +151,8 @@ This list is the first implementation backlog after the generated inventory/matr
    - `/signup`, `/sign_up.php`, and `/users/sign_up.php` now restore the legacy public PHP-login signup flow with disabled-registration guard, email-as-username mode, blocked signup domains, default legacy level assignment, signup profile fields, activation-token creation, welcome/new-user template rendering, and in-app admin notification fanout.
    - `/profile`, `/profile.php`, and `/users/profile.php` now restore the signed-in PHP-login profile flow with current-password validation, editable name/email/password, migrated profile fields, access logs, integration status, `update_emailPw` confirmation-token handling, and public read-only `uid` profile links when legacy public profiles are enabled.
    - `/login` now resolves migrated staff/manager PHP-login identities by username or email, blocks restricted users and disabled primary legacy levels into `/disabled.php`, restores the disabled contact form at `/disabled.php` and `/users/disabled.php`, and appends migrated-compatible legacy login timestamp rows for linked PHP-login users when legacy profile timestamps are enabled.
-   - Remaining work is mapping these grants to modern roles/sessions and enforcing them in pages/actions.
+   - `src/lib/legacy-access-permissions.ts` now maps the signed-in modern user back to migrated `login_users`/`login_users_man` levels, `system_actions*`, and active `actions_control*` grants; `/profile` and `updateActiveSchoolYearDates()` now enforce the legacy `Check::protectPageOrFunction('EditSchoolFromTo','ACTION')` permission when migrated ACL data is present, while retaining the admin/manager fallback when the legacy action catalogue is absent.
+   - Remaining work is expanding this grant bridge across the remaining legacy PAGE/ACTION guards and deciding whether to hydrate grant snapshots into sessions.
 
 ## Execution Order
 

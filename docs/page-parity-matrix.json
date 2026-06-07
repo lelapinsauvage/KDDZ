@@ -16505,13 +16505,13 @@
     "legacyPhp": "Front/templates/admin/settings.php",
     "legacyJs": "Front/templates/admin/js/settings.js",
     "modernRoute": "/settings.php, /profile?legacy=settings.php",
-    "status": "partial - legacy account password and scholastic-year workflows restored; exact permission-map audit remains",
+    "status": "partial - legacy account password, scholastic-year workflow, and EditSchoolFromTo ACL restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "`/settings.php` now redirects to the profile account-settings view, and `/profile` restores the legacy Change your password card with New Password, show/hide toggle, 5-character validation, save action for the current user, and success/error toasts. The legacy `EditSchoolFromTo` card is restored for admin/manager users with Change Scholastic Year, Start Date, End Date, Update, required start/end validation, active school-year prefill, org-scoped active `SchoolYear` mutation, and the legacy success/error copy from `settings.js`. Remaining work is exact `Check::protectPageOrFunction('EditSchoolFromTo','ACTION')` permission-map parity if imported legacy ACL data exposes a narrower action grant than the modern admin/manager guard."
+    "verification": "`/settings.php` now redirects to the profile account-settings view, and `/profile` restores the legacy Change your password card with New Password, show/hide toggle, 5-character validation, save action for the current user, and success/error toasts. The legacy `EditSchoolFromTo` card is restored with Change Scholastic Year, Start Date, End Date, Update, required start/end validation, active school-year prefill, org-scoped active `SchoolYear` mutation, and the legacy success/error copy from `settings.js`; visibility and `updateActiveSchoolYearDates()` now enforce the migrated `Check::protectPageOrFunction('EditSchoolFromTo','ACTION')` grant through legacy levels/actions when ACL data exists, with the admin/manager guard retained as fallback for imports without that action catalogue. Remaining work is broader PAGE/ACTION permission-map enforcement."
   },
   {
     "legacyPhp": "Front/templates/admin/teachers.php",
@@ -16620,7 +16620,7 @@
     "legacyPhp": "Front/templates/admin/users/admin/classes/LevelsControl.class.php",
     "legacyJs": "",
     "modernRoute": "/settings/access-control",
-    "status": "partial - legacy level action matrix restored; active enforcement remains",
+    "status": "partial - legacy level action matrix restored; first active enforcement wired",
     "legacyTablesMentioned": [
       "Levels",
       "actions_control",
@@ -16633,7 +16633,7 @@
     "requestFieldsMentioned": [
       "LEVELS"
     ],
-    "verification": "`/settings/access-control` now restores the admin-only legacy level/action matrix over migrated `LegacyAuthRecord` levels and `LegacyAccessControlRecord` actions/grants, including staff and manager source databases, selected-level batch save, searchable action catalogue, inactive action badges, disabled level badges, legacy `No level selected!`/`Saved!` feedback, and grant persistence by soft-disabling stale rows then re-enabling/creating selected grants. Remaining work is wiring these restored grants into active modern page/action enforcement and session permission hydration."
+    "verification": "`/settings/access-control` now restores the admin-only legacy level/action matrix over migrated `LegacyAuthRecord` levels and `LegacyAccessControlRecord` actions/grants, including staff and manager source databases, selected-level batch save, searchable action catalogue, inactive action badges, disabled level badges, legacy `No level selected!`/`Saved!` feedback, and grant persistence by soft-disabling stale rows then re-enabling/creating selected grants. `EditSchoolFromTo` is now enforced through the migrated grant bridge. Remaining work is wiring the broader PAGE/ACTION map into modern route/action enforcement and deciding whether to hydrate grant snapshots into sessions."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/classes/add_level.class.php",
@@ -17140,7 +17140,7 @@
     "legacyPhp": "Front/templates/admin/users/admin/page/level-control.php",
     "legacyJs": "",
     "modernRoute": "/settings/access-control",
-    "status": "partial - legacy level action matrix restored; active enforcement remains",
+    "status": "partial - legacy level action matrix restored; first active enforcement wired",
     "legacyTablesMentioned": [
       "actions_control",
       "actions_control_man",
@@ -17152,7 +17152,7 @@
     "requestFieldsMentioned": [
       "LEVELS"
     ],
-    "verification": "`/settings/access-control` replaces the legacy `Modify levels` admin surface with source-database grouped staff/manager level tables, selected-level checkboxes, searchable action grants, select-all/clear controls, and batch save through `updateLegacyAccessControlLevels`. Remaining work is legacy create/edit level/user form parity and active `Check::protectPageOrFunction` enforcement against these grants."
+    "verification": "`/settings/access-control` replaces the legacy `Modify levels` admin surface with source-database grouped staff/manager level tables, selected-level checkboxes, searchable action grants, select-all/clear controls, and batch save through `updateLegacyAccessControlLevels`. `EditSchoolFromTo` now uses those grants for active enforcement when migrated ACL data is present. Remaining work is expanding active `Check::protectPageOrFunction` enforcement across the rest of the legacy PAGE/ACTION map."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/level-create.php",

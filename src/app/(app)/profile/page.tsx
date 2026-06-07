@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { requireOrg } from "@/lib/require-org";
+import { getLegacyAccessPermissionDecision } from "@/lib/legacy-access-permissions";
 import { isAdminRole } from "@/lib/require-role";
 import { FadeIn } from "@/components/ui/skeleton";
 import {
@@ -59,7 +60,12 @@ export default async function ProfilePage({ searchParams }: PageProps) {
 
   if (legacySettings) {
     const ctx = await requireOrg();
-    canEditSchoolYear = isAdminRole(ctx.role);
+    const editSchoolYearPermission =
+      await getLegacyAccessPermissionDecision(ctx, "EditSchoolFromTo", "ACTION");
+    canEditSchoolYear =
+      isAdminRole(ctx.role) &&
+      (!editSchoolYearPermission.isConfigured ||
+        editSchoolYearPermission.isAllowed);
 
     const year = await db.schoolYear.findFirst({
       where: {

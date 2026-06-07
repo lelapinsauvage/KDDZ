@@ -6,6 +6,7 @@ import { compare, hash } from "bcryptjs";
 import type { Prisma } from "@/generated/prisma/client";
 
 import { db } from "@/lib/db";
+import { getLegacyAccessPermissionDecision } from "@/lib/legacy-access-permissions";
 import { requireOrgSafe } from "@/lib/require-org";
 import { isAdminRole } from "@/lib/require-role";
 
@@ -1153,6 +1154,14 @@ export async function updateActiveSchoolYearDates(
   const { ctx } = result;
 
   if (!isAdminRole(ctx.role)) {
+    return { success: false, error: "Forbidden: insufficient permissions" };
+  }
+  const editSchoolYearPermission = await getLegacyAccessPermissionDecision(
+    ctx,
+    "EditSchoolFromTo",
+    "ACTION",
+  );
+  if (editSchoolYearPermission.isConfigured && !editSchoolYearPermission.isAllowed) {
     return { success: false, error: "Forbidden: insufficient permissions" };
   }
 
