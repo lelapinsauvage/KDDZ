@@ -13,6 +13,19 @@ type ActionResult<T = undefined> = {
 };
 
 const MIN_PASSWORD_LENGTH = 5;
+const LOGIN_CONFIRM_TABLES = ["login_confirm", "login_confirm_man"];
+
+type LegacyRecoverableRecord = {
+  sourceDatabase: string;
+  legacyTable: string;
+  legacyId: number;
+  legacyUserId: number | null;
+  userId: string | null;
+  recordType: string;
+  username: string | null;
+  email: string | null;
+  recordKey: string | null;
+};
 
 function siteAddress() {
   return (
@@ -25,9 +38,9 @@ function siteAddress() {
 function resetUrl(key: string) {
   const base = siteAddress();
   try {
-    return new URL(`/forgot?key=${encodeURIComponent(key)}`, base).toString();
+    return new URL(`/forgot.php?key=${encodeURIComponent(key)}`, base).toString();
   } catch {
-    return `/forgot?key=${encodeURIComponent(key)}`;
+    return `/forgot.php?key=${encodeURIComponent(key)}`;
   }
 }
 
@@ -91,25 +104,33 @@ async function findRecoverableUser(usernamemail: string) {
   const credential = usernamemail.trim();
   if (!credential) return null;
 
-  const legacyRecord = await db.legacyAuthRecord.findFirst({
-    where: {
-      recordType: "login_user",
-      OR: [
-        { username: { equals: credential, mode: "insensitive" as const } },
-        { email: { equals: credential, mode: "insensitive" as const } },
-      ],
-    },
-    orderBy: [{ sourceDatabase: "desc" }, { legacyId: "desc" }],
-    select: {
-      sourceDatabase: true,
-      legacyId: true,
-      legacyUserId: true,
-      userId: true,
-      username: true,
-      email: true,
-      recordKey: true,
-    },
-  });
+  let legacyRecord: LegacyRecoverableRecord | null = null;
+
+  try {
+    legacyRecord = await db.legacyAuthRecord.findFirst({
+      where: {
+        recordType: { in: ["login_user", "manager_login_user"] },
+        OR: [
+          { username: { equals: credential, mode: "insensitive" as const } },
+          { email: { equals: credential, mode: "insensitive" as const } },
+        ],
+      },
+      orderBy: [{ sourceDatabase: "desc" }, { legacyId: "desc" }],
+      select: {
+        sourceDatabase: true,
+        legacyTable: true,
+        legacyId: true,
+        legacyUserId: true,
+        userId: true,
+        recordType: true,
+        username: true,
+        email: true,
+        recordKey: true,
+      },
+    });
+  } catch (error) {
+    console.warn("legacy password recovery metadata unavailable:", error);
+  }
 
   const directUser = await db.user.findFirst({
     where: {
@@ -149,6 +170,15 @@ async function findRecoverableUser(usernamemail: string) {
   };
 }
 
+type RecoverableUser = NonNullable<Awaited<ReturnType<typeof findRecoverableUser>>>;
+
+function loginConfirmTableFor(legacy: RecoverableUser["legacy"]) {
+  return legacy?.recordType === "manager_login_user" ||
+    legacy?.legacyTable === "login_users_man"
+    ? "login_confirm_man"
+    : "login_confirm";
+}
+
 export async function requestPasswordReset(
   usernamemail: string,
 ): Promise<
@@ -172,6 +202,7 @@ export async function requestPasswordReset(
 
   const key = randomBytes(16).toString("hex");
   const href = resetUrl(key);
+  const legacyTable = loginConfirmTableFor(recoverable.legacy);
   const template = await legacyTemplate("email-forgot-subj", "email-forgot-msg");
   const values = {
     site_address: siteAddress(),
@@ -192,7 +223,7 @@ export async function requestPasswordReset(
   await db.$transaction([
     db.legacyAuthRecord.updateMany({
       where: {
-        legacyTable: "login_confirm",
+        legacyTable,
         recordType: "forgot_pw",
         email: recoverable.user.email,
       },
@@ -203,10 +234,10 @@ export async function requestPasswordReset(
     db.legacyAuthRecord.create({
       data: {
         sourceDatabase: recoverable.legacy?.sourceDatabase ?? "modern",
-        legacyTable: "login_confirm",
+        legacyTable,
         legacyKey: `${
           recoverable.legacy?.sourceDatabase ?? "modern"
-        }:login_confirm:forgot_pw:${key}`,
+        }:${legacyTable}:forgot_pw:${key}`,
         legacyId: 0,
         recordType: "forgot_pw",
         userId: recoverable.user.id,
@@ -259,7 +290,7 @@ export async function resetForgottenPassword(params: {
 
   const record = await db.legacyAuthRecord.findFirst({
     where: {
-      legacyTable: "login_confirm",
+      legacyTable: { in: LOGIN_CONFIRM_TABLES },
       recordType: "forgot_pw",
       recordKey: key,
     },
@@ -311,7 +342,7 @@ export async function resetForgottenPassword(params: {
     }),
     db.legacyAuthRecord.updateMany({
       where: {
-        legacyTable: "login_confirm",
+        legacyTable: { in: LOGIN_CONFIRM_TABLES },
         recordType: "forgot_pw",
         OR: [{ email: user.email }, { recordKey: key }],
       },

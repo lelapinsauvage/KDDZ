@@ -733,7 +733,10 @@
     "legacyJs": "",
     "modernRoute": "",
     "status": "unknown - needs manual mapping",
-    "legacyTablesMentioned": [],
+    "legacyTablesMentioned": [
+      "login_confirm",
+      "login_confirm_man"
+    ],
     "requestFieldsMentioned": [],
     "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
   },
@@ -17415,13 +17418,15 @@
   {
     "legacyPhp": "Front/templates/admin/users/classes/forgot.class.php",
     "legacyJs": "",
-    "modernRoute": "/forgot",
-    "status": "partial - legacy forgot/reset token flow restored; external email delivery remains",
+    "modernRoute": "/forgot.php, /users/forgot.php, /forgot",
+    "status": "partial - legacy forgot/reset PHP bridges restored; external email delivery remains",
     "legacyTablesMentioned": [
       "an",
       "email",
       "login_confirm",
-      "login_users"
+      "login_confirm_man",
+      "login_users",
+      "login_users_man"
     ],
     "requestFieldsMentioned": [
       "key",
@@ -17430,7 +17435,7 @@
       "reset",
       "usernamemail"
     ],
-    "verification": "/forgot now restores the legacy `Forgot` flow: username/email request field, account-exists validation, replacement of existing `forgot_pw` tokens, 32-character reset keys stored in `LegacyAuthRecord` as `login_confirm` rows, reset form for `?key=`, password confirmation/minimum-length validation, password update, token consumption, legacy success/error wording, and rendered migrated forgot/recovered email templates in token metadata. Remaining work is actual SMTP/provider delivery of those rendered emails."
+    "verification": "`/forgot.php` and `/users/forgot.php` now restore the legacy `Forgot` entrypoints: GET `?key=` redirects into the modern reset form, modal POST `usernamemail` returns the legacy raw Bootstrap alert HTML fragment, account-exists validation preserves the original messages, existing `forgot_pw` tokens are replaced, 32-character reset keys are stored in `LegacyAuthRecord` against `login_confirm` or `login_confirm_man` based on the recovered identity, reset emails now generate legacy `/forgot.php?key=` links, `/forgot` accepts migrated tokens from both tables, password confirmation/minimum-length validation, password update, token consumption, success/error wording, and rendered migrated forgot/recovered email templates in token metadata. Remaining work is actual SMTP/provider delivery of those rendered emails."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/generic.class.php",
@@ -18095,13 +18100,13 @@
   {
     "legacyPhp": "Front/templates/admin/users/forgot.php",
     "legacyJs": "",
-    "modernRoute": "/forgot",
-    "status": "partial - legacy forgot page restored; external email delivery remains",
+    "modernRoute": "/forgot.php, /users/forgot.php, /forgot",
+    "status": "partial - legacy forgot page PHP bridge restored; external email delivery remains",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [
       "usernamemail"
     ],
-    "verification": "/forgot now handles both legacy modes from `users/forgot.php`: POST-style username/email recovery requests and `?key=` password reset links. It preserves the legacy user-facing messages and reset fields while using modern server actions and `LegacyAuthRecord` token persistence. Remaining work is provider-backed email delivery."
+    "verification": "`/forgot.php` and `/users/forgot.php` now handle both legacy modes from `users/forgot.php`: POST-style username/email recovery requests return the raw alert snippet expected by the old login modal, and `?key=` password reset links redirect into `/forgot?key=`. The flow preserves the legacy user-facing messages and reset fields while using modern server actions, `LegacyAuthRecord` token persistence, and manager-token compatibility. Remaining work is provider-backed email delivery."
   },
   {
     "legacyPhp": "Front/templates/admin/users/header.php",

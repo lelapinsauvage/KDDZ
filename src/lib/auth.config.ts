@@ -40,6 +40,8 @@ export const authConfig = {
       const isPublic =
         pathname.startsWith("/login") ||
         pathname.startsWith("/forgot") ||
+        pathname === "/forgot.php" ||
+        pathname === "/users/forgot.php" ||
         pathname === "/signup" ||
         pathname === "/sign_up.php" ||
         pathname === "/users/sign_up.php" ||
