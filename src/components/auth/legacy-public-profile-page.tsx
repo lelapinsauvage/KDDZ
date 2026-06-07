@@ -52,6 +52,17 @@ function displayFieldValue(field: LegacyProfileFieldValue) {
   return field.value || "Not set";
 }
 
+function initialsFor(name: string) {
+  return (
+    name
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "?"
+  );
+}
+
 export async function LegacyPublicProfilePage({
   searchParams,
   legacyPath,
@@ -81,16 +92,32 @@ export async function LegacyPublicProfilePage({
     <main className="min-h-screen bg-[#F7F8FA] p-4 sm:p-6">
       <div className="mx-auto max-w-4xl">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <a
-              href="/login"
-              className="text-sm font-medium text-[#0B7464] underline-offset-4 hover:underline"
-            >
-              KiddzOnline
-            </a>
-            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-[#1A1D23]">
-              {title}
-            </h1>
+          <div className="flex min-w-0 items-center gap-3">
+            {profile ? (
+              <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#0B7464]/10 text-lg font-semibold text-[#0B7464]">
+                {profile.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={profile.imageUrl}
+                    alt=""
+                    className="size-full object-cover"
+                  />
+                ) : (
+                  initialsFor(profile.name || profile.username)
+                )}
+              </div>
+            ) : null}
+            <div className="min-w-0">
+              <a
+                href="/login"
+                className="text-sm font-medium text-[#0B7464] underline-offset-4 hover:underline"
+              >
+                KiddzOnline
+              </a>
+              <h1 className="mt-2 truncate text-2xl font-semibold tracking-tight text-[#1A1D23]">
+                {title}
+              </h1>
+            </div>
           </div>
           {profile ? (
             <Badge variant="outline">User {profile.legacyUserId}</Badge>

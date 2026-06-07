@@ -52,6 +52,8 @@ export type LegacyCurrentProfileData = {
   username: string;
   name: string;
   email: string;
+  imageUrl: string | null;
+  customAvatarEnabled: boolean;
   publicProfileEnabled: boolean;
   publicProfileUrl: string | null;
   profileFields: LegacyProfileFieldValue[];
@@ -85,6 +87,7 @@ export type LegacyPublicProfileData = {
   username: string;
   name: string;
   email: string;
+  imageUrl: string | null;
   sourceDatabase: string;
   legacyUserId: number;
   profileFields: LegacyProfileFieldValue[];
@@ -128,8 +131,8 @@ function legacyBoolean(value: unknown, key: string, fallback = false) {
   return fallback;
 }
 
-function boolSetting(value: string | null | undefined) {
-  if (!value) return false;
+function boolSetting(value: string | null | undefined, fallback = false) {
+  if (!value) return fallback;
   return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
 }
 
@@ -281,6 +284,26 @@ function socialIdentifier(legacyData: unknown, provider: string) {
         ? String(raw)
         : "";
   return value && value !== "0" ? value : null;
+}
+
+function legacyProfileImageUrl(
+  userImage: string | null | undefined,
+  legacyData: Prisma.JsonValue | null | undefined,
+) {
+  return (
+    userImage?.trim() ||
+    legacyString(legacyData, "avatar") ||
+    legacyString(legacyData, "image") ||
+    legacyString(legacyData, "gravatar") ||
+    null
+  );
+}
+
+function normalizeStoredProfileImageUrl(value: string | null | undefined) {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith("/") || /^https?:\/\//i.test(trimmed)) return trimmed;
+  return null;
 }
 
 function profileFieldLegacyIdFromValue(record: {
@@ -628,8 +651,9 @@ export async function getCurrentLegacyProfile(): Promise<
 
   const recordType = legacyRecord.recordType as LegacyUserRecordType;
   const legacyUserId = legacyRecord.legacyUserId ?? legacyRecord.legacyId;
-  const [settings, profileFields, socialIntegration] = await Promise.all([
+  const [settings, profileFields, socialIntegration, userImage] = await Promise.all([
     legacySettings(legacyRecord.sourceDatabase, [
+      "custom-avatar-enable",
       "profile-public-enable",
       "profile-timestamps-enable",
       "profile-timestamps-admin-enable",
@@ -653,6 +677,10 @@ export async function getCurrentLegacyProfile(): Promise<
           select: { legacyData: true },
         })
       : Promise.resolve(null),
+    db.user.findUnique({
+      where: { id: result.ctx.userId },
+      select: { image: true },
+    }),
   ]);
 
   const levelIds = parsePhpLevelIds(legacyRecord.recordValue);
@@ -683,6 +711,10 @@ export async function getCurrentLegacyProfile(): Promise<
   const publicProfileEnabled = boolSetting(
     settings.get("profile-public-enable"),
   );
+  const customAvatarEnabled = boolSetting(
+    settings.get("custom-avatar-enable"),
+    true,
+  );
   const username =
     legacyRecord.username ||
     legacyRecord.recordKey ||
@@ -708,6 +740,8 @@ export async function getCurrentLegacyProfile(): Promise<
     username,
     name,
     email,
+    imageUrl: legacyProfileImageUrl(userImage?.image, legacyRecord.legacyData),
+    customAvatarEnabled,
     publicProfileEnabled,
     publicProfileUrl: publicProfileEnabled
       ? `${siteAddress().replace(/\/$/, "")}/profile.php?uid=${legacyUserId}`
@@ -740,6 +774,7 @@ export async function getPublicLegacyProfile(
       },
       orderBy: [{ sourceDatabase: "desc" }, { legacyId: "desc" }],
       select: {
+        userId: true,
         sourceDatabase: true,
         legacyId: true,
         legacyUserId: true,
@@ -753,6 +788,12 @@ export async function getPublicLegacyProfile(
     if (!record) {
       return { success: false, error: "Sorry, that user does not exist." };
     }
+    const userImage = record.userId
+      ? await db.user.findUnique({
+          where: { id: record.userId },
+          select: { image: true },
+        })
+      : null;
 
     const settings = await legacySettings(record.sourceDatabase, [
       "profile-public-enable",
@@ -778,6 +819,7 @@ export async function getPublicLegacyProfile(
           `User ${resolvedLegacyUserId}`,
         name: legacyString(record.legacyData, "name") || "Unnamed",
         email: record.email || legacyString(record.legacyData, "email") || "",
+        imageUrl: legacyProfileImageUrl(userImage?.image, record.legacyData),
         sourceDatabase: record.sourceDatabase,
         legacyUserId: resolvedLegacyUserId,
         profileFields,
@@ -786,6 +828,75 @@ export async function getPublicLegacyProfile(
   } catch (error) {
     console.error("getPublicLegacyProfile error:", error);
     return { success: false, error: "Unable to load public profile." };
+  }
+}
+
+export async function updateCurrentUserLegacyProfileImage(
+  imageUrl: string | null,
+): Promise<ActionResult<{ imageUrl: string | null }>> {
+  const result = await requireOrgSafe();
+  if (!result.ok) return { success: false, error: result.error };
+  const { ctx } = result;
+  const normalizedImageUrl = normalizeStoredProfileImageUrl(imageUrl);
+
+  if (imageUrl && !normalizedImageUrl) {
+    return { success: false, error: "Invalid avatar URL." };
+  }
+
+  try {
+    const [user, legacyRecord] = await Promise.all([
+      db.user.findUnique({
+        where: { id: ctx.userId },
+        select: { id: true, isActive: true },
+      }),
+      findCurrentLegacyProfile(ctx.userId),
+    ]);
+
+    if (!user?.isActive) {
+      return { success: false, error: "User not found" };
+    }
+    if (!legacyRecord) {
+      return {
+        success: false,
+        error: "Legacy profile metadata is not linked to this account.",
+      };
+    }
+
+    const settings = await legacySettings(legacyRecord.sourceDatabase, [
+      "custom-avatar-enable",
+    ]);
+    if (!boolSetting(settings.get("custom-avatar-enable"), true)) {
+      return { success: false, error: "Custom avatar uploads are disabled." };
+    }
+
+    const updatedAt = new Date().toISOString();
+    await db.$transaction([
+      db.user.update({
+        where: { id: user.id },
+        data: { image: normalizedImageUrl },
+      }),
+      db.legacyAuthRecord.update({
+        where: { id: legacyRecord.id },
+        data: {
+          legacyData: {
+            ...legacyObject(legacyRecord.legacyData),
+            avatar: normalizedImageUrl ?? "",
+            image: normalizedImageUrl ?? "",
+            avatarUpdatedAt: updatedAt,
+            avatar_updated_from: "modern_profile",
+          },
+        },
+      }),
+    ]);
+
+    revalidatePath("/profile");
+    revalidatePath("/profile.php");
+    revalidatePath("/users/profile.php");
+
+    return { success: true, data: { imageUrl: normalizedImageUrl } };
+  } catch (error) {
+    console.error("updateCurrentUserLegacyProfileImage error:", error);
+    return { success: false, error: "Failed to update avatar" };
   }
 }
 

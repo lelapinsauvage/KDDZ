@@ -12,6 +12,7 @@ export type UploadScope =
   | "doctor-document"
   | "manager"
   | "manager-document"
+  | "profile-avatar"
   | "payment-receipt"
   | "daily-report"
   | "absence-report"

@@ -29,6 +29,7 @@ import {
   Clock3,
   Eye,
   EyeOff,
+  ImageIcon,
   KeyRound,
   Link2,
   Loader2,
@@ -36,19 +37,25 @@ import {
   Save,
   Shield,
   User,
+  X,
 } from "lucide-react";
 import {
   changeCurrentUserPassword,
   updateActiveSchoolYearDates,
   updateCurrentUserLegacyProfile,
+  updateCurrentUserLegacyProfileImage,
   type LegacyCurrentProfileData,
 } from "@/lib/actions/profile";
+import { uploadFileWithPresign } from "@/lib/uploads/client-upload";
 import { toast } from "sonner";
 
 interface ProfileUser {
+  id: string;
   name: string;
   email: string;
+  image: string | null;
   role: string;
+  branchId: string | null;
 }
 
 interface ActiveSchoolYear {
@@ -141,6 +148,10 @@ export function ProfileClient({
   const [profileValues, setProfileValues] = useState(() =>
     buildInitialProfileValues(legacyProfile),
   );
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(
+    legacyProfile?.imageUrl ?? user.image ?? null,
+  );
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [pendingConfirmUrl, setPendingConfirmUrl] = useState<string | null>(null);
   const [schoolYearStartDate, setSchoolYearStartDate] = useState(
     activeSchoolYear?.startDate ?? "",
@@ -150,6 +161,7 @@ export function ProfileClient({
   );
   const [isPasswordPending, startPasswordTransition] = useTransition();
   const [isLegacyPending, startLegacyTransition] = useTransition();
+  const [isImagePending, startImageTransition] = useTransition();
   const [isSchoolYearPending, startSchoolYearTransition] = useTransition();
   const initials = (legacyName || user.name)
     ? (legacyName || user.name)
@@ -186,6 +198,87 @@ export function ProfileClient({
       toast.error(profileNotice.message);
     }
   }, [profileNotice]);
+
+  useEffect(() => {
+    setProfileImageUrl(legacyProfile?.imageUrl ?? user.image ?? null);
+  }, [legacyProfile?.imageUrl, user.image]);
+
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    };
+  }, [imagePreviewUrl]);
+
+  function setSelectedProfileImage(file: File) {
+    if (!legacyProfile?.customAvatarEnabled) {
+      toast.error("Custom avatar uploads are disabled.");
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      toast.error("Sorry, that file is not accepted.");
+      return;
+    }
+    if (!user.branchId) {
+      toast.error("Cannot upload avatar because no branch is available.");
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreviewUrl((current) => {
+      if (current) URL.revokeObjectURL(current);
+      return previewUrl;
+    });
+
+    startImageTransition(async () => {
+      try {
+        const uploaded = await uploadFileWithPresign({
+          branchId: user.branchId!,
+          scope: "profile-avatar",
+          ownerId: user.id,
+          file,
+        });
+        const result = await updateCurrentUserLegacyProfileImage(
+          uploaded.publicUrl,
+        );
+        if (!result.success) {
+          throw new Error(result.error ?? "Failed to update avatar");
+        }
+        setProfileImageUrl(result.data?.imageUrl ?? uploaded.publicUrl);
+        setImagePreviewUrl((current) => {
+          if (current) URL.revokeObjectURL(current);
+          return null;
+        });
+        toast.success("Avatar change success!");
+      } catch (error) {
+        setImagePreviewUrl((current) => {
+          if (current) URL.revokeObjectURL(current);
+          return null;
+        });
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Sorry, that file is not accepted.",
+        );
+      }
+    });
+  }
+
+  function clearProfileImage() {
+    if (!legacyProfile?.customAvatarEnabled) return;
+    startImageTransition(async () => {
+      const result = await updateCurrentUserLegacyProfileImage(null);
+      if (!result.success) {
+        toast.error(result.error ?? "Failed to update avatar");
+        return;
+      }
+      setProfileImageUrl(null);
+      setImagePreviewUrl((current) => {
+        if (current) URL.revokeObjectURL(current);
+        return null;
+      });
+      toast.success("Avatar removed");
+    });
+  }
 
   function handlePasswordSave() {
     if (!password) {
@@ -304,6 +397,7 @@ export function ProfileClient({
 
   const displayName = legacyName || user.name || "Unnamed";
   const displayEmail = legacyEmail || user.email || "No email";
+  const displayImageUrl = imagePreviewUrl ?? profileImageUrl;
 
   return (
     <>
@@ -317,8 +411,17 @@ export function ProfileClient({
 
       <div className="space-y-4 p-4 md:p-6">
         <div className="flex flex-wrap items-center gap-4">
-          <div className="flex size-16 items-center justify-center rounded-full bg-primary/10 text-xl font-bold text-primary">
-            {initials}
+          <div className="flex size-16 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-xl font-bold text-primary">
+            {displayImageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={displayImageUrl}
+                alt=""
+                className="size-full object-cover"
+              />
+            ) : (
+              initials
+            )}
           </div>
           <div className="min-w-0">
             <h2 className="truncate text-lg font-semibold text-foreground">
@@ -337,6 +440,47 @@ export function ProfileClient({
                 {displayEmail}
               </span>
             </div>
+            {legacyProfile?.customAvatarEnabled ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                <label
+                  className={`inline-flex h-9 items-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-medium shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground ${
+                    isImagePending
+                      ? "cursor-not-allowed opacity-60"
+                      : "cursor-pointer"
+                  }`}
+                >
+                  {isImagePending ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <ImageIcon className="size-4" />
+                  )}
+                  Photo
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={isImagePending}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) setSelectedProfileImage(file);
+                      event.target.value = "";
+                    }}
+                  />
+                </label>
+                {displayImageUrl ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearProfileImage}
+                    disabled={isImagePending}
+                  >
+                    <X className="size-4" />
+                    Clear
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </div>
 

@@ -43,13 +43,37 @@ export default async function ProfilePage({ searchParams }: PageProps) {
   const dbUser = session.user.id
     ? await db.user.findUnique({
         where: { id: session.user.id },
-        select: { name: true, email: true, role: true },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+          role: true,
+          branchId: true,
+          organizationId: true,
+        },
       })
     : null;
+  let uploadBranchId = dbUser?.branchId ?? session.user.branchId ?? null;
+  if (!uploadBranchId) {
+    const organizationId =
+      dbUser?.organizationId ?? session.user.organizationId ?? null;
+    const fallbackBranch = organizationId
+      ? await db.branch.findFirst({
+          where: { organizationId },
+          select: { id: true },
+          orderBy: { createdAt: "asc" },
+        })
+      : null;
+    uploadBranchId = fallbackBranch?.id ?? null;
+  }
   const user = {
+    id: dbUser?.id ?? session.user.id,
     name: dbUser?.name ?? session.user.name ?? "",
     email: dbUser?.email ?? session.user.email ?? "",
+    image: dbUser?.image ?? session.user.image ?? null,
     role: dbUser?.role ?? (session.user as { role?: string }).role ?? "",
+    branchId: uploadBranchId,
   };
   const legacyProfile = await getCurrentLegacyProfile();
 

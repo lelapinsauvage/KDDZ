@@ -33,6 +33,7 @@ const uploadScopeSchema = z.enum([
   "doctor-document",
   "manager",
   "manager-document",
+  "profile-avatar",
   "payment-receipt",
   "daily-report",
   "absence-report",
