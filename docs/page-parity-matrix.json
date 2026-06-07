@@ -18227,11 +18227,11 @@
   {
     "legacyPhp": "Front/templates/admin/users/protected.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/users/protected.php",
+    "status": "restored - legacy protected-content demo restored",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/users/protected.php` now restores the legacy permission demo page with Admin, Special, all-registered, and public content blocks. The modern page uses the current Auth.js session role for the gated snippets and keeps the original warning/public copy for unauthenticated visitors."
   },
   {
     "legacyPhp": "Front/templates/admin/users/sign_up.php",
@@ -18258,11 +18258,11 @@
   {
     "legacyPhp": "Front/templates/admin/users/whoami.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/users/whoami.php",
+    "status": "restored - legacy current-user text endpoint restored",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/users/whoami.php` now returns a plain-text runtime user value, matching the legacy `get_current_user()` diagnostic endpoint shape with no-store caching."
   },
   {
     "legacyPhp": "Front/templates/admin/view.php",

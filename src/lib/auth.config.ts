@@ -46,6 +46,8 @@ export const authConfig = {
         pathname === "/sign_up.php" ||
         pathname === "/users/sign_up.php" ||
         pathname === "/users/admin/login.php" ||
+        pathname === "/users/protected.php" ||
+        pathname === "/users/whoami.php" ||
         pathname === "/logout.php" ||
         pathname === "/users/logout.php" ||
         pathname === "/disabled.php" ||
