@@ -12,7 +12,8 @@ import {
   Inbox,
 } from "lucide-react"
 import { MobileMoreSheet } from "./mobile-more-sheet"
-import type { UserRole, SidebarClassInfo } from "./app-sidebar"
+import type { UserRole, SidebarClassInfo, LegacyPagePermissionMap } from "./app-sidebar"
+import { legacyPageAllows } from "./app-sidebar"
 import type { SidebarBadges } from "@/lib/actions/sidebar"
 import type { LegacyNotificationGateVisibility } from "@/lib/legacy-notification-gates"
 
@@ -20,26 +21,27 @@ interface TabItem {
   label: string
   icon: React.ComponentType<{ className?: string }>
   href: string
+  legacyPage?: string
 }
 
 const adminTabs: TabItem[] = [
-  { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-  { label: "Children", icon: Baby, href: "/children" },
-  { label: "Reports", icon: FileText, href: "/daily-reports" },
+  { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard", legacyPage: "index.php" },
+  { label: "Children", icon: Baby, href: "/children", legacyPage: "children.php" },
+  { label: "Reports", icon: FileText, href: "/daily-reports", legacyPage: "dailyreports.php" },
   { label: "Messages", icon: MessageCircle, href: "/messages/inbox" },
 ]
 
 const teacherTabs: TabItem[] = [
   { label: "Today", icon: LayoutDashboard, href: "/today" },
-  { label: "Children", icon: Baby, href: "/children" },
-  { label: "Reports", icon: FileText, href: "/daily-reports" },
+  { label: "Children", icon: Baby, href: "/children", legacyPage: "children.php" },
+  { label: "Reports", icon: FileText, href: "/daily-reports", legacyPage: "dailyreports.php" },
   { label: "Messages", icon: Inbox, href: "/messages/inbox" },
 ]
 
 const nurseTabs: TabItem[] = [
-  { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-  { label: "Medical", icon: FileText, href: "/medical/general" },
-  { label: "Children", icon: Baby, href: "/children" },
+  { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard", legacyPage: "index.php" },
+  { label: "Medical", icon: FileText, href: "/medical/general", legacyPage: "medical_reports.php" },
+  { label: "Children", icon: Baby, href: "/children", legacyPage: "children.php" },
   { label: "Messages", icon: Inbox, href: "/messages/inbox" },
 ]
 
@@ -62,6 +64,7 @@ interface MobileNavProps {
   classes?: SidebarClassInfo[]
   badges?: SidebarBadges
   notificationGates?: LegacyNotificationGateVisibility | null
+  legacyPagePermissions?: LegacyPagePermissionMap | null
 }
 
 export function MobileNav({
@@ -69,9 +72,12 @@ export function MobileNav({
   classes,
   badges,
   notificationGates,
+  legacyPagePermissions,
 }: MobileNavProps) {
   const pathname = usePathname()
-  const tabs = getTabsForRole(userRole)
+  const tabs = getTabsForRole(userRole).filter((tab) =>
+    legacyPageAllows(tab.legacyPage, legacyPagePermissions)
+  )
   const [moreOpen, setMoreOpen] = useState(false)
 
   return (
@@ -124,6 +130,7 @@ export function MobileNav({
         classes={classes}
         badges={badges}
         notificationGates={notificationGates}
+        legacyPagePermissions={legacyPagePermissions}
       />
     </>
   )

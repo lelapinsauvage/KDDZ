@@ -90,12 +90,14 @@ interface NavLeaf {
   icon?: React.ComponentType<{ className?: string }>
   badgeKey?: keyof SidebarBadges
   notificationGateKey?: LegacyNotificationGateKey
+  legacyPage?: string
 }
 
 interface NavAccordionItem {
   title: string
   icon?: React.ComponentType<{ className?: string }>
   children: NavItem[]
+  legacyPage?: string
 }
 
 type NavItem = NavLeaf | NavAccordionItem
@@ -108,8 +110,14 @@ type NavSection =
       href: string
       badgeKey?: keyof SidebarBadges
       notificationGateKey?: LegacyNotificationGateKey
+      legacyPage?: string
     }
-  | { label: string; icon: React.ComponentType<{ className?: string }>; children: NavItem[] }
+  | {
+      label: string
+      icon: React.ComponentType<{ className?: string }>
+      children: NavItem[]
+      legacyPage?: string
+    }
 
 function isAccordion(item: NavItem): item is NavAccordionItem {
   return "children" in item
@@ -174,32 +182,66 @@ function notificationGateAllows(
   return !key || !gates || gates[key] !== false
 }
 
+export type LegacyPagePermissionDecision = {
+  isConfigured: boolean
+  isAllowed: boolean
+}
+
+export type LegacyPagePermissionMap = Record<string, LegacyPagePermissionDecision>
+
+function legacyPageAllows(
+  legacyPage: string | undefined,
+  permissions?: LegacyPagePermissionMap | null
+) {
+  if (!legacyPage || !permissions) return true
+  const decision = permissions[legacyPage]
+  return !decision?.isConfigured || decision.isAllowed
+}
+
 function filterNavItems(
   items: NavItem[],
-  gates?: LegacyNotificationGateVisibility | null
+  gates?: LegacyNotificationGateVisibility | null,
+  legacyPagePermissions?: LegacyPagePermissionMap | null
 ): NavItem[] {
   return items.flatMap<NavItem>((item) => {
     if (!isAccordion(item)) {
-      return notificationGateAllows(item.notificationGateKey, gates) ? [item] : []
+      return notificationGateAllows(item.notificationGateKey, gates) &&
+        legacyPageAllows(item.legacyPage, legacyPagePermissions)
+        ? [item]
+        : []
     }
 
-    const children = filterNavItems(item.children, gates)
+    if (!legacyPageAllows(item.legacyPage, legacyPagePermissions)) return []
+
+    const children = filterNavItems(
+      item.children,
+      gates,
+      legacyPagePermissions
+    )
     return children.length > 0 ? [{ ...item, children }] : []
   })
 }
 
 function filterNavSections(
   sections: NavSection[],
-  gates?: LegacyNotificationGateVisibility | null
+  gates?: LegacyNotificationGateVisibility | null,
+  legacyPagePermissions?: LegacyPagePermissionMap | null
 ): NavSection[] {
   return sections.flatMap<NavSection>((section) => {
     if (!isSectionAccordion(section)) {
-      return notificationGateAllows(section.notificationGateKey, gates)
+      return notificationGateAllows(section.notificationGateKey, gates) &&
+        legacyPageAllows(section.legacyPage, legacyPagePermissions)
         ? [section]
         : []
     }
 
-    const children = filterNavItems(section.children, gates)
+    if (!legacyPageAllows(section.legacyPage, legacyPagePermissions)) return []
+
+    const children = filterNavItems(
+      section.children,
+      gates,
+      legacyPagePermissions
+    )
     return children.length > 0 ? [{ ...section, children }] : []
   })
 }
@@ -209,15 +251,15 @@ function filterNavSections(
 // ---------------------------------------------------------------------------
 
 const adminNav: NavSection[] = [
-  { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+  { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard", legacyPage: "index.php" },
   {
     label: "Garderie Management",
     icon: Building2,
     children: [
-      { title: "Branches Management", href: "/branches", icon: Building2 },
-      { title: "Classes Management", href: "/classes", icon: School },
-      { title: "Accounting Management", href: "/accounting", icon: DollarSign },
-      { title: "Monthly Attendance", href: "/reports/monthly", icon: CalendarDays },
+      { title: "Branches Management", href: "/branches", icon: Building2, legacyPage: "branches.php" },
+      { title: "Classes Management", href: "/classes", icon: School, legacyPage: "classes.php" },
+      { title: "Accounting Management", href: "/accounting", icon: DollarSign, legacyPage: "accounting.php" },
+      { title: "Monthly Attendance", href: "/reports/monthly", icon: CalendarDays, legacyPage: "Monthly_report.php" },
     ],
   },
   // "Classes" dynamic section inserted at runtime by getNavForRole
@@ -226,31 +268,32 @@ const adminNav: NavSection[] = [
     icon: Inbox,
     children: [
       { title: "Inbox", href: "/messages/inbox", icon: Inbox, badgeKey: "unreadMessages" },
-      { title: "Messages Portal", href: "/messages/compose", icon: Send },
-      { title: "Single Messaging", href: "/messages/compose/direct", icon: PenLine },
-      { title: "Sent Messages", href: "/messages/sent", icon: Send },
+      { title: "Messages Portal", href: "/messages/compose", icon: Send, legacyPage: "message_portal.php" },
+      { title: "Single Messaging", href: "/messages/compose/direct", icon: PenLine, legacyPage: "message_portal_single.php" },
+      { title: "Sent Messages", href: "/messages/sent", icon: Send, legacyPage: "Msg_list.php" },
     ],
   },
   {
     label: "Children Management",
     icon: Baby,
     children: [
-      { title: "Children Listing", href: "/children", icon: Baby },
-      { title: "Children Drafts", href: "/children/drafts", icon: FileEdit },
-      { title: "Calls Management", href: "/calls", icon: Phone },
+      { title: "Children Listing", href: "/children", icon: Baby, legacyPage: "children.php" },
+      { title: "Children Drafts", href: "/children/drafts", icon: FileEdit, legacyPage: "children_drafts.php" },
+      { title: "Calls Management", href: "/calls", icon: Phone, legacyPage: "calls.php" },
       {
         title: "Daily Reports",
         icon: FileText,
         children: [
-          { title: "Daily Reports", href: "/daily-reports", icon: FileText, badgeKey: "missingReports" },
-          { title: "Drafts", href: "/daily-reports/drafts", icon: FileEdit },
-          { title: "Absent Reports", href: "/absent-reports", icon: CalendarDays },
-          { title: "Absent Drafts", href: "/absent-reports/drafts", icon: FileEdit },
+          { title: "Daily Reports", href: "/daily-reports", icon: FileText, badgeKey: "missingReports", legacyPage: "dailyreports.php" },
+          { title: "Drafts", href: "/daily-reports/drafts", icon: FileEdit, legacyPage: "dailyreportsd.php" },
+          { title: "Absent Reports", href: "/absent-reports", icon: CalendarDays, legacyPage: "absentreports.php" },
+          { title: "Absent Drafts", href: "/absent-reports/drafts", icon: FileEdit, legacyPage: "absentreportsD.php" },
         ],
       },
       {
         title: "Medical Reports",
         icon: Stethoscope,
+        legacyPage: "medical_reports.php",
         children: [
           { title: "General Info", href: "/medical/general", icon: Stethoscope },
           { title: "Suffering Form", href: "/medical/suffering", icon: Heart },
@@ -259,39 +302,40 @@ const adminNav: NavSection[] = [
           { title: "Accident Report", href: "/medical/accidents", icon: AlertTriangle },
         ],
       },
-      { title: "Parent Users", href: "/settings/parent-users", icon: Users },
+      { title: "Parent Users", href: "/settings/parent-users", icon: Users, legacyPage: "parent_users.php" },
     ],
   },
   {
     label: "Food Management",
     icon: UtensilsCrossed,
     children: [
-      { title: "Food Listing", href: "/food", icon: UtensilsCrossed },
-      { title: "Food Calendar", href: "/food/calendar", icon: Calendar },
+      { title: "Food Listing", href: "/food", icon: UtensilsCrossed, legacyPage: "food.php" },
+      { title: "Food Calendar", href: "/food/calendar", icon: Calendar, legacyPage: "food_calendar.php" },
     ],
   },
   {
     label: "Employees Management",
     icon: UserCheck,
     children: [
-      { title: "Nurses Listing", href: "/employees/nurses", icon: Stethoscope },
-      { title: "Doctors Listing", href: "/employees/doctors", icon: Pill },
-      { title: "Managers Listing", href: "/employees/managers", icon: UserCheck },
-      { title: "Teachers Listing", href: "/employees/teachers", icon: GraduationCap },
-      { title: "Teachers Calendar", href: "/employees/calendar", icon: Calendar },
-      { title: "Upload Attendance", href: "/employees/attendance", icon: Upload },
-      { title: "Attendance Logs", href: "/employees/attendance-logs", icon: Clock },
+      { title: "Nurses Listing", href: "/employees/nurses", icon: Stethoscope, legacyPage: "nurses.php" },
+      { title: "Doctors Listing", href: "/employees/doctors", icon: Pill, legacyPage: "doctors.php" },
+      { title: "Managers Listing", href: "/employees/managers", icon: UserCheck, legacyPage: "managers.php" },
+      { title: "Teachers Listing", href: "/employees/teachers", icon: GraduationCap, legacyPage: "teachers.php" },
+      { title: "Teachers Calendar", href: "/employees/calendar", icon: Calendar, legacyPage: "calendar.php" },
+      { title: "Upload Attendance", href: "/employees/attendance", icon: Upload, legacyPage: "attendance.php" },
+      { title: "Attendance Logs", href: "/employees/attendance-logs", icon: Clock, legacyPage: "PA_logs.php" },
     ],
   },
   {
     label: "Setting",
     icon: Settings,
     children: [
-      { title: "Holiday Calendar", href: "/settings/holidays", icon: Calendar },
-      { title: "Events Calendar", href: "/settings/events", icon: CalendarDays },
+      { title: "Holiday Calendar", href: "/settings/holidays", icon: Calendar, legacyPage: "holiday_calendar.php" },
+      { title: "Events Calendar", href: "/settings/events", icon: CalendarDays, legacyPage: "NotifCalendar.php" },
       {
         title: "Address Management",
         icon: MapPin,
+        legacyPage: "Address.php",
         children: [
           { title: "Mouhafaza", href: "/settings/regions", icon: Globe },
           { title: "Quadaa", href: "/settings/zones", icon: MapIcon },
@@ -301,6 +345,7 @@ const adminNav: NavSection[] = [
       {
         title: "Notifications",
         icon: Bell,
+        legacyPage: "Alarms.php",
         children: [
           { title: "Overview", href: "/alarms", icon: Bell, badgeKey: "activeAlarms", notificationGateKey: "general" },
           { title: "Birthdays", href: "/alarms/birthdays", icon: Cake, notificationGateKey: "birthdays" },
@@ -317,7 +362,7 @@ const adminNav: NavSection[] = [
           { title: "Contracts", href: "/alarms/contracts", icon: FileText },
         ],
       },
-      { title: "New Academic Year", href: "/settings/new-year", icon: GraduationCap },
+      { title: "New Academic Year", href: "/settings/new-year", icon: GraduationCap, legacyPage: "newyear.php" },
     ],
   },
 ]
@@ -328,16 +373,16 @@ const teacherNav: NavSection[] = [
     label: "Daily Operations",
     icon: FileText,
     children: [
-      { title: "Daily Reports", href: "/daily-reports", icon: FileText, badgeKey: "missingReports" },
-      { title: "Drafts", href: "/daily-reports/drafts", icon: FileEdit },
-      { title: "Absent Reports", href: "/absent-reports", icon: CalendarDays },
+      { title: "Daily Reports", href: "/daily-reports", icon: FileText, badgeKey: "missingReports", legacyPage: "dailyreports.php" },
+      { title: "Drafts", href: "/daily-reports/drafts", icon: FileEdit, legacyPage: "dailyreportsd.php" },
+      { title: "Absent Reports", href: "/absent-reports", icon: CalendarDays, legacyPage: "absentreports.php" },
     ],
   },
   {
     label: "Children",
     icon: Baby,
     children: [
-      { title: "Children Listing", href: "/children", icon: Baby },
+      { title: "Children Listing", href: "/children", icon: Baby, legacyPage: "children.php" },
     ],
   },
   {
@@ -345,16 +390,17 @@ const teacherNav: NavSection[] = [
     icon: Inbox,
     children: [
       { title: "Messages", href: "/messages/inbox", icon: Inbox, badgeKey: "unreadMessages" },
-      { title: "Notifications", href: "/alarms", icon: Bell, badgeKey: "activeAlarms", notificationGateKey: "general" },
+      { title: "Notifications", href: "/alarms", icon: Bell, badgeKey: "activeAlarms", notificationGateKey: "general", legacyPage: "Alarms.php" },
     ],
   },
 ]
 
 const nurseNav: NavSection[] = [
-  { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+  { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard", legacyPage: "index.php" },
   {
     label: "Health",
     icon: Stethoscope,
+    legacyPage: "medical_reports.php",
     children: [
       { title: "General Info", href: "/medical/general", icon: Stethoscope },
       { title: "Vaccinations", href: "/medical/vaccinations", icon: Syringe },
@@ -366,7 +412,7 @@ const nurseNav: NavSection[] = [
     label: "Children",
     icon: Baby,
     children: [
-      { title: "All Children", href: "/children", icon: Baby },
+      { title: "All Children", href: "/children", icon: Baby, legacyPage: "children.php" },
     ],
   },
   {
@@ -374,7 +420,7 @@ const nurseNav: NavSection[] = [
     icon: Inbox,
     children: [
       { title: "Messages", href: "/messages/inbox", icon: Inbox, badgeKey: "unreadMessages" },
-      { title: "Notifications", href: "/alarms", icon: Bell, badgeKey: "activeAlarms", notificationGateKey: "general" },
+      { title: "Notifications", href: "/alarms", icon: Bell, badgeKey: "activeAlarms", notificationGateKey: "general", legacyPage: "Alarms.php" },
     ],
   },
 ]
@@ -382,7 +428,8 @@ const nurseNav: NavSection[] = [
 function getNavForRole(
   role: UserRole,
   classes?: SidebarClassInfo[],
-  notificationGates?: LegacyNotificationGateVisibility | null
+  notificationGates?: LegacyNotificationGateVisibility | null,
+  legacyPagePermissions?: LegacyPagePermissionMap | null
 ): NavSection[] {
   let sections: NavSection[]
   switch (role) {
@@ -442,7 +489,7 @@ function getNavForRole(
     }
   }
 
-  return filterNavSections(sections, notificationGates)
+  return filterNavSections(sections, notificationGates, legacyPagePermissions)
 }
 
 // ---------------------------------------------------------------------------
@@ -654,6 +701,7 @@ interface AppSidebarProps {
   badges?: SidebarBadges
   classes?: SidebarClassInfo[]
   notificationGates?: LegacyNotificationGateVisibility | null
+  legacyPagePermissions?: LegacyPagePermissionMap | null
 }
 
 const TABLET_MAX = 1024
@@ -663,12 +711,18 @@ export function AppSidebar({
   badges,
   classes,
   notificationGates,
+  legacyPagePermissions,
 }: AppSidebarProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const { data: session } = useSession()
   const { setOpen } = useSidebar()
-  const sections = getNavForRole(userRole, classes, notificationGates)
+  const sections = getNavForRole(
+    userRole,
+    classes,
+    notificationGates,
+    legacyPagePermissions
+  )
   const quickActions = getQuickActionsForRole(userRole)
   const userName = session?.user?.name || "User"
   const userInitial = userName.charAt(0).toUpperCase()
@@ -833,4 +887,4 @@ export function AppSidebar({
 }
 
 // Export types and helpers for mobile nav
-export { getNavForRole, type NavSection, type NavItem, type NavLeaf, type NavAccordionItem, type UserRole, isAccordion, isSectionAccordion, hasActiveChild, sectionHasActiveChild, isLeafActive, badgeColors }
+export { getNavForRole, type NavSection, type NavItem, type NavLeaf, type NavAccordionItem, type UserRole, isAccordion, isSectionAccordion, hasActiveChild, sectionHasActiveChild, isLeafActive, legacyPageAllows, badgeColors }

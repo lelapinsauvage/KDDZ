@@ -16297,14 +16297,16 @@
     "legacyPhp": "Front/templates/admin/leftmenu.php",
     "legacyJs": "",
     "modernRoute": "global app sidebar/header",
-    "status": "partial - legacy sidebar groups, notification gates, class links, user settings bridge, and key menu targets restored; permission/visual audit remains",
+    "status": "partial - legacy sidebar groups, notification gates, PAGE permissions, class links, user settings bridge, and key menu targets restored; visual audit remains",
     "legacyTablesMentioned": [
       "t_class",
       "t_notification_setting",
-      "notifications_nature"
+      "notifications_nature",
+      "system_actions",
+      "actions_control"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Modern `AppSidebar` now mirrors the legacy left menu groups for Dashboard, Garderie Management, dynamic Classes, Messages, Children Management, Food Management, Employees Management, Setting/Address/Notifications, and New Academic Year; it uses migrated dynamic classes, notification/message badges, active route highlighting, and corrects legacy Monthly Attendance to `/reports/monthly`. Desktop and mobile navigation now apply the legacy `$_SESSION['notif']`/`t_notification_setting` alarm visibility gates for Overview/Events, Insurance, Vaccinations, Assessments, Medical, Medicine, Birthdays, and Payments while leaving Requests, Messages, Others, and Contracts visible like `leftmenu.php`. The header/sidebar user Settings entries now use `/settings.php`, preserving the legacy account settings/password destination. Remaining work is exact `Check::protectPageOrFunction` permission-gating parity, per-branch food calendar submenu parity, and final Metronic visual/hover audit."
+    "verification": "Modern `AppSidebar` now mirrors the legacy left menu groups for Dashboard, Garderie Management, dynamic Classes, Messages, Children Management, Food Management, Employees Management, Setting/Address/Notifications, and New Academic Year; it uses migrated dynamic classes, notification/message badges, active route highlighting, and corrects legacy Monthly Attendance to `/reports/monthly`. Desktop and mobile navigation now apply the legacy `$_SESSION['notif']`/`t_notification_setting` alarm visibility gates for Overview/Events, Insurance, Vaccinations, Assessments, Medical, Medicine, Birthdays, and Payments while leaving Requests, Messages, Others, and Contracts visible like `leftmenu.php`. The layout now batch-resolves migrated `Check::protectPageOrFunction(..., \"PAGE\")` decisions for the left-menu PAGE names and filters guarded desktop sidebar, mobile tab, and mobile More sheet entries when the current user's migrated levels lack the matching active `actions_control*` grant; missing legacy action rows fall back to visible. The header/sidebar user Settings entries now use `/settings.php`, preserving the legacy account settings/password destination. Remaining work is per-branch food calendar submenu parity and final Metronic visual/hover audit."
   },
   {
     "legacyPhp": "Front/templates/admin/managers.php",
@@ -16620,7 +16622,7 @@
     "legacyPhp": "Front/templates/admin/users/admin/classes/LevelsControl.class.php",
     "legacyJs": "",
     "modernRoute": "/settings/access-control",
-    "status": "partial - legacy level action matrix restored; first active enforcement wired",
+    "status": "partial - legacy level action matrix restored; sidebar PAGE filtering and first action enforcement wired",
     "legacyTablesMentioned": [
       "Levels",
       "actions_control",
@@ -16633,7 +16635,7 @@
     "requestFieldsMentioned": [
       "LEVELS"
     ],
-    "verification": "`/settings/access-control` now restores the admin-only legacy level/action matrix over migrated `LegacyAuthRecord` levels and `LegacyAccessControlRecord` actions/grants, including staff and manager source databases, selected-level batch save, searchable action catalogue, inactive action badges, disabled level badges, legacy `No level selected!`/`Saved!` feedback, and grant persistence by soft-disabling stale rows then re-enabling/creating selected grants. `EditSchoolFromTo` is now enforced through the migrated grant bridge. Remaining work is wiring the broader PAGE/ACTION map into modern route/action enforcement and deciding whether to hydrate grant snapshots into sessions."
+    "verification": "`/settings/access-control` now restores the admin-only legacy level/action matrix over migrated `LegacyAuthRecord` levels and `LegacyAccessControlRecord` actions/grants, including staff and manager source databases, selected-level batch save, searchable action catalogue, inactive action badges, disabled level badges, legacy `No level selected!`/`Saved!` feedback, and grant persistence by soft-disabling stale rows then re-enabling/creating selected grants. `EditSchoolFromTo` is now enforced through the migrated grant bridge, and `leftmenu.php` PAGE grants now filter desktop/mobile navigation. Remaining work is wiring the broader PAGE/ACTION map into server-side route/action denial and deciding whether to hydrate grant snapshots into sessions."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/classes/add_level.class.php",
@@ -17140,7 +17142,7 @@
     "legacyPhp": "Front/templates/admin/users/admin/page/level-control.php",
     "legacyJs": "",
     "modernRoute": "/settings/access-control",
-    "status": "partial - legacy level action matrix restored; first active enforcement wired",
+    "status": "partial - legacy level action matrix restored; sidebar PAGE filtering and first action enforcement wired",
     "legacyTablesMentioned": [
       "actions_control",
       "actions_control_man",
@@ -17152,7 +17154,7 @@
     "requestFieldsMentioned": [
       "LEVELS"
     ],
-    "verification": "`/settings/access-control` replaces the legacy `Modify levels` admin surface with source-database grouped staff/manager level tables, selected-level checkboxes, searchable action grants, select-all/clear controls, and batch save through `updateLegacyAccessControlLevels`. `EditSchoolFromTo` now uses those grants for active enforcement when migrated ACL data is present. Remaining work is expanding active `Check::protectPageOrFunction` enforcement across the rest of the legacy PAGE/ACTION map."
+    "verification": "`/settings/access-control` replaces the legacy `Modify levels` admin surface with source-database grouped staff/manager level tables, selected-level checkboxes, searchable action grants, select-all/clear controls, and batch save through `updateLegacyAccessControlLevels`. `EditSchoolFromTo` now uses those grants for active enforcement when migrated ACL data is present, and left-menu PAGE grants now filter desktop/mobile navigation. Remaining work is expanding active `Check::protectPageOrFunction` server-side route/action enforcement across the rest of the legacy PAGE/ACTION map."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/level-create.php",

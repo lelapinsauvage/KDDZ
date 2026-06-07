@@ -23,6 +23,7 @@ import {
   type NavItem,
   type NavSection,
   type SidebarClassInfo,
+  type LegacyPagePermissionMap,
 } from "./app-sidebar"
 import type { SidebarBadges } from "@/lib/actions/sidebar"
 import type { LegacyNotificationGateVisibility } from "@/lib/legacy-notification-gates"
@@ -34,6 +35,7 @@ interface MobileMoreSheetProps {
   classes?: SidebarClassInfo[]
   badges?: SidebarBadges
   notificationGates?: LegacyNotificationGateVisibility | null
+  legacyPagePermissions?: LegacyPagePermissionMap | null
 }
 
 export function MobileMoreSheet({
@@ -43,9 +45,15 @@ export function MobileMoreSheet({
   classes,
   badges,
   notificationGates,
+  legacyPagePermissions,
 }: MobileMoreSheetProps) {
   const pathname = usePathname()
-  const sections = getNavForRole(userRole, classes, notificationGates)
+  const sections = getNavForRole(
+    userRole,
+    classes,
+    notificationGates,
+    legacyPagePermissions
+  )
 
   // Track which accordions are open by label/title key
   const [openKeys, setOpenKeys] = useState<Set<string>>(() => {

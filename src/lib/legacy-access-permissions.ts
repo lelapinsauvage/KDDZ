@@ -18,6 +18,11 @@ export type LegacyAccessPermissionDecision = {
   isAllowed: boolean;
 };
 
+export type LegacyAccessPermissionRequest = {
+  actionName: string;
+  actionType?: "PAGE" | "ACTION" | string;
+};
+
 const LEGACY_ACCESS_CONFIGS: LegacyAccessConfig[] = [
   {
     userRecordType: "login_user",
@@ -57,6 +62,13 @@ function normalizeActionType(actionType: string) {
   return actionType.trim().toUpperCase();
 }
 
+export function legacyAccessPermissionKey(
+  actionName: string,
+  actionType: "PAGE" | "ACTION" | string = "PAGE",
+) {
+  return `${normalizeActionType(actionType)}:${actionName}`;
+}
+
 function actionMatches(params: {
   actionName: string | null;
   actionType: string | null;
@@ -86,7 +98,66 @@ export async function getLegacyAccessPermissionDecision(
   actionName: string,
   actionType: "PAGE" | "ACTION" | string = "PAGE",
 ): Promise<LegacyAccessPermissionDecision> {
-  const normalizedType = normalizeActionType(actionType);
+  const decisions = await getLegacyAccessPermissionDecisions(ctx, [
+    { actionName, actionType },
+  ]);
+  return (
+    decisions[legacyAccessPermissionKey(actionName, actionType)] ?? {
+      isConfigured: false,
+      isAllowed: false,
+    }
+  );
+}
+
+export async function getLegacyAccessPermissionMap(
+  ctx: OrgContext,
+  actionNames: string[],
+  actionType: "PAGE" | "ACTION" | string = "PAGE",
+): Promise<Record<string, LegacyAccessPermissionDecision>> {
+  const decisions = await getLegacyAccessPermissionDecisions(
+    ctx,
+    actionNames.map((actionName) => ({ actionName, actionType })),
+  );
+
+  return Object.fromEntries(
+    actionNames.map((actionName) => [
+      actionName,
+      decisions[legacyAccessPermissionKey(actionName, actionType)] ?? {
+        isConfigured: false,
+        isAllowed: false,
+      },
+    ]),
+  );
+}
+
+export async function getLegacyAccessPermissionDecisions(
+  ctx: OrgContext,
+  requests: LegacyAccessPermissionRequest[],
+): Promise<Record<string, LegacyAccessPermissionDecision>> {
+  const normalizedRequests = Array.from(
+    new Map(
+      requests
+        .map((request) => ({
+          actionName: request.actionName.trim(),
+          actionType: normalizeActionType(request.actionType ?? "PAGE"),
+        }))
+        .filter((request) => request.actionName)
+        .map((request) => [
+          legacyAccessPermissionKey(request.actionName, request.actionType),
+          request,
+        ]),
+    ).values(),
+  );
+  const emptyDecisions: Record<string, LegacyAccessPermissionDecision> =
+    Object.fromEntries(
+      normalizedRequests.map((request) => [
+        legacyAccessPermissionKey(request.actionName, request.actionType),
+        { isConfigured: false, isAllowed: false },
+      ]),
+    );
+
+  if (normalizedRequests.length === 0) return {};
+
   const legacyUsers = await db.legacyAuthRecord.findMany({
     where: {
       userId: ctx.userId,
@@ -115,7 +186,7 @@ export async function getLegacyAccessPermissionDecision(
   }
 
   if (levelEntries.length === 0) {
-    return { isConfigured: false, isAllowed: false };
+    return emptyDecisions;
   }
 
   const sourceDatabases = Array.from(
@@ -137,36 +208,61 @@ export async function getLegacyAccessPermissionDecision(
     },
   });
 
-  const matchingActions = actions.filter((action) =>
-    actionMatches({
-      actionName: action.actionName,
-      actionType: action.actionType,
-      expectedName: actionName,
-      expectedType: normalizedType,
-    }),
-  );
-  if (matchingActions.length === 0) {
-    return { isConfigured: false, isAllowed: false };
+  const relevantActionsByRequest = new Map<
+    string,
+    Array<(typeof actions)[number]>
+  >();
+  for (const request of normalizedRequests) {
+    const requestKey = legacyAccessPermissionKey(
+      request.actionName,
+      request.actionType,
+    );
+    const relevantActions = actions.filter((action) => {
+      if (
+        !actionMatches({
+          actionName: action.actionName,
+          actionType: action.actionType,
+          expectedName: request.actionName,
+          expectedType: request.actionType,
+        })
+      ) {
+        return false;
+      }
+
+      const config = configForActionRecordType(action.recordType);
+      return (
+        config &&
+        action.legacyActionId &&
+        levelEntries.some(
+          (entry) =>
+            entry.sourceDatabase === action.sourceDatabase &&
+            entry.config.actionRecordType === config.actionRecordType,
+        )
+      );
+    });
+    relevantActionsByRequest.set(requestKey, relevantActions);
   }
 
-  const relevantActions = matchingActions.filter((action) => {
-    const config = configForActionRecordType(action.recordType);
-    return (
-      config &&
-      action.legacyActionId &&
-      levelEntries.some(
-        (entry) =>
-          entry.sourceDatabase === action.sourceDatabase &&
-          entry.config.actionRecordType === config.actionRecordType,
-      )
-    );
-  });
-  if (relevantActions.length === 0) {
-    return { isConfigured: false, isAllowed: false };
+  const allRelevantActions = Array.from(
+    new Map(
+      Array.from(relevantActionsByRequest.values())
+        .flat()
+        .map((action) => [
+          `${action.sourceDatabase}:${action.recordType}:${action.legacyActionId}`,
+          action,
+        ]),
+    ).values(),
+  );
+  const decisions = { ...emptyDecisions };
+  for (const [requestKey, relevantActions] of relevantActionsByRequest) {
+    if (relevantActions.length > 0) {
+      decisions[requestKey] = { isConfigured: true, isAllowed: false };
+    }
   }
+  if (allRelevantActions.length === 0) return decisions;
 
   const actionIds = uniqueNumbers(
-    relevantActions.map((action) => action.legacyActionId ?? 0),
+    allRelevantActions.map((action) => action.legacyActionId ?? 0),
   );
   const levelIds = uniqueNumbers(
     levelEntries.map((entry) => entry.legacyLevelId),
@@ -189,25 +285,30 @@ export async function getLegacyAccessPermissionDecision(
     },
   });
 
-  const isAllowed = grants.some((grant) => {
-    const entry = levelEntries.find(
-      (level) =>
-        level.sourceDatabase === grant.sourceDatabase &&
-        level.config.grantRecordType === grant.recordType &&
-        level.legacyLevelId === grant.legacyLevelId,
-    );
-    if (!entry) return false;
+  for (const [requestKey, relevantActions] of relevantActionsByRequest) {
+    if (relevantActions.length === 0) continue;
 
-    return relevantActions.some((action) => {
-      const config = configForActionRecordType(action.recordType);
-      return (
-        config &&
-        config.grantRecordType === grant.recordType &&
-        action.sourceDatabase === grant.sourceDatabase &&
-        action.legacyActionId === grant.legacyActionId
+    const isAllowed = grants.some((grant) => {
+      const entry = levelEntries.find(
+        (level) =>
+          level.sourceDatabase === grant.sourceDatabase &&
+          level.config.grantRecordType === grant.recordType &&
+          level.legacyLevelId === grant.legacyLevelId,
       );
-    });
-  });
+      if (!entry) return false;
 
-  return { isConfigured: true, isAllowed };
+      return relevantActions.some((action) => {
+        const config = configForActionRecordType(action.recordType);
+        return (
+          config &&
+          config.grantRecordType === grant.recordType &&
+          action.sourceDatabase === grant.sourceDatabase &&
+          action.legacyActionId === grant.legacyActionId
+        );
+      });
+    });
+    decisions[requestKey] = { isConfigured: true, isAllowed };
+  }
+
+  return decisions;
 }
