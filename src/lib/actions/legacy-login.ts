@@ -153,11 +153,23 @@ export async function getLegacyLoginSuccessRedirect(input: {
 
 export async function getLegacyLoginFailureRedirect(
   identifier: string,
-): Promise<ActionResult<{ redirectTo: string | null }>> {
+): Promise<ActionResult<{ redirectTo: string | null; message?: string }>> {
   try {
     const identity = await resolveStaffLoginIdentity(db, identifier);
     const disabledStatus = await getLegacyLoginDisabledStatus(db, identity);
-    if (!disabledStatus.isDisabled || !identity) {
+    if (!disabledStatus.isDisabled) {
+      return { success: true, data: { redirectTo: null } };
+    }
+    if (disabledStatus.reason === "legacy_logins_disabled") {
+      return {
+        success: true,
+        data: {
+          redirectTo: null,
+          message: "The admin has disabled logins.",
+        },
+      };
+    }
+    if (!identity) {
       return { success: true, data: { redirectTo: null } };
     }
 

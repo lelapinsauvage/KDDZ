@@ -16865,7 +16865,7 @@
       "update-form",
       "user-profiles-form"
     ],
-    "verification": "The legacy `user-profiles-form` profile-field add/update/delete semantics are restored at `/settings/legacy-users/profile-fields` over migrated `login_profile_fields` / `login_profile_fields_man`, including Section, Input type, Input label, Sign Up (`hide`/`require`/`optional`), Public, Delete, source database grouping, soft-delete provenance, and preserved orphan profile values. `/settings/legacy-auth` now restores the `general-options-form`, `denied-form`, `integration-form`, and `update-form` save semantics over migrated `login_settings` / `login_settings_man`: Admin email validation, Site address slash normalization, numeric Default session validation, serialized default/notify levels, site-control/new-user/password/redirect checkboxes, restricted signup domains, denied messages, social-login provider keys/toggles, captcha provider keys/radio choice, and update-check toggle. Legacy sign-in redirect settings now drive successful `/login` redirects when no protected-route callback is present, and sign-out redirect settings already drive `/logout.php`. Legacy notification settings remain surfaced in `/settings/notifications`. /settings/notifications now loads the full migrated LegacySetting set for notification, accounting reminder, and auth-email rows instead of sampling the first 1000. Remaining work is deciding which remaining imported login settings actively drive modern Auth.js/OAuth/captcha/runtime update-check behavior."
+    "verification": "The legacy `user-profiles-form` profile-field add/update/delete semantics are restored at `/settings/legacy-users/profile-fields` over migrated `login_profile_fields` / `login_profile_fields_man`, including Section, Input type, Input label, Sign Up (`hide`/`require`/`optional`), Public, Delete, source database grouping, soft-delete provenance, and preserved orphan profile values. `/settings/legacy-auth` now restores the `general-options-form`, `denied-form`, `integration-form`, and `update-form` save semantics over migrated `login_settings` / `login_settings_man`: Admin email validation, Site address slash normalization, numeric Default session validation, serialized default/notify levels, site-control toggles, new-user/password/redirect checkboxes, restricted signup domains, denied messages, social-login provider keys/toggles, captcha provider keys/radio choice, and update-check toggle. Legacy `disable-logins-enable` now blocks credential auth with the old disabled-logins message, sign-in redirect settings drive successful `/login` redirects when no protected-route callback is present, and sign-out redirect settings already drive `/logout.php`. Legacy notification settings remain surfaced in `/settings/notifications`. /settings/notifications now loads the full migrated LegacySetting set for notification, accounting reminder, and auth-email rows instead of sampling the first 1000. Remaining work is deciding which remaining imported login settings actively drive modern Auth.js/OAuth/captcha/runtime update-check behavior."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/footer.php",
@@ -18057,7 +18057,7 @@
     "legacyPhp": "Front/templates/admin/users/classes/login.class.php",
     "legacyJs": "",
     "modernRoute": "/login",
-    "status": "partial - legacy username/email, disabled fallback, password verification, login audit, and sign-in redirect restored; full session/action-control audit remains",
+    "status": "partial - legacy username/email, disabled-login guard, disabled fallback, password verification, login audit, and sign-in redirect restored; full session/action-control audit remains",
     "legacyTablesMentioned": [
       "actions_control",
       "if",
@@ -18081,7 +18081,7 @@
       "token",
       "username"
     ],
-    "verification": "`/login` now resolves migrated staff and manager PHP-login identities by username, email, or linked modern email before password verification; validates modern bcrypt passwords and migrated legacy passwords stored as bcrypt(`md5:{legacy hash}`); upgrades successful legacy-password logins to direct bcrypt; blocks legacy restricted users and users whose primary migrated `login_levels` / `login_levels_man` row is disabled by routing the failed sign-in to `/disabled.php`; honors explicit protected-route callback URLs first, then restored `signin-redirect-referrer-enable` / `signin-redirect-url` settings with legacy `home.php` mapped to `/dashboard`; and appends migrated-compatible `LegacyLoginTimestamp` rows for `login_timestamps` / `login_timestamps_man` when `profile-timestamps-enable` is enabled. Remaining work is full legacy remember-me/session lifetime, action-control session grants, selected-year session hydration, and social-login runtime audit."
+    "verification": "`/login` now resolves migrated staff and manager PHP-login identities by username, email, or linked modern email before password verification; enforces `disable-logins-enable` with the legacy \"The admin has disabled logins.\" message; validates modern bcrypt passwords and migrated legacy passwords stored as bcrypt(`md5:{legacy hash}`); upgrades successful legacy-password logins to direct bcrypt; blocks legacy restricted users and users whose primary migrated `login_levels` / `login_levels_man` row is disabled by routing the failed sign-in to `/disabled.php`; honors explicit protected-route callback URLs first, then restored `signin-redirect-referrer-enable` / `signin-redirect-url` settings with legacy `home.php` mapped to `/dashboard`; and appends migrated-compatible `LegacyLoginTimestamp` rows for `login_timestamps` / `login_timestamps_man` when `profile-timestamps-enable` is enabled. Remaining work is full legacy remember-me/session lifetime, action-control session grants, selected-year session hydration, and social-login runtime audit."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/prereqs.php",
@@ -18294,7 +18294,7 @@
     "legacyPhp": "Front/templates/admin/users/login.php",
     "legacyJs": "",
     "modernRoute": "/login",
-    "status": "partial - legacy username/email sign-in form and success redirect restored; remember/social visual audit remains",
+    "status": "partial - legacy username/email sign-in form, disabled-login message, and success redirect restored; remember/social visual audit remains",
     "legacyTablesMentioned": [
       "login_integration",
       "login_settings"
@@ -18306,7 +18306,7 @@
       "token",
       "username"
     ],
-    "verification": "`/login` now accepts the legacy username-or-email credential shape, links failed restricted/disabled legacy identities to `/disabled.php`, keeps the existing forgot-password and signup flows, honors migrated sign-in redirect settings after successful credentials auth, and relies on the restored `classes/login.class.php` server behavior for password validation and login audit. Remaining work is exact Stay signed in session lifetime, legacy social button/runtime behavior, and CSRF/token visual parity beyond Auth.js protection."
+    "verification": "`/login` now accepts the legacy username-or-email credential shape, shows the legacy disabled-logins message when migrated settings block credential auth, links failed restricted/disabled legacy identities to `/disabled.php`, keeps the existing forgot-password and signup flows, honors migrated sign-in redirect settings after successful credentials auth, and relies on the restored `classes/login.class.php` server behavior for password validation and login audit. Remaining work is exact Stay signed in session lifetime, legacy social button/runtime behavior, and CSRF/token visual parity beyond Auth.js protection."
   },
   {
     "legacyPhp": "Front/templates/admin/users/logout.php",

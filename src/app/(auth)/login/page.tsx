@@ -46,7 +46,11 @@ function LoginForm() {
           router.push(redirectResult.data.redirectTo);
           return;
         }
-        setError("Invalid username/email or password");
+        setError(
+          redirectResult.success && redirectResult.data?.message
+            ? redirectResult.data.message
+            : "Invalid username/email or password",
+        );
       } else {
         const redirectResult = await getLegacyLoginSuccessRedirect({
           callbackUrl,

@@ -3,6 +3,10 @@ import type { Prisma } from "@/generated/prisma/client";
 type AppDb = typeof import("./db").db;
 
 const STAFF_LOGIN_RECORD_TYPES = ["login_user", "manager_login_user"] as const;
+const LEGACY_LOGIN_SETTINGS_TABLES = [
+  "login_settings",
+  "login_settings_man",
+] as const;
 
 const loginUserInclude = {
   branch: { select: { organizationId: true } },
@@ -39,7 +43,11 @@ export type LegacyLoginDisabledStatus =
   | { isDisabled: false; reason: null; levelName?: null }
   | {
       isDisabled: true;
-      reason: "modern_user_inactive" | "legacy_user_restricted" | "legacy_level_disabled";
+      reason:
+        | "legacy_logins_disabled"
+        | "modern_user_inactive"
+        | "legacy_user_restricted"
+        | "legacy_level_disabled";
       levelName?: string | null;
     };
 
@@ -52,6 +60,19 @@ function legacyObject(value: unknown): Record<string, unknown> {
     return value as Record<string, unknown>;
   }
   return {};
+}
+
+function legacyBool(value: string | null | undefined) {
+  const normalized = value?.trim().toLowerCase();
+  return Boolean(
+    normalized && !["0", "false", "no", "off", "null"].includes(normalized),
+  );
+}
+
+function loginSettingsTableForRecord(record: LegacyLoginRecord) {
+  return record.recordType === "manager_login_user"
+    ? "login_settings_man"
+    : "login_settings";
 }
 
 export function legacyString(value: unknown, key: string) {
@@ -115,6 +136,21 @@ async function findUserForLegacyRecord(db: AppDb, record: LegacyLoginRecord) {
     (await findUserByEmail(db, record.email ?? "")) ??
     (await findUserByEmail(db, legacyString(record.legacyData, "email")))
   );
+}
+
+async function findLinkedLegacyLoginRecordForUser(db: AppDb, userId: string) {
+  return db.legacyAuthRecord.findFirst({
+    where: {
+      userId,
+      recordType: { in: [...STAFF_LOGIN_RECORD_TYPES] },
+    },
+    orderBy: [
+      { recordType: "asc" },
+      { sourceDatabase: "asc" },
+      { legacyId: "asc" },
+    ],
+    select: legacyLoginRecordSelect,
+  });
 }
 
 export async function findStaffLoginRecordByCredential(
@@ -194,11 +230,65 @@ async function hasPendingLegacyActivation(
   return Boolean(pending);
 }
 
+async function legacyLoginsDisabledForRecord(
+  db: AppDb,
+  record: LegacyLoginRecord | null,
+) {
+  const where: Prisma.LegacySettingWhereInput = {
+    settingKey: "disable-logins-enable",
+    legacyTable: { in: [...LEGACY_LOGIN_SETTINGS_TABLES] },
+  };
+
+  if (record) {
+    where.sourceDatabase = record.sourceDatabase;
+    where.legacyTable = loginSettingsTableForRecord(record);
+  }
+
+  const settings = await db.legacySetting.findMany({
+    where,
+    orderBy: [
+      { legacyTable: "asc" },
+      { sourceDatabase: "asc" },
+      { legacyId: "desc" },
+    ],
+    select: {
+      sourceDatabase: true,
+      legacyTable: true,
+      settingValue: true,
+    },
+  });
+  const latestSettings = new Map<string, string | null>();
+  for (const setting of settings) {
+    const key = `${setting.sourceDatabase}:${setting.legacyTable}`;
+    if (!latestSettings.has(key)) {
+      latestSettings.set(key, setting.settingValue);
+    }
+  }
+
+  return Array.from(latestSettings.values()).some((value) =>
+    legacyBool(value),
+  );
+}
+
 export async function getLegacyLoginDisabledStatus(
   db: AppDb,
   identity: ResolvedStaffLoginIdentity | null,
 ): Promise<LegacyLoginDisabledStatus> {
-  if (!identity) return { isDisabled: false, reason: null };
+  if (!identity) {
+    const loginsDisabled = await legacyLoginsDisabledForRecord(db, null);
+    return loginsDisabled
+      ? { isDisabled: true, reason: "legacy_logins_disabled" }
+      : { isDisabled: false, reason: null };
+  }
+
+  const legacyLoginRecord =
+    identity.legacy ??
+    (identity.user
+      ? await findLinkedLegacyLoginRecordForUser(db, identity.user.id)
+      : null);
+  if (await legacyLoginsDisabledForRecord(db, legacyLoginRecord)) {
+    return { isDisabled: true, reason: "legacy_logins_disabled" };
+  }
 
   const pendingActivation = await hasPendingLegacyActivation(db, identity);
   if (pendingActivation) return { isDisabled: false, reason: null };
