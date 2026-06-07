@@ -25,16 +25,21 @@ import {
   Download,
   AlertTriangle,
   Clock,
-  FileText,
+  Paperclip,
   Printer,
 } from "lucide-react";
 import { deletePayment } from "@/lib/actions/payments";
 import { PaymentDialog } from "@/app/(app)/accounting/payment-dialog";
+import {
+  AttachmentPreviewDialog,
+  type AttachmentPreviewItem,
+} from "@/components/shared/attachment-preview-dialog";
 
 // ── Types ──
 
 interface ChildData {
   id: string;
+  childNumber: string | null;
   firstName: string;
   lastName: string;
   branchId: string;
@@ -61,8 +66,13 @@ interface PaymentRow {
   status: string;
   reference: string | null;
   notes: string | null;
+  legacyImageFilename: string | null;
   receiptFilename: string | null;
   receiptFileUrl: string | null;
+  methodLabel: string;
+  childNumber: string | null;
+  firstName: string;
+  lastName: string;
   createdBy: string | null;
 }
 
@@ -133,12 +143,6 @@ const methodLabels: Record<string, string> = {
   CREDIT_CARD: "Credit Card",
 };
 
-const statusBadgeStyles: Record<string, string> = {
-  PAID: "bg-[#008200] text-white border-transparent",
-  PENDING: "bg-[#c29d0b] text-white border-transparent",
-  OVERDUE: "bg-[#d64635] text-white border-transparent",
-};
-
 const monthNames = [
   "", "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
@@ -147,6 +151,45 @@ const monthNames = [
 function formatDate(iso: string) {
   const d = new Date(iso);
   return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+}
+
+function display(value: string | null | undefined) {
+  return value && value.trim() ? value : "\u2014";
+}
+
+function paymentReceiptRaw(payment: PaymentRow) {
+  return (
+    payment.receiptFileUrl?.trim() ||
+    payment.receiptFilename?.trim() ||
+    payment.legacyImageFilename?.trim() ||
+    null
+  );
+}
+
+function paymentReceiptHref(payment: PaymentRow) {
+  const raw = paymentReceiptRaw(payment);
+  if (!raw) return null;
+  if (/^(https?:|blob:|data:)/i.test(raw) || raw.startsWith("/")) return raw;
+  if (raw.includes("/")) return `/${raw.replace(/^\/+/, "")}`;
+  return `/images/AccDocs/${raw}`;
+}
+
+function paymentReceiptFilename(payment: PaymentRow) {
+  const raw = paymentReceiptRaw(payment);
+  if (!raw) return "Payment attachment";
+  return raw.split("?")[0].split("/").filter(Boolean).at(-1) ?? raw;
+}
+
+function paymentPreviewItems(payment: PaymentRow): AttachmentPreviewItem[] {
+  const href = paymentReceiptHref(payment);
+  if (!href) return [];
+  return [
+    {
+      id: `payment-attachment-${payment.id}`,
+      filename: paymentReceiptFilename(payment),
+      href,
+    },
+  ];
 }
 
 // ── Component ──
@@ -164,6 +207,10 @@ export function AccountingClient({
   >(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [previewTarget, setPreviewTarget] = useState<{
+    title: string;
+    attachments: AttachmentPreviewItem[];
+  } | null>(null);
   const [isPending, startTransition] = useTransition();
 
   // Accounting entry totals
@@ -215,16 +262,17 @@ export function AccountingClient({
   }
 
   function handleExport() {
-    const headers = ["Date", "Amount", "Category", "Method", "Status", "For Month", "Notes", "Receipt #"];
+    const headers = ["Date", "Child#", "Fees Type", "Amount $", "For", "Payment", "From", "To", "Notes"];
     const rows = payments.map((p) => [
       formatDate(p.date),
-      p.amount.toFixed(2),
+      p.childNumber ?? "",
       categoryLabels[p.category] ?? p.category,
-      methodLabels[p.method] ?? p.method,
-      p.status,
+      p.amount.toFixed(2),
       p.month ? monthNames[p.month] : "",
+      p.methodLabel || methodLabels[p.method] || p.method,
+      p.dateFrom ? formatDate(p.dateFrom) : "",
+      p.dateTo ? formatDate(p.dateTo) : "",
       p.notes ?? "",
-      p.reference ?? "",
     ]);
 
     const csv = [
@@ -251,6 +299,21 @@ export function AccountingClient({
       cell: ({ row }) => <span className="font-medium">{formatDate(row.original.date)}</span>,
     },
     {
+      accessorKey: "childNumber",
+      header: "Child #",
+      cell: ({ row }) => <span className="text-[#555]">{display(row.original.childNumber)}</span>,
+    },
+    {
+      accessorKey: "firstName",
+      header: "First Name",
+      cell: ({ row }) => <span className="text-[#555]">{row.original.firstName}</span>,
+    },
+    {
+      accessorKey: "lastName",
+      header: "Last Name",
+      cell: ({ row }) => <span className="text-[#555]">{row.original.lastName}</span>,
+    },
+    {
       accessorKey: "amount",
       header: () => <div className="text-right">Amount ($)</div>,
       cell: ({ row }) => (
@@ -263,16 +326,14 @@ export function AccountingClient({
       accessorKey: "month",
       header: "For",
       cell: ({ row }) => (
-        <span className="text-[#555]">
-          {row.original.month ? monthNames[row.original.month] : "\u2014"}
-        </span>
+        <span className="text-[#555]">{row.original.month ? monthNames[row.original.month] : "\u2014"}</span>
       ),
     },
     {
       accessorKey: "method",
       header: "Payment",
       cell: ({ row }) => (
-        <span className="text-[#555]">{methodLabels[row.original.method] ?? row.original.method}</span>
+        <span className="text-[#555]">{row.original.methodLabel || methodLabels[row.original.method] || row.original.method}</span>
       ),
     },
     {
@@ -290,38 +351,11 @@ export function AccountingClient({
       ),
     },
     {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }) => (
-        <Badge className={statusBadgeStyles[row.original.status] ?? "bg-gray-100 text-gray-600"}>
-          {row.original.status}
-        </Badge>
-      ),
-    },
-    {
       accessorKey: "notes",
       header: "Remarks",
       cell: ({ row }) => (
         <span className="text-[#555] text-sm">{row.original.notes ?? "\u2014"}</span>
       ),
-    },
-    {
-      accessorKey: "receiptFileUrl",
-      header: "Receipt",
-      cell: ({ row }) =>
-        row.original.receiptFileUrl ? (
-          <a
-            href={row.original.receiptFileUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
-          >
-            <FileText className="size-3.5" />
-            View
-          </a>
-        ) : (
-          <span className="text-muted-foreground">\u2014</span>
-        ),
     },
     {
       id: "actions",
@@ -342,6 +376,32 @@ export function AccountingClient({
               <Trash2 className="size-4" />
             </Button>
           </div>
+        );
+      },
+      enableSorting: false,
+    },
+    {
+      id: "attachment",
+      header: "Attachment",
+      cell: ({ row }) => {
+        const attachments = paymentPreviewItems(row.original);
+        return attachments.length ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 px-2 text-primary"
+            onClick={() =>
+              setPreviewTarget({
+                title: `Payment attachment - ${formatDate(row.original.date)}`,
+                attachments,
+              })
+            }
+          >
+            <Paperclip className="size-3.5" />
+            View Attachment
+          </Button>
+        ) : (
+          <span className="text-muted-foreground">\u2014</span>
         );
       },
       enableSorting: false,
@@ -449,7 +509,6 @@ export function AccountingClient({
         {/* Action Buttons */}
         <div className="flex items-center gap-3">
           <Button
-           
             onClick={() => {
               setEditPayment(null);
               setDialogOpen(true);
@@ -548,6 +607,15 @@ export function AccountingClient({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AttachmentPreviewDialog
+        open={Boolean(previewTarget)}
+        onOpenChange={(open) => {
+          if (!open) setPreviewTarget(null);
+        }}
+        title={previewTarget?.title ?? "Payment attachment"}
+        attachments={previewTarget?.attachments ?? []}
+      />
     </>
   );
 }

@@ -1171,7 +1171,7 @@
     "legacyPhp": "Front/templates/admin/child_accounting.php",
     "legacyJs": "Front/templates/admin/js/child_accounting.js",
     "modernRoute": "/child_accounting.php, /children/[id]/accounting",
-    "status": "partial - child accounting sections and deep-link bridge exist; table column/layout parity still needs final audit",
+    "status": "restored - legacy child accounting category tables, columns, export, and attachment preview restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -1179,7 +1179,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "`/child_accounting.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy child ids into the modern child accounting page. Remaining work is exact legacy child #/name columns, category table layout, and attachment preview behavior against modern per-child context."
+    "verification": "Restored the child-specific accounting category tables for Registration, Monthly, Bus, Xtra-time, and Other fees with the legacy Date/Child #/First Name/Last Name/Amount/For/Payment/From/To/Remarks/Action/Attachment columns, child statement export columns, print/edit/delete actions, raw legacy payment method labels where preserved, and receipt attachment preview/open/download behavior with migrated `images/AccDocs` filename fallback. `/child_accounting.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy child ids into the modern child accounting page. Remaining work is final logged-in visual smoke after local database/runtime state is clean."
   },
   {
     "legacyPhp": "Front/templates/admin/child_attend_det_data.php",

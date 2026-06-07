@@ -8,6 +8,30 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
+function legacyString(data: unknown, key: string) {
+  if (!data || typeof data !== "object" || Array.isArray(data)) return null;
+  const value = (data as Record<string, unknown>)[key];
+  if (typeof value === "string") return value;
+  if (typeof value === "number") return String(value);
+  return null;
+}
+
+function legacyPaymentMethodLabel(method: string, legacyData: unknown) {
+  const raw = (legacyString(legacyData, "type") ?? method).trim().toLowerCase();
+  if (raw === "cash") return "Cash";
+  if (raw === "check" || raw === "cheque") return "Cheque";
+  if (raw === "creditcard" || raw === "credit_card" || raw === "credit card") return "Credit Card";
+  if (raw === "bank") return "by Bank Transfere";
+
+  const modernLabels: Record<string, string> = {
+    CASH: "Cash",
+    CHECK: "Cheque",
+    TRANSFER: "Bank Transfer",
+    CREDIT_CARD: "Credit Card",
+  };
+  return modernLabels[method] ?? method;
+}
+
 export default async function ChildAccountingPage({ params }: Props) {
   const { id } = await params;
 
@@ -24,6 +48,7 @@ export default async function ChildAccountingPage({ params }: Props) {
 
   const childData = {
     id: child.id,
+    childNumber: child.childNumber ?? null,
     firstName: child.firstName,
     lastName: child.lastName,
     branchId: child.branchId,
@@ -55,8 +80,10 @@ export default async function ChildAccountingPage({ params }: Props) {
             status: string;
             reference: string | null;
             notes: string | null;
+            legacyImageFilename: string | null;
             receiptFilename: string | null;
             receiptFileUrl: string | null;
+            legacyData: unknown;
             createdBy: { name: string | null } | null;
           }>;
           summary: {
@@ -81,8 +108,13 @@ export default async function ChildAccountingPage({ params }: Props) {
     status: p.status,
     reference: p.reference,
     notes: p.notes,
+    legacyImageFilename: p.legacyImageFilename,
     receiptFilename: p.receiptFilename,
     receiptFileUrl: p.receiptFileUrl,
+    methodLabel: legacyPaymentMethodLabel(p.method, p.legacyData),
+    childNumber: childData.childNumber,
+    firstName: childData.firstName,
+    lastName: childData.lastName,
     createdBy: p.createdBy?.name ?? null,
   }));
 
