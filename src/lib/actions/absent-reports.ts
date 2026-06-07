@@ -19,7 +19,7 @@ interface GetAbsenceReportsParams {
   status?: AbsenceStatus;
   search?: string;
   page?: number;
-  pageSize?: number;
+  pageSize?: number | "all";
 }
 
 const attachmentPayloadSchema = z
@@ -193,7 +193,9 @@ export async function getAbsenceReports(params: GetAbsenceReportsParams = {}) {
       }
     }
 
-    const skip = (page - 1) * pageSize;
+    const paginated = pageSize !== "all";
+    const numericPageSize = paginated ? Math.max(1, pageSize) : undefined;
+    const skip = numericPageSize ? (page - 1) * numericPageSize : undefined;
 
     const [reports, total] = await Promise.all([
       db.absenceReport.findMany({
@@ -214,8 +216,8 @@ export async function getAbsenceReports(params: GetAbsenceReportsParams = {}) {
           },
         },
         orderBy: { date: "desc" },
-        skip,
-        take: pageSize,
+        ...(skip !== undefined ? { skip } : {}),
+        ...(numericPageSize !== undefined ? { take: numericPageSize } : {}),
       }),
       db.absenceReport.count({ where }),
     ]);

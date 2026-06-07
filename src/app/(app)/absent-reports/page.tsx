@@ -44,7 +44,7 @@ export default async function AbsentReportsPage({ searchParams }: PageProps) {
 
   const [{ reports: absenceReports, total }, branchesResult] = await Promise.all([
     getAbsenceReports({
-      pageSize: 500,
+      pageSize: "all",
       status: initialStatusFilter === "ALL" ? undefined : initialStatusFilter,
     }),
     getBranches(),

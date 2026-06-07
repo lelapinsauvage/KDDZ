@@ -41,7 +41,7 @@ export default async function DailyReportsPage({ searchParams }: PageProps) {
 
   const [{ reports, total }, branchesResult] = await Promise.all([
     getDailyReports({
-      pageSize: 500,
+      pageSize: "all",
       status: initialStatusFilter === "ALL" ? undefined : initialStatusFilter,
     }),
     getBranches(),

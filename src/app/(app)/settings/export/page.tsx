@@ -240,7 +240,7 @@ export default function ExportDatabasePage() {
           const result = await getDailyReports({
             dateFrom: range?.from,
             dateTo: range?.to,
-            pageSize: 10000,
+            pageSize: "all",
           });
           const reports = result.reports ?? [];
           const headers = ["ID", "Child", "Date", "Status", "Mood", "Remarks"];
@@ -257,7 +257,7 @@ export default function ExportDatabasePage() {
           break;
         }
         case "medical": {
-          const result = await getMedicalForms({ pageSize: 10000 });
+          const result = await getMedicalForms({ pageSize: "all" });
           const forms = result.forms ?? [];
           const headers = ["ID", "Child", "Form Type", "Status", "Created At"];
           const rows = forms.map((f: ExportMedicalForm) => [

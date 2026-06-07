@@ -5,8 +5,8 @@ import { getSchoolYears } from "@/lib/actions/school-years";
 import { SufferingListClient } from "./suffering-list-client";
 
 export default async function SufferingListPage() {
-  const [{ forms, total }, branchesResult, classesResult, yearsResult] = await Promise.all([
-    getMedicalForms({ formType: "CONDITIONS", pageSize: 500 }),
+  const [{ forms }, branchesResult, classesResult, yearsResult] = await Promise.all([
+    getMedicalForms({ formType: "CONDITIONS", pageSize: "all" }),
     getBranches(),
     getClasses(),
     getSchoolYears(),
@@ -41,7 +41,7 @@ export default async function SufferingListPage() {
   return (
     <SufferingListClient
       forms={sufferingForms}
-      total={total}
+      total={sufferingForms.length}
       branches={branches}
       classes={classes}
       schoolYears={schoolYears}

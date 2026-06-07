@@ -21,7 +21,7 @@ interface GetDailyReportsParams {
   status?: DailyReportStatus;
   search?: string;
   page?: number;
-  pageSize?: number;
+  pageSize?: number | "all";
 }
 
 const removeAttachmentIdsSchema = z.array(z.string().uuid()).max(50);
@@ -165,7 +165,9 @@ export async function getDailyReports(params: GetDailyReportsParams = {}) {
       }
     }
 
-    const skip = (page - 1) * pageSize;
+    const paginated = pageSize !== "all";
+    const numericPageSize = paginated ? Math.max(1, pageSize) : undefined;
+    const skip = numericPageSize ? (page - 1) * numericPageSize : undefined;
 
     const [reports, total] = await Promise.all([
       db.dailyReport.findMany({
@@ -190,8 +192,8 @@ export async function getDailyReports(params: GetDailyReportsParams = {}) {
           attachments: true,
         },
         orderBy: { reportDate: "desc" },
-        skip,
-        take: pageSize,
+        ...(skip !== undefined ? { skip } : {}),
+        ...(numericPageSize !== undefined ? { take: numericPageSize } : {}),
       }),
       db.dailyReport.count({ where }),
     ]);

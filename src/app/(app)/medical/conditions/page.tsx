@@ -44,7 +44,7 @@ function dateString(value: string) {
 
 export default async function MedicalConditionsPage() {
   const [{ forms, total }, branchesResult] = await Promise.all([
-    getMedicalForms({ formType: "CONDITIONS", pageSize: 500 }),
+    getMedicalForms({ formType: "CONDITIONS", pageSize: "all" }),
     getBranches(),
   ]);
 

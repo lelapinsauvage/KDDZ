@@ -18,7 +18,7 @@ function legacyNumber(data: Record<string, unknown>, ...keys: string[]) {
 
 export default async function MedicalGeneralPage() {
   const [{ forms, total }, branchesResult, classesResult, yearsResult] = await Promise.all([
-    getMedicalForms({ formType: "GENERAL", pageSize: 500 }),
+    getMedicalForms({ formType: "GENERAL", pageSize: "all" }),
     getBranches(),
     getClasses(),
     getSchoolYears(),

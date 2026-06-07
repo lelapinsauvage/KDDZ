@@ -45,7 +45,7 @@ function dateString(value: string) {
 
 export default async function VaccinationsPage() {
   const [{ forms, total }, branchesResult, classesResult] = await Promise.all([
-    getMedicalForms({ formType: "VACCINATIONS", pageSize: 500 }),
+    getMedicalForms({ formType: "VACCINATIONS", pageSize: "all" }),
     getBranches(),
     getClasses(),
   ]);

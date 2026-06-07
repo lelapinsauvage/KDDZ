@@ -36,7 +36,7 @@ export default async function AccidentReportsPage({ searchParams }: PageProps) {
   const scopedBranch = branches.find((branch) => branch.id === requestedBranchId);
   const { forms, total } = await getMedicalForms({
     formType: "ACCIDENTS",
-    pageSize: 500,
+    pageSize: "all",
     branchId: scopedBranch?.id,
   });
 

@@ -22,7 +22,7 @@ interface GetMedicalFormsParams {
   branchId?: string;
   search?: string;
   page?: number;
-  pageSize?: number;
+  pageSize?: number | "all";
 }
 
 interface CreateMedicalFormData {
@@ -122,7 +122,9 @@ export async function getMedicalForms(params: GetMedicalFormsParams = {}) {
       }
     }
 
-    const skip = (page - 1) * pageSize;
+    const paginated = pageSize !== "all";
+    const numericPageSize = paginated ? Math.max(1, pageSize) : undefined;
+    const skip = numericPageSize ? (page - 1) * numericPageSize : undefined;
 
     const [forms, total] = await Promise.all([
       db.medicalForm.findMany({
@@ -144,8 +146,8 @@ export async function getMedicalForms(params: GetMedicalFormsParams = {}) {
           },
         },
         orderBy: { createdAt: "desc" },
-        skip,
-        take: pageSize,
+        ...(skip !== undefined ? { skip } : {}),
+        ...(numericPageSize !== undefined ? { take: numericPageSize } : {}),
       }),
       db.medicalForm.count({ where }),
     ]);

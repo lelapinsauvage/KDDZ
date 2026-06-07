@@ -26,7 +26,7 @@ function legacyNumber(legacyData: unknown, key: string) {
 
 export default async function DraftAbsentReportsPage() {
   const [{ reports: absenceReports, total }, branchesResult] = await Promise.all([
-    getPendingAbsenceReports({ pageSize: 500 }),
+    getPendingAbsenceReports({ pageSize: "all" }),
     getBranches(),
   ]);
 
