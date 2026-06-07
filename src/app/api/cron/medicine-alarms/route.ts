@@ -18,6 +18,7 @@ function emptySummary(): MedicineGenerationSummary {
     branchesScanned: 0,
     entriesMatched: 0,
     alarmsCreated: 0,
+    receiptsCreated: 0,
     notificationsCreated: 0,
     skippedExisting: 0,
     skippedDisabledBranches: 0,
@@ -34,6 +35,7 @@ function addSummary(
   total.branchesScanned += next.branchesScanned;
   total.entriesMatched += next.entriesMatched;
   total.alarmsCreated += next.alarmsCreated;
+  total.receiptsCreated += next.receiptsCreated;
   total.notificationsCreated += next.notificationsCreated;
   total.skippedExisting += next.skippedExisting;
   total.skippedDisabledBranches += next.skippedDisabledBranches;

@@ -393,6 +393,16 @@ function formatGenerationStatus(
     return `Matched ${formsMatched}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"} and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing.`;
   }
 
+  if (family === "medicine") {
+    const entriesMatched = metric(data, "entriesMatched");
+    const alarmsCreated = metric(data, "alarmsCreated");
+    const receiptsCreated = metric(data, "receiptsCreated");
+    const notificationsCreated = metric(data, "notificationsCreated");
+    const skippedExisting = metric(data, "skippedExisting");
+    const skippedExpired = metric(data, "skippedExpired");
+    return `Matched ${entriesMatched}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"}, ${receiptsCreated} receipt${receiptsCreated === 1 ? "" : "s"}, and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing, ${skippedExpired} expired.`;
+  }
+
   if (family === "vaccination") {
     const remindersMatched = metric(data, "remindersMatched");
     const alarmsCreated = metric(data, "alarmsCreated");

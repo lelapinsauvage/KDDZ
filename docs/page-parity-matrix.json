@@ -592,7 +592,7 @@
     "legacyPhp": "Front/templates/admin/alarmsMedicine.php",
     "legacyJs": "Front/templates/admin/js/alarmsMedicine.js",
     "modernRoute": "/alarmsMedicine.php, /alarms/medicine",
-    "status": "partial - legacy medicine alarms bridge, staff/parent read-state, and sent history restored",
+    "status": "partial - legacy medicine alarms bridge, staff/parent read-state, sent history, and class targeting restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -604,7 +604,7 @@
       "custom_notifications_medicine",
       "custom_notifications_medicine_parents"
     ],
-    "verification": "Modern page reads migrated `NotificationReceipt` rows from `custom_notifications_medicine` and `custom_notifications_medicine_parents`, restores Teachers New/Viewed status, search/status/branch/date filters, row/bulk/all mark-viewed actions, Sent Medicine Alarms history for staff and parent recipients, and keeps the manual generator backed by the idempotent `Data::AlarmsMedicine()` parity job plus protected `/api/cron/medicine-alarms`. `/alarmsMedicine.php` now redirects to the modern medicine alarms page. Remaining work is parent/mobile delivery and exact legacy class-user targeting."
+    "verification": "Modern page reads migrated and generated `NotificationReceipt` rows from `custom_notifications_medicine` and `custom_notifications_medicine_parents`, restores Teachers New/Viewed status, search/status/branch/date filters, row/bulk/all mark-viewed actions, Sent Medicine Alarms history for staff and parent recipients, and keeps the manual generator backed by the idempotent `Data::AlarmsMedicine()` parity job plus generated `custom_notifications_medicine` receipts targeted like `getusersperclassUsersDb()` through imported `login_users.uclasses` and protected `/api/cron/medicine-alarms`. `/alarmsMedicine.php` now redirects to the modern medicine alarms page. Remaining work is parent/mobile delivery."
   },
   {
     "legacyPhp": "Front/templates/admin/alarmsMsg.php",
@@ -17041,7 +17041,7 @@
     "status": "partial - legacy medication template fallback restored; delivery audit remains",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "/settings/notifications Medicine now falls back to migrated `email-medication-subject` and `email-medication-msg` rows and exposes legacy `{{child_name}}`, `{{med_name}}`, and `{{med_time}}` shortcodes. Existing medicine alarm generation can use the saved modern template; remaining work is external parent/mobile delivery and exact recipient targeting."
+    "verification": "/settings/notifications Medicine now falls back to migrated `email-medication-subject` and `email-medication-msg` rows and exposes legacy `{{child_name}}`, `{{med_name}}`, and `{{med_time}}` shortcodes. Existing medicine alarm generation can use the saved modern template and exact generated staff receipt targeting; remaining work is external parent/mobile delivery."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-missingReports.php",
