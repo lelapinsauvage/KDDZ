@@ -2,6 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
+import {
+  deliverPushNotification,
+  pushDeliveryAuditData,
+} from "@/lib/push-delivery";
 import { requireOrg, requireOrgSafe } from "@/lib/require-org";
 
 import type { Prisma } from "@/generated/prisma/client";
@@ -366,6 +370,14 @@ function normalizeLegacyDelivery(delivery?: LegacyMessageDeliveryOptions | null)
     whatsapp: Boolean(delivery?.whatsapp),
     adminOnly: Boolean(delivery?.adminOnly),
   };
+}
+
+function shouldDeliverMobile(delivery?: LegacyMessageDeliveryOptions | null) {
+  return Boolean(delivery?.mobile);
+}
+
+function messagePushTitle(subject: string | null) {
+  return subject?.trim() || "New message";
 }
 
 function legacyMessageData(params: {
@@ -1564,6 +1576,11 @@ export async function sendMessage(
       threadId = thread.id;
     }
 
+    const messageLegacyData = legacyMessageData({
+      sourcePage: "message_portal_single.php",
+      nature: data.nature,
+      delivery: data.delivery,
+    });
     const message = await db.message.create({
       data: {
         senderId: ctx.userId,
@@ -1575,13 +1592,10 @@ export async function sendMessage(
         threadId,
         organizationId: ctx.organizationId,
         legacyNature: data.nature ?? null,
-        legacyData: legacyMessageData({
-          sourcePage: "message_portal_single.php",
-          nature: data.nature,
-          delivery: data.delivery,
-        }),
+        legacyData: messageLegacyData,
       },
     });
+    let returnedMessage = message;
 
     if (data.recipientType === "PARENT") {
       const adminIds = await adminRecipientIds(ctx.organizationId, ctx.userId);
@@ -1606,11 +1620,34 @@ export async function sendMessage(
           })),
         });
       }
+      if (shouldDeliverMobile(data.delivery)) {
+        const pushDelivery = await deliverPushNotification({
+          recipientParentUserIds: [data.recipientId],
+          title: messagePushTitle(subjectLine),
+          body: data.body,
+          category: "MESSAGE",
+          metadata: {
+            source: "legacy_message_portal_single",
+            messageId: message.id,
+            threadId,
+            nature: data.nature ?? null,
+          },
+        });
+        returnedMessage = await db.message.update({
+          where: { id: message.id },
+          data: {
+            legacyData: {
+              ...messageLegacyData,
+              pushDelivery: pushDeliveryAuditData(pushDelivery),
+            },
+          },
+        });
+      }
     }
 
     revalidateMessagePaths();
 
-    return { success: true, data: message };
+    return { success: true, data: returnedMessage };
   } catch (error) {
     console.error("Failed to send message:", error);
     return { success: false, error: "Failed to send message" };
@@ -1667,6 +1704,7 @@ export async function replyToMessage(
       });
     }
 
+    const replyLegacyData = jsonForCreate(original.legacyData);
     const reply = await db.message.create({
       data: {
         senderId: ctx.userId,
@@ -1678,13 +1716,40 @@ export async function replyToMessage(
         threadId,
         organizationId: ctx.organizationId,
         legacyNature: original.legacyNature,
-        legacyData: jsonForCreate(original.legacyData),
+        legacyData: replyLegacyData,
       },
     });
+    const originalDelivery = legacyDeliveryAudit(original.legacyData);
+    const returnedReply =
+      replyRecipient.type === "PARENT" &&
+      originalDelivery.channels.includes("Mobile")
+        ? await db.message.update({
+            where: { id: reply.id },
+            data: {
+              legacyData: {
+                ...(isJsonRecord(replyLegacyData) ? replyLegacyData : {}),
+                pushDelivery: pushDeliveryAuditData(
+                  await deliverPushNotification({
+                    recipientParentUserIds: [replyRecipient.id],
+                    title: messagePushTitle(reply.subject),
+                    body,
+                    category: "MESSAGE",
+                    metadata: {
+                      source: "legacy_message_reply",
+                      messageId: reply.id,
+                      threadId,
+                      nature: original.legacyNature ?? null,
+                    },
+                  }),
+                ),
+              },
+            },
+          })
+        : reply;
 
     revalidateMessagePaths();
 
-    return { success: true, data: reply };
+    return { success: true, data: returnedReply };
   } catch (error) {
     console.error("Failed to reply to message:", error);
     return { success: false, error: "Failed to reply" };
@@ -1992,6 +2057,21 @@ export async function sendClassMessage(
     await db.message.createMany({
       data: messageCreateData,
     });
+    const pushDelivery =
+      !adminOnly && shouldDeliverMobile(data.delivery)
+        ? await deliverPushNotification({
+            recipientParentUserIds: Array.from(parentUserIds),
+            title: messagePushTitle(subjectLine),
+            body: data.body,
+            category: "MESSAGE",
+            metadata: {
+              source: "legacy_message_portal_class",
+              threadId: thread.id,
+              classId: data.classId,
+              nature: data.nature ?? null,
+            },
+          })
+        : null;
 
     revalidateMessagePaths();
 
@@ -2003,6 +2083,7 @@ export async function sendClassMessage(
         adminRecipientCount: adminIds.length,
         selectedChildCount: selectedChildIds.length || children.length,
         adminOnly,
+        pushDelivery,
       },
     };
   } catch (error) {
@@ -2143,6 +2224,19 @@ export async function sendBulkChildMessage(
 
       return { threadId: thread.id, sideEffectSummary };
     });
+    const pushDelivery = shouldDeliverMobile(data.delivery)
+      ? await deliverPushNotification({
+          recipientParentUserIds: Array.from(parentUserIds),
+          title: messagePushTitle(subjectLine),
+          body: data.body,
+          category: "MESSAGE",
+          metadata: {
+            source: "legacy_message_portal_bulk",
+            threadId: writeResult.threadId,
+            nature: data.nature ?? null,
+          },
+        })
+      : null;
 
     revalidateMessagePaths();
 
@@ -2154,6 +2248,7 @@ export async function sendBulkChildMessage(
         childCount: children.length,
         teacherCount: validTeacherUserIds.length,
         sideEffectSummary: writeResult.sideEffectSummary,
+        pushDelivery,
       },
     };
   } catch (error) {

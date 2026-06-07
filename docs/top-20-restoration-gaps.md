@@ -84,7 +84,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - `/parent/login` now restores a parent-facing login screen backed by `/api/parent/login`, stores the parent JWT and modern child UUID client-side, and keeps failed-login responses in the legacy `{ status: false }` shape with a timeout guard for slow database lookups.
    - `/parent` now restores the first parent PWA shell with child dashboard stats, latest daily report summary, payments, absence reports, message compose/list/thread replies, notifications, push subscription registration/unregistration, food calendar, and holidays using the existing `/api/parent/*` compatibility endpoints.
    - Legacy iOS/Android apps show the real parent feature set.
-   - Remaining work is credentialed E2E with a known production-like parent login, exact native-app screen audit, external push provider delivery, offline/mobile polish, and final API contract verification.
+   - Remaining work is credentialed E2E with a known production-like parent login, exact native-app screen audit, alarm-family push provider delivery, offline/mobile polish, and final API contract verification.
 
 10. **Parent API response compatibility**
    - Legacy `ws/*.php`, iOS `WebFunctions.swift`, and Android `WebServiceFunctions.java` must be response-shape audited against modern `/api/parent/*`.
@@ -97,7 +97,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - `/api/parent/calendar/holidays` now covers both `ws/holcalendar.php` and `ws/holcalendarOLD.php` with unauthenticated native `POST usites` compatibility, active-only rows, `description`/`date` fields, and repeated-holiday current-year adjustment.
    - `/api/parent/login` now restores `ws/login.php` JSON/form login compatibility, failed-login defaults, numeric legacy `id`/`usites`, parent report URL with persisted token, md5-prefixed legacy password verification, and a modern `childId` field for the PWA.
    - `/api/parent/messages/[childId]`, `/api/parent/messages/thread/[threadId]`, and `/api/parent/messages` now restore `messagesList.php`, `message.php`, and `sendMessage.php` compatibility for unauthenticated native POST fields, recipient-anchored grouped thread headers, latest whole-thread previews, numeric thread ids, SQL datetime strings, legacy sender values, legacy no-read-reset thread opens, send feedback, and admin/teacher recipient fan-out.
-   - `/api/parent/push-token` now restores `ws/pnotifications.php` compatibility for unauthenticated native `cid` registration, token reactivation, global legacy delete/show fallback, authenticated PWA registration/delete/show, legacy OS mapping, and legacy result strings.
+   - `/api/parent/push-token` now restores `ws/pnotifications.php` compatibility for unauthenticated native `cid` registration, token reactivation, global legacy delete/show fallback, authenticated PWA registration/delete/show, legacy OS mapping, and legacy result strings; message sends with the legacy Mobile flag now attempt provider-neutral OneSignal/webhook push delivery against active parent push tokens.
 
 11. **Top-level calls module**
    - `/calls` now restores the legacy `calls.php` / `bcalls.php` listing surface with child #, image, first/last name, call type, branch, class, cause, subject, date/time, action, branch/class/date/type/search filters, pagination, child links, delete actions, and new call report creation.
@@ -141,7 +141,8 @@ This list is the first implementation backlog after the generated inventory/matr
 19. **Message delivery/read-state parity**
    - `/alarms/msg` now restores the legacy message notification listing with current-staff-user New/Viewed scoping, filters, row/bulk mark-viewed actions, Set All As Viewed, and idempotent migration provenance from `t_alarms_msg` plus per-recipient `custom_notifications_msg` delivery rows.
    - Parent message grouped list, thread detail, compose, and replies are now wired into `/parent`; the parent APIs accept unauthenticated native legacy POST/form bodies, preserve numeric thread ids and SQL datetime strings, dedupe migrated/runtime recipient fan-out for parent thread views, and send parent-originated messages to the legacy admin/teacher recipient sets.
-   - Remaining work is exact legacy reply-thread visual audit, credentialed native send/open testing, parent/mobile read reset behavior, and external push-on-message delivery if product confirms it was active in production.
+   - Mobile-flagged staff-to-parent direct, class, bulk, and reply messages now attempt provider-neutral OneSignal/webhook push delivery against active parent push tokens, returning or storing skipped/failed/sent summaries.
+   - Remaining work is exact legacy reply-thread visual audit, credentialed native send/open testing, parent/mobile read reset behavior, SMS/WhatsApp provider delivery, and production push credential rollout.
 
 20. **Role and permission parity**
    - Legacy levels/actions/control tables are now preserved as metadata, and `/settings/access-control` now restores the admin-only staff/manager level action-grant matrix with selected-level batch saves into `LegacyAccessControlRecord`.
