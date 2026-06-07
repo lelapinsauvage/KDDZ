@@ -257,24 +257,29 @@ export async function generateMedicalAlarmsForOrganization(params: {
       referenceId: { in: childIds },
       isActive: true,
     },
-    select: { referenceId: true, legacyData: true },
+    select: { id: true, referenceId: true, legacyData: true },
   });
-  const existingAlarmKeys = new Set(
-    existingAlarms
-      .map(existingMedicalKey)
-      .filter((key): key is string => Boolean(key)),
-  );
+  const existingAlarmByKey = new Map<string, (typeof existingAlarms)[number]>();
+  for (const alarm of existingAlarms) {
+    const key = existingMedicalKey(alarm);
+    if (key) existingAlarmByKey.set(key, alarm);
+  }
 
-  const candidates = [];
+  const candidates: Array<{
+    child: (typeof children)[number];
+    report: MedicalReportConfig;
+    key: string;
+    existingAlarm: (typeof existingAlarms)[number] | null;
+  }> = [];
   for (const child of children) {
     for (const report of REPORTS) {
       if (existingFormKeys.has(`${child.id}:${report.formType}`)) continue;
       const key = `${child.id}:${report.legacyType}:0`;
-      if (existingAlarmKeys.has(key)) {
+      const existingAlarm = existingAlarmByKey.get(key) ?? null;
+      if (existingAlarm) {
         summary.skippedExisting += 1;
-        continue;
       }
-      candidates.push({ child, report, key });
+      candidates.push({ child, report, key, existingAlarm });
     }
   }
   summary.reportsMatched = candidates.length;
@@ -343,10 +348,15 @@ export async function generateMedicalAlarmsForOrganization(params: {
   const bodyTemplate =
     template?.body ||
     "Dear Parents, The {{report_name}} of your child {{child_name}} is missing . we need to be provided with that report. Regards, The Administration";
-  let nextLegacyNotificationId = (maxReceipt._max.legacyNotificationId ?? 0) + 1;
+  const maxExistingAlarmLegacyId = existingAlarms.reduce((max, alarm) => {
+    const legacyId = readNumber(asRecord(alarm.legacyData), ["aid"]) ?? 0;
+    return Math.max(max, legacyId);
+  }, 0);
+  let nextLegacyNotificationId =
+    Math.max(maxReceipt._max.legacyNotificationId ?? 0, maxExistingAlarmLegacyId) + 1;
 
   for (const candidate of candidates) {
-    const { child, key, report } = candidate;
+    const { child, existingAlarm, key, report } = candidate;
     const childName = `${child.firstName} ${child.lastName}`;
     const variables = {
       child_name: childName,
@@ -357,55 +367,110 @@ export async function generateMedicalAlarmsForOrganization(params: {
       date: todayKey,
     };
     const message = renderNotificationText(bodyTemplate, variables);
-    const legacyNotificationId = nextLegacyNotificationId++;
+    let legacyNotificationId = existingAlarm
+      ? readNumber(asRecord(existingAlarm.legacyData), ["aid"])
+      : null;
+    if (legacyNotificationId === null) {
+      legacyNotificationId = nextLegacyNotificationId++;
+    }
     const href = childLegacyHref(report, child);
-    const alarm = await db.alarm.create({
-      data: {
-        type: "MEDICAL",
-        referenceId: child.id,
-        referenceType: "Child",
-        message,
-        dueDate: today,
-        branchId: child.branchId,
-        isActive: true,
-        legacyData: {
-          aid: legacyNotificationId,
-          sourceTable: "t_alarms_medical",
-          sourceDeliveryTable: MEDICAL_RECEIPT_SOURCE,
-          modernGenerator: "generateMedicalAlarms",
-          legacyMethod: "Data::AlarmsMedical",
-          childId: child.id,
-          legacyChildId: child.legacyId,
-          classId: child.classId,
-          legacyClassId: child.class?.legacyId ?? null,
-          type: report.legacyType,
-          level: 1,
-          status: 0,
-          currDate: todayKey,
-          reportName: report.reportName,
-          href,
+    let alarmId = existingAlarm?.id ?? null;
+    if (existingAlarm) {
+      const existingData = asRecord(existingAlarm.legacyData) ?? {};
+      if (
+        readNumber(existingData, ["aid"]) === null ||
+        existingData.sourceDeliveryTable !== MEDICAL_RECEIPT_SOURCE
+      ) {
+        await db.alarm.update({
+          where: { id: existingAlarm.id },
+          data: {
+            legacyData: {
+              ...existingData,
+              aid: legacyNotificationId,
+              sourceDeliveryTable: MEDICAL_RECEIPT_SOURCE,
+              legacyChildId: child.legacyId,
+              legacyClassId: child.class?.legacyId ?? null,
+              legacyClassAccess: "login_users.uclasses_exact_or_zero",
+            },
+          },
+        });
+      }
+    }
+
+    if (!existingAlarm) {
+      const alarm = await db.alarm.create({
+        data: {
+          type: "MEDICAL",
+          referenceId: child.id,
+          referenceType: "Child",
+          message,
+          dueDate: today,
+          branchId: child.branchId,
+          isActive: true,
+          legacyData: {
+            aid: legacyNotificationId,
+            sourceTable: "t_alarms_medical",
+            sourceDeliveryTable: MEDICAL_RECEIPT_SOURCE,
+            modernGenerator: "generateMedicalAlarms",
+            legacyMethod: "Data::AlarmsMedical",
+            childId: child.id,
+            legacyChildId: child.legacyId,
+            classId: child.classId,
+            legacyClassId: child.class?.legacyId ?? null,
+            legacyClassAccess: "login_users.uclasses_exact_or_zero",
+            type: report.legacyType,
+            level: 1,
+            status: 0,
+            currDate: todayKey,
+            reportName: report.reportName,
+            href,
+          },
         },
-      },
-    });
-    existingAlarmKeys.add(key);
-    summary.alarmsCreated += 1;
+      });
+      alarmId = alarm.id;
+      existingAlarmByKey.set(key, {
+        id: alarm.id,
+        referenceId: child.id,
+        legacyData: alarm.legacyData,
+      });
+      summary.alarmsCreated += 1;
+    }
 
     const recipients = recipientsForMedicalCandidate(legacyRecipients, {
       sourceDatabase:
         child.sourceDatabase ?? child.class?.sourceDatabase ?? child.branch.sourceDatabase,
       legacyClassId: child.class?.legacyId ?? null,
     });
-    if (recipients.length === 0) continue;
+    if (!alarmId || recipients.length === 0) continue;
+
+    const existingReceipts = await db.notificationReceipt.findMany({
+      where: {
+        sourceTable: MEDICAL_RECEIPT_SOURCE,
+        legacyNotificationId,
+        recipientType: "USER",
+        legacyRecipientId: {
+          in: recipients.map((recipient) => recipient.legacyRecipientId),
+        },
+      },
+      select: { legacyRecipientId: true },
+    });
+    const existingReceiptIds = new Set(
+      existingReceipts.map((receipt) => receipt.legacyRecipientId),
+    );
+    const newReceiptRecipients = recipients.filter(
+      (recipient) => !existingReceiptIds.has(recipient.legacyRecipientId),
+    );
+    if (newReceiptRecipients.length === 0) continue;
 
     const receiptResult = await db.notificationReceipt.createMany({
-      data: recipients.map((recipient) => ({
+      data: newReceiptRecipients.map((recipient) => ({
         sourceTable: MEDICAL_RECEIPT_SOURCE,
         category: "medical",
         legacyNotificationId,
         legacyRecipientId: recipient.legacyRecipientId,
         recipientType: "USER",
         recipientId: recipient.userId,
-        alarmId: alarm.id,
+        alarmId,
         isRead: false,
         metadata: {
           modernGenerator: "generateMedicalAlarms",
@@ -422,7 +487,7 @@ export async function generateMedicalAlarmsForOrganization(params: {
     if (!templateEnabled || receiptResult.count === 0) continue;
 
     const notificationResult = await db.notification.createMany({
-      data: recipients.map((recipient) => ({
+      data: newReceiptRecipients.map((recipient) => ({
         userId: recipient.userId,
         title: renderNotificationText(subjectTemplate, variables),
         body: message,
