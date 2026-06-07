@@ -9,6 +9,9 @@ import { requireRole } from "@/lib/require-role";
 type UserRole = "ADMIN" | "TEACHER" | "NURSE" | "DOCTOR" | "MANAGER";
 export type LegacyUserRecordType = "login_user" | "manager_login_user";
 type LegacyLevelRecordType = "login_level" | "manager_login_level";
+type LegacyProfileValueRecordType = "profile_value" | "manager_profile_value";
+type LegacyProfileFieldRecordType = "profile_field" | "manager_profile_field";
+export type LegacyProfileFieldType = "text_input" | "checkbox" | "textarea";
 
 type ActionResult<T = unknown> = {
   success: boolean;
@@ -53,13 +56,36 @@ export type LegacyAdminLoginHistoryEntry = {
 export type LegacyAdminProfileValue = {
   id: string;
   legacyId: number;
+  fieldLegacyId: number;
   label: string;
   value: string | null;
+  fieldType: LegacyProfileFieldType;
+  section: string;
+  isPublic: boolean;
+  signup: boolean;
+  hasStoredValue: boolean;
 };
 
 export type LegacyAdminSocialIntegration = {
   provider: string;
   identifier: string;
+};
+
+type LegacyAdminProfileFieldDefinition = {
+  id: string;
+  sourceDatabase: string;
+  legacyId: number;
+  label: string;
+  fieldType: LegacyProfileFieldType;
+  section: string;
+  isPublic: boolean;
+  signup: boolean;
+  recordType: LegacyProfileFieldRecordType;
+};
+
+export type LegacyAdminProfileValueInput = {
+  fieldLegacyId: number;
+  value: string | boolean | null;
 };
 
 export type LegacyAdminLevelOption = {
@@ -115,6 +141,7 @@ export type LegacyAdminUserInput = {
   sites?: string;
   classes?: string;
   isRestricted?: boolean;
+  profileValues?: LegacyAdminProfileValueInput[];
 };
 
 const USER_CONFIG: Record<
@@ -156,6 +183,38 @@ function legacyString(value: unknown, key: string) {
   if (typeof raw === "string") return raw;
   if (typeof raw === "number") return String(raw);
   return "";
+}
+
+function legacyNumber(value: unknown, key: string) {
+  const raw = legacyObject(value)[key];
+  const parsed =
+    typeof raw === "number"
+      ? raw
+      : typeof raw === "string"
+        ? Number.parseInt(raw, 10)
+        : Number.NaN;
+
+  return Number.isInteger(parsed) ? parsed : null;
+}
+
+function legacyBoolean(value: unknown, key: string, fallback = false) {
+  const raw = legacyObject(value)[key];
+  if (typeof raw === "boolean") return raw;
+  if (typeof raw === "number") return raw !== 0;
+  if (typeof raw === "string") {
+    const normalized = raw.trim().toLowerCase();
+    if (["1", "true", "yes", "on"].includes(normalized)) return true;
+    if (["0", "false", "no", "off", ""].includes(normalized)) return false;
+  }
+  return fallback;
+}
+
+function normalizeProfileFieldType(value: string | null | undefined) {
+  const normalized = value?.trim();
+  if (normalized === "checkbox" || normalized === "textarea") {
+    return normalized;
+  }
+  return "text_input";
 }
 
 function parsePhpLevelIds(serialized: string | null) {
@@ -258,10 +317,33 @@ function auditPrincipalForRecordType(recordType: LegacyUserRecordType) {
   return recordType === "manager_login_user" ? "MANAGER_USER" : "USER";
 }
 
-function profileRecordTypeForUser(recordType: LegacyUserRecordType) {
+function profileRecordTypeForUser(
+  recordType: LegacyUserRecordType,
+): LegacyProfileValueRecordType {
   return recordType === "manager_login_user"
     ? "manager_profile_value"
     : "profile_value";
+}
+
+function profileFieldRecordTypeForUser(
+  recordType: LegacyUserRecordType,
+): LegacyProfileFieldRecordType {
+  return recordType === "manager_login_user"
+    ? "manager_profile_field"
+    : "profile_field";
+}
+
+function profileLegacyTableForUser(recordType: LegacyUserRecordType) {
+  return recordType === "manager_login_user"
+    ? "login_profiles_man"
+    : "login_profiles";
+}
+
+function profileGroupKey(
+  sourceDatabase: string,
+  recordType: LegacyUserRecordType,
+) {
+  return `${sourceDatabase}:${recordType}`;
 }
 
 function userAuditKey(
@@ -278,6 +360,22 @@ function userProfileKey(
   legacyUserId: number,
 ) {
   return `${sourceDatabase}:${profileRecordTypeForUser(recordType)}:${legacyUserId}`;
+}
+
+function userProfileFieldKey(
+  sourceDatabase: string,
+  recordType: LegacyUserRecordType,
+  legacyUserId: number,
+  fieldLegacyId: number,
+) {
+  return `${userProfileKey(sourceDatabase, recordType, legacyUserId)}:${fieldLegacyId}`;
+}
+
+function userRecordTypeForProfileRecord(recordType: string): LegacyUserRecordType {
+  return recordType === "manager_profile_value" ||
+    recordType === "manager_profile_field"
+    ? "manager_login_user"
+    : "login_user";
 }
 
 function userSocialIntegrationKey(sourceDatabase: string, legacyUserId: number) {
@@ -307,6 +405,258 @@ function socialIntegrationsFromLegacyData(
   });
 }
 
+type LegacyProfileFieldRecord = {
+  id: string;
+  sourceDatabase: string;
+  legacyId: number;
+  recordType: string;
+  recordKey: string | null;
+  recordValue: string | null;
+  isDisabled: boolean | null;
+  legacyData: Prisma.JsonValue | null;
+};
+
+type LegacyProfileValueRecord = {
+  id: string;
+  sourceDatabase: string;
+  legacyId: number;
+  legacyUserId: number | null;
+  recordType: string;
+  recordKey: string | null;
+  recordValue: string | null;
+  legacyData: Prisma.JsonValue | null;
+};
+
+function profileFieldFromRecord(
+  record: LegacyProfileFieldRecord,
+): LegacyAdminProfileFieldDefinition {
+  const data = legacyObject(record.legacyData);
+  const label =
+    legacyString(data, "label") ||
+    record.recordKey ||
+    `Profile field ${record.legacyId}`;
+  const isPublic = legacyBoolean(
+    data,
+    "public",
+    !(record.isDisabled ?? false),
+  );
+
+  return {
+    id: record.id,
+    sourceDatabase: record.sourceDatabase,
+    legacyId: record.legacyId,
+    label,
+    fieldType: normalizeProfileFieldType(
+      legacyString(data, "type") || record.recordValue,
+    ),
+    section: legacyString(data, "section") || "Profile",
+    isPublic,
+    signup: legacyBoolean(data, "signup"),
+    recordType: record.recordType as LegacyProfileFieldRecordType,
+  };
+}
+
+function profileFieldLegacyIdFromValueRecord(record: LegacyProfileValueRecord) {
+  const fromData = legacyNumber(record.legacyData, "pfield_id");
+  if (fromData && fromData > 0) return fromData;
+
+  const match = record.recordKey?.match(/^profile_field:(\d+)$/);
+  const fromKey = match ? Number.parseInt(match[1], 10) : Number.NaN;
+  return Number.isInteger(fromKey) && fromKey > 0 ? fromKey : null;
+}
+
+function normalizeProfileInputValue(
+  field: LegacyAdminProfileFieldDefinition,
+  value: string | boolean | null,
+) {
+  if (field.fieldType === "checkbox") {
+    return value === true ||
+      value === "1" ||
+      (typeof value === "string" &&
+        ["true", "yes", "on"].includes(value.trim().toLowerCase()))
+      ? "1"
+      : "0";
+  }
+
+  if (value === null) return "";
+  return typeof value === "string" ? value : String(value);
+}
+
+function buildProfileContext(
+  fieldRecords: LegacyProfileFieldRecord[],
+  valueRecords: LegacyProfileValueRecord[],
+) {
+  const fieldsByGroup = new Map<string, LegacyAdminProfileFieldDefinition[]>();
+  const fieldIdsByGroup = new Map<string, Set<number>>();
+
+  for (const record of fieldRecords) {
+    const field = profileFieldFromRecord(record);
+    const recordType = userRecordTypeForProfileRecord(record.recordType);
+    const groupKey = profileGroupKey(record.sourceDatabase, recordType);
+    const fields = fieldsByGroup.get(groupKey) ?? [];
+    const fieldIds = fieldIdsByGroup.get(groupKey) ?? new Set<number>();
+
+    fields.push(field);
+    fieldIds.add(field.legacyId);
+    fieldsByGroup.set(groupKey, fields);
+    fieldIdsByGroup.set(groupKey, fieldIds);
+  }
+
+  for (const fields of fieldsByGroup.values()) {
+    fields.sort((a, b) => {
+      const section = a.section.localeCompare(b.section);
+      if (section !== 0) return section;
+      return a.legacyId - b.legacyId;
+    });
+  }
+
+  const valuesByUserField = new Map<string, LegacyProfileValueRecord>();
+  const orphanValuesByUser = new Map<string, LegacyProfileValueRecord[]>();
+
+  for (const record of valueRecords) {
+    const legacyUserId = record.legacyUserId;
+    if (!legacyUserId) continue;
+
+    const recordType = userRecordTypeForProfileRecord(record.recordType);
+    const fieldLegacyId = profileFieldLegacyIdFromValueRecord(record);
+    const groupKey = profileGroupKey(record.sourceDatabase, recordType);
+    const userKey = userProfileKey(record.sourceDatabase, recordType, legacyUserId);
+
+    if (
+      fieldLegacyId &&
+      (fieldIdsByGroup.get(groupKey)?.has(fieldLegacyId) ?? false)
+    ) {
+      const valueKey = userProfileFieldKey(
+        record.sourceDatabase,
+        recordType,
+        legacyUserId,
+        fieldLegacyId,
+      );
+      if (!valuesByUserField.has(valueKey)) {
+        valuesByUserField.set(valueKey, record);
+      }
+      continue;
+    }
+
+    const orphanValues = orphanValuesByUser.get(userKey) ?? [];
+    orphanValues.push(record);
+    orphanValuesByUser.set(userKey, orphanValues);
+  }
+
+  return { fieldsByGroup, valuesByUserField, orphanValuesByUser };
+}
+
+function buildProfileValuesForLegacyUser(params: {
+  sourceDatabase: string;
+  recordType: LegacyUserRecordType;
+  legacyUserId: number;
+  context: ReturnType<typeof buildProfileContext>;
+}) {
+  const groupKey = profileGroupKey(params.sourceDatabase, params.recordType);
+  const fields = params.context.fieldsByGroup.get(groupKey) ?? [];
+  const values = fields.map((field) => {
+    const valueRecord = params.context.valuesByUserField.get(
+      userProfileFieldKey(
+        params.sourceDatabase,
+        params.recordType,
+        params.legacyUserId,
+        field.legacyId,
+      ),
+    );
+
+    return {
+      id: valueRecord?.id ?? `profile-field:${field.id}:${params.legacyUserId}`,
+      legacyId: valueRecord?.legacyId ?? field.legacyId,
+      fieldLegacyId: field.legacyId,
+      label: field.label,
+      value: valueRecord?.recordValue ?? null,
+      fieldType: field.fieldType,
+      section: field.section,
+      isPublic: field.isPublic,
+      signup: field.signup,
+      hasStoredValue: Boolean(valueRecord),
+    };
+  });
+
+  const userKey = userProfileKey(
+    params.sourceDatabase,
+    params.recordType,
+    params.legacyUserId,
+  );
+  const orphanValues = params.context.orphanValuesByUser.get(userKey) ?? [];
+
+  for (const orphan of orphanValues) {
+    const fieldLegacyId =
+      profileFieldLegacyIdFromValueRecord(orphan) ?? orphan.legacyId;
+    values.push({
+      id: orphan.id,
+      legacyId: orphan.legacyId,
+      fieldLegacyId,
+      label: orphan.recordKey ?? `Profile field ${fieldLegacyId}`,
+      value: orphan.recordValue,
+      fieldType: "text_input",
+      section: "Legacy profile",
+      isPublic: true,
+      signup: false,
+      hasStoredValue: true,
+    });
+  }
+
+  return values;
+}
+
+async function getProfileValuesForUser(
+  sourceDatabase: string,
+  recordType: LegacyUserRecordType,
+  legacyUserId: number,
+) {
+  const [fieldRecords, valueRecords] = await Promise.all([
+    db.legacyAuthRecord.findMany({
+      where: {
+        sourceDatabase,
+        recordType: profileFieldRecordTypeForUser(recordType),
+      },
+      orderBy: [{ legacyId: "asc" }],
+      select: {
+        id: true,
+        sourceDatabase: true,
+        legacyId: true,
+        recordType: true,
+        recordKey: true,
+        recordValue: true,
+        isDisabled: true,
+        legacyData: true,
+      },
+    }),
+    db.legacyAuthRecord.findMany({
+      where: {
+        sourceDatabase,
+        legacyUserId,
+        recordType: profileRecordTypeForUser(recordType),
+      },
+      orderBy: [{ legacyId: "asc" }],
+      select: {
+        id: true,
+        sourceDatabase: true,
+        legacyId: true,
+        legacyUserId: true,
+        recordType: true,
+        recordKey: true,
+        recordValue: true,
+        legacyData: true,
+      },
+    }),
+  ]);
+
+  const context = buildProfileContext(fieldRecords, valueRecords);
+  return buildProfileValuesForLegacyUser({
+    sourceDatabase,
+    recordType,
+    legacyUserId,
+    context,
+  });
+}
+
 async function getDefaultLevelId(
   sourceDatabase: string,
   recordType: LegacyUserRecordType,
@@ -328,6 +678,166 @@ async function getDefaultLevelId(
   return Number.isInteger(defaultLevelId) && defaultLevelId > 0
     ? defaultLevelId
     : null;
+}
+
+async function saveLegacyProfileValues(
+  tx: Prisma.TransactionClient,
+  params: {
+    sourceDatabase: string;
+    recordType: LegacyUserRecordType;
+    legacyUserId: number;
+    userId: string | null;
+    values: LegacyAdminProfileValueInput[] | undefined;
+  },
+) {
+  if (!params.values?.length) return;
+
+  const submittedByField = new Map<number, LegacyAdminProfileValueInput>();
+  for (const value of params.values) {
+    const fieldLegacyId = Number(value.fieldLegacyId);
+    if (Number.isInteger(fieldLegacyId) && fieldLegacyId > 0) {
+      submittedByField.set(fieldLegacyId, value);
+    }
+  }
+  if (submittedByField.size === 0) return;
+
+  const fieldRecordType = profileFieldRecordTypeForUser(params.recordType);
+  const valueRecordType = profileRecordTypeForUser(params.recordType);
+  const legacyTable = profileLegacyTableForUser(params.recordType);
+  const fieldRecords = await tx.legacyAuthRecord.findMany({
+    where: {
+      sourceDatabase: params.sourceDatabase,
+      recordType: fieldRecordType,
+      legacyId: { in: Array.from(submittedByField.keys()) },
+    },
+    select: {
+      id: true,
+      sourceDatabase: true,
+      legacyId: true,
+      recordType: true,
+      recordKey: true,
+      recordValue: true,
+      isDisabled: true,
+      legacyData: true,
+    },
+  });
+
+  const fields = fieldRecords
+    .map(profileFieldFromRecord)
+    .sort((a, b) => a.legacyId - b.legacyId);
+  const fieldsById = new Map(fields.map((field) => [field.legacyId, field]));
+  const existingValueRecords = await tx.legacyAuthRecord.findMany({
+    where: {
+      sourceDatabase: params.sourceDatabase,
+      legacyUserId: params.legacyUserId,
+      recordType: valueRecordType,
+    },
+    select: {
+      id: true,
+      sourceDatabase: true,
+      legacyId: true,
+      legacyUserId: true,
+      recordType: true,
+      recordKey: true,
+      recordValue: true,
+      legacyData: true,
+    },
+  });
+  const existingByField = new Map<number, LegacyProfileValueRecord>();
+
+  for (const record of existingValueRecords) {
+    const fieldLegacyId = profileFieldLegacyIdFromValueRecord(record) ?? record.legacyId;
+    if (fieldLegacyId && !existingByField.has(fieldLegacyId)) {
+      existingByField.set(fieldLegacyId, record);
+    }
+  }
+
+  const maxValueRecord = await tx.legacyAuthRecord.findFirst({
+    where: {
+      sourceDatabase: params.sourceDatabase,
+      legacyTable,
+    },
+    orderBy: { legacyId: "desc" },
+    select: { legacyId: true },
+  });
+  let nextLegacyId = (maxValueRecord?.legacyId ?? 0) + 1;
+
+  const submittedFieldIds = Array.from(submittedByField.keys()).sort(
+    (a, b) => a - b,
+  );
+
+  for (const fieldLegacyId of submittedFieldIds) {
+    const submitted = submittedByField.get(fieldLegacyId);
+    if (!submitted) continue;
+
+    const existingRecord = existingByField.get(fieldLegacyId);
+    const field =
+      fieldsById.get(fieldLegacyId) ??
+      (existingRecord
+        ? ({
+            id: existingRecord.id,
+            sourceDatabase: existingRecord.sourceDatabase,
+            legacyId: fieldLegacyId,
+            label:
+              existingRecord.recordKey ?? `Profile field ${fieldLegacyId}`,
+            fieldType: "text_input",
+            section: "Legacy profile",
+            isPublic: true,
+            signup: false,
+            recordType: fieldRecordType,
+          } satisfies LegacyAdminProfileFieldDefinition)
+        : null);
+
+    if (!field) {
+      throw new Error("One or more profile fields no longer exist.");
+    }
+
+    const recordValue = normalizeProfileInputValue(field, submitted.value);
+    const legacyData = {
+      pfield_id: fieldLegacyId,
+      user_id: params.legacyUserId,
+      profile_label: field.label,
+      profile_value: recordValue,
+      updated_from: "modern_legacy_user_admin",
+    } satisfies Prisma.InputJsonObject;
+
+    if (existingRecord) {
+      await tx.legacyAuthRecord.update({
+        where: { id: existingRecord.id },
+        data: {
+          recordKey: field.label,
+          recordValue,
+          legacyData: {
+            ...legacyObject(existingRecord.legacyData),
+            ...legacyData,
+          },
+        },
+      });
+      continue;
+    }
+
+    const legacyId = nextLegacyId;
+    nextLegacyId += 1;
+
+    await tx.legacyAuthRecord.create({
+      data: {
+        sourceDatabase: params.sourceDatabase,
+        legacyTable,
+        legacyKey: `${params.sourceDatabase}:${legacyTable}:${legacyId}`,
+        legacyId,
+        recordType: valueRecordType,
+        userId: params.userId,
+        legacyUserId: params.legacyUserId,
+        recordKey: field.label,
+        recordValue,
+        legacyData: {
+          p_id: legacyId,
+          ...legacyData,
+          inserted_from: "modern_legacy_user_admin",
+        },
+      },
+    });
+  }
 }
 
 function firstGroup(groups: LegacyAdminUserGroup[]) {
@@ -660,8 +1170,13 @@ export async function getLegacyAdminUsers(): Promise<
       ),
     );
 
-    const [modernUsers, loginAuditRows, profileRecords, integrationRecords] =
-      await Promise.all([
+    const [
+      modernUsers,
+      loginAuditRows,
+      profileFieldRecords,
+      profileRecords,
+      integrationRecords,
+    ] = await Promise.all([
         userIds.length
           ? db.user.findMany({
               where: { id: { in: userIds } },
@@ -688,6 +1203,29 @@ export async function getLegacyAdminUsers(): Promise<
               },
             })
           : Promise.resolve([]),
+        sourceDatabases.length
+          ? db.legacyAuthRecord.findMany({
+              where: {
+                sourceDatabase: { in: sourceDatabases },
+                recordType: { in: ["profile_field", "manager_profile_field"] },
+              },
+              orderBy: [
+                { sourceDatabase: "asc" },
+                { recordType: "asc" },
+                { legacyId: "asc" },
+              ],
+              select: {
+                id: true,
+                sourceDatabase: true,
+                legacyId: true,
+                recordType: true,
+                recordKey: true,
+                recordValue: true,
+                isDisabled: true,
+                legacyData: true,
+              },
+            })
+          : Promise.resolve([]),
         legacyUserIds.length
           ? db.legacyAuthRecord.findMany({
               where: {
@@ -708,6 +1246,7 @@ export async function getLegacyAdminUsers(): Promise<
                 recordType: true,
                 recordKey: true,
                 recordValue: true,
+                legacyData: true,
               },
             })
           : Promise.resolve([]),
@@ -774,25 +1313,10 @@ export async function getLegacyAdminUsers(): Promise<
       auditByUser.set(key, current);
     }
 
-    const profilesByUser = new Map<string, LegacyAdminProfileValue[]>();
-    for (const profile of profileRecords) {
-      const legacyUserId = profile.legacyUserId;
-      if (!legacyUserId) continue;
-
-      const recordType =
-        profile.recordType === "manager_profile_value"
-          ? "manager_login_user"
-          : "login_user";
-      const key = userProfileKey(profile.sourceDatabase, recordType, legacyUserId);
-      const values = profilesByUser.get(key) ?? [];
-      values.push({
-        id: profile.id,
-        legacyId: profile.legacyId,
-        label: profile.recordKey ?? `Profile field ${profile.legacyId}`,
-        value: profile.recordValue,
-      });
-      profilesByUser.set(key, values);
-    }
+    const profileContext = buildProfileContext(
+      profileFieldRecords,
+      profileRecords,
+    );
 
     const integrationsByUser = new Map<string, LegacyAdminSocialIntegration[]>();
     for (const integration of integrationRecords) {
@@ -822,9 +1346,12 @@ export async function getLegacyAdminUsers(): Promise<
             loginHistory: loginHistoryByUser.get(
               userAuditKey(record.sourceDatabase, recordType, legacyUserId),
             ),
-            profileValues: profilesByUser.get(
-              userProfileKey(record.sourceDatabase, recordType, legacyUserId),
-            ),
+            profileValues: buildProfileValuesForLegacyUser({
+              sourceDatabase: record.sourceDatabase,
+              recordType,
+              legacyUserId,
+              context: profileContext,
+            }),
             socialIntegrations:
               recordType === "login_user"
                 ? integrationsByUser.get(
@@ -979,6 +1506,7 @@ export async function updateLegacyAdminUser(
     if ("error" in validated) return { success: false, error: validated.error };
 
     const config = configForRecordType(recordType);
+    const legacyUserId = existing.legacyUserId ?? existing.legacyId;
     const { levels } = await getLevelsAndGroups();
     const role = roleForLegacyLevels(
       validated.levelIds,
@@ -1042,7 +1570,7 @@ export async function updateLegacyAdminUser(
           legacyTable: config.legacyTable,
           recordType,
           userId: modernUser?.id ?? existing.userId,
-          legacyUserId: existing.legacyUserId ?? existing.legacyId,
+          legacyUserId,
           username: validated.username,
           email: validated.email,
           recordKey: validated.username,
@@ -1050,7 +1578,7 @@ export async function updateLegacyAdminUser(
           isDisabled: validated.isRestricted,
           legacyData: userLegacyData({
             existing: existing.legacyData,
-            legacyId: existing.legacyUserId ?? existing.legacyId,
+            legacyId: legacyUserId,
             userLevel,
             name: validated.name,
             username: validated.username,
@@ -1064,8 +1592,21 @@ export async function updateLegacyAdminUser(
         },
       });
 
+      await saveLegacyProfileValues(tx, {
+        sourceDatabase: existing.sourceDatabase,
+        recordType,
+        legacyUserId,
+        userId: legacyRecord.userId,
+        values: input.profileValues,
+      });
+
       return { modernUser, legacyRecord };
     });
+    const profileValues = await getProfileValuesForUser(
+      updated.legacyRecord.sourceDatabase,
+      recordType,
+      legacyUserId,
+    );
 
     revalidatePath("/settings/legacy-users");
 
@@ -1075,6 +1616,7 @@ export async function updateLegacyAdminUser(
         record: updated.legacyRecord,
         levelOptions: levels,
         modernUser: updated.modernUser,
+        profileValues,
       }),
     };
   } catch (error) {

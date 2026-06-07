@@ -41,6 +41,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
@@ -102,13 +103,19 @@ type DialogMode = "create" | "edit";
 
 type LegacyUserFormState = Omit<
   LegacyAdminUserInput,
-  "password" | "password2" | "sites" | "classes" | "isRestricted"
+  | "password"
+  | "password2"
+  | "sites"
+  | "classes"
+  | "isRestricted"
+  | "profileValues"
 > & {
   password: string;
   password2: string;
   sites: string;
   classes: string;
   isRestricted: boolean;
+  profileValues: Record<string, string>;
 };
 
 type AccessOption = {
@@ -147,6 +154,7 @@ function createEmptyForm(group: LegacyAdminUserGroup | null): LegacyUserFormStat
     sites: "0",
     classes: "0",
     isRestricted: false,
+    profileValues: {},
   };
 }
 
@@ -163,6 +171,12 @@ function formFromUser(user: LegacyAdminUserRow): LegacyUserFormState {
     sites: user.sites || "0",
     classes: user.classes || "0",
     isRestricted: user.isRestricted,
+    profileValues: Object.fromEntries(
+      user.profileValues.map((profile) => [
+        String(profile.fieldLegacyId),
+        profile.value ?? (profile.fieldType === "checkbox" ? "0" : ""),
+      ]),
+    ),
   };
 }
 
@@ -208,6 +222,27 @@ function formatLegacyDateTime(value: string | null) {
 
 function loginCountLabel(count: number) {
   return `${count} ${count === 1 ? "login" : "logins"}`;
+}
+
+function isCheckedProfileValue(value: string | null | undefined) {
+  return ["1", "true", "yes", "on"].includes(
+    value?.trim().toLowerCase() ?? "",
+  );
+}
+
+function groupProfileValues(profiles: LegacyAdminUserRow["profileValues"]) {
+  const grouped = new Map<string, LegacyAdminUserRow["profileValues"]>();
+  for (const profile of profiles) {
+    const section = profile.section || "Profile";
+    const values = grouped.get(section) ?? [];
+    values.push(profile);
+    grouped.set(section, values);
+  }
+
+  return Array.from(grouped.entries()).map(([section, values]) => ({
+    section,
+    values,
+  }));
 }
 
 function sortUsers(users: LegacyAdminUserRow[]) {
@@ -518,6 +553,10 @@ export function LegacyUsersClient({
         })),
     [form.sourceDatabase, initialData.classes],
   );
+  const editingProfileSections = useMemo(
+    () => groupProfileValues(editingUser?.profileValues ?? []),
+    [editingUser],
+  );
 
   const totals = useMemo(
     () => ({
@@ -535,6 +574,16 @@ export function LegacyUsersClient({
     value: LegacyUserFormState[K],
   ) {
     setForm((current) => ({ ...current, [key]: value }));
+  }
+
+  function updateProfileValue(fieldLegacyId: number, value: string) {
+    setForm((current) => ({
+      ...current,
+      profileValues: {
+        ...current.profileValues,
+        [String(fieldLegacyId)]: value,
+      },
+    }));
   }
 
   function openCreateDialog() {
@@ -573,6 +622,7 @@ export function LegacyUsersClient({
       levelIds: [],
       sites: "0",
       classes: "0",
+      profileValues: {},
     }));
   }
 
@@ -632,6 +682,13 @@ export function LegacyUsersClient({
       sites: form.sites.trim() || "0",
       classes: form.classes.trim() || "0",
       isRestricted: form.isRestricted,
+      profileValues:
+        dialogMode === "edit" && editingUser
+          ? editingUser.profileValues.map((profile) => ({
+              fieldLegacyId: profile.fieldLegacyId,
+              value: form.profileValues[String(profile.fieldLegacyId)] ?? "",
+            }))
+          : undefined,
     };
 
     startTransition(async () => {
@@ -645,7 +702,21 @@ export function LegacyUsersClient({
             : { success: false, error: "No such user!" };
 
       if (result.success && result.data) {
-        const savedUser = result.data;
+        const savedUser =
+          dialogMode === "edit" && editingUser
+            ? {
+                ...result.data,
+                loginHistory: result.data.loginHistory.length
+                  ? result.data.loginHistory
+                  : editingUser.loginHistory,
+                socialIntegrations: result.data.socialIntegrations.length
+                  ? result.data.socialIntegrations
+                  : editingUser.socialIntegrations,
+                profileValues: result.data.profileValues.length
+                  ? result.data.profileValues
+                  : editingUser.profileValues,
+              }
+            : result.data;
         setUsers((current) => {
           if (dialogMode === "create") {
             return sortUsers([...current, savedUser]);
@@ -1143,20 +1214,81 @@ export function LegacyUsersClient({
               <span className="font-medium">Restricted</span>
             </label>
 
-            {dialogMode === "edit" && editingUser?.profileValues.length ? (
-              <div className="space-y-2">
+            {dialogMode === "edit" && editingProfileSections.length ? (
+              <div className="space-y-3">
                 <Label>Profile Values</Label>
-                <div className="grid max-h-44 gap-2 overflow-y-auto rounded-sm border border-border p-3 md:grid-cols-2">
-                  {editingUser.profileValues.map((profile) => (
-                    <div
-                      key={profile.id}
-                      className="rounded-sm border border-border/70 bg-muted/30 p-2"
-                    >
-                      <div className="truncate text-xs font-semibold text-muted-foreground">
-                        {profile.label}
+                <div className="max-h-72 space-y-4 overflow-y-auto rounded-sm border border-border p-3">
+                  {editingProfileSections.map((section) => (
+                    <div key={section.section} className="space-y-2">
+                      <div className="text-xs font-semibold text-muted-foreground">
+                        {section.section}
                       </div>
-                      <div className="mt-1 break-words text-sm">
-                        {profile.value || "-"}
+                      <div className="grid gap-3 md:grid-cols-2">
+                        {section.values.map((profile) => {
+                          const fieldKey = String(profile.fieldLegacyId);
+                          const inputId = `profile-${profile.fieldLegacyId}`;
+                          const value = form.profileValues[fieldKey] ?? "";
+
+                          if (profile.fieldType === "checkbox") {
+                            return (
+                              <label
+                                key={profile.id}
+                                className="flex min-h-10 items-center gap-2 rounded-sm border border-border/70 px-3 py-2 text-sm"
+                              >
+                                <Checkbox
+                                  checked={isCheckedProfileValue(value)}
+                                  onCheckedChange={(checked) =>
+                                    updateProfileValue(
+                                      profile.fieldLegacyId,
+                                      checked === true ? "1" : "0",
+                                    )
+                                  }
+                                  disabled={isPending}
+                                />
+                                <span className="font-medium">{profile.label}</span>
+                              </label>
+                            );
+                          }
+
+                          if (profile.fieldType === "textarea") {
+                            return (
+                              <div
+                                key={profile.id}
+                                className="space-y-1 md:col-span-2"
+                              >
+                                <Label htmlFor={inputId}>{profile.label}</Label>
+                                <Textarea
+                                  id={inputId}
+                                  value={value}
+                                  onChange={(event) =>
+                                    updateProfileValue(
+                                      profile.fieldLegacyId,
+                                      event.target.value,
+                                    )
+                                  }
+                                  disabled={isPending}
+                                />
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <div key={profile.id} className="space-y-1">
+                              <Label htmlFor={inputId}>{profile.label}</Label>
+                              <Input
+                                id={inputId}
+                                value={value}
+                                onChange={(event) =>
+                                  updateProfileValue(
+                                    profile.fieldLegacyId,
+                                    event.target.value,
+                                  )
+                                }
+                                disabled={isPending}
+                              />
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   ))}

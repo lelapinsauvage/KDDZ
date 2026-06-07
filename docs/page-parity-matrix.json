@@ -16584,7 +16584,7 @@
     "legacyPhp": "Front/templates/admin/users/admin/classes/edit_user.class.php",
     "legacyJs": "",
     "modernRoute": "/settings/legacy-users",
-    "status": "partial - legacy admin user edit/delete restored; editable profile delivery remains",
+    "status": "partial - legacy admin user edit/delete/profile fields restored; delivery/OAuth/export remain",
     "legacyTablesMentioned": [
       "login_integration",
       "login_levels",
@@ -16605,7 +16605,7 @@
       "user_level",
       "usites"
     ],
-    "verification": "`/settings/legacy-users` now restores the admin edit form behavior for migrated legacy users: name/username/email updates, optional password reset with confirmation/minimum-length validation, legacy level assignment, restricted flag, branch/class access (`usites`/`uclasses`) with migrated legacy branch/class IDs, synchronized modern user role/active state, creation of a linked modern user when an unlinked legacy record receives a password, read-only migrated `login_profiles` / `login_profiles_man` profile values, preserved `login_integration` social-link identifiers, latest `login_timestamps` time/IP/count plus full timestamp history in the edit modal, and soft-delete that disables the modern account while preserving migrated provenance and soft-disables associated social-link rows. Remaining work is editable profile-field save semantics, welcome-email-on-level-change delivery, active OAuth reconnect/unlink flows, and physical legacy export semantics.",
+    "verification": "`/settings/legacy-users` now restores the admin edit form behavior for migrated legacy users: name/username/email updates, optional password reset with confirmation/minimum-length validation, legacy level assignment, restricted flag, branch/class access (`usites`/`uclasses`) with migrated legacy branch/class IDs, synchronized modern user role/active state, creation of a linked modern user when an unlinked legacy record receives a password, editable custom profile fields from `login_profile_fields` / `login_profile_fields_man` with legacy text, textarea, and checkbox controls persisted back into `login_profiles` / `login_profiles_man` through update-or-insert semantics, preserved `login_integration` social-link identifiers, latest `login_timestamps` time/IP/count plus full timestamp history in the edit modal, and soft-delete that disables the modern account while preserving migrated provenance and soft-disables associated social-link rows. Remaining work is welcome-email-on-level-change delivery, active OAuth reconnect/unlink flows, and physical legacy export semantics.",
     "legacyTables": [
       "login_integration",
       "login_levels",
@@ -17139,12 +17139,16 @@
     "status": "partial - legacy user edit page restored in modal",
     "legacyTablesMentioned": [
       "login_integration",
+      "login_profile_fields",
+      "login_profiles",
       "user"
     ],
     "requestFieldsMentioned": [],
-    "verification": "`/settings/legacy-users` restores the admin user detail/edit workflow in a modern modal, including migrated source database/table identity, legacy levels, restricted flag, branch/class access stored back as `usites`/`uclasses`, optional password reset, read-only migrated profile values, preserved social-link identifiers from `login_integration`, latest login audit fields, full login timestamp history, and soft delete. `/users.php?uid=` and `/users/admin/users.php?uid=` bridge to the restored roster with the legacy id prefilled as the search query and auto-open the matching edit modal when that legacy id is present in the migrated data. Remaining work is editable profile custom fields and active OAuth link/unlink flows.",
+    "verification": "`/settings/legacy-users` restores the admin user detail/edit workflow in a modern modal, including migrated source database/table identity, legacy levels, restricted flag, branch/class access stored back as `usites`/`uclasses`, optional password reset, editable migrated profile values backed by `login_profile_fields` and `login_profiles`, preserved social-link identifiers from `login_integration`, latest login audit fields, full login timestamp history, and soft delete. `/users.php?uid=` and `/users/admin/users.php?uid=` bridge to the restored roster with the legacy id prefilled as the search query and auto-open the matching edit modal when that legacy id is present in the migrated data. Remaining work is active OAuth link/unlink flows.",
     "legacyTables": [
       "login_integration",
+      "login_profile_fields",
+      "login_profiles",
       "login_users",
       "login_users_man",
       "t_branch",
