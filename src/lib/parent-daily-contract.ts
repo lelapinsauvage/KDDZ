@@ -187,7 +187,7 @@ export function mapLegacyDailyReport(
   const legacy = asRecord(report.legacyData);
   const feverFlat: Record<string, string> = {};
 
-  for (let index = 0; index < 4; index++) {
+  for (let index = 0; index < 5; index++) {
     const fever = report.fevers[index];
     feverFlat[String(index * 2)] = fever ? String(fever.temperature) : "";
     feverFlat[String(index * 2 + 1)] = fever ? formatTime(fever.time) : "";
@@ -196,9 +196,9 @@ export function mapLegacyDailyReport(
   const milk = report.milks[0];
 
   return {
-    report_id: readRaw(legacy, "report_id", report.id),
+    report_id: readString(legacy, ["report_id"]) ?? report.id,
     reportdate: readString(legacy, ["reportdate"]) ?? formatDate(report.reportDate),
-    status: readString(legacy, ["status"]) ?? report.status,
+    status: readString(legacy, ["status"]) ?? "present",
     bftime: readString(legacy, ["bftime"]) ?? formatTime(report.breakfastTime),
     breakf: mapLegacyMealPortion(legacy, "breakf", report.breakfastPortion),
     lntime: readString(legacy, ["lntime"]) ?? formatTime(report.lunchTime),
@@ -214,7 +214,7 @@ export function mapLegacyDailyReport(
     is_sleep: readLegacyBoolean(legacy, "is_sleep", report.isSleep),
     sleep_from: readString(legacy, ["sleep_from"]) ?? formatTime(report.sleepFrom),
     sleep_to: readString(legacy, ["sleep_to"]) ?? formatTime(report.sleepTo),
-    diahria: readLegacyBoolean(legacy, "diahria", report.diarrhea),
+    diahria: readLegacyBoolean(legacy, ["diahria", "diarrhea"], report.diarrhea),
     ur_pot: readString(legacy, ["ur_pot"]) ?? String(report.urinePotty),
     stool_pot: readString(legacy, ["stool_pot"]) ?? String(report.stoolPotty),
     ur_di: readString(legacy, ["ur_di"]) ?? String(report.urineDiaper),
@@ -240,9 +240,9 @@ export function mapLegacyDetailedDailyReport(
   const legacy = asRecord(report.legacyData);
 
   return {
-    report_id: readRaw(legacy, "report_id", report.id),
+    report_id: readString(legacy, ["report_id"]) ?? report.id,
     reportdate: readString(legacy, ["reportdate"]) ?? formatDate(report.reportDate),
-    status: readString(legacy, ["status"]) ?? report.status,
+    status: readString(legacy, ["status"]) ?? "present",
     bftime: readString(legacy, ["bftime"]) ?? formatTime(report.breakfastTime),
     breakf: mapLegacyMealPortion(legacy, "breakf", report.breakfastPortion),
     lntime: readString(legacy, ["lntime"]) ?? formatTime(report.lunchTime),
@@ -254,7 +254,7 @@ export function mapLegacyDetailedDailyReport(
     is_sleep: readLegacyBoolean(legacy, "is_sleep", report.isSleep),
     sleep_from: readString(legacy, ["sleep_from"]) ?? formatTime(report.sleepFrom),
     sleep_to: readString(legacy, ["sleep_to"]) ?? formatTime(report.sleepTo),
-    diarrhea: readLegacyBoolean(legacy, "diahria", report.diarrhea),
+    diarrhea: readLegacyBoolean(legacy, ["diarrhea", "diahria"], report.diarrhea),
     ur_pot: readString(legacy, ["ur_pot"]) ?? String(report.urinePotty),
     stool_pot: readString(legacy, ["stool_pot"]) ?? String(report.stoolPotty),
     ur_di: readString(legacy, ["ur_di"]) ?? String(report.urineDiaper),
@@ -349,11 +349,11 @@ function readString(data: Record<string, unknown> | null, keys: string[]) {
 
 function readLegacyBoolean(
   legacy: Record<string, unknown> | null,
-  key: string,
+  key: string | string[],
   fallback: boolean
 ) {
-  const value = legacy?.[key];
-  return value === undefined || value === null ? (fallback ? "1" : "0") : String(value);
+  const value = readString(legacy, Array.isArray(key) ? key : [key]);
+  return value === null ? (fallback ? "1" : "0") : value;
 }
 
 function mapLegacyMealPortion(
