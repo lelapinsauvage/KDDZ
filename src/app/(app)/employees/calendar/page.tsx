@@ -15,10 +15,10 @@ export default async function EmployeeCalendarPage({
   // Fetch all active employees and events for this month in parallel
   const [teachersRes, nursesRes, doctorsRes, managersRes, eventsRes] =
     await Promise.all([
-      getEmployees("teacher", { isActive: true, pageSize: 200 }),
-      getEmployees("nurse", { isActive: true, pageSize: 200 }),
-      getEmployees("doctor", { isActive: true, pageSize: 200 }),
-      getEmployees("manager", { isActive: true, pageSize: 200 }),
+      getEmployees("teacher", { isActive: true, pageSize: "all" }),
+      getEmployees("nurse", { isActive: true, pageSize: "all" }),
+      getEmployees("doctor", { isActive: true, pageSize: "all" }),
+      getEmployees("manager", { isActive: true, pageSize: "all" }),
       getEmployeeEvents({ month, year }),
     ]);
 

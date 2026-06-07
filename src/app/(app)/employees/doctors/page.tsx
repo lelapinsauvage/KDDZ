@@ -9,7 +9,7 @@ export default async function DoctorsListingPage({
   searchParams: Promise<{ q?: string | string[] }>;
 }) {
   const { q } = await searchParams;
-  const result = await getEmployees("doctor", { pageSize: 100 });
+  const result = await getEmployees("doctor", { pageSize: "all" });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const raw = result.data as any;

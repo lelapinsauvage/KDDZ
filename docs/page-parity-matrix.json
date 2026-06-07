@@ -1107,7 +1107,7 @@
       "id",
       "t_emp_status"
     ],
-    "verification": "Modern calendar route exists and legacy `t_emp_status` sick/absent/day_off/warning rows now migrate to `EmployeeEvent` with teacher links, status, date, and reference numbers. `/calendar.php` now redirects to the modern employee calendar, and `/calendar.php?id=` resolves raw numeric, UUID, legacy key, and encrypted teacher ids into a preselected employee calendar filter. Remaining work is exact field/action audit against `calendar.php`/`calendar.js`, approval events, non-teacher legacy `id` semantics if production used them, and final visual parity."
+    "verification": "Modern calendar route exists and legacy `t_emp_status` sick/absent/day_off/warning rows now migrate to `EmployeeEvent` with teacher links, status, date, and reference numbers. `/calendar.php` now redirects to the modern employee calendar, `/calendar.php?id=` resolves raw numeric, UUID, legacy key, and encrypted teacher ids into a preselected employee calendar filter, and the employee selector now loads all active teachers/nurses/doctors/managers instead of a capped sample. Remaining work is exact field/action audit against `calendar.php`/`calendar.js`, approval events, non-teacher legacy `id` semantics if production used them, and final visual parity."
   },
   {
     "legacyPhp": "Front/templates/admin/call.php",
@@ -16204,7 +16204,7 @@
     "requestFieldsMentioned": [
       "q"
     ],
-    "verification": "Restored the shared staff roster shape for doctors with legacy `#`, Image, F Name, L Name, DOB, Branch, Mobile, Nationality, Gender, Date, Status, and Action columns; 10/20/50/100/150/All page sizes; Copy/PDF/Excel/CSV export in legacy column order; print action; selected-row deactivation backed by the org-safe employee action; and `/doctors.php?q=` redirect hydration into the modern roster search across row values. Remaining work is the legacy selected-employee form modal behavior from `doctors.js`."
+    "verification": "Restored the shared staff roster shape for doctors with legacy `#`, Image, F Name, L Name, DOB, Branch, Mobile, Nationality, Gender, Date, Status, and Action columns; uncapped org-scoped roster loading for 10/20/50/100/150/All page sizes; Copy/PDF/Excel/CSV export in legacy column order over the full loaded set; print action; selected-row deactivation backed by the org-safe employee action; and `/doctors.php?q=` redirect hydration into the modern roster search across row values. Remaining work is the legacy selected-employee form modal behavior from `doctors.js`."
   },
   {
     "legacyPhp": "Front/templates/admin/exportdb.php",
@@ -16348,7 +16348,7 @@
     "requestFieldsMentioned": [
       "q"
     ],
-    "verification": "Restored the shared staff roster shape for managers with legacy `#`, Image, F Name, L Name, DOB, Branch, Mobile, Nationality, Gender, Date, Status, and Action columns; 10/20/50/100/150/All page sizes; Copy/PDF/Excel/CSV export in legacy column order; print action; selected-row deactivation backed by the org-safe employee action; and `/managers.php?q=` redirect hydration into the modern roster search across row values. Remaining work is the legacy selected-employee form modal behavior from `managers.js`."
+    "verification": "Restored the shared staff roster shape for managers with legacy `#`, Image, F Name, L Name, DOB, Branch, Mobile, Nationality, Gender, Date, Status, and Action columns; uncapped org-scoped roster loading for 10/20/50/100/150/All page sizes; Copy/PDF/Excel/CSV export in legacy column order over the full loaded set; print action; selected-row deactivation backed by the org-safe employee action; and `/managers.php?q=` redirect hydration into the modern roster search across row values. Remaining work is the legacy selected-employee form modal behavior from `managers.js`."
   },
   {
     "legacyPhp": "Front/templates/admin/message_portal.php",
@@ -16444,7 +16444,7 @@
     "requestFieldsMentioned": [
       "q"
     ],
-    "verification": "Restored the shared staff roster shape for nurses with legacy `#`, Image, F Name, L Name, DOB, Branch, Mobile, Nationality, Gender, Date, Status, and Action columns; 10/20/50/100/150/All page sizes; Copy/PDF/Excel/CSV export in legacy column order; print action; selected-row deactivation backed by the org-safe employee action; and `/nurses.php?q=` redirect hydration into the modern roster search across row values. Remaining work is the legacy selected-employee form modal behavior from `nurses.js`."
+    "verification": "Restored the shared staff roster shape for nurses with legacy `#`, Image, F Name, L Name, DOB, Branch, Mobile, Nationality, Gender, Date, Status, and Action columns; uncapped org-scoped roster loading for 10/20/50/100/150/All page sizes; Copy/PDF/Excel/CSV export in legacy column order over the full loaded set; print action; selected-row deactivation backed by the org-safe employee action; and `/nurses.php?q=` redirect hydration into the modern roster search across row values. Remaining work is the legacy selected-employee form modal behavior from `nurses.js`."
   },
   {
     "legacyPhp": "Front/templates/admin/pages/forbidden.php",
@@ -16565,7 +16565,7 @@
     "requestFieldsMentioned": [
       "q"
     ],
-    "verification": "Restored the shared staff roster shape for teachers with legacy `#`, Image, F Name, L Name, DOB, Branch, Class, Nationality, Gender, Date, Status, and Action columns; teacher class is now included in the listing query; 10/20/50/100/150/All page sizes; Copy/PDF/Excel/CSV export in legacy column order; print action; selected-row deactivation backed by the org-safe employee action; teacher-only calendar/profile PDF row actions through `/calendar.php?id=` and `/view.php?p=teacher&id=` using the migrated legacy id when available; and `/teachers.php?q=` redirect hydration into the modern roster search across row values. Teacher `addTeacher`, `updateTeacher`, and `deleteTeacher` ACTION grants now hide Add/Edit/Delete and bulk-deactivate controls, protect direct new/edit form entry, and deny direct create/update/deactivate server mutations when the imported action catalogue is configured and not granted. Remaining work is the legacy selected-employee form modal behavior from `teachers.js`."
+    "verification": "Restored the shared staff roster shape for teachers with legacy `#`, Image, F Name, L Name, DOB, Branch, Class, Nationality, Gender, Date, Status, and Action columns; teacher class is now included in the listing query; uncapped org-scoped roster loading for 10/20/50/100/150/All page sizes; Copy/PDF/Excel/CSV export in legacy column order over the full loaded set; print action; selected-row deactivation backed by the org-safe employee action; teacher-only calendar/profile PDF row actions through `/calendar.php?id=` and `/view.php?p=teacher&id=` using the migrated legacy id when available; and `/teachers.php?q=` redirect hydration into the modern roster search across row values. Teacher `addTeacher`, `updateTeacher`, and `deleteTeacher` ACTION grants now hide Add/Edit/Delete and bulk-deactivate controls, protect direct new/edit form entry, and deny direct create/update/deactivate server mutations when the imported action catalogue is configured and not granted. Remaining work is the legacy selected-employee form modal behavior from `teachers.js`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/_install/footer.php",

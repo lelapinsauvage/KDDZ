@@ -13,7 +13,7 @@ export default async function TeachersListingPage({
   const { q } = await searchParams;
   const ctx = await requireOrg();
   const [result, actionPermissions] = await Promise.all([
-    getEmployees("teacher", { pageSize: 100 }),
+    getEmployees("teacher", { pageSize: "all" }),
     getLegacyTeacherActionPermissions(ctx),
   ]);
 

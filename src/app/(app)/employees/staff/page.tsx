@@ -7,7 +7,7 @@ const EMPLOYEE_TYPES: EmployeeType[] = ["teacher", "nurse", "doctor", "manager"]
 
 export default async function StaffPage() {
   const results = await Promise.all(
-    EMPLOYEE_TYPES.map((type) => getEmployees(type, { pageSize: 200 }))
+    EMPLOYEE_TYPES.map((type) => getEmployees(type, { pageSize: "all" }))
   );
 
   const allEmployees = EMPLOYEE_TYPES.flatMap((type, i) => {
