@@ -24,13 +24,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Eye, KeyRound, Loader2, Pencil, Printer, Search, UserPlus, UserX, X } from "lucide-react";
+import { Eye, KeyRound, Loader2, MessageCircle, Pencil, Printer, Search, Smartphone, UserPlus, UserX, X } from "lucide-react";
 import { toast } from "sonner";
 import type { ExportColumn } from "@/lib/export";
 import {
   createParentUser,
   toggleParentUserStatus,
   resetParentPassword,
+  sendParentUserCredentials,
 } from "@/lib/actions/parent-users";
 import { getAvatarColor, getInitials } from "@/components/children/children-columns";
 
@@ -228,6 +229,24 @@ export function ParentUsersClient({
         toast.success("Password has been reset.");
       } else {
         toast.error(result.error ?? "Failed to reset password.");
+      }
+      setResetPasswordDialog(null);
+      setResetPassword("");
+    });
+  }
+
+  function handleResetAndSend(channel: "sms" | "whatsapp") {
+    if (!resetPasswordDialog || !resetPassword) return;
+    const { userId } = resetPasswordDialog;
+    startTransition(async () => {
+      const result = await sendParentUserCredentials(userId, {
+        channel,
+        password: resetPassword,
+      });
+      if (result.success) {
+        toast.success(result.data?.message ?? "Credentials sent.");
+      } else {
+        toast.error(result.error ?? "Failed to send credentials.");
       }
       setResetPasswordDialog(null);
       setResetPassword("");
@@ -644,6 +663,22 @@ export function ParentUsersClient({
             >
               {isPending && <Loader2 className="mr-1 size-4 animate-spin" />}
               Reset Password
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => handleResetAndSend("sms")}
+              disabled={!resetPassword || isPending}
+            >
+              <Smartphone className="mr-1 size-4" />
+              Reset + SMS
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => handleResetAndSend("whatsapp")}
+              disabled={!resetPassword || isPending}
+            >
+              <MessageCircle className="mr-1 size-4" />
+              Reset + WhatsApp
             </Button>
           </DialogFooter>
         </DialogContent>

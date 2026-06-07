@@ -15,11 +15,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Save, KeyRound, Clock, Loader2, Phone, Mail, MessageCircle, User, Users, ExternalLink, Shield } from "lucide-react";
+import { Save, KeyRound, Clock, Loader2, Phone, Mail, MessageCircle, User, Users, ExternalLink, Shield, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import {
   updateParentUser,
   resetParentPassword,
+  sendParentUserCredentials,
 } from "@/lib/actions/parent-users";
 import { getAvatarColor, getInitials } from "@/components/children/children-columns";
 
@@ -118,6 +119,31 @@ export function ParentUserDetailClient({ parentUser, childrenList }: ParentUserD
         toast.success("Password has been reset.");
       } else {
         toast.error(result.error ?? "Failed to reset password.");
+      }
+    });
+  }
+
+  function handleSendCredentials(channel: "sms" | "whatsapp") {
+    if (!password.trim()) {
+      toast.error("Enter a new password first.");
+      return;
+    }
+
+    startTransition(async () => {
+      const result = await sendParentUserCredentials(parentUser.id, {
+        channel,
+        password,
+        username: username.trim(),
+        childId,
+        isActive: status === "active",
+      });
+
+      if (result.success) {
+        setSaved(true);
+        toast.success(result.data?.message ?? "Credentials sent.");
+        setTimeout(() => setSaved(false), 2000);
+      } else {
+        toast.error(result.error ?? "Failed to send credentials.");
       }
     });
   }
@@ -326,6 +352,24 @@ export function ParentUserDetailClient({ parentUser, childrenList }: ParentUserD
               <Button variant="outline" size="sm" onClick={handleResetPassword} disabled={isPending || !password.trim()}>
                 <KeyRound className="mr-1 size-3.5" />
                 Reset Password
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleSendCredentials("sms")}
+                disabled={isPending || !password.trim()}
+              >
+                <Smartphone className="mr-1 size-3.5" />
+                Send SMS
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleSendCredentials("whatsapp")}
+                disabled={isPending || !password.trim()}
+              >
+                <MessageCircle className="mr-1 size-3.5" />
+                Send WhatsApp
               </Button>
               {parentUser.parents
                 .filter((p) => p.phone)

@@ -2,9 +2,16 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
+import {
+  channelDeliveryAuditData,
+  deliverParentChannelNotification,
+  type ChannelDeliverySummary,
+  type MessageDeliveryChannel,
+} from "@/lib/channel-delivery";
 import { requireOrg, requireOrgSafe } from "@/lib/require-org";
 import { verifyChildAccess } from "@/lib/verify-org-access";
 import { hash } from "bcryptjs";
+import type { Prisma } from "@/generated/prisma/client";
 
 const MIN_PASSWORD_LENGTH = 6;
 
@@ -26,11 +33,42 @@ interface ParentUserData {
   isActive?: boolean;
 }
 
+interface ParentUserCredentialDeliveryData {
+  channel: MessageDeliveryChannel;
+  password: string;
+  username?: string;
+  childId?: string;
+  isActive?: boolean;
+}
+
 type ActionResult<T = unknown> = {
   success: boolean;
   error?: string;
   data?: T;
 };
+
+function legacyObject(value: unknown): Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function parentCredentialMessage(username: string, password: string) {
+  return `Dear Parent, you can now login to your KiddzOnline account username: ${username} password: ${password} using the KiddzOnline Mobile App Or visit https://kiddzonline.com/Garderie_parent`;
+}
+
+function deliveryResultMessage(summary: ChannelDeliverySummary) {
+  if (summary.deliveredCount > 0) {
+    return `${summary.channel.toUpperCase()} sent to ${summary.deliveredCount} contact(s).`;
+  }
+  if (summary.failedCount > 0) {
+    return `${summary.channel.toUpperCase()} failed for ${summary.failedCount} contact(s).`;
+  }
+  return (
+    summary.errors[0] ??
+    `${summary.channel.toUpperCase()} delivery skipped.`
+  );
+}
 
 // ---------------------------------------------------------------------------
 // getParentUsers
@@ -345,6 +383,113 @@ export async function resetParentPassword(
   } catch (error) {
     console.error("Failed to reset parent password:", error);
     return { success: false, error: "Failed to reset parent password" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// sendParentUserCredentials
+// ---------------------------------------------------------------------------
+
+export async function sendParentUserCredentials(
+  id: string,
+  data: ParentUserCredentialDeliveryData,
+): Promise<ActionResult<{ delivery: ChannelDeliverySummary; message: string }>> {
+  try {
+    const res = await requireOrgSafe();
+    if (!res.ok) return { success: false, error: res.error };
+    const { organizationId: orgId } = res.ctx;
+
+    const existing = await db.parentUser.findUnique({
+      where: { id },
+      include: { child: { include: { branch: true } } },
+    });
+    if (!existing || existing.child.branch.organizationId !== orgId) {
+      return { success: false, error: "Parent user not found" };
+    }
+
+    const username = data.username?.trim() || existing.username;
+    if (!username) {
+      return { success: false, error: "Username is required" };
+    }
+    if (!data.password || data.password.length < MIN_PASSWORD_LENGTH) {
+      return {
+        success: false,
+        error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,
+      };
+    }
+
+    const childId = data.childId ?? existing.childId;
+    if (childId !== existing.childId && !(await verifyChildAccess(childId, orgId))) {
+      return { success: false, error: "Child not found in organization" };
+    }
+
+    const passwordHash = await hash(data.password, 12);
+    const credentialMessage = parentCredentialMessage(username, data.password);
+    const baseLegacyData = legacyObject(existing.legacyData);
+    const previousCredentialDelivery = legacyObject(
+      baseLegacyData.credentialDelivery,
+    );
+
+    await db.parentUser.update({
+      where: { id },
+      data: {
+        username,
+        childId,
+        isActive: data.isActive ?? existing.isActive,
+        passwordHash,
+      },
+    });
+
+    const delivery = await deliverParentChannelNotification({
+      channel: data.channel,
+      recipientParentUserIds: [id],
+      subject: "KiddzOnline account",
+      body: credentialMessage,
+      category: "PARENT_CREDENTIALS",
+      metadata: {
+        source: "legacy_parent_user_credentials",
+        parentUserId: id,
+        childId,
+      },
+    });
+
+    await db.parentUser.update({
+      where: { id },
+      data: {
+        legacyData: {
+          ...baseLegacyData,
+          credentialDelivery: {
+            ...previousCredentialDelivery,
+            [data.channel]: {
+              sentAt: new Date().toISOString(),
+              username,
+              childId,
+              delivery: channelDeliveryAuditData(delivery),
+            },
+          },
+        } as Prisma.InputJsonObject,
+      },
+    });
+
+    revalidatePath("/settings/parent-users");
+    revalidatePath(`/settings/parent-users/${id}`);
+
+    return {
+      success: true,
+      data: {
+        delivery,
+        message: deliveryResultMessage(delivery),
+      },
+    };
+  } catch (error) {
+    console.error("Failed to send parent user credentials:", error);
+    if (
+      error instanceof Error &&
+      error.message.includes("Unique constraint")
+    ) {
+      return { success: false, error: "Username already exists" };
+    }
+    return { success: false, error: "Failed to send parent credentials" };
   }
 }
 
