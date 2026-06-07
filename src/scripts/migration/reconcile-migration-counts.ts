@@ -110,6 +110,13 @@ function bySourceTable(table: string): string {
   return `${pgColumn("sourceTable")} = ${pgLiteral(table)}`;
 }
 
+function realLegacyFileWhere(prefix?: string): string {
+  const filePredicate =
+    "url IS NOT NULL AND TRIM(url) <> '' AND TRIM(url) <> '0' " +
+    "AND LOWER(TRIM(url)) NOT IN ('default.jpg', 'default.jpeg', 'default.png')";
+  return prefix ? `${prefix} AND ${filePredicate}` : filePredicate;
+}
+
 function resolveWhere(
   where: CountSide["where"],
   sourceDatabase: string
@@ -572,13 +579,14 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     targetTable: "teacher_addresses",
     notes: "Teacher address rows depend on teacher mapping.",
   }),
-  weakRule({
+  provenancedRule({
     id: "employees.t_teacher_attachments",
     step: "8. Employees",
     sourceTable: "t_teacher_attachments",
-    sourceWhere: "active = 1",
+    sourceWhere: realLegacyFileWhere("active = 1"),
     targetTable: "teacher_attachments",
-    notes: "Teacher attachments still need legacy provenance fields.",
+    notes:
+      "Teacher attachment rows with real legacy files keep sourceDatabase and legacyKey.",
   }),
   provenancedRule({
     id: "employees.t_teacher_info",
@@ -595,13 +603,14 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     targetTable: "nurses",
     notes: "Nurse core rows do not yet carry sourceDatabase.",
   }),
-  weakRule({
+  provenancedRule({
     id: "employees.t_nurse_attachments",
     step: "8. Employees",
     sourceTable: "t_nurse_attachments",
-    sourceWhere: "active = 1",
+    sourceWhere: realLegacyFileWhere("active = 1"),
     targetTable: "nurse_attachments",
-    notes: "Nurse attachments still need legacy provenance fields.",
+    notes:
+      "Nurse attachment rows with real legacy files keep sourceDatabase and legacyKey.",
   }),
   weakRule({
     id: "employees.t_doctor",
@@ -632,8 +641,10 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     id: "garderie_misc.t_attachments",
     step: "9. Garderie Misc",
     sourceTable: "t_attachments",
+    sourceWhere: realLegacyFileWhere(),
     targetTable: "child_attachments",
-    notes: "Generic child attachments keep sourceDatabase and legacyKey.",
+    notes:
+      "Generic child attachment rows with real legacy files keep sourceDatabase and legacyKey.",
   }),
   provenancedRule({
     id: "garderie_misc.t_events_types",
@@ -666,15 +677,19 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     id: "garderie_misc.t_garderie_doctor_attachments",
     step: "9. Garderie Misc",
     sourceTable: "t_garderie_doctor_attachments",
+    sourceWhere: realLegacyFileWhere(),
     targetTable: "doctor_attachments",
-    notes: "Garderie doctor attachments keep sourceDatabase and legacyKey.",
+    notes:
+      "Garderie doctor attachment rows with real legacy files keep sourceDatabase and legacyKey.",
   }),
   provenancedRule({
     id: "garderie_misc.t_manager_attachments",
     step: "9. Garderie Misc",
     sourceTable: "t_manager_attachments",
+    sourceWhere: realLegacyFileWhere(),
     targetTable: "manager_attachments",
-    notes: "Manager attachments keep sourceDatabase and legacyKey.",
+    notes:
+      "Manager attachment rows with real legacy files keep sourceDatabase and legacyKey.",
   }),
   weakRule({
     id: "users.login_users",
@@ -788,13 +803,14 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     targetTable: "daily_report_milks",
     notes: "Milk rows depend on successfully mapped daily reports.",
   }),
-  weakRule({
+  provenancedRule({
     id: "daily_reports.t_daily_attachments",
     step: "15. Daily Reports",
     sourceTable: "t_daily_attachments",
-    sourceWhere: "active = 1",
+    sourceWhere: realLegacyFileWhere("active = 1"),
     targetTable: "daily_report_attachments",
-    notes: "Daily attachments still need legacy provenance fields.",
+    notes:
+      "Daily report attachment rows with real legacy files keep sourceDatabase and legacyKey.",
   }),
   weakRule({
     id: "absences.t_absent_report",
@@ -804,13 +820,14 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     targetTable: "absence_reports",
     notes: "Absence reports are matched by child/date/reason without provenance.",
   }),
-  weakRule({
+  provenancedRule({
     id: "absences.t_absent_attachments",
     step: "16. Absences",
     sourceTable: "t_absent_attachments",
-    sourceWhere: "active = 1",
+    sourceWhere: realLegacyFileWhere("active = 1"),
     targetTable: "absence_attachments",
-    notes: "Absence attachments depend on mapped absence reports.",
+    notes:
+      "Absence attachment rows with real legacy files keep sourceDatabase and legacyKey.",
   }),
   provenancedRule({
     id: "calls.callparent",
@@ -891,8 +908,10 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     id: "medical.t_forms_attachments",
     step: "19. Medical Forms",
     sourceTable: "t_forms_attachments",
+    sourceWhere: realLegacyFileWhere(),
     targetTable: "form_attachments",
-    notes: "Form attachments keep sourceDatabase and legacyKey.",
+    notes:
+      "Medical form attachment rows with real legacy files keep sourceDatabase and legacyKey.",
   }),
   weakRule({
     id: "medical.vaccinations_from_t_form_4",
