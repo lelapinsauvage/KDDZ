@@ -16324,7 +16324,7 @@
     "legacyPhp": "Front/templates/admin/message_portal.php",
     "legacyJs": "Front/templates/admin/js/message_portal.js",
     "modernRoute": "/message_portal.php, /messages/compose",
-    "status": "partial - legacy bulk compose options, delivery audit, and addTo* side-effect writes restored; provider/teacher fanout remains",
+    "status": "partial - legacy bulk compose options, delivery audit, addTo* writes, and selected-teacher fanout restored; provider delivery remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -16332,7 +16332,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "`/message_portal.php` now redirects to the modern bulk compose page while preserving legacy recipient context when present. The modern bulk form now loads migrated `notifications_nature` rows with the legacy PHP fallback list, exposes Web/Mobile/SMS/WhatsApp delivery choices, saves the selected channel intent into `Message.legacyData`, shows that saved delivery audit in inbox, sent, and thread views, and restores legacy nature-specific `addTo*` side effects as transactional modern `Alarm`/`NotificationReceipt` writes, including real `Event` rows for Events and `Holiday` rows plus general alarms for General/Closure-style sends. Remaining work is exact legacy selected-teacher side-effect fanout, provider-backed external delivery, and final DataTables visual parity."
+    "verification": "`/message_portal.php` now redirects to the modern bulk compose page while preserving legacy recipient context when present. The modern bulk form now loads migrated `notifications_nature` rows with the legacy PHP fallback list, exposes Web/Mobile/SMS/WhatsApp delivery choices, saves the selected channel intent into `Message.legacyData`, shows that saved delivery audit in inbox, sent, and thread views, restores selected teacher recipients beside selected children, and restores legacy nature-specific `addTo*` side effects as transactional modern `Alarm`/`NotificationReceipt` writes, including real `Event` rows for Events and `Holiday` rows plus general alarms for General/Closure-style sends. Staff side-effect receipts now fan out to the selected teacher user ids instead of every branch staff user, preserving migrated `login_users` ids when available. Remaining work is provider-backed external delivery and final DataTables visual parity."
   },
   {
     "legacyPhp": "Front/templates/admin/message_portal_class.php",

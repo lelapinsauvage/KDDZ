@@ -61,6 +61,7 @@ interface SendClassMessageData {
 
 interface SendBulkChildMessageData {
   childIds: string[];
+  teacherUserIds?: string[];
   subject?: string | null;
   body: string;
   nature?: string | null;
@@ -373,6 +374,7 @@ function legacyMessageData(params: {
   delivery?: LegacyMessageDeliveryOptions | null;
   classId?: string | null;
   childIds?: string[];
+  teacherUserIds?: string[];
   recipientScope?: string;
 }): Prisma.InputJsonObject {
   const delivery = normalizeLegacyDelivery(params.delivery);
@@ -393,6 +395,7 @@ function legacyMessageData(params: {
         : null,
     classId: params.classId ?? null,
     selectedChildIds: params.childIds ?? [],
+    selectedTeacherUserIds: params.teacherUserIds ?? [],
     recipientScope: params.recipientScope ?? "primary",
   };
 }
@@ -432,6 +435,18 @@ function findLegacyMessageSideEffect(nature?: string | null) {
   );
 }
 
+function legacySideEffectHasTargets(
+  config: LegacyMessageSideEffectConfig | null | undefined,
+  childCount: number,
+  teacherUserCount: number,
+) {
+  if (!config) return false;
+  if (config.createsEvent || config.createsHoliday) {
+    return childCount > 0 || teacherUserCount > 0;
+  }
+  return childCount > 0 || (teacherUserCount > 0 && Boolean(config.staffDeliveryTable));
+}
+
 function startOfToday() {
   const date = new Date();
   date.setHours(0, 0, 0, 0);
@@ -467,6 +482,55 @@ function sideEffectReceiptTables(config: LegacyMessageSideEffectConfig) {
   ].filter((table): table is string => Boolean(table));
 }
 
+async function selectedStaffUsersForSideEffects(params: {
+  tx: Prisma.TransactionClient;
+  organizationId: string;
+  teacherUserIds: string[];
+}) {
+  const selectedIds = Array.from(
+    new Set(params.teacherUserIds.filter(Boolean)),
+  );
+  if (selectedIds.length === 0) {
+    return [] as Array<{
+      id: string;
+      branchId: string | null;
+      legacyRecipientId: number | null;
+    }>;
+  }
+
+  const users = await params.tx.user.findMany({
+    where: {
+      id: { in: selectedIds },
+      organizationId: params.organizationId,
+      isActive: true,
+      role: "TEACHER",
+    },
+    select: { id: true, branchId: true },
+  });
+  if (users.length === 0) {
+    return [];
+  }
+
+  const legacyRows = await params.tx.legacyAuthRecord.findMany({
+    where: {
+      userId: { in: users.map((user) => user.id) },
+      legacyTable: { in: ["login_users", "login_users_man"] },
+    },
+    select: { userId: true, legacyUserId: true, legacyId: true },
+    orderBy: [{ sourceDatabase: "desc" }, { legacyId: "desc" }],
+  });
+  const legacyByUser = new Map<string, number>();
+  for (const row of legacyRows) {
+    if (!row.userId || legacyByUser.has(row.userId)) continue;
+    legacyByUser.set(row.userId, row.legacyUserId ?? row.legacyId);
+  }
+
+  return users.map((user) => ({
+    ...user,
+    legacyRecipientId: legacyByUser.get(user.id) ?? null,
+  }));
+}
+
 async function createLegacyBulkMessageSideEffects(params: {
   tx: Prisma.TransactionClient;
   organizationId: string;
@@ -475,6 +539,7 @@ async function createLegacyBulkMessageSideEffects(params: {
   nature?: string | null;
   subject: string | null;
   body: string;
+  teacherUserIds?: string[];
   children: Array<{
     id: string;
     legacyId: number | null;
@@ -497,16 +562,10 @@ async function createLegacyBulkMessageSideEffects(params: {
   const today = startOfToday();
   const branchIds = Array.from(new Set(params.children.map((child) => child.branchId)));
   const staffUsers = config.staffDeliveryTable
-    ? await params.tx.user.findMany({
-        where: {
-          organizationId: params.organizationId,
-          isActive: true,
-          OR: [
-            { branchId: { in: branchIds } },
-            { branchId: null, role: "ADMIN" },
-          ],
-        },
-        select: { id: true },
+    ? await selectedStaffUsersForSideEffects({
+        tx: params.tx,
+        organizationId: params.organizationId,
+        teacherUserIds: params.teacherUserIds ?? [],
       })
     : [];
 
@@ -607,13 +666,147 @@ async function createLegacyBulkMessageSideEffects(params: {
     : null;
   if (holiday) summary.holidaysCreated += 1;
 
+  if (holiday) {
+    const legacyNotificationId = nextLegacyId++;
+    const alarm = await params.tx.alarm.create({
+      data: {
+        type: config.alarmType,
+        referenceId: holiday.id,
+        referenceType: "Holiday",
+        message: params.body,
+        dueDate: today,
+        branchId: branchIds.length === 1 ? branchIds[0] : null,
+        isActive: true,
+        legacyData: {
+          aid: legacyNotificationId,
+          child_id: holiday.id,
+          sourceTable: config.contentTable,
+          sourceDeliveryTable: config.staffDeliveryTable,
+          parentDeliveryTable: config.parentDeliveryTable,
+          modernGenerator: "sendBulkChildMessage",
+          legacyMethod: config.legacyMethod,
+          legacyNature: params.nature,
+          legacyNatureId: config.legacyNatureId,
+          messageThreadId: params.threadId,
+          senderId: params.senderId,
+          selectedTeacherUserIds: staffUsers.map((user) => user.id),
+          selectedLegacyTeacherUserIds: staffUsers.map(
+            (user) => user.legacyRecipientId,
+          ),
+          type: params.subject || config.family,
+          details: params.body,
+          href: config.href,
+          level: 0,
+          ntype: 1,
+          datetime: sqlDateTime(now),
+        },
+      },
+    });
+    summary.alarmsCreated += 1;
+
+    const receiptData = [
+      ...parentSideEffectReceipts({
+        config,
+        children: params.children,
+        legacyNotificationId,
+        alarmId: alarm.id,
+        metadata: {
+          modernTargetType: "Holiday",
+          modernTargetId: holiday.id,
+          datetime: sqlDateTime(now),
+          ntype: 1,
+        },
+      }),
+      ...staffSideEffectReceipts({
+        config,
+        users: staffUsers,
+        legacyNotificationId,
+        alarmId: alarm.id,
+        metadata: {
+          modernTargetType: "Holiday",
+          modernTargetId: holiday.id,
+          submit_time: sqlDateTime(now),
+          ntype: 1,
+        },
+      }),
+    ];
+    if (receiptData.length > 0) {
+      const receipts = await params.tx.notificationReceipt.createMany({
+        data: receiptData,
+        skipDuplicates: true,
+      });
+      summary.receiptsCreated += receipts.count;
+    }
+
+    return summary;
+  }
+
+  if (staffUsers.length > 0) {
+    const legacyNotificationId = nextLegacyId++;
+    const alarm = await params.tx.alarm.create({
+      data: {
+        type: config.alarmType,
+        referenceId: null,
+        referenceType: "SelectedTeachers",
+        message: params.body,
+        dueDate: today,
+        branchId: branchIds.length === 1 ? branchIds[0] : null,
+        isActive: true,
+        legacyData: {
+          aid: legacyNotificationId,
+          child_id: 0,
+          sourceTable: config.contentTable,
+          sourceDeliveryTable: config.staffDeliveryTable,
+          parentDeliveryTable: config.parentDeliveryTable,
+          modernGenerator: "sendBulkChildMessage",
+          legacyMethod: config.legacyMethod,
+          legacyNature: params.nature,
+          legacyNatureId: config.legacyNatureId,
+          messageThreadId: params.threadId,
+          senderId: params.senderId,
+          selectedTeacherUserIds: staffUsers.map((user) => user.id),
+          selectedLegacyTeacherUserIds: staffUsers.map(
+            (user) => user.legacyRecipientId,
+          ),
+          type: params.subject || config.family,
+          details: params.body,
+          href: config.href,
+          level: config.legacyNatureId === 1 ? 0 : undefined,
+          ntype: 1,
+          datetime: sqlDateTime(now),
+        },
+      },
+    });
+    summary.alarmsCreated += 1;
+
+    const receiptData = staffSideEffectReceipts({
+      config,
+      users: staffUsers,
+      legacyNotificationId,
+      alarmId: alarm.id,
+      metadata: {
+        modernTargetType: "Alarm",
+        modernTargetId: alarm.id,
+        submit_time: sqlDateTime(now),
+        ntype: 1,
+      },
+    });
+    if (receiptData.length > 0) {
+      const receipts = await params.tx.notificationReceipt.createMany({
+        data: receiptData,
+        skipDuplicates: true,
+      });
+      summary.receiptsCreated += receipts.count;
+    }
+  }
+
   for (const child of params.children) {
     const legacyNotificationId = nextLegacyId++;
     const alarm = await params.tx.alarm.create({
       data: {
         type: config.alarmType,
-        referenceId: holiday?.id ?? child.id,
-        referenceType: holiday ? "Holiday" : "Child",
+        referenceId: child.id,
+        referenceType: "Child",
         message: params.body,
         dueDate: today,
         branchId: child.branchId,
@@ -653,18 +846,6 @@ async function createLegacyBulkMessageSideEffects(params: {
           modernTargetType: "Alarm",
           modernTargetId: alarm.id,
           datetime: sqlDateTime(now),
-          ntype: 1,
-        },
-      }),
-      ...staffSideEffectReceipts({
-        config,
-        users: staffUsers,
-        legacyNotificationId,
-        alarmId: alarm.id,
-        metadata: {
-          modernTargetType: "Alarm",
-          modernTargetId: alarm.id,
-          submit_time: sqlDateTime(now),
           ntype: 1,
         },
       }),
@@ -717,7 +898,7 @@ function parentSideEffectReceipts(params: {
 
 function staffSideEffectReceipts(params: {
   config: LegacyMessageSideEffectConfig;
-  users: Array<{ id: string }>;
+  users: Array<{ id: string; legacyRecipientId?: number | null }>;
   legacyNotificationId: number;
   alarmId: string | null;
   metadata: Prisma.InputJsonObject;
@@ -728,7 +909,7 @@ function staffSideEffectReceipts(params: {
     sourceTable: params.config.staffDeliveryTable!,
     category: params.config.category,
     legacyNotificationId: params.legacyNotificationId,
-    legacyRecipientId: -(index + 1),
+    legacyRecipientId: user.legacyRecipientId ?? -(index + 1),
     recipientType: "USER",
     recipientId: user.id,
     alarmId: params.alarmId,
@@ -1842,25 +2023,56 @@ export async function sendBulkChildMessage(
     if (!res.ok) return { success: false, error: res.error };
     const { ctx } = res;
 
-    if (data.childIds.length === 0) {
-      return { success: false, error: "No children selected" };
+    const selectedChildIds = Array.from(new Set(data.childIds.filter(Boolean)));
+    const selectedTeacherUserIds = Array.from(
+      new Set((data.teacherUserIds ?? []).filter(Boolean)),
+    );
+
+    if (selectedChildIds.length === 0 && selectedTeacherUserIds.length === 0) {
+      return { success: false, error: "Select at least one child or teacher" };
     }
 
     const senderType = roleToSenderType(ctx.role);
 
     // Find all parent users for the selected children within the org
-    const children = await db.child.findMany({
-      where: {
-        id: { in: data.childIds },
-        branch: { organizationId: ctx.organizationId },
-      },
-      include: {
-        parentUsers: {
-          where: { isActive: true },
-          select: { id: true, legacyId: true, legacyChildId: true },
-        },
-      },
-    });
+    const [children, selectedTeachers] = await Promise.all([
+      selectedChildIds.length > 0
+        ? db.child.findMany({
+            where: {
+              id: { in: selectedChildIds },
+              branch: { organizationId: ctx.organizationId },
+            },
+            include: {
+              parentUsers: {
+                where: { isActive: true },
+                select: { id: true, legacyId: true, legacyChildId: true },
+              },
+            },
+          })
+        : Promise.resolve([]),
+      selectedTeacherUserIds.length > 0
+        ? db.user.findMany({
+            where: {
+              id: { in: selectedTeacherUserIds },
+              organizationId: ctx.organizationId,
+              isActive: true,
+              role: "TEACHER",
+            },
+            select: { id: true },
+          })
+        : Promise.resolve([]),
+    ]);
+    const validTeacherUserIds = selectedTeachers.map((teacher) => teacher.id);
+    if (selectedChildIds.length === 0 && validTeacherUserIds.length === 0) {
+      return { success: false, error: "No active teachers found for selection" };
+    }
+
+    const sideEffectConfig = findLegacyMessageSideEffect(data.nature);
+    const hasSideEffectTargets = legacySideEffectHasTargets(
+      sideEffectConfig,
+      children.length,
+      validTeacherUserIds.length,
+    );
 
     const parentUserIds = new Set<string>();
     for (const child of children) {
@@ -1869,8 +2081,11 @@ export async function sendBulkChildMessage(
       }
     }
 
-    if (parentUserIds.size === 0) {
-      return { success: false, error: "No parent users found for the selected children" };
+    if (parentUserIds.size === 0 && !hasSideEffectTargets) {
+      return {
+        success: false,
+        error: "No eligible parent or legacy notification recipients found",
+      };
     }
 
     // Prefix subject with nature tag if provided
@@ -1892,7 +2107,8 @@ export async function sendBulkChildMessage(
         sourcePage: "message_portal.php",
         nature: data.nature,
         delivery: data.delivery,
-        childIds: data.childIds,
+        childIds: selectedChildIds,
+        teacherUserIds: validTeacherUserIds,
       }),
     }));
 
@@ -1904,12 +2120,14 @@ export async function sendBulkChildMessage(
         },
       });
 
-      await tx.message.createMany({
-        data: messageCreateData.map((message) => ({
-          ...message,
-          threadId: thread.id,
-        })),
-      });
+      if (messageCreateData.length > 0) {
+        await tx.message.createMany({
+          data: messageCreateData.map((message) => ({
+            ...message,
+            threadId: thread.id,
+          })),
+        });
+      }
 
       const sideEffectSummary = await createLegacyBulkMessageSideEffects({
         tx,
@@ -1919,6 +2137,7 @@ export async function sendBulkChildMessage(
         nature: data.nature,
         subject: data.subject ?? subjectLine,
         body: data.body,
+        teacherUserIds: validTeacherUserIds,
         children,
       });
 
@@ -1933,6 +2152,7 @@ export async function sendBulkChildMessage(
         threadId: writeResult.threadId,
         recipientCount: parentUserIds.size,
         childCount: children.length,
+        teacherCount: validTeacherUserIds.length,
         sideEffectSummary: writeResult.sideEffectSummary,
       },
     };

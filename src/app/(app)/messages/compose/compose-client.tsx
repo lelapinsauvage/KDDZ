@@ -25,6 +25,7 @@ import {
   XSquare,
   Loader2,
   UserCheck,
+  GraduationCap,
 } from "lucide-react";
 import { sendBulkChildMessage } from "@/lib/actions/messages";
 import type { MessageNatureOption } from "@/lib/message-compose-options";
@@ -61,10 +62,22 @@ interface ClassItem {
   branchName: string;
 }
 
+interface TeacherItem {
+  id: string;
+  userId: string;
+  firstName: string;
+  lastName: string;
+  branchId: string | null;
+  branchName: string | null;
+  classId: string | null;
+  className: string | null;
+}
+
 interface ComposeClientProps {
   branches: Branch[];
   childrenList: ChildItem[];
   classes: ClassItem[];
+  teachers: TeacherItem[];
   natures: MessageNatureOption[];
 }
 
@@ -104,6 +117,7 @@ export function ComposeClient({
   branches,
   childrenList: children,
   classes,
+  teachers,
   natures,
 }: ComposeClientProps) {
   const router = useRouter();
@@ -114,6 +128,9 @@ export function ComposeClient({
   const [classFilter, setClassFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectedTeacherUserIds, setSelectedTeacherUserIds] = useState<Set<string>>(
+    new Set(),
+  );
 
   // Right pane state
   const [nature, setNature] = useState(natures[0]?.value ?? "General");
@@ -125,6 +142,7 @@ export function ComposeClient({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [sentCount, setSentCount] = useState(0);
+  const [sentTeacherCount, setSentTeacherCount] = useState(0);
 
   // Filtered classes based on branch
   const filteredClasses = useMemo(() => {
@@ -154,12 +172,34 @@ export function ComposeClient({
     return list;
   }, [children, branchFilter, classFilter, search]);
 
+  const filteredTeachers = useMemo(() => {
+    let list = teachers;
+
+    if (branchFilter !== "all") {
+      list = list.filter((teacher) => teacher.branchId === branchFilter);
+    }
+    if (classFilter !== "all") {
+      list = list.filter((teacher) => teacher.classId === classFilter);
+    }
+
+    return list;
+  }, [teachers, branchFilter, classFilter]);
+
   // Selection handlers
   function toggleChild(id: string) {
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleTeacher(userId: string) {
+    setSelectedTeacherUserIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(userId)) next.delete(userId);
+      else next.add(userId);
       return next;
     });
   }
@@ -186,6 +226,18 @@ export function ComposeClient({
     setSelectedIds(new Set());
   }
 
+  function selectVisibleTeachers() {
+    setSelectedTeacherUserIds((prev) => {
+      const next = new Set(prev);
+      for (const teacher of filteredTeachers) next.add(teacher.userId);
+      return next;
+    });
+  }
+
+  function unselectTeachers() {
+    setSelectedTeacherUserIds(new Set());
+  }
+
   // Reset class filter when branch changes
   function handleBranchChange(val: string) {
     setBranchFilter(val);
@@ -194,12 +246,15 @@ export function ComposeClient({
 
   // Send
   function handleSend() {
-    if (selectedIds.size === 0 || !body) return;
+    if ((selectedIds.size === 0 && selectedTeacherUserIds.size === 0) || !body) {
+      return;
+    }
     setError(null);
 
     startTransition(async () => {
       const result = await sendBulkChildMessage({
         childIds: Array.from(selectedIds),
+        teacherUserIds: Array.from(selectedTeacherUserIds),
         subject: subject || null,
         body,
         nature,
@@ -210,6 +265,7 @@ export function ComposeClient({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const data = result.data as any;
         setSentCount(data?.recipientCount ?? 0);
+        setSentTeacherCount(data?.teacherCount ?? 0);
         setSuccess(true);
         setTimeout(() => router.push("/messages/sent"), 2000);
       } else {
@@ -218,7 +274,11 @@ export function ComposeClient({
     });
   }
 
-  const canSend = selectedIds.size > 0 && body && !isPending && !success;
+  const canSend =
+    (selectedIds.size > 0 || selectedTeacherUserIds.size > 0) &&
+    body &&
+    !isPending &&
+    !success;
 
   return (
     <>
@@ -241,9 +301,12 @@ export function ComposeClient({
                   <Users className="size-4 text-muted-foreground" />
                   <h3 className="text-sm font-semibold">Recipients</h3>
                 </div>
-                {selectedIds.size > 0 && (
+                {(selectedIds.size > 0 || selectedTeacherUserIds.size > 0) && (
                   <Badge className="bg-primary/10 text-primary font-normal">
-                    {selectedIds.size} selected
+                    {selectedIds.size} children
+                    {selectedTeacherUserIds.size > 0
+                      ? ` · ${selectedTeacherUserIds.size} teachers`
+                      : ""}
                   </Badge>
                 )}
               </div>
@@ -368,6 +431,85 @@ export function ComposeClient({
                 {filteredChildren.length}{" "}
                 {filteredChildren.length === 1 ? "child" : "children"} shown
               </p>
+
+              {teachers.length > 0 && (
+                <div className="space-y-2 border-t pt-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <GraduationCap className="size-4 text-muted-foreground" />
+                      <h4 className="text-sm font-semibold">Teachers</h4>
+                    </div>
+                    {selectedTeacherUserIds.size > 0 && (
+                      <Badge className="bg-muted text-muted-foreground font-normal">
+                        {selectedTeacherUserIds.size} selected
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={selectVisibleTeachers}
+                      disabled={filteredTeachers.length === 0}
+                    >
+                      <UserCheck className="mr-1 size-3" />
+                      Select Teachers
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={unselectTeachers}
+                      disabled={selectedTeacherUserIds.size === 0}
+                    >
+                      <XSquare className="mr-1 size-3" />
+                      Clear Teachers
+                    </Button>
+                  </div>
+                  <div className="max-h-36 overflow-y-auto divide-y rounded-lg border">
+                    {filteredTeachers.length === 0 ? (
+                      <div className="p-3 text-center text-xs text-muted-foreground">
+                        No teachers found for this filter.
+                      </div>
+                    ) : (
+                      filteredTeachers.map((teacher) => {
+                        const fullName = `${teacher.firstName} ${teacher.lastName}`;
+                        const isChecked = selectedTeacherUserIds.has(teacher.userId);
+                        return (
+                          <label
+                            key={teacher.id}
+                            className={`flex cursor-pointer items-center gap-3 px-3 py-2 transition-colors hover:bg-muted/50 ${
+                              isChecked ? "bg-primary/5" : ""
+                            }`}
+                          >
+                            <Checkbox
+                              checked={isChecked}
+                              onCheckedChange={() => toggleTeacher(teacher.userId)}
+                            />
+                            <div
+                              className={`flex size-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white ${avatarColor(fullName)}`}
+                            >
+                              {initials(teacher.firstName, teacher.lastName)}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-medium">
+                                {fullName}
+                              </p>
+                              <p className="truncate text-xs text-muted-foreground">
+                                {teacher.className ?? "No class"}
+                                {teacher.branchName
+                                  ? ` \u00B7 ${teacher.branchName}`
+                                  : ""}
+                              </p>
+                            </div>
+                          </label>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -430,7 +572,11 @@ export function ComposeClient({
               {success && (
                 <p className="text-sm text-green-600">
                   Message sent to {sentCount} parent
-                  {sentCount !== 1 ? "s" : ""} ({selectedIds.size} children)
+                  {sentCount !== 1 ? "s" : ""}
+                  {sentTeacherCount > 0
+                    ? ` and ${sentTeacherCount} teacher${sentTeacherCount !== 1 ? "s" : ""}`
+                    : ""}{" "}
+                  ({selectedIds.size} children)
                   successfully! Redirecting...
                 </p>
               )}
@@ -440,7 +586,9 @@ export function ComposeClient({
                 <p className="text-xs text-muted-foreground">
                   {selectedIds.size > 0
                     ? `Sending to parents of ${selectedIds.size} selected ${selectedIds.size === 1 ? "child" : "children"}`
-                    : "Select at least one child to send"}
+                    : selectedTeacherUserIds.size > 0
+                      ? `Sending to ${selectedTeacherUserIds.size} teacher${selectedTeacherUserIds.size === 1 ? "" : "s"}`
+                      : "Select at least one recipient"}
                 </p>
                 <div className="flex gap-2">
                   <Button

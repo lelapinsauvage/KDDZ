@@ -2,16 +2,34 @@ import { getBranches } from "@/lib/actions/branches";
 import { getChildren } from "@/lib/actions/children";
 import { getClasses } from "@/lib/actions/classes";
 import { getLegacyNotificationNatures } from "@/lib/actions/notification-templates";
+import { db } from "@/lib/db";
 import { legacyNatureRowsToMessageOptions } from "@/lib/message-compose-options";
+import { requireOrg } from "@/lib/require-org";
 import { ComposeClient } from "./compose-client";
 
 export default async function ComposeMessagePage() {
-  const [branchesRes, childrenRes, classesRes, naturesRes] = await Promise.all([
-    getBranches(),
-    getChildren({ status: "ACTIVE", pageSize: 500 }),
-    getClasses({ isActive: true }),
-    getLegacyNotificationNatures(),
-  ]);
+  const { organizationId: orgId } = await requireOrg();
+  const [branchesRes, childrenRes, classesRes, naturesRes, rawTeachers] =
+    await Promise.all([
+      getBranches(),
+      getChildren({ status: "ACTIVE", pageSize: 500 }),
+      getClasses({ isActive: true }),
+      getLegacyNotificationNatures(),
+      db.teacher.findMany({
+        where: { isActive: true, branch: { organizationId: orgId } },
+        select: {
+          id: true,
+          userId: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          branch: { select: { id: true, name: true } },
+          class: { select: { id: true, name: true } },
+        },
+        orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+        take: 500,
+      }),
+    ]);
 
   const rawBranches = (branchesRes.data ?? []) as Array<{
     id: string;
@@ -36,6 +54,32 @@ export default async function ComposeMessagePage() {
     name: string;
     branch: { id: string; name: string };
   }>;
+  const linkedUserIds = rawTeachers
+    .map((teacher) => teacher.userId)
+    .filter((id): id is string => Boolean(id));
+  const teacherEmails = rawTeachers
+    .map((teacher) => teacher.email?.trim())
+    .filter((email): email is string => Boolean(email));
+  const matchedUsers =
+    linkedUserIds.length > 0 || teacherEmails.length > 0
+      ? await db.user.findMany({
+          where: {
+            organizationId: orgId,
+            isActive: true,
+            OR: [
+              ...(linkedUserIds.length > 0 ? [{ id: { in: linkedUserIds } }] : []),
+              ...(teacherEmails.length > 0 ? [{ email: { in: teacherEmails } }] : []),
+            ],
+          },
+          select: { id: true, email: true },
+        })
+      : [];
+  const userIds = new Set(matchedUsers.map((user) => user.id));
+  const userIdByEmail = new Map(
+    matchedUsers
+      .filter((user) => Boolean(user.email))
+      .map((user) => [user.email.toLowerCase(), user.id]),
+  );
 
   const branches = rawBranches.map((b) => ({ id: b.id, name: b.name }));
 
@@ -56,6 +100,25 @@ export default async function ComposeMessagePage() {
     branchId: cls.branch.id,
     branchName: cls.branch.name,
   }));
+  const teachers = rawTeachers
+    .map((teacher) => {
+      const userId =
+        teacher.userId && userIds.has(teacher.userId)
+          ? teacher.userId
+          : userIdByEmail.get(teacher.email?.trim().toLowerCase() ?? "");
+      if (!userId) return null;
+      return {
+        id: teacher.id,
+        userId,
+        firstName: teacher.firstName,
+        lastName: teacher.lastName,
+        branchId: teacher.branch?.id ?? null,
+        branchName: teacher.branch?.name ?? null,
+        classId: teacher.class?.id ?? null,
+        className: teacher.class?.name ?? null,
+      };
+    })
+    .filter((teacher): teacher is NonNullable<typeof teacher> => Boolean(teacher));
   const natures = legacyNatureRowsToMessageOptions(naturesRes.data);
 
   return (
@@ -63,6 +126,7 @@ export default async function ComposeMessagePage() {
       branches={branches}
       childrenList={children}
       classes={classes}
+      teachers={teachers}
       natures={natures}
     />
   );
