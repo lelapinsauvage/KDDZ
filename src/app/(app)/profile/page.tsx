@@ -4,10 +4,17 @@ import { db } from "@/lib/db";
 import { requireOrg } from "@/lib/require-org";
 import { isAdminRole } from "@/lib/require-role";
 import { FadeIn } from "@/components/ui/skeleton";
+import {
+  confirmCurrentUserLegacyProfileUpdate,
+  getCurrentLegacyProfile,
+} from "@/lib/actions/profile";
 import { ProfileClient } from "./profile-client";
 
 interface PageProps {
-  searchParams: Promise<{ legacy?: string | string[] }>;
+  searchParams: Promise<{
+    legacy?: string | string[];
+    key?: string | string[];
+  }>;
 }
 
 function firstParam(value?: string | string[]) {
@@ -26,13 +33,24 @@ export default async function ProfilePage({ searchParams }: PageProps) {
   }
   const params = await searchParams;
   const legacySource = firstParam(params.legacy);
+  const confirmKey = firstParam(params.key);
   const legacySettings = legacySource === "settings.php" || legacySource === "settings";
+  const profileNotice = confirmKey
+    ? await confirmCurrentUserLegacyProfileUpdate(confirmKey)
+    : null;
 
+  const dbUser = session.user.id
+    ? await db.user.findUnique({
+        where: { id: session.user.id },
+        select: { name: true, email: true, role: true },
+      })
+    : null;
   const user = {
-    name: session.user.name ?? "",
-    email: session.user.email ?? "",
-    role: (session.user as { role?: string }).role ?? "",
+    name: dbUser?.name ?? session.user.name ?? "",
+    email: dbUser?.email ?? session.user.email ?? "",
+    role: dbUser?.role ?? (session.user as { role?: string }).role ?? "",
   };
+  const legacyProfile = await getCurrentLegacyProfile();
 
   let activeSchoolYear:
     | { id: string; label: string; startDate: string; endDate: string }
@@ -71,6 +89,18 @@ export default async function ProfilePage({ searchParams }: PageProps) {
     <FadeIn>
       <ProfileClient
         user={user}
+        legacyProfile={legacyProfile}
+        profileNotice={
+          profileNotice
+            ? {
+                type: profileNotice.success ? "success" : "error",
+                message:
+                  profileNotice.data?.message ??
+                  profileNotice.error ??
+                  "Incorrect confirmation link",
+              }
+            : null
+        }
         legacySettings={legacySettings}
         activeSchoolYear={activeSchoolYear}
         canEditSchoolYear={canEditSchoolYear}

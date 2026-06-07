@@ -17969,20 +17969,28 @@
   {
     "legacyPhp": "Front/templates/admin/users/classes/profile.class.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "modernRoute": "/profile, /profile.php, /users/profile.php",
+    "status": "partial - legacy self-service profile restored; public UID/OAuth delivery remain",
     "legacyTablesMentioned": [
       "login_confirm",
       "login_profile_fields",
+      "login_profiles",
+      "login_settings",
+      "login_timestamps",
       "login_users",
-      "profile",
-      "their"
+      "login_users_man"
     ],
     "requestFieldsMentioned": [
       "key",
-      "uid"
+      "uid",
+      "CurrentPass",
+      "name",
+      "email",
+      "password",
+      "confirm",
+      "p-*"
     ],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "`/profile` now restores the signed-in legacy PHP-login profile flow over migrated auth metadata: General tab fields, mandatory current-password validation, immediate name update, editable custom profile sections from `login_profile_fields` / `login_profiles`, checkbox normalization, access-log tab visibility from `profile-timestamps-enable` and `profile-timestamps-admin-enable`, top 10 migrated login timestamps, social integration status badges from preserved `login_integration`, pending email/password confirmation rows in `login_confirm` / `login_confirm_man` with `update_emailPw`, and `?key=` confirmation that applies the pending email/password update. `/profile.php` and `/users/profile.php` bridge to the modern route while preserving query strings. Remaining work is public read-only `uid` rendering when `profile-public-enable` is on, live OAuth link/unlink, avatar upload, and external SMTP delivery for confirmation emails."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/signup.class.php",
@@ -18173,11 +18181,28 @@
   {
     "legacyPhp": "Front/templates/admin/users/profile.php",
     "legacyJs": "",
-    "modernRoute": "",
-    "status": "unknown - needs manual mapping",
-    "legacyTablesMentioned": [],
-    "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "modernRoute": "/profile, /profile.php, /users/profile.php",
+    "status": "partial - legacy profile page shell and bridges restored",
+    "legacyTablesMentioned": [
+      "login_confirm",
+      "login_profile_fields",
+      "login_profiles",
+      "login_settings",
+      "login_timestamps",
+      "login_users",
+      "login_users_man"
+    ],
+    "requestFieldsMentioned": [
+      "key",
+      "uid",
+      "CurrentPass",
+      "name",
+      "email",
+      "password",
+      "confirm",
+      "p-*"
+    ],
+    "verification": "The legacy profile page shell is now represented by `/profile` with tabs for General, migrated profile-field sections, Access Logs, and Integration status, plus Save changes backed by the legacy current-password and confirmation-token semantics. Old PHP links `/profile.php` and `/users/profile.php` preserve query strings into the modern profile page. Remaining work is public read-only profile rendering for guest `uid` links, avatar upload, active OAuth link/unlink, and external email delivery."
   },
   {
     "legacyPhp": "Front/templates/admin/users/protected.php",
