@@ -25,7 +25,7 @@
     "legacyPhp": "Front/templates/admin/Areas.php",
     "legacyJs": "",
     "modernRoute": "/Areas.php, /settings/areas",
-    "status": "partial - legacy Quadaa bridge and listing/modal labels restored; visual audit remains",
+    "status": "restored - legacy Quadaa bridge, listing/modal labels, export, and print restored",
     "legacyTablesMentioned": [
       "Quadaa",
       "auto",
@@ -34,7 +34,7 @@
     "requestFieldsMentioned": [
       "q"
     ],
-    "verification": "Restored legacy Quadaa wording, `#` column, Name, Reference Number, Mouhafaza, Datetime, single Action column, and create/update/delete modal labels over the migrated District records. `/Areas.php` now redirects to the modern Quadaa settings page and `q` initializes the modern table search across the listing row values. Remaining work is final DataTables filter/export visual audit."
+    "verification": "Restored legacy Quadaa wording, `#` column, Name, Reference Number, Mouhafaza, Datetime, single Action column, and create/update/delete modal labels over the migrated District records. `/Areas.php` now redirects to the modern Quadaa settings page and `q` initializes the modern table search across the listing row values. Excel/CSV export and print controls now use the legacy Quadaa column order while excluding the Action controls."
   },
   {
     "legacyPhp": "Front/templates/admin/Branch_Dashboard.php",
@@ -406,7 +406,7 @@
     "legacyPhp": "Front/templates/admin/Zones_Management.php",
     "legacyJs": "",
     "modernRoute": "/Zones_Management.php, /settings/zones",
-    "status": "partial - legacy Mouhafaza bridge and listing/modal labels restored; visual audit remains",
+    "status": "restored - legacy Mouhafaza bridge, listing/modal labels, export, and print restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -414,7 +414,7 @@
     "requestFieldsMentioned": [
       "q"
     ],
-    "verification": "Restored legacy Mouhafaza wording, `#` column, Name, Ref. Number, Created Date, single Action column, and create/update/delete modal labels over the migrated Province records. `/Zones_Management.php` now redirects to the modern Mouhafaza settings page and `q` initializes the modern table search across the listing row values. Remaining work is final DataTables filter/export visual audit."
+    "verification": "Restored legacy Mouhafaza wording, `#` column, Name, Ref. Number, Created Date, single Action column, and create/update/delete modal labels over the migrated Province records. `/Zones_Management.php` now redirects to the modern Mouhafaza settings page and `q` initializes the modern table search across the listing row values. Excel/CSV export and print controls now use the legacy Mouhafaza column order while excluding the Action controls."
   },
   {
     "legacyPhp": "Front/templates/admin/absentreport.php",
@@ -16487,7 +16487,7 @@
     "legacyPhp": "Front/templates/admin/regions.php",
     "legacyJs": "Front/templates/admin/js/regions.js",
     "modernRoute": "/regions.php, /settings/regions",
-    "status": "partial - legacy Region bridge and listing/modal labels restored; export visual audit remains",
+    "status": "restored - legacy Region bridge, listing/modal labels, filters, export, and print restored",
     "legacyTablesMentioned": [
       "Region",
       "auto",
@@ -16496,7 +16496,7 @@
     "requestFieldsMentioned": [
       "q"
     ],
-    "verification": "Restored legacy Regions listing over migrated Region records with `#`, Name, Reference Number, Quadaa, Datetime, single Action column, field/date filters, New/Update Region dialogs requiring Quadaa, delete confirmation, and Region parent-Quadaa reassignment. `/regions.php` now redirects to the modern Region settings page and `q` initializes the modern table search across the listing row values. Remaining work is final export/print visual audit."
+    "verification": "Restored legacy Regions listing over migrated Region records with `#`, Name, Reference Number, Quadaa, Datetime, single Action column, field/date filters, New/Update Region dialogs requiring Quadaa, delete confirmation, and Region parent-Quadaa reassignment. `/regions.php` now redirects to the modern Region settings page and `q` initializes the modern table search across the listing row values. Excel/CSV export and print controls now use the legacy Region column order while excluding the Action controls."
   },
   {
     "legacyPhp": "Front/templates/admin/settings.php",

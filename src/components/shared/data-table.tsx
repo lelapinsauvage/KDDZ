@@ -52,7 +52,10 @@ import {
   ArrowDown,
   ArrowUpDown,
   Inbox,
+  Printer,
 } from "lucide-react";
+import { ExportButton } from "@/components/shared/export-button";
+import type { ExportColumn } from "@/lib/export";
 
 // ── Bulk Action Type ──────────────────────────
 
@@ -61,6 +64,18 @@ export interface BulkAction<TData> {
   icon?: React.ComponentType<{ className?: string }>;
   onClick: (selectedRows: TData[]) => void;
   variant?: "default" | "destructive";
+}
+
+export interface DataTableExportOptions<TData> {
+  filename: string;
+  sheetName?: string;
+  columns: ExportColumn[];
+  mapRow?: (row: TData, index: number) => Record<string, unknown>;
+}
+
+export interface DataTablePrintOptions<TData> {
+  label?: string;
+  onPrint?: (visibleRows: TData[]) => void;
 }
 
 // ── Sortable Header Helper ───────────────────
@@ -109,6 +124,8 @@ interface DataTableProps<TData, TValue> {
   onRowClick?: (row: TData) => void;
   bulkActions?: BulkAction<TData>[];
   pageSizeOptions?: Array<number | "all">;
+  exportOptions?: DataTableExportOptions<TData>;
+  printOptions?: DataTablePrintOptions<TData>;
 }
 
 const GLOBAL_FILTER_ID = "__globalSearch";
@@ -165,6 +182,8 @@ export function DataTable<TData, TValue>({
   onRowClick,
   bulkActions,
   pageSizeOptions = [10, 20, 30, 50, 100],
+  exportOptions,
+  printOptions,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(() =>
@@ -228,6 +247,16 @@ export function DataTable<TData, TValue>({
 
   const selectedRows = table.getFilteredSelectedRowModel().rows;
   const hasSelection = selectedRows.length > 0;
+  const actionRows = table.getPrePaginationRowModel().rows;
+  const actionRowData = actionRows.map((row) => row.original);
+  const exportData =
+    exportOptions?.columns.length
+      ? actionRows.map((row, index) =>
+          exportOptions.mapRow
+            ? exportOptions.mapRow(row.original, index)
+            : (row.original as Record<string, unknown>),
+        )
+      : [];
   const currentPageSize = table.getState().pagination.pageSize;
   const pageSizeValue = pageSizeOptions.some(
     (option) => option !== "all" && option === currentPageSize
@@ -271,6 +300,15 @@ export function DataTable<TData, TValue>({
   const clearAllFilters = useCallback(() => {
     activeFilters.forEach((f) => removeFilter(f.id));
   }, [activeFilters, removeFilter]);
+
+  const handlePrint = useCallback(() => {
+    if (printOptions?.onPrint) {
+      printOptions.onPrint(actionRowData);
+      return;
+    }
+
+    window.print();
+  }, [actionRowData, printOptions]);
 
   // ── Loading skeleton ────────────────────────
 
@@ -357,45 +395,69 @@ export function DataTable<TData, TValue>({
           </div>
         )}
 
-        {/* Column visibility toggle */}
-        <Popover>
-          <PopoverTrigger asChild>
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          {exportOptions && (
+            <ExportButton
+              filename={exportOptions.filename}
+              sheetName={exportOptions.sheetName}
+              columns={exportOptions.columns}
+              data={exportData}
+            />
+          )}
+
+          {printOptions && (
             <Button
+              type="button"
               variant="outline"
               size="sm"
-              aria-label="Toggle column visibility"
-              className="ml-auto h-9 gap-1.5 border-border/60"
+              disabled={actionRowData.length === 0}
+              onClick={handlePrint}
             >
-              <SlidersHorizontal className="size-3.5" />
-              Columns
+              <Printer className="mr-1 size-4" />
+              {printOptions.label ?? "Print"}
             </Button>
-          </PopoverTrigger>
-          <PopoverContent align="end" className="w-48 p-2">
-            <div className="space-y-1">
-              <p className="px-2 py-1 text-xs font-medium text-muted-foreground">
-                Toggle columns
-              </p>
-              {toggleableColumns.map((column) => {
-                const label = column.id
-                  .replace(/([A-Z])/g, " $1")
-                  .replace(/^./, (s) => s.toUpperCase())
-                  .trim();
-                return (
-                  <label
-                    key={column.id}
-                    className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
-                  >
-                    <Checkbox
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(v) => column.toggleVisibility(!!v)}
-                    />
-                    {label}
-                  </label>
-                );
-              })}
-            </div>
-          </PopoverContent>
-        </Popover>
+          )}
+
+          {/* Column visibility toggle */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                aria-label="Toggle column visibility"
+                className="h-9 gap-1.5 border-border/60"
+              >
+                <SlidersHorizontal className="size-3.5" />
+                Columns
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-48 p-2">
+              <div className="space-y-1">
+                <p className="px-2 py-1 text-xs font-medium text-muted-foreground">
+                  Toggle columns
+                </p>
+                {toggleableColumns.map((column) => {
+                  const label = column.id
+                    .replace(/([A-Z])/g, " $1")
+                    .replace(/^./, (s) => s.toUpperCase())
+                    .trim();
+                  return (
+                    <label
+                      key={column.id}
+                      className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
+                    >
+                      <Checkbox
+                        checked={column.getIsVisible()}
+                        onCheckedChange={(v) => column.toggleVisibility(!!v)}
+                      />
+                      {label}
+                    </label>
+                  );
+                })}
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
 
       {/* Filter chips */}

@@ -8,6 +8,7 @@ import { DataTable } from "@/components/shared/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { ExportColumn } from "@/lib/export";
 import {
   Select,
   SelectContent,
@@ -77,6 +78,14 @@ const emptyFilters: RegionFilters = {
   dateFrom: "",
   dateTo: "",
 };
+
+const regionExportColumns: ExportColumn[] = [
+  { header: "#", key: "rowNumber" },
+  { header: "Name", key: "name" },
+  { header: "Reference Number", key: "referenceNumber" },
+  { header: "Quadaa", key: "quadaa" },
+  { header: "Datetime", key: "createdAt" },
+];
 
 function formatDisplayDate(value: string | Date | null | undefined) {
   if (!value) {
@@ -365,6 +374,19 @@ export function RegionsClient({
           searchPlaceholder="Search regions..."
           initialSearchValue={initialSearchQuery}
           searchMode="global"
+          exportOptions={{
+            filename: "regions",
+            sheetName: "Regions",
+            columns: regionExportColumns,
+            mapRow: (region) => ({
+              rowNumber: region.rowNumber,
+              name: region.name,
+              referenceNumber: region.referenceNumber,
+              quadaa: region.quadaa,
+              createdAt: region.createdAt,
+            }),
+          }}
+          printOptions={{ label: "Print" }}
         />
       </div>
 

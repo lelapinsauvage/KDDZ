@@ -38,6 +38,7 @@ import {
   updateDistrict,
   deleteDistrict,
 } from "@/lib/actions/settings";
+import type { ExportColumn } from "@/lib/export";
 
 interface Area {
   id: string;
@@ -58,6 +59,14 @@ interface AreasClientProps {
   zoneOptions: MouhafazaOption[];
   initialSearchQuery?: string;
 }
+
+const areaExportColumns: ExportColumn[] = [
+  { header: "#", key: "rowNumber" },
+  { header: "Name", key: "name" },
+  { header: "Reference Number", key: "referenceNumber" },
+  { header: "Mouhafaza", key: "zone" },
+  { header: "Datetime", key: "createdAt" },
+];
 
 export function AreasClient({ initialAreas, zoneOptions, initialSearchQuery }: AreasClientProps) {
   const [areas, setAreas] = useState(initialAreas);
@@ -217,6 +226,19 @@ export function AreasClient({ initialAreas, zoneOptions, initialSearchQuery }: A
           searchPlaceholder="Search quadaa..."
           initialSearchValue={initialSearchQuery}
           searchMode="global"
+          exportOptions={{
+            filename: "quadaa",
+            sheetName: "Quadaa",
+            columns: areaExportColumns,
+            mapRow: (area, index) => ({
+              rowNumber: index + 1,
+              name: area.name,
+              referenceNumber: area.referenceNumber,
+              zone: area.zone,
+              createdAt: area.createdAt,
+            }),
+          }}
+          printOptions={{ label: "Print" }}
         />
       </div>
 

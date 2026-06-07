@@ -32,6 +32,7 @@ import {
   updateProvince,
   deleteProvince,
 } from "@/lib/actions/settings";
+import type { ExportColumn } from "@/lib/export";
 
 interface Zone {
   id: string;
@@ -45,6 +46,13 @@ interface ZonesClientProps {
   initialZones: Zone[];
   initialSearchQuery?: string;
 }
+
+const zoneExportColumns: ExportColumn[] = [
+  { header: "#", key: "rowNumber" },
+  { header: "Name", key: "name" },
+  { header: "Ref. Number", key: "referenceNumber" },
+  { header: "Created Date", key: "createdAt" },
+];
 
 export function ZonesClient({ initialZones, initialSearchQuery }: ZonesClientProps) {
   const [zones, setZones] = useState(initialZones);
@@ -197,6 +205,18 @@ export function ZonesClient({ initialZones, initialSearchQuery }: ZonesClientPro
               searchPlaceholder="Search mouhafazat..."
               initialSearchValue={initialSearchQuery}
               searchMode="global"
+              exportOptions={{
+                filename: "mouhafazat",
+                sheetName: "Mouhafazat",
+                columns: zoneExportColumns,
+                mapRow: (zone, index) => ({
+                  rowNumber: index + 1,
+                  name: zone.name,
+                  referenceNumber: zone.referenceNumber,
+                  createdAt: zone.createdAt,
+                }),
+              }}
+              printOptions={{ label: "Print" }}
             />
           </CardContent>
         </Card>
