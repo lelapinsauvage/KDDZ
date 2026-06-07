@@ -16407,19 +16407,19 @@
     "legacyPhp": "Front/templates/admin/users/_install/footer.php",
     "legacyJs": "",
     "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "status": "mapped - retired installer footer include",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Shell-only Jigowatt installer footer that closed `_install/index.php` markup and loaded legacy Bootstrap/Jigowatt scripts. The legacy installer is not a runtime app surface in the modernized system, so no route is restored."
   },
   {
     "legacyPhp": "Front/templates/admin/users/_install/header.php",
     "legacyJs": "",
     "modernRoute": "",
-    "status": "unknown - needs manual mapping",
+    "status": "mapped - retired installer header include",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Read PHP + JS, compare fields/columns/actions, then verify route."
+    "verification": "Shell-only Jigowatt installer header/nav include for `_install/index.php`. The modern app uses environment/migration setup instead of exposing the legacy PHP installer shell, so no route is restored."
   },
   {
     "legacyPhp": "Front/templates/admin/users/_install/index.php",
