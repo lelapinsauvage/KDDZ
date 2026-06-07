@@ -379,10 +379,11 @@ function formatGenerationStatus(
   if (family === "contract") {
     const documentsMatched = metric(data, "documentsMatched");
     const alarmsCreated = metric(data, "alarmsCreated");
+    const receiptsCreated = metric(data, "receiptsCreated");
     const notificationsCreated = metric(data, "notificationsCreated");
     const skippedExisting = metric(data, "skippedExisting");
     const skippedOutsideWindow = metric(data, "skippedOutsideWindow");
-    return `Matched ${documentsMatched}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"} and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing, ${skippedOutsideWindow} outside window.`;
+    return `Matched ${documentsMatched}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"}, ${receiptsCreated} receipt${receiptsCreated === 1 ? "" : "s"}, and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing, ${skippedOutsideWindow} outside window.`;
   }
 
   if (family === "insurance") {

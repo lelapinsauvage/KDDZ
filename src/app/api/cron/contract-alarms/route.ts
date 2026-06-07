@@ -19,6 +19,7 @@ function emptySummary(): ContractGenerationSummary {
     documentsScanned: 0,
     documentsMatched: 0,
     alarmsCreated: 0,
+    receiptsCreated: 0,
     notificationsCreated: 0,
     skippedExisting: 0,
     skippedDisabledBranches: 0,
@@ -36,6 +37,7 @@ function addSummary(
   total.documentsScanned += next.documentsScanned;
   total.documentsMatched += next.documentsMatched;
   total.alarmsCreated += next.alarmsCreated;
+  total.receiptsCreated += next.receiptsCreated;
   total.notificationsCreated += next.notificationsCreated;
   total.skippedExisting += next.skippedExisting;
   total.skippedDisabledBranches += next.skippedDisabledBranches;

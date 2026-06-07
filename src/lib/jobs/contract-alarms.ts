@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 
 const LEGACY_REMINDER_DAYS = [1, 3, 7];
 const DAY_MS = 86_400_000;
+const CONTRACT_RECEIPT_SOURCE = "custom_notifications_contracts";
 
 type StaffKind = "Teacher" | "Manager" | "Doctor" | "Nurse";
 
@@ -11,7 +12,9 @@ interface StaffOwner {
   firstName: string;
   lastName: string;
   branchId: string;
+  branchLegacyId: number | null;
   branchName: string;
+  sourceDatabase: string | null;
   userId: string | null;
 }
 
@@ -33,11 +36,29 @@ interface ContractCandidate {
   message: string;
 }
 
+interface ExistingContractAlarm {
+  id: string;
+  referenceId: string | null;
+  referenceType: string | null;
+  dueDate: Date | null;
+  message: string | null;
+  legacyData: unknown;
+}
+
+interface LegacyContractRecipient {
+  userId: string;
+  legacyRecipientId: number;
+  legacySourceDatabase: string;
+  legacySites: string;
+  legacyClasses: string;
+}
+
 export interface ContractGenerationSummary {
   branchesScanned: number;
   documentsScanned: number;
   documentsMatched: number;
   alarmsCreated: number;
+  receiptsCreated: number;
   notificationsCreated: number;
   skippedExisting: number;
   skippedDisabledBranches: number;
@@ -184,6 +205,7 @@ function emptySummary(): ContractGenerationSummary {
     documentsScanned: 0,
     documentsMatched: 0,
     alarmsCreated: 0,
+    receiptsCreated: 0,
     notificationsCreated: 0,
     skippedExisting: 0,
     skippedDisabledBranches: 0,
@@ -265,13 +287,9 @@ function looseLegacyKey(
 function addExistingKeys(params: {
   existingKeys: Set<string>;
   looseExistingKeys: Set<string>;
-  alarm: {
-    referenceId: string | null;
-    referenceType: string | null;
-    dueDate: Date | null;
-    message: string | null;
-    legacyData: unknown;
-  };
+  existingByKey?: Map<string, ExistingContractAlarm>;
+  looseExistingByKey?: Map<string, ExistingContractAlarm>;
+  alarm: ExistingContractAlarm;
 }) {
   const data = asRecord(params.alarm.legacyData);
   const type = readString(data, ["type", "documentType"]);
@@ -282,36 +300,36 @@ function addExistingKeys(params: {
     (params.alarm.dueDate ? dateKey(params.alarm.dueDate) : null);
 
   if (params.alarm.referenceId && params.alarm.referenceType && type && days !== null && expiry) {
-    params.existingKeys.add(
-      modernKey(
-        params.alarm.referenceType,
-        params.alarm.referenceId,
-        type,
-        days,
-        expiry,
-      ),
+    const key = modernKey(
+      params.alarm.referenceType,
+      params.alarm.referenceId,
+      type,
+      days,
+      expiry,
     );
+    params.existingKeys.add(key);
+    params.existingByKey?.set(key, params.alarm);
   }
 
   const legacyPersonId = readNumber(data, ["legacyPersonId", "person_id"]);
   const sourceStaffTable = readString(data, ["sourceStaffTable", "level"]);
   if (legacyPersonId !== null && sourceStaffTable && type && days !== null) {
     if (expiry) {
-      params.existingKeys.add(
-        legacyKey(sourceStaffTable, legacyPersonId, type, days, expiry),
-      );
+      const key = legacyKey(sourceStaffTable, legacyPersonId, type, days, expiry);
+      params.existingKeys.add(key);
+      params.existingByKey?.set(key, params.alarm);
     } else {
-      params.looseExistingKeys.add(
-        looseLegacyKey(sourceStaffTable, legacyPersonId, type, days),
-      );
+      const key = looseLegacyKey(sourceStaffTable, legacyPersonId, type, days);
+      params.looseExistingKeys.add(key);
+      params.looseExistingByKey?.set(key, params.alarm);
     }
   }
 }
 
-function candidateExists(
+function existingAlarmForCandidate(
   candidate: ContractCandidate,
-  existingKeys: Set<string>,
-  looseExistingKeys: Set<string>,
+  existingByKey: Map<string, ExistingContractAlarm>,
+  looseExistingByKey: Map<string, ExistingContractAlarm>,
 ) {
   const modern = modernKey(
     candidate.staffKind,
@@ -320,9 +338,10 @@ function candidateExists(
     candidate.legacyDayDifference,
     candidate.expiryKey,
   );
-  if (existingKeys.has(modern)) return true;
+  const modernExisting = existingByKey.get(modern);
+  if (modernExisting) return modernExisting;
 
-  if (!candidate.legacyPersonId) return false;
+  if (!candidate.legacyPersonId) return null;
   const exactLegacy = legacyKey(
     candidate.sourceStaffTable,
     candidate.legacyPersonId,
@@ -330,16 +349,17 @@ function candidateExists(
     candidate.legacyDayDifference,
     candidate.expiryKey,
   );
-  if (existingKeys.has(exactLegacy)) return true;
+  const exactLegacyExisting = existingByKey.get(exactLegacy);
+  if (exactLegacyExisting) return exactLegacyExisting;
 
-  return looseExistingKeys.has(
+  return looseExistingByKey.get(
     looseLegacyKey(
       candidate.sourceStaffTable,
       candidate.legacyPersonId,
       candidate.documentType,
       candidate.legacyDayDifference,
     ),
-  );
+  ) ?? null;
 }
 
 function rememberCandidate(candidate: ContractCandidate, existingKeys: Set<string>) {
@@ -363,6 +383,74 @@ function rememberCandidate(candidate: ContractCandidate, existingKeys: Set<strin
       ),
     );
   }
+}
+
+function rememberExistingAlarmForCandidate(
+  candidate: ContractCandidate,
+  existingByKey: Map<string, ExistingContractAlarm>,
+  alarm: ExistingContractAlarm,
+) {
+  existingByKey.set(
+    modernKey(
+      candidate.staffKind,
+      candidate.staff.id,
+      candidate.documentType,
+      candidate.legacyDayDifference,
+      candidate.expiryKey,
+    ),
+    alarm,
+  );
+  if (candidate.legacyPersonId) {
+    existingByKey.set(
+      legacyKey(
+        candidate.sourceStaffTable,
+        candidate.legacyPersonId,
+        candidate.documentType,
+        candidate.legacyDayDifference,
+        candidate.expiryKey,
+      ),
+      alarm,
+    );
+  }
+}
+
+function legacyContractUserAllows(
+  recipient: LegacyContractRecipient,
+  candidate: ContractCandidate,
+  directLegacyUserId: number | null,
+) {
+  if (directLegacyUserId !== null && recipient.legacyRecipientId === directLegacyUserId) {
+    return true;
+  }
+
+  if (recipient.legacyClasses.trim() !== "0") return false;
+  if (recipient.legacySites.trim() === "0") return true;
+  if (candidate.staff.branchLegacyId === null) return false;
+  return recipient.legacySites.trim() === String(candidate.staff.branchLegacyId);
+}
+
+function recipientsForContractCandidate(
+  recipients: LegacyContractRecipient[],
+  recipientIds: Set<string>,
+  candidate: ContractCandidate,
+  directLegacyUserId: number | null,
+) {
+  const selected = new Map<string, LegacyContractRecipient>();
+  for (const recipient of recipients) {
+    if (!recipientIds.has(recipient.userId)) continue;
+    if (
+      candidate.staff.sourceDatabase &&
+      recipient.legacySourceDatabase !== candidate.staff.sourceDatabase
+    ) {
+      continue;
+    }
+    if (!legacyContractUserAllows(recipient, candidate, directLegacyUserId)) {
+      continue;
+    }
+    if (!selected.has(recipient.userId)) selected.set(recipient.userId, recipient);
+  }
+
+  return Array.from(selected.values());
 }
 
 function toCandidate(params: {
@@ -480,7 +568,7 @@ export async function generateContractAlarmsForOrganization(params: {
             lastName: true,
             branchId: true,
             userId: true,
-            branch: { select: { name: true } },
+            branch: { select: { name: true, legacyId: true, sourceDatabase: true } },
           },
         },
       },
@@ -500,7 +588,7 @@ export async function generateContractAlarmsForOrganization(params: {
             lastName: true,
             branchId: true,
             userId: true,
-            branch: { select: { name: true } },
+            branch: { select: { name: true, legacyId: true, sourceDatabase: true } },
           },
         },
       },
@@ -521,7 +609,7 @@ export async function generateContractAlarmsForOrganization(params: {
             lastName: true,
             branchId: true,
             userId: true,
-            branch: { select: { name: true } },
+            branch: { select: { name: true, legacyId: true, sourceDatabase: true } },
           },
         },
       },
@@ -541,7 +629,7 @@ export async function generateContractAlarmsForOrganization(params: {
             lastName: true,
             branchId: true,
             userId: true,
-            branch: { select: { name: true } },
+            branch: { select: { name: true, legacyId: true, sourceDatabase: true } },
           },
         },
       },
@@ -562,7 +650,7 @@ export async function generateContractAlarmsForOrganization(params: {
             firstName: true,
             lastName: true,
             branchId: true,
-            branch: { select: { name: true } },
+            branch: { select: { name: true, legacyId: true, sourceDatabase: true } },
           },
         },
       },
@@ -581,7 +669,7 @@ export async function generateContractAlarmsForOrganization(params: {
             firstName: true,
             lastName: true,
             branchId: true,
-            branch: { select: { name: true } },
+            branch: { select: { name: true, legacyId: true, sourceDatabase: true } },
           },
         },
       },
@@ -603,7 +691,7 @@ export async function generateContractAlarmsForOrganization(params: {
             lastName: true,
             branchId: true,
             userId: true,
-            branch: { select: { name: true } },
+            branch: { select: { name: true, legacyId: true, sourceDatabase: true } },
           },
         },
       },
@@ -634,7 +722,9 @@ export async function generateContractAlarmsForOrganization(params: {
         staffKind: "Teacher",
         staff: {
           ...row.teacher,
+          branchLegacyId: row.teacher.branch.legacyId,
           branchName: row.teacher.branch.name,
+          sourceDatabase: row.teacher.branch.sourceDatabase,
           userId: row.teacher.userId,
         },
         documentId: row.id,
@@ -661,7 +751,9 @@ export async function generateContractAlarmsForOrganization(params: {
         staffKind: "Teacher",
         staff: {
           ...row.teacher,
+          branchLegacyId: row.teacher.branch.legacyId,
           branchName: row.teacher.branch.name,
+          sourceDatabase: row.teacher.branch.sourceDatabase,
           userId: row.teacher.userId,
         },
         documentId: row.id,
@@ -688,7 +780,9 @@ export async function generateContractAlarmsForOrganization(params: {
         staffKind: "Nurse",
         staff: {
           ...row.nurse,
+          branchLegacyId: row.nurse.branch.legacyId,
           branchName: row.nurse.branch.name,
+          sourceDatabase: row.nurse.branch.sourceDatabase,
           userId: null,
         },
         documentId: row.id,
@@ -715,7 +809,9 @@ export async function generateContractAlarmsForOrganization(params: {
         staffKind: "Nurse",
         staff: {
           ...row.nurse,
+          branchLegacyId: row.nurse.branch.legacyId,
           branchName: row.nurse.branch.name,
+          sourceDatabase: row.nurse.branch.sourceDatabase,
           userId: null,
         },
         documentId: row.id,
@@ -742,7 +838,9 @@ export async function generateContractAlarmsForOrganization(params: {
         staffKind: "Doctor",
         staff: {
           ...row.doctor,
+          branchLegacyId: row.doctor.branch.legacyId,
           branchName: row.doctor.branch.name,
+          sourceDatabase: row.doctor.branch.sourceDatabase,
           userId: null,
         },
         documentId: row.id,
@@ -769,7 +867,9 @@ export async function generateContractAlarmsForOrganization(params: {
         staffKind: "Doctor",
         staff: {
           ...row.doctor,
+          branchLegacyId: row.doctor.branch.legacyId,
           branchName: row.doctor.branch.name,
+          sourceDatabase: row.doctor.branch.sourceDatabase,
           userId: null,
         },
         documentId: row.id,
@@ -796,7 +896,9 @@ export async function generateContractAlarmsForOrganization(params: {
         staffKind: "Manager",
         staff: {
           ...row.manager,
+          branchLegacyId: row.manager.branch.legacyId,
           branchName: row.manager.branch.name,
+          sourceDatabase: row.manager.branch.sourceDatabase,
           userId: row.manager.userId,
         },
         documentId: row.id,
@@ -819,6 +921,7 @@ export async function generateContractAlarmsForOrganization(params: {
       branchId: { in: enabledBranchIds },
     },
     select: {
+      id: true,
       referenceId: true,
       referenceType: true,
       dueDate: true,
@@ -828,15 +931,23 @@ export async function generateContractAlarmsForOrganization(params: {
   });
   const existingKeys = new Set<string>();
   const looseExistingKeys = new Set<string>();
+  const existingByKey = new Map<string, ExistingContractAlarm>();
+  const looseExistingByKey = new Map<string, ExistingContractAlarm>();
   for (const alarm of existingAlarms) {
-    addExistingKeys({ existingKeys, looseExistingKeys, alarm });
+    addExistingKeys({
+      existingKeys,
+      looseExistingKeys,
+      existingByKey,
+      looseExistingByKey,
+      alarm,
+    });
   }
 
   const directUserIds = Array.from(
     new Set(candidates.map((candidate) => candidate.staff.userId).filter(Boolean) as string[]),
   );
 
-  const [users, templates, legacyTemplateRows] = await Promise.all([
+  const [users, templates, legacyTemplateRows, maxReceipt] = await Promise.all([
     db.user.findMany({
       where: {
         isActive: true,
@@ -861,6 +972,10 @@ export async function generateContractAlarmsForOrganization(params: {
         settingKey: { in: ["email-expiring-subj", "email-expiring-msg"] },
       },
     }),
+    db.notificationReceipt.aggregate({
+      where: { sourceTable: CONTRACT_RECEIPT_SOURCE },
+      _max: { legacyNotificationId: true },
+    }),
   ]);
   const template =
     templates.find((row) => row.category === "CONTRACT") ??
@@ -879,6 +994,45 @@ export async function generateContractAlarmsForOrganization(params: {
     userIdsByBranch.set(user.branchId, branchUsers);
   }
 
+  const userIds = users.map((user) => user.id);
+  const legacyAuthRows = userIds.length
+    ? await db.legacyAuthRecord.findMany({
+        where: {
+          legacyTable: "login_users",
+          userId: { in: userIds },
+          isDisabled: { not: true },
+        },
+        select: {
+          sourceDatabase: true,
+          userId: true,
+          legacyId: true,
+          legacyUserId: true,
+          legacyData: true,
+        },
+        orderBy: [
+          { sourceDatabase: "asc" },
+          { legacyId: "asc" },
+        ],
+      })
+    : [];
+  const legacyRecipients: LegacyContractRecipient[] = legacyAuthRows.flatMap((row) => {
+    if (!row.userId) return [];
+    const data = asRecord(row.legacyData);
+    return [{
+      userId: row.userId,
+      legacyRecipientId: row.legacyUserId ?? row.legacyId,
+      legacySourceDatabase: row.sourceDatabase,
+      legacySites: readString(data, ["usites"]) ?? "0",
+      legacyClasses: readString(data, ["uclasses"]) ?? "0",
+    }];
+  });
+  const maxExistingAlarmLegacyId = existingAlarms.reduce((max, alarm) => {
+    const legacyId = readNumber(asRecord(alarm.legacyData), ["aid"]) ?? 0;
+    return Math.max(max, legacyId);
+  }, 0);
+  let nextLegacyNotificationId =
+    Math.max(maxReceipt._max.legacyNotificationId ?? 0, maxExistingAlarmLegacyId) + 1;
+
   const templateEnabled = template?.enabled ?? true;
   const subjectTemplate =
     template?.subject ||
@@ -890,50 +1044,17 @@ export async function generateContractAlarmsForOrganization(params: {
     "[[message]]";
 
   for (const candidate of candidates) {
-    if (candidateExists(candidate, existingKeys, looseExistingKeys)) {
-      summary.skippedExisting += 1;
-      continue;
+    const existingAlarm = existingAlarmForCandidate(
+      candidate,
+      existingByKey,
+      looseExistingByKey,
+    );
+    let legacyNotificationId = existingAlarm
+      ? readNumber(asRecord(existingAlarm.legacyData), ["aid"])
+      : null;
+    if (legacyNotificationId === null) {
+      legacyNotificationId = nextLegacyNotificationId++;
     }
-
-    await db.alarm.create({
-      data: {
-        type: "CONTRACT",
-        referenceId: candidate.staff.id,
-        referenceType: candidate.staffKind,
-        message: candidate.message,
-        dueDate: candidate.expiryDate,
-        branchId: candidate.staff.branchId,
-        isActive: true,
-        legacyData: {
-          sourceTable: "t_alarms_contracts",
-          sourceDeliveryTable: "custom_notifications_contracts",
-          sourceDocumentTable: candidate.sourceTable,
-          sourceStaffTable: candidate.sourceStaffTable,
-          modernGenerator: "generateContractAlarms",
-          legacyMethod: candidate.legacyMethod,
-          personId: candidate.staff.id,
-          legacyPersonId: candidate.legacyPersonId,
-          documentId: candidate.documentId,
-          legacyDocumentId: candidate.legacyDocumentId,
-          type: candidate.documentType,
-          documentType: candidate.documentType,
-          documentTitle: candidate.documentTitle,
-          level: candidate.sourceStaffTable,
-          mid: candidate.legacyDayDifference,
-          indays: candidate.legacyDayDifference,
-          signedDaysUntilExpiry: candidate.signedDaysUntilExpiry,
-          expiryDate: candidate.expiryKey,
-          branchId: candidate.staff.branchId,
-          branchName: candidate.staff.branchName,
-          staffKind: candidate.staffKind,
-          href: "alarmsContracts.php",
-        },
-      },
-    });
-    rememberCandidate(candidate, existingKeys);
-    summary.alarmsCreated += 1;
-
-    if (!templateEnabled) continue;
 
     const recipientIds = new Set([
       ...(userIdsByBranch.get(candidate.staff.branchId) ?? []),
@@ -942,10 +1063,151 @@ export async function generateContractAlarmsForOrganization(params: {
     if (candidate.staff.userId && usersById.has(candidate.staff.userId)) {
       recipientIds.add(candidate.staff.userId);
     }
+    const directLegacyUserId = candidate.staff.userId
+      ? legacyRecipients.find(
+          (recipient) =>
+            recipient.userId === candidate.staff.userId &&
+            (!candidate.staff.sourceDatabase ||
+              recipient.legacySourceDatabase === candidate.staff.sourceDatabase),
+        )?.legacyRecipientId ?? null
+      : null;
+    const recipients = recipientsForContractCandidate(
+      legacyRecipients,
+      recipientIds,
+      candidate,
+      directLegacyUserId,
+    );
+
+    let alarmId = existingAlarm?.id ?? null;
+    if (existingAlarm) {
+      summary.skippedExisting += 1;
+      const existingData = asRecord(existingAlarm.legacyData) ?? {};
+      if (
+        readNumber(existingData, ["aid"]) === null ||
+        existingData.sourceDeliveryTable !== CONTRACT_RECEIPT_SOURCE
+      ) {
+        await db.alarm.update({
+          where: { id: existingAlarm.id },
+          data: {
+            legacyData: {
+              ...existingData,
+              aid: legacyNotificationId,
+              sourceDeliveryTable: CONTRACT_RECEIPT_SOURCE,
+              legacyBranchId: candidate.staff.branchLegacyId,
+              legacyRecipientRule: "getUserAndBoss",
+            },
+          },
+        });
+      }
+    }
+
+    if (!existingAlarm) {
+      const alarm = await db.alarm.create({
+        data: {
+          type: "CONTRACT",
+          referenceId: candidate.staff.id,
+          referenceType: candidate.staffKind,
+          message: candidate.message,
+          dueDate: candidate.expiryDate,
+          branchId: candidate.staff.branchId,
+          isActive: true,
+          legacyData: {
+            aid: legacyNotificationId,
+            sourceTable: "t_alarms_contracts",
+            sourceDeliveryTable: CONTRACT_RECEIPT_SOURCE,
+            sourceDocumentTable: candidate.sourceTable,
+            sourceStaffTable: candidate.sourceStaffTable,
+            modernGenerator: "generateContractAlarms",
+            legacyMethod: candidate.legacyMethod,
+            legacyRecipientRule: "getUserAndBoss",
+            personId: candidate.staff.id,
+            legacyPersonId: candidate.legacyPersonId,
+            documentId: candidate.documentId,
+            legacyDocumentId: candidate.legacyDocumentId,
+            type: candidate.documentType,
+            documentType: candidate.documentType,
+            documentTitle: candidate.documentTitle,
+            level: candidate.sourceStaffTable,
+            mid: candidate.legacyDayDifference,
+            indays: candidate.legacyDayDifference,
+            signedDaysUntilExpiry: candidate.signedDaysUntilExpiry,
+            expiryDate: candidate.expiryKey,
+            branchId: candidate.staff.branchId,
+            legacyBranchId: candidate.staff.branchLegacyId,
+            branchName: candidate.staff.branchName,
+            staffKind: candidate.staffKind,
+            href: "alarmsContracts.php",
+          },
+        },
+      });
+      alarmId = alarm.id;
+      rememberCandidate(candidate, existingKeys);
+      rememberExistingAlarmForCandidate(candidate, existingByKey, {
+        id: alarm.id,
+        referenceId: candidate.staff.id,
+        referenceType: candidate.staffKind,
+        dueDate: candidate.expiryDate,
+        message: candidate.message,
+        legacyData: alarm.legacyData,
+      });
+      summary.alarmsCreated += 1;
+    }
+
     if (recipientIds.size === 0) {
       summary.skippedNoRecipients += 1;
       continue;
     }
+    if (!alarmId || recipients.length === 0) continue;
+
+    const existingReceipts = await db.notificationReceipt.findMany({
+      where: {
+        sourceTable: CONTRACT_RECEIPT_SOURCE,
+        legacyNotificationId,
+        recipientType: "USER",
+        legacyRecipientId: {
+          in: recipients.map((recipient) => recipient.legacyRecipientId),
+        },
+      },
+      select: { legacyRecipientId: true },
+    });
+    const existingReceiptIds = new Set(
+      existingReceipts.map((receipt) => receipt.legacyRecipientId),
+    );
+    const newReceiptRecipients = recipients.filter(
+      (recipient) => !existingReceiptIds.has(recipient.legacyRecipientId),
+    );
+    if (newReceiptRecipients.length === 0) continue;
+
+    const receiptResult = await db.notificationReceipt.createMany({
+      data: newReceiptRecipients.map((recipient) => ({
+        sourceTable: CONTRACT_RECEIPT_SOURCE,
+        category: "contracts",
+        legacyNotificationId,
+        legacyRecipientId: recipient.legacyRecipientId,
+        recipientType: "USER",
+        recipientId: recipient.userId,
+        alarmId,
+        isRead: false,
+        metadata: {
+          modernGenerator: "generateContractAlarms",
+          legacyMethod: candidate.legacyMethod,
+          legacyRecipientRule: "getUserAndBoss",
+          legacySites: recipient.legacySites,
+          legacyClasses: recipient.legacyClasses,
+          legacyBranchId: candidate.staff.branchLegacyId,
+          sourceStaffTable: candidate.sourceStaffTable,
+          legacyPersonId: candidate.legacyPersonId,
+          documentId: candidate.documentId,
+          legacyDocumentId: candidate.legacyDocumentId,
+          documentType: candidate.documentType,
+          expiryDate: candidate.expiryKey,
+        },
+      })),
+      skipDuplicates: true,
+    });
+    summary.receiptsCreated += receiptResult.count;
+
+    if (!templateEnabled || receiptResult.count === 0) continue;
 
     const variables = {
       message: candidate.message,
@@ -964,8 +1226,8 @@ export async function generateContractAlarmsForOrganization(params: {
     const body = renderNotificationText(bodyTemplate, variables);
 
     const created = await db.notification.createMany({
-      data: Array.from(recipientIds).map((userId) => ({
-        userId,
+      data: newReceiptRecipients.map((recipient) => ({
+        userId: recipient.userId,
         title,
         body,
         type: "CONTRACT",

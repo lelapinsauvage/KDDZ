@@ -534,7 +534,7 @@
       "t_garderie_doctor_attachments",
       "t_nurse_attachments"
     ],
-    "verification": "Modern page reads migrated `NotificationReceipt` rows from `custom_notifications_contracts`, restores Teachers New/Viewed status, search/status/branch/date filters, row/bulk/all mark-viewed actions, Sent Contracts Reminders history, and keeps manual generation backed by the idempotent staff attachment/document expiry job plus protected `/api/cron/contract-alarms`. `/alarmsContracts.php` now redirects to the modern contract alarms page. Remaining work is exact legacy user/class targeting if richer permission data is mapped and parent/mobile delivery if required."
+    "verification": "Modern page reads migrated and generated `NotificationReceipt` rows from `custom_notifications_contracts`, restores Teachers New/Viewed status, search/status/branch/date filters, row/bulk/all mark-viewed actions, Sent Contracts Reminders history, and keeps manual generation backed by the idempotent staff attachment/document expiry job plus protected `/api/cron/contract-alarms`; generated receipts follow legacy `getUserAndBoss()` targeting through imported `login_users.usites/uclasses`. `/alarmsContracts.php` now redirects to the modern contract alarms page. Remaining work is parent/mobile delivery if required."
   },
   {
     "legacyPhp": "Front/templates/admin/alarmsEvents.php",
