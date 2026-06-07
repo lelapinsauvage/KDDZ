@@ -2,6 +2,7 @@
 
 import { randomBytes } from "crypto";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import { deliverEmail, emailDeliveryAuditData } from "@/lib/email-delivery";
@@ -16,6 +17,11 @@ type ActionResult<T = unknown> = {
   error?: string;
   data?: T;
 };
+
+const SIGNIN_REDIRECT_SETTING_KEYS = [
+  "signin-redirect-referrer-enable",
+  "signin-redirect-url",
+] as const;
 
 export type LegacyDisabledContactInput = {
   name: string;
@@ -38,6 +44,55 @@ function inputString(value: string | null | undefined) {
   return value?.trim() ?? "";
 }
 
+function legacyBool(value: string | null | undefined) {
+  const normalized = value?.trim().toLowerCase();
+  return Boolean(
+    normalized && !["0", "false", "no", "off", "null"].includes(normalized),
+  );
+}
+
+function modernizeLegacyRedirect(value: string) {
+  const normalized = value.trim().replace(/^\/+/, "").toLowerCase();
+  if (
+    normalized === "home.php" ||
+    normalized === "index.php" ||
+    normalized === "front/templates/admin/home.php" ||
+    normalized === "front/templates/admin/index.php"
+  ) {
+    return "/dashboard";
+  }
+  return value;
+}
+
+function safeInternalRedirect(
+  value: string | null | undefined,
+  origin: string,
+  fallback = "/dashboard",
+) {
+  const trimmed = modernizeLegacyRedirect(inputString(value));
+  if (!trimmed) return fallback;
+
+  try {
+    const url = new URL(trimmed, origin);
+    if (url.origin !== origin) return fallback;
+    return `${url.pathname}${url.search}${url.hash}` || fallback;
+  } catch {
+    return trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+  }
+}
+
+async function requestOrigin() {
+  const requestHeaders = await headers();
+  const proto =
+    requestHeaders.get("x-forwarded-proto") ??
+    (process.env.NODE_ENV === "production" ? "https" : "http");
+  const host =
+    requestHeaders.get("x-forwarded-host") ??
+    requestHeaders.get("host") ??
+    "localhost:3000";
+  return `${proto}://${host}`;
+}
+
 function disabledUrl(params: {
   name?: string | null;
   email?: string | null;
@@ -49,6 +104,51 @@ function disabledUrl(params: {
   if (params.reason) search.set("reason", params.reason);
   const query = search.toString();
   return query ? `/disabled.php?${query}` : "/disabled.php";
+}
+
+export async function getLegacyLoginSuccessRedirect(input: {
+  callbackUrl?: string | null;
+}): Promise<ActionResult<{ redirectTo: string }>> {
+  try {
+    const origin = await requestOrigin();
+    const callbackUrl = inputString(input.callbackUrl);
+    if (callbackUrl) {
+      return {
+        success: true,
+        data: { redirectTo: safeInternalRedirect(callbackUrl, origin) },
+      };
+    }
+
+    const rows = await db.legacySetting.findMany({
+      where: {
+        legacyTable: { in: ["login_settings", "login_settings_man"] },
+        settingKey: { in: [...SIGNIN_REDIRECT_SETTING_KEYS] },
+      },
+      orderBy: [
+        { legacyTable: "asc" },
+        { sourceDatabase: "asc" },
+        { legacyId: "desc" },
+      ],
+      select: {
+        settingKey: true,
+        settingValue: true,
+      },
+    });
+    const value = (key: (typeof SIGNIN_REDIRECT_SETTING_KEYS)[number]) =>
+      rows.find((row) => row.settingKey === key)?.settingValue ?? null;
+    const useReferrer =
+      rows.length === 0 ||
+      legacyBool(value("signin-redirect-referrer-enable"));
+    const target = useReferrer ? "home.php" : value("signin-redirect-url");
+
+    return {
+      success: true,
+      data: { redirectTo: safeInternalRedirect(target, origin) },
+    };
+  } catch (error) {
+    console.warn("getLegacyLoginSuccessRedirect fallback:", error);
+    return { success: true, data: { redirectTo: "/dashboard" } };
+  }
 }
 
 export async function getLegacyLoginFailureRedirect(

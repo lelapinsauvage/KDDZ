@@ -6,7 +6,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getLegacyLoginFailureRedirect } from "@/lib/actions/legacy-login";
+import {
+  getLegacyLoginFailureRedirect,
+  getLegacyLoginSuccessRedirect,
+} from "@/lib/actions/legacy-login";
 
 export default function LoginPage() {
   return (
@@ -19,7 +22,7 @@ export default function LoginPage() {
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  const callbackUrl = searchParams.get("callbackUrl");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -45,7 +48,10 @@ function LoginForm() {
         }
         setError("Invalid username/email or password");
       } else {
-        router.push(callbackUrl);
+        const redirectResult = await getLegacyLoginSuccessRedirect({
+          callbackUrl,
+        });
+        router.push(redirectResult.data?.redirectTo ?? "/dashboard");
         router.refresh();
       }
     } catch {
