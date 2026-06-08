@@ -7,7 +7,11 @@ import {
   jsonSuccess,
   verifyParentToken,
 } from "@/lib/parent-auth";
-import { mapLegacyHoliday } from "@/lib/parent-native-list-contracts";
+import {
+  buildEmptyLegacyNativeListPayload,
+  mapLegacyHoliday,
+  shouldUseLegacyNativeListFallback,
+} from "@/lib/parent-native-list-contracts";
 
 type ParentHolidayUser = {
   childId: string;
@@ -34,7 +38,7 @@ async function handleRequest(request: NextRequest) {
 
   if (request.method === "POST") {
     if (!postedChildId) {
-      return jsonSuccess([makeHeader("", false, 0)]);
+      return jsonSuccess(buildEmptyLegacyNativeListPayload());
     }
     if (auth?.parentUser && !matchesChildId(auth.parentUser, postedChildId)) {
       return jsonError("Access denied", 403);
@@ -55,8 +59,8 @@ async function handleRequest(request: NextRequest) {
 
     return jsonSuccess([header, ...items]);
   } catch (error) {
-    if (isPrismaConnectionError(error)) {
-      return jsonSuccess([makeHeader("", false, 0)]);
+    if (shouldUseLegacyNativeListFallback(request, error)) {
+      return jsonSuccess(buildEmptyLegacyNativeListPayload());
     }
     return jsonError("Internal server error", 500);
   }
@@ -109,7 +113,14 @@ async function optionalAuthenticateParent(request: NextRequest) {
         },
       },
     },
+  }).catch((error: unknown) => {
+    if (isPrismaConnectionError(error)) return null;
+    return "db-error" as const;
   });
+
+  if (parentUser === "db-error") {
+    return { error: jsonError("Internal server error", 500) };
+  }
 
   if (!parentUser) {
     return { error: jsonError("Unauthorized", 401) };

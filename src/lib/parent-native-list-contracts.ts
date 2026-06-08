@@ -1,5 +1,5 @@
 import type { MealType, Prisma } from "@/generated/prisma/client";
-import { formatDate } from "@/lib/parent-auth";
+import { formatDate, isPrismaConnectionError, makeHeader } from "@/lib/parent-auth";
 
 export type LegacyAbsenceReportRow = {
   id: string;
@@ -45,6 +45,19 @@ export type LegacyFoodCalendarItem = {
   bname: string;
   lname: string;
 };
+
+export function buildEmptyLegacyNativeListPayload(
+  extra?: Record<string, unknown>
+) {
+  return [makeHeader("", false, 0, extra)];
+}
+
+export function shouldUseLegacyNativeListFallback(
+  request: { method: string },
+  error: unknown
+) {
+  return request.method === "POST" || isPrismaConnectionError(error);
+}
 
 export function mapLegacyAbsenceReport(report: LegacyAbsenceReportRow) {
   const legacy = asRecord(report.legacyData);

@@ -9,7 +9,9 @@ import {
   verifyParentToken,
 } from "@/lib/parent-auth";
 import {
+  buildEmptyLegacyNativeListPayload,
   mapLegacyFoodCalendarItems,
+  shouldUseLegacyNativeListFallback,
   stripLegacyFoodCalendarGroupingFields,
 } from "@/lib/parent-native-list-contracts";
 
@@ -46,7 +48,7 @@ async function handleRequest(request: NextRequest) {
     let child = auth?.parentUser.child ?? null;
     if (request.method === "POST") {
       if (!postedChildId) {
-        return jsonSuccess([makeHeader("", false, 0, { branch_id: 0 })]);
+        return jsonSuccess(buildEmptyLegacyNativeListPayload({ branch_id: 0 }));
       }
 
       if (auth?.parentUser) {
@@ -56,7 +58,7 @@ async function handleRequest(request: NextRequest) {
       } else {
         child = await resolveLegacyFoodChild(postedChildId);
         if (!child) {
-          return jsonSuccess([makeHeader("", false, 0, { branch_id: 0 })]);
+          return jsonSuccess(buildEmptyLegacyNativeListPayload({ branch_id: 0 }));
         }
       }
     }
@@ -84,8 +86,8 @@ async function handleRequest(request: NextRequest) {
 
     return jsonSuccess([header, ...items.map(stripLegacyFoodCalendarGroupingFields)]);
   } catch (error) {
-    if (isPrismaConnectionError(error)) {
-      return jsonSuccess([makeHeader("", false, 0, { branch_id: 0 })]);
+    if (shouldUseLegacyNativeListFallback(request, error)) {
+      return jsonSuccess(buildEmptyLegacyNativeListPayload({ branch_id: 0 }));
     }
     return jsonError("Internal server error", 500);
   }
@@ -136,7 +138,14 @@ async function optionalAuthenticateParent(request: NextRequest) {
   const parentUser = await db.parentUser.findUnique({
     where: { id: payload.sub, isActive: true },
     include: { child: true },
+  }).catch((error: unknown) => {
+    if (isPrismaConnectionError(error)) return null;
+    return "db-error" as const;
   });
+
+  if (parentUser === "db-error") {
+    return { error: jsonError("Internal server error", 500) };
+  }
 
   if (!parentUser) {
     return { error: jsonError("Unauthorized", 401) };

@@ -8,7 +8,11 @@ import {
   makeHeader,
   verifyParentToken,
 } from "@/lib/parent-auth";
-import { mapLegacyAbsenceReport } from "@/lib/parent-native-list-contracts";
+import {
+  buildEmptyLegacyNativeListPayload,
+  mapLegacyAbsenceReport,
+  shouldUseLegacyNativeListFallback,
+} from "@/lib/parent-native-list-contracts";
 
 type ParentAbsenceChild = {
   id: string;
@@ -58,7 +62,7 @@ async function handleRequest(
     }
 
     if (request.method === "POST") {
-      if (!postedChildId) return jsonSuccess([makeHeader("", false, 0)]);
+      if (!postedChildId) return jsonSuccess(buildEmptyLegacyNativeListPayload());
 
       if (parentUser) {
         if (!matchesParentUserChildId(parentUser, postedChildId)) {
@@ -66,7 +70,7 @@ async function handleRequest(
         }
       } else {
         child = await resolveLegacyAbsenceChild(postedChildId);
-        if (!child) return jsonSuccess([makeHeader("", false, 0)]);
+        if (!child) return jsonSuccess(buildEmptyLegacyNativeListPayload());
       }
     }
 
@@ -82,8 +86,8 @@ async function handleRequest(
     const header = makeHeader(formatChildName(child), true, reports.length);
     return jsonSuccess([header, ...reports.map(mapLegacyAbsenceReport)]);
   } catch (error) {
-    if (isPrismaConnectionError(error)) {
-      return jsonSuccess([makeHeader("", false, 0)]);
+    if (shouldUseLegacyNativeListFallback(request, error)) {
+      return jsonSuccess(buildEmptyLegacyNativeListPayload());
     }
     return jsonError("Internal server error", 500);
   }
@@ -134,7 +138,10 @@ async function optionalAuthenticateParent(request: NextRequest) {
   const parentUser = await db.parentUser.findUnique({
     where: { id: payload.sub, isActive: true },
     include: { child: true },
-  }).catch(() => "db-error" as const);
+  }).catch((error: unknown) => {
+    if (isPrismaConnectionError(error)) return null;
+    return "db-error" as const;
+  });
 
   if (parentUser === "db-error") {
     return { error: jsonError("Internal server error", 500) };

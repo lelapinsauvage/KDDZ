@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
 import type { MealType } from "@/generated/prisma/client";
 import {
+  buildEmptyLegacyNativeListPayload,
   mapLegacyAbsenceReport,
   mapLegacyFinancePayment,
   mapLegacyFoodCalendarItems,
   mapLegacyHoliday,
+  shouldUseLegacyNativeListFallback,
   stripLegacyFoodCalendarGroupingFields,
 } from "@/lib/parent-native-list-contracts";
 
@@ -111,5 +113,28 @@ const holiday = mapLegacyHoliday({
 });
 assert.equal(holiday.description, "Independence Day");
 assert.equal(holiday.date, `${currentYear}-11-22`);
+
+assert.deepEqual(buildEmptyLegacyNativeListPayload(), [
+  { name: "", status: false, count: 0 },
+]);
+assert.deepEqual(buildEmptyLegacyNativeListPayload({ branch_id: 0 }), [
+  { name: "", status: false, count: 0, branch_id: 0 },
+]);
+
+assert.equal(
+  shouldUseLegacyNativeListFallback({ method: "POST" }, new Error("bad row")),
+  true,
+  "native POST list feeds must keep PHP empty-header fallback on unexpected route errors"
+);
+assert.equal(
+  shouldUseLegacyNativeListFallback({ method: "GET" }, { code: "P1001" }),
+  true,
+  "database connection failures must keep PHP empty-header fallback"
+);
+assert.equal(
+  shouldUseLegacyNativeListFallback({ method: "GET" }, new Error("bad row")),
+  false,
+  "non-connection GET errors should remain hard failures for authenticated web flows"
+);
 
 console.log("parent native list legacy contract assertions passed");

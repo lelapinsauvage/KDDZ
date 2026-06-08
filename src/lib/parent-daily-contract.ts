@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import {
   formatDate,
   formatTime,
+  isPrismaConnectionError,
   jsonError,
   makeHeader,
   mapPortionSize,
@@ -97,7 +98,10 @@ export async function optionalAuthenticateParentDaily(request: NextRequest) {
   const parentUser = await db.parentUser.findUnique({
     where: { id: payload.sub, isActive: true },
     include: { child: true },
-  }).catch(() => "db-error" as const);
+  }).catch((error: unknown) => {
+    if (isPrismaConnectionError(error)) return null;
+    return "db-error" as const;
+  });
 
   if (parentUser === "db-error") {
     return { error: jsonError("Internal server error", 500) };
