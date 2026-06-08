@@ -3,14 +3,20 @@ import { db } from "@/lib/db";
 import type { AlarmType, Prisma } from "@/generated/prisma/client";
 import {
   formatChildName,
-  formatDate,
-  formatDateTimeLong,
   isPrismaConnectionError,
-  makeHeader,
   jsonError,
   jsonSuccess,
   verifyParentToken,
 } from "@/lib/parent-auth";
+import {
+  buildEmptyLegacyParentAlarmPayload,
+  buildLegacyAssessmentAlarmItem,
+  buildLegacyChildAlarmItem,
+  buildLegacyEventAlarmItem,
+  buildLegacyGeneralAlarmItem,
+  buildLegacyParentAlarmHeader,
+} from "@/lib/parent-alarm-contracts";
+import type { LegacyParentAlarmFamily } from "@/lib/parent-alarm-contracts";
 
 const VALID_ALARM_TYPES: Record<string, AlarmType> = {
   birthdays: "BIRTHDAY",
@@ -29,6 +35,7 @@ const VALID_ALARM_TYPES: Record<string, AlarmType> = {
 const ASSESSMENT_MESSAGE_SETTING_KEY = "email-assessment-msg";
 const DEFAULT_LEGACY_ASSESSMENT_MESSAGE =
   "Dear Parents, The assessment report of {{child_name}} is done. you can read it on his account. Regards, The Administration";
+const BIRTHDAY_MESSAGE_SETTING_KEY = "email-birthday-msg";
 
 type ParentAlarmChild = {
   id: string;
@@ -93,6 +100,7 @@ async function handleRequest(
   if (!alarmType) {
     return jsonError("Invalid alarm type", 400);
   }
+  const alarmFamily = type as LegacyParentAlarmFamily;
 
   const body = request.method === "POST" ? await readRequestBody(request) : null;
   const postedChildId = readString(body, ["pid", "usites", "child_id", "childId"]);
@@ -104,7 +112,7 @@ async function handleRequest(
   if (type !== "general") {
     if (!postedChildId) {
       if (request.method === "POST") {
-        return jsonSuccess([makeHeader("", false, 0)]);
+        return jsonSuccess(buildEmptyLegacyParentAlarmPayload());
       }
       if (!child) return jsonError("Unauthorized", 401);
     }
@@ -119,11 +127,13 @@ async function handleRequest(
         () => "db-error" as const
       );
       if (resolvedChild === "db-error") {
-        return jsonError("Internal server error", 500);
+        return request.method === "POST"
+          ? jsonSuccess(buildEmptyLegacyParentAlarmPayload())
+          : jsonError("Internal server error", 500);
       }
       child = resolvedChild;
       if (!child) {
-        return jsonSuccess([makeHeader("", false, 0)]);
+        return jsonSuccess(buildEmptyLegacyParentAlarmPayload());
       }
     }
   }
@@ -148,27 +158,47 @@ async function handleRequest(
     }
 
     // Standard child-specific alarms
-    const alarms = await db.alarm.findMany({
-      where: {
-        type: alarmType,
-        referenceId: child.id,
-        referenceType: "Child",
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const [alarms, birthdayMessageTemplate] = await Promise.all([
+      db.alarm.findMany({
+        where: {
+          type: alarmType,
+          referenceId: child.id,
+          referenceType: "Child",
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+      alarmFamily === "birthdays"
+        ? loadLegacyBirthdayMessageTemplate()
+        : Promise.resolve(null),
+    ]);
 
-    const header = makeHeader(
+    const header = buildLegacyParentAlarmHeader(
       formatChildName(child),
       true,
       alarms.length
     );
+    const birthdayDetails =
+      alarmFamily === "birthdays" && birthdayMessageTemplate
+        ? renderLegacyMessageTemplate(
+            birthdayMessageTemplate,
+            formatLegacyAssessmentChildName(child)
+          )
+        : null;
 
     const items = filterByLegacyType(type, alarms).map((alarm) =>
-      mapChildAlarm(alarm, child, type)
+      buildLegacyChildAlarmItem({
+        alarm,
+        child,
+        family: alarmFamily,
+        detailsOverride: birthdayDetails,
+      })
     );
 
     return jsonSuccess([{ ...header, count: items.length }, ...items]);
-  } catch {
+  } catch (error) {
+    if (request.method === "POST" || isPrismaConnectionError(error)) {
+      return jsonSuccess(buildEmptyLegacyParentAlarmPayload());
+    }
     return jsonError("Internal server error", 500);
   }
 }
@@ -187,8 +217,12 @@ async function handleEvents(child: ParentAlarmChild) {
     eventMatchesChildBranch(event, child.branchId)
   );
 
-  const header = makeHeader(formatChildName(child), true, filteredEvents.length);
-  const items = filteredEvents.map(mapEventAlarm);
+  const header = buildLegacyParentAlarmHeader(
+    formatChildName(child),
+    true,
+    filteredEvents.length
+  );
+  const items = filteredEvents.map(buildLegacyEventAlarmItem);
 
   return jsonSuccess([header, ...items]);
 }
@@ -216,20 +250,22 @@ async function handleAssessments(child: ParentAlarmChild) {
         assessmentMarkerTime(a.marker, a.assessment.createdAt)
     );
 
-  const header = makeHeader(
+  const header = buildLegacyParentAlarmHeader(
     formatChildName(child),
     true,
     assessmentMarkers.length
   );
 
   const childName = formatLegacyAssessmentChildName(child);
-  const items = assessmentMarkers.map(({ assessment, marker }) => ({
-    id: readValue(marker, ["id"]) ?? assessment.id,
-    child_id:
-      readValue(marker, ["childId", "child_id"]) ?? child.legacyId ?? child.id,
-    message: renderLegacyAssessmentMessage(messageTemplate, childName),
-    datetime: formatLegacyAssessmentDatetime(marker, assessment.createdAt),
-  }));
+  const items = assessmentMarkers.map(({ assessment, marker }) =>
+    buildLegacyAssessmentAlarmItem({
+      id: readValue(marker, ["id"]) ?? assessment.id,
+      childId:
+        readValue(marker, ["childId", "child_id"]) ?? child.legacyId ?? child.id,
+      message: renderLegacyMessageTemplate(messageTemplate, childName),
+      datetime: formatLegacyAssessmentDatetime(marker, assessment.createdAt),
+    })
+  );
 
   return jsonSuccess([header, ...items]);
 }
@@ -251,6 +287,20 @@ async function loadLegacyAssessmentMessageTemplate() {
   );
 }
 
+async function loadLegacyBirthdayMessageTemplate() {
+  const settings = await db.legacySetting.findMany({
+    where: {
+      legacyTable: "login_settings",
+      settingKey: BIRTHDAY_MESSAGE_SETTING_KEY,
+      settingValue: { not: null },
+    },
+    select: { sourceDatabase: true, settingValue: true },
+    orderBy: [{ sourceDatabase: "desc" }, { legacyId: "desc" }],
+  });
+
+  return chooseLegacySettingValue(settings);
+}
+
 async function handleGeneralAlarms() {
   const alarms = await db.alarm.findMany({
     where: {
@@ -267,8 +317,8 @@ async function handleGeneralAlarms() {
     return readString(legacy, ["sourceTable"]) === "t_alarms";
   });
 
-  const header = makeHeader("", false, generalAlarms.length);
-  const items = generalAlarms.map(mapGeneralAlarm);
+  const header = buildLegacyParentAlarmHeader("", false, generalAlarms.length);
+  const items = generalAlarms.map(buildLegacyGeneralAlarmItem);
 
   return jsonSuccess([header, ...items]);
 }
@@ -281,72 +331,6 @@ function filterByLegacyType(type: string, alarms: ParentAlarm[]) {
     const level = readString(legacy, ["level"]);
     return level === null || level === "0";
   });
-}
-
-function mapChildAlarm(
-  alarm: ParentAlarm,
-  child: ParentAlarmChild,
-  type: string
-) {
-  const legacy = asRecord(alarm.legacyData);
-  const href = readString(legacy, ["href"]) ?? "";
-  const item: Record<string, unknown> = {
-    aid: readValue(legacy, ["aid"]) ?? alarm.id,
-    child_id: readValue(legacy, ["child_id"]) ?? child.legacyId ?? child.id,
-    daysbefore: readValue(legacy, ["level", "daysBefore"]) ?? "",
-    details: cleanLegacyLine(readString(legacy, ["details"]) ?? alarm.message ?? ""),
-    datetime:
-      readString(legacy, ["datetime"]) ??
-      formatDateTimeLong(alarm.createdAt) ??
-      formatDate(alarm.dueDate),
-    status: readValue(legacy, ["status"]) ?? (alarm.isActive ? "1" : "0"),
-    href,
-    "href ": href,
-  };
-
-  if (type === "insurance") {
-    item.date = readValue(legacy, ["curr_date", "date"]) ?? formatDate(alarm.dueDate);
-  }
-
-  if (type === "medical") {
-    delete item.status;
-    delete item.href;
-    delete item["href "];
-  }
-
-  return item;
-}
-
-function mapGeneralAlarm(alarm: ParentAlarm) {
-  const legacy = asRecord(alarm.legacyData);
-  const href = readString(legacy, ["href"]) ?? "";
-  return {
-    aid: readValue(legacy, ["aid"]) ?? alarm.id,
-    hid: readValue(legacy, ["child_id"]) ?? alarm.referenceId ?? "",
-    daysbefore: readValue(legacy, ["level", "daysBefore"]) ?? "",
-    details: cleanLegacyLine(readString(legacy, ["details"]) ?? alarm.message ?? ""),
-    datetime:
-      readString(legacy, ["datetime"]) ??
-      formatDateTimeLong(alarm.createdAt) ??
-      formatDate(alarm.dueDate),
-    status: readValue(legacy, ["status"]) ?? (alarm.isActive ? "1" : "0"),
-    href,
-    "href ": href,
-  };
-}
-
-function mapEventAlarm(event: ParentEvent) {
-  const legacy = asRecord(event.legacyData);
-  const active = readValue(legacy, ["active"]) ?? (event.isActive ? "1" : "0");
-
-  return {
-    subject: readString(legacy, ["custom_subject"]) ?? event.customSubject ?? event.title,
-    eventdate: readString(legacy, ["edate"]) ?? formatDate(event.date),
-    custom_body: readString(legacy, ["custom_body"]) ?? event.customBody ?? event.description ?? "",
-    submit_time: readString(legacy, ["submit_time"]) ?? formatDateTimeLong(event.createdAt),
-    active,
-    "active ": active,
-  };
 }
 
 function eventMatchesChildBranch(event: ParentEvent, childBranchId: string) {
@@ -478,7 +462,7 @@ function extractAssessmentMarkers(data: Prisma.JsonValue | null) {
   return markers;
 }
 
-function renderLegacyAssessmentMessage(template: string, childName: string) {
+function renderLegacyMessageTemplate(template: string, childName: string) {
   return cleanLegacyLine(template.replaceAll("{{child_name}}", childName));
 }
 
