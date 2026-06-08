@@ -2,10 +2,16 @@ import { NextRequest } from "next/server";
 import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import {
+  isPrismaConnectionError,
   jsonError,
   jsonSuccess,
   verifyParentToken,
 } from "@/lib/parent-auth";
+import {
+  buildEmptyLegacyMessageThread,
+  buildLegacyMessageThreadItem,
+  buildLegacyMessageThreadPayload,
+} from "@/lib/parent-message-contracts";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -27,21 +33,21 @@ async function handleRequest(
   request: NextRequest,
   { params }: { params: Promise<{ threadId: string }> }
 ) {
-  const { threadId: routeThreadId } = await params;
-
-  const auth = await optionalAuthenticateParent(request);
-  if (auth && "error" in auth) return auth.error;
-  if (request.method !== "POST" && !auth?.parentUser) {
-    return jsonError("Unauthorized", 401);
-  }
-
   try {
+    const { threadId: routeThreadId } = await params;
+
+    const auth = await optionalAuthenticateParent(request);
+    if (auth && "error" in auth) return auth.error;
+    if (request.method !== "POST" && !auth?.parentUser) {
+      return jsonError("Unauthorized", 401);
+    }
+
     const postedThreadId =
       request.method === "POST" ? await readPostedThreadId(request) : null;
     const threadId = postedThreadId || routeThreadId;
     const threadMessages = await loadThreadMessages(threadId);
     if (threadMessages.length === 0) {
-      return jsonSuccess([]);
+      return jsonSuccess(buildEmptyLegacyMessageThread());
     }
 
     const parentUser = auth?.parentUser;
@@ -79,15 +85,14 @@ async function handleRequest(
       }
     }
 
-    const payload = Object.fromEntries(
-      uniqueMessages.map((message, index) => [
-        String(index + 1),
-        {
-          thread_id: message.legacyThreadId
+    const payload = buildLegacyMessageThreadPayload(
+      uniqueMessages.map((message) =>
+        buildLegacyMessageThreadItem({
+          threadId: message.legacyThreadId
             ? String(message.legacyThreadId)
             : message.threadId ?? message.id,
-          modern_thread_id: message.threadId,
-          legacy_thread_id: message.legacyThreadId,
+          modernThreadId: message.threadId,
+          legacyThreadId: message.legacyThreadId,
           datetime: messageDateTime(message),
           sender:
             message.legacySenderType !== null && message.legacySenderType !== undefined
@@ -95,16 +100,19 @@ async function handleRequest(
               : message.senderType === "PARENT"
                 ? "1"
                 : "0",
-          sender_type: message.senderType,
+          senderType: message.senderType,
           subject: message.subject ?? "",
           message: message.body,
-          is_read: message.isRead,
-        },
-      ])
+          isRead: message.isRead,
+        })
+      )
     );
 
     return jsonSuccess(payload);
-  } catch {
+  } catch (error) {
+    if (request.method === "POST" || isPrismaConnectionError(error)) {
+      return jsonSuccess(buildEmptyLegacyMessageThread());
+    }
     return jsonError("Internal server error", 500);
   }
 }
@@ -184,11 +192,7 @@ async function optionalAuthenticateParent(request: NextRequest) {
   const parentUser = await db.parentUser.findUnique({
     where: { id: payload.sub, isActive: true },
     include: { child: true },
-  }).catch(() => "db-error" as const);
-
-  if (parentUser === "db-error") {
-    return { error: jsonError("Internal server error", 500) };
-  }
+  });
 
   if (!parentUser) {
     return { error: jsonError("Unauthorized", 401) };

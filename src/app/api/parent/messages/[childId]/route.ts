@@ -3,11 +3,16 @@ import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import {
   formatChildName,
-  makeHeader,
+  isPrismaConnectionError,
   jsonError,
   jsonSuccess,
   verifyParentToken,
 } from "@/lib/parent-auth";
+import {
+  buildEmptyLegacyMessageList,
+  buildLegacyMessageListHeader,
+  buildLegacyMessageListItem,
+} from "@/lib/parent-message-contracts";
 
 type ParentMessagesChild = {
   id: string;
@@ -57,20 +62,21 @@ async function handleRequest(
   request: NextRequest,
   { params }: { params: Promise<{ childId: string }> }
 ) {
-  const { childId } = await params;
-
-  const postedChildId = request.method === "POST" ? await readPostedChildId(request) : null;
-  const auth = await optionalAuthenticateParent(request);
-  if (auth && "error" in auth) return auth.error;
-
   try {
+    const { childId } = await params;
+
+    const postedChildId =
+      request.method === "POST" ? await readPostedChildId(request) : null;
+    const auth = await optionalAuthenticateParent(request);
+    if (auth && "error" in auth) return auth.error;
+
     let parentUser = auth?.parentUser ?? null;
     if (parentUser && !matchesParentUserChildId(parentUser, childId)) {
       return jsonError("Access denied", 403);
     }
 
     if (request.method === "POST") {
-      if (!postedChildId) return jsonSuccess([makeHeader("", false, 0)]);
+      if (!postedChildId) return jsonSuccess(buildEmptyLegacyMessageList());
 
       if (parentUser) {
         if (!matchesParentUserChildId(parentUser, postedChildId)) {
@@ -78,7 +84,7 @@ async function handleRequest(
         }
       } else {
         parentUser = await resolveLegacyParentMessageUser(postedChildId);
-        if (!parentUser) return jsonSuccess([makeHeader("", false, 0)]);
+        if (!parentUser) return jsonSuccess(buildEmptyLegacyMessageList());
       }
     }
 
@@ -155,21 +161,29 @@ async function handleRequest(
       (a, b) => b.datetime.getTime() - a.datetime.getTime()
     );
 
-    const header = makeHeader(formatChildName(child), true, threads.length);
+    const header = buildLegacyMessageListHeader(
+      formatChildName(child),
+      true,
+      threads.length
+    );
 
-    const items = threads.map((t) => ({
-      datetime: t.datetimeText,
-      thread_id: t.threadId,
-      modern_thread_id: t.modernThreadId,
-      legacy_thread_id: t.legacyThreadId,
-      subject: t.subject,
-      last_message: t.lastMessage,
-      original_sender:
-        originalSenderMap.get(t.modernThreadId) ?? "Administration",
-    }));
+    const items = threads.map((t) =>
+      buildLegacyMessageListItem({
+        datetime: t.datetimeText,
+        threadId: t.threadId,
+        modernThreadId: t.modernThreadId,
+        legacyThreadId: t.legacyThreadId,
+        subject: t.subject,
+        lastMessage: t.lastMessage,
+        originalSender: originalSenderMap.get(t.modernThreadId) ?? "Administration",
+      })
+    );
 
     return jsonSuccess([header, ...items]);
-  } catch {
+  } catch (error) {
+    if (request.method === "POST" || isPrismaConnectionError(error)) {
+      return jsonSuccess(buildEmptyLegacyMessageList());
+    }
     return jsonError("Internal server error", 500);
   }
 }
@@ -261,11 +275,7 @@ async function optionalAuthenticateParent(request: NextRequest) {
   const parentUser = await db.parentUser.findUnique({
     where: { id: payload.sub, isActive: true },
     include: { child: true },
-  }).catch(() => "db-error" as const);
-
-  if (parentUser === "db-error") {
-    return { error: jsonError("Internal server error", 500) };
-  }
+  });
 
   if (!parentUser) {
     return { error: jsonError("Unauthorized", 401) };

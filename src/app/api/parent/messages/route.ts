@@ -5,10 +5,15 @@ import { db } from "@/lib/db";
 import {
   checkRateLimit,
   getRateLimitKey,
+  isPrismaConnectionError,
   jsonError,
   jsonSuccess,
   verifyParentToken,
 } from "@/lib/parent-auth";
+import {
+  buildFailedLegacySendMessageResult,
+  buildSentLegacySendMessageResult,
+} from "@/lib/parent-message-contracts";
 
 const legacyString = z.union([z.string(), z.number()]).transform(String);
 const requiredLegacyString = legacyString.pipe(z.string().min(1));
@@ -49,27 +54,24 @@ export async function POST(request: NextRequest) {
     return jsonError("Too many requests", 429);
   }
 
-  const auth = await optionalAuthenticateParent(request);
-  if (auth && "error" in auth) return auth.error;
-
-  const body = await readRequestBody(request);
-  const parsed = sendMessageSchema.safeParse(body);
-  if (!parsed.success) {
-    return jsonSuccess({
-      feedback: "Message Failed to Send",
-      threadid: 0,
-    });
-  }
-
-  const {
-    usites,
-    to,
-    subject,
-    message: messageBody,
-  } = parsed.data;
-  const threadid = parsed.data.threadid || "0";
-
   try {
+    const auth = await optionalAuthenticateParent(request);
+    if (auth && "error" in auth) return auth.error;
+
+    const body = await readRequestBody(request);
+    const parsed = sendMessageSchema.safeParse(body);
+    if (!parsed.success) {
+      return failedSend();
+    }
+
+    const {
+      usites,
+      to,
+      subject,
+      message: messageBody,
+    } = parsed.data;
+    const threadid = parsed.data.threadid || "0";
+
     let parentUser = auth?.parentUser ?? null;
     const isAuthenticatedParent = Boolean(parentUser);
     if (parentUser) {
@@ -150,12 +152,11 @@ export async function POST(request: NextRequest) {
       )
     );
 
-    return jsonSuccess({
-      feedback: "Message Sent",
-      threadid: legacyThreadId,
-      modern_thread_id: thread.id,
-    });
-  } catch {
+    return jsonSuccess(buildSentLegacySendMessageResult(legacyThreadId, thread.id));
+  } catch (error) {
+    if (isPrismaConnectionError(error)) {
+      return failedSend();
+    }
     return failedSend();
   }
 }
@@ -326,11 +327,7 @@ async function optionalAuthenticateParent(request: NextRequest) {
   const parentUser = await db.parentUser.findUnique({
     where: { id: payload.sub, isActive: true },
     include: { child: true },
-  }).catch(() => "db-error" as const);
-
-  if (parentUser === "db-error") {
-    return { error: jsonError("Internal server error", 500) };
-  }
+  });
 
   if (!parentUser) {
     return { error: jsonError("Unauthorized", 401) };
@@ -393,8 +390,5 @@ function parseLegacyInt(value: unknown): number | null {
 }
 
 function failedSend() {
-  return jsonSuccess({
-    feedback: "Message Failed to Send",
-    threadid: 0,
-  });
+  return jsonSuccess(buildFailedLegacySendMessageResult());
 }
