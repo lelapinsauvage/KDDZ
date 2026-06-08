@@ -12,7 +12,12 @@ import {
   Inbox,
 } from "lucide-react"
 import { MobileMoreSheet } from "./mobile-more-sheet"
-import type { UserRole, SidebarClassInfo, LegacyPagePermissionMap } from "./app-sidebar"
+import type {
+  UserRole,
+  SidebarClassInfo,
+  SidebarBranchInfo,
+  LegacyPagePermissionMap,
+} from "./app-sidebar"
 import { legacyPageAllows } from "./app-sidebar"
 import type { SidebarBadges } from "@/lib/actions/sidebar"
 import type { LegacyNotificationGateVisibility } from "@/lib/legacy-notification-gates"
@@ -62,6 +67,7 @@ function getTabsForRole(role: UserRole): TabItem[] {
 interface MobileNavProps {
   userRole: UserRole
   classes?: SidebarClassInfo[]
+  branches?: SidebarBranchInfo[]
   badges?: SidebarBadges
   notificationGates?: LegacyNotificationGateVisibility | null
   legacyPagePermissions?: LegacyPagePermissionMap | null
@@ -70,6 +76,7 @@ interface MobileNavProps {
 export function MobileNav({
   userRole,
   classes,
+  branches,
   badges,
   notificationGates,
   legacyPagePermissions,
@@ -128,6 +135,7 @@ export function MobileNav({
         onOpenChange={setMoreOpen}
         userRole={userRole}
         classes={classes}
+        branches={branches}
         badges={badges}
         notificationGates={notificationGates}
         legacyPagePermissions={legacyPagePermissions}

@@ -135,6 +135,11 @@ export interface SidebarClassInfo {
   branch: { id: string; name: string }
 }
 
+export interface SidebarBranchInfo {
+  id: string
+  name: string
+}
+
 // ---------------------------------------------------------------------------
 // Badge styling
 // ---------------------------------------------------------------------------
@@ -428,6 +433,7 @@ const nurseNav: NavSection[] = [
 function getNavForRole(
   role: UserRole,
   classes?: SidebarClassInfo[],
+  branches?: SidebarBranchInfo[],
   notificationGates?: LegacyNotificationGateVisibility | null,
   legacyPagePermissions?: LegacyPagePermissionMap | null
 ): NavSection[] {
@@ -487,6 +493,35 @@ function getNavForRole(
     } else {
       sections.push(classesSection)
     }
+  }
+
+  if ((role === "ADMIN" || role === "MANAGER") && branches && branches.length > 0) {
+    sections = sections.map((section) => {
+      if (!isSectionAccordion(section) || section.label !== "Food Management") {
+        return section
+      }
+
+      return {
+        ...section,
+        children: section.children.map((item) => {
+          if (isAccordion(item) || item.title !== "Food Calendar") {
+            return item
+          }
+
+          return {
+            title: "Food Calendar",
+            icon: Calendar,
+            legacyPage: "food_calendar.php",
+            children: branches.map((branch) => ({
+              title: branch.name,
+              href: `/food/calendar?branch=${encodeURIComponent(branch.id)}`,
+              icon: Building2,
+              legacyPage: "food_calendar.php",
+            })),
+          }
+        }),
+      }
+    })
   }
 
   return filterNavSections(sections, notificationGates, legacyPagePermissions)
@@ -700,6 +735,7 @@ interface AppSidebarProps {
   userRole: UserRole
   badges?: SidebarBadges
   classes?: SidebarClassInfo[]
+  branches?: SidebarBranchInfo[]
   notificationGates?: LegacyNotificationGateVisibility | null
   legacyPagePermissions?: LegacyPagePermissionMap | null
 }
@@ -710,6 +746,7 @@ export function AppSidebar({
   userRole,
   badges,
   classes,
+  branches,
   notificationGates,
   legacyPagePermissions,
 }: AppSidebarProps) {
@@ -720,6 +757,7 @@ export function AppSidebar({
   const sections = getNavForRole(
     userRole,
     classes,
+    branches,
     notificationGates,
     legacyPagePermissions
   )

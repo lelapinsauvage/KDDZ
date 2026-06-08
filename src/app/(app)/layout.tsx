@@ -145,6 +145,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           userRole={userRole}
           badges={badges}
           classes={classes}
+          branches={branches}
           notificationGates={notificationGates}
           legacyPagePermissions={legacyPagePermissions}
         />
@@ -164,6 +165,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <MobileNav
           userRole={userRole}
           classes={classes}
+          branches={branches}
           badges={badges}
           notificationGates={notificationGates}
           legacyPagePermissions={legacyPagePermissions}

@@ -23,6 +23,7 @@ import {
   type NavItem,
   type NavSection,
   type SidebarClassInfo,
+  type SidebarBranchInfo,
   type LegacyPagePermissionMap,
 } from "./app-sidebar"
 import type { SidebarBadges } from "@/lib/actions/sidebar"
@@ -33,6 +34,7 @@ interface MobileMoreSheetProps {
   onOpenChange: (open: boolean) => void
   userRole: UserRole
   classes?: SidebarClassInfo[]
+  branches?: SidebarBranchInfo[]
   badges?: SidebarBadges
   notificationGates?: LegacyNotificationGateVisibility | null
   legacyPagePermissions?: LegacyPagePermissionMap | null
@@ -43,6 +45,7 @@ export function MobileMoreSheet({
   onOpenChange,
   userRole,
   classes,
+  branches,
   badges,
   notificationGates,
   legacyPagePermissions,
@@ -51,6 +54,7 @@ export function MobileMoreSheet({
   const sections = getNavForRole(
     userRole,
     classes,
+    branches,
     notificationGates,
     legacyPagePermissions
   )
