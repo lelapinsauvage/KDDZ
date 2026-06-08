@@ -34,8 +34,8 @@ const success = buildSuccessfulLegacyParentLogin({
   modernParentUserId: "modern-parent-id",
 });
 
-assert.equal(success.id, 123);
-assert.equal(success.usites, 456);
+assert.equal(success.id, "123");
+assert.equal(success.usites, "456");
 assert.equal(success.status, true);
 assert.equal(success.fname, "Mira");
 assert.equal(success.lname, "Saab");

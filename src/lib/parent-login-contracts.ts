@@ -40,8 +40,8 @@ export function buildSuccessfulLegacyParentLogin(params: {
   modernParentUserId: string;
 }) {
   return {
-    id: toLegacyId(params.id),
-    usites: toLegacyId(params.usites),
+    id: toLegacyStringId(params.id),
+    usites: toLegacyStringId(params.usites),
     status: true,
     fname: toLegacyString(params.fname),
     lname: toLegacyString(params.lname),
@@ -56,11 +56,9 @@ export function buildSuccessfulLegacyParentLogin(params: {
   } satisfies LegacyParentLoginResponse;
 }
 
-function toLegacyId(value: unknown) {
-  if (typeof value === "number" && Number.isFinite(value)) return value;
+function toLegacyStringId(value: unknown) {
   const stringValue = toLegacyString(value).trim();
-  if (/^\d+$/.test(stringValue)) return Number(stringValue);
-  return stringValue || 0;
+  return stringValue || "0";
 }
 
 function toLegacyString(value: unknown) {
