@@ -14,9 +14,11 @@ import { POST as messageThreadPost } from "@/app/ws/message.php/route";
 import { POST as messagesListPost } from "@/app/ws/messagesList.php/route";
 import { POST as detailedDailyPost } from "@/app/ws/newdaily.php/route";
 import { POST as notificationsPost } from "@/app/ws/notifications_master.php/route";
+import { POST as pushTokenPost } from "@/app/ws/pnotifications.php/route";
 import { POST as sendMessagePost } from "@/app/ws/sendMessage.php/route";
 import { db } from "@/lib/db";
 import { LEGACY_NOTIFICATION_GROUP_COUNT } from "@/lib/parent-notification-contract";
+import { LEGACY_PUSH_RESULTS } from "@/lib/parent-push-token-contracts";
 
 type JsonRecord = Record<string, unknown>;
 type LegacyRouteHandler = (
@@ -159,6 +161,7 @@ async function main() {
   );
 
   const messageThread = await verifyTemporaryMessageThread(usites, token);
+  const pushToken = await verifyTemporaryPushToken(usites, token);
   const notificationPayload = await postNotificationsMaster(usites, token);
   assertNotificationPayload(notificationPayload, "notifications_master");
 
@@ -171,6 +174,7 @@ async function main() {
         childId: login.childId,
         feedCounts,
         messageThread,
+        pushToken,
         notificationGroups: LEGACY_NOTIFICATION_GROUP_COUNT,
         detailCounts: notificationDetailCounts(notificationPayload),
       },
@@ -459,6 +463,70 @@ async function cleanupTemporaryMessageThread(threadId: string) {
   await db.messageThread.deleteMany({ where: { id: threadId } });
 }
 
+async function verifyTemporaryPushToken(usites: string, token: string) {
+  const pushToken = `codex-parent-e2e-token-${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2)}`;
+
+  try {
+    const registerResult = asRecord(
+      await postLegacyFormRoute("ws/pnotifications.php", pushTokenPost, usites, token, {
+        cid: usites,
+        token: pushToken,
+        os: "2",
+      }),
+      "ws/pnotifications.php register response"
+    );
+    assert.equal(
+      registerResult.result,
+      LEGACY_PUSH_RESULTS.inserted,
+      "pnotifications register result"
+    );
+
+    const showAfterRegister = assertPushTokenShowPayload(
+      await postLegacyFormRoute("ws/pnotifications.php", pushTokenPost, usites, token, {
+        show: "1",
+      }),
+      "ws/pnotifications.php show after register"
+    );
+    const activeToken = findPushTokenRow(showAfterRegister, pushToken);
+    assert.equal(activeToken.child_id, usites, "registered push token child_id");
+    assert.equal(activeToken.os, "2", "registered push token os");
+    assert.equal(activeToken.active, "1", "registered push token active flag");
+    assert.equal(activeToken.platform, "IOS", "registered push token platform");
+
+    const deleteResult = asRecord(
+      await postLegacyFormRoute("ws/pnotifications.php", pushTokenPost, usites, token, {
+        del: pushToken,
+      }),
+      "ws/pnotifications.php delete response"
+    );
+    assert.equal(
+      deleteResult.result,
+      LEGACY_PUSH_RESULTS.deleted,
+      "pnotifications delete result"
+    );
+
+    const showAfterDelete = assertPushTokenShowPayload(
+      await postLegacyFormRoute("ws/pnotifications.php", pushTokenPost, usites, token, {
+        show: "1",
+      }),
+      "ws/pnotifications.php show after delete"
+    );
+    const deletedToken = findPushTokenRow(showAfterDelete, pushToken);
+    assert.equal(deletedToken.active, "0", "deleted push token active flag");
+
+    return {
+      token: pushToken,
+      showCountAfterRegister: showAfterRegister.length,
+      showCountAfterDelete: showAfterDelete.length,
+      cleanedUp: true,
+    };
+  } finally {
+    await db.pushToken.deleteMany({ where: { token: pushToken } });
+  }
+}
+
 function assertLegacyListPayload(
   payload: unknown,
   label: string,
@@ -657,6 +725,33 @@ function assertMessageThreadItem(record: JsonRecord, label: string) {
     `${label}.legacy_thread_id must be number or null`
   );
   assert.equal(typeof record.is_read, "boolean", `${label}.is_read must be boolean`);
+}
+
+function assertPushTokenShowPayload(payload: unknown, label: string) {
+  const record = asRecord(payload, label);
+  assert.ok(Array.isArray(record.result), `${label}.result must be array`);
+  const rows = record.result.map((item, index) => {
+    const row = asRecord(item, `${label}.result[${index}]`);
+    assertStringFields(row, [
+      "id",
+      "datetime",
+      "child_id",
+      "token",
+      "os",
+      "active",
+      "modern_id",
+      "parent_user_id",
+      "platform",
+    ], `${label}.result[${index}]`);
+    return row;
+  });
+  return rows;
+}
+
+function findPushTokenRow(rows: JsonRecord[], token: string) {
+  const row = rows.find((item) => item.token === token);
+  assert.ok(row, `push token ${token} should be present in show result`);
+  return row;
 }
 
 function assertNotificationPayload(payload: JsonRecord, label: string) {
