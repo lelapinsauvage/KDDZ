@@ -1,14 +1,22 @@
 import { NextRequest } from "next/server";
-import type { Prisma, PushPlatform } from "@/generated/prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 import { z } from "zod/v4";
 import { db } from "@/lib/db";
 import {
   checkRateLimit,
   getRateLimitKey,
+  isPrismaConnectionError,
   jsonError,
   jsonSuccess,
   verifyParentToken,
 } from "@/lib/parent-auth";
+import {
+  buildEmptyLegacyPushShowResult,
+  buildLegacyPushResult,
+  LEGACY_PUSH_RESULTS,
+  mapLegacyPushPlatform,
+  mapLegacyPushToken,
+} from "@/lib/parent-push-token-contracts";
 
 const legacyString = z.union([z.string(), z.number()]).transform(String);
 
@@ -45,17 +53,6 @@ type LegacyPushOwner = {
   child: PushParentChild | null;
 };
 
-type PushTokenRow = {
-  id: string;
-  parentUserId: string | null;
-  token: string;
-  platform: PushPlatform;
-  isActive: boolean;
-  legacyData: Prisma.JsonValue | null;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
 export async function POST(request: NextRequest) {
   // Rate limit: 30 push-token operations per minute per IP
   const rlKey = getRateLimitKey(request, "push-token");
@@ -89,7 +86,7 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) {
     return shouldShow
       ? handleShow(parentUser?.id ?? null)
-      : jsonSuccess({ result: "Missing Paramaters" });
+      : jsonSuccess(buildLegacyPushResult(LEGACY_PUSH_RESULTS.missingParameters));
   }
 
   const { cid, token, os } = parsed.data;
@@ -111,7 +108,11 @@ async function optionalAuthenticateParent(request: NextRequest) {
   const parentUser = await db.parentUser.findUnique({
     where: { id: payload.sub, isActive: true },
     include: { child: true },
-  });
+  }).catch(() => "db-error" as const);
+
+  if (parentUser === "db-error") {
+    return { error: jsonError("Internal server error", 500) };
+  }
 
   if (!parentUser) {
     return { error: jsonError("Unauthorized", 401) };
@@ -135,12 +136,14 @@ async function handleRegister(
       owner = { parentUser, child: parentUser.child };
     } else {
       if (!cid) {
-        return jsonSuccess({ result: "Missing Paramaters" });
+        return jsonSuccess(
+          buildLegacyPushResult(LEGACY_PUSH_RESULTS.missingParameters)
+        );
       }
       owner = await resolveLegacyPushOwner(cid);
     }
 
-    const platform = mapPlatform(os);
+    const platform = mapLegacyPushPlatform(os);
     const legacyData = {
       source: "ws/pnotifications.php",
       cid: cid ?? owner.child?.id ?? parentUser?.childId ?? "",
@@ -180,8 +183,13 @@ async function handleRegister(
       });
     }
 
-    return jsonSuccess({ result: "Values inserted Successfully" });
-  } catch {
+    return jsonSuccess(buildLegacyPushResult(LEGACY_PUSH_RESULTS.inserted));
+  } catch (error) {
+    if (isPrismaConnectionError(error)) {
+      return jsonSuccess(
+        buildLegacyPushResult(LEGACY_PUSH_RESULTS.missingParameters)
+      );
+    }
     return jsonError("Internal server error", 500);
   }
 }
@@ -196,7 +204,7 @@ async function handleDelete(tokenString: string, parentUserId: string | null) {
     });
 
     if (!existing) {
-      return jsonSuccess({ result: "No Such Token Exists" });
+      return jsonSuccess(buildLegacyPushResult(LEGACY_PUSH_RESULTS.noToken));
     }
 
     await db.pushToken.update({
@@ -204,8 +212,11 @@ async function handleDelete(tokenString: string, parentUserId: string | null) {
       data: { isActive: false },
     });
 
-    return jsonSuccess({ result: "Token Deleted Successfully" });
-  } catch {
+    return jsonSuccess(buildLegacyPushResult(LEGACY_PUSH_RESULTS.deleted));
+  } catch (error) {
+    if (isPrismaConnectionError(error)) {
+      return jsonSuccess(buildLegacyPushResult(LEGACY_PUSH_RESULTS.noToken));
+    }
     return jsonError("Internal server error", 500);
   }
 }
@@ -229,7 +240,7 @@ async function handleShow(parentUserId: string | null) {
 
     return jsonSuccess({ result: tokens.map(mapLegacyPushToken) });
   } catch {
-    return jsonError("Internal server error", 500);
+    return jsonSuccess(buildEmptyLegacyPushShowResult());
   }
 }
 
@@ -260,13 +271,6 @@ async function readRequestBody(request: NextRequest): Promise<Record<string, unk
   const text = await request.text().catch(() => "");
   if (!text.trim()) return {};
   return Object.fromEntries(new URLSearchParams(text).entries());
-}
-
-function mapPlatform(os: string) {
-  // Legacy `notifications_tokens.os`: 1 = Android, 2 = iOS, 3 = other.
-  if (os === "1") return "ANDROID" as const;
-  if (os === "2") return "IOS" as const;
-  return "WEB" as const;
 }
 
 async function resolveLegacyPushOwner(cid: string): Promise<LegacyPushOwner> {
@@ -319,46 +323,4 @@ function matchesChildId(parentUser: PushParentUser, childId: string) {
 function parseLegacyInt(value: unknown): number | null {
   const parsed = Number.parseInt(String(value ?? ""), 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
-}
-
-function mapLegacyPushToken(token: PushTokenRow) {
-  const legacy = asRecord(token.legacyData);
-
-  return {
-    id: readString(legacy, ["legacyId", "id"]) ?? token.id,
-    datetime:
-      readString(legacy, ["datetime"]) ?? formatSqlDateTime(token.createdAt),
-    child_id:
-      readString(legacy, ["cid", "child_id", "legacyChildId"]) ?? "",
-    token: token.token,
-    os: readString(legacy, ["os"]) ?? platformToLegacyOs(token.platform),
-    active: token.isActive ? "1" : "0",
-    modern_id: token.id,
-    parent_user_id: token.parentUserId ?? "",
-    platform: token.platform,
-  };
-}
-
-function platformToLegacyOs(platform: PushPlatform) {
-  if (platform === "ANDROID") return "1";
-  if (platform === "IOS") return "2";
-  return "0";
-}
-
-function formatSqlDateTime(date: Date) {
-  return date.toISOString().slice(0, 19).replace("T", " ");
-}
-
-function asRecord(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : null;
-}
-
-function readString(data: Record<string, unknown> | null, keys: string[]) {
-  for (const key of keys) {
-    const value = data?.[key];
-    if (value !== undefined && value !== null) return String(value);
-  }
-  return null;
 }
