@@ -5,11 +5,14 @@ import { z } from "zod/v4";
 import { db } from "@/lib/db";
 import {
   createParentToken,
-  jsonError,
   jsonSuccess,
   checkRateLimit,
   getRateLimitKey,
 } from "@/lib/parent-auth";
+import {
+  buildFailedLegacyParentLogin,
+  buildSuccessfulLegacyParentLogin,
+} from "@/lib/parent-login-contracts";
 
 const loginSchema = z.object({
   name: z.string().min(1),
@@ -17,9 +20,6 @@ const loginSchema = z.object({
 });
 
 const LOGIN_LOOKUP_TIMEOUT_MS = 5_000;
-const LEGACY_PARENT_REPORT_URL =
-  "https://kiddzonline.com/Garderie_parent/Front/templates/admin/users/login.php";
-
 class LoginLookupTimeoutError extends Error {
   constructor() {
     super("Parent login lookup timed out");
@@ -28,18 +28,7 @@ class LoginLookupTimeoutError extends Error {
 }
 
 function failedLogin(feedback = "") {
-  return jsonSuccess({
-    id: 0,
-    usites: 0,
-    status: false,
-    fname: "",
-    lname: "",
-    url: "",
-    urlLabel: "View Full Reports",
-    feedback,
-    token: "",
-    childId: "",
-  });
+  return jsonSuccess(buildFailedLegacyParentLogin(feedback));
 }
 
 async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
@@ -60,7 +49,7 @@ export async function POST(request: NextRequest) {
   // Rate limit: 10 login attempts per minute per IP
   const rlKey = getRateLimitKey(request, "login");
   if (!checkRateLimit(rlKey, 10, 60_000)) {
-    return jsonError("Too many login attempts", 429);
+    return failedLogin("Too many login attempts");
   }
 
   const body = await readRequestBody(request);
@@ -106,23 +95,15 @@ export async function POST(request: NextRequest) {
     const child = parentUser.child;
     const legacyId = parentUser.legacyId ?? parentUser.id;
     const legacyChildId = parentUser.legacyChildId ?? child.legacyId ?? child.id;
-    const reportUrl = token
-      ? `${LEGACY_PARENT_REPORT_URL}?token=${encodeURIComponent(token)}`
-      : "";
-
-    return jsonSuccess({
+    return jsonSuccess(buildSuccessfulLegacyParentLogin({
       id: legacyId,
       usites: legacyChildId,
-      status: true,
       fname: child.firstName,
       lname: child.lastName,
-      url: reportUrl,
-      urlLabel: "View Full Reports",
-      feedback: "",
       token,
       childId: child.id,
       modernParentUserId: parentUser.id,
-    });
+    }));
   } catch (error) {
     if (error instanceof LoginLookupTimeoutError) {
       return failedLogin("Login temporarily unavailable");
