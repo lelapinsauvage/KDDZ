@@ -5,6 +5,7 @@ import {
   formatDate,
   formatTime,
   jsonError,
+  makeHeader,
   mapPortionSize,
   verifyParentToken,
 } from "@/lib/parent-auth";
@@ -54,6 +55,10 @@ type DailyReportForParent = {
   fevers: { temperature: unknown; time: Date }[];
   milks: { amountCc: number; time: Date }[];
 };
+
+export function buildEmptyLegacyDailyPayload() {
+  return [makeHeader("", false, 0)];
+}
 
 export async function readPostedParentDailyChildId(request: NextRequest) {
   const body = await readRequestBody(request);

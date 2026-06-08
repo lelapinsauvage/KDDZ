@@ -1,11 +1,16 @@
 import assert from "node:assert/strict";
 import type { PortionSize } from "@/generated/prisma/client";
 import {
+  buildEmptyLegacyDailyPayload,
   mapLegacyDailyReport,
   mapLegacyDetailedDailyReport,
 } from "@/lib/parent-daily-contract";
 
 type DailyReportFixture = Parameters<typeof mapLegacyDailyReport>[0];
+
+assert.deepEqual(buildEmptyLegacyDailyPayload(), [
+  { name: "", status: false, count: 0 },
+]);
 
 const report: DailyReportFixture = {
   id: "modern-report-id",

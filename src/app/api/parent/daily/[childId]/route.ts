@@ -1,11 +1,13 @@
 import { NextRequest } from "next/server";
 import {
   formatChildName,
+  isPrismaConnectionError,
   jsonError,
   jsonSuccess,
   makeHeader,
 } from "@/lib/parent-auth";
 import {
+  buildEmptyLegacyDailyPayload,
   loadParentDailyReports,
   mapLegacyDailyReport,
   matchesParentDailyUserChildId,
@@ -69,7 +71,10 @@ async function handleRequest(
     const reports = await loadParentDailyReports(child.id);
     const header = makeHeader(formatChildName(child), true, reports.length);
     return jsonSuccess([header, ...reports.map(mapLegacyDailyReport)]);
-  } catch {
+  } catch (error) {
+    if (request.method === "POST" || isPrismaConnectionError(error)) {
+      return jsonSuccess(buildEmptyLegacyDailyPayload());
+    }
     return jsonError("Internal server error", 500);
   }
 }
