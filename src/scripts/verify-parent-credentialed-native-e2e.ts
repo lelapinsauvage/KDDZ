@@ -10,9 +10,11 @@ import { POST as foodCalendarPost } from "@/app/ws/foodcalendar.php/route";
 import { POST as holidayCalendarPost } from "@/app/ws/holcalendar.php/route";
 import { POST as oldHolidayCalendarPost } from "@/app/ws/holcalendarOLD.php/route";
 import { POST as parentLoginPost } from "@/app/ws/login.php/route";
+import { POST as messageThreadPost } from "@/app/ws/message.php/route";
 import { POST as messagesListPost } from "@/app/ws/messagesList.php/route";
 import { POST as detailedDailyPost } from "@/app/ws/newdaily.php/route";
 import { POST as notificationsPost } from "@/app/ws/notifications_master.php/route";
+import { POST as sendMessagePost } from "@/app/ws/sendMessage.php/route";
 import { db } from "@/lib/db";
 import { LEGACY_NOTIFICATION_GROUP_COUNT } from "@/lib/parent-notification-contract";
 
@@ -156,6 +158,7 @@ async function main() {
     "holcalendarOLD.php should alias holcalendar.php"
   );
 
+  const messageThread = await verifyTemporaryMessageThread(usites, token);
   const notificationPayload = await postNotificationsMaster(usites, token);
   assertNotificationPayload(notificationPayload, "notifications_master");
 
@@ -167,6 +170,7 @@ async function main() {
         usites,
         childId: login.childId,
         feedCounts,
+        messageThread,
         notificationGroups: LEGACY_NOTIFICATION_GROUP_COUNT,
         detailCounts: notificationDetailCounts(notificationPayload),
       },
@@ -287,7 +291,8 @@ async function postLegacyFormRoute(
   path: string,
   handler: LegacyRouteHandler,
   usites: string,
-  token: string
+  token: string,
+  fields: Record<string, string> = {}
 ) {
   assert.ok(token, "login.token must not be empty");
 
@@ -296,8 +301,9 @@ async function postLegacyFormRoute(
     headers: {
       authorization: `Bearer ${token}`,
       "content-type": "application/x-www-form-urlencoded",
+      "x-forwarded-for": `verify-parent-e2e-${Date.now()}-${path}`,
     },
-    body: new URLSearchParams({ usites }),
+    body: new URLSearchParams({ usites, ...fields }),
   });
 
   const response = await handler(request);
@@ -326,6 +332,131 @@ async function postNotificationsMaster(usites: string, token: string) {
     "ws/notifications_master.php should return HTTP 200"
   );
   return asRecord(await response.json(), "ws/notifications_master.php response");
+}
+
+async function verifyTemporaryMessageThread(usites: string, token: string) {
+  const marker = `codex-parent-e2e-${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2)}`;
+  const subject = `Codex parent E2E ${marker}`;
+  const firstMessage = `Temporary parent message ${marker}`;
+  const replyMessage = `Temporary parent reply ${marker}`;
+  let modernThreadId: string | null = null;
+  let legacyThreadId: number | null = null;
+
+  try {
+    const sendResult = asRecord(
+      await postLegacyFormRoute("ws/sendMessage.php", sendMessagePost, usites, token, {
+        to: "1",
+        threadid: "0",
+        subject,
+        message: firstMessage,
+      }),
+      "ws/sendMessage.php response"
+    );
+    assert.equal(sendResult.feedback, "Message Sent", "sendMessage feedback");
+    legacyThreadId = requiredNumber(sendResult, "threadid", "sendMessage");
+    assert.ok(legacyThreadId > 0, "sendMessage.threadid must be positive");
+    modernThreadId = requiredString(sendResult, "modern_thread_id", "sendMessage");
+
+    const replyResult = asRecord(
+      await postLegacyFormRoute("ws/sendMessage.php", sendMessagePost, usites, token, {
+        to: "1",
+        threadid: String(legacyThreadId),
+        subject,
+        message: replyMessage,
+      }),
+      "ws/sendMessage.php reply response"
+    );
+    assert.equal(replyResult.feedback, "Message Sent", "sendMessage reply feedback");
+    assert.equal(replyResult.threadid, legacyThreadId, "reply should keep thread id");
+    assert.equal(
+      replyResult.modern_thread_id,
+      modernThreadId,
+      "reply should keep modern thread id"
+    );
+
+    const messagesPayload = assertLegacyListPayload(
+      await postLegacyFormRoute(
+        "ws/messagesList.php",
+        messagesListPost,
+        usites,
+        token
+      ),
+      "ws/messagesList.php after send",
+      assertMessageListItem
+    );
+    assert.ok(
+      legacyListItemCount(messagesPayload) > 0,
+      "messagesList should include the temporary thread"
+    );
+    const listItem = messagesPayload
+      .slice(1)
+      .map((item, index) =>
+        asRecord(item, `ws/messagesList.php after send[${index + 1}]`)
+      )
+      .find((item) => item.modern_thread_id === modernThreadId);
+    assert.ok(listItem, "messagesList should include modern temporary thread id");
+    assert.equal(listItem.subject, subject, "messagesList subject");
+    assert.equal(listItem.legacy_thread_id, legacyThreadId, "messagesList legacy id");
+    assert.equal(listItem.original_sender, "Parent", "messagesList original sender");
+    assert.match(
+      String(listItem.last_message),
+      /^You: Temporary parent reply/,
+      "messagesList should preview latest parent reply"
+    );
+
+    const threadPayload = asRecord(
+      await postLegacyFormRoute(
+        "ws/message.php",
+        messageThreadPost,
+        String(legacyThreadId),
+        token
+      ),
+      "ws/message.php response"
+    );
+    const threadItems = numericRecordItems(threadPayload, "ws/message.php response");
+    assert.ok(threadItems.length >= 2, "message thread should include send and reply");
+    for (const [index, item] of threadItems.entries()) {
+      assertMessageThreadItem(item, `ws/message.php[${index + 1}]`);
+      assert.equal(
+        item.modern_thread_id,
+        modernThreadId,
+        `ws/message.php[${index + 1}].modern_thread_id`
+      );
+      assert.equal(
+        item.legacy_thread_id,
+        legacyThreadId,
+        `ws/message.php[${index + 1}].legacy_thread_id`
+      );
+      assert.equal(item.subject, subject, `ws/message.php[${index + 1}].subject`);
+    }
+    assert.ok(
+      threadItems.some((item) => item.message === firstMessage),
+      "message thread should include original temporary message"
+    );
+    assert.ok(
+      threadItems.some((item) => item.message === replyMessage),
+      "message thread should include temporary reply"
+    );
+
+    return {
+      legacyThreadId,
+      modernThreadId,
+      listCountAfterSend: legacyListItemCount(messagesPayload),
+      threadItems: threadItems.length,
+      cleanedUp: true,
+    };
+  } finally {
+    if (modernThreadId) {
+      await cleanupTemporaryMessageThread(modernThreadId);
+    }
+  }
+}
+
+async function cleanupTemporaryMessageThread(threadId: string) {
+  await db.message.deleteMany({ where: { threadId } });
+  await db.messageThread.deleteMany({ where: { id: threadId } });
 }
 
 function assertLegacyListPayload(
@@ -508,6 +639,26 @@ function assertMessageListItem(record: JsonRecord, label: string) {
   );
 }
 
+function assertMessageThreadItem(record: JsonRecord, label: string) {
+  assertStringFields(record, [
+    "thread_id",
+    "datetime",
+    "sender",
+    "sender_type",
+    "subject",
+    "message",
+  ], label);
+  assert.ok(
+    typeof record.modern_thread_id === "string" || record.modern_thread_id === null,
+    `${label}.modern_thread_id must be string or null`
+  );
+  assert.ok(
+    record.legacy_thread_id === null || typeof record.legacy_thread_id === "number",
+    `${label}.legacy_thread_id must be number or null`
+  );
+  assert.equal(typeof record.is_read, "boolean", `${label}.is_read must be boolean`);
+}
+
 function assertNotificationPayload(payload: JsonRecord, label: string) {
   const info = asRecord(payload.info, `${label}.info`);
   assertStringFields(info, ["name", "no_notifications"], `${label}.info`);
@@ -605,6 +756,18 @@ function requiredString(record: JsonRecord, key: string, label: string) {
   const value = record[key];
   assert.equal(typeof value, "string", `${label}.${key} must be string`);
   return value as string;
+}
+
+function requiredNumber(record: JsonRecord, key: string, label: string) {
+  const value = record[key];
+  assert.equal(typeof value, "number", `${label}.${key} must be number`);
+  return value as number;
+}
+
+function numericRecordItems(record: JsonRecord, label: string) {
+  return Object.entries(record)
+    .sort(([left], [right]) => Number(left) - Number(right))
+    .map(([key, value]) => asRecord(value, `${label}.${key}`));
 }
 
 function asRecord(value: unknown, label: string): JsonRecord {
