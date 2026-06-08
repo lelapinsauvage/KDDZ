@@ -4,17 +4,20 @@ import type { AlarmType, Prisma } from "@/generated/prisma/client";
 import {
   formatChildName,
   formatDateTimeLong,
+  isPrismaConnectionError,
   jsonError,
   jsonSuccess,
   verifyParentToken,
 } from "@/lib/parent-auth";
-
-interface NotificationGroup {
-  name: string;
-  details: NotificationDetail[];
-}
-
-type NotificationDetail = { datetime: string; subject: string; body: string };
+import {
+  buildEmptyNotificationPayload,
+  buildNotificationGroup,
+  cleanLegacyNotificationBody,
+  DEFAULT_NATURES,
+  type ParentNotificationDetail as NotificationDetail,
+  type ParentNotificationNature as NotificationNature,
+  withDefaultNotificationNatures,
+} from "@/lib/parent-notification-contract";
 
 type ParentNotificationChild = {
   id: string;
@@ -30,17 +33,6 @@ type ParentNotificationUser = {
   childId: string;
   legacyChildId: number | null;
   child: ParentNotificationChild;
-};
-
-type NotificationNature = {
-  legacyId: number;
-  name: string;
-  contentTable: string | null;
-  parentDeliveryTable: string | null;
-  subjectColumn: string | null;
-  bodyColumn: string | null;
-  displayOrder: number | null;
-  isActive: boolean;
 };
 
 type AlarmRow = {
@@ -96,20 +88,6 @@ const ALARM_TABLE_TYPES: Record<string, AlarmType> = {
   t_alarms_others: "OTHER",
 };
 
-const DEFAULT_NATURES: NotificationNature[] = [
-  nature(1, "Birthdays", "custom_notifications_birthday_parents", null, "", "cusntf_notification_text"),
-  nature(2, "Closure", "t_alarms", "custom_notifications_parents", "type", "details"),
-  nature(4, "Events", "t_events", "custom_notifications_events_parents", "custom_subject", "custom_body"),
-  nature(7, "Medicine", "t_alarms_medicine", "custom_notifications_medicine_parents", "", "details"),
-  nature(3, "Assessments", "t_alarms_assessment_parents", null, "", "details"),
-  nature(5, "Report Reminders", "t_alarms_medical", "custom_notifications_medical_parents", "", "details"),
-  nature(6, "Vaccinations", "t_alarms_vaccinations", "custom_notifications_vaccinations", "", "details"),
-  nature(8, "Insurance", "t_alarms_insurance", "custom_notifications_insurance_parents", "", "details"),
-  nature(9, "Payments", "t_alarms_payments", "custom_notifications_payments", "", "details"),
-  nature(10, "Other", "t_alarms_others", "custom_notifications_others_parents", "", "details"),
-  nature(11, "Requests", "t_alarms_requests", "custom_notifications_requests_parents", "", "details"),
-];
-
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export async function GET(
@@ -130,33 +108,35 @@ async function handleRequest(
   request: NextRequest,
   { params }: { params: Promise<{ childId: string }> }
 ) {
-  const { childId: routeChildId } = await params;
-
-  const body = request.method === "POST" ? await readRequestBody(request) : null;
-  const postedChildId = readString(body, ["usites", "pid", "child_id", "childId"]);
-  const auth = await optionalAuthenticateParent(request);
-  if (auth && "error" in auth) return auth.error;
-  if (request.method === "POST" && !postedChildId) return jsonSuccess({});
-
-  const requestedChildId = postedChildId ?? routeChildId;
-  let parentUser = auth?.parentUser ?? null;
-  let child = parentUser?.child ?? null;
-
-  if (parentUser) {
-    if (!matchesChildId(parentUser, requestedChildId)) {
-      return jsonError("Access denied", 403);
-    }
-  } else {
-    const context = await resolveLegacyNotificationContext(requestedChildId);
-    parentUser = context.parentUser;
-    child = context.child;
-  }
-
-  if (!child) {
-    return jsonSuccess(buildEmptyNotificationPayload());
-  }
-
   try {
+    const { childId: routeChildId } = await params;
+
+    const body = request.method === "POST" ? await readRequestBody(request) : null;
+    const postedChildId = readString(body, ["usites", "pid", "child_id", "childId"]);
+    const auth = await optionalAuthenticateParent(request);
+    if (auth && "error" in auth) return auth.error;
+    if (request.method === "POST" && !postedChildId) {
+      return jsonSuccess(buildEmptyNotificationPayload());
+    }
+
+    const requestedChildId = postedChildId ?? routeChildId;
+    let parentUser = auth?.parentUser ?? null;
+    let child = parentUser?.child ?? null;
+
+    if (parentUser) {
+      if (!matchesChildId(parentUser, requestedChildId)) {
+        return jsonError("Access denied", 403);
+      }
+    } else {
+      const context = await resolveLegacyNotificationContext(requestedChildId);
+      parentUser = context.parentUser;
+      child = context.child;
+    }
+
+    if (!child) {
+      return jsonSuccess(buildEmptyNotificationPayload());
+    }
+
     const result: Record<string, unknown> = {
       info: {
         name: formatChildName(child),
@@ -178,25 +158,12 @@ async function handleRequest(
     }
 
     return jsonSuccess(result);
-  } catch {
+  } catch (error) {
+    if (isPrismaConnectionError(error)) {
+      return jsonSuccess(buildEmptyNotificationPayload());
+    }
     return jsonError("Internal server error", 500);
   }
-}
-
-function buildEmptyNotificationPayload() {
-  const result: Record<string, unknown> = {
-    info: {
-      name: "",
-      status: false,
-      no_notifications: "No New Notifications",
-    },
-  };
-
-  DEFAULT_NATURES.forEach((item, index) => {
-    result[`notification${index + 1}`] = buildNotificationGroup(item.name, []);
-  });
-
-  return result;
 }
 
 async function loadNotificationNatures(): Promise<NotificationNature[]> {
@@ -215,22 +182,6 @@ async function loadNotificationNatures(): Promise<NotificationNature[]> {
   });
 
   return natures.length > 0 ? withDefaultNotificationNatures(natures) : DEFAULT_NATURES;
-}
-
-function withDefaultNotificationNatures(natures: NotificationNature[]) {
-  if (natures.length >= DEFAULT_NATURES.length) return natures;
-
-  const existingKeys = new Set(
-    natures.map((item) => `${item.legacyId}:${item.name.toLowerCase()}`)
-  );
-  const missing = DEFAULT_NATURES.filter(
-    (item) => !existingKeys.has(`${item.legacyId}:${item.name.toLowerCase()}`)
-  );
-
-  return [...natures, ...missing].sort(
-    (a, b) =>
-      (a.displayOrder ?? a.legacyId) - (b.displayOrder ?? b.legacyId)
-  );
 }
 
 async function loadNatureDetails(
@@ -412,7 +363,7 @@ function mapAlarmDetail(
   return {
     datetime: formatLegacyDate(readString(legacy, ["datetime"]), alarm.dueDate ?? alarm.createdAt),
     subject: readSubject(legacy, nature, legacyFallbackSubject(alarm.type)),
-    body: cleanLegacyBody(
+    body: cleanLegacyNotificationBody(
       readBody(legacy, nature, alarm.message ?? legacyFallbackSubject(alarm.type))
     ),
   };
@@ -430,7 +381,7 @@ function mapEventDetail(
       event.date
     ),
     subject: readSubject(legacy, nature, event.customSubject ?? event.title),
-    body: cleanLegacyBody(
+    body: cleanLegacyNotificationBody(
       readBody(legacy, nature, event.customBody ?? event.description ?? "")
     ),
   };
@@ -449,7 +400,7 @@ function mapMessageDetail(
       message.createdAt
     ),
     subject: readSubject(legacyMessage, nature, message.subject ?? ""),
-    body: cleanLegacyBody(readBody(legacyMessage, nature, message.body)),
+    body: cleanLegacyNotificationBody(readBody(legacyMessage, nature, message.body)),
   };
 }
 
@@ -467,15 +418,8 @@ function mapAssessmentDetail(
   return {
     datetime: formatLegacyDate(readString(marker, ["datetime"]), assessment.createdAt),
     subject: readSubject(marker, nature, `Assessment Type ${assessment.assessmentType}`),
-    body: cleanLegacyBody(readBody(marker, nature, fallbackMessage)),
+    body: cleanLegacyNotificationBody(readBody(marker, nature, fallbackMessage)),
   };
-}
-
-function buildNotificationGroup(
-  name: string,
-  details: NotificationDetail[]
-): NotificationGroup {
-  return { name, details };
 }
 
 function recipientFilters(
@@ -632,26 +576,6 @@ function matchesChildId(parentUser: ParentNotificationUser, postedChildId: strin
   );
 }
 
-function nature(
-  legacyId: number,
-  name: string,
-  contentTable: string,
-  parentDeliveryTable: string | null,
-  subjectColumn: string,
-  bodyColumn: string
-): NotificationNature {
-  return {
-    legacyId,
-    name,
-    contentTable,
-    parentDeliveryTable,
-    subjectColumn,
-    bodyColumn,
-    displayOrder: legacyId,
-    isActive: true,
-  };
-}
-
 function readSubject(
   data: Record<string, unknown> | null,
   nature: NotificationNature,
@@ -700,10 +624,6 @@ function firstRecord(value: unknown) {
 
 function jsonStringArray(value: Prisma.JsonValue | null) {
   return Array.isArray(value) ? value.map(String).filter(Boolean) : [];
-}
-
-function cleanLegacyBody(value: string) {
-  return value.replace(/"/g, "");
 }
 
 function formatLegacyDate(value: string | null, fallback: Date) {
