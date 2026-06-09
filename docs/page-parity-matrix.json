@@ -563,7 +563,7 @@
     "legacyPhp": "Front/templates/admin/alarmsInsurance.php",
     "legacyJs": "Front/templates/admin/js/alarmsInsurance.js",
     "modernRoute": "/alarmsInsurance.php, /alarms/insurance",
-    "status": "partial - legacy insurance alarms bridge, staff/parent read-state, sent history, and class targeting restored",
+    "status": "partial - legacy insurance alarms bridge, staff/parent read-state, sent history, class targeting, and message-portal parent delivery restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -574,7 +574,7 @@
       "custom_notifications_insurance",
       "custom_notifications_insurance_parents"
     ],
-    "verification": "Modern page reads migrated and generated `NotificationReceipt` rows from `custom_notifications_insurance` and `custom_notifications_insurance_parents`, restores Teachers New/Viewed status, search/status/branch/date filters, row/bulk/all mark-viewed actions, Sent Insurance Reminders history for staff and parent recipients, and keeps the manual generator backed by the idempotent `Data::AlarmsInsurance()` parity job plus generated `custom_notifications_insurance` receipts targeted like `getusersperclassUsersDb()` through imported `login_users.uclasses` and protected `/api/cron/insurance-alarms`. `/alarmsInsurance.php` now redirects to the modern insurance alarms page. Alarm notification and sent-history loads now use uncapped server queries over migrated/generated receipts. Remaining work is parent/mobile delivery."
+    "verification": "Modern page reads migrated and generated `NotificationReceipt` rows from `custom_notifications_insurance` and `custom_notifications_insurance_parents`, restores Teachers New/Viewed status, search/status/branch/date filters, row/bulk/all mark-viewed actions, Sent Insurance Reminders history for staff and parent recipients, and keeps the manual generator backed by the idempotent `Data::AlarmsInsurance()` parity job plus generated `custom_notifications_insurance` receipts targeted like `getusersperclassUsersDb()` through imported `login_users.uclasses` and protected `/api/cron/insurance-alarms`. Message-portal Insurance sends now mirror `Data::addToInsurance()` parent receipts, including the legacy `ntype` marker, and `verify-medicine-insurance-message-side-effects.ts` proves those receipts surface through `notifications_master.php`. `/alarmsInsurance.php` now redirects to the modern insurance alarms page. Alarm notification and sent-history loads now use uncapped server queries over migrated/generated receipts. Remaining work is hosted schedule decision, external provider push/SMS/email execution, and final visual audit."
   },
   {
     "legacyPhp": "Front/templates/admin/alarmsMedical.php",
@@ -596,7 +596,7 @@
     "legacyPhp": "Front/templates/admin/alarmsMedicine.php",
     "legacyJs": "Front/templates/admin/js/alarmsMedicine.js",
     "modernRoute": "/alarmsMedicine.php, /alarms/medicine",
-    "status": "partial - legacy medicine alarms bridge, staff/parent read-state, sent history, and class targeting restored",
+    "status": "partial - legacy medicine alarms bridge, staff/parent read-state, sent history, class targeting, and message-portal parent delivery restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -608,7 +608,7 @@
       "custom_notifications_medicine",
       "custom_notifications_medicine_parents"
     ],
-    "verification": "Modern page reads migrated and generated `NotificationReceipt` rows from `custom_notifications_medicine` and `custom_notifications_medicine_parents`, restores Teachers New/Viewed status, search/status/branch/date filters, row/bulk/all mark-viewed actions, Sent Medicine Alarms history for staff and parent recipients, and keeps the manual generator backed by the idempotent `Data::AlarmsMedicine()` parity job plus generated `custom_notifications_medicine` receipts targeted like `getusersperclassUsersDb()` through imported `login_users.uclasses` and protected `/api/cron/medicine-alarms`. `/alarmsMedicine.php` now redirects to the modern medicine alarms page. Alarm notification and sent-history loads now use uncapped server queries over migrated/generated receipts. Remaining work is parent/mobile delivery."
+    "verification": "Modern page reads migrated and generated `NotificationReceipt` rows from `custom_notifications_medicine` and `custom_notifications_medicine_parents`, restores Teachers New/Viewed status, search/status/branch/date filters, row/bulk/all mark-viewed actions, Sent Medicine Alarms history for staff and parent recipients, and keeps the manual generator backed by the idempotent `Data::AlarmsMedicine()` parity job plus generated `custom_notifications_medicine` receipts targeted like `getusersperclassUsersDb()` through imported `login_users.uclasses` and protected `/api/cron/medicine-alarms`. Message-portal Medicine sends now mirror `Data::addToMedicine()` parent receipts, and `verify-medicine-insurance-message-side-effects.ts` proves those receipts surface through `notifications_master.php`. `/alarmsMedicine.php` now redirects to the modern medicine alarms page. Alarm notification and sent-history loads now use uncapped server queries over migrated/generated receipts. Remaining work is hosted 10-minute scheduling, external provider push/SMS/email execution, and final visual audit."
   },
   {
     "legacyPhp": "Front/templates/admin/alarmsMsg.php",
@@ -17070,7 +17070,7 @@
     "status": "partial - legacy insurance template fallback restored; delivery audit remains",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "/settings/notifications Insurance now falls back to migrated `email-insurance-subj` and `email-insurance-msg` rows and exposes legacy `{{child_name}}` and `{{expiry_date}}` shortcodes. Existing insurance alarm generation can use the saved modern template and exact generated staff receipt targeting; remaining work is external parent/mobile delivery."
+    "verification": "/settings/notifications Insurance now falls back to migrated `email-insurance-subj` and `email-insurance-msg` rows and exposes legacy `{{child_name}}` and `{{expiry_date}}` shortcodes. Existing insurance alarm generation can use the saved modern template and exact generated staff receipt targeting; message-portal parent receipts are verified through `notifications_master.php`; remaining work is external provider delivery."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-medication.php",
@@ -17079,7 +17079,7 @@
     "status": "partial - legacy medication template fallback restored; delivery audit remains",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "/settings/notifications Medicine now falls back to migrated `email-medication-subject` and `email-medication-msg` rows and exposes legacy `{{child_name}}`, `{{med_name}}`, and `{{med_time}}` shortcodes. Existing medicine alarm generation can use the saved modern template and exact generated staff receipt targeting; remaining work is external parent/mobile delivery."
+    "verification": "/settings/notifications Medicine now falls back to migrated `email-medication-subject` and `email-medication-msg` rows and exposes legacy `{{child_name}}`, `{{med_name}}`, and `{{med_time}}` shortcodes. Existing medicine alarm generation can use the saved modern template and exact generated staff receipt targeting; message-portal parent receipts are verified through `notifications_master.php`; remaining work is external provider delivery."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-missingReports.php",
