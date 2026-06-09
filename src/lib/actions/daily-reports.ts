@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { requireOrg, requireOrgSafe } from "@/lib/require-org";
 import { verifyChildAccess } from "@/lib/verify-org-access";
 import { dailyReportSchema } from "@/lib/validations/daily-report";
+import { dailyReportLegacyDataPatch } from "@/lib/legacy-daily-report-fields";
 import type { DailyReportStatus, Prisma } from "@/generated/prisma/client";
 
 // ─────────────────────────────────────────────
@@ -331,6 +332,7 @@ export async function createDailyReport(formData: FormData) {
         runnyNose: data.runnyNose,
         vomit: data.vomit,
         remarks: data.remarks || null,
+        legacyData: dailyReportLegacyDataPatch(data),
         createdById: ctx.userId,
         fevers: {
           create: data.feverEntries.map((f) => ({
@@ -474,6 +476,7 @@ export async function updateDailyReport(id: string, formData: FormData) {
         runnyNose: data.runnyNose,
         vomit: data.vomit,
         remarks: data.remarks || null,
+        legacyData: dailyReportLegacyDataPatch(data, existing.legacyData),
         fevers: {
           create: data.feverEntries.map((f) => ({
             temperature: parseFloat(f.temperature),

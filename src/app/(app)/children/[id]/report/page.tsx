@@ -1,6 +1,16 @@
 import { notFound } from "next/navigation";
 import { getChild } from "@/lib/actions/children";
 import { getDailyReports } from "@/lib/actions/daily-reports";
+import { db } from "@/lib/db";
+import {
+  buildLegacyFoodNameMap,
+  dailyReportClothingFlags,
+  dailyReportFoodLabel,
+  legacyDailyFoodId,
+  legacyDailyRecord,
+  legacyDailySourceDatabase,
+  legacyDailyText,
+} from "@/lib/legacy-daily-report-fields";
 import { ReportClient } from "./report-client";
 
 interface Props {
@@ -15,28 +25,9 @@ function formatTime(date: Date | null): string | null {
   return `${hours}:${minutes}`;
 }
 
-function legacyRecord(value: unknown): Record<string, unknown> {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : {};
-}
-
-function legacyText(value: unknown): string | null {
-  if (value === null || value === undefined || value === "") return null;
-  return String(value);
-}
-
-function legacyBool(value: unknown): boolean {
-  return value === true || value === 1 || value === "1" || value === "true";
-}
-
 function decimalText(value: unknown): string | null {
   if (value === null || value === undefined) return null;
   return String(value);
-}
-
-function foodLabel(name: string | undefined, legacyId: unknown) {
-  return name ?? (legacyText(legacyId) ? `Food #${legacyText(legacyId)}` : null);
 }
 
 export default async function ChildReportPage({ params }: Props) {
@@ -52,6 +43,31 @@ export default async function ChildReportPage({ params }: Props) {
     status: "SUBMITTED",
     pageSize: 200,
   });
+  const legacyFoodIds = new Set<number>();
+  const legacySourceDatabases = new Set<string>();
+
+  for (const report of reportsRaw) {
+    for (const key of ["breakfast_id", "lunch_id"] as const) {
+      const legacyFoodId = legacyDailyFoodId(report.legacyData, key);
+      if (legacyFoodId) legacyFoodIds.add(legacyFoodId);
+    }
+
+    const sourceDatabase = legacyDailySourceDatabase(report.legacyData);
+    if (sourceDatabase) legacySourceDatabases.add(sourceDatabase);
+  }
+
+  const legacyFoods = legacyFoodIds.size
+    ? await db.food.findMany({
+        where: {
+          legacyId: { in: [...legacyFoodIds] },
+          ...(legacySourceDatabases.size
+            ? { sourceDatabase: { in: [...legacySourceDatabases] } }
+            : {}),
+        },
+        select: { legacyId: true, sourceDatabase: true, name: true },
+      })
+    : [];
+  const legacyFoodNames = buildLegacyFoodNameMap(legacyFoods);
 
   const childData = {
     id: child.id,
@@ -61,7 +77,8 @@ export default async function ChildReportPage({ params }: Props) {
   };
 
   const reports = reportsRaw.map((r) => {
-    const legacy = legacyRecord(r.legacyData);
+    const legacy = legacyDailyRecord(r.legacyData);
+    const clothingFlags = dailyReportClothingFlags(legacy);
     const milk = r.milks[0];
     const [fever1, fever2] = r.fevers;
 
@@ -78,13 +95,23 @@ export default async function ChildReportPage({ params }: Props) {
       id: r.id,
       date: r.reportDate.toISOString().slice(0, 10),
       status: r.status,
-      breakfastType: foodLabel(r.breakfastFood?.name, legacy.breakfast_id),
+      breakfastType: dailyReportFoodLabel({
+        relatedName: r.breakfastFood?.name,
+        legacyData: legacy,
+        legacyIdKey: "breakfast_id",
+        legacyFoodNames,
+      }),
       breakfastPortion: r.breakfastPortion ?? null,
       breakfastTime: formatTime(r.breakfastTime),
-      lunchType: foodLabel(r.lunchFood?.name, legacy.lunch_id),
+      lunchType: dailyReportFoodLabel({
+        relatedName: r.lunchFood?.name,
+        legacyData: legacy,
+        legacyIdKey: "lunch_id",
+        legacyFoodNames,
+      }),
       lunchPortion: r.lunchPortion ?? null,
       lunchTime: formatTime(r.lunchTime),
-      dessertType: r.dessert ?? legacyText(legacy.dessert),
+      dessertType: r.dessert ?? legacyDailyText(legacy.dessert),
       dessertPortion: r.dessertPortion ?? null,
       dessertTime: formatTime(r.dessertTime),
       milkCc: milk?.amountCc ?? 0,
@@ -104,11 +131,11 @@ export default async function ChildReportPage({ params }: Props) {
       fever1Time: formatTime(fever1?.time ?? null),
       fever2Temp: decimalText(fever2?.temperature) ?? null,
       fever2Time: formatTime(fever2?.time ?? null),
-      clothesPants: legacyBool(legacy.pantchecked),
-      clothesShirt: legacyBool(legacy.shirtchecked),
-      clothesTshirt: legacyBool(legacy.tshirthecked),
-      clothesUnderwear: legacyBool(legacy.boxerchecked),
-      clothesSocks: legacyBool(legacy.sockschecked),
+      clothesPants: clothingFlags.clothesPants,
+      clothesShirt: clothingFlags.clothesShirt,
+      clothesTshirt: clothingFlags.clothesTshirt,
+      clothesUnderwear: clothingFlags.clothesUnderwear,
+      clothesSocks: clothingFlags.clothesSocks,
       remarks: r.remarks ?? null,
       attachmentCount: r.attachments.length,
     };
