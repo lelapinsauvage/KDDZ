@@ -748,8 +748,8 @@
     "legacyTable": "t_parents",
     "legacyColumns": "pid:int(11) NOT NULL AUTO_INCREMENT, relation:varchar(50) CHARACTER SET utf8 NOT NULL, pname:varchar(50) CHARACTER SET utf8 NOT NULL, plname:varchar(50) CHARACTER SET utf8 NOT NULL, profession:varchar(50) CHARACTER SET utf8 NOT NULL, work_tel:varchar(50) CHARACTER SET utf8 NOT NULL, parent_mobile:varchar(50) NOT NULL, martial_status:varchar(50) NOT NULL, divorce_status:varchar(50) NOT NULL, medical_case:varchar(50) NOT NULL, parent_email:varchar(50) NOT NULL, can_pick:varchar(50) NOT NULL, child_id:varchar(50) NOT NULL, pa_progress_all:double NOT NULL DEFAULT '0', pa_progress_m:double NOT NULL DEFAULT '0', active:tinyint(1) NOT NULL DEFAULT '1', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP",
     "modernDestination": "Parent",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-parents.ts",
+    "reconciliation": "Parent profile rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy child id, contact fields, marital/divorce/medical fields, pickup flag, and raw legacyData; source/target count is covered by `parents.t_parents` reconciliation; mismatches expose unmapped children, duplicate child/type fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1716,8 +1716,8 @@
     "legacyTable": "t_parents",
     "legacyColumns": "pid:int(11) NOT NULL, relation:varchar(50) CHARACTER SET utf8 NOT NULL, pname:varchar(50) CHARACTER SET utf8 NOT NULL, plname:varchar(50) CHARACTER SET utf8 NOT NULL, profession:varchar(50) CHARACTER SET utf8 NOT NULL, work_tel:varchar(50) CHARACTER SET utf8 NOT NULL, parent_mobile:varchar(50) NOT NULL, martial_status:varchar(50) NOT NULL, divorce_status:varchar(50) NOT NULL, medical_case:varchar(50) NOT NULL, parent_email:varchar(50) NOT NULL, can_pick:varchar(50) NOT NULL, child_id:varchar(50) NOT NULL, pa_progress_all:double NOT NULL DEFAULT '0', pa_progress_m:double NOT NULL DEFAULT '0', active:tinyint(1) NOT NULL DEFAULT '1', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP",
     "modernDestination": "Parent",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-parents.ts",
+    "reconciliation": "Parent profile rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy child id, contact fields, marital/divorce/medical fields, pickup flag, and raw legacyData; source/target count is covered by `parents.t_parents` reconciliation; mismatches expose unmapped children, duplicate child/type fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -2556,8 +2556,8 @@
     "legacyTable": "t_parents",
     "legacyColumns": "pid:int(11) NOT NULL AUTO_INCREMENT, relation:varchar(50) CHARACTER SET utf8 NOT NULL, pname:varchar(50) CHARACTER SET utf8 NOT NULL, plname:varchar(50) CHARACTER SET utf8 NOT NULL, profession:varchar(50) CHARACTER SET utf8 NOT NULL, work_tel:varchar(50) CHARACTER SET utf8 NOT NULL, parent_mobile:varchar(50) NOT NULL, martial_status:varchar(50) NOT NULL, divorce_status:varchar(50) NOT NULL, medical_case:varchar(50) NOT NULL, parent_email:varchar(50) NOT NULL, can_pick:varchar(50) NOT NULL, child_id:varchar(50) NOT NULL, pa_progress_all:double NOT NULL DEFAULT '0', pa_progress_m:double NOT NULL DEFAULT '0', active:tinyint(1) NOT NULL DEFAULT '1', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP",
     "modernDestination": "Parent",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-parents.ts",
+    "reconciliation": "Parent profile rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy child id, contact fields, marital/divorce/medical fields, pickup flag, and raw legacyData; source/target count is covered by `parents.t_parents` reconciliation; mismatches expose unmapped children, duplicate child/type fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",

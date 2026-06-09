@@ -126,7 +126,7 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_garderie` | BranchCompliance |
 | `t_garderie_attachments` | BranchDocument |
 | `t_garderie_doctor`, `t_garderie_doctor_attachments` | Doctor, DoctorAttachment |
-| `t_parents` | Parent |
+| `t_parents` | Parent, including source database/key provenance and raw legacy row |
 | `t_teacher`, `t_teacher_address`, `t_teacher_attachments` | Teacher, TeacherAddress, TeacherAttachment |
 | `t_teacher_info` | TeacherExperience |
 | `t_nurse`, `t_nurse_attachments` | Nurse, NurseAttachment |
@@ -278,6 +278,8 @@ Class rows from `t_class` are reconciled against `Class.sourceDatabase` and `Cla
 Child addresses and relative/contact rows from `t_address`, `t_authorized`, and `t_relatives` are reconciled against `sourceDatabase` and `legacyTable`. Count mismatches usually mean a source row had an unmapped child; legacy `t_relatives.can_pick` still controls pickup authorization without changing the source-table count.
 
 Parent mobile login rows from `parent_login_users` are reconciled against `ParentUser.sourceDatabase`/`legacyKey` for non-empty usernames. Count mismatches usually mean the source row could not be linked to a migrated child.
+
+Active parent profile rows from `t_parents` are reconciled against `Parent.sourceDatabase` and `Parent.legacyTable`. Count mismatches usually mean a source row had an unmapped child or a duplicate child/type fallback during a backfill rerun.
 
 Active absence reports from `t_absent_report` are reconciled against `AbsenceReport.sourceDatabase`/`legacyKey`. Count mismatches usually mean a source row had an unmapped child or an invalid legacy report date.
 

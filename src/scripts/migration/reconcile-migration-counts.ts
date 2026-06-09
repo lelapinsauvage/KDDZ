@@ -608,14 +608,15 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     targetTable: "child_previous_garderies",
     notes: "Previous-garderie history keeps sourceDatabase and legacyKey.",
   }),
-  weakRule({
+  provenancedRule({
     id: "parents.t_parents",
     step: "7. Parents",
     sourceTable: "t_parents",
     sourceWhere: "active = 1",
     targetTable: "parents",
+    targetWhere: byLegacyTable("t_parents"),
     notes:
-      "Parent rows do not yet carry legacy provenance; count only proves broad coverage.",
+      "Parent rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy child id, contact fields, pickup flag, and raw legacy row.",
   }),
   weakRule({
     id: "employees.t_teacher",

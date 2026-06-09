@@ -19,15 +19,18 @@
  * Prerequisites: Children must be migrated first.
  */
 
-import type { PrismaClient } from "@/generated/prisma/client";
+import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 import { createPrismaClient } from "./lib/prisma-client";
-import { queryMysql, closeMysqlPool } from "./lib/mysql-client";
+import { queryMysql, closeMysqlPool, getMysqlConfig } from "./lib/mysql-client";
 import {
   generateUUID,
   setMapping,
   getMapping,
   isDryRun,
   cleanString,
+  parseDate,
+  toBool,
+  toInt,
   log,
   logError,
   logProgress,
@@ -49,6 +52,28 @@ interface OldParent {
   child_id: string;
   active: number;
   datetime: string;
+  [key: string]: unknown;
+}
+
+function legacyKey(sourceDatabase: string, table: string, legacyId: number) {
+  return `${sourceDatabase}:${table}:${legacyId}`;
+}
+
+function legacyRowData(
+  sourceDatabase: string,
+  legacyId: number,
+  legacyChildId: number | null,
+  row: Record<string, unknown>
+): Prisma.InputJsonObject {
+  return JSON.parse(
+    JSON.stringify({
+      sourceDatabase,
+      sourceTable: "t_parents",
+      legacyId,
+      legacyChildId,
+      row,
+    })
+  ) as Prisma.InputJsonObject;
 }
 
 function mapParentType(
@@ -70,6 +95,7 @@ function mapParentType(
 export async function migrateParents(prisma: PrismaClient) {
   log("=== Migrating Parents ===");
   const dryRun = isDryRun();
+  const sourceDatabase = getMysqlConfig().database || "unknown";
 
   const oldRows = await queryMysql<OldParent>(
     "SELECT * FROM t_parents WHERE active = 1 ORDER BY pid"
@@ -82,20 +108,60 @@ export async function migrateParents(prisma: PrismaClient) {
 
   for (const row of oldRows) {
     const childId = getMapping("child", row.child_id);
-    if (!childId) {
+    const legacyId = toInt(row.pid, 0);
+    if (!childId || !legacyId) {
       logError(`Parent ${row.pid} — child ${row.child_id} not found`);
       errors++;
       continue;
     }
 
     const parentType = mapParentType(row.relation);
+    const legacyChildId = toInt(row.child_id, 0) || null;
+    const key = legacyKey(sourceDatabase, "t_parents", legacyId);
+    const createdAt = parseDate(row.datetime);
 
-    // Idempotency: check by child + type
-    const existing = await prisma.parent.findFirst({
-      where: { childId, type: parentType },
+    const existingByKey = await prisma.parent.findUnique({
+      where: { legacyKey: key },
     });
+    const existing =
+      existingByKey ??
+      (await prisma.parent.findFirst({
+        where: {
+          childId,
+          type: parentType,
+          legacyKey: null,
+        },
+      }));
+
+    const data = {
+      sourceDatabase,
+      legacyKey: key,
+      legacyId,
+      legacyTable: "t_parents",
+      legacyChildId,
+      type: parentType,
+      firstName: cleanString(row.pname),
+      lastName: cleanString(row.plname),
+      phone: null,
+      mobile: cleanString(row.parent_mobile),
+      email: cleanString(row.parent_email),
+      profession: cleanString(row.profession),
+      workPhone: cleanString(row.work_tel),
+      maritalStatus: cleanString(row.martial_status),
+      divorceSituation: cleanString(row.divorce_status),
+      medicalCase: cleanString(row.medical_case),
+      canPickUp: toBool(row.can_pick),
+      legacyData: legacyRowData(sourceDatabase, legacyId, legacyChildId, row),
+      ...(createdAt ? { createdAt } : {}),
+    };
 
     if (existing) {
+      if (!dryRun) {
+        await prisma.parent.update({
+          where: { id: existing.id },
+          data,
+        });
+      }
       setMapping("parent", row.pid, existing.id);
       skipped++;
       continue;
@@ -108,20 +174,7 @@ export async function migrateParents(prisma: PrismaClient) {
         data: {
           id: newId,
           childId,
-          type: parentType,
-          firstName: cleanString(row.pname),
-          lastName: cleanString(row.plname),
-          phone: null,
-          mobile: cleanString(row.parent_mobile),
-          email: cleanString(row.parent_email),
-          profession: cleanString(row.profession),
-          workPhone: cleanString(row.work_tel),
-          maritalStatus: cleanString(row.martial_status),
-          divorceSituation: cleanString(row.divorce_status),
-          medicalCase: cleanString(row.medical_case),
-          canPickUp:
-            row.can_pick?.toLowerCase() === "yes" || row.can_pick === "1",
-          createdAt: row.datetime ? new Date(row.datetime) : new Date(),
+          ...data,
         },
       });
     }
