@@ -365,34 +365,19 @@ function provenancedRule(params: {
   });
 }
 
-function weakRule(params: {
-  id: string;
-  step: string;
-  sourceTable: string;
-  sourceWhere?: string;
-  targetTable: string;
-  targetWhere?: CountSide["where"];
-  targetCountExpression?: string;
-  notes: string;
-  expectation?: Expectation;
-  evidence?: EvidenceStrength;
-}): ReconciliationRule {
-  return baseRule({
-    id: params.id,
-    step: params.step,
-    source: { table: params.sourceTable, where: params.sourceWhere },
-    target: {
-      table: params.targetTable,
-      where: params.targetWhere,
-      countExpression: params.targetCountExpression,
-    },
-    expectation: params.expectation ?? "target-at-least-source",
-    evidence: params.evidence ?? "weak",
-    notes: params.notes,
-  });
-}
-
 const assessmentTables = [1, 2, 3, 4, 5, 6, 7];
+const assessmentTableNames = assessmentTables.map(
+  (assessmentType) => `t_assessment_${assessmentType}`
+);
+const newAssessmentTableList = assessmentTableNames.map(pgLiteral).join(", ");
+const newAssessmentMarkerTargetCountExpression = `COALESCE(SUM(
+  CASE WHEN ${pgColumn("legacyTable")} = ${pgLiteral("new_assessment")} THEN 1 ELSE 0 END +
+  CASE
+    WHEN jsonb_typeof(${pgColumn("data")} -> ${pgLiteral("_legacyNewAssessmentMarkers")}) = ${pgLiteral("array")}
+    THEN jsonb_array_length(${pgColumn("data")} -> ${pgLiteral("_legacyNewAssessmentMarkers")})
+    ELSE 0
+  END
+), 0)`;
 const formTables = [
   { table: "t_form_1", type: "GENERAL" },
   { table: "t_form_2", type: "CONDITIONS" },
@@ -1010,15 +995,22 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
         "Assessment rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, child/class/teacher/user legacy ids, answer payload, and raw legacy row.",
     })
   ),
-  weakRule({
+  baseRule({
     id: "assessments.new_assessment",
     step: "18. Assessments",
-    sourceTable: "new_assessment",
-    targetTable: "assessments",
-    expectation: "informational",
-    evidence: "derived",
+    source: {
+      table: "new_assessment",
+      where: `t_name IN (${newAssessmentTableList})`,
+    },
+    target: {
+      table: "assessments",
+      where: bySourceDatabase(),
+      countExpression: newAssessmentMarkerTargetCountExpression,
+    },
+    expectation: "equal",
+    evidence: "strong",
     notes:
-      "new_assessment markers may link onto existing assessments or create stubs, so source and target counts are not expected to match.",
+      "new_assessment rows are counted from source-provenanced stub assessments plus _legacyNewAssessmentMarkers entries on linked migrated assessments.",
   }),
   baseRule({
     id: "assessments.t_assessment_dates",

@@ -173,7 +173,7 @@
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, t_name:varchar(150) NOT NULL, report_id:int(11) NOT NULL, child_id:int(11) NOT NULL, sent:int(11) NOT NULL",
     "modernDestination": "Assessment",
     "status": "mapped - migrated by migrate-assessments.ts",
-    "reconciliation": "new_assessment rows are parent notification markers: they are preserved as `_legacyNewAssessmentMarkers` on matching Assessment rows or as stub Assessment rows with `new_assessment` provenance when no report exists; count reconciliation remains derived/informational because markers intentionally link onto existing reports."
+    "reconciliation": "new_assessment rows are parent notification markers: they are preserved as source-provenanced `_legacyNewAssessmentMarkers` on matching Assessment rows or as stub Assessment rows with `new_assessment` provenance when no report exists; source/target count is covered by `assessments.new_assessment` reconciliation, which counts stub rows plus linked marker-array entries."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1096,7 +1096,7 @@
     "legacyColumns": "id:int(11) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, t_name:varchar(150) NOT NULL, report_id:int(11) NOT NULL, child_id:int(11) NOT NULL, sent:int(11) NOT NULL",
     "modernDestination": "Assessment",
     "status": "mapped - migrated by migrate-assessments.ts",
-    "reconciliation": "new_assessment rows are parent notification markers: they are preserved as `_legacyNewAssessmentMarkers` on matching Assessment rows or as stub Assessment rows with `new_assessment` provenance when no report exists; count reconciliation remains derived/informational because markers intentionally link onto existing reports."
+    "reconciliation": "new_assessment rows are parent notification markers: they are preserved as source-provenanced `_legacyNewAssessmentMarkers` on matching Assessment rows or as stub Assessment rows with `new_assessment` provenance when no report exists; source/target count is covered by `assessments.new_assessment` reconciliation, which counts stub rows plus linked marker-array entries."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1987,7 +1987,7 @@
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, t_name:varchar(150) NOT NULL, report_id:int(11) NOT NULL, child_id:int(11) NOT NULL, sent:int(11) NOT NULL",
     "modernDestination": "Assessment",
     "status": "mapped - migrated by migrate-assessments.ts",
-    "reconciliation": "new_assessment rows are parent notification markers: they are preserved as `_legacyNewAssessmentMarkers` on matching Assessment rows or as stub Assessment rows with `new_assessment` provenance when no report exists; count reconciliation remains derived/informational because markers intentionally link onto existing reports."
+    "reconciliation": "new_assessment rows are parent notification markers: they are preserved as source-provenanced `_legacyNewAssessmentMarkers` on matching Assessment rows or as stub Assessment rows with `new_assessment` provenance when no report exists; source/target count is covered by `assessments.new_assessment` reconciliation, which counts stub rows plus linked marker-array entries."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",

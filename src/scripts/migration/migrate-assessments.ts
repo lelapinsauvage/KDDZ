@@ -311,9 +311,13 @@ async function migrateNewAssessmentMarkers(
       continue;
     }
 
+    const markerKey = legacyKey(sourceDatabase, "new_assessment", row.id);
     const marker = {
       sourceDatabase,
       sourceTable: "new_assessment",
+      legacyKey: markerKey,
+      legacyTable: "new_assessment",
+      legacyId: row.id,
       id: row.id,
       datetime: row.datetime,
       table: row.t_name,
@@ -321,7 +325,6 @@ async function migrateNewAssessmentMarkers(
       childId: row.child_id,
       sent: toBool(row.sent),
     };
-    const markerKey = legacyKey(sourceDatabase, "new_assessment", row.id);
     const existingStub = await prisma.assessment.findUnique({
       where: { legacyKey: markerKey },
       select: { id: true },
@@ -344,9 +347,14 @@ async function migrateNewAssessmentMarkers(
       const currentMarkers = Array.isArray(data._legacyNewAssessmentMarkers)
         ? data._legacyNewAssessmentMarkers
         : [];
-      const alreadyLinked = currentMarkers.some(
-        (item) => asRecord(item).id === row.id
-      );
+      const alreadyLinked = currentMarkers.some((item) => {
+        const currentMarker = asRecord(item);
+        return (
+          currentMarker.legacyKey === markerKey ||
+          (currentMarker.sourceDatabase === sourceDatabase &&
+            currentMarker.id === row.id)
+        );
+      });
 
       if (!alreadyLinked && !dryRun) {
         await prisma.assessment.update({
