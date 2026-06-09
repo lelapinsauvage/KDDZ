@@ -2484,21 +2484,30 @@ model Notification {
 }
 
 model PushToken {
-  id           String       @id @default(uuid()) @db.Uuid
-  userId       String?      @db.Uuid
-  parentUserId String?      @db.Uuid
-  token        String       @unique
-  platform     PushPlatform
-  isActive     Boolean      @default(true)
-  legacyData   Json?
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  id             String       @id @default(uuid()) @db.Uuid
+  userId         String?      @db.Uuid
+  parentUserId   String?      @db.Uuid
+  sourceDatabase String?
+  legacyKey      String?      @unique
+  legacyId       Int?
+  legacyTable    String?
+  legacyChildId  Int?
+  token          String       @unique
+  platform       PushPlatform
+  isActive       Boolean      @default(true)
+  legacyData     Json?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   user       User?       @relation("UserPushTokens", fields: [userId], references: [id], onDelete: Cascade)
   parentUser ParentUser? @relation("ParentPushTokens", fields: [parentUserId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([parentUserId])
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyTable])
+  @@index([legacyChildId])
   @@index([platform])
   @@index([isActive])
   @@map("push_tokens")

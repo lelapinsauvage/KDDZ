@@ -173,7 +173,7 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_events` | Event |
 | `t_alarms`, `t_alarms_*` (except `t_alarms_msg`) | Alarm |
 | `custom_notifications_*` delivery tables | NotificationReceipt |
-| `notifications_tokens` | PushToken |
+| `notifications_tokens` | PushToken, including source database/key/table provenance and raw legacy row |
 | `t_notifications_log` | LegacyNotificationLog, including source database/key/table provenance and raw legacy row |
 | `notifications_nature` | LegacyNotificationNature |
 | `t_alarms_msg` | MessageThread, Message |
@@ -181,7 +181,7 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 
 Message migration preserves legacy message notification provenance on `Message` rows: source database, stable `legacyKey`, legacy message/thread/sender/recipient ids, delivery user/type, `legacyNature`, `legacyHref`, and raw legacy row JSON. Each `custom_notifications_msg` delivery row becomes a separate recipient-scoped modern `Message`, so reconciliation expects recipient fan-out rather than a simple 1:1 count with `t_alarms_msg`.
 
-Alarm migration preserves source database/table provenance inside `Alarm.legacyData` for every `t_alarms*` content row and backfills that JSON when previously imported alarms are encountered on rerun. Push tokens retain `sourceDatabase`/`sourceTable` in `legacyData` but their count check remains weaker because the modern schema intentionally deduplicates tokens. Legacy notification logs now keep first-class `sourceDatabase`, `legacyKey`, and `legacyTable` provenance while preserving the globally unique legacy id used by compatibility views.
+Alarm migration preserves source database/table provenance inside `Alarm.legacyData` for every `t_alarms*` content row and backfills that JSON when previously imported alarms are encountered on rerun. Push tokens now keep first-class `sourceDatabase`, `legacyKey`, and `legacyTable` provenance, and reconciliation compares distinct non-empty legacy token values because the modern token is unique. Legacy notification logs now keep first-class `sourceDatabase`, `legacyKey`, and `legacyTable` provenance while preserving the globally unique legacy id used by compatibility views.
 
 ## Key Design Decisions
 
@@ -349,7 +349,7 @@ The seven legacy assessment tables are consolidated into `Assessment`. Answer ke
 Legacy `t_assessment_dates.assessment_date` stores age thresholds in days, not absolute calendar dates. Those values are migrated to `AssessmentScheduleRule`; the modern `AssessmentDate` table remains reserved for explicit scheduled calendar dates.
 
 ### Alarms And Notifications
-Legacy alarm content rows are restored into `Alarm` with source database/table/category provenance and the complete source row preserved in `legacyData`. Legacy delivery/read rows from `custom_notifications_*` are restored into `NotificationReceipt` so "seen" state and recipient ids remain auditable even when the modern notification UI reads from `Alarm`. Mobile push tokens retain their legacy active flag on `PushToken.isActive` and source provenance in `legacyData`.
+Legacy alarm content rows are restored into `Alarm` with source database/table/category provenance and the complete source row preserved in `legacyData`. Legacy delivery/read rows from `custom_notifications_*` are restored into `NotificationReceipt` so "seen" state and recipient ids remain auditable even when the modern notification UI reads from `Alarm`. Mobile push tokens retain their legacy active flag on `PushToken.isActive`, source database/key/table provenance, legacy child id, and raw legacy row data.
 
 ## Troubleshooting
 

@@ -82,7 +82,7 @@ This list is the first implementation backlog after the generated inventory/matr
 
 7. **Notification logs/settings migration**
    - Legacy has many `custom_notifications_*`, `t_alarms_*`, `t_notification_setting`, and `t_notifications_log` tables.
-   - Historical alarms, receipts, push tokens, and notification logs are covered by `migrate-alarms.ts`; alarm and push-token legacy JSON keeps source database/table provenance, notification logs now keep first-class source database/key/table provenance, and migrated `t_notification_setting`, `notifications_nature`, and `t_notifications_log` rows are visible in `/settings/notifications` under the Legacy tab for audit and parity review, with the LegacySetting, notification nature, notification log, and sent-notification audit loaders now uncapped for production-sized imports.
+   - Historical alarms, receipts, push tokens, and notification logs are covered by `migrate-alarms.ts`; alarm legacy JSON keeps source database/table provenance, push tokens and notification logs now keep first-class source database/key/table provenance, and migrated `t_notification_setting`, `notifications_nature`, and `t_notifications_log` rows are visible in `/settings/notifications` under the Legacy tab for audit and parity review, with the LegacySetting, notification nature, notification log, and sent-notification audit loaders now uncapped for production-sized imports.
    - Legacy `t_notification_setting` activation/edit behavior is restored for both the newer channel matrix schema and the older `mtype`/`status` schema, and restored alarm generators now enforce the System Alerts gates.
    - Remaining work is parent/custom notification families and production external provider send-job parity.
 

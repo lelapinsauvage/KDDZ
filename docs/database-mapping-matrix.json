@@ -1112,7 +1112,7 @@
     "legacyColumns": "id:int(11) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, child_id:int(11) NOT NULL, token:text NOT NULL, os:int(11) NOT NULL DEFAULT '0' COMMENT '0: NA / 1: Android / 2: iOS / 3: Other', active:int(11) NOT NULL DEFAULT '1'",
     "modernDestination": "PushToken",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Push token rows preserve parent-user mapping, platform, active flag, raw legacy row, sourceDatabase, and sourceTable in PushToken.legacyData; `alarms.notifications_tokens` remains a weak count because tokens are unique and legacy rows can deduplicate by token."
+    "reconciliation": "Push token rows preserve parent-user mapping, platform, active flag, sourceDatabase, legacyKey, legacyId, legacyTable, legacy child id, and raw legacy row; `alarms.notifications_tokens` reconciles distinct non-empty legacy token values because modern PushToken.token is unique."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",

@@ -431,6 +431,9 @@ const vaccinationSourceCountExpression = `COALESCE(SUM(${vaccinationFieldPairs
       )})`
   )
   .join(" + ")}), 0)`;
+const pushTokenSourceCountExpression = `COUNT(DISTINCT NULLIF(NULLIF(TRIM(COALESCE(${quoteMysqlIdentifier(
+  "token"
+)}, '')), ''), '0'))`;
 const alarmTables = [
   "t_alarms",
   "t_alarms_birthday",
@@ -1168,12 +1171,22 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
       notes: `${table} delivery rows are preserved as NotificationReceipt.`,
     })
   ),
-  weakRule({
+  baseRule({
     id: "alarms.notifications_tokens",
     step: "22. Alarms & Notifications",
-    sourceTable: "notifications_tokens",
-    targetTable: "push_tokens",
-    notes: "Push tokens are unique by token and can deduplicate across rows.",
+    source: {
+      table: "notifications_tokens",
+      countExpression: pushTokenSourceCountExpression,
+    },
+    target: {
+      table: "push_tokens",
+      where: byLegacyTable("notifications_tokens"),
+      countExpression: pgDistinctCount("token"),
+    },
+    expectation: "equal",
+    evidence: "strong",
+    notes:
+      "Push tokens preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy child id, platform, active flag, and raw legacy row; reconciliation counts distinct non-empty legacy tokens because the modern token is unique.",
   }),
   provenancedRule({
     id: "alarms.t_notifications_log",

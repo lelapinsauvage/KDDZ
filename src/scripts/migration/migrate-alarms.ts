@@ -605,6 +605,7 @@ async function migratePushTokens(prisma: PrismaClient, dryRun: boolean) {
 
   let migrated = 0;
   let skipped = 0;
+  let backfilled = 0;
 
   for (const row of rows) {
     const token = cleanString(row.token);
@@ -613,19 +614,49 @@ async function migratePushTokens(prisma: PrismaClient, dryRun: boolean) {
       continue;
     }
 
+    const legacyId = toInt(row.id);
+    const legacyChildId = toInt(row.child_id, 0) || null;
+    const key = `${sourceDatabase}:notifications_tokens:${legacyId}`;
+    const childId = getMapping("child", row.child_id);
+    const parentUser = childId
+      ? await prisma.parentUser.findFirst({
+          where: { childId },
+          select: { id: true },
+        })
+      : null;
+    const legacyData = sourceLegacyData(
+      sourceDatabase,
+      "notifications_tokens",
+      row
+    );
+    const provenanceData = {
+      parentUserId: parentUser?.id ?? null,
+      sourceDatabase,
+      legacyKey: key,
+      legacyId,
+      legacyTable: "notifications_tokens",
+      legacyChildId,
+      legacyData,
+    };
     const existing = await prisma.pushToken.findUnique({ where: { token } });
     if (existing) {
-      if (
-        !dryRun &&
+      const needsBackfill =
+        existing.sourceDatabase !== sourceDatabase ||
+        existing.legacyTable !== "notifications_tokens" ||
+        !existing.legacyKey ||
+        !existing.legacyData ||
+        (!existing.parentUserId && Boolean(parentUser?.id)) ||
         shouldBackfillLegacySource(
           existing.legacyData,
           sourceDatabase,
           "notifications_tokens"
-        )
-      ) {
+        );
+      if (!dryRun && needsBackfill) {
         await prisma.pushToken.update({
           where: { id: existing.id },
           data: {
+            ...provenanceData,
+            parentUserId: existing.parentUserId ?? parentUser?.id ?? null,
             legacyData: sourceLegacyData(
               sourceDatabase,
               "notifications_tokens",
@@ -634,34 +665,23 @@ async function migratePushTokens(prisma: PrismaClient, dryRun: boolean) {
             ),
           },
         });
+        backfilled++;
+      } else {
+        skipped++;
       }
       setMapping("notifications_tokens", row.id, existing.id);
-      skipped++;
       continue;
     }
-
-    const childId = getMapping("child", row.child_id);
-    const parentUser = childId
-      ? await prisma.parentUser.findFirst({
-          where: { childId },
-          select: { id: true },
-        })
-      : null;
 
     const id = generateUUID();
     if (!dryRun) {
       await prisma.pushToken.create({
         data: {
           id,
-          parentUserId: parentUser?.id ?? null,
+          ...provenanceData,
           token,
           platform: platformFromLegacy(row.os),
           isActive: toBool(row.active),
-          legacyData: sourceLegacyData(
-            sourceDatabase,
-            "notifications_tokens",
-            row
-          ),
           createdAt: parseDate(row.datetime) ?? new Date(),
         },
       });
@@ -671,7 +691,9 @@ async function migratePushTokens(prisma: PrismaClient, dryRun: boolean) {
     migrated++;
   }
 
-  log(`Push tokens: ${migrated} migrated, ${skipped} skipped`);
+  log(
+    `Push tokens: ${migrated} migrated, ${backfilled} backfilled, ${skipped} skipped`
+  );
 }
 
 async function migrateNotificationLogs(prisma: PrismaClient, dryRun: boolean) {
