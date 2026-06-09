@@ -1123,14 +1123,18 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     notes:
       "Food items preserve sourceDatabase, legacyKey, legacyId, raw legacyData, organization mapping, category, active flag, and created timestamp.",
   }),
-  weakRule({
+  baseRule({
     id: "food.t_food_calendar",
     step: "21. Food, Calendar & Holidays",
-    sourceTable: "t_food_calendar",
-    sourceWhere: "active = 1",
-    targetTable: "food_calendars",
-    targetWhere: bySourceDatabase(),
-    targetCountExpression: pgDistinctCount("legacyId"),
+    source: {
+      table: "t_food_calendar",
+      where: "active = 1",
+    },
+    target: {
+      table: "food_calendars",
+      where: bySourceDatabase(),
+      countExpression: pgDistinctCount("legacyId"),
+    },
     expectation: "equal",
     evidence: "strong",
     notes:
