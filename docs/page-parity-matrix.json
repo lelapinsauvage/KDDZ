@@ -1036,15 +1036,16 @@
     "legacyPhp": "Front/templates/admin/attendance.php",
     "legacyJs": "Front/templates/admin/js/attendance.js",
     "modernRoute": "/attendance.php, /employees/attendance",
-    "status": "partial - legacy attendance bridge, scanner data migration, and raw CSV upload restored",
+    "status": "partial - legacy attendance bridge, id preselect, scanner data migration, and raw CSV upload restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
     ],
     "requestFieldsMentioned": [
+      "employeeId",
       "id"
     ],
-    "verification": "Legacy `t_teacher_attendance` scanner rows now migrate through `migrate-employees.ts`, `/attendance.php` redirects to the modern employee attendance page, and the runtime CSV upload accepts the raw legacy scanner columns (`readerid`, `readername`, `tdate`, `ttime`, `status`, `cardid`, `teacher_id`, `tdefault`) alongside the modern template. Upload matching now uses migrated teacher legacy ids, unique normalized teacher names, and card-id seeding while preserving raw scanner provenance in `TeacherAttendance.note`; the attendance page loads all staff for matching instead of a 200-row cap. Remaining work is legacy `id` preselect semantics if still needed and exact field/action audit against `attendance.php`/`attendance.js`."
+    "verification": "Legacy `t_teacher_attendance` scanner rows now migrate through `migrate-employees.ts`, `/attendance.php` redirects to the modern employee attendance page, and `/attendance.php?id=` now resolves raw numeric, UUID, legacy-key, and encrypted legacy teacher ids into `/employees/attendance?employeeId=` so the modern manual attendance table preselects that employee. The runtime CSV upload accepts the raw legacy scanner columns (`readerid`, `readername`, `tdate`, `ttime`, `status`, `cardid`, `teacher_id`, `tdefault`) alongside the modern template. Upload matching now uses migrated teacher legacy ids, unique normalized teacher names, and card-id seeding while preserving raw scanner provenance in `TeacherAttendance.note`; the attendance page loads all staff for matching instead of a 200-row cap. Verified by `src/scripts/verify-legacy-attendance-preselect-contract.ts`. Remaining work is exact field/action audit against `attendance.php`/`attendance.js`."
   },
   {
     "legacyPhp": "Front/templates/admin/bcalls.php",

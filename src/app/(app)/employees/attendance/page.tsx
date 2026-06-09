@@ -1,8 +1,15 @@
 import { getEmployees } from "@/lib/actions/employees";
 import { getBranches } from "@/lib/actions/branches";
+import { normalizeAttendancePreselectedEmployeeId } from "@/lib/legacy-attendance-preselect-contract";
 import { AttendanceClient } from "./attendance-client";
 
-export default async function EmployeeAttendancePage() {
+interface PageProps {
+  searchParams: Promise<{ employeeId?: string }>;
+}
+
+export default async function EmployeeAttendancePage({ searchParams }: PageProps) {
+  const params = await searchParams;
+
   // Fetch all employee types in parallel
   const [teachersRes, nursesRes, doctorsRes, managersRes, branchesRes] = await Promise.all([
     getEmployees("teacher", { pageSize: "all" }),
@@ -97,6 +104,16 @@ export default async function EmployeeAttendancePage() {
     id: b.id,
     name: b.name,
   }));
+  const initialEmployeeId = normalizeAttendancePreselectedEmployeeId(
+    params.employeeId,
+    employees,
+  );
 
-  return <AttendanceClient employees={employees} branches={branches} />;
+  return (
+    <AttendanceClient
+      employees={employees}
+      branches={branches}
+      initialEmployeeId={initialEmployeeId}
+    />
+  );
 }

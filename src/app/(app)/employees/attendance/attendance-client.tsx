@@ -58,6 +58,7 @@ interface BranchOption {
 interface AttendanceClientProps {
   employees: EmployeeAttendance[];
   branches: BranchOption[];
+  initialEmployeeId: string;
 }
 
 type AttendanceStatus = "present" | "absent" | "late";
@@ -502,6 +503,7 @@ function buildAttendanceLogsFromCsv(
 export function AttendanceClient({
   employees,
   branches,
+  initialEmployeeId,
 }: AttendanceClientProps) {
   const [isPending, startTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -509,6 +511,7 @@ export function AttendanceClient({
   const today = new Date().toISOString().split("T")[0];
   const [dateFilter, setDateFilter] = useState(today);
   const [branchFilter, setBranchFilter] = useState("ALL");
+  const [employeeFilter, setEmployeeFilter] = useState(initialEmployeeId);
 
   // Attendance entries keyed by employee ID
   const [entries, setEntries] = useState<Map<string, AttendanceEntry>>(new Map());
@@ -526,11 +529,12 @@ export function AttendanceClient({
 
   const filtered = useMemo(() => {
     return employees.filter((a) => {
+      if (employeeFilter !== "ALL" && a.id !== employeeFilter) return false;
       if (branchFilter !== "ALL" && a.branch !== branchFilter) return false;
       if (!a.isActive) return false;
       return true;
     });
-  }, [branchFilter, employees]);
+  }, [branchFilter, employeeFilter, employees]);
 
   // Get or create entry
   const getEntry = useCallback(
@@ -887,6 +891,19 @@ export function AttendanceClient({
                 {branches.map((b) => (
                   <SelectItem key={b.id} value={b.name}>
                     {b.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={employeeFilter} onValueChange={setEmployeeFilter}>
+              <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[220px]">
+                <SelectValue placeholder="All Employees" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Employees</SelectItem>
+                {employees.map((employee) => (
+                  <SelectItem key={employee.id} value={employee.id}>
+                    {employee.employeeName} ({employee.role})
                   </SelectItem>
                 ))}
               </SelectContent>
