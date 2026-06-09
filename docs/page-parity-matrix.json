@@ -626,7 +626,7 @@
     "legacyPhp": "Front/templates/admin/alarmsOthers.php",
     "legacyJs": "Front/templates/admin/js/alarmsOthers.js",
     "modernRoute": "/alarmsOthers.php, /alarms/others",
-    "status": "partial - legacy other alarms bridge, staff/parent read-state, and sent history restored",
+    "status": "partial - legacy other alarms bridge, staff/parent read-state, sent history, and message-portal parent delivery restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -636,7 +636,7 @@
       "custom_notifications_others",
       "custom_notifications_others_parents"
     ],
-    "verification": "Modern page keeps the active other-alarm dashboard and adds a Notifications tab reading migrated `NotificationReceipt` rows from staff and parent legacy delivery tables, restoring New/Viewed filters, row/bulk/all mark-viewed actions, and Sent Others Alarms history for staff and parent recipients. `/alarmsOthers.php` now redirects to the modern other alarms page. Active other alarms plus notification and sent-history loads now use uncapped server queries over migrated/generated records. Remaining work is source workflow/sender audit, exact parent-vs-teacher active table semantics, and final visual audit."
+    "verification": "Modern page keeps the active other-alarm dashboard and adds a Notifications tab reading migrated `NotificationReceipt` rows from staff and parent legacy delivery tables, restoring New/Viewed filters, row/bulk/all mark-viewed actions, and Sent Others Alarms history for staff and parent recipients. Message-portal Other sends now mirror `Data::addToOthers()` with one shared `t_alarms_others` content row, staff and parent receipt fanout, and the legacy `alarmsInsurance.php` href; `verify-request-other-message-side-effects.ts` proves those receipts surface through `notifications_master.php`. `/alarmsOthers.php` now redirects to the modern other alarms page. Active other alarms plus notification and sent-history loads now use uncapped server queries over migrated/generated records. Remaining work is exact parent-vs-teacher active table semantics, final visual audit, and external provider push/SMS/email execution if enabled for this family."
   },
   {
     "legacyPhp": "Front/templates/admin/alarmsPayments.php",
@@ -662,7 +662,7 @@
     "legacyPhp": "Front/templates/admin/alarmsRequests.php",
     "legacyJs": "Front/templates/admin/js/alarmsRequests.js",
     "modernRoute": "/alarmsRequests.php, /alarms/requests",
-    "status": "partial - legacy request alarms bridge, staff/parent read-state, and sent history restored",
+    "status": "partial - legacy request alarms bridge, staff/parent read-state, sent history, and message-portal parent delivery restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -672,7 +672,7 @@
       "custom_notifications_requests",
       "custom_notifications_requests_parents"
     ],
-    "verification": "Modern page keeps the active request-alarm dashboard and adds a Notifications tab reading migrated `NotificationReceipt` rows from staff and parent legacy delivery tables, restoring New/Viewed filters, row/bulk/all mark-viewed actions, and Sent Requests Alarms history for staff and parent recipients. `/alarmsRequests.php` now redirects to the modern request alarms page. Active request alarms plus notification and sent-history loads now use uncapped server queries over migrated/generated records. Remaining work is source workflow/sender audit, exact parent-vs-teacher active table semantics, and final visual audit."
+    "verification": "Modern page keeps the active request-alarm dashboard and adds a Notifications tab reading migrated `NotificationReceipt` rows from staff and parent legacy delivery tables, restoring New/Viewed filters, row/bulk/all mark-viewed actions, and Sent Requests Alarms history for staff and parent recipients. Message-portal Request sends now mirror `Data::addToRequests()` with one shared `t_alarms_requests` content row, staff and parent receipt fanout, and the legacy `alarmsInsurance.php` href; `verify-request-other-message-side-effects.ts` proves those receipts surface through `notifications_master.php`. `/alarmsRequests.php` now redirects to the modern request alarms page. Active request alarms plus notification and sent-history loads now use uncapped server queries over migrated/generated records. Remaining work is exact parent-vs-teacher active table semantics, final visual audit, and external provider push/SMS/email execution if enabled for this family."
   },
   {
     "legacyPhp": "Front/templates/admin/alarmsVaccinations.php",
