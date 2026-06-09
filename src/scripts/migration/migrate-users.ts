@@ -65,6 +65,7 @@ interface OldUser {
   usites: string;
   uclasses: string;
   uchild: string;
+  [key: string]: unknown;
 }
 
 interface OldParentUser {
@@ -126,6 +127,19 @@ function parentUserLegacyData(
   } as Prisma.InputJsonValue;
 }
 
+function userLegacyData(
+  row: OldUser,
+  sourceDatabase: string
+): Prisma.InputJsonValue {
+  return {
+    sourceDatabase,
+    sourceTable: "login_users",
+    ...Object.fromEntries(
+      Object.entries(row).map(([key, value]) => [key, value ?? null])
+    ),
+  } as Prisma.InputJsonValue;
+}
+
 /**
  * Rehash an MD5 password hash with bcrypt.
  * The old system stored passwords as plain MD5.
@@ -141,6 +155,7 @@ async function rehashMd5ToBcrypt(md5Hash: string): Promise<string> {
 export async function migrateUsers(prisma: PrismaClient) {
   log("=== Migrating Users ===");
   const dryRun = isDryRun();
+  const sourceDatabase = getMysqlConfig().database || "unknown";
 
   // --- login_users → User ---
   const oldUsers = await queryMysql<OldUser>(
@@ -158,9 +173,25 @@ export async function migrateUsers(prisma: PrismaClient) {
       continue;
     }
 
-    // Idempotency: check by email
-    const existing = await prisma.user.findUnique({ where: { email } });
+    const legacyKey = `${sourceDatabase}:login_users:${row.user_id}`;
+    const existingByKey = await prisma.user.findUnique({ where: { legacyKey } });
+    // Idempotency fallback for rows migrated before User provenance existed.
+    const existing =
+      existingByKey ??
+      (await prisma.user.findUnique({ where: { email } }));
     if (existing) {
+      if (!dryRun) {
+        await prisma.user.update({
+          where: { id: existing.id },
+          data: {
+            sourceDatabase,
+            legacyKey,
+            legacyId: row.user_id,
+            legacyTable: "login_users",
+            legacyData: userLegacyData(row, sourceDatabase),
+          },
+        });
+      }
       setMapping("user", row.user_id, existing.id);
       skipped++;
       continue;
@@ -181,12 +212,17 @@ export async function migrateUsers(prisma: PrismaClient) {
       await prisma.user.create({
         data: {
           id: newId,
+          sourceDatabase,
+          legacyKey,
+          legacyId: row.user_id,
+          legacyTable: "login_users",
           email,
           name: row.name || row.username,
           passwordHash,
           role,
           isActive: !toBool(row.restricted),
           branchId,
+          legacyData: userLegacyData(row, sourceDatabase),
           createdAt: row.timestamp ? new Date(row.timestamp) : new Date(),
         },
       });

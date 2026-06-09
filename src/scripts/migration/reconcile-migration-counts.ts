@@ -774,13 +774,15 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     notes:
       "Manager attachment rows with real legacy files keep sourceDatabase and legacyKey.",
   }),
-  weakRule({
+  provenancedRule({
     id: "users.login_users",
     step: "10. Users",
     sourceTable: "login_users",
+    sourceWhere: "TRIM(email) <> ''",
     targetTable: "users",
+    targetWhere: byLegacyTable("login_users"),
     notes:
-      "Modern users can include seeded/admin users; this is a lower-bound check.",
+      "Legacy staff/admin auth users preserve sourceDatabase, legacyKey, legacyId, legacyTable, email/name/role mapping, branch mapping, active flag, and raw legacyData.",
   }),
   provenancedRule({
     id: "users.parent_login_users",

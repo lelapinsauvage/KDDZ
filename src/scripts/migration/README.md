@@ -133,7 +133,7 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_doctor` | Doctor, DoctorAddress, including source database/key provenance and raw legacy row |
 | `t_manager`, `t_manager_address` | Manager, ManagerAddress; core manager and address rows include source database/key provenance |
 | `t_manager_attachments` | ManagerAttachment |
-| `login_users` | User, plus LegacyAuthRecord rows preserving serialized `user_level` targeting metadata |
+| `login_users` | User with source database/key provenance, plus LegacyAuthRecord rows preserving serialized `user_level` targeting metadata |
 | `parent_login_users` | ParentUser, including raw `legacyData`, numeric legacy login ids, child-link `usites`, and existing token preservation for `ws/login.php` parity |
 | `login_confirm`, `login_confirm_man`, `login_profiles`, `login_profiles_man`, `login_profile_fields`, `login_profile_fields_man`, `login_levels`, `login_levels_man`, `parent_login_levels`, `login_integration`, `login_users`, `login_users_man` | LegacyAuthRecord |
 | `login_timestamps`, `login_timestamps_man`, `parent_login_timestamps` | LegacyLoginTimestamp |
@@ -289,6 +289,8 @@ Class rows from `t_class` are reconciled against `Class.sourceDatabase` and `Cla
 Child addresses and relative/contact rows from `t_address`, `t_authorized`, and `t_relatives` are reconciled against `sourceDatabase` and `legacyTable`. Count mismatches usually mean a source row had an unmapped child; legacy `t_relatives.can_pick` still controls pickup authorization without changing the source-table count.
 
 Parent mobile login rows from `parent_login_users` are reconciled against `ParentUser.sourceDatabase`/`legacyKey` for non-empty usernames. Count mismatches usually mean the source row could not be linked to a migrated child.
+
+Legacy staff/admin login rows from `login_users` are reconciled against `User.sourceDatabase` and `User.legacyTable` for rows with non-empty email, matching the User migrator skip condition. Seeded or newly-created modern users are excluded from this source-specific count.
 
 Active parent profile rows from `t_parents` are reconciled against `Parent.sourceDatabase` and `Parent.legacyTable`. Count mismatches usually mean a source row had an unmapped child or a duplicate child/type fallback during a backfill rerun.
 

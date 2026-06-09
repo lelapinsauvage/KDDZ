@@ -538,6 +538,10 @@ model Settings {
 
 model User {
   id             String    @id @default(uuid()) @db.Uuid
+  sourceDatabase String?
+  legacyKey      String?   @unique
+  legacyId       Int?
+  legacyTable    String?
   email          String    @unique
   emailVerified  DateTime?
   passwordHash   String?
@@ -547,6 +551,7 @@ model User {
   isActive       Boolean   @default(true)
   branchId       String?   @db.Uuid
   organizationId String?   @db.Uuid
+  legacyData     Json?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
@@ -568,6 +573,9 @@ model User {
 
   @@index([branchId])
   @@index([organizationId])
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyTable])
   @@index([email])
   @@index([role])
   @@map("users")

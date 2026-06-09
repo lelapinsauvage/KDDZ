@@ -164,8 +164,8 @@
     "legacyTable": "login_users",
     "legacyColumns": "user_id:int(8) NOT NULL AUTO_INCREMENT, user_level:longtext NOT NULL, restricted:int(1) NOT NULL DEFAULT '0', username:varchar(255) NOT NULL, name:varchar(255) NOT NULL, email:varchar(255) NOT NULL, password:varchar(128) NOT NULL, db_id:int(11) NOT NULL, timestamp:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, usites:varchar(255) NOT NULL DEFAULT '0', uclasses:varchar(50) NOT NULL DEFAULT '0', uchild:varchar(20) NOT NULL DEFAULT '0'",
     "modernDestination": "User",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-users.ts and migrate-auth-metadata.ts",
+    "reconciliation": "Staff/admin login rows with non-empty email preserve sourceDatabase, legacyKey, legacyId, legacyTable, email/name/role mapping, branch mapping, active flag, and raw legacyData on User; source/target count is covered by `users.login_users` reconciliation. Serialized user_level and related auth metadata are also preserved as LegacyAuthRecord for exact legacy permission targeting."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1076,8 +1076,8 @@
     "legacyTable": "login_users",
     "legacyColumns": "user_id:int(8) NOT NULL, user_level:longtext NOT NULL, restricted:int(1) NOT NULL DEFAULT '0', username:varchar(255) NOT NULL, name:varchar(255) NOT NULL, email:varchar(255) NOT NULL, password:varchar(128) NOT NULL, db_id:int(11) NOT NULL, timestamp:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, usites:varchar(255) NOT NULL DEFAULT '0', uclasses:varchar(50) NOT NULL DEFAULT '0', uchild:varchar(20) NOT NULL DEFAULT '0'",
     "modernDestination": "User",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-users.ts and migrate-auth-metadata.ts",
+    "reconciliation": "Staff/admin login rows with non-empty email preserve sourceDatabase, legacyKey, legacyId, legacyTable, email/name/role mapping, branch mapping, active flag, and raw legacyData on User; source/target count is covered by `users.login_users` reconciliation. Serialized user_level and related auth metadata are also preserved as LegacyAuthRecord for exact legacy permission targeting."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1972,8 +1972,8 @@
     "legacyTable": "login_users",
     "legacyColumns": "user_id:int(8) NOT NULL AUTO_INCREMENT, user_level:longtext NOT NULL, restricted:int(1) NOT NULL DEFAULT '0', username:varchar(255) NOT NULL, name:varchar(255) NOT NULL, email:varchar(255) NOT NULL, password:varchar(128) NOT NULL, db_id:int(11) NOT NULL, timestamp:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, usites:varchar(255) NOT NULL DEFAULT '0', uclasses:varchar(50) NOT NULL DEFAULT '0', uchild:varchar(20) NOT NULL DEFAULT '0'",
     "modernDestination": "User",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-users.ts and migrate-auth-metadata.ts",
+    "reconciliation": "Staff/admin login rows with non-empty email preserve sourceDatabase, legacyKey, legacyId, legacyTable, email/name/role mapping, branch mapping, active flag, and raw legacyData on User; source/target count is covered by `users.login_users` reconciliation. Serialized user_level and related auth metadata are also preserved as LegacyAuthRecord for exact legacy permission targeting."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2708,8 +2708,8 @@
     "legacyTable": "login_users",
     "legacyColumns": "user_id:int(8) NOT NULL, user_level:longtext NOT NULL, restricted:int(1) NOT NULL DEFAULT '0', username:varchar(255) NOT NULL, name:varchar(255) NOT NULL, email:varchar(255) NOT NULL, password:varchar(128) NOT NULL, db_id:int(11) NOT NULL, timestamp:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, usites:varchar(255) NOT NULL DEFAULT '0', uclasses:varchar(50) NOT NULL DEFAULT '0', uchild:varchar(20) NOT NULL DEFAULT '0'",
     "modernDestination": "User",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-users.ts and migrate-auth-metadata.ts",
+    "reconciliation": "Staff/admin login rows with non-empty email preserve sourceDatabase, legacyKey, legacyId, legacyTable, email/name/role mapping, branch mapping, active flag, and raw legacyData on User; source/target count is covered by `users.login_users` reconciliation. Serialized user_level and related auth metadata are also preserved as LegacyAuthRecord for exact legacy permission targeting."
   },
   {
     "sourceDump": "kiddzonl_master29sept",
@@ -2876,8 +2876,8 @@
     "legacyTable": "login_users",
     "legacyColumns": "user_id:int(8) NOT NULL, user_level:longtext NOT NULL, restricted:int(1) NOT NULL DEFAULT '0', username:varchar(255) NOT NULL, name:varchar(255) NOT NULL, email:varchar(255) NOT NULL, password:varchar(128) NOT NULL, db_id:int(11) NOT NULL, timestamp:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, usites:varchar(255) NOT NULL DEFAULT '0', uclasses:varchar(50) NOT NULL DEFAULT '0', uchild:varchar(20) NOT NULL DEFAULT '0'",
     "modernDestination": "User",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-users.ts and migrate-auth-metadata.ts",
+    "reconciliation": "Staff/admin login rows with non-empty email preserve sourceDatabase, legacyKey, legacyId, legacyTable, email/name/role mapping, branch mapping, active flag, and raw legacyData on User; source/target count is covered by `users.login_users` reconciliation. Serialized user_level and related auth metadata are also preserved as LegacyAuthRecord for exact legacy permission targeting."
   },
   {
     "sourceDump": "kiddzonl_users29sept",
@@ -3084,8 +3084,8 @@
     "legacyTable": "login_users",
     "legacyColumns": "user_id:int(8) NOT NULL AUTO_INCREMENT, user_level:longtext NOT NULL, restricted:int(1) NOT NULL DEFAULT '0', username:varchar(255) NOT NULL, name:varchar(255) NOT NULL, email:varchar(255) NOT NULL, password:varchar(128) NOT NULL, db_id:int(11) NOT NULL, timestamp:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, usites:varchar(255) NOT NULL DEFAULT '0', uclasses:varchar(50) NOT NULL DEFAULT '0', uchild:varchar(20) NOT NULL DEFAULT '0'",
     "modernDestination": "User",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-users.ts and migrate-auth-metadata.ts",
+    "reconciliation": "Staff/admin login rows with non-empty email preserve sourceDatabase, legacyKey, legacyId, legacyTable, email/name/role mapping, branch mapping, active flag, and raw legacyData on User; source/target count is covered by `users.login_users` reconciliation. Serialized user_level and related auth metadata are also preserved as LegacyAuthRecord for exact legacy permission targeting."
   },
   {
     "sourceDump": "kiddzonl_users_2018-2019",
