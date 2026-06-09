@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import { getDailyReport } from "@/lib/actions/daily-reports";
+import { dailyReportFoodLabel } from "@/lib/legacy-daily-report-fields";
+import { loadLegacyDailyReportFoodNames } from "@/lib/legacy-daily-report-food-lookup";
 import { DailyReportDetailClient } from "./detail-client";
 
 interface Props {
@@ -15,6 +17,7 @@ export default async function DailyReportDetailPage({ params }: Props) {
   }
 
   const r = result.report;
+  const legacyFoodNames = await loadLegacyDailyReportFoodNames([r.legacyData]);
 
   const report = {
     id: r.id,
@@ -23,9 +26,19 @@ export default async function DailyReportDetailPage({ params }: Props) {
     childName: `${r.child.firstName} ${r.child.lastName}`,
     className: r.child.class?.name ?? null,
     branchName: r.child.branch?.name ?? null,
-    breakfastFood: r.breakfastFood?.name ?? null,
+    breakfastFood: dailyReportFoodLabel({
+      relatedName: r.breakfastFood?.name,
+      legacyData: r.legacyData,
+      legacyIdKey: "breakfast_id",
+      legacyFoodNames,
+    }),
     breakfastPortion: r.breakfastPortion ?? null,
-    lunchFood: r.lunchFood?.name ?? null,
+    lunchFood: dailyReportFoodLabel({
+      relatedName: r.lunchFood?.name,
+      legacyData: r.legacyData,
+      legacyIdKey: "lunch_id",
+      legacyFoodNames,
+    }),
     lunchPortion: r.lunchPortion ?? null,
     dessert: r.dessert ?? null,
     dessertPortion: r.dessertPortion ?? null,

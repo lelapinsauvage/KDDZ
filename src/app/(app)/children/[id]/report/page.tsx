@@ -1,16 +1,13 @@
 import { notFound } from "next/navigation";
 import { getChild } from "@/lib/actions/children";
 import { getDailyReports } from "@/lib/actions/daily-reports";
-import { db } from "@/lib/db";
 import {
-  buildLegacyFoodNameMap,
   dailyReportClothingFlags,
   dailyReportFoodLabel,
-  legacyDailyFoodId,
   legacyDailyRecord,
-  legacyDailySourceDatabase,
   legacyDailyText,
 } from "@/lib/legacy-daily-report-fields";
+import { loadLegacyDailyReportFoodNames } from "@/lib/legacy-daily-report-food-lookup";
 import { ReportClient } from "./report-client";
 
 interface Props {
@@ -43,31 +40,9 @@ export default async function ChildReportPage({ params }: Props) {
     status: "SUBMITTED",
     pageSize: 200,
   });
-  const legacyFoodIds = new Set<number>();
-  const legacySourceDatabases = new Set<string>();
-
-  for (const report of reportsRaw) {
-    for (const key of ["breakfast_id", "lunch_id"] as const) {
-      const legacyFoodId = legacyDailyFoodId(report.legacyData, key);
-      if (legacyFoodId) legacyFoodIds.add(legacyFoodId);
-    }
-
-    const sourceDatabase = legacyDailySourceDatabase(report.legacyData);
-    if (sourceDatabase) legacySourceDatabases.add(sourceDatabase);
-  }
-
-  const legacyFoods = legacyFoodIds.size
-    ? await db.food.findMany({
-        where: {
-          legacyId: { in: [...legacyFoodIds] },
-          ...(legacySourceDatabases.size
-            ? { sourceDatabase: { in: [...legacySourceDatabases] } }
-            : {}),
-        },
-        select: { legacyId: true, sourceDatabase: true, name: true },
-      })
-    : [];
-  const legacyFoodNames = buildLegacyFoodNameMap(legacyFoods);
+  const legacyFoodNames = await loadLegacyDailyReportFoodNames(
+    reportsRaw.map((report) => report.legacyData),
+  );
 
   const childData = {
     id: child.id,
