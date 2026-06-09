@@ -2654,42 +2654,70 @@ model LegacyYearDatabase {
 
 model Province {
   id              String   @id @default(uuid()) @db.Uuid
+  sourceDatabase  String?
+  legacyKey       String?  @unique
+  legacyId        Int?
+  legacyTable     String?
   name            String
   referenceNumber String?  @map("reference_number")
+  legacyData      Json?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   districts District[]
 
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyTable])
   @@map("provinces")
 }
 
 model District {
-  id              String   @id @default(uuid()) @db.Uuid
-  name            String
-  referenceNumber String?  @map("reference_number")
-  provinceId      String   @db.Uuid
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id               String   @id @default(uuid()) @db.Uuid
+  sourceDatabase   String?
+  legacyKey        String?  @unique
+  legacyId         Int?
+  legacyTable      String?
+  legacyProvinceId Int?
+  name             String
+  referenceNumber  String?  @map("reference_number")
+  provinceId       String   @db.Uuid
+  legacyData       Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   province Province @relation(fields: [provinceId], references: [id], onDelete: Cascade)
   regions  Region[]
 
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyTable])
+  @@index([legacyProvinceId])
   @@index([provinceId])
   @@map("districts")
 }
 
 model Region {
-  id              String   @id @default(uuid()) @db.Uuid
-  name            String
-  referenceNumber String?  @map("reference_number")
-  districtId      String   @db.Uuid
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id               String   @id @default(uuid()) @db.Uuid
+  sourceDatabase   String?
+  legacyKey        String?  @unique
+  legacyId         Int?
+  legacyTable      String?
+  legacyDistrictId Int?
+  name             String
+  referenceNumber  String?  @map("reference_number")
+  districtId       String   @db.Uuid
+  legacyData       Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   district       District       @relation(fields: [districtId], references: [id], onDelete: Cascade)
   childAddresses ChildAddress[]
 
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyTable])
+  @@index([legacyDistrictId])
   @@index([districtId])
   @@map("regions")
 }

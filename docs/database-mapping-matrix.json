@@ -701,7 +701,8 @@
     "legacyColumns": "m_id:int(11) NOT NULL AUTO_INCREMENT, m_name:text NOT NULL, m_ref_num:int(11) NOT NULL, m_datetime:datetime NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1'",
     "modernDestination": "Province",
     "status": "mapped - migrated by migrate-locations.ts",
-    "reconciliation": "Active rows migrated; inactive/orphan rows skipped and counted in logs."
+    "reconciliation": "Active rows migrated; inactive/orphan rows skipped and counted in logs.",
+    "reconciliationNote": "Province rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, reference number, created timestamp, and raw legacyData; source/target count is covered by `locations.t_mouhafaza` reconciliation; mismatches expose inactive rows, name/reference fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -765,7 +766,8 @@
     "legacyColumns": "qid:int(11) NOT NULL AUTO_INCREMENT, qname:varchar(50) NOT NULL, ref_nb:varchar(50) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1', q_mid:int(11) NOT NULL",
     "modernDestination": "District",
     "status": "mapped - migrated by migrate-locations.ts",
-    "reconciliation": "Active rows migrated; inactive/orphan rows skipped and counted in logs."
+    "reconciliation": "Active rows migrated; inactive/orphan rows skipped and counted in logs.",
+    "reconciliationNote": "District rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy province id, reference number, created timestamp, province mapping, and raw legacyData; source/target count is covered by `locations.t_quadaa` reconciliation; mismatches expose inactive rows, orphan provinces, name/reference fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -773,7 +775,8 @@
     "legacyColumns": "rid:int(11) NOT NULL AUTO_INCREMENT, rname:varchar(50) NOT NULL, ref_nb:varchar(50) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1', r_qid:int(11) NOT NULL",
     "modernDestination": "Region",
     "status": "mapped - migrated by migrate-locations.ts",
-    "reconciliation": "Active rows migrated; inactive/orphan rows skipped and counted in logs."
+    "reconciliation": "Active rows migrated; inactive/orphan rows skipped and counted in logs.",
+    "reconciliationNote": "Region rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy district id, reference number, created timestamp, district mapping, and raw legacyData; source/target count is covered by `locations.t_region` reconciliation; mismatches expose inactive rows, orphan districts, name/reference fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1669,7 +1672,8 @@
     "legacyColumns": "m_id:int(11) NOT NULL, m_name:text NOT NULL, m_ref_num:int(11) NOT NULL, m_datetime:datetime NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1'",
     "modernDestination": "Province",
     "status": "mapped - migrated by migrate-locations.ts",
-    "reconciliation": "Active rows migrated; inactive/orphan rows skipped and counted in logs."
+    "reconciliation": "Active rows migrated; inactive/orphan rows skipped and counted in logs.",
+    "reconciliationNote": "Province rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, reference number, created timestamp, and raw legacyData; source/target count is covered by `locations.t_mouhafaza` reconciliation; mismatches expose inactive rows, name/reference fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1733,7 +1737,8 @@
     "legacyColumns": "qid:int(11) NOT NULL, qname:varchar(50) NOT NULL, ref_nb:varchar(50) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1', q_mid:int(11) NOT NULL",
     "modernDestination": "District",
     "status": "mapped - migrated by migrate-locations.ts",
-    "reconciliation": "Active rows migrated; inactive/orphan rows skipped and counted in logs."
+    "reconciliation": "Active rows migrated; inactive/orphan rows skipped and counted in logs.",
+    "reconciliationNote": "District rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy province id, reference number, created timestamp, province mapping, and raw legacyData; source/target count is covered by `locations.t_quadaa` reconciliation; mismatches expose inactive rows, orphan provinces, name/reference fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1741,7 +1746,8 @@
     "legacyColumns": "rid:int(11) NOT NULL, rname:varchar(50) NOT NULL, ref_nb:varchar(50) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1', r_qid:int(11) NOT NULL",
     "modernDestination": "Region",
     "status": "mapped - migrated by migrate-locations.ts",
-    "reconciliation": "Active rows migrated; inactive/orphan rows skipped and counted in logs."
+    "reconciliation": "Active rows migrated; inactive/orphan rows skipped and counted in logs.",
+    "reconciliationNote": "Region rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy district id, reference number, created timestamp, district mapping, and raw legacyData; source/target count is covered by `locations.t_region` reconciliation; mismatches expose inactive rows, orphan districts, name/reference fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -2509,7 +2515,8 @@
     "legacyColumns": "m_id:int(11) NOT NULL AUTO_INCREMENT, m_name:text NOT NULL, m_ref_num:int(11) NOT NULL, m_datetime:datetime NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1'",
     "modernDestination": "Province",
     "status": "mapped - migrated by migrate-locations.ts",
-    "reconciliation": "Active rows migrated; inactive/orphan rows skipped and counted in logs."
+    "reconciliation": "Active rows migrated; inactive/orphan rows skipped and counted in logs.",
+    "reconciliationNote": "Province rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, reference number, created timestamp, and raw legacyData; source/target count is covered by `locations.t_mouhafaza` reconciliation; mismatches expose inactive rows, name/reference fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2573,7 +2580,8 @@
     "legacyColumns": "qid:int(11) NOT NULL AUTO_INCREMENT, qname:varchar(50) NOT NULL, ref_nb:varchar(50) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1', q_mid:int(11) NOT NULL",
     "modernDestination": "District",
     "status": "mapped - migrated by migrate-locations.ts",
-    "reconciliation": "Active rows migrated; inactive/orphan rows skipped and counted in logs."
+    "reconciliation": "Active rows migrated; inactive/orphan rows skipped and counted in logs.",
+    "reconciliationNote": "District rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy province id, reference number, created timestamp, province mapping, and raw legacyData; source/target count is covered by `locations.t_quadaa` reconciliation; mismatches expose inactive rows, orphan provinces, name/reference fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2581,7 +2589,8 @@
     "legacyColumns": "rid:int(11) NOT NULL AUTO_INCREMENT, rname:varchar(50) NOT NULL, ref_nb:varchar(50) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1', r_qid:int(11) NOT NULL",
     "modernDestination": "Region",
     "status": "mapped - migrated by migrate-locations.ts",
-    "reconciliation": "Active rows migrated; inactive/orphan rows skipped and counted in logs."
+    "reconciliation": "Active rows migrated; inactive/orphan rows skipped and counted in logs.",
+    "reconciliationNote": "Region rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy district id, reference number, created timestamp, district mapping, and raw legacyData; source/target count is covered by `locations.t_region` reconciliation; mismatches expose inactive rows, orphan districts, name/reference fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",

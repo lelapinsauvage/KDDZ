@@ -40,6 +40,7 @@ This list is the first implementation backlog after the generated inventory/matr
 4. **Full data reconciliation**
    - `reconcile-migration-counts.ts` now provides curated source/target count checks across the migration order and distinguishes strong provenance from weaker count-only evidence.
    - Branch reconciliation now uses `Branch.sourceDatabase`/`legacyTable` for `t_branch` rows, covering contact fields, image metadata, prefixes, organization mapping, and active state.
+   - Location reconciliation now uses Province/District/Region source provenance for active `t_mouhafaza`, `t_quadaa`, and `t_region` rows, preserving reference numbers, parent legacy ids, created timestamps, and raw source rows.
    - Class reconciliation now uses `Class.sourceDatabase`/`legacyTable` for `t_class` rows, covering branch mapping, age/capacity/camera fields, image metadata, and active state.
    - Child roster reconciliation now uses `Child.sourceDatabase`/`legacyTable` for both active `t_child` rows and `t_child_draft` rows, so draft/active imports are checked by exact legacy table provenance instead of broad child totals.
    - Child history reconciliation now uses `ChildHistory.sourceDatabase`/`legacyTable` for `t_child_h` snapshots, preserving child legacy ids, changed-by user, timestamps, and raw snapshot JSON.

@@ -487,32 +487,35 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     notes:
       "Branch rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, organization mapping, contact fields, image, prefix, and active flag.",
   }),
-  weakRule({
+  provenancedRule({
     id: "locations.t_mouhafaza",
     step: "2. Locations",
     sourceTable: "t_mouhafaza",
     sourceWhere: "active = 1",
     targetTable: "provinces",
+    targetWhere: byLegacyTable("t_mouhafaza"),
     notes:
-      "Location migrator deduplicates by name/reference and skips inactive rows.",
+      "Province rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, reference number, created timestamp, and raw legacyData.",
   }),
-  weakRule({
+  provenancedRule({
     id: "locations.t_quadaa",
     step: "2. Locations",
     sourceTable: "t_quadaa",
     sourceWhere: "active = 1",
     targetTable: "districts",
+    targetWhere: byLegacyTable("t_quadaa"),
     notes:
-      "Districts depend on migrated provinces; lower counts require orphan-parent review.",
+      "District rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacyProvinceId, reference number, created timestamp, province mapping, and raw legacyData.",
   }),
-  weakRule({
+  provenancedRule({
     id: "locations.t_region",
     step: "2. Locations",
     sourceTable: "t_region",
     sourceWhere: "active = 1",
     targetTable: "regions",
+    targetWhere: byLegacyTable("t_region"),
     notes:
-      "Regions depend on migrated districts; lower counts require orphan-parent review.",
+      "Region rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacyDistrictId, reference number, created timestamp, district mapping, and raw legacyData.",
   }),
   provenancedRule({
     id: "school_years.t_school_year",

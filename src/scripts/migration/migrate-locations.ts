@@ -8,9 +8,9 @@
  * modern UUID hierarchy.
  */
 
-import type { PrismaClient } from "@/generated/prisma/client";
+import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 import { createPrismaClient } from "./lib/prisma-client";
-import { queryMysql, closeMysqlPool } from "./lib/mysql-client";
+import { queryMysql, closeMysqlPool, getMysqlConfig } from "./lib/mysql-client";
 import {
   cleanString,
   generateUUID,
@@ -30,6 +30,7 @@ interface OldProvince {
   m_ref_num: number | string;
   m_datetime: string | Date;
   active: number | string;
+  [key: string]: unknown;
 }
 
 interface OldDistrict {
@@ -39,6 +40,7 @@ interface OldDistrict {
   datetime: string | Date;
   active: number | string;
   q_mid: number;
+  [key: string]: unknown;
 }
 
 interface OldRegion {
@@ -48,6 +50,27 @@ interface OldRegion {
   datetime: string | Date;
   active: number | string;
   r_qid: number;
+  [key: string]: unknown;
+}
+
+function legacyKey(sourceDatabase: string, table: string, legacyId: number) {
+  return `${sourceDatabase}:${table}:${legacyId}`;
+}
+
+function legacyLocationData(
+  sourceDatabase: string,
+  sourceTable: string,
+  legacyId: number,
+  row: Record<string, unknown>
+): Prisma.InputJsonValue {
+  return JSON.parse(
+    JSON.stringify({
+      sourceDatabase,
+      sourceTable,
+      legacyId,
+      row,
+    })
+  ) as Prisma.InputJsonValue;
 }
 
 function legacyDate(value: string | Date | null | undefined): Date {
@@ -60,7 +83,11 @@ function setLocationMapping(table: string, oldId: number, newId: string) {
   setMapping(table, oldId, newId);
 }
 
-async function migrateProvinces(prisma: PrismaClient, dryRun: boolean) {
+async function migrateProvinces(
+  prisma: PrismaClient,
+  dryRun: boolean,
+  sourceDatabase: string
+) {
   const rows = await queryMysql<OldProvince>("SELECT * FROM t_mouhafaza ORDER BY m_id");
   log(`Found ${rows.length} provinces in old DB`);
 
@@ -80,14 +107,41 @@ async function migrateProvinces(prisma: PrismaClient, dryRun: boolean) {
       continue;
     }
 
+    const key = legacyKey(sourceDatabase, "t_mouhafaza", row.m_id);
     const referenceNumber = cleanString(row.m_ref_num);
-    const existing = await prisma.province.findFirst({
-      where: referenceNumber
-        ? { OR: [{ name }, { referenceNumber }] }
-        : { name },
+    const data = {
+      sourceDatabase,
+      legacyKey: key,
+      legacyId: row.m_id,
+      legacyTable: "t_mouhafaza",
+      name,
+      referenceNumber,
+      legacyData: legacyLocationData(
+        sourceDatabase,
+        "t_mouhafaza",
+        row.m_id,
+        row
+      ),
+      createdAt: legacyDate(row.m_datetime),
+    };
+    const existingByKey = await prisma.province.findUnique({
+      where: { legacyKey: key },
     });
+    const existing =
+      existingByKey ??
+      (await prisma.province.findFirst({
+        where: referenceNumber
+          ? { legacyKey: null, OR: [{ name }, { referenceNumber }] }
+          : { legacyKey: null, name },
+      }));
 
     if (existing) {
+      if (!dryRun) {
+        await prisma.province.update({
+          where: { id: existing.id },
+          data,
+        });
+      }
       setLocationMapping("province", row.m_id, existing.id);
       setLocationMapping("mouhafaza", row.m_id, existing.id);
       existingCount++;
@@ -99,9 +153,7 @@ async function migrateProvinces(prisma: PrismaClient, dryRun: boolean) {
       await prisma.province.create({
         data: {
           id,
-          name,
-          referenceNumber,
-          createdAt: legacyDate(row.m_datetime),
+          ...data,
         },
       });
     }
@@ -115,7 +167,11 @@ async function migrateProvinces(prisma: PrismaClient, dryRun: boolean) {
   log(`Provinces: ${migrated} migrated, ${existingCount} existing, ${skipped} skipped`);
 }
 
-async function migrateDistricts(prisma: PrismaClient, dryRun: boolean) {
+async function migrateDistricts(
+  prisma: PrismaClient,
+  dryRun: boolean,
+  sourceDatabase: string
+) {
   const rows = await queryMysql<OldDistrict>("SELECT * FROM t_quadaa ORDER BY qid");
   log(`Found ${rows.length} districts in old DB`);
 
@@ -142,14 +198,43 @@ async function migrateDistricts(prisma: PrismaClient, dryRun: boolean) {
       continue;
     }
 
+    const key = legacyKey(sourceDatabase, "t_quadaa", row.qid);
     const referenceNumber = cleanString(row.ref_nb);
-    const existing = await prisma.district.findFirst({
-      where: referenceNumber
-        ? { provinceId, OR: [{ name }, { referenceNumber }] }
-        : { provinceId, name },
+    const data = {
+      sourceDatabase,
+      legacyKey: key,
+      legacyId: row.qid,
+      legacyTable: "t_quadaa",
+      legacyProvinceId: row.q_mid,
+      name,
+      referenceNumber,
+      provinceId,
+      legacyData: legacyLocationData(
+        sourceDatabase,
+        "t_quadaa",
+        row.qid,
+        row
+      ),
+      createdAt: legacyDate(row.datetime),
+    };
+    const existingByKey = await prisma.district.findUnique({
+      where: { legacyKey: key },
     });
+    const existing =
+      existingByKey ??
+      (await prisma.district.findFirst({
+        where: referenceNumber
+          ? { provinceId, legacyKey: null, OR: [{ name }, { referenceNumber }] }
+          : { provinceId, legacyKey: null, name },
+      }));
 
     if (existing) {
+      if (!dryRun) {
+        await prisma.district.update({
+          where: { id: existing.id },
+          data,
+        });
+      }
       setLocationMapping("district", row.qid, existing.id);
       setLocationMapping("quadaa", row.qid, existing.id);
       existingCount++;
@@ -161,10 +246,7 @@ async function migrateDistricts(prisma: PrismaClient, dryRun: boolean) {
       await prisma.district.create({
         data: {
           id,
-          name,
-          referenceNumber,
-          provinceId,
-          createdAt: legacyDate(row.datetime),
+          ...data,
         },
       });
     }
@@ -180,7 +262,11 @@ async function migrateDistricts(prisma: PrismaClient, dryRun: boolean) {
   );
 }
 
-async function migrateRegions(prisma: PrismaClient, dryRun: boolean) {
+async function migrateRegions(
+  prisma: PrismaClient,
+  dryRun: boolean,
+  sourceDatabase: string
+) {
   const rows = await queryMysql<OldRegion>("SELECT * FROM t_region ORDER BY rid");
   log(`Found ${rows.length} regions in old DB`);
 
@@ -207,14 +293,43 @@ async function migrateRegions(prisma: PrismaClient, dryRun: boolean) {
       continue;
     }
 
+    const key = legacyKey(sourceDatabase, "t_region", row.rid);
     const referenceNumber = cleanString(row.ref_nb);
-    const existing = await prisma.region.findFirst({
-      where: referenceNumber
-        ? { districtId, OR: [{ name }, { referenceNumber }] }
-        : { districtId, name },
+    const data = {
+      sourceDatabase,
+      legacyKey: key,
+      legacyId: row.rid,
+      legacyTable: "t_region",
+      legacyDistrictId: row.r_qid,
+      name,
+      referenceNumber,
+      districtId,
+      legacyData: legacyLocationData(
+        sourceDatabase,
+        "t_region",
+        row.rid,
+        row
+      ),
+      createdAt: legacyDate(row.datetime),
+    };
+    const existingByKey = await prisma.region.findUnique({
+      where: { legacyKey: key },
     });
+    const existing =
+      existingByKey ??
+      (await prisma.region.findFirst({
+        where: referenceNumber
+          ? { districtId, legacyKey: null, OR: [{ name }, { referenceNumber }] }
+          : { districtId, legacyKey: null, name },
+      }));
 
     if (existing) {
+      if (!dryRun) {
+        await prisma.region.update({
+          where: { id: existing.id },
+          data,
+        });
+      }
       setLocationMapping("region", row.rid, existing.id);
       existingCount++;
       continue;
@@ -225,10 +340,7 @@ async function migrateRegions(prisma: PrismaClient, dryRun: boolean) {
       await prisma.region.create({
         data: {
           id,
-          name,
-          referenceNumber,
-          districtId,
-          createdAt: legacyDate(row.datetime),
+          ...data,
         },
       });
     }
@@ -246,10 +358,11 @@ async function migrateRegions(prisma: PrismaClient, dryRun: boolean) {
 export async function migrateLocations(prisma: PrismaClient) {
   log("=== Migrating Locations ===");
   const dryRun = isDryRun();
+  const sourceDatabase = getMysqlConfig().database || "unknown";
 
-  await migrateProvinces(prisma, dryRun);
-  await migrateDistricts(prisma, dryRun);
-  await migrateRegions(prisma, dryRun);
+  await migrateProvinces(prisma, dryRun, sourceDatabase);
+  await migrateDistricts(prisma, dryRun, sourceDatabase);
+  await migrateRegions(prisma, dryRun, sourceDatabase);
 
   log(`Locations migration complete${dryRun ? " [DRY RUN]" : ""}`);
 }

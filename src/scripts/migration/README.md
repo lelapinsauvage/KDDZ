@@ -111,9 +111,9 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | Old MySQL Table(s) | New PostgreSQL Model(s) |
 |---|---|
 | `t_branch` | Branch, including source database/key provenance and image metadata |
-| `t_mouhafaza` | Province |
-| `t_quadaa` | District |
-| `t_region` | Region |
+| `t_mouhafaza` | Province, including source database/key provenance, reference number, created timestamp, and raw legacy row |
+| `t_quadaa` | District, including source database/key provenance, legacy province id, reference number, created timestamp, province mapping, and raw legacy row |
+| `t_region` | Region, including source database/key provenance, legacy district id, reference number, created timestamp, district mapping, and raw legacy row |
 | `t_school_year` | SchoolYear |
 | `t_class` | Class, including source database/key provenance and class image metadata |
 | `t_child`, `t_child_draft` | Child (isDraft flag) |
@@ -266,6 +266,8 @@ The notification receipt rules mirror every `custom_notifications*` delivery tab
 
 Branch rows from `t_branch` are reconciled against `Branch.sourceDatabase` and `Branch.legacyTable`, covering contact fields, prefix, image metadata, and active state. Count mismatches usually mean a source row collided with an organization/name fallback during backfill or the selected dump differs from canonical production.
 
+Location reference rows from `t_mouhafaza`, `t_quadaa`, and `t_region` are reconciled against `sourceDatabase` and `legacyTable` on Province, District, and Region. Count mismatches usually mean inactive rows, orphan parent locations, reference/name fallback collisions, or differences between the selected dump and canonical production.
+
 Alarm content rows from `t_alarms*` are reconciled against `Alarm.legacyData.sourceDatabase` and `Alarm.legacyData.sourceTable`. Count mismatches usually mean duplicate legacy content merged into an existing alarm or the imported dump differs from the canonical production source.
 
 Daily report rows from `t_daily_report` are reconciled against `DailyReport.legacyData.sourceDatabase` and `DailyReport.legacyData.sourceTable` for active rows. Count mismatches usually mean a source row had an unmapped child, an invalid report date, or duplicate child/date content merged into an existing report.
@@ -311,7 +313,7 @@ All scripts check for existing records before inserting, so they can be re-run s
 Old DB uses `active = 0` for soft deletes. Only active records (active = 1) are migrated. Deleted records (deleted = 1) are also excluded.
 
 ### Locations
-Legacy Lebanon location tables are migrated into the modern Province → District → Region hierarchy. Old `t_mouhafaza.m_id`, `t_quadaa.qid`, and `t_region.rid` values are mapped to UUIDs for downstream address restoration; inactive rows and orphan districts/regions are skipped and counted in logs.
+Legacy Lebanon location tables are migrated into the modern Province → District → Region hierarchy. Old `t_mouhafaza.m_id`, `t_quadaa.qid`, and `t_region.rid` values are mapped to UUIDs for downstream address restoration; active rows keep `sourceDatabase`, `legacyKey`, `legacyId`, `legacyTable`, reference numbers, created timestamps, parent legacy ids where applicable, and raw row JSON for cutover reconciliation. Inactive rows and orphan districts/regions are skipped and counted in logs.
 
 ### School Years
 Legacy `t_school_year` rows are migrated with source database/table/id, `sid`, source date, and raw JSON. The year from `t_school_year.sdate` is mapped so `t_child.sel_year` can populate each child's `schoolYearId`.
