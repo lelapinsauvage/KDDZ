@@ -42,15 +42,22 @@ async function handleRequest(
       return jsonError("Unauthorized", 401);
     }
 
-    const postedThreadId =
-      request.method === "POST" ? await readPostedThreadId(request) : null;
+    const postedBody =
+      request.method === "POST" ? await readRequestBody(request) : null;
+    const postedThreadId = readString(asRecord(postedBody), [
+      "usites",
+      "thread_id",
+      "threadid",
+      "id",
+    ]);
     const threadId = postedThreadId || routeThreadId;
     const threadMessages = await loadThreadMessages(threadId);
     if (threadMessages.length === 0) {
       return jsonSuccess(buildEmptyLegacyMessageThread());
     }
 
-    const parentUser = auth?.parentUser;
+    const parentUser =
+      auth?.parentUser ?? (await resolveLegacyThreadParent(threadMessages, postedBody));
     if (parentUser) {
       const hasAccess = threadMessages.some(
         (message) =>
@@ -82,6 +89,11 @@ async function handleRequest(
           where: { id: { in: unreadParentIds } },
           data: { isRead: true },
         });
+        for (const message of threadMessages) {
+          if (unreadParentIds.includes(message.id)) {
+            message.isRead = true;
+          }
+        }
       }
     }
 
@@ -174,11 +186,6 @@ function dedupeMessages(messages: ThreadMessage[]) {
   );
 }
 
-async function readPostedThreadId(request: NextRequest) {
-  const body = await readRequestBody(request);
-  return readString(asRecord(body), ["usites", "thread_id", "threadid", "id"]);
-}
-
 async function optionalAuthenticateParent(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   const hasBearer = authHeader?.startsWith("Bearer ");
@@ -201,6 +208,68 @@ async function optionalAuthenticateParent(request: NextRequest) {
   return { parentUser };
 }
 
+async function resolveLegacyThreadParent(
+  threadMessages: ThreadMessage[],
+  body: unknown
+) {
+  const parentHint = readString(asRecord(body), [
+    "parent_user_id",
+    "parentUserId",
+    "child_id",
+    "childId",
+    "pid",
+  ]);
+
+  if (parentHint) {
+    const hintedParent = await resolveParentUserFromHint(parentHint);
+    if (hintedParent) return hintedParent;
+  }
+
+  const recipientIds = [
+    ...new Set(
+      threadMessages
+        .filter((message) => message.recipientType === "PARENT")
+        .map((message) => message.recipientId)
+    ),
+  ];
+
+  if (recipientIds.length !== 1) return null;
+
+  return db.parentUser.findFirst({
+    where: { id: recipientIds[0], isActive: true },
+    select: { id: true },
+  });
+}
+
+async function resolveParentUserFromHint(hint: string) {
+  if (UUID_RE.test(hint)) {
+    const directParent = await db.parentUser.findFirst({
+      where: { id: hint, isActive: true },
+      select: { id: true },
+    });
+    if (directParent) return directParent;
+
+    const childParent = await db.parentUser.findFirst({
+      where: { childId: hint, isActive: true },
+      select: { id: true },
+      orderBy: { createdAt: "asc" },
+    });
+    if (childParent) return childParent;
+  }
+
+  const legacyId = parseLegacyInt(hint);
+  if (legacyId === null) return null;
+
+  return db.parentUser.findFirst({
+    where: {
+      isActive: true,
+      OR: [{ legacyId }, { legacyChildId: legacyId }, { child: { legacyId } }],
+    },
+    select: { id: true },
+    orderBy: { createdAt: "asc" },
+  });
+}
+
 async function readRequestBody(request: NextRequest) {
   const contentType = request.headers.get("content-type") ?? "";
 
@@ -212,14 +281,19 @@ async function readRequestBody(request: NextRequest) {
     contentType.includes("application/x-www-form-urlencoded") ||
     contentType.includes("multipart/form-data")
   ) {
-    const form = await request.formData().catch(() => null);
-    if (!form) return null;
-    return Object.fromEntries(
-      [...form.entries()].map(([key, value]) => [
-        key,
-        typeof value === "string" ? value : value.name,
-      ])
-    );
+    const form = await request
+      .clone()
+      .formData()
+      .catch(() => null);
+    const entries = form ? [...form.entries()] : [];
+    if (entries.length > 0) {
+      return Object.fromEntries(
+        entries.map(([key, value]) => [
+          key,
+          typeof value === "string" ? value : value.name,
+        ])
+      );
+    }
   }
 
   const text = await request.text().catch(() => "");
@@ -254,4 +328,9 @@ function readString(data: Record<string, unknown> | null, keys: string[]) {
     if (value !== undefined && value !== null) return String(value);
   }
   return null;
+}
+
+function parseLegacyInt(value: unknown): number | null {
+  const parsed = Number.parseInt(String(value ?? ""), 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 }

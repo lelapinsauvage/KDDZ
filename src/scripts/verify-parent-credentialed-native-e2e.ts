@@ -1,6 +1,6 @@
 import "dotenv/config";
 import assert from "node:assert/strict";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { compare } from "bcryptjs";
 import { NextRequest } from "next/server";
 import { POST as absencePost } from "@/app/ws/absence.php/route";
@@ -77,6 +77,11 @@ async function main() {
   );
   const usites = requiredString(login, "usites", "parent login");
   const token = requiredString(login, "token", "parent login");
+  const parentUserId = requiredString(
+    login,
+    "modernParentUserId",
+    "parent login"
+  );
   assert.ok(login.id !== "0", "successful login id must not use failure sentinel");
   assert.ok(usites !== "0", "successful login usites must not use failure sentinel");
 
@@ -169,7 +174,11 @@ async function main() {
     "holcalendarOLD.php should alias holcalendar.php"
   );
 
-  const messageThread = await verifyTemporaryMessageThread(usites, token);
+  const messageThread = await verifyTemporaryMessageThread(
+    usites,
+    token,
+    parentUserId
+  );
   const pushToken = await verifyTemporaryPushToken(usites, token);
   const alarmFeedCounts = await verifyLegacyAlarmFeeds(usites, token);
   const unauthGeneralAlarmCount = await verifyUnauthenticatedGeneralAlarmFeed();
@@ -371,15 +380,21 @@ async function postNotificationsMaster(usites: string, token: string) {
   return asRecord(await response.json(), "ws/notifications_master.php response");
 }
 
-async function verifyTemporaryMessageThread(usites: string, token: string) {
+async function verifyTemporaryMessageThread(
+  usites: string,
+  token: string,
+  parentUserId: string
+) {
   const marker = `codex-parent-e2e-${Date.now()}-${Math.random()
     .toString(36)
     .slice(2)}`;
   const subject = `Codex parent E2E ${marker}`;
   const firstMessage = `Temporary parent message ${marker}`;
   const replyMessage = `Temporary parent reply ${marker}`;
+  const staffMessage = `Temporary unread staff message ${marker}`;
   let modernThreadId: string | null = null;
   let legacyThreadId: number | null = null;
+  let unreadMessageId: string | null = null;
 
   try {
     const sendResult = asRecord(
@@ -443,6 +458,27 @@ async function verifyTemporaryMessageThread(usites: string, token: string) {
       "messagesList should preview latest parent reply"
     );
 
+    const unreadMessage = await db.message.create({
+      data: {
+        senderId: randomUUID(),
+        senderType: "ADMIN",
+        recipientId: parentUserId,
+        recipientType: "PARENT",
+        subject,
+        body: staffMessage,
+        threadId: modernThreadId,
+        legacyThreadId,
+        legacySenderType: 0,
+        legacyRecipientType: 1,
+        legacyDeliveryUserType: 1,
+        legacyNature: "Mobile Message",
+        legacyHref: `message_portal_single.php?thread=${legacyThreadId}`,
+        isRead: false,
+      },
+      select: { id: true },
+    });
+    unreadMessageId = unreadMessage.id;
+
     const threadPayload = asRecord(
       await postLegacyFormRoute(
         "ws/message.php",
@@ -476,15 +512,35 @@ async function verifyTemporaryMessageThread(usites: string, token: string) {
       threadItems.some((item) => item.message === replyMessage),
       "message thread should include temporary reply"
     );
+    assert.ok(
+      threadItems.some(
+        (item) => item.message === staffMessage && item.is_read === true
+      ),
+      "message thread should mark unread parent recipient rows read on open"
+    );
+
+    const resetMessage = await db.message.findUnique({
+      where: { id: unreadMessage.id },
+      select: { isRead: true },
+    });
+    assert.equal(
+      resetMessage?.isRead,
+      true,
+      "message.php should persist parent read reset"
+    );
 
     return {
       legacyThreadId,
       modernThreadId,
       listCountAfterSend: legacyListItemCount(messagesPayload),
       threadItems: threadItems.length,
+      readReset: true,
       cleanedUp: true,
     };
   } finally {
+    if (unreadMessageId) {
+      await db.message.deleteMany({ where: { id: unreadMessageId } });
+    }
     if (modernThreadId) {
       await cleanupTemporaryMessageThread(modernThreadId);
     }

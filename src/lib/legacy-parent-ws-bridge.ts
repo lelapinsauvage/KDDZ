@@ -75,14 +75,19 @@ async function readRequestBody(request: Request) {
     contentType.includes("application/x-www-form-urlencoded") ||
     contentType.includes("multipart/form-data")
   ) {
-    const form = await request.formData().catch(() => null);
-    if (!form) return null;
-    return Object.fromEntries(
-      [...form.entries()].map(([key, value]) => [
-        key,
-        typeof value === "string" ? value : value.name,
-      ]),
-    );
+    const form = await request
+      .clone()
+      .formData()
+      .catch(() => null);
+    const entries = form ? [...form.entries()] : [];
+    if (entries.length > 0) {
+      return Object.fromEntries(
+        entries.map(([key, value]) => [
+          key,
+          typeof value === "string" ? value : value.name,
+        ]),
+      );
+    }
   }
 
   const text = await request.text().catch(() => "");
