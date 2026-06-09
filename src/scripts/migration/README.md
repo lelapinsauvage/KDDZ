@@ -110,7 +110,7 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 
 | Old MySQL Table(s) | New PostgreSQL Model(s) |
 |---|---|
-| `t_branch` | Branch |
+| `t_branch` | Branch, including source database/key provenance and image metadata |
 | `t_mouhafaza` | Province |
 | `t_quadaa` | District |
 | `t_region` | Region |
@@ -263,6 +263,8 @@ The report labels each rule with evidence strength:
 Warnings are not cosmetic. Any `warning`, `missing`, or `error` result must be resolved or explicitly accepted before cutover. `not-applicable` means the legacy table was not present in the selected imported database, which is expected for some master/annual dumps.
 
 The notification receipt rules mirror every `custom_notifications*` delivery table migrated by `migrate-alarms.ts`, including parent receipt variants, requests/others, event staff/parent deliveries, and holiday read-state.
+
+Branch rows from `t_branch` are reconciled against `Branch.sourceDatabase` and `Branch.legacyTable`, covering contact fields, prefix, image metadata, and active state. Count mismatches usually mean a source row collided with an organization/name fallback during backfill or the selected dump differs from canonical production.
 
 Alarm content rows from `t_alarms*` are reconciled against `Alarm.legacyData.sourceDatabase` and `Alarm.legacyData.sourceTable`. Count mismatches usually mean duplicate legacy content merged into an existing alarm or the imported dump differs from the canonical production source.
 

@@ -412,8 +412,8 @@
     "legacyTable": "t_branch",
     "legacyColumns": "brid:int(11) NOT NULL AUTO_INCREMENT, image:varchar(50) NOT NULL DEFAULT 'default.jpg', brname:varchar(50) NOT NULL, brlocation:varchar(50) NOT NULL, mobile:varchar(20) NOT NULL, tel:varchar(20) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:int(11) NOT NULL, prefix:varchar(100) CHARACTER SET utf8mb4 NOT NULL",
     "modernDestination": "Branch",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-branches.ts",
+    "reconciliation": "Branch rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, organization mapping, contact fields, image URL, prefix, and active flag; source/target count is covered by `branches.t_branch` reconciliation; mismatches expose organization/name fallback collisions or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1380,8 +1380,8 @@
     "legacyTable": "t_branch",
     "legacyColumns": "brid:int(11) NOT NULL, image:varchar(50) NOT NULL DEFAULT 'default.jpg', brname:varchar(50) NOT NULL, brlocation:varchar(50) NOT NULL, mobile:varchar(20) NOT NULL, tel:varchar(20) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:int(11) NOT NULL, prefix:varchar(100) CHARACTER SET utf8mb4 NOT NULL",
     "modernDestination": "Branch",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-branches.ts",
+    "reconciliation": "Branch rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, organization mapping, contact fields, image URL, prefix, and active flag; source/target count is covered by `branches.t_branch` reconciliation; mismatches expose organization/name fallback collisions or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -2220,8 +2220,8 @@
     "legacyTable": "t_branch",
     "legacyColumns": "brid:int(11) NOT NULL AUTO_INCREMENT, image:varchar(50) NOT NULL DEFAULT 'default.jpg', brname:varchar(50) NOT NULL, brlocation:varchar(50) NOT NULL, mobile:varchar(20) NOT NULL, tel:varchar(20) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:int(11) NOT NULL, prefix:varchar(100) CHARACTER SET utf8mb4 NOT NULL",
     "modernDestination": "Branch",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-branches.ts",
+    "reconciliation": "Branch rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, organization mapping, contact fields, image URL, prefix, and active flag; source/target count is covered by `branches.t_branch` reconciliation; mismatches expose organization/name fallback collisions or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2908,8 +2908,8 @@
     "legacyTable": "t_branch",
     "legacyColumns": "brid:int(11) NOT NULL, image:varchar(50) NOT NULL DEFAULT 'default.jpg', brname:varchar(50) NOT NULL, brlocation:varchar(50) NOT NULL, mobile:varchar(20) NOT NULL, tel:varchar(20) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:int(11) NOT NULL, prefix:varchar(100) CHARACTER SET utf8mb4 NOT NULL",
     "modernDestination": "Branch",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-branches.ts",
+    "reconciliation": "Branch rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, organization mapping, contact fields, image URL, prefix, and active flag; source/target count is covered by `branches.t_branch` reconciliation; mismatches expose organization/name fallback collisions or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_users29sept",
@@ -3116,8 +3116,8 @@
     "legacyTable": "t_branch",
     "legacyColumns": "brid:int(11) NOT NULL AUTO_INCREMENT, image:varchar(50) NOT NULL DEFAULT 'default.jpg', brname:varchar(50) NOT NULL, brlocation:varchar(50) NOT NULL, mobile:varchar(20) NOT NULL, tel:varchar(20) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:int(11) NOT NULL, prefix:varchar(100) CHARACTER SET utf8mb4 NOT NULL",
     "modernDestination": "Branch",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-branches.ts",
+    "reconciliation": "Branch rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, organization mapping, contact fields, image URL, prefix, and active flag; source/target count is covered by `branches.t_branch` reconciliation; mismatches expose organization/name fallback collisions or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_users_2018-2019",

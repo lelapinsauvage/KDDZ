@@ -478,13 +478,14 @@ const loginTimestampTables = [
 ];
 
 const RECONCILIATION_RULES: ReconciliationRule[] = [
-  weakRule({
+  provenancedRule({
     id: "branches.t_branch",
     step: "1. Branches",
     sourceTable: "t_branch",
     targetTable: "branches",
+    targetWhere: byLegacyTable("t_branch"),
     notes:
-      "Branch rows do not yet carry legacy provenance; count is a lower-bound sanity check, not row-level proof.",
+      "Branch rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, organization mapping, contact fields, image, prefix, and active flag.",
   }),
   weakRule({
     id: "locations.t_mouhafaza",
