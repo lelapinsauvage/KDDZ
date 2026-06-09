@@ -172,6 +172,7 @@ async function main() {
   const messageThread = await verifyTemporaryMessageThread(usites, token);
   const pushToken = await verifyTemporaryPushToken(usites, token);
   const alarmFeedCounts = await verifyLegacyAlarmFeeds(usites, token);
+  const unauthGeneralAlarmCount = await verifyUnauthenticatedGeneralAlarmFeed();
   const notificationPayload = await postNotificationsMaster(usites, token);
   assertNotificationPayload(notificationPayload, "notifications_master");
 
@@ -186,6 +187,7 @@ async function main() {
         messageThread,
         pushToken,
         alarmFeedCounts,
+        unauthGeneralAlarmCount,
         notificationGroups: LEGACY_NOTIFICATION_GROUP_COUNT,
         detailCounts: notificationDetailCounts(notificationPayload),
       },
@@ -319,6 +321,26 @@ async function postLegacyFormRoute(
       "x-forwarded-for": `verify-parent-e2e-${Date.now()}-${path}`,
     },
     body: new URLSearchParams({ usites, ...fields }),
+  });
+
+  const response = await handler(request);
+  assert.ok(response, `${path} should return a response`);
+  assert.equal(response.status, 200, `${path} should return HTTP 200`);
+  return await response.json();
+}
+
+async function postLegacyUnauthenticatedFormRoute(
+  path: string,
+  handler: LegacyRouteHandler,
+  fields: Record<string, string> = {}
+) {
+  const request = new NextRequest(`http://localhost/${path}`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/x-www-form-urlencoded",
+      "x-forwarded-for": `verify-parent-e2e-${Date.now()}-${path}`,
+    },
+    body: new URLSearchParams(fields),
   });
 
   const response = await handler(request);
@@ -832,6 +854,19 @@ async function verifyLegacyAlarmFeeds(usites: string, token: string) {
   }
 
   return counts;
+}
+
+async function verifyUnauthenticatedGeneralAlarmFeed() {
+  const payload = assertLegacyListPayload(
+    await postLegacyUnauthenticatedFormRoute(
+      "ws/general_alarms.php",
+      generalAlarmsPost
+    ),
+    "ws/general_alarms.php unauthenticated no-pid",
+    assertGeneralAlarmItem
+  );
+
+  return legacyListItemCount(payload);
 }
 
 function assertChildAlarmItem(record: JsonRecord, label: string) {

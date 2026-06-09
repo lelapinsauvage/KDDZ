@@ -7,6 +7,8 @@ import {
   buildLegacyGeneralAlarmItem,
   buildLegacyParentAlarmHeader,
 } from "@/lib/parent-alarm-contracts";
+import { encryptLegacyId, legacyNumericCandidates } from "@/lib/legacy-id";
+import { normalizeLegacyInternalHref } from "@/lib/legacy-href";
 
 const emptyPayload = buildEmptyLegacyParentAlarmPayload();
 
@@ -77,7 +79,9 @@ assert.equal(insurance.date, "2026-06-30");
 const medical = buildLegacyChildAlarmItem({
   alarm: {
     ...baseAlarm,
-    legacyData: null,
+    legacyData: {
+      href: `Medical_form1.php?id=${encodeURIComponent(encryptLegacyId(42))}`,
+    },
   },
   child,
   family: "medical",
@@ -85,6 +89,41 @@ const medical = buildLegacyChildAlarmItem({
 assert.equal("status" in medical, false, "medical rows must omit status");
 assert.equal("href" in medical, false, "medical rows must omit href");
 assert.equal("href " in medical, false, "medical rows must omit legacy href-space");
+
+const encryptedChildId = encryptLegacyId(42);
+assert.equal(
+  encryptedChildId,
+  "cHJCd0RiLzJZWS9TampoL0orZk8rdz09",
+  "legacy encrypted child id must match PHP encrypt_decrypt output"
+);
+assert.deepEqual(
+  legacyNumericCandidates(encryptedChildId),
+  [42],
+  "legacy encrypted child id must round-trip to numeric id"
+);
+for (const legacyForm of [
+  "Medical_form1.php",
+  "Medical_form2.php",
+  "Medical_form4.php",
+]) {
+  const normalizedHref = normalizeLegacyInternalHref(
+    `${legacyForm}?id=${encodeURIComponent(encryptedChildId)}`
+  );
+  assert.equal(
+    normalizedHref,
+    `/${legacyForm}?id=${encodeURIComponent(encryptedChildId)}`,
+    `${legacyForm} missing-report href must stay on the legacy PHP bridge`
+  );
+  const parsedId = new URL(
+    normalizedHref,
+    "https://kiddzonline.local"
+  ).searchParams.get("id");
+  assert.deepEqual(
+    legacyNumericCandidates(parsedId),
+    [42],
+    `${legacyForm} href id must remain decryptable after URL parsing`
+  );
+}
 
 const birthday = buildLegacyChildAlarmItem({
   alarm: {
