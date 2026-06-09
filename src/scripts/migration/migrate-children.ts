@@ -167,6 +167,14 @@ function legacyKey(sourceDatabase: string, table: string, legacyId: number) {
   return `${sourceDatabase}:${table}:${legacyId}`;
 }
 
+function childHistoryLegacyKey(
+  sourceDatabase: string,
+  row: OldChildHistory,
+  createdAt: Date
+) {
+  return `${sourceDatabase}:t_child_h:${row.cid}:${row.datetime || createdAt.toISOString()}`;
+}
+
 function legacyRowData(
   sourceDatabase: string,
   sourceTable: string,
@@ -395,7 +403,7 @@ export async function migrateChildren(prisma: PrismaClient) {
   log(`Children (drafts): ${draftMigrated} migrated, ${draftSkipped} skipped`);
 
   // --- Migrate t_child_h → ChildHistory ---
-  await migrateChildHistory(prisma, dryRun);
+  await migrateChildHistory(prisma, dryRun, sourceDatabase);
 
   // --- Migrate t_address → ChildAddress ---
   await migrateAddresses(prisma, dryRun, sourceDatabase);
@@ -409,7 +417,11 @@ export async function migrateChildren(prisma: PrismaClient) {
   log(`=== Children migration complete ===${dryRun ? " [DRY RUN]" : ""}`);
 }
 
-async function migrateChildHistory(prisma: PrismaClient, dryRun: boolean) {
+async function migrateChildHistory(
+  prisma: PrismaClient,
+  dryRun: boolean,
+  sourceDatabase: string
+) {
   const rows = await queryMysql<OldChildHistory>(
     "SELECT * FROM t_child_h ORDER BY datetime, cid"
   );
@@ -417,6 +429,7 @@ async function migrateChildHistory(prisma: PrismaClient, dryRun: boolean) {
 
   let migrated = 0;
   let skipped = 0;
+  let backfilled = 0;
 
   for (const row of rows) {
     const childId = getMapping("child", row.cid);
@@ -426,15 +439,45 @@ async function migrateChildHistory(prisma: PrismaClient, dryRun: boolean) {
     }
 
     const createdAt = parseDate(row.datetime) ?? new Date();
-    const existing = await prisma.childHistory.findFirst({
-      where: {
-        childId,
-        createdAt,
-        changeNote: "Legacy t_child_h snapshot",
-      },
+    const key = childHistoryLegacyKey(sourceDatabase, row, createdAt);
+    const legacyChildId = toInt(row.cid, 0) || null;
+    const snapshot = JSON.parse(
+      JSON.stringify({
+        sourceDatabase,
+        sourceTable: "t_child_h",
+        ...row,
+      })
+    );
+    const existingByKey = await prisma.childHistory.findUnique({
+      where: { legacyKey: key },
     });
+    const existing =
+      existingByKey ??
+      (await prisma.childHistory.findFirst({
+        where: {
+          childId,
+          createdAt,
+          changeNote: "Legacy t_child_h snapshot",
+          legacyKey: null,
+        },
+      }));
     if (existing) {
-      skipped++;
+      if (!dryRun) {
+        await prisma.childHistory.update({
+          where: { id: existing.id },
+          data: {
+            sourceDatabase,
+            legacyKey: key,
+            legacyTable: "t_child_h",
+            legacyChildId,
+            snapshot,
+            changedBy: cleanString(row.uby) ?? null,
+            changeNote: "Legacy t_child_h snapshot",
+            createdAt,
+          },
+        });
+      }
+      backfilled++;
       continue;
     }
 
@@ -443,12 +486,11 @@ async function migrateChildHistory(prisma: PrismaClient, dryRun: boolean) {
         data: {
           id: generateUUID(),
           childId,
-          snapshot: JSON.parse(
-            JSON.stringify({
-              sourceTable: "t_child_h",
-              ...row,
-            })
-          ),
+          sourceDatabase,
+          legacyKey: key,
+          legacyTable: "t_child_h",
+          legacyChildId,
+          snapshot,
           changedBy: cleanString(row.uby) ?? null,
           changeNote: "Legacy t_child_h snapshot",
           createdAt,
@@ -460,7 +502,9 @@ async function migrateChildHistory(prisma: PrismaClient, dryRun: boolean) {
     logProgress(migrated, rows.length, "Child History");
   }
 
-  log(`Child History: ${migrated} migrated, ${skipped} skipped`);
+  log(
+    `Child History: ${migrated} migrated, ${backfilled} existing/backfilled, ${skipped} skipped`
+  );
 }
 
 async function migrateAddresses(

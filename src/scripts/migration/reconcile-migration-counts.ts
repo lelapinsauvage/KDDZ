@@ -550,13 +550,14 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     notes:
       "Draft child rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, photo, school-year mapping, and isDraft=true; mismatches expose unresolved branches or invalid draft IDs.",
   }),
-  weakRule({
+  provenancedRule({
     id: "children.t_child_h",
     step: "5. Children",
     sourceTable: "t_child_h",
     targetTable: "child_history",
+    targetWhere: byLegacyTable("t_child_h"),
     notes:
-      "History rows depend on child mapping and currently do not store sourceDatabase.",
+      "History snapshots preserve sourceDatabase, legacyKey, legacyTable, legacy child id, raw snapshot JSON, changed-by user, and timestamp.",
   }),
   provenancedRule({
     id: "children.t_address",

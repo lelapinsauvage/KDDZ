@@ -42,6 +42,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - Branch reconciliation now uses `Branch.sourceDatabase`/`legacyTable` for `t_branch` rows, covering contact fields, image metadata, prefixes, organization mapping, and active state.
    - Class reconciliation now uses `Class.sourceDatabase`/`legacyTable` for `t_class` rows, covering branch mapping, age/capacity/camera fields, image metadata, and active state.
    - Child roster reconciliation now uses `Child.sourceDatabase`/`legacyTable` for both active `t_child` rows and `t_child_draft` rows, so draft/active imports are checked by exact legacy table provenance instead of broad child totals.
+   - Child history reconciliation now uses `ChildHistory.sourceDatabase`/`legacyTable` for `t_child_h` snapshots, preserving child legacy ids, changed-by user, timestamps, and raw snapshot JSON.
    - Child address/contact reconciliation now uses `ChildAddress` and `Relative` source provenance for `t_address`, `t_authorized`, and `t_relatives`, and the child migration preserves every address row instead of collapsing to one address per child.
    - Parent profile reconciliation now uses `Parent.sourceDatabase`/`legacyTable` for active `t_parents` rows, preserving contact fields, pickup flags, child legacy ids, and raw legacy data.
    - Teacher, nurse, and manager core reconciliation now uses staff `sourceDatabase`/`legacyTable` for `t_teacher`, `t_nurse`, and `t_manager` rows, covering branch mapping, image metadata, contact fields, and active state.

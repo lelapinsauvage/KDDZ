@@ -885,16 +885,23 @@ model ChildAttachment {
 }
 
 model ChildHistory {
-  id         String   @id @default(uuid()) @db.Uuid
-  childId    String   @db.Uuid
-  snapshot   Json
-  changedBy  String?
-  changeNote String?
-  createdAt  DateTime @default(now())
+  id             String   @id @default(uuid()) @db.Uuid
+  childId        String   @db.Uuid
+  sourceDatabase String?
+  legacyKey      String?  @unique
+  legacyTable    String?
+  legacyChildId  Int?
+  snapshot       Json
+  changedBy      String?
+  changeNote     String?
+  createdAt      DateTime @default(now())
 
   child Child @relation(fields: [childId], references: [id], onDelete: Cascade)
 
   @@index([childId])
+  @@index([sourceDatabase])
+  @@index([legacyTable])
+  @@index([legacyChildId])
   @@index([createdAt])
   @@map("child_history")
 }

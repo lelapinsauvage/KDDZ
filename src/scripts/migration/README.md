@@ -117,7 +117,7 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_school_year` | SchoolYear |
 | `t_class` | Class, including source database/key provenance and class image metadata |
 | `t_child`, `t_child_draft` | Child (isDraft flag) |
-| `t_child_h` | ChildHistory |
+| `t_child_h` | ChildHistory, including source database/key provenance and raw snapshot JSON |
 | `t_old_garderie` | ChildPreviousGarderie |
 | `t_attachments` | ChildAttachment |
 | `t_address` | ChildAddress, including source database/key provenance and raw legacy row |
@@ -277,6 +277,8 @@ Call rows from `t_form_6` are reconciled against `CallLog.sourceDatabase` for al
 Food calendar rows from `t_food_calendar` fan out into meal-type `FoodCalendar` entries, so reconciliation counts distinct target `legacyId` values with `sourceDatabase` provenance. Count mismatches usually mean a source row had an unmapped branch, invalid date, or no mappable meal/dessert entry.
 
 Child roster rows from `t_child` and draft rows from `t_child_draft` are reconciled against `Child.sourceDatabase` and `Child.legacyTable` so active/draft imports are checked by exact legacy provenance rather than broad child totals. Count mismatches usually mean a source row had an unmapped branch or invalid draft id.
+
+Child history rows from `t_child_h` are reconciled against `ChildHistory.sourceDatabase` and `ChildHistory.legacyTable`. Count mismatches usually mean a source row had an unmapped child or duplicated the same child/timestamp fallback.
 
 Class rows from `t_class` are reconciled against `Class.sourceDatabase` and `Class.legacyTable`. Count mismatches usually mean a source class had an unmapped branch or duplicate branch/name fallback during a backfill rerun.
 
