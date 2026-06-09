@@ -4,18 +4,27 @@ import { createHash } from "node:crypto";
 import { compare } from "bcryptjs";
 import { NextRequest } from "next/server";
 import { POST as absencePost } from "@/app/ws/absence.php/route";
+import { POST as birthdayAlarmsPost } from "@/app/ws/birthdays_alarms.php/route";
 import { POST as dailyPost } from "@/app/ws/daily.php/route";
+import { POST as eventAlarmsPost } from "@/app/ws/events_alarms.php/route";
 import { POST as financePost } from "@/app/ws/finance.php/route";
 import { POST as foodCalendarPost } from "@/app/ws/foodcalendar.php/route";
+import { POST as generalAlarmsPost } from "@/app/ws/general_alarms.php/route";
 import { POST as holidayCalendarPost } from "@/app/ws/holcalendar.php/route";
 import { POST as oldHolidayCalendarPost } from "@/app/ws/holcalendarOLD.php/route";
+import { POST as insuranceAlarmsPost } from "@/app/ws/insurance_alarms.php/route";
+import { POST as medicineAlarmsPost } from "@/app/ws/medicine_alarms.php/route";
 import { POST as parentLoginPost } from "@/app/ws/login.php/route";
 import { POST as messageThreadPost } from "@/app/ws/message.php/route";
 import { POST as messagesListPost } from "@/app/ws/messagesList.php/route";
+import { POST as missingReportsAlarmsPost } from "@/app/ws/missingReports_alarms.php/route";
+import { POST as assessmentAlarmsPost } from "@/app/ws/newassessment_alarms.php/route";
 import { POST as detailedDailyPost } from "@/app/ws/newdaily.php/route";
 import { POST as notificationsPost } from "@/app/ws/notifications_master.php/route";
+import { POST as paymentAlarmsPost } from "@/app/ws/payments_alarms.php/route";
 import { POST as pushTokenPost } from "@/app/ws/pnotifications.php/route";
 import { POST as sendMessagePost } from "@/app/ws/sendMessage.php/route";
+import { POST as vaccinationAlarmsPost } from "@/app/ws/vaccinations_alarms.php/route";
 import { db } from "@/lib/db";
 import { LEGACY_NOTIFICATION_GROUP_COUNT } from "@/lib/parent-notification-contract";
 import { LEGACY_PUSH_RESULTS } from "@/lib/parent-push-token-contracts";
@@ -162,6 +171,7 @@ async function main() {
 
   const messageThread = await verifyTemporaryMessageThread(usites, token);
   const pushToken = await verifyTemporaryPushToken(usites, token);
+  const alarmFeedCounts = await verifyLegacyAlarmFeeds(usites, token);
   const notificationPayload = await postNotificationsMaster(usites, token);
   assertNotificationPayload(notificationPayload, "notifications_master");
 
@@ -175,6 +185,7 @@ async function main() {
         feedCounts,
         messageThread,
         pushToken,
+        alarmFeedCounts,
         notificationGroups: LEGACY_NOTIFICATION_GROUP_COUNT,
         detailCounts: notificationDetailCounts(notificationPayload),
       },
@@ -748,6 +759,149 @@ function assertPushTokenShowPayload(payload: unknown, label: string) {
   return rows;
 }
 
+async function verifyLegacyAlarmFeeds(usites: string, token: string) {
+  const routes: Array<{
+    path: string;
+    handler: LegacyRouteHandler;
+    fields?: Record<string, string>;
+    assertItem: (record: JsonRecord, label: string) => void;
+  }> = [
+    {
+      path: "ws/birthdays_alarms.php",
+      handler: birthdayAlarmsPost,
+      fields: { pid: usites },
+      assertItem: assertChildAlarmItem,
+    },
+    {
+      path: "ws/medicine_alarms.php",
+      handler: medicineAlarmsPost,
+      fields: { pid: usites },
+      assertItem: assertChildAlarmItem,
+    },
+    {
+      path: "ws/insurance_alarms.php",
+      handler: insuranceAlarmsPost,
+      fields: { pid: usites },
+      assertItem: assertInsuranceAlarmItem,
+    },
+    {
+      path: "ws/vaccinations_alarms.php",
+      handler: vaccinationAlarmsPost,
+      fields: { pid: usites },
+      assertItem: assertChildAlarmItem,
+    },
+    {
+      path: "ws/payments_alarms.php",
+      handler: paymentAlarmsPost,
+      fields: { pid: usites },
+      assertItem: assertChildAlarmItem,
+    },
+    {
+      path: "ws/missingReports_alarms.php",
+      handler: missingReportsAlarmsPost,
+      fields: { pid: usites },
+      assertItem: assertMedicalAlarmItem,
+    },
+    {
+      path: "ws/newassessment_alarms.php",
+      handler: assessmentAlarmsPost,
+      fields: { pid: usites },
+      assertItem: assertAssessmentAlarmItem,
+    },
+    {
+      path: "ws/events_alarms.php",
+      handler: eventAlarmsPost,
+      fields: { pid: usites },
+      assertItem: assertEventAlarmItem,
+    },
+    {
+      path: "ws/general_alarms.php",
+      handler: generalAlarmsPost,
+      assertItem: assertGeneralAlarmItem,
+    },
+  ];
+
+  const counts: Record<string, number> = {};
+  for (const route of routes) {
+    const payload = assertLegacyListPayload(
+      await postLegacyFormRoute(route.path, route.handler, usites, token, route.fields),
+      route.path,
+      route.assertItem
+    );
+    counts[route.path] = legacyListItemCount(payload);
+  }
+
+  return counts;
+}
+
+function assertChildAlarmItem(record: JsonRecord, label: string) {
+  assertStringFields(record, [
+    "aid",
+    "child_id",
+    "daysbefore",
+    "details",
+    "datetime",
+    "status",
+    "href",
+    "href ",
+  ], label);
+  assertSqlDateTimeStringFields(record, ["datetime"], label);
+}
+
+function assertInsuranceAlarmItem(record: JsonRecord, label: string) {
+  assertChildAlarmItem(record, label);
+  assertStringFields(record, ["date"], label);
+  if (record.date !== "") {
+    assertDateStringFields(record, ["date"], label);
+  }
+}
+
+function assertMedicalAlarmItem(record: JsonRecord, label: string) {
+  assertStringFields(record, [
+    "aid",
+    "child_id",
+    "daysbefore",
+    "details",
+    "datetime",
+  ], label);
+  assert.equal("status" in record, false, `${label}.status must be omitted`);
+  assert.equal("href" in record, false, `${label}.href must be omitted`);
+  assert.equal("href " in record, false, `${label}.href-space must be omitted`);
+  assertSqlDateTimeStringFields(record, ["datetime"], label);
+}
+
+function assertAssessmentAlarmItem(record: JsonRecord, label: string) {
+  assertStringFields(record, ["id", "child_id", "message", "datetime"], label);
+  assertSqlDateTimeStringFields(record, ["datetime"], label);
+}
+
+function assertEventAlarmItem(record: JsonRecord, label: string) {
+  assertStringFields(record, [
+    "subject",
+    "eventdate",
+    "custom_body",
+    "submit_time",
+    "active",
+    "active ",
+  ], label);
+  assertDateStringFields(record, ["eventdate"], label);
+  assertSqlDateTimeStringFields(record, ["submit_time"], label);
+}
+
+function assertGeneralAlarmItem(record: JsonRecord, label: string) {
+  assertStringFields(record, [
+    "aid",
+    "hid",
+    "daysbefore",
+    "details",
+    "datetime",
+    "status",
+    "href",
+    "href ",
+  ], label);
+  assertSqlDateTimeStringFields(record, ["datetime"], label);
+}
+
 function findPushTokenRow(rows: JsonRecord[], token: string) {
   const row = rows.find((item) => item.token === token);
   assert.ok(row, `push token ${token} should be present in show result`);
@@ -832,6 +986,20 @@ function assertDateStringFields(
       String(record[key]),
       /^\d{4}-\d{2}-\d{2}$/,
       `${label}.${key} must be YYYY-MM-DD`
+    );
+  }
+}
+
+function assertSqlDateTimeStringFields(
+  record: JsonRecord,
+  keys: readonly string[],
+  label: string
+) {
+  for (const key of keys) {
+    assert.match(
+      String(record[key]),
+      /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/,
+      `${label}.${key} must be YYYY-MM-DD HH:mm:ss`
     );
   }
 }
