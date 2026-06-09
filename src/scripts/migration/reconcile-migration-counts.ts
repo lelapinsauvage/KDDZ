@@ -494,25 +494,25 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     notes:
       "Classes currently lack legacy provenance; count cannot detect row swaps.",
   }),
-  weakRule({
+  provenancedRule({
     id: "children.t_child",
     step: "5. Children",
     sourceTable: "t_child",
     sourceWhere: "deleted = 0",
     targetTable: "children",
-    targetWhere: `${pgColumn("isDraft")} = false`,
+    targetWhere: byLegacyTable("t_child"),
     notes:
-      "Active child rows are restored as non-draft children; no row-level legacy key exists yet.",
+      "Child rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, core identity, branch/class/year mappings, photo, activity/draft flags, and raw profile fields; mismatches expose unresolved branches or duplicate legacy keys.",
   }),
-  weakRule({
+  provenancedRule({
     id: "children.t_child_draft",
     step: "5. Children",
     sourceTable: "t_child_draft",
     sourceWhere: "deleted = 0",
     targetTable: "children",
-    targetWhere: `${pgColumn("isDraft")} = true`,
+    targetWhere: byLegacyTable("t_child_draft"),
     notes:
-      "Draft child rows are restored into children with isDraft=true.",
+      "Draft child rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, photo, school-year mapping, and isDraft=true; mismatches expose unresolved branches or invalid draft IDs.",
   }),
   weakRule({
     id: "children.t_child_h",

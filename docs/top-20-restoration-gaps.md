@@ -39,6 +39,7 @@ This list is the first implementation backlog after the generated inventory/matr
 
 4. **Full data reconciliation**
    - `reconcile-migration-counts.ts` now provides curated source/target count checks across the migration order and distinguishes strong provenance from weaker count-only evidence.
+   - Child roster reconciliation now uses `Child.sourceDatabase`/`legacyTable` for both active `t_child` rows and `t_child_draft` rows, so draft/active imports are checked by exact legacy table provenance instead of broad child totals.
    - Attachment reconciliation now compares real-file legacy rows only and uses strong provenance for teacher, nurse, child, doctor, manager, daily report, absence report, and medical form attachment tables that preserve `sourceDatabase` and `legacyKey`.
    - Parent mobile login reconciliation now uses `ParentUser.sourceDatabase`/`legacyKey` for non-empty `parent_login_users.username` rows, exposing unresolved child links instead of hiding them in broad user totals.
    - Absence report reconciliation now uses `AbsenceReport.sourceDatabase`/`legacyKey` for active `t_absent_report` rows, covering the same migrated raw fields used by parent mobile `absence.php` compatibility.

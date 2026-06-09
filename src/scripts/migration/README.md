@@ -261,6 +261,8 @@ Warnings are not cosmetic. Any `warning`, `missing`, or `error` result must be r
 
 The notification receipt rules mirror every `custom_notifications*` delivery table migrated by `migrate-alarms.ts`, including parent receipt variants, requests/others, event staff/parent deliveries, and holiday read-state.
 
+Child roster rows from `t_child` and draft rows from `t_child_draft` are reconciled against `Child.sourceDatabase` and `Child.legacyTable` so active/draft imports are checked by exact legacy provenance rather than broad child totals. Count mismatches usually mean a source row had an unmapped branch or invalid draft id.
+
 Parent mobile login rows from `parent_login_users` are reconciled against `ParentUser.sourceDatabase`/`legacyKey` for non-empty usernames. Count mismatches usually mean the source row could not be linked to a migrated child.
 
 Active absence reports from `t_absent_report` are reconciled against `AbsenceReport.sourceDatabase`/`legacyKey`. Count mismatches usually mean a source row had an unmapped child or an invalid legacy report date.
