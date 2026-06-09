@@ -434,6 +434,11 @@ const vaccinationSourceCountExpression = `COALESCE(SUM(${vaccinationFieldPairs
 const pushTokenSourceCountExpression = `COUNT(DISTINCT NULLIF(NULLIF(TRIM(COALESCE(${quoteMysqlIdentifier(
   "token"
 )}, '')), ''), '0'))`;
+const assessmentScheduleTypeExpression = `(CASE WHEN ${quoteMysqlIdentifier(
+  "assessment_id"
+)} > 10 THEN FLOOR(${quoteMysqlIdentifier(
+  "assessment_id"
+)} / 11) ELSE ${quoteMysqlIdentifier("assessment_id")} END)`;
 const alarmTables = [
   "t_alarms",
   "t_alarms_birthday",
@@ -1018,12 +1023,21 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
   baseRule({
     id: "assessments.t_assessment_dates",
     step: "18. Assessments",
-    source: { table: "t_assessment_dates" },
-    target: { table: "assessment_schedule_rules" },
-    expectation: "target-at-most-source",
-    evidence: "derived",
+    source: {
+      table: "t_assessment_dates",
+      where: `${assessmentScheduleTypeExpression} IN (${assessmentTables.join(
+        ", "
+      )})`,
+      countExpression: `COUNT(DISTINCT ${assessmentScheduleTypeExpression})`,
+    },
+    target: {
+      table: "assessment_schedule_rules",
+      where: byLegacyTable("t_assessment_dates"),
+    },
+    expectation: "equal",
+    evidence: "strong",
     notes:
-      "Multiple legacy threshold rows are consolidated into one AssessmentScheduleRule per assessment type.",
+      "Legacy age-threshold rows are consolidated into one AssessmentScheduleRule per assessment type with sourceDatabase, legacyKey, legacyTable, min/max legacy ids, and raw legacy rows.",
   }),
   ...formTables.map(({ table, type }) =>
     provenancedRule({

@@ -389,7 +389,7 @@
     "legacyColumns": "dateid:int(11) NOT NULL AUTO_INCREMENT, assessment_id:int(11) NOT NULL, assessment_date:varchar(50) NOT NULL, assessment_datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP",
     "modernDestination": "AssessmentScheduleRule",
     "status": "mapped - migrated by migrate-assessments.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Assessment threshold rows are consolidated into one AssessmentScheduleRule per normalized assessment type, preserving sourceDatabase, legacyKey, legacyTable, min/max legacy ids, and raw threshold rows; source/target count is covered by `assessments.t_assessment_dates` reconciliation using distinct normalized assessment types."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1360,7 +1360,7 @@
     "legacyColumns": "dateid:int(11) NOT NULL, assessment_id:int(11) NOT NULL, assessment_date:varchar(50) NOT NULL, assessment_datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP",
     "modernDestination": "AssessmentScheduleRule",
     "status": "mapped - migrated by migrate-assessments.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Assessment threshold rows are consolidated into one AssessmentScheduleRule per normalized assessment type, preserving sourceDatabase, legacyKey, legacyTable, min/max legacy ids, and raw threshold rows; source/target count is covered by `assessments.t_assessment_dates` reconciliation using distinct normalized assessment types."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -2203,7 +2203,7 @@
     "legacyColumns": "dateid:int(11) NOT NULL AUTO_INCREMENT, assessment_id:int(11) NOT NULL, assessment_date:varchar(50) NOT NULL, assessment_datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP",
     "modernDestination": "AssessmentScheduleRule",
     "status": "mapped - migrated by migrate-assessments.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Assessment threshold rows are consolidated into one AssessmentScheduleRule per normalized assessment type, preserving sourceDatabase, legacyKey, legacyTable, min/max legacy ids, and raw threshold rows; source/target count is covered by `assessments.t_assessment_dates` reconciliation using distinct normalized assessment types."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",

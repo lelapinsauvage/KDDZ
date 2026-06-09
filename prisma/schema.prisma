@@ -2029,6 +2029,9 @@ model AssessmentDate {
 model AssessmentScheduleRule {
   id              String   @id @default(uuid()) @db.Uuid
   organizationId  String   @db.Uuid
+  sourceDatabase  String?
+  legacyKey       String?  @unique
+  legacyTable     String?
   assessmentType  Int
   minimumAgeDays  Decimal? @db.Decimal(8, 2)
   maximumAgeDays  Decimal? @db.Decimal(8, 2)
@@ -2041,6 +2044,8 @@ model AssessmentScheduleRule {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@unique([organizationId, assessmentType])
+  @@index([sourceDatabase])
+  @@index([legacyTable])
   @@index([assessmentType])
   @@map("assessment_schedule_rules")
 }

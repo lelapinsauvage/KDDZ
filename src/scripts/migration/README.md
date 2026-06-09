@@ -154,7 +154,7 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_form_6` | CallLog, including source database/key provenance, legacy child/branch/class/teacher ids, draft state, and raw `legacyData` |
 | `t_assessment_1` .. `t_assessment_7` | Assessment, including source database/key provenance, child/class/teacher/user legacy ids, answer payload, and raw legacy row |
 | `new_assessment` | Assessment `_legacyNewAssessmentMarkers` / notification stub |
-| `t_assessment_dates` | AssessmentScheduleRule |
+| `t_assessment_dates` | AssessmentScheduleRule, including source database/key/table provenance, min/max legacy ids, and raw threshold rows |
 | `t_form_1` | MedicalForm (GENERAL), including source database/key provenance, child/branch/class/user legacy ids, form data, and raw legacy row |
 | `t_form_2` | MedicalForm (CONDITIONS), including source database/key provenance, child/branch/class/user legacy ids, form data, and raw legacy row |
 | `t_form_3` | MedicalForm (VISITS), including source database/key provenance, child/branch/class/user legacy ids, form data, and raw legacy row |
@@ -346,7 +346,7 @@ The old medical form tables are consolidated into `MedicalForm`. Form-specific f
 ### Assessments
 The seven legacy assessment tables are consolidated into `Assessment`. Answer keys (`m*`, `c*`, `l*`, `s*`, `d*`) stay as flat JSON keys so the modern assessment editor can reopen the migrated report. Active rows keep `sourceDatabase`, `legacyKey`, `legacyId`, `legacyTable`, child/class/teacher/user legacy ids, answer payload JSON, and raw legacy row JSON for reconciliation. Legacy `new_assessment` rows are preserved as markers on the matching assessment, or as a stub assessment with `new_assessment` provenance when the notification marker has no matching report row.
 
-Legacy `t_assessment_dates.assessment_date` stores age thresholds in days, not absolute calendar dates. Those values are migrated to `AssessmentScheduleRule`; the modern `AssessmentDate` table remains reserved for explicit scheduled calendar dates.
+Legacy `t_assessment_dates.assessment_date` stores age thresholds in days, not absolute calendar dates. Those values are migrated to `AssessmentScheduleRule`; the modern `AssessmentDate` table remains reserved for explicit scheduled calendar dates. Multiple minimum/maximum threshold rows are consolidated into one rule per assessment type, with `sourceDatabase`, `legacyKey`, `legacyTable`, min/max legacy ids, and raw threshold rows preserved for reconciliation.
 
 ### Alarms And Notifications
 Legacy alarm content rows are restored into `Alarm` with source database/table/category provenance and the complete source row preserved in `legacyData`. Legacy delivery/read rows from `custom_notifications_*` are restored into `NotificationReceipt` so "seen" state and recipient ids remain auditable even when the modern notification UI reads from `Alarm`. Mobile push tokens retain their legacy active flag on `PushToken.isActive`, source database/key/table provenance, legacy child id, and raw legacy row data.

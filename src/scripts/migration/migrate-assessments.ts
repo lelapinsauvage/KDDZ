@@ -443,6 +443,7 @@ function buildScheduleRules(rows: OldAssessmentScheduleDate[]): ScheduleRuleDraf
 async function migrateAssessmentScheduleRules(
   prisma: PrismaClient,
   organizationId: string,
+  sourceDatabase: string,
   dryRun: boolean
 ) {
   const rows = await queryMysql<OldAssessmentScheduleDate>(
@@ -452,10 +453,31 @@ async function migrateAssessmentScheduleRules(
 
   const rules = buildScheduleRules(rows);
   let migrated = 0;
-  let skipped = 0;
+  let backfilled = 0;
+  let refreshed = 0;
 
   for (const rule of rules) {
-    const existing = await prisma.assessmentScheduleRule.findUnique({
+    const key = legacyKey(
+      sourceDatabase,
+      "t_assessment_dates",
+      rule.assessmentType
+    );
+    const data = {
+      organizationId,
+      sourceDatabase,
+      legacyKey: key,
+      legacyTable: "t_assessment_dates",
+      assessmentType: rule.assessmentType,
+      minimumAgeDays: rule.minimumAgeDays,
+      maximumAgeDays: rule.maximumAgeDays,
+      legacyMinimumId: rule.legacyMinimumId,
+      legacyMaximumId: rule.legacyMaximumId,
+      legacyData: JSON.parse(JSON.stringify(rule.legacyRows)),
+    };
+    const existingByKey = await prisma.assessmentScheduleRule.findUnique({
+      where: { legacyKey: key },
+    });
+    const existingByType = await prisma.assessmentScheduleRule.findUnique({
       where: {
         organizationId_assessmentType: {
           organizationId,
@@ -463,15 +485,26 @@ async function migrateAssessmentScheduleRules(
         },
       },
     });
+    const existing = existingByKey ?? existingByType;
 
     if (existing) {
+      if (!dryRun) {
+        await prisma.assessmentScheduleRule.update({
+          where: { id: existing.id },
+          data,
+        });
+      }
       if (rule.legacyMinimumId) {
         setMapping("assessment_schedule_rule", rule.legacyMinimumId, existing.id);
       }
       if (rule.legacyMaximumId) {
         setMapping("assessment_schedule_rule", rule.legacyMaximumId, existing.id);
       }
-      skipped++;
+      if (existingByKey) {
+        refreshed++;
+      } else {
+        backfilled++;
+      }
       continue;
     }
 
@@ -480,13 +513,7 @@ async function migrateAssessmentScheduleRules(
       await prisma.assessmentScheduleRule.create({
         data: {
           id,
-          organizationId,
-          assessmentType: rule.assessmentType,
-          minimumAgeDays: rule.minimumAgeDays,
-          maximumAgeDays: rule.maximumAgeDays,
-          legacyMinimumId: rule.legacyMinimumId,
-          legacyMaximumId: rule.legacyMaximumId,
-          legacyData: JSON.parse(JSON.stringify(rule.legacyRows)),
+          ...data,
         },
       });
     }
@@ -500,7 +527,9 @@ async function migrateAssessmentScheduleRules(
     migrated++;
   }
 
-  log(`Assessment schedule rules: ${migrated} migrated, ${skipped} skipped`);
+  log(
+    `Assessment schedule rules: ${migrated} migrated, ${backfilled} backfilled, ${refreshed} refreshed`
+  );
 }
 
 export async function migrateAssessments(
@@ -522,7 +551,12 @@ export async function migrateAssessments(
   }
 
   await migrateNewAssessmentMarkers(prisma, dryRun, sourceDatabase);
-  await migrateAssessmentScheduleRules(prisma, organizationId, dryRun);
+  await migrateAssessmentScheduleRules(
+    prisma,
+    organizationId,
+    sourceDatabase,
+    dryRun
+  );
 
   log(`=== Assessment migration complete ===${dryRun ? " [DRY RUN]" : ""}`);
 }
