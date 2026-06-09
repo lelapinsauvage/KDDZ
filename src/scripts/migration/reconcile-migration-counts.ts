@@ -94,6 +94,10 @@ function pgColumn(column: string): string {
   return quotePgIdentifier(column);
 }
 
+function pgTextContains(column: string, fragment: string): string {
+  return `POSITION(${pgLiteral(fragment)} IN ${pgColumn(column)}) > 0`;
+}
+
 function bySourceDatabase(column = "sourceDatabase") {
   return (sourceDatabase: string) =>
     `${pgColumn(column)} = ${pgLiteral(sourceDatabase)}`;
@@ -342,7 +346,7 @@ function weakRule(params: {
   sourceTable: string;
   sourceWhere?: string;
   targetTable: string;
-  targetWhere?: string;
+  targetWhere?: CountSide["where"];
   notes: string;
   expectation?: Expectation;
   evidence?: EvidenceStrength;
@@ -608,6 +612,21 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     sourceTable: "t_teacher_info",
     targetTable: "teacher_experiences",
     notes: "Teacher experience rows keep sourceDatabase and legacyKey.",
+  }),
+  weakRule({
+    id: "employees.t_emp_status",
+    step: "8. Employees",
+    sourceTable: "t_emp_status",
+    sourceWhere: "active = 1",
+    targetTable: "employee_events",
+    targetWhere: (sourceDatabase) =>
+      [
+        pgTextContains("notes", `"sourceDatabase":"${sourceDatabase}"`),
+        pgTextContains("notes", `"sourceTable":"t_emp_status"`),
+      ].join(" AND "),
+    expectation: "equal",
+    notes:
+      "Teacher calendar status rows preserve sourceDatabase/sourceTable in EmployeeEvent.notes JSON; mismatches expose orphaned teachers, invalid statuses, or invalid dates.",
   }),
   weakRule({
     id: "employees.t_nurse",

@@ -261,6 +261,8 @@ Warnings are not cosmetic. Any `warning`, `missing`, or `error` result must be r
 
 The notification receipt rules mirror every `custom_notifications*` delivery table migrated by `migrate-alarms.ts`, including parent receipt variants, requests/others, event staff/parent deliveries, and holiday read-state.
 
+Employee calendar status rows from `t_emp_status` are reconciled against `EmployeeEvent.notes` legacy JSON. Count mismatches usually mean a source row had an unmapped teacher, invalid date, or unsupported legacy status.
+
 ### Idempotency
 All scripts check for existing records before inserting, so they can be re-run safely. Already-migrated records are skipped.
 
