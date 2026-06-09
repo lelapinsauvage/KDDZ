@@ -120,9 +120,9 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_child_h` | ChildHistory |
 | `t_old_garderie` | ChildPreviousGarderie |
 | `t_attachments` | ChildAttachment |
-| `t_address` | ChildAddress |
-| `t_authorized` | Relative (isAuthorized=true) |
-| `t_relatives` | Relative |
+| `t_address` | ChildAddress, including source database/key provenance and raw legacy row |
+| `t_authorized` | Relative (isAuthorized=true), including source database/key provenance and raw legacy row |
+| `t_relatives` | Relative, including source database/key provenance and raw legacy row |
 | `t_garderie` | BranchCompliance |
 | `t_garderie_attachments` | BranchDocument |
 | `t_garderie_doctor`, `t_garderie_doctor_attachments` | Doctor, DoctorAttachment |
@@ -272,6 +272,8 @@ Call rows from `t_form_6` are reconciled against `CallLog.sourceDatabase` for al
 Food calendar rows from `t_food_calendar` fan out into meal-type `FoodCalendar` entries, so reconciliation counts distinct target `legacyId` values with `sourceDatabase` provenance. Count mismatches usually mean a source row had an unmapped branch, invalid date, or no mappable meal/dessert entry.
 
 Child roster rows from `t_child` and draft rows from `t_child_draft` are reconciled against `Child.sourceDatabase` and `Child.legacyTable` so active/draft imports are checked by exact legacy provenance rather than broad child totals. Count mismatches usually mean a source row had an unmapped branch or invalid draft id.
+
+Child addresses and relative/contact rows from `t_address`, `t_authorized`, and `t_relatives` are reconciled against `sourceDatabase` and `legacyTable`. Count mismatches usually mean a source row had an unmapped child; legacy `t_relatives.can_pick` still controls pickup authorization without changing the source-table count.
 
 Parent mobile login rows from `parent_login_users` are reconciled against `ParentUser.sourceDatabase`/`legacyKey` for non-empty usernames. Count mismatches usually mean the source row could not be linked to a migrated child.
 

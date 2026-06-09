@@ -47,7 +47,7 @@
  * Prerequisites: Branches, Classes, Locations, and School Years must be migrated first.
  */
 
-import type { PrismaClient } from "@/generated/prisma/client";
+import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 import { createPrismaClient } from "./lib/prisma-client";
 import { queryMysql, closeMysqlPool, getMysqlConfig } from "./lib/mysql-client";
 import {
@@ -122,7 +122,9 @@ interface OldAddress {
   floor: string;
   tel: string;
   remarks: string;
+  datetime?: string;
   active: number;
+  [key: string]: unknown;
 }
 
 interface OldAuthorized {
@@ -134,7 +136,9 @@ interface OldAuthorized {
   mobile: string;
   emergence: string;
   child_id: string;
+  datettime?: string;
   active: number;
+  [key: string]: unknown;
 }
 
 interface OldRelative {
@@ -147,7 +151,9 @@ interface OldRelative {
   relative_phone: string;
   can_pick: string;
   child_id: string;
+  datetime?: string;
   active: number;
+  [key: string]: unknown;
 }
 
 interface OldChildHistory {
@@ -159,6 +165,24 @@ interface OldChildHistory {
 
 function legacyKey(sourceDatabase: string, table: string, legacyId: number) {
   return `${sourceDatabase}:${table}:${legacyId}`;
+}
+
+function legacyRowData(
+  sourceDatabase: string,
+  sourceTable: string,
+  legacyId: number,
+  legacyChildId: number | null,
+  row: Record<string, unknown>
+): Prisma.InputJsonObject {
+  return JSON.parse(
+    JSON.stringify({
+      sourceDatabase,
+      sourceTable,
+      legacyId,
+      legacyChildId,
+      row,
+    })
+  ) as Prisma.InputJsonObject;
 }
 
 export async function migrateChildren(prisma: PrismaClient) {
@@ -374,13 +398,13 @@ export async function migrateChildren(prisma: PrismaClient) {
   await migrateChildHistory(prisma, dryRun);
 
   // --- Migrate t_address → ChildAddress ---
-  await migrateAddresses(prisma, dryRun);
+  await migrateAddresses(prisma, dryRun, sourceDatabase);
 
   // --- Migrate t_authorized → Relative (isAuthorized = true) ---
-  await migrateAuthorized(prisma, dryRun);
+  await migrateAuthorized(prisma, dryRun, sourceDatabase);
 
   // --- Migrate t_relatives → Relative ---
-  await migrateRelatives(prisma, dryRun);
+  await migrateRelatives(prisma, dryRun, sourceDatabase);
 
   log(`=== Children migration complete ===${dryRun ? " [DRY RUN]" : ""}`);
 }
@@ -439,101 +463,305 @@ async function migrateChildHistory(prisma: PrismaClient, dryRun: boolean) {
   log(`Child History: ${migrated} migrated, ${skipped} skipped`);
 }
 
-async function migrateAddresses(prisma: PrismaClient, dryRun: boolean) {
+async function migrateAddresses(
+  prisma: PrismaClient,
+  dryRun: boolean,
+  sourceDatabase: string
+) {
   const rows = await queryMysql<OldAddress>(
     "SELECT * FROM t_address WHERE active = 1 ORDER BY aid"
   );
   log(`Found ${rows.length} addresses in t_address`);
 
-  let count = 0;
+  let migrated = 0;
+  let backfilled = 0;
+  let skipped = 0;
   for (const row of rows) {
     const childId = getMapping("child", row.child_id);
-    if (!childId) continue;
+    const legacyId = toInt(row.aid, 0);
+    if (!childId || !legacyId) {
+      skipped++;
+      continue;
+    }
 
-    // Idempotency
-    const existing = await prisma.childAddress.findFirst({
-      where: { childId },
+    const legacyChildId = toInt(row.child_id, 0) || null;
+    const key = legacyKey(sourceDatabase, "t_address", legacyId);
+    const street = cleanString(row.street);
+    const building = cleanString(row.building);
+    const floor = cleanString(row.floor);
+    const city = cleanString(row.city);
+    const regionId = getMapping("region", row.region);
+    const createdAt = parseDate(row.datetime ?? "");
+
+    const existingByKey = await prisma.childAddress.findUnique({
+      where: { legacyKey: key },
     });
-    if (existing) continue;
+    const existing =
+      existingByKey ??
+      (await prisma.childAddress.findFirst({
+        where: {
+          childId,
+          legacyKey: null,
+          street,
+          building,
+          floor,
+          city,
+        },
+      }));
 
+    const data = {
+      sourceDatabase,
+      legacyKey: key,
+      legacyId,
+      legacyTable: "t_address",
+      legacyChildId,
+      addressType: cleanString(row.atype),
+      country: cleanString(row.country) ?? "Lebanon",
+      street,
+      building,
+      floor,
+      city,
+      telephone: cleanString(row.tel),
+      regionId,
+      legacyData: legacyRowData(
+        sourceDatabase,
+        "t_address",
+        legacyId,
+        legacyChildId,
+        row
+      ),
+      ...(createdAt ? { createdAt } : {}),
+    };
+
+    if (existing) {
+      if (!dryRun) {
+        await prisma.childAddress.update({
+          where: { id: existing.id },
+          data,
+        });
+      }
+      setMapping("child_address", legacyId, existing.id);
+      backfilled++;
+      continue;
+    }
+
+    const id = generateUUID();
     if (!dryRun) {
       await prisma.childAddress.create({
         data: {
-          id: generateUUID(),
+          id,
           childId,
-          street: cleanString(row.street),
-          building: cleanString(row.building),
-          floor: cleanString(row.floor),
-          city: cleanString(row.city),
+          ...data,
         },
       });
     }
-    count++;
+    setMapping("child_address", legacyId, id);
+    migrated++;
   }
-  log(`Addresses: ${count} migrated`);
+  log(
+    `Addresses: ${migrated} migrated, ${backfilled} existing/backfilled, ${skipped} skipped`
+  );
 }
 
-async function migrateAuthorized(prisma: PrismaClient, dryRun: boolean) {
+async function migrateAuthorized(
+  prisma: PrismaClient,
+  dryRun: boolean,
+  sourceDatabase: string
+) {
   const rows = await queryMysql<OldAuthorized>(
     "SELECT * FROM t_authorized WHERE active = 1 ORDER BY authid"
   );
   log(`Found ${rows.length} authorized persons in t_authorized`);
 
-  let count = 0;
+  let migrated = 0;
+  let backfilled = 0;
+  let skipped = 0;
   for (const row of rows) {
     const childId = getMapping("child", row.child_id);
-    if (!childId) continue;
+    const legacyId = toInt(row.authid, 0);
+    const firstName = cleanString(row.fname);
+    const lastName = cleanString(row.lname);
+    const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
+    if (!childId || !legacyId || !fullName) {
+      skipped++;
+      continue;
+    }
 
-    const fullName = [row.fname, row.lname].filter(Boolean).join(" ").trim();
-    if (!fullName) continue;
+    const legacyChildId = toInt(row.child_id, 0) || null;
+    const key = legacyKey(sourceDatabase, "t_authorized", legacyId);
+    const phone = cleanString(row.tel);
+    const mobile = cleanString(row.mobile);
+    const relation = cleanString(row.relation);
+    const createdAt = parseDate(row.datettime ?? "");
 
+    const existingByKey = await prisma.relative.findUnique({
+      where: { legacyKey: key },
+    });
+    const existing =
+      existingByKey ??
+      (await prisma.relative.findFirst({
+        where: {
+          childId,
+          legacyKey: null,
+          relation,
+          OR: [
+            {
+              name: firstName ?? fullName,
+              lastName,
+            },
+            {
+              name: fullName,
+            },
+          ],
+        },
+      }));
+
+    const data = {
+      sourceDatabase,
+      legacyKey: key,
+      legacyId,
+      legacyTable: "t_authorized",
+      legacyChildId,
+      name: firstName ?? fullName,
+      lastName,
+      relation,
+      phone,
+      mobile,
+      isAuthorized: true,
+      isEmergencyContact: toBool(row.emergence),
+      legacyData: legacyRowData(
+        sourceDatabase,
+        "t_authorized",
+        legacyId,
+        legacyChildId,
+        row
+      ),
+      ...(createdAt ? { createdAt } : {}),
+    };
+
+    if (existing) {
+      if (!dryRun) {
+        await prisma.relative.update({
+          where: { id: existing.id },
+          data,
+        });
+      }
+      setMapping("authorized_relative", legacyId, existing.id);
+      backfilled++;
+      continue;
+    }
+
+    const id = generateUUID();
     if (!dryRun) {
       await prisma.relative.create({
         data: {
-          id: generateUUID(),
+          id,
           childId,
-          name: fullName,
-          relation: cleanString(row.relation),
-          phone: cleanString(row.mobile) || cleanString(row.tel),
-          isAuthorized: true,
+          ...data,
         },
       });
     }
-    count++;
+    setMapping("authorized_relative", legacyId, id);
+    migrated++;
   }
-  log(`Authorized persons → Relatives: ${count} migrated`);
+  log(
+    `Authorized persons → Relatives: ${migrated} migrated, ${backfilled} existing/backfilled, ${skipped} skipped`
+  );
 }
 
-async function migrateRelatives(prisma: PrismaClient, dryRun: boolean) {
+async function migrateRelatives(
+  prisma: PrismaClient,
+  dryRun: boolean,
+  sourceDatabase: string
+) {
   const rows = await queryMysql<OldRelative>(
     "SELECT * FROM t_relatives WHERE active = 1 ORDER BY rid"
   );
   log(`Found ${rows.length} relatives in t_relatives`);
 
-  let count = 0;
+  let migrated = 0;
+  let backfilled = 0;
+  let skipped = 0;
   for (const row of rows) {
     const childId = getMapping("child", row.child_id);
-    if (!childId) continue;
+    const legacyId = toInt(row.rid, 0);
+    const name = cleanString(row.fname);
+    if (!childId || !legacyId || !name) {
+      skipped++;
+      continue;
+    }
 
-    if (!row.fname?.trim()) continue;
+    const legacyChildId = toInt(row.child_id, 0) || null;
+    const key = legacyKey(sourceDatabase, "t_relatives", legacyId);
+    const relation = cleanString(row.relation);
+    const phone = cleanString(row.relative_phone);
+    const isAuthorized =
+      row.can_pick?.toLowerCase() === "yes" || row.can_pick === "1";
+    const createdAt = parseDate(row.datetime ?? "");
 
+    const existingByKey = await prisma.relative.findUnique({
+      where: { legacyKey: key },
+    });
+    const existing =
+      existingByKey ??
+      (await prisma.relative.findFirst({
+        where: {
+          childId,
+          legacyKey: null,
+          name,
+          relation,
+          phone,
+        },
+      }));
+
+    const data = {
+      sourceDatabase,
+      legacyKey: key,
+      legacyId,
+      legacyTable: "t_relatives",
+      legacyChildId,
+      name,
+      relation,
+      phone,
+      isAuthorized,
+      legacyData: legacyRowData(
+        sourceDatabase,
+        "t_relatives",
+        legacyId,
+        legacyChildId,
+        row
+      ),
+      ...(createdAt ? { createdAt } : {}),
+    };
+
+    if (existing) {
+      if (!dryRun) {
+        await prisma.relative.update({
+          where: { id: existing.id },
+          data,
+        });
+      }
+      setMapping("relative", legacyId, existing.id);
+      backfilled++;
+      continue;
+    }
+
+    const id = generateUUID();
     if (!dryRun) {
       await prisma.relative.create({
         data: {
-          id: generateUUID(),
+          id,
           childId,
-          name: row.fname.trim(),
-          relation: cleanString(row.relation),
-          phone: cleanString(row.relative_phone),
-          isAuthorized:
-            row.can_pick?.toLowerCase() === "yes" ||
-            row.can_pick === "1",
+          ...data,
         },
       });
     }
-    count++;
+    setMapping("relative", legacyId, id);
+    migrated++;
   }
-  log(`Relatives: ${count} migrated`);
+  log(
+    `Relatives: ${migrated} migrated, ${backfilled} existing/backfilled, ${skipped} skipped`
+  );
 }
 
 // ---------------------------------------------------------------------------

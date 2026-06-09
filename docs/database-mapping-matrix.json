@@ -244,8 +244,8 @@
     "legacyTable": "t_address",
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, child_id:varchar(50) NOT NULL, atype:varchar(50) NOT NULL, muhafaza:varchar(50) CHARACTER SET utf8 NOT NULL, country:varchar(50) CHARACTER SET utf8 NOT NULL, quadaa:varchar(50) CHARACTER SET utf8 NOT NULL, region:varchar(50) CHARACTER SET utf8 NOT NULL, city:varchar(50) CHARACTER SET utf8mb4 NOT NULL, street:varchar(50) CHARACTER SET utf8 NOT NULL, building:varchar(50) CHARACTER SET utf8 NOT NULL, floor:varchar(50) NOT NULL, tel:varchar(50) NOT NULL, remarks:varchar(50) CHARACTER SET utf8 NOT NULL, latitude:varchar(50) CHARACTER SET utf8 DEFAULT NULL, longitude:varchar(50) CHARACTER SET utf8 NOT NULL, add_progress_total:double NOT NULL, add_progress_m:double NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1'",
     "modernDestination": "ChildAddress",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-children.ts",
+    "reconciliation": "Child address rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy child id, address type, telephone, region mapping when available, and raw legacyData; source/target count is covered by `children.t_address` reconciliation; mismatches expose unmapped children or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -404,8 +404,8 @@
     "legacyTable": "t_authorized",
     "legacyColumns": "authid:int(11) NOT NULL AUTO_INCREMENT, relation:varchar(50) NOT NULL, fname:varchar(50) NOT NULL, lname:varchar(50) NOT NULL, tel:varchar(50) NOT NULL, mobile:varchar(50) NOT NULL, emergence:varchar(50) NOT NULL, child_id:varchar(50) NOT NULL, auth_progress_all:double NOT NULL, auth_progress_m:double NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', datettime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP",
     "modernDestination": "Relative",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-children.ts",
+    "reconciliation": "Authorized pickup rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy child id, split first/last name, phone/mobile, emergency flag, and raw legacyData; source/target count is covered by `children.t_authorized` reconciliation; mismatches expose unmapped children, blank names, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -780,8 +780,8 @@
     "legacyTable": "t_relatives",
     "legacyColumns": "rid:int(11) NOT NULL AUTO_INCREMENT, relation:varchar(50) NOT NULL, fname:varchar(50) NOT NULL, dob:varchar(50) NOT NULL, medical_case:varchar(50) NOT NULL, place_in_family:varchar(50) NOT NULL, relative_phone:varchar(50) NOT NULL, can_pick:varchar(50) NOT NULL, child_id:varchar(50) NOT NULL, rel_progress:double NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP",
     "modernDestination": "Relative",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-children.ts",
+    "reconciliation": "Relative rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy child id, pickup authorization from can_pick, and raw legacyData; source/target count is covered by `children.t_relatives` reconciliation; mismatches expose unmapped children, blank names, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1180,8 +1180,8 @@
     "legacyTable": "t_address",
     "legacyColumns": "aid:int(11) NOT NULL, child_id:varchar(50) NOT NULL, atype:varchar(50) NOT NULL, muhafaza:varchar(50) CHARACTER SET utf8 NOT NULL, country:varchar(50) CHARACTER SET utf8 NOT NULL, quadaa:varchar(50) CHARACTER SET utf8 NOT NULL, region:varchar(50) CHARACTER SET utf8 NOT NULL, city:varchar(50) CHARACTER SET utf8mb4 NOT NULL, street:varchar(50) CHARACTER SET utf8 NOT NULL, building:varchar(50) CHARACTER SET utf8 NOT NULL, floor:varchar(50) NOT NULL, tel:varchar(50) NOT NULL, remarks:varchar(50) CHARACTER SET utf8 NOT NULL, latitude:varchar(50) CHARACTER SET utf8 DEFAULT NULL, longitude:varchar(50) CHARACTER SET utf8 NOT NULL, add_progress_total:double NOT NULL, add_progress_m:double NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1'",
     "modernDestination": "ChildAddress",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-children.ts",
+    "reconciliation": "Child address rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy child id, address type, telephone, region mapping when available, and raw legacyData; source/target count is covered by `children.t_address` reconciliation; mismatches expose unmapped children or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1372,8 +1372,8 @@
     "legacyTable": "t_authorized",
     "legacyColumns": "authid:int(11) NOT NULL, relation:varchar(50) NOT NULL, fname:varchar(50) NOT NULL, lname:varchar(50) NOT NULL, tel:varchar(50) NOT NULL, mobile:varchar(50) NOT NULL, emergence:varchar(50) NOT NULL, child_id:varchar(50) NOT NULL, auth_progress_all:double NOT NULL, auth_progress_m:double NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', datettime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP",
     "modernDestination": "Relative",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-children.ts",
+    "reconciliation": "Authorized pickup rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy child id, split first/last name, phone/mobile, emergency flag, and raw legacyData; source/target count is covered by `children.t_authorized` reconciliation; mismatches expose unmapped children, blank names, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1748,8 +1748,8 @@
     "legacyTable": "t_relatives",
     "legacyColumns": "rid:int(11) NOT NULL, relation:varchar(50) NOT NULL, fname:varchar(50) NOT NULL, dob:varchar(50) NOT NULL, medical_case:varchar(50) NOT NULL, place_in_family:varchar(50) NOT NULL, relative_phone:varchar(50) NOT NULL, can_pick:varchar(50) NOT NULL, child_id:varchar(50) NOT NULL, rel_progress:double NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP",
     "modernDestination": "Relative",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-children.ts",
+    "reconciliation": "Relative rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy child id, pickup authorization from can_pick, and raw legacyData; source/target count is covered by `children.t_relatives` reconciliation; mismatches expose unmapped children, blank names, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -2052,8 +2052,8 @@
     "legacyTable": "t_address",
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, child_id:varchar(50) NOT NULL, atype:varchar(50) NOT NULL, muhafaza:varchar(50) CHARACTER SET utf8 NOT NULL, country:varchar(50) CHARACTER SET utf8 NOT NULL, quadaa:varchar(50) CHARACTER SET utf8 NOT NULL, region:varchar(50) CHARACTER SET utf8 NOT NULL, city:varchar(50) CHARACTER SET utf8mb4 NOT NULL, street:varchar(50) CHARACTER SET utf8 NOT NULL, building:varchar(50) CHARACTER SET utf8 NOT NULL, floor:varchar(50) NOT NULL, tel:varchar(50) NOT NULL, remarks:varchar(50) CHARACTER SET utf8 NOT NULL, latitude:varchar(50) CHARACTER SET utf8 DEFAULT NULL, longitude:varchar(50) CHARACTER SET utf8 NOT NULL, add_progress_total:double NOT NULL, add_progress_m:double NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1'",
     "modernDestination": "ChildAddress",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-children.ts",
+    "reconciliation": "Child address rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy child id, address type, telephone, region mapping when available, and raw legacyData; source/target count is covered by `children.t_address` reconciliation; mismatches expose unmapped children or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2212,8 +2212,8 @@
     "legacyTable": "t_authorized",
     "legacyColumns": "authid:int(11) NOT NULL AUTO_INCREMENT, relation:varchar(50) NOT NULL, fname:varchar(50) NOT NULL, lname:varchar(50) NOT NULL, tel:varchar(50) NOT NULL, mobile:varchar(50) NOT NULL, emergence:varchar(50) NOT NULL, child_id:varchar(50) NOT NULL, auth_progress_all:double NOT NULL, auth_progress_m:double NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', datettime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP",
     "modernDestination": "Relative",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-children.ts",
+    "reconciliation": "Authorized pickup rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy child id, split first/last name, phone/mobile, emergency flag, and raw legacyData; source/target count is covered by `children.t_authorized` reconciliation; mismatches expose unmapped children, blank names, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2588,8 +2588,8 @@
     "legacyTable": "t_relatives",
     "legacyColumns": "rid:int(11) NOT NULL AUTO_INCREMENT, relation:varchar(50) NOT NULL, fname:varchar(50) NOT NULL, dob:varchar(50) NOT NULL, medical_case:varchar(50) NOT NULL, place_in_family:varchar(50) NOT NULL, relative_phone:varchar(50) NOT NULL, can_pick:varchar(50) NOT NULL, child_id:varchar(50) NOT NULL, rel_progress:double NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP",
     "modernDestination": "Relative",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-children.ts",
+    "reconciliation": "Relative rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy child id, pickup authorization from can_pick, and raw legacyData; source/target count is covered by `children.t_relatives` reconciliation; mismatches expose unmapped children, blank names, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",

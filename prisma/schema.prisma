@@ -743,23 +743,33 @@ model Child {
 }
 
 model ChildAddress {
-  id          String   @id @default(uuid()) @db.Uuid
-  childId     String   @db.Uuid
-  addressType String?
-  country     String?  @default("Lebanon")
-  street      String?
-  building    String?
-  floor       String?
-  city        String?
-  telephone   String?
-  regionId    String?  @db.Uuid
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String   @id @default(uuid()) @db.Uuid
+  childId        String   @db.Uuid
+  sourceDatabase String?
+  legacyKey      String?  @unique
+  legacyId       Int?
+  legacyTable    String?
+  legacyChildId  Int?
+  addressType    String?
+  country        String?  @default("Lebanon")
+  street         String?
+  building       String?
+  floor          String?
+  city           String?
+  telephone      String?
+  regionId       String?  @db.Uuid
+  legacyData     Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   child  Child   @relation(fields: [childId], references: [id], onDelete: Cascade)
   region Region? @relation(fields: [regionId], references: [id], onDelete: SetNull)
 
   @@index([childId])
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyTable])
+  @@index([legacyChildId])
   @@index([regionId])
   @@map("child_addresses")
 }
@@ -795,6 +805,11 @@ model Parent {
 model Relative {
   id                 String   @id @default(uuid()) @db.Uuid
   childId            String   @db.Uuid
+  sourceDatabase     String?
+  legacyKey          String?  @unique
+  legacyId           Int?
+  legacyTable        String?
+  legacyChildId      Int?
   name               String
   lastName           String?
   relation           String?
@@ -802,12 +817,17 @@ model Relative {
   mobile             String?
   isAuthorized       Boolean  @default(false)
   isEmergencyContact Boolean  @default(false)
+  legacyData         Json?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
   child Child @relation(fields: [childId], references: [id], onDelete: Cascade)
 
   @@index([childId])
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyTable])
+  @@index([legacyChildId])
   @@map("relatives")
 }
 

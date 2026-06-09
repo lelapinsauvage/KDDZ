@@ -556,34 +556,35 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     notes:
       "History rows depend on child mapping and currently do not store sourceDatabase.",
   }),
-  weakRule({
+  provenancedRule({
     id: "children.t_address",
     step: "5. Children",
     sourceTable: "t_address",
     sourceWhere: "active = 1",
     targetTable: "child_addresses",
+    targetWhere: byLegacyTable("t_address"),
     notes:
-      "Child address rows depend on child and location mapping; no provenance column exists.",
+      "Child address rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy child id, raw legacy row, address type, phone, and region mapping when available.",
   }),
-  weakRule({
+  provenancedRule({
     id: "children.t_authorized",
     step: "5. Children",
     sourceTable: "t_authorized",
     sourceWhere: "active = 1",
     targetTable: "relatives",
-    targetWhere: `${pgColumn("isAuthorized")} = true`,
+    targetWhere: byLegacyTable("t_authorized"),
     notes:
-      "Authorized pickup rows become Relative rows with isAuthorized=true.",
+      "Authorized pickup rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy child id, split first/last name, emergency flag, and raw legacy row.",
   }),
-  weakRule({
+  provenancedRule({
     id: "children.t_relatives",
     step: "5. Children",
     sourceTable: "t_relatives",
     sourceWhere: "active = 1",
     targetTable: "relatives",
-    targetWhere: `${pgColumn("isAuthorized")} = false`,
+    targetWhere: byLegacyTable("t_relatives"),
     notes:
-      "General relatives become Relative rows with isAuthorized=false.",
+      "General relatives preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy child id, pickup authorization, and raw legacy row.",
   }),
   provenancedRule({
     id: "garderie_profile.t_garderie",
