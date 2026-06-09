@@ -110,6 +110,30 @@ function parseDaysBeforeList(value: string): number[] {
   ).sort((a, b) => a - b);
 }
 
+function hasCalendarLegacyProvenance(
+  existing: {
+    sourceDatabase: string | null;
+    legacyKey: string | null;
+    legacyId: number | null;
+    legacyBranchId: number | null;
+    legacyData: unknown;
+  },
+  legacy: {
+    sourceDatabase: string;
+    legacyKey: string;
+    legacyId: number;
+    legacyBranchId: number;
+  }
+) {
+  return (
+    existing.sourceDatabase === legacy.sourceDatabase &&
+    existing.legacyKey === legacy.legacyKey &&
+    existing.legacyId === legacy.legacyId &&
+    existing.legacyBranchId === legacy.legacyBranchId &&
+    Boolean(existing.legacyData)
+  );
+}
+
 async function ensureDessertFood(
   prisma: PrismaClient,
   organizationId: string,
@@ -167,7 +191,7 @@ async function createCalendarEntry(
     },
   });
   if (existing) {
-    if (!dryRun && !existing.legacyData) {
+    if (!dryRun && !hasCalendarLegacyProvenance(existing, legacy)) {
       await prisma.foodCalendar.update({
         where: { id: existing.id },
         data: legacy,

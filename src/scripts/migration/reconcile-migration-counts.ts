@@ -17,6 +17,7 @@ type ResultStatus = "ok" | "warning" | "missing" | "not-applicable" | "error";
 interface CountSide {
   table: string;
   where?: string | ((sourceDatabase: string) => string);
+  countExpression?: string;
   label?: string;
 }
 
@@ -94,6 +95,10 @@ function pgColumn(column: string): string {
   return quotePgIdentifier(column);
 }
 
+function pgDistinctCount(column: string): string {
+  return `COUNT(DISTINCT ${pgColumn(column)})`;
+}
+
 function pgTextContains(column: string, fragment: string): string {
   return `POSITION(${pgLiteral(fragment)} IN ${pgColumn(column)}) > 0`;
 }
@@ -163,8 +168,12 @@ async function postgresTableExists(
   return Boolean(rows[0]?.regclass);
 }
 
-async function mysqlCount(table: string, where: string | null): Promise<number> {
-  const sql = `SELECT COUNT(*) AS count FROM ${quoteMysqlIdentifier(table)}${
+async function mysqlCount(
+  table: string,
+  where: string | null,
+  countExpression = "COUNT(*)"
+): Promise<number> {
+  const sql = `SELECT ${countExpression} AS count FROM ${quoteMysqlIdentifier(table)}${
     where ? ` WHERE ${where}` : ""
   }`;
   const rows = await queryMysql<Array<{ count: unknown }>[number]>(sql);
@@ -175,9 +184,10 @@ async function postgresCount(
   prisma: PrismaClient,
   schema: string,
   table: string,
-  where: string | null
+  where: string | null,
+  countExpression = "COUNT(*)"
 ): Promise<number> {
-  const sql = `SELECT COUNT(*)::bigint AS count FROM ${pgTableRef(
+  const sql = `SELECT (${countExpression})::bigint AS count FROM ${pgTableRef(
     schema,
     table
   )}${where ? ` WHERE ${where}` : ""}`;
@@ -262,7 +272,11 @@ async function reconcileRule(
     }
 
     if (!(await postgresTableExists(prisma, targetSchema, rule.target.table))) {
-      const sourceCount = await mysqlCount(rule.source.table, sourceWhere);
+      const sourceCount = await mysqlCount(
+        rule.source.table,
+        sourceWhere,
+        rule.source.countExpression
+      );
       return {
         id: rule.id,
         step: rule.step,
@@ -282,8 +296,14 @@ async function reconcileRule(
     }
 
     const [sourceCount, targetCount] = await Promise.all([
-      mysqlCount(rule.source.table, sourceWhere),
-      postgresCount(prisma, targetSchema, rule.target.table, targetWhere),
+      mysqlCount(rule.source.table, sourceWhere, rule.source.countExpression),
+      postgresCount(
+        prisma,
+        targetSchema,
+        rule.target.table,
+        targetWhere,
+        rule.target.countExpression
+      ),
     ]);
     const evaluation = evaluate(rule, sourceCount, targetCount);
 
@@ -356,6 +376,7 @@ function weakRule(params: {
   sourceWhere?: string;
   targetTable: string;
   targetWhere?: CountSide["where"];
+  targetCountExpression?: string;
   notes: string;
   expectation?: Expectation;
   evidence?: EvidenceStrength;
@@ -364,7 +385,11 @@ function weakRule(params: {
     id: params.id,
     step: params.step,
     source: { table: params.sourceTable, where: params.sourceWhere },
-    target: { table: params.targetTable, where: params.targetWhere },
+    target: {
+      table: params.targetTable,
+      where: params.targetWhere,
+      countExpression: params.targetCountExpression,
+    },
     expectation: params.expectation ?? "target-at-least-source",
     evidence: params.evidence ?? "weak",
     notes: params.notes,
@@ -1010,10 +1035,12 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     sourceTable: "t_food_calendar",
     sourceWhere: "active = 1",
     targetTable: "food_calendars",
-    expectation: "informational",
-    evidence: "derived",
+    targetWhere: bySourceDatabase(),
+    targetCountExpression: pgDistinctCount("legacyId"),
+    expectation: "equal",
+    evidence: "strong",
     notes:
-      "Each food-calendar row can fan out into breakfast/lunch/snack/dessert entries.",
+      "Food calendar rows fan out by meal type, so reconciliation counts distinct legacyId values with sourceDatabase provenance.",
   }),
   provenancedRule({
     id: "food.t_food_apply",

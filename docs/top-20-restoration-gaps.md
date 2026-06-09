@@ -45,6 +45,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - Absence report reconciliation now uses `AbsenceReport.sourceDatabase`/`legacyKey` for active `t_absent_report` rows, covering the same migrated raw fields used by parent mobile `absence.php` compatibility.
    - Daily report reconciliation now uses `DailyReport.legacyData.sourceDatabase`/`sourceTable` for active `t_daily_report` rows, covering the same raw payload used by parent mobile `daily.php`/`newdaily.php` compatibility.
    - Call log reconciliation now uses `CallLog.sourceDatabase` for all active `t_form_6` rows, including drafts, matching the restored Form 6 runtime call workflow.
+   - Food calendar reconciliation now counts distinct `FoodCalendar.legacyId` values for active `t_food_calendar` rows, preserving row-level proof despite breakfast/lunch/snack/dessert fan-out.
    - Teacher calendar status reconciliation now covers migrated `t_emp_status` rows through the legacy JSON stored on `EmployeeEvent.notes`.
    - Notification receipt reconciliation now covers the full migrated delivery-table set from `migrate-alarms.ts`, including parent receipt variants, requests/others, event staff/parent deliveries, and holiday read-state.
    - Alarm content reconciliation now uses `Alarm.legacyData.sourceDatabase`/`sourceTable` for `t_alarms*` imports, and `migrate-alarms.ts` backfills that provenance on existing imported alarms when rerun.
