@@ -48,7 +48,7 @@
  * Prerequisites: Children must be migrated first.
  */
 
-import type { PrismaClient } from "@/generated/prisma/client";
+import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 import { createPrismaClient } from "./lib/prisma-client";
 import { queryMysql, closeMysqlPool, getMysqlConfig } from "./lib/mysql-client";
 import {
@@ -152,6 +152,37 @@ function legacyKey(sourceDatabase: string, table: string, legacyId: number) {
   return `${sourceDatabase}:${table}:${legacyId}`;
 }
 
+function legacyRecord(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return value as Record<string, unknown>;
+}
+
+function dailyReportLegacyData(
+  row: OldDailyReport,
+  sourceDatabase: string,
+  current?: unknown
+): Prisma.InputJsonValue {
+  return JSON.parse(
+    JSON.stringify({
+      ...legacyRecord(current),
+      ...row,
+      sourceDatabase,
+      sourceTable: "t_daily_report",
+    })
+  ) as Prisma.InputJsonValue;
+}
+
+function shouldBackfillDailyReportLegacyData(
+  current: unknown,
+  sourceDatabase: string
+) {
+  const legacyData = legacyRecord(current);
+  return (
+    legacyData.sourceDatabase !== sourceDatabase ||
+    legacyData.sourceTable !== "t_daily_report"
+  );
+}
+
 export async function migrateDailyReports(prisma: PrismaClient) {
   log("=== Migrating Daily Reports ===");
   const dryRun = isDryRun();
@@ -185,15 +216,18 @@ export async function migrateDailyReports(prisma: PrismaClient) {
       where: { childId, reportDate },
     });
     if (existing) {
-      if (!dryRun && !existing.legacyData) {
+      if (
+        !dryRun &&
+        shouldBackfillDailyReportLegacyData(existing.legacyData, sourceDatabase)
+      ) {
         await prisma.dailyReport.update({
           where: { id: existing.id },
           data: {
-            legacyData: {
+            legacyData: dailyReportLegacyData(
+              row,
               sourceDatabase,
-              sourceTable: "t_daily_report",
-              ...row,
-            },
+              existing.legacyData
+            ),
           },
         });
       }
@@ -232,11 +266,7 @@ export async function migrateDailyReports(prisma: PrismaClient) {
           runnyNose: toBool(row.rnose ?? 0),
           vomit: toBool(row.vomit ?? 0),
           remarks: cleanString(row.remarks),
-          legacyData: {
-            sourceDatabase,
-            sourceTable: "t_daily_report",
-            ...row,
-          },
+          legacyData: dailyReportLegacyData(row, sourceDatabase),
           createdAt: row.datetime ? new Date(row.datetime) : new Date(),
         },
       });

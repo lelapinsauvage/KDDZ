@@ -43,6 +43,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - Attachment reconciliation now compares real-file legacy rows only and uses strong provenance for teacher, nurse, child, doctor, manager, daily report, absence report, and medical form attachment tables that preserve `sourceDatabase` and `legacyKey`.
    - Parent mobile login reconciliation now uses `ParentUser.sourceDatabase`/`legacyKey` for non-empty `parent_login_users.username` rows, exposing unresolved child links instead of hiding them in broad user totals.
    - Absence report reconciliation now uses `AbsenceReport.sourceDatabase`/`legacyKey` for active `t_absent_report` rows, covering the same migrated raw fields used by parent mobile `absence.php` compatibility.
+   - Daily report reconciliation now uses `DailyReport.legacyData.sourceDatabase`/`sourceTable` for active `t_daily_report` rows, covering the same raw payload used by parent mobile `daily.php`/`newdaily.php` compatibility.
    - Teacher calendar status reconciliation now covers migrated `t_emp_status` rows through the legacy JSON stored on `EmployeeEvent.notes`.
    - Notification receipt reconciliation now covers the full migrated delivery-table set from `migrate-alarms.ts`, including parent receipt variants, requests/others, event staff/parent deliveries, and holiday read-state.
    - Alarm content reconciliation now uses `Alarm.legacyData.sourceDatabase`/`sourceTable` for `t_alarms*` imports, and `migrate-alarms.ts` backfills that provenance on existing imported alarms when rerun.

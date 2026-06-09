@@ -821,14 +821,15 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
       notes: `${table} rows are preserved as LegacySetting.`,
     })
   ),
-  weakRule({
+  provenancedRule({
     id: "daily_reports.t_daily_report",
     step: "15. Daily Reports",
     sourceTable: "t_daily_report",
     sourceWhere: "active = 1",
     targetTable: "daily_reports",
+    targetWhere: byLegacyDataSourceTable("t_daily_report"),
     notes:
-      "Daily reports are keyed by child/date, but no sourceDatabase is stored yet.",
+      "Daily reports preserve sourceDatabase/sourceTable inside legacyData; mismatches expose unmapped children, invalid dates, or duplicate child/date merges.",
   }),
   weakRule({
     id: "daily_reports.t_daily_fever",
