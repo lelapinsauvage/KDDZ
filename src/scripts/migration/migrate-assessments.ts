@@ -18,7 +18,7 @@
 
 import type { PrismaClient } from "@/generated/prisma/client";
 import { createPrismaClient } from "./lib/prisma-client";
-import { queryMysql, closeMysqlPool } from "./lib/mysql-client";
+import { queryMysql, closeMysqlPool, getMysqlConfig } from "./lib/mysql-client";
 import {
   cleanString,
   generateUUID,
@@ -61,6 +61,26 @@ interface ScheduleRuleDraft {
 const ASSESSMENT_TYPES = [1, 2, 3, 4, 5, 6, 7] as const;
 const ANSWER_KEY_RE = /^[mclsd]\d+$/;
 
+function legacyKey(sourceDatabase: string, table: string, legacyId: number) {
+  return `${sourceDatabase}:${table}:${legacyId}`;
+}
+
+function legacyRowData(
+  sourceDatabase: string,
+  sourceTable: string,
+  legacyId: number,
+  row: Record<string, unknown>
+) {
+  return JSON.parse(
+    JSON.stringify({
+      sourceDatabase,
+      sourceTable,
+      legacyId,
+      row,
+    })
+  );
+}
+
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -90,6 +110,7 @@ function datesMatch(left: unknown, right: unknown): boolean {
 }
 
 function buildAssessmentData(
+  sourceDatabase: string,
   tableName: string,
   assessmentType: number,
   row: Record<string, unknown>
@@ -99,6 +120,7 @@ function buildAssessmentData(
     comments: cleanString(row.comments) ?? "",
     _legacy: {
       source: "mysql",
+      sourceDatabase,
       table: tableName,
       reportId: oldId,
       childId: cleanString(row.child_id),
@@ -130,10 +152,17 @@ async function findExistingAssessment(
   childId: string,
   assessmentType: number,
   tableName: string,
-  oldId: number
+  oldId: number,
+  key: string
 ) {
+  const existingByKey = await prisma.assessment.findUnique({
+    where: { legacyKey: key },
+    select: { id: true, data: true },
+  });
+  if (existingByKey) return existingByKey;
+
   const candidates = await prisma.assessment.findMany({
-    where: { childId, assessmentType },
+    where: { childId, assessmentType, legacyKey: null },
     select: { id: true, data: true },
   });
 
@@ -146,6 +175,7 @@ async function findExistingAssessment(
 
 async function migrateAssessmentTable(
   prisma: PrismaClient,
+  sourceDatabase: string,
   tableName: string,
   assessmentType: number,
   dryRun: boolean
@@ -172,27 +202,49 @@ async function migrateAssessmentTable(
       childId,
       assessmentType,
       tableName,
-      oldId
+      oldId,
+      legacyKey(sourceDatabase, tableName, oldId)
     );
+    const status = toBool(row.is_draft)
+      ? ("DRAFT" as const)
+      : ("SUBMITTED" as const);
+    const data = buildAssessmentData(sourceDatabase, tableName, assessmentType, row);
+    const baseData = {
+      childId,
+      sourceDatabase,
+      legacyKey: legacyKey(sourceDatabase, tableName, oldId),
+      legacyId: oldId,
+      legacyTable: tableName,
+      legacyChildId: toInt(row.child_id, 0) || null,
+      legacyClassId: toInt(row.class_id, 0) || null,
+      legacyTeacherId: toInt(row.teacher_id, 0) || null,
+      legacyCreatedById: toInt(row.uby, 0) || null,
+      assessmentType,
+      status,
+      data: JSON.parse(JSON.stringify(data)),
+      legacyData: legacyRowData(sourceDatabase, tableName, oldId, row),
+      createdById: getMapping("user", row.uby as number),
+      createdAt: parseDate(row.datetime as string) ?? new Date(),
+    };
     if (existing) {
+      if (!dryRun) {
+        await prisma.assessment.update({
+          where: { id: existing.id },
+          data: baseData,
+        });
+      }
       setMapping(`assessment_${assessmentType}`, oldId, existing.id);
       skipped++;
       continue;
     }
 
     const id = generateUUID();
-    const data = buildAssessmentData(tableName, assessmentType, row);
 
     if (!dryRun) {
       await prisma.assessment.create({
         data: {
           id,
-          childId,
-          assessmentType,
-          status: toBool(row.is_draft) ? "DRAFT" : "SUBMITTED",
-          data: JSON.parse(JSON.stringify(data)),
-          createdById: getMapping("user", row.uby as number),
-          createdAt: parseDate(row.datetime as string) ?? new Date(),
+          ...baseData,
         },
       });
     }
@@ -237,7 +289,11 @@ async function findAssessmentForNotification(
   });
 }
 
-async function migrateNewAssessmentMarkers(prisma: PrismaClient, dryRun: boolean) {
+async function migrateNewAssessmentMarkers(
+  prisma: PrismaClient,
+  dryRun: boolean,
+  sourceDatabase: string
+) {
   const rows = await queryMysql<OldNewAssessment>(
     "SELECT * FROM new_assessment ORDER BY id"
   );
@@ -256,6 +312,8 @@ async function migrateNewAssessmentMarkers(prisma: PrismaClient, dryRun: boolean
     }
 
     const marker = {
+      sourceDatabase,
+      sourceTable: "new_assessment",
       id: row.id,
       datetime: row.datetime,
       table: row.t_name,
@@ -263,6 +321,16 @@ async function migrateNewAssessmentMarkers(prisma: PrismaClient, dryRun: boolean
       childId: row.child_id,
       sent: toBool(row.sent),
     };
+    const markerKey = legacyKey(sourceDatabase, "new_assessment", row.id);
+    const existingStub = await prisma.assessment.findUnique({
+      where: { legacyKey: markerKey },
+      select: { id: true },
+    });
+    if (existingStub) {
+      setMapping("new_assessment", row.id, existingStub.id);
+      skipped++;
+      continue;
+    }
 
     const existing = await findAssessmentForNotification(
       prisma,
@@ -305,8 +373,16 @@ async function migrateNewAssessmentMarkers(prisma: PrismaClient, dryRun: boolean
         data: {
           id,
           childId,
+          sourceDatabase,
+          legacyKey: markerKey,
+          legacyId: row.id,
+          legacyTable: "new_assessment",
+          legacyChildId: row.child_id,
           assessmentType,
           status: toBool(row.sent) ? "SUBMITTED" : "DRAFT",
+          legacyData: legacyRowData(sourceDatabase, "new_assessment", row.id, {
+            ...row,
+          }),
           data: JSON.parse(
             JSON.stringify({
               comments: "",
@@ -433,17 +509,19 @@ export async function migrateAssessments(
 ) {
   log("=== Migrating Assessments ===");
   const dryRun = isDryRun();
+  const sourceDatabase = getMysqlConfig().database || "unknown";
 
   for (const assessmentType of ASSESSMENT_TYPES) {
     await migrateAssessmentTable(
       prisma,
+      sourceDatabase,
       `t_assessment_${assessmentType}`,
       assessmentType,
       dryRun
     );
   }
 
-  await migrateNewAssessmentMarkers(prisma, dryRun);
+  await migrateNewAssessmentMarkers(prisma, dryRun, sourceDatabase);
   await migrateAssessmentScheduleRules(prisma, organizationId, dryRun);
 
   log(`=== Assessment migration complete ===${dryRun ? " [DRY RUN]" : ""}`);

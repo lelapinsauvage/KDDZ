@@ -966,15 +966,18 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
       "Call logs preserve sourceDatabase, legacyKey, legacy ids, draft status, child/branch/class/teacher ids, and raw legacyData.",
   }),
   ...assessmentTables.map((assessmentType) =>
-    weakRule({
+    provenancedRule({
       id: `assessments.t_assessment_${assessmentType}`,
       step: "18. Assessments",
       sourceTable: `t_assessment_${assessmentType}`,
       sourceWhere: "active = 1",
       targetTable: "assessments",
-      targetWhere: `${pgColumn("assessmentType")} = ${assessmentType}`,
+      targetWhere: (sourceDatabase) =>
+        `${byLegacyTable(`t_assessment_${assessmentType}`)(
+          sourceDatabase
+        )} AND ${pgColumn("assessmentType")} = ${assessmentType}`,
       notes:
-        "Assessment rows preserve legacy identifiers inside JSON, not queryable provenance columns.",
+        "Assessment rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, child/class/teacher/user legacy ids, answer payload, and raw legacy row.",
     })
   ),
   weakRule({

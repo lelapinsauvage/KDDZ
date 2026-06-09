@@ -1946,20 +1946,36 @@ model FoodApplication {
 // ─────────────────────────────────────────────
 
 model Assessment {
-  id             String           @id @default(uuid()) @db.Uuid
-  childId        String           @db.Uuid
-  assessmentType Int
-  schoolYearId   String?          @db.Uuid
-  status         AssessmentStatus @default(DRAFT)
-  data           Json?
-  createdById    String?          @db.Uuid
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  id                String           @id @default(uuid()) @db.Uuid
+  childId           String           @db.Uuid
+  sourceDatabase    String?
+  legacyKey         String?          @unique
+  legacyId          Int?
+  legacyTable       String?
+  legacyChildId     Int?
+  legacyClassId     Int?
+  legacyTeacherId   Int?
+  legacyCreatedById Int?
+  assessmentType    Int
+  schoolYearId      String?          @db.Uuid
+  status            AssessmentStatus @default(DRAFT)
+  data              Json?
+  legacyData        Json?
+  createdById       String?          @db.Uuid
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
 
   child      Child       @relation(fields: [childId], references: [id], onDelete: Cascade)
   schoolYear SchoolYear? @relation(fields: [schoolYearId], references: [id], onDelete: SetNull)
   createdBy  User?       @relation("AssessmentCreator", fields: [createdById], references: [id], onDelete: SetNull)
 
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyTable])
+  @@index([legacyChildId])
+  @@index([legacyClassId])
+  @@index([legacyTeacherId])
+  @@index([legacyCreatedById])
   @@index([childId])
   @@index([assessmentType])
   @@index([schoolYearId])

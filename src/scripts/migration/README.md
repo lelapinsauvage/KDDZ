@@ -152,7 +152,7 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `callparent` | CallCauseCategory |
 | `callcauses` | CallCause |
 | `t_form_6` | CallLog, including source database/key provenance, legacy child/branch/class/teacher ids, draft state, and raw `legacyData` |
-| `t_assessment_1` .. `t_assessment_7` | Assessment |
+| `t_assessment_1` .. `t_assessment_7` | Assessment, including source database/key provenance, child/class/teacher/user legacy ids, answer payload, and raw legacy row |
 | `new_assessment` | Assessment `_legacyNewAssessmentMarkers` / notification stub |
 | `t_assessment_dates` | AssessmentScheduleRule |
 | `t_form_1` | MedicalForm (GENERAL), including source database/key provenance, child/branch/class/user legacy ids, form data, and raw legacy row |
@@ -288,6 +288,8 @@ Accounting rows from `t_accounting` fan out into positive fee and discount `Acco
 
 Medical form rows from `t_form_1` through `t_form_5` are reconciled against `MedicalForm.sourceDatabase` and `MedicalForm.legacyTable`, while `t_med_forms_info` rows are reconciled against `MedicalFormEntry.sourceDatabase` and `legacyTable`. Count mismatches usually mean an unmapped child/form dependency, an invalid legacy id, or a pre-provenance fallback collision that needs review.
 
+Assessment report rows from `t_assessment_1` through `t_assessment_7` are reconciled against `Assessment.sourceDatabase` and `Assessment.legacyTable`. Count mismatches usually mean an unmapped child, a duplicate legacy report fallback, or differences between the selected dump and canonical production.
+
 Child roster rows from `t_child` and draft rows from `t_child_draft` are reconciled against `Child.sourceDatabase` and `Child.legacyTable` so active/draft imports are checked by exact legacy provenance rather than broad child totals. Count mismatches usually mean a source row had an unmapped branch or invalid draft id.
 
 Child history rows from `t_child_h` are reconciled against `ChildHistory.sourceDatabase` and `ChildHistory.legacyTable`. Count mismatches usually mean a source row had an unmapped child or duplicated the same child/timestamp fallback.
@@ -340,7 +342,7 @@ Old DB stores dates as varchar. The migration handles multiple formats: `YYYY-MM
 The old medical form tables are consolidated into `MedicalForm`. Form-specific fields remain in the `data` JSON, and active `t_form_1` through `t_form_5` rows also keep `sourceDatabase`, `legacyKey`, `legacyId`, `legacyTable`, child/branch/class/user legacy ids, and a raw row `legacyData` snapshot for reconciliation. The `t_med_forms_info` detail rows become `MedicalFormEntry` records with the same source/key provenance, legacy form and child ids, generated field/value text, and raw legacy row JSON.
 
 ### Assessments
-The seven legacy assessment tables are consolidated into `Assessment`. Answer keys (`m*`, `c*`, `l*`, `s*`, `d*`) stay as flat JSON keys so the modern assessment editor can reopen the migrated report. Legacy `new_assessment` rows are preserved as markers on the matching assessment, or as a stub assessment when the notification marker has no matching report row.
+The seven legacy assessment tables are consolidated into `Assessment`. Answer keys (`m*`, `c*`, `l*`, `s*`, `d*`) stay as flat JSON keys so the modern assessment editor can reopen the migrated report. Active rows keep `sourceDatabase`, `legacyKey`, `legacyId`, `legacyTable`, child/class/teacher/user legacy ids, answer payload JSON, and raw legacy row JSON for reconciliation. Legacy `new_assessment` rows are preserved as markers on the matching assessment, or as a stub assessment with `new_assessment` provenance when the notification marker has no matching report row.
 
 Legacy `t_assessment_dates.assessment_date` stores age thresholds in days, not absolute calendar dates. Those values are migrated to `AssessmentScheduleRule`; the modern `AssessmentDate` table remains reserved for explicit scheduled calendar dates.
 
