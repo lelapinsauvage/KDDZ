@@ -1243,7 +1243,7 @@
     "legacyPhp": "Front/templates/admin/child_report.php",
     "legacyJs": "Front/templates/admin/js/child_report.js",
     "modernRoute": "/child_report.php, /children/[id]/report",
-    "status": "partial - legacy daily report matrix and deep-link bridge restored; grouped header audit remains",
+    "status": "partial - legacy daily report matrix, grouped header, and deep-link bridge restored; export/data audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -1251,7 +1251,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Restored child-specific daily report header, submitted-report filtering, Date/Breakfast Type/Breakfast Portion/Lunch Type/Lunch Portion/Dessert Type/Dessert Portion/Milk CC/Nap From/Nap To/Pot Urine/Pot Stool/Diaper Urine/Diaper Stool/Fever 1/Fever 1 Time/Fever 2/Fever 2 Time/Pant/Shirt/T-Shirt/Boxer/Socks/Actions matrix columns, search/date filters, Excel/CSV export, print action, child photo/name card, and view/edit/print actions. `/child_report.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy child ids into the modern child daily-report matrix. Remaining work is exact legacy two-row grouped table header, TableTools visual/PDF export parity, and food-name/clothing fidelity for records whose legacy data was not mapped into first-class fields."
+    "verification": "Restored child-specific daily report header, submitted-report filtering, Date/Breakfast Type/Breakfast Portion/Lunch Type/Lunch Portion/Dessert Type/Dessert Portion/Milk CC/Nap From/Nap To/Pot Urine/Pot Stool/Diaper Urine/Diaper Stool/Fever 1/Fever 1 Time/Fever 2/Fever 2 Time/Pant/Shirt/T-Shirt/Boxer/Socks/Actions matrix columns, search/date filters, Excel/CSV export, print action, child photo/name card, and view/edit/print actions. The modern table now restores the exact legacy two-row grouped header contract: Date; BreakFast Type/Portion; Lunch Type/Portion; Dessert Type/Portion; Milk CC; Nap From/To; Pot Urine/Stool; Diaper Urine/Stool; Fever 1 */Time; Fever 2 */Time; Pant/Shirt/T-Shirt/Boxer/Socks; Actions. Shared DataTable rendering now respects TanStack grouped-header `colSpan`, and the header contract is verified by `src/scripts/verify-child-report-grouped-header-contract.ts`. `/child_report.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy child ids into the modern child daily-report matrix. Remaining work is TableTools visual/PDF export parity and food-name/clothing fidelity for records whose legacy data was not mapped into first-class fields."
   },
   {
     "legacyPhp": "Front/templates/admin/children.php",

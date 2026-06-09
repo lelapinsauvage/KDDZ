@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { type ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef, type HeaderContext } from "@tanstack/react-table";
 import Link from "next/link";
 import {
   Check,
@@ -26,6 +26,10 @@ import { Input } from "@/components/ui/input";
 import { DataTable, SortableHeader } from "@/components/shared/data-table";
 import { ExportButton } from "@/components/shared/export-button";
 import type { ExportColumn } from "@/lib/export";
+import {
+  legacyChildDailyReportHeaderGroups,
+  type LegacyChildDailyReportColumnId,
+} from "@/lib/legacy-child-report-table-contract";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -188,133 +192,134 @@ function SummaryCard({
   );
 }
 
-const columns: ColumnDef<ReportRow>[] = [
-  {
+function sortableReportHeader(label: string) {
+  function ReportTableHeader({ column }: HeaderContext<ReportRow, unknown>) {
+    return (
+      <SortableHeader column={column}>{label}</SortableHeader>
+    );
+  }
+
+  ReportTableHeader.displayName = `ReportTableHeader(${label})`;
+  return ReportTableHeader;
+}
+
+const leafColumns: Record<LegacyChildDailyReportColumnId, ColumnDef<ReportRow>> = {
+  date: {
     accessorKey: "date",
-    header: ({ column }) => <SortableHeader column={column}>Date</SortableHeader>,
+    header: sortableReportHeader("Date"),
     cell: ({ row }) => <span className="font-medium">{row.original.date}</span>,
   },
-  {
+  breakfastType: {
     accessorKey: "breakfastType",
-    header: ({ column }) => (
-      <SortableHeader column={column}>Breakfast Type</SortableHeader>
-    ),
+    header: sortableReportHeader("Type"),
     cell: ({ row }) => display(row.original.breakfastType),
   },
-  {
+  breakfastPortion: {
     accessorKey: "breakfastPortion",
-    header: ({ column }) => (
-      <SortableHeader column={column}>Breakfast Portion</SortableHeader>
-    ),
+    header: sortableReportHeader("Portion"),
     cell: ({ row }) => portionBadge(row.original.breakfastPortion),
   },
-  {
+  lunchType: {
     accessorKey: "lunchType",
-    header: ({ column }) => <SortableHeader column={column}>Lunch Type</SortableHeader>,
+    header: sortableReportHeader("Type"),
     cell: ({ row }) => display(row.original.lunchType),
   },
-  {
+  lunchPortion: {
     accessorKey: "lunchPortion",
-    header: ({ column }) => (
-      <SortableHeader column={column}>Lunch Portion</SortableHeader>
-    ),
+    header: sortableReportHeader("Portion"),
     cell: ({ row }) => portionBadge(row.original.lunchPortion),
   },
-  {
+  dessertType: {
     accessorKey: "dessertType",
-    header: ({ column }) => (
-      <SortableHeader column={column}>Dessert Type</SortableHeader>
-    ),
+    header: sortableReportHeader("Type"),
     cell: ({ row }) => display(row.original.dessertType),
   },
-  {
+  dessertPortion: {
     accessorKey: "dessertPortion",
-    header: ({ column }) => (
-      <SortableHeader column={column}>Dessert Portion</SortableHeader>
-    ),
+    header: sortableReportHeader("Portion"),
     cell: ({ row }) => portionBadge(row.original.dessertPortion),
   },
-  {
+  milkCc: {
     accessorKey: "milkCc",
-    header: ({ column }) => <SortableHeader column={column}>Milk CC</SortableHeader>,
+    header: sortableReportHeader("CC"),
     cell: ({ row }) => display(row.original.milkCc),
   },
-  {
+  sleepFrom: {
     accessorKey: "sleepFrom",
-    header: ({ column }) => <SortableHeader column={column}>Nap From</SortableHeader>,
+    header: sortableReportHeader("From"),
     cell: ({ row }) => display(row.original.sleepFrom),
   },
-  {
+  sleepTo: {
     accessorKey: "sleepTo",
-    header: ({ column }) => <SortableHeader column={column}>Nap To</SortableHeader>,
+    header: sortableReportHeader("To"),
     cell: ({ row }) => display(row.original.sleepTo),
   },
-  {
+  urinePotty: {
     accessorKey: "urinePotty",
-    header: ({ column }) => <SortableHeader column={column}>Pot Urine</SortableHeader>,
+    header: sortableReportHeader("Urine"),
     cell: ({ row }) => display(row.original.urinePotty),
   },
-  {
+  stoolPotty: {
     accessorKey: "stoolPotty",
-    header: ({ column }) => <SortableHeader column={column}>Pot Stool</SortableHeader>,
+    header: sortableReportHeader("Stool"),
     cell: ({ row }) => display(row.original.stoolPotty),
   },
-  {
+  urineDiaper: {
     accessorKey: "urineDiaper",
-    header: ({ column }) => <SortableHeader column={column}>Diaper Urine</SortableHeader>,
+    header: sortableReportHeader("Urine"),
     cell: ({ row }) => display(row.original.urineDiaper),
   },
-  {
+  stoolDiaper: {
     accessorKey: "stoolDiaper",
-    header: ({ column }) => <SortableHeader column={column}>Diaper Stool</SortableHeader>,
+    header: sortableReportHeader("Stool"),
     cell: ({ row }) => display(row.original.stoolDiaper),
   },
-  {
+  fever1Temp: {
     accessorKey: "fever1Temp",
-    header: ({ column }) => <SortableHeader column={column}>Fever 1</SortableHeader>,
+    header: sortableReportHeader("*"),
     cell: ({ row }) => display(row.original.fever1Temp),
   },
-  {
+  fever1Time: {
     accessorKey: "fever1Time",
-    header: ({ column }) => <SortableHeader column={column}>Fever 1 Time</SortableHeader>,
+    header: sortableReportHeader("Time"),
     cell: ({ row }) => display(row.original.fever1Time),
   },
-  {
+  fever2Temp: {
     accessorKey: "fever2Temp",
-    header: ({ column }) => <SortableHeader column={column}>Fever 2</SortableHeader>,
+    header: sortableReportHeader("*"),
     cell: ({ row }) => display(row.original.fever2Temp),
   },
-  {
+  fever2Time: {
     accessorKey: "fever2Time",
-    header: ({ column }) => <SortableHeader column={column}>Fever 2 Time</SortableHeader>,
+    header: sortableReportHeader("Time"),
     cell: ({ row }) => display(row.original.fever2Time),
   },
-  {
+  clothesPants: {
     accessorKey: "clothesPants",
-    header: "Pant",
+    header: sortableReportHeader("Pant"),
     cell: ({ row }) => <BooleanMark checked={row.original.clothesPants} />,
   },
-  {
+  clothesShirt: {
     accessorKey: "clothesShirt",
-    header: "Shirt",
+    header: sortableReportHeader("Shirt"),
     cell: ({ row }) => <BooleanMark checked={row.original.clothesShirt} />,
   },
-  {
+  clothesTshirt: {
     accessorKey: "clothesTshirt",
-    header: "T-Shirt",
+    header: sortableReportHeader("T-Shirt"),
     cell: ({ row }) => <BooleanMark checked={row.original.clothesTshirt} />,
   },
-  {
+  clothesUnderwear: {
     accessorKey: "clothesUnderwear",
-    header: "Boxer",
+    header: sortableReportHeader("Boxer"),
     cell: ({ row }) => <BooleanMark checked={row.original.clothesUnderwear} />,
   },
-  {
+  clothesSocks: {
     accessorKey: "clothesSocks",
-    header: "Socks",
+    header: sortableReportHeader("Socks"),
     cell: ({ row }) => <BooleanMark checked={row.original.clothesSocks} />,
   },
-  {
+  actions: {
     id: "actions",
     header: "Actions",
     enableSorting: false,
@@ -348,7 +353,30 @@ const columns: ColumnDef<ReportRow>[] = [
       </DropdownMenu>
     ),
   },
-];
+};
+
+function legacyHeaderColumn(
+  columnId: LegacyChildDailyReportColumnId,
+  label: string,
+): ColumnDef<ReportRow> {
+  const column = leafColumns[columnId];
+  if (!label || columnId === "actions") {
+    return { ...column, header: label } as ColumnDef<ReportRow>;
+  }
+  return { ...column, header: sortableReportHeader(label) } as ColumnDef<ReportRow>;
+}
+
+const columns: ColumnDef<ReportRow>[] = legacyChildDailyReportHeaderGroups.map((group) => {
+  if (group.columns.length === 1 && group.columns[0].label === "") {
+    return legacyHeaderColumn(group.columns[0].id, group.label);
+  }
+
+  return {
+    id: group.id,
+    header: group.label,
+    columns: group.columns.map((column) => legacyHeaderColumn(column.id, column.label)),
+  };
+});
 
 export function ReportClient({ child, reports, total }: Props) {
   const id = child.id;
