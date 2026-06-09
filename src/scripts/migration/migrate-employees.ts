@@ -535,7 +535,8 @@ async function migrateTeacherEmployeeEvents(
 
   const sourceDatabase = getMysqlConfig().database || "unknown";
   let migrated = 0;
-  let skipped = 0;
+  let backfilled = 0;
+  let refreshed = 0;
   let orphaned = 0;
 
   for (const row of rows) {
@@ -551,7 +552,47 @@ async function migrateTeacherEmployeeEvents(
     }
 
     const key = legacyKey(sourceDatabase, "t_emp_status", legacyId);
-    const existingByKey = await prisma.employeeEvent.findFirst({
+    const teacher = await prisma.teacher.findUnique({
+      where: { id: teacherId },
+      select: { branchId: true },
+    });
+    const createdAt = parseDate(row.datetime) ?? new Date();
+    const legacyData = legacyRowData(
+      sourceDatabase,
+      "t_emp_status",
+      legacyId,
+      row as unknown as Record<string, unknown>
+    );
+    const data = {
+      employeeId: teacherId,
+      employeeType: "teacher",
+      sourceDatabase,
+      legacyKey: key,
+      legacyId,
+      legacyTable: "t_emp_status",
+      legacyTeacherId,
+      legacyCreatedById: toInt(row.uby, 0) || null,
+      status,
+      date,
+      referenceNumber: cleanString(row.ref_nb),
+      notes: JSON.stringify({
+        legacyKey: key,
+        sourceDatabase,
+        sourceTable: "t_emp_status",
+        legacyId,
+        legacyTeacherId,
+        legacyStatus: row.status,
+        legacyCreatedBy: row.uby,
+        legacyData: row,
+      }),
+      legacyData,
+      branchId: teacher?.branchId ?? null,
+      createdAt,
+    };
+    const existingByKey = await prisma.employeeEvent.findUnique({
+      where: { legacyKey: key },
+    });
+    const existingByNotes = await prisma.employeeEvent.findFirst({
       where: {
         notes: {
           contains: key,
@@ -560,6 +601,7 @@ async function migrateTeacherEmployeeEvents(
     });
     const existing =
       existingByKey ??
+      existingByNotes ??
       (await prisma.employeeEvent.findUnique({
         where: {
           employeeId_employeeType_date: {
@@ -570,36 +612,25 @@ async function migrateTeacherEmployeeEvents(
         },
       }));
     if (existing) {
-      skipped++;
+      if (!dryRun) {
+        await prisma.employeeEvent.update({
+          where: { id: existing.id },
+          data,
+        });
+      }
+      if (existingByKey) {
+        refreshed++;
+      } else {
+        backfilled++;
+      }
       continue;
     }
-
-    const teacher = await prisma.teacher.findUnique({
-      where: { id: teacherId },
-      select: { branchId: true },
-    });
 
     if (!dryRun) {
       await prisma.employeeEvent.create({
         data: {
           id: generateUUID(),
-          employeeId: teacherId,
-          employeeType: "teacher",
-          status,
-          date,
-          referenceNumber: cleanString(row.ref_nb),
-          notes: JSON.stringify({
-            legacyKey: key,
-            sourceDatabase,
-            sourceTable: "t_emp_status",
-            legacyId,
-            legacyTeacherId,
-            legacyStatus: row.status,
-            legacyCreatedBy: row.uby,
-            legacyData: row,
-          }),
-          branchId: teacher?.branchId ?? null,
-          createdAt: parseDate(row.datetime) ?? new Date(),
+          ...data,
         },
       });
     }
@@ -609,7 +640,7 @@ async function migrateTeacherEmployeeEvents(
   }
 
   log(
-    `Teacher employee events: ${migrated} migrated, ${skipped} skipped, ${orphaned} orphaned`
+    `Teacher employee events: ${migrated} migrated, ${backfilled} backfilled, ${refreshed} refreshed, ${orphaned} orphaned`
   );
 }
 

@@ -314,7 +314,7 @@ Teacher and manager address rows from `t_teacher_address` and `t_manager_address
 
 Active absence reports from `t_absent_report` are reconciled against `AbsenceReport.sourceDatabase`/`legacyKey`. Count mismatches usually mean a source row had an unmapped child or an invalid legacy report date.
 
-Employee calendar status rows from `t_emp_status` are reconciled against `EmployeeEvent.notes` legacy JSON. Count mismatches usually mean a source row had an unmapped teacher, invalid date, or unsupported legacy status.
+Employee calendar status rows from `t_emp_status` are reconciled against `EmployeeEvent.sourceDatabase` and `legacyTable`, preserving legacy keys, teacher/user ids, status, date, reference number, and raw legacy row data. Count mismatches usually mean a source row had an unmapped teacher, invalid date, or unsupported legacy status.
 
 ### Idempotency
 All scripts check for existing records before inserting, so they can be re-run safely. Already-migrated records are skipped.

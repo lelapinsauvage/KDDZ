@@ -99,10 +99,6 @@ function pgDistinctCount(column: string): string {
   return `COUNT(DISTINCT ${pgColumn(column)})`;
 }
 
-function pgTextContains(column: string, fragment: string): string {
-  return `POSITION(${pgLiteral(fragment)} IN ${pgColumn(column)}) > 0`;
-}
-
 function bySourceDatabase(column = "sourceDatabase") {
   return (sourceDatabase: string) =>
     `${pgColumn(column)} = ${pgLiteral(sourceDatabase)}`;
@@ -707,20 +703,15 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     targetTable: "teacher_experiences",
     notes: "Teacher experience rows keep sourceDatabase and legacyKey.",
   }),
-  weakRule({
+  provenancedRule({
     id: "employees.t_emp_status",
     step: "8. Employees",
     sourceTable: "t_emp_status",
     sourceWhere: "active = 1",
     targetTable: "employee_events",
-    targetWhere: (sourceDatabase) =>
-      [
-        pgTextContains("notes", `"sourceDatabase":"${sourceDatabase}"`),
-        pgTextContains("notes", `"sourceTable":"t_emp_status"`),
-      ].join(" AND "),
-    expectation: "equal",
+    targetWhere: byLegacyTable("t_emp_status"),
     notes:
-      "Teacher calendar status rows preserve sourceDatabase/sourceTable in EmployeeEvent.notes JSON; mismatches expose orphaned teachers, invalid statuses, or invalid dates.",
+      "Teacher calendar status rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy teacher/user ids, status, date, reference number, and raw legacy row.",
   }),
   provenancedRule({
     id: "employees.t_nurse",

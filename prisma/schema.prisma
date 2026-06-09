@@ -1522,19 +1522,31 @@ model ManagerAttachment {
 // ─────────────────────────────────────────────
 
 model EmployeeEvent {
-  id              String              @id @default(uuid()) @db.Uuid
-  employeeId      String              @db.Uuid
-  employeeType    String
-  status          EmployeeEventStatus
-  date            DateTime            @db.Date
-  referenceNumber String?
-  notes           String?             @db.Text
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
+  id                String              @id @default(uuid()) @db.Uuid
+  employeeId        String              @db.Uuid
+  employeeType      String
+  sourceDatabase    String?
+  legacyKey         String?             @unique
+  legacyId          Int?
+  legacyTable       String?
+  legacyTeacherId   Int?
+  legacyCreatedById Int?
+  status            EmployeeEventStatus
+  date              DateTime            @db.Date
+  referenceNumber   String?
+  notes             String?             @db.Text
+  legacyData        Json?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
 
   branchId String? @db.Uuid
 
   @@unique([employeeId, employeeType, date])
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyTable])
+  @@index([legacyTeacherId])
+  @@index([legacyCreatedById])
   @@index([employeeId, employeeType])
   @@index([date])
   @@index([status])
