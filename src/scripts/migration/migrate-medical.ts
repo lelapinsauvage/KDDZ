@@ -378,7 +378,51 @@ async function migrateFormAttachments(prisma: PrismaClient, dryRun: boolean) {
 // ---------------------------------------------------------------------------
 // Migrate t_form_4 vaccinations → Vaccination model
 // ---------------------------------------------------------------------------
-async function migrateVaccinations(prisma: PrismaClient, dryRun: boolean) {
+function vaccinationLegacyKey(
+  sourceDatabase: string,
+  legacyId: number,
+  dateField: string,
+  statusField: string
+) {
+  return `${legacyKey(
+    sourceDatabase,
+    "t_form_4",
+    legacyId
+  )}:vaccination:${dateField}:${statusField}`;
+}
+
+function vaccinationLegacyData(params: {
+  sourceDatabase: string;
+  legacyId: number;
+  legacyChildId: number | null;
+  dateField: string;
+  statusField: string;
+  vaccineName: string;
+  dateValue: string | null;
+  statusValue: string | null;
+  row: Record<string, unknown>;
+}) {
+  return JSON.parse(
+    JSON.stringify({
+      sourceDatabase: params.sourceDatabase,
+      sourceTable: "t_form_4",
+      legacyId: params.legacyId,
+      legacyChildId: params.legacyChildId,
+      dateField: params.dateField,
+      statusField: params.statusField,
+      vaccineName: params.vaccineName,
+      dateValue: params.dateValue,
+      statusValue: params.statusValue,
+      row: params.row,
+    })
+  );
+}
+
+async function migrateVaccinations(
+  prisma: PrismaClient,
+  dryRun: boolean,
+  sourceDatabase: string
+) {
   const rows = await queryMysql<Record<string, unknown>>(
     "SELECT * FROM t_form_4 WHERE active = 1 ORDER BY form_id"
   );
@@ -404,10 +448,19 @@ async function migrateVaccinations(prisma: PrismaClient, dryRun: boolean) {
     ["dtdate1", "dt1", "DT"],
   ];
 
-  let count = 0;
+  let created = 0;
+  let updated = 0;
+  let existingCount = 0;
+  let missingChild = 0;
+  let meaningfulRows = 0;
   for (const row of rows) {
+    const oldId = toInt(row.form_id);
+    const legacyChildId = toInt(row.child_id, 0) || null;
     const childId = getMapping("child", row.child_id as string);
-    if (!childId) continue;
+    if (!childId) {
+      missingChild++;
+      continue;
+    }
 
     for (const [dateField, statusField, vaccineName] of vaccineFields) {
       const dateVal = cleanString(row[dateField]);
@@ -415,33 +468,78 @@ async function migrateVaccinations(prisma: PrismaClient, dryRun: boolean) {
 
       // Only create if there's meaningful data
       if (!dateVal && !statusVal) continue;
+      meaningfulRows++;
+
+      const key = vaccinationLegacyKey(
+        sourceDatabase,
+        oldId,
+        dateField,
+        statusField
+      );
+      const baseData = {
+        childId,
+        sourceDatabase,
+        legacyKey: key,
+        legacyId: oldId,
+        legacyTable: "t_form_4",
+        legacyChildId,
+        legacyDateField: dateField,
+        legacyStatusField: statusField,
+        vaccineName,
+        dateGiven: dateVal ? parseDate(dateVal) : null,
+        notes: statusVal,
+        legacyData: vaccinationLegacyData({
+          sourceDatabase,
+          legacyId: oldId,
+          legacyChildId,
+          dateField,
+          statusField,
+          vaccineName,
+          dateValue: dateVal,
+          statusValue: statusVal,
+          row,
+        }),
+      };
 
       if (!dryRun) {
-        // Check idempotency
-        const existing = await prisma.vaccination.findFirst({
-          where: { childId, vaccineName },
+        const existingByKey = await prisma.vaccination.findUnique({
+          where: { legacyKey: key },
         });
-        if (existing) continue;
+        const existing =
+          existingByKey ??
+          (await prisma.vaccination.findFirst({
+            where: { childId, vaccineName, legacyKey: null },
+          }));
+        if (existingByKey) {
+          existingCount++;
+          await prisma.vaccination.update({
+            where: { id: existingByKey.id },
+            data: baseData,
+          });
+          continue;
+        }
 
-        await prisma.vaccination.create({
-          data: {
-            id: generateUUID(),
-            childId,
-            vaccineName,
-            dateGiven: dateVal
-              ? (() => {
-                  const d = new Date(dateVal);
-                  return isNaN(d.getTime()) ? null : d;
-                })()
-              : null,
-            notes: statusVal,
-          },
-        });
+        if (existing) {
+          await prisma.vaccination.update({
+            where: { id: existing.id },
+            data: baseData,
+          });
+          updated++;
+        } else {
+          await prisma.vaccination.create({
+            data: {
+              id: generateUUID(),
+              ...baseData,
+            },
+          });
+          created++;
+        }
       }
-      count++;
     }
   }
-  log(`Vaccinations: ${count} created from t_form_4`);
+  log(
+    `Vaccinations: ${created} created, ${updated} backfilled, ${existingCount} refreshed from t_form_4 (${meaningfulRows} meaningful legacy vaccine rows, ${missingChild} forms skipped for missing child)`
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -499,7 +597,7 @@ export async function migrateMedical(prisma: PrismaClient) {
     "form_id",
     "child_id"
   );
-  await migrateVaccinations(prisma, dryRun);
+  await migrateVaccinations(prisma, dryRun, sourceDatabase);
 
   // Form 5 — Accident Report → ACCIDENTS
   await migrateFormTable(

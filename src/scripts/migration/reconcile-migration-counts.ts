@@ -404,6 +404,37 @@ const formTables = [
   { table: "t_form_4", type: "VACCINATIONS" },
   { table: "t_form_5", type: "ACCIDENTS" },
 ];
+const vaccinationFieldPairs = [
+  ["hepdate", "hep"],
+  ["ipvdate", "ipv"],
+  ["opvdate1", "opv1"],
+  ["opvdate2", "opv2"],
+  ["opvdate3", "opv3"],
+  ["opvdate4", "opv4"],
+  ["opvdate5", "opv5"],
+  ["dptdate1", "dpt1"],
+  ["dptdate2", "dpt2"],
+  ["dptdate3", "dpt3"],
+  ["dptdate4", "dpt4"],
+  ["hasbedate1", "hasbe1"],
+  ["mmrdate1", "mmr1"],
+  ["mmrdate2", "mmr2"],
+  ["ndptdate", "ndpt"],
+  ["dtdate1", "dt1"],
+] as const;
+function mysqlMeaningfulText(column: string) {
+  return `(NULLIF(NULLIF(TRIM(COALESCE(${quoteMysqlIdentifier(
+    column
+  )}, '')), ''), '0') IS NOT NULL)`;
+}
+const vaccinationSourceCountExpression = `COALESCE(SUM(${vaccinationFieldPairs
+  .map(
+    ([dateField, statusField]) =>
+      `(${mysqlMeaningfulText(dateField)} OR ${mysqlMeaningfulText(
+        statusField
+      )})`
+  )
+  .join(" + ")}), 0)`;
 const alarmTables = [
   "t_alarms",
   "t_alarms_birthday",
@@ -1034,16 +1065,22 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     notes:
       "Medical form attachment rows with real legacy files keep sourceDatabase and legacyKey.",
   }),
-  weakRule({
+  baseRule({
     id: "medical.vaccinations_from_t_form_4",
     step: "19. Medical Forms",
-    sourceTable: "t_form_4",
-    sourceWhere: "active = 1",
-    targetTable: "vaccinations",
-    expectation: "informational",
-    evidence: "derived",
+    source: {
+      table: "t_form_4",
+      where: "active = 1",
+      countExpression: vaccinationSourceCountExpression,
+    },
+    target: {
+      table: "vaccinations",
+      where: byLegacyTable("t_form_4"),
+    },
+    expectation: "equal",
+    evidence: "strong",
     notes:
-      "Each t_form_4 row can fan out into zero or many vaccination rows depending on populated vaccine fields.",
+      "Vaccination rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy child id, vaccine/date/status fields, and raw legacy row.",
   }),
   provenancedRule({
     id: "payments.t_payments",

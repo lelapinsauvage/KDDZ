@@ -1826,19 +1826,34 @@ model MedicalFormEntry {
 }
 
 model Vaccination {
-  id          String    @id @default(uuid()) @db.Uuid
-  childId     String    @db.Uuid
-  vaccineName String
-  dateGiven   DateTime? @db.Date
-  nextDueDate DateTime? @db.Date
-  notes       String?   @db.Text
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id                String    @id @default(uuid()) @db.Uuid
+  childId           String    @db.Uuid
+  sourceDatabase    String?
+  legacyKey         String?   @unique
+  legacyId          Int?
+  legacyTable       String?
+  legacyChildId     Int?
+  legacyDateField   String?
+  legacyStatusField String?
+  vaccineName       String
+  dateGiven         DateTime? @db.Date
+  nextDueDate       DateTime? @db.Date
+  notes             String?   @db.Text
+  legacyData        Json?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   child Child @relation(fields: [childId], references: [id], onDelete: Cascade)
 
   @@index([childId])
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyTable])
+  @@index([legacyChildId])
+  @@index([legacyDateField])
+  @@index([legacyStatusField])
   @@index([nextDueDate])
+  @@index([legacyData], type: Gin)
   @@map("vaccinations")
 }
 

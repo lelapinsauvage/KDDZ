@@ -56,7 +56,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - Daily report fever/milk reconciliation now uses detail-row `sourceDatabase`/`legacyTable` for `t_daily_fever` and `t_daily_milk`, preserving temperature, milk type, amount/time, legacy report ids, and raw legacy rows.
    - Call log reconciliation now uses `CallLog.sourceDatabase` for all active `t_form_6` rows, including drafts, matching the restored Form 6 runtime call workflow.
    - Assessment reconciliation now uses `Assessment.sourceDatabase`/`legacyTable` for active `t_assessment_1` through `t_assessment_7` rows, preserving child/class/teacher/user legacy ids and raw answer payloads.
-   - Medical form reconciliation now uses `MedicalForm` and `MedicalFormEntry` source provenance for active `t_form_1` through `t_form_5` rows and `t_med_forms_info` detail rows.
+   - Medical form reconciliation now uses `MedicalForm` and `MedicalFormEntry` source provenance for active `t_form_1` through `t_form_5` rows and `t_med_forms_info` detail rows; vaccination fan-out from `t_form_4` now reconciles each populated vaccine date/status pair against `Vaccination` source provenance.
    - Food item reconciliation now uses `Food.sourceDatabase` for `t_food` rows, preserving legacy keys, categories, active flags, created timestamps, and raw legacy food data.
    - Food calendar reconciliation now counts distinct `FoodCalendar.legacyId` values for active `t_food_calendar` rows, preserving row-level proof despite breakfast/lunch/snack/dessert fan-out.
    - Holiday reconciliation now uses `Holiday.sourceDatabase`/`legacyTable` for `t_holiday` rows, preserving notification fields, repeated/active flags, day offsets, and raw legacy holiday data.

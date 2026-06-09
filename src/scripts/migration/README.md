@@ -158,7 +158,7 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_form_1` | MedicalForm (GENERAL), including source database/key provenance, child/branch/class/user legacy ids, form data, and raw legacy row |
 | `t_form_2` | MedicalForm (CONDITIONS), including source database/key provenance, child/branch/class/user legacy ids, form data, and raw legacy row |
 | `t_form_3` | MedicalForm (VISITS), including source database/key provenance, child/branch/class/user legacy ids, form data, and raw legacy row |
-| `t_form_4` | MedicalForm (VACCINATIONS) + Vaccination, including source database/key provenance, child/branch/class/user legacy ids, form data, and raw legacy row |
+| `t_form_4` | MedicalForm (VACCINATIONS) + Vaccination, including source database/key provenance, child/branch/class/user legacy ids, form data, raw legacy row, and per-vaccine date/status field provenance |
 | `t_form_5` | MedicalForm (ACCIDENTS), including source database/key provenance, child/branch/class/user legacy ids, form data, and raw legacy row |
 | `t_med_forms_info` | MedicalFormEntry, including source database/key provenance, legacy form/child ids, field/value text, and raw legacy row |
 | `t_forms_attachments` | FormAttachment |
@@ -288,6 +288,8 @@ Accounting rows from `t_accounting` fan out into positive fee and discount `Acco
 
 Medical form rows from `t_form_1` through `t_form_5` are reconciled against `MedicalForm.sourceDatabase` and `MedicalForm.legacyTable`, while `t_med_forms_info` rows are reconciled against `MedicalFormEntry.sourceDatabase` and `legacyTable`. Count mismatches usually mean an unmapped child/form dependency, an invalid legacy id, or a pre-provenance fallback collision that needs review.
 
+Vaccination rows generated from `t_form_4` are reconciled by counting each populated vaccine date/status pair in the source row and matching those generated rows against `Vaccination.sourceDatabase` and `legacyTable`. Count mismatches usually mean an unmapped child, a pre-provenance child/vaccine fallback collision, or a source field that needs vaccine-pair mapping review.
+
 Assessment report rows from `t_assessment_1` through `t_assessment_7` are reconciled against `Assessment.sourceDatabase` and `Assessment.legacyTable`. Count mismatches usually mean an unmapped child, a duplicate legacy report fallback, or differences between the selected dump and canonical production.
 
 Child roster rows from `t_child` and draft rows from `t_child_draft` are reconciled against `Child.sourceDatabase` and `Child.legacyTable` so active/draft imports are checked by exact legacy provenance rather than broad child totals. Count mismatches usually mean a source row had an unmapped branch or invalid draft id.
@@ -339,7 +341,7 @@ Legacy `t_accounting` rows store a child fee setup, not one modern ledger row. P
 Old DB stores dates as varchar. The migration handles multiple formats: `YYYY-MM-DD`, `DD/MM/YYYY`, `DD-MM-YYYY`, empty strings, and `0000-00-00`.
 
 ### Medical Forms
-The old medical form tables are consolidated into `MedicalForm`. Form-specific fields remain in the `data` JSON, and active `t_form_1` through `t_form_5` rows also keep `sourceDatabase`, `legacyKey`, `legacyId`, `legacyTable`, child/branch/class/user legacy ids, and a raw row `legacyData` snapshot for reconciliation. The `t_med_forms_info` detail rows become `MedicalFormEntry` records with the same source/key provenance, legacy form and child ids, generated field/value text, and raw legacy row JSON.
+The old medical form tables are consolidated into `MedicalForm`. Form-specific fields remain in the `data` JSON, and active `t_form_1` through `t_form_5` rows also keep `sourceDatabase`, `legacyKey`, `legacyId`, `legacyTable`, child/branch/class/user legacy ids, and a raw row `legacyData` snapshot for reconciliation. The `t_med_forms_info` detail rows become `MedicalFormEntry` records with the same source/key provenance, legacy form and child ids, generated field/value text, and raw legacy row JSON. `t_form_4` also fans populated vaccine date/status pairs into `Vaccination` rows that keep the source form id, legacy child id, vaccine name, legacy date/status field names, and raw source row for row-level audit.
 
 ### Assessments
 The seven legacy assessment tables are consolidated into `Assessment`. Answer keys (`m*`, `c*`, `l*`, `s*`, `d*`) stay as flat JSON keys so the modern assessment editor can reopen the migrated report. Active rows keep `sourceDatabase`, `legacyKey`, `legacyId`, `legacyTable`, child/class/teacher/user legacy ids, answer payload JSON, and raw legacy row JSON for reconciliation. Legacy `new_assessment` rows are preserved as markers on the matching assessment, or as a stub assessment with `new_assessment` provenance when the notification marker has no matching report row.
