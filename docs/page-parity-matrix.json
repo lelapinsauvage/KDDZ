@@ -580,7 +580,7 @@
     "legacyPhp": "Front/templates/admin/alarmsMedical.php",
     "legacyJs": "Front/templates/admin/js/alarmsMedical.js",
     "modernRoute": "/alarmsMedical.php, /alarms/medical",
-    "status": "partial - legacy medical alarms bridge, deep links, generator, staff/parent read-state, and class targeting restored",
+    "status": "partial - legacy medical alarms bridge, deep links, generator, staff/parent read-state, class targeting, and message-portal parent delivery restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -590,7 +590,7 @@
       "custom_notifications_medical",
       "custom_notifications_medical_parents"
     ],
-    "verification": "Modern page now reads migrated and generated `NotificationReceipt` rows for current-staff New/Viewed status, restores `#`, Alarm details, Alarm Time, Status, Actions, search/status/type/branch/date filters, row/bulk mark-viewed, Set All As Viewed, and Sent Reports Reminders history for staff and parent recipients. Medical alarm action buttons and header badges preserve migrated `Medical_form*.php?id=<encrypted-child-id>` hrefs through the modern legacy bridge routes, and the page now exposes an idempotent `Data::AlarmsMedical()` parity generator for missing General, Suffering, and Vaccination reports with generated/backfilled `custom_notifications_medical` receipts targeted like `getusersperclassUsersDb()` through imported `login_users.uclasses` plus protected `/api/cron/medical-alarms`. `/alarmsMedical.php` redirects to the modern medical alarms page. Alarm notification and sent-history loads now use uncapped server queries over migrated/generated receipts. Remaining work is parent/mobile delivery."
+    "verification": "Modern page now reads migrated and generated `NotificationReceipt` rows for current-staff New/Viewed status, restores `#`, Alarm details, Alarm Time, Status, Actions, search/status/type/branch/date filters, row/bulk mark-viewed, Set All As Viewed, and Sent Reports Reminders history for staff and parent recipients. Medical alarm action buttons and header badges preserve migrated `Medical_form*.php?id=<encrypted-child-id>` hrefs through the modern legacy bridge routes, and the page now exposes an idempotent `Data::AlarmsMedical()` parity generator for missing General, Suffering, and Vaccination reports with generated/backfilled `custom_notifications_medical` receipts targeted like `getusersperclassUsersDb()` through imported `login_users.uclasses` plus protected `/api/cron/medical-alarms`. Message-portal Reports Reminders sends now mirror `Data::addToReportsReminders()` parent receipts, and `verify-medical-message-side-effects.ts` proves those receipts surface through `notifications_master.php`. `/alarmsMedical.php` redirects to the modern medical alarms page. Alarm notification and sent-history loads now use uncapped server queries over migrated/generated receipts. Remaining work is scheduled generator approval, exact encrypted deep-link parity for generated rows, external provider push/SMS/email execution, and final visual audit."
   },
   {
     "legacyPhp": "Front/templates/admin/alarmsMedicine.php",
@@ -17088,7 +17088,7 @@
     "status": "partial - legacy missing-report template fallback restored; delivery audit remains",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "/settings/notifications Missing Reports now falls back to migrated `email-missingReport-subj` and `email-missingReport-msg` rows and exposes legacy `{{child_name}}` and `{{report_name}}` shortcodes. Remaining work is generator/delivery parity for any approved missing-report send jobs."
+    "verification": "/settings/notifications Missing Reports now falls back to migrated `email-missingReport-subj` and `email-missingReport-msg` rows and exposes legacy `{{child_name}}` and `{{report_name}}` shortcodes. Message-portal Reports Reminders parent receipts are verified through `notifications_master.php`; remaining work is scheduled generator approval and external provider delivery."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-vaccinations.php",

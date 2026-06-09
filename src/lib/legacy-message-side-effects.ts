@@ -539,13 +539,21 @@ export async function createLegacyBulkMessageSideEffects(params: {
     return summary;
   }
 
-  if (staffUsers.length > 0) {
+  const usesSharedReceiptBackedContent =
+    config.parentDeliveryMode !== "standaloneAlarm";
+
+  if (
+    staffUsers.length > 0 ||
+    (usesSharedReceiptBackedContent &&
+      params.children.length > 0 &&
+      config.parentDeliveryTable)
+  ) {
     const legacyNotificationId = nextLegacyId++;
     const alarm = await params.tx.alarm.create({
       data: {
         type: config.alarmType,
         referenceId: null,
-        referenceType: "SelectedTeachers",
+        referenceType: staffUsers.length > 0 ? "SelectedTeachers" : "SelectedChildren",
         message: params.body,
         dueDate: today,
         branchId: branchIds.length === 1 ? branchIds[0] : null,
@@ -566,6 +574,8 @@ export async function createLegacyBulkMessageSideEffects(params: {
           selectedLegacyTeacherUserIds: staffUsers.map(
             (user) => user.legacyRecipientId,
           ),
+          selectedChildIds: params.children.map((child) => child.id),
+          selectedLegacyChildIds: params.children.map((child) => child.legacyId),
           type: params.subject || config.family,
           details: params.body,
           href: config.href,
@@ -577,18 +587,34 @@ export async function createLegacyBulkMessageSideEffects(params: {
     });
     summary.alarmsCreated += 1;
 
-    const receiptData = staffSideEffectReceipts({
-      config,
-      users: staffUsers,
-      legacyNotificationId,
-      alarmId: alarm.id,
-      metadata: {
-        modernTargetType: "Alarm",
-        modernTargetId: alarm.id,
-        submit_time: sqlDateTime(now),
-        ntype: 1,
-      },
-    });
+    const receiptData = [
+      ...(usesSharedReceiptBackedContent
+        ? parentSideEffectReceipts({
+            config,
+            children: params.children,
+            legacyNotificationId,
+            alarmId: alarm.id,
+            metadata: {
+              modernTargetType: "Alarm",
+              modernTargetId: alarm.id,
+              datetime: sqlDateTime(now),
+              ntype: 1,
+            },
+          })
+        : []),
+      ...staffSideEffectReceipts({
+        config,
+        users: staffUsers,
+        legacyNotificationId,
+        alarmId: alarm.id,
+        metadata: {
+          modernTargetType: "Alarm",
+          modernTargetId: alarm.id,
+          submit_time: sqlDateTime(now),
+          ntype: 1,
+        },
+      }),
+    ];
     if (receiptData.length > 0) {
       const receipts = await params.tx.notificationReceipt.createMany({
         data: receiptData,
@@ -596,6 +622,10 @@ export async function createLegacyBulkMessageSideEffects(params: {
       });
       summary.receiptsCreated += receipts.count;
     }
+  }
+
+  if (usesSharedReceiptBackedContent) {
+    return summary;
   }
 
   for (const child of params.children) {
