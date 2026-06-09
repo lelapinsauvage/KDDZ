@@ -520,13 +520,14 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     targetTable: "school_years",
     notes: "School years preserve sourceDatabase and legacyKey.",
   }),
-  weakRule({
+  provenancedRule({
     id: "classes.t_class",
     step: "4. Classes",
     sourceTable: "t_class",
     targetTable: "classes",
+    targetWhere: byLegacyTable("t_class"),
     notes:
-      "Classes currently lack legacy provenance; count cannot detect row swaps.",
+      "Classes preserve sourceDatabase, legacyKey, legacyId, legacyTable, branch mapping, age window, capacity, camera number, image, and active flag.",
   }),
   provenancedRule({
     id: "children.t_child",

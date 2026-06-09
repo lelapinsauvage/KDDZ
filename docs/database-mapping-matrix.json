@@ -444,8 +444,8 @@
     "legacyTable": "t_class",
     "legacyColumns": "clid:int(11) NOT NULL AUTO_INCREMENT, image:varchar(50) NOT NULL DEFAULT 'default.jpg', classname:varchar(50) NOT NULL, branch_id:int(11) NOT NULL, branch_name:varchar(50) CHARACTER SET utf8mb4 NOT NULL, class_language:varchar(50) NOT NULL, age_from:int(2) NOT NULL, age_to:int(2) NOT NULL, radiofrom:varchar(20) NOT NULL, radioto:varchar(20) NOT NULL, camera_number:varchar(10) NOT NULL, max_students:int(2) NOT NULL, current_students:int(2) NOT NULL, males_num:int(2) NOT NULL, females_num:int(2) NOT NULL, teacher_id:int(10) NOT NULL, helper_id:int(10) NOT NULL, clfloor:varchar(50) DEFAULT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:tinyint(1) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1'",
     "modernDestination": "Class",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-classes.ts",
+    "reconciliation": "Class rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, branch mapping, language, age window, capacity, camera number, image URL, and active flag; source/target count is covered by `classes.t_class` reconciliation; mismatches expose unmapped branches, branch/name fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1412,8 +1412,8 @@
     "legacyTable": "t_class",
     "legacyColumns": "clid:int(11) NOT NULL, image:varchar(50) NOT NULL DEFAULT 'default.jpg', classname:varchar(50) NOT NULL, branch_id:int(11) NOT NULL, branch_name:varchar(50) CHARACTER SET utf8mb4 NOT NULL, class_language:varchar(50) NOT NULL, age_from:int(2) NOT NULL, age_to:int(2) NOT NULL, radiofrom:varchar(20) NOT NULL, radioto:varchar(20) NOT NULL, camera_number:varchar(10) NOT NULL, max_students:int(2) NOT NULL, current_students:int(2) NOT NULL, males_num:int(2) NOT NULL, females_num:int(2) NOT NULL, teacher_id:int(10) NOT NULL, helper_id:int(10) NOT NULL, clfloor:varchar(50) DEFAULT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:tinyint(1) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1'",
     "modernDestination": "Class",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-classes.ts",
+    "reconciliation": "Class rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, branch mapping, language, age window, capacity, camera number, image URL, and active flag; source/target count is covered by `classes.t_class` reconciliation; mismatches expose unmapped branches, branch/name fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -2252,8 +2252,8 @@
     "legacyTable": "t_class",
     "legacyColumns": "clid:int(11) NOT NULL AUTO_INCREMENT, image:varchar(50) NOT NULL DEFAULT 'default.jpg', classname:varchar(50) NOT NULL, branch_id:int(11) NOT NULL, branch_name:varchar(50) CHARACTER SET utf8mb4 NOT NULL, class_language:varchar(50) NOT NULL, age_from:int(2) NOT NULL, age_to:int(2) NOT NULL, radiofrom:varchar(20) NOT NULL, radioto:varchar(20) NOT NULL, camera_number:varchar(10) NOT NULL, max_students:int(2) NOT NULL, current_students:int(2) NOT NULL, males_num:int(2) NOT NULL, females_num:int(2) NOT NULL, teacher_id:int(10) NOT NULL, helper_id:int(10) NOT NULL, clfloor:varchar(50) DEFAULT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:tinyint(1) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1'",
     "modernDestination": "Class",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-classes.ts",
+    "reconciliation": "Class rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, branch mapping, language, age window, capacity, camera number, image URL, and active flag; source/target count is covered by `classes.t_class` reconciliation; mismatches expose unmapped branches, branch/name fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2916,8 +2916,8 @@
     "legacyTable": "t_class",
     "legacyColumns": "clid:int(11) NOT NULL, image:varchar(50) NOT NULL DEFAULT 'default.jpg', classname:varchar(50) NOT NULL, branch_id:int(11) NOT NULL, branch_name:varchar(50) CHARACTER SET utf8mb4 NOT NULL, class_language:varchar(50) NOT NULL, age_from:int(2) NOT NULL, age_to:int(2) NOT NULL, radiofrom:varchar(20) NOT NULL, radioto:varchar(20) NOT NULL, camera_number:varchar(10) NOT NULL, max_students:int(2) NOT NULL, current_students:int(2) NOT NULL, males_num:int(2) NOT NULL, females_num:int(2) NOT NULL, teacher_id:int(10) NOT NULL, helper_id:int(10) NOT NULL, clfloor:varchar(50) DEFAULT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:tinyint(1) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1'",
     "modernDestination": "Class",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-classes.ts",
+    "reconciliation": "Class rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, branch mapping, language, age window, capacity, camera number, image URL, and active flag; source/target count is covered by `classes.t_class` reconciliation; mismatches expose unmapped branches, branch/name fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_users29sept",
@@ -3124,8 +3124,8 @@
     "legacyTable": "t_class",
     "legacyColumns": "clid:int(11) NOT NULL AUTO_INCREMENT, image:varchar(50) NOT NULL DEFAULT 'default.jpg', classname:varchar(50) NOT NULL, branch_id:int(11) NOT NULL, branch_name:varchar(50) CHARACTER SET utf8mb4 NOT NULL, class_language:varchar(50) NOT NULL, age_from:int(2) NOT NULL, age_to:int(2) NOT NULL, radiofrom:varchar(20) NOT NULL, radioto:varchar(20) NOT NULL, camera_number:varchar(10) NOT NULL, max_students:int(2) NOT NULL, current_students:int(2) NOT NULL, males_num:int(2) NOT NULL, females_num:int(2) NOT NULL, teacher_id:int(10) NOT NULL, helper_id:int(10) NOT NULL, clfloor:varchar(50) DEFAULT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:tinyint(1) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1'",
     "modernDestination": "Class",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-classes.ts",
+    "reconciliation": "Class rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, branch mapping, language, age window, capacity, camera number, image URL, and active flag; source/target count is covered by `classes.t_class` reconciliation; mismatches expose unmapped branches, branch/name fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_users_2018-2019",

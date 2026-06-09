@@ -39,6 +39,7 @@ This list is the first implementation backlog after the generated inventory/matr
 
 4. **Full data reconciliation**
    - `reconcile-migration-counts.ts` now provides curated source/target count checks across the migration order and distinguishes strong provenance from weaker count-only evidence.
+   - Class reconciliation now uses `Class.sourceDatabase`/`legacyTable` for `t_class` rows, covering branch mapping, age/capacity/camera fields, image metadata, and active state.
    - Child roster reconciliation now uses `Child.sourceDatabase`/`legacyTable` for both active `t_child` rows and `t_child_draft` rows, so draft/active imports are checked by exact legacy table provenance instead of broad child totals.
    - Child address/contact reconciliation now uses `ChildAddress` and `Relative` source provenance for `t_address`, `t_authorized`, and `t_relatives`, and the child migration preserves every address row instead of collapsing to one address per child.
    - Attachment reconciliation now compares real-file legacy rows only and uses strong provenance for teacher, nurse, child, doctor, manager, daily report, absence report, and medical form attachment tables that preserve `sourceDatabase` and `legacyKey`.
