@@ -1041,13 +1041,14 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     targetTable: "payment_reminders",
     notes: "Payment reminder rows keep sourceDatabase and legacyKey.",
   }),
-  weakRule({
+  provenancedRule({
     id: "food.t_food",
     step: "21. Food, Calendar & Holidays",
     sourceTable: "t_food",
     sourceWhere: "deleted = 0",
     targetTable: "foods",
-    notes: "Food items are matched by organization/name/category without provenance.",
+    notes:
+      "Food items preserve sourceDatabase, legacyKey, legacyId, raw legacyData, organization mapping, category, active flag, and created timestamp.",
   }),
   weakRule({
     id: "food.t_food_calendar",

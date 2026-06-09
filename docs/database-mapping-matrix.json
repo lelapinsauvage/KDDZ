@@ -524,8 +524,8 @@
     "legacyTable": "t_food",
     "legacyColumns": "fid:int(11) NOT NULL AUTO_INCREMENT, type:varchar(20) COLLATE latin1_general_ci NOT NULL, fname:varchar(50) CHARACTER SET utf8 NOT NULL, active:varchar(20) COLLATE latin1_general_ci NOT NULL DEFAULT 'On', uby:int(11) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, deleted:tinyint(4) NOT NULL DEFAULT '0'",
     "modernDestination": "Food",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-food-calendar.ts",
+    "reconciliation": "Food rows preserve sourceDatabase, legacyKey, legacyId, category, active flag, created timestamp, organization mapping, and raw legacyData; source/target count is covered by `food.t_food` reconciliation; mismatches expose blank legacy names, name/category fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1492,8 +1492,8 @@
     "legacyTable": "t_food",
     "legacyColumns": "fid:int(11) NOT NULL, type:varchar(20) COLLATE latin1_general_ci NOT NULL, fname:varchar(50) CHARACTER SET utf8 NOT NULL, active:varchar(20) COLLATE latin1_general_ci NOT NULL DEFAULT 'On', uby:int(11) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, deleted:tinyint(4) NOT NULL DEFAULT '0'",
     "modernDestination": "Food",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-food-calendar.ts",
+    "reconciliation": "Food rows preserve sourceDatabase, legacyKey, legacyId, category, active flag, created timestamp, organization mapping, and raw legacyData; source/target count is covered by `food.t_food` reconciliation; mismatches expose blank legacy names, name/category fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -2332,8 +2332,8 @@
     "legacyTable": "t_food",
     "legacyColumns": "fid:int(11) NOT NULL AUTO_INCREMENT, type:varchar(20) COLLATE latin1_general_ci NOT NULL, fname:varchar(50) CHARACTER SET utf8 NOT NULL, active:varchar(20) COLLATE latin1_general_ci NOT NULL DEFAULT 'On', uby:int(11) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, deleted:tinyint(4) NOT NULL DEFAULT '0'",
     "modernDestination": "Food",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-food-calendar.ts",
+    "reconciliation": "Food rows preserve sourceDatabase, legacyKey, legacyId, category, active flag, created timestamp, organization mapping, and raw legacyData; source/target count is covered by `food.t_food` reconciliation; mismatches expose blank legacy names, name/category fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",

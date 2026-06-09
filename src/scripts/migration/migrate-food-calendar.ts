@@ -35,6 +35,7 @@ interface OldFood {
   active: string;
   datetime: string;
   deleted: number;
+  [key: string]: unknown;
 }
 
 interface OldFoodCalendar {
@@ -237,10 +238,45 @@ export async function migrateFoodCalendar(prisma: PrismaClient, organizationId: 
       continue;
     }
 
-    const existing = await prisma.food.findFirst({
-      where: { organizationId, name, category },
+    const key = `${sourceDatabase}:t_food:${row.fid}`;
+    const legacyData = JSON.parse(
+      JSON.stringify({
+        sourceDatabase,
+        sourceTable: "t_food",
+        legacyId: row.fid,
+        row,
+      })
+    ) as Prisma.InputJsonValue;
+    const data = {
+      sourceDatabase,
+      legacyKey: key,
+      legacyId: row.fid,
+      legacyData,
+      name,
+      category,
+      isActive: row.active.toLowerCase() === "on",
+      createdAt: parseDate(row.datetime) ?? new Date(),
+    };
+    const existingByKey = await prisma.food.findUnique({
+      where: { legacyKey: key },
     });
+    const existing =
+      existingByKey ??
+      (await prisma.food.findFirst({
+        where: {
+          organizationId,
+          name,
+          category,
+          legacyKey: null,
+        },
+      }));
     if (existing) {
+      if (!dryRun) {
+        await prisma.food.update({
+          where: { id: existing.id },
+          data,
+        });
+      }
       setMapping("food", row.fid, existing.id);
       foodSkipped++;
       continue;
@@ -252,10 +288,7 @@ export async function migrateFoodCalendar(prisma: PrismaClient, organizationId: 
         data: {
           id,
           organizationId,
-          name,
-          category,
-          isActive: row.active.toLowerCase() === "on",
-          createdAt: parseDate(row.datetime) ?? new Date(),
+          ...data,
         },
       });
     }
