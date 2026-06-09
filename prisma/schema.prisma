@@ -1611,30 +1611,50 @@ model DailyReport {
 }
 
 model DailyReportFever {
-  id            String   @id @default(uuid()) @db.Uuid
-  dailyReportId String   @db.Uuid
-  temperature   Decimal  @db.Decimal(4, 1)
-  time          DateTime @db.Time(6)
-  createdAt     DateTime @default(now())
+  id             String   @id @default(uuid()) @db.Uuid
+  dailyReportId  String   @db.Uuid
+  sourceDatabase String?
+  legacyKey      String?  @unique
+  legacyId       Int?
+  legacyTable    String?
+  legacyReportId Int?
+  temperature    Decimal  @db.Decimal(4, 1)
+  time           DateTime @db.Time(6)
+  legacyData     Json?
+  createdAt      DateTime @default(now())
 
   dailyReport DailyReport @relation(fields: [dailyReportId], references: [id], onDelete: Cascade)
 
   @@index([dailyReportId])
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyTable])
+  @@index([legacyReportId])
   @@map("daily_report_fevers")
 }
 
 model DailyReportMilk {
-  id            String   @id @default(uuid()) @db.Uuid
-  dailyReportId String   @db.Uuid
-  milkType      String?
-  amountCc      Int
-  scoops        Int?
-  time          DateTime @db.Time(6)
-  createdAt     DateTime @default(now())
+  id             String   @id @default(uuid()) @db.Uuid
+  dailyReportId  String   @db.Uuid
+  sourceDatabase String?
+  legacyKey      String?  @unique
+  legacyId       Int?
+  legacyTable    String?
+  legacyReportId Int?
+  milkType       String?
+  amountCc       Int
+  scoops         Int?
+  time           DateTime @db.Time(6)
+  legacyData     Json?
+  createdAt      DateTime @default(now())
 
   dailyReport DailyReport @relation(fields: [dailyReportId], references: [id], onDelete: Cascade)
 
   @@index([dailyReportId])
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyTable])
+  @@index([legacyReportId])
   @@map("daily_report_milks")
 }
 

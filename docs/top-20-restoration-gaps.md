@@ -50,6 +50,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - Parent mobile login reconciliation now uses `ParentUser.sourceDatabase`/`legacyKey` for non-empty `parent_login_users.username` rows, exposing unresolved child links instead of hiding them in broad user totals.
    - Absence report reconciliation now uses `AbsenceReport.sourceDatabase`/`legacyKey` for active `t_absent_report` rows, covering the same migrated raw fields used by parent mobile `absence.php` compatibility.
    - Daily report reconciliation now uses `DailyReport.legacyData.sourceDatabase`/`sourceTable` for active `t_daily_report` rows, covering the same raw payload used by parent mobile `daily.php`/`newdaily.php` compatibility.
+   - Daily report fever/milk reconciliation now uses detail-row `sourceDatabase`/`legacyTable` for `t_daily_fever` and `t_daily_milk`, preserving temperature, milk type, amount/time, legacy report ids, and raw legacy rows.
    - Call log reconciliation now uses `CallLog.sourceDatabase` for all active `t_form_6` rows, including drafts, matching the restored Form 6 runtime call workflow.
    - Food calendar reconciliation now counts distinct `FoodCalendar.legacyId` values for active `t_food_calendar` rows, preserving row-level proof despite breakfast/lunch/snack/dessert fan-out.
    - Teacher calendar status reconciliation now covers migrated `t_emp_status` rows through the legacy JSON stored on `EmployeeEvent.notes`.

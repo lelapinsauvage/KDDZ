@@ -129,6 +129,7 @@ interface OldFever {
   ftime: string;
   report_id: number;
   active: number;
+  [key: string]: unknown;
 }
 
 interface OldMilk {
@@ -138,6 +139,7 @@ interface OldMilk {
   mtime: string;
   report_id: number;
   active: number;
+  [key: string]: unknown;
 }
 
 interface OldDailyAttachment {
@@ -168,6 +170,24 @@ function dailyReportLegacyData(
       ...row,
       sourceDatabase,
       sourceTable: "t_daily_report",
+    })
+  ) as Prisma.InputJsonValue;
+}
+
+function dailyDetailLegacyData(
+  row: Record<string, unknown>,
+  sourceDatabase: string,
+  sourceTable: string,
+  legacyId: number,
+  legacyReportId: number | null
+): Prisma.InputJsonValue {
+  return JSON.parse(
+    JSON.stringify({
+      sourceDatabase,
+      sourceTable,
+      legacyId,
+      legacyReportId,
+      row,
     })
   ) as Prisma.InputJsonValue;
 }
@@ -286,52 +306,167 @@ export async function migrateDailyReports(prisma: PrismaClient) {
     "SELECT * FROM t_daily_fever WHERE active = 1"
   );
   let feverCount = 0;
+  let feverBackfilled = 0;
+  let feverSkipped = 0;
   for (const f of fevers) {
     const dailyReportId = getMapping("daily_report", f.report_id);
-    if (!dailyReportId) continue;
+    const legacyId = toInt(f.dfid, 0);
+    if (!dailyReportId || !legacyId) {
+      feverSkipped++;
+      continue;
+    }
 
     const time = parseTime(f.ftime);
-    if (!time) continue;
+    if (!time) {
+      feverSkipped++;
+      continue;
+    }
 
+    const legacyReportId = toInt(f.report_id, 0) || null;
+    const key = legacyKey(sourceDatabase, "t_daily_fever", legacyId);
+    const temperature = toFloat(f.fvalue);
+    const existingByKey = await prisma.dailyReportFever.findUnique({
+      where: { legacyKey: key },
+    });
+    const existing =
+      existingByKey ??
+      (await prisma.dailyReportFever.findFirst({
+        where: {
+          dailyReportId,
+          legacyKey: null,
+          time,
+          temperature,
+        },
+      }));
+    const data = {
+      sourceDatabase,
+      legacyKey: key,
+      legacyId,
+      legacyTable: "t_daily_fever",
+      legacyReportId,
+      temperature,
+      time,
+      legacyData: dailyDetailLegacyData(
+        f,
+        sourceDatabase,
+        "t_daily_fever",
+        legacyId,
+        legacyReportId
+      ),
+    };
+
+    if (existing) {
+      if (!dryRun) {
+        await prisma.dailyReportFever.update({
+          where: { id: existing.id },
+          data,
+        });
+      }
+      setMapping("daily_fever", legacyId, existing.id);
+      feverBackfilled++;
+      continue;
+    }
+
+    const id = generateUUID();
     if (!dryRun) {
       await prisma.dailyReportFever.create({
         data: {
-          id: generateUUID(),
+          id,
           dailyReportId,
-          temperature: toFloat(f.fvalue),
-          time,
+          ...data,
         },
       });
     }
+    setMapping("daily_fever", legacyId, id);
     feverCount++;
   }
-  log(`Daily Report Fevers: ${feverCount} migrated`);
+  log(
+    `Daily Report Fevers: ${feverCount} migrated, ${feverBackfilled} existing/backfilled, ${feverSkipped} skipped`
+  );
 
   // --- Milk sub-records ---
   const milks = await queryMysql<OldMilk>(
     "SELECT * FROM t_daily_milk WHERE active = 1"
   );
   let milkCount = 0;
+  let milkBackfilled = 0;
+  let milkSkipped = 0;
   for (const m of milks) {
     const dailyReportId = getMapping("daily_report", m.report_id);
-    if (!dailyReportId) continue;
+    const legacyId = toInt(m.dmid, 0);
+    if (!dailyReportId || !legacyId) {
+      milkSkipped++;
+      continue;
+    }
 
     const time = parseTime(m.mtime);
-    if (!time) continue;
+    if (!time) {
+      milkSkipped++;
+      continue;
+    }
 
+    const legacyReportId = toInt(m.report_id, 0) || null;
+    const key = legacyKey(sourceDatabase, "t_daily_milk", legacyId);
+    const amountCc = toInt(m.mcc);
+    const existingByKey = await prisma.dailyReportMilk.findUnique({
+      where: { legacyKey: key },
+    });
+    const existing =
+      existingByKey ??
+      (await prisma.dailyReportMilk.findFirst({
+        where: {
+          dailyReportId,
+          legacyKey: null,
+          time,
+          amountCc,
+        },
+      }));
+    const data = {
+      sourceDatabase,
+      legacyKey: key,
+      legacyId,
+      legacyTable: "t_daily_milk",
+      legacyReportId,
+      milkType: cleanString(m.mtype),
+      amountCc,
+      time,
+      legacyData: dailyDetailLegacyData(
+        m,
+        sourceDatabase,
+        "t_daily_milk",
+        legacyId,
+        legacyReportId
+      ),
+    };
+
+    if (existing) {
+      if (!dryRun) {
+        await prisma.dailyReportMilk.update({
+          where: { id: existing.id },
+          data,
+        });
+      }
+      setMapping("daily_milk", legacyId, existing.id);
+      milkBackfilled++;
+      continue;
+    }
+
+    const id = generateUUID();
     if (!dryRun) {
       await prisma.dailyReportMilk.create({
         data: {
-          id: generateUUID(),
+          id,
           dailyReportId,
-          amountCc: toInt(m.mcc),
-          time,
+          ...data,
         },
       });
     }
+    setMapping("daily_milk", legacyId, id);
     milkCount++;
   }
-  log(`Daily Report Milks: ${milkCount} migrated`);
+  log(
+    `Daily Report Milks: ${milkCount} migrated, ${milkBackfilled} existing/backfilled, ${milkSkipped} skipped`
+  );
 
   // --- Attachments ---
   const attachments = await queryMysql<OldDailyAttachment>(

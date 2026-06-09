@@ -143,6 +143,7 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `notifications` | LegacySetting |
 | `year_select`, `year_db` | LegacyYearDatabase |
 | `t_daily_report` | DailyReport, including source database/table provenance and raw `legacyData` for parent mobile `daily.php`/`newdaily.php` parity |
+| `t_daily_fever`, `t_daily_milk` | DailyReportFever, DailyReportMilk, including source database/key provenance and raw legacy rows |
 | `t_daily_fever` | DailyReportFever |
 | `t_daily_milk` | DailyReportMilk |
 | `t_daily_attachments` | DailyReportAttachment |
@@ -266,6 +267,8 @@ The notification receipt rules mirror every `custom_notifications*` delivery tab
 Alarm content rows from `t_alarms*` are reconciled against `Alarm.legacyData.sourceDatabase` and `Alarm.legacyData.sourceTable`. Count mismatches usually mean duplicate legacy content merged into an existing alarm or the imported dump differs from the canonical production source.
 
 Daily report rows from `t_daily_report` are reconciled against `DailyReport.legacyData.sourceDatabase` and `DailyReport.legacyData.sourceTable` for active rows. Count mismatches usually mean a source row had an unmapped child, an invalid report date, or duplicate child/date content merged into an existing report.
+
+Daily report detail rows from `t_daily_fever` and `t_daily_milk` are reconciled against `sourceDatabase` and `legacyTable` on their detail models. Count mismatches usually mean a source row had an unmapped daily report, invalid time, or matched an existing detail-row fallback during backfill.
 
 Call rows from `t_form_6` are reconciled against `CallLog.sourceDatabase` for all active rows, including drafts. Count mismatches usually mean a source row had an unmapped child or invalid legacy id.
 

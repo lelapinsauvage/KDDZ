@@ -460,16 +460,16 @@
     "legacyTable": "t_daily_fever",
     "legacyColumns": "dfid:int(11) NOT NULL AUTO_INCREMENT, fvalue:double NOT NULL, ftime:varchar(50) NOT NULL, report_id:int(11) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP",
     "modernDestination": "DailyReportFever",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-daily-reports.ts",
+    "reconciliation": "Fever rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy report id, temperature/time, and raw legacyData; source/target count is covered by `daily_reports.t_daily_fever` reconciliation; mismatches expose unmapped daily reports, invalid times, detail-row fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "t_daily_milk",
     "legacyColumns": "dmid:int(11) NOT NULL AUTO_INCREMENT, mtype:varchar(50) NOT NULL, mcc:varchar(50) NOT NULL, mtime:varchar(50) NOT NULL, report_id:int(11) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP",
     "modernDestination": "DailyReportMilk",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-daily-reports.ts",
+    "reconciliation": "Milk rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy report id, milk type, amount/time, and raw legacyData; source/target count is covered by `daily_reports.t_daily_milk` reconciliation; mismatches expose unmapped daily reports, invalid times, detail-row fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1428,16 +1428,16 @@
     "legacyTable": "t_daily_fever",
     "legacyColumns": "dfid:int(11) NOT NULL, fvalue:double NOT NULL, ftime:varchar(50) NOT NULL, report_id:int(11) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP",
     "modernDestination": "DailyReportFever",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-daily-reports.ts",
+    "reconciliation": "Fever rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy report id, temperature/time, and raw legacyData; source/target count is covered by `daily_reports.t_daily_fever` reconciliation; mismatches expose unmapped daily reports, invalid times, detail-row fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "t_daily_milk",
     "legacyColumns": "dmid:int(11) NOT NULL, mtype:varchar(50) NOT NULL, mcc:varchar(50) NOT NULL, mtime:varchar(50) NOT NULL, report_id:int(11) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP",
     "modernDestination": "DailyReportMilk",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-daily-reports.ts",
+    "reconciliation": "Milk rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy report id, milk type, amount/time, and raw legacyData; source/target count is covered by `daily_reports.t_daily_milk` reconciliation; mismatches expose unmapped daily reports, invalid times, detail-row fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -2268,16 +2268,16 @@
     "legacyTable": "t_daily_fever",
     "legacyColumns": "dfid:int(11) NOT NULL AUTO_INCREMENT, fvalue:double NOT NULL, ftime:varchar(50) NOT NULL, report_id:int(11) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP",
     "modernDestination": "DailyReportFever",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-daily-reports.ts",
+    "reconciliation": "Fever rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy report id, temperature/time, and raw legacyData; source/target count is covered by `daily_reports.t_daily_fever` reconciliation; mismatches expose unmapped daily reports, invalid times, detail-row fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "t_daily_milk",
     "legacyColumns": "dmid:int(11) NOT NULL AUTO_INCREMENT, mtype:varchar(50) NOT NULL, mcc:varchar(50) NOT NULL, mtime:varchar(50) NOT NULL, report_id:int(11) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP",
     "modernDestination": "DailyReportMilk",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-daily-reports.ts",
+    "reconciliation": "Milk rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy report id, milk type, amount/time, and raw legacyData; source/target count is covered by `daily_reports.t_daily_milk` reconciliation; mismatches expose unmapped daily reports, invalid times, detail-row fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",

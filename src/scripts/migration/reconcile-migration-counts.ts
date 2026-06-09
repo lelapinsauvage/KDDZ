@@ -870,21 +870,25 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     notes:
       "Daily reports preserve sourceDatabase/sourceTable inside legacyData; mismatches expose unmapped children, invalid dates, or duplicate child/date merges.",
   }),
-  weakRule({
+  provenancedRule({
     id: "daily_reports.t_daily_fever",
     step: "15. Daily Reports",
     sourceTable: "t_daily_fever",
     sourceWhere: "active = 1",
     targetTable: "daily_report_fevers",
-    notes: "Fever rows depend on successfully mapped daily reports.",
+    targetWhere: byLegacyTable("t_daily_fever"),
+    notes:
+      "Fever rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy report id, temperature/time, and raw legacy row.",
   }),
-  weakRule({
+  provenancedRule({
     id: "daily_reports.t_daily_milk",
     step: "15. Daily Reports",
     sourceTable: "t_daily_milk",
     sourceWhere: "active = 1",
     targetTable: "daily_report_milks",
-    notes: "Milk rows depend on successfully mapped daily reports.",
+    targetWhere: byLegacyTable("t_daily_milk"),
+    notes:
+      "Milk rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy report id, milk type, amount/time, and raw legacy row.",
   }),
   provenancedRule({
     id: "daily_reports.t_daily_attachments",
