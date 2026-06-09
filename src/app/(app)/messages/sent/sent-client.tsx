@@ -54,7 +54,15 @@ import {
   X,
 } from "lucide-react";
 import { deleteMessage, resendMessage } from "@/lib/actions/messages";
-import type { ExportColumn } from "@/lib/export";
+import {
+  buildLegacySentMessageExportRows,
+  formatLegacySentMessageDateTime,
+  LEGACY_SENT_MESSAGE_EXPORT_COLUMNS,
+  LEGACY_SENT_MESSAGE_PAGE_SIZES,
+  legacySentMessageThreadLabel,
+  parseLegacySentMessagePageSize,
+  type LegacySentMessagePageSize,
+} from "@/lib/legacy-sent-message-contract";
 
 interface SentMessage {
   id: string;
@@ -82,8 +90,6 @@ interface LegacyDeliveryAudit {
   pendingExternal: boolean;
 }
 
-type SentPageSize = number | "all";
-
 export interface SentFilters {
   q: string;
   id: string;
@@ -95,7 +101,7 @@ export interface SentFilters {
   message: string;
   thread: string;
   page: number;
-  pageSize: SentPageSize;
+  pageSize: LegacySentMessagePageSize;
 }
 
 interface SentClientProps {
@@ -141,17 +147,6 @@ const NATURE_STYLES: Record<string, string> = {
   event: "bg-blue-100 text-blue-700",
 };
 
-const sentExportColumns: ExportColumn[] = [
-  { header: "#", key: "serial" },
-  { header: "To", key: "to" },
-  { header: "Date", key: "date" },
-  { header: "Nature", key: "nature" },
-  { header: "Delivery", key: "delivery" },
-  { header: "Subject", key: "subject" },
-  { header: "Message", key: "message" },
-  { header: "Thread", key: "thread" },
-];
-
 function avatarColor(name: string): string {
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
@@ -166,42 +161,6 @@ function initials(name: string): string {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   }
   return (parts[0] ?? "?").slice(0, 2).toUpperCase();
-}
-
-function parseDate(value: string) {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date;
-}
-
-function pad(value: number) {
-  return String(value).padStart(2, "0");
-}
-
-function formatLegacyDateTime(value: string) {
-  const date = parseDate(value);
-  if (!date) return "";
-
-  return [
-    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`,
-    `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`,
-  ].join(" ");
-}
-
-function threadLabel(message: SentMessage) {
-  if (message.legacyThreadId) return String(message.legacyThreadId);
-  if (message.threadId) return message.threadId.slice(0, 8);
-  return "-";
-}
-
-function deliveryLabel(audit: LegacyDeliveryAudit) {
-  const scope = audit.scope && audit.scope !== "Parent" ? audit.scope : null;
-  return [
-    ...audit.channels,
-    scope,
-    audit.pendingExternal ? "Pending" : null,
-  ]
-    .filter(Boolean)
-    .join(", ");
 }
 
 function DeliveryBadges({ audit }: { audit: LegacyDeliveryAudit }) {
@@ -330,17 +289,7 @@ export function SentClient({
     : (filters.page - 1) * numericPageSize;
   const exportSource = exportMessages.length ? exportMessages : messages;
   const exportRows = useMemo(
-    () =>
-      exportSource.map((message, index) => ({
-        serial: message.legacyId ?? index + 1,
-        to: message.recipientName,
-        date: formatLegacyDateTime(message.createdAt),
-        nature: message.nature,
-        delivery: deliveryLabel(message.legacyDelivery),
-        subject: message.subject ?? "",
-        message: message.body,
-        thread: threadLabel(message),
-      })),
+    () => buildLegacySentMessageExportRows(exportSource),
     [exportSource],
   );
 
@@ -380,7 +329,7 @@ export function SentClient({
             <ExportButton
               filename="sent-messages"
               sheetName="Sent Messages"
-              columns={sentExportColumns}
+              columns={LEGACY_SENT_MESSAGE_EXPORT_COLUMNS}
               data={exportRows}
             />
             <Button
@@ -481,7 +430,9 @@ export function SentClient({
                   <TableHead className="min-w-[220px] bg-muted/60">To</TableHead>
                   <TableHead className="min-w-[160px] bg-muted/60">Date</TableHead>
                   <TableHead className="min-w-[120px] bg-muted/60">Nature</TableHead>
-                  <TableHead className="min-w-[170px] bg-muted/60">Delivery</TableHead>
+                  <TableHead className="min-w-[170px] bg-muted/60 print:hidden">
+                    Delivery
+                  </TableHead>
                   <TableHead className="min-w-[220px] bg-muted/60">Subject</TableHead>
                   <TableHead className="min-w-[280px] bg-muted/60">Message</TableHead>
                   <TableHead className="min-w-[120px] bg-muted/60">Thread</TableHead>
@@ -516,7 +467,7 @@ export function SentClient({
                         </TableCell>
                         <TableCell>
                           <span className="whitespace-nowrap text-xs text-muted-foreground">
-                            {formatLegacyDateTime(message.createdAt) || "-"}
+                            {formatLegacySentMessageDateTime(message.createdAt) || "-"}
                           </span>
                         </TableCell>
                         <TableCell>
@@ -527,7 +478,7 @@ export function SentClient({
                             {nature}
                           </Badge>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="print:hidden">
                           <DeliveryBadges audit={message.legacyDelivery} />
                         </TableCell>
                         <TableCell>
@@ -549,7 +500,7 @@ export function SentClient({
                             className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
                           >
                             <MessageSquare className="size-3" />
-                            {threadLabel(message)}
+                            {legacySentMessageThreadLabel(message)}
                           </Link>
                         </TableCell>
                         <TableCell>
@@ -618,10 +569,11 @@ export function SentClient({
             <Select
               value={`${filters.pageSize}`}
               onValueChange={(value) => {
+                const pageSize = parseLegacySentMessagePageSize(value);
                 setFilters((current) => ({
                   ...current,
                   page: 1,
-                  pageSize: value === "all" ? "all" : Number(value),
+                  pageSize,
                 }));
                 replaceParams({ pageSize: value, page: "1" });
               }}
@@ -630,7 +582,7 @@ export function SentClient({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {[10, 20, 50, 100, 1000].map((size) => (
+                {LEGACY_SENT_MESSAGE_PAGE_SIZES.map((size) => (
                   <SelectItem key={size} value={`${size}`}>
                     {size}
                   </SelectItem>

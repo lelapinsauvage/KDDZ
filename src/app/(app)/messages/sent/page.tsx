@@ -1,4 +1,8 @@
 import { getSentMessages } from "@/lib/actions/messages";
+import {
+  parseLegacySentMessagePageSize,
+  type LegacySentMessagePageSize,
+} from "@/lib/legacy-sent-message-contract";
 import { normalizeLegacySearchQuery } from "@/lib/legacy-query";
 import { SentClient } from "./sent-client";
 
@@ -22,15 +26,8 @@ function normalizeParam(value: SearchValue) {
   return normalizeLegacySearchQuery(value);
 }
 
-type SentPageSize = number | "all";
-
-const PAGE_SIZES = [10, 20, 50, 100, 1000];
-
-function parsePageSize(value: SearchValue): SentPageSize {
-  const normalized = normalizeParam(value);
-  if (normalized === "all") return "all";
-  const parsed = Number(normalized) || 10;
-  return PAGE_SIZES.includes(parsed) ? parsed : 10;
+function parsePageSize(value: SearchValue): LegacySentMessagePageSize {
+  return parseLegacySentMessagePageSize(normalizeParam(value));
 }
 
 function parsePage(value: SearchValue) {

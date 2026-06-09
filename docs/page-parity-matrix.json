@@ -320,7 +320,7 @@
     "legacyPhp": "Front/templates/admin/Msg_list.php",
     "legacyJs": "Front/templates/admin/js/Msg_list.js",
     "modernRoute": "/Msg_list.php, /messages/sent",
-    "status": "partial - legacy sent messages columns, filters, export/print, and bridge restored; visual audit remains",
+    "status": "partial - legacy sent messages columns, server pagination, full export/print, and bridge restored; visual audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -334,9 +334,11 @@
       "q",
       "subject",
       "thread",
-      "to"
+      "to",
+      "page",
+      "pageSize"
     ],
-    "verification": "Restored the legacy Sent Messages listing shape with `#`, To, Date, Nature, Subject, Message, Thread, and Actions columns over migrated `t_alarms_msg`/`custom_notifications_msg` provenance; legacy numeric message/thread ids and nature are visible when preserved, filters cover each legacy column plus date range and global search, page sizes match 10/20/50/100/1000, and Excel/CSV export plus print use the legacy column order. `/Msg_list.php` now redirects to the modern sent messages page while preserving supported legacy filter query values. Remaining work is exact TableTools copy/PDF visual parity, server-side pagination beyond the first 1000 rows, and final logged-in visual smoke."
+    "verification": "Restored the legacy Sent Messages listing shape with `#`, To, Date, Nature, Subject, Message, Thread, and Actions columns over migrated `t_alarms_msg`/`custom_notifications_msg` provenance; legacy numeric message/thread ids and nature are visible when preserved, server-side filters cover each legacy column plus date range and global search, URL-backed page sizes match 10/20/50/100/1000/All, and Copy/PDF/Excel/CSV export uses the legacy column order over the full filtered result set. The modern on-screen Delivery audit remains available for channel diagnostics but is excluded from the legacy export contract and hidden from print. `/Msg_list.php` now redirects to the modern sent messages page while preserving supported legacy filter query values. Verified by `src/scripts/verify-legacy-sent-message-contract.ts`. Remaining work is exact TableTools copy/PDF visual audit and final logged-in Browser smoke."
   },
   {
     "legacyPhp": "Front/templates/admin/NotifCalendar.php",
