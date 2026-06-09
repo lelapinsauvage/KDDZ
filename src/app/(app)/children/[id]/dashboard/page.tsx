@@ -5,6 +5,7 @@ import { getChildAttendance, getChildAbsences } from "@/lib/actions/attendance";
 import { getMedicalForms } from "@/lib/actions/medical";
 import { getVaccinations } from "@/lib/actions/medical";
 import { getAccountingSummary } from "@/lib/actions/accounting";
+import { getChildDailyComplianceStats } from "@/lib/actions/dashboard";
 import { DashboardClient } from "./dashboard-client";
 
 interface Props {
@@ -28,6 +29,7 @@ export default async function ChildDashboardPage({ params }: Props) {
     { vaccinations },
     _accountingSummary,
     dashboardStats,
+    childDailyStats,
   ] = await Promise.all([
     getDailyReports({ childId: id, pageSize: 100 }),
     getChildAttendance(id),
@@ -36,14 +38,16 @@ export default async function ChildDashboardPage({ params }: Props) {
     getVaccinations({ childId: id }),
     getAccountingSummary(id),
     getChildDashboardStats(id),
+    getChildDailyComplianceStats(id),
   ]);
 
   // Compute attendance stats
-  const totalDays = attendanceRecords.length;
-  const presentDays = attendanceRecords.filter((r) => r.status === "PRESENT").length;
-  const absentDays = attendanceRecords.filter((r) => r.status === "ABSENT").length;
   const draftDays = attendanceRecords.filter((r) => r.status === "DRAFT").length;
-  const noReportDays = totalDays - presentDays - absentDays - draftDays;
+  const noReportDays = childDailyStats.missingDailyReports;
+  const attendanceDenominator =
+    childDailyStats.totalAttendance +
+    childDailyStats.totalAbsence +
+    childDailyStats.missingDailyReports;
 
   // Get parent contacts
   const parents = (child.parents ?? []).map((p) => ({
@@ -205,11 +209,13 @@ export default async function ChildDashboardPage({ params }: Props) {
     callsInOut: dashboardStats.incomingCalls + dashboardStats.outgoingCalls,
     accidentReports: dashboardStats.accidentReports,
     totalPayments: `$${dashboardStats.totalPayments.toFixed(2)}`,
-    totalAttendance: dashboardStats.totalAttendance,
-    totalAbsence: dashboardStats.totalAbsence,
-    missingDailyReports: totalDays > 0 ? Math.max(0, totalDays - dashboardStats.totalDailyReports) : 0,
-    missingAbsentReports: absentDays > 0 ? Math.max(0, absentDays - dashboardStats.totalAbsenceReports) : 0,
-    attendanceRate: totalDays > 0 ? `${Math.round((presentDays / totalDays) * 100)}%` : "N/A",
+    totalAttendance: childDailyStats.totalAttendance,
+    totalAbsence: childDailyStats.totalAbsence,
+    missingDailyReports: childDailyStats.missingDailyReports,
+    missingAbsentReports: childDailyStats.missingAbsentReports,
+    attendanceRate: attendanceDenominator > 0
+      ? `${Math.round((childDailyStats.totalAttendance / attendanceDenominator) * 100)}%`
+      : "N/A",
     totalReports: totalReportsCount,
     medicalPublished,
     medicalMissing,
@@ -221,8 +227,8 @@ export default async function ChildDashboardPage({ params }: Props) {
   };
 
   const attendanceChart = {
-    present: presentDays,
-    absent: absentDays,
+    present: childDailyStats.totalAttendance,
+    absent: childDailyStats.totalAbsence,
     draft: draftDays,
     noReport: noReportDays,
   };

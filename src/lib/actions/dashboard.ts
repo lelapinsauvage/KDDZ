@@ -8,6 +8,7 @@ import {
   ASSESSMENT_TYPE_NAMES,
   VALID_ASSESSMENT_TYPES,
 } from "@/lib/assessment-types";
+import { buildChildDailyComplianceDetails } from "@/lib/child-dashboard-compliance";
 import type { MedicalFormType, PaymentMethod, Prisma } from "@/generated/prisma/client";
 
 // ── Types ──────────────────────────────────────────
@@ -71,6 +72,7 @@ export interface DashboardDrilldownRequestFilters {
   to?: string | null;
   schoolYearId?: string | null;
   branchId?: string | null;
+  childId?: string | null;
 }
 
 interface NormalizedDashboardFilters {
@@ -745,6 +747,14 @@ export async function getDailyComplianceStats(
   return details.stats;
 }
 
+export async function getChildDailyComplianceStats(
+  childId: string
+): Promise<DailyComplianceStats> {
+  const { organizationId: orgId } = await requireOrg();
+  const details = await getChildDailyComplianceDetails(orgId, childId, false);
+  return details.stats;
+}
+
 interface DailyComplianceDetails {
   stats: DailyComplianceStats;
   missingDailyRows: DashboardDrilldownRow[];
@@ -918,6 +928,148 @@ async function getDailyComplianceDetails(
   };
 }
 
+async function getChildDashboardRange(orgId: string) {
+  const today = startOfDay(new Date());
+  const activeSchoolYear = await db.schoolYear.findFirst({
+    where: { organizationId: orgId, isActive: true },
+    select: { startDate: true, endDate: true },
+    orderBy: { startDate: "desc" },
+  });
+
+  if (activeSchoolYear) {
+    const start = startOfDay(activeSchoolYear.startDate);
+    const configuredEnd = startOfDay(activeSchoolYear.endDate);
+    const end = configuredEnd < today ? configuredEnd : today;
+    return { start, endExclusive: addDays(end, 1) };
+  }
+
+  const fallbackStartYear = today.getMonth() >= 9
+    ? today.getFullYear()
+    : today.getFullYear() - 1;
+  const start = new Date(fallbackStartYear, 9, 1);
+  const configuredEnd = new Date(fallbackStartYear + 1, 8, 30);
+  const end = configuredEnd < today ? configuredEnd : today;
+  return { start, endExclusive: addDays(end, 1) };
+}
+
+async function getChildDailyComplianceDetails(
+  orgId: string,
+  childId: string,
+  includeRows = true
+): Promise<DailyComplianceDetails> {
+  const child = await db.child.findFirst({
+    where: { id: childId, isActive: true, isDraft: false, branch: { organizationId: orgId } },
+    select: {
+      id: true,
+      childNumber: true,
+      legacyId: true,
+      firstName: true,
+      lastName: true,
+      enrollmentDate: true,
+      branchId: true,
+      class: { select: { name: true } },
+    },
+  });
+
+  if (!child) {
+    return {
+      stats: {
+        totalAttendance: 0,
+        totalAbsence: 0,
+        missingDailyReports: 0,
+        missingAbsentReports: 0,
+      },
+      missingDailyRows: [],
+      missingAbsentRows: [],
+    };
+  }
+
+  const dashboardRange = await getChildDashboardRange(orgId);
+  const enrollmentDate = child.enrollmentDate ? startOfDay(child.enrollmentDate) : null;
+  const start = enrollmentDate && enrollmentDate > dashboardRange.start
+    ? enrollmentDate
+    : dashboardRange.start;
+  const endExclusive = dashboardRange.endExclusive;
+
+  if (start >= endExclusive) {
+    return {
+      stats: {
+        totalAttendance: 0,
+        totalAbsence: 0,
+        missingDailyReports: 0,
+        missingAbsentReports: 0,
+      },
+      missingDailyRows: [],
+      missingAbsentRows: [],
+    };
+  }
+
+  const reportDateRange = { gte: start, lt: endExclusive };
+  const [reports, absenceReports, holidays] = await Promise.all([
+    db.dailyReport.findMany({
+      where: { childId: child.id, reportDate: reportDateRange },
+      select: {
+        childId: true,
+        reportDate: true,
+        status: true,
+        legacyData: true,
+      },
+    }),
+    db.absenceReport.findMany({
+      where: {
+        childId: child.id,
+        status: "APPROVED",
+        OR: [
+          { date: reportDateRange },
+          { absentFrom: { lt: endExclusive }, absentTo: { gte: start } },
+        ],
+      },
+      select: {
+        date: true,
+        absentFrom: true,
+        absentTo: true,
+      },
+    }),
+    db.holiday.findMany({
+      where: {
+        isActive: true,
+        AND: [
+          {
+            OR: [
+              { repeated: true },
+              {
+                repeated: false,
+                date: { lt: endExclusive },
+                OR: [
+                  { endDate: null },
+                  { endDate: { gte: start } },
+                ],
+              },
+            ],
+          },
+          {
+            OR: [
+              { branchId: null },
+              { branchId: child.branchId },
+            ],
+          },
+        ],
+      },
+      select: { date: true, endDate: true, repeated: true },
+    }),
+  ]);
+
+  return buildChildDailyComplianceDetails({
+    child,
+    start,
+    endExclusive,
+    reports,
+    absenceReports,
+    holidays,
+    includeRows,
+  });
+}
+
 export async function getDashboardDrilldowns(
   branchId?: string | null,
   filters?: DashboardMetricFilters
@@ -964,10 +1116,29 @@ export async function getDashboardDrilldown(
 ): Promise<DashboardDrilldown> {
   const session = await auth();
   const { organizationId: orgId } = await requireOrg();
+  const requestedChildId = filters?.childId?.trim() || null;
   const requestedBranchId = filters?.branchId?.trim() || null;
   const sessionBranchId = session?.user?.branchId ?? null;
   const branchId = sessionBranchId ?? requestedBranchId;
   const range = normalizeDashboardFilters(metricFiltersFromRequest(filters));
+
+  if (
+    requestedChildId &&
+    (kind === "missingDailyReports" || kind === "missingAbsentReports")
+  ) {
+    const details = await getChildDailyComplianceDetails(orgId, requestedChildId);
+    return kind === "missingDailyReports"
+      ? {
+          title: "Missing Daily Reports",
+          columns: ["date", "action"],
+          rows: details.missingDailyRows,
+        }
+      : {
+          title: "Missing Absent Reports",
+          columns: ["date", "action"],
+          rows: details.missingAbsentRows,
+        };
+  }
 
   if (requestedBranchId && branchId === requestedBranchId) {
     const hasBranchAccess = await verifyBranchAccess(requestedBranchId, orgId);

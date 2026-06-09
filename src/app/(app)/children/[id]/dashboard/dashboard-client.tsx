@@ -18,7 +18,6 @@ import {
   MessageCircle,
   ShieldAlert,
   UserX,
-  FileQuestion,
   Eye,
   Send,
   Droplets,
@@ -33,6 +32,11 @@ import {
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { getAvatarColor, getInitials } from "@/components/children/children-columns";
 import { ASSESSMENT_TYPE_NAMES } from "@/lib/assessment-types";
+import type {
+  DashboardDrilldown,
+  DashboardDrilldownRequestFilters,
+} from "@/lib/actions/dashboard";
+import { DashboardDrilldownCard } from "@/components/dashboard/dashboard-drilldown-card";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { DataTable } from "@/components/shared/data-table";
 import { ATTENDANCE_COLORS } from "@/components/dashboard/demographics-section";
@@ -390,6 +394,17 @@ export function DashboardClient({
   const id = child.id;
   const initials = getInitials(child.firstName, child.lastName);
   const avatarBg = getAvatarColor(`${child.firstName} ${child.lastName}`);
+  const missingReportFilters: DashboardDrilldownRequestFilters = { childId: id };
+  const missingDailyDrilldown: DashboardDrilldown = {
+    title: "Missing Daily Reports",
+    columns: ["date", "action"],
+    rows: [],
+  };
+  const missingAbsentDrilldown: DashboardDrilldown = {
+    title: "Missing Absent Reports",
+    columns: ["date", "action"],
+    rows: [],
+  };
 
   // Donut data (present vs absent only)
   const donutData = [
@@ -694,8 +709,24 @@ export function DashboardClient({
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <StatCard title="Attendance" value={stats.totalAttendance} icon={Calendar} color="emerald" href={`/children/${id}/report`} />
             <StatCard title="Absence" value={stats.totalAbsence} icon={UserX} color="rose" href={`/children/${id}/absence`} />
-            <StatCard title="Missing Daily Rpt" value={stats.missingDailyReports} icon={FileQuestion} color="amber" href={`/children/${id}/report`} />
-            <StatCard title="Missing Absent Rpt" value={stats.missingAbsentReports} icon={AlertTriangle} color="amber" href={`/children/${id}/absence`} />
+            <DashboardDrilldownCard
+              title="Missing Daily Rpt"
+              value={stats.missingDailyReports}
+              iconName="fileWarning"
+              color="amber"
+              drilldownKind="missingDailyReports"
+              filters={missingReportFilters}
+              drilldown={missingDailyDrilldown}
+            />
+            <DashboardDrilldownCard
+              title="Missing Absent Rpt"
+              value={stats.missingAbsentReports}
+              iconName="alertTriangle"
+              color="amber"
+              drilldownKind="missingAbsentReports"
+              filters={missingReportFilters}
+              drilldown={missingAbsentDrilldown}
+            />
           </div>
 
           {/* ─── Attendance Pie Chart ──────────────── */}
