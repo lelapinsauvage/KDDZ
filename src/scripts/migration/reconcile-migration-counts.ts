@@ -846,13 +846,14 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     notes:
       "Daily report attachment rows with real legacy files keep sourceDatabase and legacyKey.",
   }),
-  weakRule({
+  provenancedRule({
     id: "absences.t_absent_report",
     step: "16. Absences",
     sourceTable: "t_absent_report",
     sourceWhere: "active = 1",
     targetTable: "absence_reports",
-    notes: "Absence reports are matched by child/date/reason without provenance.",
+    notes:
+      "Absence reports preserve sourceDatabase, legacyKey, legacyId, legacyChildId, status, hospital fields, createdBy mapping, and raw legacyData; mismatches expose unresolved child links or invalid legacy dates.",
   }),
   provenancedRule({
     id: "absences.t_absent_attachments",

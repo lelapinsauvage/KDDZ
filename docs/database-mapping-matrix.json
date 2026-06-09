@@ -228,8 +228,8 @@
     "legacyTable": "t_absent_report",
     "legacyColumns": "report_id:int(11) NOT NULL AUTO_INCREMENT, reportdate:varchar(50) NOT NULL, child_id:varchar(50) NOT NULL, class_id:varchar(50) CHARACTER SET utf8 NOT NULL, teacher_id:varchar(50) CHARACTER SET utf8 NOT NULL, ab_reason:varchar(50) CHARACTER SET utf8 NOT NULL, ab_from:varchar(50) CHARACTER SET utf8 NOT NULL, ab_to:varchar(50) CHARACTER SET utf8 NOT NULL, attend_hos:varchar(20) NOT NULL, hos_name:varchar(50) CHARACTER SET utf8 NOT NULL, dr_name:varchar(50) CHARACTER SET utf8 NOT NULL, is_rep_draft:tinyint(1) NOT NULL DEFAULT '0', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, d_progress_all:double NOT NULL, d_progress_m:double NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', uby:int(11) NOT NULL",
     "modernDestination": "AbsenceReport",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-absences.ts",
+    "reconciliation": "Absence reports preserve sourceDatabase, legacyKey, legacyId, legacyChildId, status, hospital fields, createdBy mapping, and raw legacyData for parent mobile absence parity; source/target count is covered by `absences.t_absent_report` reconciliation for active rows; skipped/orphan triage still depends on running it against canonical production dumps because unresolved child links and invalid dates are intentionally reported."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1164,8 +1164,8 @@
     "legacyTable": "t_absent_report",
     "legacyColumns": "report_id:int(11) NOT NULL, reportdate:varchar(50) NOT NULL, child_id:varchar(50) NOT NULL, class_id:varchar(50) CHARACTER SET utf8 NOT NULL, teacher_id:varchar(50) CHARACTER SET utf8 NOT NULL, ab_reason:varchar(50) CHARACTER SET utf8 NOT NULL, ab_from:varchar(50) CHARACTER SET utf8 NOT NULL, ab_to:varchar(50) CHARACTER SET utf8 NOT NULL, attend_hos:varchar(20) NOT NULL, hos_name:varchar(50) CHARACTER SET utf8 NOT NULL, dr_name:varchar(50) CHARACTER SET utf8 NOT NULL, is_rep_draft:tinyint(1) NOT NULL DEFAULT '0', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, d_progress_all:double NOT NULL, d_progress_m:double NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', uby:int(11) NOT NULL",
     "modernDestination": "AbsenceReport",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-absences.ts",
+    "reconciliation": "Absence reports preserve sourceDatabase, legacyKey, legacyId, legacyChildId, status, hospital fields, createdBy mapping, and raw legacyData for parent mobile absence parity; source/target count is covered by `absences.t_absent_report` reconciliation for active rows; skipped/orphan triage still depends on running it against canonical production dumps because unresolved child links and invalid dates are intentionally reported."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -2036,8 +2036,8 @@
     "legacyTable": "t_absent_report",
     "legacyColumns": "report_id:int(11) NOT NULL AUTO_INCREMENT, reportdate:varchar(50) NOT NULL, child_id:varchar(50) NOT NULL, class_id:varchar(50) CHARACTER SET utf8 NOT NULL, teacher_id:varchar(50) CHARACTER SET utf8 NOT NULL, ab_reason:varchar(50) CHARACTER SET utf8 NOT NULL, ab_from:varchar(50) CHARACTER SET utf8 NOT NULL, ab_to:varchar(50) CHARACTER SET utf8 NOT NULL, attend_hos:varchar(20) NOT NULL, hos_name:varchar(50) CHARACTER SET utf8 NOT NULL, dr_name:varchar(50) CHARACTER SET utf8 NOT NULL, is_rep_draft:tinyint(1) NOT NULL DEFAULT '0', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, d_progress_all:double NOT NULL, d_progress_m:double NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', uby:int(11) NOT NULL",
     "modernDestination": "AbsenceReport",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-absences.ts",
+    "reconciliation": "Absence reports preserve sourceDatabase, legacyKey, legacyId, legacyChildId, status, hospital fields, createdBy mapping, and raw legacyData for parent mobile absence parity; source/target count is covered by `absences.t_absent_report` reconciliation for active rows; skipped/orphan triage still depends on running it against canonical production dumps because unresolved child links and invalid dates are intentionally reported."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",

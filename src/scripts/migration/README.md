@@ -263,6 +263,8 @@ The notification receipt rules mirror every `custom_notifications*` delivery tab
 
 Parent mobile login rows from `parent_login_users` are reconciled against `ParentUser.sourceDatabase`/`legacyKey` for non-empty usernames. Count mismatches usually mean the source row could not be linked to a migrated child.
 
+Active absence reports from `t_absent_report` are reconciled against `AbsenceReport.sourceDatabase`/`legacyKey`. Count mismatches usually mean a source row had an unmapped child or an invalid legacy report date.
+
 Employee calendar status rows from `t_emp_status` are reconciled against `EmployeeEvent.notes` legacy JSON. Count mismatches usually mean a source row had an unmapped teacher, invalid date, or unsupported legacy status.
 
 ### Idempotency
