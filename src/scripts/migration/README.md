@@ -162,9 +162,9 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_form_5` | MedicalForm (ACCIDENTS) |
 | `t_med_forms_info` | MedicalFormEntry |
 | `t_forms_attachments` | FormAttachment |
-| `t_payments` | Payment, including raw `legacyData` for parent mobile `finance.php` parity |
-| `newpayment` | PaymentReminder |
-| `t_accounting` | AccountingEntry |
+| `t_payments` | Payment, including source database/key provenance, legacy child id, receipt metadata, and raw `legacyData` for parent mobile `finance.php` parity |
+| `newpayment` | PaymentReminder, including source database/key provenance, payment/child links, due metadata, sent flag, and raw legacy row |
+| `t_accounting` | AccountingEntry, including source database/key/field provenance for generated fee/discount lines and raw legacy row |
 | `t_food` | Food, including source database/key provenance and raw legacy row |
 | `t_food_calendar` | FoodCalendar, including source database/key provenance and raw `legacyData` for parent mobile `foodcalendar.php` parity |
 | `t_food_apply` | FoodApplication |
@@ -282,6 +282,10 @@ Food rows from `t_food` are reconciled against `Food.sourceDatabase`, with raw l
 
 Holiday rows from `t_holiday` are reconciled against `Holiday.sourceDatabase` and `Holiday.legacyTable`, preserving notification text, day offsets, active/repeated flags, and raw legacy data. Count mismatches usually mean a row had an invalid date/name or matched a pre-existing name/date fallback during backfill.
 
+Payment rows from `t_payments` are reconciled against `Payment.sourceDatabase`, preserving legacy ids, child links, amount/currency/category/method fields, receipt metadata, and raw legacy data. Payment reminders from `newpayment` are reconciled against `PaymentReminder.sourceDatabase`, preserving payment/child links, due metadata, sent flag, and raw legacy rows.
+
+Accounting rows from `t_accounting` fan out into positive fee and discount `AccountingEntry` lines. Reconciliation compares the expected generated line count against entries with `sourceDatabase` and `legacyTable = t_accounting`; mismatches usually mean a source row had an unmapped child, a zero-only accounting setup, or a pre-provenance fallback collision that needs review.
+
 Child roster rows from `t_child` and draft rows from `t_child_draft` are reconciled against `Child.sourceDatabase` and `Child.legacyTable` so active/draft imports are checked by exact legacy provenance rather than broad child totals. Count mismatches usually mean a source row had an unmapped branch or invalid draft id.
 
 Child history rows from `t_child_h` are reconciled against `ChildHistory.sourceDatabase` and `ChildHistory.legacyTable`. Count mismatches usually mean a source row had an unmapped child or duplicated the same child/timestamp fallback.
@@ -322,7 +326,10 @@ Legacy `t_school_year` rows are migrated with source database/table/id, `sid`, s
 Legacy `t_food_apply` rows restore the "food for all" class/date meal templates used to prefill daily reports. They are kept as `FoodApplication` rows with class, triggering child, breakfast/lunch food IDs, meal times, dessert text/time, creator, active flag, and the complete legacy row.
 
 ### Payment Reminders
-Legacy `newpayment` rows are scheduled payment reminders/requests, not duplicate paid transactions. They become `PaymentReminder` rows linked to the migrated payment and child when mappings exist, preserving category, amount, currency, due date, month, sent flag, and source row JSON.
+Legacy `newpayment` rows are scheduled payment reminders/requests, not duplicate paid transactions. They become `PaymentReminder` rows linked to the migrated payment and child when mappings exist, preserving source database/key provenance, category, amount, currency, due date, month, sent flag, and source row JSON.
+
+### Accounting Entries
+Legacy `t_accounting` rows store a child fee setup, not one modern ledger row. Positive legacy fee totals and discounts become separate `AccountingEntry` lines with stable `sourceDatabase:t_accounting:<accid>:<field>:<type>` keys, the source child id, generated amount field, and raw legacy row JSON so reruns can update or backfill instead of duplicating fee lines.
 
 ### Date Handling
 Old DB stores dates as varchar. The migration handles multiple formats: `YYYY-MM-DD`, `DD/MM/YYYY`, `DD-MM-YYYY`, empty strings, and `0000-00-00`.

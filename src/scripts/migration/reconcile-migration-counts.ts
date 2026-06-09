@@ -476,6 +476,23 @@ const loginTimestampTables = [
   "login_timestamps_man",
   "parent_login_timestamps",
 ];
+const accountingAmountFields = [
+  "general_fees_total",
+  "general_fees_disc",
+  "xtra_fees_total",
+  "xtra_fees_disc",
+  "bus_fees_total",
+  "bus_fees_disc",
+  "apron_fees_total",
+  "apron_fees_disc",
+  "reg_fees_total",
+  "reg_fees_disc",
+  "act_fees_total",
+  "act_fees_disc",
+];
+const accountingEntrySourceCountExpression = `COALESCE(SUM(${accountingAmountFields
+  .map((field) => `(${field} > 0)`)
+  .join(" + ")}), 0)`;
 
 const RECONCILIATION_RULES: ReconciliationRule[] = [
   provenancedRule({
@@ -1028,16 +1045,22 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     targetTable: "payments",
     notes: "Payments keep sourceDatabase and legacyKey.",
   }),
-  weakRule({
+  baseRule({
     id: "payments.t_accounting",
     step: "20. Payments",
-    sourceTable: "t_accounting",
-    sourceWhere: "active = 1",
-    targetTable: "accounting_entries",
-    expectation: "informational",
-    evidence: "derived",
+    source: {
+      table: "t_accounting",
+      where: "active = 1",
+      countExpression: accountingEntrySourceCountExpression,
+    },
+    target: {
+      table: "accounting_entries",
+      where: byLegacyTable("t_accounting"),
+    },
+    expectation: "equal",
+    evidence: "strong",
     notes:
-      "Each accounting row can fan out into several fee and discount entries.",
+      "Accounting fee/discount lines preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy child id, legacy amount field, and raw legacy row.",
   }),
   provenancedRule({
     id: "payments.newpayment",

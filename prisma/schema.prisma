@@ -2058,19 +2058,31 @@ model PaymentReminder {
 }
 
 model AccountingEntry {
-  id           String              @id @default(uuid()) @db.Uuid
-  childId      String              @db.Uuid
+  id             String              @id @default(uuid()) @db.Uuid
+  childId        String              @db.Uuid
+  sourceDatabase String?
+  legacyKey     String?             @unique
+  legacyId      Int?
+  legacyTable   String?
+  legacyChildId Int?
+  legacyField   String?
   description  String?
   amount       Decimal             @db.Decimal(10, 2)
   type         AccountingEntryType
   date         DateTime            @db.Date
   schoolYearId String?             @db.Uuid
+  legacyData    Json?
   createdAt    DateTime            @default(now())
   updatedAt    DateTime            @updatedAt
 
   child      Child       @relation(fields: [childId], references: [id], onDelete: Cascade)
   schoolYear SchoolYear? @relation(fields: [schoolYearId], references: [id], onDelete: SetNull)
 
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyTable])
+  @@index([legacyChildId])
+  @@index([legacyField])
   @@index([childId])
   @@index([type])
   @@index([date])

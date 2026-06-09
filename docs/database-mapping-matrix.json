@@ -181,7 +181,7 @@
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, submit_time:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, payment_id:int(11) NOT NULL, cid:int(11) NOT NULL, target:varchar(50) NOT NULL, amount:varchar(50) NOT NULL, currency:varchar(50) NOT NULL, to:varchar(50) NOT NULL, for:varchar(50) NOT NULL, sent:int(11) NOT NULL",
     "modernDestination": "PaymentReminder",
     "status": "mapped - migrated by migrate-payments.ts",
-    "reconciliation": "Scheduled payment reminder rows restored with payment/child mappings, due date, category, amount, currency, sent flag, and legacy JSON."
+    "reconciliation": "PaymentReminder rows preserve sourceDatabase, legacyKey, legacyId, legacy payment id, legacy child id, payment/child mappings, category, amount, currency, due date, month, sent flag, and raw legacyData; source/target count is covered by `payments.newpayment` reconciliation; mismatches expose duplicate legacy ids or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -236,8 +236,8 @@
     "legacyTable": "t_accounting",
     "legacyColumns": "accid:int(11) NOT NULL AUTO_INCREMENT, general_fees_net:double NOT NULL, general_fees_disc:double NOT NULL, general_fees_total:double NOT NULL, general_fees_per:varchar(50) NOT NULL, xtra_fees_net:double NOT NULL, xtra_fees_disc:double NOT NULL, xtra_fees_total:double NOT NULL, xtra_fees_per:varchar(50) NOT NULL, bus_fees_net:double NOT NULL, bus_fees_disc:double NOT NULL, bus_fees_total:double NOT NULL, bus_fees_per:varchar(50) NOT NULL, apron_fees_net:double NOT NULL, apron_fees_disc:double NOT NULL, apron_fees_total:double NOT NULL, apron_fees_per:varchar(50) NOT NULL, reg_fees_net:double NOT NULL, reg_fees_disc:double NOT NULL, reg_fees_total:double NOT NULL, reg_fees_per:varchar(50) NOT NULL, act_fees_net:double NOT NULL, act_fees_disc:double NOT NULL, act_fees_total:double NOT NULL, act_fees_per:varchar(50) NOT NULL, accounting_remarks:varchar(50) CHARACTER SET utf8 NOT NULL, child_id:varchar(50) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP",
     "modernDestination": "AccountingEntry",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-payments.ts",
+    "reconciliation": "Positive t_accounting fee totals and discounts fan out into AccountingEntry rows that preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy child id, legacy amount field, generated line type, and raw legacyData; source/target line count is covered by `payments.t_accounting` reconciliation; mismatches expose unmapped children, amount-field edge cases, fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -757,8 +757,8 @@
     "legacyTable": "t_payments",
     "legacyColumns": "cpid:int(11) NOT NULL AUTO_INCREMENT, cid:int(11) NOT NULL, type:varchar(50) NOT NULL, cheque:varchar(255) NOT NULL, target:varchar(50) NOT NULL, notes:varchar(50) NOT NULL, for:varchar(50) NOT NULL, year:varchar(50) NOT NULL, from:varchar(50) NOT NULL, to:varchar(50) NOT NULL, image:varchar(50) NOT NULL, amount:double NOT NULL, amount_init:double NOT NULL, currency:varchar(10) DEFAULT NULL, currency_nm:varchar(255) DEFAULT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1', uby:int(11) NOT NULL, pay_num:varchar(100) NOT NULL, prefix:int(11) NOT NULL",
     "modernDestination": "Payment",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-payments.ts",
+    "reconciliation": "Payment rows preserve sourceDatabase, legacyKey, legacyId, legacy child id, amount/currency/method/category/date range/month, reference/notes, receipt filename/url, creator mapping, and raw legacyData; source/target count is covered by `payments.t_payments` reconciliation; mismatches expose unmapped children, fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1088,7 +1088,7 @@
     "legacyColumns": "id:int(11) NOT NULL, submit_time:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, payment_id:int(11) NOT NULL, cid:int(11) NOT NULL, target:varchar(50) NOT NULL, amount:varchar(50) NOT NULL, currency:varchar(50) NOT NULL, to:varchar(50) NOT NULL, for:varchar(50) NOT NULL, sent:int(11) NOT NULL",
     "modernDestination": "PaymentReminder",
     "status": "mapped - migrated by migrate-payments.ts",
-    "reconciliation": "Scheduled payment reminder rows restored with payment/child mappings, due date, category, amount, currency, sent flag, and legacy JSON."
+    "reconciliation": "PaymentReminder rows preserve sourceDatabase, legacyKey, legacyId, legacy payment id, legacy child id, payment/child mappings, category, amount, currency, due date, month, sent flag, and raw legacyData; source/target count is covered by `payments.newpayment` reconciliation; mismatches expose duplicate legacy ids or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1175,8 +1175,8 @@
     "legacyTable": "t_accounting",
     "legacyColumns": "accid:int(11) NOT NULL, general_fees_net:double NOT NULL, general_fees_disc:double NOT NULL, general_fees_total:double NOT NULL, general_fees_per:varchar(50) NOT NULL, xtra_fees_net:double NOT NULL, xtra_fees_disc:double NOT NULL, xtra_fees_total:double NOT NULL, xtra_fees_per:varchar(50) NOT NULL, bus_fees_net:double NOT NULL, bus_fees_disc:double NOT NULL, bus_fees_total:double NOT NULL, bus_fees_per:varchar(50) NOT NULL, apron_fees_net:double NOT NULL, apron_fees_disc:double NOT NULL, apron_fees_total:double NOT NULL, apron_fees_per:varchar(50) NOT NULL, reg_fees_net:double NOT NULL, reg_fees_disc:double NOT NULL, reg_fees_total:double NOT NULL, reg_fees_per:varchar(50) NOT NULL, act_fees_net:double NOT NULL, act_fees_disc:double NOT NULL, act_fees_total:double NOT NULL, act_fees_per:varchar(50) NOT NULL, accounting_remarks:varchar(50) CHARACTER SET utf8 NOT NULL, child_id:varchar(50) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP",
     "modernDestination": "AccountingEntry",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-payments.ts",
+    "reconciliation": "Positive t_accounting fee totals and discounts fan out into AccountingEntry rows that preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy child id, legacy amount field, generated line type, and raw legacyData; source/target line count is covered by `payments.t_accounting` reconciliation; mismatches expose unmapped children, amount-field edge cases, fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1728,8 +1728,8 @@
     "legacyTable": "t_payments",
     "legacyColumns": "cpid:int(11) NOT NULL, cid:int(11) NOT NULL, type:varchar(50) NOT NULL, cheque:varchar(255) NOT NULL, target:varchar(50) NOT NULL, notes:varchar(50) NOT NULL, for:varchar(50) NOT NULL, year:varchar(50) NOT NULL, from:varchar(50) NOT NULL, to:varchar(50) NOT NULL, image:varchar(50) NOT NULL, amount:double NOT NULL, amount_init:double NOT NULL, currency:varchar(10) DEFAULT NULL, currency_nm:varchar(255) DEFAULT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1', uby:int(11) NOT NULL, pay_num:varchar(100) NOT NULL, prefix:int(11) NOT NULL",
     "modernDestination": "Payment",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-payments.ts",
+    "reconciliation": "Payment rows preserve sourceDatabase, legacyKey, legacyId, legacy child id, amount/currency/method/category/date range/month, reference/notes, receipt filename/url, creator mapping, and raw legacyData; source/target count is covered by `payments.t_payments` reconciliation; mismatches expose unmapped children, fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1995,7 +1995,7 @@
     "legacyColumns": "id:int(11) NOT NULL AUTO_INCREMENT, submit_time:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, payment_id:int(11) NOT NULL, cid:int(11) NOT NULL, target:varchar(50) NOT NULL, amount:varchar(50) NOT NULL, currency:varchar(50) NOT NULL, to:varchar(50) NOT NULL, for:varchar(50) NOT NULL, sent:int(11) NOT NULL",
     "modernDestination": "PaymentReminder",
     "status": "mapped - migrated by migrate-payments.ts",
-    "reconciliation": "Scheduled payment reminder rows restored with payment/child mappings, due date, category, amount, currency, sent flag, and legacy JSON."
+    "reconciliation": "PaymentReminder rows preserve sourceDatabase, legacyKey, legacyId, legacy payment id, legacy child id, payment/child mappings, category, amount, currency, due date, month, sent flag, and raw legacyData; source/target count is covered by `payments.newpayment` reconciliation; mismatches expose duplicate legacy ids or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2050,8 +2050,8 @@
     "legacyTable": "t_accounting",
     "legacyColumns": "accid:int(11) NOT NULL AUTO_INCREMENT, general_fees_net:double NOT NULL, general_fees_disc:double NOT NULL, general_fees_total:double NOT NULL, general_fees_per:varchar(50) NOT NULL, xtra_fees_net:double NOT NULL, xtra_fees_disc:double NOT NULL, xtra_fees_total:double NOT NULL, xtra_fees_per:varchar(50) NOT NULL, bus_fees_net:double NOT NULL, bus_fees_disc:double NOT NULL, bus_fees_total:double NOT NULL, bus_fees_per:varchar(50) NOT NULL, apron_fees_net:double NOT NULL, apron_fees_disc:double NOT NULL, apron_fees_total:double NOT NULL, apron_fees_per:varchar(50) NOT NULL, reg_fees_net:double NOT NULL, reg_fees_disc:double NOT NULL, reg_fees_total:double NOT NULL, reg_fees_per:varchar(50) NOT NULL, act_fees_net:double NOT NULL, act_fees_disc:double NOT NULL, act_fees_total:double NOT NULL, act_fees_per:varchar(50) NOT NULL, accounting_remarks:varchar(50) CHARACTER SET utf8 NOT NULL, child_id:varchar(50) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP",
     "modernDestination": "AccountingEntry",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-payments.ts",
+    "reconciliation": "Positive t_accounting fee totals and discounts fan out into AccountingEntry rows that preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy child id, legacy amount field, generated line type, and raw legacyData; source/target line count is covered by `payments.t_accounting` reconciliation; mismatches expose unmapped children, amount-field edge cases, fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2571,8 +2571,8 @@
     "legacyTable": "t_payments",
     "legacyColumns": "cpid:int(11) NOT NULL AUTO_INCREMENT, cid:int(11) NOT NULL, type:varchar(50) NOT NULL, cheque:varchar(255) NOT NULL, target:varchar(50) NOT NULL, notes:varchar(50) NOT NULL, for:varchar(50) NOT NULL, year:varchar(50) NOT NULL, from:varchar(50) NOT NULL, to:varchar(50) NOT NULL, image:varchar(50) NOT NULL, amount:double NOT NULL, amount_init:double NOT NULL, currency:varchar(10) DEFAULT NULL, currency_nm:varchar(255) DEFAULT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1', uby:int(11) NOT NULL, pay_num:varchar(100) NOT NULL, prefix:int(11) NOT NULL",
     "modernDestination": "Payment",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-payments.ts",
+    "reconciliation": "Payment rows preserve sourceDatabase, legacyKey, legacyId, legacy child id, amount/currency/method/category/date range/month, reference/notes, receipt filename/url, creator mapping, and raw legacyData; source/target count is covered by `payments.t_payments` reconciliation; mismatches expose unmapped children, fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",

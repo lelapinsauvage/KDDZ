@@ -58,6 +58,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - Food item reconciliation now uses `Food.sourceDatabase` for `t_food` rows, preserving legacy keys, categories, active flags, created timestamps, and raw legacy food data.
    - Food calendar reconciliation now counts distinct `FoodCalendar.legacyId` values for active `t_food_calendar` rows, preserving row-level proof despite breakfast/lunch/snack/dessert fan-out.
    - Holiday reconciliation now uses `Holiday.sourceDatabase`/`legacyTable` for `t_holiday` rows, preserving notification fields, repeated/active flags, day offsets, and raw legacy holiday data.
+   - Payment/accounting reconciliation now uses `Payment`, `PaymentReminder`, and generated `AccountingEntry` source provenance for `t_payments`, `newpayment`, and positive `t_accounting` fee/discount lines.
    - Teacher calendar status reconciliation now covers migrated `t_emp_status` rows through the legacy JSON stored on `EmployeeEvent.notes`.
    - Legacy staff/admin login reconciliation now uses `User.sourceDatabase`/`legacyTable` for non-empty `login_users.email` rows, while seeded/new modern users stay excluded from the source-specific count.
    - Notification receipt reconciliation now covers the full migrated delivery-table set from `migrate-alarms.ts`, including parent receipt variants, requests/others, event staff/parent deliveries, and holiday read-state.

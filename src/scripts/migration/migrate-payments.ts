@@ -103,6 +103,7 @@ interface OldAccounting {
   child_id: string;
   active: number;
   datetime: string;
+  [key: string]: unknown;
 }
 
 interface OldNewPayment {
@@ -116,6 +117,15 @@ interface OldNewPayment {
   to: string;
   for: string;
   sent: number;
+}
+
+type AccountingLineType = "FEE" | "DISCOUNT";
+
+interface AccountingLine {
+  field: string;
+  label: string;
+  type: AccountingLineType;
+  amount: number;
 }
 
 function normalizeCurrency(val: string | null | undefined): string {
@@ -236,7 +246,7 @@ export async function migratePayments(prisma: PrismaClient) {
   );
 
   // --- t_accounting → AccountingEntry ---
-  await migrateAccounting(prisma, dryRun);
+  await migrateAccounting(prisma, dryRun, sourceDatabase);
   await migratePaymentReminders(prisma, dryRun);
 
   log(`=== Payments migration complete ===${dryRun ? " [DRY RUN]" : ""}`);
@@ -257,7 +267,39 @@ function extractMonth(val: string | null | undefined): number | null {
   return monthNames[val.toLowerCase().trim()] ?? null;
 }
 
-async function migrateAccounting(prisma: PrismaClient, dryRun: boolean) {
+function accountingLegacyKey(
+  sourceDatabase: string,
+  legacyId: number,
+  field: string,
+  type: AccountingLineType
+) {
+  return `${sourceDatabase}:t_accounting:${legacyId}:${field}:${type.toLowerCase()}`;
+}
+
+function accountingLegacyData(
+  sourceDatabase: string,
+  row: OldAccounting,
+  line: AccountingLine
+) {
+  return JSON.parse(
+    JSON.stringify({
+      sourceDatabase,
+      sourceTable: "t_accounting",
+      legacyId: row.accid,
+      legacyChildId: row.child_id,
+      legacyField: line.field,
+      lineType: line.type,
+      amount: line.amount,
+      row,
+    })
+  );
+}
+
+async function migrateAccounting(
+  prisma: PrismaClient,
+  dryRun: boolean,
+  sourceDatabase: string
+) {
   const rows = await queryMysql<OldAccounting>(
     "SELECT * FROM t_accounting WHERE active = 1 ORDER BY accid"
   );
@@ -274,50 +316,107 @@ async function migrateAccounting(prisma: PrismaClient, dryRun: boolean) {
 
   let feeCount = 0;
   let discCount = 0;
+  let existingCount = 0;
+  let missingChild = 0;
 
   for (const row of rows) {
     const childId = getMapping("child", row.child_id);
-    if (!childId) continue;
+    if (!childId) {
+      missingChild++;
+      continue;
+    }
 
     const entryDate = row.datetime ? new Date(row.datetime) : new Date();
 
     for (const ft of feeTypes) {
       const total = toFloat((row as unknown as Record<string, unknown>)[ft.totalField]);
       const disc = toFloat((row as unknown as Record<string, unknown>)[ft.discField]);
+      const lines: AccountingLine[] = [];
 
-      // Create fee entry if total > 0
-      if (total > 0 && !dryRun) {
-        await prisma.accountingEntry.create({
-          data: {
-            id: generateUUID(),
-            childId,
-            description: ft.label,
-            amount: total,
-            type: "FEE",
-            date: entryDate,
-          },
+      if (total > 0) {
+        lines.push({
+          field: ft.totalField,
+          label: ft.label,
+          type: "FEE",
+          amount: total,
         });
-        feeCount++;
       }
 
-      // Create discount entry if disc > 0
-      if (disc > 0 && !dryRun) {
-        await prisma.accountingEntry.create({
-          data: {
-            id: generateUUID(),
-            childId,
-            description: `${ft.label} Discount`,
-            amount: disc,
-            type: "DISCOUNT",
-            date: entryDate,
-          },
+      if (disc > 0) {
+        lines.push({
+          field: ft.discField,
+          label: `${ft.label} Discount`,
+          type: "DISCOUNT",
+          amount: disc,
         });
-        discCount++;
+      }
+
+      for (const line of lines) {
+        const legacyKey = accountingLegacyKey(
+          sourceDatabase,
+          row.accid,
+          line.field,
+          line.type
+        );
+        const data = {
+          childId,
+          sourceDatabase,
+          legacyKey,
+          legacyId: toInt(row.accid),
+          legacyTable: "t_accounting",
+          legacyChildId: toInt(row.child_id),
+          legacyField: line.field,
+          description: line.label,
+          amount: line.amount,
+          type: line.type,
+          date: entryDate,
+          legacyData: accountingLegacyData(sourceDatabase, row, line),
+        };
+        const existingByKey = await prisma.accountingEntry.findUnique({
+          where: { legacyKey },
+        });
+        const existing =
+          existingByKey ??
+          (await prisma.accountingEntry.findFirst({
+            where: {
+              childId,
+              description: line.label,
+              amount: line.amount,
+              type: line.type,
+              date: entryDate,
+              legacyKey: null,
+            },
+          }));
+
+        if (existing) {
+          if (!dryRun) {
+            await prisma.accountingEntry.update({
+              where: { id: existing.id },
+              data,
+            });
+          }
+          existingCount++;
+          continue;
+        }
+
+        if (!dryRun) {
+          await prisma.accountingEntry.create({
+            data: {
+              id: generateUUID(),
+              ...data,
+            },
+          });
+        }
+
+        if (line.type === "FEE") feeCount++;
+        else discCount++;
       }
     }
   }
 
-  log(`Accounting: ${feeCount} fee entries, ${discCount} discount entries`);
+  log(
+    `Accounting: ${feeCount} fee entries, ${discCount} discount entries, ${existingCount} existing, ${missingChild} missing child`
+  );
 }
 
 async function migratePaymentReminders(prisma: PrismaClient, dryRun: boolean) {
