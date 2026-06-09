@@ -128,11 +128,12 @@ export function EventAlarmsClient({
         eventsScanned,
         alarmsCreated,
         receiptsCreated,
+        parentReceiptsCreated,
         notificationsCreated,
         skippedExisting,
       } = result.data;
       setGenerationStatus(
-        `Matched ${eventsMatched} of ${eventsScanned} event${eventsScanned === 1 ? "" : "s"}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"}, ${receiptsCreated} receipt${receiptsCreated === 1 ? "" : "s"}, and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing.`,
+        `Matched ${eventsMatched} of ${eventsScanned} event${eventsScanned === 1 ? "" : "s"}; created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"}, ${receiptsCreated} staff receipt${receiptsCreated === 1 ? "" : "s"}, ${parentReceiptsCreated ?? 0} parent receipt${parentReceiptsCreated === 1 ? "" : "s"}, and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing.`,
       );
       router.refresh();
       return;

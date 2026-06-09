@@ -4,6 +4,7 @@ import { isLegacyNotificationGateEnabled } from "@/lib/legacy-notification-gates
 const DEFAULT_REMINDER_DAYS = [1, 3, 7];
 const DAY_MS = 86_400_000;
 const EVENT_RECEIPT_SOURCE = "custom_notifications_events";
+const EVENT_PARENT_RECEIPT_SOURCE = "custom_notifications_events_parents";
 
 export interface EventGenerationSummary {
   branchesScanned: number;
@@ -11,6 +12,8 @@ export interface EventGenerationSummary {
   eventsMatched: number;
   alarmsCreated: number;
   receiptsCreated: number;
+  parentRecipientsMatched: number;
+  parentReceiptsCreated: number;
   notificationsCreated: number;
   skippedExisting: number;
   skippedDisabledBranches: number;
@@ -19,6 +22,7 @@ export interface EventGenerationSummary {
   skippedOutsideWindow: number;
   skippedMissingBranches: number;
   skippedNoRecipients: number;
+  skippedNoParentRecipients: number;
 }
 
 interface EventCandidate {
@@ -42,6 +46,14 @@ interface LegacyEventRecipient {
   userId: string;
   legacyRecipientId: number;
   legacySourceDatabase: string;
+}
+
+interface LegacyEventParentRecipient {
+  childId: string;
+  parentUserId: string | null;
+  legacyRecipientId: number;
+  legacySourceDatabase: string | null;
+  recipientType: "PARENT_USER" | "CHILD";
 }
 
 function startOfToday(now = new Date()) {
@@ -123,6 +135,8 @@ function emptySummary(): EventGenerationSummary {
     eventsMatched: 0,
     alarmsCreated: 0,
     receiptsCreated: 0,
+    parentRecipientsMatched: 0,
+    parentReceiptsCreated: 0,
     notificationsCreated: 0,
     skippedExisting: 0,
     skippedDisabledBranches: 0,
@@ -131,6 +145,7 @@ function emptySummary(): EventGenerationSummary {
     skippedOutsideWindow: 0,
     skippedMissingBranches: 0,
     skippedNoRecipients: 0,
+    skippedNoParentRecipients: 0,
   };
 }
 
@@ -160,6 +175,23 @@ function recipientsForEventCandidate(
     if (!recipientIds.has(recipient.userId)) continue;
     if (!legacySourceMatches(recipient, sourceDatabase)) continue;
     if (!selected.has(recipient.userId)) selected.set(recipient.userId, recipient);
+  }
+
+  return Array.from(selected.values());
+}
+
+function parentRecipientsForEventCandidate(
+  recipients: LegacyEventParentRecipient[],
+  sourceDatabase: string | null,
+) {
+  const selected = new Map<number, LegacyEventParentRecipient>();
+  for (const recipient of recipients) {
+    if (sourceDatabase && recipient.legacySourceDatabase !== sourceDatabase) {
+      continue;
+    }
+    if (!selected.has(recipient.legacyRecipientId)) {
+      selected.set(recipient.legacyRecipientId, recipient);
+    }
   }
 
   return Array.from(selected.values());
@@ -399,6 +431,41 @@ export async function generateEventAlarmsForOrganization(params: {
         }]
       : [],
   );
+  const candidateBranchIds = [...new Set(candidates.map((candidate) => candidate.branchId))];
+  const children = await db.child.findMany({
+    where: {
+      branchId: { in: candidateBranchIds },
+      isActive: true,
+      isDraft: false,
+      legacyId: { not: null },
+    },
+    select: {
+      id: true,
+      branchId: true,
+      legacyId: true,
+      sourceDatabase: true,
+      parentUsers: {
+        where: { isActive: true },
+        select: { id: true, sourceDatabase: true },
+        orderBy: { createdAt: "asc" },
+        take: 1,
+      },
+    },
+  });
+  const parentRecipientsByBranch = new Map<string, LegacyEventParentRecipient[]>();
+  for (const child of children) {
+    if (child.legacyId === null) continue;
+    const parentUser = child.parentUsers[0] ?? null;
+    const recipients = parentRecipientsByBranch.get(child.branchId) ?? [];
+    recipients.push({
+      childId: child.id,
+      parentUserId: parentUser?.id ?? null,
+      legacyRecipientId: child.legacyId,
+      legacySourceDatabase: child.sourceDatabase ?? parentUser?.sourceDatabase ?? null,
+      recipientType: parentUser ? "PARENT_USER" : "CHILD",
+    });
+    parentRecipientsByBranch.set(child.branchId, recipients);
+  }
   const maxExistingAlarmLegacyId = existingAlarms.reduce((max, alarm) => {
     const legacyId = readNumber(asRecord(alarm.legacyData), ["legacyEventId", "aid"]) ?? 0;
     return Math.max(max, legacyId);
@@ -444,6 +511,7 @@ export async function generateEventAlarmsForOrganization(params: {
             ...(asRecord(candidate.legacyData) ?? {}),
             generatedLegacyId: legacyNotificationId,
             sourceDeliveryTable: EVENT_RECEIPT_SOURCE,
+            parentDeliveryTable: EVENT_PARENT_RECEIPT_SOURCE,
           },
         },
       });
@@ -465,7 +533,7 @@ export async function generateEventAlarmsForOrganization(params: {
               aid: legacyNotificationId,
               legacyEventId: legacyNotificationId,
               sourceDeliveryTable: EVENT_RECEIPT_SOURCE,
-              parentDeliveryTable: "custom_notifications_events_parents",
+              parentDeliveryTable: EVENT_PARENT_RECEIPT_SOURCE,
             },
           },
         });
@@ -486,7 +554,7 @@ export async function generateEventAlarmsForOrganization(params: {
             aid: legacyNotificationId,
             sourceTable: "t_events",
             sourceDeliveryTable: EVENT_RECEIPT_SOURCE,
-            parentDeliveryTable: "custom_notifications_events_parents",
+            parentDeliveryTable: EVENT_PARENT_RECEIPT_SOURCE,
             modernGenerator: "generateEventAlarms",
             legacyMethod: "Data::saveNewEvents",
             legacyFollowupMethod: "Data::addToEvents",
@@ -523,37 +591,106 @@ export async function generateEventAlarmsForOrganization(params: {
 
     if (recipientIds.size === 0) {
       summary.skippedNoRecipients += 1;
+    } else if (alarmId && recipients.length > 0) {
+      const existingReceipts = await db.notificationReceipt.findMany({
+        where: {
+          sourceTable: EVENT_RECEIPT_SOURCE,
+          legacyNotificationId,
+          recipientType: "USER",
+          legacyRecipientId: {
+            in: recipients.map((recipient) => recipient.legacyRecipientId),
+          },
+        },
+        select: { legacyRecipientId: true },
+      });
+      const existingReceiptIds = new Set(
+        existingReceipts.map((receipt) => receipt.legacyRecipientId),
+      );
+      const newReceiptRecipients = recipients.filter(
+        (recipient) => !existingReceiptIds.has(recipient.legacyRecipientId),
+      );
+
+      if (newReceiptRecipients.length > 0) {
+        const receiptResult = await db.notificationReceipt.createMany({
+          data: newReceiptRecipients.map((recipient) => ({
+            sourceTable: EVENT_RECEIPT_SOURCE,
+            category: "events",
+            legacyNotificationId,
+            legacyRecipientId: recipient.legacyRecipientId,
+            recipientType: "USER",
+            recipientId: recipient.userId,
+            alarmId,
+            isRead: false,
+            metadata: {
+              modernGenerator: "generateEventAlarms",
+              legacyMethod: "Data::saveNewEvents",
+              legacyFollowupMethod: "Data::addToEvents",
+              modernTargetType: "Event",
+              modernTargetId: candidate.eventId,
+              sourceDatabase: candidate.sourceDatabase,
+              targetBranchId: candidate.branchId,
+              daysBefore: candidate.daysBefore,
+              submit_time: new Date().toISOString(),
+              ntype: 0,
+            },
+          })),
+          skipDuplicates: true,
+        });
+        summary.receiptsCreated += receiptResult.count;
+
+        const created = await db.notification.createMany({
+          data: newReceiptRecipients.map((recipient) => ({
+            userId: recipient.userId,
+            title: candidate.title,
+            body: candidate.message,
+            type: "EVENT",
+            category: "EVENT",
+            isRead: false,
+          })),
+        });
+        summary.notificationsCreated += created.count;
+      }
+    }
+
+    if (!alarmId) continue;
+
+    const parentRecipients = parentRecipientsForEventCandidate(
+      parentRecipientsByBranch.get(candidate.branchId) ?? [],
+      candidate.sourceDatabase,
+    );
+    summary.parentRecipientsMatched += parentRecipients.length;
+    if (parentRecipients.length === 0) {
+      summary.skippedNoParentRecipients += 1;
       continue;
     }
-    if (!alarmId || recipients.length === 0) continue;
 
-    const existingReceipts = await db.notificationReceipt.findMany({
+    const existingParentReceipts = await db.notificationReceipt.findMany({
       where: {
-        sourceTable: EVENT_RECEIPT_SOURCE,
+        sourceTable: EVENT_PARENT_RECEIPT_SOURCE,
         legacyNotificationId,
-        recipientType: "USER",
         legacyRecipientId: {
-          in: recipients.map((recipient) => recipient.legacyRecipientId),
+          in: parentRecipients.map((recipient) => recipient.legacyRecipientId),
         },
       },
       select: { legacyRecipientId: true },
     });
-    const existingReceiptIds = new Set(
-      existingReceipts.map((receipt) => receipt.legacyRecipientId),
+    const existingParentReceiptIds = new Set(
+      existingParentReceipts.map((receipt) => receipt.legacyRecipientId),
     );
-    const newReceiptRecipients = recipients.filter(
-      (recipient) => !existingReceiptIds.has(recipient.legacyRecipientId),
+    const newParentReceiptRecipients = parentRecipients.filter(
+      (recipient) => !existingParentReceiptIds.has(recipient.legacyRecipientId),
     );
-    if (newReceiptRecipients.length === 0) continue;
 
-    const receiptResult = await db.notificationReceipt.createMany({
-      data: newReceiptRecipients.map((recipient) => ({
-        sourceTable: EVENT_RECEIPT_SOURCE,
-        category: "events",
+    if (newParentReceiptRecipients.length === 0) continue;
+
+    const parentReceiptResult = await db.notificationReceipt.createMany({
+      data: newParentReceiptRecipients.map((recipient) => ({
+        sourceTable: EVENT_PARENT_RECEIPT_SOURCE,
+        category: "events_parents",
         legacyNotificationId,
         legacyRecipientId: recipient.legacyRecipientId,
-        recipientType: "USER",
-        recipientId: recipient.userId,
+        recipientType: recipient.recipientType,
+        recipientId: recipient.parentUserId ?? recipient.childId,
         alarmId,
         isRead: false,
         metadata: {
@@ -565,25 +702,16 @@ export async function generateEventAlarmsForOrganization(params: {
           sourceDatabase: candidate.sourceDatabase,
           targetBranchId: candidate.branchId,
           daysBefore: candidate.daysBefore,
+          eventDate: candidate.targetDateKey,
+          legacyChildId: recipient.legacyRecipientId,
+          parentUserId: recipient.parentUserId,
           submit_time: new Date().toISOString(),
           ntype: 0,
         },
       })),
       skipDuplicates: true,
     });
-    summary.receiptsCreated += receiptResult.count;
-
-    const created = await db.notification.createMany({
-      data: newReceiptRecipients.map((recipient) => ({
-        userId: recipient.userId,
-        title: candidate.title,
-        body: candidate.message,
-        type: "EVENT",
-        category: "EVENT",
-        isRead: false,
-      })),
-    });
-    summary.notificationsCreated += created.count;
+    summary.parentReceiptsCreated += parentReceiptResult.count;
   }
 
   return summary;

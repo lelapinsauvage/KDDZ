@@ -20,6 +20,8 @@ function emptySummary(): EventGenerationSummary {
     eventsMatched: 0,
     alarmsCreated: 0,
     receiptsCreated: 0,
+    parentRecipientsMatched: 0,
+    parentReceiptsCreated: 0,
     notificationsCreated: 0,
     skippedExisting: 0,
     skippedDisabledBranches: 0,
@@ -28,6 +30,7 @@ function emptySummary(): EventGenerationSummary {
     skippedOutsideWindow: 0,
     skippedMissingBranches: 0,
     skippedNoRecipients: 0,
+    skippedNoParentRecipients: 0,
   };
 }
 
@@ -40,6 +43,8 @@ function addSummary(
   total.eventsMatched += next.eventsMatched;
   total.alarmsCreated += next.alarmsCreated;
   total.receiptsCreated += next.receiptsCreated;
+  total.parentRecipientsMatched += next.parentRecipientsMatched;
+  total.parentReceiptsCreated += next.parentReceiptsCreated;
   total.notificationsCreated += next.notificationsCreated;
   total.skippedExisting += next.skippedExisting;
   total.skippedDisabledBranches += next.skippedDisabledBranches;
@@ -48,6 +53,7 @@ function addSummary(
   total.skippedOutsideWindow += next.skippedOutsideWindow;
   total.skippedMissingBranches += next.skippedMissingBranches;
   total.skippedNoRecipients += next.skippedNoRecipients;
+  total.skippedNoParentRecipients += next.skippedNoParentRecipients;
 }
 
 function isAuthorized(request: NextRequest) {
