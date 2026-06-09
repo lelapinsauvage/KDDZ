@@ -251,9 +251,18 @@ const foodItems = mapLegacyFoodCalendarItems([
     legacyData: { date: "2026-06-07", dessert: "Fruit" },
     food: { name: "Rice" },
   },
+  {
+    id: "early-dinner-row",
+    legacyId: 12,
+    legacyBranchId: 3,
+    date: new Date("2026-06-07T00:00:00.000Z"),
+    mealType: "SNACK" as MealType,
+    legacyData: { date: "2026-06-07", dessert: "Fruit" },
+    food: { name: "Soup" },
+  },
 ]);
 const food = stripLegacyFoodCalendarGroupingFields(foodItems[0]);
-assertStringFields(food, ["dessert", "date", "bname", "lname"], "food calendar");
+assertStringFields(food, ["dessert", "date", "bname", "lname", "edinner"], "food calendar");
 assertDateStringFields(food, ["date"], "food calendar");
 
 const holiday = mapLegacyHoliday({

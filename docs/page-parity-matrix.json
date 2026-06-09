@@ -16234,7 +16234,7 @@
     "legacyPhp": "Front/templates/admin/food_calendar.php",
     "legacyJs": "Front/templates/admin/js/food_calendar.js",
     "modernRoute": "/food_calendar.php, /food/calendar",
-    "status": "partial - legacy food calendar bridge, query state, print handoff, all-branch apply, and action guards restored; meal audit remains",
+    "status": "partial - legacy food calendar bridge, query state, print handoff, all-branch apply, action guards, and Early Dinner restored; visual audit remains",
     "legacyTablesMentioned": [
       "BreakFast",
       "auto",
@@ -16247,7 +16247,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "`/food_calendar.php?id=`/`brid=` now resolves raw numeric, UUID, and encrypted legacy branch ids into `/food/calendar?branch=...`, the modern page initializes and keeps branch/month/year query state as the user navigates, the Print action opens the visible branch/month/year like legacy `food_calendar.js`, and blank-day saves can apply Breakfast/Lunch/Snack/Dessert to This Branch or All Branches. The legacy `AddFoodToCalendar`, `EditFoodCalendar`, and `FoodAllBranches` ACTION grants now hide blank-day create, existing-day edit/clear, and All Branches controls respectively, and direct food-calendar writes enforce add/edit/all-branch grants by current target state when the imported action catalogue is configured and not granted. Remaining work is exact FullCalendar visual behavior and legacy Early Dinner schema support."
+    "verification": "`/food_calendar.php?id=`/`brid=` now resolves raw numeric, UUID, and encrypted legacy branch ids into `/food/calendar?branch=...`, the modern page initializes and keeps branch/month/year query state as the user navigates, the Print action opens the visible branch/month/year like legacy `food_calendar.js`, and blank-day saves can apply Breakfast/Lunch/Early Dinner/Dessert to This Branch or All Branches. The legacy `edid` Early Dinner slot is preserved through the existing `SNACK` enum bucket, displayed as Early Dinner on calendar/edit/print surfaces, and exposed to native parent food-calendar feeds as `edinner`. The legacy `AddFoodToCalendar`, `EditFoodCalendar`, and `FoodAllBranches` ACTION grants now hide blank-day create, existing-day edit/clear, and All Branches controls respectively, and direct food-calendar writes enforce add/edit/all-branch grants by current target state when the imported action catalogue is configured and not granted. Remaining work is exact FullCalendar visual behavior."
   },
   {
     "legacyPhp": "Front/templates/admin/forbidden.php",
@@ -16511,14 +16511,14 @@
     "legacyPhp": "Front/templates/admin/printFoodCal.php",
     "legacyJs": "",
     "modernRoute": "/printFoodCal.php, /food/calendar/print",
-    "status": "partial - legacy print link bridge and print state restored; food calendar visual audit remains",
+    "status": "partial - legacy print link bridge, print state, and Early Dinner legend restored; food calendar visual audit remains",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [
       "brid",
       "month",
       "year"
     ],
-    "verification": "`/printFoodCal.php?brid=&month=&year=` now resolves raw numeric, UUID, and encrypted legacy branch ids into the modern print calendar, initializes branch/month/year from the legacy URL, triggers the print dialog for the bridge route, and keeps print-page branch/month/year query state aligned while navigating. Remaining work is exact legacy FullCalendar print layout parity."
+    "verification": "`/printFoodCal.php?brid=&month=&year=` now resolves raw numeric, UUID, and encrypted legacy branch ids into the modern print calendar, initializes branch/month/year from the legacy URL, triggers the print dialog for the bridge route, keeps print-page branch/month/year query state aligned while navigating, and labels the legacy `edid` slot as `ED = Early Dinner`. Remaining work is exact legacy FullCalendar print layout parity."
   },
   {
     "legacyPhp": "Front/templates/admin/regions.php",

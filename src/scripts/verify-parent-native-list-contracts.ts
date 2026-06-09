@@ -94,6 +94,15 @@ const foodItems = mapLegacyFoodCalendarItems([
     legacyData: { date: "2026-06-07", dessert: "Fruit" },
     food: { name: "Rice" },
   },
+  {
+    id: "early-dinner-row",
+    legacyId: 12,
+    legacyBranchId: 3,
+    date: new Date("2026-06-07T00:00:00.000Z"),
+    mealType: "SNACK" as MealType,
+    legacyData: { date: "2026-06-07", dessert: "Fruit" },
+    food: { name: "Soup" },
+  },
 ]);
 assert.equal(foodItems.length, 1);
 const food = stripLegacyFoodCalendarGroupingFields(foodItems[0]);
@@ -102,6 +111,7 @@ assert.deepEqual(food, {
   date: "2026-06-07",
   bname: "Labneh",
   lname: "Rice",
+  edinner: "Soup",
 });
 
 const currentYear = new Date().getFullYear();

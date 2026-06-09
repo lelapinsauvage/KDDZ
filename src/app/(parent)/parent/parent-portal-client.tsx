@@ -105,6 +105,7 @@ type FoodRow = {
   bname?: string;
   lname?: string;
   dessert?: string;
+  edinner?: string;
 };
 
 type HolidayRow = {
@@ -611,7 +612,7 @@ export function ParentPortalClient() {
                     <div key={item.date} className="border-b border-border py-3 last:border-b-0">
                       <p className="font-semibold">{formatDisplayDate(item.date)}</p>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        {[item.bname, item.lname, item.dessert].filter(Boolean).join(" / ") || "No meals recorded"}
+                        {[item.bname, item.lname, item.dessert, item.edinner].filter(Boolean).join(" / ") || "No meals recorded"}
                       </p>
                     </div>
                   ))}

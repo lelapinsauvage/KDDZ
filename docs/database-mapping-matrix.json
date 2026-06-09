@@ -541,7 +541,7 @@
     "legacyColumns": "hid:int(11) NOT NULL AUTO_INCREMENT, repeated:tinyint(1) NOT NULL DEFAULT '0', bfid:int(11) NOT NULL, lnid:int(11) NOT NULL, edid:int(11) NOT NULL, dessert:varchar(20) NOT NULL DEFAULT 'none', branch_id:int(11) NOT NULL DEFAULT '0', date:date NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:int(11) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1'",
     "modernDestination": "FoodCalendar",
     "status": "mapped - migrated by migrate-food-calendar.ts",
-    "reconciliation": "Food calendar rows fan out into meal-type FoodCalendar entries while preserving sourceDatabase, legacyKey, legacyId, legacyBranchId, and raw legacyData; source/target count is covered by `food.t_food_calendar` reconciliation using distinct legacyId values for active rows; mismatches expose unmapped branches, invalid dates, or source rows without a mappable meal/dessert entry."
+    "reconciliation": "Food calendar rows fan out into breakfast/lunch/early-dinner/dessert meal-type FoodCalendar entries while preserving sourceDatabase, legacyKey, legacyId, legacyBranchId, and raw legacyData; legacy `edid` is stored in the current SNACK enum bucket and displayed/exported as Early Dinner; source/target count is covered by `food.t_food_calendar` reconciliation using distinct legacyId values for active rows; mismatches expose unmapped branches, invalid dates, or source rows without a mappable meal/dessert entry."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1512,7 +1512,7 @@
     "legacyColumns": "hid:int(11) NOT NULL, repeated:tinyint(1) NOT NULL DEFAULT '0', bfid:int(11) NOT NULL, lnid:int(11) NOT NULL, edid:int(11) NOT NULL, dessert:varchar(20) NOT NULL DEFAULT 'none', branch_id:int(11) NOT NULL DEFAULT '0', date:date NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:int(11) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1'",
     "modernDestination": "FoodCalendar",
     "status": "mapped - migrated by migrate-food-calendar.ts",
-    "reconciliation": "Food calendar rows fan out into meal-type FoodCalendar entries while preserving sourceDatabase, legacyKey, legacyId, legacyBranchId, and raw legacyData; source/target count is covered by `food.t_food_calendar` reconciliation using distinct legacyId values for active rows; mismatches expose unmapped branches, invalid dates, or source rows without a mappable meal/dessert entry."
+    "reconciliation": "Food calendar rows fan out into breakfast/lunch/early-dinner/dessert meal-type FoodCalendar entries while preserving sourceDatabase, legacyKey, legacyId, legacyBranchId, and raw legacyData; legacy `edid` is stored in the current SNACK enum bucket and displayed/exported as Early Dinner; source/target count is covered by `food.t_food_calendar` reconciliation using distinct legacyId values for active rows; mismatches expose unmapped branches, invalid dates, or source rows without a mappable meal/dessert entry."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -2355,7 +2355,7 @@
     "legacyColumns": "hid:int(11) NOT NULL AUTO_INCREMENT, repeated:tinyint(1) NOT NULL DEFAULT '0', bfid:int(11) NOT NULL, lnid:int(11) NOT NULL, edid:int(11) NOT NULL, dessert:varchar(20) NOT NULL DEFAULT 'none', branch_id:int(11) NOT NULL DEFAULT '0', date:date NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:int(11) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1'",
     "modernDestination": "FoodCalendar",
     "status": "mapped - migrated by migrate-food-calendar.ts",
-    "reconciliation": "Food calendar rows fan out into meal-type FoodCalendar entries while preserving sourceDatabase, legacyKey, legacyId, legacyBranchId, and raw legacyData; source/target count is covered by `food.t_food_calendar` reconciliation using distinct legacyId values for active rows; mismatches expose unmapped branches, invalid dates, or source rows without a mappable meal/dessert entry."
+    "reconciliation": "Food calendar rows fan out into breakfast/lunch/early-dinner/dessert meal-type FoodCalendar entries while preserving sourceDatabase, legacyKey, legacyId, legacyBranchId, and raw legacyData; legacy `edid` is stored in the current SNACK enum bucket and displayed/exported as Early Dinner; source/target count is covered by `food.t_food_calendar` reconciliation using distinct legacyId values for active rows; mismatches expose unmapped branches, invalid dates, or source rows without a mappable meal/dessert entry."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",

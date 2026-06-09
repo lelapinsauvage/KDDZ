@@ -51,7 +51,7 @@ const MEALS: { type: MealTypeKey; label: string }[] = [
   { type: "BREAKFAST", label: "B" },
   { type: "LUNCH", label: "L" },
   { type: "DESSERT", label: "D" },
-  { type: "SNACK", label: "S" },
+  { type: "SNACK", label: "ED" },
 ];
 
 function getDaysInMonth(year: number, month: number): number {
@@ -309,7 +309,7 @@ export default function PrintClient({
           <span>B = Breakfast</span>
           <span>L = Lunch</span>
           <span>D = Dessert</span>
-          <span>S = Snack</span>
+          <span>ED = Early Dinner</span>
         </div>
       </div>
 

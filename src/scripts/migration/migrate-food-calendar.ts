@@ -320,6 +320,7 @@ export async function migrateFoodCalendar(prisma: PrismaClient, organizationId: 
     const entries: Array<[MealType, string | null]> = [
       ["BREAKFAST", getMapping("food", row.bfid)],
       ["LUNCH", getMapping("food", row.lnid)],
+      // Legacy calls `edid` Early Dinner; the current enum stores it as SNACK.
       ["SNACK", getMapping("food", row.edid)],
       ["DESSERT", await ensureDessertFood(prisma, organizationId, row.dessert, dryRun)],
     ];

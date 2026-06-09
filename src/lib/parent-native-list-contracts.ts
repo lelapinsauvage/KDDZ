@@ -44,6 +44,7 @@ export type LegacyFoodCalendarItem = {
   dessert: string;
   bname: string;
   lname: string;
+  edinner: string;
 };
 
 export function buildEmptyLegacyNativeListPayload(
@@ -112,6 +113,7 @@ export function mapLegacyFoodCalendarItems(rows: LegacyFoodCalendarRow[]) {
         dessert: readString(legacy, ["dessert"]) ?? "",
         bname: "",
         lname: "",
+        edinner: readString(legacy, ["edinner"]) ?? "",
       });
     }
 
@@ -119,6 +121,7 @@ export function mapLegacyFoodCalendarItems(rows: LegacyFoodCalendarRow[]) {
     if (!item.dessert) item.dessert = readString(legacy, ["dessert"]) ?? "";
     if (row.mealType === "BREAKFAST") item.bname = row.food.name;
     if (row.mealType === "LUNCH") item.lname = row.food.name;
+    if (row.mealType === "SNACK") item.edinner = row.food.name;
     if (row.mealType === "DESSERT" && !item.dessert) item.dessert = row.food.name;
   }
 
@@ -138,6 +141,7 @@ export function stripLegacyFoodCalendarGroupingFields(
     date: item.date,
     bname: item.bname,
     lname: item.lname,
+    edinner: item.edinner,
   };
 }
 

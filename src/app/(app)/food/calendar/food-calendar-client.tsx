@@ -83,8 +83,8 @@ const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MEALS: { type: MealType; label: string }[] = [
   { type: "BREAKFAST", label: "Breakfast" },
   { type: "LUNCH", label: "Lunch" },
-  { type: "SNACK", label: "Snack" },
   { type: "DESSERT", label: "Dessert" },
+  { type: "SNACK", label: "Early Dinner" },
 ];
 
 function toISODate(year: number, month: number, day: number): string {
@@ -391,8 +391,8 @@ export function FoodCalendarClient({
       const mealSelections: { mealType: MealType; foodId: string | null }[] = [
         { mealType: "BREAKFAST", foodId: dialogBreakfast },
         { mealType: "LUNCH", foodId: dialogLunch },
-        { mealType: "SNACK", foodId: dialogSnack },
         { mealType: "DESSERT", foodId: dialogDessert },
+        { mealType: "SNACK", foodId: dialogSnack },
       ];
 
       const result = await setFoodCalendarDay({
@@ -730,7 +730,7 @@ export function FoodCalendarClient({
                 )}
             </DialogTitle>
             <DialogDescription>
-              Choose breakfast, lunch, snack, and dessert for this day.
+              Choose breakfast, lunch, early dinner, and dessert for this day.
             </DialogDescription>
           </DialogHeader>
 
@@ -761,16 +761,16 @@ export function FoodCalendarClient({
               />
             </div>
 
-            {/* Snack */}
+            {/* Early Dinner */}
             <div className="space-y-1.5">
               <label className={cn("text-sm font-medium", FOOD_CATEGORY_COLORS.SNACK.text)}>
-                Snack
+                Early Dinner
               </label>
               <MealCombobox
                 value={dialogSnack}
                 onValueChange={setDialogSnack}
                 options={foodsByCategory.SNACK}
-                placeholder="Select snack"
+                placeholder="Select early dinner"
               />
             </div>
 
