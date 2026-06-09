@@ -381,16 +381,30 @@ const alarmTables = [
   "t_alarms_parents",
   "t_alarms_requests",
 ];
+
+// Keep in sync with RECEIPT_CONFIGS in migrate-alarms.ts.
 const receiptTables = [
   "custom_notifications",
   "custom_notifications_birthday",
+  "custom_notifications_birthday_parents",
   "custom_notifications_contracts",
   "custom_notifications_insurance",
+  "custom_notifications_insurance_parents",
   "custom_notifications_medical",
+  "custom_notifications_medical_parents",
   "custom_notifications_medicine",
+  "custom_notifications_medicine_parents",
   "custom_notifications_assessment",
   "custom_notifications_payments",
   "custom_notifications_vaccinations",
+  "custom_notifications_requests",
+  "custom_notifications_requests_parents",
+  "custom_notifications_others",
+  "custom_notifications_others_parents",
+  "custom_notifications_parents",
+  "custom_notifications_events",
+  "custom_notifications_events_parents",
+  "custom_notifications_holiday",
 ];
 const authTables = [
   "login_confirm",

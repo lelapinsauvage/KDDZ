@@ -21,7 +21,7 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -29,7 +29,7 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications_assessment` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -37,7 +37,7 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications_birthday` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -45,23 +45,23 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications_contracts` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "custom_notifications_events",
     "legacyColumns": "submit_time:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
+    "reconciliation": "Preserves event delivery read-state with modern event target metadata; source/target count is covered by `notification_receipts.custom_notifications_events` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "custom_notifications_holiday",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
+    "reconciliation": "Preserves holiday delivery read-state with modern holiday target metadata when available; source/target count is covered by `notification_receipts.custom_notifications_holiday` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -69,7 +69,7 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications_insurance` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -77,7 +77,7 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications_medical` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -85,7 +85,7 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications_medicine` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -101,7 +101,7 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications_payments` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -109,7 +109,7 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications_vaccinations` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -853,7 +853,7 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -861,7 +861,7 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications_assessment` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -869,7 +869,7 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications_birthday` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -877,7 +877,7 @@
     "legacyColumns": "id:int(11) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, cusntf_notification_text:text NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0', ntype:int(11) NOT NULL",
     "modernDestination": "Alarm + NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Preserves standalone parent birthday sent-history/read-state rows for `/alarms/birthdays`, including text, datetime, child recipient, and legacy `ntype`; needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Preserves standalone parent birthday sent-history/read-state rows for `/alarms/birthdays`, including text, datetime, child recipient, and legacy `ntype`; source/target count is covered by `notification_receipts.custom_notifications_birthday_parents` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -885,31 +885,31 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications_contracts` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "custom_notifications_events",
     "legacyColumns": "submit_time:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
+    "reconciliation": "Preserves event delivery read-state with modern event target metadata; source/target count is covered by `notification_receipts.custom_notifications_events` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "custom_notifications_events_parents",
     "legacyColumns": "datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
+    "reconciliation": "Preserves parent event delivery read-state with modern event target metadata; source/target count is covered by `notification_receipts.custom_notifications_events_parents` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "custom_notifications_holiday",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
+    "reconciliation": "Preserves holiday delivery read-state with modern holiday target metadata when available; source/target count is covered by `notification_receipts.custom_notifications_holiday` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -917,7 +917,7 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications_insurance` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -925,7 +925,7 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0', ntype:int(11) NOT NULL",
     "modernDestination": "NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Preserves parent insurance sent-history/read-state rows for `/alarms/insurance`, including legacy `ntype`; needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Preserves parent insurance sent-history/read-state rows for `/alarms/insurance`, including legacy `ntype`; source/target count is covered by `notification_receipts.custom_notifications_insurance_parents` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -933,7 +933,7 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications_medical` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -941,7 +941,7 @@
     "legacyColumns": "submit_time:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Preserves parent medical sent-history/read-state rows for `/alarms/medical`, including legacy submit time; needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Preserves parent medical sent-history/read-state rows for `/alarms/medical`, including legacy submit time; source/target count is covered by `notification_receipts.custom_notifications_medical_parents` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -949,7 +949,7 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications_medicine` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -957,7 +957,7 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Preserves parent medicine sent-history/read-state rows for `/alarms/medicine`; needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Preserves parent medicine sent-history/read-state rows for `/alarms/medicine`; source/target count is covered by `notification_receipts.custom_notifications_medicine_parents` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -971,25 +971,25 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "custom_notifications_others",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications_others` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "custom_notifications_others_parents",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications_others_parents` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "custom_notifications_parents",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications_parents` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -997,23 +997,23 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications_payments` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "custom_notifications_requests",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications_requests` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "custom_notifications_requests_parents",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications_requests_parents` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1021,7 +1021,7 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications_vaccinations` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1829,7 +1829,7 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -1837,7 +1837,7 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications_assessment` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -1845,7 +1845,7 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications_birthday` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -1853,23 +1853,23 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications_contracts` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "custom_notifications_events",
     "legacyColumns": "submit_time:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
+    "reconciliation": "Preserves event delivery read-state with modern event target metadata; source/target count is covered by `notification_receipts.custom_notifications_events` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "custom_notifications_holiday",
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
-    "modernDestination": "",
-    "status": "unmapped - needs decision",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "NotificationReceipt",
+    "status": "mapped - migrated by migrate-alarms.ts",
+    "reconciliation": "Preserves holiday delivery read-state with modern holiday target metadata when available; source/target count is covered by `notification_receipts.custom_notifications_holiday` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -1877,7 +1877,7 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications_insurance` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -1885,7 +1885,7 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications_medical` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -1893,7 +1893,7 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications_medicine` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -1909,7 +1909,7 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications_payments` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -1917,7 +1917,7 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "NotificationReceipt",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Source/target count is covered by `notification_receipts.custom_notifications_vaccinations` reconciliation; skipped/orphan triage still depends on running it against canonical production dumps."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",

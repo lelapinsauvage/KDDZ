@@ -259,6 +259,8 @@ The report labels each rule with evidence strength:
 
 Warnings are not cosmetic. Any `warning`, `missing`, or `error` result must be resolved or explicitly accepted before cutover. `not-applicable` means the legacy table was not present in the selected imported database, which is expected for some master/annual dumps.
 
+The notification receipt rules mirror every `custom_notifications*` delivery table migrated by `migrate-alarms.ts`, including parent receipt variants, requests/others, event staff/parent deliveries, and holiday read-state.
+
 ### Idempotency
 All scripts check for existing records before inserting, so they can be re-run safely. Already-migrated records are skipped.
 
