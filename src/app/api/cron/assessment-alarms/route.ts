@@ -18,9 +18,11 @@ function emptySummary(): AssessmentGenerationSummary {
     branchesScanned: 0,
     childrenMatched: 0,
     alarmsCreated: 0,
+    parentAlarmsCreated: 0,
     receiptsCreated: 0,
     notificationsCreated: 0,
     skippedExisting: 0,
+    skippedExistingParentAlarms: 0,
     skippedDisabledBranches: 0,
     skippedLegacyNotificationGate: false,
   };
@@ -33,9 +35,11 @@ function addSummary(
   total.branchesScanned += next.branchesScanned;
   total.childrenMatched += next.childrenMatched;
   total.alarmsCreated += next.alarmsCreated;
+  total.parentAlarmsCreated += next.parentAlarmsCreated;
   total.receiptsCreated += next.receiptsCreated;
   total.notificationsCreated += next.notificationsCreated;
   total.skippedExisting += next.skippedExisting;
+  total.skippedExistingParentAlarms += next.skippedExistingParentAlarms;
   total.skippedDisabledBranches += next.skippedDisabledBranches;
   total.skippedLegacyNotificationGate ||= next.skippedLegacyNotificationGate;
 }

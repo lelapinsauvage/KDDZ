@@ -143,12 +143,14 @@ export function AssessmentsClient({
 
       const {
         alarmsCreated,
+        parentAlarmsCreated,
         receiptsCreated,
         notificationsCreated,
         skippedExisting,
+        skippedExistingParentAlarms,
       } = result.data;
       setGenerationStatus(
-        `Created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"}, ${receiptsCreated} receipt${receiptsCreated === 1 ? "" : "s"}, and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing.`,
+        `Created ${alarmsCreated} staff alarm${alarmsCreated === 1 ? "" : "s"}, ${parentAlarmsCreated ?? 0} parent alarm${parentAlarmsCreated === 1 ? "" : "s"}, ${receiptsCreated} receipt${receiptsCreated === 1 ? "" : "s"}, and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing staff and ${skippedExistingParentAlarms ?? 0} existing parent.`,
       );
       router.refresh();
       return;

@@ -2,6 +2,8 @@ import { ASSESSMENT_TYPE_NAMES, VALID_ASSESSMENT_TYPES } from "@/lib/assessment-
 import { db } from "@/lib/db";
 import { isLegacyNotificationGateEnabled } from "@/lib/legacy-notification-gates";
 
+const ASSESSMENT_ALARM_SOURCE = "t_alarms_assessment";
+const ASSESSMENT_PARENT_ALARM_SOURCE = "t_alarms_assessment_parents";
 const ASSESSMENT_RECEIPT_SOURCE = "custom_notifications_assessment";
 
 export interface AssessmentDueAlarm {
@@ -28,9 +30,11 @@ export interface AssessmentGenerationSummary {
   branchesScanned: number;
   childrenMatched: number;
   alarmsCreated: number;
+  parentAlarmsCreated: number;
   receiptsCreated: number;
   notificationsCreated: number;
   skippedExisting: number;
+  skippedExistingParentAlarms: number;
   skippedDisabledBranches: number;
   skippedLegacyNotificationGate: boolean;
 }
@@ -200,12 +204,18 @@ function emptySummary(): AssessmentGenerationSummary {
     branchesScanned: 0,
     childrenMatched: 0,
     alarmsCreated: 0,
+    parentAlarmsCreated: 0,
     receiptsCreated: 0,
     notificationsCreated: 0,
     skippedExisting: 0,
+    skippedExistingParentAlarms: 0,
     skippedDisabledBranches: 0,
     skippedLegacyNotificationGate: false,
   };
+}
+
+function sourceTableFromLegacyData(legacyData: unknown) {
+  return readString(asRecord(legacyData), "sourceTable");
 }
 
 export async function getAssessmentDueAlarmCandidates(params: {
@@ -393,7 +403,11 @@ export async function generateAssessmentAlarmsForOrganization(params: {
     },
     select: { id: true, referenceId: true, legacyData: true },
   });
-  const existingByKey = new Map<
+  const existingStaffByKey = new Map<
+    string,
+    { id: string; referenceId: string | null; legacyData: unknown }
+  >();
+  const existingParentByKey = new Map<
     string,
     { id: string; referenceId: string | null; legacyData: unknown }
   >();
@@ -401,7 +415,13 @@ export async function generateAssessmentAlarmsForOrganization(params: {
     if (!alarm.referenceId) continue;
     const assessmentType = assessmentTypeFromLegacyData(alarm.legacyData);
     if (assessmentType !== null) {
-      existingByKey.set(`${assessmentType}:${alarm.referenceId}`, alarm);
+      const key = `${assessmentType}:${alarm.referenceId}`;
+      const sourceTable = sourceTableFromLegacyData(alarm.legacyData);
+      if (sourceTable === ASSESSMENT_PARENT_ALARM_SOURCE) {
+        existingParentByKey.set(key, alarm);
+      } else if (!sourceTable || sourceTable === ASSESSMENT_ALARM_SOURCE) {
+        existingStaffByKey.set(key, alarm);
+      }
     }
   }
 
@@ -478,7 +498,7 @@ export async function generateAssessmentAlarmsForOrganization(params: {
 
   for (const candidate of candidates) {
     const dedupeKey = `${candidate.assessmentType}:${candidate.childId}`;
-    const existingAlarm = existingByKey.get(dedupeKey);
+    const existingAlarm = existingStaffByKey.get(dedupeKey);
     let legacyNotificationId = existingAlarm
       ? readNumber(asRecord(existingAlarm.legacyData), "aid")
       : null;
@@ -500,6 +520,7 @@ export async function generateAssessmentAlarmsForOrganization(params: {
             legacyData: {
               ...existingData,
               aid: legacyNotificationId,
+              sourceTable: ASSESSMENT_ALARM_SOURCE,
               sourceDeliveryTable: ASSESSMENT_RECEIPT_SOURCE,
               legacyChildId: candidate.legacyChildId,
               legacyClassId: candidate.legacyClassId,
@@ -524,7 +545,7 @@ export async function generateAssessmentAlarmsForOrganization(params: {
           isActive: true,
           legacyData: {
             aid: legacyNotificationId,
-            sourceTable: "t_alarms_assessment",
+            sourceTable: ASSESSMENT_ALARM_SOURCE,
             sourceDeliveryTable: ASSESSMENT_RECEIPT_SOURCE,
             modernGenerator: "generateAssessmentAlarms",
             legacyMethod: "Data::AlarmsAssessment",
@@ -544,12 +565,98 @@ export async function generateAssessmentAlarmsForOrganization(params: {
         },
       });
       alarmId = alarm.id;
-      existingByKey.set(dedupeKey, {
+      existingStaffByKey.set(dedupeKey, {
         id: alarm.id,
         referenceId: candidate.childId,
         legacyData: alarm.legacyData,
       });
       summary.alarmsCreated += 1;
+    }
+
+    const existingParentAlarm = existingParentByKey.get(dedupeKey);
+    let legacyParentAlarmId = existingParentAlarm
+      ? readNumber(asRecord(existingParentAlarm.legacyData), "aid")
+      : null;
+    if (legacyParentAlarmId === null) {
+      legacyParentAlarmId = nextLegacyNotificationId++;
+    }
+
+    if (existingParentAlarm) {
+      summary.skippedExistingParentAlarms += 1;
+      const existingData = asRecord(existingParentAlarm.legacyData) ?? {};
+      if (
+        readNumber(existingData, "aid") === null ||
+        existingData.sourceTable !== ASSESSMENT_PARENT_ALARM_SOURCE ||
+        existingData.details !== candidate.message ||
+        existingData.href !== "alarmsAssessment.php"
+      ) {
+        await db.alarm.update({
+          where: { id: existingParentAlarm.id },
+          data: {
+            message: candidate.message,
+            dueDate: candidate.dueDate,
+            branchId: candidate.branchId,
+            legacyData: {
+              ...existingData,
+              aid: legacyParentAlarmId,
+              mid: legacyNotificationId,
+              sourceTable: ASSESSMENT_PARENT_ALARM_SOURCE,
+              details: candidate.message,
+              href: "alarmsAssessment.php",
+              type: candidate.assessmentTypeName,
+              legacyType: `t_assessment_${candidate.assessmentType}`,
+              assessmentType: candidate.assessmentType,
+              childId: candidate.childId,
+              child_id: candidate.legacyChildId,
+              legacyChildId: candidate.legacyChildId,
+              classId: candidate.classId,
+              legacyClassId: candidate.legacyClassId,
+              targetDate: dateKey(candidate.dueDate),
+            },
+          },
+        });
+      }
+    } else {
+      const parentAlarm = await db.alarm.create({
+        data: {
+          type: "ASSESSMENT",
+          referenceId: candidate.childId,
+          referenceType: "Child",
+          message: candidate.message,
+          dueDate: candidate.dueDate,
+          branchId: candidate.branchId,
+          isActive: true,
+          legacyData: {
+            aid: legacyParentAlarmId,
+            mid: legacyNotificationId,
+            sourceTable: ASSESSMENT_PARENT_ALARM_SOURCE,
+            modernGenerator: "generateAssessmentAlarms",
+            legacyMethod: "Data::addToAssessments",
+            legacySourceMethod: "Data::AlarmsAssessment",
+            legacyType: `t_assessment_${candidate.assessmentType}`,
+            assessmentType: candidate.assessmentType,
+            childId: candidate.childId,
+            child_id: candidate.legacyChildId,
+            legacyChildId: candidate.legacyChildId,
+            classId: candidate.classId,
+            legacyClassId: candidate.legacyClassId,
+            level: 1,
+            status: 0,
+            ntype: 0,
+            type: candidate.assessmentTypeName,
+            details: candidate.message,
+            href: "alarmsAssessment.php",
+            actionHref: candidate.actionHref,
+            targetDate: dateKey(candidate.dueDate),
+          },
+        },
+      });
+      existingParentByKey.set(dedupeKey, {
+        id: parentAlarm.id,
+        referenceId: candidate.childId,
+        legacyData: parentAlarm.legacyData,
+      });
+      summary.parentAlarmsCreated += 1;
     }
 
     const recipients = recipientsForCandidate(legacyRecipients, candidate);

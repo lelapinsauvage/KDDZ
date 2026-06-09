@@ -362,10 +362,12 @@ function formatGenerationStatus(
 
   if (family === "assessment") {
     const alarmsCreated = metric(data, "alarmsCreated");
+    const parentAlarmsCreated = metric(data, "parentAlarmsCreated");
     const receiptsCreated = metric(data, "receiptsCreated");
     const notificationsCreated = metric(data, "notificationsCreated");
     const skippedExisting = metric(data, "skippedExisting");
-    return `Created ${alarmsCreated} alarm${alarmsCreated === 1 ? "" : "s"}, ${receiptsCreated} receipt${receiptsCreated === 1 ? "" : "s"}, and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing.`;
+    const skippedExistingParentAlarms = metric(data, "skippedExistingParentAlarms");
+    return `Created ${alarmsCreated} staff alarm${alarmsCreated === 1 ? "" : "s"}, ${parentAlarmsCreated} parent alarm${parentAlarmsCreated === 1 ? "" : "s"}, ${receiptsCreated} receipt${receiptsCreated === 1 ? "" : "s"}, and ${notificationsCreated} notification${notificationsCreated === 1 ? "" : "s"}; skipped ${skippedExisting} existing staff and ${skippedExistingParentAlarms} existing parent.`;
   }
 
   if (family === "birthday") {

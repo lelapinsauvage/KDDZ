@@ -497,13 +497,13 @@
     "legacyPhp": "Front/templates/admin/alarmsAssessment.php",
     "legacyJs": "Front/templates/admin/js/alarmsAssessment.js",
     "modernRoute": "/alarmsAssessment.php, /alarms/assessments",
-    "status": "partial - legacy assessment alarms bridge, due queue, generator, read-state, sent history, and class targeting restored",
+    "status": "partial - legacy assessment alarms bridge, due queue, generator, read-state, sent history, class targeting, and parent notification rows restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Restored active-child missing assessment reminders due within 15 days with direct create actions, plus manual/server action equivalent of `Data::AlarmsAssessment()` using `AssessmentScheduleRule`, idempotent child/type alarm creation, legacy `custom_notifications_assessment` receipts targeted like `getusersperclass()` through imported `login_users.uclasses`, Assessment template rendering, staff in-app notifications, protected cron endpoint, current-user New/Viewed updates from receipt rows, sent-history rows, and parent `new_assessment` marker generation for non-draft reports. `/alarmsAssessment.php` now redirects to the modern assessment alarms page. Remaining work is external parent/mobile delivery and final visual audit."
+    "verification": "Restored active-child missing assessment reminders due within 15 days with direct create actions, plus manual/server action equivalent of `Data::AlarmsAssessment()` using `AssessmentScheduleRule`, idempotent child/type staff alarm creation, legacy `custom_notifications_assessment` receipts targeted like `getusersperclass()` through imported `login_users.uclasses`, parent/mobile `t_alarms_assessment_parents` alarm rows equivalent to `Data::addToAssessments()`, Assessment template rendering, staff in-app notifications, protected cron endpoint, current-user New/Viewed updates from receipt rows, sent-history rows, and parent `new_assessment` marker generation for non-draft reports. `/alarmsAssessment.php` now redirects to the modern assessment alarms page, and `verify-assessment-parent-delivery.ts` proves generated parent assessment rows surface through `notifications_master.php`. Remaining work is final visual audit and external provider push/SMS/email execution once production credentials/scheduling are confirmed."
   },
   {
     "legacyPhp": "Front/templates/admin/alarmsBirthday.php",
