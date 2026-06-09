@@ -963,45 +963,6 @@ export function HolidaysClient({
                     )}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium">Inform Teachers</label>
-                    <Controller
-                      control={form.control}
-                      name="informTeachers"
-                      render={({ field }) => (
-                        <div className="flex items-center gap-3 pt-1.5">
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                          <span className={`text-sm font-medium ${field.value ? "text-emerald-600" : "text-muted-foreground"}`}>
-                            {field.value ? "Yes" : "No"}
-                          </span>
-                        </div>
-                      )}
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium">Send Via</label>
-                    <Controller
-                      control={form.control}
-                      name="sendVia"
-                      render={({ field }) => (
-                        <Select value={field.value} onValueChange={field.onChange}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="BOTH">Both</SelectItem>
-                            <SelectItem value="WHATSAPP">WhatsApp</SelectItem>
-                            <SelectItem value="SMS">SMS</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
-                  </div>
-                </div>
               </div>
             </div>
 
