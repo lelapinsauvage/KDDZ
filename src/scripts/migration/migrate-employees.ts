@@ -221,7 +221,7 @@ async function migrateTeachers(prisma: PrismaClient, dryRun: boolean) {
   log(`Teachers: ${migrated} migrated, ${skipped} skipped`);
 
   // Teacher addresses
-  await migrateTeacherAddresses(prisma, dryRun);
+  await migrateTeacherAddresses(prisma, dryRun, sourceDatabase);
   // Teacher attachments
   await migrateTeacherAttachments(prisma, dryRun);
   // Teacher experience/stage/workshop rows
@@ -241,37 +241,103 @@ interface OldTeacherAddress {
   city: string;
   street: string;
   building: string;
+  datetime?: string;
   active: number;
+  [key: string]: unknown;
 }
 
-async function migrateTeacherAddresses(prisma: PrismaClient, dryRun: boolean) {
+async function migrateTeacherAddresses(
+  prisma: PrismaClient,
+  dryRun: boolean,
+  sourceDatabase: string
+) {
   const rows = await queryMysql<OldTeacherAddress>(
     "SELECT * FROM t_teacher_address WHERE active = 1"
   );
-  let count = 0;
+  let migrated = 0;
+  let backfilled = 0;
+  let skipped = 0;
   for (const row of rows) {
     const teacherId = getMapping("teacher", row.teacher_id);
-    if (!teacherId) continue;
+    const legacyId = toInt(row.taid, 0);
+    if (!teacherId || !legacyId) {
+      skipped++;
+      continue;
+    }
 
-    const existing = await prisma.teacherAddress.findFirst({
-      where: { teacherId },
+    const legacyTeacherId = toInt(row.teacher_id, 0) || null;
+    const key = legacyKey(sourceDatabase, "t_teacher_address", legacyId);
+    const street = cleanString(row.street);
+    const city = cleanString(row.city);
+    const region = cleanString(row.region);
+    const building = cleanString(row.building);
+    const createdAt = parseDate(row.datetime ?? "");
+
+    const existingByKey = await prisma.teacherAddress.findUnique({
+      where: { legacyKey: key },
     });
-    if (existing) continue;
+    const existing =
+      existingByKey ??
+      (await prisma.teacherAddress.findFirst({
+        where: {
+          teacherId,
+          legacyKey: null,
+          street,
+          city,
+          region,
+          building,
+        },
+      }));
 
+    const data = {
+      sourceDatabase,
+      legacyKey: key,
+      legacyId,
+      legacyTable: "t_teacher_address",
+      legacyTeacherId,
+      governorate: cleanString(row.muhafaza),
+      district: cleanString(row.quadaa),
+      region,
+      city,
+      street,
+      building,
+      legacyData: legacyRowData(
+        sourceDatabase,
+        "t_teacher_address",
+        legacyId,
+        row
+      ),
+      ...(createdAt ? { createdAt } : {}),
+    };
+
+    if (existing) {
+      if (!dryRun) {
+        await prisma.teacherAddress.update({
+          where: { id: existing.id },
+          data,
+        });
+      }
+      setMapping("teacher_address", legacyId, existing.id);
+      backfilled++;
+      continue;
+    }
+
+    const id = generateUUID();
     if (!dryRun) {
       await prisma.teacherAddress.create({
         data: {
-          id: generateUUID(),
+          id,
           teacherId,
-          street: cleanString(row.street),
-          city: cleanString(row.city),
-          region: cleanString(row.region),
+          ...data,
         },
       });
     }
-    count++;
+    setMapping("teacher_address", legacyId, id);
+    migrated++;
   }
-  log(`Teacher addresses: ${count} migrated`);
+  log(
+    `Teacher addresses: ${migrated} migrated, ${backfilled} existing/backfilled, ${skipped} skipped`
+  );
 }
 
 interface OldTeacherAttachment {
@@ -1211,30 +1277,90 @@ async function migrateManagers(prisma: PrismaClient, dryRun: boolean) {
   const addrs = await queryMysql<OldTeacherAddress>(
     "SELECT * FROM t_manager_address WHERE active = 1"
   );
-  let addrCount = 0;
+  let addrMigrated = 0;
+  let addrBackfilled = 0;
+  let addrSkipped = 0;
   for (const row of addrs) {
     const managerId = getMapping("manager", row.teacher_id);
-    if (!managerId) continue;
+    const legacyId = toInt(row.taid, 0);
+    if (!managerId || !legacyId) {
+      addrSkipped++;
+      continue;
+    }
 
-    const existing = await prisma.managerAddress.findFirst({
-      where: { managerId },
+    const legacyManagerId = toInt(row.teacher_id, 0) || null;
+    const key = legacyKey(sourceDatabase, "t_manager_address", legacyId);
+    const street = cleanString(row.street);
+    const city = cleanString(row.city);
+    const region = cleanString(row.region);
+    const building = cleanString(row.building);
+    const createdAt = parseDate(row.datetime ?? "");
+
+    const existingByKey = await prisma.managerAddress.findUnique({
+      where: { legacyKey: key },
     });
-    if (existing) continue;
+    const existing =
+      existingByKey ??
+      (await prisma.managerAddress.findFirst({
+        where: {
+          managerId,
+          legacyKey: null,
+          street,
+          city,
+          region,
+          building,
+        },
+      }));
 
+    const data = {
+      sourceDatabase,
+      legacyKey: key,
+      legacyId,
+      legacyTable: "t_manager_address",
+      legacyManagerId,
+      governorate: cleanString(row.muhafaza),
+      district: cleanString(row.quadaa),
+      region,
+      city,
+      street,
+      building,
+      legacyData: legacyRowData(
+        sourceDatabase,
+        "t_manager_address",
+        legacyId,
+        row
+      ),
+      ...(createdAt ? { createdAt } : {}),
+    };
+
+    if (existing) {
+      if (!dryRun) {
+        await prisma.managerAddress.update({
+          where: { id: existing.id },
+          data,
+        });
+      }
+      setMapping("manager_address", legacyId, existing.id);
+      addrBackfilled++;
+      continue;
+    }
+
+    const id = generateUUID();
     if (!dryRun) {
       await prisma.managerAddress.create({
         data: {
-          id: generateUUID(),
+          id,
           managerId,
-          street: cleanString(row.street),
-          city: cleanString(row.city),
-          region: cleanString(row.region),
+          ...data,
         },
       });
     }
-    addrCount++;
+    setMapping("manager_address", legacyId, id);
+    addrMigrated++;
   }
-  log(`Manager addresses: ${addrCount} migrated`);
+  log(
+    `Manager addresses: ${addrMigrated} migrated, ${addrBackfilled} existing/backfilled, ${addrSkipped} skipped`
+  );
 }
 
 // ---------------------------------------------------------------------------

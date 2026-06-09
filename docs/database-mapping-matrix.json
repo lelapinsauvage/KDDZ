@@ -669,7 +669,7 @@
     "legacyColumns": "taid:int(11) NOT NULL AUTO_INCREMENT, teacher_id:varchar(50) NOT NULL, muhafaza:varchar(50) CHARACTER SET utf8 NOT NULL, quadaa:varchar(50) CHARACTER SET utf8 NOT NULL, region:varchar(50) CHARACTER SET utf8 NOT NULL, city:varchar(50) CHARACTER SET utf8mb4 NOT NULL, street:varchar(50) CHARACTER SET utf8 NOT NULL, building:varchar(50) CHARACTER SET utf8 NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1'",
     "modernDestination": "ManagerAddress",
     "status": "mapped - migrated by migrate-employees.ts",
-    "reconciliation": "Active manager addresses migrate after manager mapping; needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Manager address rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy manager id, governorate, district, region, city, street, building, and raw legacyData; source/target count is covered by `employees.t_manager_address` reconciliation; mismatches expose unmapped managers, address-shape fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -804,8 +804,8 @@
     "legacyTable": "t_teacher_address",
     "legacyColumns": "taid:int(11) NOT NULL AUTO_INCREMENT, teacher_id:varchar(50) NOT NULL, muhafaza:varchar(50) CHARACTER SET utf8 NOT NULL, quadaa:varchar(50) CHARACTER SET utf8 NOT NULL, region:varchar(50) CHARACTER SET utf8 NOT NULL, city:varchar(50) CHARACTER SET utf8mb4 NOT NULL, street:varchar(50) CHARACTER SET utf8 NOT NULL, building:varchar(50) CHARACTER SET utf8 NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1'",
     "modernDestination": "TeacherAddress",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-employees.ts",
+    "reconciliation": "Teacher address rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy teacher id, governorate, district, region, city, street, building, and raw legacyData; source/target count is covered by `employees.t_teacher_address` reconciliation; mismatches expose unmapped teachers, address-shape fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1637,7 +1637,7 @@
     "legacyColumns": "taid:int(11) NOT NULL, teacher_id:varchar(50) NOT NULL, muhafaza:varchar(50) CHARACTER SET utf8 NOT NULL, quadaa:varchar(50) CHARACTER SET utf8 NOT NULL, region:varchar(50) CHARACTER SET utf8 NOT NULL, city:varchar(50) CHARACTER SET utf8mb4 NOT NULL, street:varchar(50) CHARACTER SET utf8 NOT NULL, building:varchar(50) CHARACTER SET utf8 NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1'",
     "modernDestination": "ManagerAddress",
     "status": "mapped - migrated by migrate-employees.ts",
-    "reconciliation": "Active manager addresses migrate after manager mapping; needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Manager address rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy manager id, governorate, district, region, city, street, building, and raw legacyData; source/target count is covered by `employees.t_manager_address` reconciliation; mismatches expose unmapped managers, address-shape fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1780,8 +1780,8 @@
     "legacyTable": "t_teacher_address",
     "legacyColumns": "taid:int(11) NOT NULL, teacher_id:varchar(50) NOT NULL, muhafaza:varchar(50) CHARACTER SET utf8 NOT NULL, quadaa:varchar(50) CHARACTER SET utf8 NOT NULL, region:varchar(50) CHARACTER SET utf8 NOT NULL, city:varchar(50) CHARACTER SET utf8mb4 NOT NULL, street:varchar(50) CHARACTER SET utf8 NOT NULL, building:varchar(50) CHARACTER SET utf8 NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1'",
     "modernDestination": "TeacherAddress",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-employees.ts",
+    "reconciliation": "Teacher address rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy teacher id, governorate, district, region, city, street, building, and raw legacyData; source/target count is covered by `employees.t_teacher_address` reconciliation; mismatches expose unmapped teachers, address-shape fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -2477,7 +2477,7 @@
     "legacyColumns": "taid:int(11) NOT NULL AUTO_INCREMENT, teacher_id:varchar(50) NOT NULL, muhafaza:varchar(50) CHARACTER SET utf8 NOT NULL, quadaa:varchar(50) CHARACTER SET utf8 NOT NULL, region:varchar(50) CHARACTER SET utf8 NOT NULL, city:varchar(50) CHARACTER SET utf8mb4 NOT NULL, street:varchar(50) CHARACTER SET utf8 NOT NULL, building:varchar(50) CHARACTER SET utf8 NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1'",
     "modernDestination": "ManagerAddress",
     "status": "mapped - migrated by migrate-employees.ts",
-    "reconciliation": "Active manager addresses migrate after manager mapping; needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Manager address rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy manager id, governorate, district, region, city, street, building, and raw legacyData; source/target count is covered by `employees.t_manager_address` reconciliation; mismatches expose unmapped managers, address-shape fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2612,8 +2612,8 @@
     "legacyTable": "t_teacher_address",
     "legacyColumns": "taid:int(11) NOT NULL AUTO_INCREMENT, teacher_id:varchar(50) NOT NULL, muhafaza:varchar(50) CHARACTER SET utf8 NOT NULL, quadaa:varchar(50) CHARACTER SET utf8 NOT NULL, region:varchar(50) CHARACTER SET utf8 NOT NULL, city:varchar(50) CHARACTER SET utf8mb4 NOT NULL, street:varchar(50) CHARACTER SET utf8 NOT NULL, building:varchar(50) CHARACTER SET utf8 NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1'",
     "modernDestination": "TeacherAddress",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-employees.ts",
+    "reconciliation": "Teacher address rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy teacher id, governorate, district, region, city, street, building, and raw legacyData; source/target count is covered by `employees.t_teacher_address` reconciliation; mismatches expose unmapped teachers, address-shape fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",

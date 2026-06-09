@@ -986,20 +986,30 @@ model Teacher {
 }
 
 model TeacherAddress {
-  id          String   @id @default(uuid()) @db.Uuid
-  teacherId   String   @db.Uuid
-  governorate String?
-  district    String?
-  region      String?
-  city        String?
-  street      String?
-  building    String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String   @id @default(uuid()) @db.Uuid
+  teacherId       String   @db.Uuid
+  sourceDatabase  String?
+  legacyKey       String?  @unique
+  legacyId        Int?
+  legacyTable     String?
+  legacyTeacherId Int?
+  governorate     String?
+  district        String?
+  region          String?
+  city            String?
+  street          String?
+  building        String?
+  legacyData      Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 
   @@index([teacherId])
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyTable])
+  @@index([legacyTeacherId])
   @@map("teacher_addresses")
 }
 
@@ -1438,17 +1448,30 @@ model Manager {
 }
 
 model ManagerAddress {
-  id        String   @id @default(uuid()) @db.Uuid
-  managerId String   @db.Uuid
-  street    String?
-  city      String?
-  region    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(uuid()) @db.Uuid
+  managerId       String   @db.Uuid
+  sourceDatabase  String?
+  legacyKey       String?  @unique
+  legacyId        Int?
+  legacyTable     String?
+  legacyManagerId Int?
+  governorate     String?
+  district        String?
+  region          String?
+  city            String?
+  street          String?
+  building        String?
+  legacyData      Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   manager Manager @relation(fields: [managerId], references: [id], onDelete: Cascade)
 
   @@index([managerId])
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyTable])
+  @@index([legacyManagerId])
   @@map("manager_addresses")
 }
 

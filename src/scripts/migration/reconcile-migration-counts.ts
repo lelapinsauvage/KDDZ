@@ -628,13 +628,15 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     notes:
       "Teacher core rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, branch mapping, profile image, register number, contact fields, and active flag.",
   }),
-  weakRule({
+  provenancedRule({
     id: "employees.t_teacher_address",
     step: "8. Employees",
     sourceTable: "t_teacher_address",
     sourceWhere: "active = 1",
     targetTable: "teacher_addresses",
-    notes: "Teacher address rows depend on teacher mapping.",
+    targetWhere: byLegacyTable("t_teacher_address"),
+    notes:
+      "Teacher address rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy teacher id, full address columns, and raw legacy row.",
   }),
   provenancedRule({
     id: "employees.t_teacher_attachments",
@@ -706,13 +708,15 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     notes:
       "Manager core rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, branch mapping, profile image, contact fields, and active flag.",
   }),
-  weakRule({
+  provenancedRule({
     id: "employees.t_manager_address",
     step: "8. Employees",
     sourceTable: "t_manager_address",
     sourceWhere: "active = 1",
     targetTable: "manager_addresses",
-    notes: "Manager address rows depend on manager mapping.",
+    targetWhere: byLegacyTable("t_manager_address"),
+    notes:
+      "Manager address rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy manager id, full address columns, and raw legacy row.",
   }),
   provenancedRule({
     id: "garderie_misc.t_attachments",

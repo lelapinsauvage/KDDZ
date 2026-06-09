@@ -127,11 +127,11 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_garderie_attachments` | BranchDocument |
 | `t_garderie_doctor`, `t_garderie_doctor_attachments` | Doctor, DoctorAttachment |
 | `t_parents` | Parent, including source database/key provenance and raw legacy row |
-| `t_teacher`, `t_teacher_address`, `t_teacher_attachments` | Teacher, TeacherAddress, TeacherAttachment; core teacher rows include source database/key provenance |
+| `t_teacher`, `t_teacher_address`, `t_teacher_attachments` | Teacher, TeacherAddress, TeacherAttachment; core teacher and address rows include source database/key provenance |
 | `t_teacher_info` | TeacherExperience |
 | `t_nurse`, `t_nurse_attachments` | Nurse, NurseAttachment; core nurse rows include source database/key provenance |
 | `t_doctor` | Doctor, DoctorAddress, including source database/key provenance and raw legacy row |
-| `t_manager`, `t_manager_address` | Manager, ManagerAddress; core manager rows include source database/key provenance |
+| `t_manager`, `t_manager_address` | Manager, ManagerAddress; core manager and address rows include source database/key provenance |
 | `t_manager_attachments` | ManagerAttachment |
 | `login_users` | User, plus LegacyAuthRecord rows preserving serialized `user_level` targeting metadata |
 | `parent_login_users` | ParentUser, including raw `legacyData`, numeric legacy login ids, child-link `usites`, and existing token preservation for `ws/login.php` parity |
@@ -284,6 +284,8 @@ Active parent profile rows from `t_parents` are reconciled against `Parent.sourc
 Teacher, nurse, and manager core rows from `t_teacher`, `t_nurse`, and `t_manager` are reconciled against their staff model `sourceDatabase`/`legacyTable` fields. Count mismatches usually mean a staff row had an unmapped branch or collided with a branch/name fallback during a backfill rerun.
 
 Doctor rows from `t_doctor` are reconciled against `Doctor.sourceDatabase` and `Doctor.legacyTable`; the migrator also backfills the attached address fields from the same legacy row. Count mismatches usually mean duplicate first/last-name fallback collisions or a canonical dump difference.
+
+Teacher and manager address rows from `t_teacher_address` and `t_manager_address` are reconciled against their address model `sourceDatabase`/`legacyTable` fields. Count mismatches usually mean a source row had an unmapped staff record or collided with an existing address-shape fallback during backfill.
 
 Active absence reports from `t_absent_report` are reconciled against `AbsenceReport.sourceDatabase`/`legacyKey`. Count mismatches usually mean a source row had an unmapped child or an invalid legacy report date.
 
