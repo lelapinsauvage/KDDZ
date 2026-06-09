@@ -127,11 +127,11 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_garderie_attachments` | BranchDocument |
 | `t_garderie_doctor`, `t_garderie_doctor_attachments` | Doctor, DoctorAttachment |
 | `t_parents` | Parent, including source database/key provenance and raw legacy row |
-| `t_teacher`, `t_teacher_address`, `t_teacher_attachments` | Teacher, TeacherAddress, TeacherAttachment |
+| `t_teacher`, `t_teacher_address`, `t_teacher_attachments` | Teacher, TeacherAddress, TeacherAttachment; core teacher rows include source database/key provenance |
 | `t_teacher_info` | TeacherExperience |
-| `t_nurse`, `t_nurse_attachments` | Nurse, NurseAttachment |
+| `t_nurse`, `t_nurse_attachments` | Nurse, NurseAttachment; core nurse rows include source database/key provenance |
 | `t_doctor` | Doctor, DoctorAddress |
-| `t_manager`, `t_manager_address` | Manager, ManagerAddress |
+| `t_manager`, `t_manager_address` | Manager, ManagerAddress; core manager rows include source database/key provenance |
 | `t_manager_attachments` | ManagerAttachment |
 | `login_users` | User, plus LegacyAuthRecord rows preserving serialized `user_level` targeting metadata |
 | `parent_login_users` | ParentUser, including raw `legacyData`, numeric legacy login ids, child-link `usites`, and existing token preservation for `ws/login.php` parity |
@@ -280,6 +280,8 @@ Child addresses and relative/contact rows from `t_address`, `t_authorized`, and 
 Parent mobile login rows from `parent_login_users` are reconciled against `ParentUser.sourceDatabase`/`legacyKey` for non-empty usernames. Count mismatches usually mean the source row could not be linked to a migrated child.
 
 Active parent profile rows from `t_parents` are reconciled against `Parent.sourceDatabase` and `Parent.legacyTable`. Count mismatches usually mean a source row had an unmapped child or a duplicate child/type fallback during a backfill rerun.
+
+Teacher, nurse, and manager core rows from `t_teacher`, `t_nurse`, and `t_manager` are reconciled against their staff model `sourceDatabase`/`legacyTable` fields. Count mismatches usually mean a staff row had an unmapped branch or collided with a branch/name fallback during a backfill rerun.
 
 Active absence reports from `t_absent_report` are reconciled against `AbsenceReport.sourceDatabase`/`legacyKey`. Count mismatches usually mean a source row had an unmapped child or an invalid legacy report date.
 

@@ -618,13 +618,15 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     notes:
       "Parent rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy child id, contact fields, pickup flag, and raw legacy row.",
   }),
-  weakRule({
+  provenancedRule({
     id: "employees.t_teacher",
     step: "8. Employees",
     sourceTable: "t_teacher",
     sourceWhere: "deleted = 0",
     targetTable: "teachers",
-    notes: "Teacher core rows do not yet carry sourceDatabase.",
+    targetWhere: byLegacyTable("t_teacher"),
+    notes:
+      "Teacher core rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, branch mapping, profile image, register number, contact fields, and active flag.",
   }),
   weakRule({
     id: "employees.t_teacher_address",
@@ -665,13 +667,15 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     notes:
       "Teacher calendar status rows preserve sourceDatabase/sourceTable in EmployeeEvent.notes JSON; mismatches expose orphaned teachers, invalid statuses, or invalid dates.",
   }),
-  weakRule({
+  provenancedRule({
     id: "employees.t_nurse",
     step: "8. Employees",
     sourceTable: "t_nurse",
     sourceWhere: "deleted = 0",
     targetTable: "nurses",
-    notes: "Nurse core rows do not yet carry sourceDatabase.",
+    targetWhere: byLegacyTable("t_nurse"),
+    notes:
+      "Nurse core rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, branch mapping, profile image, contact fields, and active flag.",
   }),
   provenancedRule({
     id: "employees.t_nurse_attachments",
@@ -691,13 +695,15 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     notes:
       "General doctor rows are matched by name and do not yet store sourceDatabase.",
   }),
-  weakRule({
+  provenancedRule({
     id: "employees.t_manager",
     step: "8. Employees",
     sourceTable: "t_manager",
     sourceWhere: "deleted = 0",
     targetTable: "managers",
-    notes: "Manager core rows do not yet carry sourceDatabase.",
+    targetWhere: byLegacyTable("t_manager"),
+    notes:
+      "Manager core rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, branch mapping, profile image, contact fields, and active flag.",
   }),
   weakRule({
     id: "employees.t_manager_address",

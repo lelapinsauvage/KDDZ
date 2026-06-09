@@ -660,8 +660,8 @@
     "legacyTable": "t_manager",
     "legacyColumns": "teacher_id:int(11) NOT NULL AUTO_INCREMENT, image:varchar(50) NOT NULL DEFAULT 'default.jpg', t_user_id:int(11) NOT NULL DEFAULT '0', f_name:varchar(50) CHARACTER SET utf8 NOT NULL, m_name:varchar(50) CHARACTER SET utf8 NOT NULL, l_name:varchar(50) CHARACTER SET utf8 NOT NULL, f_name_ar:varchar(100) CHARACTER SET utf8mb4 NOT NULL, m_name_ar:varchar(100) CHARACTER SET utf8mb4 NOT NULL, l_name_ar:varchar(100) CHARACTER SET utf8mb4 NOT NULL, dob:varchar(50) CHARACTER SET utf8 NOT NULL, pob:varchar(50) CHARACTER SET utf8 NOT NULL, nationality:varchar(50) CHARACTER SET utf8 NOT NULL, sel_gender:varchar(50) CHARACTER SET utf8 NOT NULL, mobile:varchar(50) CHARACTER SET utf8 NOT NULL, email:varchar(50) CHARACTER SET utf8 NOT NULL, uni_degree:varchar(50) CHARACTER SET utf8 NOT NULL, uni_degree_ar:varchar(50) CHARACTER SET utf8 NOT NULL, sel_branch:int(11) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', deleted:tinyint(1) NOT NULL DEFAULT '0', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:int(11) NOT NULL",
     "modernDestination": "Manager",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-employees.ts",
+    "reconciliation": "Manager core rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, branch mapping, profile image, contact fields, and active flag; source/target count is covered by `employees.t_manager` reconciliation; mismatches expose unmapped branches, branch/name fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -724,8 +724,8 @@
     "legacyTable": "t_nurse",
     "legacyColumns": "teacher_id:int(11) NOT NULL AUTO_INCREMENT, image:varchar(50) NOT NULL DEFAULT 'default.jpg', f_name:varchar(50) CHARACTER SET utf8 NOT NULL, m_name:varchar(50) CHARACTER SET utf8 NOT NULL, l_name:varchar(50) CHARACTER SET utf8 NOT NULL, f_name_ar:varchar(100) CHARACTER SET utf8mb4 NOT NULL, m_name_ar:varchar(100) CHARACTER SET utf8mb4 NOT NULL, l_name_ar:varchar(100) CHARACTER SET utf8mb4 NOT NULL, dob:varchar(50) CHARACTER SET utf8 NOT NULL, pob:varchar(50) CHARACTER SET utf8 NOT NULL, nationality:varchar(50) CHARACTER SET utf8 NOT NULL, sel_gender:varchar(50) CHARACTER SET utf8 NOT NULL, mobile:varchar(50) CHARACTER SET utf8 NOT NULL, email:varchar(50) CHARACTER SET utf8 NOT NULL, uni_degree:varchar(50) CHARACTER SET utf8 NOT NULL, uni_degree_ar:varchar(50) CHARACTER SET utf8 NOT NULL, sel_branch:int(11) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', deleted:tinyint(1) NOT NULL DEFAULT '0', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:int(11) NOT NULL",
     "modernDestination": "Nurse",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-employees.ts",
+    "reconciliation": "Nurse core rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, branch mapping, profile image, contact fields, and active flag; source/target count is covered by `employees.t_nurse` reconciliation; mismatches expose unmapped branches, branch/name fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -796,8 +796,8 @@
     "legacyTable": "t_teacher",
     "legacyColumns": "teacher_id:int(11) NOT NULL AUTO_INCREMENT, image:varchar(50) NOT NULL DEFAULT 'default.jpg', t_user_id:int(11) NOT NULL DEFAULT '0', f_name:varchar(50) CHARACTER SET utf8 NOT NULL, m_name:varchar(50) CHARACTER SET utf8 NOT NULL, l_name:varchar(50) CHARACTER SET utf8 NOT NULL, dob:varchar(50) CHARACTER SET utf8 NOT NULL, pob:varchar(50) CHARACTER SET utf8 NOT NULL, regnum:varchar(50) CHARACTER SET utf8 NOT NULL, nationality:varchar(50) CHARACTER SET utf8 NOT NULL, martial:varchar(50) CHARACTER SET utf8 NOT NULL, noc:varchar(50) CHARACTER SET utf8 NOT NULL, sel_gender:varchar(50) CHARACTER SET utf8 NOT NULL, has_medcase:varchar(50) CHARACTER SET utf8 NOT NULL, medcase:varchar(50) CHARACTER SET utf8 NOT NULL, tel:varchar(50) CHARACTER SET utf8 NOT NULL, mobile:varchar(50) CHARACTER SET utf8 NOT NULL, cnss:varchar(50) CHARACTER SET utf8 NOT NULL, email:varchar(50) CHARACTER SET utf8 NOT NULL, cnssnum:varchar(50) CHARACTER SET utf8 NOT NULL, sec_degree:varchar(50) CHARACTER SET utf8 NOT NULL, sec_degree_y:varchar(50) CHARACTER SET utf8 NOT NULL, uni_degree:varchar(50) CHARACTER SET utf8 NOT NULL, uni_degree_y:varchar(50) CHARACTER SET utf8 NOT NULL, engselected:tinyint(1) NOT NULL DEFAULT '0', engread:varchar(50) CHARACTER SET utf8 NOT NULL, engwrite:varchar(50) CHARACTER SET utf8 NOT NULL, engspeak:varchar(50) CHARACTER SET utf8 NOT NULL, frselected:tinyint(1) NOT NULL DEFAULT '0', frread:varchar(50) CHARACTER SET utf8 NOT NULL, frwrite:varchar(50) CHARACTER SET utf8 NOT NULL, frspeak:varchar(50) CHARACTER SET utf8 NOT NULL, arselected:tinyint(1) NOT NULL DEFAULT '0', arread:varchar(50) CHARACTER SET utf8 NOT NULL, arwrite:varchar(50) CHARACTER SET utf8 NOT NULL, arspeak:varchar(50) CHARACTER SET utf8 NOT NULL, remarks:varchar(50) CHARACTER SET utf8 NOT NULL, classid:int(11) NOT NULL, sel_branch:int(11) NOT NULL, contract:varchar(50) CHARACTER SET utf8 NOT NULL, medtest:varchar(50) CHARACTER SET utf8 NOT NULL, firstaid:varchar(50) CHARACTER SET utf8 NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', deleted:tinyint(1) NOT NULL DEFAULT '0', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:int(11) NOT NULL",
     "modernDestination": "Teacher",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-employees.ts",
+    "reconciliation": "Teacher core rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, branch mapping, register number, profile image, contact fields, and active flag; source/target count is covered by `employees.t_teacher` reconciliation; mismatches expose unmapped branches, branch/name fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1628,8 +1628,8 @@
     "legacyTable": "t_manager",
     "legacyColumns": "teacher_id:int(11) NOT NULL, image:varchar(50) NOT NULL DEFAULT 'default.jpg', t_user_id:int(11) NOT NULL DEFAULT '0', f_name:varchar(50) CHARACTER SET utf8 NOT NULL, m_name:varchar(50) CHARACTER SET utf8 NOT NULL, l_name:varchar(50) CHARACTER SET utf8 NOT NULL, f_name_ar:varchar(100) CHARACTER SET utf8mb4 NOT NULL, m_name_ar:varchar(100) CHARACTER SET utf8mb4 NOT NULL, l_name_ar:varchar(100) CHARACTER SET utf8mb4 NOT NULL, dob:varchar(50) CHARACTER SET utf8 NOT NULL, pob:varchar(50) CHARACTER SET utf8 NOT NULL, nationality:varchar(50) CHARACTER SET utf8 NOT NULL, sel_gender:varchar(50) CHARACTER SET utf8 NOT NULL, mobile:varchar(50) CHARACTER SET utf8 NOT NULL, email:varchar(50) CHARACTER SET utf8 NOT NULL, uni_degree:varchar(50) CHARACTER SET utf8 NOT NULL, uni_degree_ar:varchar(50) CHARACTER SET utf8 NOT NULL, sel_branch:int(11) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', deleted:tinyint(1) NOT NULL DEFAULT '0', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:int(11) NOT NULL",
     "modernDestination": "Manager",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-employees.ts",
+    "reconciliation": "Manager core rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, branch mapping, profile image, contact fields, and active flag; source/target count is covered by `employees.t_manager` reconciliation; mismatches expose unmapped branches, branch/name fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1692,8 +1692,8 @@
     "legacyTable": "t_nurse",
     "legacyColumns": "teacher_id:int(11) NOT NULL, image:varchar(50) NOT NULL DEFAULT 'default.jpg', f_name:varchar(50) CHARACTER SET utf8 NOT NULL, m_name:varchar(50) CHARACTER SET utf8 NOT NULL, l_name:varchar(50) CHARACTER SET utf8 NOT NULL, f_name_ar:varchar(100) CHARACTER SET utf8mb4 NOT NULL, m_name_ar:varchar(100) CHARACTER SET utf8mb4 NOT NULL, l_name_ar:varchar(100) CHARACTER SET utf8mb4 NOT NULL, dob:varchar(50) CHARACTER SET utf8 NOT NULL, pob:varchar(50) CHARACTER SET utf8 NOT NULL, nationality:varchar(50) CHARACTER SET utf8 NOT NULL, sel_gender:varchar(50) CHARACTER SET utf8 NOT NULL, mobile:varchar(50) CHARACTER SET utf8 NOT NULL, email:varchar(50) CHARACTER SET utf8 NOT NULL, uni_degree:varchar(50) CHARACTER SET utf8 NOT NULL, uni_degree_ar:varchar(50) CHARACTER SET utf8 NOT NULL, sel_branch:int(11) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', deleted:tinyint(1) NOT NULL DEFAULT '0', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:int(11) NOT NULL",
     "modernDestination": "Nurse",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-employees.ts",
+    "reconciliation": "Nurse core rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, branch mapping, profile image, contact fields, and active flag; source/target count is covered by `employees.t_nurse` reconciliation; mismatches expose unmapped branches, branch/name fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1772,8 +1772,8 @@
     "legacyTable": "t_teacher",
     "legacyColumns": "teacher_id:int(11) NOT NULL, image:varchar(50) NOT NULL DEFAULT 'default.jpg', t_user_id:int(11) NOT NULL DEFAULT '0', f_name:varchar(50) CHARACTER SET utf8 NOT NULL, m_name:varchar(50) CHARACTER SET utf8 NOT NULL, l_name:varchar(50) CHARACTER SET utf8 NOT NULL, dob:varchar(50) CHARACTER SET utf8 NOT NULL, pob:varchar(50) CHARACTER SET utf8 NOT NULL, regnum:varchar(50) CHARACTER SET utf8 NOT NULL, nationality:varchar(50) CHARACTER SET utf8 NOT NULL, martial:varchar(50) CHARACTER SET utf8 NOT NULL, noc:varchar(50) CHARACTER SET utf8 NOT NULL, sel_gender:varchar(50) CHARACTER SET utf8 NOT NULL, has_medcase:varchar(50) CHARACTER SET utf8 NOT NULL, medcase:varchar(50) CHARACTER SET utf8 NOT NULL, tel:varchar(50) CHARACTER SET utf8 NOT NULL, mobile:varchar(50) CHARACTER SET utf8 NOT NULL, cnss:varchar(50) CHARACTER SET utf8 NOT NULL, email:varchar(50) CHARACTER SET utf8 NOT NULL, cnssnum:varchar(50) CHARACTER SET utf8 NOT NULL, sec_degree:varchar(50) CHARACTER SET utf8 NOT NULL, sec_degree_y:varchar(50) CHARACTER SET utf8 NOT NULL, uni_degree:varchar(50) CHARACTER SET utf8 NOT NULL, uni_degree_y:varchar(50) CHARACTER SET utf8 NOT NULL, engselected:tinyint(1) NOT NULL DEFAULT '0', engread:varchar(50) CHARACTER SET utf8 NOT NULL, engwrite:varchar(50) CHARACTER SET utf8 NOT NULL, engspeak:varchar(50) CHARACTER SET utf8 NOT NULL, frselected:tinyint(1) NOT NULL DEFAULT '0', frread:varchar(50) CHARACTER SET utf8 NOT NULL, frwrite:varchar(50) CHARACTER SET utf8 NOT NULL, frspeak:varchar(50) CHARACTER SET utf8 NOT NULL, arselected:tinyint(1) NOT NULL DEFAULT '0', arread:varchar(50) CHARACTER SET utf8 NOT NULL, arwrite:varchar(50) CHARACTER SET utf8 NOT NULL, arspeak:varchar(50) CHARACTER SET utf8 NOT NULL, remarks:varchar(50) CHARACTER SET utf8 NOT NULL, classid:int(11) NOT NULL, sel_branch:int(11) NOT NULL, contract:varchar(50) CHARACTER SET utf8 NOT NULL, medtest:varchar(50) CHARACTER SET utf8 NOT NULL, firstaid:varchar(50) CHARACTER SET utf8 NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', deleted:tinyint(1) NOT NULL DEFAULT '0', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:int(11) NOT NULL",
     "modernDestination": "Teacher",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-employees.ts",
+    "reconciliation": "Teacher core rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, branch mapping, register number, profile image, contact fields, and active flag; source/target count is covered by `employees.t_teacher` reconciliation; mismatches expose unmapped branches, branch/name fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -2468,8 +2468,8 @@
     "legacyTable": "t_manager",
     "legacyColumns": "teacher_id:int(11) NOT NULL AUTO_INCREMENT, image:varchar(50) NOT NULL DEFAULT 'default.jpg', t_user_id:int(11) NOT NULL DEFAULT '0', f_name:varchar(50) CHARACTER SET utf8 NOT NULL, m_name:varchar(50) CHARACTER SET utf8 NOT NULL, l_name:varchar(50) CHARACTER SET utf8 NOT NULL, f_name_ar:varchar(100) CHARACTER SET utf8mb4 NOT NULL, m_name_ar:varchar(100) CHARACTER SET utf8mb4 NOT NULL, l_name_ar:varchar(100) CHARACTER SET utf8mb4 NOT NULL, dob:varchar(50) CHARACTER SET utf8 NOT NULL, pob:varchar(50) CHARACTER SET utf8 NOT NULL, nationality:varchar(50) CHARACTER SET utf8 NOT NULL, sel_gender:varchar(50) CHARACTER SET utf8 NOT NULL, mobile:varchar(50) CHARACTER SET utf8 NOT NULL, email:varchar(50) CHARACTER SET utf8 NOT NULL, uni_degree:varchar(50) CHARACTER SET utf8 NOT NULL, uni_degree_ar:varchar(50) CHARACTER SET utf8 NOT NULL, sel_branch:int(11) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', deleted:tinyint(1) NOT NULL DEFAULT '0', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:int(11) NOT NULL",
     "modernDestination": "Manager",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-employees.ts",
+    "reconciliation": "Manager core rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, branch mapping, profile image, contact fields, and active flag; source/target count is covered by `employees.t_manager` reconciliation; mismatches expose unmapped branches, branch/name fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2532,8 +2532,8 @@
     "legacyTable": "t_nurse",
     "legacyColumns": "teacher_id:int(11) NOT NULL AUTO_INCREMENT, image:varchar(50) NOT NULL DEFAULT 'default.jpg', f_name:varchar(50) CHARACTER SET utf8 NOT NULL, m_name:varchar(50) CHARACTER SET utf8 NOT NULL, l_name:varchar(50) CHARACTER SET utf8 NOT NULL, f_name_ar:varchar(100) CHARACTER SET utf8mb4 NOT NULL, m_name_ar:varchar(100) CHARACTER SET utf8mb4 NOT NULL, l_name_ar:varchar(100) CHARACTER SET utf8mb4 NOT NULL, dob:varchar(50) CHARACTER SET utf8 NOT NULL, pob:varchar(50) CHARACTER SET utf8 NOT NULL, nationality:varchar(50) CHARACTER SET utf8 NOT NULL, sel_gender:varchar(50) CHARACTER SET utf8 NOT NULL, mobile:varchar(50) CHARACTER SET utf8 NOT NULL, email:varchar(50) CHARACTER SET utf8 NOT NULL, uni_degree:varchar(50) CHARACTER SET utf8 NOT NULL, uni_degree_ar:varchar(50) CHARACTER SET utf8 NOT NULL, sel_branch:int(11) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', deleted:tinyint(1) NOT NULL DEFAULT '0', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:int(11) NOT NULL",
     "modernDestination": "Nurse",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-employees.ts",
+    "reconciliation": "Nurse core rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, branch mapping, profile image, contact fields, and active flag; source/target count is covered by `employees.t_nurse` reconciliation; mismatches expose unmapped branches, branch/name fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2604,8 +2604,8 @@
     "legacyTable": "t_teacher",
     "legacyColumns": "teacher_id:int(11) NOT NULL AUTO_INCREMENT, image:varchar(50) NOT NULL DEFAULT 'default.jpg', t_user_id:int(11) NOT NULL DEFAULT '0', f_name:varchar(50) CHARACTER SET utf8 NOT NULL, m_name:varchar(50) CHARACTER SET utf8 NOT NULL, l_name:varchar(50) CHARACTER SET utf8 NOT NULL, dob:varchar(50) CHARACTER SET utf8 NOT NULL, pob:varchar(50) CHARACTER SET utf8 NOT NULL, regnum:varchar(50) CHARACTER SET utf8 NOT NULL, nationality:varchar(50) CHARACTER SET utf8 NOT NULL, martial:varchar(50) CHARACTER SET utf8 NOT NULL, noc:varchar(50) CHARACTER SET utf8 NOT NULL, sel_gender:varchar(50) CHARACTER SET utf8 NOT NULL, has_medcase:varchar(50) CHARACTER SET utf8 NOT NULL, medcase:varchar(50) CHARACTER SET utf8 NOT NULL, tel:varchar(50) CHARACTER SET utf8 NOT NULL, mobile:varchar(50) CHARACTER SET utf8 NOT NULL, cnss:varchar(50) CHARACTER SET utf8 NOT NULL, email:varchar(50) CHARACTER SET utf8 NOT NULL, cnssnum:varchar(50) CHARACTER SET utf8 NOT NULL, sec_degree:varchar(50) CHARACTER SET utf8 NOT NULL, sec_degree_y:varchar(50) CHARACTER SET utf8 NOT NULL, uni_degree:varchar(50) CHARACTER SET utf8 NOT NULL, uni_degree_y:varchar(50) CHARACTER SET utf8 NOT NULL, engselected:tinyint(1) NOT NULL DEFAULT '0', engread:varchar(50) CHARACTER SET utf8 NOT NULL, engwrite:varchar(50) CHARACTER SET utf8 NOT NULL, engspeak:varchar(50) CHARACTER SET utf8 NOT NULL, frselected:tinyint(1) NOT NULL DEFAULT '0', frread:varchar(50) CHARACTER SET utf8 NOT NULL, frwrite:varchar(50) CHARACTER SET utf8 NOT NULL, frspeak:varchar(50) CHARACTER SET utf8 NOT NULL, arselected:tinyint(1) NOT NULL DEFAULT '0', arread:varchar(50) CHARACTER SET utf8 NOT NULL, arwrite:varchar(50) CHARACTER SET utf8 NOT NULL, arspeak:varchar(50) CHARACTER SET utf8 NOT NULL, remarks:varchar(50) CHARACTER SET utf8 NOT NULL, classid:int(11) NOT NULL, sel_branch:int(11) NOT NULL, contract:varchar(50) CHARACTER SET utf8 NOT NULL, medtest:varchar(50) CHARACTER SET utf8 NOT NULL, firstaid:varchar(50) CHARACTER SET utf8 NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', deleted:tinyint(1) NOT NULL DEFAULT '0', datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:int(11) NOT NULL",
     "modernDestination": "Teacher",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-employees.ts",
+    "reconciliation": "Teacher core rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, branch mapping, register number, profile image, contact fields, and active flag; source/target count is covered by `employees.t_teacher` reconciliation; mismatches expose unmapped branches, branch/name fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
