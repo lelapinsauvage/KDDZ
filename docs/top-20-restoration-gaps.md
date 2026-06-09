@@ -40,6 +40,7 @@ This list is the first implementation backlog after the generated inventory/matr
 4. **Full data reconciliation**
    - `reconcile-migration-counts.ts` now provides curated source/target count checks across the migration order and distinguishes strong provenance from weaker count-only evidence.
    - Attachment reconciliation now compares real-file legacy rows only and uses strong provenance for teacher, nurse, child, doctor, manager, daily report, absence report, and medical form attachment tables that preserve `sourceDatabase` and `legacyKey`.
+   - Parent mobile login reconciliation now uses `ParentUser.sourceDatabase`/`legacyKey` for non-empty `parent_login_users.username` rows, exposing unresolved child links instead of hiding them in broad user totals.
    - Teacher calendar status reconciliation now covers migrated `t_emp_status` rows through the legacy JSON stored on `EmployeeEvent.notes`.
    - Notification receipt reconciliation now covers the full migrated delivery-table set from `migrate-alarms.ts`, including parent receipt variants, requests/others, event staff/parent deliveries, and holiday read-state.
    - Remaining work is to run it against the canonical production dumps after import, resolve warnings/missing/error rows, and add skipped/orphan detail where count-only evidence is still weak.

@@ -732,13 +732,14 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     notes:
       "Modern users can include seeded/admin users; this is a lower-bound check.",
   }),
-  weakRule({
+  provenancedRule({
     id: "users.parent_login_users",
     step: "10. Users",
     sourceTable: "parent_login_users",
+    sourceWhere: "TRIM(username) <> ''",
     targetTable: "parent_users",
     notes:
-      "Parent users do not yet preserve sourceDatabase; count is not row-level proof.",
+      "Parent users preserve sourceDatabase, legacyKey, legacyId, legacyChildId, token, active flag, and raw legacyData; mismatches expose unresolved child links or invalid usernames.",
   }),
   ...accessControlTables.map((table) =>
     provenancedRule({
