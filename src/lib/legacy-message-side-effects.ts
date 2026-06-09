@@ -12,6 +12,8 @@ interface LegacyMessageSideEffectConfig {
   parentDeliveryTable: string | null;
   staffDeliveryTable: string | null;
   href: string;
+  parentDeliveryMode?: "receipt" | "standaloneAlarm";
+  parentStandaloneReceipt?: boolean;
   createsHoliday?: boolean;
   createsEvent?: boolean;
 }
@@ -40,6 +42,8 @@ const LEGACY_MESSAGE_SIDE_EFFECTS: LegacyMessageSideEffectConfig[] = [
     parentDeliveryTable: "custom_notifications_birthday_parents",
     staffDeliveryTable: "custom_notifications_birthday",
     href: "alarmsBirthday.php",
+    parentDeliveryMode: "standaloneAlarm",
+    parentStandaloneReceipt: true,
   },
   {
     legacyNatureId: 2,
@@ -73,6 +77,7 @@ const LEGACY_MESSAGE_SIDE_EFFECTS: LegacyMessageSideEffectConfig[] = [
     parentDeliveryTable: "t_alarms_assessment_parents",
     staffDeliveryTable: "custom_notifications_assessment",
     href: "alarmsAssessment.php",
+    parentDeliveryMode: "standaloneAlarm",
   },
   {
     legacyNatureId: 4,
@@ -230,21 +235,53 @@ function sqlDateTime(date = new Date()) {
   return date.toISOString().slice(0, 19).replace("T", " ");
 }
 
+function readLegacyNumber(data: unknown, key: string) {
+  const record =
+    data && typeof data === "object" && !Array.isArray(data)
+      ? (data as Record<string, unknown>)
+      : {};
+  const value = record[key];
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
 async function nextLegacySideEffectId(
   tx: Prisma.TransactionClient,
   sourceTables: string[],
 ) {
-  const [receiptMax, eventMax] = await Promise.all([
+  const [receiptMax, eventMax, alarmRows] = await Promise.all([
     tx.notificationReceipt.aggregate({
       where: { sourceTable: { in: sourceTables } },
       _max: { legacyNotificationId: true },
     }),
     tx.event.aggregate({ _max: { legacyId: true } }),
+    sourceTables.length
+      ? tx.alarm.findMany({
+          where: {
+            OR: sourceTables.map((table) => ({
+              legacyData: { path: ["sourceTable"], equals: table },
+            })),
+          },
+          select: { legacyData: true },
+        })
+      : Promise.resolve([]),
   ]);
+  const alarmMax = alarmRows.reduce((max, alarm) => {
+    const legacyId =
+      readLegacyNumber(alarm.legacyData, "aid") ??
+      readLegacyNumber(alarm.legacyData, "id") ??
+      0;
+    return Math.max(max, legacyId);
+  }, 0);
 
   return Math.max(
     receiptMax._max.legacyNotificationId ?? 0,
     eventMax._max.legacyId ?? 0,
+    alarmMax,
   ) + 1;
 }
 
@@ -563,6 +600,81 @@ export async function createLegacyBulkMessageSideEffects(params: {
 
   for (const child of params.children) {
     const legacyNotificationId = nextLegacyId++;
+    if (
+      config.parentDeliveryMode === "standaloneAlarm" &&
+      config.parentDeliveryTable
+    ) {
+      const alarm = await params.tx.alarm.create({
+        data: {
+          type: config.alarmType,
+          referenceId: child.id,
+          referenceType: "Child",
+          message: params.body,
+          dueDate: today,
+          branchId: child.branchId,
+          isActive: true,
+          legacyData: {
+            aid: legacyNotificationId,
+            id: legacyNotificationId,
+            sourceTable: config.parentDeliveryTable,
+            sourceContentTable: config.contentTable,
+            sourceDeliveryTable: config.staffDeliveryTable,
+            parentDeliveryTable: config.parentDeliveryTable,
+            modernGenerator: "sendBulkChildMessage",
+            legacyMethod: config.legacyMethod,
+            legacyNature: params.nature,
+            legacyNatureId: config.legacyNatureId,
+            messageThreadId: params.threadId,
+            senderId: params.senderId,
+            childId: child.id,
+            child_id: child.legacyId,
+            cusntf_user_id: child.legacyId,
+            cusntf_notification_text: params.body,
+            cusntf_is_viewed: 0,
+            classId: child.classId,
+            type: params.subject || config.family,
+            details: params.body,
+            href: config.href,
+            ntype: 1,
+            status: 0,
+            datetime: sqlDateTime(now),
+          },
+        },
+      });
+      summary.alarmsCreated += 1;
+
+      if (config.parentStandaloneReceipt) {
+        const receipts = await params.tx.notificationReceipt.createMany({
+          data: [{
+            sourceTable: config.parentDeliveryTable,
+            category: `${config.category}_parents`,
+            legacyNotificationId,
+            legacyRecipientId:
+              child.legacyId ??
+              child.parentUsers[0]?.legacyChildId ??
+              child.parentUsers[0]?.legacyId ??
+              -1,
+            recipientType: "CHILD",
+            recipientId: child.id,
+            alarmId: alarm.id,
+            isRead: false,
+            metadata: {
+              modernTargetType: "Alarm",
+              modernTargetId: alarm.id,
+              datetime: sqlDateTime(now),
+              ntype: 1,
+              legacyMethod: config.legacyMethod,
+              legacyNatureId: config.legacyNatureId,
+            },
+          }],
+          skipDuplicates: true,
+        });
+        summary.receiptsCreated += receipts.count;
+      }
+
+      continue;
+    }
+
     const alarm = await params.tx.alarm.create({
       data: {
         type: config.alarmType,
