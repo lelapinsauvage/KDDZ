@@ -540,7 +540,8 @@ export async function createLegacyBulkMessageSideEffects(params: {
   }
 
   const usesSharedReceiptBackedContent =
-    config.parentDeliveryMode !== "standaloneAlarm";
+    config.parentDeliveryMode !== "standaloneAlarm" &&
+    Boolean(config.staffDeliveryTable);
 
   if (
     staffUsers.length > 0 ||
@@ -727,6 +728,7 @@ export async function createLegacyBulkMessageSideEffects(params: {
           senderId: params.senderId,
           childId: child.id,
           legacyChildId: child.legacyId,
+          child_id: child.legacyId,
           classId: child.classId,
           type: params.subject || config.family,
           details: params.body,

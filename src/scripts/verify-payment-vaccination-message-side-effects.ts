@@ -1,0 +1,305 @@
+import "dotenv/config";
+import assert from "node:assert/strict";
+import { NextRequest } from "next/server";
+import { POST as notificationsPost } from "@/app/ws/notifications_master.php/route";
+import { db } from "@/lib/db";
+import {
+  createLegacyBulkMessageSideEffects,
+  findLegacyMessageSideEffect,
+  legacySideEffectHasTargets,
+} from "@/lib/legacy-message-side-effects";
+
+type IdRecord = { id: string };
+type ChildRecord = { id: string; legacyId: number | null; branchId: string; classId: string | null };
+type ParentRecord = { id: string; legacyId: number | null; legacyChildId: number | null };
+
+type Scenario = {
+  nature: "Payment" | "Vaccination";
+  family: "Payments" | "Vaccinations";
+  alarmType: "PAYMENT" | "VACCINATION";
+  legacyMethod: "addToPayments" | "addToVaccinations";
+  contentTable: "t_alarms_payments" | "t_alarms_vaccinations";
+  parentDeliveryTable: "custom_notifications_payments" | "custom_notifications_vaccinations";
+  href: "alarmsPayments.php" | "AlarmsVaccinations.php";
+};
+
+const SCENARIOS: Scenario[] = [
+  {
+    nature: "Payment",
+    family: "Payments",
+    alarmType: "PAYMENT",
+    legacyMethod: "addToPayments",
+    contentTable: "t_alarms_payments",
+    parentDeliveryTable: "custom_notifications_payments",
+    href: "alarmsPayments.php",
+  },
+  {
+    nature: "Vaccination",
+    family: "Vaccinations",
+    alarmType: "VACCINATION",
+    legacyMethod: "addToVaccinations",
+    contentTable: "t_alarms_vaccinations",
+    parentDeliveryTable: "custom_notifications_vaccinations",
+    href: "AlarmsVaccinations.php",
+  },
+];
+
+async function main() {
+  for (const scenario of SCENARIOS) {
+    await verifyScenario(scenario);
+  }
+
+  console.log("payment and vaccination message side-effect assertions passed");
+}
+
+async function verifyScenario(scenario: Scenario) {
+  const marker = `verify-${scenario.nature.toLowerCase()}-side-effect-${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2)}`;
+  const legacyChildId = Math.floor(Date.now() % 2_000_000_000) + (
+    scenario.nature === "Vaccination" ? 300_000 : 0
+  );
+  const subject = `${scenario.nature} subject ${marker}`;
+  const body = `${scenario.nature} body ${marker}`;
+
+  let organization: IdRecord | null = null;
+  let branch: IdRecord | null = null;
+  let sender: IdRecord | null = null;
+  let child: ChildRecord | null = null;
+  let parentUser: ParentRecord | null = null;
+  let thread: IdRecord | null = null;
+
+  try {
+    const config = findLegacyMessageSideEffect(scenario.nature);
+    assert.ok(config, `${scenario.nature} nature should map to a legacy side-effect config`);
+    assert.equal(config.family, scenario.family);
+    assert.equal(config.alarmType, scenario.alarmType);
+    assert.equal(config.legacyMethod, scenario.legacyMethod);
+    assert.equal(config.contentTable, scenario.contentTable);
+    assert.equal(config.parentDeliveryTable, scenario.parentDeliveryTable);
+    assert.equal(config.staffDeliveryTable, null);
+    assert.equal(config.href, scenario.href);
+    assert.equal(config.parentDeliveryMode, undefined);
+    assert.equal(config.parentStandaloneReceipt, undefined);
+    assert.equal(legacySideEffectHasTargets(config, 1, 0), true);
+    assert.equal(legacySideEffectHasTargets(config, 0, 1), false);
+
+    organization = await db.organization.create({
+      data: {
+        name: `${scenario.nature} Side Effect Verification`,
+        slug: `${marker}-org`,
+      },
+      select: { id: true },
+    });
+
+    branch = await db.branch.create({
+      data: {
+        organizationId: organization.id,
+        name: `${scenario.nature} Side Effect Branch`,
+      },
+      select: { id: true },
+    });
+
+    sender = await db.user.create({
+      data: {
+        email: `${marker}-sender@example.test`,
+        name: `${scenario.nature} Sender`,
+        role: "ADMIN",
+        organizationId: organization.id,
+        isActive: true,
+      },
+      select: { id: true },
+    });
+
+    child = await db.child.create({
+      data: {
+        firstName: scenario.nature,
+        lastName: "Child",
+        branchId: branch.id,
+        legacyId: legacyChildId,
+      },
+      select: { id: true, legacyId: true, branchId: true, classId: true },
+    });
+
+    parentUser = await db.parentUser.create({
+      data: {
+        username: `${marker}-parent@example.test`,
+        passwordHash: `not-used-by-${scenario.nature.toLowerCase()}-verifier`,
+        childId: child.id,
+        legacyId: legacyChildId + 20_000,
+        legacyChildId: child.legacyId,
+        isActive: true,
+      },
+      select: { id: true, legacyId: true, legacyChildId: true },
+    });
+
+    thread = await db.messageThread.create({
+      data: {
+        subject,
+        organizationId: organization.id,
+      },
+      select: { id: true },
+    });
+
+    const summary = await db.$transaction((tx) =>
+      createLegacyBulkMessageSideEffects({
+        tx,
+        organizationId: organization!.id,
+        senderId: sender!.id,
+        threadId: thread!.id,
+        nature: scenario.nature,
+        subject,
+        body,
+        teacherUserIds: [],
+        children: [{
+          id: child!.id,
+          legacyId: child!.legacyId,
+          branchId: child!.branchId,
+          classId: child!.classId,
+          parentUsers: [{
+            id: parentUser!.id,
+            legacyId: parentUser!.legacyId,
+            legacyChildId: parentUser!.legacyChildId,
+          }],
+        }],
+      }),
+    );
+
+    assert.ok(summary, `${scenario.nature} side-effect generation should return a summary`);
+    assert.equal(summary.family, scenario.family);
+    assert.equal(summary.alarmsCreated, 1, `${scenario.nature} send should create one child alarm`);
+    assert.equal(summary.receiptsCreated, 1, `${scenario.nature} send should create one child receipt`);
+
+    const alarmCount = await db.alarm.count({
+      where: { legacyData: { path: ["messageThreadId"], equals: thread.id } },
+    });
+    assert.equal(alarmCount, 1, `${scenario.nature} send should persist exactly one child alarm`);
+
+    const alarm = await db.alarm.findFirst({
+      where: {
+        type: scenario.alarmType,
+        referenceType: "Child",
+        referenceId: child.id,
+        legacyData: { path: ["messageThreadId"], equals: thread.id },
+      },
+      select: { id: true, legacyData: true },
+    });
+    assert.ok(alarm, `${scenario.nature} send should persist a child-scoped alarm`);
+
+    const legacy = asRecord(alarm.legacyData);
+    assert.equal(legacy.sourceTable, scenario.contentTable);
+    assert.equal(legacy.sourceDeliveryTable, null);
+    assert.equal(legacy.parentDeliveryTable, scenario.parentDeliveryTable);
+    assert.equal(legacy.legacyMethod, scenario.legacyMethod);
+    assert.equal(legacy.details, body);
+    assert.equal(legacy.href, scenario.href);
+    assert.equal(legacy.childId, child.id);
+    assert.equal(legacy.legacyChildId, child.legacyId);
+    assert.equal(legacy.child_id, child.legacyId);
+
+    const legacyNotificationId = Number(legacy.aid);
+    assert.ok(
+      Number.isFinite(legacyNotificationId),
+      `${scenario.nature} alarm should preserve legacy aid`,
+    );
+
+    const parentReceipt = await db.notificationReceipt.findUnique({
+      where: {
+        sourceTable_legacyNotificationId_legacyRecipientId_recipientType: {
+          sourceTable: scenario.parentDeliveryTable,
+          legacyNotificationId,
+          legacyRecipientId: child.legacyId ?? 0,
+          recipientType: "CHILD",
+        },
+      },
+      select: { recipientId: true, isRead: true, alarmId: true, metadata: true },
+    });
+    assert.ok(parentReceipt, `${scenario.nature} send should persist a parent receipt`);
+    assert.equal(parentReceipt.recipientId, child.id);
+    assert.equal(parentReceipt.isRead, false);
+    assert.equal(parentReceipt.alarmId, alarm.id);
+    assert.equal(asRecord(parentReceipt.metadata).legacyMethod, scenario.legacyMethod);
+
+    const staffReceiptCount = await db.notificationReceipt.count({
+      where: {
+        sourceTable: scenario.parentDeliveryTable,
+        legacyNotificationId,
+        recipientType: "USER",
+      },
+    });
+    assert.equal(
+      staffReceiptCount,
+      0,
+      `${scenario.nature} message side effect should not create teacher receipts`,
+    );
+
+    const request = new NextRequest("http://localhost/ws/notifications_master.php", {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({ usites: String(child.legacyId) }),
+    });
+    const response = await notificationsPost(request);
+    assert.ok(response, "notifications_master.php should return a response");
+    assert.equal(response.status, 200, "notifications_master.php should return HTTP 200");
+    const payload = await response.json();
+    assert.equal(
+      notificationDetails(payload).some((detail) => detail.body === body),
+      true,
+      `parent notifications payload should expose generated ${scenario.nature} parent receipt`,
+    );
+  } finally {
+    if (thread) {
+      await db.notificationReceipt.deleteMany({
+        where: {
+          alarm: { legacyData: { path: ["messageThreadId"], equals: thread.id } },
+        },
+      });
+      await db.alarm.deleteMany({
+        where: { legacyData: { path: ["messageThreadId"], equals: thread.id } },
+      });
+      await db.messageThread.deleteMany({ where: { id: thread.id } });
+    }
+    if (parentUser) await db.parentUser.deleteMany({ where: { id: parentUser.id } });
+    if (child) await db.child.deleteMany({ where: { id: child.id } });
+    if (sender) await db.user.deleteMany({ where: { id: sender.id } });
+    if (branch) await db.branch.deleteMany({ where: { id: branch.id } });
+    if (organization) {
+      await db.organization.deleteMany({ where: { id: organization.id } });
+    }
+  }
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function notificationDetails(payload: unknown): Array<{ subject: string; body: string }> {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) return [];
+
+  return Object.values(payload as Record<string, unknown>).flatMap((group) => {
+    if (!group || typeof group !== "object" || Array.isArray(group)) return [];
+    const details = (group as { details?: unknown }).details;
+    if (!Array.isArray(details)) return [];
+    return details.flatMap((detail) => {
+      if (!detail || typeof detail !== "object" || Array.isArray(detail)) return [];
+      const subject = (detail as { subject?: unknown }).subject;
+      const body = (detail as { body?: unknown }).body;
+      return typeof subject === "string" && typeof body === "string"
+        ? [{ subject, body }]
+        : [];
+    });
+  });
+}
+
+main()
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await db.$disconnect();
+  });
