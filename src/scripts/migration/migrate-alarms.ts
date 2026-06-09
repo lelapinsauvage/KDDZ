@@ -10,6 +10,7 @@
 
 import type {
   AlarmType,
+  Prisma,
   PrismaClient,
   PushPlatform,
 } from "@/generated/prisma/client";
@@ -82,6 +83,41 @@ interface OldNotificationNature {
   body_col: string;
   n_order: number;
   active: number;
+}
+
+function legacyJson(data: Record<string, unknown>): Prisma.InputJsonValue {
+  return JSON.parse(JSON.stringify(data)) as Prisma.InputJsonValue;
+}
+
+function legacyRecord(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return value as Record<string, unknown>;
+}
+
+function sourceLegacyData(
+  sourceDatabase: string,
+  sourceTable: string,
+  row: object,
+  extra: Record<string, unknown> = {}
+): Prisma.InputJsonValue {
+  return legacyJson({
+    ...extra,
+    ...row,
+    sourceDatabase,
+    sourceTable,
+  });
+}
+
+function shouldBackfillLegacySource(
+  current: unknown,
+  sourceDatabase: string,
+  sourceTable: string
+) {
+  const legacyData = legacyRecord(current);
+  return (
+    legacyData.sourceDatabase !== sourceDatabase ||
+    legacyData.sourceTable !== sourceTable
+  );
 }
 
 const ALARM_CONFIGS: AlarmConfig[] = [
@@ -270,6 +306,7 @@ async function migrateAlarmTable(
   config: AlarmConfig,
   dryRun: boolean
 ) {
+  const sourceDatabase = getMysqlConfig().database || "unknown";
   const rows = await queryMysql<Record<string, unknown>>(
     `SELECT * FROM ${config.table} ORDER BY aid`
   );
@@ -294,6 +331,24 @@ async function migrateAlarmTable(
       },
     });
     if (existing) {
+      if (
+        !dryRun &&
+        shouldBackfillLegacySource(
+          existing.legacyData,
+          sourceDatabase,
+          config.table
+        )
+      ) {
+        await prisma.alarm.update({
+          where: { id: existing.id },
+          data: {
+            legacyData: sourceLegacyData(sourceDatabase, config.table, row, {
+              ...legacyRecord(existing.legacyData),
+              category: config.category,
+            }),
+          },
+        });
+      }
       setMapping(config.table, oldId, existing.id);
       skipped++;
       continue;
@@ -313,13 +368,9 @@ async function migrateAlarmTable(
             parseDate(row.datetime as string),
           isActive: true,
           branchId: await resolveBranchId(prisma, referenceId, referenceType),
-          legacyData: JSON.parse(
-            JSON.stringify({
-              sourceTable: config.table,
-              category: config.category,
-              ...row,
-            })
-          ),
+          legacyData: sourceLegacyData(sourceDatabase, config.table, row, {
+            category: config.category,
+          }),
           createdAt,
         },
       });
@@ -365,6 +416,7 @@ async function migrateBirthdayParentAlarms(
   dryRun: boolean
 ) {
   const table = "custom_notifications_birthday_parents";
+  const sourceDatabase = getMysqlConfig().database || "unknown";
   if (!(await tableExists(table))) {
     log(`${table}: table not present, skipping standalone parent alarms`);
     return;
@@ -400,6 +452,20 @@ async function migrateBirthdayParentAlarms(
       },
     });
     if (existing) {
+      if (
+        !dryRun &&
+        shouldBackfillLegacySource(existing.legacyData, sourceDatabase, table)
+      ) {
+        await prisma.alarm.update({
+          where: { id: existing.id },
+          data: {
+            legacyData: sourceLegacyData(sourceDatabase, table, row, {
+              ...legacyRecord(existing.legacyData),
+              category: "birthday_parents",
+            }),
+          },
+        });
+      }
       setMapping(table, oldId, existing.id);
       skipped++;
       continue;
@@ -417,13 +483,9 @@ async function migrateBirthdayParentAlarms(
           dueDate: createdAt,
           isActive: true,
           branchId: await resolveBranchId(prisma, referenceId, referenceType),
-          legacyData: JSON.parse(
-            JSON.stringify({
-              sourceTable: table,
-              category: "birthday_parents",
-              ...row,
-            })
-          ),
+          legacyData: sourceLegacyData(sourceDatabase, table, row, {
+            category: "birthday_parents",
+          }),
           createdAt,
         },
       });
@@ -535,6 +597,7 @@ async function migrateNotificationReceipts(
 }
 
 async function migratePushTokens(prisma: PrismaClient, dryRun: boolean) {
+  const sourceDatabase = getMysqlConfig().database || "unknown";
   const rows = await queryMysql<OldPushToken>(
     "SELECT * FROM notifications_tokens ORDER BY id"
   );
@@ -552,6 +615,26 @@ async function migratePushTokens(prisma: PrismaClient, dryRun: boolean) {
 
     const existing = await prisma.pushToken.findUnique({ where: { token } });
     if (existing) {
+      if (
+        !dryRun &&
+        shouldBackfillLegacySource(
+          existing.legacyData,
+          sourceDatabase,
+          "notifications_tokens"
+        )
+      ) {
+        await prisma.pushToken.update({
+          where: { id: existing.id },
+          data: {
+            legacyData: sourceLegacyData(
+              sourceDatabase,
+              "notifications_tokens",
+              row,
+              legacyRecord(existing.legacyData)
+            ),
+          },
+        });
+      }
       setMapping("notifications_tokens", row.id, existing.id);
       skipped++;
       continue;
@@ -574,7 +657,11 @@ async function migratePushTokens(prisma: PrismaClient, dryRun: boolean) {
           token,
           platform: platformFromLegacy(row.os),
           isActive: toBool(row.active),
-          legacyData: JSON.parse(JSON.stringify(row)),
+          legacyData: sourceLegacyData(
+            sourceDatabase,
+            "notifications_tokens",
+            row
+          ),
           createdAt: parseDate(row.datetime) ?? new Date(),
         },
       });
@@ -588,6 +675,7 @@ async function migratePushTokens(prisma: PrismaClient, dryRun: boolean) {
 }
 
 async function migrateNotificationLogs(prisma: PrismaClient, dryRun: boolean) {
+  const sourceDatabase = getMysqlConfig().database || "unknown";
   const rows = await queryMysql<OldNotificationLog>(
     "SELECT * FROM t_notifications_log ORDER BY id"
   );
@@ -602,6 +690,26 @@ async function migrateNotificationLogs(prisma: PrismaClient, dryRun: boolean) {
       where: { legacyId },
     });
     if (existing) {
+      if (
+        !dryRun &&
+        shouldBackfillLegacySource(
+          existing.legacyData,
+          sourceDatabase,
+          "t_notifications_log"
+        )
+      ) {
+        await prisma.legacyNotificationLog.update({
+          where: { legacyId },
+          data: {
+            legacyData: sourceLegacyData(
+              sourceDatabase,
+              "t_notifications_log",
+              row,
+              legacyRecord(existing.legacyData)
+            ),
+          },
+        });
+      }
       skipped++;
       continue;
     }
@@ -616,7 +724,11 @@ async function migrateNotificationLogs(prisma: PrismaClient, dryRun: boolean) {
           name: cleanString(row.name),
           status: toInt(row.status, 0),
           expiryDate: cleanString(row.expiryDate),
-          legacyData: JSON.parse(JSON.stringify(row)),
+          legacyData: sourceLegacyData(
+            sourceDatabase,
+            "t_notifications_log",
+            row
+          ),
           createdAt: parseDate(row.date) ?? new Date(),
         },
       });

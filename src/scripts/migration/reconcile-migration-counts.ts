@@ -114,6 +114,15 @@ function bySourceTable(table: string): string {
   return `${pgColumn("sourceTable")} = ${pgLiteral(table)}`;
 }
 
+function byLegacyDataSourceTable(table: string) {
+  return (sourceDatabase: string) =>
+    `${pgColumn("legacyData")} ->> ${pgLiteral(
+      "sourceDatabase"
+    )} = ${pgLiteral(sourceDatabase)} AND ${pgColumn(
+      "legacyData"
+    )} ->> ${pgLiteral("sourceTable")} = ${pgLiteral(table)}`;
+}
+
 function realLegacyFileWhere(prefix?: string): string {
   const filePredicate =
     "url IS NOT NULL AND TRIM(url) <> '' AND TRIM(url) <> '0' " +
@@ -1019,16 +1028,14 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     notes: "Holidays are matched by name/date without provenance.",
   }),
   ...alarmTables.map((table) =>
-    weakRule({
+    provenancedRule({
       id: `alarms.${table}`,
       step: "22. Alarms & Notifications",
       sourceTable: table,
       targetTable: "alarms",
-      targetWhere: `${pgColumn("legacyData")} ->> ${pgLiteral(
-        "sourceTable"
-      )} = ${pgLiteral(table)}`,
+      targetWhere: byLegacyDataSourceTable(table),
       notes:
-        "Alarm provenance is currently stored inside legacyData JSON rather than dedicated columns.",
+        "Alarm content rows preserve sourceDatabase, sourceTable, and category inside Alarm.legacyData.",
     })
   ),
   ...receiptTables.map((table) =>
@@ -1053,7 +1060,9 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     step: "22. Alarms & Notifications",
     sourceTable: "t_notifications_log",
     targetTable: "legacy_notification_logs",
-    notes: "Notification logs keep legacyId but not sourceDatabase.",
+    targetWhere: byLegacyDataSourceTable("t_notifications_log"),
+    notes:
+      "Notification logs preserve sourceDatabase/sourceTable inside legacyData, but legacyId remains globally unique for compatibility.",
   }),
   provenancedRule({
     id: "alarms.notifications_nature",

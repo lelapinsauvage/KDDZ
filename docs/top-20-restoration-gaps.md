@@ -45,6 +45,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - Absence report reconciliation now uses `AbsenceReport.sourceDatabase`/`legacyKey` for active `t_absent_report` rows, covering the same migrated raw fields used by parent mobile `absence.php` compatibility.
    - Teacher calendar status reconciliation now covers migrated `t_emp_status` rows through the legacy JSON stored on `EmployeeEvent.notes`.
    - Notification receipt reconciliation now covers the full migrated delivery-table set from `migrate-alarms.ts`, including parent receipt variants, requests/others, event staff/parent deliveries, and holiday read-state.
+   - Alarm content reconciliation now uses `Alarm.legacyData.sourceDatabase`/`sourceTable` for `t_alarms*` imports, and `migrate-alarms.ts` backfills that provenance on existing imported alarms when rerun.
    - Remaining work is to run it against the canonical production dumps after import, resolve warnings/missing/error rows, and add skipped/orphan detail where count-only evidence is still weak.
 
 5. **Legacy cron schedule and delivery config**
@@ -62,7 +63,7 @@ This list is the first implementation backlog after the generated inventory/matr
 
 7. **Notification logs/settings migration**
    - Legacy has many `custom_notifications_*`, `t_alarms_*`, `t_notification_setting`, and `t_notifications_log` tables.
-   - Historical alarms, receipts, push tokens, and notification logs are covered by `migrate-alarms.ts`; migrated `t_notification_setting`, `notifications_nature`, and `t_notifications_log` rows are now visible in `/settings/notifications` under the Legacy tab for audit and parity review, with the LegacySetting, notification nature, notification log, and sent-notification audit loaders now uncapped for production-sized imports.
+   - Historical alarms, receipts, push tokens, and notification logs are covered by `migrate-alarms.ts`; alarm, push-token, and notification-log legacy JSON now keeps source database/table provenance for cutover reconciliation, and migrated `t_notification_setting`, `notifications_nature`, and `t_notifications_log` rows are visible in `/settings/notifications` under the Legacy tab for audit and parity review, with the LegacySetting, notification nature, notification log, and sent-notification audit loaders now uncapped for production-sized imports.
    - Legacy `t_notification_setting` activation/edit behavior is restored for both the newer channel matrix schema and the older `mtype`/`status` schema, and restored alarm generators now enforce the System Alerts gates.
    - Remaining work is parent/custom notification families and production external provider send-job parity.
 

@@ -180,6 +180,8 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 
 Message migration preserves legacy message notification provenance on `Message` rows: source database, stable `legacyKey`, legacy message/thread/sender/recipient ids, delivery user/type, `legacyNature`, `legacyHref`, and raw legacy row JSON. Each `custom_notifications_msg` delivery row becomes a separate recipient-scoped modern `Message`, so reconciliation expects recipient fan-out rather than a simple 1:1 count with `t_alarms_msg`.
 
+Alarm migration preserves source database/table provenance inside `Alarm.legacyData` for every `t_alarms*` content row and backfills that JSON when previously imported alarms are encountered on rerun. Push tokens and legacy notification logs also retain `sourceDatabase`/`sourceTable` in `legacyData`; their count checks remain weaker where the modern schema intentionally deduplicates tokens or keeps legacy notification-log ids globally unique.
+
 ## Key Design Decisions
 
 ### ID Mapping
@@ -261,6 +263,8 @@ Warnings are not cosmetic. Any `warning`, `missing`, or `error` result must be r
 
 The notification receipt rules mirror every `custom_notifications*` delivery table migrated by `migrate-alarms.ts`, including parent receipt variants, requests/others, event staff/parent deliveries, and holiday read-state.
 
+Alarm content rows from `t_alarms*` are reconciled against `Alarm.legacyData.sourceDatabase` and `Alarm.legacyData.sourceTable`. Count mismatches usually mean duplicate legacy content merged into an existing alarm or the imported dump differs from the canonical production source.
+
 Child roster rows from `t_child` and draft rows from `t_child_draft` are reconciled against `Child.sourceDatabase` and `Child.legacyTable` so active/draft imports are checked by exact legacy provenance rather than broad child totals. Count mismatches usually mean a source row had an unmapped branch or invalid draft id.
 
 Parent mobile login rows from `parent_login_users` are reconciled against `ParentUser.sourceDatabase`/`legacyKey` for non-empty usernames. Count mismatches usually mean the source row could not be linked to a migrated child.
@@ -299,7 +303,7 @@ The seven legacy assessment tables are consolidated into `Assessment`. Answer ke
 Legacy `t_assessment_dates.assessment_date` stores age thresholds in days, not absolute calendar dates. Those values are migrated to `AssessmentScheduleRule`; the modern `AssessmentDate` table remains reserved for explicit scheduled calendar dates.
 
 ### Alarms And Notifications
-Legacy alarm content rows are restored into `Alarm` with the complete source row preserved in `legacyData`. Legacy delivery/read rows from `custom_notifications_*` are restored into `NotificationReceipt` so "seen" state and recipient ids remain auditable even when the modern notification UI reads from `Alarm`. Mobile push tokens retain their legacy active flag on `PushToken.isActive`.
+Legacy alarm content rows are restored into `Alarm` with source database/table/category provenance and the complete source row preserved in `legacyData`. Legacy delivery/read rows from `custom_notifications_*` are restored into `NotificationReceipt` so "seen" state and recipient ids remain auditable even when the modern notification UI reads from `Alarm`. Mobile push tokens retain their legacy active flag on `PushToken.isActive` and source provenance in `legacyData`.
 
 ## Troubleshooting
 

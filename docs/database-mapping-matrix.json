@@ -253,7 +253,7 @@
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -261,7 +261,7 @@
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms_assessment` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -269,7 +269,7 @@
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms_birthday` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -277,7 +277,7 @@
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, person_id:int(11) NOT NULL, type:varchar(50) NOT NULL, level:varchar(50) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms_contracts` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -285,7 +285,7 @@
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, med_id:int(11) NOT NULL, details:text NOT NULL, curr_date:varchar(20) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms_insurance` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -293,7 +293,7 @@
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms_medical` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -301,7 +301,7 @@
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, med_id:int(11) NOT NULL, details:text NOT NULL, curr_date:varchar(20) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms_medicine` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -317,7 +317,7 @@
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms_payments` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -325,7 +325,7 @@
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms_vaccinations` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -717,7 +717,7 @@
     "legacyColumns": "id:bigint(20) NOT NULL AUTO_INCREMENT, date:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, name:varchar(100) DEFAULT NULL, status:int(11) NOT NULL, childId:bigint(20) NOT NULL, expiryDate:varchar(100) NOT NULL",
     "modernDestination": "LegacyNotificationLog",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Notification log rows preserve legacyId, child mapping, status, expiry/name fields, createdAt, raw legacy row, sourceDatabase, and sourceTable in LegacyNotificationLog.legacyData; source/target count is covered by `alarms.t_notifications_log` reconciliation, while duplicate legacy ids across dumps still need canonical-run triage."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1109,7 +1109,7 @@
     "legacyColumns": "id:int(11) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, child_id:int(11) NOT NULL, token:text NOT NULL, os:int(11) NOT NULL DEFAULT '0' COMMENT '0: NA / 1: Android / 2: iOS / 3: Other', active:int(11) NOT NULL DEFAULT '1'",
     "modernDestination": "PushToken",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Push token rows preserve parent-user mapping, platform, active flag, raw legacy row, sourceDatabase, and sourceTable in PushToken.legacyData; `alarms.notifications_tokens` remains a weak count because tokens are unique and legacy rows can deduplicate by token."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1189,7 +1189,7 @@
     "legacyColumns": "aid:int(11) NOT NULL, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL, ntype:int(11) NOT NULL COMMENT '0: System / 1: Message'",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1197,7 +1197,7 @@
     "legacyColumns": "aid:int(11) NOT NULL, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL, ntype:int(11) NOT NULL COMMENT '0: System / 1: Message'",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms_assessment` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1205,7 +1205,7 @@
     "legacyColumns": "aid:int(11) NOT NULL, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL, ntype:int(11) NOT NULL COMMENT '0: System / 1: Message'",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms_assessment_parents` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1213,7 +1213,7 @@
     "legacyColumns": "aid:int(11) NOT NULL, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL, ntype:int(11) NOT NULL COMMENT '0: System / 1: Message'",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms_birthday` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1221,7 +1221,7 @@
     "legacyColumns": "aid:int(11) NOT NULL, mid:int(11) NOT NULL, person_id:int(11) NOT NULL, type:varchar(50) NOT NULL, level:varchar(50) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL, ntype:int(11) NOT NULL COMMENT '0: System / 1: Message'",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms_contracts` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1229,7 +1229,7 @@
     "legacyColumns": "aid:int(11) NOT NULL, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, med_id:int(11) NOT NULL, details:text NOT NULL, curr_date:varchar(20) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL, ntype:int(11) NOT NULL COMMENT '0: System / 1: Message'",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms_insurance` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1237,7 +1237,7 @@
     "legacyColumns": "aid:int(11) NOT NULL, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL, ntype:int(11) NOT NULL COMMENT '0: System / 1: Message'",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms_medical` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1245,7 +1245,7 @@
     "legacyColumns": "aid:int(11) NOT NULL, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, med_id:int(11) NOT NULL, details:text NOT NULL, curr_date:varchar(20) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL, ntype:int(11) NOT NULL COMMENT '0: System / 1: Message'",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms_medicine` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1261,7 +1261,7 @@
     "legacyColumns": "aid:int(11) NOT NULL, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL, ntype:int(11) NOT NULL COMMENT '0: System / 1: Message'",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms_others` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1269,7 +1269,7 @@
     "legacyColumns": "aid:int(11) NOT NULL, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL, ntype:int(11) NOT NULL COMMENT '0: System / 1: Message / 2: Both'",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms_parents` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1277,7 +1277,7 @@
     "legacyColumns": "aid:int(11) NOT NULL, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL, ntype:int(11) NOT NULL COMMENT '0: System / 1: Message'",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms_payments` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1285,7 +1285,7 @@
     "legacyColumns": "aid:int(11) NOT NULL, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL, ntype:int(11) NOT NULL COMMENT '0: System / 1: Message'",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms_requests` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1293,7 +1293,7 @@
     "legacyColumns": "aid:int(11) NOT NULL, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL, ntype:int(11) NOT NULL COMMENT '0: System / 1: Message'",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms_vaccinations` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1677,7 +1677,7 @@
     "legacyColumns": "id:bigint(20) NOT NULL, date:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, name:varchar(100) DEFAULT NULL, status:int(11) NOT NULL, childId:bigint(20) NOT NULL, expiryDate:varchar(100) NOT NULL",
     "modernDestination": "LegacyNotificationLog",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Notification log rows preserve legacyId, child mapping, status, expiry/name fields, createdAt, raw legacy row, sourceDatabase, and sourceTable in LegacyNotificationLog.legacyData; source/target count is covered by `alarms.t_notifications_log` reconciliation, while duplicate legacy ids across dumps still need canonical-run triage."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -2061,7 +2061,7 @@
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2069,7 +2069,7 @@
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms_assessment` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2077,7 +2077,7 @@
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms_birthday` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2085,7 +2085,7 @@
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, person_id:int(11) NOT NULL, type:varchar(50) NOT NULL, level:varchar(50) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms_contracts` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2093,7 +2093,7 @@
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, med_id:int(11) NOT NULL, details:text NOT NULL, curr_date:varchar(20) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms_insurance` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2101,7 +2101,7 @@
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms_medical` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2109,7 +2109,7 @@
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, med_id:int(11) NOT NULL, details:text NOT NULL, curr_date:varchar(20) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms_medicine` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2125,7 +2125,7 @@
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms_payments` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2133,7 +2133,7 @@
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, mid:int(11) NOT NULL, child_id:int(11) NOT NULL, type:varchar(20) NOT NULL, level:tinyint(1) NOT NULL, details:text NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
     "modernDestination": "Alarm",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Alarm content rows preserve sourceDatabase, sourceTable, category, raw legacy row, reference mapping, due date, branch, and active flag in Alarm.legacyData; source/target count is covered by `alarms.t_alarms_vaccinations` reconciliation; mismatches expose duplicate content merged into existing alarms or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2525,7 +2525,7 @@
     "legacyColumns": "id:bigint(20) NOT NULL AUTO_INCREMENT, date:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, name:varchar(100) DEFAULT NULL, status:int(11) NOT NULL, childId:bigint(20) NOT NULL, expiryDate:varchar(100) NOT NULL",
     "modernDestination": "LegacyNotificationLog",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "reconciliation": "Notification log rows preserve legacyId, child mapping, status, expiry/name fields, createdAt, raw legacy row, sourceDatabase, and sourceTable in LegacyNotificationLog.legacyData; source/target count is covered by `alarms.t_notifications_log` reconciliation, while duplicate legacy ids across dumps still need canonical-run triage."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
