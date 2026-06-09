@@ -80,6 +80,11 @@ function dateKey(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
+function dateFromKey(key: string) {
+  const [year, month, day] = key.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day, 12));
+}
+
 function dayDiff(start: Date, end: Date) {
   return Math.round((startOfToday(end).getTime() - startOfToday(start).getTime()) / DAY_MS);
 }
@@ -466,10 +471,10 @@ function toCandidate(params: {
   expiryDate: Date;
   today: Date;
 }): ContractCandidate {
-  const expiryDate = startOfToday(params.expiryDate);
-  const signedDaysUntilExpiry = dayDiff(params.today, expiryDate);
+  const expiryKey = dateKey(params.expiryDate);
+  const expiryDate = dateFromKey(expiryKey);
+  const signedDaysUntilExpiry = dayDiff(params.today, params.expiryDate);
   const legacyDayDifference = Math.abs(signedDaysUntilExpiry);
-  const expiryKey = dateKey(expiryDate);
   const fullName = legacyName(params.staff.firstName, params.staff.lastName);
   const message = legacyMessage({
     staffKind: params.staffKind,
@@ -1000,7 +1005,7 @@ export async function generateContractAlarmsForOrganization(params: {
         where: {
           legacyTable: "login_users",
           userId: { in: userIds },
-          isDisabled: { not: true },
+          OR: [{ isDisabled: false }, { isDisabled: null }],
         },
         select: {
           sourceDatabase: true,
