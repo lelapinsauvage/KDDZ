@@ -155,12 +155,12 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_assessment_1` .. `t_assessment_7` | Assessment |
 | `new_assessment` | Assessment `_legacyNewAssessmentMarkers` / notification stub |
 | `t_assessment_dates` | AssessmentScheduleRule |
-| `t_form_1` | MedicalForm (GENERAL) |
-| `t_form_2` | MedicalForm (CONDITIONS) |
-| `t_form_3` | MedicalForm (VISITS) |
-| `t_form_4` | MedicalForm (VACCINATIONS) + Vaccination |
-| `t_form_5` | MedicalForm (ACCIDENTS) |
-| `t_med_forms_info` | MedicalFormEntry |
+| `t_form_1` | MedicalForm (GENERAL), including source database/key provenance, child/branch/class/user legacy ids, form data, and raw legacy row |
+| `t_form_2` | MedicalForm (CONDITIONS), including source database/key provenance, child/branch/class/user legacy ids, form data, and raw legacy row |
+| `t_form_3` | MedicalForm (VISITS), including source database/key provenance, child/branch/class/user legacy ids, form data, and raw legacy row |
+| `t_form_4` | MedicalForm (VACCINATIONS) + Vaccination, including source database/key provenance, child/branch/class/user legacy ids, form data, and raw legacy row |
+| `t_form_5` | MedicalForm (ACCIDENTS), including source database/key provenance, child/branch/class/user legacy ids, form data, and raw legacy row |
+| `t_med_forms_info` | MedicalFormEntry, including source database/key provenance, legacy form/child ids, field/value text, and raw legacy row |
 | `t_forms_attachments` | FormAttachment |
 | `t_payments` | Payment, including source database/key provenance, legacy child id, receipt metadata, and raw `legacyData` for parent mobile `finance.php` parity |
 | `newpayment` | PaymentReminder, including source database/key provenance, payment/child links, due metadata, sent flag, and raw legacy row |
@@ -286,6 +286,8 @@ Payment rows from `t_payments` are reconciled against `Payment.sourceDatabase`, 
 
 Accounting rows from `t_accounting` fan out into positive fee and discount `AccountingEntry` lines. Reconciliation compares the expected generated line count against entries with `sourceDatabase` and `legacyTable = t_accounting`; mismatches usually mean a source row had an unmapped child, a zero-only accounting setup, or a pre-provenance fallback collision that needs review.
 
+Medical form rows from `t_form_1` through `t_form_5` are reconciled against `MedicalForm.sourceDatabase` and `MedicalForm.legacyTable`, while `t_med_forms_info` rows are reconciled against `MedicalFormEntry.sourceDatabase` and `legacyTable`. Count mismatches usually mean an unmapped child/form dependency, an invalid legacy id, or a pre-provenance fallback collision that needs review.
+
 Child roster rows from `t_child` and draft rows from `t_child_draft` are reconciled against `Child.sourceDatabase` and `Child.legacyTable` so active/draft imports are checked by exact legacy provenance rather than broad child totals. Count mismatches usually mean a source row had an unmapped branch or invalid draft id.
 
 Child history rows from `t_child_h` are reconciled against `ChildHistory.sourceDatabase` and `ChildHistory.legacyTable`. Count mismatches usually mean a source row had an unmapped child or duplicated the same child/timestamp fallback.
@@ -335,7 +337,7 @@ Legacy `t_accounting` rows store a child fee setup, not one modern ledger row. P
 Old DB stores dates as varchar. The migration handles multiple formats: `YYYY-MM-DD`, `DD/MM/YYYY`, `DD-MM-YYYY`, empty strings, and `0000-00-00`.
 
 ### Medical Forms
-The 6 old form tables are consolidated into a single `MedicalForm` model. Form-specific fields are stored as JSON in the `data` column. The `t_med_forms_info` detail rows become `MedicalFormEntry` records.
+The old medical form tables are consolidated into `MedicalForm`. Form-specific fields remain in the `data` JSON, and active `t_form_1` through `t_form_5` rows also keep `sourceDatabase`, `legacyKey`, `legacyId`, `legacyTable`, child/branch/class/user legacy ids, and a raw row `legacyData` snapshot for reconciliation. The `t_med_forms_info` detail rows become `MedicalFormEntry` records with the same source/key provenance, legacy form and child ids, generated field/value text, and raw legacy row JSON.
 
 ### Assessments
 The seven legacy assessment tables are consolidated into `Assessment`. Answer keys (`m*`, `c*`, `l*`, `s*`, `d*`) stay as flat JSON keys so the modern assessment editor can reopen the migrated report. Legacy `new_assessment` rows are preserved as markers on the matching assessment, or as a stub assessment when the notification marker has no matching report row.

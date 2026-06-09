@@ -998,24 +998,29 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
       "Multiple legacy threshold rows are consolidated into one AssessmentScheduleRule per assessment type.",
   }),
   ...formTables.map(({ table, type }) =>
-    weakRule({
+    provenancedRule({
       id: `medical.${table}`,
       step: "19. Medical Forms",
       sourceTable: table,
       sourceWhere: "active = 1",
       targetTable: "medical_forms",
-      targetWhere: `${pgColumn("formType")} = ${pgLiteral(type)}`,
+      targetWhere: (sourceDatabase) =>
+        `${byLegacyTable(table)(sourceDatabase)} AND ${pgColumn(
+          "formType"
+        )} = ${pgLiteral(type)}`,
       notes:
-        "Medical form rows store legacy IDs inside JSON; add provenance columns before treating this as row-level proof.",
+        "Medical form rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, child/branch/class/user legacy ids, form status, form data, and raw legacy row.",
     })
   ),
-  weakRule({
+  provenancedRule({
     id: "medical.t_med_forms_info",
     step: "19. Medical Forms",
     sourceTable: "t_med_forms_info",
     sourceWhere: "active = 1",
     targetTable: "medical_form_entries",
-    notes: "Medical form info rows depend on mapped medical forms.",
+    targetWhere: byLegacyTable("t_med_forms_info"),
+    notes:
+      "Medical form info rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, legacy form/child ids, field/value text, and raw legacy row.",
   }),
   provenancedRule({
     id: "medical.t_forms_attachments",

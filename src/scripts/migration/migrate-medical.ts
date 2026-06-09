@@ -45,12 +45,33 @@ type MedFormType =
   | "ACCIDENTS";
 type MedFormStatus = "DRAFT" | "SUBMITTED" | "REVIEWED";
 
+function legacyKey(sourceDatabase: string, table: string, legacyId: number) {
+  return `${sourceDatabase}:${table}:${legacyId}`;
+}
+
+function legacyRowData(
+  sourceDatabase: string,
+  sourceTable: string,
+  legacyId: number,
+  row: Record<string, unknown>
+) {
+  return JSON.parse(
+    JSON.stringify({
+      sourceDatabase,
+      sourceTable,
+      legacyId,
+      row,
+    })
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Generic form migration helper
 // ---------------------------------------------------------------------------
 async function migrateFormTable(
   prisma: PrismaClient,
   dryRun: boolean,
+  sourceDatabase: string,
   tableName: string,
   formType: MedFormType,
   formTypeKey: string,
@@ -63,36 +84,20 @@ async function migrateFormTable(
   log(`Found ${rows.length} records in ${tableName}`);
 
   let migrated = 0;
-  let skipped = 0;
+  let existingCount = 0;
+  let missingChild = 0;
 
   for (const row of rows) {
-    const oldId = row[idColumn] as number;
+    const oldId = toInt(row[idColumn]);
     const childId = getMapping("child", row[childIdColumn] as string);
-    if (!childId) continue;
-
-    // Idempotency: check if form already exists for this child+type
-    // Use the old ID in mapping to avoid false positives for children with multiple forms
-    const _mapKey = `${formTypeKey}_${oldId}`;
-    const existing = await prisma.medicalForm.findFirst({
-      where: {
-        childId,
-        formType,
-        // Check data JSON for old_id match
-      },
-    });
-
-    // More precise idempotency: store old ID in data JSON
-    if (existing) {
-      const data = existing.data as Record<string, unknown> | null;
-      if (data && data._oldId === oldId) {
-        setMapping(formTypeKey, oldId, existing.id);
-        skipped++;
-        continue;
-      }
+    if (!childId) {
+      missingChild++;
+      continue;
     }
 
     const isDraft = toBool(row.is_rep_draft);
     const status: MedFormStatus = isDraft ? "DRAFT" : "SUBMITTED";
+    const key = legacyKey(sourceDatabase, tableName, oldId);
 
     // Store all form fields as JSON data
     const data: Record<string, unknown> = { _oldId: oldId };
@@ -108,6 +113,53 @@ async function migrateFormTable(
         data[key] = val;
       }
     }
+    const legacyData = legacyRowData(sourceDatabase, tableName, oldId, row);
+    const baseData = {
+      childId,
+      sourceDatabase,
+      legacyKey: key,
+      legacyId: oldId,
+      legacyTable: tableName,
+      legacyChildId: toInt(row[childIdColumn], 0) || null,
+      legacyBranchId: toInt(row.branch_id, 0) || null,
+      legacyClassId: toInt(row.class_id, 0) || null,
+      legacyCreatedById: toInt(row.uby, 0) || null,
+      formType,
+      status,
+      data: JSON.parse(JSON.stringify(data)),
+      legacyData,
+      createdById: getMapping("user", row.uby as string | number),
+      createdAt: parseDate(row.datetime as string) ?? new Date(),
+    };
+
+    const existingByKey = await prisma.medicalForm.findUnique({
+      where: { legacyKey: key },
+    });
+    const existing =
+      existingByKey ??
+      (await prisma.medicalForm.findFirst({
+        where: {
+          childId,
+          formType,
+          legacyKey: null,
+          OR: [
+            { data: { path: ["_oldId"], equals: oldId } },
+            { data: { path: ["_oldId"], equals: String(oldId) } },
+          ],
+        },
+      }));
+
+    if (existing) {
+      if (!dryRun) {
+        await prisma.medicalForm.update({
+          where: { id: existing.id },
+          data: baseData,
+        });
+      }
+      setMapping(formTypeKey, oldId, existing.id);
+      existingCount++;
+      continue;
+    }
 
     const newId = generateUUID();
 
@@ -115,13 +167,7 @@ async function migrateFormTable(
       await prisma.medicalForm.create({
         data: {
           id: newId,
-          childId,
-          formType,
-          status,
-          data: JSON.parse(JSON.stringify(data)),
-          createdAt: row.datetime
-            ? new Date(row.datetime as string)
-            : new Date(),
+          ...baseData,
         },
       });
     }
@@ -131,7 +177,9 @@ async function migrateFormTable(
     logProgress(migrated, rows.length, tableName);
   }
 
-  log(`${tableName}: ${migrated} migrated, ${skipped} skipped`);
+  log(
+    `${tableName}: ${migrated} migrated, ${existingCount} existing, ${missingChild} missing child`
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -151,6 +199,8 @@ interface OldMedFormInfo {
   child_id: string;
   expiry: string;
   active: number;
+  datetime: string;
+  [key: string]: unknown;
 }
 
 interface OldFormAttachment {
@@ -166,19 +216,28 @@ interface OldFormAttachment {
   active: number;
 }
 
-async function migrateMedFormEntries(prisma: PrismaClient, dryRun: boolean) {
+async function migrateMedFormEntries(
+  prisma: PrismaClient,
+  dryRun: boolean,
+  sourceDatabase: string
+) {
   const rows = await queryMysql<OldMedFormInfo>(
     "SELECT * FROM t_med_forms_info WHERE active = 1 ORDER BY medfid"
   );
   log(`Found ${rows.length} medical form info entries`);
 
   let migrated = 0;
+  let existingCount = 0;
+  let missingForm = 0;
 
   for (const row of rows) {
     // Map formtype to our mapping key
     const formTypeKey = row.formtype; // e.g., "form1", "form2"
     const medicalFormId = getMapping(formTypeKey, row.form_id);
-    if (!medicalFormId) continue;
+    if (!medicalFormId) {
+      missingForm++;
+      continue;
+    }
 
     // Build a combined value from all info fields
     const valueParts: string[] = [];
@@ -192,26 +251,59 @@ async function migrateMedFormEntries(prisma: PrismaClient, dryRun: boolean) {
 
     const field = `${row.medtype || "general"}`;
     const value = valueParts.join("; ") || null;
+    const key = legacyKey(sourceDatabase, "t_med_forms_info", row.medfid);
+    const data = {
+      medicalFormId,
+      sourceDatabase,
+      legacyKey: key,
+      legacyId: row.medfid,
+      legacyTable: "t_med_forms_info",
+      legacyFormId: toInt(row.form_id),
+      legacyChildId: toInt(row.child_id, 0) || null,
+      field,
+      value,
+      legacyData: legacyRowData(sourceDatabase, "t_med_forms_info", row.medfid, row),
+      createdAt: parseDate(row.datetime) ?? new Date(),
+    };
+    const existingByKey = await prisma.medicalFormEntry.findUnique({
+      where: { legacyKey: key },
+    });
+    const existing =
+      existingByKey ??
+      (await prisma.medicalFormEntry.findFirst({
+        where: {
+          medicalFormId,
+          field,
+          value,
+          legacyKey: null,
+        },
+      }));
+
+    if (existing) {
+      if (!dryRun) {
+        await prisma.medicalFormEntry.update({
+          where: { id: existing.id },
+          data,
+        });
+      }
+      existingCount++;
+      continue;
+    }
 
     if (!dryRun) {
       await prisma.medicalFormEntry.create({
         data: {
           id: generateUUID(),
-          medicalFormId,
-          field,
-          value,
-          legacyData: {
-            sourceDatabase: getMysqlConfig().database || "unknown",
-            sourceTable: "t_med_forms_info",
-            ...row,
-          },
+          ...data,
         },
       });
     }
     migrated++;
   }
 
-  log(`Medical form entries: ${migrated} migrated`);
+  log(
+    `Medical form entries: ${migrated} migrated, ${existingCount} existing, ${missingForm} missing form`
+  );
 }
 
 async function migrateFormAttachments(prisma: PrismaClient, dryRun: boolean) {
@@ -358,11 +450,13 @@ async function migrateVaccinations(prisma: PrismaClient, dryRun: boolean) {
 export async function migrateMedical(prisma: PrismaClient) {
   log("=== Migrating Medical Forms ===");
   const dryRun = isDryRun();
+  const sourceDatabase = getMysqlConfig().database || "unknown";
 
   // Form 1 — Medical Dossier → GENERAL
   await migrateFormTable(
     prisma,
     dryRun,
+    sourceDatabase,
     "t_form_1",
     "GENERAL",
     "form1",
@@ -374,6 +468,7 @@ export async function migrateMedical(prisma: PrismaClient) {
   await migrateFormTable(
     prisma,
     dryRun,
+    sourceDatabase,
     "t_form_2",
     "CONDITIONS",
     "form2",
@@ -385,6 +480,7 @@ export async function migrateMedical(prisma: PrismaClient) {
   await migrateFormTable(
     prisma,
     dryRun,
+    sourceDatabase,
     "t_form_3",
     "VISITS",
     "form3",
@@ -396,6 +492,7 @@ export async function migrateMedical(prisma: PrismaClient) {
   await migrateFormTable(
     prisma,
     dryRun,
+    sourceDatabase,
     "t_form_4",
     "VACCINATIONS",
     "form4",
@@ -408,6 +505,7 @@ export async function migrateMedical(prisma: PrismaClient) {
   await migrateFormTable(
     prisma,
     dryRun,
+    sourceDatabase,
     "t_form_5",
     "ACCIDENTS",
     "form5",
@@ -419,6 +517,7 @@ export async function migrateMedical(prisma: PrismaClient) {
   await migrateFormTable(
     prisma,
     dryRun,
+    sourceDatabase,
     "t_form_6",
     "GENERAL",
     "form6",
@@ -427,7 +526,7 @@ export async function migrateMedical(prisma: PrismaClient) {
   );
 
   // Med form info entries (linked to forms 1-6)
-  await migrateMedFormEntries(prisma, dryRun);
+  await migrateMedFormEntries(prisma, dryRun, sourceDatabase);
   await migrateFormAttachments(prisma, dryRun);
 
   log(`=== Medical migration complete ===${dryRun ? " [DRY RUN]" : ""}`);

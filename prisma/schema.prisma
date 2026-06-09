@@ -1760,20 +1760,36 @@ model AbsenceAttachment {
 // ─────────────────────────────────────────────
 
 model MedicalForm {
-  id          String            @id @default(uuid()) @db.Uuid
-  childId     String            @db.Uuid
-  formType    MedicalFormType
-  status      MedicalFormStatus @default(DRAFT)
-  data        Json?
-  createdById String?           @db.Uuid
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  id                String            @id @default(uuid()) @db.Uuid
+  childId           String            @db.Uuid
+  sourceDatabase    String?
+  legacyKey         String?           @unique
+  legacyId          Int?
+  legacyTable       String?
+  legacyChildId     Int?
+  legacyBranchId    Int?
+  legacyClassId     Int?
+  legacyCreatedById Int?
+  formType          MedicalFormType
+  status            MedicalFormStatus @default(DRAFT)
+  data              Json?
+  legacyData        Json?
+  createdById       String?           @db.Uuid
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 
   child       Child              @relation(fields: [childId], references: [id], onDelete: Cascade)
   createdBy   User?              @relation("MedicalFormCreator", fields: [createdById], references: [id], onDelete: SetNull)
   entries     MedicalFormEntry[]
   attachments FormAttachment[]
 
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyTable])
+  @@index([legacyChildId])
+  @@index([legacyBranchId])
+  @@index([legacyClassId])
+  @@index([legacyCreatedById])
   @@index([childId])
   @@index([formType])
   @@index([status])
@@ -1782,16 +1798,27 @@ model MedicalForm {
 }
 
 model MedicalFormEntry {
-  id            String   @id @default(uuid()) @db.Uuid
-  medicalFormId String   @db.Uuid
-  field         String
-  value         String?  @db.Text
-  legacyData    Json?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id             String   @id @default(uuid()) @db.Uuid
+  medicalFormId  String   @db.Uuid
+  sourceDatabase String?
+  legacyKey      String?  @unique
+  legacyId       Int?
+  legacyTable    String?
+  legacyFormId   Int?
+  legacyChildId  Int?
+  field          String
+  value          String?  @db.Text
+  legacyData     Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   medicalForm MedicalForm @relation(fields: [medicalFormId], references: [id], onDelete: Cascade)
 
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([legacyTable])
+  @@index([legacyFormId])
+  @@index([legacyChildId])
   @@index([medicalFormId])
   @@index([field])
   @@index([legacyData], type: Gin)
