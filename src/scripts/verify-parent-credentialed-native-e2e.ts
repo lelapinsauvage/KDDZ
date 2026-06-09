@@ -772,7 +772,7 @@ function assertFinanceItem(record: JsonRecord, label: string) {
 }
 
 function assertFoodCalendarItem(record: JsonRecord, label: string) {
-  assertStringFields(record, ["dessert", "date", "bname", "lname"], label);
+  assertStringFields(record, ["dessert", "date", "bname", "lname", "edinner"], label);
   assertDateStringFields(record, ["date"], label);
 }
 
