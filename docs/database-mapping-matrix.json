@@ -644,8 +644,8 @@
     "legacyTable": "t_holiday",
     "legacyColumns": "hid:int(11) NOT NULL AUTO_INCREMENT, description:varchar(225) NOT NULL, message:varchar(225) NOT NULL, message_date:varchar(50) NOT NULL, repeated:tinyint(1) NOT NULL DEFAULT '1', date:date NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:int(11) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', subject:varchar(250) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL, body:varchar(512) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL, notificationType:tinyint(4) NOT NULL DEFAULT '0' COMMENT '0: Holiday / 1: Strike', activeNotification:tinyint(4) NOT NULL DEFAULT '1' COMMENT '1: active', notificationDate:varchar(150) NOT NULL, notificationTime:varchar(150) NOT NULL, daysbefore:text NOT NULL",
     "modernDestination": "Holiday",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-food-calendar.ts",
+    "reconciliation": "Holiday rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, notification subject/body/day offsets, repeated/active flags, date, type, and raw legacyData; source/target count is covered by `food.t_holiday` reconciliation; mismatches expose invalid date/name rows, name/date fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1612,8 +1612,8 @@
     "legacyTable": "t_holiday",
     "legacyColumns": "hid:int(11) NOT NULL, description:varchar(225) NOT NULL, message:varchar(225) NOT NULL, message_date:varchar(50) NOT NULL, repeated:tinyint(1) NOT NULL DEFAULT '1', date:date NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:int(11) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', subject:varchar(250) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL, body:varchar(512) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL, notificationType:tinyint(4) NOT NULL DEFAULT '0' COMMENT '0: Holiday / 1: Strike', activeNotification:tinyint(4) NOT NULL DEFAULT '1' COMMENT '1: active', notificationDate:varchar(150) NOT NULL, notificationTime:varchar(150) NOT NULL, daysbefore:text NOT NULL",
     "modernDestination": "Holiday",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-food-calendar.ts",
+    "reconciliation": "Holiday rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, notification subject/body/day offsets, repeated/active flags, date, type, and raw legacyData; source/target count is covered by `food.t_holiday` reconciliation; mismatches expose invalid date/name rows, name/date fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -2452,8 +2452,8 @@
     "legacyTable": "t_holiday",
     "legacyColumns": "hid:int(11) NOT NULL AUTO_INCREMENT, description:varchar(225) NOT NULL, message:varchar(225) NOT NULL, message_date:varchar(50) NOT NULL, repeated:tinyint(1) NOT NULL DEFAULT '1', date:date NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, uby:int(11) NOT NULL, active:tinyint(1) NOT NULL DEFAULT '1', subject:varchar(250) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL, body:varchar(512) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL, notificationType:tinyint(4) NOT NULL DEFAULT '0' COMMENT '0: Holiday / 1: Strike', activeNotification:tinyint(4) NOT NULL DEFAULT '1' COMMENT '1: active', notificationDate:varchar(150) NOT NULL, notificationTime:varchar(150) NOT NULL, daysbefore:text NOT NULL",
     "modernDestination": "Holiday",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-food-calendar.ts",
+    "reconciliation": "Holiday rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, notification subject/body/day offsets, repeated/active flags, date, type, and raw legacyData; source/target count is covered by `food.t_holiday` reconciliation; mismatches expose invalid date/name rows, name/date fallback collisions, or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",

@@ -82,6 +82,7 @@ interface OldHoliday {
   notificationDate: string;
   notificationTime: string;
   daysbefore: string;
+  [key: string]: unknown;
 }
 
 function mapFoodCategory(type: string): "BREAKFAST" | "LUNCH" | "DESSERT" | "SNACK" {
@@ -351,7 +352,7 @@ export async function migrateFoodCalendar(prisma: PrismaClient, organizationId: 
   log(`Food Calendar Entries: ${calendarEntries} migrated, ${calendarSkipped} skipped`);
 
   await migrateFoodApplications(prisma, dryRun);
-  await migrateHolidays(prisma, dryRun);
+  await migrateHolidays(prisma, dryRun, sourceDatabase);
 
   log(`=== Food/calendar migration complete ===${dryRun ? " [DRY RUN]" : ""}`);
 }
@@ -409,7 +410,11 @@ async function migrateFoodApplications(prisma: PrismaClient, dryRun: boolean) {
   log(`Food Applications: ${migrated} migrated, ${skipped} skipped`);
 }
 
-async function migrateHolidays(prisma: PrismaClient, dryRun: boolean) {
+async function migrateHolidays(
+  prisma: PrismaClient,
+  dryRun: boolean,
+  sourceDatabase: string
+) {
   const rows = await queryMysql<OldHoliday>(
     "SELECT * FROM t_holiday ORDER BY hid"
   );
@@ -426,34 +431,66 @@ async function migrateHolidays(prisma: PrismaClient, dryRun: boolean) {
       continue;
     }
 
-    const existing = await prisma.holiday.findFirst({
-      where: { name, date },
+    const key = `${sourceDatabase}:t_holiday:${row.hid}`;
+    const notificationDaysBefore = parseDaysBeforeList(row.daysbefore);
+    const legacyData = JSON.parse(
+      JSON.stringify({
+        sourceDatabase,
+        sourceTable: "t_holiday",
+        legacyId: row.hid,
+        row,
+      })
+    ) as Prisma.InputJsonValue;
+    const data = {
+      sourceDatabase,
+      legacyKey: key,
+      legacyId: row.hid,
+      legacyTable: "t_holiday",
+      legacyData,
+      name,
+      description: cleanString(row.message),
+      date,
+      repeated: toBool(row.repeated),
+      type: row.notificationType === 1 ? "STRIKE" : "HOLIDAY",
+      isActive: toBool(row.active),
+      notificationTitle: cleanString(row.subject),
+      notificationMessage: cleanString(row.body),
+      daysBefore: notificationDaysBefore[0] ?? 0,
+      notificationDaysBefore,
+      informTeachers: false,
+      sendVia: "BOTH",
+      createdAt: parseDate(row.datetime) ?? new Date(),
+    };
+    const existingByKey = await prisma.holiday.findUnique({
+      where: { legacyKey: key },
     });
+    const existing =
+      existingByKey ??
+      (await prisma.holiday.findFirst({
+        where: {
+          name,
+          date,
+          legacyKey: null,
+        },
+      }));
     if (existing) {
+      if (!dryRun) {
+        await prisma.holiday.update({
+          where: { id: existing.id },
+          data,
+        });
+      }
       setMapping("holiday", row.hid, existing.id);
       skipped++;
       continue;
     }
 
     const id = generateUUID();
-    const notificationDaysBefore = parseDaysBeforeList(row.daysbefore);
     if (!dryRun) {
       await prisma.holiday.create({
         data: {
           id,
-          name,
-          description: cleanString(row.message),
-          date,
-          repeated: toBool(row.repeated),
-          type: row.notificationType === 1 ? "STRIKE" : "HOLIDAY",
-          isActive: toBool(row.active),
-          notificationTitle: cleanString(row.subject),
-          notificationMessage: cleanString(row.body),
-          daysBefore: notificationDaysBefore[0] ?? 0,
-          notificationDaysBefore,
-          informTeachers: false,
-          sendVia: "BOTH",
-          createdAt: parseDate(row.datetime) ?? new Date(),
+          ...data,
         },
       });
     }

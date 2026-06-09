@@ -1070,12 +1070,14 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     targetTable: "food_applications",
     notes: "Food application rows keep sourceDatabase and legacyKey.",
   }),
-  weakRule({
+  provenancedRule({
     id: "food.t_holiday",
     step: "21. Food, Calendar & Holidays",
     sourceTable: "t_holiday",
     targetTable: "holidays",
-    notes: "Holidays are matched by name/date without provenance.",
+    targetWhere: byLegacyTable("t_holiday"),
+    notes:
+      "Holiday rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, notification fields, repeated/active flags, date, and raw legacyData.",
   }),
   ...alarmTables.map((table) =>
     provenancedRule({

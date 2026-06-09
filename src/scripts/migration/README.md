@@ -168,7 +168,7 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_food` | Food, including source database/key provenance and raw legacy row |
 | `t_food_calendar` | FoodCalendar, including source database/key provenance and raw `legacyData` for parent mobile `foodcalendar.php` parity |
 | `t_food_apply` | FoodApplication |
-| `t_holiday` | Holiday |
+| `t_holiday` | Holiday, including source database/key provenance and raw legacy row |
 | `t_events_types` | EventType |
 | `t_events` | Event |
 | `t_alarms`, `t_alarms_*` (except `t_alarms_msg`) | Alarm |
@@ -277,6 +277,8 @@ Call rows from `t_form_6` are reconciled against `CallLog.sourceDatabase` for al
 Food calendar rows from `t_food_calendar` fan out into meal-type `FoodCalendar` entries, so reconciliation counts distinct target `legacyId` values with `sourceDatabase` provenance. Count mismatches usually mean a source row had an unmapped branch, invalid date, or no mappable meal/dessert entry.
 
 Food rows from `t_food` are reconciled against `Food.sourceDatabase`, with raw legacy data preserving the source row. Count mismatches usually mean a source row had no name or matched a pre-existing name/category fallback during backfill.
+
+Holiday rows from `t_holiday` are reconciled against `Holiday.sourceDatabase` and `Holiday.legacyTable`, preserving notification text, day offsets, active/repeated flags, and raw legacy data. Count mismatches usually mean a row had an invalid date/name or matched a pre-existing name/date fallback during backfill.
 
 Child roster rows from `t_child` and draft rows from `t_child_draft` are reconciled against `Child.sourceDatabase` and `Child.legacyTable` so active/draft imports are checked by exact legacy provenance rather than broad child totals. Count mismatches usually mean a source row had an unmapped branch or invalid draft id.
 

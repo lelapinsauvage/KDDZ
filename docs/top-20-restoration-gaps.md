@@ -56,6 +56,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - Call log reconciliation now uses `CallLog.sourceDatabase` for all active `t_form_6` rows, including drafts, matching the restored Form 6 runtime call workflow.
    - Food item reconciliation now uses `Food.sourceDatabase` for `t_food` rows, preserving legacy keys, categories, active flags, created timestamps, and raw legacy food data.
    - Food calendar reconciliation now counts distinct `FoodCalendar.legacyId` values for active `t_food_calendar` rows, preserving row-level proof despite breakfast/lunch/snack/dessert fan-out.
+   - Holiday reconciliation now uses `Holiday.sourceDatabase`/`legacyTable` for `t_holiday` rows, preserving notification fields, repeated/active flags, day offsets, and raw legacy holiday data.
    - Teacher calendar status reconciliation now covers migrated `t_emp_status` rows through the legacy JSON stored on `EmployeeEvent.notes`.
    - Notification receipt reconciliation now covers the full migrated delivery-table set from `migrate-alarms.ts`, including parent receipt variants, requests/others, event staff/parent deliveries, and holiday read-state.
    - Alarm content reconciliation now uses `Alarm.legacyData.sourceDatabase`/`sourceTable` for `t_alarms*` imports, and `migrate-alarms.ts` backfills that provenance on existing imported alarms when rerun.
