@@ -150,7 +150,7 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_absent_attachments` | AbsenceAttachment |
 | `callparent` | CallCauseCategory |
 | `callcauses` | CallCause |
-| `t_form_6` | CallLog and MedicalForm (GENERAL) |
+| `t_form_6` | CallLog, including source database/key provenance, legacy child/branch/class/teacher ids, draft state, and raw `legacyData` |
 | `t_assessment_1` .. `t_assessment_7` | Assessment |
 | `new_assessment` | Assessment `_legacyNewAssessmentMarkers` / notification stub |
 | `t_assessment_dates` | AssessmentScheduleRule |
@@ -266,6 +266,8 @@ The notification receipt rules mirror every `custom_notifications*` delivery tab
 Alarm content rows from `t_alarms*` are reconciled against `Alarm.legacyData.sourceDatabase` and `Alarm.legacyData.sourceTable`. Count mismatches usually mean duplicate legacy content merged into an existing alarm or the imported dump differs from the canonical production source.
 
 Daily report rows from `t_daily_report` are reconciled against `DailyReport.legacyData.sourceDatabase` and `DailyReport.legacyData.sourceTable` for active rows. Count mismatches usually mean a source row had an unmapped child, an invalid report date, or duplicate child/date content merged into an existing report.
+
+Call rows from `t_form_6` are reconciled against `CallLog.sourceDatabase` for all active rows, including drafts. Count mismatches usually mean a source row had an unmapped child or invalid legacy id.
 
 Child roster rows from `t_child` and draft rows from `t_child_draft` are reconciled against `Child.sourceDatabase` and `Child.legacyTable` so active/draft imports are checked by exact legacy provenance rather than broad child totals. Count mismatches usually mean a source row had an unmapped branch or invalid draft id.
 

@@ -587,9 +587,9 @@
     "sourceDump": "kiddzonl_garderie17-18",
     "legacyTable": "t_form_6",
     "legacyColumns": "form_id:int(11) NOT NULL AUTO_INCREMENT, child_id:varchar(50) NOT NULL, branch_id:varchar(50) CHARACTER SET utf8 NOT NULL, class_id:varchar(50) CHARACTER SET utf8 NOT NULL, calltype:varchar(50) CHARACTER SET utf8 NOT NULL, accident_date:varchar(50) CHARACTER SET utf8 NOT NULL, accident_time:varchar(50) CHARACTER SET utf8 NOT NULL, causeofcall:varchar(50) CHARACTER SET utf8 NOT NULL, subject:varchar(50) CHARACTER SET utf8 NOT NULL, remarks:varchar(50) CHARACTER SET utf8 NOT NULL, teacher_id:int(11) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1', is_rep_draft:tinyint(1) NOT NULL DEFAULT '0', f_progress:double NOT NULL, uby:int(11) NOT NULL",
-    "modernDestination": "MedicalForm",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "CallLog",
+    "status": "mapped - migrated by migrate-calls.ts",
+    "reconciliation": "Form 6 call rows are restored as CallLog with sourceDatabase, legacyKey, legacy ids, draft flag, child/branch/class/teacher provenance, direction/date/time, subject/reason/remarks, and raw legacyData; source/target count is covered by `calls.t_form_6` reconciliation for active rows; skipped/orphan triage still depends on running it against canonical production dumps because unmapped children are intentionally reported."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1563,9 +1563,9 @@
     "sourceDump": "kiddzonl_garderie29sept",
     "legacyTable": "t_form_6",
     "legacyColumns": "form_id:int(11) NOT NULL, child_id:varchar(50) NOT NULL, branch_id:varchar(50) CHARACTER SET utf8 NOT NULL, class_id:varchar(50) CHARACTER SET utf8 NOT NULL, calltype:varchar(50) CHARACTER SET utf8 NOT NULL, accident_date:varchar(50) CHARACTER SET utf8 NOT NULL, accident_time:varchar(50) CHARACTER SET utf8 NOT NULL, causeofcall:varchar(50) CHARACTER SET utf8 NOT NULL, subject:varchar(50) CHARACTER SET utf8 NOT NULL, remarks:varchar(50) CHARACTER SET utf8 NOT NULL, teacher_id:int(11) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1', is_rep_draft:tinyint(1) NOT NULL DEFAULT '0', f_progress:double NOT NULL, uby:int(11) NOT NULL",
-    "modernDestination": "MedicalForm",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "CallLog",
+    "status": "mapped - migrated by migrate-calls.ts",
+    "reconciliation": "Form 6 call rows are restored as CallLog with sourceDatabase, legacyKey, legacy ids, draft flag, child/branch/class/teacher provenance, direction/date/time, subject/reason/remarks, and raw legacyData; source/target count is covered by `calls.t_form_6` reconciliation for active rows; skipped/orphan triage still depends on running it against canonical production dumps because unmapped children are intentionally reported."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -2395,9 +2395,9 @@
     "sourceDump": "kiddzonl_garderie_2018-2019",
     "legacyTable": "t_form_6",
     "legacyColumns": "form_id:int(11) NOT NULL AUTO_INCREMENT, child_id:varchar(50) NOT NULL, branch_id:varchar(50) CHARACTER SET utf8 NOT NULL, class_id:varchar(50) CHARACTER SET utf8 NOT NULL, calltype:varchar(50) CHARACTER SET utf8 NOT NULL, accident_date:varchar(50) CHARACTER SET utf8 NOT NULL, accident_time:varchar(50) CHARACTER SET utf8 NOT NULL, causeofcall:varchar(50) CHARACTER SET utf8 NOT NULL, subject:varchar(50) CHARACTER SET utf8 NOT NULL, remarks:varchar(50) CHARACTER SET utf8 NOT NULL, teacher_id:int(11) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1', is_rep_draft:tinyint(1) NOT NULL DEFAULT '0', f_progress:double NOT NULL, uby:int(11) NOT NULL",
-    "modernDestination": "MedicalForm",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "modernDestination": "CallLog",
+    "status": "mapped - migrated by migrate-calls.ts",
+    "reconciliation": "Form 6 call rows are restored as CallLog with sourceDatabase, legacyKey, legacy ids, draft flag, child/branch/class/teacher provenance, direction/date/time, subject/reason/remarks, and raw legacyData; source/target count is covered by `calls.t_form_6` reconciliation for active rows; skipped/orphan triage still depends on running it against canonical production dumps because unmapped children are intentionally reported."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",

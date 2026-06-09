@@ -888,14 +888,15 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     targetTable: "call_causes",
     notes: "Call cause rows keep sourceDatabase and legacyKey.",
   }),
-  weakRule({
+  provenancedRule({
     id: "calls.t_form_6",
     step: "17. Calls",
     sourceTable: "t_form_6",
-    sourceWhere: "active = 1 AND is_rep_draft = 0",
+    sourceWhere: "active = 1",
     targetTable: "call_logs",
+    targetWhere: bySourceDatabase(),
     notes:
-      "Current code migrates t_form_6 to CallLog; README also mentions MedicalForm, so this rule exposes that parity decision.",
+      "Call logs preserve sourceDatabase, legacyKey, legacy ids, draft status, child/branch/class/teacher ids, and raw legacyData.",
   }),
   ...assessmentTables.map((assessmentType) =>
     weakRule({
