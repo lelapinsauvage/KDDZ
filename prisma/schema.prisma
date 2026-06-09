@@ -2308,6 +2308,7 @@ model Message {
   sourceDatabase         String?
   legacyKey              String?       @unique
   legacyId               Int?
+  legacyTable            String?
   legacyThreadId         Int?
   legacySenderId         Int?
   legacySenderType       Int?
@@ -2333,6 +2334,7 @@ model Message {
 
   @@index([sourceDatabase])
   @@index([legacyId])
+  @@index([legacyTable])
   @@index([legacyThreadId])
   @@index([legacyDeliveryUserId, legacyDeliveryUserType])
   @@index([organizationId])

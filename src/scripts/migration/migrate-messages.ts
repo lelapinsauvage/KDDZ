@@ -98,10 +98,14 @@ function legacyMessageKey(
 }
 
 function legacyMessageData(
+  sourceDatabase: string,
+  sourceTable: string,
   message: OldMessage,
   recipient: OldMsgRecipient | null,
 ) {
-  return JSON.parse(JSON.stringify({ message, recipient }));
+  return JSON.parse(
+    JSON.stringify({ sourceDatabase, sourceTable, message, recipient })
+  );
 }
 
 export async function migrateMessages(
@@ -209,6 +213,7 @@ export async function migrateMessages(
           sourceDatabase,
           legacyKey,
           legacyId: msg.aid,
+          legacyTable: "t_alarms_msg",
           legacyThreadId: msg.thread_id || msg.aid,
           legacySenderId: msg.sender,
           legacySenderType: msg.sender_type,
@@ -218,7 +223,12 @@ export async function migrateMessages(
           legacyDeliveryUserType: null,
           legacyNature: cleanString(msg.nature),
           legacyHref: cleanString(msg.href),
-          legacyData: legacyMessageData(msg, null),
+          legacyData: legacyMessageData(
+            sourceDatabase,
+            "t_alarms_msg",
+            msg,
+            null
+          ),
           senderId,
           senderType,
           recipientId: senderId,
@@ -256,6 +266,7 @@ export async function migrateMessages(
             sourceDatabase,
             legacyKey,
             legacyId: msg.aid,
+            legacyTable: "custom_notifications_msg",
             legacyThreadId: msg.thread_id || msg.aid,
             legacySenderId: msg.sender,
             legacySenderType: msg.sender_type,
@@ -265,7 +276,12 @@ export async function migrateMessages(
             legacyDeliveryUserType: recip.user_type,
             legacyNature: cleanString(msg.nature),
             legacyHref: cleanString(msg.href),
-            legacyData: legacyMessageData(msg, recip),
+            legacyData: legacyMessageData(
+              sourceDatabase,
+              "custom_notifications_msg",
+              msg,
+              recip
+            ),
             senderId,
             senderType,
             recipientId,

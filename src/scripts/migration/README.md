@@ -176,10 +176,10 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `notifications_tokens` | PushToken, including source database/key/table provenance and raw legacy row |
 | `t_notifications_log` | LegacyNotificationLog, including source database/key/table provenance and raw legacy row |
 | `notifications_nature` | LegacyNotificationNature |
-| `t_alarms_msg` | MessageThread, Message |
-| `custom_notifications_msg` | Message (per-recipient) |
+| `t_alarms_msg` | MessageThread, Message, including source database/key/table provenance and distinct legacy message representation |
+| `custom_notifications_msg` | Message (per-recipient), including source database/key/table provenance and delivery/read-state metadata |
 
-Message migration preserves legacy message notification provenance on `Message` rows: source database, stable `legacyKey`, legacy message/thread/sender/recipient ids, delivery user/type, `legacyNature`, `legacyHref`, and raw legacy row JSON. Each `custom_notifications_msg` delivery row becomes a separate recipient-scoped modern `Message`, so reconciliation expects recipient fan-out rather than a simple 1:1 count with `t_alarms_msg`.
+Message migration preserves legacy message notification provenance on `Message` rows: source database, stable `legacyKey`, `legacyTable`, legacy message/thread/sender/recipient ids, delivery user/type, `legacyNature`, `legacyHref`, and raw legacy row JSON. `t_alarms_msg` reconciliation compares distinct legacy message ids to collapse recipient fan-out, while each `custom_notifications_msg` delivery row linked to a legacy message becomes a separate recipient-scoped modern `Message` with exact delivery-row reconciliation.
 
 Alarm migration preserves source database/table provenance inside `Alarm.legacyData` for every `t_alarms*` content row and backfills that JSON when previously imported alarms are encountered on rerun. Push tokens now keep first-class `sourceDatabase`, `legacyKey`, and `legacyTable` provenance, and reconciliation compares distinct non-empty legacy token values because the modern token is unique. Legacy notification logs now keep first-class `sourceDatabase`, `legacyKey`, and `legacyTable` provenance while preserving the globally unique legacy id used by compatibility views.
 

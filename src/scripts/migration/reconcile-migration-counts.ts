@@ -1217,25 +1217,36 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     targetTable: "legacy_notification_natures",
     notes: "Notification nature rows keep sourceDatabase and legacyKey.",
   }),
-  weakRule({
+  baseRule({
     id: "messages.t_alarms_msg",
     step: "23. Messages",
-    sourceTable: "t_alarms_msg",
-    targetTable: "messages",
-    expectation: "informational",
-    evidence: "derived",
+    source: { table: "t_alarms_msg" },
+    target: {
+      table: "messages",
+      where: bySourceDatabase(),
+      countExpression: pgDistinctCount("legacyId"),
+    },
+    expectation: "equal",
+    evidence: "strong",
     notes:
-      "Message rows keep sourceDatabase, legacyKey, legacyId, and legacyThreadId, but t_alarms_msg count is informational because custom_notifications_msg delivery rows intentionally fan out into multiple recipient messages.",
+      "Every legacy message has at least one modern Message representation; recipient fan-out is collapsed by COUNT(DISTINCT legacyId).",
   }),
-  weakRule({
+  baseRule({
     id: "messages.custom_notifications_msg",
     step: "23. Messages",
-    sourceTable: "custom_notifications_msg",
-    targetTable: "messages",
-    expectation: "informational",
-    evidence: "derived",
+    source: {
+      table: "custom_notifications_msg",
+      where:
+        "EXISTS (SELECT 1 FROM `t_alarms_msg` WHERE `t_alarms_msg`.`aid` = `custom_notifications_msg`.`cusntf_notification_id`)",
+    },
+    target: {
+      table: "messages",
+      where: byLegacyTable("custom_notifications_msg"),
+    },
+    expectation: "equal",
+    evidence: "strong",
     notes:
-      "custom_notifications_msg rows become per-recipient Message rows with legacyKey and delivery user/type provenance; count is informational because source messages without delivery rows create a self-recipient fallback.",
+      "Each delivery row with a matching legacy message becomes one recipient-scoped Message preserving delivery user/type and read-state provenance.",
   }),
 ];
 

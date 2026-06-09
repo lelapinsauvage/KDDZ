@@ -93,7 +93,7 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, user_type:tinyint(1) NOT NULL DEFAULT '0' COMMENT '\"Garderie\" 0 \"Parent\" 1', cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "Message",
     "status": "mapped - migrated by migrate-messages.ts",
-    "reconciliation": "Message delivery rows restore per-recipient Message records with legacy notification/user/type/read-state provenance; counts intentionally fan out by recipient rather than matching t_alarms_msg 1:1."
+    "reconciliation": "Message delivery rows restore one recipient-scoped Message per delivery row with sourceDatabase, legacyKey, legacyTable, legacy message id, delivery user/type, read-state, nature/href, and raw legacyData; source/target count is covered by `messages.custom_notifications_msg` reconciliation for rows linked to `t_alarms_msg`."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -309,7 +309,7 @@
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, sender:int(11) NOT NULL, sender_type:tinyint(1) NOT NULL DEFAULT '0' COMMENT '\"Garderie\" 0 \"Parent\" 1', thread_id:int(11) NOT NULL, message:text NOT NULL, subject:varchar(50) NOT NULL, nature:varchar(50) NOT NULL, curr_date:varchar(20) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
     "modernDestination": "MessageThread/Message",
     "status": "mapped - migrated by migrate-messages.ts",
-    "reconciliation": "Message alarm rows restore MessageThread/Message records with source database/table/id, legacy thread/sender metadata, nature, href, raw JSON, and stable legacy keys; recipient fan-out is reconciled with custom_notifications_msg."
+    "reconciliation": "Message alarm rows restore MessageThread/Message records with sourceDatabase, legacyKey, legacyTable, legacy message/thread/sender metadata, nature, href, and raw legacyData; source/target count is covered by `messages.t_alarms_msg` reconciliation using distinct legacy message ids to collapse recipient fan-out."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -968,7 +968,7 @@
     "legacyColumns": "stamp:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, user_type:tinyint(1) NOT NULL DEFAULT '0' COMMENT '\"Garderie\" 0 \"Parent\" 1', cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "Message",
     "status": "mapped - migrated by migrate-messages.ts",
-    "reconciliation": "Message delivery rows restore per-recipient Message records with legacy notification/user/type/read-state provenance; counts intentionally fan out by recipient rather than matching t_alarms_msg 1:1."
+    "reconciliation": "Message delivery rows restore one recipient-scoped Message per delivery row with sourceDatabase, legacyKey, legacyTable, legacy message id, delivery user/type, read-state, nature/href, and raw legacyData; source/target count is covered by `messages.custom_notifications_msg` reconciliation for rows linked to `t_alarms_msg`."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1256,7 +1256,7 @@
     "legacyColumns": "aid:int(11) NOT NULL, sender:int(11) NOT NULL, sender_type:tinyint(1) NOT NULL DEFAULT '0' COMMENT '\"Garderie\" 0 \"Parent\" 1', thread_id:int(11) NOT NULL, message:text NOT NULL, subject:varchar(50) NOT NULL, nature:varchar(50) NOT NULL, curr_date:varchar(20) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
     "modernDestination": "MessageThread/Message",
     "status": "mapped - migrated by migrate-messages.ts",
-    "reconciliation": "Message alarm rows restore MessageThread/Message records with source database/table/id, legacy thread/sender metadata, nature, href, raw JSON, and stable legacy keys; recipient fan-out is reconciled with custom_notifications_msg."
+    "reconciliation": "Message alarm rows restore MessageThread/Message records with sourceDatabase, legacyKey, legacyTable, legacy message/thread/sender metadata, nature, href, and raw legacyData; source/target count is covered by `messages.t_alarms_msg` reconciliation using distinct legacy message ids to collapse recipient fan-out."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -1907,7 +1907,7 @@
     "legacyColumns": "cusntf_notification_id:int(11) NOT NULL, cusntf_user_id:int(11) NOT NULL, user_type:tinyint(1) NOT NULL DEFAULT '0' COMMENT '\"Garderie\" 0 \"Parent\" 1', cusntf_is_viewed:tinyint(1) NOT NULL DEFAULT '0'",
     "modernDestination": "Message",
     "status": "mapped - migrated by migrate-messages.ts",
-    "reconciliation": "Message delivery rows restore per-recipient Message records with legacy notification/user/type/read-state provenance; counts intentionally fan out by recipient rather than matching t_alarms_msg 1:1."
+    "reconciliation": "Message delivery rows restore one recipient-scoped Message per delivery row with sourceDatabase, legacyKey, legacyTable, legacy message id, delivery user/type, read-state, nature/href, and raw legacyData; source/target count is covered by `messages.custom_notifications_msg` reconciliation for rows linked to `t_alarms_msg`."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
@@ -2123,7 +2123,7 @@
     "legacyColumns": "aid:int(11) NOT NULL AUTO_INCREMENT, sender:int(11) NOT NULL, sender_type:tinyint(1) NOT NULL DEFAULT '0' COMMENT '\"Garderie\" 0 \"Parent\" 1', thread_id:int(11) NOT NULL, message:text NOT NULL, subject:varchar(50) NOT NULL, nature:varchar(50) NOT NULL, curr_date:varchar(20) NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, status:tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Ignored', href:varchar(255) NOT NULL",
     "modernDestination": "MessageThread/Message",
     "status": "mapped - migrated by migrate-messages.ts",
-    "reconciliation": "Message alarm rows restore MessageThread/Message records with source database/table/id, legacy thread/sender metadata, nature, href, raw JSON, and stable legacy keys; recipient fan-out is reconciled with custom_notifications_msg."
+    "reconciliation": "Message alarm rows restore MessageThread/Message records with sourceDatabase, legacyKey, legacyTable, legacy message/thread/sender metadata, nature, href, and raw legacyData; source/target count is covered by `messages.t_alarms_msg` reconciliation using distinct legacy message ids to collapse recipient fan-out."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
