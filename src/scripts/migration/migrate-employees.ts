@@ -67,6 +67,7 @@ import type {
   AttendanceLogStatus,
   EmployeeEventStatus,
   ExperienceType,
+  Prisma,
   PrismaClient,
 } from "@/generated/prisma/client";
 import { createPrismaClient } from "./lib/prisma-client";
@@ -88,6 +89,22 @@ import {
 
 function legacyKey(sourceDatabase: string, table: string, legacyId: number) {
   return `${sourceDatabase}:${table}:${legacyId}`;
+}
+
+function legacyRowData(
+  sourceDatabase: string,
+  sourceTable: string,
+  legacyId: number,
+  row: Record<string, unknown>
+): Prisma.InputJsonObject {
+  return JSON.parse(
+    JSON.stringify({
+      sourceDatabase,
+      sourceTable,
+      legacyId,
+      row,
+    })
+  ) as Prisma.InputJsonObject;
 }
 
 // ---------------------------------------------------------------------------
@@ -962,6 +979,46 @@ interface OldDoctor {
   remarks: string;
   active: number;
   datetime: string;
+  [key: string]: unknown;
+}
+
+async function upsertDoctorAddress(
+  prisma: PrismaClient,
+  dryRun: boolean,
+  doctorId: string,
+  row: OldDoctor
+) {
+  if (!row.street && !row.city && !row.region && !row.building) return;
+
+  const data = {
+    governorate: cleanString(row.muhafaza),
+    district: cleanString(row.quadaa),
+    region: cleanString(row.region),
+    city: cleanString(row.city),
+    street: cleanString(row.street),
+    building: cleanString(row.building),
+  };
+
+  if (dryRun) return;
+
+  const existing = await prisma.doctorAddress.findFirst({
+    where: { doctorId },
+  });
+  if (existing) {
+    await prisma.doctorAddress.update({
+      where: { id: existing.id },
+      data,
+    });
+    return;
+  }
+
+  await prisma.doctorAddress.create({
+    data: {
+      id: generateUUID(),
+      doctorId,
+      ...data,
+    },
+  });
 }
 
 async function migrateDoctors(
@@ -969,6 +1026,7 @@ async function migrateDoctors(
   dryRun: boolean,
   defaultBranchId: string
 ) {
+  const sourceDatabase = getMysqlConfig().database || "unknown";
   const rows = await queryMysql<OldDoctor>(
     "SELECT * FROM t_doctor WHERE active = 1 ORDER BY did"
   );
@@ -978,10 +1036,49 @@ async function migrateDoctors(
   let skipped = 0;
 
   for (const row of rows) {
-    const existing = await prisma.doctor.findFirst({
-      where: { firstName: row.dfname, lastName: row.dlname },
+    const legacyId = toInt(row.did, 0);
+    if (!legacyId) {
+      skipped++;
+      continue;
+    }
+
+    const key = legacyKey(sourceDatabase, "t_doctor", legacyId);
+    const existingByKey = await prisma.doctor.findUnique({
+      where: { legacyKey: key },
     });
+    const existing =
+      existingByKey ??
+      (await prisma.doctor.findFirst({
+        where: {
+          firstName: row.dfname,
+          lastName: row.dlname,
+          legacyKey: null,
+        },
+      }));
+    const createdAt = parseDate(row.datetime);
+    const data = {
+      sourceDatabase,
+      legacyKey: key,
+      legacyId,
+      legacyTable: "t_doctor",
+      firstName: row.dfname || "",
+      lastName: row.dlname || "",
+      phone: cleanString(row.tel),
+      remarks: cleanString(row.remarks),
+      branchId: defaultBranchId,
+      isActive: toBool(row.active),
+      legacyData: legacyRowData(sourceDatabase, "t_doctor", legacyId, row),
+      ...(createdAt ? { createdAt } : {}),
+    };
+
     if (existing) {
+      if (!dryRun) {
+        await prisma.doctor.update({
+          where: { id: existing.id },
+          data,
+        });
+      }
+      await upsertDoctorAddress(prisma, dryRun, existing.id, row);
       setMapping("doctor", row.did, existing.id);
       skipped++;
       continue;
@@ -992,28 +1089,11 @@ async function migrateDoctors(
       await prisma.doctor.create({
         data: {
           id: newId,
-          firstName: row.dfname || "",
-          lastName: row.dlname || "",
-          phone: cleanString(row.tel),
-          branchId: defaultBranchId,
-          isActive: toBool(row.active),
-          createdAt: row.datetime ? new Date(row.datetime) : new Date(),
+          ...data,
         },
       });
-
-      // Doctor address
-      if (row.street || row.city || row.region) {
-        await prisma.doctorAddress.create({
-          data: {
-            id: generateUUID(),
-            doctorId: newId,
-            street: cleanString(row.street),
-            city: cleanString(row.city),
-            region: cleanString(row.region),
-          },
-        });
-      }
     }
+    await upsertDoctorAddress(prisma, dryRun, newId, row);
     setMapping("doctor", row.did, newId);
     migrated++;
   }

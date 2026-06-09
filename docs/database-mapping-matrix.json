@@ -484,8 +484,8 @@
     "legacyTable": "t_doctor",
     "legacyColumns": "did:int(11) NOT NULL AUTO_INCREMENT, dfname:varchar(50) CHARACTER SET utf8 NOT NULL, dlname:varchar(50) CHARACTER SET utf8 NOT NULL, muhafaza:varchar(50) CHARACTER SET utf8 NOT NULL, country:varchar(50) CHARACTER SET utf8 NOT NULL, quadaa:varchar(50) CHARACTER SET utf8 NOT NULL, region:varchar(50) CHARACTER SET utf8 NOT NULL, city:varchar(50) CHARACTER SET utf8mb4 NOT NULL, street:varchar(50) CHARACTER SET utf8 NOT NULL, building:varchar(50) CHARACTER SET utf8 NOT NULL, tel:varchar(50) NOT NULL, remarks:varchar(50) CHARACTER SET utf8 NOT NULL, latitude:varchar(50) CHARACTER SET utf8 DEFAULT NULL, longitude:varchar(50) CHARACTER SET utf8 NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1'",
     "modernDestination": "Doctor",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-employees.ts",
+    "reconciliation": "Doctor core rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, default branch assignment, phone, remarks, active flag, raw legacyData, and backfilled DoctorAddress fields; source/target count is covered by `employees.t_doctor` reconciliation; mismatches expose duplicate first/last-name fallback collisions or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1452,8 +1452,8 @@
     "legacyTable": "t_doctor",
     "legacyColumns": "did:int(11) NOT NULL, dfname:varchar(50) CHARACTER SET utf8 NOT NULL, dlname:varchar(50) CHARACTER SET utf8 NOT NULL, muhafaza:varchar(50) CHARACTER SET utf8 NOT NULL, country:varchar(50) CHARACTER SET utf8 NOT NULL, quadaa:varchar(50) CHARACTER SET utf8 NOT NULL, region:varchar(50) CHARACTER SET utf8 NOT NULL, city:varchar(50) CHARACTER SET utf8mb4 NOT NULL, street:varchar(50) CHARACTER SET utf8 NOT NULL, building:varchar(50) CHARACTER SET utf8 NOT NULL, tel:varchar(50) NOT NULL, remarks:varchar(50) CHARACTER SET utf8 NOT NULL, latitude:varchar(50) CHARACTER SET utf8 DEFAULT NULL, longitude:varchar(50) CHARACTER SET utf8 NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1'",
     "modernDestination": "Doctor",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-employees.ts",
+    "reconciliation": "Doctor core rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, default branch assignment, phone, remarks, active flag, raw legacyData, and backfilled DoctorAddress fields; source/target count is covered by `employees.t_doctor` reconciliation; mismatches expose duplicate first/last-name fallback collisions or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -2292,8 +2292,8 @@
     "legacyTable": "t_doctor",
     "legacyColumns": "did:int(11) NOT NULL AUTO_INCREMENT, dfname:varchar(50) CHARACTER SET utf8 NOT NULL, dlname:varchar(50) CHARACTER SET utf8 NOT NULL, muhafaza:varchar(50) CHARACTER SET utf8 NOT NULL, country:varchar(50) CHARACTER SET utf8 NOT NULL, quadaa:varchar(50) CHARACTER SET utf8 NOT NULL, region:varchar(50) CHARACTER SET utf8 NOT NULL, city:varchar(50) CHARACTER SET utf8mb4 NOT NULL, street:varchar(50) CHARACTER SET utf8 NOT NULL, building:varchar(50) CHARACTER SET utf8 NOT NULL, tel:varchar(50) NOT NULL, remarks:varchar(50) CHARACTER SET utf8 NOT NULL, latitude:varchar(50) CHARACTER SET utf8 DEFAULT NULL, longitude:varchar(50) CHARACTER SET utf8 NOT NULL, datetime:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, active:tinyint(1) NOT NULL DEFAULT '1'",
     "modernDestination": "Doctor",
-    "status": "mapped - verify columns/transforms",
-    "reconciliation": "Needs source count, migrated count, skipped count, orphan report."
+    "status": "mapped - migrated by migrate-employees.ts",
+    "reconciliation": "Doctor core rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, default branch assignment, phone, remarks, active flag, raw legacyData, and backfilled DoctorAddress fields; source/target count is covered by `employees.t_doctor` reconciliation; mismatches expose duplicate first/last-name fallback collisions or canonical dump differences."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",

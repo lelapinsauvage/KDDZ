@@ -686,14 +686,15 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     notes:
       "Nurse attachment rows with real legacy files keep sourceDatabase and legacyKey.",
   }),
-  weakRule({
+  provenancedRule({
     id: "employees.t_doctor",
     step: "8. Employees",
     sourceTable: "t_doctor",
     sourceWhere: "active = 1",
     targetTable: "doctors",
+    targetWhere: byLegacyTable("t_doctor"),
     notes:
-      "General doctor rows are matched by name and do not yet store sourceDatabase.",
+      "General doctor rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, default branch assignment, phone, remarks, active flag, raw legacy row, and backfilled address fields.",
   }),
   provenancedRule({
     id: "employees.t_manager",
