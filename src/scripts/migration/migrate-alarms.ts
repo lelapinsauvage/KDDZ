@@ -682,25 +682,38 @@ async function migrateNotificationLogs(prisma: PrismaClient, dryRun: boolean) {
   log(`Found ${rows.length} legacy notification log rows`);
 
   let migrated = 0;
-  let skipped = 0;
+  let backfilled = 0;
+  let refreshed = 0;
 
   for (const row of rows) {
     const legacyId = toInt(row.id);
-    const existing = await prisma.legacyNotificationLog.findUnique({
+    const key = `${sourceDatabase}:t_notifications_log:${legacyId}`;
+    const data = {
+      sourceDatabase,
+      legacyKey: key,
+      legacyId,
+      legacyTable: "t_notifications_log",
+      childId: getMapping("child", row.childId),
+      legacyChildId: toInt(row.childId, 0) || null,
+      name: cleanString(row.name),
+      status: toInt(row.status, 0),
+      expiryDate: cleanString(row.expiryDate),
+      legacyData: sourceLegacyData(sourceDatabase, "t_notifications_log", row),
+      createdAt: parseDate(row.date) ?? new Date(),
+    };
+    const existingByKey = await prisma.legacyNotificationLog.findUnique({
+      where: { legacyKey: key },
+    });
+    const existingById = await prisma.legacyNotificationLog.findUnique({
       where: { legacyId },
     });
+    const existing = existingByKey ?? existingById;
     if (existing) {
-      if (
-        !dryRun &&
-        shouldBackfillLegacySource(
-          existing.legacyData,
-          sourceDatabase,
-          "t_notifications_log"
-        )
-      ) {
+      if (!dryRun) {
         await prisma.legacyNotificationLog.update({
-          where: { legacyId },
+          where: { id: existing.id },
           data: {
+            ...data,
             legacyData: sourceLegacyData(
               sourceDatabase,
               "t_notifications_log",
@@ -710,7 +723,11 @@ async function migrateNotificationLogs(prisma: PrismaClient, dryRun: boolean) {
           },
         });
       }
-      skipped++;
+      if (existingByKey) {
+        refreshed++;
+      } else {
+        backfilled++;
+      }
       continue;
     }
 
@@ -718,25 +735,16 @@ async function migrateNotificationLogs(prisma: PrismaClient, dryRun: boolean) {
       await prisma.legacyNotificationLog.create({
         data: {
           id: generateUUID(),
-          legacyId,
-          childId: getMapping("child", row.childId),
-          legacyChildId: toInt(row.childId, 0) || null,
-          name: cleanString(row.name),
-          status: toInt(row.status, 0),
-          expiryDate: cleanString(row.expiryDate),
-          legacyData: sourceLegacyData(
-            sourceDatabase,
-            "t_notifications_log",
-            row
-          ),
-          createdAt: parseDate(row.date) ?? new Date(),
+          ...data,
         },
       });
     }
     migrated++;
   }
 
-  log(`Notification logs: ${migrated} migrated, ${skipped} skipped`);
+  log(
+    `Notification logs: ${migrated} migrated, ${backfilled} backfilled, ${refreshed} refreshed`
+  );
 }
 
 async function migrateNotificationNatures(

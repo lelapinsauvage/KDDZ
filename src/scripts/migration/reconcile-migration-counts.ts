@@ -1175,14 +1175,13 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     targetTable: "push_tokens",
     notes: "Push tokens are unique by token and can deduplicate across rows.",
   }),
-  weakRule({
+  provenancedRule({
     id: "alarms.t_notifications_log",
     step: "22. Alarms & Notifications",
     sourceTable: "t_notifications_log",
     targetTable: "legacy_notification_logs",
-    targetWhere: byLegacyDataSourceTable("t_notifications_log"),
     notes:
-      "Notification logs preserve sourceDatabase/sourceTable inside legacyData, but legacyId remains globally unique for compatibility.",
+      "Notification logs preserve sourceDatabase, legacyKey, legacyId, legacyTable, child mapping, status, expiry/name fields, createdAt, and raw legacy row.",
   }),
   provenancedRule({
     id: "alarms.notifications_nature",

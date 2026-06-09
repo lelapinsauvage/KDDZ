@@ -174,14 +174,14 @@ pnpm tsx src/scripts/migration/migrate-messages.ts [--dry-run]
 | `t_alarms`, `t_alarms_*` (except `t_alarms_msg`) | Alarm |
 | `custom_notifications_*` delivery tables | NotificationReceipt |
 | `notifications_tokens` | PushToken |
-| `t_notifications_log` | LegacyNotificationLog |
+| `t_notifications_log` | LegacyNotificationLog, including source database/key/table provenance and raw legacy row |
 | `notifications_nature` | LegacyNotificationNature |
 | `t_alarms_msg` | MessageThread, Message |
 | `custom_notifications_msg` | Message (per-recipient) |
 
 Message migration preserves legacy message notification provenance on `Message` rows: source database, stable `legacyKey`, legacy message/thread/sender/recipient ids, delivery user/type, `legacyNature`, `legacyHref`, and raw legacy row JSON. Each `custom_notifications_msg` delivery row becomes a separate recipient-scoped modern `Message`, so reconciliation expects recipient fan-out rather than a simple 1:1 count with `t_alarms_msg`.
 
-Alarm migration preserves source database/table provenance inside `Alarm.legacyData` for every `t_alarms*` content row and backfills that JSON when previously imported alarms are encountered on rerun. Push tokens and legacy notification logs also retain `sourceDatabase`/`sourceTable` in `legacyData`; their count checks remain weaker where the modern schema intentionally deduplicates tokens or keeps legacy notification-log ids globally unique.
+Alarm migration preserves source database/table provenance inside `Alarm.legacyData` for every `t_alarms*` content row and backfills that JSON when previously imported alarms are encountered on rerun. Push tokens retain `sourceDatabase`/`sourceTable` in `legacyData` but their count check remains weaker because the modern schema intentionally deduplicates tokens. Legacy notification logs now keep first-class `sourceDatabase`, `legacyKey`, and `legacyTable` provenance while preserving the globally unique legacy id used by compatibility views.
 
 ## Key Design Decisions
 

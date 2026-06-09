@@ -718,7 +718,7 @@
     "legacyColumns": "id:bigint(20) NOT NULL AUTO_INCREMENT, date:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, name:varchar(100) DEFAULT NULL, status:int(11) NOT NULL, childId:bigint(20) NOT NULL, expiryDate:varchar(100) NOT NULL",
     "modernDestination": "LegacyNotificationLog",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Notification log rows preserve legacyId, child mapping, status, expiry/name fields, createdAt, raw legacy row, sourceDatabase, and sourceTable in LegacyNotificationLog.legacyData; source/target count is covered by `alarms.t_notifications_log` reconciliation, while duplicate legacy ids across dumps still need canonical-run triage."
+    "reconciliation": "Notification log rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, child mapping, status, expiry/name fields, createdAt, and raw legacy row; source/target count is covered by `alarms.t_notifications_log` reconciliation, while duplicate legacy ids across dumps still need canonical-run triage."
   },
   {
     "sourceDump": "kiddzonl_garderie17-18",
@@ -1681,7 +1681,7 @@
     "legacyColumns": "id:bigint(20) NOT NULL, date:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, name:varchar(100) DEFAULT NULL, status:int(11) NOT NULL, childId:bigint(20) NOT NULL, expiryDate:varchar(100) NOT NULL",
     "modernDestination": "LegacyNotificationLog",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Notification log rows preserve legacyId, child mapping, status, expiry/name fields, createdAt, raw legacy row, sourceDatabase, and sourceTable in LegacyNotificationLog.legacyData; source/target count is covered by `alarms.t_notifications_log` reconciliation, while duplicate legacy ids across dumps still need canonical-run triage."
+    "reconciliation": "Notification log rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, child mapping, status, expiry/name fields, createdAt, and raw legacy row; source/target count is covered by `alarms.t_notifications_log` reconciliation, while duplicate legacy ids across dumps still need canonical-run triage."
   },
   {
     "sourceDump": "kiddzonl_garderie29sept",
@@ -2532,7 +2532,7 @@
     "legacyColumns": "id:bigint(20) NOT NULL AUTO_INCREMENT, date:timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, name:varchar(100) DEFAULT NULL, status:int(11) NOT NULL, childId:bigint(20) NOT NULL, expiryDate:varchar(100) NOT NULL",
     "modernDestination": "LegacyNotificationLog",
     "status": "mapped - migrated by migrate-alarms.ts",
-    "reconciliation": "Notification log rows preserve legacyId, child mapping, status, expiry/name fields, createdAt, raw legacy row, sourceDatabase, and sourceTable in LegacyNotificationLog.legacyData; source/target count is covered by `alarms.t_notifications_log` reconciliation, while duplicate legacy ids across dumps still need canonical-run triage."
+    "reconciliation": "Notification log rows preserve sourceDatabase, legacyKey, legacyId, legacyTable, child mapping, status, expiry/name fields, createdAt, and raw legacy row; source/target count is covered by `alarms.t_notifications_log` reconciliation, while duplicate legacy ids across dumps still need canonical-run triage."
   },
   {
     "sourceDump": "kiddzonl_garderie_2018-2019",
