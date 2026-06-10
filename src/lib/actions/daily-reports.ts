@@ -55,6 +55,7 @@ function parseDailyReportBooleans(rawData: Record<string, unknown>) {
   for (const boolField of [
     "isSleep",
     "diarrhea",
+    "constipation",
     "cough",
     "runnyNose",
     "vomit",
@@ -64,6 +65,12 @@ function parseDailyReportBooleans(rawData: Record<string, unknown>) {
     "clothesTshirt",
     "clothesUnderwear",
     "clothesSocks",
+    "needsWipes",
+    "needsBrush",
+    "needsTowel",
+    "needsDiapers",
+    "needsBabyBottle",
+    "needsMilk",
     "hospitalAttend",
   ]) {
     rawData[boolField] =

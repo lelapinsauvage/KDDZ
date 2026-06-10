@@ -4,6 +4,7 @@ import {
   dailyReportClothingFlags,
   dailyReportFoodLabel,
   dailyReportLegacyDataPatch,
+  dailyReportNeedFlags,
   legacyDailyFoodId,
   legacyDailyFoodName,
 } from "@/lib/legacy-daily-report-fields";
@@ -77,6 +78,27 @@ assert.deepEqual(
   },
 );
 
+assert.deepEqual(
+  dailyReportNeedFlags({
+    constipation: "1",
+    wipeschecked: "checked",
+    brushchecked: 1,
+    towelchecked: "true",
+    diaperschecked: "yes",
+    babybottlechecked: "on",
+    milkchecked: "0",
+  }),
+  {
+    constipation: true,
+    needsWipes: true,
+    needsBrush: true,
+    needsTowel: true,
+    needsDiapers: true,
+    needsBabyBottle: true,
+    needsMilk: false,
+  },
+);
+
 const patch = dailyReportLegacyDataPatch(
   {
     clothesPants: true,
@@ -84,6 +106,13 @@ const patch = dailyReportLegacyDataPatch(
     clothesTshirt: true,
     clothesUnderwear: false,
     clothesSocks: true,
+    constipation: true,
+    needsWipes: true,
+    needsBrush: false,
+    needsTowel: true,
+    needsDiapers: false,
+    needsBabyBottle: true,
+    needsMilk: false,
   },
   {
     sourceDatabase: "garderie_2025",
@@ -103,5 +132,12 @@ assert.equal(patch.shirtchecked, "0");
 assert.equal(patch.tshirthecked, "1");
 assert.equal(patch.boxerchecked, "0");
 assert.equal(patch.sockschecked, "1");
+assert.equal(patch.constipation, "1");
+assert.equal(patch.wipeschecked, "1");
+assert.equal(patch.brushchecked, "0");
+assert.equal(patch.towelchecked, "1");
+assert.equal(patch.diaperschecked, "0");
+assert.equal(patch.babybottlechecked, "1");
+assert.equal(patch.milkchecked, "0");
 
 console.log("legacy daily report field contract assertions passed");

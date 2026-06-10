@@ -60,6 +60,7 @@ export const dailyReportSchema = z.object({
 
   // Health indicators
   diarrhea: z.boolean().default(false),
+  constipation: z.boolean().default(false),
   urinePotty: z.coerce.number().int().min(0).default(0),
   stoolPotty: z.coerce.number().int().min(0).default(0),
   urineDiaper: z.coerce.number().int().min(0).default(0),
@@ -84,6 +85,12 @@ export const dailyReportSchema = z.object({
   clothesTshirt: z.boolean().default(false),
   clothesUnderwear: z.boolean().default(false),
   clothesSocks: z.boolean().default(false),
+  needsWipes: z.boolean().default(false),
+  needsBrush: z.boolean().default(false),
+  needsTowel: z.boolean().default(false),
+  needsDiapers: z.boolean().default(false),
+  needsBabyBottle: z.boolean().default(false),
+  needsMilk: z.boolean().default(false),
 
   // Attachments
   attachments: z.array(attachmentEntrySchema).default([]),

@@ -47,6 +47,7 @@ import {
   Clock,
   Pill,
   Palette,
+  PackageCheck,
 } from "lucide-react";
 
 type PortionValue = "NONE" | "LITTLE" | "HALF" | "MOST" | "ALL";
@@ -77,6 +78,15 @@ const clothesItems = [
   { key: "clothesTshirt" as const, label: "T-shirt" },
   { key: "clothesUnderwear" as const, label: "Underwear" },
   { key: "clothesSocks" as const, label: "Socks" },
+] as const;
+
+const dailyNeedItems = [
+  { key: "needsWipes" as const, label: "Wipes" },
+  { key: "needsBrush" as const, label: "Brush" },
+  { key: "needsTowel" as const, label: "Towel" },
+  { key: "needsDiapers" as const, label: "Diapers" },
+  { key: "needsBabyBottle" as const, label: "Baby Bottle" },
+  { key: "needsMilk" as const, label: "Milk" },
 ] as const;
 
 interface ChildOption {
@@ -220,6 +230,7 @@ export function DailyReportForm({
       reportDate: new Date().toISOString().split("T")[0],
       isSleep: false,
       diarrhea: false,
+      constipation: false,
       cough: false,
       runnyNose: false,
       vomit: false,
@@ -240,6 +251,12 @@ export function DailyReportForm({
       activities: undefined,
       medicine: undefined,
       clothesSocks: false,
+      needsWipes: false,
+      needsBrush: false,
+      needsTowel: false,
+      needsDiapers: false,
+      needsBabyBottle: false,
+      needsMilk: false,
       attachments: [],
       hospitalAttend: false,
       ...defaultValues,
@@ -338,6 +355,7 @@ export function DailyReportForm({
 
     // Hygiene
     fd.set("diarrhea", String(data.diarrhea));
+    fd.set("constipation", String(data.constipation));
     fd.set("urinePotty", String(data.urinePotty));
     fd.set("stoolPotty", String(data.stoolPotty));
     fd.set("urineDiaper", String(data.urineDiaper));
@@ -366,6 +384,12 @@ export function DailyReportForm({
     fd.set("clothesTshirt", String(data.clothesTshirt));
     fd.set("clothesUnderwear", String(data.clothesUnderwear));
     fd.set("clothesSocks", String(data.clothesSocks));
+    fd.set("needsWipes", String(data.needsWipes));
+    fd.set("needsBrush", String(data.needsBrush));
+    fd.set("needsTowel", String(data.needsTowel));
+    fd.set("needsDiapers", String(data.needsDiapers));
+    fd.set("needsBabyBottle", String(data.needsBabyBottle));
+    fd.set("needsMilk", String(data.needsMilk));
 
     // Attachments
     fd.set("attachments", JSON.stringify(uploadedAttachments));
@@ -1056,6 +1080,7 @@ export function DailyReportForm({
               <div className="flex flex-wrap gap-2">
                 {[
                   { key: "diarrhea" as const, label: "Diarrhea" },
+                  { key: "constipation" as const, label: "Constipation" },
                   { key: "cough" as const, label: "Cough" },
                   { key: "runnyNose" as const, label: "Runny Nose" },
                   { key: "vomit" as const, label: "Vomit" },
@@ -1247,6 +1272,37 @@ export function DailyReportForm({
                         isActive
                           ? "border-violet-500 bg-violet-500 text-white shadow-sm"
                           : "border-violet-200 bg-white text-violet-700 hover:border-violet-400"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Daily needs */}
+          <Card className="border-cyan-200 bg-cyan-50/60">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base text-cyan-900">
+                <PackageCheck className="size-4 text-cyan-500" />
+                Daily Needs
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {dailyNeedItems.map(({ key, label }) => {
+                  const isActive = watch(key);
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setValue(key, !isActive)}
+                      className={`rounded-sm border-2 px-4 py-3 min-h-[44px] text-sm font-medium transition-all ${
+                        isActive
+                          ? "border-cyan-600 bg-cyan-600 text-white shadow-sm"
+                          : "border-cyan-200 bg-white text-cyan-800 hover:border-cyan-400"
                       }`}
                     >
                       {label}

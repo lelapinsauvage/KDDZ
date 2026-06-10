@@ -4,7 +4,10 @@ import { DailyReportForm } from "@/components/daily-reports/daily-report-form";
 import { getDailyReport } from "@/lib/actions/daily-reports";
 import { getChildren } from "@/lib/actions/children";
 import { getFoods } from "@/lib/actions/food";
-import { dailyReportClothingFlags } from "@/lib/legacy-daily-report-fields";
+import {
+  dailyReportClothingFlags,
+  dailyReportNeedFlags,
+} from "@/lib/legacy-daily-report-fields";
 import type { DailyReportFormValues } from "@/lib/validations/daily-report";
 
 interface Props {
@@ -58,6 +61,7 @@ export default async function EditDailyReportPage({ params }: Props) {
     dessert: dessertFoods.foods.map((f) => ({ id: f.id, name: f.name })),
   };
   const clothingFlags = dailyReportClothingFlags(r.legacyData);
+  const needFlags = dailyReportNeedFlags(r.legacyData);
 
   const defaultValues: Partial<DailyReportFormValues> = {
     childId: r.child.id,
@@ -80,6 +84,7 @@ export default async function EditDailyReportPage({ params }: Props) {
     activities: r.activities ?? undefined,
     medicine: r.medicine ?? undefined,
     diarrhea: r.diarrhea,
+    constipation: needFlags.constipation,
     cough: r.cough,
     runnyNose: r.runnyNose,
     vomit: r.vomit,
@@ -93,6 +98,12 @@ export default async function EditDailyReportPage({ params }: Props) {
     clothesTshirt: clothingFlags.clothesTshirt,
     clothesUnderwear: clothingFlags.clothesUnderwear,
     clothesSocks: clothingFlags.clothesSocks,
+    needsWipes: needFlags.needsWipes,
+    needsBrush: needFlags.needsBrush,
+    needsTowel: needFlags.needsTowel,
+    needsDiapers: needFlags.needsDiapers,
+    needsBabyBottle: needFlags.needsBabyBottle,
+    needsMilk: needFlags.needsMilk,
     remarks: r.remarks ?? undefined,
     feverEntries: r.fevers.map((f) => ({
       temperature: String(Number(f.temperature)),

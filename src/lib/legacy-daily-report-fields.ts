@@ -20,6 +20,16 @@ export type DailyReportClothingFlags = {
   clothesSocks: boolean;
 };
 
+export type DailyReportNeedFlags = {
+  constipation: boolean;
+  needsWipes: boolean;
+  needsBrush: boolean;
+  needsTowel: boolean;
+  needsDiapers: boolean;
+  needsBabyBottle: boolean;
+  needsMilk: boolean;
+};
+
 const clothingLegacyKeys = {
   clothesPants: ["clothesPants", "pantchecked"],
   clothesShirt: ["clothesShirt", "clothesSweater", "shirtchecked"],
@@ -28,6 +38,16 @@ const clothingLegacyKeys = {
   clothesUnderwear: ["clothesUnderwear", "boxerchecked"],
   clothesSocks: ["clothesSocks", "sockschecked"],
 } satisfies Record<keyof DailyReportClothingFlags, string[]>;
+
+const needLegacyKeys = {
+  constipation: ["constipation"],
+  needsWipes: ["needsWipes", "wipeschecked"],
+  needsBrush: ["needsBrush", "brushchecked"],
+  needsTowel: ["needsTowel", "towelchecked"],
+  needsDiapers: ["needsDiapers", "diaperschecked"],
+  needsBabyBottle: ["needsBabyBottle", "babybottlechecked"],
+  needsMilk: ["needsMilk", "milkchecked"],
+} satisfies Record<keyof DailyReportNeedFlags, string[]>;
 
 export function legacyDailyRecord(value: unknown): LegacyRecord {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -153,6 +173,34 @@ export function dailyReportClothingFlags(
   };
 }
 
+export function dailyReportNeedFlags(legacyData: unknown): DailyReportNeedFlags {
+  const legacy = legacyDailyRecord(legacyData);
+
+  return {
+    constipation: needLegacyKeys.constipation.some((key) =>
+      legacyDailyBool(legacy[key]),
+    ),
+    needsWipes: needLegacyKeys.needsWipes.some((key) =>
+      legacyDailyBool(legacy[key]),
+    ),
+    needsBrush: needLegacyKeys.needsBrush.some((key) =>
+      legacyDailyBool(legacy[key]),
+    ),
+    needsTowel: needLegacyKeys.needsTowel.some((key) =>
+      legacyDailyBool(legacy[key]),
+    ),
+    needsDiapers: needLegacyKeys.needsDiapers.some((key) =>
+      legacyDailyBool(legacy[key]),
+    ),
+    needsBabyBottle: needLegacyKeys.needsBabyBottle.some((key) =>
+      legacyDailyBool(legacy[key]),
+    ),
+    needsMilk: needLegacyKeys.needsMilk.some((key) =>
+      legacyDailyBool(legacy[key]),
+    ),
+  };
+}
+
 export function dailyReportLegacyDataPatch(
   data: Pick<
     DailyReportFormValues,
@@ -161,6 +209,13 @@ export function dailyReportLegacyDataPatch(
     | "clothesTshirt"
     | "clothesUnderwear"
     | "clothesSocks"
+    | "constipation"
+    | "needsWipes"
+    | "needsBrush"
+    | "needsTowel"
+    | "needsDiapers"
+    | "needsBabyBottle"
+    | "needsMilk"
   >,
   current?: unknown,
 ): Prisma.InputJsonValue {
@@ -172,6 +227,13 @@ export function dailyReportLegacyDataPatch(
     clothesTshirt: data.clothesTshirt,
     clothesUnderwear: data.clothesUnderwear,
     clothesSocks: data.clothesSocks,
+    constipation: Boolean(data.constipation),
+    needsWipes: Boolean(data.needsWipes),
+    needsBrush: Boolean(data.needsBrush),
+    needsTowel: Boolean(data.needsTowel),
+    needsDiapers: Boolean(data.needsDiapers),
+    needsBabyBottle: Boolean(data.needsBabyBottle),
+    needsMilk: Boolean(data.needsMilk),
   };
 
   next.pantchecked = data.clothesPants ? "1" : "0";
@@ -179,6 +241,13 @@ export function dailyReportLegacyDataPatch(
   next.tshirthecked = data.clothesTshirt ? "1" : "0";
   next.boxerchecked = data.clothesUnderwear ? "1" : "0";
   next.sockschecked = data.clothesSocks ? "1" : "0";
+  next.constipation = data.constipation ? "1" : "0";
+  next.wipeschecked = data.needsWipes ? "1" : "0";
+  next.brushchecked = data.needsBrush ? "1" : "0";
+  next.towelchecked = data.needsTowel ? "1" : "0";
+  next.diaperschecked = data.needsDiapers ? "1" : "0";
+  next.babybottlechecked = data.needsBabyBottle ? "1" : "0";
+  next.milkchecked = data.needsMilk ? "1" : "0";
 
   return JSON.parse(JSON.stringify(next)) as Prisma.InputJsonValue;
 }

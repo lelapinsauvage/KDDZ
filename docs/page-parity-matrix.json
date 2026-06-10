@@ -16158,7 +16158,7 @@
     "legacyPhp": "Front/templates/admin/dailyreport.php",
     "legacyJs": "Front/templates/admin/js/dailyreport.js",
     "modernRoute": "/dailyreport.php, /daily-reports/[id]/edit, /daily-reports/new?childId=",
-    "status": "partial - legacy daily report edit/create bridge restored; form field audit remains",
+    "status": "partial - legacy daily report edit/create bridge and health/items flags restored; form field audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -16169,7 +16169,7 @@
       "id",
       "isdraft"
     ],
-    "verification": "The main and draft listings now link into the modern edit route with legacy child/report context preserved through migrated IDs and report dates. `/dailyreport.php?fid=` now resolves raw numeric, UUID, and encrypted legacy daily-report ids into the modern edit form; `/dailyreport.php?id=` resolves raw numeric, UUID, legacy key, and encrypted child ids into a preselected new daily report and preserves `date=` as the modern report date. Daily report create/edit child selectors now load uncapped active children for production-sized rosters. Remaining work is exact `dailyreport.php` form layout/field validation/progress behavior, including the full food/sleep/health/clothes/attachments workflow audit against `dailyreport.js`."
+    "verification": "The main and draft listings now link into the modern edit route with legacy child/report context preserved through migrated IDs and report dates. `/dailyreport.php?fid=` now resolves raw numeric, UUID, and encrypted legacy daily-report ids into the modern edit form; `/dailyreport.php?id=` resolves raw numeric, UUID, legacy key, and encrypted child ids into a preselected new daily report and preserves `date=` as the modern report date. Daily report create/edit child selectors now load uncapped active children for production-sized rosters. The create/edit form now restores the legacy Constipation health flag and Daily Needs item flags for Wipes, Brush, Towel, Diapers, Baby Bottle, and Milk; imported rows hydrate from `constipation`, `wipeschecked`, `brushchecked`, `towelchecked`, `diaperschecked`, `babybottlechecked`, and `milkchecked`, and new saves write the same legacy keys into `DailyReport.legacyData` for parent native `newdaily.php` compatibility. Verified by `src/scripts/verify-legacy-daily-report-field-contract.ts`. Remaining work is exact `dailyreport.php` food/sleep/secondary-mood/secondary-lunch validation/progress behavior and final layout/attachments audit against `dailyreport.js`."
   },
   {
     "legacyPhp": "Front/templates/admin/dailyreports.php",
