@@ -20,6 +20,7 @@ const files = {
   migration: "src/scripts/migration/migrate-branches.ts",
   exportButton: "src/components/shared/export-button.tsx",
   matrix: "docs/page-parity-matrix.json",
+  matrixMd: "docs/page-parity-matrix.md",
 };
 
 const contents = Object.fromEntries(
@@ -179,6 +180,27 @@ assert.match(
 assert.match(
   matrixRow.verification ?? "",
   /Browser smoke confirmed `\/branches\.php` redirects to `\/branches`/,
+);
+
+assert.match(
+  text.matrixMd,
+  /branches\.php \| Front\/templates\/admin\/js\/branches\.js \| \/branches\.php, \/branches \| restored - legacy branch roster, filters, TableTools export, print, soft delete, ACL, bridge, and default image fallback restored/,
+);
+assert.match(
+  text.matrixMd,
+  /branches\.php[\s\S]*Restored the legacy default branch JPEG to `public\/images\/BranchPhoto\/default\.jpg`/,
+);
+assert.match(
+  text.matrixMd,
+  /branches\.php[\s\S]*Browser smoke confirmed `\/branches\.php` redirects to `\/branches`/,
+);
+assert.match(
+  text.matrixMd,
+  /branches\.php[\s\S]*verify-legacy-branches-tabletools-contract\.ts/,
+);
+assert.doesNotMatch(
+  text.matrixMd,
+  /branches\.php[^\n]*visual audit remains/,
 );
 
 console.log("legacy branches TableTools contract assertions passed");
