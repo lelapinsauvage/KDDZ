@@ -93,7 +93,7 @@ const staffRows = [
     legacyJs: "doctors.js",
     route: "/doctors.php, /employees/doctors",
     status:
-      "partial - legacy doctors roster columns, q bridge, copy/PDF exports, page sizes, selected placement update, and selected deactivate restored; detail form audit remains",
+      "restored - legacy doctors roster columns, q bridge, copy/PDF exports, page sizes, selected placement, selected deactivate, and detail form audit restored",
     placement: "bulk branch update",
   },
   {
@@ -101,7 +101,7 @@ const staffRows = [
     legacyJs: "managers.js",
     route: "/managers.php, /employees/managers",
     status:
-      "partial - legacy managers roster columns, q bridge, copy/PDF exports, page sizes, selected placement update, and selected deactivate restored; detail form audit remains",
+      "restored - legacy managers roster columns, q bridge, copy/PDF exports, page sizes, selected placement, selected deactivate, and detail form audit restored",
     placement: "bulk branch update",
   },
   {
@@ -109,7 +109,7 @@ const staffRows = [
     legacyJs: "nurses.js",
     route: "/nurses.php, /employees/nurses",
     status:
-      "partial - legacy nurses roster columns, q bridge, copy/PDF exports, page sizes, selected placement update, and selected deactivate restored; detail form audit remains",
+      "restored - legacy nurses roster columns, q bridge, copy/PDF exports, page sizes, selected placement, selected deactivate, and detail form audit restored",
     placement: "bulk branch update",
   },
   {
@@ -117,7 +117,7 @@ const staffRows = [
     legacyJs: "teachers.js",
     route: "/teachers.php, /employees/teachers",
     status:
-      "partial - legacy teachers roster columns, q bridge, copy/PDF exports, page sizes, selected placement update, selected deactivate, row actions, and ACL restored; detail form audit remains",
+      "restored - legacy teachers roster columns, q bridge, copy/PDF exports, page sizes, selected placement, selected deactivate, row actions, ACL, and detail form audit restored",
     placement: "bulk branch/class update",
   },
 ];
@@ -147,9 +147,13 @@ for (const row of staffRows) {
     contents.matrixMd,
     new RegExp(`${escapeRegExp(row.legacyPhp)}[\\s\\S]*verify-legacy-staff-roster-contract\\.ts`),
   );
+  assert.match(
+    contents.matrixMd,
+    new RegExp(`${escapeRegExp(row.legacyPhp)}[\\s\\S]*verify-legacy-staff-detail-visual-smoke-contract\\.ts`),
+  );
   assert.doesNotMatch(
     contents.matrixMd,
-    new RegExp(`${escapeRegExp(row.legacyPhp)}[^\\n]*form modal audit remains`),
+    new RegExp(`${escapeRegExp(row.legacyPhp)}[^\\n]*detail form audit remains`),
   );
 }
 
