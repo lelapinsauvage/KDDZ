@@ -15,6 +15,7 @@ import {
   Paperclip,
   Pencil,
   Plus,
+  Printer,
   Search,
   Trash2,
   UserX,
@@ -439,6 +440,10 @@ export function AccidentsClient({ child, accidents, staffList }: Props) {
               columns={exportColumns}
               data={exportRows(filteredAccidents)}
             />
+            <Button variant="outline" size="sm" onClick={() => window.print()}>
+              <Printer className="size-4" />
+              Print
+            </Button>
             <Button size="sm" onClick={() => setDialogOpen(true)}>
               <Plus className="size-4" />
               New Accident

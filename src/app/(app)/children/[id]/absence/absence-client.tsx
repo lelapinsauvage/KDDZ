@@ -14,6 +14,7 @@ import {
   Paperclip,
   Pencil,
   Plus,
+  Printer,
   Search,
   Trash2,
   UserX,
@@ -368,6 +369,10 @@ export function AbsenceClient({ child, absences }: Props) {
               columns={exportColumns}
               data={exportRows(filteredAbsences)}
             />
+            <Button variant="outline" size="sm" onClick={() => window.print()}>
+              <Printer className="size-4" />
+              Print
+            </Button>
             <Button size="sm" asChild>
               <Link href={`/absent-reports/new?childId=${id}`}>
                 <Plus className="size-4" />

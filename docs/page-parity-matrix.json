@@ -1155,7 +1155,7 @@
     "legacyPhp": "Front/templates/admin/child_absence.php",
     "legacyJs": "Front/templates/admin/js/child_absence.js",
     "modernRoute": "/child_absence.php, /children/[id]/absence",
-    "status": "partial - legacy child absence table and deep-link bridge restored; visual export audit remains",
+    "status": "restored - legacy child absence table, preview, export, print, and deep-link bridge restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -1163,13 +1163,13 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Restored child-specific absence report header, Date/Reason/Absent From/To/Hospital/Dr. Name/Action/Attachment table columns, search/date/status filters, Excel/CSV export, first-attachment open action with count badge, new absence action, and view/edit/delete actions with confirmation. `/child_absence.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy child ids into the modern child absence page. Remaining work is exact legacy image-preview modal behavior and DataTables TableTools visual/PDF export parity."
+    "verification": "Restored child-specific absence report header, Date/Reason/Absent From/To/Hospital/Dr. Name/Action/Attachment table columns, search/date/status filters, Copy/PDF/Excel/CSV export, print action, AttachmentPreviewDialog-compatible image preview with count badge, new absence action, and view/edit/delete actions with confirmation. `/child_absence.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy child ids into the modern child absence page. Verified by `src/scripts/verify-legacy-child-history-tabletools-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/child_accident.php",
     "legacyJs": "Front/templates/admin/js/child_accident.js",
     "modernRoute": "/child_accident.php, /children/[id]/accidents",
-    "status": "partial - legacy child accident table and deep-link bridge restored; visual export audit remains",
+    "status": "restored - legacy child accident table, preview, export, print, and deep-link bridge restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -1177,7 +1177,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Restored child-specific accident report header, Date/Time/Cause/Place/Specific Area/Cam #/First Aid/Teacher/Hospital/Treatment/Action/Attachment table columns, search/date/attachment filters, Excel/CSV export, first-attachment open action with count badge, new accident dialog, and view/edit/delete actions with confirmation. `/child_accident.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy child ids into the modern child accidents page. Remaining work is exact legacy image-preview modal behavior and DataTables TableTools visual/PDF export parity."
+    "verification": "Restored child-specific accident report header, Date/Time/Cause/Place/Specific Area/Cam #/First Aid/Teacher/Hospital/Treatment/Action/Attachment table columns, search/date/attachment filters, Copy/PDF/Excel/CSV export, print action, AttachmentPreviewDialog-compatible image preview with count badge, new accident dialog, and view/edit/delete actions with confirmation. `/child_accident.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy child ids into the modern child accidents page. Verified by `src/scripts/verify-legacy-child-history-tabletools-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/child_accounting.php",
@@ -1214,7 +1214,7 @@
     "legacyPhp": "Front/templates/admin/child_calls.php",
     "legacyJs": "Front/templates/admin/js/child_calls.js",
     "modernRoute": "/child_calls.php, /children/[id]/calls",
-    "status": "partial - legacy incoming/outgoing call tables, edit, draft status, and deep-link bridge restored; visual export audit remains",
+    "status": "restored - legacy incoming/outgoing call tables, preview, export, print, edit, draft status, and deep-link bridge restored",
     "legacyTablesMentioned": [
       "t_form_6",
       "t_form_attch",
@@ -1226,7 +1226,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Restored child-specific Incoming and Outgoing sections, Date/Time/Cause/Pick up or Teacher/Subject/Remarks/Action/Attachment table columns, search/date/attachment filters, Excel/CSV export, print action, first-attachment open action with count badge, add call dialog, view details, standalone Form 6 open action, edit existing reports, draft badge/status, Save As Draft behavior via the Form 6 dialog, teacher-backed display, existing attachment removal from edit, and delete confirmation. `/child_calls.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy child ids into the modern child calls page. Remaining work is child-table inline legacy image-preview modal behavior and DataTables TableTools visual/PDF export parity."
+    "verification": "Restored child-specific Incoming and Outgoing sections, Date/Time/Cause/Pick up or Teacher/Subject/Remarks/Action/Attachment table columns, search/date/attachment filters, Copy/PDF/Excel/CSV export, print action, AttachmentPreviewDialog-compatible image preview with count badge, add call dialog, view details, standalone Form 6 open action, edit existing reports, draft badge/status, Save As Draft behavior via the Form 6 dialog, teacher-backed display, existing attachment removal from edit, and delete confirmation. `/child_calls.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy child ids into the modern child calls page. Verified by `src/scripts/verify-legacy-child-history-tabletools-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/child_dashboard.php",
