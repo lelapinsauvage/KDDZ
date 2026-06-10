@@ -135,14 +135,18 @@ const row = matrix.find(
 
 assert.ok(row);
 assert.match(row.status ?? "", /nested edit provenance/);
-assert.match(row.status ?? "", /address coordinates restored/);
+assert.match(row.status ?? "", /address coordinates/);
+assert.match(row.status ?? "", /edit wizard visual smoke restored/);
 assert.match(row.verification ?? "", /verify-legacy-child-edit-preservation-contract\.ts/);
 assert.match(row.verification ?? "", /preserves existing nested child rows in place/);
+assert.match(row.verification ?? "", /Browser smoke confirmed/);
+assert.match(row.verification ?? "", /core child info, address\/family, care, financial, attachments, and review\/submit wizard steps/);
 assert.match(row.verification ?? "", /map picker/);
+assert.doesNotMatch(row.verification ?? "", /exact edit-form visual\/action audit/);
 
 assert.match(
   text.matrixMd,
-  /Child_Details\.php \| Front\/templates\/admin\/js\/Child_Details\.js \| \/Child_Details\.php, \/children\/\[id\] \| partial - legacy dossier landing, child deep-link bridge, nested edit provenance, and address coordinates restored; map picker visual audit remains/,
+  /Child_Details\.php \| Front\/templates\/admin\/js\/Child_Details\.js \| \/Child_Details\.php, \/children\/\[id\] \| partial - legacy dossier landing, child deep-link bridge, nested edit provenance, address coordinates, and edit wizard visual smoke restored; map picker and write-flow smokes remain/,
 );
 assert.match(
   text.matrixMd,
@@ -155,6 +159,16 @@ assert.match(
 assert.match(
   text.matrixMd,
   /Child_Details\.php[\s\S]*Latitude\/Longitude now hydrate from preserved legacy `t_address` JSON/,
+);
+assert.match(
+  text.matrixMd,
+  /Child_Details\.php[\s\S]*Browser smoke confirmed `\/children\/7f48dd13-131e-4f4e-99bd-59a86a4b3b92`/,
+);
+assert.doesNotMatch(
+  text.matrixMd
+    .split("\n")
+    .find((line) => line.includes("| Front/templates/admin/Child_Details.php |")) ?? "",
+  /exact edit-form visual\/action audit/,
 );
 
 console.log("legacy child edit preservation assertions passed");
