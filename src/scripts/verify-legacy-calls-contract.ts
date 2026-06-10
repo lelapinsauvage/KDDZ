@@ -303,6 +303,9 @@ const markdownRows = {
   detail: text.markdownMatrix
     .split("\n")
     .find((line) => line.includes("| Front/templates/admin/call.php |")),
+  calls: text.markdownMatrix
+    .split("\n")
+    .find((line) => line.includes("| Front/templates/admin/calls.php |")),
 };
 
 assert.match(
@@ -323,5 +326,14 @@ assert.match(
   /Browser detail smoke is pending a local migrated CallLog row/,
 );
 assert.doesNotMatch(markdownRows.detail ?? "", /visual smoke remains/);
+assert.match(
+  markdownRows.calls ?? "",
+  /restored - legacy incoming\/outgoing call listing bridge, exports, page sizes, and Form 6 creation restored/,
+);
+assert.match(
+  markdownRows.calls ?? "",
+  /Browser smoke confirmed the 10-row default selector, legacy headers, zero-data empty state/,
+);
+assert.doesNotMatch(markdownRows.calls ?? "", /final logged-in visual smoke/);
 
 console.log("legacy calls contract assertions passed");
