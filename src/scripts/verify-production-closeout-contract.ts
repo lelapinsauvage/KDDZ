@@ -50,6 +50,7 @@ try {
   const closeoutPayload = JSON.parse(closeoutSummary) as {
     status?: string;
     readinessSummary?: { ready?: number; needsEvidence?: number; total?: number };
+    parityTracker?: { total?: number; complete?: number; partial?: number; donePct?: number; leftPct?: number };
     branch?: string;
     commit?: string;
     redacted?: boolean;
@@ -59,6 +60,7 @@ try {
     readinessReport: readinessReportPath,
     evidenceRecord: evidenceRecordPath,
     readinessSummary: { ready: 12, needsEvidence: 0, total: 12 },
+    parityTracker: { total: 1713, complete: 1696, partial: 17, donePct: 99, leftPct: 1 },
     branch: "legacy-parity-runbook",
     commit: "0404c6a",
     redacted: true,

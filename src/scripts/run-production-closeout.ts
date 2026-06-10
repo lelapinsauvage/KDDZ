@@ -10,6 +10,11 @@ type ReadinessReport = {
   };
 };
 
+type ParityRow = {
+  status?: string;
+  [key: string]: unknown;
+};
+
 const envFilePath = optionValue("--env-file");
 const evidenceRecordPath = optionValue("--evidence-record");
 const outputPath = optionValue("--out") ?? "/tmp/kiddzonl-production-readiness.json";
@@ -48,6 +53,7 @@ const summary = {
   readinessReport: outputPath,
   evidenceRecord: evidenceRecordPath,
   readinessSummary,
+  parityTracker: trackerSummary(),
   branch,
   commit,
   redacted: true,
@@ -88,6 +94,46 @@ function readReadinessSummary(path: string) {
     ready: report.summary?.ready ?? null,
     needsEvidence: report.summary?.needsEvidence ?? null,
     total: report.summary?.total ?? null,
+  };
+}
+
+function trackerSummary() {
+  const matrix = JSON.parse(readFileSync("docs/page-parity-matrix.json", "utf8")) as ParityRow[];
+  let total = 0;
+  let partial = 0;
+
+  function walk(value: unknown): void {
+    if (Array.isArray(value)) {
+      value.forEach(walk);
+      return;
+    }
+
+    if (!value || typeof value !== "object") {
+      return;
+    }
+
+    const row = value as ParityRow;
+    if (typeof row.status === "string") {
+      total += 1;
+      if (row.status.toLowerCase().startsWith("partial")) {
+        partial += 1;
+      }
+    }
+
+    Object.values(row).forEach(walk);
+  }
+
+  walk(matrix);
+  const complete = total - partial;
+  const donePct = Math.round((complete / total) * 1000) / 10;
+  const leftPct = Math.round((100 - donePct) * 10) / 10;
+
+  return {
+    total,
+    complete,
+    partial,
+    donePct,
+    leftPct,
   };
 }
 
