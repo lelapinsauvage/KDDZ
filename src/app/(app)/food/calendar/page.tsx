@@ -32,7 +32,7 @@ function parseView(value?: string): CalendarViewMode {
   return value === "week" || value === "day" ? value : "month";
 }
 
-function parseFocusedDate(value: string | undefined, year: number, month: number) {
+function parseDateParam(value?: string) {
   if (value && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
     const [dateYear, dateMonth, dateDay] = value.split("-").map(Number);
     const date = new Date(dateYear, dateMonth - 1, dateDay);
@@ -41,9 +41,16 @@ function parseFocusedDate(value: string | undefined, year: number, month: number
       date.getMonth() === dateMonth - 1 &&
       date.getDate() === dateDay
     ) {
-      return value;
+      return { date: value, year: dateYear, month: dateMonth };
     }
   }
+
+  return null;
+}
+
+function parseFocusedDate(value: string | undefined, year: number, month: number) {
+  const parsedDate = parseDateParam(value);
+  if (parsedDate) return parsedDate.date;
 
   return `${year}-${String(month).padStart(2, "0")}-01`;
 }
@@ -70,8 +77,9 @@ export default async function FoodCalendarPage({ searchParams }: PageProps) {
       ? requestedBranchId
       : branches[0]?.id ?? "";
   const now = new Date();
-  const year = parseYear(params.year) ?? now.getFullYear();
-  const month = parseMonth(params.month) ?? now.getMonth() + 1;
+  const parsedDate = parseDateParam(params.date);
+  const year = parseYear(params.year) ?? parsedDate?.year ?? now.getFullYear();
+  const month = parseMonth(params.month) ?? parsedDate?.month ?? now.getMonth() + 1;
   const viewMode = parseView(params.view);
   const focusedDate = parseFocusedDate(params.date, year, month);
 

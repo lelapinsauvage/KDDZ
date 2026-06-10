@@ -11,6 +11,7 @@ function read(path: string) {
 const client = read("src/app/(app)/food/calendar/food-calendar-client.tsx");
 const page = read("src/app/(app)/food/calendar/page.tsx");
 const parityMatrix = read("docs/page-parity-matrix.md");
+const topGaps = read("docs/top-20-restoration-gaps.md");
 
 for (const expected of [
   'type CalendarViewMode = "month" | "week" | "day"',
@@ -38,8 +39,12 @@ for (const expected of [
   "view?: string",
   "date?: string",
   'type CalendarViewMode = "month" | "week" | "day"',
+  "function parseDateParam",
   "function parseView",
   "function parseFocusedDate",
+  "const parsedDate = parseDateParam(params.date)",
+  "parseYear(params.year) ?? parsedDate?.year ?? now.getFullYear()",
+  "parseMonth(params.month) ?? parsedDate?.month ?? now.getMonth() + 1",
   "initialViewMode={viewMode}",
   "initialFocusedDate={focusedDate}",
 ]) {
@@ -54,10 +59,22 @@ for (const expected of [
   "AddFoodToCalendar",
   "EditFoodCalendar",
   "Early Dinner",
+  "Browser smoke confirmed `/food/calendar?branch=...&view=month&date=2018-10-01`",
+  "date-derived month/year behavior",
 ]) {
   assert.ok(
     parityMatrix.includes(expected),
     `food calendar parity row should keep restored data/action contract: ${expected}`
+  );
+}
+
+for (const expected of [
+  "/food/calendar?branch=...&view=month&date=2018-10-01",
+  "migrated Breakfast/Lunch rows",
+]) {
+  assert.ok(
+    topGaps.includes(expected),
+    `top restoration gaps should record food calendar browser evidence: ${expected}`,
   );
 }
 

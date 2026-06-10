@@ -26,7 +26,7 @@ function parseView(value?: string): HolidayCalendarView {
   return value === "week" || value === "day" ? value : "month";
 }
 
-function parseFocusedDate(value: string | undefined, year: number, month: number) {
+function parseDateParam(value?: string) {
   if (value && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
     const [dateYear, dateMonth, dateDay] = value.split("-").map(Number);
     const date = new Date(dateYear, dateMonth - 1, dateDay);
@@ -35,9 +35,16 @@ function parseFocusedDate(value: string | undefined, year: number, month: number
       date.getMonth() === dateMonth - 1 &&
       date.getDate() === dateDay
     ) {
-      return value;
+      return { date: value, year: dateYear, month: dateMonth };
     }
   }
+
+  return null;
+}
+
+function parseFocusedDate(value: string | undefined, year: number, month: number) {
+  const parsedDate = parseDateParam(value);
+  if (parsedDate) return parsedDate.date;
 
   return `${year}-${String(month).padStart(2, "0")}-01`;
 }
@@ -58,8 +65,9 @@ function normalizeNotificationDaysBefore(value: unknown, fallback: number) {
 export default async function HolidayCalendarPage({ searchParams }: HolidayCalendarPageProps) {
   const params = await searchParams;
   const now = new Date();
-  const initialYear = parseYear(params.year) ?? now.getFullYear();
-  const initialMonth = parseMonth(params.month) ?? now.getMonth() + 1;
+  const parsedDate = parseDateParam(params.date);
+  const initialYear = parseYear(params.year) ?? parsedDate?.year ?? now.getFullYear();
+  const initialMonth = parseMonth(params.month) ?? parsedDate?.month ?? now.getMonth() + 1;
   const initialViewMode = parseView(params.view);
   const initialFocusedDate = parseFocusedDate(params.date, initialYear, initialMonth);
 
