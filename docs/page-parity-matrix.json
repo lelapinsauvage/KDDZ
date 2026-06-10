@@ -16996,10 +16996,10 @@
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-Expiring.php",
     "legacyJs": "",
     "modernRoute": "/settings/notifications",
-    "status": "partial - legacy expiring document template restored for contract alarms; delivery audit remains",
+    "status": "restored - legacy expiring document template, getUserAndBoss targeting, and provider delivery audit restored",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "/settings/notifications now exposes a Contracts template card backed by migrated `email-expiring-subj` and `email-expiring-msg` rows. Contract alarm generation reads the `CONTRACT` template, keeps compatibility with prior `EXPIRATION` rows, and falls back to migrated `email-expiring-*` settings when no modern template exists. Remaining work is external email/SMS/WhatsApp provider delivery and exact legacy recipient targeting."
+    "verification": "/settings/notifications exposes a Contracts template card backed by migrated `email-expiring-subj` and `email-expiring-msg` rows with the legacy `{{person_name}}`, `{{document_name}}`, and `{{expiry_date}}` shortcodes. Contract alarm generation reads the `CONTRACT` template, keeps compatibility with prior `EXPIRATION` rows, falls back to migrated `email-expiring-*` settings when no modern template exists, targets generated contract recipients through the restored legacy `getUserAndBoss` semantics (`usites`/branch admins plus direct owner, while non-zero `uclasses` users are excluded unless directly matched), sends the rendered message through the provider-neutral `deliverEmail` bridge with CONTRACT metadata and `custom_notifications_contracts` provenance, and stores `emailDeliveryAuditData` on the generated alarm legacy audit payload so skipped/unconfigured, failed, and sent outcomes remain inspectable without hard-coding production credentials. Verified by `src/scripts/verify-legacy-expiring-email-template-delivery-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-acct-update.php",

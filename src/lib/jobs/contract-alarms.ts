@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { deliverEmail, emailDeliveryAuditData } from "@/lib/email-delivery";
 
 const LEGACY_REMINDER_DAYS = [1, 3, 7];
 const DAY_MS = 86_400_000;
@@ -47,6 +48,8 @@ interface ExistingContractAlarm {
 
 interface LegacyContractRecipient {
   userId: string;
+  email: string | null;
+  name: string | null;
   legacyRecipientId: number;
   legacySourceDatabase: string;
   legacySites: string;
@@ -456,6 +459,45 @@ function recipientsForContractCandidate(
   }
 
   return Array.from(selected.values());
+}
+
+async function storeContractEmailAudit(params: {
+  alarmId: string;
+  subject: string;
+  body: string;
+  recipients: LegacyContractRecipient[];
+  legacyNotificationId: number;
+  sourceDatabase: string | null;
+}) {
+  const emailDelivery = await deliverEmail({
+    recipients: params.recipients.map((recipient) => ({
+      email: recipient.email ?? "",
+      name: recipient.name,
+    })),
+    subject: params.subject,
+    body: params.body,
+    category: "CONTRACT",
+    metadata: {
+      source: "generateContractAlarms",
+      legacyNotificationId: params.legacyNotificationId,
+      sourceDatabase: params.sourceDatabase,
+      legacyDeliveryTable: CONTRACT_RECEIPT_SOURCE,
+    },
+  });
+
+  const alarm = await db.alarm.findUnique({
+    where: { id: params.alarmId },
+    select: { legacyData: true },
+  });
+  await db.alarm.update({
+    where: { id: params.alarmId },
+    data: {
+      legacyData: {
+        ...(asRecord(alarm?.legacyData) ?? {}),
+        emailDelivery: emailDeliveryAuditData(emailDelivery),
+      },
+    },
+  });
 }
 
 function toCandidate(params: {
@@ -963,7 +1005,7 @@ export async function generateContractAlarmsForOrganization(params: {
           ...(directUserIds.length ? [{ id: { in: directUserIds } }] : []),
         ],
       },
-      select: { id: true, branchId: true, role: true },
+      select: { id: true, branchId: true, role: true, email: true, name: true },
     }),
     db.notificationTemplate.findMany({
       where: {
@@ -991,7 +1033,7 @@ export async function generateContractAlarmsForOrganization(params: {
     .filter((user) => user.branchId === null && user.role === "ADMIN")
     .map((user) => user.id);
   const userIdsByBranch = new Map<string, string[]>();
-  const usersById = new Set(users.map((user) => user.id));
+  const allowedUserIds = new Set(users.map((user) => user.id));
   for (const user of users) {
     if (!user.branchId) continue;
     const branchUsers = userIdsByBranch.get(user.branchId) ?? [];
@@ -1000,6 +1042,7 @@ export async function generateContractAlarmsForOrganization(params: {
   }
 
   const userIds = users.map((user) => user.id);
+  const usersById = new Map(users.map((user) => [user.id, user]));
   const legacyAuthRows = userIds.length
     ? await db.legacyAuthRecord.findMany({
         where: {
@@ -1023,8 +1066,11 @@ export async function generateContractAlarmsForOrganization(params: {
   const legacyRecipients: LegacyContractRecipient[] = legacyAuthRows.flatMap((row) => {
     if (!row.userId) return [];
     const data = asRecord(row.legacyData);
+    const user = usersById.get(row.userId);
     return [{
       userId: row.userId,
+      email: user?.email ?? null,
+      name: user?.name ?? null,
       legacyRecipientId: row.legacyUserId ?? row.legacyId,
       legacySourceDatabase: row.sourceDatabase,
       legacySites: readString(data, ["usites"]) ?? "0",
@@ -1065,7 +1111,7 @@ export async function generateContractAlarmsForOrganization(params: {
       ...(userIdsByBranch.get(candidate.staff.branchId) ?? []),
       ...adminUserIds,
     ]);
-    if (candidate.staff.userId && usersById.has(candidate.staff.userId)) {
+    if (candidate.staff.userId && allowedUserIds.has(candidate.staff.userId)) {
       recipientIds.add(candidate.staff.userId);
     }
     const directLegacyUserId = candidate.staff.userId
@@ -1241,6 +1287,15 @@ export async function generateContractAlarmsForOrganization(params: {
       })),
     });
     summary.notificationsCreated += created.count;
+
+    await storeContractEmailAudit({
+      alarmId,
+      subject: title,
+      body,
+      recipients: newReceiptRecipients,
+      legacyNotificationId,
+      sourceDatabase: candidate.staff.sourceDatabase,
+    });
   }
 
   return summary;
