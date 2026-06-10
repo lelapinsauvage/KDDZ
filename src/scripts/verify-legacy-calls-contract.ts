@@ -26,6 +26,7 @@ const files = {
   actions: "src/lib/actions/calls.ts",
   branchResolver: "src/lib/legacy-branch.ts",
   matrix: "docs/page-parity-matrix.json",
+  markdownMatrix: "docs/page-parity-matrix.md",
 };
 
 const text = Object.fromEntries(
@@ -294,5 +295,33 @@ assert.match(detailRow.verification ?? "", /verify-legacy-calls-contract\.ts/);
 assert.match(callsRow.verification ?? "", /default 10-row page size/);
 assert.match(branchRow.verification ?? "", /Browser smoke confirmed `\/bcalls\.php\?brid=` renders the branch-scoped calls listing/);
 assert.match(detailRow.verification ?? "", /Browser detail smoke is pending a local migrated CallLog row/);
+
+const markdownRows = {
+  branch: text.markdownMatrix
+    .split("\n")
+    .find((line) => line.includes("| Front/templates/admin/bcalls.php |")),
+  detail: text.markdownMatrix
+    .split("\n")
+    .find((line) => line.includes("| Front/templates/admin/call.php |")),
+};
+
+assert.match(
+  markdownRows.branch ?? "",
+  /restored - legacy branch-scoped calls listing, bridge, filters, exports, page sizes, and zero-data smoke parity restored/,
+);
+assert.match(
+  markdownRows.branch ?? "",
+  /Browser smoke confirmed `\/bcalls\.php\?brid=` renders the branch-scoped calls listing/,
+);
+assert.doesNotMatch(markdownRows.branch ?? "", /visual smoke remains/);
+assert.match(
+  markdownRows.detail ?? "",
+  /restored - legacy Form 6 standalone shell, workflow, attachments, and direct legacy bridge restored/,
+);
+assert.match(
+  markdownRows.detail ?? "",
+  /Browser detail smoke is pending a local migrated CallLog row/,
+);
+assert.doesNotMatch(markdownRows.detail ?? "", /visual smoke remains/);
 
 console.log("legacy calls contract assertions passed");
