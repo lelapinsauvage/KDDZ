@@ -215,12 +215,14 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
       const eventType = eventTypeId
         ? eventTypes.find((et) => et.id === eventTypeId)
         : null;
-      const customSubject = values.customSubject || values.title;
+      const notificationTitle =
+        values.title || values.customSubject || eventType?.name || "Notification";
+      const customSubject = values.customSubject || notificationTitle;
       const customBody = values.customBody || values.description || null;
 
       if (dialogMode === "add") {
         const result = await createEvent({
-          title: values.title,
+          title: notificationTitle,
           description: values.description || null,
           customSubject,
           customBody,
@@ -239,7 +241,7 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
             ...events,
             {
               id: newEv.id,
-              title: values.title,
+              title: notificationTitle,
               description: values.description || "",
               customSubject,
               customBody: customBody || "",
@@ -261,7 +263,7 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
         }
       } else if (editingId) {
         const result = await updateEvent(editingId, {
-          title: values.title,
+          title: notificationTitle,
           description: values.description || null,
           customSubject,
           customBody,
@@ -279,7 +281,7 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
               e.id === editingId
                 ? {
                     ...e,
-                    title: values.title,
+                    title: notificationTitle,
                     description: values.description || "",
                     customSubject,
                     customBody: customBody || "",
@@ -528,10 +530,11 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
   return (
     <>
       <PageHeader
-        title="Events Calendar"
+        title="Alerts & Notifications"
+        description="Here You Can Schedule Messages/Alerts prior of events"
         breadcrumbs={[
           { label: "Settings", href: "/settings/nursery" },
-          { label: "Events" },
+          { label: "Events Calendar" },
         ]}
         actions={
           <Button
@@ -540,7 +543,7 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
             disabled={isPending}
           >
             <Plus className="mr-1 size-4" />
-            Add Event
+            Add A Notification
           </Button>
         }
       />
@@ -624,14 +627,21 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
                                 <div
                                   key={ev.id}
                                   className="cursor-pointer truncate rounded px-1 py-0.5 text-[10px] font-medium leading-tight text-white"
-                                  style={{ backgroundColor: ev.eventTypeColor }}
-                                  title={`${ev.title} (${ev.eventTypeName})`}
+                                  style={{
+                                    backgroundColor: ev.isActive
+                                      ? ev.eventTypeColor
+                                      : "#60778a",
+                                  }}
+                                  title={`${ev.title} (${ev.eventTypeName}) - Branches: ${ev.branchName}`}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     openEdit(ev);
                                   }}
                                 >
                                   {ev.title}
+                                  <span className="block truncate font-normal opacity-90">
+                                    Branches: {ev.branchName}
+                                  </span>
                                 </div>
                               ))}
                               {dayEvents.length > 2 && (
@@ -665,75 +675,24 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
         <DialogContent className="sm:max-w-[640px]">
           <DialogHeader>
             <DialogTitle>
-              {dialogMode === "add" ? "Add Event" : "Edit Event"}
+              {dialogMode === "add" ? "Add A Notification" : "Edit Notification"}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
-            <div>
-              <label className="mb-1.5 block text-sm font-medium">Title</label>
-              <Input
-                placeholder="e.g. Parent-Teacher Meeting"
-                {...form.register("title")}
-              />
-              {form.formState.errors.title && (
-                <p className="mt-1 text-xs text-destructive">{form.formState.errors.title.message}</p>
-              )}
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium">Description</label>
-              <Textarea
-                placeholder="Event description (optional)"
-                {...form.register("description")}
-                rows={3}
-              />
-            </div>
+            <input type="hidden" {...form.register("title")} />
+            <input type="hidden" {...form.register("description")} />
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <label className="mb-1.5 block text-sm font-medium">Subject</label>
-                <Input
-                  placeholder="Notification subject"
-                  {...form.register("customSubject")}
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium">Body</label>
-                <Textarea
-                  placeholder="Notification body"
-                  {...form.register("customBody")}
-                  rows={2}
-                />
-                {form.formState.errors.customBody && (
-                  <p className="mt-1 text-xs text-destructive">
-                    {form.formState.errors.customBody.message}
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium">Start Date</label>
-                <Input type="date" {...form.register("date")} />
-                {form.formState.errors.date && (
-                  <p className="mt-1 text-xs text-destructive">{form.formState.errors.date.message}</p>
-                )}
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium">End Date</label>
-                <Input type="date" {...form.register("endDate")} />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium">Event Type</label>
+                <label className="mb-1.5 block text-sm font-medium">Cause</label>
                 <Select
                   value={form.watch("eventTypeId") ?? "NONE"}
                   onValueChange={handleEventTypeChange}
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="-" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="NONE">No Type</SelectItem>
+                    <SelectItem value="NONE">-</SelectItem>
                     {eventTypes.map((et) => (
                       <SelectItem key={et.id} value={et.id}>
                         <div className="flex items-center gap-2">
@@ -748,60 +707,96 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
                   </SelectContent>
                 </Select>
               </div>
-              <label className="flex items-center gap-3 self-end pb-2 text-sm">
-                <Checkbox
-                  checked={form.watch("isActive")}
-                  onCheckedChange={(v) => form.setValue("isActive", !!v)}
-                />
-                Active
-              </label>
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium">Branches</label>
-              <div className="grid max-h-[152px] gap-2 overflow-auto rounded-md border p-3 md:grid-cols-2">
-                <label className="flex items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={form.watch("notificationBranchIds").length === 0}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        form.setValue("notificationBranchIds", [], {
-                          shouldDirty: true,
-                          shouldValidate: true,
-                        });
-                        form.setValue("branchId", null);
-                      }
-                    }}
-                  />
-                  All Branches
-                </label>
-                {branches.map((branch) => (
-                  <label key={branch.id} className="flex items-center gap-2 text-sm">
-                    <Checkbox
-                      checked={form.watch("notificationBranchIds").includes(branch.id)}
-                      onCheckedChange={(checked) => toggleBranch(branch.id, !!checked)}
-                    />
-                    {branch.name}
-                  </label>
-                ))}
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">Event Date</label>
+                <Input type="date" {...form.register("date")} />
+                {form.formState.errors.date && (
+                  <p className="mt-1 text-xs text-destructive">{form.formState.errors.date.message}</p>
+                )}
               </div>
             </div>
+            <input type="hidden" {...form.register("endDate")} />
             <div>
-              <label className="mb-2 block text-sm font-medium">Days Before</label>
-              <div className="grid grid-cols-5 gap-2 rounded-md border p-3 sm:grid-cols-10">
-                {REMINDER_DAY_OPTIONS.map((day) => (
-                  <label key={day} className="flex items-center gap-2 text-sm">
+              <label className="mb-1.5 block text-sm font-medium">Subject</label>
+              <Input
+                placeholder="Notification subject"
+                {...form.register("customSubject")}
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">Body</label>
+              <Textarea
+                placeholder="Notification body"
+                {...form.register("customBody")}
+                rows={3}
+              />
+              <div className="mt-1 text-xs text-muted-foreground">
+                Characters Count: {form.watch("customBody")?.length ?? 0}{" "}
+                <span className="opacity-70">(155 per SMS)</span>
+              </div>
+              {form.formState.errors.customBody && (
+                <p className="mt-1 text-xs text-destructive">
+                  {form.formState.errors.customBody.message}
+                </p>
+              )}
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm font-medium">Branches</label>
+                <div className="grid max-h-[152px] gap-2 overflow-auto rounded-md border p-3">
+                  <label className="flex items-center gap-2 text-sm">
                     <Checkbox
-                      checked={form.watch("notificationDaysBefore").includes(day)}
-                      onCheckedChange={(checked) => toggleReminderDay(day, !!checked)}
+                      checked={form.watch("notificationBranchIds").length === 0}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          form.setValue("notificationBranchIds", [], {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                          });
+                          form.setValue("branchId", null);
+                        }
+                      }}
                     />
-                    {day}
+                    All Branches
                   </label>
-                ))}
+                  {branches.map((branch) => (
+                    <label key={branch.id} className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={form.watch("notificationBranchIds").includes(branch.id)}
+                        onCheckedChange={(checked) => toggleBranch(branch.id, !!checked)}
+                      />
+                      {branch.name}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="mb-2 block text-sm font-medium">Days Before</label>
+                  <div className="grid grid-cols-2 gap-2 rounded-md border p-3 sm:grid-cols-5">
+                    {REMINDER_DAY_OPTIONS.map((day) => (
+                      <label key={day} className="flex items-center gap-2 text-sm">
+                        <Checkbox
+                          checked={form.watch("notificationDaysBefore").includes(day)}
+                          onCheckedChange={(checked) => toggleReminderDay(day, !!checked)}
+                        />
+                        {day} Days
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <label className="flex items-center gap-3 text-sm">
+                  <Checkbox
+                    checked={form.watch("isActive")}
+                    onCheckedChange={(v) => form.setValue("isActive", !!v)}
+                  />
+                  Active
+                </label>
               </div>
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                Cancel
+                Close
               </Button>
               <Button
                 type="submit"
@@ -809,7 +804,7 @@ export function EventsClient({ events: initialEvents, eventTypes, branches }: Ev
                 disabled={isPending}
               >
                 {isPending && <Loader2 className="mr-1 size-4 animate-spin" />}
-                {dialogMode === "add" ? "Add" : "Save"}
+                Save
               </Button>
             </DialogFooter>
           </form>

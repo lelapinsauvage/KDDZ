@@ -61,7 +61,7 @@ export const holidaySchema = z.object({
 export type HolidayFormValues = z.infer<typeof holidaySchema>;
 
 export const eventSchema = z.object({
-  title: z.string().min(1, "Event title is required"),
+  title: z.string(),
   description: z.string(),
   customSubject: z.string(),
   customBody: z.string().max(155, "Message must be 155 characters or less"),

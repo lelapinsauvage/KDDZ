@@ -344,7 +344,7 @@
     "legacyPhp": "Front/templates/admin/NotifCalendar.php",
     "legacyJs": "Front/templates/admin/js/NotifCalendar.js",
     "modernRoute": "/NotifCalendar.php, /settings/events",
-    "status": "partial - legacy event notification bridge and fields restored",
+    "status": "restored - legacy event notification calendar, modal actions, migration, and parent delivery restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -352,7 +352,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Restored `t_events` migration fields, custom subject/body, multi-branch notification targeting, 1-10 day reminder offsets, event-type default subject/body fill, organization-scoped event CRUD, and generated parent/mobile `custom_notifications_events_parents` receipt fanout from active branch children. Event import fidelity now preserves active/inactive legacy rows with sourceDatabase, legacyKey/id, event type mapping, custom subject/body, event date, submit timestamp, notification branch ids parsed from legacy branches JSON, and 1-10 day reminder offsets parsed from daysbefore JSON; invalid legacy ids/dates are counted in skipped totals and migrated/updated/skipped counts are logged. Verified by `src/scripts/verify-legacy-event-import-contract.ts` and `src/scripts/verify-event-parent-delivery.ts`. `/NotifCalendar.php` now lands on the modern events calendar while preserving the legacy event id as query context. Remaining work is exact FullCalendar visual/action audit."
+    "verification": "Restored the legacy Alerts & Notifications calendar contract from `NotifCalendar.php`/`NotifCalendar.js`: `/NotifCalendar.php` redirects to `/settings/events` while preserving legacy `id` as `legacyEvent` query context, and the modern page now mirrors the legacy notification modal/action surface with `Alerts & Notifications` title/help text, `Add A Notification` and `Edit Notification` dialogs, Cause, Event Date, Subject, Body, Characters Count with `(155 per SMS)`, Branches, 1-10 `Days Before`, Active, Close, Save, delete confirmation/action, cause default subject/body fill, inactive event coloring with legacy `#60778a`, and event pills showing `Branches: ...`. Restored `t_events` migration fields, custom subject/body, multi-branch notification targeting, 1-10 day reminder offsets, event-type default subject/body fill, organization-scoped event CRUD, and generated parent/mobile `custom_notifications_events_parents` receipt fanout from active branch children. Event import fidelity preserves active/inactive legacy rows with sourceDatabase, legacyKey/id, event type mapping, custom subject/body, event date, submit timestamp, notification branch ids parsed from legacy branches JSON, and 1-10 day reminder offsets parsed from daysbefore JSON; invalid legacy ids/dates are counted in skipped totals and migrated/updated/skipped counts are logged. Browser smoke confirmed `/NotifCalendar.php` redirects to `/settings/events`, renders the legacy Alerts & Notifications title/help text, Add A Notification action, calendar grid, events table, no broken media, and opens the Add A Notification dialog with Cause, Event Date, Subject, Body, character count, Branches, Days Before 1-10, Active, Close, and Save controls. Verified by `src/scripts/verify-legacy-event-import-contract.ts` and `src/scripts/verify-event-parent-delivery.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/Nurse_Details.php",

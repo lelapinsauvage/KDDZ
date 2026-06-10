@@ -184,6 +184,18 @@ assert.match(modern.eventsClient, /updateEvent\(editingId,/);
 assert.match(modern.eventsClient, /toggleBranch/);
 assert.match(modern.eventsClient, /toggleReminderDay/);
 assert.match(modern.eventsClient, /Array\.from\(\{ length: 10 \}/);
+assert.match(modern.eventsClient, /title="Alerts & Notifications"/);
+assert.match(modern.eventsClient, /Here You Can Schedule Messages\/Alerts prior of events/);
+assert.match(modern.eventsClient, /Add A Notification/);
+assert.match(modern.eventsClient, /Edit Notification/);
+assert.match(modern.eventsClient, /Cause/);
+assert.match(modern.eventsClient, /Event Date/);
+assert.match(modern.eventsClient, /Characters Count:/);
+assert.match(modern.eventsClient, /\(155 per SMS\)/);
+assert.match(modern.eventsClient, /Branches: \{ev\.branchName\}/);
+assert.match(modern.eventsClient, /ev\.isActive[\s\S]*\? ev\.eventTypeColor[\s\S]*: "#60778a"/);
+assert.match(modern.eventsClient, /notificationTitle =[\s\S]*values\.title \|\| values\.customSubject \|\| eventType\?\.name \|\| "Notification"/);
+assert.match(modern.eventsClient, /<input type="hidden" \{\.\.\.form\.register\("title"\)\} \/>/);
 
 assert.match(modern.settingsActions, /function normalizeDaysBefore/);
 assert.match(modern.settingsActions, /item >= 1 && item <= 10/);
@@ -251,6 +263,7 @@ for (const row of eventRows) {
 
 type MatrixRow = {
   modernRoute?: string;
+  status?: string;
   verification?: string;
 };
 
@@ -259,15 +272,19 @@ const eventsRow = pageMatrix.find(
   (entry) => entry.modernRoute === "/NotifCalendar.php, /settings/events",
 );
 assert.ok(eventsRow, "Missing /NotifCalendar.php page matrix row");
+assert.match(eventsRow.status ?? "", /restored - legacy event notification calendar/);
 assert.match(eventsRow.verification ?? "", /Event import fidelity/);
 assert.match(eventsRow.verification ?? "", /verify-legacy-event-import-contract\.ts/);
 assert.match(eventsRow.verification ?? "", /sourceDatabase, legacyKey\/id/);
 assert.match(eventsRow.verification ?? "", /notification branch ids/);
 assert.match(eventsRow.verification ?? "", /1-10 day reminder offsets/);
+assert.match(eventsRow.verification ?? "", /Add A Notification/);
+assert.match(eventsRow.verification ?? "", /Browser smoke/);
+assert.doesNotMatch(eventsRow.verification ?? "", /Remaining work/);
 
 assert.match(
   modern.pageMatrixMd,
-  /NotifCalendar\.php \| Front\/templates\/admin\/js\/NotifCalendar\.js \| \/NotifCalendar\.php, \/settings\/events \| partial - legacy event notification bridge and fields restored/,
+  /NotifCalendar\.php \| Front\/templates\/admin\/js\/NotifCalendar\.js \| \/NotifCalendar\.php, \/settings\/events \| restored - legacy event notification calendar, modal actions, migration, and parent delivery restored/,
 );
 assert.match(
   modern.pageMatrixMd,
@@ -279,7 +296,11 @@ assert.match(
 );
 assert.match(
   modern.pageMatrixMd,
-  /NotifCalendar\.php[\s\S]*legacy event id as query context/,
+  /NotifCalendar\.php[\s\S]*legacy `id` as `legacyEvent` query context/,
+);
+assert.match(
+  modern.pageMatrixMd,
+  /NotifCalendar\.php[\s\S]*Add A Notification[\s\S]*Edit Notification/,
 );
 
 console.log("legacy event import assertions passed");
