@@ -32,6 +32,7 @@ import {
 import {
   ChevronLeft,
   ChevronRight,
+  Pencil,
   Trash2,
 } from "lucide-react";
 import {
@@ -137,6 +138,8 @@ export function CalendarClient({
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+  const [dayDetailsOpen, setDayDetailsOpen] = useState(false);
+  const [dayDetailsDate, setDayDetailsDate] = useState("");
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
 
@@ -155,6 +158,11 @@ export function CalendarClient({
     if (employeeFilter === "ALL") return events;
     return events.filter((e) => e.employeeId === employeeFilter);
   }, [events, employeeFilter]);
+
+  const dayDetailsEvents = useMemo(
+    () => events.filter((event) => event.date === dayDetailsDate),
+    [dayDetailsDate, events],
+  );
 
   // Build week rows
   const weeks = useMemo(() => {
@@ -212,10 +220,16 @@ export function CalendarClient({
   const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
 
   // Open create dialog
-  function openCreateDialog(day: number) {
+  function openDay(day: number) {
     const dateStr = formatDate(year, month, day);
+    if (employeeFilter === "ALL") {
+      setDayDetailsDate(dateStr);
+      setDayDetailsOpen(true);
+      return;
+    }
+
     setEditingEvent(null);
-    setFormEmployeeId(employees[0]?.id ?? "");
+    setFormEmployeeId(employeeFilter);
     setFormStatus("");
     setFormDate(dateStr);
     setFormRefNb("");
@@ -401,7 +415,7 @@ export function CalendarClient({
                     className={`min-h-[100px] border-r last:border-r-0 p-1.5 transition-colors ${
                       day === null ? "bg-muted/30" : "hover:bg-muted/10 cursor-pointer"
                     } ${isTodayCell ? "bg-primary/5" : ""}`}
-                    onClick={() => day && openCreateDialog(day)}
+                    onClick={() => day && openDay(day)}
                   >
                     {day !== null && (
                       <>
@@ -531,6 +545,75 @@ export function CalendarClient({
                 : editingEvent
                   ? "Update"
                   : "Create Task"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={dayDetailsOpen} onOpenChange={setDayDetailsOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>All Tasks</DialogTitle>
+          </DialogHeader>
+
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="border-b text-left text-xs uppercase text-muted-foreground">
+                  <th className="px-3 py-2 font-semibold">#</th>
+                  <th className="px-3 py-2 font-semibold">Name</th>
+                  <th className="px-3 py-2 font-semibold">Status</th>
+                  <th className="px-3 py-2 font-semibold">Reference No</th>
+                  <th className="px-3 py-2 font-semibold">Date</th>
+                  <th className="px-3 py-2 font-semibold">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dayDetailsEvents.length === 0 ? (
+                  <tr>
+                    <td className="px-3 py-6 text-center text-muted-foreground" colSpan={6}>
+                      No tasks found.
+                    </td>
+                  </tr>
+                ) : (
+                  dayDetailsEvents.map((event, index) => {
+                    const emp = employeeLookup.get(event.employeeId);
+                    const statusLabel =
+                      STATUS_OPTIONS.find((option) => option.value === event.status)?.label ??
+                      event.status.replace("_", " ");
+
+                    return (
+                      <tr key={event.id} className="border-b last:border-0">
+                        <td className="px-3 py-2">{index + 1}</td>
+                        <td className="px-3 py-2">{emp?.name ?? "Unknown"}</td>
+                        <td className="px-3 py-2">{statusLabel}</td>
+                        <td className="px-3 py-2">{event.referenceNumber || "-"}</td>
+                        <td className="px-3 py-2">{event.date}</td>
+                        <td className="px-3 py-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8"
+                            title="Update"
+                            onClick={() => {
+                              setDayDetailsOpen(false);
+                              openEditDialog(event);
+                            }}
+                          >
+                            <Pencil className="size-4" />
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDayDetailsOpen(false)}>
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>

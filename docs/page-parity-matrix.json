@@ -1101,7 +1101,7 @@
     "legacyPhp": "Front/templates/admin/calendar.php",
     "legacyJs": "Front/templates/admin/js/calendar.js",
     "modernRoute": "/calendar.php, /employees/calendar",
-    "status": "partial - legacy teacher status calendar bridge and migrated events restored",
+    "status": "restored - legacy employee task calendar bridge, CRUD, migration, and all-task day list restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -1110,7 +1110,7 @@
       "id",
       "t_emp_status"
     ],
-    "verification": "Modern calendar route exists and legacy `t_emp_status` sick/absent/day_off/warning rows now migrate to `EmployeeEvent` with teacher links, status, date, and reference numbers. `/calendar.php` now redirects to the modern employee calendar, `/calendar.php?id=` resolves raw numeric, UUID, legacy key, and encrypted teacher ids into a preselected employee calendar filter, and the employee selector now loads all active teachers/nurses/doctors/managers instead of a capped sample. Remaining work is exact field/action audit against `calendar.php`/`calendar.js`, approval events, non-teacher legacy `id` semantics if production used them, and final visual parity."
+    "verification": "Restored the legacy Tasks calendar contract from `calendar.php`/`calendar.js`: `/calendar.php` redirects to the modern employee calendar, `/calendar.php?id=` resolves raw numeric, UUID, legacy key, and encrypted teacher ids into a preselected employee calendar filter, and the modern page loads all active teachers/nurses/doctors/managers. Legacy `t_emp_status` sick/absent/day_off/warning rows migrate to `EmployeeEvent` with source database/key/table, legacy id, teacher id, created-by id, branch, status, date, reference number, and raw row provenance. The modern calendar preserves the Tasks title, Warning/Day OFF/Sick/Absent legend, Create Task and Update/Delete Event flows, status options, Reference Number hiding for Day Off, org-safe create/update/delete actions, and the legacy `emp_id == 0` behavior where All Employees day clicks open an All Tasks table with #, Name, Status, Reference No, Date, and Action columns instead of creating a task. Legacy approval-date blocking remains intentionally inactive because the original `CheckApprovaldate` calls were commented out. Browser smoke confirmed `/calendar.php` redirects to `/employees/calendar`, renders the Tasks calendar, status legend, All Employees selector, calendar grid, opens the All Tasks day-list modal from the All Employees view, and has no broken media. Verified by `src/scripts/verify-legacy-employee-calendar-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/call.php",
