@@ -440,6 +440,101 @@ export async function resolveLegacySocialAuthIdentity(params: {
   return resolveStaffLoginIdentity(db, user.email);
 }
 
+export async function linkLegacySocialAuthIdentityByEmail(params: {
+  provider: string;
+  providerAccountId?: string | null;
+  email?: string | null;
+}): Promise<ResolvedStaffLoginIdentity | null> {
+  const legacyProviderKey = legacySocialKeyForAuthProvider(params.provider);
+  const providerAccountId = params.providerAccountId?.trim();
+  const email = params.email?.trim().toLowerCase();
+  if (!legacyProviderKey || !providerAccountId || !email) return null;
+
+  const identity = await resolveStaffLoginIdentity(db, email);
+  if (!identity?.user || identity.legacy?.recordType !== "login_user") return null;
+
+  const legacyUserId = identity.legacy.legacyUserId ?? identity.legacy.legacyId;
+  const existing = await db.legacyAuthRecord.findFirst({
+    where: {
+      sourceDatabase: identity.legacy.sourceDatabase,
+      legacyTable: "login_integration",
+      recordType: "social_integration",
+      legacyUserId,
+    },
+    orderBy: [{ legacyId: "desc" }],
+    select: {
+      id: true,
+      legacyData: true,
+    },
+  });
+  const existingData = legacyObject(existing?.legacyData) as Prisma.InputJsonObject;
+  const updatedData: Prisma.InputJsonObject = {
+    ...existingData,
+    [legacyProviderKey]: providerAccountId,
+    user_id: legacyUserId,
+    [`${legacyProviderKey}_linked_at`]: new Date().toISOString(),
+    linked_from: "modern_oauth_verified_email",
+  };
+  const linkedProviders = linkedSocialProviderList(updatedData);
+
+  await db.$transaction([
+    existing
+      ? db.legacyAuthRecord.update({
+          where: { id: existing.id },
+          data: {
+            userId: identity.user.id,
+            legacyUserId,
+            username: identity.legacy.username ?? identity.legacy.recordKey,
+            email: identity.legacy.email ?? identity.user.email,
+            recordValue: linkedProviders,
+            isDisabled: false,
+            legacyData: updatedData,
+          },
+        })
+      : db.legacyAuthRecord.create({
+          data: {
+            sourceDatabase: identity.legacy.sourceDatabase,
+            legacyTable: "login_integration",
+            legacyKey: `${identity.legacy.sourceDatabase}:login_integration:${legacyUserId}`,
+            legacyId: legacyUserId,
+            recordType: "social_integration",
+            userId: identity.user.id,
+            legacyUserId,
+            username: identity.legacy.username ?? identity.legacy.recordKey,
+            email: identity.legacy.email ?? identity.user.email,
+            recordKey: String(legacyUserId),
+            recordValue: linkedProviders,
+            isDisabled: false,
+            legacyData: updatedData,
+          },
+        }),
+    db.legacyAuthRecord.create({
+      data: {
+        sourceDatabase: identity.legacy.sourceDatabase,
+        legacyTable: "login_integration_audit",
+        legacyKey: `${identity.legacy.sourceDatabase}:login_integration_link:${legacyUserId}:${legacyProviderKey}:${randomBytes(6).toString("hex")}`,
+        legacyId: 0,
+        recordType: "social_link_audit",
+        userId: identity.user.id,
+        legacyUserId,
+        username: identity.legacy.username ?? identity.legacy.recordKey,
+        email: identity.legacy.email ?? identity.user.email,
+        recordKey: legacyProviderKey,
+        recordValue: providerAccountId,
+        legacyData: {
+          provider: legacyProviderKey,
+          providerAccountId,
+          email,
+          linkedAt: new Date().toISOString(),
+          source: "oauth_verified_email",
+        },
+      },
+    }),
+  ]);
+
+  return identity;
+}
+
 export async function recordLegacySocialLoginAudit(params: {
   identity: ResolvedStaffLoginIdentity;
   provider: string;

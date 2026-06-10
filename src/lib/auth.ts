@@ -18,6 +18,7 @@ import {
   configuredLegacyOAuthProviders,
   createLegacySocialSignupPrefill,
   isLegacySocialAuthProvider,
+  linkLegacySocialAuthIdentityByEmail,
   recordLegacySocialLoginAudit,
   resolveLegacySocialAuthIdentity,
 } from "./legacy-social-auth";
@@ -248,7 +249,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async signIn({ account, user, profile }) {
       if (!isLegacySocialAuthProvider(account?.provider)) return true;
       const { db } = await import("./db");
-      const identity = await resolveLegacySocialAuthIdentity({
+      let identity = await resolveLegacySocialAuthIdentity({
+        provider: account?.provider ?? "",
+        providerAccountId: account?.providerAccountId,
+        email: user.email,
+      });
+      identity ??= await linkLegacySocialAuthIdentityByEmail({
         provider: account?.provider ?? "",
         providerAccountId: account?.providerAccountId,
         email: user.email,

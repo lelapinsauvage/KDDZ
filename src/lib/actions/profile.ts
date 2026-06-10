@@ -8,6 +8,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import { deliverEmail, emailDeliveryAuditData } from "@/lib/email-delivery";
 import { getLegacyAccessPermissionDecision } from "@/lib/legacy-access-permissions";
+import { legacySocialProviderStatuses } from "@/lib/legacy-social-auth";
 import { requireOrgSafe } from "@/lib/require-org";
 import { isAdminRole } from "@/lib/require-role";
 
@@ -41,6 +42,9 @@ export type LegacyProfileAccessLogEntry = {
 export type LegacyProfileIntegrationMethod = {
   providerKey: string;
   provider: string;
+  authProviderId: string | null;
+  isSupported: boolean;
+  isConfigured: boolean;
   enabled: boolean;
   linked: boolean;
   identifier: string | null;
@@ -726,9 +730,15 @@ export async function getCurrentLegacyProfile(): Promise<
     legacyRecord.email || legacyString(legacyRecord.legacyData, "email") || "";
   const integrations = SOCIAL_LOGIN_PROVIDERS.map((provider) => {
     const identifier = socialIdentifier(socialIntegration?.legacyData, provider);
+    const deploymentStatus = legacySocialProviderStatuses().find(
+      (status) => status.key === provider,
+    );
     return {
       providerKey: provider,
       provider: socialProviderLabel(provider),
+      authProviderId: deploymentStatus?.authProviderId ?? null,
+      isSupported: deploymentStatus?.isSupported ?? false,
+      isConfigured: deploymentStatus?.isConfigured ?? false,
       enabled: boolSetting(settings.get(`integration-${provider}-enable`)),
       linked: Boolean(identifier),
       identifier,

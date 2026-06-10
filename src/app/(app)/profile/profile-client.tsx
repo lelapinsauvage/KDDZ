@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import { signIn } from "next-auth/react";
 import { PageHeader } from "@/components/layout/page-header";
 import {
   Card,
@@ -377,6 +378,16 @@ export function ProfileClient({
         ),
       );
       toast.success(`${result.data?.provider ?? "Provider"} unlinked`);
+    });
+  }
+
+  function handleSocialConnect(authProviderId: string | null) {
+    if (!authProviderId) {
+      toast.error("This provider is not supported.");
+      return;
+    }
+    startSocialTransition(async () => {
+      await signIn(authProviderId, { callbackUrl: "/profile" });
     });
   }
 
@@ -830,7 +841,33 @@ export function ProfileClient({
                               )}
                               Unlink
                             </Button>
-                          ) : null}
+                          ) : (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="mt-3 w-full"
+                              disabled={
+                                isSocialPending ||
+                                !method.authProviderId ||
+                                !method.isConfigured
+                              }
+                              onClick={() =>
+                                handleSocialConnect(method.authProviderId)
+                              }
+                            >
+                              {isSocialPending ? (
+                                <Loader2 className="size-3 animate-spin" />
+                              ) : (
+                                <Link2 className="size-3" />
+                              )}
+                              {method.authProviderId && method.isConfigured
+                                ? "Connect"
+                                : method.isSupported
+                                  ? "Needs credentials"
+                                  : "Unavailable"}
+                            </Button>
+                          )}
                         </div>
                       ))}
                     </div>
