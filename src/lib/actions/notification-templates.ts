@@ -1263,6 +1263,64 @@ export async function getLegacyNotificationNatures(): Promise<
 }
 
 // ---------------------------------------------------------------------------
+// updateLegacyNotificationNatureStatus
+// ---------------------------------------------------------------------------
+
+export async function updateLegacyNotificationNatureStatus(
+  id: string,
+  isActive: boolean,
+): Promise<ActionResult<LegacyNotificationNatureRow>> {
+  try {
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+
+    const existing = await db.legacyNotificationNature.findUnique({
+      where: { id },
+    });
+    if (!existing) {
+      return { success: false, error: "Legacy notification nature not found" };
+    }
+
+    const updated = await db.legacyNotificationNature.update({
+      where: { id },
+      data: {
+        isActive,
+        legacyData: {
+          ...jsonRecord(existing.legacyData),
+          active: isActive ? 1 : 0,
+          updated_from: "modern_legacy_notification_natures",
+        },
+      },
+    });
+
+    revalidatePath("/settings/notifications");
+    revalidatePath("/api/parent/notifications");
+
+    return {
+      success: true,
+      data: {
+        id: updated.id,
+        sourceDatabase: updated.sourceDatabase,
+        legacyId: updated.legacyId,
+        name: updated.name,
+        description: updated.description,
+        contentTable: updated.contentTable,
+        deliveryTable: updated.deliveryTable,
+        parentDeliveryTable: updated.parentDeliveryTable,
+        displayOrder: updated.displayOrder,
+        isActive: updated.isActive,
+      },
+    };
+  } catch (error) {
+    console.error("Failed to update legacy notification nature:", error);
+    return {
+      success: false,
+      error: "Failed to update legacy notification nature",
+    };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // getLegacyNotificationLogs
 // ---------------------------------------------------------------------------
 

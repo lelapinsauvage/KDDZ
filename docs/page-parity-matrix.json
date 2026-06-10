@@ -17216,10 +17216,10 @@
     "legacyPhp": "Front/templates/admin/users/admin/page/notifications.php",
     "legacyJs": "",
     "modernRoute": "/settings/notifications",
-    "status": "partial - legacy notification settings/natures/send logs visible in Legacy tab; custom notification send/edit workflows still need audit",
+    "status": "restored - legacy notification settings, natures, active-state editing, send logs, and delivery audits restored",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "Compare legacy notification admin behavior with modern templates, logs, and send jobs. /settings/notifications now surfaces the full migrated Legacy tab settings set instead of a capped sample, including notification, reminder, and legacy auth-email rows. /settings/notifications now loads uncapped sent notification audit rows plus full migrated notification natures and legacy notification logs, with chunked child-name hydration for production-sized log imports."
+    "verification": "The legacy `notifications.php` channel toggles remain covered by the migrated Legacy tab settings matrix, and `/settings/notifications` now also restores the admin notification-nature workflow behind `message_portal.php`: it loads all migrated `notifications_nature` rows, shows source ids/tables/status, edits active/inactive state through guarded `updateLegacyNotificationNatureStatus`, preserves the legacy `active` flag in `legacyData`, and revalidates the settings and parent notification surfaces. Parent/mobile `notifications_master` already consumes `LegacyNotificationNature.isActive`, so disabling a migrated nature immediately removes that group's details while preserving the group shell expected by native clients. The same page keeps uncapped legacy send logs with chunked child-name hydration plus the existing notification template/test/bulk-send/provider-delivery audit controls. Verified by `src/scripts/verify-legacy-notification-nature-admin-contract.ts` and `src/scripts/verify-legacy-notification-channel-gates-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/reports.php",

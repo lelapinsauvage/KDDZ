@@ -70,6 +70,7 @@ import {
   sendLegacyBulkEmail,
   updateLegacyAccountingReminderSetting,
   updateLegacyNotificationChannelSetting,
+  updateLegacyNotificationNatureStatus,
   type SentNotificationRow,
 } from "@/lib/actions/notification-templates";
 
@@ -1094,6 +1095,7 @@ function LegacyTab({
   logs: LegacyNotificationLogRow[];
 }) {
   const [legacySettings, setLegacySettings] = useState(settings);
+  const [legacyNatures, setLegacyNatures] = useState(natures);
   const [channelMessage, setChannelMessage] = useState<{
     success: boolean;
     text: string;
@@ -1102,10 +1104,16 @@ function LegacyTab({
     success: boolean;
     text: string;
   } | null>(null);
+  const [natureMessage, setNatureMessage] = useState<{
+    success: boolean;
+    text: string;
+  } | null>(null);
   const [pendingChannel, setPendingChannel] = useState<string | null>(null);
   const [pendingReminder, setPendingReminder] = useState<string | null>(null);
+  const [pendingNature, setPendingNature] = useState<string | null>(null);
   const [isChannelPending, startChannelTransition] = useTransition();
   const [isReminderPending, startReminderTransition] = useTransition();
+  const [isNaturePending, startNatureTransition] = useTransition();
 
   function formatDate(iso: string) {
     return new Date(iso).toLocaleDateString("en-US", {
@@ -1293,6 +1301,35 @@ function LegacyTab({
     });
   }
 
+  function handleNatureToggle(
+    nature: LegacyNotificationNatureRow,
+    isActive: boolean,
+  ) {
+    setPendingNature(nature.id);
+    setNatureMessage(null);
+    startNatureTransition(async () => {
+      const result = await updateLegacyNotificationNatureStatus(
+        nature.id,
+        isActive,
+      );
+      if (result.success && result.data) {
+        setLegacyNatures((prev) =>
+          prev.map((row) => (row.id === result.data!.id ? result.data! : row)),
+        );
+        setNatureMessage({
+          success: true,
+          text: "Legacy notification nature updated.",
+        });
+      } else {
+        setNatureMessage({
+          success: false,
+          text: result.error ?? "Legacy notification nature update failed.",
+        });
+      }
+      setPendingNature(null);
+    });
+  }
+
   return (
     <div className="space-y-4">
       <div className="grid gap-3 md:grid-cols-3">
@@ -1315,7 +1352,12 @@ function LegacyTab({
               <div className="text-xs font-medium uppercase tracking-normal">
                 Natures
               </div>
-              <div className="mt-1 text-2xl font-semibold">{natures.length}</div>
+              <div className="mt-1 text-2xl font-semibold">
+                {legacyNatures.length}
+              </div>
+              <div className="mt-1 text-xs">
+                {legacyNatures.filter((nature) => nature.isActive).length} active
+              </div>
             </div>
             <ListTree className="size-5" />
           </div>
@@ -1647,7 +1689,7 @@ function LegacyTab({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {natures.length === 0 ? (
+                {legacyNatures.length === 0 ? (
                   <TableRow>
                     <TableCell
                       colSpan={5}
@@ -1657,7 +1699,7 @@ function LegacyTab({
                     </TableCell>
                   </TableRow>
                 ) : (
-                  natures.map((nature) => (
+                  legacyNatures.map((nature) => (
                     <TableRow key={nature.id}>
                       <TableCell className="px-4 py-3">
                         <div className="font-medium">{nature.name}</div>
@@ -1675,16 +1717,27 @@ function LegacyTab({
                         {nature.parentDeliveryTable ?? "-"}
                       </TableCell>
                       <TableCell className="px-4 py-3">
-                        <Badge
-                          variant="outline"
-                          className={
-                            nature.isActive
-                              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                              : "border-slate-200 bg-slate-50 text-slate-600"
-                          }
-                        >
-                          {nature.isActive ? "Active" : "Inactive"}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={nature.isActive}
+                            disabled={
+                              isNaturePending && pendingNature === nature.id
+                            }
+                            onCheckedChange={(checked) =>
+                              handleNatureToggle(nature, checked)
+                            }
+                          />
+                          <Badge
+                            variant="outline"
+                            className={
+                              nature.isActive
+                                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                : "border-slate-200 bg-slate-50 text-slate-600"
+                            }
+                          >
+                            {nature.isActive ? "Active" : "Inactive"}
+                          </Badge>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -1692,6 +1745,15 @@ function LegacyTab({
               </TableBody>
             </Table>
           </div>
+          {natureMessage && (
+            <p
+              className={`mt-3 text-xs ${
+                natureMessage.success ? "text-emerald-600" : "text-red-600"
+              }`}
+            >
+              {natureMessage.text}
+            </p>
+          )}
         </CardContent>
       </Card>
 
