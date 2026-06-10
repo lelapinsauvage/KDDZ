@@ -17097,10 +17097,10 @@
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-vaccinations.php",
     "legacyJs": "",
     "modernRoute": "/settings/notifications",
-    "status": "partial - legacy vaccination template fallback restored; delivery audit remains",
+    "status": "restored - legacy vaccination template fallback and provider delivery audit restored",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "/settings/notifications Vaccinations now falls back to migrated `email-vaccinations-subj` and `email-vaccinations-msg` rows and exposes legacy `{{child_name}}`, `{{vaccination_name}}`, and `{{x_days}}` shortcodes. Existing vaccination alarm generation can use the saved modern template and exact generated staff receipt targeting; message-portal parent receipts are verified through `notifications_master.php`; remaining work is external provider delivery."
+    "verification": "/settings/notifications Vaccinations falls back to migrated `email-vaccinations-subj` and `email-vaccinations-msg` rows and exposes the legacy `{{child_name}}`, `{{vaccination_name}}`, and `{{x_days}}` shortcodes. `generateVaccinationAlarmsForOrganization()` now renders the saved VACCINATIONS subject/body for generated vaccination staff recipients, preserves the legacy `x_days` variable alongside the modern due-day value, sends the rendered message through the provider-neutral `deliverEmail` bridge with VACCINATIONS metadata and `custom_notifications_vaccinations` provenance, and stores `emailDeliveryAuditData` on the generated alarm legacy audit payload so skipped/unconfigured, failed, and sent delivery outcomes remain inspectable without hard-coding production credentials. Message-portal parent receipts continue to be verified through `notifications_master.php`. Verified by `src/scripts/verify-legacy-vaccination-email-template-delivery-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-welcome.php",
