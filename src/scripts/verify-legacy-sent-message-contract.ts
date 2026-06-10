@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
   buildLegacySentMessageExportRows,
   formatLegacySentMessageDateTime,
@@ -59,6 +60,39 @@ assert.equal(
     threadId: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
   }),
   "aaaaaaaa",
+);
+
+const matrixJson = readFileSync("docs/page-parity-matrix.json", "utf8");
+const matrixMarkdown = readFileSync("docs/page-parity-matrix.md", "utf8");
+
+assert.match(
+  matrixJson,
+  /Msg_list\.php[\s\S]*restored - legacy sent messages columns, server pagination, full export\/print, and bridge restored/,
+);
+assert.match(
+  matrixJson,
+  /Msg_list\.php[\s\S]*Copy\/PDF\/Excel\/CSV export uses the legacy column order/,
+);
+assert.match(
+  matrixJson,
+  /Msg_list\.php[\s\S]*logged-in Browser smoke through `\/Msg_list\.php\?q=\.\.\.`/,
+);
+
+assert.match(
+  matrixMarkdown,
+  /Msg_list\.php \| Front\/templates\/admin\/js\/Msg_list\.js \| \/Msg_list\.php, \/messages\/sent \| restored - legacy sent messages columns, server pagination, full export\/print, and bridge restored/,
+);
+assert.match(
+  matrixMarkdown,
+  /Msg_list\.php[\s\S]*Copy\/PDF\/Excel\/CSV export uses the legacy column order/,
+);
+assert.match(
+  matrixMarkdown,
+  /Msg_list\.php[\s\S]*logged-in Browser smoke through `\/Msg_list\.php\?q=\.\.\.`/,
+);
+assert.doesNotMatch(
+  matrixMarkdown,
+  /Msg_list\.php[^\n]*visual audit remains/,
 );
 
 console.log("legacy sent message export contract ok");
