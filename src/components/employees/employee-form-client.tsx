@@ -133,8 +133,11 @@ export function EmployeeFormClient({
     defaultValues: employee ?? {
       username: "",
       firstName: "",
+      firstNameAr: "",
       middleName: "",
+      middleNameAr: "",
       lastName: "",
+      lastNameAr: "",
       imageUrl: "",
       dateOfBirth: "",
       placeOfBirth: "",
@@ -200,6 +203,7 @@ export function EmployeeFormClient({
   const storedImageUrl = watch("imageUrl") || "";
   const displayImageUrl = imagePreviewUrl || storedImageUrl;
   const supportsMiddleName = type !== "manager";
+  const supportsArabicName = type === "doctor";
   const displayName = [
     watch("firstName"),
     supportsMiddleName ? watch("middleName") : "",
@@ -553,6 +557,37 @@ export function EmployeeFormClient({
                       <p className="mt-1 text-xs text-red-500">{errors.lastName.message}</p>
                     )}
                   </div>
+                  {supportsArabicName && (
+                    <>
+                      <div>
+                        <Label htmlFor="firstNameAr">Arabic First Name</Label>
+                        <Input
+                          id="firstNameAr"
+                          dir="rtl"
+                          {...register("firstNameAr")}
+                          placeholder="الاسم الأول"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="middleNameAr">Arabic Father Name</Label>
+                        <Input
+                          id="middleNameAr"
+                          dir="rtl"
+                          {...register("middleNameAr")}
+                          placeholder="اسم الأب"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="lastNameAr">Arabic Family Name</Label>
+                        <Input
+                          id="lastNameAr"
+                          dir="rtl"
+                          {...register("lastNameAr")}
+                          placeholder="الشهرة"
+                        />
+                      </div>
+                    </>
+                  )}
                   <div>
                     <Label htmlFor="dateOfBirth">Date of Birth</Label>
                     <Input id="dateOfBirth" type="date" {...register("dateOfBirth")} />

@@ -57,8 +57,11 @@ interface DocumentData {
 interface EmployeeData {
   username?: string | null;
   firstName: string;
+  firstNameAr?: string | null;
   middleName?: string | null;
+  middleNameAr?: string | null;
   lastName: string;
+  lastNameAr?: string | null;
   imageUrl?: string | null;
   email?: string | null;
   phone?: string | null;
@@ -653,6 +656,11 @@ export async function createEmployee(
     if (type === "doctor" && data.licenseNumber !== undefined) {
       createData.licenseNumber = data.licenseNumber;
     }
+    if (type === "doctor") {
+      createData.firstNameAr = data.firstNameAr ?? null;
+      createData.middleNameAr = data.middleNameAr ?? null;
+      createData.lastNameAr = data.lastNameAr ?? null;
+    }
     if (type === "teacher" && data.classId) {
       createData.classId = data.classId;
     }
@@ -820,6 +828,11 @@ export async function updateEmployee(
     // Type-specific fields
     if (type === "doctor" && data.licenseNumber !== undefined) {
       updateData.licenseNumber = data.licenseNumber;
+    }
+    if (type === "doctor") {
+      if (data.firstNameAr !== undefined) updateData.firstNameAr = data.firstNameAr || null;
+      if (data.middleNameAr !== undefined) updateData.middleNameAr = data.middleNameAr || null;
+      if (data.lastNameAr !== undefined) updateData.lastNameAr = data.lastNameAr || null;
     }
     if (type === "teacher" && data.classId !== undefined) {
       updateData.classId = data.classId || null;

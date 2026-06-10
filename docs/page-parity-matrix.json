@@ -90,7 +90,7 @@
     "legacyPhp": "Front/templates/admin/Doctor_Details.php",
     "legacyJs": "Front/templates/admin/js/Doctor_Details.js",
     "modernRoute": "/Doctor_Details.php, /employees/doctors/[id]",
-    "status": "partial - legacy doctor detail bridge, no-id create bridge, field snapshot, and middle-name edit field restored; edit-form action audit remains",
+    "status": "partial - legacy doctor detail bridge, no-id create bridge, field snapshot, Arabic name edit fields, and middle-name edit field restored; edit-form action audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -98,7 +98,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "`/Doctor_Details.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy doctor ids into the modern doctor detail page, and no-id `/Doctor_Details.php` links from the legacy New Doctor button now open `/employees/doctors/new`. The detail page now exposes a Legacy Profile snapshot with preserved legacy account provenance, Arabic name fields, register/license fields, contact/address, education/CNSS, placement, status, remarks, and language rows when present. The shared doctor create/edit form now restores the legacy `m_name`/Middle Name field and persists it through validation, form hydration, and org-safe create/update actions. Runtime staff document saves now persist only rows with real uploaded or imported file URLs, preventing placeholder file paths in the legacy-compatible attachment tables. Verified by `src/scripts/verify-legacy-staff-middle-name-contract.ts`. Remaining work is exact legacy save/draft/profile-photo/action behavior audit against `Doctor_Details.php`/`Doctor_Details.js`."
+    "verification": "`/Doctor_Details.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy doctor ids into the modern doctor detail page, and no-id `/Doctor_Details.php` links from the legacy New Doctor button now open `/employees/doctors/new`. The detail page now exposes a Legacy Profile snapshot with preserved legacy account provenance, Arabic name fields, register/license fields, contact/address, education/CNSS, placement, status, remarks, and language rows when present. The shared doctor create/edit form now restores the legacy `m_name`/Middle Name plus `f_name_ar`, `m_name_ar`, and `l_name_ar` Arabic name fields and persists them through validation, form hydration, and org-safe create/update actions. Runtime staff document saves now persist only rows with real uploaded or imported file URLs, preventing placeholder file paths in the legacy-compatible attachment tables. Verified by `src/scripts/verify-legacy-staff-middle-name-contract.ts` and `src/scripts/verify-legacy-doctor-arabic-name-contract.ts`. Remaining work is exact legacy save/draft/profile-photo/action behavior audit against `Doctor_Details.php`/`Doctor_Details.js`."
   },
   {
     "legacyPhp": "Front/templates/admin/Manager_Details.php",

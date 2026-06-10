@@ -45,8 +45,11 @@ export const employeeFormSchema = z.object({
 
   // Personal info
   firstName: z.string().min(1, "First name is required"),
+  firstNameAr: z.string(),
   middleName: z.string(),
+  middleNameAr: z.string(),
   lastName: z.string().min(1, "Last name is required"),
+  lastNameAr: z.string(),
   imageUrl: z.string(),
   dateOfBirth: z.string(),
   placeOfBirth: z.string(),
