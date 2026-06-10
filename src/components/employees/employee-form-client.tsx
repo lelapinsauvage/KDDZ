@@ -462,11 +462,12 @@ export function EmployeeFormClient({
                   <Button
                     type="button"
                     variant="ghost"
-                    size="sm"
+                    size="icon"
                     onClick={clearStoredImage}
+                    aria-label="Clear profile photo"
+                    title="Clear profile photo"
                   >
                     <X className="size-4" />
-                    Clear
                   </Button>
                 )}
               </div>

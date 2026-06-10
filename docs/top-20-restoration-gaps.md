@@ -23,7 +23,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - Payment receipt upload is now wired through the accounting quick-payment and child-accounting payment dialogs, storing browser-uploaded receipt URLs on `Payment.receiptFileUrl`.
    - Absence report attachments now upload through the presign route, preserve existing attachments on edit, and update `AbsenceAttachment` rows for additions/removals.
    - Daily report attachments now upload through the presign route, preserve existing attachments on edit, and update `DailyReportAttachment` rows for additions/removals.
-   - Teacher, nurse, doctor, and manager forms now upload profile photos through role-specific staff scopes and persist/display URLs on each staff `imageUrl` field.
+   - Teacher, nurse, doctor, and manager forms now upload profile photos through role-specific staff scopes and persist/display URLs on each staff `imageUrl` field; the staff photo/draft audit now verifies hidden legacy draft buttons, role-scoped upload, and `imageUrl` clearing via `src/scripts/verify-legacy-staff-photo-draft-contract.ts`.
    - Legacy PHP-login profile avatars now upload through the `profile-avatar` scope, honor `custom-avatar-enable`, sync `User.image` plus migrated legacy profile metadata, and render on signed-in/public profile shells.
    - Employee document rows now upload through the presign route before save and persist real URLs through the legacy-compatible teacher/nurse/doctor/manager attachment tables; title-only/no-file rows no longer create placeholder attachment paths.
    - Staff detail pages now display migrated teacher/nurse/doctor/manager attachment rows with file-open links, so object-storage URL rewrites are visible in the employee UI.
