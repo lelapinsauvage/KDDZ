@@ -1,5 +1,9 @@
 import { db } from "@/lib/db";
 import { isLegacyNotificationGateEnabled } from "@/lib/legacy-notification-gates";
+import {
+  deliverPushNotification,
+  pushDeliveryAuditData,
+} from "@/lib/push-delivery";
 
 const DEFAULT_REMINDER_DAYS = [1, 3, 7];
 const DAY_MS = 86_400_000;
@@ -98,6 +102,49 @@ function readNumber(data: Record<string, unknown> | null, keys: string[]) {
     }
   }
   return null;
+}
+
+async function storeEventParentPushAudit(params: {
+  alarmId: string;
+  parentUserIds: string[];
+  title: string;
+  body: string;
+  eventId: string;
+  legacyNotificationId: number;
+  sourceDatabase: string | null;
+  targetBranchId: string;
+  daysBefore: number;
+}) {
+  const pushDelivery = await deliverPushNotification({
+    recipientParentUserIds: params.parentUserIds,
+    title: params.title,
+    body: params.body,
+    category: "EVENT",
+    url: "/parent",
+    metadata: {
+      source: "generateEventAlarms",
+      legacyNotificationId: params.legacyNotificationId,
+      sourceDatabase: params.sourceDatabase,
+      legacyDeliveryTable: EVENT_PARENT_RECEIPT_SOURCE,
+      eventId: params.eventId,
+      targetBranchId: params.targetBranchId,
+      daysBefore: params.daysBefore,
+    },
+  });
+
+  const alarm = await db.alarm.findUnique({
+    where: { id: params.alarmId },
+    select: { legacyData: true },
+  });
+  await db.alarm.update({
+    where: { id: params.alarmId },
+    data: {
+      legacyData: {
+        ...(asRecord(alarm?.legacyData) ?? {}),
+        parentPushDelivery: pushDeliveryAuditData(pushDelivery),
+      },
+    },
+  });
 }
 
 function jsonStringArray(value: unknown) {
@@ -712,6 +759,23 @@ export async function generateEventAlarmsForOrganization(params: {
       skipDuplicates: true,
     });
     summary.parentReceiptsCreated += parentReceiptResult.count;
+
+    const parentUserIds = newParentReceiptRecipients
+      .map((recipient) => recipient.parentUserId)
+      .filter((id): id is string => Boolean(id));
+    if (parentReceiptResult.count > 0 && parentUserIds.length > 0) {
+      await storeEventParentPushAudit({
+        alarmId,
+        parentUserIds,
+        title: candidate.title,
+        body: candidate.message,
+        eventId: candidate.eventId,
+        legacyNotificationId,
+        sourceDatabase: candidate.sourceDatabase,
+        targetBranchId: candidate.branchId,
+        daysBefore: candidate.daysBefore,
+      });
+    }
   }
 
   return summary;

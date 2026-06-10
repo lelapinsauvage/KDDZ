@@ -71,6 +71,17 @@ async function main() {
       select: { id: true },
     });
 
+    await db.pushToken.create({
+      data: {
+        parentUserId: parentUser.id,
+        token: `${marker}-ios-token`,
+        platform: "IOS",
+        isActive: true,
+        legacyTable: "notifications_tokens",
+        legacyChildId,
+      },
+    });
+
     event = await db.event.create({
       data: {
         organizationId: organization.id,
@@ -129,6 +140,21 @@ async function main() {
     assert.equal(receipt.recipientType, "PARENT_USER");
     assert.equal(receipt.recipientId, parentUser.id);
     assert.equal(receipt.isRead, false);
+
+    const alarm = await db.alarm.findFirst({
+      where: {
+        referenceId: event.id,
+        referenceType: "Event",
+      },
+      select: { legacyData: true },
+    });
+    assert.ok(alarm, "event parent delivery should create an alarm");
+    const alarmLegacy = asRecord(alarm.legacyData);
+    const parentPushDelivery = asRecord(alarmLegacy.parentPushDelivery);
+    assert.equal(parentPushDelivery.provider, "disabled");
+    assert.equal(parentPushDelivery.configured, false);
+    assert.equal(parentPushDelivery.attemptedCount, 0);
+    assert.equal(parentPushDelivery.skippedCount, 1);
 
     const secondRun = await generateEventAlarmsForOrganization({
       organizationId: organization.id,
@@ -189,13 +215,21 @@ async function main() {
       });
       await db.event.deleteMany({ where: { id: event.id } });
     }
-    if (parentUser) await db.parentUser.deleteMany({ where: { id: parentUser.id } });
+    if (parentUser) {
+      await db.pushToken.deleteMany({ where: { parentUserId: parentUser.id } });
+      await db.parentUser.deleteMany({ where: { id: parentUser.id } });
+    }
     if (child) await db.child.deleteMany({ where: { id: child.id } });
     if (branch) await db.branch.deleteMany({ where: { id: branch.id } });
     if (organization) {
       await db.organization.deleteMany({ where: { id: organization.id } });
     }
   }
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  assert.ok(value && typeof value === "object" && !Array.isArray(value));
+  return value as Record<string, unknown>;
 }
 
 function notificationDetails(payload: unknown): Array<{ subject: string; body: string }> {

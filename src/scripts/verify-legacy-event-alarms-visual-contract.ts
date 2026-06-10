@@ -12,6 +12,7 @@ const files = {
   receiptClient:
     "src/app/(app)/alarms/_components/staff-receipt-alarms-client.tsx",
   actions: "src/lib/actions/alarms.ts",
+  eventJob: "src/lib/jobs/event-alarms.ts",
   matrix: "docs/page-parity-matrix.json",
   markdownMatrix: "docs/page-parity-matrix.md",
   topGaps: "docs/top-20-restoration-gaps.md",
@@ -85,6 +86,10 @@ assert.match(text.actions, /export async function generateEventAlarms/);
 assert.match(text.actions, /export async function generateHolidayAlarms/);
 assert.match(text.actions, /export async function markEventAlarmViewed/);
 assert.match(text.actions, /export async function markAllEventAlarmsViewed/);
+assert.match(text.eventJob, /deliverPushNotification/);
+assert.match(text.eventJob, /pushDeliveryAuditData/);
+assert.match(text.eventJob, /parentPushDelivery/);
+assert.match(text.eventJob, /recipientParentUserIds: params\.parentUserIds/);
 
 type MatrixRow = {
   legacyPhp?: string;
@@ -107,7 +112,10 @@ assert.match(row.verification ?? "", /Browser smoke confirmed `\/alarmsEvents\.p
 assert.match(row.verification ?? "", /Event Alarms/);
 assert.match(row.verification ?? "", /Dashboard and Notifications tabs/);
 assert.match(row.verification ?? "", /Sent Events Alarms/);
+assert.match(row.verification ?? "", /provider-neutral parent push delivery/);
+assert.match(row.verification ?? "", /parentPushDelivery/);
 assert.match(row.verification ?? "", /no broken images or app errors/);
+assert.doesNotMatch(row.verification ?? "", /external provider push parity/);
 
 const markdownRow = text.markdownMatrix
   .split("\n")
