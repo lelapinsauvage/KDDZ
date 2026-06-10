@@ -10,6 +10,10 @@ function read(path: string) {
 
 const client = read("src/app/(app)/food/calendar/food-calendar-client.tsx");
 const page = read("src/app/(app)/food/calendar/page.tsx");
+const parityRows = JSON.parse(read("docs/page-parity-matrix.json")) as Array<{
+  legacyPhp?: string;
+  status?: string;
+}>;
 const parityMatrix = read("docs/page-parity-matrix.md");
 const topGaps = read("docs/top-20-restoration-gaps.md");
 
@@ -53,6 +57,12 @@ for (const expected of [
     `food calendar page should preserve shareable view/date state: ${expected}`
   );
 }
+
+const foodCalendarRow = parityRows.find(
+  (row) => row.legacyPhp === "Front/templates/admin/food_calendar.php",
+);
+assert.ok(foodCalendarRow);
+assert.match(foodCalendarRow.status ?? "", /^restored - /);
 
 for (const expected of [
   "FoodAllBranches",

@@ -16237,7 +16237,7 @@
     "legacyPhp": "Front/templates/admin/food_calendar.php",
     "legacyJs": "Front/templates/admin/js/food_calendar.js",
     "modernRoute": "/food_calendar.php, /food/calendar",
-    "status": "parity - legacy food calendar bridge, FullCalendar-style views, query state, print handoff, all-branch apply, action guards, and Early Dinner restored",
+    "status": "restored - legacy food calendar bridge, FullCalendar-style views, query state, print handoff, all-branch apply, action guards, and Early Dinner restored",
     "legacyTablesMentioned": [
       "BreakFast",
       "auto",
@@ -16280,7 +16280,7 @@
     "legacyPhp": "Front/templates/admin/holiday_calendar.php",
     "legacyJs": "Front/templates/admin/js/holiday_calendar.js",
     "modernRoute": "/holiday_calendar.php, /settings/holidays",
-    "status": "parity - legacy holiday calendar bridge, FullCalendar-style views, modal semantics, multi-day reminders, and AddEditHolidays guard restored",
+    "status": "restored - legacy holiday calendar bridge, FullCalendar-style views, modal semantics, multi-day reminders, and AddEditHolidays guard restored",
     "legacyTablesMentioned": [
       "Holiday",
       "auto",

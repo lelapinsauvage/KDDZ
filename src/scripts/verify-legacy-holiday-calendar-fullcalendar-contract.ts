@@ -10,6 +10,10 @@ function read(path: string) {
 
 const client = read("src/app/(app)/settings/holidays/holidays-client.tsx");
 const page = read("src/app/(app)/settings/holidays/page.tsx");
+const parityRows = JSON.parse(read("docs/page-parity-matrix.json")) as Array<{
+  legacyPhp?: string;
+  status?: string;
+}>;
 const parityMatrix = read("docs/page-parity-matrix.md");
 const topGaps = read("docs/top-20-restoration-gaps.md");
 
@@ -53,6 +57,12 @@ for (const expected of [
     `holiday calendar page should preserve shareable view/date state: ${expected}`,
   );
 }
+
+const holidayCalendarRow = parityRows.find(
+  (row) => row.legacyPhp === "Front/templates/admin/holiday_calendar.php",
+);
+assert.ok(holidayCalendarRow);
+assert.match(holidayCalendarRow.status ?? "", /^restored - /);
 
 for (const expected of [
   "AddEditHolidays",
