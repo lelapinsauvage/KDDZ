@@ -123,6 +123,14 @@ export function ClassMessageClient({
     setSelectedChildIds(new Set());
   }
 
+  function toggleAllVisibleChildren(checked: boolean) {
+    if (checked) {
+      selectAllChildren();
+    } else {
+      unselectAll();
+    }
+  }
+
   function handleSend() {
     if (!selectedClass) return;
 
@@ -157,6 +165,9 @@ export function ClassMessageClient({
     (delivery.adminOnly || selectedChildIds.size > 0) &&
     !isPending &&
     !success;
+  const allVisibleChildrenSelected =
+    classChildren.length > 0 &&
+    classChildren.every((child) => selectedChildIds.has(child.id));
 
   return (
     <>
@@ -245,36 +256,68 @@ export function ClassMessageClient({
                   </Button>
                 </div>
 
-                <div className="max-h-64 overflow-y-auto rounded-md border divide-y">
+                <div className="max-h-72 overflow-y-auto rounded-md border">
                   {classChildren.length === 0 ? (
                     <div className="p-5 text-center text-sm text-muted-foreground">
                       No children found in this class.
                     </div>
                   ) : (
-                    classChildren.map((child) => {
-                      const checked = selectedChildIds.has(child.id);
-                      return (
-                        <label
-                          key={child.id}
-                          className={`flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-sm hover:bg-muted/50 ${
-                            checked ? "bg-primary/5" : ""
-                          }`}
-                        >
-                          <span className="flex min-w-0 items-center gap-3">
+                    <table className="w-full text-sm" data-legacy-class-recipient-table>
+                      <thead className="sticky top-0 z-10 bg-muted/80 text-xs text-muted-foreground backdrop-blur">
+                        <tr className="border-b">
+                          <th className="w-10 px-3 py-2 text-left font-medium">
                             <Checkbox
-                              checked={checked}
-                              onCheckedChange={() => toggleChild(child.id)}
+                              aria-label="Select all children in page"
+                              checked={allVisibleChildrenSelected}
+                              onCheckedChange={(next) =>
+                                toggleAllVisibleChildren(next === true)
+                              }
                             />
-                            <span className="truncate">
-                              {child.firstName} {child.lastName}
-                            </span>
-                          </span>
-                          <Badge variant={child.isActive ? "secondary" : "outline"}>
-                            {child.isActive ? "Active" : "Inactive"}
-                          </Badge>
-                        </label>
-                      );
-                    })
+                          </th>
+                          <th className="w-14 px-3 py-2 text-left font-medium">
+                            #
+                          </th>
+                          <th className="px-3 py-2 text-left font-medium">
+                            Name
+                          </th>
+                          <th className="w-28 px-3 py-2 text-left font-medium">
+                            Status
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {classChildren.map((child, index) => {
+                          const checked = selectedChildIds.has(child.id);
+                          return (
+                            <tr
+                              key={child.id}
+                              className={checked ? "bg-primary/5" : ""}
+                            >
+                              <td className="px-3 py-2">
+                                <Checkbox
+                                  aria-label={`Select ${child.firstName} ${child.lastName}`}
+                                  checked={checked}
+                                  onCheckedChange={() => toggleChild(child.id)}
+                                />
+                              </td>
+                              <td className="px-3 py-2 text-muted-foreground">
+                                {index + 1}
+                              </td>
+                              <td className="px-3 py-2 font-medium">
+                                {child.firstName} {child.lastName}
+                              </td>
+                              <td className="px-3 py-2">
+                                <Badge
+                                  variant={child.isActive ? "secondary" : "outline"}
+                                >
+                                  {child.isActive ? "Active" : "Inactive"}
+                                </Badge>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   )}
                 </div>
               </div>

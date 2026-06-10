@@ -190,6 +190,7 @@ This list is the first implementation backlog after the generated inventory/matr
    - Mobile-flagged staff-to-parent direct, class, bulk, and reply messages now attempt provider-neutral OneSignal/webhook push delivery against active parent push tokens, returning or storing skipped/failed/sent summaries.
    - SMS/WhatsApp-flagged staff-to-parent direct, class, bulk, reply, and resend messages now attempt provider-neutral webhook delivery against deduped parent `mobile`/`phone` contacts, returning or storing matched/skipped/failed/sent summaries.
    - Message reply-thread browser contract now covers `message_portal_single.php?thread=` validation, the old Thread conversation surface, legacy message id/nature badges, `Thread #` metadata, reply actions, channel badges, and post-reply refresh behavior.
+   - Class message visual contract now covers the old `message_portal_class.php` DataTables-style child selector, page checkbox, `#`/Name/Status columns, active/inactive status badges, Message Admin Only path, and select-all/unselect controls.
    - Remaining work is native-device acceptance and production push/SMS/WhatsApp credential rollout.
 
 20. **Role and permission parity**

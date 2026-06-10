@@ -16371,7 +16371,7 @@
     "legacyPhp": "Front/templates/admin/message_portal_class.php",
     "legacyJs": "Front/templates/admin/js/message_portal_class.js",
     "modernRoute": "/message_portal_class.php, /messages/compose/class",
-    "status": "partial - legacy class child selection/admin fanout, delivery audit, mobile push, and SMS/WhatsApp webhook delivery restored",
+    "status": "partial - legacy class child selection/admin fanout, visual audit restored, delivery audit, mobile push, and SMS/WhatsApp webhook delivery restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -16379,7 +16379,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "`/message_portal_class.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy class ids into `/messages/compose/class?classId=...` so the modern class message form preselects the legacy class. The modern class form restores uncapped child loading for class recipient selection, per-child selection, Select All Children, Select All Active, Unselect All, the Message Admin Only path, migrated legacy natures, and legacy admin-recipient fanout before optional parent fanout. Saved Web/Mobile/SMS/WhatsApp/Admin-only intent now appears as delivery audit badges in inbox, sent, and thread views. Mobile-flagged class sends now attempt provider-neutral OneSignal/webhook push delivery using active parent push tokens, and SMS/WhatsApp-flagged class sends attempt provider-neutral webhook delivery using deduped parent `mobile`/`phone` contacts. Remaining work is production provider credential rollout and visual audit against the old Metronic table."
+    "verification": "`/message_portal_class.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy class ids into `/messages/compose/class?classId=...` so the modern class message form preselects the legacy class. The modern class form restores uncapped child loading for class recipient selection, per-child selection, Select All Children, Select All Active, Unselect All, the Message Admin Only path, migrated legacy natures, and legacy admin-recipient fanout before optional parent fanout. The class recipient visual audit now restores the legacy DataTables-style child selector with page-level checkbox, row numbers, Name and Status columns, active/inactive badges, and the same select-all/unselect controls from `message_portal_class.js`, verified by `src/scripts/verify-legacy-class-message-visual-contract.ts`. Saved Web/Mobile/SMS/WhatsApp/Admin-only intent now appears as delivery audit badges in inbox, sent, and thread views. Mobile-flagged class sends now attempt provider-neutral OneSignal/webhook push delivery using active parent push tokens, and SMS/WhatsApp-flagged class sends attempt provider-neutral webhook delivery using deduped parent `mobile`/`phone` contacts. Remaining work is production provider credential rollout."
   },
   {
     "legacyPhp": "Front/templates/admin/message_portal_single.php",
