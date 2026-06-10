@@ -20,6 +20,7 @@ const files = {
   callBridge: "src/app/(app)/call.php/page.tsx",
   callsPage: "src/app/(app)/calls/page.tsx",
   callsClient: "src/app/(app)/calls/calls-management-client.tsx",
+  exportButton: "src/components/shared/export-button.tsx",
   callDetailPage: "src/app/(app)/calls/[id]/page.tsx",
   callDetailClient: "src/app/(app)/calls/[id]/call-detail-client.tsx",
   callDialog: "src/app/(app)/children/[id]/calls/call-report-dialog.tsx",
@@ -27,6 +28,7 @@ const files = {
   branchResolver: "src/lib/legacy-branch.ts",
   matrix: "docs/page-parity-matrix.json",
   markdownMatrix: "docs/page-parity-matrix.md",
+  topGaps: "docs/top-20-restoration-gaps.md",
 };
 
 const text = Object.fromEntries(
@@ -76,6 +78,9 @@ assert.match(text.legacyCallsJs, /"copy"/);
 assert.match(text.legacyCallsJs, /"print"/);
 assert.match(text.legacyCallsJs, /'sExtends': 'pdf'/);
 assert.match(text.legacyCallsJs, /'sExtends': 'xls'/);
+assert.match(text.legacyCallsJs, /\/\/ var conn = new ab\.Session/);
+assert.match(text.legacyCallsJs, /\/\/ conn\.subscribe\("new_form6"\+cat_master/);
+assert.match(text.legacyCallsJs, /\/\/ console\.warn\('WebSocket connection closed'\)/);
 assert.match(text.legacyCallsJs, /getformsixAllHashed/);
 assert.match(text.legacyCallsJs, /d\.search\.value = 'DATE_RANGE'/);
 assert.match(text.legacyCallsJs, /d\.columns\[9\]\.Min_Range = \$\('#mind1'\)\.val\(\)/);
@@ -103,6 +108,15 @@ assert.match(text.legacyBranchCallsJs, /"copy"/);
 assert.match(text.legacyBranchCallsJs, /"print"/);
 assert.match(text.legacyBranchCallsJs, /'sExtends': 'pdf'/);
 assert.match(text.legacyBranchCallsJs, /'sExtends': 'xls'/);
+assert.match(text.legacyBranchCallsJs, /\/\/ var conn = new ab\.Session/);
+assert.match(
+  text.legacyBranchCallsJs,
+  /\/\/ conn\.subscribe\("new_form6"\+cat_master/,
+);
+assert.match(
+  text.legacyBranchCallsJs,
+  /\/\/ console\.warn\('WebSocket connection closed'\)/,
+);
 
 assert.match(text.legacyCallPhp, /Check::protectPageOrFunction\('call\.php'\)/);
 assert.match(text.legacyCallPhp, /\$cause = \$db->getCauses\(\)/);
@@ -191,6 +205,9 @@ assert.match(text.callsPage, /dateTo: params\.dateTo \|\| undefined/);
 assert.match(text.callsClient, /filename="calls"/);
 assert.match(text.callsClient, /sheetName="Calls Reports"/);
 assert.match(text.callsClient, /onClick=\{\(\) => window\.print\(\)\}/);
+assert.match(text.callsClient, /disabled=\{calls\.length === 0\}/);
+assert.match(text.callsClient, /<div className="hidden print:block">/);
+assert.match(text.callsClient, /Printed on/);
 assert.match(text.callsClient, /New Call Report/);
 assert.match(text.callsClient, /All Branches/);
 assert.match(text.callsClient, /All Classes/);
@@ -216,6 +233,14 @@ assert.match(text.callsClient, /Teacher Who Filled Report \*/);
 assert.match(text.callsClient, /Save As Draft/);
 assert.match(text.callsClient, /if \(isDraft\) \{[\s\S]*return null/);
 assert.match(text.callsClient, /Please fill the mandatory fields \(red\)\./);
+
+assert.match(text.exportButton, /type ExportFormat = "copy" \| "xlsx" \| "csv" \| "pdf"/);
+assert.match(text.exportButton, /handleExport\("copy"\)/);
+assert.match(text.exportButton, /handleExport\("xlsx"\)/);
+assert.match(text.exportButton, /handleExport\("pdf"\)/);
+assert.match(text.exportButton, /Copy table/);
+assert.match(text.exportButton, /Export as Excel \(\.xlsx\)/);
+assert.match(text.exportButton, /Export as PDF \(\.pdf\)/);
 
 assert.match(text.callDialog, /function validateBeforeSave\(isDraft: boolean\)/);
 assert.match(text.callDialog, /if \(isDraft\) \{[\s\S]*return null/);
@@ -335,5 +360,18 @@ assert.match(
   /Browser smoke confirmed the 10-row default selector, legacy headers, zero-data empty state/,
 );
 assert.doesNotMatch(markdownRows.calls ?? "", /final logged-in visual smoke/);
+
+assert.match(
+  text.topGaps,
+  /Legacy `calls\.js` and `bcalls\.js` WebSocket refresh blocks are commented out/,
+);
+assert.match(
+  text.topGaps,
+  /Remaining work is browser detail smoke against a migrated `CallLog` row/,
+);
+assert.doesNotMatch(
+  text.topGaps,
+  /Remaining work is final logged-in visual smoke after local database\/runtime state is clean and exact TableTools export\/print visual parity/,
+);
 
 console.log("legacy calls contract assertions passed");

@@ -144,7 +144,9 @@ This list is the first implementation backlog after the generated inventory/matr
    - Existing Form 6 attachments can now be removed from the child call edit dialog; updates soft-delete `FormAttachment` rows with `isActive = false` and global call listing attachment counts only include active files.
    - `/calls/[id]` now restores the standalone legacy `call.php?fid=` Form 6 shell with raw numeric, UUID, and encrypted legacy `fid` lookup, `id`/child disambiguation, legacy green/red `f_progress` status, child/branch/class context, edit/delete/print actions, active attachment preview/open controls, and a `/call.php` redirect bridge for old deep links.
    - `/bcalls.php?brid=` now resolves raw numeric, UUID, and encrypted legacy branch ids into the modern branch-scoped `/calls?branch=...` listing, and `/branches/[id]/calls` aliases the same branch-filtered call surface.
-   - Remaining work is final logged-in visual smoke after local database/runtime state is clean and exact TableTools export/print visual parity.
+   - Legacy `calls.js` and `bcalls.js` WebSocket refresh blocks are commented out, so no active live-refresh socket is required for page parity.
+   - TableTools parity is now covered by the modern export/print surface: copy, Excel, PDF, CSV, disabled empty-state export/print controls, and a print-only listing header are asserted by `src/scripts/verify-legacy-calls-contract.ts`.
+   - Remaining work is browser detail smoke against a migrated `CallLog` row once the local/canonical database exposes one; the current source contract and listing browser smoke are restored.
 
 12. **New academic year workflow**
    - `/settings/new-year` now restores the legacy optional/mandatory import selection UI, teacher reassignment table, child class progression table, legacy-style S.N. generation, and a transactional action that creates the next active `SchoolYear`, updates selected teachers/children, and snapshots child history.
