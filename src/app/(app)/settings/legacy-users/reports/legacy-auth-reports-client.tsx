@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -17,6 +18,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -43,6 +45,8 @@ type LegacyAuthReportsClientProps = {
   error?: string | null;
 };
 
+type SeriesKey = "newUsers" | LegacyAuthReportsData["providers"][number]["key"];
+
 function groupTitle(data: LegacyAuthReportsData) {
   const group = data.groups.find((item) => item.key === data.selectedGroupKey);
   return group ? `${group.sourceDatabase} / ${group.label}` : "No legacy source";
@@ -52,10 +56,33 @@ export function LegacyAuthReportsClient({
   data,
   error,
 }: LegacyAuthReportsClientProps) {
+  const seriesChoices = useMemo(
+    () => [
+      { key: "newUsers" as const, label: "New users", color: "#0B9178" },
+      ...data.providers.map((provider) => ({
+        key: provider.key,
+        label: `${provider.label} users`,
+        color: provider.color,
+      })),
+    ],
+    [data.providers],
+  );
+  const [visibleSeries, setVisibleSeries] = useState<Record<string, boolean>>(
+    () => Object.fromEntries(seriesChoices.map((choice) => [choice.key, true])),
+  );
+
   const topUserChartData = data.topUsers.map((user) => ({
     username: user.username,
     logins: user.loginCount,
   }));
+
+  function isSeriesVisible(key: SeriesKey) {
+    return visibleSeries[key] ?? true;
+  }
+
+  function toggleSeries(key: SeriesKey, checked: boolean) {
+    setVisibleSeries((current) => ({ ...current, [key]: checked }));
+  }
 
   return (
     <>
@@ -210,7 +237,32 @@ export function LegacyAuthReportsClient({
                 Registered Users
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-3">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-sm border border-border bg-muted/30 px-3 py-2">
+                {seriesChoices.map((choice) => (
+                  <label
+                    key={choice.key}
+                    className="flex cursor-pointer items-center gap-2 text-sm"
+                  >
+                    <Checkbox
+                      checked={isSeriesVisible(choice.key)}
+                      onCheckedChange={(checked) =>
+                        toggleSeries(choice.key, checked === true)
+                      }
+                      aria-label={`Toggle ${choice.label}`}
+                    />
+                    <span
+                      className="size-2 rounded-full"
+                      style={{ backgroundColor: choice.color }}
+                    />
+                    <span>{choice.label}</span>
+                  </label>
+                ))}
+                <span className="ml-auto text-xs text-muted-foreground">
+                  Tip: Hover over the points on the graph.
+                </span>
+              </div>
+
               <div className="h-[320px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={data.series}>
@@ -236,25 +288,29 @@ export function LegacyAuthReportsClient({
                       }}
                     />
                     <Legend verticalAlign="top" height={32} />
-                    <Line
-                      type="monotone"
-                      dataKey="newUsers"
-                      name="New users"
-                      stroke="#0B9178"
-                      strokeWidth={2.5}
-                      dot={false}
-                    />
-                    {data.providers.map((provider) => (
+                    {isSeriesVisible("newUsers") ? (
                       <Line
-                        key={provider.key}
                         type="monotone"
-                        dataKey={provider.key}
-                        name={`${provider.label} users`}
-                        stroke={provider.color}
-                        strokeWidth={2}
+                        dataKey="newUsers"
+                        name="New users"
+                        stroke="#0B9178"
+                        strokeWidth={2.5}
                         dot={false}
                       />
-                    ))}
+                    ) : null}
+                    {data.providers
+                      .filter((provider) => isSeriesVisible(provider.key))
+                      .map((provider) => (
+                        <Line
+                          key={provider.key}
+                          type="monotone"
+                          dataKey={provider.key}
+                          name={`${provider.label} users`}
+                          stroke={provider.color}
+                          strokeWidth={2}
+                          dot={false}
+                        />
+                      ))}
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -263,10 +319,13 @@ export function LegacyAuthReportsClient({
 
           <Card className="rounded-sm">
             <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <BarChart3 className="size-4" />
-                Most Frequent Users
-              </CardTitle>
+              <div className="flex items-center justify-between gap-3">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <BarChart3 className="size-4" />
+                  Most Frequent Users
+                </CardTitle>
+                <Badge variant="outline">Top 10</Badge>
+              </div>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="h-[220px]">

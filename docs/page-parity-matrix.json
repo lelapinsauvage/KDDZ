@@ -16819,7 +16819,7 @@
     "legacyPhp": "Front/templates/admin/users/admin/classes/reports.class.php",
     "legacyJs": "",
     "modernRoute": "/settings/legacy-users/reports",
-    "status": "partial - legacy registration and top-user reports restored; visual parity remains",
+    "status": "restored - legacy registration reports, series controls, Top 10 login table, bridge, and browser visual audit restored",
     "legacyTablesMentioned": [
       "login_integration",
       "login_settings",
@@ -16831,7 +16831,7 @@
       "end_date",
       "start_date"
     ],
-    "verification": "`/settings/legacy-users/reports` restores the legacy PHP-login reports data contract over migrated auth metadata: source selector for staff/manager login tables, From/To date range, Total and Range registered counts, enabled social-provider totals from `integration-*-enable` settings, per-day New users and social series, login timestamp totals, and Top 10 users by login count. Remaining work is exact legacy Flot hover/checkbox styling if pixel parity is required."
+    "verification": "`/settings/legacy-users/reports` restores the legacy PHP-login reports data contract over migrated auth metadata: source selector for staff/manager login tables, From/To date range, Total and Range registered counts, enabled social-provider totals from `integration-*-enable` settings, per-day New users and social series, login timestamp totals, series checkboxes with the legacy `Tip: Hover over the points on the graph` affordance, and the Most Frequent Users / Top 10 Username/Logins table plus bar chart. Browser smoke confirmed `/users/admin/page/reports.php` redirects to `/settings/legacy-users/reports`, renders the Source selector, From/To date inputs, Submit action, Registered Users chart, New users checkbox, hover tip, Most Frequent Users, Top 10 badge, Username/Logins table, no broken images, and no unexpected browser errors beyond the known PostgreSQL SSL warning. Verified by `src/scripts/verify-legacy-user-reports-visual-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/classes/send_email.class.php",
@@ -17225,7 +17225,7 @@
     "legacyPhp": "Front/templates/admin/users/admin/page/reports.php",
     "legacyJs": "",
     "modernRoute": "/users/admin/page/reports.php, /settings/legacy-users/reports",
-    "status": "partial - legacy reports page restored in modern dashboard",
+    "status": "restored - legacy reports page bridge, Registered Users chart controls, Top 10 login table, and browser visual audit restored",
     "legacyTablesMentioned": [
       "login_integration",
       "login_settings",
@@ -17237,7 +17237,7 @@
       "end_date",
       "start_date"
     ],
-    "verification": "`/users/admin/page/reports.php` redirects to `/settings/legacy-users/reports`, which restores the Registered Users totals/range report, enabled social-login series, and Most Frequent Users table/bar chart from the legacy PHP-login Reports tab. Remaining work is exact old AJAX fade/Flot UI behavior if needed."
+    "verification": "`/users/admin/page/reports.php` redirects to `/settings/legacy-users/reports`, which restores the legacy Registered Users report: Source selector, From/To date range, Submit action, Total and Range registered counts, enabled social-provider totals, per-day New users/social chart series, series checkboxes, `Tip: Hover over the points on the graph`, and the Most Frequent Users / Top 10 Username/Logins table plus bar chart from the PHP-login Reports tab. Browser smoke confirmed the bridge and modern page render those legacy report controls with no broken images and no unexpected browser errors beyond the known PostgreSQL SSL warning. Verified by `src/scripts/verify-legacy-user-reports-visual-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/send-email.php",
