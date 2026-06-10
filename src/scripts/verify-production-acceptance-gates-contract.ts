@@ -22,6 +22,7 @@ const files = {
   evidenceTemplate: "docs/production-acceptance-evidence-template.md",
   cutoverRunbook: "docs/production-cutover-runbook.md",
   partialGateMap: "docs/partial-production-gate-map.md",
+  readinessEnvExample: "docs/production-readiness.env.example",
 };
 
 const contents = Object.fromEntries(
@@ -57,6 +58,7 @@ const requiredReferences = [
   "docs/production-acceptance-evidence-template.md",
   "docs/production-cutover-runbook.md",
   "docs/partial-production-gate-map.md",
+  "docs/production-readiness.env.example",
   "src/scripts/migration/README.md",
   "src/scripts/audit-production-readiness.ts",
   "src/scripts/verify-production-gate-suite.ts",
@@ -89,17 +91,41 @@ for (const envName of [
   "LEGACY_CHANNEL_DELIVERY_WEBHOOK_URL",
 ]) {
   assert.match(contents.gates, new RegExp(`\\b${envName}\\b`), `${envName} must be named without a value`);
+  assert.match(contents.readinessEnvExample, new RegExp(`\\b${envName}\\b`), `${envName} is missing from readiness env example`);
   assert.doesNotMatch(contents.gates, new RegExp(`${envName}\\s*=`), `${envName} must not have an inline value`);
+}
+
+for (const evidenceEnvName of [
+  "LEGACY_PRODUCTION_DUMP_MANIFEST",
+  "LEGACY_MEDIA_EXPORT_MANIFEST",
+  "LEGACY_MEDIA_UPLOAD_MANIFEST",
+  "MIGRATION_RECONCILIATION_REPORT",
+  "PRODUCTION_CRONTAB_EVIDENCE",
+  "HOSTED_SCHEDULER_EVIDENCE",
+  "CRON_SECRET",
+  "VERCEL_CRON_SECRET",
+  "NATIVE_IOS_ACCEPTANCE_REPORT",
+  "NATIVE_ANDROID_ACCEPTANCE_REPORT",
+  "NOTIFICATIONS_NATURE_ACCEPTANCE_REPORT",
+  "PRINT_STATIONERY_ACCEPTANCE_REPORT",
+  "REAL_CALL_ROWS_ACCEPTANCE_REPORT",
+  "NURSERY_COMPLIANCE_ACCEPTANCE_REPORT",
+  "LEGACY_ACL_ACCEPTANCE_REPORT",
+  "LEGACY_BACKFILL_ACCEPTANCE_REPORT",
+]) {
+  assert.match(contents.readinessEnvExample, new RegExp(`\\b${evidenceEnvName}\\b`), `${evidenceEnvName} is missing from readiness env example`);
 }
 
 assert.doesNotMatch(contents.gates, /https?:\/\/[^\s)]+/i, "production gates must not include webhook URLs");
 assert.doesNotMatch(contents.evidenceTemplate, /https?:\/\/[^\s)]+/i, "evidence template must not include webhook URLs");
 assert.doesNotMatch(contents.cutoverRunbook, /https?:\/\/[^\s)]+/i, "cutover runbook must not include webhook URLs");
 assert.doesNotMatch(contents.partialGateMap, /https?:\/\/[^\s)]+/i, "partial gate map must not include webhook URLs");
+assert.doesNotMatch(contents.readinessEnvExample, /https?:\/\/[^\s)]+/i, "readiness env example must not include URLs");
 assert.doesNotMatch(contents.gates, /(api[_-]?key|secret|token)\s*[:=]\s*["']?[A-Za-z0-9_-]{12,}/i, "production gates must not include secret values");
 assert.doesNotMatch(contents.evidenceTemplate, /(api[_-]?key|secret|token)\s*[:=]\s*["']?[A-Za-z0-9_-]{12,}/i, "evidence template must not include secret values");
 assert.doesNotMatch(contents.cutoverRunbook, /(api[_-]?key|secret|token)\s*[:=]\s*["']?[A-Za-z0-9_-]{12,}/i, "cutover runbook must not include secret values");
 assert.doesNotMatch(contents.partialGateMap, /(api[_-]?key|secret|token)\s*[:=]\s*["']?[A-Za-z0-9_-]{12,}/i, "partial gate map must not include secret values");
+assert.doesNotMatch(contents.readinessEnvExample, /(api[_-]?key|secret|token)\s*[:=]\s*["']?[A-Za-z0-9_-]{12,}/i, "readiness env example must not include secret values");
 
 const matrix = JSON.parse(contents.matrix) as ParityRow[];
 const partialRows: ParityRow[] = [];

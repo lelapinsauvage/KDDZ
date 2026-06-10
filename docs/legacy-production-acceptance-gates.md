@@ -10,6 +10,8 @@ Use `docs/production-cutover-runbook.md` for the ordered production execution se
 
 Use `docs/partial-production-gate-map.md` to trace each remaining page-parity partial row to its blocking production gate.
 
+Use `docs/production-readiness.env.example` as the non-secret environment/evidence pointer template for the readiness audit.
+
 ## Gate Register
 
 | Gate | Scope | Evidence Required To Close |

@@ -27,6 +27,8 @@ pnpm run verify:production-gates
 pnpm tsx src/scripts/verify-production-readiness-audit-contract.ts
 ```
 
+Use `docs/production-readiness.env.example` as the non-secret list of evidence pointer names to configure in the production secret/evidence manager.
+
 Stop the cutover if the authoritative dump set is ambiguous, the selected first migration dump is not approved, or cron ownership cannot decide whether commented legacy blocks remain disabled.
 
 ## Phase 1: Rehearse Import And Media
