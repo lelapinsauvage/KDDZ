@@ -372,7 +372,7 @@
     "legacyPhp": "Front/templates/admin/PA_logs.php",
     "legacyJs": "Front/templates/admin/js/pa_logs.js",
     "modernRoute": "/PA_logs.php, /employees/attendance-logs",
-    "status": "partial - legacy attendance logs columns, filters, export/print, and bridge restored; visual audit remains",
+    "status": "restored - legacy attendance logs columns, filters, TableTools export, print, and bridge restored",
     "legacyTablesMentioned": [
       "Log",
       "auto",
@@ -393,7 +393,7 @@
       "teacherNo",
       "to"
     ],
-    "verification": "Legacy scanner rows migrate to `TeacherAttendance` with raw `t_teacher_attendance` provenance preserved in note JSON, and the listing now restores the legacy Log, Reader ID, Reader, Date, Time, Status, Card ID, Teacher No, Note, and Datetime columns from that provenance. The page defaults to today's date range like `pa_logs.js`, supports column filters plus global `q`, preserves legacy filter aliases from `/PA_logs.php`, restores 10/20/50/100/150/All page sizes, and adds Excel/CSV export plus print in legacy column order. Remaining work is exact TableTools copy/PDF visual parity, live WebSocket refresh behavior if product confirms it was active, pagination beyond the first 1000 loaded rows, and final logged-in visual smoke."
+    "verification": "Legacy scanner rows migrate to `TeacherAttendance` with raw `t_teacher_attendance` provenance preserved in note JSON, and the listing restores the legacy Log, Reader ID, Reader, Date, Time, Status, Card ID, Teacher No, Note, and Datetime columns from that provenance. The page defaults to today's date range like `pa_logs.js`, supports column filters plus global `q`, preserves legacy filter aliases from `/PA_logs.php`, restores 10/20/50/100/150/All page sizes, and uses the shared TableTools-equivalent Copy/PDF/Excel/CSV export plus print in legacy column order. The legacy websocket block in `pa_logs.js` is commented out, so no live refresh path is required for parity. Verified by `src/scripts/verify-legacy-attendance-logs-tabletools-contract.ts` plus logged-in Browser smoke using a temporary legacy-shaped scanner row that confirmed the columns, default date range, Copy/Excel/CSV/PDF export menu, print enablement, and cleanup back to zero smoke rows."
   },
   {
     "legacyPhp": "Front/templates/admin/Teacher_Details.php",
