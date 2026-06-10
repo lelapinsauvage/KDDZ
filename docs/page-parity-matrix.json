@@ -16542,13 +16542,13 @@
     "legacyPhp": "Front/templates/admin/settings.php",
     "legacyJs": "Front/templates/admin/js/settings.js",
     "modernRoute": "/settings.php, /profile?legacy=settings.php",
-    "status": "partial - legacy account password, scholastic-year workflow, and EditSchoolFromTo ACL restored",
+    "status": "restored - legacy account password, scholastic-year workflow, EditSchoolFromTo ACL, bridge, and browser visual audit restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "`/settings.php` now redirects to the profile account-settings view, and `/profile` restores the legacy Change your password card with New Password, show/hide toggle, 5-character validation, save action for the current user, and success/error toasts. The legacy `EditSchoolFromTo` card is restored with Change Scholastic Year, Start Date, End Date, Update, required start/end validation, active school-year prefill, org-scoped active `SchoolYear` mutation, and the legacy success/error copy from `settings.js`; visibility and `updateActiveSchoolYearDates()` now enforce the migrated `Check::protectPageOrFunction('EditSchoolFromTo','ACTION')` grant through legacy levels/actions when ACL data exists, with the admin/manager guard retained as fallback for imports without that action catalogue. Remaining work is broader PAGE/ACTION permission-map enforcement."
+    "verification": "`/settings.php` redirects to `/profile?legacy=settings.php`, which restores the legacy Settings page as a focused account/scholastic-year surface: Settings title/breadcrumb, Change your password card, New Password field, show/hide toggle, Enter-to-save and Change action, `No Change !` empty validation, `Password must be at least 5 characters` validation, password save/reset behavior, and success/error toasts. The legacy `EditSchoolFromTo` card is restored with Change Scholastic Year, Start Date, End Date, Update, required start/end validation, active school-year prefill, org-scoped active `SchoolYear` mutation, `Please Fill both start & end dates`, and `Dates updated successufly` legacy copy from `settings.js`; visibility and `updateActiveSchoolYearDates()` enforce the migrated `Check::protectPageOrFunction('EditSchoolFromTo','ACTION')` grant through legacy levels/actions when ACL data exists, with admin/manager fallback for imports without that action catalogue. Browser smoke confirmed `/settings.php` lands on `/profile?legacy=settings.php`, renders Settings, Change your password, New Password, Change, password visibility toggle, Change Scholastic Year, Start Date, End Date, Update, no broken images, and no unexpected browser errors beyond the known PostgreSQL SSL warning. Broader PAGE/ACTION permission-map enforcement remains tracked on the access-control and app-shell rows. Verified by `src/scripts/verify-legacy-settings-visual-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/teachers.php",
