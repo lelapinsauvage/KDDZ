@@ -109,6 +109,17 @@ async function main() {
       select: { id: true },
     });
 
+    await db.pushToken.create({
+      data: {
+        parentUserId: parentUser.id,
+        token: `${marker}-ios-token`,
+        platform: "IOS",
+        isActive: true,
+        legacyTable: "notifications_tokens",
+        legacyChildId,
+      },
+    });
+
     staffUser = await db.user.create({
       data: {
         email: `${marker}-teacher@example.test`,
@@ -184,6 +195,12 @@ async function main() {
       staffAlarm.message,
       "parent alarm should expose the same due-reminder body"
     );
+    const parentLegacyData = asRecord(parentAlarm.legacyData);
+    const parentPushDelivery = asRecord(parentLegacyData.parentPushDelivery);
+    assert.equal(parentPushDelivery.provider, "disabled");
+    assert.equal(parentPushDelivery.configured, false);
+    assert.equal(parentPushDelivery.attemptedCount, 0);
+    assert.equal(parentPushDelivery.skippedCount, 1);
 
     const staffLegacyData = staffAlarm.legacyData as { aid?: unknown };
     const legacyNotificationId = Number(staffLegacyData.aid);
@@ -274,7 +291,10 @@ async function main() {
       await db.legacyAuthRecord.deleteMany({ where: { userId: staffUser.id } });
       await db.user.deleteMany({ where: { id: staffUser.id } });
     }
-    if (parentUser) await db.parentUser.deleteMany({ where: { id: parentUser.id } });
+    if (parentUser) {
+      await db.pushToken.deleteMany({ where: { parentUserId: parentUser.id } });
+      await db.parentUser.deleteMany({ where: { id: parentUser.id } });
+    }
     await db.legacySetting.deleteMany({ where: { sourceDatabase } });
     if (child) await db.child.deleteMany({ where: { id: child.id } });
     if (klass) await db.class.deleteMany({ where: { id: klass.id } });
@@ -283,6 +303,11 @@ async function main() {
       await db.organization.deleteMany({ where: { id: organization.id } });
     }
   }
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  assert.ok(value && typeof value === "object" && !Array.isArray(value));
+  return value as Record<string, unknown>;
 }
 
 function notificationBodies(payload: unknown): string[] {

@@ -2,6 +2,10 @@ import { ASSESSMENT_TYPE_NAMES, VALID_ASSESSMENT_TYPES } from "@/lib/assessment-
 import { db } from "@/lib/db";
 import { deliverEmail, emailDeliveryAuditData } from "@/lib/email-delivery";
 import { isLegacyNotificationGateEnabled } from "@/lib/legacy-notification-gates";
+import {
+  deliverPushNotification,
+  pushDeliveryAuditData,
+} from "@/lib/push-delivery";
 
 const ASSESSMENT_ALARM_SOURCE = "t_alarms_assessment";
 const ASSESSMENT_PARENT_ALARM_SOURCE = "t_alarms_assessment_parents";
@@ -236,6 +240,47 @@ async function storeAssessmentEmailAudit(params: {
       legacyData: {
         ...(asRecord(alarm?.legacyData) ?? {}),
         emailDelivery: emailDeliveryAuditData(emailDelivery),
+      },
+    },
+  });
+}
+
+async function storeAssessmentParentPushAudit(params: {
+  parentAlarmId: string;
+  parentUserIds: string[];
+  title: string;
+  body: string;
+  childId: string;
+  legacyChildId: number | null;
+  assessmentType: number;
+  sourceDatabase: string | null;
+}) {
+  const pushDelivery = await deliverPushNotification({
+    recipientParentUserIds: params.parentUserIds,
+    title: params.title,
+    body: params.body,
+    category: "ASSESSMENT",
+    url: "/parent",
+    metadata: {
+      source: "generateAssessmentAlarms",
+      legacyDeliveryTable: ASSESSMENT_PARENT_ALARM_SOURCE,
+      childId: params.childId,
+      legacyChildId: params.legacyChildId,
+      assessmentType: params.assessmentType,
+      sourceDatabase: params.sourceDatabase,
+    },
+  });
+
+  const alarm = await db.alarm.findUnique({
+    where: { id: params.parentAlarmId },
+    select: { legacyData: true },
+  });
+  await db.alarm.update({
+    where: { id: params.parentAlarmId },
+    data: {
+      legacyData: {
+        ...(asRecord(alarm?.legacyData) ?? {}),
+        parentPushDelivery: pushDeliveryAuditData(pushDelivery),
       },
     },
   });
@@ -620,6 +665,8 @@ export async function generateAssessmentAlarmsForOrganization(params: {
     }
 
     const existingParentAlarm = existingParentByKey.get(dedupeKey);
+    let parentAlarmId = existingParentAlarm?.id ?? null;
+    let shouldAttemptParentPushAudit = !existingParentAlarm;
     let legacyParentAlarmId = existingParentAlarm
       ? readNumber(asRecord(existingParentAlarm.legacyData), "aid")
       : null;
@@ -630,11 +677,14 @@ export async function generateAssessmentAlarmsForOrganization(params: {
     if (existingParentAlarm) {
       summary.skippedExistingParentAlarms += 1;
       const existingData = asRecord(existingParentAlarm.legacyData) ?? {};
+      const needsParentPushAudit = !asRecord(existingData.parentPushDelivery);
+      shouldAttemptParentPushAudit = needsParentPushAudit;
       if (
         readNumber(existingData, "aid") === null ||
         existingData.sourceTable !== ASSESSMENT_PARENT_ALARM_SOURCE ||
         existingData.details !== candidate.message ||
-        existingData.href !== "alarmsAssessment.php"
+        existingData.href !== "alarmsAssessment.php" ||
+        needsParentPushAudit
       ) {
         await db.alarm.update({
           where: { id: existingParentAlarm.id },
@@ -697,12 +747,35 @@ export async function generateAssessmentAlarmsForOrganization(params: {
           },
         },
       });
+      parentAlarmId = parentAlarm.id;
       existingParentByKey.set(dedupeKey, {
         id: parentAlarm.id,
         referenceId: candidate.childId,
         legacyData: parentAlarm.legacyData,
       });
       summary.parentAlarmsCreated += 1;
+    }
+
+    if (parentAlarmId && shouldAttemptParentPushAudit) {
+      const parentUsers = await db.parentUser.findMany({
+        where: {
+          childId: candidate.childId,
+          isActive: true,
+        },
+        select: { id: true },
+      });
+      if (parentUsers.length > 0) {
+        await storeAssessmentParentPushAudit({
+          parentAlarmId,
+          parentUserIds: parentUsers.map((parentUser) => parentUser.id),
+          title: candidate.assessmentTypeName,
+          body: candidate.message,
+          childId: candidate.childId,
+          legacyChildId: candidate.legacyChildId,
+          assessmentType: candidate.assessmentType,
+          sourceDatabase: candidate.sourceDatabase,
+        });
+      }
     }
 
     const recipients = recipientsForCandidate(legacyRecipients, candidate);
