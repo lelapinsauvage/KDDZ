@@ -6,6 +6,8 @@ Do not put secrets in this file. Record provider names, environment variable nam
 
 Use `docs/production-acceptance-evidence-template.md` as the non-secret release record shape when collecting final evidence for these gates.
 
+Use `docs/production-cutover-runbook.md` for the ordered production execution sequence and stop conditions.
+
 ## Gate Register
 
 | Gate | Scope | Evidence Required To Close |
