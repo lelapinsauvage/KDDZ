@@ -151,7 +151,7 @@ const LEGACY_PAGE_ROUTE_RULES: LegacyPageRouteRule[] = [
   },
   {
     legacyPage: "Monthly_report.php",
-    exact: ["/reports/monthly", "/reports/monthly-branch", "/Monthly_report.php"],
+    exact: ["/reports/monthly", "/reports/monthly-branch", "/Monthly_report.php", "/Monthly_report_b.php"],
     prefixes: ["/reports/monthly/", "/reports/monthly-branch/"],
   },
   {

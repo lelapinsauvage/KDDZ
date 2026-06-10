@@ -295,7 +295,7 @@
     "legacyPhp": "Front/templates/admin/Monthly_report_b.php",
     "legacyJs": "Front/templates/admin/js/payroll_det_b.js",
     "modernRoute": "/Monthly_report_b.php, /reports/monthly-branch",
-    "status": "partial - legacy branch monthly matrix, filters, export/print, and bridge restored; visual audit remains",
+    "status": "restored - legacy branch monthly matrix, TableTools export, print, AJAX fragment, and bridge restored",
     "legacyTablesMentioned": [
       "t_branch",
       "t_class",
@@ -314,7 +314,7 @@
       "q",
       "brid"
     ],
-    "verification": "Restored the branch-scoped legacy monthly attendance matrix: `/Monthly_report_b.php?brid=` resolves raw numeric, UUID, and encrypted legacy branch ids; missing `brid` redirects to the all-branch monthly report; `p`/`from`/`month`, class, and search query context are preserved; the branch report locks the branch, shows `Monthly Attendance Report For {branch}`, includes Child #/Name/L Name/Branch/Class/1-31/P-A columns, first-five-column filters, global search, no pagination, N/P/A/W/H legend semantics, Excel/CSV export, print action, Sunday-only weekend override, active/repeated holiday override, blank current/future/pre-joining cells, and N/P/A workflow links. Remaining work is exact TableTools copy/PDF/XLS/print visual parity, historical child snapshot parity beyond current imported child rows, and final logged-in visual smoke."
+    "verification": "Restored the branch-scoped legacy monthly attendance matrix: `/Monthly_report_b.php?brid=` now hard-redirects through a route handler with the legacy `Monthly_report.php` PAGE auth/permission check, resolves raw numeric, UUID, and encrypted legacy branch ids, redirects missing `brid`/`branch` to the all-branch monthly report, and preserves `p`/`from`/`month`, class, and search query context. The branch report locks the branch, shows `Monthly Attendance Report For {branch}`, includes Child #/Name/L Name/Branch/Class/1-31/P-A columns with the legacy branch prefix value, first-five-column filters, global search, no pagination, N/P/A/W/H legend semantics, Copy/PDF/Excel/CSV export, print action, Sunday-only weekend override, active/repeated holiday override, blank current/future/pre-joining cells, and N/P/A workflow links. `/payroll_det_data_b.php` preserves the legacy AJAX `from`/`brid` HTML fragment contract for old scripts. Legacy `Data::getmonthlyattendanceperbr()` reads current active `t_child` rows rather than `t_child_h`, because the historical child query is commented out in the live PHP source. Verified by `src/scripts/verify-legacy-branch-monthly-attendance-tabletools-contract.ts` and logged-in Browser smoke."
   },
   {
     "legacyPhp": "Front/templates/admin/Msg_list.php",

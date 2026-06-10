@@ -310,7 +310,7 @@ export async function loadMonthlyAttendance({
       firstName: child.firstName,
       lastName: child.lastName,
       branchId: child.branchId,
-      branchName: child.branch?.name ?? child.branch?.prefix ?? "-",
+      branchName: child.branch?.prefix ?? child.branch?.name ?? "-",
       classId: child.classId,
       className: child.class?.name ?? "-",
       presentCount,
