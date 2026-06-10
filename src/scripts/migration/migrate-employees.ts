@@ -565,7 +565,10 @@ async function migrateTeacherAttachments(
     const legacyId = toInt(row.tattid);
     const legacyTeacherId = toInt(row.teacher_id);
     const teacherId = getMapping("teacher", legacyTeacherId);
-    if (!teacherId || !legacyId) continue;
+    if (!teacherId || !legacyId) {
+      skipped++;
+      continue;
+    }
     const fileUrl = cleanLegacyFileName(row.url);
     if (!fileUrl) {
       skipped++;
@@ -1217,7 +1220,10 @@ async function migrateNurses(prisma: PrismaClient, dryRun: boolean) {
     const legacyId = toInt(row.tattid);
     const legacyNurseId = toInt(row.teacher_id);
     const nurseId = getMapping("nurse", legacyNurseId);
-    if (!nurseId || !legacyId) continue;
+    if (!nurseId || !legacyId) {
+      attSkipped++;
+      continue;
+    }
     const fileUrl = cleanLegacyFileName(row.url);
     if (!fileUrl) {
       attSkipped++;
