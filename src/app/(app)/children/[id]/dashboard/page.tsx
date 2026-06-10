@@ -10,10 +10,13 @@ import { DashboardClient } from "./dashboard-client";
 
 interface Props {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<{ year?: string | string[] }>;
 }
 
-export default async function ChildDashboardPage({ params }: Props) {
+export default async function ChildDashboardPage({ params, searchParams }: Props) {
   const { id } = await params;
+  const query = await searchParams;
+  const selectedYearId = typeof query?.year === "string" ? query.year : null;
 
   const child = await getChild(id);
   if (!child) {
@@ -38,7 +41,7 @@ export default async function ChildDashboardPage({ params }: Props) {
     getVaccinations({ childId: id }),
     getAccountingSummary(id),
     getChildDashboardStats(id),
-    getChildDailyComplianceStats(id),
+    getChildDailyComplianceStats(id, { schoolYearId: selectedYearId }),
   ]);
 
   // Compute attendance stats
@@ -242,6 +245,7 @@ export default async function ChildDashboardPage({ params }: Props) {
       absenceList={absenceList}
       medicalList={medicalList}
       assessmentList={assessmentList}
+      selectedYearId={selectedYearId}
     />
   );
 }

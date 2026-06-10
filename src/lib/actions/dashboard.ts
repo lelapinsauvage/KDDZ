@@ -748,10 +748,12 @@ export async function getDailyComplianceStats(
 }
 
 export async function getChildDailyComplianceStats(
-  childId: string
+  childId: string,
+  filters?: Pick<DashboardMetricFilters, "schoolYearId">
 ): Promise<DailyComplianceStats> {
   const { organizationId: orgId } = await requireOrg();
-  const details = await getChildDailyComplianceDetails(orgId, childId, false);
+  const range = normalizeDashboardFilters(filters);
+  const details = await getChildDailyComplianceDetails(orgId, childId, range, false);
   return details.stats;
 }
 
@@ -928,17 +930,24 @@ async function getDailyComplianceDetails(
   };
 }
 
-async function getChildDashboardRange(orgId: string) {
+async function getChildDashboardRange(orgId: string, schoolYearId?: string | null) {
   const today = startOfDay(new Date());
+  const requestedSchoolYear = schoolYearId
+    ? await db.schoolYear.findFirst({
+        where: { id: schoolYearId, organizationId: orgId },
+        select: { startDate: true, endDate: true },
+      })
+    : null;
   const activeSchoolYear = await db.schoolYear.findFirst({
     where: { organizationId: orgId, isActive: true },
     select: { startDate: true, endDate: true },
     orderBy: { startDate: "desc" },
   });
+  const schoolYear = requestedSchoolYear ?? activeSchoolYear;
 
-  if (activeSchoolYear) {
-    const start = startOfDay(activeSchoolYear.startDate);
-    const configuredEnd = startOfDay(activeSchoolYear.endDate);
+  if (schoolYear) {
+    const start = startOfDay(schoolYear.startDate);
+    const configuredEnd = startOfDay(schoolYear.endDate);
     const end = configuredEnd < today ? configuredEnd : today;
     return { start, endExclusive: addDays(end, 1) };
   }
@@ -955,6 +964,7 @@ async function getChildDashboardRange(orgId: string) {
 async function getChildDailyComplianceDetails(
   orgId: string,
   childId: string,
+  range: NormalizedDashboardFilters,
   includeRows = true
 ): Promise<DailyComplianceDetails> {
   const child = await db.child.findFirst({
@@ -984,7 +994,7 @@ async function getChildDailyComplianceDetails(
     };
   }
 
-  const dashboardRange = await getChildDashboardRange(orgId);
+  const dashboardRange = await getChildDashboardRange(orgId, range.schoolYearId);
   const enrollmentDate = child.enrollmentDate ? startOfDay(child.enrollmentDate) : null;
   const start = enrollmentDate && enrollmentDate > dashboardRange.start
     ? enrollmentDate
@@ -1126,7 +1136,7 @@ export async function getDashboardDrilldown(
     requestedChildId &&
     (kind === "missingDailyReports" || kind === "missingAbsentReports")
   ) {
-    const details = await getChildDailyComplianceDetails(orgId, requestedChildId);
+    const details = await getChildDailyComplianceDetails(orgId, requestedChildId, range);
     return kind === "missingDailyReports"
       ? {
           title: "Missing Daily Reports",

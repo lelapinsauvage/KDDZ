@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { type ColumnDef } from "@tanstack/react-table";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,14 @@ import { DashboardDrilldownCard } from "@/components/dashboard/dashboard-drilldo
 import { StatCard } from "@/components/dashboard/stat-card";
 import { DataTable } from "@/components/shared/data-table";
 import { ATTENDANCE_COLORS } from "@/components/dashboard/demographics-section";
+import { useAppContext } from "@/hooks/use-app-context";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // ── Helpers ──────────────────────────────────────
 
@@ -229,6 +238,7 @@ interface Props {
   absenceList: AbsenceRow[];
   medicalList: MedicalRow[];
   assessmentList: AssessmentRow[];
+  selectedYearId: string | null;
 }
 
 // ── Status Badge ─────────────────────────────────
@@ -390,11 +400,23 @@ export function DashboardClient({
   absenceList,
   medicalList,
   assessmentList,
+  selectedYearId,
 }: Props) {
   const id = child.id;
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const { years, currentYear, setYear } = useAppContext();
+  const effectiveYearId = selectedYearId ?? currentYear?.id ?? null;
   const initials = getInitials(child.firstName, child.lastName);
   const avatarBg = getAvatarColor(`${child.firstName} ${child.lastName}`);
-  const missingReportFilters: DashboardDrilldownRequestFilters = { childId: id };
+  const missingReportFilters: DashboardDrilldownRequestFilters = useMemo(
+    () => ({
+      childId: id,
+      schoolYearId: effectiveYearId,
+    }),
+    [effectiveYearId, id],
+  );
   const missingDailyDrilldown: DashboardDrilldown = {
     title: "Missing Daily Reports",
     columns: ["date", "action"],
@@ -431,6 +453,27 @@ export function DashboardClient({
   const mother = child.parents.find((p) => p.type === "MOTHER");
   const father = child.parents.find((p) => p.type === "FATHER");
   const authorizedPickups = child.relatives.filter((r) => r.isAuthorized);
+
+  useEffect(() => {
+    if (!selectedYearId || currentYear?.id === selectedYearId) return;
+    const selectedYear = years.find((year) => year.id === selectedYearId);
+    if (selectedYear) setYear(selectedYear);
+  }, [currentYear?.id, selectedYearId, setYear, years]);
+
+  function handleYearChange(yearId: string) {
+    const selectedYear = years.find((year) => year.id === yearId) ?? null;
+    setYear(selectedYear);
+
+    const params = new URLSearchParams(searchParams.toString());
+    if (selectedYear) {
+      params.set("year", selectedYear.id);
+    } else {
+      params.delete("year");
+    }
+
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }
 
   return (
     <div className="p-4 md:p-6">
@@ -671,7 +714,7 @@ export function DashboardClient({
         {/* ═══ RIGHT MAIN CONTENT ═══ */}
         <main className="flex-1 min-w-0 space-y-5">
           {/* ─── Quick Actions Bar ─────────────────── */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button size="sm" asChild>
               <Link href={`/children/${id}/calls`}>
                 <Phone className="mr-1.5 size-3.5" />
@@ -696,6 +739,20 @@ export function DashboardClient({
                 Send Message
               </Link>
             </Button>
+            {years.length > 0 && (
+              <Select value={effectiveYearId ?? ""} onValueChange={handleYearChange}>
+                <SelectTrigger size="sm" className="h-9 min-w-[160px]">
+                  <SelectValue placeholder="School Year" />
+                </SelectTrigger>
+                <SelectContent>
+                  {years.map((year) => (
+                    <SelectItem key={year.id} value={year.id}>
+                      {year.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           {/* ─── Row 1: Calls, Accidents, Payments ── */}
