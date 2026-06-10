@@ -23,6 +23,7 @@ Preview the full evidence/provider requirement list before collecting values:
 ```bash
 pnpm tsx src/scripts/audit-production-readiness.ts --list-requirements
 pnpm tsx src/scripts/audit-production-readiness.ts --list-requirements --gate=PROD-CRON
+pnpm tsx src/scripts/verify-production-gate-suite.ts
 pnpm tsx src/scripts/verify-production-readiness-audit-contract.ts
 ```
 
