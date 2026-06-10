@@ -313,7 +313,7 @@ export function AssessmentForm({
               {category.isRedFlags && (
                 <AlertTriangle className="size-4 text-amber-500" />
               )}
-              {category.name}
+              {category.isRedFlags ? "Developmental Red Flags" : category.name}
               {category.isRedFlags && (
                 <Badge variant="outline" className="text-amber-600 border-amber-300 text-xs ml-auto">
                   Critical for Ministry

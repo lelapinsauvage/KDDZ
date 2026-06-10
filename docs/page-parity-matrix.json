@@ -696,8 +696,8 @@
   {
     "legacyPhp": "Front/templates/admin/assessment_1.php",
     "legacyJs": "Front/templates/admin/js/assessment_1.js",
-    "modernRoute": "/assessments/[type]",
-    "status": "restored - report review queue parity; form visual audit remains",
+    "modernRoute": "/assessment_1.php, /assessments/1, /assessments/1/new, /assessments/1/[id]",
+    "status": "restored - report review queue, legacy bridge, and shared form visual audit restored",
     "legacyTablesMentioned": [
       "auto",
       "stomach",
@@ -708,13 +708,13 @@
       "id",
       "isdraft"
     ],
-    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 1-3 month bracket, and uncapped migrated assessment report loading for the restored review queues. Assessment create/edit child selectors now load uncapped active children for production-sized rosters."
+    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 1-3 month bracket, uncapped migrated report loading, and uncapped active-child create/edit selectors. /assessment_1.php now restores the legacy PHP form bridge: fid resolves raw UUID, legacy numeric/encrypted, or legacyKey assessment identifiers into /assessments/1/[id]; id resolves raw/encrypted legacy child ids into /assessments/1/new?childId=...; and bare legacy URLs open /assessments/1. The shared modern Development report form preserves the legacy assessment.php guard mapping, child selector, status selector, active age-bracket tabs, progress summary, Yes/No criteria controls, Developmental Red Flags checklist, comments, Save as Draft, and Submit Assessment behavior across all seven age brackets. Browser smoke confirmed /assessment_1.php?id= opens the Development report form for a real active child, renders the Child selector, Status, age brackets, Yes/No criteria, Developmental Red Flags, Comments, Save as Draft, Submit Assessment, and no broken images; console output was limited to the known PostgreSQL SSL warning and existing Radix hydration-id warning. Verified by src/scripts/verify-legacy-assessment-form-visual-contract.ts."
   },
   {
     "legacyPhp": "Front/templates/admin/assessment_2.php",
     "legacyJs": "Front/templates/admin/js/assessment_2.js",
-    "modernRoute": "/assessments/[type]",
-    "status": "restored - report review queue parity; form visual audit remains",
+    "modernRoute": "/assessment_2.php, /assessments/2, /assessments/2/new, /assessments/2/[id]",
+    "status": "restored - report review queue, legacy bridge, and shared form visual audit restored",
     "legacyTablesMentioned": [
       "auto",
       "hand",
@@ -726,13 +726,13 @@
       "id",
       "isdraft"
     ],
-    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 4-7 month bracket, and uncapped migrated assessment report loading for the restored review queues. Assessment create/edit child selectors now load uncapped active children for production-sized rosters."
+    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 4-7 month bracket, uncapped migrated report loading, and uncapped active-child create/edit selectors. /assessment_2.php now restores the legacy PHP form bridge: fid resolves raw UUID, legacy numeric/encrypted, or legacyKey assessment identifiers into /assessments/2/[id]; id resolves raw/encrypted legacy child ids into /assessments/2/new?childId=...; and bare legacy URLs open /assessments/2. The shared modern Development report form preserves the legacy assessment.php guard mapping, child selector, status selector, active age-bracket tabs, progress summary, Yes/No criteria controls, Developmental Red Flags checklist, comments, Save as Draft, and Submit Assessment behavior across all seven age brackets. Browser smoke confirmed /assessment_2.php?id= opens the Development report form for a real active child, renders the Child selector, Status, age brackets, Yes/No criteria, Developmental Red Flags, Comments, Save as Draft, Submit Assessment, and no broken images; console output was limited to the known PostgreSQL SSL warning and existing Radix hydration-id warning. Verified by src/scripts/verify-legacy-assessment-form-visual-contract.ts."
   },
   {
     "legacyPhp": "Front/templates/admin/assessment_3.php",
     "legacyJs": "Front/templates/admin/js/assessment_3.js",
-    "modernRoute": "/assessments/[type]",
-    "status": "restored - report review queue parity; form visual audit remains",
+    "modernRoute": "/assessment_3.php, /assessments/3, /assessments/3/new, /assessments/3/[id]",
+    "status": "restored - report review queue, legacy bridge, and shared form visual audit restored",
     "legacyTablesMentioned": [
       "auto",
       "container",
@@ -744,13 +744,13 @@
       "id",
       "isdraft"
     ],
-    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 8-12 month bracket, and uncapped migrated assessment report loading for the restored review queues. Assessment create/edit child selectors now load uncapped active children for production-sized rosters."
+    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 8-12 month bracket, uncapped migrated report loading, and uncapped active-child create/edit selectors. /assessment_3.php now restores the legacy PHP form bridge: fid resolves raw UUID, legacy numeric/encrypted, or legacyKey assessment identifiers into /assessments/3/[id]; id resolves raw/encrypted legacy child ids into /assessments/3/new?childId=...; and bare legacy URLs open /assessments/3. The shared modern Development report form preserves the legacy assessment.php guard mapping, child selector, status selector, active age-bracket tabs, progress summary, Yes/No criteria controls, Developmental Red Flags checklist, comments, Save as Draft, and Submit Assessment behavior across all seven age brackets. Browser smoke confirmed /assessment_3.php?id= opens the Development report form for a real active child, renders the Child selector, Status, age brackets, Yes/No criteria, Developmental Red Flags, Comments, Save as Draft, Submit Assessment, and no broken images; console output was limited to the known PostgreSQL SSL warning and existing Radix hydration-id warning. Verified by src/scripts/verify-legacy-assessment-form-visual-contract.ts."
   },
   {
     "legacyPhp": "Front/templates/admin/assessment_4.php",
     "legacyJs": "Front/templates/admin/js/assessment_4.js",
-    "modernRoute": "/assessments/[type]",
-    "status": "restored - report review queue parity; form visual audit remains",
+    "modernRoute": "/assessment_4.php, /assessments/4, /assessments/4/new, /assessments/4/[id]",
+    "status": "restored - report review queue, legacy bridge, and shared form visual audit restored",
     "legacyTablesMentioned": [
       "auto",
       "ball",
@@ -763,13 +763,13 @@
       "id",
       "isdraft"
     ],
-    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 12-24 month bracket, and uncapped migrated assessment report loading for the restored review queues. Assessment create/edit child selectors now load uncapped active children for production-sized rosters."
+    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 12-24 month bracket, uncapped migrated report loading, and uncapped active-child create/edit selectors. /assessment_4.php now restores the legacy PHP form bridge: fid resolves raw UUID, legacy numeric/encrypted, or legacyKey assessment identifiers into /assessments/4/[id]; id resolves raw/encrypted legacy child ids into /assessments/4/new?childId=...; and bare legacy URLs open /assessments/4. The shared modern Development report form preserves the legacy assessment.php guard mapping, child selector, status selector, active age-bracket tabs, progress summary, Yes/No criteria controls, Developmental Red Flags checklist, comments, Save as Draft, and Submit Assessment behavior across all seven age brackets. Browser smoke confirmed /assessment_4.php?id= opens the Development report form for a real active child, renders the Child selector, Status, age brackets, Yes/No criteria, Developmental Red Flags, Comments, Save as Draft, Submit Assessment, and no broken images; console output was limited to the known PostgreSQL SSL warning and existing Radix hydration-id warning. Verified by src/scripts/verify-legacy-assessment-form-visual-contract.ts."
   },
   {
     "legacyPhp": "Front/templates/admin/assessment_5.php",
     "legacyJs": "Front/templates/admin/js/assessment_5.js",
-    "modernRoute": "/assessments/[type]",
-    "status": "restored - report review queue parity; form visual audit remains",
+    "modernRoute": "/assessment_5.php, /assessments/5, /assessments/5/new, /assessments/5/[id]",
+    "status": "restored - report review queue, legacy bridge, and shared form visual audit restored",
     "legacyTablesMentioned": [
       "auto",
       "cup",
@@ -782,13 +782,13 @@
       "id",
       "isdraft"
     ],
-    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 24-36 month bracket, and uncapped migrated assessment report loading for the restored review queues. Assessment create/edit child selectors now load uncapped active children for production-sized rosters."
+    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 24-36 month bracket, uncapped migrated report loading, and uncapped active-child create/edit selectors. /assessment_5.php now restores the legacy PHP form bridge: fid resolves raw UUID, legacy numeric/encrypted, or legacyKey assessment identifiers into /assessments/5/[id]; id resolves raw/encrypted legacy child ids into /assessments/5/new?childId=...; and bare legacy URLs open /assessments/5. The shared modern Development report form preserves the legacy assessment.php guard mapping, child selector, status selector, active age-bracket tabs, progress summary, Yes/No criteria controls, Developmental Red Flags checklist, comments, Save as Draft, and Submit Assessment behavior across all seven age brackets. Browser smoke confirmed /assessment_5.php?id= opens the Development report form for a real active child, renders the Child selector, Status, age brackets, Yes/No criteria, Developmental Red Flags, Comments, Save as Draft, Submit Assessment, and no broken images; console output was limited to the known PostgreSQL SSL warning and existing Radix hydration-id warning. Verified by src/scripts/verify-legacy-assessment-form-visual-contract.ts."
   },
   {
     "legacyPhp": "Front/templates/admin/assessment_6.php",
     "legacyJs": "Front/templates/admin/js/assessment_6.js",
-    "modernRoute": "/assessments/[type]",
-    "status": "restored - report review queue parity; form visual audit remains",
+    "modernRoute": "/assessment_6.php, /assessments/6, /assessments/6/new, /assessments/6/[id]",
+    "status": "restored - report review queue, legacy bridge, and shared form visual audit restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -798,13 +798,13 @@
       "id",
       "isdraft"
     ],
-    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 3-4 year bracket, and uncapped migrated assessment report loading for the restored review queues. Assessment create/edit child selectors now load uncapped active children for production-sized rosters."
+    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 3-4 year bracket, uncapped migrated report loading, and uncapped active-child create/edit selectors. /assessment_6.php now restores the legacy PHP form bridge: fid resolves raw UUID, legacy numeric/encrypted, or legacyKey assessment identifiers into /assessments/6/[id]; id resolves raw/encrypted legacy child ids into /assessments/6/new?childId=...; and bare legacy URLs open /assessments/6. The shared modern Development report form preserves the legacy assessment.php guard mapping, child selector, status selector, active age-bracket tabs, progress summary, Yes/No criteria controls, Developmental Red Flags checklist, comments, Save as Draft, and Submit Assessment behavior across all seven age brackets. Browser smoke confirmed /assessment_6.php?id= opens the Development report form for a real active child, renders the Child selector, Status, age brackets, Yes/No criteria, Developmental Red Flags, Comments, Save as Draft, Submit Assessment, and no broken images; console output was limited to the known PostgreSQL SSL warning and existing Radix hydration-id warning. Verified by src/scripts/verify-legacy-assessment-form-visual-contract.ts."
   },
   {
     "legacyPhp": "Front/templates/admin/assessment_7.php",
     "legacyJs": "Front/templates/admin/js/assessment_7.js",
-    "modernRoute": "/assessments/[type]",
-    "status": "restored - report review queue parity; form visual audit remains",
+    "modernRoute": "/assessment_7.php, /assessments/7, /assessments/7/new, /assessments/7/[id]",
+    "status": "restored - report review queue, legacy bridge, and shared form visual audit restored",
     "legacyTablesMentioned": [
       "auto",
       "parents",
@@ -815,7 +815,7 @@
       "id",
       "isdraft"
     ],
-    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 4-5 year bracket, and uncapped migrated assessment report loading for the restored review queues. Assessment create/edit child selectors now load uncapped active children for production-sized rosters."
+    "verification": "Restored create/open actions, draft/incomplete/completed/missing status, schedule-rule eligibility for the 4-5 year bracket, uncapped migrated report loading, and uncapped active-child create/edit selectors. /assessment_7.php now restores the legacy PHP form bridge: fid resolves raw UUID, legacy numeric/encrypted, or legacyKey assessment identifiers into /assessments/7/[id]; id resolves raw/encrypted legacy child ids into /assessments/7/new?childId=...; and bare legacy URLs open /assessments/7. The shared modern Development report form preserves the legacy assessment.php guard mapping, child selector, status selector, active age-bracket tabs, progress summary, Yes/No criteria controls, Developmental Red Flags checklist, comments, Save as Draft, and Submit Assessment behavior across all seven age brackets. Browser smoke confirmed /assessment_7.php?id= opens the Development report form for a real active child, renders the Child selector, Status, age brackets, Yes/No criteria, Developmental Red Flags, Comments, Save as Draft, Submit Assessment, and no broken images; console output was limited to the known PostgreSQL SSL warning and existing Radix hydration-id warning. Verified by src/scripts/verify-legacy-assessment-form-visual-contract.ts."
   },
   {
     "legacyPhp": "Front/templates/admin/assets/plugins/ckeditor/samples/assets/posteddata.php",
