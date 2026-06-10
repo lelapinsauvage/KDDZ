@@ -149,6 +149,21 @@ for (const needle of modernNavNeedles) {
   assert.match(modernSidebar, needle);
 }
 
+const metronicSidebarNeedles = [
+  /bg-\[#2b3643\]/,
+  /hover:bg-\[#2c3542\]/,
+  /hover:text-sidebar-accent-foreground/,
+  /bg-\[#1caf9a\]/,
+  /border-l-\[#1caf9a\]/,
+  /border border-sidebar-primary\/20 border-dashed/,
+  /New Daily Report/,
+  /aria-label="Main navigation"/,
+];
+
+for (const needle of metronicSidebarNeedles) {
+  assert.match(modernSidebar, needle);
+}
+
 for (const page of [
   "index.php",
   "branches.php",
@@ -308,5 +323,14 @@ for (const legacyPhp of ["Front/templates/admin/AlarmBar.php", "Front/templates/
   assert.match(row.verification, new RegExp(verifier.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.match(matrixMd, new RegExp(`${legacyPhp.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}[^\\n]*${verifier.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`));
 }
+
+const leftMenuRow = matrix.find((entry) => entry.legacyPhp === "Front/templates/admin/leftmenu.php");
+assert.ok(leftMenuRow);
+assert.match(leftMenuRow.status, /^restored - /);
+assert.match(leftMenuRow.verification, /dark Metronic-style sidebar/);
+assert.match(leftMenuRow.verification, /Children\/Food accordion expansion/);
+assert.match(leftMenuRow.verification, /hover:bg-\[#2c3542\]/);
+assert.doesNotMatch(leftMenuRow.verification, /Remaining work is final Metronic visual\/hover audit/);
+assert.doesNotMatch(matrixMd, /leftmenu\.php[^\n]*Remaining work is final Metronic visual\/hover audit/);
 
 console.log("legacy app shell contract assertions passed");
