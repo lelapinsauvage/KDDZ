@@ -21,6 +21,10 @@ const checks = [
     command: ["pnpm", "tsx", "src/scripts/verify-production-acceptance-evidence-record-contract.ts"],
   },
   {
+    label: "production closeout contract",
+    command: ["pnpm", "tsx", "src/scripts/verify-production-closeout-contract.ts"],
+  },
+  {
     label: "page parity matrix JSON",
     command: ["python3", "-m", "json.tool", "docs/page-parity-matrix.json"],
   },

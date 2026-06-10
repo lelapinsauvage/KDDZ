@@ -62,8 +62,10 @@ const requiredReferences = [
   "src/scripts/migration/README.md",
   "src/scripts/audit-production-readiness.ts",
   "src/scripts/verify-production-acceptance-evidence-record.ts",
+  "src/scripts/run-production-closeout.ts",
   "src/scripts/verify-production-gate-suite.ts",
   "src/scripts/verify-production-acceptance-evidence-record-contract.ts",
+  "src/scripts/verify-production-closeout-contract.ts",
   "src/scripts/verify-production-readiness-audit-contract.ts",
   "src/scripts/verify-parent-credentialed-native-e2e.ts",
   "src/scripts/verify-legacy-calls-contract.ts",
@@ -199,6 +201,7 @@ assert.match(contents.migrationReadme, /reconcile-migration-counts\.ts/);
 assert.match(contents.gates, /partial-production-gate-map\.md/);
 const readinessAudit = readFileSync("src/scripts/audit-production-readiness.ts", "utf8");
 const evidenceRecordVerifier = readFileSync("src/scripts/verify-production-acceptance-evidence-record.ts", "utf8");
+const closeoutRunner = readFileSync("src/scripts/run-production-closeout.ts", "utf8");
 const productionGateSuite = readFileSync("src/scripts/verify-production-gate-suite.ts", "utf8");
 assert.match(readinessAudit, /No environment values/);
 assert.match(readinessAudit, /--out/);
@@ -213,18 +216,27 @@ assert.match(evidenceRecordVerifier, /--branch/);
 assert.match(evidenceRecordVerifier, /--commit/);
 assert.match(evidenceRecordVerifier, /remaining production tickets must be none/);
 assert.match(evidenceRecordVerifier, /release decision must be accepted/);
+assert.match(closeoutRunner, /audit-production-readiness\.ts/);
+assert.match(closeoutRunner, /verify-production-acceptance-evidence-record\.ts/);
+assert.match(closeoutRunner, /rev-parse/);
 assert.match(productionGateSuite, /verify-production-acceptance-gates-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-readiness-audit-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-acceptance-evidence-record-contract\.ts/);
+assert.match(productionGateSuite, /verify-production-closeout-contract\.ts/);
 assert.match(productionGateSuite, /page-parity-matrix\.json/);
 assert.match(readFileSync("src/scripts/verify-production-readiness-audit-contract.ts", "utf8"), /assertNoSensitiveOutput/);
 assert.match(
   readFileSync("src/scripts/verify-production-acceptance-evidence-record-contract.ts", "utf8"),
   /PROD-NATIVE-1/
 );
+assert.match(
+  readFileSync("src/scripts/verify-production-closeout-contract.ts", "utf8"),
+  /production closeout verified/
+);
 assert.match(contents.gates, /--out=<path>/);
 assert.match(contents.gates, /--env-file=<path>/);
 assert.match(contents.gates, /verify-production-acceptance-evidence-record\.ts/);
+assert.match(contents.gates, /pnpm run closeout:production/);
 assert.match(contents.gates, /--readiness-report=<path>/);
 assert.match(contents.gates, /--readiness-report=\/tmp\/kiddzonl-production-readiness\.json/);
 assert.match(contents.gates, /--branch=legacy-parity-runbook/);
@@ -237,6 +249,7 @@ assert.match(contents.gates, /verify-production-readiness-audit-contract\.ts/);
 assert.match(contents.cutoverRunbook, /--out=\/tmp\/kiddzonl-production-readiness\.json/);
 assert.match(contents.cutoverRunbook, /--env-file=\/secure\/private-readiness\.env/);
 assert.match(contents.cutoverRunbook, /verify-production-acceptance-evidence-record\.ts \/secure\/production-acceptance-evidence\.md --readiness-report=\/tmp\/kiddzonl-production-readiness\.json --branch=legacy-parity-runbook --commit=<release-commit-sha>/);
+assert.match(contents.cutoverRunbook, /pnpm run closeout:production/);
 assert.match(contents.cutoverRunbook, /release decision `accepted` and remaining production tickets `none`/);
 assert.match(contents.cutoverRunbook, /--list-requirements/);
 assert.match(contents.cutoverRunbook, /--gate=PROD-CRON/);
@@ -245,6 +258,10 @@ assert.match(contents.cutoverRunbook, /verify-production-readiness-audit-contrac
 assert.equal(
   packageJson.scripts["verify:production-gates"],
   "tsx src/scripts/verify-production-gate-suite.ts"
+);
+assert.equal(
+  packageJson.scripts["closeout:production"],
+  "tsx src/scripts/run-production-closeout.ts"
 );
 
 console.log("production acceptance gates contract assertions passed");
