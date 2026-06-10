@@ -132,7 +132,10 @@ assert.match(modern.actions, /db\.parentUser\.findMany/);
 assert.match(modern.actions, /orderBy: \{ username: "asc" \}/);
 assert.match(modern.actions, /export async function createParentUser/);
 assert.match(modern.actions, /verifyChildAccess\(data\.childId, orgId\)/);
-assert.match(modern.actions, /Username already exists/);
+assert.match(
+  modern.actions,
+  /Username Already used by another Parent, please try another one!/,
+);
 assert.match(modern.actions, /export async function resetParentPassword/);
 assert.match(modern.actions, /export async function toggleParentUserStatus/);
 assert.match(modern.actions, /export async function sendParentUserCredentials/);

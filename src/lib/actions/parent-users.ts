@@ -14,6 +14,8 @@ import { hash } from "bcryptjs";
 import type { Prisma } from "@/generated/prisma/client";
 
 const MIN_PASSWORD_LENGTH = 6;
+const LEGACY_DUPLICATE_PARENT_USERNAME_MESSAGE =
+  "Username Already used by another Parent, please try another one!";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -271,7 +273,10 @@ export async function createParentUser(
       error instanceof Error &&
       error.message.includes("Unique constraint")
     ) {
-      return { success: false, error: "Username already exists" };
+      return {
+        success: false,
+        error: LEGACY_DUPLICATE_PARENT_USERNAME_MESSAGE,
+      };
     }
     return { success: false, error: "Failed to create parent user" };
   }
@@ -338,7 +343,10 @@ export async function updateParentUser(
       error instanceof Error &&
       error.message.includes("Unique constraint")
     ) {
-      return { success: false, error: "Username already exists" };
+      return {
+        success: false,
+        error: LEGACY_DUPLICATE_PARENT_USERNAME_MESSAGE,
+      };
     }
     return { success: false, error: "Failed to update parent user" };
   }
@@ -489,7 +497,10 @@ export async function sendParentUserCredentials(
       error instanceof Error &&
       error.message.includes("Unique constraint")
     ) {
-      return { success: false, error: "Username already exists" };
+      return {
+        success: false,
+        error: LEGACY_DUPLICATE_PARENT_USERNAME_MESSAGE,
+      };
     }
     return { success: false, error: "Failed to send parent credentials" };
   }

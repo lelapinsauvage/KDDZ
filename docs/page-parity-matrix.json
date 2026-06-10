@@ -16462,7 +16462,7 @@
     "legacyPhp": "Front/templates/admin/parent_user.php",
     "legacyJs": "Front/templates/admin/js/parent_user.js",
     "modernRoute": "/parent_user.php, /settings/parent-users/[id]",
-    "status": "partial - legacy parent-user detail workflow and credential channel delivery restored; visual audit remains",
+    "status": "partial - legacy parent-user detail workflow, credential channel delivery, and browser visual audit restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -16471,7 +16471,7 @@
       "fid",
       "id"
     ],
-    "verification": "`/parent_user.php?fid=&id=` now resolves encrypted/raw legacy parent-login user ids from `fid` and redirects to the modern parent-user detail form; child-only legacy links now resolve encrypted/raw child ids into `/settings/parent-users?createChildId=...` so the modern create dialog opens like legacy. The detail workflow now restores required username validation, duplicate-username error surfacing, org-safe child reassignment, optional password reset on save, legacy Active/InActive status selection, credential WhatsApp message links using the legacy KiddzOnline message text when a new password is entered, and reset-plus-send SMS/WhatsApp provider-neutral webhook delivery with matched/skipped/failed/sent audit stored on `ParentUser.legacyData`. Remaining work is production provider credential rollout and final visual/modal audit."
+    "verification": "`/parent_user.php?fid=&id=` now resolves encrypted/raw legacy parent-login user ids from `fid` and redirects to the modern parent-user detail form; child-only legacy links now resolve encrypted/raw child ids into `/settings/parent-users?createChildId=...` so the modern create dialog opens like legacy. The detail workflow now restores required username validation, the exact legacy duplicate-username alert text, org-safe child reassignment, optional password reset on save, legacy Active/InActive status selection, credential WhatsApp message links using the legacy KiddzOnline message text when a new password is entered, and reset-plus-send SMS/WhatsApp provider-neutral webhook delivery with matched/skipped/failed/sent audit stored on `ParentUser.legacyData`. Browser smoke confirmed `/parent_user.php?fid=` redirects to `/settings/parent-users/[id]`, renders Parent User Detail with Linked Child, Contact Information, Relatives & Emergency Contacts when present, Account Information, Username/Password/Status controls with Active/InActive options, Reset Password, Send SMS, Send WhatsApp, direct WhatsApp parent links when phones exist, Save Changes, Account Info, and no broken images or app errors beyond the known PostgreSQL SSL warning. Verified by `src/scripts/verify-legacy-parent-user-detail-visual-contract.ts`. Remaining work is production provider credential rollout."
   },
   {
     "legacyPhp": "Front/templates/admin/parent_users.php",
