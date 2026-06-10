@@ -249,7 +249,7 @@ export async function getCallLogs(params: GetCallLogsParams = {}) {
       dateTo,
       search,
       page = 1,
-      pageSize = 20,
+      pageSize = 10,
     } = params;
 
     const childWhere: Prisma.ChildWhereInput = {

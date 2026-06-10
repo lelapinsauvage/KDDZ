@@ -1051,7 +1051,7 @@
     "legacyPhp": "Front/templates/admin/bcalls.php",
     "legacyJs": "Front/templates/admin/js/bcalls.js",
     "modernRoute": "/bcalls.php, /branches/[id]/calls, /calls",
-    "status": "partial - branch-scoped listing, legacy branch deep links, copy/PDF exports, and page sizes restored; visual smoke remains",
+    "status": "restored - legacy branch-scoped calls listing, bridge, filters, exports, page sizes, and zero-data smoke parity restored",
     "legacyTablesMentioned": [
       "t_form_6",
       "t_child",
@@ -1063,7 +1063,7 @@
     "requestFieldsMentioned": [
       "brid"
     ],
-    "verification": "Restored branch-compatible incoming/outgoing call listing through `/calls?branch=...` with legacy child #, image, F Name, L Name, Call Type, Branch, Class, Cause, Subject, Date, Action columns, teacher-backed Form 6 data, draft badges, standalone Form 6 open action, delete action, branch/class/date/type/search filters, legacy 10/20/50/100/150/All page-size choices, full-filtered Copy/PDF/Excel/CSV export, and print action. `/bcalls.php?brid=` now resolves raw numeric, UUID, and encrypted legacy branch ids into the modern branch filter, and `/branches/[id]/calls` redirects modern branch deep links to the same filtered listing. Remaining work is final logged-in visual smoke and legacy print styling acceptance."
+    "verification": "`src/scripts/verify-legacy-calls-contract.ts` locks the legacy branch-scoped Form 6 listing contract: `bcalls.php` keeps the `calls.php` page guard, decrypts `brid`, shows the branch title, disables the branch selector, posts `brid` to `getformsixAllperbranchHashed`, and preserves the legacy child #, image, F Name, L Name, Call Type, Branch, Class, Cause, Subject, Date, Action columns, date range filter, 10/20/50/100/150/All page sizes, Copy/Print/PDF/XLS exports, and delete action. Modern `/bcalls.php?brid=` resolves raw numeric, UUID, and encrypted branch ids and renders the branch-scoped `/calls` listing directly, `/branches/[id]/calls` aliases the same listing, `/calls` now defaults to the legacy 10-row page size, and Browser smoke confirmed `/bcalls.php?brid=` renders the branch-scoped calls listing with legacy headers, Karakol Druz branch context, zero-data empty state, disabled export/print controls, no broken media, and a 10-row default selector."
   },
   {
     "legacyPhp": "Front/templates/admin/branch.php",
@@ -1116,7 +1116,7 @@
     "legacyPhp": "Front/templates/admin/call.php",
     "legacyJs": "Front/templates/admin/js/call.js",
     "modernRoute": "/calls/[id], /call.php",
-    "status": "partial - legacy Form 6 workflow and standalone shell restored; visual smoke remains",
+    "status": "restored - legacy Form 6 standalone shell, workflow, attachments, and direct legacy bridge restored",
     "legacyTablesMentioned": [
       "t_form_6",
       "t_form_attch",
@@ -1131,7 +1131,7 @@
       "fid",
       "id"
     ],
-    "verification": "Restored legacy Call Type, Date, Time, Cause of Call, Subject, Remarks, Teacher, and Attachments fields in the child/global call dialogs; submitted validation now matches `call.js` mandatory Form 6 fields while Save As Draft requires only a child, writes `isDraft`/`is_rep_draft`, preserves raw `t_form_6` keys in `legacyData`, uses migrated call parent/subject choices, resolves legacy teachers, edits existing call reports, displays existing attachments, uploads new attachments, removes existing attachments from edit dialogs via `FormAttachment.isActive = false`, and revalidates child/global/detail call routes. `/calls/[id]` now restores the standalone Form 6 view with child photo/name, legacy green/red `f_progress` status, child/branch/class/teacher provenance, edit/delete/print actions, active attachment preview/open controls, and `/call.php?fid=...&id=...` redirects with raw numeric, UUID, and encrypted legacy id lookup. Remaining work is final logged-in visual smoke and exact Metronic attachment-row styling only if required."
+    "verification": "`src/scripts/verify-legacy-calls-contract.ts` locks the legacy Form 6 standalone workflow: `call.php` keeps the `call.php` page guard, decrypts `id`/`fid`, shows the legacy red/green completion status from `f_progress`, child photo/name, Call Type, Date, Time, Cause of Call, Subject, Remarks, Teacher, Attachments, Save, and Save As Draft controls. Modern dialogs preserve submitted-save validation for Call Type/Date/Time/Cause/Subject/Teacher while draft save only requires a child, persist `isDraft` plus raw `is_rep_draft`, use migrated `callparent`/`callcauses` subject choices, preserve active attachments, support new upload and existing attachment removal, and revalidate global/child/detail routes. `/call.php?fid=...&id=...` renders the modern standalone shell directly while preserving `legacyChild`, and `/calls/[id]` resolves raw numeric, UUID, legacy key, and encrypted legacy Form 6 ids with print/edit/delete, child provenance, active attachment preview/open controls, and legacy completion wording. Browser detail smoke is pending a local migrated CallLog row; the current local database rendered zero calls, so the browser pass verified the legacy listing and create-dialog surfaces without submitting data."
   },
   {
     "legacyPhp": "Front/templates/admin/calls.php",
@@ -1149,7 +1149,7 @@
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Restored the legacy Incoming/Outgoing Calls Listing with child #, image, F Name, L Name, Call Type, Branch, Class, Cause, Subject, Date, Action columns, form id descending sort, branch/class/type/date/search filters, legacy 10/20/50/100/150/All page-size choices, full-filtered Copy/PDF/Excel/CSV export, print action, New Call Report dialog, child selector, standalone Form 6 open action, delete action, teacher-backed Form 6 save, Save As Draft versus submitted validation, migrated callparent/callcauses choices, child photo fallback, and legacy Form 6 provenance/draft import. `/calls.php` now redirects to the modern calls listing. Remaining work is final logged-in visual smoke after local database/runtime state is clean and legacy print styling acceptance."
+    "verification": "Restored the legacy Incoming/Outgoing Calls Listing with child #, image, F Name, L Name, Call Type, Branch, Class, Cause, Subject, Date, Action columns, form id descending sort, branch/class/type/date/search filters, legacy default 10-row page size plus 10/20/50/100/150/All choices, full-filtered Copy/PDF/Excel/CSV export, print action, New Call Report dialog, child selector, standalone Form 6 open action, delete action, teacher-backed Form 6 save, Save As Draft versus submitted validation, migrated callparent/callcauses choices, child photo fallback, and legacy Form 6 provenance/draft import. `/calls.php` now renders the restored calls listing directly for legacy URL stability. Verified by `src/scripts/verify-legacy-calls-contract.ts`; Browser smoke confirmed the 10-row default selector, legacy headers, zero-data empty state, disabled Export/Print controls when no rows exist, New Call Report dialog with mandatory legacy Form 6 fields, draft/save actions, and no broken media."
   },
   {
     "legacyPhp": "Front/templates/admin/child_absence.php",

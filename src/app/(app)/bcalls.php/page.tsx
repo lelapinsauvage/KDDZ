@@ -1,17 +1,28 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { resolveLegacyBranchId } from "@/lib/legacy-branch";
+import CallsManagementPage from "../calls/page";
 
 interface PageProps {
-  searchParams: Promise<{ brid?: string }>;
+  searchParams: Promise<{
+    brid?: string;
+    search?: string;
+    class?: string;
+    direction?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    page?: string;
+    pageSize?: string;
+  }>;
 }
 
-export default async function LegacyBranchCallsRedirect({
+export default async function LegacyBranchCallsPage({
   searchParams,
 }: PageProps) {
-  const { brid } = await searchParams;
+  const params = await searchParams;
+  const { brid, ...modernParams } = params;
 
   if (!brid?.trim()) {
-    redirect("/calls");
+    return <CallsManagementPage searchParams={Promise.resolve(modernParams)} />;
   }
 
   const branchId = await resolveLegacyBranchId(brid);
@@ -19,5 +30,9 @@ export default async function LegacyBranchCallsRedirect({
     notFound();
   }
 
-  redirect(`/calls?branch=${encodeURIComponent(branchId)}`);
+  return (
+    <CallsManagementPage
+      searchParams={Promise.resolve({ ...modernParams, branch: branchId })}
+    />
+  );
 }

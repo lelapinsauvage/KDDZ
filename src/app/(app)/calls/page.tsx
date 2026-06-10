@@ -34,9 +34,9 @@ function parseDirection(value: string | undefined): CallDirection | undefined {
 
 function parsePageSize(value: string | undefined): CallsPageSize {
   if (value === "all") return "all";
-  const parsed = Number(value) || 25;
+  const parsed = Number(value) || 10;
   if ([10, 20, 50, 100, 150].includes(parsed)) return parsed;
-  return 25;
+  return 10;
 }
 
 function formatTime(date: Date | null): string | null {

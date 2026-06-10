@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import StandaloneCallPage from "../calls/[id]/page";
 
 interface PageProps {
   searchParams: Promise<{ fid?: string; id?: string }>;
@@ -11,11 +12,10 @@ export default async function LegacyCallPhpRedirect({ searchParams }: PageProps)
     redirect("/calls");
   }
 
-  const target = new URLSearchParams();
-  if (id?.trim()) {
-    target.set("legacyChild", id.trim());
-  }
-
-  const query = target.toString();
-  redirect(`/calls/${encodeURIComponent(fid.trim())}${query ? `?${query}` : ""}`);
+  return (
+    <StandaloneCallPage
+      params={Promise.resolve({ id: fid.trim() })}
+      searchParams={Promise.resolve({ legacyChild: id?.trim() })}
+    />
+  );
 }

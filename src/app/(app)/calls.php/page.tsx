@@ -1,5 +1,3 @@
-import { redirect } from "next/navigation";
+import CallsManagementPage from "../calls/page";
 
-export default function LegacyCallsRedirect() {
-  redirect("/calls");
-}
+export default CallsManagementPage;
