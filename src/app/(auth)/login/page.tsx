@@ -1,16 +1,31 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  getLegacySocialLoginMethods,
   getLegacyLoginFailureRedirect,
   getLegacyLoginSuccessRedirect,
 } from "@/lib/actions/legacy-login";
+
+type LegacySocialMethod = {
+  key: string;
+  label: string;
+  href: string;
+};
+
+const legacySocialClasses: Record<string, string> = {
+  facebook: "border-[#3B5998]/30 bg-[#3B5998] text-white hover:bg-[#314a7f]",
+  google: "border-[#F23437]/30 bg-[#F23437] text-white hover:bg-[#d9292c]",
+  twitter: "border-[#0088CC]/30 bg-[#0088CC] text-white hover:bg-[#0077b3]",
+  yahoo: "border-[#670D6D]/30 bg-[#670D6D] text-white hover:bg-[#530957]",
+};
 
 export default function LoginPage() {
   return (
@@ -29,6 +44,19 @@ function LoginForm() {
   const [remember, setRemember] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [socialMethods, setSocialMethods] = useState<LegacySocialMethod[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+    getLegacySocialLoginMethods().then((result) => {
+      if (mounted && result.success) {
+        setSocialMethods(result.data ?? []);
+      }
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -151,6 +179,23 @@ function LoginForm() {
               </Label>
             </div>
 
+            {socialMethods.length > 0 && (
+              <div className="grid gap-2">
+                {socialMethods.map((method) => (
+                  <Link
+                    key={method.key}
+                    href={method.href}
+                    className={`flex h-10 items-center justify-center rounded-lg border px-3 text-sm font-semibold transition-colors ${
+                      legacySocialClasses[method.key] ??
+                      "border-[#E2E5E9] bg-[#F7F8FA] text-[#1A1D23] hover:bg-[#ECEFF3]"
+                    }`}
+                  >
+                    {method.label}
+                  </Link>
+                ))}
+              </div>
+            )}
+
             <Button
               type="submit"
               className="h-11 w-full rounded-lg bg-primary text-sm font-semibold tracking-wide text-white shadow-md shadow-[#0B7464]/20 transition-all hover:bg-[#0D5C50] hover:shadow-sm hover:shadow-[#0B7464]/25 active:scale-[0.98]"
@@ -160,21 +205,21 @@ function LoginForm() {
             </Button>
 
             <div className="text-center">
-              <a
+              <Link
                 href="/forgot"
                 className="text-sm font-medium text-[#0B7464] transition-colors hover:text-[#0D5C50] hover:underline"
               >
                 Forgot password?
-              </a>
+              </Link>
             </div>
 
             <div className="text-center">
-              <a
+              <Link
                 href="/signup"
                 className="text-sm font-medium text-[#0B7464] transition-colors hover:text-[#0D5C50] hover:underline"
               >
                 Create a new account
-              </a>
+              </Link>
             </div>
           </form>
 

@@ -23,6 +23,21 @@ const SIGNIN_REDIRECT_SETTING_KEYS = [
   "signin-redirect-url",
 ] as const;
 
+const LEGACY_SOCIAL_LOGIN_METHODS = [
+  {
+    key: "facebook",
+    label: "Facebook",
+    settingKey: "integration-facebook-enable",
+  },
+  { key: "google", label: "Google", settingKey: "integration-google-enable" },
+  {
+    key: "twitter",
+    label: "Twitter",
+    settingKey: "integration-twitter-enable",
+  },
+  { key: "yahoo", label: "Yahoo", settingKey: "integration-yahoo-enable" },
+] as const;
+
 export type LegacyDisabledContactInput = {
   name: string;
   email: string;
@@ -49,6 +64,50 @@ function legacyBool(value: string | null | undefined) {
   return Boolean(
     normalized && !["0", "false", "no", "off", "null"].includes(normalized),
   );
+}
+
+export async function getLegacySocialLoginMethods(): Promise<
+  ActionResult<Array<{ key: string; label: string; href: string }>>
+> {
+  try {
+    const rows = await db.legacySetting.findMany({
+      where: {
+        legacyTable: { in: ["login_settings", "login_settings_man"] },
+        settingKey: {
+          in: LEGACY_SOCIAL_LOGIN_METHODS.map((method) => method.settingKey),
+        },
+      },
+      orderBy: [
+        { legacyTable: "asc" },
+        { sourceDatabase: "asc" },
+        { legacyId: "desc" },
+      ],
+      select: {
+        settingKey: true,
+        settingValue: true,
+      },
+    });
+
+    const enabled = new Set(
+      rows
+        .filter((row) => legacyBool(row.settingValue))
+        .map((row) => row.settingKey),
+    );
+
+    return {
+      success: true,
+      data: LEGACY_SOCIAL_LOGIN_METHODS.filter((method) =>
+        enabled.has(method.settingKey),
+      ).map((method) => ({
+        key: method.key,
+        label: method.label,
+        href: `/login?login=${method.key}`,
+      })),
+    };
+  } catch (error) {
+    console.warn("getLegacySocialLoginMethods fallback:", error);
+    return { success: true, data: [] };
+  }
 }
 
 function modernizeLegacyRedirect(value: string) {

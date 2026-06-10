@@ -18313,7 +18313,7 @@
     "legacyPhp": "Front/templates/admin/users/login.php",
     "legacyJs": "",
     "modernRoute": "/login",
-    "status": "partial - legacy username/email sign-in form, Stay signed in control, disabled-login message, and success redirect restored; social visual audit remains",
+    "status": "partial - legacy username/email sign-in form, Stay signed in control, disabled-login message, success redirect, and social visual parity restored",
     "legacyTablesMentioned": [
       "login_integration",
       "login_settings"
@@ -18325,7 +18325,7 @@
       "token",
       "username"
     ],
-    "verification": "`/login` now accepts the legacy username-or-email credential shape, shows the legacy disabled-logins message when migrated settings block credential auth, restores the Stay signed in checkbox and sends the `remember` flag into the credentials flow, links failed restricted/disabled legacy identities to `/disabled.php`, keeps the existing forgot-password and signup flows, honors migrated sign-in redirect settings after successful credentials auth, and relies on the restored `classes/login.class.php` server behavior for password validation and login audit. Remaining work is exact browser-close cookie semantics for zero-minute sessions, legacy social button/runtime behavior, and CSRF/token visual parity beyond Auth.js protection."
+    "verification": "`/login` now accepts the legacy username-or-email credential shape, shows the legacy disabled-logins message when migrated settings block credential auth, restores the Stay signed in checkbox and sends the `remember` flag into the credentials flow, links failed restricted/disabled legacy identities to `/disabled.php`, keeps the existing forgot-password and signup flows, honors migrated sign-in redirect settings after successful credentials auth, and relies on the restored `classes/login.class.php` server behavior for password validation and login audit. The page now also mirrors the legacy `$jigowatt_integration->enabledMethods` visual surface by reading migrated `integration-facebook-enable`, `integration-google-enable`, `integration-twitter-enable`, and `integration-yahoo-enable` settings and rendering enabled social provider buttons that preserve the old `/login?login=<provider>` link shape. Remaining work is exact browser-close cookie semantics for zero-minute sessions, active social/OAuth runtime behavior, and CSRF/token visual parity beyond Auth.js protection. Verified by `src/scripts/verify-legacy-login-social-visual-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/logout.php",
