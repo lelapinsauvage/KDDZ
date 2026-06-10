@@ -64,6 +64,16 @@ for (const source of [legacy.dailyJs, legacy.absenceJs]) {
 }
 assert.match(legacy.dailyJs, /AddAttToDaily/);
 assert.match(legacy.dailyJs, /images\/RepDocs/);
+assert.match(legacy.dailyJs, /function generateattachment\(\)/);
+assert.match(legacy.dailyJs, /src="\.\/images\/RepDocs\/default\.jpg"/);
+assert.match(legacy.dailyJs, /placeholder="Image Title"/);
+assert.match(legacy.dailyJs, /function sel_generateattachment\(\)/);
+assert.match(legacy.dailyJs, /sel_attachment_values\[i\]\.att_title/);
+assert.match(legacy.dailyJs, /sel_attachment_values\[i\]\.rattid/);
+assert.match(legacy.dailyJs, /function getAttValues\(\)/);
+assert.match(legacy.dailyJs, /attachment_values\.push\(\{ ProfileDoc: profileDoc, Attachment_title: attachment_title, Check_id: check_id\}\)/);
+assert.match(legacy.dailyJs, /function deleteattachment\(oc\)/);
+assert.match(legacy.dailyJs, /function deleteEletattachment\(\)/);
 assert.match(legacy.absenceJs, /AddAttToAbsent/);
 assert.match(legacy.absenceJs, /images\/AbsDocs/);
 
@@ -104,6 +114,7 @@ assert.match(modern.dailyImporter, /interface OldDailyAttachment \{[\s\S]*rattid
 assert.match(modern.dailyImporter, /att_title: string/);
 assert.match(modern.dailyImporter, /url: string/);
 assert.match(modern.dailyImporter, /formid: string/);
+assert.match(modern.dailyImporter, /att_title\s*→ filename/);
 assert.match(modern.dailyImporter, /SELECT \* FROM t_daily_attachments WHERE active = 1/);
 assert.match(modern.dailyImporter, /legacyKey\(sourceDatabase, "t_daily_attachments", legacyId\)/);
 assert.match(modern.dailyImporter, /legacyDailyReportId/);
@@ -128,9 +139,17 @@ assert.match(modern.absenceImporter, /Absence Attachments: \$\{attCount\} migrat
 assert.match(modern.dailyForm, /scope: "daily-report"/);
 assert.match(modern.dailyForm, /removeAttachmentIds/);
 assert.match(modern.dailyForm, /href=\{attachment\.fileUrl\}/);
+assert.match(modern.dailyForm, /visibleExistingAttachments/);
+assert.match(modern.dailyForm, /setRemovedAttachmentIds/);
+assert.match(modern.dailyForm, /\{attachment\.filename\}/);
+assert.match(modern.dailyForm, /attachmentsArray\.append\(\{ title: "", fileName: file\?\.name \?\? "" \}\)/);
+assert.match(modern.dailyForm, /\.\.\.register\(`attachments\.\$\{index\}\.title`\)/);
+assert.match(modern.dailyForm, /setAttachmentFile\(index, file\)/);
+assert.match(modern.dailyForm, /uploadedAttachments\.push\(\{\s*title: \(data\.attachments \?\? \[\]\)\[index\]\?\.title,\s*fileName: file\.name,\s*fileUrl: uploaded\.publicUrl,\s*\}\)/);
 assert.match(modern.dailyActions, /dailyAttachmentCreates/);
 assert.match(modern.dailyActions, /removeAttachmentIds/);
 assert.match(modern.dailyActions, /attachments: true/);
+assert.match(modern.dailyActions, /title\?\.\s*trim\(\)\s*\|\|\s*attachment\.fileName\?\.\s*trim\(\)\s*\|\|\s*"attachment"/);
 assert.match(modern.dailyDetail, /report\.attachments\.map/);
 assert.match(modern.dailyDetail, /href=\{attachment\.fileUrl\}/);
 
@@ -210,5 +229,7 @@ const dailyRow = pageMatrix.find((entry) =>
   entry.modernRoute?.startsWith("/dailyreport.php"),
 );
 assert.doesNotMatch(dailyRow?.status ?? "", /attachments\/layout audit remains/);
+assert.doesNotMatch(dailyRow?.verification ?? "", /attachments audit against `dailyreport\.js`/);
+assert.match(dailyRow?.verification ?? "", /`dailyreport\.js` attachment workflow audit/);
 
 console.log("legacy report attachment import assertions passed");
