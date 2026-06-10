@@ -12,6 +12,7 @@ const files = {
   legacyBranch: "src/lib/legacy-branch.ts",
   exportButton: "src/components/shared/export-button.tsx",
   matrix: "docs/page-parity-matrix.json",
+  matrixMd: "docs/page-parity-matrix.md",
 };
 
 const contents = Object.fromEntries(
@@ -84,6 +85,23 @@ assert.match(
 assert.match(
   contents.matrix,
   /Medical_forms5b\.php[\s\S]*verify-legacy-branch-accident-tabletools-contract\.ts/,
+);
+
+assert.match(
+  contents.matrixMd,
+  /Medical_forms5b\.php \| Front\/templates\/admin\/js\/Medical_forms5b\.js \| \/Medical_forms5b\.php, \/medical\/accidents\?branch= \| restored - legacy branch accident report bridge, locked listing, TableTools export, and print restored/,
+);
+assert.match(
+  contents.matrixMd,
+  /Medical_forms5b\.php[\s\S]*Copy\/PDF\/Excel\/CSV export and print action/,
+);
+assert.match(
+  contents.matrixMd,
+  /Medical_forms5b\.php[\s\S]*verify-legacy-branch-accident-tabletools-contract\.ts/,
+);
+assert.doesNotMatch(
+  contents.matrixMd,
+  /Medical_forms5b\.php[^\n]*visual export audit remains/,
 );
 
 console.log("legacy branch accident TableTools contract assertions passed");
