@@ -136,17 +136,26 @@ type MatrixRow = {
 const matrix = JSON.parse(text.matrixJson) as MatrixRow[];
 const row = matrix.find((entry) => entry.legacyPhp === "Front/templates/admin/nurseryinfo.php");
 assert.ok(row, "nurseryinfo.php matrix row should exist");
-assert.match(row.status ?? "", /visual smoke restored/);
+assert.equal(
+  row.status,
+  "restored - government compliance workflow, legacy branch bridge, Upnurseryinfo guard, storage upload path, and visual smoke restored",
+);
 assert.match(row.verification ?? "", /Browser smoke confirmed/);
 assert.match(row.verification ?? "", /Government Compliance/);
 assert.match(row.verification ?? "", /Operational Settings/);
+assert.match(row.verification ?? "", /storage-provider-backed upload route/);
 assert.doesNotMatch(row.verification ?? "", /exact legacy visual\/finalization audit/);
+assert.doesNotMatch(row.verification ?? "", /Remaining work is final production data\/provider acceptance/);
 
 const mdRow = text.matrixMd
   .split("\n")
   .find((line) => line.includes("| Front/templates/admin/nurseryinfo.php |")) ?? "";
-assert.match(mdRow, /visual smoke restored/);
+assert.match(
+  mdRow,
+  /restored - government compliance workflow, legacy branch bridge, Upnurseryinfo guard, storage upload path, and visual smoke restored/,
+);
 assert.match(mdRow, /verify-legacy-nursery-info-visual-contract\.ts/);
 assert.doesNotMatch(mdRow, /exact legacy visual\/finalization audit/);
+assert.doesNotMatch(mdRow, /Remaining work is final production data\/provider acceptance/);
 
 console.log("legacy nursery info visual contract assertions passed");
