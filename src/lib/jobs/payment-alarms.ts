@@ -22,6 +22,7 @@ export interface PaymentGenerationSummary {
   beforeAlarmsCreated: number;
   afterAlarmsCreated: number;
   receiptsCreated: number;
+  paymentRemindersMarkedSent: number;
   parentRecipientsMatched: number;
   skippedExisting: number;
   skippedDisabledBranches: number;
@@ -188,6 +189,7 @@ function emptySummary(): PaymentGenerationSummary {
     beforeAlarmsCreated: 0,
     afterAlarmsCreated: 0,
     receiptsCreated: 0,
+    paymentRemindersMarkedSent: 0,
     parentRecipientsMatched: 0,
     skippedExisting: 0,
     skippedDisabledBranches: 0,
@@ -424,6 +426,49 @@ async function storePaymentParentPushAudit(params: {
       },
     },
   });
+}
+
+async function markPaymentRemindersSent(params: {
+  reminderIds: string[];
+  alarmId: string;
+  legacyNotificationId: number;
+  candidateKey: string;
+  legacyMethod: string;
+}) {
+  if (params.reminderIds.length === 0) return 0;
+
+  const reminders = await db.paymentReminder.findMany({
+    where: {
+      id: { in: params.reminderIds },
+      sent: false,
+    },
+    select: { id: true, legacyData: true },
+  });
+  if (reminders.length === 0) return 0;
+
+  const markedAt = new Date().toISOString();
+  await Promise.all(
+    reminders.map((reminder) =>
+      db.paymentReminder.update({
+        where: { id: reminder.id },
+        data: {
+          sent: true,
+          legacyData: {
+            ...(asRecord(reminder.legacyData) ?? {}),
+            sentByPaymentAlarm: {
+              alarmId: params.alarmId,
+              legacyNotificationId: params.legacyNotificationId,
+              candidateKey: params.candidateKey,
+              legacyMethod: params.legacyMethod,
+              markedAt,
+            },
+          },
+        },
+      }),
+    ),
+  );
+
+  return reminders.length;
 }
 
 export async function generatePaymentAlarmsForOrganization(params: {
@@ -898,6 +943,16 @@ export async function generatePaymentAlarmsForOrganization(params: {
         legacyData: alarm.legacyData,
       });
       incrementCreated(summary, candidate.alarmType);
+    }
+
+    if (alarmId && candidate.alarmType === "Paid") {
+      summary.paymentRemindersMarkedSent += await markPaymentRemindersSent({
+        reminderIds: candidate.reminderIds,
+        alarmId,
+        legacyNotificationId,
+        candidateKey: key,
+        legacyMethod: candidate.legacyMethod,
+      });
     }
 
     if (!alarmId || candidate.parentRecipients.length === 0) continue;

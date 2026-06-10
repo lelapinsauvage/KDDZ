@@ -25,6 +25,7 @@ function emptySummary(): PaymentGenerationSummary {
     beforeAlarmsCreated: 0,
     afterAlarmsCreated: 0,
     receiptsCreated: 0,
+    paymentRemindersMarkedSent: 0,
     parentRecipientsMatched: 0,
     skippedExisting: 0,
     skippedDisabledBranches: 0,
@@ -48,6 +49,7 @@ function addSummary(
   total.beforeAlarmsCreated += next.beforeAlarmsCreated;
   total.afterAlarmsCreated += next.afterAlarmsCreated;
   total.receiptsCreated += next.receiptsCreated;
+  total.paymentRemindersMarkedSent += next.paymentRemindersMarkedSent;
   total.parentRecipientsMatched += next.parentRecipientsMatched;
   total.skippedExisting += next.skippedExisting;
   total.skippedDisabledBranches += next.skippedDisabledBranches;

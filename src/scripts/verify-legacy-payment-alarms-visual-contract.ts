@@ -86,6 +86,8 @@ assert.match(text.paymentJob, /deliverPushNotification/);
 assert.match(text.paymentJob, /pushDeliveryAuditData/);
 assert.match(text.paymentJob, /parentPushDelivery/);
 assert.match(text.paymentJob, /recipientParentUserIds: params\.parentUserIds/);
+assert.match(text.paymentJob, /markPaymentRemindersSent/);
+assert.match(text.paymentJob, /sentByPaymentAlarm/);
 
 type MatrixRow = {
   legacyPhp?: string;
@@ -110,6 +112,8 @@ assert.match(row.verification ?? "", /Dashboard and Notifications tabs/);
 assert.match(row.verification ?? "", /Sent Payment Alarms/);
 assert.match(row.verification ?? "", /provider-neutral parent push delivery/);
 assert.match(row.verification ?? "", /parentPushDelivery/);
+assert.match(row.verification ?? "", /PaymentReminder\.sent/);
+assert.doesNotMatch(row.verification ?? "", /final sent-state semantics/);
 assert.match(row.verification ?? "", /no broken images or app errors/);
 
 const markdownRow = text.markdownMatrix
@@ -118,10 +122,15 @@ const markdownRow = text.markdownMatrix
 assert.match(markdownRow ?? "", /browser visual audit restored/);
 assert.match(markdownRow ?? "", /Browser smoke confirmed `\/alarmsPayments\.php`/);
 assert.match(markdownRow ?? "", /provider-neutral parent push delivery/);
+assert.match(markdownRow ?? "", /PaymentReminder\.sent/);
 
 assert.match(
   text.topGaps,
   /Payment alarms now audit provider-neutral parent push delivery on generated payment reminders/,
+);
+assert.match(
+  text.topGaps,
+  /paid `PaymentReminder\.sent` finalization/,
 );
 
 console.log("legacy payment alarms visual contract assertions passed");

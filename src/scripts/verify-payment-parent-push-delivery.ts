@@ -110,6 +110,7 @@ async function main() {
     assert.equal(firstRun.remindersMatched, 1);
     assert.equal(firstRun.paidAlarmsCreated, 1);
     assert.equal(firstRun.receiptsCreated, 1);
+    assert.equal(firstRun.paymentRemindersMarkedSent, 1);
     assert.equal(firstRun.parentRecipientsMatched, 1);
 
     const alarm = await db.alarm.findFirst({
@@ -145,13 +146,26 @@ async function main() {
     assert.equal(parentPushDelivery.attemptedCount, 0);
     assert.equal(parentPushDelivery.skippedCount, 1);
 
+    const sentReminder = await db.paymentReminder.findUnique({
+      where: { id: reminder.id },
+      select: { sent: true, legacyData: true },
+    });
+    assert.equal(sentReminder?.sent, true);
+    const sentAudit = asRecord(asRecord(sentReminder?.legacyData).sentByPaymentAlarm);
+    assert.equal(sentAudit.alarmId, alarm.id);
+    assert.equal(sentAudit.legacyNotificationId, legacyNotificationId);
+    assert.equal(sentAudit.legacyMethod, "Data::AlarmsPaidPayments");
+
     const secondRun = await generatePaymentAlarmsForOrganization({
       organizationId: organization.id,
       now: today,
     });
+    assert.equal(secondRun.reminderGroupsMatched, 0);
+    assert.equal(secondRun.remindersMatched, 0);
     assert.equal(secondRun.paidAlarmsCreated, 0);
     assert.equal(secondRun.receiptsCreated, 0);
-    assert.equal(secondRun.skippedExisting, 1);
+    assert.equal(secondRun.paymentRemindersMarkedSent, 0);
+    assert.equal(secondRun.skippedExisting, 0);
 
     console.log("payment parent push delivery assertions passed");
   } finally {
