@@ -56,6 +56,7 @@ const requiredReferences = [
   "docs/production-cutover-runbook.md",
   "src/scripts/migration/README.md",
   "src/scripts/audit-production-readiness.ts",
+  "src/scripts/verify-production-readiness-audit-contract.ts",
   "src/scripts/verify-parent-credentialed-native-e2e.ts",
   "src/scripts/verify-legacy-calls-contract.ts",
   "src/scripts/migration/reconcile-migration-counts.ts",
@@ -139,10 +140,13 @@ const readinessAudit = readFileSync("src/scripts/audit-production-readiness.ts",
 assert.match(readinessAudit, /No environment values/);
 assert.match(readinessAudit, /--out/);
 assert.match(readinessAudit, /--list-requirements/);
+assert.match(readFileSync("src/scripts/verify-production-readiness-audit-contract.ts", "utf8"), /assertNoSensitiveOutput/);
 assert.match(contents.gates, /--out=<path>/);
 assert.match(contents.gates, /--list-requirements/);
+assert.match(contents.gates, /verify-production-readiness-audit-contract\.ts/);
 assert.match(contents.cutoverRunbook, /--out=\/tmp\/kiddzonl-production-readiness\.json/);
 assert.match(contents.cutoverRunbook, /--list-requirements/);
+assert.match(contents.cutoverRunbook, /verify-production-readiness-audit-contract\.ts/);
 
 console.log("production acceptance gates contract assertions passed");
 

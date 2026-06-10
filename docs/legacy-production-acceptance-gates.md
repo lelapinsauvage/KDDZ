@@ -32,6 +32,7 @@ Run these commands as part of production acceptance and paste only the non-sensi
 ```bash
 pnpm tsx src/scripts/audit-production-readiness.ts --list-requirements
 pnpm tsx src/scripts/audit-production-readiness.ts --out=/tmp/kiddzonl-production-readiness.json
+pnpm tsx src/scripts/verify-production-readiness-audit-contract.ts
 pnpm tsx src/scripts/verify-parent-credentialed-native-e2e.ts
 pnpm tsx src/scripts/verify-legacy-calls-contract.ts
 pnpm tsx src/scripts/migration/reconcile-migration-counts.ts --help
