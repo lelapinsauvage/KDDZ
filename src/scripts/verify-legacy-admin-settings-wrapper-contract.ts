@@ -3,13 +3,21 @@ import { readFileSync } from "node:fs";
 import { legacyAdminSettingsRedirect } from "@/lib/legacy-admin-settings-redirect";
 
 const files = {
+  legacyAdminIndex:
+    "/Users/karimsaab/Desktop/Garderie Project/Garderie-old-backup/Front/templates/admin/users/admin/index.php",
   legacySettings:
     "/Users/karimsaab/Desktop/Garderie Project/Garderie-old-backup/Front/templates/admin/users/admin/settings.php",
   legacyPageSettings:
     "/Users/karimsaab/Desktop/Garderie Project/Garderie-old-backup/Front/templates/admin/users/admin/page/settings.php",
   redirect: "src/lib/legacy-admin-settings-redirect.ts",
+  indexBridge: "src/app/(app)/users/admin/index.php/page.tsx",
   rootBridge: "src/app/(app)/users/admin/settings.php/page.tsx",
   pageBridge: "src/app/(app)/users/admin/page/settings.php/page.tsx",
+  userControlBridge: "src/app/(app)/users/admin/page/user-control.php/page.tsx",
+  levelControlBridge:
+    "src/app/(app)/users/admin/page/level-control.php/page.tsx",
+  reportsBridge: "src/app/(app)/users/admin/page/reports.php/page.tsx",
+  sendEmailBridge: "src/app/(app)/users/admin/page/send-email.php/page.tsx",
   matrix: "docs/page-parity-matrix.json",
   markdownMatrix: "docs/page-parity-matrix.md",
 };
@@ -40,6 +48,21 @@ const legacyShellTabs = [
   "update",
 ];
 
+const legacyAdminIndexTabs = [
+  "user-control",
+  "level-control",
+  "reports",
+  "send-email",
+];
+
+assert.match(text.legacyAdminIndex, /protect\("Admin"\)/);
+assert.match(text.legacyAdminIndex, /tabbable tabs-left/);
+for (const tab of legacyAdminIndexTabs) {
+  assert.match(text.legacyAdminIndex, new RegExp(`#${tab}`));
+}
+assert.match(text.legacyAdminIndex, /href="settings\.php"/);
+assert.match(text.legacyAdminIndex, /include_once\('page\/user-control\.php'\)/);
+
 assert.match(text.legacySettings, /protect\("Admin"\)/);
 assert.match(text.legacySettings, /<div id="message"><\/div>/);
 assert.match(text.legacySettings, /tabbable tabs-left/);
@@ -54,6 +77,11 @@ assert.match(text.legacyPageSettings, /settings\.class\.php/);
 
 assert.match(text.rootBridge, /legacyAdminSettingsRedirect/);
 assert.match(text.pageBridge, /legacyAdminSettingsRedirect/);
+assert.match(text.indexBridge, /redirect\("\/settings\/legacy-users"\)/);
+assert.match(text.userControlBridge, /redirect\(`\/settings\/legacy-users\$\{suffix\}`\)/);
+assert.match(text.levelControlBridge, /redirect\("\/settings\/access-control"\)/);
+assert.match(text.reportsBridge, /redirect\("\/settings\/legacy-users\/reports"\)/);
+assert.match(text.sendEmailBridge, /redirect\("\/settings\/notifications\?tab=bulk"\)/);
 assert.match(text.rootBridge, /redirect\(legacyAdminSettingsRedirect\(await searchParams\)\)/);
 assert.match(text.pageBridge, /redirect\(legacyAdminSettingsRedirect\(await searchParams\)\)/);
 
@@ -116,6 +144,18 @@ for (const row of rows) {
   assert.doesNotMatch(row.verification ?? "", /Remaining work is exact old admin settings shell composition/);
 }
 
+const indexRow = matrix.find(
+  (row) => row.legacyPhp === "Front/templates/admin/users/admin/index.php",
+);
+assert.ok(indexRow);
+assert.match(
+  indexRow.status ?? "",
+  /restored - legacy admin hub tab composition and bridges restored/,
+);
+assert.match(indexRow.verification ?? "", /Users, Levels, Reports, Send email, and Settings/);
+assert.match(indexRow.verification ?? "", /verify-legacy-admin-settings-wrapper-contract\.ts/);
+assert.doesNotMatch(indexRow.verification ?? "", /settings composition remains/);
+
 const markdownRows = text.markdownMatrix
   .split("\n")
   .filter(
@@ -131,5 +171,17 @@ for (const row of markdownRows) {
   );
   assert.doesNotMatch(row, /Remaining work is exact old admin settings shell composition/);
 }
+
+const markdownIndexRows = text.markdownMatrix
+  .split("\n")
+  .filter((line) =>
+    line.includes("| Front/templates/admin/users/admin/index.php |"),
+  );
+assert.equal(markdownIndexRows.length, 1);
+assert.match(
+  markdownIndexRows[0],
+  /restored - legacy admin hub tab composition and bridges restored/,
+);
+assert.doesNotMatch(markdownIndexRows[0], /settings composition remains/);
 
 console.log("legacy admin settings wrapper contract assertions passed");

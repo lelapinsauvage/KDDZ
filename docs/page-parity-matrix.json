@@ -16903,8 +16903,8 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/index.php",
     "legacyJs": "Front/templates/admin/js/index.js",
-    "modernRoute": "/users/admin/index.php, /settings/access-control, /settings/legacy-users, /settings/legacy-users/reports",
-    "status": "partial - legacy level/user/reports admin surfaces restored; settings composition remains",
+    "modernRoute": "/users/admin/index.php, /users/admin/page/user-control.php, /users/admin/page/level-control.php, /users/admin/page/reports.php, /users/admin/page/send-email.php, /users/admin/settings.php, /settings/legacy-users, /settings/access-control, /settings/legacy-users/reports, /settings/notifications?tab=bulk, /settings/legacy-auth",
+    "status": "restored - legacy admin hub tab composition and bridges restored",
     "legacyTablesMentioned": [
       "login_levels",
       "login_levels_man",
@@ -16917,7 +16917,7 @@
       "add_user",
       "searchUsers"
     ],
-    "verification": "Legacy admin level creation/editing/action grants now live in `/settings/access-control`, admin user roster/create/edit/delete lives in `/settings/legacy-users`, and the old Reports tab now lives in `/settings/legacy-users/reports`. `/users/admin/index.php` bridges to the restored user admin surface. Remaining work is exact old dashboard tab composition and any settings/profile wrapper polish not covered by direct modern routes."
+    "verification": "Legacy `users/admin/index.php` is restored as a protected admin hub bridge: the archived tabs-left shell exposes Users, Levels, Reports, Send email, and Settings; `/users/admin/index.php` opens the restored user-control surface; `/users/admin/page/user-control.php` preserves search into `/settings/legacy-users`; `/users/admin/page/level-control.php` opens `/settings/access-control`; `/users/admin/page/reports.php` opens `/settings/legacy-users/reports`; `/users/admin/page/send-email.php` opens `/settings/notifications?tab=bulk`; and `/users/admin/settings.php` plus `/users/admin/page/settings.php` preserve all settings-wrapper tab aliases into their restored modern destinations. Verified against the archived legacy index/settings shells, bridge files, redirect mapper, and parity rows by `src/scripts/verify-legacy-admin-settings-wrapper-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/levels.php",
@@ -17180,7 +17180,7 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/level-control.php",
     "legacyJs": "",
-    "modernRoute": "/settings/access-control",
+    "modernRoute": "/users/admin/page/level-control.php, /settings/access-control",
     "status": "partial - legacy level action matrix restored; PAGE filtering and active ACTION enforcement restored",
     "legacyTablesMentioned": [
       "actions_control",
@@ -17193,7 +17193,7 @@
     "requestFieldsMentioned": [
       "LEVELS"
     ],
-    "verification": "`/settings/access-control` replaces the legacy `Modify levels` admin surface with source-database grouped staff/manager level tables, selected-level checkboxes, searchable action grants, select-all/clear controls, and batch save through `updateLegacyAccessControlLevels`. `EditSchoolFromTo` now uses those grants for active enforcement when migrated ACL data is present; left-menu PAGE grants filter desktop/mobile navigation and deny direct guarded route hits through `/forbidden.php`; non-left-menu deep PAGE guards now cover branch/class/child dashboards, child accounting/calls/absence/accident/attendance, individual call/medical/assessment forms, message class compose, nursery compliance, and invoice/daily/absence detail bridges. Child, class, branch, and teacher add/update/delete ACTION grants now protect roster controls, direct form entry, and write mutations; nursery `Upnurseryinfo` protects nursery/compliance saves and compliance-document uploads; holiday `AddEditHolidays` protects holiday create/update/delete controls and writes; food calendar `AddFoodToCalendar`, `EditFoodCalendar`, and `FoodAllBranches` protect blank-day create, existing-day edit/clear, and all-branch apply writes; and `manageSystem` protects the header Admin Panel link plus restored legacy admin settings pages/actions. Remaining work is deciding whether to hydrate grant snapshots into sessions and auditing any missed legacy edge ACTION guards during final QA."
+    "verification": "`/users/admin/page/level-control.php` redirects to `/settings/access-control`; `/settings/access-control` replaces the legacy `Modify levels` admin surface with source-database grouped staff/manager level tables, selected-level checkboxes, searchable action grants, select-all/clear controls, and batch save through `updateLegacyAccessControlLevels`. `EditSchoolFromTo` now uses those grants for active enforcement when migrated ACL data is present; left-menu PAGE grants filter desktop/mobile navigation and deny direct guarded route hits through `/forbidden.php`; non-left-menu deep PAGE guards now cover branch/class/child dashboards, child accounting/calls/absence/accident/attendance, individual call/medical/assessment forms, message class compose, nursery compliance, and invoice/daily/absence detail bridges. Child, class, branch, and teacher add/update/delete ACTION grants now protect roster controls, direct form entry, and write mutations; nursery `Upnurseryinfo` protects nursery/compliance saves and compliance-document uploads; holiday `AddEditHolidays` protects holiday create/update/delete controls and writes; food calendar `AddFoodToCalendar`, `EditFoodCalendar`, and `FoodAllBranches` protect blank-day create, existing-day edit/clear, and all-branch apply writes; and `manageSystem` protects the header Admin Panel link plus restored legacy admin settings pages/actions. Remaining work is deciding whether to hydrate grant snapshots into sessions and auditing any missed legacy edge ACTION guards during final QA."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/level-create.php",
@@ -17242,11 +17242,11 @@
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/send-email.php",
     "legacyJs": "",
-    "modernRoute": "/settings/notifications",
+    "modernRoute": "/users/admin/page/send-email.php, /settings/notifications?tab=bulk",
     "status": "partial - legacy level-targeted bulk send form and BCC provider delivery restored; credential rollout remains",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "/settings/notifications now includes a Bulk Email tab matching the legacy Send email form: legacy login levels are loaded from migrated `login_levels` and `login_levels_man` metadata, disabled levels are blocked, subject/message fields are required, selected groups are deduped, restored `login_users` / `login_users_man` level payloads are used for exact targeting when available, and modern dispatch creates in-app `BULK_EMAIL` notifications plus external email delivery attempts. The delivery helper uses BCC mode for legacy privacy, reports skipped sends when no provider is configured, and supports Resend or an email webhook through environment variables; remaining work is production credential rollout and final provider audit. The Bulk Email tab now loads the full migrated login level set instead of sampling the first 200 levels."
+    "verification": "`/users/admin/page/send-email.php` redirects to the restored Bulk Email tab. /settings/notifications now includes a Bulk Email tab matching the legacy Send email form: legacy login levels are loaded from migrated `login_levels` and `login_levels_man` metadata, disabled levels are blocked, subject/message fields are required, selected groups are deduped, restored `login_users` / `login_users_man` level payloads are used for exact targeting when available, and modern dispatch creates in-app `BULK_EMAIL` notifications plus external email delivery attempts. The delivery helper uses BCC mode for legacy privacy, reports skipped sends when no provider is configured, and supports Resend or an email webhook through environment variables; remaining work is production credential rollout and final provider audit. The Bulk Email tab now loads the full migrated login level set instead of sampling the first 200 levels."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/settings.php",
