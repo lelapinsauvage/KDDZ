@@ -174,6 +174,8 @@ export function AccessControlClient({
   const [levelWelcomeEmail, setLevelWelcomeEmail] = useState(false);
   const [levelDisabled, setLevelDisabled] = useState(false);
   const [levelSaving, setLevelSaving] = useState(false);
+  const [levelDialogMessage, setLevelDialogMessage] =
+    useState<MessageState>(null);
   const [deleteLevelTarget, setDeleteLevelTarget] =
     useState<DeleteLevelTarget>(null);
   const [levelUsersDialog, setLevelUsersDialog] =
@@ -278,6 +280,7 @@ export function AccessControlClient({
     setLevelRedirect("");
     setLevelWelcomeEmail(false);
     setLevelDisabled(false);
+    setLevelDialogMessage(null);
     setLevelDialogOpen(true);
     setMessage(null);
   }
@@ -293,6 +296,7 @@ export function AccessControlClient({
     setLevelRedirect(level.redirect ?? "");
     setLevelWelcomeEmail(level.welcomeEmail);
     setLevelDisabled(level.isDisabled);
+    setLevelDialogMessage(null);
     setLevelDialogOpen(true);
     setMessage(null);
   }
@@ -351,6 +355,10 @@ export function AccessControlClient({
     setLevelDialogOpen(false);
   }
 
+  function showLevelDialogMessage(nextMessage: NonNullable<MessageState>) {
+    setLevelDialogMessage(nextMessage);
+  }
+
   function saveLevel() {
     const group = groups.find((candidate) => candidate.key === levelDialogGroupKey);
     const trimmedName = levelName.trim();
@@ -360,12 +368,16 @@ export function AccessControlClient({
       return;
     }
     if (!trimmedName) {
-      setMessage({ type: "error", text: "You must enter a level name." });
+      showLevelDialogMessage({
+        type: "error",
+        text: "You must enter a level name.",
+      });
       return;
     }
 
     setLevelSaving(true);
     setMessage(null);
+    setLevelDialogMessage(null);
 
     startTransition(() => {
       void (async () => {
@@ -416,23 +428,32 @@ export function AccessControlClient({
                 return { ...candidate, levels: nextLevels };
               }),
             );
-            setLevelDialogOpen(false);
-            setMessage({
-              type: "success",
-              text:
-                levelDialogMode === "create"
-                  ? `Successfully added level ${trimmedName} to the database.`
-                  : `Information updated for level ${trimmedName}.`,
-            });
+            if (levelDialogMode === "create") {
+              setLevelName("");
+              setLevelRedirect("");
+              showLevelDialogMessage({
+                type: "success",
+                text: `Successfully added level ${trimmedName} to the database.`,
+              });
+            } else {
+              setLevelDialogOpen(false);
+              setMessage({
+                type: "success",
+                text: `Information updated for level ${trimmedName}.`,
+              });
+            }
           } else {
-            setMessage({
+            showLevelDialogMessage({
               type: "error",
               text: result.error ?? "Failed to save level",
             });
           }
         } catch (error) {
           console.error("Failed to save level:", error);
-          setMessage({ type: "error", text: "Failed to save level" });
+          showLevelDialogMessage({
+            type: "error",
+            text: "Failed to save level",
+          });
         } finally {
           setLevelSaving(false);
         }
@@ -881,6 +902,32 @@ export function AccessControlClient({
             </DialogTitle>
           </DialogHeader>
           <div className="grid gap-4">
+            <div
+              id="level-message"
+              aria-live="polite"
+              className="overflow-hidden"
+              style={{
+                marginBottom: levelDialogMessage ? 4 : 0,
+                maxHeight: levelDialogMessage ? 96 : 0,
+                opacity: levelDialogMessage ? 1 : 0,
+                transition:
+                  "max-height 300ms ease-out, opacity 300ms ease-out, margin-bottom 300ms ease-out",
+              }}
+            >
+              {levelDialogMessage ? (
+                <div
+                  role={levelDialogMessage.type === "error" ? "alert" : "status"}
+                  className={cn(
+                    "rounded-sm border px-3 py-2 text-sm font-medium",
+                    levelDialogMessage.type === "success"
+                      ? "border-[#bbf7d0] bg-[#f0fdf4] text-[#166534]"
+                      : "border-[#fecaca] bg-[#fef2f2] text-[#991b1b]",
+                  )}
+                >
+                  {levelDialogMessage.text}
+                </div>
+              ) : null}
+            </div>
             <div className="grid gap-2">
               <Label htmlFor="legacy-level-name">Name</Label>
               <Input
