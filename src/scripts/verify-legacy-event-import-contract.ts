@@ -27,6 +27,7 @@ const modern = {
     "utf8",
   ),
   eventsPage: readFileSync("src/app/(app)/settings/events/page.tsx", "utf8"),
+  notifBridge: readFileSync("src/app/(app)/NotifCalendar.php/page.tsx", "utf8"),
   eventsClient: readFileSync(
     "src/app/(app)/settings/events/events-client.tsx",
     "utf8",
@@ -47,6 +48,7 @@ const modern = {
   ),
   databaseMatrix: readFileSync("docs/database-mapping-matrix.md", "utf8"),
   pageMatrix: readFileSync("docs/page-parity-matrix.json", "utf8"),
+  pageMatrixMd: readFileSync("docs/page-parity-matrix.md", "utf8"),
 };
 
 function modelBlock(schema: string, model: string) {
@@ -224,6 +226,9 @@ assert.match(modern.parentNotificationsApi, /eventMatchesChildBranch/);
 assert.match(modern.parentDeliveryVerifier, /custom_notifications_events_parents/);
 assert.match(modern.parentDeliveryVerifier, /notifications_master\.php/);
 
+assert.match(modern.notifBridge, /redirect\(`\/settings\/events/);
+assert.match(modern.notifBridge, /target\.set\("legacyEvent", id\.trim\(\)\)/);
+
 const eventRows = modern.databaseMatrix
   .split("\n")
   .filter((line) => line.includes("| t_events |"));
@@ -259,5 +264,22 @@ assert.match(eventsRow.verification ?? "", /verify-legacy-event-import-contract\
 assert.match(eventsRow.verification ?? "", /sourceDatabase, legacyKey\/id/);
 assert.match(eventsRow.verification ?? "", /notification branch ids/);
 assert.match(eventsRow.verification ?? "", /1-10 day reminder offsets/);
+
+assert.match(
+  modern.pageMatrixMd,
+  /NotifCalendar\.php \| Front\/templates\/admin\/js\/NotifCalendar\.js \| \/NotifCalendar\.php, \/settings\/events \| partial - legacy event notification bridge and fields restored/,
+);
+assert.match(
+  modern.pageMatrixMd,
+  /NotifCalendar\.php[\s\S]*custom subject\/body, multi-branch notification targeting, 1-10 day reminder offsets/,
+);
+assert.match(
+  modern.pageMatrixMd,
+  /NotifCalendar\.php[\s\S]*verify-legacy-event-import-contract\.ts/,
+);
+assert.match(
+  modern.pageMatrixMd,
+  /NotifCalendar\.php[\s\S]*legacy event id as query context/,
+);
 
 console.log("legacy event import assertions passed");
