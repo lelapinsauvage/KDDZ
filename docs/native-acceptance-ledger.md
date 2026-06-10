@@ -37,6 +37,8 @@ Known limits:
 
 Remaining native acceptance gates:
 
+These native gates roll up into `docs/legacy-production-acceptance-gates.md`; keep this ledger for non-sensitive local/native evidence and use the production gate register for final closure.
+
 1. Run the legacy iOS build against the modern deployment using the restored `master.php` and literal `/ws/*.php` URLs.
 2. Run the legacy Android build against the same deployment and confirm the active parent screens parse without crashes.
 3. Register real device push tokens and send Mobile-flagged direct, class, bulk, reply, and alarm messages through configured OneSignal/webhook credentials.

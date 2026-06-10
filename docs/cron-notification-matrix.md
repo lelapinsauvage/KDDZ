@@ -56,6 +56,8 @@ Historical rows from `t_alarms*`, `custom_notifications*`, `notifications_tokens
 
 ## Cutover Gates
 
+The production scheduler/provider cutover is also tracked in `docs/legacy-production-acceptance-gates.md`; the cron gates below must close there before the remaining partial rows can become complete.
+
 1. Recover production crontab entries, timezone, URL parameters, and `gid` coverage.
 2. Recover or retire the missing `../cronjob/functions.php` and `../cronjob/messages.php` helpers referenced by `cronjob.php`.
 3. Confirm which commented daily cron blocks were actually enabled in production.
