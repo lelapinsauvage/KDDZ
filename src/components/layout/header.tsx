@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useSession, signOut } from "next-auth/react"
 import {
   User,
@@ -26,8 +26,8 @@ import { InboxTray } from "./inbox-tray"
 import { NotificationDropdown } from "./notification-dropdown"
 import { LegacyAlarmBar } from "./legacy-alarm-bar"
 import { GlobalSearch } from "./global-search"
-import { getHeaderData } from "@/lib/actions/header"
 import type {
+  HeaderData,
   HeaderNotification,
   HeaderMessage,
   HeaderAlarm,
@@ -36,35 +36,34 @@ import type {
 
 interface HeaderProps {
   canManageSystem?: boolean
+  initialData?: HeaderData
 }
 
-export function Header({ canManageSystem = false }: HeaderProps) {
+const emptyHeaderData: HeaderData = {
+  alarmCounts: { birthdays: 0, assessments: 0, medical: 0, totalAlarms: 0 },
+  notifications: [],
+  unreadNotificationCount: 0,
+  unreadMessageCount: 0,
+  recentMessages: [],
+  recentAlarms: [],
+  hasCriticalAlarms: false,
+  legacyBadges: [],
+}
+
+export function Header({ canManageSystem = false, initialData = emptyHeaderData }: HeaderProps) {
   const { data: session } = useSession()
   const userName = session?.user?.name || "User"
   const userInitial = userName.charAt(0).toUpperCase()
   const [searchOpen, setSearchOpen] = useState(false)
 
-  const [notifications, setNotifications] = useState<HeaderNotification[]>([])
-  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0)
-  const [unreadMessageCount, setUnreadMessageCount] = useState(0)
-  const [recentMessages, setRecentMessages] = useState<HeaderMessage[]>([])
-  const [alarmCounts, setAlarmCounts] = useState({ birthdays: 0, assessments: 0, medical: 0, totalAlarms: 0 })
-  const [recentAlarms, setRecentAlarms] = useState<HeaderAlarm[]>([])
-  const [hasCriticalAlarms, setHasCriticalAlarms] = useState(false)
-  const [legacyBadges, setLegacyBadges] = useState<HeaderLegacyBadgeFamily[]>([])
-
-  useEffect(() => {
-    getHeaderData().then((data) => {
-      setAlarmCounts(data.alarmCounts)
-      setNotifications(data.notifications)
-      setUnreadNotificationCount(data.unreadNotificationCount)
-      setUnreadMessageCount(data.unreadMessageCount)
-      setRecentMessages(data.recentMessages)
-      setRecentAlarms(data.recentAlarms)
-      setHasCriticalAlarms(data.hasCriticalAlarms)
-      setLegacyBadges(data.legacyBadges)
-    })
-  }, [])
+  const [notifications] = useState<HeaderNotification[]>(initialData.notifications)
+  const [unreadNotificationCount] = useState(initialData.unreadNotificationCount)
+  const [unreadMessageCount] = useState(initialData.unreadMessageCount)
+  const [recentMessages] = useState<HeaderMessage[]>(initialData.recentMessages)
+  const [alarmCounts] = useState(initialData.alarmCounts)
+  const [recentAlarms] = useState<HeaderAlarm[]>(initialData.recentAlarms)
+  const [hasCriticalAlarms] = useState(initialData.hasCriticalAlarms)
+  const [legacyBadges] = useState<HeaderLegacyBadgeFamily[]>(initialData.legacyBadges)
 
   return (
     <header className="header-bar fixed top-0 left-0 right-0 z-50 flex h-14 items-center">

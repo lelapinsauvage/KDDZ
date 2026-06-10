@@ -8,6 +8,7 @@ import { AppContextProvider } from "@/components/providers/app-context-provider"
 import { db } from "@/lib/db"
 import { auth } from "@/lib/auth"
 import { getSidebarBadges } from "@/lib/actions/sidebar"
+import { getHeaderData } from "@/lib/actions/header"
 import {
   getLegacyAccessPermissionMap,
   type LegacyAccessPermissionDecision,
@@ -63,6 +64,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     branches,
     years,
     badges,
+    headerData,
     classes,
     notificationGates,
     legacyPagePermissions,
@@ -83,6 +85,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         })
       : [],
     getSidebarBadges(),
+    getHeaderData(),
     orgId
       ? db.class.findMany({
           where: { isActive: true, branch: { organizationId: orgId } },
@@ -135,7 +138,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         }
       >
         {/* Fixed header spanning full width */}
-        <Header canManageSystem={legacySystemActionPermissions.canManageSystem} />
+        <Header
+          canManageSystem={legacySystemActionPermissions.canManageSystem}
+          initialData={headerData}
+        />
 
         {/* Sidebar + main content area below header */}
         <AppSidebar
