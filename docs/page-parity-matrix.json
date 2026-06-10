@@ -17289,7 +17289,7 @@
     "legacyPhp": "Front/templates/admin/users/admin/page/user-add.php",
     "legacyJs": "",
     "modernRoute": "/users/admin/page/user-add.php, /settings/legacy-users, /users/admin/classes/add_user.class.php",
-    "status": "partial - legacy add-user form and validators restored in modal",
+    "status": "restored - legacy add-user form, validators, and in-dialog AJAX message lifecycle restored",
     "legacyTablesMentioned": [
       "login_users",
       "login_users_man"
@@ -17302,7 +17302,7 @@
       "password",
       "email"
     ],
-    "verification": "`/settings/legacy-users` exposes the legacy add-user fields as an admin modal with Name, Username, Password, Confirm Password, Email, level/source selection, branch/class access, restricted flag, legacy validation wording, and modern/legacy account persistence. `/users/admin/page/user-add.php` opens the same surface with the create dialog, and `/users/admin/classes/add_user.class.php` restores the old `checkusername`/`checkemail` remote validator responses. Remaining work is exact slide-down old page animation."
+    "verification": "`/settings/legacy-users` exposes the legacy add-user fields as an admin modal with Name, Username, Password, Confirm Password, Email, level/source selection, branch/class access, restricted flag, legacy validation wording, and modern/legacy account persistence. `/users/admin/page/user-add.php` opens the same surface with the create dialog, and `/users/admin/classes/add_user.class.php` restores the old `checkusername`/`checkemail` remote validator responses. The create modal now keeps the legacy `#message` lifecycle: failed client/server validation shows an in-dialog alert, successful creates keep the dialog open, reset the Add user button state, and clear the fields only after success while the message remains in the same transition-ready slot. Browser smoke used temporary migrated login-level metadata to open the dialog and confirmed a mismatched-password validation alert renders in `#message`, the dialog stays open, input values are preserved on failure, and no new browser errors appeared beyond the known PostgreSQL SSL warning; temporary metadata was removed after the smoke. Verified by `src/scripts/verify-legacy-user-add-message-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/user-control.php",

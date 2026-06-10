@@ -477,6 +477,7 @@ export function LegacyUsersClient({
   const [message, setMessage] = useState<MessageState>(
     initialError ? { type: "error", text: initialError } : null,
   );
+  const [dialogMessage, setDialogMessage] = useState<MessageState>(null);
   const [dialogOpen, setDialogOpen] = useState(
     Boolean(initialEditUser) || (initialCreateOpen && initialData.groups.length > 0),
   );
@@ -690,6 +691,7 @@ export function LegacyUsersClient({
     setEditingUser(null);
     setForm(createEmptyForm(group ?? initialData.groups[0] ?? null));
     setMessage(null);
+    setDialogMessage(null);
     setDialogOpen(true);
   }
 
@@ -698,6 +700,7 @@ export function LegacyUsersClient({
     setEditingUser(user);
     setForm(formFromUser(user));
     setMessage(null);
+    setDialogMessage(null);
     setDialogOpen(true);
   }
 
@@ -755,12 +758,16 @@ export function LegacyUsersClient({
     return null;
   }
 
+  function showDialogMessage(nextMessage: NonNullable<MessageState>) {
+    setDialogMessage(nextMessage);
+  }
+
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const clientError = validateForm();
     if (clientError) {
-      setMessage({ type: "error", text: clientError });
+      showDialogMessage({ type: "error", text: clientError });
       toast.error(clientError);
       return;
     }
@@ -788,6 +795,7 @@ export function LegacyUsersClient({
 
     startTransition(async () => {
       setMessage(null);
+      setDialogMessage(null);
 
       const result =
         dialogMode === "create"
@@ -823,14 +831,31 @@ export function LegacyUsersClient({
             ),
           );
         });
-        setDialogOpen(false);
-        setMessage({ type: "success", text: "Saved!" });
-        toast.success("Saved!");
+        if (dialogMode === "create") {
+          const group =
+            initialData.groups.find(
+              (item) =>
+                item.sourceDatabase === form.sourceDatabase &&
+                item.recordType === form.recordType,
+            ) ??
+            initialData.groups[0] ??
+            null;
+          setForm(createEmptyForm(group));
+          showDialogMessage({
+            type: "success",
+            text: `Successfully added user ${savedUser.username} to the database. Credentials sent to user.`,
+          });
+          toast.success("Saved!");
+        } else {
+          setDialogOpen(false);
+          setMessage({ type: "success", text: "Saved!" });
+          toast.success("Saved!");
+        }
         return;
       }
 
       const error = result.error ?? "Failed to save legacy user";
-      setMessage({ type: "error", text: error });
+      showDialogMessage({ type: "error", text: error });
       toast.error(error);
     });
   }
@@ -1263,6 +1288,32 @@ export function LegacyUsersClient({
             </DialogDescription>
           </DialogHeader>
           <form className="space-y-5" onSubmit={handleSubmit}>
+            <div
+              id="message"
+              aria-live="polite"
+              className="overflow-hidden"
+              style={{
+                marginBottom: dialogMessage ? 4 : 0,
+                maxHeight: dialogMessage ? 96 : 0,
+                opacity: dialogMessage ? 1 : 0,
+                transition:
+                  "max-height 300ms ease-out, opacity 300ms ease-out, margin-bottom 300ms ease-out",
+              }}
+            >
+              {dialogMessage ? (
+                <div
+                  role={dialogMessage.type === "error" ? "alert" : "status"}
+                  className={cn(
+                    "rounded-sm border px-3 py-2 text-sm font-medium",
+                    dialogMessage.type === "success"
+                      ? "border-[#bbf7d0] bg-[#f0fdf4] text-[#166534]"
+                      : "border-[#fecaca] bg-[#fef2f2] text-[#991b1b]",
+                  )}
+                >
+                  {dialogMessage.text}
+                </div>
+              ) : null}
+            </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="legacy-user-source">Source</Label>
