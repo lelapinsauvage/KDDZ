@@ -6,7 +6,7 @@ const files = {
     "/Users/karimsaab/Desktop/Garderie Project/Garderie-old-backup/Front/templates/admin/js/Medical_forms5b.js",
   legacyPhp:
     "/Users/karimsaab/Desktop/Garderie Project/Garderie-old-backup/Front/templates/admin/Medical_forms5b.php",
-  redirect: "src/app/(app)/Medical_forms5b.php/page.tsx",
+  redirect: "src/app/(app)/Medical_forms5b.php/route.ts",
   page: "src/app/(app)/medical/accidents/page.tsx",
   client: "src/app/(app)/medical/accidents/accident-reports-client.tsx",
   legacyBranch: "src/lib/legacy-branch.ts",
@@ -41,9 +41,11 @@ assert.match(contents.legacyBranch, /legacyNumericCandidates\(identifier\)/);
 assert.match(contents.legacyBranch, /UUID_PATTERN\.test\(normalizedIdentifier\)/);
 assert.match(contents.legacyBranch, /legacyId:\s*\{\s*in:\s*legacyIds\s*\}/);
 
-assert.match(contents.redirect, /redirect\("\/medical\/accidents"\)/);
+assert.match(contents.redirect, /export const runtime = "nodejs"/);
+assert.match(contents.redirect, /NextResponse\.redirect\(new URL\("\/medical\/accidents", request\.url\)\)/);
 assert.match(contents.redirect, /resolveLegacyBranchId\(brid\)/);
-assert.match(contents.redirect, /redirect\(`\/medical\/accidents\?branch=\$\{encodeURIComponent\(branchId\)\}`\)/);
+assert.match(contents.redirect, /target\.searchParams\.set\("branch", branchId\)/);
+assert.match(contents.redirect, /NextResponse\.redirect\(target\)/);
 
 assert.match(contents.page, /searchParams: Promise<\{ branch\?: string \}>/);
 assert.match(contents.page, /branches\.find\(\(branch\) => branch\.id === requestedBranchId\)/);
