@@ -258,7 +258,7 @@ function ClassForm({
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
-  const displayImageUrl = imagePreviewUrl || (form.imageUrl ? classPhotoSrc(form.imageUrl) : null);
+  const displayImageUrl = imagePreviewUrl || classPhotoSrc(form.imageUrl || null);
 
   function handleImageFile(file: File) {
     if (!file.type.startsWith("image/")) return;

@@ -1308,7 +1308,7 @@
     "legacyPhp": "Front/templates/admin/class.php",
     "legacyJs": "Front/templates/admin/js/class.js",
     "modernRoute": "/class.php, /classes?new=1, /classes?edit=",
-    "status": "partial - legacy add/edit form bridge and ACL restored; visual/layout audit remains",
+    "status": "restored - legacy class add/edit bridge, fields, image preview, ACL, and save/update payload parity restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest",
@@ -1318,7 +1318,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Restored the legacy class add/update field contract inside the modern Classes Listing dialogs: image upload/preview, Branch, Class Name, Class Language, Age From/To with Years/Months units, Camera Number, Max Number Of Students, active flag, required-field validation, and legacy-compatible save/update payloads. Class `addClass` and `updateClass` ACTION grants now deny `/class.php` new/edit bridge modal entry and `/classes?new=1` or `/classes?edit=` query modal entry when the imported action catalogue is configured and not granted. `/class.php` now opens the modern New Class dialog and `/class.php?id=` resolves raw numeric, UUID, legacy key, and encrypted legacy class ids into the modern Update Class dialog via `/classes?edit=...`. Remaining work is exact Metronic form layout/toast timing and WebSocket refresh behavior that was commented in legacy JS."
+    "verification": "`src/scripts/verify-legacy-class-form-contract.ts` now locks the legacy `class.php` and `js/class.js` contract to the modern bridge: `classes.php` page guard, encrypted/raw/UUID id resolution, default `/images/ClassPhoto/default.jpg`, image upload/preview, Branch, Class Name, Class Language, Age From/To plus Years/Months units, Camera Number, Max Number Of Students, Active, required-field validation, legacy add/update ACTION ACLs, and create/update payload mapping. Browser smoke confirmed `/class.php` opens `/classes?new=1` with the New Class dialog and `/class.php?id=` opens `/classes?edit=` with the Update Class dialog prefilled from an imported legacy class. Legacy WebSocket refresh code was commented out in `js/class.js`, so there is no active runtime WebSocket behavior to restore for this page."
   },
   {
     "legacyPhp": "Front/templates/admin/class_dashboard.php",
