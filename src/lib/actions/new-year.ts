@@ -1,9 +1,15 @@
 "use server";
 
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import type { Prisma } from "@/generated/prisma/client";
+import { createDatabaseSqlDump } from "@/lib/database-sql-export";
 import { db } from "@/lib/db";
 import { requireOrg, requireOrgSafe } from "@/lib/require-org";
+import { putObjectFromFile } from "@/lib/storage/object-storage";
 
 const optionalImportSchema = z.enum([
   "GF",
@@ -109,6 +115,80 @@ function legacyChildNumber(
   const prefix = branchPrefix ?? "";
   const branchCode = legacyBranchId ? String(legacyBranchId) : "";
   return `${prefix}${start}${end}${branchCode}${String(index + 1).padStart(3, "0")}`;
+}
+
+function legacyArchiveDatabaseName(sourceDatabase: string, label: string) {
+  const range = yearRangeFromLabel(label);
+  if (!range) {
+    return `${sourceDatabase}${label.replace(/\D/g, "")}`;
+  }
+
+  return `${sourceDatabase}${range.startYear}${range.endYear}`;
+}
+
+function legacyNumber(value: unknown) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function legacyRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function jsonValue(value: unknown): Prisma.InputJsonValue {
+  return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
+}
+
+function archiveLegacyKey(sourceDatabase: string, databaseName: string) {
+  return `${sourceDatabase}:ArchiveAndCreate:${databaseName}`;
+}
+
+function safeObjectSegment(value: string) {
+  return value.replace(/[^A-Za-z0-9._-]+/g, "_").replace(/^_+|_+$/g, "") || "archive";
+}
+
+async function createArchiveSnapshot(databaseName: string) {
+  const dump = await createDatabaseSqlDump();
+  const tempDir = mkdtempSync(path.join(tmpdir(), "garderie-newyear-"));
+  const tempPath = path.join(tempDir, dump.filename);
+
+  try {
+    writeFileSync(tempPath, dump.content);
+    const stored = await putObjectFromFile({
+      sourcePath: tempPath,
+      key: [
+        "legacy-archives",
+        "newyear",
+        safeObjectSegment(databaseName),
+        dump.filename,
+      ].join("/"),
+      contentType: "application/sql; charset=utf-8",
+      metadata: {
+        legacySource: "ArchiveAndCreate",
+        archiveDatabaseName: databaseName,
+        engine: dump.engine,
+      },
+      overwrite: true,
+    });
+
+    return {
+      filename: dump.filename,
+      engine: dump.engine,
+      storageKey: stored.key,
+      storageProvider: stored.provider,
+      publicUrl: stored.publicUrl,
+      bytes: stored.bytes,
+      status: stored.status,
+    };
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
 }
 
 export async function getNewYearSetupData() {
@@ -276,23 +356,38 @@ export async function createNewAcademicYear(
         ...data.children.map((child) => child.classId),
       ]),
     ];
-    const [classes, teachers, children] = await Promise.all([
+    const [classes, teachers, children, activeYear, registry, latestYearDatabase] = await Promise.all([
       db.class.findMany({
         where: { id: { in: classIds }, branch: { organizationId: ctx.organizationId } },
-        select: { id: true },
+        select: { id: true, legacyId: true, sourceDatabase: true, branch: { select: { legacyId: true, sourceDatabase: true } } },
       }),
       db.teacher.findMany({
         where: {
           id: { in: data.teachers.map((teacher) => teacher.teacherId) },
           branch: { organizationId: ctx.organizationId },
         },
-        select: { id: true },
+        select: { id: true, legacyId: true, sourceDatabase: true },
       }),
       db.child.findMany({
         where: {
           id: { in: data.children.map((child) => child.childId) },
           branch: { organizationId: ctx.organizationId },
         },
+      }),
+      db.schoolYear.findFirst({
+        where: { organizationId: ctx.organizationId, isActive: true },
+        orderBy: { startDate: "desc" },
+        select: { id: true, label: true, sourceDatabase: true, legacyId: true, legacyData: true },
+      }),
+      db.legacyGarderieRegistry.findFirst({
+        where: { isActive: true },
+        orderBy: [{ updatedAt: "desc" }, { legacyId: "desc" }],
+        select: { sourceDatabase: true, currentDatabase: true, userManageDatabase: true, legacyId: true, name: true },
+      }),
+      db.legacyYearDatabase.findFirst({
+        where: { legacyTable: "year_db", isSelected: true },
+        orderBy: [{ sourceCreatedAt: "desc" }, { legacyId: "desc" }],
+        select: { sourceDatabase: true, databaseName: true, legacyYearId: true, selectedYear: true },
       }),
     ]);
 
@@ -310,6 +405,63 @@ export async function createNewAcademicYear(
     }
 
     const childrenById = new Map(children.map((child) => [child.id, child]));
+    const classesById = new Map(classes.map((cls) => [cls.id, cls]));
+    const sourceDatabase =
+      activeYear?.sourceDatabase ??
+      registry?.sourceDatabase ??
+      latestYearDatabase?.sourceDatabase ??
+      children.find((child) => child.sourceDatabase)?.sourceDatabase ??
+      teachers.find((teacher) => teacher.sourceDatabase)?.sourceDatabase ??
+      "modern_garderie";
+    const legacyCurrentDatabaseName =
+      registry?.currentDatabase ??
+      latestYearDatabase?.databaseName ??
+      sourceDatabase;
+    const archiveDatabaseName = legacyArchiveDatabaseName(legacyCurrentDatabaseName, data.label);
+    const archiveSnapshot = await createArchiveSnapshot(archiveDatabaseName);
+    const legacyYearId =
+      latestYearDatabase?.legacyYearId ??
+      legacyNumber(legacyRecord(activeYear?.legacyData).yid) ??
+      activeYear?.legacyId ??
+      null;
+    const archivePayload = {
+      restoredFrom: "ajax/v1/ArchiveAndCreate",
+      sourcePage: "newyear.php",
+      sourceScript: "js/newyear.js",
+      sourceDatabase,
+      legacyCurrentDatabaseName,
+      archiveDatabaseName,
+      archiveSnapshot,
+      previousActiveYear: activeYear,
+      registry,
+      optional: data.optionalImports,
+      requiredimports: ["cls", "brs", "chls", "prts"],
+      selectedTeacher: data.teachers.map((teacher) => {
+        const record = teachers.find((row) => row.id === teacher.teacherId);
+        const targetClass = classesById.get(teacher.classId);
+        return {
+          teacherId: teacher.teacherId,
+          legacyTeacherId: record?.legacyId ?? null,
+          classId: teacher.classId,
+          legacyClassId: targetClass?.legacyId ?? null,
+          sourceDatabase: record?.sourceDatabase ?? targetClass?.sourceDatabase ?? null,
+        };
+      }),
+      selectedChild: data.children.map((childAssignment) => {
+        const record = childrenById.get(childAssignment.childId);
+        const targetClass = classesById.get(childAssignment.classId);
+        return {
+          childId: childAssignment.childId,
+          legacyChildId: record?.legacyId ?? null,
+          classId: childAssignment.classId,
+          legacyClassId: targetClass?.legacyId ?? null,
+          childNumber: childAssignment.childNumber ?? null,
+          previousClassId: record?.classId ?? null,
+          previousSchoolYearId: record?.schoolYearId ?? null,
+          sourceDatabase: record?.sourceDatabase ?? targetClass?.sourceDatabase ?? null,
+        };
+      }),
+    };
 
     const schoolYear = await db.$transaction(async (tx) => {
       await tx.schoolYear.updateMany({
@@ -319,6 +471,10 @@ export async function createNewAcademicYear(
 
       const created = await tx.schoolYear.create({
         data: {
+          sourceDatabase,
+          legacyKey: archiveLegacyKey(sourceDatabase, archiveDatabaseName),
+          legacyId: legacyYearId,
+          legacySid: legacyYearId,
           label: data.label,
           startDate,
           endDate,
@@ -326,11 +482,45 @@ export async function createNewAcademicYear(
           organizationId: ctx.organizationId,
           legacyData: {
             restoredFrom: "newyear.php",
+            archiveAndCreate: archivePayload,
+            archiveDatabaseName,
+            archiveSnapshot,
+            legacyArchiveMode: "sql_snapshot_plus_transactional_progression",
             optionalImports: data.optionalImports,
             mandatoryImports: ["cls", "brs", "chls", "prts"],
             teacherAssignments: data.teachers,
             childAssignments: data.children,
           },
+        },
+      });
+
+      await tx.legacyYearDatabase.upsert({
+        where: { legacyKey: archiveLegacyKey(sourceDatabase, archiveDatabaseName) },
+        create: {
+          sourceDatabase,
+          legacyTable: "ArchiveAndCreate",
+          legacyKey: archiveLegacyKey(sourceDatabase, archiveDatabaseName),
+          legacyId: Math.floor(Date.now() / 1000),
+          legacyYearId,
+          selectedYear: data.label,
+          databaseName: archiveDatabaseName,
+          isSelected: true,
+          sourceCreatedAt: new Date(),
+          legacyData: jsonValue({
+            ...archivePayload,
+            createdSchoolYearId: created.id,
+          }),
+        },
+        update: {
+          legacyYearId,
+          selectedYear: data.label,
+          databaseName: archiveDatabaseName,
+          isSelected: true,
+          sourceCreatedAt: new Date(),
+          legacyData: jsonValue({
+            ...archivePayload,
+            createdSchoolYearId: created.id,
+          }),
         },
       });
 

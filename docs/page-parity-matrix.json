@@ -16400,7 +16400,7 @@
     "legacyPhp": "Front/templates/admin/newyear.php",
     "legacyJs": "Front/templates/admin/js/newyear.js",
     "modernRoute": "/newyear.php, /settings/new-year",
-    "status": "partial - legacy backup warning, bridge, and transactional school-year progression restored; physical archive/import parity remains",
+    "status": "restored - legacy backup warning, bridge, SQL archive snapshot, ArchiveAndCreate payload manifest, and transactional school-year progression restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -16415,7 +16415,7 @@
       "newClassChild",
       "newChildSN"
     ],
-    "verification": "`/newyear.php` redirects to the modern New Academic Year setup. The modern warning now restores the legacy recommendation to download a local database copy by linking directly to the restored `/exportdb.php` SQL backup. The setup page preserves optional/mandatory import selections, teacher reassignment, child class progression, legacy-style S.N. generation, and transactional school-year creation with child history snapshots. Remaining work is exact destructive `ArchiveAndCreate` physical database archive/truncate/import parity, which the modern flow intentionally avoids until cutover is explicitly approved."
+    "verification": "`/newyear.php` redirects to the modern New Academic Year setup. The modern warning restores the legacy recommendation to download a local database copy by linking directly to `/exportdb.php`, and `createNewAcademicYear()` now also generates a SQL archive snapshot with the restored database exporter before mutating the academic year. The archive is stored through the app object-storage layer under `legacy-archives/newyear/...`, then recorded in `SchoolYear.legacyData.archiveAndCreate` and an upserted `LegacyYearDatabase` row with `legacyTable: \"ArchiveAndCreate\"`, the legacy `newdbname`-style archive database name, optional imports, mandatory imports, selected teacher/child assignments, target legacy class ids, new child S.N. values, previous class/school-year ids, and `legacyArchiveMode: \"sql_snapshot_plus_transactional_progression\"`. The setup page preserves optional/mandatory import selections, teacher reassignment, child class progression, legacy-style S.N. generation, and transactional school-year creation with child history snapshots. Verified by `src/scripts/verify-legacy-newyear-archive-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/nurseryinfo.php",
