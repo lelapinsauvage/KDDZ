@@ -1,6 +1,10 @@
 import { db } from "@/lib/db";
 import { deliverEmail, emailDeliveryAuditData } from "@/lib/email-delivery";
 import { isLegacyNotificationGateEnabled } from "@/lib/legacy-notification-gates";
+import {
+  deliverPushNotification,
+  pushDeliveryAuditData,
+} from "@/lib/push-delivery";
 
 const VACCINATION_RECEIPT_SOURCE = "custom_notifications_vaccinations";
 
@@ -209,6 +213,53 @@ async function storeVaccinationEmailAudit(params: {
   });
 }
 
+async function storeVaccinationPushAudit(params: {
+  alarmId: string;
+  recipientUserIds: string[];
+  title: string;
+  body: string;
+  childId: string;
+  legacyChildId: number | null;
+  legacyNotificationId: number;
+  vaccineName: string;
+  vaccineType: string;
+  level: number;
+  sourceDatabase: string | null;
+}) {
+  const pushDelivery = await deliverPushNotification({
+    recipientUserIds: params.recipientUserIds,
+    title: params.title,
+    body: params.body,
+    category: "VACCINATIONS",
+    url: "/alarms/vaccinations",
+    metadata: {
+      source: "generateVaccinationAlarms",
+      legacyNotificationId: params.legacyNotificationId,
+      legacyDeliveryTable: VACCINATION_RECEIPT_SOURCE,
+      childId: params.childId,
+      legacyChildId: params.legacyChildId,
+      vaccineName: params.vaccineName,
+      vaccineType: params.vaccineType,
+      level: params.level,
+      sourceDatabase: params.sourceDatabase,
+    },
+  });
+
+  const alarm = await db.alarm.findUnique({
+    where: { id: params.alarmId },
+    select: { legacyData: true },
+  });
+  await db.alarm.update({
+    where: { id: params.alarmId },
+    data: {
+      legacyData: {
+        ...(asRecord(alarm?.legacyData) ?? {}),
+        pushDelivery: pushDeliveryAuditData(pushDelivery),
+      },
+    },
+  });
+}
+
 function parsePositiveInteger(value: string | undefined, fallback: number) {
   if (!value) return fallback;
   const parsed = Number(value);
@@ -394,6 +445,7 @@ export async function getVaccinationDueAlarmCandidates(params: {
 export async function generateVaccinationAlarmsForOrganization(params: {
   organizationId: string;
   branchId?: string | null;
+  now?: Date;
 }): Promise<VaccinationGenerationSummary> {
   const branchRows = await db.branch.findMany({
     where: {
@@ -424,6 +476,7 @@ export async function generateVaccinationAlarmsForOrganization(params: {
     getVaccinationDueAlarmCandidates({
       organizationId: params.organizationId,
       branchId: params.branchId,
+      now: params.now,
     }),
     db.child.count({
       where: {
@@ -548,12 +601,16 @@ export async function generateVaccinationAlarmsForOrganization(params: {
     }
 
     let alarmId = existingAlarm?.id ?? null;
+    let shouldAttemptPushAudit = !existingAlarm;
     if (existingAlarm) {
       summary.skippedExisting += 1;
       const existingData = asRecord(existingAlarm.legacyData) ?? {};
+      const needsPushAudit = !asRecord(existingData.pushDelivery);
+      shouldAttemptPushAudit = needsPushAudit;
       if (
         readNumber(existingData, "aid") === null ||
-        existingData.sourceDeliveryTable !== VACCINATION_RECEIPT_SOURCE
+        existingData.sourceDeliveryTable !== VACCINATION_RECEIPT_SOURCE ||
+        needsPushAudit
       ) {
         await db.alarm.update({
           where: { id: existingAlarm.id },
@@ -635,7 +692,38 @@ export async function generateVaccinationAlarmsForOrganization(params: {
     const newReceiptRecipients = recipients.filter(
       (recipient) => !existingReceiptIds.has(recipient.legacyRecipientId),
     );
-    if (newReceiptRecipients.length === 0) continue;
+
+    const variables = {
+      child_name: candidate.childName,
+      parent_name: "Parent",
+      class_name: candidate.className ?? "",
+      branch_name: candidate.branchName,
+      date: dateKey(candidate.dueDate),
+      vaccination_name: candidate.vaccineName,
+      days_until: candidate.daysUntilDue,
+      x_days: candidate.daysUntilDue,
+    };
+    const title = renderNotificationText(subjectTemplate, variables);
+    const body = renderNotificationText(bodyTemplate, variables);
+
+    if (newReceiptRecipients.length === 0) {
+      if (shouldAttemptPushAudit) {
+        await storeVaccinationPushAudit({
+          alarmId,
+          recipientUserIds: recipients.map((recipient) => recipient.userId),
+          title,
+          body,
+          childId: candidate.childId,
+          legacyChildId: candidate.legacyChildId,
+          legacyNotificationId,
+          vaccineName: candidate.vaccineName,
+          vaccineType: candidate.vaccineType,
+          level: candidate.level,
+          sourceDatabase: candidate.sourceDatabase,
+        });
+      }
+      continue;
+    }
 
     const receiptResult = await db.notificationReceipt.createMany({
       data: newReceiptRecipients.map((recipient) => ({
@@ -661,18 +749,6 @@ export async function generateVaccinationAlarmsForOrganization(params: {
 
     if (!templateEnabled || receiptResult.count === 0) continue;
 
-    const variables = {
-      child_name: candidate.childName,
-      parent_name: "Parent",
-      class_name: candidate.className ?? "",
-      branch_name: candidate.branchName,
-      date: dateKey(candidate.dueDate),
-      vaccination_name: candidate.vaccineName,
-      days_until: candidate.daysUntilDue,
-      x_days: candidate.daysUntilDue,
-    };
-    const title = renderNotificationText(subjectTemplate, variables);
-    const body = renderNotificationText(bodyTemplate, variables);
     const created = await db.notification.createMany({
       data: newReceiptRecipients.map((recipient) => ({
         userId: recipient.userId,
@@ -693,6 +769,22 @@ export async function generateVaccinationAlarmsForOrganization(params: {
       legacyNotificationId,
       sourceDatabase: candidate.sourceDatabase,
     });
+
+    if (shouldAttemptPushAudit) {
+      await storeVaccinationPushAudit({
+        alarmId,
+        recipientUserIds: newReceiptRecipients.map((recipient) => recipient.userId),
+        title,
+        body,
+        childId: candidate.childId,
+        legacyChildId: candidate.legacyChildId,
+        legacyNotificationId,
+        vaccineName: candidate.vaccineName,
+        vaccineType: candidate.vaccineType,
+        level: candidate.level,
+        sourceDatabase: candidate.sourceDatabase,
+      });
+    }
   }
 
   return summary;

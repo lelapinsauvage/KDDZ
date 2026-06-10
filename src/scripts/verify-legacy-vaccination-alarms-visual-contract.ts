@@ -12,6 +12,7 @@ const files = {
   receiptClient:
     "src/app/(app)/alarms/_components/staff-receipt-alarms-client.tsx",
   actions: "src/lib/actions/alarms.ts",
+  vaccinationJob: "src/lib/jobs/vaccination-alarms.ts",
   matrix: "docs/page-parity-matrix.json",
   markdownMatrix: "docs/page-parity-matrix.md",
   topGaps: "docs/top-20-restoration-gaps.md",
@@ -82,6 +83,10 @@ assert.match(text.actions, /export async function getVaccinationAlarmHistory/);
 assert.match(text.actions, /export async function generateVaccinationAlarms/);
 assert.match(text.actions, /export async function markVaccinationAlarmViewed/);
 assert.match(text.actions, /export async function markAllVaccinationAlarmsViewed/);
+assert.match(text.vaccinationJob, /deliverPushNotification/);
+assert.match(text.vaccinationJob, /pushDeliveryAuditData/);
+assert.match(text.vaccinationJob, /pushDelivery/);
+assert.match(text.vaccinationJob, /recipientUserIds: params\.recipientUserIds/);
 
 type MatrixRow = {
   legacyPhp?: string;
@@ -105,17 +110,21 @@ assert.match(row.verification ?? "", /Vaccination Alarms/);
 assert.match(row.verification ?? "", /Notifications search\/status\/branch\/date filters/);
 assert.match(row.verification ?? "", /Sent Vaccination Alarms/);
 assert.match(row.verification ?? "", /no broken images or app errors/);
+assert.match(row.verification ?? "", /provider-neutral staff push delivery/);
+assert.match(row.verification ?? "", /pushDelivery/);
+assert.match(row.verification ?? "", /verify-vaccination-push-delivery\.ts/);
 
 const markdownRow = text.markdownMatrix
   .split("\n")
   .find((line) => line.includes("| Front/templates/admin/alarmsVaccinations.php |"));
 assert.match(markdownRow ?? "", /browser visual audit restored/);
 assert.match(markdownRow ?? "", /Browser smoke confirmed `\/alarmsVaccinations\.php`/);
+assert.match(markdownRow ?? "", /provider-neutral staff push delivery/);
 assert.doesNotMatch(markdownRow ?? "", /final visual audit/);
 
 assert.match(
   text.topGaps,
-  /Vaccination alarms browser smoke now confirms the legacy `\/alarmsVaccinations\.php` bridge/,
+  /Vaccination alarms now audit provider-neutral staff push delivery on generated due reminders/,
 );
 
 console.log("legacy vaccination alarms visual contract assertions passed");
