@@ -16187,13 +16187,13 @@
     "legacyPhp": "Front/templates/admin/dailyreportsd.php",
     "legacyJs": "Front/templates/admin/js/dailyreportsd.js",
     "modernRoute": "/dailyreportsd.php, /daily-reports/drafts",
-    "status": "partial - legacy draft roster, filters, export, page sizes, setting-gated selected approval, and bridge restored; visual audit remains",
+    "status": "restored - legacy draft daily report roster, filters, TableTools exports, print, page sizes, selected approval, and bridge restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Restored `/daily-reports/drafts` as a real Draft Reports Listing instead of a redirect, with the same legacy Child #/Image/F Name/L Name/Status/Branch/Class/Report Date/Date/Action columns, filters, date range, page sizes backed by uncapped server loading, export, print, and migrated photo fallback. Added selected-row approval backed by `approveDailyReports`, preserving the legacy guard that present drafts with undefined breakfast/lunch portions are skipped. Selected approval now appears only when legacy `t_settings.direct_approval` is disabled, matching the old alternate selections table, and approvals update both the modern status and preserved `is_rep_draft` flag. `/dailyreportsd.php` now redirects to the modern draft daily reports roster. Remaining work is exact TableTools visual/PDF export parity."
+    "verification": "Restored `/daily-reports/drafts` as a real Draft Reports Listing instead of a redirect, with the same legacy Child #/Image/F Name/L Name/Status/Branch/Class/Report Date/Date/Action columns, filters, date range, 10/20/50/100/150/All page sizes backed by uncapped server loading, migrated photo fallback, view/edit/print/delete actions, and draft-only workflow scope. The legacy TableTools Copy, PDF, XLS, and Print actions are covered by the shared export menu as Copy table, PDF export, the modern XLSX replacement for legacy XLS, plus an explicit Print button; CSV remains as an additional modern export. Added selected-row approval backed by `approveDailyReports`, preserving the legacy guard that present drafts with undefined breakfast/lunch portions are skipped. Selected approval now appears only when legacy `t_settings.direct_approval` is disabled, matching the old alternate selections table, and approvals update both the modern status and preserved `is_rep_draft` flag. `/dailyreportsd.php` is now a hard HTTP route-handler bridge to the modern draft daily reports roster. Browser smoke confirmed the old PHP URL redirects to `/daily-reports/drafts`, renders Draft Reports Listing, exposes legacy headers/filters/actions/page-size/export/print surfaces, keeps selected approval visibility tied to direct approval, and has no broken child images. Verified by `src/scripts/verify-legacy-draft-daily-reports-roster-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/doctors.php",
