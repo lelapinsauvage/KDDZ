@@ -114,6 +114,12 @@ assert.match(text.parentMatrix, /ws\/notifications_master\.php \| usites/);
 assert.match(text.parentMatrix, /eleven `notificationN` groups for iOS/);
 assert.match(text.parentMatrix, /database-connection empty eleven-group fallback restored/);
 assert.match(text.pageMatrix, /`notifications_master` payloads now share a reusable contract assertion/);
+assert.match(text.pageMatrix, /Alarm-family push delivery is now locally covered/);
+assert.match(text.pageMatrix, /verify-birthday-push-delivery\.ts/);
+assert.match(text.pageMatrix, /verify-payment-parent-push-delivery\.ts/);
+assert.doesNotMatch(text.pageMatrix, /Remaining work is alarm-family push delivery/);
 assert.match(text.topGaps, /the eleven `notificationN` groups the iOS parser force-reads/);
+assert.match(text.topGaps, /Alarm-family push delivery is now locally covered/);
+assert.doesNotMatch(text.topGaps, /alarm-family push provider delivery/);
 
 console.log("parent notification legacy contract assertions passed");
