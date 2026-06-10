@@ -273,7 +273,7 @@
     "legacyPhp": "Front/templates/admin/Monthly_report.php",
     "legacyJs": "Front/templates/admin/js/payroll_det.js",
     "modernRoute": "/Monthly_report.php, /reports/monthly",
-    "status": "partial - legacy monthly attendance matrix, filters, export/print, and bridge restored; visual audit remains",
+    "status": "restored - legacy monthly attendance matrix, TableTools export, print, AJAX fragment, and bridge restored",
     "legacyTablesMentioned": [
       "t_child",
       "t_daily_report",
@@ -289,7 +289,7 @@
       "p",
       "q"
     ],
-    "verification": "Restored the legacy Monthly Attendance Report matrix: month picker default, `Showing Data For YYYY-MM`, legend with N/P/A/W/H semantics, Child #/Name/L Name/Class/1-31/P-A columns, first-four-column filters, global search, no pagination, Sunday-only weekend override, active/repeated holiday override, blank current/future/pre-joining cells, N links to new daily reports, P/A links to existing report/absence workflows, Excel/CSV export, print action, and `/Monthly_report.php` query bridge preserving legacy `p`/`from` month values. Remaining work is exact TableTools copy/PDF/XLS/print visual parity, historical child snapshot parity beyond current imported child rows, and final logged-in visual smoke."
+    "verification": "Restored the legacy Monthly Attendance Report matrix: month picker default, `Showing Data For YYYY-MM`, legend with N/P/A/W/H semantics, Child #/Name/L Name/Class/1-31/P-A columns, first-four-column filters, global search, no pagination, Sunday-only weekend override, active/repeated holiday override, blank current/future/pre-joining cells, N links to new daily reports, P/A links to existing report/absence workflows, Copy/PDF/Excel/CSV export, print action, and a hard HTTP `/Monthly_report.php` route-handler bridge preserving legacy auth/permission checks plus `p`/`from` month values. `/payroll_det_data.php` preserves the legacy AJAX `from`-only HTML fragment contract for old scripts. Legacy `Data::getmonthlyattendance()` reads current active `t_child` rows rather than `t_child_h`, so the modern loader intentionally mirrors current imported child rows with the same created-before-month, active, non-draft guard. Verified by `src/scripts/verify-legacy-monthly-attendance-tabletools-contract.ts` and logged-in Browser smoke."
   },
   {
     "legacyPhp": "Front/templates/admin/Monthly_report_b.php",
