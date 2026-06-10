@@ -18379,7 +18379,7 @@
     "legacyPhp": "Front/templates/admin/users/sign_up.php",
     "legacyJs": "",
     "modernRoute": "/signup, /sign_up.php, /users/sign_up.php",
-    "status": "partial - legacy signup page restored in modern auth shell",
+    "status": "restored - legacy signup page shell, side copy, fields, and bridges restored",
     "legacyTablesMentioned": [
       "login_confirm",
       "login_profile_fields",
@@ -18395,7 +18395,7 @@
       "username",
       "p-*"
     ],
-    "verification": "The legacy sign-up form now lives at `/signup`, with old PHP deep links `/sign_up.php` and `/users/sign_up.php` preserving query strings. It restores Full name, optional Username, Email, Password, Password again, visible signup profile fields, uncapped migrated source discovery, disabled-registration messaging, and activation-aware success behavior. Remaining work is exact legacy marketing side-copy and retired captcha/social widgets if those integrations are re-enabled."
+    "verification": "The legacy sign-up page shell now lives at `/signup`, with old PHP deep links `/sign_up.php` and `/users/sign_up.php` preserving query strings. It restores the archived two-column page composition: the left `sign-up-form` fields for Full name, optional Username with 15-character limit, Email, Password, Password again, visible signup profile fields, and Create my account action; the right-column legacy marketing copy with `Create a new account`, the original body paragraph, `Features`, and the original features paragraph; uncapped migrated source discovery; disabled-registration messaging; and activation-aware success behavior. Runtime captcha/OAuth enablement remains tracked on `classes/signup.class.php` and the legacy Integration settings row. Verified against the archived PHP page, both PHP redirect bridges, modern signup shell, and parity row by `src/scripts/verify-legacy-signup-shell-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/whoami.php",

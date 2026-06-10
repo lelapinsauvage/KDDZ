@@ -32,6 +32,15 @@ type LegacySignupClientProps = {
   error?: string | null;
 };
 
+const legacySignupCopy = {
+  title: "Create a new account",
+  body:
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris cursus rhoncus tristique. Mauris ornare ipsum a leo molestie id porttitor justo bibendum. Pellentesque magna augue, sollicitudin ut ornare pretium, mattis imperdiet augue. Morbi semper sapien sit amet velit interdum eu commodo erat fringilla. Nulla et ipsum orci, ac varius nulla. Nam vehicula, mi quis euismod consectetur, magna dui porttitor sem, vel venenatis felis nunc eu diam. Integer vitae est at nunc varius viverra sit amet at magna. Vestibulum mi diam, pharetra id malesuada ac, venenatis nec turpis. Vestibulum metus nisl, pharetra non laoreet eu, laoreet a eros. Suspendisse ut arcu in mauris dapibus sodales. Vestibulum commodo congue elit at mollis. Fusce semper auctor odio, ut pharetra justo faucibus blandit. Fusce in pellentesque elit. Nunc adipiscing neque eu odio tincidunt ac mollis erat porta.",
+  featuresTitle: "Features",
+  features:
+    "Cras placerat scelerisque vehicula. Fusce eu ipsum vel mi convallis dapibus. Cras ut nibh metus, quis malesuada augue. Aenean a nisi nec sem accumsan gravida in in turpis. Nulla euismod lorem non sem imperdiet vestibulum. Donec blandit aliquet turpis sed dapibus. Duis fermentum facilisis diam, sit amet ultrices neque dictum eget.",
+};
+
 function internalRedirect(value: string) {
   if (!value.trim()) return "/dashboard";
   try {
@@ -148,118 +157,139 @@ export function LegacySignupClient({ data, error }: LegacySignupClientProps) {
           : "Create your KiddzOnline account"
       }
     >
-      <div className="rounded-sm border border-[#E2E5E9] bg-white p-6 shadow-[0_4px_6px_rgba(15,23,42,0.06),0_2px_4px_rgba(15,23,42,0.04)] sm:p-8">
-        <div className="mb-6">
-          <div className="mb-3 flex size-10 items-center justify-center rounded-sm bg-[#EFFCF8] text-[#0B7464]">
-            <UserPlus className="size-5" />
-          </div>
-          <h2 className="font-heading text-xl font-semibold text-[#1A1D23]">
-            Create a new account
-          </h2>
-          <p className="mt-0.5 text-sm text-[#6B7280]">
-            {data.useEmailAsUsername
-              ? "Your email will be used as your username."
-              : "Choose a username and password."}
-          </p>
-        </div>
-
-        <StatusMessage status={status} />
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="signup-name">Full name</Label>
-            <Input
-              id="signup-name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              disabled={!canSubmit || pending}
-              required
-            />
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.82fr)] lg:items-start">
+        <div className="rounded-sm border border-[#E2E5E9] bg-white p-6 shadow-[0_4px_6px_rgba(15,23,42,0.06),0_2px_4px_rgba(15,23,42,0.04)] sm:p-8">
+          <div className="mb-6">
+            <div className="mb-3 flex size-10 items-center justify-center rounded-sm bg-[#EFFCF8] text-[#0B7464]">
+              <UserPlus className="size-5" />
+            </div>
+            <h2 className="font-heading text-xl font-semibold text-[#1A1D23]">
+              Create a new account
+            </h2>
+            <p className="mt-0.5 text-sm text-[#6B7280]">
+              {data.useEmailAsUsername
+                ? "Your email will be used as your username."
+                : "Choose a username and password."}
+            </p>
           </div>
 
-          {!data.useEmailAsUsername ? (
+          <StatusMessage status={status} />
+
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="signup-username">Username</Label>
+              <Label htmlFor="signup-name">Full name</Label>
               <Input
-                id="signup-username"
-                value={username}
-                maxLength={15}
-                onChange={(event) => setUsername(event.target.value)}
+                id="signup-name"
+                value={name}
+                placeholder="Full name"
+                onChange={(event) => setName(event.target.value)}
                 disabled={!canSubmit || pending}
                 required
               />
             </div>
-          ) : null}
 
-          <div className="space-y-1.5">
-            <Label htmlFor="signup-email">Email</Label>
-            <Input
-              id="signup-email"
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              disabled={!canSubmit || pending}
-              required
-            />
-          </div>
+            {!data.useEmailAsUsername ? (
+              <div className="space-y-1.5">
+                <Label htmlFor="signup-username">Username</Label>
+                <Input
+                  id="signup-username"
+                  value={username}
+                  maxLength={15}
+                  placeholder="Choose your username"
+                  onChange={(event) => setUsername(event.target.value)}
+                  disabled={!canSubmit || pending}
+                  required
+                />
+              </div>
+            ) : null}
 
-          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="signup-password">Password</Label>
+              <Label htmlFor="signup-email">Email</Label>
               <Input
-                id="signup-password"
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
+                id="signup-email"
+                type="email"
+                value={email}
+                placeholder="Email"
+                onChange={(event) => setEmail(event.target.value)}
                 disabled={!canSubmit || pending}
                 required
               />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="signup-password-confirm">Password again</Label>
-              <Input
-                id="signup-password-confirm"
-                type="password"
-                value={passwordConfirm}
-                onChange={(event) => setPasswordConfirm(event.target.value)}
-                disabled={!canSubmit || pending}
-                required
-              />
-            </div>
-          </div>
 
-          {groupedFields.map(([section, fields]) => (
-            <div key={section} className="space-y-3 rounded-sm border border-[#E2E5E9] p-3">
-              <div className="text-sm font-semibold text-[#1A1D23]">{section}</div>
-              <div className="space-y-3">
-                {fields.map((field) => (
-                  <ProfileFieldControl
-                    key={field.legacyId}
-                    field={field}
-                    value={profileValues[fieldStateKey(field)] ?? ""}
-                    disabled={!canSubmit || pending}
-                    onChange={(value) => updateProfileValue(field, value)}
-                  />
-                ))}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="signup-password">Password</Label>
+                <Input
+                  id="signup-password"
+                  type="password"
+                  value={password}
+                  placeholder="Create a password"
+                  onChange={(event) => setPassword(event.target.value)}
+                  disabled={!canSubmit || pending}
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="signup-password-confirm">Password again</Label>
+                <Input
+                  id="signup-password-confirm"
+                  type="password"
+                  value={passwordConfirm}
+                  placeholder="Confirm your password"
+                  onChange={(event) => setPasswordConfirm(event.target.value)}
+                  disabled={!canSubmit || pending}
+                  required
+                />
               </div>
             </div>
-          ))}
 
-          <Button type="submit" className="h-11 w-full" disabled={!canSubmit || pending}>
-            <UserPlus className="size-4" />
-            {pending ? "Creating..." : "Create my account"}
-          </Button>
-        </form>
+            {groupedFields.map(([section, fields]) => (
+              <div key={section} className="space-y-3 rounded-sm border border-[#E2E5E9] p-3">
+                <div className="text-sm font-semibold text-[#1A1D23]">{section}</div>
+                <div className="space-y-3">
+                  {fields.map((field) => (
+                    <ProfileFieldControl
+                      key={field.legacyId}
+                      field={field}
+                      value={profileValues[fieldStateKey(field)] ?? ""}
+                      disabled={!canSubmit || pending}
+                      onChange={(value) => updateProfileValue(field, value)}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
 
-        <div className="mt-5 text-center">
-          <Link
-            href="/login"
-            className="inline-flex items-center gap-1 text-sm font-medium text-[#0B7464] transition-colors hover:text-[#0D5C50] hover:underline"
-          >
-            <ArrowLeft className="size-4" />
-            Back to login
-          </Link>
+            <Button type="submit" className="h-11 w-full" disabled={!canSubmit || pending}>
+              <UserPlus className="size-4" />
+              {pending ? "Creating..." : "Create my account"}
+            </Button>
+          </form>
+
+          <div className="mt-5 text-center">
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-1 text-sm font-medium text-[#0B7464] transition-colors hover:text-[#0D5C50] hover:underline"
+            >
+              <ArrowLeft className="size-4" />
+              Back to login
+            </Link>
+          </div>
         </div>
+        <aside className="space-y-5 rounded-sm border border-[#E2E5E9] bg-white p-6 text-[#374151] shadow-[0_4px_6px_rgba(15,23,42,0.05)] sm:p-8">
+          <div className="space-y-3">
+            <h2 className="font-heading text-2xl font-semibold text-[#1A1D23]">
+              {legacySignupCopy.title}
+            </h2>
+            <p className="text-sm leading-6">{legacySignupCopy.body}</p>
+          </div>
+          <div className="space-y-3">
+            <h3 className="font-heading text-xl font-semibold text-[#1A1D23]">
+              {legacySignupCopy.featuresTitle}
+            </h3>
+            <p className="text-sm leading-6">{legacySignupCopy.features}</p>
+          </div>
+        </aside>
       </div>
     </AuthShell>
   );
@@ -381,7 +411,7 @@ function AuthShell({
 }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#F7F8FA] p-4">
-      <div className="relative w-full max-w-[560px]">
+      <div className="relative w-full max-w-[980px]">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-sm bg-primary shadow-sm shadow-[#0B9178]/25">
             <span className="font-heading text-[1.375rem] font-bold text-white">K</span>
