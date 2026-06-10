@@ -52,6 +52,7 @@ import {
 import {
   createLegacyAdminUser,
   deleteLegacyAdminUser,
+  unlinkLegacyAdminUserSocialProvider,
   type LegacyAdminLevelOption,
   type LegacyAdminUserGroup,
   type LegacyAdminUserInput,
@@ -881,6 +882,39 @@ export function LegacyUsersClient({
     });
   }
 
+  function handleSocialUnlink(providerKey: string) {
+    if (!editingUser) return;
+
+    startTransition(async () => {
+      const result = await unlinkLegacyAdminUserSocialProvider(
+        editingUser.id,
+        providerKey,
+      );
+      if (!result.success) {
+        const error = result.error ?? "Failed to unlink social provider";
+        showDialogMessage({ type: "error", text: error });
+        toast.error(error);
+        return;
+      }
+
+      const removeProvider = (user: LegacyAdminUserRow) => ({
+        ...user,
+        socialIntegrations: user.socialIntegrations.filter(
+          (integration) => integration.providerKey !== providerKey,
+        ),
+      });
+
+      setEditingUser((current) => (current ? removeProvider(current) : current));
+      setUsers((current) =>
+        current.map((user) =>
+          user.id === editingUser.id ? removeProvider(user) : user,
+        ),
+      );
+      showDialogMessage({ type: "success", text: "Social link removed." });
+      toast.success("Social link removed");
+    });
+  }
+
   return (
     <TooltipProvider>
       <PageHeader
@@ -1540,9 +1574,23 @@ export function LegacyUsersClient({
                       key={`${integration.provider}:${integration.identifier}`}
                       className="rounded-sm border border-border/70 bg-muted/30 p-2"
                     >
-                      <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
-                        <Link2 className="size-3" />
-                        {integration.provider}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+                          <Link2 className="size-3" />
+                          {integration.provider}
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-xs"
+                          disabled={isPending}
+                          onClick={() =>
+                            handleSocialUnlink(integration.providerKey)
+                          }
+                        >
+                          Unlink
+                        </Button>
                       </div>
                       <div className="mt-1 break-all font-mono text-xs">
                         {integration.identifier}

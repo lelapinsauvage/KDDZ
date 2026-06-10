@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { randomBytes } from "crypto";
 import { hash } from "bcryptjs";
 import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
@@ -71,6 +72,7 @@ export type LegacyAdminProfileValue = {
 };
 
 export type LegacyAdminSocialIntegration = {
+  providerKey: string;
   provider: string;
   identifier: string;
 };
@@ -543,8 +545,29 @@ function socialIntegrationsFromLegacyData(
           : "";
 
     if (!value || value === "0") return [];
-    return [{ provider: socialProviderLabel(provider), identifier: value }];
+    return [
+      {
+        providerKey: provider,
+        provider: socialProviderLabel(provider),
+        identifier: value,
+      },
+    ];
   });
+}
+
+function normalizeSocialProviderKey(provider: string) {
+  const normalized = provider.trim().toLowerCase();
+  return SOCIAL_LOGIN_PROVIDERS.find((entry) => entry === normalized) ?? null;
+}
+
+function linkedSocialProviderList(data: Prisma.InputJsonObject) {
+  return SOCIAL_LOGIN_PROVIDERS.filter((provider) => {
+    const value = data[provider];
+    return Boolean(
+      (typeof value === "string" && value.trim() && value.trim() !== "0") ||
+        (typeof value === "number" && value > 0),
+    );
+  }).join(",");
 }
 
 type LegacyProfileFieldRecord = {
@@ -800,6 +823,7 @@ async function getProfileValuesForUser(
         sourceDatabase: true,
         legacyId: true,
         legacyUserId: true,
+        userId: true,
         recordType: true,
         recordKey: true,
         recordValue: true,
@@ -2364,6 +2388,118 @@ export async function deleteLegacyAdminUser(
         error instanceof Error
           ? error.message
           : "Failed to delete legacy admin user",
+    };
+  }
+}
+
+export async function unlinkLegacyAdminUserSocialProvider(
+  legacyRecordId: string,
+  provider: string,
+): Promise<ActionResult<{ providerKey: string }>> {
+  const providerKey = normalizeSocialProviderKey(provider);
+  if (!providerKey) return { success: false, error: "Unknown provider." };
+
+  try {
+    await requireLegacyAdminPanelAccess();
+
+    const existing = await db.legacyAuthRecord.findUnique({
+      where: { id: legacyRecordId },
+      select: {
+        id: true,
+        sourceDatabase: true,
+        legacyId: true,
+        legacyUserId: true,
+        userId: true,
+        recordType: true,
+        username: true,
+        email: true,
+        recordKey: true,
+      },
+    });
+    if (!existing) return { success: false, error: "No such user!" };
+    if (existing.recordType !== "login_user") {
+      return {
+        success: false,
+        error: "Manager social links are not stored in legacy login_integration.",
+      };
+    }
+
+    const legacyUserId = existing.legacyUserId ?? existing.legacyId;
+    const integration = await db.legacyAuthRecord.findFirst({
+      where: {
+        sourceDatabase: existing.sourceDatabase,
+        legacyTable: "login_integration",
+        recordType: "social_integration",
+        legacyUserId,
+      },
+      orderBy: [{ legacyId: "desc" }],
+      select: {
+        id: true,
+        legacyData: true,
+      },
+    });
+    if (!integration) {
+      return { success: false, error: "Social link not found." };
+    }
+
+    const legacyData = legacyObject(integration.legacyData);
+    const previousIdentifier = legacyString(legacyData, providerKey);
+    if (!previousIdentifier) {
+      return { success: false, error: "Social link not found." };
+    }
+
+    const updatedData = {
+      ...legacyData,
+      [providerKey]: "",
+      [`${providerKey}_unlinked_at`]: new Date().toISOString(),
+      [`${providerKey}_previous_identifier`]: previousIdentifier,
+      updated_from: "modern_legacy_user_admin_social_unlink",
+    };
+    const linkedProviders = linkedSocialProviderList(updatedData);
+
+    await db.$transaction([
+      db.legacyAuthRecord.update({
+        where: { id: integration.id },
+        data: {
+          recordValue: linkedProviders,
+          isDisabled: linkedProviders.length === 0,
+          legacyData: updatedData,
+        },
+      }),
+      db.legacyAuthRecord.create({
+        data: {
+          sourceDatabase: existing.sourceDatabase,
+          legacyTable: "login_integration_audit",
+          legacyKey: `${existing.sourceDatabase}:login_integration_admin_unlink:${legacyUserId}:${providerKey}:${randomBytes(6).toString("hex")}`,
+          legacyId: 0,
+          recordType: "social_unlink_audit",
+          userId: existing.userId,
+          legacyUserId,
+          username: existing.username ?? existing.recordKey,
+          email: existing.email,
+          recordKey: providerKey,
+          recordValue: previousIdentifier,
+          legacyData: {
+            provider: providerKey,
+            previousIdentifier,
+            source: "legacy_user_admin",
+            unlinkedAt: new Date().toISOString(),
+          },
+        },
+      }),
+    ]);
+
+    revalidatePath("/settings/legacy-users");
+
+    return { success: true, data: { providerKey } };
+  } catch (error) {
+    console.error("Failed to unlink legacy admin social provider:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to unlink social provider",
     };
   }
 }

@@ -16760,7 +16760,7 @@
     "legacyPhp": "Front/templates/admin/users/admin/classes/edit_user.class.php",
     "legacyJs": "",
     "modernRoute": "/settings/legacy-users",
-    "status": "partial - legacy admin user edit/delete/profile fields and welcome-level delivery audit restored; OAuth/export remain",
+    "status": "partial - legacy admin user edit/delete/profile fields, social unlink, and welcome-level delivery audit restored; OAuth reconnect/export remain",
     "legacyTablesMentioned": [
       "login_integration",
       "login_levels",
@@ -16782,7 +16782,7 @@
       "user_level",
       "usites"
     ],
-    "verification": "`/settings/legacy-users` restores the admin edit form behavior for migrated legacy users: name/username/email updates, optional password reset with confirmation/minimum-length validation, legacy level assignment, restricted flag, branch/class access (`usites`/`uclasses`) with migrated legacy branch/class IDs, synchronized modern user role/active state, creation of a linked modern user when an unlinked legacy record receives a password, editable custom profile fields from `login_profile_fields` / `login_profile_fields_man` with legacy text, textarea, and checkbox controls persisted back into `login_profiles` / `login_profiles_man` through update-or-insert semantics, preserved `login_integration` social-link identifiers, latest `login_timestamps` time/IP/count plus full timestamp history in the edit modal, and soft-delete that disables the modern account while preserving migrated provenance and soft-disables associated social-link rows. The update action now also restores the legacy `welcome_email` level-change delivery path from `Edit_user`: when newly assigned levels have `welcomeEmail` enabled, it renders the migrated add-user template, sends it through the provider-neutral `deliverEmail` bridge, and stores a `welcomeLevelEmail` audit payload with `emailDeliveryAuditData` on the legacy user record. Remaining work is active OAuth reconnect/unlink flows and physical legacy export semantics. Verified by `src/scripts/verify-legacy-admin-user-edit-welcome-delivery-contract.ts`."
+    "verification": "`/settings/legacy-users` restores the admin edit form behavior for migrated legacy users: name/username/email updates, optional password reset with confirmation/minimum-length validation, legacy level assignment, restricted flag, branch/class access (`usites`/`uclasses`) with migrated legacy branch/class IDs, synchronized modern user role/active state, creation of a linked modern user when an unlinked legacy record receives a password, editable custom profile fields from `login_profile_fields` / `login_profile_fields_man` with legacy text, textarea, and checkbox controls persisted back into `login_profiles` / `login_profiles_man` through update-or-insert semantics, preserved `login_integration` social-link identifiers, latest `login_timestamps` time/IP/count plus full timestamp history in the edit modal, and soft-delete that disables the modern account while preserving migrated provenance and soft-disables associated social-link rows. The update action now also restores the legacy `welcome_email` level-change delivery path from `Edit_user`: when newly assigned levels have `welcomeEmail` enabled, it renders the migrated add-user template, sends it through the provider-neutral `deliverEmail` bridge, and stores a `welcomeLevelEmail` audit payload with `emailDeliveryAuditData` on the legacy user record. Social unlink is restored in the admin user modal over migrated `login_integration` rows with `social_unlink_audit` records. Verified by `src/scripts/verify-legacy-social-unlink-contract.ts`. Remaining work is active OAuth reconnect/link flows and physical legacy export semantics. Verified by `src/scripts/verify-legacy-admin-user-edit-welcome-delivery-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/classes/functions.php",
@@ -17364,7 +17364,7 @@
     "legacyPhp": "Front/templates/admin/users/admin/users.php",
     "legacyJs": "",
     "modernRoute": "/users.php, /users/admin/users.php, /settings/legacy-users",
-    "status": "partial - legacy user edit page, modal bridge, and welcome-level delivery audit restored",
+    "status": "partial - legacy user edit page, modal bridge, social unlink, and welcome-level delivery audit restored",
     "legacyTablesMentioned": [
       "login_integration",
       "login_profile_fields",
@@ -17381,7 +17381,7 @@
       "usites",
       "uclasses"
     ],
-    "verification": "`/settings/legacy-users` restores the admin user detail/edit workflow in a modern modal, including migrated source database/table identity, legacy levels, restricted flag, branch/class access stored back as `usites`/`uclasses`, optional password reset, editable migrated profile values backed by `login_profile_fields` and `login_profiles`, preserved social-link identifiers from `login_integration`, latest login audit fields, full login timestamp history, soft delete, and the legacy `welcome_email` level-change delivery audit through `welcomeLevelEmail`. `/users.php?uid=` and `/users/admin/users.php?uid=` bridge to the restored roster with the legacy id prefilled as the search query and auto-open the matching edit modal when that legacy id is present in the migrated data. Remaining work is active OAuth link/unlink flows. Verified by `src/scripts/verify-legacy-admin-user-edit-welcome-delivery-contract.ts`."
+    "verification": "`/settings/legacy-users` restores the admin user detail/edit workflow in a modern modal, including migrated source database/table identity, legacy levels, restricted flag, branch/class access stored back as `usites`/`uclasses`, optional password reset, editable migrated profile values backed by `login_profile_fields` and `login_profiles`, preserved social-link identifiers from `login_integration`, latest login audit fields, full login timestamp history, soft delete, and the legacy `welcome_email` level-change delivery audit through `welcomeLevelEmail`. `/users.php?uid=` and `/users/admin/users.php?uid=` bridge to the restored roster with the legacy id prefilled as the search query and auto-open the matching edit modal when that legacy id is present in the migrated data. Admin user edit now restores social unlink for preserved `login_integration` identifiers with `social_unlink_audit` records. Verified by `src/scripts/verify-legacy-social-unlink-contract.ts`. Remaining work is active OAuth reconnect/link flows and physical legacy export semantics. Verified by `src/scripts/verify-legacy-admin-user-edit-welcome-delivery-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/assets/css/index.php",
@@ -17630,7 +17630,7 @@
     "legacyPhp": "Front/templates/admin/users/classes/integration.class.php",
     "legacyJs": "",
     "modernRoute": "/settings/legacy-users",
-    "status": "partial - archived social links and supported OAuth runtime restored; Yahoo/PlayThru decisions remain",
+    "status": "partial - archived social links, supported OAuth runtime, and social unlink restored; Yahoo/PlayThru/reconnect decisions remain",
     "legacyTablesMentioned": [
       "a",
       "login_integration"
@@ -17639,7 +17639,7 @@
       "link",
       "unlink"
     ],
-    "verification": "Legacy `Integration`/HybridAuth social metadata is preserved in `LegacyAuthRecord` rows from `login_integration`, exposed on profile/admin user surfaces, and now used by Facebook, Google, and Twitter Auth.js OAuth runtime to resolve provider account ids to linked active migrated users. OAuth sign-ins hydrate the same legacy session/access metadata as credential login and create `social_login_audit` records. Yahoo remains metadata-only because the installed Auth.js provider set has no Yahoo provider, and PlayThru remains archived. Verified by `src/scripts/verify-legacy-social-oauth-runtime-contract.ts`. Remaining work is a product/security decision on Yahoo replacement/retirement and whether the retired PlayThru provider still matters."
+    "verification": "Legacy `Integration`/HybridAuth social metadata is preserved in `LegacyAuthRecord` rows from `login_integration`, exposed on profile/admin user surfaces, and now used by Facebook, Google, and Twitter Auth.js OAuth runtime to resolve provider account ids to linked active migrated users. OAuth sign-ins hydrate the same legacy session/access metadata as credential login and create `social_login_audit` records. Yahoo remains metadata-only because the installed Auth.js provider set has no Yahoo provider, and PlayThru remains archived. Verified by `src/scripts/verify-legacy-social-oauth-runtime-contract.ts` and `src/scripts/verify-legacy-social-unlink-contract.ts`. Profile/admin social unlink is restored over migrated `login_integration` rows with `social_unlink_audit` records. Remaining work is a product/security decision on Yahoo replacement/retirement, OAuth reconnect/link UX, and whether the retired PlayThru provider still matters."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/integration/hybridauth/Hybrid/Auth.php",
@@ -18115,7 +18115,7 @@
     "legacyPhp": "Front/templates/admin/users/classes/profile.class.php",
     "legacyJs": "",
     "modernRoute": "/profile, /profile.php, /users/profile.php",
-    "status": "partial - legacy self-service, custom avatar, public UID profile, provider email, supported OAuth login, and bridges restored; link/unlink remains",
+    "status": "partial - legacy self-service, custom avatar, public UID profile, provider email, supported OAuth login, social unlink, and bridges restored; reconnect remains",
     "legacyTablesMentioned": [
       "login_confirm",
       "login_profile_fields",
@@ -18136,7 +18136,7 @@
       "uploadAvatar",
       "p-*"
     ],
-    "verification": "`/profile` now restores the signed-in legacy PHP-login profile flow over migrated auth metadata: General tab fields, mandatory current-password validation, immediate name update, editable custom profile sections from `login_profile_fields` / `login_profiles`, checkbox normalization, `custom-avatar-enable` avatar upload with legacy success/failure messages, `User.image` plus migrated profile metadata sync, access-log tab visibility from `profile-timestamps-enable` and `profile-timestamps-admin-enable`, top 10 migrated login timestamps, social integration status badges from preserved `login_integration`, pending email/password confirmation rows in `login_confirm` / `login_confirm_man` with `update_emailPw`, provider-backed confirmation/success emails with delivery audit summaries, and `?key=` confirmation that applies the pending email/password update. `/profile.php?uid=` and `/users/profile.php?uid=` now render the legacy public read-only profile shell with the stored avatar when `profile-public-enable` is enabled, while signed-in/key links bridge into `/profile` with query strings preserved. Facebook, Google, and Twitter Auth.js OAuth login now consumes preserved `login_integration` identifiers for linked active users. Remaining work is live OAuth link/unlink management from the profile page and Yahoo replacement/retirement."
+    "verification": "`/profile` now restores the signed-in legacy PHP-login profile flow over migrated auth metadata: General tab fields, mandatory current-password validation, immediate name update, editable custom profile sections from `login_profile_fields` / `login_profiles`, checkbox normalization, `custom-avatar-enable` avatar upload with legacy success/failure messages, `User.image` plus migrated profile metadata sync, access-log tab visibility from `profile-timestamps-enable` and `profile-timestamps-admin-enable`, top 10 migrated login timestamps, social integration status badges from preserved `login_integration`, pending email/password confirmation rows in `login_confirm` / `login_confirm_man` with `update_emailPw`, provider-backed confirmation/success emails with delivery audit summaries, and `?key=` confirmation that applies the pending email/password update. `/profile.php?uid=` and `/users/profile.php?uid=` now render the legacy public read-only profile shell with the stored avatar when `profile-public-enable` is enabled, while signed-in/key links bridge into `/profile` with query strings preserved. Facebook, Google, and Twitter Auth.js OAuth login now consumes preserved `login_integration` identifiers for linked active users. Profile and admin social unlink management is now restored over migrated `login_integration` metadata: linked provider cards expose Unlink actions, the server clears the provider identifier from the preserved row, refreshes linked-provider summaries, and writes `social_unlink_audit` records while leaving login history/user metadata intact. Verified by `src/scripts/verify-legacy-social-unlink-contract.ts`. Remaining work is live OAuth reconnect/link management from the profile page and Yahoo replacement/retirement."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/signup.class.php",
@@ -18343,7 +18343,7 @@
     "legacyPhp": "Front/templates/admin/users/profile.php",
     "legacyJs": "",
     "modernRoute": "/profile, /profile.php, /users/profile.php",
-    "status": "partial - legacy profile page shell, custom avatar, public UID view, provider email, supported OAuth login, and bridges restored; link/unlink remains",
+    "status": "partial - legacy profile page shell, custom avatar, public UID view, provider email, supported OAuth login, social unlink, and bridges restored; reconnect remains",
     "legacyTablesMentioned": [
       "login_confirm",
       "login_profile_fields",
@@ -18364,7 +18364,7 @@
       "uploadAvatar",
       "p-*"
     ],
-    "verification": "The legacy profile page shell is now represented by `/profile` with tabs for General, migrated profile-field sections, Access Logs, and Integration status, plus Save changes backed by the legacy current-password, provider-backed confirmation/success email, and confirmation-token semantics. Custom avatar upload now honors `custom-avatar-enable`, stores browser-uploaded images through the profile avatar upload scope, syncs the modern session image, and renders on signed-in/public profile headers. Old PHP links `/profile.php` and `/users/profile.php` preserve query strings; `?uid=` renders the public read-only profile when legacy public profiles are enabled, while signed-in/key links route into `/profile`. Facebook, Google, and Twitter Auth.js OAuth login now consumes preserved `login_integration` identifiers for linked active users. Remaining work is active OAuth link/unlink management from the profile page and Yahoo replacement/retirement."
+    "verification": "The legacy profile page shell is now represented by `/profile` with tabs for General, migrated profile-field sections, Access Logs, and Integration status, plus Save changes backed by the legacy current-password, provider-backed confirmation/success email, and confirmation-token semantics. Custom avatar upload now honors `custom-avatar-enable`, stores browser-uploaded images through the profile avatar upload scope, syncs the modern session image, and renders on signed-in/public profile headers. Old PHP links `/profile.php` and `/users/profile.php` preserve query strings; `?uid=` renders the public read-only profile when legacy public profiles are enabled, while signed-in/key links route into `/profile`. Facebook, Google, and Twitter Auth.js OAuth login now consumes preserved `login_integration` identifiers for linked active users. Profile and admin social unlink management is now restored over migrated `login_integration` metadata: linked provider cards expose Unlink actions, the server clears the provider identifier from the preserved row, refreshes linked-provider summaries, and writes `social_unlink_audit` records while leaving login history/user metadata intact. Verified by `src/scripts/verify-legacy-social-unlink-contract.ts`. Remaining work is active OAuth reconnect/link management from the profile page and Yahoo replacement/retirement."
   },
   {
     "legacyPhp": "Front/templates/admin/users/protected.php",

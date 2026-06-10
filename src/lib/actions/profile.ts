@@ -39,6 +39,7 @@ export type LegacyProfileAccessLogEntry = {
 };
 
 export type LegacyProfileIntegrationMethod = {
+  providerKey: string;
   provider: string;
   enabled: boolean;
   linked: boolean;
@@ -726,6 +727,7 @@ export async function getCurrentLegacyProfile(): Promise<
   const integrations = SOCIAL_LOGIN_PROVIDERS.map((provider) => {
     const identifier = socialIdentifier(socialIntegration?.legacyData, provider);
     return {
+      providerKey: provider,
       provider: socialProviderLabel(provider),
       enabled: boolSetting(settings.get(`integration-${provider}-enable`)),
       linked: Boolean(identifier),
@@ -755,6 +757,123 @@ export async function getCurrentLegacyProfile(): Promise<
     })),
     integrations,
   };
+}
+
+function linkedSocialProviderList(data: Prisma.InputJsonObject) {
+  return SOCIAL_LOGIN_PROVIDERS.filter((provider) => {
+    const value = data[provider];
+    return Boolean(
+      (typeof value === "string" && value.trim() && value.trim() !== "0") ||
+        (typeof value === "number" && value > 0),
+    );
+  }).join(",");
+}
+
+function normalizeSocialProviderKey(provider: string) {
+  const normalized = provider.trim().toLowerCase();
+  return SOCIAL_LOGIN_PROVIDERS.find((entry) => entry === normalized) ?? null;
+}
+
+async function findSocialIntegrationRecord(params: {
+  sourceDatabase: string;
+  legacyUserId: number;
+}) {
+  return db.legacyAuthRecord.findFirst({
+    where: {
+      sourceDatabase: params.sourceDatabase,
+      legacyTable: "login_integration",
+      recordType: "social_integration",
+      legacyUserId: params.legacyUserId,
+    },
+    orderBy: [{ legacyId: "desc" }],
+    select: {
+      id: true,
+      sourceDatabase: true,
+      legacyData: true,
+    },
+  });
+}
+
+export async function unlinkCurrentUserLegacySocialProvider(
+  provider: string,
+): Promise<ActionResult<{ provider: string }>> {
+  const providerKey = normalizeSocialProviderKey(provider);
+  if (!providerKey) return { success: false, error: "Unknown provider." };
+
+  const result = await requireOrgSafe();
+  if (!result.ok) return { success: false, error: result.error };
+  const { ctx } = result;
+
+  try {
+    const legacyRecord = await findCurrentLegacyProfile(ctx.userId);
+    if (!legacyRecord || legacyRecord.recordType !== "login_user") {
+      return { success: false, error: "Legacy social links are unavailable." };
+    }
+
+    const legacyUserId = legacyRecord.legacyUserId ?? legacyRecord.legacyId;
+    const integration = await findSocialIntegrationRecord({
+      sourceDatabase: legacyRecord.sourceDatabase,
+      legacyUserId,
+    });
+    if (!integration) {
+      return { success: false, error: "Social link not found." };
+    }
+
+    const legacyData = legacyObject(integration.legacyData);
+    const previousIdentifier = legacyString(legacyData, providerKey);
+    if (!previousIdentifier) {
+      return { success: false, error: "Social link not found." };
+    }
+
+    const updatedData = {
+      ...legacyData,
+      [providerKey]: "",
+      [`${providerKey}_unlinked_at`]: new Date().toISOString(),
+      [`${providerKey}_previous_identifier`]: previousIdentifier,
+      updated_from: "modern_profile_social_unlink",
+    };
+
+    await db.$transaction([
+      db.legacyAuthRecord.update({
+        where: { id: integration.id },
+        data: {
+          recordValue: linkedSocialProviderList(updatedData),
+          isDisabled: linkedSocialProviderList(updatedData).length === 0,
+          legacyData: updatedData,
+        },
+      }),
+      db.legacyAuthRecord.create({
+        data: {
+          sourceDatabase: legacyRecord.sourceDatabase,
+          legacyTable: "login_integration_audit",
+          legacyKey: `${legacyRecord.sourceDatabase}:login_integration_unlink:${legacyUserId}:${providerKey}:${randomBytes(6).toString("hex")}`,
+          legacyId: 0,
+          recordType: "social_unlink_audit",
+          userId: ctx.userId,
+          legacyUserId,
+          username: legacyRecord.username ?? legacyRecord.recordKey,
+          email: legacyRecord.email,
+          recordKey: providerKey,
+          recordValue: previousIdentifier,
+          legacyData: {
+            provider: providerKey,
+            previousIdentifier,
+            source: "profile",
+            unlinkedAt: new Date().toISOString(),
+          },
+        },
+      }),
+    ]);
+
+    revalidatePath("/profile");
+    revalidatePath("/profile.php");
+    revalidatePath("/users/profile.php");
+
+    return { success: true, data: { provider: socialProviderLabel(providerKey) } };
+  } catch (error) {
+    console.error("unlinkCurrentUserLegacySocialProvider error:", error);
+    return { success: false, error: "Failed to unlink social provider." };
+  }
 }
 
 export async function getPublicLegacyProfile(

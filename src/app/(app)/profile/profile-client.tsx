@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import {
   changeCurrentUserPassword,
+  unlinkCurrentUserLegacySocialProvider,
   updateActiveSchoolYearDates,
   updateCurrentUserLegacyProfile,
   updateCurrentUserLegacyProfileImage,
@@ -151,6 +152,9 @@ export function ProfileClient({
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(
     legacyProfile?.imageUrl ?? user.image ?? null,
   );
+  const [legacyIntegrations, setLegacyIntegrations] = useState(
+    () => legacyProfile?.integrations ?? [],
+  );
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [pendingConfirmUrl, setPendingConfirmUrl] = useState<string | null>(null);
   const [schoolYearStartDate, setSchoolYearStartDate] = useState(
@@ -161,6 +165,7 @@ export function ProfileClient({
   );
   const [isPasswordPending, startPasswordTransition] = useTransition();
   const [isLegacyPending, startLegacyTransition] = useTransition();
+  const [isSocialPending, startSocialTransition] = useTransition();
   const [isImagePending, startImageTransition] = useTransition();
   const [isSchoolYearPending, startSchoolYearTransition] = useTransition();
   const initials = (legacyName || user.name)
@@ -356,6 +361,25 @@ export function ProfileClient({
     });
   }
 
+  function handleSocialUnlink(providerKey: string) {
+    startSocialTransition(async () => {
+      const result = await unlinkCurrentUserLegacySocialProvider(providerKey);
+      if (!result.success) {
+        toast.error(result.error ?? "Failed to unlink social provider");
+        return;
+      }
+
+      setLegacyIntegrations((current) =>
+        current.map((method) =>
+          method.providerKey === providerKey
+            ? { ...method, linked: false, identifier: null }
+            : method,
+        ),
+      );
+      toast.success(`${result.data?.provider ?? "Provider"} unlinked`);
+    });
+  }
+
   function handleSchoolYearSave() {
     if (!schoolYearStartDate || !schoolYearEndDate) {
       toast.error("Please Fill both start & end dates");
@@ -527,7 +551,7 @@ export function ProfileClient({
                   Access logs
                 </TabsTrigger>
               ) : null}
-              {legacyProfile.integrations.length ? (
+              {legacyIntegrations.length ? (
                 <TabsTrigger value="integration">
                   <Link2 className="size-4" />
                   Integration
@@ -764,7 +788,7 @@ export function ProfileClient({
               </TabsContent>
             ) : null}
 
-            {legacyProfile.integrations.length ? (
+            {legacyIntegrations.length ? (
               <TabsContent value="integration">
                 <Card className="rounded-sm">
                   <CardHeader className="pb-3">
@@ -772,7 +796,7 @@ export function ProfileClient({
                   </CardHeader>
                   <CardContent>
                     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                      {legacyProfile.integrations.map((method) => (
+                      {legacyIntegrations.map((method) => (
                         <div
                           key={method.provider}
                           className="rounded-sm border p-3"
@@ -788,6 +812,25 @@ export function ProfileClient({
                           <div className="mt-2 min-h-5 truncate text-sm text-muted-foreground">
                             {method.identifier ?? "No linked identifier"}
                           </div>
+                          {method.linked ? (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="mt-3 w-full"
+                              disabled={isSocialPending}
+                              onClick={() =>
+                                handleSocialUnlink(method.providerKey)
+                              }
+                            >
+                              {isSocialPending ? (
+                                <Loader2 className="size-3 animate-spin" />
+                              ) : (
+                                <X className="size-3" />
+                              )}
+                              Unlink
+                            </Button>
+                          ) : null}
                         </div>
                       ))}
                     </div>
