@@ -11,6 +11,7 @@ const files = {
   receiptClient:
     "src/app/(app)/alarms/_components/staff-receipt-alarms-client.tsx",
   actions: "src/lib/actions/alarms.ts",
+  contractJob: "src/lib/jobs/contract-alarms.ts",
   matrix: "docs/page-parity-matrix.json",
   markdownMatrix: "docs/page-parity-matrix.md",
   topGaps: "docs/top-20-restoration-gaps.md",
@@ -68,6 +69,10 @@ assert.match(text.actions, /export async function getContractAlarmHistory/);
 assert.match(text.actions, /export async function generateContractAlarms/);
 assert.match(text.actions, /export async function markContractAlarmViewed/);
 assert.match(text.actions, /export async function markAllContractAlarmsViewed/);
+assert.match(text.contractJob, /deliverPushNotification/);
+assert.match(text.contractJob, /pushDeliveryAuditData/);
+assert.match(text.contractJob, /pushDelivery/);
+assert.match(text.contractJob, /recipientUserIds: params\.recipientUserIds/);
 
 type MatrixRow = {
   legacyPhp?: string;
@@ -90,16 +95,20 @@ assert.match(row.verification ?? "", /Browser smoke confirmed `\/alarmsContracts
 assert.match(row.verification ?? "", /Contracts Notifications Listing/);
 assert.match(row.verification ?? "", /Sent Contracts Reminders/);
 assert.match(row.verification ?? "", /no broken images or app errors/);
+assert.match(row.verification ?? "", /provider-neutral staff push delivery/);
+assert.match(row.verification ?? "", /pushDelivery/);
+assert.match(row.verification ?? "", /verify-contract-push-delivery\.ts/);
 
 const markdownRow = text.markdownMatrix
   .split("\n")
   .find((line) => line.includes("| Front/templates/admin/alarmsContracts.php |"));
 assert.match(markdownRow ?? "", /browser visual audit restored/);
 assert.match(markdownRow ?? "", /Browser smoke confirmed `\/alarmsContracts\.php`/);
+assert.match(markdownRow ?? "", /provider-neutral staff push delivery/);
 
 assert.match(
   text.topGaps,
-  /Contract alarms browser smoke now confirms the legacy `\/alarmsContracts\.php` bridge/,
+  /Contract alarms now audit provider-neutral staff push delivery on generated staff document-expiry reminders/,
 );
 
 console.log("legacy contract alarms visual contract assertions passed");

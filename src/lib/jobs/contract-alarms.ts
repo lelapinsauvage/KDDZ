@@ -1,5 +1,9 @@
 import { db } from "@/lib/db";
 import { deliverEmail, emailDeliveryAuditData } from "@/lib/email-delivery";
+import {
+  deliverPushNotification,
+  pushDeliveryAuditData,
+} from "@/lib/push-delivery";
 
 const LEGACY_REMINDER_DAYS = [1, 3, 7];
 const DAY_MS = 86_400_000;
@@ -495,6 +499,52 @@ async function storeContractEmailAudit(params: {
       legacyData: {
         ...(asRecord(alarm?.legacyData) ?? {}),
         emailDelivery: emailDeliveryAuditData(emailDelivery),
+      },
+    },
+  });
+}
+
+async function storeContractPushAudit(params: {
+  alarmId: string;
+  recipientUserIds: string[];
+  title: string;
+  body: string;
+  legacyNotificationId: number;
+  candidate: ContractCandidate;
+}) {
+  const pushDelivery = await deliverPushNotification({
+    recipientUserIds: params.recipientUserIds,
+    title: params.title,
+    body: params.body,
+    category: "CONTRACT",
+    url: "/alarms/contracts",
+    metadata: {
+      source: "generateContractAlarms",
+      legacyNotificationId: params.legacyNotificationId,
+      legacyDeliveryTable: CONTRACT_RECEIPT_SOURCE,
+      legacyMethod: params.candidate.legacyMethod,
+      legacyRecipientRule: "getUserAndBoss",
+      sourceDatabase: params.candidate.staff.sourceDatabase,
+      sourceDocumentTable: params.candidate.sourceTable,
+      sourceStaffTable: params.candidate.sourceStaffTable,
+      documentId: params.candidate.documentId,
+      legacyDocumentId: params.candidate.legacyDocumentId,
+      legacyPersonId: params.candidate.legacyPersonId,
+      documentType: params.candidate.documentType,
+      expiryDate: params.candidate.expiryKey,
+    },
+  });
+
+  const alarm = await db.alarm.findUnique({
+    where: { id: params.alarmId },
+    select: { legacyData: true },
+  });
+  await db.alarm.update({
+    where: { id: params.alarmId },
+    data: {
+      legacyData: {
+        ...(asRecord(alarm?.legacyData) ?? {}),
+        pushDelivery: pushDeliveryAuditData(pushDelivery),
       },
     },
   });
@@ -1130,12 +1180,16 @@ export async function generateContractAlarmsForOrganization(params: {
     );
 
     let alarmId = existingAlarm?.id ?? null;
+    let shouldAttemptPushAudit = !existingAlarm;
     if (existingAlarm) {
       summary.skippedExisting += 1;
       const existingData = asRecord(existingAlarm.legacyData) ?? {};
+      const needsPushAudit = !asRecord(existingData.pushDelivery);
+      shouldAttemptPushAudit = needsPushAudit;
       if (
         readNumber(existingData, ["aid"]) === null ||
-        existingData.sourceDeliveryTable !== CONTRACT_RECEIPT_SOURCE
+        existingData.sourceDeliveryTable !== CONTRACT_RECEIPT_SOURCE ||
+        needsPushAudit
       ) {
         await db.alarm.update({
           where: { id: existingAlarm.id },
@@ -1227,7 +1281,36 @@ export async function generateContractAlarmsForOrganization(params: {
     const newReceiptRecipients = recipients.filter(
       (recipient) => !existingReceiptIds.has(recipient.legacyRecipientId),
     );
-    if (newReceiptRecipients.length === 0) continue;
+
+    const variables = {
+      message: candidate.message,
+      staff_name: legacyName(candidate.staff.firstName, candidate.staff.lastName),
+      staff_type: candidate.staffKind,
+      person_name: legacyName(candidate.staff.firstName, candidate.staff.lastName),
+      document_type: candidate.documentType,
+      document_title: candidate.documentTitle ?? candidate.documentType,
+      document_name: candidate.documentTitle ?? candidate.documentType,
+      branch_name: candidate.staff.branchName,
+      date: candidate.expiryKey,
+      expiry_date: candidate.expiryKey,
+      days_until: candidate.legacyDayDifference,
+    };
+    const title = renderNotificationText(subjectTemplate, variables);
+    const body = renderNotificationText(bodyTemplate, variables);
+
+    if (newReceiptRecipients.length === 0) {
+      if (templateEnabled && shouldAttemptPushAudit) {
+        await storeContractPushAudit({
+          alarmId,
+          recipientUserIds: recipients.map((recipient) => recipient.userId),
+          title,
+          body,
+          legacyNotificationId,
+          candidate,
+        });
+      }
+      continue;
+    }
 
     const receiptResult = await db.notificationReceipt.createMany({
       data: newReceiptRecipients.map((recipient) => ({
@@ -1260,22 +1343,6 @@ export async function generateContractAlarmsForOrganization(params: {
 
     if (!templateEnabled || receiptResult.count === 0) continue;
 
-    const variables = {
-      message: candidate.message,
-      staff_name: legacyName(candidate.staff.firstName, candidate.staff.lastName),
-      staff_type: candidate.staffKind,
-      person_name: legacyName(candidate.staff.firstName, candidate.staff.lastName),
-      document_type: candidate.documentType,
-      document_title: candidate.documentTitle ?? candidate.documentType,
-      document_name: candidate.documentTitle ?? candidate.documentType,
-      branch_name: candidate.staff.branchName,
-      date: candidate.expiryKey,
-      expiry_date: candidate.expiryKey,
-      days_until: candidate.legacyDayDifference,
-    };
-    const title = renderNotificationText(subjectTemplate, variables);
-    const body = renderNotificationText(bodyTemplate, variables);
-
     const created = await db.notification.createMany({
       data: newReceiptRecipients.map((recipient) => ({
         userId: recipient.userId,
@@ -1296,6 +1363,17 @@ export async function generateContractAlarmsForOrganization(params: {
       legacyNotificationId,
       sourceDatabase: candidate.staff.sourceDatabase,
     });
+
+    if (shouldAttemptPushAudit) {
+      await storeContractPushAudit({
+        alarmId,
+        recipientUserIds: newReceiptRecipients.map((recipient) => recipient.userId),
+        title,
+        body,
+        legacyNotificationId,
+        candidate,
+      });
+    }
   }
 
   return summary;
