@@ -10,6 +10,7 @@ const files = {
   headerContract: "src/lib/legacy-child-report-table-contract.ts",
   exportButton: "src/components/shared/export-button.tsx",
   matrix: "docs/page-parity-matrix.json",
+  matrixMd: "docs/page-parity-matrix.md",
 };
 
 const contents = Object.fromEntries(
@@ -53,6 +54,18 @@ assert.match(
 assert.match(
   contents.matrix,
   /child_report\.php[\s\S]*production-data audit for legacy food ids/,
+);
+assert.match(
+  contents.matrixMd,
+  /child_report\.php \| Front\/templates\/admin\/js\/child_report\.js \| \/child_report\.php, \/children\/\[id\]\/report \| partial - legacy daily report matrix, grouped header, legacy field fallbacks, TableTools export, and deep-link bridge restored; production food-id audit remains/,
+);
+assert.match(
+  contents.matrixMd,
+  /child_report\.php[\s\S]*Copy\/PDF\/Excel\/CSV export, print action/,
+);
+assert.match(
+  contents.matrixMd,
+  /child_report\.php[\s\S]*verify-legacy-child-report-tabletools-contract\.ts/,
 );
 
 console.log("legacy child report TableTools contract assertions passed");

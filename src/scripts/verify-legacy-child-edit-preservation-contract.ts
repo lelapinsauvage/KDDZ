@@ -13,6 +13,7 @@ const files = {
   validation: "src/lib/validations/child.ts",
   actions: "src/lib/actions/children.ts",
   matrix: "docs/page-parity-matrix.json",
+  matrixMd: "docs/page-parity-matrix.md",
 };
 
 const text = Object.fromEntries(
@@ -138,5 +139,22 @@ assert.match(row.status ?? "", /address coordinates restored/);
 assert.match(row.verification ?? "", /verify-legacy-child-edit-preservation-contract\.ts/);
 assert.match(row.verification ?? "", /preserves existing nested child rows in place/);
 assert.match(row.verification ?? "", /map picker/);
+
+assert.match(
+  text.matrixMd,
+  /Child_Details\.php \| Front\/templates\/admin\/js\/Child_Details\.js \| \/Child_Details\.php, \/children\/\[id\] \| partial - legacy dossier landing, child deep-link bridge, nested edit provenance, and address coordinates restored; map picker visual audit remains/,
+);
+assert.match(
+  text.matrixMd,
+  /Child_Details\.php[\s\S]*verify-legacy-child-edit-preservation-contract\.ts/,
+);
+assert.match(
+  text.matrixMd,
+  /Child_Details\.php[\s\S]*preserves existing nested child rows in place/,
+);
+assert.match(
+  text.matrixMd,
+  /Child_Details\.php[\s\S]*Latitude\/Longitude now hydrate from preserved legacy `t_address` JSON/,
+);
 
 console.log("legacy child edit preservation assertions passed");
