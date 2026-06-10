@@ -59,6 +59,7 @@ export interface LegacyStaffSnapshotStaff {
   secondaryDegree?: string | null;
   secondaryDegreeYear?: string | null;
   universityDegree?: string | null;
+  specializationAr?: string | null;
   universityDegreeYear?: string | null;
   hireDate?: string | null;
   specialization?: string | null;
@@ -213,6 +214,11 @@ export function LegacyStaffSnapshot({ role, staff }: LegacyStaffSnapshotProps) {
             { label: "Secondary Degree", value: staff.secondaryDegree },
             { label: "Secondary Degree Year", value: staff.secondaryDegreeYear },
             { label: "University Degree", value: staff.universityDegree },
+            {
+              label: "Arabic Studied Domain",
+              value: staff.specializationAr,
+              dir: "rtl",
+            },
             { label: "University Degree Year", value: staff.universityDegreeYear },
             { label: "Specialization", value: staff.specialization },
             { label: "CNSS", value: staff.cnss },

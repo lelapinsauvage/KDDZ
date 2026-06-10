@@ -80,6 +80,7 @@ export const employeeFormSchema = z.object({
   // Garderie info
   hireDate: z.string(),
   specialization: z.string(),
+  specializationAr: z.string(),
   branchId: z.string().min(1, "Branch is required"),
   classId: z.string(),
   isActive: z.boolean(),

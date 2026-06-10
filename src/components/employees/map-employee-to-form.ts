@@ -84,6 +84,7 @@ export function mapEmployeeToForm(emp: any): EmployeeFormValues & { id: string }
     licenseNumber: emp.licenseNumber ?? "",
     hireDate: fmtDate(emp.hireDate),
     specialization: emp.specialization ?? "",
+    specializationAr: emp.specializationAr ?? "",
     branchId: emp.branchId ?? "",
     classId: emp.classId ?? "",
     isActive: emp.isActive ?? true,

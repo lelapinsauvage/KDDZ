@@ -19,13 +19,14 @@ const contents = Object.fromEntries(
 assert.match(contents.schema, /model Teacher[\s\S]*middleName\s+String\?/);
 assert.match(contents.schema, /model Nurse[\s\S]*middleName\s+String\?/);
 assert.match(contents.schema, /model Doctor[\s\S]*middleName\s+String\?/);
+assert.match(contents.schema, /model Manager[\s\S]*middleName\s+String\?/);
 
 assert.match(contents.validation, /middleName:\s*z\.string\(\)/);
 assert.match(contents.mapper, /middleName:\s*emp\.middleName\s*\?\?\s*""/);
 assert.match(contents.action, /middleName\?:\s*string\s*\|\s*null/);
 assert.match(contents.action, /createData\.middleName\s*=\s*data\.middleName\s*\?\?\s*null/);
 assert.match(contents.action, /updateData\.middleName\s*=\s*data\.middleName\s*\|\|\s*null/);
-assert.match(contents.form, /supportsMiddleName\s*=\s*type\s*!==\s*"manager"/);
+assert.match(contents.form, /supportsMiddleName\s*=\s*true/);
 assert.match(contents.form, /htmlFor="middleName"/);
 assert.match(contents.form, /\{\.\.\.register\("middleName"\)\}/);
 

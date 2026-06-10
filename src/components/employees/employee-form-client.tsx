@@ -161,6 +161,7 @@ export function EmployeeFormClient({
       licenseNumber: "",
       hireDate: "",
       specialization: "",
+      specializationAr: "",
       branchId: "",
       classId: "",
       isActive: true,
@@ -210,8 +211,8 @@ export function EmployeeFormClient({
 
   const storedImageUrl = watch("imageUrl") || "";
   const displayImageUrl = imagePreviewUrl || storedImageUrl;
-  const supportsMiddleName = type !== "manager";
-  const supportsArabicName = type === "doctor";
+  const supportsMiddleName = true;
+  const supportsArabicName = type === "doctor" || type === "manager";
   const displayName = [
     watch("firstName"),
     supportsMiddleName ? watch("middleName") : "",
@@ -673,14 +674,25 @@ export function EmployeeFormClient({
                   )}
                   <div>
                     <Label htmlFor="specialization">
-                      {type === "doctor" ? "Studied Domain" : "Specialization"}
+                      {type === "doctor" || type === "manager" ? "Studied Domain" : "Specialization"}
                     </Label>
                     <Input
                       id="specialization"
                       {...register("specialization")}
-                      placeholder={type === "doctor" ? "Studied Domain" : "Specialization"}
+                      placeholder={type === "doctor" || type === "manager" ? "Studied Domain" : "Specialization"}
                     />
                   </div>
+                  {type === "manager" && (
+                    <div>
+                      <Label htmlFor="specializationAr">Arabic Studied Domain</Label>
+                      <Input
+                        id="specializationAr"
+                        dir="rtl"
+                        {...register("specializationAr")}
+                        placeholder="الاختصاص"
+                      />
+                    </div>
+                  )}
                   {type === "doctor" && (
                     <div>
                       <Label htmlFor="licenseNumber">Registration / License No</Label>

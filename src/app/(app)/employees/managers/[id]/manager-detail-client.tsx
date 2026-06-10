@@ -49,7 +49,7 @@ export function ManagerDetailClient({ manager, branchStats }: ManagerDetailClien
           { label: "Home", href: "/dashboard" },
           { label: "Employees" },
           { label: "Managers", href: "/employees/managers" },
-          { label: `${manager.firstName} ${manager.lastName}` },
+          { label: [manager.firstName, manager.middleName, manager.lastName].filter(Boolean).join(" ") },
         ]}
       />
 
@@ -72,7 +72,9 @@ export function ManagerDetailClient({ manager, branchStats }: ManagerDetailClien
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-3">
-                <h2 className="text-xl font-semibold">{manager.firstName} {manager.lastName}</h2>
+                <h2 className="text-xl font-semibold">
+                  {[manager.firstName, manager.middleName, manager.lastName].filter(Boolean).join(" ")}
+                </h2>
                 <Badge className={manager.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
                   {manager.isActive ? "Active" : "Inactive"}
                 </Badge>
@@ -113,9 +115,12 @@ export function ManagerDetailClient({ manager, branchStats }: ManagerDetailClien
                 <CardContent className="space-y-3">
                   {[
                     { label: "Date of Birth", value: manager.dateOfBirth ? format(new Date(manager.dateOfBirth), "MMM d, yyyy") : "—" },
+                    { label: "Place of Birth", value: manager.placeOfBirth ?? "—" },
                     { label: "Nationality", value: manager.nationality ?? "—" },
+                    { label: "Gender", value: manager.gender ? manager.gender.toLowerCase() : "—" },
                     { label: "Mobile", value: manager.mobile ?? "—" },
-                    { label: "Specialization", value: manager.specialization ?? "—" },
+                    { label: "Studied Domain", value: manager.specialization ?? "—" },
+                    { label: "Arabic Studied Domain", value: manager.specializationAr ?? "—" },
                   ].map((item) => (
                     <div key={item.label} className="flex justify-between border-b pb-2">
                       <span className="text-sm text-muted-foreground">{item.label}</span>

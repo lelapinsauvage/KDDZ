@@ -28,7 +28,7 @@ for (const field of ["firstNameAr", "middleNameAr", "lastNameAr"]) {
   assert.match(contents.form, new RegExp(`\\{\\.\\.\\.register\\("${field}"\\)\\}`));
 }
 
-assert.match(contents.form, /supportsArabicName\s*=\s*type\s*===\s*"doctor"/);
+assert.match(contents.form, /supportsArabicName\s*=\s*type\s*===\s*"doctor"\s*\|\|\s*type\s*===\s*"manager"/);
 assert.match(contents.action, /if\s*\(type\s*===\s*"doctor"\)\s*\{[\s\S]*createData\.firstNameAr/);
 assert.match(contents.action, /if\s*\(type\s*===\s*"doctor"\)\s*\{[\s\S]*updateData\.firstNameAr/);
 

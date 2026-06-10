@@ -1428,26 +1428,34 @@ model DoctorDocument {
 }
 
 model Manager {
-  id             String    @id @default(uuid()) @db.Uuid
-  sourceDatabase String?
-  legacyKey      String?   @unique
-  legacyId       Int?
-  legacyTable    String?
-  userId         String?   @db.Uuid
-  firstName      String
-  lastName       String
-  phone          String?
-  mobile         String?
-  email          String?
-  nationality    String?
-  dateOfBirth    DateTime? @db.Date
-  hireDate       DateTime? @db.Date
-  imageUrl       String?
-  branchId       String    @db.Uuid
-  specialization String?
-  isActive       Boolean   @default(true)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id               String    @id @default(uuid()) @db.Uuid
+  sourceDatabase   String?
+  legacyKey        String?   @unique
+  legacyId         Int?
+  legacyTable      String?
+  userId           String?   @db.Uuid
+  username         String?
+  firstName        String
+  firstNameAr      String?
+  middleName       String?
+  middleNameAr     String?
+  lastName         String
+  lastNameAr       String?
+  phone            String?
+  mobile           String?
+  email            String?
+  nationality      String?
+  dateOfBirth      DateTime? @db.Date
+  placeOfBirth     String?
+  gender           Gender?
+  hireDate         DateTime? @db.Date
+  imageUrl         String?
+  branchId         String    @db.Uuid
+  specialization   String?
+  specializationAr String?
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   branch      Branch              @relation(fields: [branchId], references: [id], onDelete: Cascade)
   addresses   ManagerAddress[]

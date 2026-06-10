@@ -87,6 +87,7 @@ interface EmployeeData {
   branchId: string;
   classId?: string | null;
   specialization?: string | null;
+  specializationAr?: string | null;
   isActive?: boolean;
   remarks?: string | null;
   // Doctor-specific
@@ -734,6 +735,16 @@ export async function createEmployee(
     }
 
     // Type-specific fields
+    if (type === "manager") {
+      createData.username = data.username ?? null;
+      createData.firstNameAr = data.firstNameAr ?? null;
+      createData.middleName = data.middleName ?? null;
+      createData.middleNameAr = data.middleNameAr ?? null;
+      createData.lastNameAr = data.lastNameAr ?? null;
+      createData.placeOfBirth = data.placeOfBirth ?? null;
+      createData.gender = data.gender || null;
+      createData.specializationAr = data.specializationAr ?? null;
+    }
     if (type === "doctor" && data.licenseNumber !== undefined) {
       createData.licenseNumber = data.licenseNumber;
     }
@@ -886,6 +897,16 @@ export async function updateEmployee(
     }
 
     // Type-specific fields
+    if (type === "manager") {
+      if (data.username !== undefined) updateData.username = data.username || null;
+      if (data.firstNameAr !== undefined) updateData.firstNameAr = data.firstNameAr || null;
+      if (data.middleName !== undefined) updateData.middleName = data.middleName || null;
+      if (data.middleNameAr !== undefined) updateData.middleNameAr = data.middleNameAr || null;
+      if (data.lastNameAr !== undefined) updateData.lastNameAr = data.lastNameAr || null;
+      if (data.placeOfBirth !== undefined) updateData.placeOfBirth = data.placeOfBirth || null;
+      if (data.gender !== undefined) updateData.gender = data.gender || null;
+      if (data.specializationAr !== undefined) updateData.specializationAr = data.specializationAr || null;
+    }
     if (type === "doctor" && data.licenseNumber !== undefined) {
       updateData.licenseNumber = data.licenseNumber;
     }

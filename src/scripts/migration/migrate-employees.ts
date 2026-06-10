@@ -45,7 +45,15 @@
  * === Manager (t_manager → Manager) ===
  *   teacher_id   → (old ID, mapped to UUID)
  *   f_name       → firstName
+ *   f_name_ar    → firstNameAr
+ *   m_name       → middleName
+ *   m_name_ar    → middleNameAr
  *   l_name       → lastName
+ *   l_name_ar    → lastNameAr
+ *   pob          → placeOfBirth
+ *   sel_gender   → gender
+ *   uni_degree   → specialization
+ *   uni_degree_ar → specializationAr
  *   mobile       → mobile
  *   email        → email
  *   nationality  → nationality
@@ -67,6 +75,7 @@ import type {
   AttendanceLogStatus,
   EmployeeEventStatus,
   ExperienceType,
+  Gender,
   Prisma,
   PrismaClient,
 } from "@/generated/prisma/client";
@@ -80,6 +89,7 @@ import {
   parseDate,
   cleanString,
   cleanLegacyFileName,
+  mapGender,
   toBool,
   toInt,
   log,
@@ -905,6 +915,8 @@ interface OldNurse {
   sel_gender: string;
   mobile: string;
   email: string;
+  uni_degree: string;
+  uni_degree_ar: string;
   image: string;
   sel_branch: number;
   active: number;
@@ -1214,6 +1226,8 @@ interface OldManager {
   sel_gender: string;
   mobile: string;
   email: string;
+  uni_degree: string;
+  uni_degree_ar: string;
   image: string;
   sel_branch: number;
   active: number;
@@ -1256,12 +1270,28 @@ async function migrateManagers(prisma: PrismaClient, dryRun: boolean) {
         legacyKey?: string;
         legacyId?: number;
         legacyTable?: string;
+        firstNameAr?: string | null;
+        middleName?: string | null;
+        middleNameAr?: string | null;
+        lastNameAr?: string | null;
+        placeOfBirth?: string | null;
+        gender?: Gender | null;
+        specialization?: string | null;
+        specializationAr?: string | null;
         imageUrl?: string;
       } = {
         sourceDatabase,
         legacyKey: key,
         legacyId: row.teacher_id,
         legacyTable: "t_manager",
+        firstNameAr: cleanString(row.f_name_ar),
+        middleName: cleanString(row.m_name),
+        middleNameAr: cleanString(row.m_name_ar),
+        lastNameAr: cleanString(row.l_name_ar),
+        placeOfBirth: cleanString(row.pob),
+        gender: mapGender(row.sel_gender),
+        specialization: cleanString(row.uni_degree),
+        specializationAr: cleanString(row.uni_degree_ar),
       };
       if (imageUrl && existing.imageUrl !== imageUrl) {
         updateData.imageUrl = imageUrl;
@@ -1287,13 +1317,21 @@ async function migrateManagers(prisma: PrismaClient, dryRun: boolean) {
           legacyId: row.teacher_id,
           legacyTable: "t_manager",
           firstName: row.f_name || "",
+          firstNameAr: cleanString(row.f_name_ar),
+          middleName: cleanString(row.m_name),
+          middleNameAr: cleanString(row.m_name_ar),
           lastName: row.l_name || "",
+          lastNameAr: cleanString(row.l_name_ar),
           mobile: cleanString(row.mobile),
           email: cleanString(row.email),
           nationality: cleanString(row.nationality),
           dateOfBirth: parseDate(row.dob),
+          placeOfBirth: cleanString(row.pob),
+          gender: mapGender(row.sel_gender),
           imageUrl,
           branchId,
+          specialization: cleanString(row.uni_degree),
+          specializationAr: cleanString(row.uni_degree_ar),
           isActive: toBool(row.active),
           createdAt: row.datetime ? new Date(row.datetime) : new Date(),
         },
