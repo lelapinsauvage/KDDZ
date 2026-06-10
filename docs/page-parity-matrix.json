@@ -352,7 +352,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Restored `t_events` migration fields, custom subject/body, multi-branch notification targeting, 1-10 day reminder offsets, event-type default subject/body fill, organization-scoped event CRUD, and generated parent/mobile `custom_notifications_events_parents` receipt fanout from active branch children. `/NotifCalendar.php` now lands on the modern events calendar while preserving the legacy event id as query context. Remaining work is exact FullCalendar visual/action audit."
+    "verification": "Restored `t_events` migration fields, custom subject/body, multi-branch notification targeting, 1-10 day reminder offsets, event-type default subject/body fill, organization-scoped event CRUD, and generated parent/mobile `custom_notifications_events_parents` receipt fanout from active branch children. Event import fidelity now preserves active/inactive legacy rows with sourceDatabase, legacyKey/id, event type mapping, custom subject/body, event date, submit timestamp, notification branch ids parsed from legacy branches JSON, and 1-10 day reminder offsets parsed from daysbefore JSON; invalid legacy ids/dates are counted in skipped totals and migrated/updated/skipped counts are logged. Verified by `src/scripts/verify-legacy-event-import-contract.ts` and `src/scripts/verify-event-parent-delivery.ts`. `/NotifCalendar.php` now lands on the modern events calendar while preserving the legacy event id as query context. Remaining work is exact FullCalendar visual/action audit."
   },
   {
     "legacyPhp": "Front/templates/admin/Nurse_Details.php",
