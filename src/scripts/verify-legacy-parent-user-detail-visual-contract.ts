@@ -138,7 +138,7 @@ const row = matrix.find(
 assert.ok(row, "parent_user.php matrix row should exist");
 assert.equal(
   row.status,
-  "partial - legacy parent-user detail workflow, credential channel delivery, and browser visual audit restored",
+  "restored - legacy parent-user detail workflow, credential channel delivery, and browser visual audit restored",
 );
 assert.match(row.verification, /Browser smoke confirmed `\/parent_user\.php\?fid=`/);
 assert.match(row.verification, /Parent User Detail/);
@@ -163,9 +163,10 @@ const markdownRow =
   "";
 assert.match(
   markdownRow,
-  /partial - legacy parent-user detail workflow, credential channel delivery, and browser visual audit restored/,
+  /restored - legacy parent-user detail workflow, credential channel delivery, and browser visual audit restored/,
 );
 assert.doesNotMatch(markdownRow, /visual audit remains/);
+assert.doesNotMatch(markdownRow, /production provider credential rollout/);
 assert.match(markdownRow, /Browser smoke confirmed `\/parent_user\.php\?fid=`/);
 
 console.log("Legacy parent-user detail visual contract verified.");
