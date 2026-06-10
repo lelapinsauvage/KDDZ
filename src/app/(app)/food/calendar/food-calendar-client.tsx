@@ -71,6 +71,7 @@ interface CalendarEntryData {
 }
 
 type CalendarData = Record<string, Record<string, CalendarEntryData>>;
+type CalendarViewMode = "month" | "week" | "day";
 
 // ── Helpers ─────────────────────────────────────
 const MONTH_NAMES = [
@@ -87,8 +88,37 @@ const MEALS: { type: MealType; label: string }[] = [
   { type: "SNACK", label: "Early Dinner" },
 ];
 
+const VIEW_MODES: { value: CalendarViewMode; label: string }[] = [
+  { value: "month", label: "Month" },
+  { value: "week", label: "Week" },
+  { value: "day", label: "Day" },
+];
+
 function toISODate(year: number, month: number, day: number): string {
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function dateToISODate(date: Date): string {
+  return toISODate(date.getFullYear(), date.getMonth() + 1, date.getDate());
+}
+
+function parseISODateKey(dateKey: string): Date {
+  const [dateYear, dateMonth, dateDay] = dateKey.split("-").map(Number);
+  return new Date(dateYear, dateMonth - 1, dateDay);
+}
+
+function addDays(date: Date, days: number): Date {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function getStartOfWeek(date: Date): Date {
+  return addDays(date, -date.getDay());
+}
+
+function formatDateKey(dateKey: string, options: Intl.DateTimeFormatOptions): string {
+  return parseISODateKey(dateKey).toLocaleDateString("en-US", options);
 }
 
 function getDaysInMonth(year: number, month: number): number {
@@ -99,13 +129,21 @@ function getFirstDayOfWeek(year: number, month: number): number {
   return new Date(year, month - 1, 1).getDay();
 }
 
-function buildCalendarPath(branchId: string, year: number, month: number): string {
+function buildCalendarPath(
+  branchId: string,
+  year: number,
+  month: number,
+  viewMode: CalendarViewMode,
+  focusedDate: string
+): string {
   const params = new URLSearchParams();
   if (branchId) {
     params.set("branch", branchId);
   }
   params.set("month", String(month).padStart(2, "0"));
   params.set("year", String(year));
+  params.set("view", viewMode);
+  params.set("date", focusedDate);
   return `/food/calendar?${params.toString()}`;
 }
 
@@ -212,6 +250,8 @@ interface FoodCalendarClientProps {
   initialBranchId: string;
   initialYear: number;
   initialMonth: number;
+  initialViewMode: CalendarViewMode;
+  initialFocusedDate: string;
   initialCalendar: CalendarData;
   foods: FoodOption[];
   permissions?: {
@@ -227,6 +267,8 @@ export function FoodCalendarClient({
   initialBranchId,
   initialYear,
   initialMonth,
+  initialViewMode,
+  initialFocusedDate,
   initialCalendar,
   foods,
   permissions = {
@@ -237,6 +279,8 @@ export function FoodCalendarClient({
 }: FoodCalendarClientProps) {
   const [year, setYear] = useState(initialYear);
   const [month, setMonth] = useState(initialMonth);
+  const [viewMode, setViewMode] = useState<CalendarViewMode>(initialViewMode);
+  const [focusedDate, setFocusedDate] = useState(initialFocusedDate);
   const [branch, setBranch] = useState(initialBranchId);
   const [calendar, setCalendar] = useState<CalendarData>(initialCalendar);
   const [isPending, startTransition] = useTransition();
@@ -251,11 +295,23 @@ export function FoodCalendarClient({
   const [applyTarget, setApplyTarget] = useState<"branch" | "all">("branch");
 
   const replaceCalendarUrl = useCallback(
-    (branchId: string, nextYear: number, nextMonth: number) => {
+    (
+      branchId: string,
+      nextYear: number,
+      nextMonth: number,
+      nextViewMode: CalendarViewMode,
+      nextFocusedDate: string
+    ) => {
       window.history.replaceState(
         null,
         "",
-        buildCalendarPath(branchId, nextYear, nextMonth)
+        buildCalendarPath(
+          branchId,
+          nextYear,
+          nextMonth,
+          nextViewMode,
+          nextFocusedDate
+        )
       );
     },
     []
@@ -290,63 +346,75 @@ export function FoodCalendarClient({
     []
   );
 
-  const prevMonth = useCallback(() => {
-    let newMonth = month - 1;
-    let newYear = year;
-    if (newMonth < 1) {
-      newMonth = 12;
-      newYear -= 1;
-    }
-    setMonth(newMonth);
-    setYear(newYear);
-    replaceCalendarUrl(branch, newYear, newMonth);
-    startTransition(() => {
-      fetchCalendar(branch, newYear, newMonth);
-    });
-  }, [branch, month, year, fetchCalendar, replaceCalendarUrl, startTransition]);
+  const movePeriod = useCallback(
+    (direction: -1 | 1) => {
+      let nextDate: Date;
+      if (viewMode === "month") {
+        nextDate = new Date(year, month - 1 + direction, 1);
+      } else {
+        nextDate = addDays(parseISODateKey(focusedDate), direction * (viewMode === "week" ? 7 : 1));
+      }
 
-  const nextMonth = useCallback(() => {
-    let newMonth = month + 1;
-    let newYear = year;
-    if (newMonth > 12) {
-      newMonth = 1;
-      newYear += 1;
-    }
-    setMonth(newMonth);
-    setYear(newYear);
-    replaceCalendarUrl(branch, newYear, newMonth);
-    startTransition(() => {
-      fetchCalendar(branch, newYear, newMonth);
-    });
-  }, [branch, month, year, fetchCalendar, replaceCalendarUrl, startTransition]);
+      const nextYear = nextDate.getFullYear();
+      const nextMonth = nextDate.getMonth() + 1;
+      const nextFocusedDate = dateToISODate(nextDate);
+
+      setMonth(nextMonth);
+      setYear(nextYear);
+      setFocusedDate(nextFocusedDate);
+      replaceCalendarUrl(branch, nextYear, nextMonth, viewMode, nextFocusedDate);
+      startTransition(() => {
+        fetchCalendar(branch, nextYear, nextMonth);
+      });
+    },
+    [
+      branch,
+      focusedDate,
+      month,
+      year,
+      viewMode,
+      fetchCalendar,
+      replaceCalendarUrl,
+      startTransition,
+    ]
+  );
 
   const handleBranchChange = useCallback(
     (newBranch: string) => {
       setBranch(newBranch);
-      replaceCalendarUrl(newBranch, year, month);
+      replaceCalendarUrl(newBranch, year, month, viewMode, focusedDate);
       startTransition(() => {
         fetchCalendar(newBranch, year, month);
       });
     },
-    [year, month, fetchCalendar, replaceCalendarUrl, startTransition]
+    [year, month, viewMode, focusedDate, fetchCalendar, replaceCalendarUrl, startTransition]
+  );
+
+  const handleViewModeChange = useCallback(
+    (nextViewMode: CalendarViewMode) => {
+      setViewMode(nextViewMode);
+      replaceCalendarUrl(branch, year, month, nextViewMode, focusedDate);
+    },
+    [branch, year, month, focusedDate, replaceCalendarUrl]
   );
 
   const goToToday = useCallback(() => {
     const now = new Date();
     const todayYear = now.getFullYear();
     const todayMonth = now.getMonth() + 1;
+    const todayDate = dateToISODate(now);
     setYear(todayYear);
     setMonth(todayMonth);
-    replaceCalendarUrl(branch, todayYear, todayMonth);
+    setFocusedDate(todayDate);
+    replaceCalendarUrl(branch, todayYear, todayMonth, viewMode, todayDate);
     startTransition(() => {
       fetchCalendar(branch, todayYear, todayMonth);
     });
-  }, [branch, fetchCalendar, replaceCalendarUrl, startTransition]);
+  }, [branch, viewMode, fetchCalendar, replaceCalendarUrl, startTransition]);
 
   // Open day assignment dialog
-  const openDayDialog = useCallback(
-    (day: number) => {
-      const dateKey = toISODate(year, month, day);
+  const openDateDialog = useCallback(
+    (dateKey: string) => {
       const dayData = calendar[dateKey] ?? {};
       const hasMeals = Object.keys(dayData).length > 0;
       const canOpen = hasMeals
@@ -364,7 +432,14 @@ export function FoodCalendarClient({
       setApplyTarget("branch");
       setDialogOpen(true);
     },
-    [year, month, calendar, permissions]
+    [calendar, permissions]
+  );
+
+  const openDayDialog = useCallback(
+    (day: number) => {
+      openDateDialog(toISODate(year, month, day));
+    },
+    [year, month, openDateDialog]
   );
 
   const selectedDateHasMeals = Boolean(
@@ -501,6 +576,62 @@ export function FoodCalendarClient({
     [branch, year, month]
   );
 
+  const visibleDateKeys = useMemo(() => {
+    if (viewMode === "day") {
+      return [focusedDate];
+    }
+
+    if (viewMode === "week") {
+      const start = getStartOfWeek(parseISODateKey(focusedDate));
+      return Array.from({ length: 7 }, (_, index) => dateToISODate(addDays(start, index)));
+    }
+
+    return [];
+  }, [focusedDate, viewMode]);
+
+  const displayTitle = useMemo(() => {
+    if (viewMode === "day") {
+      return formatDateKey(focusedDate, {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      });
+    }
+
+    if (viewMode === "week") {
+      const firstDate = visibleDateKeys[0];
+      const lastDate = visibleDateKeys[visibleDateKeys.length - 1];
+      return `${formatDateKey(firstDate, { month: "short", day: "numeric" })} - ${formatDateKey(lastDate, { month: "short", day: "numeric", year: "numeric" })}`;
+    }
+
+    return `${MONTH_NAMES[month - 1]} ${year}`;
+  }, [focusedDate, month, visibleDateKeys, viewMode, year]);
+
+  const renderMealEntries = (dayData: Record<string, CalendarEntryData>) => (
+    <div className="flex flex-col gap-1">
+      {MEALS.map((meal) => {
+        const entry = dayData[meal.type];
+        if (!entry) return null;
+        const colors = FOOD_CATEGORY_COLORS[meal.type];
+        return (
+          <span
+            key={meal.type}
+            className={cn(
+              "inline-flex min-w-0 items-center gap-1 rounded-sm px-2 py-0.5 text-[11px] font-medium leading-tight",
+              colors.bg,
+              colors.text
+            )}
+            title={`${meal.label}: ${entry.foodName}`}
+          >
+            <span className="shrink-0">{meal.label}:</span>
+            <span className="truncate">{entry.foodName}</span>
+          </span>
+        );
+      })}
+    </div>
+  );
+
   return (
     <>
       <PageHeader
@@ -553,13 +684,13 @@ export function FoodCalendarClient({
             <Button
               variant="outline"
               size="icon"
-              onClick={prevMonth}
+              onClick={() => movePeriod(-1)}
               disabled={isPending}
             >
               <ChevronLeft className="size-4" />
             </Button>
             <div className="flex items-center gap-2 rounded-md border px-4 py-1.5 text-sm font-medium text-foreground min-w-[180px] justify-center">
-              {MONTH_NAMES[month - 1]} {year}
+              {displayTitle}
               {isPending && (
                 <Loader2 className="ml-2 size-3.5 animate-spin text-muted-foreground" />
               )}
@@ -567,11 +698,30 @@ export function FoodCalendarClient({
             <Button
               variant="outline"
               size="icon"
-              onClick={nextMonth}
+              onClick={() => movePeriod(1)}
               disabled={isPending}
             >
               <ChevronRight className="size-4" />
             </Button>
+          </div>
+
+          <div
+            className="inline-flex rounded-md border bg-background p-0.5"
+            data-testid="food-calendar-view-controls"
+          >
+            {VIEW_MODES.map((mode) => (
+              <Button
+                key={mode.value}
+                type="button"
+                variant={viewMode === mode.value ? "secondary" : "ghost"}
+                size="sm"
+                className="h-8 rounded-sm px-3"
+                aria-pressed={viewMode === mode.value}
+                onClick={() => handleViewModeChange(mode.value)}
+              >
+                {mode.label}
+              </Button>
+            ))}
           </div>
         </div>
 
@@ -583,9 +733,10 @@ export function FoodCalendarClient({
             </p>
           </div>
         ) : (
-          <Card className="overflow-hidden rounded-sm">
+          <Card className="overflow-hidden rounded-sm" data-testid="food-calendar-surface">
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
+              {viewMode === "month" ? (
+              <div className="overflow-x-auto" data-testid="food-calendar-month-view">
                 <table className="w-full border-collapse">
                   <thead>
                     <tr>
@@ -655,26 +806,7 @@ export function FoodCalendarClient({
                                   </span>
                                 )}
                               </div>
-                              <div className="flex flex-col gap-1">
-                                {MEALS.map((meal) => {
-                                  const entry = dayData[meal.type];
-                                  if (!entry) return null;
-                                  const colors = FOOD_CATEGORY_COLORS[meal.type];
-                                  return (
-                                    <span
-                                      key={meal.type}
-                                      className={cn(
-                                        "inline-block truncate rounded-full px-2 py-0.5 text-[10px] font-medium leading-tight",
-                                        colors.bg,
-                                        colors.text
-                                      )}
-                                      title={`${meal.label}: ${entry.foodName}`}
-                                    >
-                                      {entry.foodName}
-                                    </span>
-                                  );
-                                })}
-                              </div>
+                              {renderMealEntries(dayData)}
                             </td>
                           );
                         })}
@@ -683,6 +815,63 @@ export function FoodCalendarClient({
                   </tbody>
                 </table>
               </div>
+              ) : (
+                <div
+                  className="divide-y"
+                  data-testid={`food-calendar-${viewMode}-view`}
+                >
+                  {visibleDateKeys.map((dateKey) => {
+                    const dayData = calendar[dateKey] ?? {};
+                    const hasMeals = Object.keys(dayData).length > 0;
+                    const canOpenDay = hasMeals
+                      ? permissions.canEditFoodCalendar
+                      : permissions.canAddFoodToCalendar;
+                    const isToday = dateKey === dateToISODate(new Date());
+
+                    return (
+                      <button
+                        key={dateKey}
+                        type="button"
+                        className={cn(
+                          "grid w-full grid-cols-[140px_1fr] gap-4 p-4 text-left transition-colors md:grid-cols-[190px_1fr]",
+                          canOpenDay && "hover:bg-primary/5",
+                          !canOpenDay && "cursor-default",
+                          isToday && "bg-primary/5"
+                        )}
+                        disabled={!canOpenDay}
+                        onClick={() => openDateDialog(dateKey)}
+                      >
+                        <span className="space-y-1">
+                          <span className="block text-xs font-semibold uppercase text-muted-foreground">
+                            {formatDateKey(dateKey, { weekday: "long" })}
+                          </span>
+                          <span className="block text-sm font-medium text-foreground">
+                            {formatDateKey(dateKey, {
+                              month: "long",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </span>
+                        </span>
+                        {hasMeals ? (
+                          renderMealEntries(dayData)
+                        ) : (
+                          <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                            {canOpenDay ? (
+                              <>
+                                <Plus className="size-4" />
+                                Add meals
+                              </>
+                            ) : (
+                              "No meals"
+                            )}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </CardContent>
           </Card>
         )}

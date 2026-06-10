@@ -16237,7 +16237,7 @@
     "legacyPhp": "Front/templates/admin/food_calendar.php",
     "legacyJs": "Front/templates/admin/js/food_calendar.js",
     "modernRoute": "/food_calendar.php, /food/calendar",
-    "status": "partial - legacy food calendar bridge, query state, print handoff, all-branch apply, action guards, and Early Dinner restored; visual audit remains",
+    "status": "parity - legacy food calendar bridge, FullCalendar-style views, query state, print handoff, all-branch apply, action guards, and Early Dinner restored",
     "legacyTablesMentioned": [
       "BreakFast",
       "auto",
@@ -16250,7 +16250,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "`/food_calendar.php?id=`/`brid=` now resolves raw numeric, UUID, and encrypted legacy branch ids into `/food/calendar?branch=...`, the modern page initializes and keeps branch/month/year query state as the user navigates, the Print action opens the visible branch/month/year like legacy `food_calendar.js`, and blank-day saves can apply Breakfast/Lunch/Early Dinner/Dessert to This Branch or All Branches. The legacy `edid` Early Dinner slot is preserved through the existing `SNACK` enum bucket, displayed as Early Dinner on calendar/edit/print surfaces, and exposed to native parent food-calendar feeds as `edinner`. The legacy `AddFoodToCalendar`, `EditFoodCalendar`, and `FoodAllBranches` ACTION grants now hide blank-day create, existing-day edit/clear, and All Branches controls respectively, and direct food-calendar writes enforce add/edit/all-branch grants by current target state when the imported action catalogue is configured and not granted. Remaining work is exact FullCalendar visual behavior."
+    "verification": "`/food_calendar.php?id=`/`brid=` now resolves raw numeric, UUID, and encrypted legacy branch ids into `/food/calendar?branch=...`, the modern page initializes and keeps branch/month/year/view/date query state as the user navigates, restores the legacy FullCalendar-style Month/Week/Day controls, labels visible events as Breakfast/Lunch/Dessert/Early Dinner like the legacy `eventRender` output, and keeps the Print action on the visible branch/month/year like legacy `food_calendar.js`. Blank-day saves can apply Breakfast/Lunch/Early Dinner/Dessert to This Branch or All Branches. The legacy `edid` Early Dinner slot is preserved through the existing `SNACK` enum bucket, displayed as Early Dinner on calendar/edit/print surfaces, and exposed to native parent food-calendar feeds as `edinner`. The legacy `AddFoodToCalendar`, `EditFoodCalendar`, and `FoodAllBranches` ACTION grants hide blank-day create, existing-day edit/clear, and All Branches controls respectively, and direct food-calendar writes enforce add/edit/all-branch grants by current target state when the imported action catalogue is configured and not granted. `src/scripts/verify-legacy-food-calendar-fullcalendar-contract.ts` locks the restored view controls, shareable view/date state, event labels, and existing action/data guardrails."
   },
   {
     "legacyPhp": "Front/templates/admin/forbidden.php",

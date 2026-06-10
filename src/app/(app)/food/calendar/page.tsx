@@ -5,8 +5,16 @@ import { requireOrgSafe } from "@/lib/require-org";
 import { FoodCalendarClient } from "./food-calendar-client";
 
 interface PageProps {
-  searchParams: Promise<{ branch?: string; month?: string; year?: string }>;
+  searchParams: Promise<{
+    branch?: string;
+    month?: string;
+    year?: string;
+    view?: string;
+    date?: string;
+  }>;
 }
+
+type CalendarViewMode = "month" | "week" | "day";
 
 function parseMonth(value?: string) {
   const parsed = Number(value);
@@ -18,6 +26,26 @@ function parseYear(value?: string) {
   return Number.isInteger(parsed) && parsed >= 1970 && parsed <= 2100
     ? parsed
     : null;
+}
+
+function parseView(value?: string): CalendarViewMode {
+  return value === "week" || value === "day" ? value : "month";
+}
+
+function parseFocusedDate(value: string | undefined, year: number, month: number) {
+  if (value && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [dateYear, dateMonth, dateDay] = value.split("-").map(Number);
+    const date = new Date(dateYear, dateMonth - 1, dateDay);
+    if (
+      date.getFullYear() === dateYear &&
+      date.getMonth() === dateMonth - 1 &&
+      date.getDate() === dateDay
+    ) {
+      return value;
+    }
+  }
+
+  return `${year}-${String(month).padStart(2, "0")}-01`;
 }
 
 export default async function FoodCalendarPage({ searchParams }: PageProps) {
@@ -44,6 +72,8 @@ export default async function FoodCalendarPage({ searchParams }: PageProps) {
   const now = new Date();
   const year = parseYear(params.year) ?? now.getFullYear();
   const month = parseMonth(params.month) ?? now.getMonth() + 1;
+  const viewMode = parseView(params.view);
+  const focusedDate = parseFocusedDate(params.date, year, month);
 
   const [calendarResult, { foods }] = await Promise.all([
     defaultBranchId
@@ -90,6 +120,8 @@ export default async function FoodCalendarPage({ searchParams }: PageProps) {
       initialBranchId={defaultBranchId}
       initialYear={year}
       initialMonth={month}
+      initialViewMode={viewMode}
+      initialFocusedDate={focusedDate}
       initialCalendar={serializedCalendar}
       foods={serializedFoods}
       permissions={foodCalendarPermissions}
