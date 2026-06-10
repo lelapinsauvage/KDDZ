@@ -4,6 +4,7 @@ import {
   findAbsenceReportForChildDate,
   resolveLegacyAbsenceReportId,
 } from "@/lib/legacy-report";
+import AbsentReportsPage from "../absent-reports/page";
 
 interface PageProps {
   searchParams: Promise<{ date?: string; fid?: string; id?: string; isdraft?: string }>;
@@ -45,5 +46,5 @@ export default async function LegacyAbsenceReportRedirect({ searchParams }: Page
     redirect(`/absent-reports/new?${params.toString()}`);
   }
 
-  redirect("/absent-reports");
+  return <AbsentReportsPage searchParams={Promise.resolve({})} />;
 }

@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { resolveLegacyChildId } from "@/lib/legacy-child";
 import { resolveLegacyDailyReportId } from "@/lib/legacy-report";
+import DailyReportsPage from "../daily-reports/page";
 
 interface PageProps {
   searchParams: Promise<{ date?: string; fid?: string; id?: string; isdraft?: string }>;
@@ -26,5 +27,5 @@ export default async function LegacyDailyReportRedirect({ searchParams }: PagePr
     redirect(`/daily-reports/new?${params.toString()}`);
   }
 
-  redirect("/daily-reports");
+  return <DailyReportsPage searchParams={Promise.resolve({})} />;
 }

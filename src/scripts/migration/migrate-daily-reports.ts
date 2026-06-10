@@ -478,7 +478,10 @@ export async function migrateDailyReports(prisma: PrismaClient) {
     const legacyId = toInt(a.rattid);
     const legacyDailyReportId = toInt(a.formid);
     const dailyReportId = getMapping("daily_report", legacyDailyReportId);
-    if (!dailyReportId || !legacyId) continue;
+    if (!dailyReportId || !legacyId) {
+      attSkipped++;
+      continue;
+    }
     const fileUrl = cleanLegacyFileName(a.url);
     if (!fileUrl) {
       attSkipped++;
