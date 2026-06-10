@@ -89,6 +89,7 @@ export function mapEmployeeToForm(emp: any): EmployeeFormValues & { id: string }
     isActive: emp.isActive ?? true,
     remarks: emp.remarks ?? "",
     address: {
+      id: address?.id ?? undefined,
       governorate: address?.governorate ?? "",
       district: address?.district ?? "",
       region: address?.region ?? "",

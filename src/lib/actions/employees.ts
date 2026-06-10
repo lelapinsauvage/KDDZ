@@ -21,6 +21,7 @@ interface EmployeeListParams {
 }
 
 interface AddressData {
+  id?: string;
   governorate?: string;
   district?: string;
   region?: string;
@@ -216,6 +217,86 @@ function staffAttachmentDelegate(type: EmployeeType) {
         softDelete: true,
       };
   }
+}
+
+function staffAddressDelegate(type: EmployeeType) {
+  switch (type) {
+    case "teacher":
+      return {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        model: db.teacherAddress as any,
+        ownerField: "teacherId",
+      };
+    case "nurse":
+      return {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        model: db.nurseAddress as any,
+        ownerField: "nurseId",
+      };
+    case "doctor":
+      return {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        model: db.doctorAddress as any,
+        ownerField: "doctorId",
+      };
+    case "manager":
+      return {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        model: db.managerAddress as any,
+        ownerField: "managerId",
+      };
+  }
+}
+
+function hasAddressData(address: AddressData) {
+  return Boolean(
+    address.governorate ||
+      address.district ||
+      address.region ||
+      address.city ||
+      address.street ||
+      address.building,
+  );
+}
+
+function staffAddressData(address: AddressData) {
+  return {
+    governorate: address.governorate ?? null,
+    district: address.district ?? null,
+    region: address.region ?? null,
+    city: address.city ?? null,
+    street: address.street ?? null,
+    building: address.building ?? null,
+  };
+}
+
+async function syncStaffAddress(
+  type: EmployeeType,
+  employeeId: string,
+  address: AddressData | undefined,
+) {
+  if (!address) return;
+
+  const { model, ownerField } = staffAddressDelegate(type);
+  const id = address.id?.trim();
+  const data = staffAddressData(address);
+
+  if (id) {
+    const updated = await model.updateMany({
+      where: { id, [ownerField]: employeeId },
+      data,
+    });
+    if (updated.count > 0) return;
+  }
+
+  if (!hasAddressData(address)) return;
+
+  await model.create({
+    data: {
+      [ownerField]: employeeId,
+      ...data,
+    },
+  });
 }
 
 function staffAttachmentCreateData(type: EmployeeType, document: DocumentData) {
@@ -665,34 +746,13 @@ export async function createEmployee(
       createData.classId = data.classId;
     }
 
-    // Nested address — ManagerAddress has fewer fields (street, city, region only)
+    // Nested address.
     if (data.address) {
       const a = data.address;
-      if (type === "manager") {
-        const hasAddress = a.region || a.city || a.street;
-        if (hasAddress) {
-          createData.addresses = {
-            create: [{
-              street: a.street ?? null,
-              city: a.city ?? null,
-              region: a.region ?? null,
-            }],
-          };
-        }
-      } else {
-        const hasAddress = a.governorate || a.district || a.region || a.city || a.street || a.building;
-        if (hasAddress) {
-          createData.addresses = {
-            create: [{
-              governorate: a.governorate ?? null,
-              district: a.district ?? null,
-              region: a.region ?? null,
-              city: a.city ?? null,
-              street: a.street ?? null,
-              building: a.building ?? null,
-            }],
-          };
-        }
+      if (hasAddressData(a)) {
+        createData.addresses = {
+          create: [staffAddressData(a)],
+        };
       }
     }
 
@@ -838,43 +898,6 @@ export async function updateEmployee(
       updateData.classId = data.classId || null;
     }
 
-    // Address: delete all + recreate — ManagerAddress has fewer fields
-    if (data.address) {
-      const a = data.address;
-      if (type === "manager") {
-        const hasAddress = a.region || a.city || a.street;
-        updateData.addresses = {
-          deleteMany: {},
-          ...(hasAddress
-            ? {
-                create: [{
-                  street: a.street ?? null,
-                  city: a.city ?? null,
-                  region: a.region ?? null,
-                }],
-              }
-            : {}),
-        };
-      } else {
-        const hasAddress = a.governorate || a.district || a.region || a.city || a.street || a.building;
-        updateData.addresses = {
-          deleteMany: {},
-          ...(hasAddress
-            ? {
-                create: [{
-                  governorate: a.governorate ?? null,
-                  district: a.district ?? null,
-                  region: a.region ?? null,
-                  city: a.city ?? null,
-                  street: a.street ?? null,
-                  building: a.building ?? null,
-                }],
-              }
-            : {}),
-        };
-      }
-    }
-
     // Languages and experiences only exist on Teacher/Nurse/Doctor.
     // Staff document uploads are synced separately into legacy-compatible attachments.
     if (type !== "manager") {
@@ -930,6 +953,8 @@ export async function updateEmployee(
       where: { id },
       data: updateData,
     });
+
+    await syncStaffAddress(type, id, data.address);
 
     if (data.documents !== undefined) {
       await syncStaffAttachments(type, id, data.documents);

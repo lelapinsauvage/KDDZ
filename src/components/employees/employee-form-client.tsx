@@ -165,7 +165,15 @@ export function EmployeeFormClient({
       classId: "",
       isActive: true,
       remarks: "",
-      address: { governorate: "", district: "", region: "", city: "", street: "", building: "" },
+      address: {
+        id: undefined,
+        governorate: "",
+        district: "",
+        region: "",
+        city: "",
+        street: "",
+        building: "",
+      },
       languages: [],
       experiences: [],
       documents: [],
@@ -689,6 +697,7 @@ export function EmployeeFormClient({
             {/* ── Section B: Contact & Address ── */}
             <TabsContent value="contact" className="space-y-6">
               <FormSection title="Address" color="green">
+                <input type="hidden" {...register("address.id")} />
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   <div>
                     <Label htmlFor="address.governorate">Governorate</Label>

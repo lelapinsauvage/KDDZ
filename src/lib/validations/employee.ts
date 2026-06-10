@@ -2,6 +2,7 @@ import { z } from "zod";
 
 // ── Address sub-schema ──
 export const employeeAddressSchema = z.object({
+  id: z.string().optional(),
   governorate: z.string(),
   district: z.string(),
   region: z.string(),

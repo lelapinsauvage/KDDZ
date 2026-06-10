@@ -90,7 +90,7 @@
     "legacyPhp": "Front/templates/admin/Doctor_Details.php",
     "legacyJs": "Front/templates/admin/js/Doctor_Details.js",
     "modernRoute": "/Doctor_Details.php, /employees/doctors/[id]",
-    "status": "partial - legacy doctor direct-render detail bridge, no-id direct-render create bridge, field snapshot, Arabic name edit fields, and middle-name edit field restored; edit-form action audit remains",
+    "status": "partial - legacy doctor direct-render detail bridge, no-id direct-render create bridge, field snapshot, Arabic name edit fields, middle-name edit field, and address edit provenance restored; edit-form action audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -98,13 +98,13 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "`/Doctor_Details.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy doctor ids and renders the modern doctor detail page directly for legacy URL stability, while no-id `/Doctor_Details.php` renders the modern doctor create page in place. The detail page now exposes a Legacy Profile snapshot with preserved legacy account provenance, Arabic name fields, register/license fields, contact/address, education/CNSS, placement, status, remarks, and language rows when present. The shared doctor create/edit form now restores the legacy `m_name`/Middle Name plus `f_name_ar`, `m_name_ar`, and `l_name_ar` Arabic name fields and persists them through validation, form hydration, and org-safe create/update actions. Runtime staff document saves now persist only rows with real uploaded or imported file URLs, preventing placeholder file paths in the legacy-compatible attachment tables. Verified by `src/scripts/verify-legacy-staff-middle-name-contract.ts`, `src/scripts/verify-legacy-doctor-arabic-name-contract.ts`, and `src/scripts/verify-legacy-staff-detail-bridge-contract.ts`. Remaining work is exact legacy save/draft/profile-photo/action behavior audit against `Doctor_Details.php`/`Doctor_Details.js`."
+    "verification": "`/Doctor_Details.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy doctor ids and renders the modern doctor detail page directly for legacy URL stability, while no-id `/Doctor_Details.php` renders the modern doctor create page in place. The detail page now exposes a Legacy Profile snapshot with preserved legacy account provenance, Arabic name fields, register/license fields, contact/address, education/CNSS, placement, status, remarks, and language rows when present. The shared doctor create/edit form now restores the legacy `m_name`/Middle Name plus `f_name_ar`, `m_name_ar`, and `l_name_ar` Arabic name fields and persists them through validation, form hydration, and org-safe create/update actions. Staff address edits now preserve existing staff address rows in place instead of deleting/recreating them, and keep the legacy Mouhafaza/Quadaa/Region/City/Street/Building field coverage through the shared form/action path. Runtime staff document saves now persist only rows with real uploaded or imported file URLs, preventing placeholder file paths in the legacy-compatible attachment tables. Verified by `src/scripts/verify-legacy-staff-middle-name-contract.ts`, `src/scripts/verify-legacy-doctor-arabic-name-contract.ts`, `src/scripts/verify-legacy-staff-detail-bridge-contract.ts`, and `src/scripts/verify-legacy-staff-address-preservation-contract.ts`. Remaining work is exact legacy save/draft/profile-photo/action behavior audit against `Doctor_Details.php`/`Doctor_Details.js`."
   },
   {
     "legacyPhp": "Front/templates/admin/Manager_Details.php",
     "legacyJs": "Front/templates/admin/js/Manager_Details.js",
     "modernRoute": "/Manager_Details.php, /employees/managers/[id]",
-    "status": "partial - legacy manager direct-render detail bridge, no-id direct-render create bridge, and field snapshot restored; edit-form action audit remains",
+    "status": "partial - legacy manager direct-render detail bridge, no-id direct-render create bridge, field snapshot, and address edit provenance restored; edit-form action audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -112,7 +112,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "`/Manager_Details.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy manager ids and renders the modern manager detail page directly for legacy URL stability, while no-id `/Manager_Details.php` renders the modern manager create page in place. The detail page now exposes a Legacy Profile snapshot with preserved legacy account provenance, core identity, contact/address, placement, status, and attachment-visible document coverage. Runtime staff document saves now persist only rows with real uploaded or imported file URLs, preventing placeholder file paths in the legacy-compatible attachment tables. Verified by `src/scripts/verify-legacy-staff-detail-bridge-contract.ts`. Remaining work is exact legacy save/draft/profile-photo/action behavior audit against `Manager_Details.php`/`Manager_Details.js` plus any manager-only legacy fields not yet represented first-class in the schema."
+    "verification": "`/Manager_Details.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy manager ids and renders the modern manager detail page directly for legacy URL stability, while no-id `/Manager_Details.php` renders the modern manager create page in place. The detail page now exposes a Legacy Profile snapshot with preserved legacy account provenance, core identity, contact/address, placement, status, and attachment-visible document coverage. Staff address edits now preserve existing staff address rows in place instead of deleting/recreating them, and manager create/update now saves the full legacy Mouhafaza/Quadaa/Region/City/Street/Building field set instead of only region/city/street. Runtime staff document saves now persist only rows with real uploaded or imported file URLs, preventing placeholder file paths in the legacy-compatible attachment tables. Verified by `src/scripts/verify-legacy-staff-detail-bridge-contract.ts` and `src/scripts/verify-legacy-staff-address-preservation-contract.ts`. Remaining work is exact legacy save/draft/profile-photo/action behavior audit against `Manager_Details.php`/`Manager_Details.js` plus any manager-only legacy fields not yet represented first-class in the schema."
   },
   {
     "legacyPhp": "Front/templates/admin/Medical_form1.php",
@@ -358,7 +358,7 @@
     "legacyPhp": "Front/templates/admin/Nurse_Details.php",
     "legacyJs": "Front/templates/admin/js/Nurse_Details.js",
     "modernRoute": "/Nurse_Details.php, /employees/nurses/[id]",
-    "status": "partial - legacy nurse direct-render detail bridge, no-id direct-render create bridge, field snapshot, and middle-name edit field restored; edit-form action audit remains",
+    "status": "partial - legacy nurse direct-render detail bridge, no-id direct-render create bridge, field snapshot, middle-name edit field, and address edit provenance restored; edit-form action audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -366,7 +366,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "`/Nurse_Details.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy nurse ids and renders the modern nurse detail page directly for legacy URL stability, while no-id `/Nurse_Details.php` renders the modern nurse create page in place. The detail page now exposes a Legacy Profile snapshot with preserved legacy account provenance, core identity, contact/address, education/CNSS, placement, status, remarks, and language rows when present. The shared nurse create/edit form now restores the legacy `m_name`/Middle Name field and persists it through validation, form hydration, and org-safe create/update actions. Runtime staff document saves now persist only rows with real uploaded or imported file URLs, preventing placeholder file paths in the legacy-compatible attachment tables. Verified by `src/scripts/verify-legacy-staff-middle-name-contract.ts` and `src/scripts/verify-legacy-staff-detail-bridge-contract.ts`. Remaining work is exact legacy save/draft/profile-photo/action behavior audit against `Nurse_Details.php`/`Nurse_Details.js`."
+    "verification": "`/Nurse_Details.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy nurse ids and renders the modern nurse detail page directly for legacy URL stability, while no-id `/Nurse_Details.php` renders the modern nurse create page in place. The detail page now exposes a Legacy Profile snapshot with preserved legacy account provenance, core identity, contact/address, education/CNSS, placement, status, remarks, and language rows when present. The shared nurse create/edit form now restores the legacy `m_name`/Middle Name field and persists it through validation, form hydration, and org-safe create/update actions. Staff address edits now preserve existing staff address rows in place instead of deleting/recreating them, and keep the legacy Mouhafaza/Quadaa/Region/City/Street/Building field coverage through the shared form/action path. Runtime staff document saves now persist only rows with real uploaded or imported file URLs, preventing placeholder file paths in the legacy-compatible attachment tables. Verified by `src/scripts/verify-legacy-staff-middle-name-contract.ts`, `src/scripts/verify-legacy-staff-detail-bridge-contract.ts`, and `src/scripts/verify-legacy-staff-address-preservation-contract.ts`. Remaining work is exact legacy save/draft/profile-photo/action behavior audit against `Nurse_Details.php`/`Nurse_Details.js`."
   },
   {
     "legacyPhp": "Front/templates/admin/PA_logs.php",
@@ -399,7 +399,7 @@
     "legacyPhp": "Front/templates/admin/Teacher_Details.php",
     "legacyJs": "Front/templates/admin/js/Teacher_Details.js",
     "modernRoute": "/Teacher_Details.php, /employees/teachers/[id]",
-    "status": "partial - legacy teacher direct-render detail bridge, no-id direct-render create bridge, field snapshot, middle-name edit field, and update ACL restored; edit-form behavior audit remains",
+    "status": "partial - legacy teacher direct-render detail bridge, no-id direct-render create bridge, field snapshot, middle-name edit field, address edit provenance, and update ACL restored; edit-form behavior audit remains",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -407,7 +407,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "`/Teacher_Details.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy teacher ids and renders the modern teacher detail page directly for legacy URL stability, while no-id `/Teacher_Details.php` renders the modern teacher create page in place where the `addTeacher` grant is enforced. The detail page now exposes a Legacy Profile snapshot with preserved legacy account provenance, core identity, register number, contact/address, education/CNSS, placement/class/status, remarks, and language rows when present. The shared teacher create/edit form now restores the legacy `m_name`/Middle Name field and persists it through validation, form hydration, and org-safe create/update actions. The `updateTeacher` ACTION grant now hides the modern detail Edit Profile action and denies direct `/employees/teachers/[id]/edit` hits when the imported action catalogue is configured and not granted. Runtime staff document saves now persist only rows with real uploaded or imported file URLs, preventing placeholder file paths in the legacy-compatible attachment tables. Verified by `src/scripts/verify-legacy-staff-middle-name-contract.ts` and `src/scripts/verify-legacy-staff-detail-bridge-contract.ts`. Remaining work is exact legacy save/draft/profile-photo behavior audit against `Teacher_Details.php`/`Teacher_Details.js`."
+    "verification": "`/Teacher_Details.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy teacher ids and renders the modern teacher detail page directly for legacy URL stability, while no-id `/Teacher_Details.php` renders the modern teacher create page in place where the `addTeacher` grant is enforced. The detail page now exposes a Legacy Profile snapshot with preserved legacy account provenance, core identity, register number, contact/address, education/CNSS, placement/class/status, remarks, and language rows when present. The shared teacher create/edit form now restores the legacy `m_name`/Middle Name field and persists it through validation, form hydration, and org-safe create/update actions. Staff address edits now preserve existing staff address rows in place instead of deleting/recreating them, and keep the legacy Mouhafaza/Quadaa/Region/City/Street/Building field coverage through the shared form/action path. The `updateTeacher` ACTION grant now hides the modern detail Edit Profile action and denies direct `/employees/teachers/[id]/edit` hits when the imported action catalogue is configured and not granted. Runtime staff document saves now persist only rows with real uploaded or imported file URLs, preventing placeholder file paths in the legacy-compatible attachment tables. Verified by `src/scripts/verify-legacy-staff-middle-name-contract.ts`, `src/scripts/verify-legacy-staff-detail-bridge-contract.ts`, and `src/scripts/verify-legacy-staff-address-preservation-contract.ts`. Remaining work is exact legacy save/draft/profile-photo behavior audit against `Teacher_Details.php`/`Teacher_Details.js`."
   },
   {
     "legacyPhp": "Front/templates/admin/Zones_Management.php",
