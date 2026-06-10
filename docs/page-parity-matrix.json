@@ -247,13 +247,13 @@
     "legacyPhp": "Front/templates/admin/Medical_forms5.php",
     "legacyJs": "Front/templates/admin/js/Medical_forms5.js",
     "modernRoute": "/Medical_forms5.php, /medical/accidents",
-    "status": "restored - legacy accident reports roster restored",
+    "status": "restored - legacy accident reports roster, TableTools exports, print, visual smoke, and bridge restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Restored the legacy `t_form_5` Accident Reports Listing with form #, child image fallback, F Name, L Name, Cause, Branch, Class, Place, First Aid, Date, single edit action, branch/class/text/date filters, 10/20/50/100/150/All paging backed by uncapped server loading, export/print, and form_id descending sort over migrated accident medical forms. `/Medical_forms5.php` now redirects to the modern roster. Remaining work is `Medical_form5.php` create/edit/detail workflow parity and final logged-in visual smoke after local auth/runtime state is clean."
+    "verification": "Restored the legacy `t_form_5` Accident Reports Listing with form #, child image fallback, F Name, L Name, Cause, Branch, Class, Place, First Aid, Date, single edit action, New Accident Report action, branch/class/search/text/date filters, 10/20/50/100/150/All paging backed by uncapped server loading, and form_id descending sort over migrated accident medical forms. The legacy TableTools Copy, PDF, XLS, and Print actions are covered by the shared export menu as Copy table, PDF export, the modern XLSX replacement for legacy XLS, plus an explicit Print button; CSV remains as an additional modern export. `/Medical_forms5.php` is now a hard HTTP route-handler bridge to the modern roster, and the commented legacy websocket refresh in `Medical_forms5.js` confirms no live socket parity is required for this page. Browser smoke confirmed the old PHP URL redirects to `/medical/accidents`, renders the roster, exposes the legacy headers/filters/actions/page-size controls/export/print surfaces, opens the export menu, and has no broken child images. Verified by `src/scripts/verify-legacy-accident-reports-roster-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/Medical_forms5b.php",
