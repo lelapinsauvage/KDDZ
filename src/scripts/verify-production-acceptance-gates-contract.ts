@@ -199,6 +199,7 @@ const readinessAudit = readFileSync("src/scripts/audit-production-readiness.ts",
 const productionGateSuite = readFileSync("src/scripts/verify-production-gate-suite.ts", "utf8");
 assert.match(readinessAudit, /No environment values/);
 assert.match(readinessAudit, /--out/);
+assert.match(readinessAudit, /--env-file/);
 assert.match(readinessAudit, /--list-requirements/);
 assert.match(readinessAudit, /--gate/);
 assert.match(productionGateSuite, /verify-production-acceptance-gates-contract\.ts/);
@@ -206,12 +207,14 @@ assert.match(productionGateSuite, /verify-production-readiness-audit-contract\.t
 assert.match(productionGateSuite, /page-parity-matrix\.json/);
 assert.match(readFileSync("src/scripts/verify-production-readiness-audit-contract.ts", "utf8"), /assertNoSensitiveOutput/);
 assert.match(contents.gates, /--out=<path>/);
+assert.match(contents.gates, /--env-file=<path>/);
 assert.match(contents.gates, /--list-requirements/);
 assert.match(contents.gates, /--gate=PROD-CRON/);
 assert.match(contents.gates, /pnpm run verify:production-gates/);
 assert.match(contents.gates, /verify-production-gate-suite\.ts/);
 assert.match(contents.gates, /verify-production-readiness-audit-contract\.ts/);
 assert.match(contents.cutoverRunbook, /--out=\/tmp\/kiddzonl-production-readiness\.json/);
+assert.match(contents.cutoverRunbook, /--env-file=\/secure\/private-readiness\.env/);
 assert.match(contents.cutoverRunbook, /--list-requirements/);
 assert.match(contents.cutoverRunbook, /--gate=PROD-CRON/);
 assert.match(contents.cutoverRunbook, /pnpm run verify:production-gates/);

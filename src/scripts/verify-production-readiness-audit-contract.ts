@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -136,6 +136,51 @@ try {
   };
   assert.deepEqual(filteredPayload.summary, { ready: 1, needsEvidence: 0, total: 1 });
   assert.deepEqual(filteredPayload.gates?.map((gate) => gate.gate), ["PROD-PROVIDERS"]);
+
+  const envFilePath = join(tmp, "private-readiness.env");
+  const envFileReportPath = join(tmp, "env-file-readiness.json");
+  writeFileSync(
+    envFilePath,
+    [
+      "PUSH_DELIVERY_PROVIDER=webhook",
+      "PUSH_DELIVERY_WEBHOOK_URL=https://example.invalid/env-file-push-secret",
+      "EMAIL_DELIVERY_PROVIDER=resend",
+      "RESEND_API_KEY=re_env_file_secret_should_not_print",
+      "EMAIL_FROM=noreply@example.invalid",
+      "SMS_DELIVERY_PROVIDER=webhook",
+      "SMS_DELIVERY_WEBHOOK_URL=https://example.invalid/env-file-sms-secret",
+      "WHATSAPP_DELIVERY_PROVIDER=webhook",
+      "WHATSAPP_DELIVERY_WEBHOOK_URL=https://example.invalid/env-file-whatsapp-secret",
+      "CRON_SECRET=env_file_cron_secret_should_not_print",
+      "LEGACY_PRODUCTION_DUMP_MANIFEST=env-file-secret-dump-id",
+      "LEGACY_MEDIA_EXPORT_MANIFEST=env-file-secret-media-export-id",
+      "LEGACY_MEDIA_UPLOAD_MANIFEST=env-file-secret-media-upload-id",
+      "MIGRATION_RECONCILIATION_REPORT=env-file-secret-reconciliation-id",
+      "PRODUCTION_CRONTAB_EVIDENCE=env-file-secret-crontab-id",
+      "HOSTED_SCHEDULER_EVIDENCE=env-file-secret-scheduler-id",
+      "NATIVE_IOS_ACCEPTANCE_REPORT=env-file-secret-ios-id",
+      "NATIVE_ANDROID_ACCEPTANCE_REPORT=env-file-secret-android-id",
+      "NOTIFICATIONS_NATURE_ACCEPTANCE_REPORT=env-file-secret-nature-id",
+      "PRINT_STATIONERY_ACCEPTANCE_REPORT=env-file-secret-print-id",
+      "REAL_CALL_ROWS_ACCEPTANCE_REPORT=env-file-secret-calls-id",
+      "NURSERY_COMPLIANCE_ACCEPTANCE_REPORT=env-file-secret-nursery-id",
+      "LEGACY_ACL_ACCEPTANCE_REPORT=env-file-secret-acl-id",
+      "LEGACY_BACKFILL_ACCEPTANCE_REPORT=env-file-secret-backfill-id",
+      "",
+    ].join("\n"),
+    "utf8"
+  );
+  const envFileReport = runAudit([`--env-file=${envFilePath}`, `--out=${envFileReportPath}`], baseEnv);
+  assert.equal(envFileReport.status, 0);
+  assert.match(envFileReport.stdout, /Ready to review: 12\/12/);
+  assertNoSensitiveOutput(envFileReport.stdout + envFileReport.stderr);
+
+  const envFileReportText = readFileSync(envFileReportPath, "utf8");
+  assertNoSensitiveOutput(envFileReportText);
+  const envFilePayload = JSON.parse(envFileReportText) as {
+    summary?: { ready?: number; needsEvidence?: number; total?: number };
+  };
+  assert.deepEqual(envFilePayload.summary, { ready: 12, needsEvidence: 0, total: 12 });
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }

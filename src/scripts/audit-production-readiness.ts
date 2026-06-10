@@ -1,5 +1,5 @@
 import { dirname } from "node:path";
-import { existsSync, mkdirSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 
 type GateId =
   | "PROD-DUMPS"
@@ -81,6 +81,10 @@ const evidenceGateRequirements: Array<{
 
 const json = process.argv.includes("--json");
 const outputPath = optionValue("--out");
+const envFilePath = optionValue("--env-file");
+if (envFilePath) {
+  loadEnvFile(envFilePath);
+}
 const listRequirements = process.argv.includes("--list-requirements");
 const gateFilter = parseGateFilter(optionValue("--gate"));
 
@@ -415,4 +419,36 @@ function writeRedactedReport(path: string, report: object) {
     mkdirSync(dir, { recursive: true });
   }
   writeFileSync(path, `${JSON.stringify(report, null, 2)}\n`, "utf8");
+}
+
+function loadEnvFile(path: string) {
+  const raw = readFileSync(path, "utf8");
+  for (const [index, line] of raw.split(/\r?\n/).entries()) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const equals = trimmed.indexOf("=");
+    if (equals <= 0) {
+      throw new Error(`Invalid env-file line ${index + 1}: expected NAME=value`);
+    }
+
+    const key = trimmed.slice(0, equals).trim();
+    const value = unquoteEnvValue(trimmed.slice(equals + 1).trim());
+    if (!/^[A-Z_][A-Z0-9_]*$/.test(key)) {
+      throw new Error(`Invalid env-file key on line ${index + 1}: ${key}`);
+    }
+
+    if (process.env[key] === undefined) {
+      process.env[key] = value;
+    }
+  }
+}
+
+function unquoteEnvValue(value: string) {
+  if (
+    (value.startsWith('"') && value.endsWith('"')) ||
+    (value.startsWith("'") && value.endsWith("'"))
+  ) {
+    return value.slice(1, -1);
+  }
+  return value;
 }
