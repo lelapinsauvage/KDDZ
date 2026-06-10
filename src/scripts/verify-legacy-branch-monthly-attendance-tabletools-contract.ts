@@ -19,6 +19,7 @@ const files = {
   fragmentRenderer: "src/lib/legacy/monthly-attendance-fragment.ts",
   exportButton: "src/components/shared/export-button.tsx",
   matrix: "docs/page-parity-matrix.json",
+  matrixMd: "docs/page-parity-matrix.md",
 };
 
 const contents = Object.fromEntries(
@@ -155,6 +156,27 @@ assert.match(
 assert.match(
   contents.matrix,
   /Monthly_report_b\.php[\s\S]*verify-legacy-branch-monthly-attendance-tabletools-contract\.ts/,
+);
+
+assert.match(
+  contents.matrixMd,
+  /Monthly_report_b\.php \| Front\/templates\/admin\/js\/payroll_det_b\.js \| \/Monthly_report_b\.php, \/reports\/monthly-branch \| restored - legacy branch monthly matrix, TableTools export, print, AJAX fragment, and bridge restored/,
+);
+assert.match(
+  contents.matrixMd,
+  /Monthly_report_b\.php[\s\S]*Copy\/PDF\/Excel\/CSV export, print action/,
+);
+assert.match(
+  contents.matrixMd,
+  /Monthly_report_b\.php[\s\S]*payroll_det_data_b\.php/,
+);
+assert.match(
+  contents.matrixMd,
+  /Monthly_report_b\.php[\s\S]*verify-legacy-branch-monthly-attendance-tabletools-contract\.ts/,
+);
+assert.doesNotMatch(
+  contents.matrixMd,
+  /Monthly_report_b\.php[^\n]*visual audit remains/,
 );
 
 console.log("legacy branch monthly attendance TableTools contract assertions passed");
