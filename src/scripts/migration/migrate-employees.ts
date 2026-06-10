@@ -5,20 +5,35 @@
  * === Teacher (t_teacher → Teacher) ===
  *   teacher_id   → (old ID, mapped to UUID)
  *   f_name       → firstName
+ *   m_name       → middleName
  *   l_name       → lastName
+ *   t_user_id    → userId lookup when migrated user exists
  *   regnum       → registerNumber
+ *   pob          → placeOfBirth
+ *   martial      → maritalStatus
+ *   noc          → numberOfChildren
+ *   sel_gender   → gender
+ *   has_medcase  → medicalCase
+ *   medcase      → medicalCaseDescription
  *   tel          → phone
  *   mobile       → mobile
  *   email        → email
  *   nationality  → nationality
+ *   cnss         → cnss
+ *   cnssnum      → cnssNo
+ *   sec_degree   → secondaryDegree
+ *   sec_degree_y → secondaryDegreeYear
+ *   uni_degree   → universityDegree / specialization
+ *   uni_degree_y → universityDegreeYear
  *   dob          → dateOfBirth
+ *   classid      → classId (FK via mapping when available)
  *   sel_branch   → branchId (FK via mapping)
+ *   remarks      → remarks
+ *   eng/fr/ar selected/read/write/speak → TeacherLanguage rows
+ *   image        → imageUrl (legacy filename until storage import)
  *   active       → isActive
  *   datetime     → createdAt
- *   Not migrated: m_name, martial, noc, sel_gender, has_medcase,
- *     medcase, cnss, cnssnum, sec_degree, sec_degree_y, uni_degree,
- *     uni_degree_y, language skills (eng/fr/ar), remarks, classid,
- *     contract, medtest, firstaid, t_user_id, uby
+ *   Not migrated: contract, medtest, firstaid, uby
  *
  * === Nurse (t_nurse → Nurse) ===
  *   teacher_id   → (old ID, mapped to UUID)
@@ -137,16 +152,89 @@ interface OldTeacher {
   pob: string;
   regnum: string;
   nationality: string;
+  martial: string;
+  noc: string | number | null;
   sel_gender: string;
+  has_medcase: string | number | null;
+  medcase: string;
   tel: string;
   mobile: string;
   email: string;
+  cnss: string;
+  cnssnum: string;
+  sec_degree: string;
+  sec_degree_y: string;
+  uni_degree: string;
+  uni_degree_y: string;
+  engselected: string | number | null;
+  engread: string;
+  engwrite: string;
+  engspeak: string;
+  frselected: string | number | null;
+  frread: string;
+  frwrite: string;
+  frspeak: string;
+  arselected: string | number | null;
+  arread: string;
+  arwrite: string;
+  arspeak: string;
+  remarks: string;
+  classid: number;
   image: string;
   sel_branch: number;
   active: number;
   deleted: number;
   datetime: string;
   t_user_id: number;
+}
+
+function mapTeacherMaritalStatus(value: string | null | undefined) {
+  const normalized = cleanString(value)?.toLowerCase();
+  if (!normalized) return null;
+  if (normalized === "single") return "SINGLE";
+  if (normalized === "married") return "MARRIED";
+  if (normalized === "divorced") return "DIVORCED";
+  if (normalized === "widowed" || normalized === "widow") return "WIDOWED";
+  return null;
+}
+
+function mapLegacyLanguageProficiency(value: string | null | undefined) {
+  const normalized = cleanString(value)?.toLowerCase();
+  if (!normalized) return "NONE";
+  if (normalized === "excellent") return "FLUENT";
+  if (normalized === "good") return "ADVANCED";
+  if (normalized === "basic") return "BASIC";
+  if (normalized === "intermediate") return "INTERMEDIATE";
+  if (normalized === "fluent") return "FLUENT";
+  return "NONE";
+}
+
+function legacyTeacherLanguages(row: OldTeacher) {
+  const languages: Array<{
+    language: "ENGLISH" | "FRENCH" | "ARABIC";
+    canRead: "NONE" | "BASIC" | "INTERMEDIATE" | "ADVANCED" | "FLUENT";
+    canWrite: "NONE" | "BASIC" | "INTERMEDIATE" | "ADVANCED" | "FLUENT";
+    canSpeak: "NONE" | "BASIC" | "INTERMEDIATE" | "ADVANCED" | "FLUENT";
+  }> = [];
+  const add = (
+    selected: string | number | null,
+    language: "ENGLISH" | "FRENCH" | "ARABIC",
+    canRead: string,
+    canWrite: string,
+    canSpeak: string,
+  ) => {
+    if (!toBool(selected)) return;
+    languages.push({
+      language,
+      canRead: mapLegacyLanguageProficiency(canRead),
+      canWrite: mapLegacyLanguageProficiency(canWrite),
+      canSpeak: mapLegacyLanguageProficiency(canSpeak),
+    });
+  };
+  add(row.engselected, "ENGLISH", row.engread, row.engwrite, row.engspeak);
+  add(row.frselected, "FRENCH", row.frread, row.frwrite, row.frspeak);
+  add(row.arselected, "ARABIC", row.arread, row.arwrite, row.arspeak);
+  return languages;
 }
 
 async function migrateTeachers(prisma: PrismaClient, dryRun: boolean) {
@@ -168,6 +256,9 @@ async function migrateTeachers(prisma: PrismaClient, dryRun: boolean) {
 
     const imageUrl = cleanLegacyFileName(row.image);
     const registerNumber = cleanString(row.regnum);
+    const classId = getMapping("class", row.classid);
+    const userId = getMapping("user", row.t_user_id);
+    const languages = legacyTeacherLanguages(row);
     const key = legacyKey(sourceDatabase, "t_teacher", row.teacher_id);
     const existingByKey = await prisma.teacher.findUnique({
       where: { legacyKey: key },
@@ -184,12 +275,48 @@ async function migrateTeachers(prisma: PrismaClient, dryRun: boolean) {
         legacyId?: number;
         legacyTable?: string;
         imageUrl?: string;
+        userId?: string | null;
+        middleName?: string | null;
+        placeOfBirth?: string | null;
         registerNumber?: string | null;
+        maritalStatus?: "SINGLE" | "MARRIED" | "DIVORCED" | "WIDOWED" | null;
+        numberOfChildren?: number | null;
+        gender?: Gender | null;
+        medicalCase?: boolean;
+        medicalCaseDescription?: string | null;
+        telephone?: string | null;
+        cnss?: string | null;
+        cnssNo?: string | null;
+        secondaryDegree?: string | null;
+        secondaryDegreeYear?: string | null;
+        universityDegree?: string | null;
+        universityDegreeYear?: string | null;
+        specialization?: string | null;
+        classId?: string | null;
+        remarks?: string | null;
       } = {
         sourceDatabase,
         legacyKey: key,
         legacyId: row.teacher_id,
         legacyTable: "t_teacher",
+        userId,
+        middleName: cleanString(row.m_name),
+        placeOfBirth: cleanString(row.pob),
+        maritalStatus: mapTeacherMaritalStatus(row.martial),
+        numberOfChildren: toInt(row.noc),
+        gender: mapGender(row.sel_gender),
+        medicalCase: toBool(row.has_medcase),
+        medicalCaseDescription: cleanString(row.medcase),
+        telephone: cleanString(row.tel),
+        cnss: cleanString(row.cnss),
+        cnssNo: cleanString(row.cnssnum),
+        secondaryDegree: cleanString(row.sec_degree),
+        secondaryDegreeYear: cleanString(row.sec_degree_y),
+        universityDegree: cleanString(row.uni_degree),
+        universityDegreeYear: cleanString(row.uni_degree_y),
+        specialization: cleanString(row.uni_degree),
+        classId,
+        remarks: cleanString(row.remarks),
       };
       if (imageUrl && existing.imageUrl !== imageUrl) {
         updateData.imageUrl = imageUrl;
@@ -202,6 +329,18 @@ async function migrateTeachers(prisma: PrismaClient, dryRun: boolean) {
           where: { id: existing.id },
           data: updateData,
         });
+        if (languages.length) {
+          await prisma.teacherLanguage.deleteMany({
+            where: { teacherId: existing.id },
+          });
+          await prisma.teacherLanguage.createMany({
+            data: languages.map((language) => ({
+              teacherId: existing.id,
+              ...language,
+            })),
+            skipDuplicates: true,
+          });
+        }
       }
       setMapping("teacher", row.teacher_id, existing.id);
       skipped++;
@@ -217,18 +356,43 @@ async function migrateTeachers(prisma: PrismaClient, dryRun: boolean) {
           legacyKey: key,
           legacyId: row.teacher_id,
           legacyTable: "t_teacher",
+          userId,
           firstName: row.f_name || "",
+          middleName: cleanString(row.m_name),
           lastName: row.l_name || "",
+          placeOfBirth: cleanString(row.pob),
           registerNumber,
+          maritalStatus: mapTeacherMaritalStatus(row.martial),
+          numberOfChildren: toInt(row.noc),
+          gender: mapGender(row.sel_gender),
+          medicalCase: toBool(row.has_medcase),
+          medicalCaseDescription: cleanString(row.medcase),
           phone: cleanString(row.tel),
+          telephone: cleanString(row.tel),
           mobile: cleanString(row.mobile),
           email: cleanString(row.email),
           nationality: cleanString(row.nationality),
+          cnss: cleanString(row.cnss),
+          cnssNo: cleanString(row.cnssnum),
+          secondaryDegree: cleanString(row.sec_degree),
+          secondaryDegreeYear: cleanString(row.sec_degree_y),
+          universityDegree: cleanString(row.uni_degree),
+          universityDegreeYear: cleanString(row.uni_degree_y),
+          specialization: cleanString(row.uni_degree),
           dateOfBirth: parseDate(row.dob),
           imageUrl,
           branchId,
+          classId,
+          remarks: cleanString(row.remarks),
           isActive: toBool(row.active),
           createdAt: row.datetime ? new Date(row.datetime) : new Date(),
+          ...(languages.length
+            ? {
+                languages: {
+                  create: languages,
+                },
+              }
+            : {}),
         },
       });
     }

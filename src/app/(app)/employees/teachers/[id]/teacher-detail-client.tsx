@@ -71,7 +71,7 @@ export function TeacherDetailClient({
               <div className="flex-1 space-y-3">
                 <div className="flex items-center gap-3">
                   <h2 className="text-xl font-semibold text-foreground">
-                    {teacher.firstName} {teacher.lastName}
+                    {[teacher.firstName, teacher.middleName, teacher.lastName].filter(Boolean).join(" ")}
                   </h2>
                   <Badge
                     className={
@@ -159,6 +159,42 @@ export function TeacherDetailClient({
                   </div>
                   <div>
                     <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
+                      Middle Name
+                    </p>
+                    <p className="text-sm text-foreground">{teacher.middleName ?? "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
+                      Place of Birth
+                    </p>
+                    <p className="text-sm text-foreground">{teacher.placeOfBirth ?? "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
+                      Register Number
+                    </p>
+                    <p className="text-sm text-foreground">{teacher.registerNumber ?? "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
+                      Gender
+                    </p>
+                    <p className="text-sm text-foreground">{teacher.gender ?? "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
+                      Marital Status
+                    </p>
+                    <p className="text-sm text-foreground">{teacher.maritalStatus ?? "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
+                      Children Count
+                    </p>
+                    <p className="text-sm text-foreground">{teacher.numberOfChildren ?? "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
                       Email Address
                     </p>
                     <p className="text-sm text-foreground">{teacher.email ?? "—"}</p>
@@ -193,6 +229,12 @@ export function TeacherDetailClient({
                   </div>
                   <div>
                     <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
+                      Telephone
+                    </p>
+                    <p className="text-sm text-foreground">{teacher.telephone ?? "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
                       Branch
                     </p>
                     <p className="text-sm text-foreground">{teacher.branch.name}</p>
@@ -205,6 +247,42 @@ export function TeacherDetailClient({
                   </div>
                   <div>
                     <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
+                      University Degree
+                    </p>
+                    <p className="text-sm text-foreground">{teacher.universityDegree ?? "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
+                      University Degree Year
+                    </p>
+                    <p className="text-sm text-foreground">{teacher.universityDegreeYear ?? "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
+                      Secondary Degree
+                    </p>
+                    <p className="text-sm text-foreground">{teacher.secondaryDegree ?? "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
+                      Secondary Degree Year
+                    </p>
+                    <p className="text-sm text-foreground">{teacher.secondaryDegreeYear ?? "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
+                      CNSS
+                    </p>
+                    <p className="text-sm text-foreground">{teacher.cnss ?? "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
+                      CNSS Number
+                    </p>
+                    <p className="text-sm text-foreground">{teacher.cnssNo ?? "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
                       Hire Date
                     </p>
                     <p className="text-sm text-foreground">
@@ -212,6 +290,18 @@ export function TeacherDetailClient({
                         ? format(new Date(teacher.hireDate), "MMM d, yyyy")
                         : "—"}
                     </p>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
+                      Medical Case Description
+                    </p>
+                    <p className="text-sm text-foreground">{teacher.medicalCaseDescription ?? "—"}</p>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
+                      Remarks
+                    </p>
+                    <p className="text-sm text-foreground">{teacher.remarks ?? "—"}</p>
                   </div>
                 </div>
               </CardContent>
