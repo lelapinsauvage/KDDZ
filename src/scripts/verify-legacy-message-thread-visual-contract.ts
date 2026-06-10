@@ -41,6 +41,9 @@ assert.match(text.actions, /legacyHref: m\.legacyHref/);
 assert.match(text.actions, /legacyNature: m\.legacyNature/);
 assert.match(text.actions, /replyToMessage/);
 assert.match(text.actions, /revalidateMessagePaths\(\)/);
+assert.match(text.actions, /const markedReadIds = new Set<string>\(\)/);
+assert.match(text.actions, /markedReadIds\.add\(message\.id\)/);
+assert.match(text.actions, /isRead: markedReadIds\.has\(m\.id\) \? true : m\.isRead/);
 
 assert.match(text.page, /legacyId: number \| null/);
 assert.match(text.page, /legacyThreadId: number \| null/);

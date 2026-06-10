@@ -1003,15 +1003,13 @@ export async function getMessageById(id: string): Promise<ActionResult> {
     const nameMap = await resolveNames(allIds);
 
     // Mark as read if recipient is the current user
-    if (
-      message.recipientId === userId &&
-      !message.isRead
-    ) {
+    const markedReadIds = new Set<string>();
+    if (message.recipientId === userId && !message.isRead) {
       await db.message.update({
         where: { id },
         data: { isRead: true },
       });
-      revalidateMessagePaths();
+      markedReadIds.add(message.id);
     }
 
     const enriched = threadMessages.map((m) => ({
@@ -1028,7 +1026,7 @@ export async function getMessageById(id: string): Promise<ActionResult> {
       recipientName: nameMap.get(m.recipientId) ?? "Unknown",
       subject: m.subject,
       body: m.body,
-      isRead: m.isRead,
+      isRead: markedReadIds.has(m.id) ? true : m.isRead,
       threadId: m.threadId,
       legacyDelivery: legacyDeliveryAudit(m.legacyData),
       createdAt:
