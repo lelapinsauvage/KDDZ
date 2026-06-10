@@ -7,6 +7,7 @@ import { getFoods } from "@/lib/actions/food";
 import {
   dailyReportClothingFlags,
   dailyReportNeedFlags,
+  dailyReportSupplementalFields,
 } from "@/lib/legacy-daily-report-fields";
 import type { DailyReportFormValues } from "@/lib/validations/daily-report";
 
@@ -56,12 +57,33 @@ export default async function EditDailyReportPage({ params }: Props) {
   }
 
   const foods = {
-    breakfast: breakfastFoods.foods.map((f) => ({ id: f.id, name: f.name })),
-    lunch: lunchFoods.foods.map((f) => ({ id: f.id, name: f.name })),
-    dessert: dessertFoods.foods.map((f) => ({ id: f.id, name: f.name })),
+    breakfast: breakfastFoods.foods.map((f) => ({
+      id: f.id,
+      name: f.name,
+      legacyId: f.legacyId,
+    })),
+    lunch: lunchFoods.foods.map((f) => ({
+      id: f.id,
+      name: f.name,
+      legacyId: f.legacyId,
+    })),
+    dessert: dessertFoods.foods.map((f) => ({
+      id: f.id,
+      name: f.name,
+      legacyId: f.legacyId,
+    })),
   };
   const clothingFlags = dailyReportClothingFlags(r.legacyData);
   const needFlags = dailyReportNeedFlags(r.legacyData);
+  const supplementalFields = dailyReportSupplementalFields(r.legacyData);
+  const earlyDinnerFoodId =
+    foods.lunch.find((food) => food.id === supplementalFields.earlyDinnerFoodId)
+      ?.id ??
+    foods.lunch.find(
+      (food) =>
+        food.legacyId != null &&
+        String(food.legacyId) === supplementalFields.earlyDinnerFoodId,
+    )?.id;
 
   const defaultValues: Partial<DailyReportFormValues> = {
     childId: r.child.id,
@@ -72,6 +94,9 @@ export default async function EditDailyReportPage({ params }: Props) {
     lunchFoodId: r.lunchFoodId ?? undefined,
     lunchPortion: (r.lunchPortion as DailyReportFormValues["lunchPortion"]) ?? undefined,
     lunchTime: r.lunchTime ? toTimeString(r.lunchTime) : undefined,
+    earlyDinnerFoodId,
+    earlyDinnerPortion: supplementalFields.earlyDinnerPortion,
+    earlyDinnerTime: supplementalFields.earlyDinnerTime || undefined,
     dessert: r.dessert ?? undefined,
     dessertPortion: (r.dessertPortion as DailyReportFormValues["dessertPortion"]) ?? undefined,
     dessertTime: r.dessertTime ? toTimeString(r.dessertTime) : undefined,
@@ -80,6 +105,10 @@ export default async function EditDailyReportPage({ params }: Props) {
     isSleep: r.isSleep,
     sleepFrom: r.sleepFrom ? toTimeString(r.sleepFrom) : undefined,
     sleepTo: r.sleepTo ? toTimeString(r.sleepTo) : undefined,
+    secondSleepFrom: supplementalFields.secondSleepFrom || undefined,
+    secondSleepTo: supplementalFields.secondSleepTo || undefined,
+    thirdSleepFrom: supplementalFields.thirdSleepFrom || undefined,
+    thirdSleepTo: supplementalFields.thirdSleepTo || undefined,
     sleepQuality: (r.sleepQuality as DailyReportFormValues["sleepQuality"]) ?? undefined,
     activities: r.activities ?? undefined,
     medicine: r.medicine ?? undefined,
@@ -89,6 +118,7 @@ export default async function EditDailyReportPage({ params }: Props) {
     runnyNose: r.runnyNose,
     vomit: r.vomit,
     mood: (r.mood as DailyReportFormValues["mood"]) ?? undefined,
+    moodNoon: supplementalFields.moodNoon,
     urinePotty: r.urinePotty,
     stoolPotty: r.stoolPotty,
     urineDiaper: r.urineDiaper,

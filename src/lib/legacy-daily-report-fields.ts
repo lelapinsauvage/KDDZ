@@ -30,6 +30,17 @@ export type DailyReportNeedFlags = {
   needsMilk: boolean;
 };
 
+export type DailyReportSupplementalFields = {
+  earlyDinnerFoodId: string;
+  earlyDinnerPortion: "well" | "half" | "little" | "none" | undefined;
+  earlyDinnerTime: string;
+  moodNoon: "sad" | "neutral" | "happy" | undefined;
+  secondSleepFrom: string;
+  secondSleepTo: string;
+  thirdSleepFrom: string;
+  thirdSleepTo: string;
+};
+
 const clothingLegacyKeys = {
   clothesPants: ["clothesPants", "pantchecked"],
   clothesShirt: ["clothesShirt", "clothesSweater", "shirtchecked"],
@@ -48,6 +59,9 @@ const needLegacyKeys = {
   needsBabyBottle: ["needsBabyBottle", "babybottlechecked"],
   needsMilk: ["needsMilk", "milkchecked"],
 } satisfies Record<keyof DailyReportNeedFlags, string[]>;
+
+const legacyMealPortions = ["well", "half", "little", "none"] as const;
+const legacyMoods = ["sad", "neutral", "happy"] as const;
 
 export function legacyDailyRecord(value: unknown): LegacyRecord {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -68,6 +82,35 @@ export function legacyDailyBool(value: unknown): boolean {
     return ["1", "true", "yes", "on", "checked"].includes(normalized);
   }
   return false;
+}
+
+function asLegacyMealPortion(
+  value: unknown,
+): DailyReportSupplementalFields["earlyDinnerPortion"] {
+  const text = legacyDailyText(value)?.toLowerCase();
+  return legacyMealPortions.find((portion) => portion === text);
+}
+
+function asLegacyMood(
+  value: unknown,
+): DailyReportSupplementalFields["moodNoon"] {
+  const text = legacyDailyText(value)?.toLowerCase();
+  return legacyMoods.find((mood) => mood === text);
+}
+
+function legacyMoodFromModernMood(value: unknown) {
+  switch (value) {
+    case "HAPPY":
+      return "happy";
+    case "CALM":
+    case "SLEEPY":
+      return "neutral";
+    case "FUSSY":
+    case "CRYING":
+      return "sad";
+    default:
+      return legacyDailyText(value)?.toLowerCase() ?? "";
+  }
 }
 
 export function legacyDailyNumber(value: unknown): number | null {
@@ -201,9 +244,39 @@ export function dailyReportNeedFlags(legacyData: unknown): DailyReportNeedFlags 
   };
 }
 
+export function dailyReportSupplementalFields(
+  legacyData: unknown,
+): DailyReportSupplementalFields {
+  const legacy = legacyDailyRecord(legacyData);
+
+  return {
+    earlyDinnerFoodId:
+      legacyDailyText(legacy.earlyDinnerFoodId) ??
+      legacyDailyText(legacy.lunch_id2) ??
+      "",
+    earlyDinnerPortion: asLegacyMealPortion(legacy.lunchf2),
+    earlyDinnerTime: legacyDailyText(legacy.lntime2) ?? "",
+    moodNoon: asLegacyMood(legacy.mood2),
+    secondSleepFrom: legacyDailyText(legacy.sleep_from1) ?? "",
+    secondSleepTo: legacyDailyText(legacy.sleep_to1) ?? "",
+    thirdSleepFrom: legacyDailyText(legacy.sleep_from2) ?? "",
+    thirdSleepTo: legacyDailyText(legacy.sleep_to2) ?? "",
+  };
+}
+
 export function dailyReportLegacyDataPatch(
   data: Pick<
     DailyReportFormValues,
+    | "mood"
+    | "earlyDinnerFoodId"
+    | "earlyDinnerLegacyId"
+    | "earlyDinnerPortion"
+    | "earlyDinnerTime"
+    | "moodNoon"
+    | "secondSleepFrom"
+    | "secondSleepTo"
+    | "thirdSleepFrom"
+    | "thirdSleepTo"
     | "clothesPants"
     | "clothesSweater"
     | "clothesTshirt"
@@ -236,6 +309,20 @@ export function dailyReportLegacyDataPatch(
     needsMilk: Boolean(data.needsMilk),
   };
 
+  const earlyDinnerFoodId = legacyDailyText(data.earlyDinnerFoodId) ?? "";
+  const earlyDinnerLegacyId =
+    legacyDailyText(data.earlyDinnerLegacyId) ?? earlyDinnerFoodId;
+
+  next.mood = legacyMoodFromModernMood(data.mood);
+  next.earlyDinnerFoodId = earlyDinnerFoodId;
+  next.lunch_id2 = earlyDinnerLegacyId;
+  next.lntime2 = legacyDailyText(data.earlyDinnerTime) ?? "";
+  next.lunchf2 = data.earlyDinnerPortion ?? "";
+  next.mood2 = data.moodNoon ?? "";
+  next.sleep_from1 = legacyDailyText(data.secondSleepFrom) ?? "";
+  next.sleep_to1 = legacyDailyText(data.secondSleepTo) ?? "";
+  next.sleep_from2 = legacyDailyText(data.thirdSleepFrom) ?? "";
+  next.sleep_to2 = legacyDailyText(data.thirdSleepTo) ?? "";
   next.pantchecked = data.clothesPants ? "1" : "0";
   next.shirtchecked = data.clothesSweater ? "1" : "0";
   next.tshirthecked = data.clothesTshirt ? "1" : "0";

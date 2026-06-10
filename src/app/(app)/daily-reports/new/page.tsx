@@ -30,9 +30,21 @@ export default async function NewDailyReportPage({ searchParams }: Props) {
   }));
 
   const foods = {
-    breakfast: breakfastFoods.foods.map((f) => ({ id: f.id, name: f.name })),
-    lunch: lunchFoods.foods.map((f) => ({ id: f.id, name: f.name })),
-    dessert: dessertFoods.foods.map((f) => ({ id: f.id, name: f.name })),
+    breakfast: breakfastFoods.foods.map((f) => ({
+      id: f.id,
+      name: f.name,
+      legacyId: f.legacyId,
+    })),
+    lunch: lunchFoods.foods.map((f) => ({
+      id: f.id,
+      name: f.name,
+      legacyId: f.legacyId,
+    })),
+    dessert: dessertFoods.foods.map((f) => ({
+      id: f.id,
+      name: f.name,
+      legacyId: f.legacyId,
+    })),
   };
 
   const defaultValues = {

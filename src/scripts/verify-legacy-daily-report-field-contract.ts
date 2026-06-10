@@ -5,6 +5,7 @@ import {
   dailyReportFoodLabel,
   dailyReportLegacyDataPatch,
   dailyReportNeedFlags,
+  dailyReportSupplementalFields,
   legacyDailyFoodId,
   legacyDailyFoodName,
 } from "@/lib/legacy-daily-report-fields";
@@ -99,8 +100,60 @@ assert.deepEqual(
   },
 );
 
+assert.deepEqual(
+  dailyReportSupplementalFields({
+    earlyDinnerFoodId: "modern-food-id",
+    lunch_id2: "88",
+    lunchf2: "half",
+    lntime2: "16:20",
+    mood2: "neutral",
+    sleep_from1: "12:30",
+    sleep_to1: "13:00",
+    sleep_from2: "14:10",
+    sleep_to2: "14:40",
+  }),
+  {
+    earlyDinnerFoodId: "modern-food-id",
+    earlyDinnerPortion: "half",
+    earlyDinnerTime: "16:20",
+    moodNoon: "neutral",
+    secondSleepFrom: "12:30",
+    secondSleepTo: "13:00",
+    thirdSleepFrom: "14:10",
+    thirdSleepTo: "14:40",
+  },
+);
+
+assert.deepEqual(
+  dailyReportSupplementalFields({
+    lunch_id2: "88",
+    lunchf2: "bad-value",
+    mood2: "bad-value",
+  }),
+  {
+    earlyDinnerFoodId: "88",
+    earlyDinnerPortion: undefined,
+    earlyDinnerTime: "",
+    moodNoon: undefined,
+    secondSleepFrom: "",
+    secondSleepTo: "",
+    thirdSleepFrom: "",
+    thirdSleepTo: "",
+  },
+);
+
 const patch = dailyReportLegacyDataPatch(
   {
+    mood: "FUSSY",
+    earlyDinnerFoodId: "modern-food-id",
+    earlyDinnerLegacyId: "88",
+    earlyDinnerPortion: "little",
+    earlyDinnerTime: "16:30",
+    moodNoon: "happy",
+    secondSleepFrom: "12:15",
+    secondSleepTo: "12:45",
+    thirdSleepFrom: "14:00",
+    thirdSleepTo: "14:20",
     clothesPants: true,
     clothesSweater: false,
     clothesTshirt: true,
@@ -124,6 +177,16 @@ const patch = dailyReportLegacyDataPatch(
 assert.equal(patch.sourceDatabase, "garderie_2025");
 assert.equal(patch.sourceTable, "t_daily_report");
 assert.equal(patch.report_id, 42);
+assert.equal(patch.mood, "sad");
+assert.equal(patch.earlyDinnerFoodId, "modern-food-id");
+assert.equal(patch.lunch_id2, "88");
+assert.equal(patch.lunchf2, "little");
+assert.equal(patch.lntime2, "16:30");
+assert.equal(patch.mood2, "happy");
+assert.equal(patch.sleep_from1, "12:15");
+assert.equal(patch.sleep_to1, "12:45");
+assert.equal(patch.sleep_from2, "14:00");
+assert.equal(patch.sleep_to2, "14:20");
 assert.equal(patch.clothesPants, true);
 assert.equal(patch.clothesShirt, false);
 assert.equal(patch.clothesSweater, false);

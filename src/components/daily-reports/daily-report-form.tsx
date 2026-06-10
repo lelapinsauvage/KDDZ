@@ -51,12 +51,20 @@ import {
 } from "lucide-react";
 
 type PortionValue = "NONE" | "LITTLE" | "HALF" | "MOST" | "ALL";
+type LegacyMealPortion = "well" | "half" | "little" | "none";
 
 const portionOptions: { value: PortionValue; label: string; icon: string }[] = [
   { value: "ALL", label: "Well", icon: "\uD83C\uDF5D" },
   { value: "HALF", label: "Half", icon: "\uD83C\uDF7D\uFE0F" },
   { value: "LITTLE", label: "Little", icon: "\uD83E\uDD44" },
   { value: "NONE", label: "None", icon: "\u274C" },
+];
+
+const earlyDinnerPortionOptions: { value: LegacyMealPortion; label: string; icon: string }[] = [
+  { value: "well", label: "Well", icon: "\uD83C\uDF5D" },
+  { value: "half", label: "Half", icon: "\uD83C\uDF7D\uFE0F" },
+  { value: "little", label: "Little", icon: "\uD83E\uDD44" },
+  { value: "none", label: "None", icon: "\u274C" },
 ];
 
 const moodOptions = [
@@ -66,6 +74,12 @@ const moodOptions = [
   { value: "CRYING", label: "Crying", emoji: "\u{1F622}" },
   { value: "SLEEPY", label: "Sleepy", emoji: "\u{1F634}" },
 ];
+
+const legacyNoonMoodOptions = [
+  { value: "sad", label: "Sad", emoji: "\u{1F61E}" },
+  { value: "neutral", label: "Neutral", emoji: "\u{1F610}" },
+  { value: "happy", label: "Happy", emoji: "\u{1F60A}" },
+] as const;
 
 const hygieneRows = [
   { label: "Diaper", urineKey: "urineDiaper" as const, stoolKey: "stoolDiaper" as const },
@@ -99,6 +113,7 @@ interface ChildOption {
 interface FoodOption {
   id: string;
   name: string;
+  legacyId?: number | null;
 }
 
 interface YesterdayData {
@@ -153,6 +168,37 @@ function PortionRadio({
   return (
     <div className="flex flex-wrap gap-2">
       {portionOptions.map((p) => {
+        const isSelected = value === p.value;
+        return (
+          <button
+            key={p.value}
+            type="button"
+            onClick={() => onChange(isSelected ? undefined : p.value)}
+            className={`flex flex-col items-center gap-1 rounded-sm border-2 px-3 py-2.5 min-w-[60px] min-h-[56px] text-xs font-medium transition-all ${
+              isSelected
+                ? "border-amber-500 bg-amber-500 text-white shadow-md scale-105"
+                : "border-gray-200 bg-white hover:border-amber-300 text-gray-600"
+            }`}
+          >
+            <span className="text-lg leading-none">{p.icon}</span>
+            <span>{p.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function LegacyPortionRadio({
+  value,
+  onChange,
+}: {
+  value?: string;
+  onChange: (val: LegacyMealPortion | undefined) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {earlyDinnerPortionOptions.map((p) => {
         const isSelected = value === p.value;
         return (
           <button
@@ -247,9 +293,18 @@ export function DailyReportForm({
       clothesUnderwear: false,
       checkInTime: undefined,
       checkOutTime: undefined,
+      earlyDinnerFoodId: undefined,
+      earlyDinnerLegacyId: undefined,
+      earlyDinnerPortion: undefined,
+      earlyDinnerTime: undefined,
       sleepQuality: undefined,
+      secondSleepFrom: undefined,
+      secondSleepTo: undefined,
+      thirdSleepFrom: undefined,
+      thirdSleepTo: undefined,
       activities: undefined,
       medicine: undefined,
+      moodNoon: undefined,
       clothesSocks: false,
       needsWipes: false,
       needsBrush: false,
@@ -339,6 +394,22 @@ export function DailyReportForm({
     if (data.lunchFoodId) fd.set("lunchFoodId", data.lunchFoodId);
     if (data.lunchPortion) fd.set("lunchPortion", data.lunchPortion);
     if (data.lunchTime) fd.set("lunchTime", data.lunchTime);
+    if (data.earlyDinnerFoodId) {
+      const earlyDinnerFood = foods.lunch.find(
+        (food) => food.id === data.earlyDinnerFoodId,
+      );
+      fd.set("earlyDinnerFoodId", data.earlyDinnerFoodId);
+      fd.set(
+        "earlyDinnerLegacyId",
+        earlyDinnerFood?.legacyId
+          ? String(earlyDinnerFood.legacyId)
+          : data.earlyDinnerFoodId,
+      );
+    }
+    if (data.earlyDinnerPortion) {
+      fd.set("earlyDinnerPortion", data.earlyDinnerPortion);
+    }
+    if (data.earlyDinnerTime) fd.set("earlyDinnerTime", data.earlyDinnerTime);
     if (data.dessert) fd.set("dessert", data.dessert);
     if (data.dessertPortion) fd.set("dessertPortion", data.dessertPortion);
     if (data.dessertTime) fd.set("dessertTime", data.dessertTime);
@@ -347,10 +418,21 @@ export function DailyReportForm({
     fd.set("applyFoodForAll", String(data.applyFoodForAll));
 
     // Sleep (auto-derive isSleep from time fields)
-    const hasSleep = !!(data.sleepFrom || data.sleepTo);
+    const hasSleep = !!(
+      data.sleepFrom ||
+      data.sleepTo ||
+      data.secondSleepFrom ||
+      data.secondSleepTo ||
+      data.thirdSleepFrom ||
+      data.thirdSleepTo
+    );
     fd.set("isSleep", String(hasSleep));
     if (data.sleepFrom) fd.set("sleepFrom", data.sleepFrom);
     if (data.sleepTo) fd.set("sleepTo", data.sleepTo);
+    if (data.secondSleepFrom) fd.set("secondSleepFrom", data.secondSleepFrom);
+    if (data.secondSleepTo) fd.set("secondSleepTo", data.secondSleepTo);
+    if (data.thirdSleepFrom) fd.set("thirdSleepFrom", data.thirdSleepFrom);
+    if (data.thirdSleepTo) fd.set("thirdSleepTo", data.thirdSleepTo);
     if (data.sleepQuality) fd.set("sleepQuality", data.sleepQuality);
 
     // Hygiene
@@ -363,6 +445,7 @@ export function DailyReportForm({
 
     // Symptoms
     if (data.mood) fd.set("mood", data.mood);
+    if (data.moodNoon) fd.set("moodNoon", data.moodNoon);
     fd.set("cough", String(data.cough));
     fd.set("runnyNose", String(data.runnyNose));
     fd.set("vomit", String(data.vomit));
@@ -784,6 +867,77 @@ export function DailyReportForm({
 
               <Separator className="bg-amber-200" />
 
+              {/* Early Dinner */}
+              <div>
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <h4 className="text-sm font-semibold text-amber-700 uppercase tracking-wider">
+                    Early Dinner
+                  </h4>
+                  {(watch("earlyDinnerFoodId") ||
+                    watch("earlyDinnerPortion") ||
+                    watch("earlyDinnerTime")) && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-8 text-amber-700 hover:bg-amber-100"
+                      onClick={() => {
+                        setValue("earlyDinnerFoodId", undefined);
+                        setValue("earlyDinnerLegacyId", undefined);
+                        setValue("earlyDinnerPortion", undefined);
+                        setValue("earlyDinnerTime", undefined);
+                      }}
+                      title="Clear Early Dinner"
+                    >
+                      <X className="size-4" />
+                    </Button>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label>Food Item</Label>
+                    <Select
+                      value={watch("earlyDinnerFoodId") || ""}
+                      onValueChange={(val) => setValue("earlyDinnerFoodId", val)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {foods.lunch.map((f) => (
+                          <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Portion</Label>
+                    <LegacyPortionRadio
+                      value={watch("earlyDinnerPortion")}
+                      onChange={(val) => setValue("earlyDinnerPortion", val)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Time</Label>
+                    <div className="flex gap-2">
+                      <Input type="time" {...register("earlyDinnerTime")} className="flex-1" />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="shrink-0 size-10 border-amber-300 text-amber-600 hover:bg-amber-100"
+                        onClick={() => setValue("earlyDinnerTime", currentTimeString())}
+                        title="Set to current time"
+                      >
+                        <Clock className="size-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <Separator className="bg-amber-200" />
+
               {/* Dessert */}
               <div>
                 <h4 className="mb-3 text-sm font-semibold text-amber-700 uppercase tracking-wider">
@@ -961,7 +1115,10 @@ export function DailyReportForm({
                 Nap Time
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
+              <div className="text-xs font-semibold uppercase text-indigo-700">
+                First Nap
+              </div>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div className="space-y-2">
                   <Label>From</Label>
@@ -1010,6 +1167,73 @@ export function DailyReportForm({
                       <SelectItem value="POOR">Poor</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+              </div>
+              <Separator className="bg-indigo-200" />
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Second Nap From</Label>
+                  <div className="flex gap-2">
+                    <Input type="time" {...register("secondSleepFrom")} className="flex-1" />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="shrink-0 size-10 border-indigo-300 text-indigo-600 hover:bg-indigo-100"
+                      onClick={() => setValue("secondSleepFrom", currentTimeString())}
+                      title="Set to current time"
+                    >
+                      <Clock className="size-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Second Nap To</Label>
+                  <div className="flex gap-2">
+                    <Input type="time" {...register("secondSleepTo")} className="flex-1" />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="shrink-0 size-10 border-indigo-300 text-indigo-600 hover:bg-indigo-100"
+                      onClick={() => setValue("secondSleepTo", currentTimeString())}
+                      title="Set to current time"
+                    >
+                      <Clock className="size-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Third Nap From</Label>
+                  <div className="flex gap-2">
+                    <Input type="time" {...register("thirdSleepFrom")} className="flex-1" />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="shrink-0 size-10 border-indigo-300 text-indigo-600 hover:bg-indigo-100"
+                      onClick={() => setValue("thirdSleepFrom", currentTimeString())}
+                      title="Set to current time"
+                    >
+                      <Clock className="size-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Third Nap To</Label>
+                  <div className="flex gap-2">
+                    <Input type="time" {...register("thirdSleepTo")} className="flex-1" />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="shrink-0 size-10 border-indigo-300 text-indigo-600 hover:bg-indigo-100"
+                      onClick={() => setValue("thirdSleepTo", currentTimeString())}
+                      title="Set to current time"
+                    >
+                      <Clock className="size-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -1210,7 +1434,10 @@ export function DailyReportForm({
                 Mood
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
+              <div className="text-xs font-semibold uppercase text-muted-foreground">
+                Morning
+              </div>
               <div className="flex flex-wrap gap-3">
                 {moodOptions.map((mood) => {
                   const isSelected = watch("mood") === mood.value;
@@ -1219,6 +1446,30 @@ export function DailyReportForm({
                       key={mood.value}
                       type="button"
                       onClick={() => setValue("mood", mood.value as "HAPPY" | "CALM" | "FUSSY" | "CRYING" | "SLEEPY")}
+                      className={`flex flex-col items-center gap-1 rounded-sm border-2 px-4 py-3 min-w-[72px] min-h-[60px] text-sm font-medium transition-all ${
+                        isSelected
+                          ? "border-primary bg-primary/10 text-primary shadow-sm scale-105"
+                          : "border-border bg-white hover:border-primary/50"
+                      }`}
+                    >
+                      <span className="text-2xl">{mood.emoji}</span>
+                      <span className="text-xs">{mood.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <Separator />
+              <div className="text-xs font-semibold uppercase text-muted-foreground">
+                Noon
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {legacyNoonMoodOptions.map((mood) => {
+                  const isSelected = watch("moodNoon") === mood.value;
+                  return (
+                    <button
+                      key={mood.value}
+                      type="button"
+                      onClick={() => setValue("moodNoon", isSelected ? undefined : mood.value)}
                       className={`flex flex-col items-center gap-1 rounded-sm border-2 px-4 py-3 min-w-[72px] min-h-[60px] text-sm font-medium transition-all ${
                         isSelected
                           ? "border-primary bg-primary/10 text-primary shadow-sm scale-105"

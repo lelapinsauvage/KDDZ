@@ -36,6 +36,10 @@ export const dailyReportSchema = z.object({
   lunchFoodId: z.string().optional(),
   lunchPortion: z.enum(["NONE", "LITTLE", "HALF", "MOST", "ALL"]).optional(),
   lunchTime: z.string().optional(),
+  earlyDinnerFoodId: z.string().optional(),
+  earlyDinnerLegacyId: z.string().optional(),
+  earlyDinnerPortion: z.enum(["well", "half", "little", "none"]).optional(),
+  earlyDinnerTime: z.string().optional(),
 
   // Dessert
   dessert: z.string().optional(),
@@ -50,6 +54,10 @@ export const dailyReportSchema = z.object({
   isSleep: z.boolean().default(false),
   sleepFrom: z.string().optional(),
   sleepTo: z.string().optional(),
+  secondSleepFrom: z.string().optional(),
+  secondSleepTo: z.string().optional(),
+  thirdSleepFrom: z.string().optional(),
+  thirdSleepTo: z.string().optional(),
   sleepQuality: z.enum(["GOOD", "FAIR", "POOR"]).optional(),
 
   // Activities
@@ -68,6 +76,7 @@ export const dailyReportSchema = z.object({
 
   // Symptoms
   mood: z.enum(["HAPPY", "CALM", "FUSSY", "CRYING", "SLEEPY"]).optional(),
+  moodNoon: z.enum(["sad", "neutral", "happy"]).optional(),
   cough: z.boolean().default(false),
   runnyNose: z.boolean().default(false),
   vomit: z.boolean().default(false),
