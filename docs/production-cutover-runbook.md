@@ -18,6 +18,12 @@ LEGACY_PRODUCTION_DUMP_MANIFEST=<non-secret report id or local evidence file>
 PRODUCTION_CRONTAB_EVIDENCE=<non-secret report id or local evidence file>
 ```
 
+Preview the full evidence/provider requirement list before collecting values:
+
+```bash
+pnpm tsx src/scripts/audit-production-readiness.ts --list-requirements
+```
+
 Stop the cutover if the authoritative dump set is ambiguous, the selected first migration dump is not approved, or cron ownership cannot decide whether commented legacy blocks remain disabled.
 
 ## Phase 1: Rehearse Import And Media

@@ -30,6 +30,7 @@ Use `docs/production-cutover-runbook.md` for the ordered production execution se
 Run these commands as part of production acceptance and paste only the non-sensitive result summary into the release notes or acceptance record:
 
 ```bash
+pnpm tsx src/scripts/audit-production-readiness.ts --list-requirements
 pnpm tsx src/scripts/audit-production-readiness.ts --out=/tmp/kiddzonl-production-readiness.json
 pnpm tsx src/scripts/verify-parent-credentialed-native-e2e.ts
 pnpm tsx src/scripts/verify-legacy-calls-contract.ts
@@ -37,7 +38,7 @@ pnpm tsx src/scripts/migration/reconcile-migration-counts.ts --help
 python3 -m json.tool docs/page-parity-matrix.json >/dev/null
 ```
 
-`audit-production-readiness.ts` is redacted by design: it prints only whether evidence pointers and provider variables are present, never their values. Use `--out=<path>` to write the same redacted JSON report into the production evidence package. It exits nonzero until all production evidence pointers are configured. Evidence pointers may be file paths or external record identifiers and are named `LEGACY_PRODUCTION_DUMP_MANIFEST`, `LEGACY_MEDIA_EXPORT_MANIFEST`, `LEGACY_MEDIA_UPLOAD_MANIFEST`, `MIGRATION_RECONCILIATION_REPORT`, `PRODUCTION_CRONTAB_EVIDENCE`, `HOSTED_SCHEDULER_EVIDENCE`, `NATIVE_IOS_ACCEPTANCE_REPORT`, `NATIVE_ANDROID_ACCEPTANCE_REPORT`, `NOTIFICATIONS_NATURE_ACCEPTANCE_REPORT`, `PRINT_STATIONERY_ACCEPTANCE_REPORT`, `REAL_CALL_ROWS_ACCEPTANCE_REPORT`, `NURSERY_COMPLIANCE_ACCEPTANCE_REPORT`, `LEGACY_ACL_ACCEPTANCE_REPORT`, and `LEGACY_BACKFILL_ACCEPTANCE_REPORT`.
+`audit-production-readiness.ts` is redacted by design: it prints only whether evidence pointers and provider variables are present, never their values. Use `--list-requirements` to print the required evidence pointers/provider setups before credentials exist, and use `--out=<path>` to write the same redacted JSON report into the production evidence package. It exits nonzero until all production evidence pointers are configured. Evidence pointers may be file paths or external record identifiers and are named `LEGACY_PRODUCTION_DUMP_MANIFEST`, `LEGACY_MEDIA_EXPORT_MANIFEST`, `LEGACY_MEDIA_UPLOAD_MANIFEST`, `MIGRATION_RECONCILIATION_REPORT`, `PRODUCTION_CRONTAB_EVIDENCE`, `HOSTED_SCHEDULER_EVIDENCE`, `NATIVE_IOS_ACCEPTANCE_REPORT`, `NATIVE_ANDROID_ACCEPTANCE_REPORT`, `NOTIFICATIONS_NATURE_ACCEPTANCE_REPORT`, `PRINT_STATIONERY_ACCEPTANCE_REPORT`, `REAL_CALL_ROWS_ACCEPTANCE_REPORT`, `NURSERY_COMPLIANCE_ACCEPTANCE_REPORT`, `LEGACY_ACL_ACCEPTANCE_REPORT`, and `LEGACY_BACKFILL_ACCEPTANCE_REPORT`.
 
 The reconciliation command must be run with the same canonical MySQL import and target PostgreSQL database used for cutover, following `src/scripts/migration/README.md`. The `--help` command above is only a local command-shape sanity check.
 

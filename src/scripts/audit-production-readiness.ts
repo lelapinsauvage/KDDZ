@@ -81,6 +81,12 @@ const evidenceGateRequirements: Array<{
 
 const json = process.argv.includes("--json");
 const outputPath = optionValue("--out");
+const listRequirements = process.argv.includes("--list-requirements");
+
+if (listRequirements) {
+  printRequirements({ json });
+  process.exit(0);
+}
 
 const evidenceAudits = evidenceGateRequirements.map(auditEvidenceGate);
 const providerAudits = [auditPushProvider(), auditEmailProvider(), auditChannelProvider("SMS"), auditChannelProvider("WHATSAPP")];
@@ -314,6 +320,65 @@ function evidenceLabel(envName: string, value: string) {
 
 function formatList(items: string[]) {
   return items.length ? items.join(", ") : "-";
+}
+
+function printRequirements(params: { json: boolean }) {
+  const evidenceRequirements = evidenceGateRequirements.map((requirement) => ({
+    gate: requirement.gate,
+    requiredEvidencePointers: [
+      ...requirement.env,
+      ...(requirement.gate === "PROD-CRON" ? ["CRON_SECRET or VERCEL_CRON_SECRET"] : []),
+    ],
+  }));
+  const providerRequirements = [
+    {
+      provider: "push",
+      acceptedSetup:
+        "PUSH_DELIVERY_PROVIDER=webhook with PUSH_DELIVERY_WEBHOOK_URL, or PUSH_DELIVERY_PROVIDER=onesignal with ONESIGNAL_APP_ID plus ONESIGNAL_REST_API_KEY/ONESIGNAL_API_KEY",
+    },
+    {
+      provider: "email",
+      acceptedSetup:
+        "EMAIL_DELIVERY_PROVIDER=webhook with EMAIL_DELIVERY_WEBHOOK_URL plus EMAIL_FROM, or EMAIL_DELIVERY_PROVIDER=resend with RESEND_API_KEY plus EMAIL_FROM",
+    },
+    {
+      provider: "sms",
+      acceptedSetup:
+        "SMS_DELIVERY_PROVIDER=webhook with SMS_DELIVERY_WEBHOOK_URL, or shared LEGACY_CHANNEL_DELIVERY_WEBHOOK_URL/MESSAGE_CHANNEL_DELIVERY_WEBHOOK_URL",
+    },
+    {
+      provider: "whatsapp",
+      acceptedSetup:
+        "WHATSAPP_DELIVERY_PROVIDER=webhook with WHATSAPP_DELIVERY_WEBHOOK_URL, or shared LEGACY_CHANNEL_DELIVERY_WEBHOOK_URL/MESSAGE_CHANNEL_DELIVERY_WEBHOOK_URL",
+    },
+  ];
+  const payload = {
+    redacted: true,
+    evidenceRequirements,
+    providerRequirements,
+    note: "Requirement names only. No environment values, URLs, tokens, keys, passwords, or report contents are included.",
+  };
+
+  if (params.json) {
+    console.log(JSON.stringify(payload, null, 2));
+    return;
+  }
+
+  console.log("Production readiness requirements (redacted)");
+  console.log("");
+  console.log("| Gate | Required evidence pointers |");
+  console.log("| --- | --- |");
+  for (const requirement of evidenceRequirements) {
+    console.log(`| ${requirement.gate} | ${requirement.requiredEvidencePointers.join(", ")} |`);
+  }
+  console.log("");
+  console.log("| Provider | Accepted setup |");
+  console.log("| --- | --- |");
+  for (const requirement of providerRequirements) {
+    console.log(`| ${requirement.provider} | ${requirement.acceptedSetup} |`);
+  }
+  console.log("");
+  console.log("No environment values, URLs, tokens, keys, passwords, or report contents were printed.");
 }
 
 function optionValue(name: string) {

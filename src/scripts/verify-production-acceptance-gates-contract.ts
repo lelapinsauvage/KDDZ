@@ -138,8 +138,11 @@ assert.match(contents.migrationReadme, /reconcile-migration-counts\.ts/);
 const readinessAudit = readFileSync("src/scripts/audit-production-readiness.ts", "utf8");
 assert.match(readinessAudit, /No environment values/);
 assert.match(readinessAudit, /--out/);
+assert.match(readinessAudit, /--list-requirements/);
 assert.match(contents.gates, /--out=<path>/);
+assert.match(contents.gates, /--list-requirements/);
 assert.match(contents.cutoverRunbook, /--out=\/tmp\/kiddzonl-production-readiness\.json/);
+assert.match(contents.cutoverRunbook, /--list-requirements/);
 
 console.log("production acceptance gates contract assertions passed");
 
