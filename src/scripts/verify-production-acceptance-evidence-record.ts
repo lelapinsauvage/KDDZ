@@ -6,11 +6,25 @@ type SectionSpec = {
   fields: string[];
 };
 
-const recordPath = process.argv[2];
+type ReadinessReport = {
+  redacted?: boolean;
+  summary?: {
+    ready?: number;
+    needsEvidence?: number;
+    total?: number;
+  };
+  gates?: Array<{
+    gate?: string;
+    status?: string;
+  }>;
+};
+
+const recordPath = positionalArgs()[0];
+const readinessReportPath = optionValue("--readiness-report");
 
 if (!recordPath || recordPath.startsWith("-")) {
   console.error(
-    "Usage: pnpm tsx src/scripts/verify-production-acceptance-evidence-record.ts <filled-production-evidence.md>"
+    "Usage: pnpm tsx src/scripts/verify-production-acceptance-evidence-record.ts <filled-production-evidence.md> [--readiness-report=<redacted-readiness.json>]"
   );
   process.exit(2);
 }
@@ -193,6 +207,10 @@ for (const spec of requiredSections) {
   }
 }
 
+if (readinessReportPath) {
+  verifyReadinessReport(readinessReportPath, sections, errors);
+}
+
 if (errors.length > 0) {
   console.error("Production acceptance evidence record is incomplete:");
   for (const error of errors) {
@@ -206,6 +224,7 @@ console.log(
     {
       status: "production acceptance evidence record verified",
       record: recordPath,
+      readinessReport: readinessReportPath ?? null,
       sections: requiredSections.length,
       fields: requiredSections.reduce((count, section) => count + section.fields.length, 0),
       redacted: true,
@@ -305,4 +324,84 @@ function assertNoPhoneNumbers(value: string) {
     const digitCount = candidate.replace(/\D/g, "").length;
     assert.ok(digitCount < 10, "evidence record must not contain phone numbers");
   }
+}
+
+function verifyReadinessReport(
+  path: string,
+  sections: Map<string, Map<string, string>>,
+  errors: string[]
+) {
+  const reportText = readFileSync(path, "utf8");
+  assertNoSensitiveContent(reportText);
+
+  const report = JSON.parse(reportText) as ReadinessReport;
+  if (report.redacted !== true) {
+    errors.push("readiness report: redacted must be true");
+  }
+  if (!report.summary) {
+    errors.push("readiness report: missing summary");
+  }
+  if (!Array.isArray(report.gates)) {
+    errors.push("readiness report: missing gates");
+    return;
+  }
+
+  const ready = report.summary?.ready;
+  const needsEvidence = report.summary?.needsEvidence;
+  const total = report.summary?.total;
+  if (ready !== total || needsEvidence !== 0) {
+    errors.push(`readiness report: expected all gates ready, got ready=${ready} needsEvidence=${needsEvidence} total=${total}`);
+  }
+
+  const metadataResult = sections.get("Run Metadata")?.get("`audit-production-readiness.ts` result") ?? "";
+  if (typeof ready === "number" && typeof total === "number" && !metadataResult.includes(`${ready}/${total}`)) {
+    errors.push(`Run Metadata: readiness result must include ${ready}/${total}`);
+  }
+
+  const expectedGateSections = requiredSections
+    .map((section) => section.section)
+    .filter((section) => section.startsWith("PROD-"));
+  const reportGates = new Set<string>();
+  for (const gate of report.gates) {
+    if (!gate.gate) {
+      errors.push("readiness report: gate entry missing gate id");
+      continue;
+    }
+    reportGates.add(gate.gate);
+    if (gate.status !== "ready-to-review") {
+      errors.push(`readiness report: ${gate.gate} status is ${gate.status ?? "missing"}`);
+    }
+  }
+
+  for (const section of expectedGateSections) {
+    if (!reportGates.has(section)) {
+      errors.push(`readiness report: missing ${section}`);
+    }
+  }
+}
+
+function optionValue(name: string) {
+  const prefix = `${name}=`;
+  const inline = process.argv.find((arg) => arg.startsWith(prefix));
+  if (inline) return inline.slice(prefix.length);
+
+  const index = process.argv.indexOf(name);
+  if (index >= 0) return process.argv[index + 1] ?? null;
+
+  return null;
+}
+
+function positionalArgs() {
+  const args: string[] = [];
+  for (let index = 2; index < process.argv.length; index += 1) {
+    const arg = process.argv[index];
+    if (arg.startsWith("--")) {
+      if (!arg.includes("=") && process.argv[index + 1] && !process.argv[index + 1].startsWith("-")) {
+        index += 1;
+      }
+      continue;
+    }
+    args.push(arg);
+  }
+  return args;
 }
