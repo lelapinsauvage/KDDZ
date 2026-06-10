@@ -133,6 +133,7 @@ export function EmployeeFormClient({
     defaultValues: employee ?? {
       username: "",
       firstName: "",
+      middleName: "",
       lastName: "",
       imageUrl: "",
       dateOfBirth: "",
@@ -198,6 +199,12 @@ export function EmployeeFormClient({
 
   const storedImageUrl = watch("imageUrl") || "";
   const displayImageUrl = imagePreviewUrl || storedImageUrl;
+  const supportsMiddleName = type !== "manager";
+  const displayName = [
+    watch("firstName"),
+    supportsMiddleName ? watch("middleName") : "",
+    watch("lastName"),
+  ].filter(Boolean).join(" ");
 
   // Fetch classes filtered by selected branch
   const [filteredClasses, setFilteredClasses] = useState<ClassOption[]>(classes);
@@ -420,8 +427,8 @@ export function EmployeeFormClient({
                 )}
               </div>
               <p className="mt-4 text-lg font-semibold text-foreground">
-                {watch("firstName") || watch("lastName")
-                  ? `${watch("firstName")} ${watch("lastName")}`
+                {displayName
+                  ? displayName
                   : `New ${singular}`}
               </p>
               <div className="mt-4 flex flex-wrap justify-center gap-2">
@@ -527,6 +534,16 @@ export function EmployeeFormClient({
                       <p className="mt-1 text-xs text-red-500">{errors.firstName.message}</p>
                     )}
                   </div>
+                  {supportsMiddleName && (
+                    <div>
+                      <Label htmlFor="middleName">Middle Name</Label>
+                      <Input
+                        id="middleName"
+                        {...register("middleName")}
+                        placeholder="Middle Name"
+                      />
+                    </div>
+                  )}
                   <div>
                     <Label htmlFor="lastName">
                       Last Name <span className="text-red-500">*</span>

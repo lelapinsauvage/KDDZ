@@ -57,6 +57,7 @@ interface DocumentData {
 interface EmployeeData {
   username?: string | null;
   firstName: string;
+  middleName?: string | null;
   lastName: string;
   imageUrl?: string | null;
   email?: string | null;
@@ -630,6 +631,7 @@ export async function createEmployee(
     // Extended fields — only on Teacher/Nurse/Doctor (not Manager)
     if (type !== "manager") {
       createData.username = data.username ?? null;
+      createData.middleName = data.middleName ?? null;
       createData.telephone = data.telephone ?? null;
       createData.placeOfBirth = data.placeOfBirth ?? null;
       createData.registerNumber = data.registerNumber ?? null;
@@ -797,6 +799,7 @@ export async function updateEmployee(
     // Extended fields — only on Teacher/Nurse/Doctor (not Manager)
     if (type !== "manager") {
       if (data.username !== undefined) updateData.username = data.username || null;
+      if (data.middleName !== undefined) updateData.middleName = data.middleName || null;
       if (data.telephone !== undefined) updateData.telephone = data.telephone || null;
       if (data.placeOfBirth !== undefined) updateData.placeOfBirth = data.placeOfBirth || null;
       if (data.registerNumber !== undefined) updateData.registerNumber = data.registerNumber || null;
