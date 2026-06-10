@@ -891,7 +891,12 @@ export function LegacyAuthSettingsClient({
                     />
                   </Field>
                   <CheckboxField
-                    label="Yahoo"
+                    label={
+                      <span className="flex flex-wrap items-center gap-2">
+                        Yahoo
+                        <Badge variant="outline">Archived runtime</Badge>
+                      </span>
+                    }
                     checked={integrationForm.yahooEnabled}
                     disabled={isPending}
                     onCheckedChange={(checked) =>
@@ -922,9 +927,13 @@ export function LegacyAuthSettingsClient({
                         Disable captcha
                       </SelectItem>
                       <SelectItem value="reCAPTCHA">reCAPTCHA</SelectItem>
-                      <SelectItem value="playThru">PlayThru</SelectItem>
+                      <SelectItem value="playThru">PlayThru archived</SelectItem>
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Yahoo OpenID and PlayThru keys are preserved for legacy audit;
+                    modern runtime uses Facebook, Google, Twitter, and reCAPTCHA.
+                  </p>
                   <div className="grid gap-3 md:grid-cols-2">
                     <Field
                       label="reCAPTCHA public key"
@@ -1117,7 +1126,7 @@ function CheckboxField({
   disabled,
   onCheckedChange,
 }: {
-  label: string;
+  label: ReactNode;
   checked: boolean;
   disabled?: boolean;
   onCheckedChange: (checked: boolean) => void;
