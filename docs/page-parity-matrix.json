@@ -17041,10 +17041,10 @@
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-birthday.php",
     "legacyJs": "",
     "modernRoute": "/settings/notifications",
-    "status": "partial - legacy birthday template fallback restored; delivery audit remains",
+    "status": "restored - legacy birthday template fallback and provider delivery audit restored",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "/settings/notifications Birthday now falls back to migrated `email-birthday-subj` and `email-birthday-msg` rows and exposes the legacy `{{child_name}}` shortcode. Existing birthday alarm generation can use the saved modern template and exact generated staff receipt targeting, while message-portal Birthday sends restore the legacy `custom_notifications_birthday_parents` parent row path. Remaining work is external provider push/SMS/email execution after production credentials are confirmed."
+    "verification": "/settings/notifications Birthday falls back to migrated `email-birthday-subj` and `email-birthday-msg` rows and exposes the legacy `{{child_name}}` shortcode. `generateBirthdayAlarmsForOrganization()` now renders the saved BIRTHDAY subject/body for generated birthday staff recipients, sends the rendered message through the provider-neutral `deliverEmail` bridge with BIRTHDAY metadata and `custom_notifications_birthday` provenance, and stores `emailDeliveryAuditData` on the generated alarm legacy audit payload so skipped/unconfigured, failed, and sent delivery outcomes remain inspectable without hard-coding production credentials. Message-portal Birthday sends continue to restore the legacy `custom_notifications_birthday_parents` parent row path. Verified by `src/scripts/verify-legacy-birthday-email-template-delivery-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-control.php",

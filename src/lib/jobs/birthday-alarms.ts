@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { deliverEmail, emailDeliveryAuditData } from "@/lib/email-delivery";
 import { isLegacyNotificationGateEnabled } from "@/lib/legacy-notification-gates";
 
 const BIRTHDAY_RECEIPT_SOURCE = "custom_notifications_birthday";
@@ -16,6 +17,8 @@ export interface BirthdayGenerationSummary {
 
 interface LegacyBirthdayRecipient {
   userId: string;
+  email: string | null;
+  name: string | null;
   legacyRecipientId: number;
   legacySourceDatabase: string;
   legacyClasses: string;
@@ -107,6 +110,45 @@ function recipientsForBirthdayCandidate(
   }
 
   return Array.from(selected.values());
+}
+
+async function storeBirthdayEmailAudit(params: {
+  alarmId: string;
+  subject: string;
+  body: string;
+  recipients: LegacyBirthdayRecipient[];
+  legacyNotificationId: number;
+  sourceDatabase: string | null;
+}) {
+  const emailDelivery = await deliverEmail({
+    recipients: params.recipients.map((recipient) => ({
+      email: recipient.email ?? "",
+      name: recipient.name,
+    })),
+    subject: params.subject,
+    body: params.body,
+    category: "BIRTHDAY",
+    metadata: {
+      source: "generateBirthdayAlarms",
+      legacyNotificationId: params.legacyNotificationId,
+      sourceDatabase: params.sourceDatabase,
+      legacyDeliveryTable: BIRTHDAY_RECEIPT_SOURCE,
+    },
+  });
+
+  const alarm = await db.alarm.findUnique({
+    where: { id: params.alarmId },
+    select: { legacyData: true },
+  });
+  await db.alarm.update({
+    where: { id: params.alarmId },
+    data: {
+      legacyData: {
+        ...(asRecord(alarm?.legacyData) ?? {}),
+        emailDelivery: emailDeliveryAuditData(emailDelivery),
+      },
+    },
+  });
 }
 
 function renderNotificationText(
@@ -258,7 +300,7 @@ export async function generateBirthdayAlarmsForOrganization(params: {
           { branchId: null },
         ],
       },
-      select: { id: true },
+      select: { id: true, email: true, name: true },
     }),
     db.notificationTemplate.findUnique({
       where: {
@@ -275,6 +317,7 @@ export async function generateBirthdayAlarmsForOrganization(params: {
   ]);
 
   const userIds = users.map((user) => user.id);
+  const usersById = new Map(users.map((user) => [user.id, user]));
   const legacyAuthRows = userIds.length
     ? await db.legacyAuthRecord.findMany({
         where: {
@@ -299,8 +342,11 @@ export async function generateBirthdayAlarmsForOrganization(params: {
   const legacyRecipients: LegacyBirthdayRecipient[] = [];
   for (const row of legacyAuthRows) {
     if (!row.userId) continue;
+    const user = usersById.get(row.userId);
     legacyRecipients.push({
       userId: row.userId,
+      email: user?.email ?? null,
+      name: user?.name ?? null,
       legacyRecipientId: row.legacyUserId ?? row.legacyId,
       legacySourceDatabase: row.sourceDatabase,
       legacyClasses: readString(asRecord(row.legacyData), "uclasses") ?? "0",
@@ -474,6 +520,15 @@ export async function generateBirthdayAlarmsForOrganization(params: {
       })),
     });
     summary.notificationsCreated += notificationResult.count;
+
+    await storeBirthdayEmailAudit({
+      alarmId,
+      subject: renderNotificationText(subjectTemplate, variables),
+      body: renderNotificationText(bodyTemplate, variables),
+      recipients: newReceiptRecipients,
+      legacyNotificationId,
+      sourceDatabase,
+    });
   }
 
   return summary;
