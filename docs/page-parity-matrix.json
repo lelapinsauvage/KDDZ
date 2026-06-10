@@ -1036,7 +1036,7 @@
     "legacyPhp": "Front/templates/admin/attendance.php",
     "legacyJs": "Front/templates/admin/js/attendance.js",
     "modernRoute": "/attendance.php, /employees/attendance",
-    "status": "partial - legacy attendance bridge, id preselect, scanner data migration, and raw CSV upload restored",
+    "status": "restored - legacy attendance bridge, id preselect, scanner data migration, raw CSV upload, and field/action audit restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -1045,7 +1045,7 @@
       "employeeId",
       "id"
     ],
-    "verification": "Legacy `t_teacher_attendance` scanner rows now migrate through `migrate-employees.ts`, `/attendance.php` redirects to the modern employee attendance page, and `/attendance.php?id=` now resolves raw numeric, UUID, legacy-key, and encrypted legacy teacher ids into `/employees/attendance?employeeId=` so the modern manual attendance table preselects that employee. The runtime CSV upload accepts the raw legacy scanner columns (`readerid`, `readername`, `tdate`, `ttime`, `status`, `cardid`, `teacher_id`, `tdefault`) alongside the modern template. Upload matching now uses migrated teacher legacy ids, unique normalized teacher names, and card-id seeding while preserving raw scanner provenance in `TeacherAttendance.note`; the attendance page loads all staff for matching instead of a 200-row cap. Verified by `src/scripts/verify-legacy-attendance-preselect-contract.ts`. Remaining work is exact field/action audit against `attendance.php`/`attendance.js`."
+    "verification": "Legacy `t_teacher_attendance` scanner rows now migrate through `migrate-employees.ts`, `/attendance.php` redirects to the modern employee attendance page, and `/attendance.php?id=` resolves raw numeric, UUID, legacy-key, and encrypted legacy teacher ids into `/employees/attendance?employeeId=` so the modern manual attendance table preselects that employee. The runtime CSV upload accepts raw legacy scanner CSV columns (`readerid`, `readername`, `tdate`, `ttime`, `status`, `cardid`, `teacher_id`, `tdefault`) alongside the modern template, maps scanner status/time to check-in/check-out/late/early-leave logs, matches teachers by migrated legacy id, unique normalized teacher name, or seeded card id, and preserves every raw scanner field plus match mode in `TeacherAttendance.note`. The modern page loads all staff for matching, keeps the legacy Teachers Attendance Upload panel, CSV-only wording, Choose CSV action, preview/confirm flow, manual Upload Attendance action, branch/employee/date filters, and org-safe write validation. Browser smoke confirmed `/attendance.php` redirects to `/employees/attendance`, renders the upload panel, active staff table, filters, Choose CSV, Upload Attendance, and no broken media. Verified by `src/scripts/verify-legacy-attendance-preselect-contract.ts` and `src/scripts/verify-legacy-attendance-upload-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/bcalls.php",
