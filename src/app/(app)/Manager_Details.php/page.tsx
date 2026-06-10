@@ -1,17 +1,19 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { resolveLegacyStaffId } from "@/lib/legacy-staff";
+import ManagerDetailsPage from "../employees/managers/[id]/page";
+import NewManagerPage from "../employees/managers/new/page";
 
 interface PageProps {
   searchParams: Promise<{ id?: string }>;
 }
 
-export default async function LegacyManagerDetailsRedirect({
+export default async function LegacyManagerDetailsPage({
   searchParams,
 }: PageProps) {
   const { id } = await searchParams;
 
   if (!id?.trim()) {
-    redirect("/employees/managers/new");
+    return <NewManagerPage />;
   }
 
   const managerId = await resolveLegacyStaffId("manager", id);
@@ -19,5 +21,5 @@ export default async function LegacyManagerDetailsRedirect({
     notFound();
   }
 
-  redirect(`/employees/managers/${encodeURIComponent(managerId)}`);
+  return <ManagerDetailsPage params={Promise.resolve({ id: managerId })} />;
 }
