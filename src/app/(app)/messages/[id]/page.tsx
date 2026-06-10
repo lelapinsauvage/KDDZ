@@ -29,6 +29,10 @@ export default async function MessageDetailPage({ params }: PageProps) {
 
   const message = data.message as {
     id: string;
+    legacyId: number | null;
+    legacyThreadId: number | null;
+    legacyHref: string | null;
+    legacyNature: string | null;
     senderId: string;
     senderType: string;
     senderName: string;
@@ -49,6 +53,10 @@ export default async function MessageDetailPage({ params }: PageProps) {
 
   const threadMessages = (data.threadMessages ?? []) as Array<{
     id: string;
+    legacyId: number | null;
+    legacyThreadId: number | null;
+    legacyHref: string | null;
+    legacyNature: string | null;
     senderId: string;
     senderType: string;
     senderName: string;

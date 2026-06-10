@@ -189,7 +189,8 @@ This list is the first implementation backlog after the generated inventory/matr
    - Parent message grouped list, thread detail, compose, and replies are now wired into `/parent`; the parent APIs accept unauthenticated native legacy POST/form bodies, preserve numeric thread ids and SQL datetime strings, dedupe migrated/runtime recipient fan-out for parent thread views, and send parent-originated messages to the legacy admin/teacher recipient sets.
    - Mobile-flagged staff-to-parent direct, class, bulk, and reply messages now attempt provider-neutral OneSignal/webhook push delivery against active parent push tokens, returning or storing skipped/failed/sent summaries.
    - SMS/WhatsApp-flagged staff-to-parent direct, class, bulk, reply, and resend messages now attempt provider-neutral webhook delivery against deduped parent `mobile`/`phone` contacts, returning or storing matched/skipped/failed/sent summaries.
-   - Remaining work is exact legacy reply-thread visual audit, native-device acceptance, and production push/SMS/WhatsApp credential rollout.
+   - Message reply-thread browser contract now covers `message_portal_single.php?thread=` validation, the old Thread conversation surface, legacy message id/nature badges, `Thread #` metadata, reply actions, channel badges, and post-reply refresh behavior.
+   - Remaining work is native-device acceptance and production push/SMS/WhatsApp credential rollout.
 
 20. **Role and permission parity**
    - Legacy levels/actions/control tables are now preserved as metadata, and `/settings/access-control` now restores the admin-only staff/manager level action-grant matrix with selected-level batch saves into `LegacyAccessControlRecord`.

@@ -1016,6 +1016,10 @@ export async function getMessageById(id: string): Promise<ActionResult> {
 
     const enriched = threadMessages.map((m) => ({
       id: m.id,
+      legacyId: m.legacyId,
+      legacyThreadId: m.legacyThreadId,
+      legacyHref: m.legacyHref,
+      legacyNature: m.legacyNature,
       senderId: m.senderId,
       senderType: m.senderType,
       senderName: nameMap.get(m.senderId) ?? "Unknown",

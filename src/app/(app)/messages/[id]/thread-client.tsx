@@ -39,6 +39,10 @@ import {
 
 interface ThreadMessage {
   id: string;
+  legacyId: number | null;
+  legacyThreadId: number | null;
+  legacyHref: string | null;
+  legacyNature: string | null;
   senderId: string;
   senderType: string;
   senderName: string;
@@ -146,6 +150,15 @@ export function ThreadClient({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const isConversation = threadMessages.length > 1;
+  const legacyThreadId =
+    message.legacyThreadId ??
+    threadMessages.find((threadMessage) => threadMessage.legacyThreadId !== null)
+      ?.legacyThreadId ??
+    null;
+  const legacyNature =
+    message.legacyNature ??
+    threadMessages.find((threadMessage) => threadMessage.legacyNature)?.legacyNature ??
+    null;
 
   function handleReply() {
     if (!replyBody.trim()) return;
@@ -301,7 +314,10 @@ export function ThreadClient({
         </Card>
 
         {/* Thread / Conversation */}
-        <div className="space-y-3">
+        <div
+          className="space-y-3"
+          data-legacy-message-thread={legacyThreadId ?? message.threadId ?? message.id}
+        >
           {threadMessages.map((msg) => {
             const isOwn = msg.senderId === currentUserId;
             return (
@@ -342,6 +358,16 @@ export function ThreadClient({
                     </div>
                   </div>
                   <div className="flex shrink-0 flex-wrap justify-end gap-1">
+                    {msg.legacyId !== null && (
+                      <Badge variant="outline" className="text-[10px]">
+                        #{msg.legacyId}
+                      </Badge>
+                    )}
+                    {msg.legacyNature && (
+                      <Badge variant="outline" className="text-[10px]">
+                        {msg.legacyNature}
+                      </Badge>
+                    )}
                     <Badge variant="outline" className="text-[10px]">
                       {msg.senderType}
                     </Badge>
@@ -359,7 +385,23 @@ export function ThreadClient({
         {/* Reply Section */}
         <Card>
           <CardContent className="py-4 space-y-3">
-            <p className="text-sm font-medium text-foreground">Reply</p>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-medium text-foreground">Reply</p>
+              {(legacyThreadId !== null || legacyNature) && (
+                <div className="flex flex-wrap gap-1 text-xs text-muted-foreground">
+                  {legacyThreadId !== null && (
+                    <Badge variant="outline" className="font-normal">
+                      Thread #{legacyThreadId}
+                    </Badge>
+                  )}
+                  {legacyNature && (
+                    <Badge variant="outline" className="font-normal">
+                      {legacyNature}
+                    </Badge>
+                  )}
+                </div>
+              )}
+            </div>
             <Textarea
               placeholder="Type your reply..."
               rows={5}
