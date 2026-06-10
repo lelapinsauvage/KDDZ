@@ -49,6 +49,7 @@ const requiredReferences = [
   "docs/cron-notification-matrix.md",
   "docs/native-acceptance-ledger.md",
   "src/scripts/migration/README.md",
+  "src/scripts/audit-production-readiness.ts",
   "src/scripts/verify-parent-credentialed-native-e2e.ts",
   "src/scripts/verify-legacy-calls-contract.ts",
   "src/scripts/migration/reconcile-migration-counts.ts",
@@ -124,6 +125,7 @@ assert.match(contents.topGaps, /legacy-production-acceptance-gates\.md/);
 assert.match(contents.cron, /legacy-production-acceptance-gates\.md/);
 assert.match(contents.native, /legacy-production-acceptance-gates\.md/);
 assert.match(contents.migrationReadme, /reconcile-migration-counts\.ts/);
+assert.match(readFileSync("src/scripts/audit-production-readiness.ts", "utf8"), /No environment values/);
 
 console.log("production acceptance gates contract assertions passed");
 
