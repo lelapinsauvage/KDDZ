@@ -96,6 +96,8 @@ assert.match(text.actions, /export async function markAssessmentAlarmViewed/);
 assert.match(text.actions, /export async function markAllAssessmentAlarmsViewed/);
 assert.match(text.assessmentJob, /deliverPushNotification/);
 assert.match(text.assessmentJob, /pushDeliveryAuditData/);
+assert.match(text.assessmentJob, /pushDelivery/);
+assert.match(text.assessmentJob, /recipientUserIds: params\.recipientUserIds/);
 assert.match(text.assessmentJob, /parentPushDelivery/);
 assert.match(text.assessmentJob, /recipientParentUserIds: params\.parentUserIds/);
 
@@ -122,6 +124,9 @@ assert.match(row.verification ?? "", /Scheduled Assessment Dates/);
 assert.match(row.verification ?? "", /Sent Assessment Alarms/);
 assert.match(row.verification ?? "", /provider-neutral parent push delivery/);
 assert.match(row.verification ?? "", /parentPushDelivery/);
+assert.match(row.verification ?? "", /provider-neutral staff push delivery/);
+assert.match(row.verification ?? "", /pushDelivery/);
+assert.match(row.verification ?? "", /verify-assessment-staff-push-delivery\.ts/);
 assert.match(row.verification ?? "", /no broken images or app errors/);
 
 const markdownRow = text.markdownMatrix
@@ -132,11 +137,12 @@ assert.match(
   /browser visual audit restored/,
 );
 assert.match(markdownRow ?? "", /Browser smoke confirmed `\/alarmsAssessment\.php`/);
+assert.match(markdownRow ?? "", /provider-neutral staff push delivery/);
 assert.doesNotMatch(markdownRow ?? "", /final visual audit/);
 
 assert.match(
   text.topGaps,
-  /Assessment alarms browser smoke now confirms the legacy `\/alarmsAssessment\.php` bridge/,
+  /Assessment alarms now audit provider-neutral staff push delivery on generated due reminders/,
 );
 assert.doesNotMatch(
   text.topGaps,

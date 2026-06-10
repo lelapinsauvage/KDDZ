@@ -286,6 +286,48 @@ async function storeAssessmentParentPushAudit(params: {
   });
 }
 
+async function storeAssessmentStaffPushAudit(params: {
+  alarmId: string;
+  recipientUserIds: string[];
+  title: string;
+  body: string;
+  legacyNotificationId: number;
+  candidate: AssessmentDueAlarm;
+}) {
+  const pushDelivery = await deliverPushNotification({
+    recipientUserIds: params.recipientUserIds,
+    title: params.title,
+    body: params.body,
+    category: "ASSESSMENT",
+    url: "/alarms/assessments",
+    metadata: {
+      source: "generateAssessmentAlarms",
+      legacyNotificationId: params.legacyNotificationId,
+      legacyDeliveryTable: ASSESSMENT_RECEIPT_SOURCE,
+      childId: params.candidate.childId,
+      legacyChildId: params.candidate.legacyChildId,
+      legacyClassId: params.candidate.legacyClassId,
+      assessmentType: params.candidate.assessmentType,
+      targetDate: dateKey(params.candidate.dueDate),
+      sourceDatabase: params.candidate.sourceDatabase,
+    },
+  });
+
+  const alarm = await db.alarm.findUnique({
+    where: { id: params.alarmId },
+    select: { legacyData: true },
+  });
+  await db.alarm.update({
+    where: { id: params.alarmId },
+    data: {
+      legacyData: {
+        ...(asRecord(alarm?.legacyData) ?? {}),
+        pushDelivery: pushDeliveryAuditData(pushDelivery),
+      },
+    },
+  });
+}
+
 function emptySummary(): AssessmentGenerationSummary {
   return {
     branchesScanned: 0,
@@ -598,12 +640,16 @@ export async function generateAssessmentAlarmsForOrganization(params: {
     }
 
     let alarmId = existingAlarm?.id ?? null;
+    let shouldAttemptStaffPushAudit = !existingAlarm;
     if (existingAlarm) {
       summary.skippedExisting += 1;
       const existingData = asRecord(existingAlarm.legacyData) ?? {};
+      const needsStaffPushAudit = !asRecord(existingData.pushDelivery);
+      shouldAttemptStaffPushAudit = needsStaffPushAudit;
       if (
         readNumber(existingData, "aid") === null ||
-        existingData.sourceDeliveryTable !== ASSESSMENT_RECEIPT_SOURCE
+        existingData.sourceDeliveryTable !== ASSESSMENT_RECEIPT_SOURCE ||
+        needsStaffPushAudit
       ) {
         await db.alarm.update({
           where: { id: existingAlarm.id },
@@ -798,7 +844,30 @@ export async function generateAssessmentAlarmsForOrganization(params: {
     const newReceiptRecipients = recipients.filter(
       (recipient) => !existingReceiptIds.has(recipient.legacyRecipientId),
     );
-    if (newReceiptRecipients.length === 0) continue;
+
+    const variables = {
+      child_name: candidate.childName,
+      parent_name: "Parent",
+      class_name: candidate.className ?? "",
+      branch_name: candidate.branchName,
+      date: dateKey(candidate.dueDate),
+    };
+    const title = renderNotificationText(subjectTemplate, variables);
+    const body = renderNotificationText(bodyTemplate, variables);
+
+    if (newReceiptRecipients.length === 0) {
+      if (templateEnabled && shouldAttemptStaffPushAudit) {
+        await storeAssessmentStaffPushAudit({
+          alarmId,
+          recipientUserIds: recipients.map((recipient) => recipient.userId),
+          title,
+          body,
+          legacyNotificationId,
+          candidate,
+        });
+      }
+      continue;
+    }
 
     const receiptResult = await db.notificationReceipt.createMany({
       data: newReceiptRecipients.map((recipient) => ({
@@ -824,19 +893,11 @@ export async function generateAssessmentAlarmsForOrganization(params: {
 
     if (!templateEnabled || receiptResult.count === 0) continue;
 
-    const variables = {
-      child_name: candidate.childName,
-      parent_name: "Parent",
-      class_name: candidate.className ?? "",
-      branch_name: candidate.branchName,
-      date: dateKey(candidate.dueDate),
-    };
-
     const notificationResult = await db.notification.createMany({
       data: newReceiptRecipients.map((recipient) => ({
         userId: recipient.userId,
-        title: renderNotificationText(subjectTemplate, variables),
-        body: renderNotificationText(bodyTemplate, variables),
+        title,
+        body,
         type: "ASSESSMENT",
         category: "ASSESSMENT",
         isRead: false,
@@ -846,12 +907,23 @@ export async function generateAssessmentAlarmsForOrganization(params: {
 
     await storeAssessmentEmailAudit({
       alarmId,
-      subject: renderNotificationText(subjectTemplate, variables),
-      body: renderNotificationText(bodyTemplate, variables),
+      subject: title,
+      body,
       recipients: newReceiptRecipients,
       legacyNotificationId,
       sourceDatabase: candidate.sourceDatabase,
     });
+
+    if (shouldAttemptStaffPushAudit) {
+      await storeAssessmentStaffPushAudit({
+        alarmId,
+        recipientUserIds: newReceiptRecipients.map((recipient) => recipient.userId),
+        title,
+        body,
+        legacyNotificationId,
+        candidate,
+      });
+    }
   }
 
   return summary;
