@@ -11,6 +11,7 @@ const files = {
   receiptClient:
     "src/app/(app)/alarms/_components/staff-receipt-alarms-client.tsx",
   actions: "src/lib/actions/alarms.ts",
+  medicineJob: "src/lib/jobs/medicine-alarms.ts",
   matrix: "docs/page-parity-matrix.json",
   markdownMatrix: "docs/page-parity-matrix.md",
   topGaps: "docs/top-20-restoration-gaps.md",
@@ -69,6 +70,10 @@ assert.match(text.actions, /export async function getMedicineAlarmHistory/);
 assert.match(text.actions, /export async function generateMedicineAlarms/);
 assert.match(text.actions, /export async function markMedicineAlarmViewed/);
 assert.match(text.actions, /export async function markAllMedicineAlarmsViewed/);
+assert.match(text.medicineJob, /deliverPushNotification/);
+assert.match(text.medicineJob, /pushDeliveryAuditData/);
+assert.match(text.medicineJob, /pushDelivery/);
+assert.match(text.medicineJob, /recipientUserIds: params\.recipientUserIds/);
 
 type MatrixRow = {
   legacyPhp?: string;
@@ -91,17 +96,21 @@ assert.match(row.verification ?? "", /Browser smoke confirmed `\/alarmsMedicine\
 assert.match(row.verification ?? "", /Medicine Alarms Listing/);
 assert.match(row.verification ?? "", /Sent Medicine Alarms/);
 assert.match(row.verification ?? "", /no broken images or app errors/);
+assert.match(row.verification ?? "", /provider-neutral staff push delivery/);
+assert.match(row.verification ?? "", /pushDelivery/);
+assert.match(row.verification ?? "", /verify-medicine-push-delivery\.ts/);
 
 const markdownRow = text.markdownMatrix
   .split("\n")
   .find((line) => line.includes("| Front/templates/admin/alarmsMedicine.php |"));
 assert.match(markdownRow ?? "", /browser visual audit restored/);
 assert.match(markdownRow ?? "", /Browser smoke confirmed `\/alarmsMedicine\.php`/);
+assert.match(markdownRow ?? "", /provider-neutral staff push delivery/);
 assert.doesNotMatch(markdownRow ?? "", /final visual audit/);
 
 assert.match(
   text.topGaps,
-  /Medicine alarms browser smoke now confirms the legacy `\/alarmsMedicine\.php` bridge/,
+  /Medicine alarms now audit provider-neutral staff push delivery on generated medication reminders/,
 );
 
 console.log("legacy medicine alarms visual contract assertions passed");

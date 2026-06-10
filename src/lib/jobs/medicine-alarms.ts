@@ -1,6 +1,10 @@
 import { db } from "@/lib/db";
 import { deliverEmail, emailDeliveryAuditData } from "@/lib/email-delivery";
 import { isLegacyNotificationGateEnabled } from "@/lib/legacy-notification-gates";
+import {
+  deliverPushNotification,
+  pushDeliveryAuditData,
+} from "@/lib/push-delivery";
 
 const MEDICINE_RECEIPT_SOURCE = "custom_notifications_medicine";
 
@@ -151,6 +155,51 @@ async function storeMedicineEmailAudit(params: {
       legacyData: {
         ...(asRecord(alarm?.legacyData) ?? {}),
         emailDelivery: emailDeliveryAuditData(emailDelivery),
+      },
+    },
+  });
+}
+
+async function storeMedicinePushAudit(params: {
+  alarmId: string;
+  recipientUserIds: string[];
+  title: string;
+  body: string;
+  childId: string;
+  legacyChildId: number | null;
+  legacyNotificationId: number;
+  medicalFormEntryId: string;
+  scheduledTime: string;
+  sourceDatabase: string | null;
+}) {
+  const pushDelivery = await deliverPushNotification({
+    recipientUserIds: params.recipientUserIds,
+    title: params.title,
+    body: params.body,
+    category: "MEDICINE",
+    url: "/alarms/medicine",
+    metadata: {
+      source: "generateMedicineAlarms",
+      legacyNotificationId: params.legacyNotificationId,
+      legacyDeliveryTable: MEDICINE_RECEIPT_SOURCE,
+      childId: params.childId,
+      legacyChildId: params.legacyChildId,
+      medicalFormEntryId: params.medicalFormEntryId,
+      scheduledTime: params.scheduledTime,
+      sourceDatabase: params.sourceDatabase,
+    },
+  });
+
+  const alarm = await db.alarm.findUnique({
+    where: { id: params.alarmId },
+    select: { legacyData: true },
+  });
+  await db.alarm.update({
+    where: { id: params.alarmId },
+    data: {
+      legacyData: {
+        ...(asRecord(alarm?.legacyData) ?? {}),
+        pushDelivery: pushDeliveryAuditData(pushDelivery),
       },
     },
   });
@@ -513,12 +562,16 @@ export async function generateMedicineAlarmsForOrganization(params: {
     const legacyChildId = child.legacyId ?? null;
 
     let alarmId = existingAlarm?.id ?? null;
+    let shouldAttemptPushAudit = !existingAlarm;
     if (existingAlarm) {
       summary.skippedExisting += 1;
       const existingData = asRecord(existingAlarm.legacyData) ?? {};
+      const needsPushAudit = !asRecord(existingData.pushDelivery);
+      shouldAttemptPushAudit = needsPushAudit;
       if (
         readNumber(existingData, "aid") === null ||
-        existingData.sourceDeliveryTable !== MEDICINE_RECEIPT_SOURCE
+        existingData.sourceDeliveryTable !== MEDICINE_RECEIPT_SOURCE ||
+        needsPushAudit
       ) {
         await db.alarm.update({
           where: { id: existingAlarm.id },
@@ -612,7 +665,27 @@ export async function generateMedicineAlarmsForOrganization(params: {
     const newReceiptRecipients = recipients.filter(
       (recipient) => !existingReceiptIds.has(recipient.legacyRecipientId),
     );
-    if (newReceiptRecipients.length === 0) continue;
+
+    const title = renderNotificationText(subjectTemplate, variables);
+    const body = renderNotificationText(bodyTemplate, variables);
+
+    if (newReceiptRecipients.length === 0) {
+      if (templateEnabled && shouldAttemptPushAudit) {
+        await storeMedicinePushAudit({
+          alarmId,
+          recipientUserIds: recipients.map((recipient) => recipient.userId),
+          title,
+          body,
+          childId: child.id,
+          legacyChildId,
+          legacyNotificationId,
+          medicalFormEntryId: entry.id,
+          scheduledTime,
+          sourceDatabase,
+        });
+      }
+      continue;
+    }
 
     const receiptResult = await db.notificationReceipt.createMany({
       data: newReceiptRecipients.map((recipient) => ({
@@ -638,8 +711,6 @@ export async function generateMedicineAlarmsForOrganization(params: {
 
     if (!templateEnabled || receiptResult.count === 0) continue;
 
-    const title = renderNotificationText(subjectTemplate, variables);
-    const body = renderNotificationText(bodyTemplate, variables);
     const created = await db.notification.createMany({
       data: newReceiptRecipients.map((recipient) => ({
         userId: recipient.userId,
@@ -660,6 +731,21 @@ export async function generateMedicineAlarmsForOrganization(params: {
       legacyNotificationId,
       sourceDatabase,
     });
+
+    if (shouldAttemptPushAudit) {
+      await storeMedicinePushAudit({
+        alarmId,
+        recipientUserIds: newReceiptRecipients.map((recipient) => recipient.userId),
+        title,
+        body,
+        childId: child.id,
+        legacyChildId,
+        legacyNotificationId,
+        medicalFormEntryId: entry.id,
+        scheduledTime,
+        sourceDatabase,
+      });
+    }
   }
 
   return summary;
