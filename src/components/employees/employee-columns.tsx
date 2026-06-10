@@ -20,6 +20,8 @@ export type EmployeeType = "teacher" | "nurse" | "doctor" | "manager";
 export interface Employee {
   id: string;
   legacyId?: number | null;
+  branchId?: string | null;
+  classId?: string | null;
   firstName: string;
   lastName: string;
   imageUrl?: string | null;

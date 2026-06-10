@@ -1,4 +1,4 @@
-import { getEmployees } from "@/lib/actions/employees";
+import { getEmployeePlacementOptions, getEmployees } from "@/lib/actions/employees";
 import { mapEmployee } from "@/lib/map-employee";
 import { EmployeeListingClient } from "@/components/employees/employee-listing-client";
 import { normalizeLegacySearchQuery } from "@/lib/legacy-query";
@@ -9,7 +9,10 @@ export default async function ManagersListingPage({
   searchParams: Promise<{ q?: string | string[] }>;
 }) {
   const { q } = await searchParams;
-  const result = await getEmployees("manager", { pageSize: "all" });
+  const [result, placementOptionsResult] = await Promise.all([
+    getEmployees("manager", { pageSize: "all" }),
+    getEmployeePlacementOptions(),
+  ]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const raw = result.data as any;
@@ -22,6 +25,7 @@ export default async function ManagersListingPage({
       type="manager"
       employees={employees}
       initialSearchQuery={normalizeLegacySearchQuery(q)}
+      placementOptions={placementOptionsResult.data}
     />
   );
 }

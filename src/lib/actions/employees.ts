@@ -99,6 +99,25 @@ type ActionResult<T = unknown> = {
   data?: T;
 };
 
+export interface EmployeePlacementOptions {
+  branches: Array<{
+    id: string;
+    name: string;
+    legacyId: number | null;
+  }>;
+  classes: Array<{
+    id: string;
+    name: string;
+    branchId: string;
+    legacyId: number | null;
+  }>;
+}
+
+interface EmployeePlacementUpdate {
+  branchId?: string | null;
+  classId?: string | null;
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -209,6 +228,12 @@ function staffAttachmentCreateData(type: EmployeeType, document: DocumentData) {
     data.isActive = true;
   }
   return data;
+}
+
+function uniqueNonEmptyStrings(values: string[]) {
+  return Array.from(
+    new Set(values.map((value) => value.trim()).filter(Boolean))
+  );
 }
 
 function attachmentDocuments(documents: DocumentData[] | undefined) {
@@ -349,6 +374,165 @@ export async function getEmployees(
   } catch (error) {
     console.error(`Failed to fetch ${type}s:`, error);
     return { success: false, error: `Failed to fetch ${type}s` };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// getEmployeePlacementOptions
+// ---------------------------------------------------------------------------
+
+export async function getEmployeePlacementOptions(): Promise<
+  ActionResult<EmployeePlacementOptions>
+> {
+  try {
+    const { organizationId: orgId } = await requireOrg();
+
+    const [branches, classes] = await Promise.all([
+      db.branch.findMany({
+        where: { organizationId: orgId, isActive: true },
+        select: { id: true, name: true, legacyId: true },
+        orderBy: [{ name: "asc" }],
+      }),
+      db.class.findMany({
+        where: {
+          isActive: true,
+          branch: { organizationId: orgId, isActive: true },
+        },
+        select: { id: true, name: true, branchId: true, legacyId: true },
+        orderBy: [{ name: "asc" }],
+      }),
+    ]);
+
+    return {
+      success: true,
+      data: {
+        branches,
+        classes,
+      },
+    };
+  } catch (error) {
+    console.error("Failed to fetch employee placement options:", error);
+    return { success: false, error: "Failed to fetch employee placement options" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// bulkUpdateEmployeePlacement
+// ---------------------------------------------------------------------------
+
+export async function bulkUpdateEmployeePlacement(
+  type: EmployeeType,
+  ids: string[],
+  placement: EmployeePlacementUpdate,
+): Promise<ActionResult<{ updated: number; skipped: number }>> {
+  try {
+    const result = await requireOrgSafe();
+    if (!result.ok) return { success: false, error: result.error };
+    const { ctx } = result;
+    const { organizationId: orgId } = ctx;
+
+    const employeeIds = uniqueNonEmptyStrings(ids);
+    if (!employeeIds.length) {
+      return { success: false, error: "Select at least one employee" };
+    }
+    if (employeeIds.length > 500) {
+      return { success: false, error: "Too many employees selected" };
+    }
+
+    const branchId = placement.branchId?.trim();
+    if (!branchId) {
+      return { success: false, error: "Select a branch" };
+    }
+
+    const { path } = getDelegate(type);
+
+    if (type === "teacher") {
+      const permission = await requireLegacyActionAllowed(ctx, "updateTeacher");
+      if (!permission.ok) return { success: false, error: permission.error };
+    }
+
+    const branch = await db.branch.findFirst({
+      where: { id: branchId, organizationId: orgId, isActive: true },
+      select: { id: true },
+    });
+    if (!branch) {
+      return { success: false, error: "Branch does not belong to your organization" };
+    }
+
+    let classId: string | null = null;
+    if (type === "teacher") {
+      classId = placement.classId?.trim() || null;
+      if (!classId) {
+        return { success: false, error: "Select a class" };
+      }
+
+      const classRecord = await db.class.findFirst({
+        where: {
+          id: classId,
+          branchId,
+          isActive: true,
+          branch: { organizationId: orgId },
+        },
+        select: { id: true },
+      });
+      if (!classRecord) {
+        return { success: false, error: "Class does not belong to the selected branch" };
+      }
+    }
+
+    const where = {
+      id: { in: employeeIds },
+      branch: { organizationId: orgId },
+    };
+
+    let updated = 0;
+    switch (type) {
+      case "teacher": {
+        const update = await db.teacher.updateMany({
+          where,
+          data: { branchId, classId },
+        });
+        updated = update.count;
+        break;
+      }
+      case "nurse": {
+        const update = await db.nurse.updateMany({
+          where,
+          data: { branchId },
+        });
+        updated = update.count;
+        break;
+      }
+      case "doctor": {
+        const update = await db.doctor.updateMany({
+          where,
+          data: { branchId },
+        });
+        updated = update.count;
+        break;
+      }
+      case "manager": {
+        const update = await db.manager.updateMany({
+          where,
+          data: { branchId },
+        });
+        updated = update.count;
+        break;
+      }
+    }
+
+    revalidatePath(path);
+
+    return {
+      success: true,
+      data: {
+        updated,
+        skipped: employeeIds.length - updated,
+      },
+    };
+  } catch (error) {
+    console.error(`Failed to update ${type} placement:`, error);
+    return { success: false, error: `Failed to update ${type} placement` };
   }
 }
 

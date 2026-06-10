@@ -9,9 +9,21 @@ import {
   type Employee,
   type EmployeeType,
 } from "@/components/employees/employee-columns";
-import { deleteEmployee } from "@/lib/actions/employees";
+import {
+  bulkUpdateEmployeePlacement,
+  deleteEmployee,
+  type EmployeePlacementOptions,
+} from "@/lib/actions/employees";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -21,7 +33,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle, CardAction } from "@/components/ui/card";
-import { Plus, Printer, Search, Trash2, X } from "lucide-react";
+import { Building2, Plus, Printer, Search, Trash2, X } from "lucide-react";
 import { useState, useMemo, useCallback, useTransition } from "react";
 import { toast } from "sonner";
 import { ExportButton } from "@/components/shared/export-button";
@@ -67,6 +79,7 @@ interface EmployeeListingClientProps {
   employees: Employee[];
   initialSearchQuery?: string;
   actionPermissions?: LegacyTeacherActionPermissions;
+  placementOptions?: EmployeePlacementOptions;
 }
 
 const labels: Record<EmployeeType, { singular: string; plural: string }> = {
@@ -76,17 +89,27 @@ const labels: Record<EmployeeType, { singular: string; plural: string }> = {
   manager: { singular: "Manager", plural: "Managers" },
 };
 
+const EMPTY_PLACEMENT_OPTIONS: EmployeePlacementOptions = {
+  branches: [],
+  classes: [],
+};
+
 export function EmployeeListingClient({
   type,
   employees,
   initialSearchQuery = "",
   actionPermissions,
+  placementOptions = EMPTY_PLACEMENT_OPTIONS,
 }: EmployeeListingClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [placementTarget, setPlacementTarget] = useState<Employee[]>([]);
+  const [placementBranchId, setPlacementBranchId] = useState("");
+  const [placementClassId, setPlacementClassId] = useState("");
   const [search, setSearch] = useState(initialSearchQuery);
   const { singular, plural } = labels[type];
+  const requiresClassPlacement = type === "teacher";
   const teacherActionPermissions = actionPermissions ?? {
     canAddTeacher: true,
     canUpdateTeacher: true,
@@ -95,6 +118,16 @@ export function EmployeeListingClient({
   const canAdd = type !== "teacher" || teacherActionPermissions.canAddTeacher;
   const canUpdate = type !== "teacher" || teacherActionPermissions.canUpdateTeacher;
   const canDelete = type !== "teacher" || teacherActionPermissions.canDeleteTeacher;
+  const hasPlacementBranches = placementOptions.branches.length > 0;
+  const availablePlacementClasses = useMemo(
+    () =>
+      placementBranchId
+        ? placementOptions.classes.filter(
+            (classOption) => classOption.branchId === placementBranchId
+          )
+        : [],
+    [placementBranchId, placementOptions.classes]
+  );
 
   const handleDeleteRequest = useCallback((id: string, name: string) => {
     if (!canDelete) {
@@ -150,6 +183,109 @@ export function EmployeeListingClient({
     });
   }, [canDelete, isPending, plural, router, singular, type]);
 
+  const handlePlacementBranchChange = useCallback(
+    (branchId: string) => {
+      setPlacementBranchId(branchId);
+      const selectedClass = placementOptions.classes.find(
+        (classOption) => classOption.id === placementClassId
+      );
+      if (selectedClass?.branchId !== branchId) {
+        setPlacementClassId("");
+      }
+    },
+    [placementClassId, placementOptions.classes]
+  );
+
+  const handleBulkPlacementOpen = useCallback(
+    (selectedEmployees: Employee[]) => {
+      if (selectedEmployees.length === 0 || isPending) return;
+      if (!canUpdate) {
+        toast.error("Access denied");
+        return;
+      }
+      if (!hasPlacementBranches) {
+        toast.error("No active branch is available");
+        return;
+      }
+
+      const sharedBranchId = selectedEmployees.every(
+        (employee) => employee.branchId && employee.branchId === selectedEmployees[0]?.branchId
+      )
+        ? selectedEmployees[0]?.branchId ?? ""
+        : "";
+      setPlacementBranchId(sharedBranchId);
+
+      const sharedClassId =
+        requiresClassPlacement &&
+        selectedEmployees.every(
+          (employee) => employee.classId && employee.classId === selectedEmployees[0]?.classId
+        )
+          ? selectedEmployees[0]?.classId ?? ""
+          : "";
+      setPlacementClassId(sharedClassId);
+      setPlacementTarget(selectedEmployees);
+    },
+    [canUpdate, hasPlacementBranches, isPending, requiresClassPlacement]
+  );
+
+  const handlePlacementClose = useCallback(() => {
+    if (isPending) return;
+    setPlacementTarget([]);
+    setPlacementBranchId("");
+    setPlacementClassId("");
+  }, [isPending]);
+
+  const handlePlacementSubmit = useCallback(() => {
+    if (placementTarget.length === 0 || isPending) return;
+    if (!canUpdate) {
+      toast.error("Access denied");
+      return;
+    }
+    if (!placementBranchId) {
+      toast.error("Select a branch");
+      return;
+    }
+    if (requiresClassPlacement && !placementClassId) {
+      toast.error("Select a class");
+      return;
+    }
+
+    const employeeIds = placementTarget.map((employee) => employee.id);
+    startTransition(async () => {
+      const result = await bulkUpdateEmployeePlacement(type, employeeIds, {
+        branchId: placementBranchId,
+        classId: requiresClassPlacement ? placementClassId : null,
+      });
+
+      if (result.success) {
+        const updated = result.data?.updated ?? employeeIds.length;
+        const skipped = result.data?.skipped ?? 0;
+        toast.success(
+          skipped > 0
+            ? `${updated} updated, ${skipped} skipped.`
+            : `${updated} ${updated === 1 ? singular.toLowerCase() : plural.toLowerCase()} updated.`
+        );
+        setPlacementTarget([]);
+        setPlacementBranchId("");
+        setPlacementClassId("");
+        router.refresh();
+      } else {
+        toast.error(result.error);
+      }
+    });
+  }, [
+    canUpdate,
+    isPending,
+    placementBranchId,
+    placementClassId,
+    placementTarget,
+    plural,
+    requiresClassPlacement,
+    router,
+    singular,
+    type,
+  ]);
+
   const handlePrint = useCallback(() => {
     window.print();
   }, []);
@@ -164,6 +300,37 @@ export function EmployeeListingClient({
     [type, handleDeleteRequest, canUpdate, canDelete]
   );
   const exportColumns = useMemo(() => createEmployeeExportColumns(type), [type]);
+
+  const bulkActions = useMemo(
+    () => [
+      ...(canUpdate && hasPlacementBranches
+        ? [
+            {
+              label: "Update Placement",
+              icon: Building2,
+              onClick: handleBulkPlacementOpen,
+            },
+          ]
+        : []),
+      ...(canDelete
+        ? [
+            {
+              label: "Deactivate Selected",
+              icon: Trash2,
+              variant: "destructive" as const,
+              onClick: handleBulkDeactivate,
+            },
+          ]
+        : []),
+    ],
+    [
+      canDelete,
+      canUpdate,
+      handleBulkDeactivate,
+      handleBulkPlacementOpen,
+      hasPlacementBranches,
+    ]
+  );
 
   const filteredData = useMemo(() => {
     if (!search) return employees;
@@ -253,18 +420,7 @@ export function EmployeeListingClient({
           <DataTable
             columns={columns}
             data={filteredData}
-            bulkActions={
-              canDelete
-                ? [
-                    {
-                      label: "Deactivate Selected",
-                      icon: Trash2,
-                      variant: "destructive",
-                      onClick: handleBulkDeactivate,
-                    },
-                  ]
-                : []
-            }
+            bulkActions={bulkActions}
             pageSizeOptions={[10, 20, 50, 100, 150, "all"]}
           />
         </CardContent>
@@ -296,6 +452,94 @@ export function EmployeeListingClient({
               disabled={isPending}
             >
               {isPending ? "Deactivating..." : "Deactivate"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={placementTarget.length > 0}
+        onOpenChange={(open) => {
+          if (!open) handlePlacementClose();
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Update Selected Employees</DialogTitle>
+            <DialogDescription>
+              Apply a new placement to {placementTarget.length} selected{" "}
+              {placementTarget.length === 1
+                ? singular.toLowerCase()
+                : plural.toLowerCase()}
+              .
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div className="grid gap-2">
+              <Label htmlFor="staff-placement-branch">Site</Label>
+              <Select
+                value={placementBranchId}
+                onValueChange={handlePlacementBranchChange}
+                disabled={isPending}
+              >
+                <SelectTrigger id="staff-placement-branch" className="w-full">
+                  <SelectValue placeholder="Select site" />
+                </SelectTrigger>
+                <SelectContent>
+                  {placementOptions.branches.map((branch) => (
+                    <SelectItem key={branch.id} value={branch.id}>
+                      {branch.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {requiresClassPlacement ? (
+              <div className="grid gap-2">
+                <Label htmlFor="staff-placement-class">Shift</Label>
+                <Select
+                  value={placementClassId}
+                  onValueChange={setPlacementClassId}
+                  disabled={!placementBranchId || isPending}
+                >
+                  <SelectTrigger id="staff-placement-class" className="w-full">
+                    <SelectValue placeholder="Select shift" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availablePlacementClasses.length ? (
+                      availablePlacementClasses.map((classOption) => (
+                        <SelectItem key={classOption.id} value={classOption.id}>
+                          {classOption.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-classes" disabled>
+                        No classes for this site
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : null}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={handlePlacementClose}
+              disabled={isPending}
+            >
+              Close
+            </Button>
+            <Button
+              onClick={handlePlacementSubmit}
+              disabled={
+                isPending ||
+                !placementBranchId ||
+                (requiresClassPlacement && !placementClassId)
+              }
+            >
+              {isPending ? "Updating..." : "Update"}
             </Button>
           </DialogFooter>
         </DialogContent>

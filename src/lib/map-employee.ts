@@ -9,6 +9,8 @@ export function mapEmployee(raw: any, type: EmployeeType): Employee {
   return {
     id: raw.id,
     legacyId: raw.legacyId ?? null,
+    branchId: raw.branchId ?? null,
+    classId: raw.classId ?? null,
     firstName: raw.firstName ?? "",
     lastName: raw.lastName ?? "",
     imageUrl: raw.imageUrl ?? null,
