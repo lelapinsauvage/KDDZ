@@ -483,7 +483,7 @@
     "legacyPhp": "Front/templates/admin/alarms.php",
     "legacyJs": "Front/templates/admin/js/alarms.js",
     "modernRoute": "/alarms.php, /alarms",
-    "status": "partial - legacy general alarms bridge, read-state, and sent history restored",
+    "status": "partial - legacy general alarms bridge, read-state, sent history, and browser visual audit restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -493,7 +493,7 @@
       "custom_notifications",
       "custom_notifications_parents"
     ],
-    "verification": "Modern page preserves the actionable notification dashboard and adds a General Notifications tab reading migrated `NotificationReceipt` rows from legacy staff and parent delivery tables, restoring current-staff New/Viewed filters, row/bulk/all mark-viewed actions, Teachers Sent Alarms history, and Parents Sent Alarms history. `/alarms.php` now redirects to the modern general alarms dashboard. Alarm notification and sent-history loads now use uncapped server queries over migrated/generated receipts. Remaining work is exact legacy `t_alarms.status` semantics, source workflow/sender audit, and final visual audit."
+    "verification": "Modern page preserves the actionable notification dashboard and adds a General Notifications tab reading migrated `NotificationReceipt` rows from legacy staff and parent delivery tables, restoring current-staff New/Viewed filters, row/bulk/all mark-viewed actions, Teachers Sent Alarms history, and Parents Sent Alarms history. `/alarms.php` now redirects to the modern general alarms dashboard. Alarm notification and sent-history loads now use uncapped server queries over migrated/generated receipts. Browser smoke confirmed `/alarms.php` redirects to `/alarms`, the dashboard renders active alert families, General Notifications opens with search, New/Viewed status, branch/date filters, Reset, Set All As Viewed, `#`/Alarm Details/Alarm Time/Status/Branch/Actions columns, zero-data empty state, Sent Alarms history with search/date filters and `#`/Type/Content/Time/To/Seen columns, and no broken images or browser errors. Verified by `src/scripts/verify-legacy-general-alarms-visual-contract.ts`. Remaining work is exact legacy `t_alarms.status` semantics and source workflow/sender audit."
   },
   {
     "legacyPhp": "Front/templates/admin/alarmsAssessment.php",
