@@ -1,4 +1,5 @@
 import type { NextAuthConfig } from "next-auth";
+import { isExpiredIsoDate, isPublicAuthPath } from "./auth-public-paths";
 
 /**
  * Auth config WITHOUT database dependencies.
@@ -45,38 +46,10 @@ export const authConfig = {
     },
     async authorized({ auth, request }) {
       const legacySessionExpiresAt = auth?.user?.legacySessionExpiresAt;
-      const legacySessionExpired =
-        Boolean(legacySessionExpiresAt) &&
-        Date.parse(legacySessionExpiresAt as string) <= Date.now();
+      const legacySessionExpired = isExpiredIsoDate(legacySessionExpiresAt);
       const isLoggedIn = !!auth?.user && !legacySessionExpired;
       const { pathname } = request.nextUrl;
-      const isParentPortal =
-        pathname === "/parent" || pathname.startsWith("/parent/");
-
-      // Public routes
-      const isPublic =
-        pathname.startsWith("/login") ||
-        pathname.startsWith("/forgot") ||
-        pathname === "/forgot.php" ||
-        pathname === "/users/forgot.php" ||
-        pathname === "/signup" ||
-        pathname === "/sign_up.php" ||
-        pathname === "/users/sign_up.php" ||
-        pathname === "/users/admin/login.php" ||
-        pathname === "/users/protected.php" ||
-        pathname === "/users/whoami.php" ||
-        pathname === "/logout.php" ||
-        pathname === "/users/logout.php" ||
-        pathname === "/disabled.php" ||
-        pathname === "/users/disabled.php" ||
-        pathname === "/profile.php" ||
-        pathname === "/users/profile.php" ||
-        pathname === "/activate.php" ||
-        pathname === "/users/activate.php" ||
-        isParentPortal ||
-        pathname.startsWith("/api/auth") ||
-        pathname.startsWith("/api/cron") ||
-        pathname.startsWith("/api/parent");
+      const isPublic = isPublicAuthPath(pathname);
 
       if (isPublic) {
         // Redirect logged-in users away from login page
