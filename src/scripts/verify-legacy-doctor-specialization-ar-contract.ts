@@ -47,7 +47,7 @@ assert.match(modern.validation, /specializationAr:\s*z\.string\(\)/);
 assert.match(modern.mapper, /specializationAr:\s*emp\.specializationAr\s*\?\?\s*""/);
 assert.match(
   modern.form,
-  /\(type === "doctor" \|\| type === "manager"\)[\s\S]*htmlFor="specializationAr"/,
+  /\(type === "nurse" \|\| type === "doctor" \|\| type === "manager"\)[\s\S]*htmlFor="specializationAr"/,
 );
 assert.match(modern.form, /\{\.\.\.register\("specializationAr"\)\}/);
 

@@ -212,7 +212,7 @@ export function EmployeeFormClient({
   const storedImageUrl = watch("imageUrl") || "";
   const displayImageUrl = imagePreviewUrl || storedImageUrl;
   const supportsMiddleName = true;
-  const supportsArabicName = type === "doctor" || type === "manager";
+  const supportsArabicName = type === "nurse" || type === "doctor" || type === "manager";
   const displayName = [
     watch("firstName"),
     supportsMiddleName ? watch("middleName") : "",
@@ -674,15 +674,15 @@ export function EmployeeFormClient({
                   )}
                   <div>
                     <Label htmlFor="specialization">
-                      {type === "doctor" || type === "manager" ? "Studied Domain" : "Specialization"}
+                      {type === "nurse" || type === "doctor" || type === "manager" ? "Studied Domain" : "Specialization"}
                     </Label>
                     <Input
                       id="specialization"
                       {...register("specialization")}
-                      placeholder={type === "doctor" || type === "manager" ? "Studied Domain" : "Specialization"}
+                      placeholder={type === "nurse" || type === "doctor" || type === "manager" ? "Studied Domain" : "Specialization"}
                     />
                   </div>
-                  {(type === "doctor" || type === "manager") && (
+                  {(type === "nurse" || type === "doctor" || type === "manager") && (
                     <div>
                       <Label htmlFor="specializationAr">Arabic Studied Domain</Label>
                       <Input

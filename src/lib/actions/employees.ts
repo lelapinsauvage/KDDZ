@@ -745,6 +745,12 @@ export async function createEmployee(
       createData.gender = data.gender || null;
       createData.specializationAr = data.specializationAr ?? null;
     }
+    if (type === "nurse") {
+      createData.firstNameAr = data.firstNameAr ?? null;
+      createData.middleNameAr = data.middleNameAr ?? null;
+      createData.lastNameAr = data.lastNameAr ?? null;
+      createData.specializationAr = data.specializationAr ?? null;
+    }
     if (type === "doctor" && data.licenseNumber !== undefined) {
       createData.licenseNumber = data.licenseNumber;
     }
@@ -906,6 +912,12 @@ export async function updateEmployee(
       if (data.lastNameAr !== undefined) updateData.lastNameAr = data.lastNameAr || null;
       if (data.placeOfBirth !== undefined) updateData.placeOfBirth = data.placeOfBirth || null;
       if (data.gender !== undefined) updateData.gender = data.gender || null;
+      if (data.specializationAr !== undefined) updateData.specializationAr = data.specializationAr || null;
+    }
+    if (type === "nurse") {
+      if (data.firstNameAr !== undefined) updateData.firstNameAr = data.firstNameAr || null;
+      if (data.middleNameAr !== undefined) updateData.middleNameAr = data.middleNameAr || null;
+      if (data.lastNameAr !== undefined) updateData.lastNameAr = data.lastNameAr || null;
       if (data.specializationAr !== undefined) updateData.specializationAr = data.specializationAr || null;
     }
     if (type === "doctor" && data.licenseNumber !== undefined) {

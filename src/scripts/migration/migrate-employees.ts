@@ -23,11 +23,19 @@
  * === Nurse (t_nurse → Nurse) ===
  *   teacher_id   → (old ID, mapped to UUID)
  *   f_name       → firstName
+ *   f_name_ar    → firstNameAr
+ *   m_name       → middleName
+ *   m_name_ar    → middleNameAr
  *   l_name       → lastName
+ *   l_name_ar    → lastNameAr
  *   mobile       → mobile
  *   email        → email
  *   nationality  → nationality
  *   dob          → dateOfBirth
+ *   pob          → placeOfBirth
+ *   sel_gender   → gender
+ *   uni_degree   → specialization
+ *   uni_degree_ar → specializationAr
  *   sel_branch   → branchId (FK via mapping)
  *   image        → imageUrl (legacy filename until storage import)
  *   active       → isActive
@@ -907,8 +915,11 @@ async function migrateTeacherAttendance(
 interface OldNurse {
   teacher_id: number;
   f_name: string;
+  f_name_ar: string;
   l_name: string;
+  l_name_ar: string;
   m_name: string;
+  m_name_ar: string;
   dob: string;
   pob: string;
   nationality: string;
@@ -957,12 +968,30 @@ async function migrateNurses(prisma: PrismaClient, dryRun: boolean) {
         legacyKey?: string;
         legacyId?: number;
         legacyTable?: string;
+        firstNameAr?: string | null;
+        middleName?: string | null;
+        middleNameAr?: string | null;
+        lastNameAr?: string | null;
+        placeOfBirth?: string | null;
+        gender?: Gender | null;
+        universityDegree?: string | null;
+        specialization?: string | null;
+        specializationAr?: string | null;
         imageUrl?: string;
       } = {
         sourceDatabase,
         legacyKey: key,
         legacyId: row.teacher_id,
         legacyTable: "t_nurse",
+        firstNameAr: cleanString(row.f_name_ar),
+        middleName: cleanString(row.m_name),
+        middleNameAr: cleanString(row.m_name_ar),
+        lastNameAr: cleanString(row.l_name_ar),
+        placeOfBirth: cleanString(row.pob),
+        gender: mapGender(row.sel_gender),
+        universityDegree: cleanString(row.uni_degree),
+        specialization: cleanString(row.uni_degree),
+        specializationAr: cleanString(row.uni_degree_ar),
       };
       if (imageUrl && existing.imageUrl !== imageUrl) {
         updateData.imageUrl = imageUrl;
@@ -988,11 +1017,20 @@ async function migrateNurses(prisma: PrismaClient, dryRun: boolean) {
           legacyId: row.teacher_id,
           legacyTable: "t_nurse",
           firstName: row.f_name || "",
+          firstNameAr: cleanString(row.f_name_ar),
+          middleName: cleanString(row.m_name),
+          middleNameAr: cleanString(row.m_name_ar),
           lastName: row.l_name || "",
+          lastNameAr: cleanString(row.l_name_ar),
           mobile: cleanString(row.mobile),
           email: cleanString(row.email),
           nationality: cleanString(row.nationality),
           dateOfBirth: parseDate(row.dob),
+          placeOfBirth: cleanString(row.pob),
+          gender: mapGender(row.sel_gender),
+          universityDegree: cleanString(row.uni_degree),
+          specialization: cleanString(row.uni_degree),
+          specializationAr: cleanString(row.uni_degree_ar),
           imageUrl,
           branchId,
           isActive: toBool(row.active),

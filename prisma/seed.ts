@@ -329,7 +329,10 @@ async function main() {
       data: {
         userId: nurseUser.id,
         firstName: "Layla",
+        firstNameAr: "ليلى",
+        middleNameAr: "مروان",
         lastName: "Nurse",
+        lastNameAr: "الممرضة",
         phone: "+961-3-222222",
         mobile: "+961-71-222222",
         email: "nurse@garderie.com",
@@ -338,6 +341,7 @@ async function main() {
         hireDate: new Date("2021-01-15"),
         branchId: mainBranch.id,
         specialization: "Pediatric Nursing",
+        specializationAr: "تمريض الأطفال",
         isActive: true,
       },
     });

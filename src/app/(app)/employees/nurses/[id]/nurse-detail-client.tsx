@@ -128,9 +128,12 @@ export function NurseDetailClient({ nurse, recentActivities }: NurseDetailClient
                 <CardContent className="space-y-3">
                   {[
                     { label: "Date of Birth", value: nurse.dateOfBirth ? format(new Date(nurse.dateOfBirth), "MMM d, yyyy") : "—" },
+                    { label: "Place of Birth", value: nurse.placeOfBirth ?? "—" },
                     { label: "Nationality", value: nurse.nationality ?? "—" },
+                    { label: "Gender", value: nurse.gender ?? "—" },
                     { label: "Mobile", value: nurse.mobile ?? "—" },
                     { label: "Specialization", value: nurse.specialization ?? "—" },
+                    { label: "Arabic Studied Domain", value: nurse.specializationAr ?? "—" },
                   ].map((item) => (
                     <div key={item.label} className="flex justify-between border-b pb-2">
                       <span className="text-sm text-muted-foreground">{item.label}</span>
