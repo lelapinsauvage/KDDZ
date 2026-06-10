@@ -17070,10 +17070,10 @@
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-insurance.php",
     "legacyJs": "",
     "modernRoute": "/settings/notifications",
-    "status": "partial - legacy insurance template fallback restored; delivery audit remains",
+    "status": "restored - legacy insurance template fallback and provider delivery audit restored",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "/settings/notifications Insurance now falls back to migrated `email-insurance-subj` and `email-insurance-msg` rows and exposes legacy `{{child_name}}` and `{{expiry_date}}` shortcodes. Existing insurance alarm generation can use the saved modern template and exact generated staff receipt targeting; message-portal parent receipts are verified through `notifications_master.php`; remaining work is external provider delivery."
+    "verification": "/settings/notifications Insurance falls back to migrated `email-insurance-subj` and `email-insurance-msg` rows and exposes the legacy `{{child_name}}` and `{{expiry_date}}` shortcodes. `generateInsuranceAlarmsForOrganization()` now renders the saved INSURANCE subject/body for generated insurance staff recipients, sends the rendered message through the provider-neutral `deliverEmail` bridge with INSURANCE metadata and `custom_notifications_insurance` provenance, and stores `emailDeliveryAuditData` on the generated alarm legacy audit payload so skipped/unconfigured, failed, and sent delivery outcomes remain inspectable without hard-coding production credentials. Message-portal parent receipts continue to be verified through `notifications_master.php`. Verified by `src/scripts/verify-legacy-insurance-email-template-delivery-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-medication.php",
