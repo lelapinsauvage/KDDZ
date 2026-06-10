@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import packageJson from "../../package.json";
 
 type ParityRow = {
   status?: string;
@@ -181,13 +182,18 @@ assert.match(readFileSync("src/scripts/verify-production-readiness-audit-contrac
 assert.match(contents.gates, /--out=<path>/);
 assert.match(contents.gates, /--list-requirements/);
 assert.match(contents.gates, /--gate=PROD-CRON/);
+assert.match(contents.gates, /pnpm run verify:production-gates/);
 assert.match(contents.gates, /verify-production-gate-suite\.ts/);
 assert.match(contents.gates, /verify-production-readiness-audit-contract\.ts/);
 assert.match(contents.cutoverRunbook, /--out=\/tmp\/kiddzonl-production-readiness\.json/);
 assert.match(contents.cutoverRunbook, /--list-requirements/);
 assert.match(contents.cutoverRunbook, /--gate=PROD-CRON/);
-assert.match(contents.cutoverRunbook, /verify-production-gate-suite\.ts/);
+assert.match(contents.cutoverRunbook, /pnpm run verify:production-gates/);
 assert.match(contents.cutoverRunbook, /verify-production-readiness-audit-contract\.ts/);
+assert.equal(
+  packageJson.scripts["verify:production-gates"],
+  "tsx src/scripts/verify-production-gate-suite.ts"
+);
 
 console.log("production acceptance gates contract assertions passed");
 
