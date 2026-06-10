@@ -19,6 +19,7 @@ import {
 
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetHeader,
   SheetTitle,
@@ -237,12 +238,30 @@ export function QuickPaymentDialog({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+      <SheetContent
+        side="right"
+        showCloseButton={false}
+        className="w-full overflow-y-auto sm:max-w-lg"
+      >
         <SheetHeader>
-          <SheetTitle>Record Payment</SheetTitle>
-          <SheetDescription>
-            Enter payment details below.
-          </SheetDescription>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <SheetTitle>Record Payment</SheetTitle>
+              <SheetDescription>
+                Enter payment details below.
+              </SheetDescription>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-8 shrink-0"
+              onClick={() => onOpenChange(false)}
+              aria-label="Close payment dialog"
+            >
+              <X className="size-4" />
+            </Button>
+          </div>
         </SheetHeader>
 
         <form
@@ -574,14 +593,25 @@ export function QuickPaymentDialog({
           </div>
 
           {/* ── Submit ── */}
-          <Button
-            type="submit"
-            size="lg"
-            className="w-full mt-2"
-            disabled={isPending}
-          >
-            {isPending ? "Recording..." : "Record Payment"}
-          </Button>
+          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <SheetClose asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                disabled={isPending}
+              >
+                Close
+              </Button>
+            </SheetClose>
+            <Button
+              type="submit"
+              size="lg"
+              disabled={isPending}
+            >
+              {isPending ? "Recording..." : "Record Payment"}
+            </Button>
+          </div>
         </form>
       </SheetContent>
     </Sheet>
