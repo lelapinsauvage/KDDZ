@@ -1085,7 +1085,7 @@
     "legacyPhp": "Front/templates/admin/branches.php",
     "legacyJs": "Front/templates/admin/js/branches.js",
     "modernRoute": "/branches.php, /branches",
-    "status": "partial - legacy branch roster, filters, copy/PDF exports, page sizes, soft delete, ACL, and bridge restored; visual audit remains",
+    "status": "restored - legacy branch roster, filters, TableTools export, print, soft delete, ACL, bridge, and default image fallback restored",
     "legacyTablesMentioned": [
       "Form",
       "Selected",
@@ -1095,7 +1095,7 @@
       "actions_control"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Restored the legacy Branches Listing as the default table view with active-branch default scope, checkbox/S.N./Image/Branch/Location/Mobile/Info/Date/Action columns, migrated `images/BranchPhoto` filename fallback, global search, status filter, legacy S.N./Branch/Location/Mobile/created-date filter row, 10/20/50/100/150/All page sizes, Copy/PDF/Excel/CSV export, print action, New Branch, dashboard/view, edit, and legacy-style soft deactivate. Branch `addBranch`, `updateBranch`, and `deleteBranch` ACTION grants now hide New/Edit/Delete controls and deny direct create/update/deactivate server mutations when the imported action catalogue is configured and not granted. `/branches.php` now redirects to the modern branch roster. Remaining work is final Browser visual smoke and legacy print styling acceptance."
+    "verification": "Restored the legacy Branches Listing as the default table view with active-branch default scope, checkbox/S.N./Image/Branch/Location/Mobile/Info/Date/Action columns, migrated `images/BranchPhoto` filename fallback, global search, status filter, legacy S.N./Branch/Location/Mobile/created-date filter row, 10/20/50/100/150/All page sizes, Copy/PDF/Excel/CSV export, print action, New Branch, dashboard/view, edit, and legacy-style soft deactivate. Branch `addBranch`, `updateBranch`, and `deleteBranch` ACTION grants now hide New/Edit/Delete controls and deny direct create/update/deactivate server mutations when the imported action catalogue is configured and not granted. `/branches.php` now redirects to the modern branch roster. Restored the legacy default branch JPEG to `public/images/BranchPhoto/default.jpg` so blank/missing branch images render without a 404. Browser smoke confirmed `/branches.php` redirects to `/branches`, loads 3 real rows with legacy headers, active default scope, filters, 10-row default page size, New Branch, enabled Export/Print controls, and Copy/Excel/CSV/PDF export choices. Verified by `src/scripts/verify-legacy-branches-tabletools-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/calendar.php",
