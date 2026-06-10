@@ -15,6 +15,7 @@ const files = {
   actionPermissions: "src/lib/legacy-class-action-permissions.ts",
   guardMap: "src/lib/legacy-page-guards.ts",
   matrix: "docs/page-parity-matrix.json",
+  markdownMatrix: "docs/page-parity-matrix.md",
 };
 
 const text = Object.fromEntries(
@@ -240,5 +241,17 @@ assert.match(
   matrixRow.verification ?? "",
   /`\/class\.php\?id=` opens `\/classes\?edit=`/,
 );
+
+const markdownRow = text.markdownMatrix
+  .split("\n")
+  .find((line) => line.includes("| Front/templates/admin/class.php |"));
+assert.match(
+  markdownRow ?? "",
+  /restored - legacy class add\/edit bridge, fields, image preview, ACL, and save\/update payload parity restored/,
+);
+assert.match(markdownRow ?? "", /verify-legacy-class-form-contract\.ts/);
+assert.match(markdownRow ?? "", /Browser smoke confirmed `\/class\.php` opens `\/classes\?new=1`/);
+assert.match(markdownRow ?? "", /`\/class\.php\?id=` opens `\/classes\?edit=`/);
+assert.doesNotMatch(markdownRow ?? "", /visual\/layout audit remains/);
 
 console.log("legacy class form contract assertions passed");

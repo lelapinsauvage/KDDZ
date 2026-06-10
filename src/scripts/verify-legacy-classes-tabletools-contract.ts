@@ -19,6 +19,7 @@ const files = {
   migration: "src/scripts/migration/migrate-classes.ts",
   exportButton: "src/components/shared/export-button.tsx",
   matrix: "docs/page-parity-matrix.json",
+  markdownMatrix: "docs/page-parity-matrix.md",
 };
 
 const contents = Object.fromEntries(
@@ -196,5 +197,17 @@ assert.match(
   matrixRow.verification ?? "",
   /Browser smoke confirmed `\/classes\.php` redirects to `\/classes`/,
 );
+
+const markdownRow = text.markdownMatrix
+  .split("\n")
+  .find((line) => line.includes("| Front/templates/admin/classes.php |"));
+assert.match(
+  markdownRow ?? "",
+  /restored - legacy class roster, filters, TableTools export, print, soft delete, ACL, bridge, and default image fallback restored/,
+);
+assert.match(markdownRow ?? "", /public\/images\/ClassPhoto\/default\.jpg/);
+assert.match(markdownRow ?? "", /Browser smoke confirmed `\/classes\.php` redirects to `\/classes`/);
+assert.match(markdownRow ?? "", /verify-legacy-classes-tabletools-contract\.ts/);
+assert.doesNotMatch(markdownRow ?? "", /visual audit remains/);
 
 console.log("legacy classes TableTools contract assertions passed");
