@@ -82,9 +82,10 @@ const evidenceGateRequirements: Array<{
 const json = process.argv.includes("--json");
 const outputPath = optionValue("--out");
 const listRequirements = process.argv.includes("--list-requirements");
+const gateFilter = parseGateFilter(optionValue("--gate"));
 
 if (listRequirements) {
-  printRequirements({ json });
+  printRequirements({ json, gateFilter });
   process.exit(0);
 }
 
@@ -104,7 +105,8 @@ if (cronGate) {
   cronGate.status = cronGate.missing.length === 0 ? "ready-to-review" : "needs-evidence";
 }
 
-const gateAudits = [...evidenceAudits, providerGate].sort((a, b) => a.gate.localeCompare(b.gate));
+const allGateAudits = [...evidenceAudits, providerGate].sort((a, b) => a.gate.localeCompare(b.gate));
+const gateAudits = gateFilter ? allGateAudits.filter((audit) => audit.gate === gateFilter) : allGateAudits;
 const summary = {
   ready: gateAudits.filter((audit) => audit.status === "ready-to-review").length,
   needsEvidence: gateAudits.filter((audit) => audit.status === "needs-evidence").length,
@@ -322,15 +324,17 @@ function formatList(items: string[]) {
   return items.length ? items.join(", ") : "-";
 }
 
-function printRequirements(params: { json: boolean }) {
-  const evidenceRequirements = evidenceGateRequirements.map((requirement) => ({
+function printRequirements(params: { json: boolean; gateFilter: GateId | null }) {
+  const evidenceRequirements = evidenceGateRequirements
+    .filter((requirement) => !params.gateFilter || requirement.gate === params.gateFilter)
+    .map((requirement) => ({
     gate: requirement.gate,
     requiredEvidencePointers: [
       ...requirement.env,
       ...(requirement.gate === "PROD-CRON" ? ["CRON_SECRET or VERCEL_CRON_SECRET"] : []),
     ],
   }));
-  const providerRequirements = [
+  const providerRequirements = params.gateFilter && params.gateFilter !== "PROD-PROVIDERS" ? [] : [
     {
       provider: "push",
       acceptedSetup:
@@ -371,14 +375,27 @@ function printRequirements(params: { json: boolean }) {
   for (const requirement of evidenceRequirements) {
     console.log(`| ${requirement.gate} | ${requirement.requiredEvidencePointers.join(", ")} |`);
   }
-  console.log("");
-  console.log("| Provider | Accepted setup |");
-  console.log("| --- | --- |");
-  for (const requirement of providerRequirements) {
-    console.log(`| ${requirement.provider} | ${requirement.acceptedSetup} |`);
+  if (providerRequirements.length > 0) {
+    console.log("");
+    console.log("| Provider | Accepted setup |");
+    console.log("| --- | --- |");
+    for (const requirement of providerRequirements) {
+      console.log(`| ${requirement.provider} | ${requirement.acceptedSetup} |`);
+    }
   }
   console.log("");
   console.log("No environment values, URLs, tokens, keys, passwords, or report contents were printed.");
+}
+
+function parseGateFilter(value: string | null): GateId | null {
+  if (!value) return null;
+  const normalized = value.trim().toUpperCase();
+  const gates: readonly string[] = [
+    ...evidenceGateRequirements.map((requirement) => requirement.gate),
+    "PROD-PROVIDERS",
+  ];
+  if (gates.includes(normalized)) return normalized as GateId;
+  throw new Error(`Unknown production gate "${value}". Use --list-requirements to inspect valid gates.`);
 }
 
 function optionValue(name: string) {

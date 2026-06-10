@@ -171,12 +171,15 @@ const readinessAudit = readFileSync("src/scripts/audit-production-readiness.ts",
 assert.match(readinessAudit, /No environment values/);
 assert.match(readinessAudit, /--out/);
 assert.match(readinessAudit, /--list-requirements/);
+assert.match(readinessAudit, /--gate/);
 assert.match(readFileSync("src/scripts/verify-production-readiness-audit-contract.ts", "utf8"), /assertNoSensitiveOutput/);
 assert.match(contents.gates, /--out=<path>/);
 assert.match(contents.gates, /--list-requirements/);
+assert.match(contents.gates, /--gate=PROD-CRON/);
 assert.match(contents.gates, /verify-production-readiness-audit-contract\.ts/);
 assert.match(contents.cutoverRunbook, /--out=\/tmp\/kiddzonl-production-readiness\.json/);
 assert.match(contents.cutoverRunbook, /--list-requirements/);
+assert.match(contents.cutoverRunbook, /--gate=PROD-CRON/);
 assert.match(contents.cutoverRunbook, /verify-production-readiness-audit-contract\.ts/);
 
 console.log("production acceptance gates contract assertions passed");

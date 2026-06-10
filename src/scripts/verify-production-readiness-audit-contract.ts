@@ -83,6 +83,22 @@ assert.equal(requirementsPayload.evidenceRequirements?.length, 11);
 assert.equal(requirementsPayload.providerRequirements?.length, 4);
 assertNoSensitiveOutput(requirementsJson.stdout + requirementsJson.stderr);
 
+const providerRequirements = runAudit(["--list-requirements", "--gate=PROD-PROVIDERS", "--json"]);
+assert.equal(providerRequirements.status, 0);
+const providerRequirementPayload = JSON.parse(providerRequirements.stdout) as {
+  evidenceRequirements?: unknown[];
+  providerRequirements?: unknown[];
+};
+assert.equal(providerRequirementPayload.evidenceRequirements?.length, 0);
+assert.equal(providerRequirementPayload.providerRequirements?.length, 4);
+assertNoSensitiveOutput(providerRequirements.stdout + providerRequirements.stderr);
+
+const cronRequirements = runAudit(["--list-requirements", "--gate=PROD-CRON"]);
+assert.equal(cronRequirements.status, 0);
+assert.match(cronRequirements.stdout, /PROD-CRON/);
+assert.doesNotMatch(cronRequirements.stdout, /PROD-DUMPS/);
+assertNoSensitiveOutput(cronRequirements.stdout + cronRequirements.stderr);
+
 const tmp = mkdtempSync(join(tmpdir(), "kiddzonl-readiness-"));
 try {
   const outPath = join(tmp, "readiness.json");
@@ -104,6 +120,22 @@ try {
   assert.deepEqual(payload.summary, { ready: 12, needsEvidence: 0, total: 12 });
   assert.equal(payload.gates?.length, 12);
   assert.equal(payload.providers?.length, 4);
+
+  const providerOutPath = join(tmp, "providers.json");
+  const filteredReportText = runAudit([`--out=${providerOutPath}`, "--gate=PROD-PROVIDERS"]);
+  assert.equal(filteredReportText.status, 0);
+  assert.match(filteredReportText.stdout, /Ready to review: 1\/1/);
+  assert.doesNotMatch(filteredReportText.stdout, /PROD-DUMPS/);
+  assertNoSensitiveOutput(filteredReportText.stdout + filteredReportText.stderr);
+
+  const filteredReport = readFileSync(providerOutPath, "utf8");
+  assertNoSensitiveOutput(filteredReport);
+  const filteredPayload = JSON.parse(filteredReport) as {
+    summary?: { ready?: number; needsEvidence?: number; total?: number };
+    gates?: Array<{ gate?: string }>;
+  };
+  assert.deepEqual(filteredPayload.summary, { ready: 1, needsEvidence: 0, total: 1 });
+  assert.deepEqual(filteredPayload.gates?.map((gate) => gate.gate), ["PROD-PROVIDERS"]);
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }
@@ -112,6 +144,13 @@ const missingEvidence = runAudit([], baseEnv);
 assert.equal(missingEvidence.status, 1);
 assert.match(missingEvidence.stdout, /Needs evidence: 12\/12/);
 assertNoSensitiveOutput(missingEvidence.stdout + missingEvidence.stderr);
+
+const filteredMissingEvidence = runAudit(["--gate=PROD-CRON"], baseEnv);
+assert.equal(filteredMissingEvidence.status, 1);
+assert.match(filteredMissingEvidence.stdout, /Needs evidence: 1\/1/);
+assert.match(filteredMissingEvidence.stdout, /PROD-CRON/);
+assert.doesNotMatch(filteredMissingEvidence.stdout, /PROD-DUMPS/);
+assertNoSensitiveOutput(filteredMissingEvidence.stdout + filteredMissingEvidence.stderr);
 
 console.log("production readiness audit contract assertions passed");
 
