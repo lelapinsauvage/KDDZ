@@ -27,6 +27,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -52,6 +53,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { deleteMedicalForm } from "@/lib/actions/medical";
+import type { ExportColumn } from "@/lib/export";
 
 type FormStatus = "DRAFT" | "SUBMITTED" | "REVIEWED";
 
@@ -83,6 +85,46 @@ interface MedicalConditionsClientProps {
   branches: Array<{ id: string; name: string }>;
 }
 
+interface LegacyFilters {
+  formId: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  className: string;
+  nationality: string;
+  gender: string;
+  createdFrom: string;
+  createdTo: string;
+}
+
+const legacyPageSizeOptions = [10, 20, 50, 100, 150, "all"] as const;
+
+const exportColumns: ExportColumn[] = [
+  { header: "Form #", key: "legacyFormId" },
+  { header: "F Name", key: "firstName" },
+  { header: "L Name", key: "lastName" },
+  {
+    header: "DOB",
+    key: "dateOfBirth",
+    transform: (value) => formatDate(value as string | null),
+  },
+  { header: "Branch", key: "branchName" },
+  { header: "Class", key: "className" },
+  { header: "Nationality", key: "nationality" },
+  {
+    header: "Gender",
+    key: "gender",
+    transform: (value) => formatGender(value as string | null),
+  },
+  {
+    header: "Date",
+    key: "createdAt",
+    transform: (value) => formatDate(value as string | null),
+  },
+  { header: "General Health", key: "generalHealth" },
+  { header: "Status", key: "status" },
+];
+
 function childPhotoSrc(photo: string | null) {
   if (!photo || photo === "default.jpg") return "";
   if (/^https?:\/\//i.test(photo) || photo.startsWith("/")) return photo;
@@ -98,6 +140,19 @@ function formatDate(date: string | null) {
     : new Date(date);
   if (Number.isNaN(parsed.getTime())) return date;
   return format(parsed, "MMM d, yyyy");
+}
+
+function dateValue(date: string) {
+  const parsed = new Date(date);
+  parsed.setHours(0, 0, 0, 0);
+  return parsed.getTime();
+}
+
+function addOneDay(date: string) {
+  const parsed = new Date(date);
+  parsed.setHours(0, 0, 0, 0);
+  parsed.setDate(parsed.getDate() + 1);
+  return parsed.getTime();
 }
 
 function formatGender(gender: string | null) {
@@ -178,8 +233,21 @@ export function MedicalConditionsClient({
   const [statusFilter, setStatusFilter] = useState("all");
   const [branchFilter, setBranchFilter] = useState("all");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [legacyFilters, setLegacyFilters] = useState<LegacyFilters>({
+    formId: "",
+    firstName: "",
+    lastName: "",
+    dateOfBirth: "",
+    className: "",
+    nationality: "",
+    gender: "",
+    createdFrom: "",
+    createdTo: "",
+  });
 
   const filteredData = useMemo(() => {
+    const from = legacyFilters.createdFrom ? dateValue(legacyFilters.createdFrom) : null;
+    const to = legacyFilters.createdTo ? addOneDay(legacyFilters.createdTo) : null;
     let data = [...conditions].sort((left, right) => {
       const rightId = right.legacyFormId ?? Number.NEGATIVE_INFINITY;
       const leftId = left.legacyFormId ?? Number.NEGATIVE_INFINITY;
@@ -202,6 +270,7 @@ export function MedicalConditionsClient({
           formatGender(condition.gender),
           condition.generalHealth,
           condition.assessmentDate,
+          condition.createdAt,
         ]
           .join(" ")
           .toLowerCase()
@@ -217,8 +286,71 @@ export function MedicalConditionsClient({
       data = data.filter((condition) => condition.branchId === branchFilter);
     }
 
+    data = data.filter((condition) => {
+      const formId = condition.legacyFormId?.toString() ?? "";
+      if (legacyFilters.formId && !formId.includes(legacyFilters.formId.trim())) return false;
+      if (
+        legacyFilters.firstName &&
+        !condition.firstName.toLowerCase().includes(legacyFilters.firstName.toLowerCase())
+      ) {
+        return false;
+      }
+      if (
+        legacyFilters.lastName &&
+        !condition.lastName.toLowerCase().includes(legacyFilters.lastName.toLowerCase())
+      ) {
+        return false;
+      }
+      if (
+        legacyFilters.dateOfBirth &&
+        !formatDate(condition.dateOfBirth).toLowerCase().includes(legacyFilters.dateOfBirth.toLowerCase())
+      ) {
+        return false;
+      }
+      if (
+        legacyFilters.className &&
+        !condition.className.toLowerCase().includes(legacyFilters.className.toLowerCase())
+      ) {
+        return false;
+      }
+      if (
+        legacyFilters.nationality &&
+        !condition.nationality.toLowerCase().includes(legacyFilters.nationality.toLowerCase())
+      ) {
+        return false;
+      }
+      if (
+        legacyFilters.gender &&
+        !formatGender(condition.gender).toLowerCase().includes(legacyFilters.gender.toLowerCase())
+      ) {
+        return false;
+      }
+
+      const created = new Date(condition.createdAt).getTime();
+      if (from !== null && created < from) return false;
+      if (to !== null && created >= to) return false;
+      return true;
+    });
+
     return data;
-  }, [conditions, search, statusFilter, branchFilter]);
+  }, [conditions, search, statusFilter, branchFilter, legacyFilters]);
+
+  function clearAllFilters() {
+    setSearch("");
+    setStatusFilter("all");
+    setBranchFilter("all");
+    setLegacyFilters({
+      formId: "",
+      firstName: "",
+      lastName: "",
+      dateOfBirth: "",
+      className: "",
+      nationality: "",
+      gender: "",
+      createdFrom: "",
+      createdTo: "",
+    });
+  }
 
   function handleDelete() {
     if (!deleteId) return;
@@ -376,53 +508,121 @@ export function MedicalConditionsClient({
         }
       />
       <div className="p-4 md:p-6 space-y-4">
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <div className="relative max-w-sm flex-1 min-w-0">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search suffering forms..."
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              className="pl-9"
-            />
-          </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Suffering Form Listing</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <div className="relative max-w-sm flex-1 min-w-0">
+                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search suffering forms..."
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  className="pl-9"
+                />
+              </div>
 
-          <Select value={branchFilter} onValueChange={setBranchFilter}>
-            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[160px]">
-              <SelectValue placeholder="All Branches" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Branches</SelectItem>
-              {branches.map((branch) => (
-                <SelectItem key={branch.id} value={branch.id}>
-                  {branch.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+              <Select value={branchFilter} onValueChange={setBranchFilter}>
+                <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[160px]">
+                  <SelectValue placeholder="All Branches" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Branches</SelectItem>
+                  {branches.map((branch) => (
+                    <SelectItem key={branch.id} value={branch.id}>
+                      {branch.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[160px]">
-              <SelectValue placeholder="All Statuses" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="DRAFT">Draft</SelectItem>
-              <SelectItem value="SUBMITTED">Submitted</SelectItem>
-              <SelectItem value="REVIEWED">Reviewed</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[160px]">
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="DRAFT">Draft</SelectItem>
+                  <SelectItem value="SUBMITTED">Submitted</SelectItem>
+                  <SelectItem value="REVIEWED">Reviewed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-        {filteredData.length === 0 ? (
-          <EmptyState
-            icon={Activity}
-            title="No suffering forms found"
-            description="No suffering forms match your current filters."
-          />
-        ) : (
-          <DataTable columns={columns} data={filteredData} />
-        )}
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
+              <Input
+                placeholder="Form #"
+                value={legacyFilters.formId}
+                onChange={(event) => setLegacyFilters((current) => ({ ...current, formId: event.target.value }))}
+              />
+              <Input
+                placeholder="F Name"
+                value={legacyFilters.firstName}
+                onChange={(event) => setLegacyFilters((current) => ({ ...current, firstName: event.target.value }))}
+              />
+              <Input
+                placeholder="L Name"
+                value={legacyFilters.lastName}
+                onChange={(event) => setLegacyFilters((current) => ({ ...current, lastName: event.target.value }))}
+              />
+              <Input
+                placeholder="DOB"
+                value={legacyFilters.dateOfBirth}
+                onChange={(event) => setLegacyFilters((current) => ({ ...current, dateOfBirth: event.target.value }))}
+              />
+              <Input
+                placeholder="Class"
+                value={legacyFilters.className}
+                onChange={(event) => setLegacyFilters((current) => ({ ...current, className: event.target.value }))}
+              />
+              <Input
+                placeholder="Nationality"
+                value={legacyFilters.nationality}
+                onChange={(event) => setLegacyFilters((current) => ({ ...current, nationality: event.target.value }))}
+              />
+              <Input
+                placeholder="Gender"
+                value={legacyFilters.gender}
+                onChange={(event) => setLegacyFilters((current) => ({ ...current, gender: event.target.value }))}
+              />
+              <Input
+                type="date"
+                value={legacyFilters.createdFrom}
+                onChange={(event) => setLegacyFilters((current) => ({ ...current, createdFrom: event.target.value }))}
+              />
+              <Input
+                type="date"
+                value={legacyFilters.createdTo}
+                onChange={(event) => setLegacyFilters((current) => ({ ...current, createdTo: event.target.value }))}
+              />
+              <Button variant="outline" onClick={clearAllFilters}>
+                Clear
+              </Button>
+            </div>
+
+            {filteredData.length === 0 ? (
+              <EmptyState
+                icon={Activity}
+                title="No suffering forms found"
+                description="No suffering forms match your current filters."
+              />
+            ) : (
+              <DataTable
+                columns={columns}
+                data={filteredData}
+                pageSizeOptions={[...legacyPageSizeOptions]}
+                exportOptions={{
+                  filename: "suffering-medical-forms",
+                  sheetName: "Suffering Form Listing",
+                  columns: exportColumns,
+                }}
+                printOptions={{ label: "Print" }}
+              />
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
