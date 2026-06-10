@@ -1276,7 +1276,7 @@
     "legacyPhp": "Front/templates/admin/children_drafts.php",
     "legacyJs": "Front/templates/admin/js/children_drafts.js",
     "modernRoute": "/children_drafts.php, /children/drafts",
-    "status": "partial - legacy draft roster, bulk branch/class modal, copy/PDF exports, ACL, and bridge restored; live refresh audit remains",
+    "status": "restored - legacy draft roster, bulk branch/class modal, filters, exports, ACL, and bridge restored",
     "legacyTablesMentioned": [
       "Form",
       "Selected",
@@ -1286,7 +1286,7 @@
       "actions_control"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Restored `/children/drafts` as a real draft listing instead of a redirect, backed by `getDrafts`/`isDraft`, with legacy S.N./image/F Name/L Name/DOB/Branch/Class/Nationality/Gender/Date/Action columns, child photo fallback handling, S.N./first/last/DOB/nationality/created-date filters, branch/class/gender filters, 10/20/50/100/150 page sizes, Copy/PDF/Excel/CSV export, New Child, edit, deactivate actions, checkbox select-all-in-page selection, and Change Branch & Class modal for selected drafts backed by the same org-safe bulk action without clearing draft status. Child `addChild`, `updateChild`, and `deleteChild` ACTION grants now hide New/Edit/bulk/deactivate controls and deny direct create/update/bulk/deactivate mutations when the imported action catalogue is configured and not granted. `/children_drafts.php` now redirects to the modern draft child roster. Remaining work is commented WebSocket refresh behavior."
+    "verification": "Restored the legacy Children Drafts Listing contract from `children_drafts.php`/`children_drafts.js`: `/children_drafts.php` redirects to `/children/drafts`; the modern draft roster preserves the guarded `Children Drafts`/`Children Drafts Listing` surface with legacy `New Child` action, S.N./child number, Image, F Name, L Name, DOB, Branch, Class, Nationality, Gender, Date, and Action columns, child photo fallback handling for migrated `images/EmpPhoto` filenames, legacy column filters for S.N., first name, last name, DOB, branch, class, nationality, gender, and created-date from/to, default 10-row page size with 10/20/50/100/150/All choices, Copy/PDF/Excel/CSV export, checkbox select-all-in-page selection, Change Branch & Class modal for selected drafts with org-safe target validation, edit, and deactivate actions. Child `addChild`, `updateChild`, and `deleteChild` ACTION grants hide New/Edit/bulk/deactivate controls and deny direct create/update/bulk/deactivate mutations when the imported action catalogue is configured and not granted. The legacy websocket live-refresh code is a commented-out `ab.Session` block in `children_drafts.js`, so no active live socket is required for parity. Browser smoke confirmed `/children_drafts.php` renders the authenticated draft roster, `Children Drafts Listing`, legacy table headers, filter controls, Change Branch & Class, Export, and no broken media; the current logged-in ACL may hide `New Child`, while the code path preserves the legacy `addChild`-gated action. Verified by `src/scripts/verify-legacy-children-drafts-roster-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/childrenperbranch.php",

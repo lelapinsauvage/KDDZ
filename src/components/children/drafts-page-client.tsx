@@ -84,7 +84,7 @@ interface Filters {
   createdFrom: string;
   createdTo: string;
   page: number;
-  pageSize: number;
+  pageSize: number | "all";
   sort: string;
   order: "asc" | "desc";
 }
@@ -527,12 +527,16 @@ export function DraftsPageClient({
     manualPagination: true,
     onSortingChange: handleSortingChange,
     state: { sorting },
-    pageCount: Math.ceil(total / filters.pageSize),
+    pageCount: filters.pageSize === "all" ? 1 : Math.ceil(total / filters.pageSize),
   });
 
-  const pageCount = Math.ceil(total / filters.pageSize);
+  const pageCount = filters.pageSize === "all" ? 1 : Math.ceil(total / filters.pageSize);
   const canPreviousPage = filters.page > 1;
   const canNextPage = filters.page < pageCount;
+  const showingFrom =
+    total === 0 ? 0 : filters.pageSize === "all" ? 1 : (filters.page - 1) * filters.pageSize + 1;
+  const showingTo =
+    filters.pageSize === "all" ? total : Math.min(filters.page * filters.pageSize, total);
 
   return (
     <>
@@ -545,6 +549,8 @@ export function DraftsPageClient({
       />
 
       <div className="space-y-4 p-4 md:p-6">
+        <h2 className="text-lg font-semibold">Children Drafts Listing</h2>
+
         {/* ── Toolbar ─────────────────────────────── */}
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {/* Search */}
@@ -637,7 +643,7 @@ export function DraftsPageClient({
             >
               <Link href="/children/new">
                 <Plus className="mr-1 size-4" />
-                Add Child
+                New Child
               </Link>
             </Button>
           ) : null}
@@ -789,7 +795,7 @@ export function DraftsPageClient({
           {/* ── Pagination ──────────────────────────── */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-muted-foreground">
-              {total} total row(s)
+              Showing {showingFrom}-{showingTo} of {total}
             </p>
             <div className="flex items-center gap-2">
               <Select
@@ -800,9 +806,9 @@ export function DraftsPageClient({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent side="top">
-                  {[10, 20, 50, 100, 150].map((size) => (
+                  {[10, 20, 50, 100, 150, "all"].map((size) => (
                     <SelectItem key={size} value={String(size)}>
-                      {size}
+                      {size === "all" ? "All" : size}
                     </SelectItem>
                   ))}
                 </SelectContent>
