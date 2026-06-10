@@ -18,6 +18,7 @@ try {
   const envFilePath = join(tmp, "private-readiness.env");
   const evidenceRecordPath = join(tmp, "production-acceptance-evidence.md");
   const readinessReportPath = join(tmp, "readiness.json");
+  const closeoutSummaryPath = join(tmp, "closeout-summary.json");
   writeFileSync(envFilePath, readinessEnvFile(), "utf8");
   writeFileSync(evidenceRecordPath, fillTemplate(template), "utf8");
 
@@ -25,6 +26,7 @@ try {
     `--env-file=${envFilePath}`,
     `--evidence-record=${evidenceRecordPath}`,
     `--out=${readinessReportPath}`,
+    `--summary-out=${closeoutSummaryPath}`,
     "--branch=legacy-parity-runbook",
     "--commit=0404c6a",
   ]);
@@ -42,6 +44,23 @@ try {
   };
   assert.equal(payload.redacted, true);
   assert.deepEqual(payload.summary, { ready: 12, needsEvidence: 0, total: 12 });
+
+  const closeoutSummary = readFileSync(closeoutSummaryPath, "utf8");
+  assertNoSensitiveOutput(closeoutSummary);
+  const closeoutPayload = JSON.parse(closeoutSummary) as {
+    status?: string;
+    branch?: string;
+    commit?: string;
+    redacted?: boolean;
+  };
+  assert.deepEqual(closeoutPayload, {
+    status: "production closeout verified",
+    readinessReport: readinessReportPath,
+    evidenceRecord: evidenceRecordPath,
+    branch: "legacy-parity-runbook",
+    commit: "0404c6a",
+    redacted: true,
+  });
 
   const staleCommit = runCloseout([
     `--env-file=${envFilePath}`,

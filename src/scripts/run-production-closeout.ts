@@ -1,24 +1,22 @@
 import { execFileSync } from "node:child_process";
 import { dirname } from "node:path";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 
 const envFilePath = optionValue("--env-file");
 const evidenceRecordPath = optionValue("--evidence-record");
 const outputPath = optionValue("--out") ?? "/tmp/kiddzonl-production-readiness.json";
+const summaryOutputPath = optionValue("--summary-out");
 const branch = optionValue("--branch") ?? gitOutput(["branch", "--show-current"]);
 const commit = optionValue("--commit") ?? gitOutput(["rev-parse", "HEAD"]);
 
 if (!envFilePath || !evidenceRecordPath) {
   console.error(
-    "Usage: pnpm tsx src/scripts/run-production-closeout.ts --env-file=<private-readiness.env> --evidence-record=<production-acceptance-evidence.md> [--out=<readiness.json>] [--branch=<branch>] [--commit=<sha>]"
+    "Usage: pnpm tsx src/scripts/run-production-closeout.ts --env-file=<private-readiness.env> --evidence-record=<production-acceptance-evidence.md> [--out=<readiness.json>] [--summary-out=<closeout-summary.json>] [--branch=<branch>] [--commit=<sha>]"
   );
   process.exit(2);
 }
 
-const outputDir = dirname(outputPath);
-if (outputDir && outputDir !== ".") {
-  mkdirSync(outputDir, { recursive: true });
-}
+ensureParentDir(outputPath);
 
 run("pnpm", [
   "tsx",
@@ -36,20 +34,21 @@ run("pnpm", [
   `--commit=${commit}`,
 ]);
 
-console.log(
-  JSON.stringify(
-    {
-      status: "production closeout verified",
-      readinessReport: outputPath,
-      evidenceRecord: evidenceRecordPath,
-      branch,
-      commit,
-      redacted: true,
-    },
-    null,
-    2
-  )
-);
+const summary = {
+  status: "production closeout verified",
+  readinessReport: outputPath,
+  evidenceRecord: evidenceRecordPath,
+  branch,
+  commit,
+  redacted: true,
+};
+
+if (summaryOutputPath) {
+  ensureParentDir(summaryOutputPath);
+  writeFileSync(summaryOutputPath, `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+}
+
+console.log(JSON.stringify(summary, null, 2));
 
 function run(command: string, args: string[]) {
   execFileSync(command, args, {
@@ -64,6 +63,13 @@ function gitOutput(args: string[]) {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   }).trim();
+}
+
+function ensureParentDir(path: string) {
+  const dir = dirname(path);
+  if (dir && dir !== ".") {
+    mkdirSync(dir, { recursive: true });
+  }
 }
 
 function optionValue(name: string) {
