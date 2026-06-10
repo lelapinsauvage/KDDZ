@@ -17,6 +17,7 @@ const files = {
   guardMap: "src/lib/legacy-page-guards.ts",
   exportButton: "src/components/shared/export-button.tsx",
   matrix: "docs/page-parity-matrix.json",
+  matrixMd: "docs/page-parity-matrix.md",
 };
 
 const contents = Object.fromEntries(
@@ -154,6 +155,27 @@ assert.match(
 assert.match(
   matrixRow.verification ?? "",
   /Browser smoke confirmed `\/classesperbranch\.php\?brid=`/,
+);
+
+assert.match(
+  text.matrixMd,
+  /classesperbranch\.php \| Front\/templates\/admin\/js\/classesperbranch\.js \| \/classesperbranch\.php, \/branches\/\[id\]\/classes \| restored - branch-scoped class listing, filters, TableTools export, print, lightbox preview, ACL, bridge, and locked branch table restored/,
+);
+assert.match(
+  text.matrixMd,
+  /classesperbranch\.php[\s\S]*Copy\/PDF\/Excel\/CSV export, print, legacy image fallback, clickable image preview\/lightbox/,
+);
+assert.match(
+  text.matrixMd,
+  /classesperbranch\.php[\s\S]*Browser smoke confirmed `\/classesperbranch\.php\?brid=`/,
+);
+assert.match(
+  text.matrixMd,
+  /classesperbranch\.php[\s\S]*verify-legacy-branch-classes-tabletools-contract\.ts/,
+);
+assert.doesNotMatch(
+  text.matrixMd,
+  /classesperbranch\.php[^\n]*visual audit remains/,
 );
 
 console.log("legacy branch-scoped classes TableTools contract assertions passed");
