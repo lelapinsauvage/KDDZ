@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { deliverEmail, emailDeliveryAuditData } from "@/lib/email-delivery";
 import { isLegacyNotificationGateEnabled } from "@/lib/legacy-notification-gates";
 import type { PaymentCategory, PaymentStatus } from "@/generated/prisma/enums";
 
@@ -51,6 +52,7 @@ interface PaymentAlarmCandidate {
 
 interface PaymentParentRecipient {
   parentUserId: string;
+  email: string | null;
   legacyRecipientId: number;
   legacyChildId: number | null;
   sourceDatabase: string | null;
@@ -238,6 +240,7 @@ function isEligibleDuePaymentFee(
 function parentRecipientsForPaymentChild(
   parentUsers: Array<{
     id: string;
+    username: string;
     legacyId: number | null;
     legacyChildId: number | null;
     sourceDatabase: string | null;
@@ -250,6 +253,7 @@ function parentRecipientsForPaymentChild(
 
     recipients.set(parentUser.legacyId, {
       parentUserId: parentUser.id,
+      email: parentUser.username,
       legacyRecipientId: parentUser.legacyId,
       legacyChildId: parentUser.legacyChildId,
       sourceDatabase: parentUser.sourceDatabase,
@@ -333,6 +337,46 @@ function incrementCreated(summary: PaymentGenerationSummary, alarmType: PaymentA
   if (alarmType === "Paid") summary.paidAlarmsCreated += 1;
   if (alarmType === "Before") summary.beforeAlarmsCreated += 1;
   if (alarmType === "After") summary.afterAlarmsCreated += 1;
+}
+
+async function storePaymentEmailAudit(params: {
+  alarmId: string;
+  subject: string;
+  body: string;
+  recipients: PaymentParentRecipient[];
+  legacyNotificationId: number;
+  sourceDatabase: string | null;
+  category: string;
+}) {
+  const emailDelivery = await deliverEmail({
+    recipients: params.recipients.map((recipient) => ({
+      email: recipient.email ?? "",
+      name: null,
+    })),
+    subject: params.subject,
+    body: params.body,
+    category: params.category,
+    metadata: {
+      source: "generatePaymentAlarms",
+      legacyNotificationId: params.legacyNotificationId,
+      sourceDatabase: params.sourceDatabase,
+      legacyDeliveryTable: PAYMENT_RECEIPT_SOURCE,
+    },
+  });
+
+  const alarm = await db.alarm.findUnique({
+    where: { id: params.alarmId },
+    select: { legacyData: true },
+  });
+  await db.alarm.update({
+    where: { id: params.alarmId },
+    data: {
+      legacyData: {
+        ...(asRecord(alarm?.legacyData) ?? {}),
+        emailDelivery: emailDeliveryAuditData(emailDelivery),
+      },
+    },
+  });
 }
 
 export async function generatePaymentAlarmsForOrganization(params: {
@@ -457,6 +501,7 @@ export async function generatePaymentAlarmsForOrganization(params: {
               where: { isActive: true },
               select: {
                 id: true,
+                username: true,
                 legacyId: true,
                 legacyChildId: true,
                 sourceDatabase: true,
@@ -489,6 +534,7 @@ export async function generatePaymentAlarmsForOrganization(params: {
               where: { isActive: true },
               select: {
                 id: true,
+                username: true,
                 legacyId: true,
                 legacyChildId: true,
                 sourceDatabase: true,
@@ -847,6 +893,18 @@ export async function generatePaymentAlarmsForOrganization(params: {
       skipDuplicates: true,
     });
     summary.receiptsCreated += receiptResult.count;
+
+    if (!template.enabled || receiptResult.count === 0) continue;
+
+    await storePaymentEmailAudit({
+      alarmId,
+      subject: renderNotificationText(template.subject, variables),
+      body: message,
+      recipients: newReceiptRecipients,
+      legacyNotificationId,
+      sourceDatabase: newReceiptRecipients[0]?.sourceDatabase ?? null,
+      category: template.category,
+    });
   }
 
   return summary;
