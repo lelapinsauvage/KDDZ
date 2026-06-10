@@ -17032,10 +17032,10 @@
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-assessment.php",
     "legacyJs": "",
     "modernRoute": "/settings/notifications",
-    "status": "partial - legacy assessment template fallback restored; delivery audit remains",
+    "status": "restored - legacy assessment template fallback, exact targeting, parent payload, and provider delivery audit restored",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "/settings/notifications Assessment now falls back to migrated `email-assessment-subj` and `email-assessment-msg` rows and exposes the legacy `{{child_name}}` shortcode. Existing assessment alarm generation can use the saved modern template; remaining work is external parent/mobile delivery and exact recipient targeting."
+    "verification": "/settings/notifications Assessment falls back to migrated `email-assessment-subj` and `email-assessment-msg` rows and exposes the legacy `{{child_name}}` shortcode. `generateAssessmentAlarmsForOrganization()` renders the saved ASSESSMENT subject/body for generated assessment staff recipients, targets generated staff receipts with legacy `login_users.uclasses` comma-list semantics and source-database matching, sends the rendered message through the provider-neutral `deliverEmail` bridge with ASSESSMENT metadata and `custom_notifications_assessment` provenance, and stores `emailDeliveryAuditData` on the generated staff alarm legacy audit payload so skipped/unconfigured, failed, and sent delivery outcomes remain inspectable without hard-coding production credentials. The generated parent assessment alarm path remains covered by `src/scripts/verify-assessment-parent-delivery.ts`, which verifies `/ws/notifications_master.php` exposes the generated parent assessment body to the legacy mobile payload. Verified by `src/scripts/verify-legacy-assessment-email-template-delivery-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-birthday.php",

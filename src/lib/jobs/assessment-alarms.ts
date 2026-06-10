@@ -1,5 +1,6 @@
 import { ASSESSMENT_TYPE_NAMES, VALID_ASSESSMENT_TYPES } from "@/lib/assessment-types";
 import { db } from "@/lib/db";
+import { deliverEmail, emailDeliveryAuditData } from "@/lib/email-delivery";
 import { isLegacyNotificationGateEnabled } from "@/lib/legacy-notification-gates";
 
 const ASSESSMENT_ALARM_SOURCE = "t_alarms_assessment";
@@ -41,6 +42,8 @@ export interface AssessmentGenerationSummary {
 
 interface LegacyAssessmentRecipient {
   userId: string;
+  email: string | null;
+  name: string | null;
   legacyRecipientId: number;
   legacySourceDatabase: string;
   legacyClasses: string;
@@ -197,6 +200,45 @@ function recipientsForCandidate(
   }
 
   return Array.from(selected.values());
+}
+
+async function storeAssessmentEmailAudit(params: {
+  alarmId: string;
+  subject: string;
+  body: string;
+  recipients: LegacyAssessmentRecipient[];
+  legacyNotificationId: number;
+  sourceDatabase: string | null;
+}) {
+  const emailDelivery = await deliverEmail({
+    recipients: params.recipients.map((recipient) => ({
+      email: recipient.email ?? "",
+      name: recipient.name,
+    })),
+    subject: params.subject,
+    body: params.body,
+    category: "ASSESSMENT",
+    metadata: {
+      source: "generateAssessmentAlarms",
+      legacyNotificationId: params.legacyNotificationId,
+      sourceDatabase: params.sourceDatabase,
+      legacyDeliveryTable: ASSESSMENT_RECEIPT_SOURCE,
+    },
+  });
+
+  const alarm = await db.alarm.findUnique({
+    where: { id: params.alarmId },
+    select: { legacyData: true },
+  });
+  await db.alarm.update({
+    where: { id: params.alarmId },
+    data: {
+      legacyData: {
+        ...(asRecord(alarm?.legacyData) ?? {}),
+        emailDelivery: emailDeliveryAuditData(emailDelivery),
+      },
+    },
+  });
 }
 
 function emptySummary(): AssessmentGenerationSummary {
@@ -435,7 +477,7 @@ export async function generateAssessmentAlarmsForOrganization(params: {
           { branchId: null },
         ],
       },
-      select: { id: true },
+      select: { id: true, email: true, name: true },
     }),
     db.notificationTemplate.findUnique({
       where: {
@@ -452,6 +494,7 @@ export async function generateAssessmentAlarmsForOrganization(params: {
   ]);
 
   const userIds = users.map((user) => user.id);
+  const usersById = new Map(users.map((user) => [user.id, user]));
   const legacyAuthRows = userIds.length
     ? await db.legacyAuthRecord.findMany({
         where: {
@@ -476,8 +519,11 @@ export async function generateAssessmentAlarmsForOrganization(params: {
   const legacyRecipients: LegacyAssessmentRecipient[] = [];
   for (const row of legacyAuthRows) {
     if (!row.userId) continue;
+    const user = usersById.get(row.userId);
     legacyRecipients.push({
       userId: row.userId,
+      email: user?.email ?? null,
+      name: user?.name ?? null,
       legacyRecipientId: row.legacyUserId ?? row.legacyId,
       legacySourceDatabase: row.sourceDatabase,
       legacyClasses: readString(asRecord(row.legacyData), "uclasses") ?? "0",
@@ -724,6 +770,15 @@ export async function generateAssessmentAlarmsForOrganization(params: {
       })),
     });
     summary.notificationsCreated += notificationResult.count;
+
+    await storeAssessmentEmailAudit({
+      alarmId,
+      subject: renderNotificationText(subjectTemplate, variables),
+      body: renderNotificationText(bodyTemplate, variables),
+      recipients: newReceiptRecipients,
+      legacyNotificationId,
+      sourceDatabase: candidate.sourceDatabase,
+    });
   }
 
   return summary;
