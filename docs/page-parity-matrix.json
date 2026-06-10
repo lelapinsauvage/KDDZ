@@ -17575,7 +17575,7 @@
     "legacyPhp": "Front/templates/admin/users/classes/generic.class.php",
     "legacyJs": "",
     "modernRoute": "/users/admin/classes/add_user.class.php, /users/admin/classes/add_level.class.php, /settings/legacy-auth, /settings/legacy-users/profile-fields",
-    "status": "partial - generic settings/profile helpers mapped; remote validators restored",
+    "status": "restored - generic settings, profile, email, password, timestamp, access, and validator helpers restored",
     "legacyTablesMentioned": [
       "login_levels",
       "login_profile_fields",
@@ -17592,7 +17592,7 @@
       "level",
       "username"
     ],
-    "verification": "The `checkExists()` Ajax validator behavior is restored through `/users/admin/classes/add_user.class.php` and `/users/admin/classes/add_level.class.php`, returning the legacy literal `true`/`false` body for duplicate email, username, and level checks over migrated auth metadata. Other Generic helper responsibilities are now covered by the restored legacy auth settings, profile-field management, login timestamp display, and user admin surfaces. Remaining work is active runtime enforcement for settings/access-control helpers that were not pure CRUD/display."
+    "verification": "Legacy `Generic` helper responsibilities are restored across the modern auth/admin surfaces: `getOption()` / `updateOption()` map to `/settings/legacy-auth` and profile-field actions over migrated `login_settings`, `login_settings_man`, `login_profile_fields`, and `login_profiles`; `sendEmail()` maps to the provider-neutral `deliverEmail()` bridge with individual/BCC modes and delivery audit; `generateProfile*()` / `profileFieldTypes()` map to signed-in profile rendering plus `/settings/legacy-users/profile-fields`; `denyAccessLogs()` / `generateAccessLogs()` map to profile timestamp settings and top-10 `LegacyLoginTimestamp` display; password helpers map to bcrypt for new/changed passwords while imported md5-prefixed legacy hashes are verified and upgraded on login; settings/runtime helpers now enforce restored general auth settings, guest redirects, session expiry, and access-control grants; and `checkExists()` Ajax validator behavior is restored through `/users/admin/classes/add_user.class.php` and `/users/admin/classes/add_level.class.php` with literal `true`/`false` duplicate email/username/level responses plus legacy suggestions HTML. Verified by `src/scripts/verify-legacy-generic-helper-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/generic_user_db.class.php",
