@@ -15,10 +15,10 @@ export const authConfig = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
+        token.id = user.id as string;
         token.role = user.role;
         token.branchId = user.branchId;
-        token.organizationId = user.organizationId;
+        token.organizationId = user.organizationId ?? null;
         token.picture = user.image;
         token.legacyLogin = user.legacyLogin;
         token.legacyAccess = user.legacyAccess;

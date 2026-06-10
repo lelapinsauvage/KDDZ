@@ -6,6 +6,8 @@ const auth = fs.readFileSync("src/lib/auth.ts", "utf8");
 const authConfig = fs.readFileSync("src/lib/auth.config.ts", "utf8");
 const appLayout = fs.readFileSync("src/app/(app)/layout.tsx", "utf8");
 const middleware = fs.readFileSync("src/middleware.ts", "utf8");
+const authRoute = fs.readFileSync("src/app/api/auth/[...nextauth]/route.ts", "utf8");
+const sessionCookies = fs.readFileSync("src/lib/legacy-session-cookies.ts", "utf8");
 const guestRedirect = fs.readFileSync("src/lib/legacy-guest-redirect.ts", "utf8");
 const login = fs.readFileSync("src/lib/actions/legacy-login.ts", "utf8");
 const logout = fs.readFileSync("src/lib/legacy-logout.ts", "utf8");
@@ -65,6 +67,10 @@ assert.match(auth, /legacySessionMode: "browser_session"/);
 assert.match(auth, /legacySessionMode: "default_session"/);
 assert.match(authConfig, /isExpiredIsoDate\(legacySessionExpiresAt\)/);
 assert.match(appLayout, /isExpiredIsoDate\(legacySessionExpiresAt\)/);
+assert.match(middleware, /getToken/);
+assert.doesNotMatch(middleware, /NextAuth\(authConfig\)/);
+assert.match(authRoute, /makeAuthSessionCookiesBrowserScoped/);
+assert.match(sessionCookies, /stripPersistentAuthSessionCookie/);
 
 assert.match(
   middleware,
