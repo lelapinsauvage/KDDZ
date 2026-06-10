@@ -8,6 +8,7 @@ const files = {
     "/Users/karimsaab/Desktop/Garderie Project/Garderie-old-backup/Front/templates/admin/users/admin/classes/add_level.class.php",
   accessControlClient:
     "src/app/(app)/settings/access-control/access-control-client.tsx",
+  accessControlActions: "src/lib/actions/legacy-access-control.ts",
   addLevelRoute:
     "src/app/(app)/users/admin/classes/add_level.class.php/route.ts",
   matrix: "docs/page-parity-matrix.json",
@@ -38,6 +39,20 @@ assert.match(text.addLevelRoute, /legacyBooleanResponse/);
 assert.match(text.addLevelRoute, /legacyLevelSuggestionsResponse/);
 assert.match(text.addLevelRoute, /searchLevels/);
 assert.match(text.addLevelRoute, /checklevel/);
+
+assert.match(text.accessControlActions, /createLegacyAccessLevel/);
+assert.match(text.accessControlActions, /const legacyId = \(maxLevel\?\.legacyId \?\? 0\) \+ 1/);
+assert.match(text.accessControlActions, /const legacyKey = `\$\{sourceDatabase\}:\$\{config\.levelTable\}:\$\{legacyId\}`/);
+assert.match(text.accessControlActions, /db\.legacyAuthRecord\.create/);
+assert.match(text.accessControlActions, /legacyTable: config\.levelTable/);
+assert.match(text.accessControlActions, /recordType: config\.levelRecordType/);
+assert.match(text.accessControlActions, /recordKey: levelName/);
+assert.match(text.accessControlActions, /redirect,/);
+assert.match(text.accessControlActions, /isDisabled: false/);
+assert.match(text.accessControlActions, /welcomeEmail: false/);
+assert.match(text.accessControlActions, /levelLegacyData\(\{/);
+assert.doesNotMatch(text.accessControlActions, /INSERT INTO `login_levels`/);
+assert.doesNotMatch(text.accessControlActions, /INSERT INTO `login_levels_man`/);
 
 assert.match(text.accessControlClient, /id="level-message"/);
 assert.match(text.accessControlClient, /aria-live="polite"/);
@@ -96,5 +111,21 @@ assert.doesNotMatch(
   markdownRow ?? "",
   /Remaining work is exact old slide-down AJAX message behavior/,
 );
+
+const addLevelRow = matrix.find(
+  (item) =>
+    item.legacyPhp === "Front/templates/admin/users/admin/classes/add_level.class.php",
+);
+assert.ok(addLevelRow);
+assert.match(
+  addLevelRow.status ?? "",
+  /restored - legacy level create, validator, search, and provenance restored/,
+);
+assert.match(addLevelRow.verification ?? "", /canonical `sourceDatabase`/);
+assert.match(addLevelRow.verification ?? "", /`legacyKey`/);
+assert.match(addLevelRow.verification ?? "", /LegacyAuthRecord/);
+assert.match(addLevelRow.verification ?? "", /modern runtime source of truth/);
+assert.match(addLevelRow.verification ?? "", /verify-legacy-level-create-message-contract\.ts/);
+assert.doesNotMatch(addLevelRow.verification ?? "", /Remaining work is deciding/);
 
 console.log("legacy level-create message contract assertions passed");

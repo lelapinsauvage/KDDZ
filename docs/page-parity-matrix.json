@@ -16680,7 +16680,7 @@
     "legacyPhp": "Front/templates/admin/users/admin/classes/add_level.class.php",
     "legacyJs": "",
     "modernRoute": "/settings/access-control, /users/admin/classes/add_level.class.php",
-    "status": "partial - legacy level create, validator, and search restored",
+    "status": "restored - legacy level create, validator, search, and provenance restored",
     "legacyTablesMentioned": [
       "login_levels",
       "login_levels_man"
@@ -16692,7 +16692,7 @@
       "redirect",
       "searchLevels"
     ],
-    "verification": "`/settings/access-control` now exposes `New level` per legacy source/type, validates required/duplicate level names, preserves redirect, creates the next legacy-style level id in `LegacyAuthRecord`, and returns the legacy success/error messages. `/users/admin/classes/add_level.class.php` restores the old jQuery remote `checklevel` endpoint with literal `true`/`false` responses and the `searchLevels` suggestions HTML against migrated staff/manager level metadata. Remaining work is deciding whether any created metadata should be exported back to legacy SQL during cutover."
+    "verification": "`/settings/access-control` exposes `New level` per legacy source/type, validates required/duplicate level names with the legacy messages, preserves redirect, creates the next legacy-style level id, stores canonical `sourceDatabase`, `legacyTable`, `legacyKey`, `legacyId`, `recordType`, `recordKey`, redirect, disabled/welcome flags, and raw legacy-shaped metadata in `LegacyAuthRecord`, and returns the legacy success/error messages. `/users/admin/classes/add_level.class.php` restores the old jQuery remote `checklevel` endpoint with literal `true`/`false` responses and the `searchLevels` suggestions HTML against migrated staff/manager level metadata. Runtime cutover keeps `LegacyAuthRecord` as the modern runtime source of truth instead of writing back into old PHP SQL tables; export-back to legacy SQL is outside live runtime and would be handled by an explicit cutover/export job if ever needed. Verified by `src/scripts/verify-legacy-level-create-message-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/classes/add_user.class.php",
