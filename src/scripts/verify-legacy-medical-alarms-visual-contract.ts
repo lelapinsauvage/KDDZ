@@ -106,6 +106,7 @@ assert.match(row.verification ?? "", /no broken images or app errors/);
 assert.match(row.verification ?? "", /provider-neutral staff push delivery/);
 assert.match(row.verification ?? "", /pushDelivery/);
 assert.match(row.verification ?? "", /verify-medical-push-delivery\.ts/);
+assert.match(row.verification ?? "", /encrypted `Medical_form1\.php\?id=` generated-row bridge/);
 
 const markdownRow = text.markdownMatrix
   .split("\n")
@@ -113,11 +114,16 @@ const markdownRow = text.markdownMatrix
 assert.match(markdownRow ?? "", /browser visual audit restored/);
 assert.match(markdownRow ?? "", /Browser smoke confirmed `\/alarmsMedical\.php`/);
 assert.match(markdownRow ?? "", /provider-neutral staff push delivery/);
+assert.match(markdownRow ?? "", /encrypted `Medical_form1\.php\?id=` generated-row bridge/);
 assert.doesNotMatch(markdownRow ?? "", /final visual audit/);
 
 assert.match(
   text.topGaps,
   /Medical alarms now audit provider-neutral staff push delivery on generated missing-report reminders/,
+);
+assert.match(
+  text.topGaps,
+  /encrypted `Medical_form1\.php\?id=` generated-row bridge resolves/,
 );
 
 console.log("legacy medical alarms visual contract assertions passed");

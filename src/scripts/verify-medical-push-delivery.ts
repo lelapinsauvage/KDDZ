@@ -1,5 +1,7 @@
 import "dotenv/config";
 import assert from "node:assert/strict";
+import { NextRequest } from "next/server";
+import { GET as medicalForm1Get } from "@/app/(app)/Medical_form1.php/route";
 import { db } from "@/lib/db";
 import { generateMedicalAlarmsForOrganization } from "@/lib/jobs/medical-alarms";
 
@@ -31,6 +33,7 @@ async function main() {
   let user: IdRecord | null = null;
   let conditionForm: IdRecord | null = null;
   let vaccinationForm: IdRecord | null = null;
+  const previousVerifyUserId = process.env.GARDERIE_VERIFY_USER_ID;
 
   try {
     organization = await db.organization.create({
@@ -197,7 +200,19 @@ async function main() {
     assert.equal(alarmLegacy.legacyClassId, legacyClassId);
     assert.equal(alarmLegacy.type, "t_form_1");
     assert.equal(alarmLegacy.reportName, "General Form");
-    assert.match(String(alarmLegacy.href), /^Medical_form1\.php\?id=/);
+    const href = String(alarmLegacy.href);
+    assert.match(href, /^Medical_form1\.php\?id=/);
+
+    process.env.GARDERIE_VERIFY_USER_ID = user.id;
+    const bridgeResponse = await medicalForm1Get(
+      new NextRequest(`http://localhost/${href}`),
+    );
+    assert.equal(bridgeResponse.status, 307);
+    const location = bridgeResponse.headers.get("location");
+    assert.ok(location, "Medical_form1.php bridge should redirect");
+    const target = new URL(location);
+    assert.equal(target.pathname, "/medical/general/new");
+    assert.equal(target.searchParams.get("childId"), child.id);
 
     const receipt = await db.notificationReceipt.findFirst({
       where: {
@@ -230,6 +245,11 @@ async function main() {
 
     console.log("medical push delivery assertions passed");
   } finally {
+    if (previousVerifyUserId === undefined) {
+      delete process.env.GARDERIE_VERIFY_USER_ID;
+    } else {
+      process.env.GARDERIE_VERIFY_USER_ID = previousVerifyUserId;
+    }
     if (child) {
       await db.notificationReceipt.deleteMany({
         where: {
