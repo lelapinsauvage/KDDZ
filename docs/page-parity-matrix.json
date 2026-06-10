@@ -16280,7 +16280,7 @@
     "legacyPhp": "Front/templates/admin/holiday_calendar.php",
     "legacyJs": "Front/templates/admin/js/holiday_calendar.js",
     "modernRoute": "/holiday_calendar.php, /settings/holidays",
-    "status": "partial - legacy holiday calendar bridge, modal semantics, multi-day reminders, and AddEditHolidays guard restored; visual audit remains",
+    "status": "parity - legacy holiday calendar bridge, FullCalendar-style views, modal semantics, multi-day reminders, and AddEditHolidays guard restored",
     "legacyTablesMentioned": [
       "Holiday",
       "auto",
@@ -16291,7 +16291,7 @@
       "system_actions_man"
     ],
     "requestFieldsMentioned": [],
-    "verification": "`/holiday_calendar.php` now redirects to the modern holidays calendar. The modern create/update modal now mirrors legacy `Create Holiday`/`Update Holiday` copy, primary `Description` field, default Repeated recurrence, Date label, `Notifications` section, legacy notification subject/message placeholders, 1-7 day labels, Create/Update buttons, apostrophe rejection for Description/message, and persisted legacy `daysbefore[]` multi-select reminders via `Holiday.notificationDaysBefore` with `daysBefore` fallback. The legacy `AddEditHolidays` ACTION grant now hides Add/Edit/Delete/calendar-cell create controls and denies direct create/update/delete holiday server mutations when the imported action catalogue is configured and not granted. General/Closure holiday send-channel side effects are verified through `verify-general-closure-side-effects.ts`; the old immediate strike employee send controls are not active parity work because `Notify Immediately` and `notifystrikes` were commented in legacy PHP/JS, so the modern modal no longer exposes those dead controls. Remaining work is exact FullCalendar visual behavior."
+    "verification": "`/holiday_calendar.php` now redirects to the modern holidays calendar. The modern create/update modal mirrors legacy `Create Holiday`/`Update Holiday` copy, primary `Description` field, default Repeated recurrence, Date label, `Notifications` section, legacy notification subject/message placeholders, 1-7 day labels, Create/Update buttons, apostrophe rejection for Description/message, and persisted legacy `daysbefore[]` multi-select reminders via `Holiday.notificationDaysBefore` with `daysBefore` fallback. The calendar now restores the legacy FullCalendar-style Month/Week/Day controls, preserves month/year/view/date query state for direct links and refreshes, and labels visible events as Holiday/Strike entries across month, week, and day views. The legacy `AddEditHolidays` ACTION grant hides Add/Edit/Delete/calendar-cell create controls and denies direct create/update/delete holiday server mutations when the imported action catalogue is configured and not granted. General/Closure holiday send-channel side effects are verified through `verify-general-closure-side-effects.ts`; the old immediate strike employee send controls are not active parity work because `Notify Immediately` and `notifystrikes` were commented in legacy PHP/JS, so the modern modal no longer exposes those dead controls. `src/scripts/verify-legacy-holiday-calendar-fullcalendar-contract.ts` locks the restored view controls, shareable view/date state, event labels, and existing modal/action guardrails."
   },
   {
     "legacyPhp": "Front/templates/admin/index.php",

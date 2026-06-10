@@ -4,6 +4,44 @@ import { getLegacyHolidayActionPermissions } from "@/lib/legacy-holiday-action-p
 import { requireOrgSafe } from "@/lib/require-org";
 import { HolidaysClient } from "./holidays-client";
 
+type HolidayCalendarView = "month" | "week" | "day";
+
+interface HolidayCalendarPageProps {
+  searchParams: Promise<{ month?: string; year?: string; view?: string; date?: string }>;
+}
+
+function parseMonth(value?: string) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 1 && parsed <= 12 ? parsed : null;
+}
+
+function parseYear(value?: string) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 1970 && parsed <= 2100
+    ? parsed
+    : null;
+}
+
+function parseView(value?: string): HolidayCalendarView {
+  return value === "week" || value === "day" ? value : "month";
+}
+
+function parseFocusedDate(value: string | undefined, year: number, month: number) {
+  if (value && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [dateYear, dateMonth, dateDay] = value.split("-").map(Number);
+    const date = new Date(dateYear, dateMonth - 1, dateDay);
+    if (
+      date.getFullYear() === dateYear &&
+      date.getMonth() === dateMonth - 1 &&
+      date.getDate() === dateDay
+    ) {
+      return value;
+    }
+  }
+
+  return `${year}-${String(month).padStart(2, "0")}-01`;
+}
+
 function normalizeNotificationDaysBefore(value: unknown, fallback: number) {
   if (Array.isArray(value)) {
     return Array.from(
@@ -17,7 +55,14 @@ function normalizeNotificationDaysBefore(value: unknown, fallback: number) {
   return fallback > 0 ? [fallback] : [];
 }
 
-export default async function HolidayCalendarPage() {
+export default async function HolidayCalendarPage({ searchParams }: HolidayCalendarPageProps) {
+  const params = await searchParams;
+  const now = new Date();
+  const initialYear = parseYear(params.year) ?? now.getFullYear();
+  const initialMonth = parseMonth(params.month) ?? now.getMonth() + 1;
+  const initialViewMode = parseView(params.view);
+  const initialFocusedDate = parseFocusedDate(params.date, initialYear, initialMonth);
+
   const orgResult = await requireOrgSafe();
   const holidayPermissions = orgResult.ok
     ? await getLegacyHolidayActionPermissions(orgResult.ctx)
@@ -60,6 +105,10 @@ export default async function HolidayCalendarPage() {
       holidays={serializedHolidays}
       branches={branches}
       canAddEditHolidays={holidayPermissions.canAddEditHolidays}
+      initialYear={initialYear}
+      initialMonth={initialMonth}
+      initialViewMode={initialViewMode}
+      initialFocusedDate={initialFocusedDate}
     />
   );
 }

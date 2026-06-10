@@ -23,6 +23,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -82,10 +83,17 @@ interface BranchOption {
   name: string;
 }
 
+type HolidayCalendarView = "month" | "week" | "day";
+type HolidayDisplayMode = "calendar" | "list";
+
 interface HolidaysClientProps {
   holidays: Holiday[];
   branches: BranchOption[];
   canAddEditHolidays?: boolean;
+  initialYear: number;
+  initialMonth: number;
+  initialViewMode: HolidayCalendarView;
+  initialFocusedDate: string;
 }
 
 // ── Calendar helpers ────────────────────────────
@@ -95,6 +103,12 @@ const MONTH_NAMES = [
 ];
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+const CALENDAR_VIEW_MODES: { value: HolidayCalendarView; label: string }[] = [
+  { value: "month", label: "Month" },
+  { value: "week", label: "Week" },
+  { value: "day", label: "Day" },
+];
 
 function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month, 0).getDate();
@@ -110,6 +124,39 @@ function toISODate(year: number, month: number, day: number): string {
 
 function dateToString(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function parseISODateKey(dateKey: string): Date {
+  const [dateYear, dateMonth, dateDay] = dateKey.split("-").map(Number);
+  return new Date(dateYear, dateMonth - 1, dateDay);
+}
+
+function addDays(date: Date, days: number): Date {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function getStartOfWeek(date: Date): Date {
+  return addDays(date, -date.getDay());
+}
+
+function formatDateKey(dateKey: string, options: Intl.DateTimeFormatOptions): string {
+  return parseISODateKey(dateKey).toLocaleDateString("en-US", options);
+}
+
+function buildHolidayCalendarPath(
+  year: number,
+  month: number,
+  viewMode: HolidayCalendarView,
+  focusedDate: string,
+) {
+  const params = new URLSearchParams();
+  params.set("month", String(month).padStart(2, "0"));
+  params.set("year", String(year));
+  params.set("view", viewMode);
+  params.set("date", focusedDate);
+  return `/settings/holidays?${params.toString()}`;
 }
 
 const DEFAULT_VALUES: HolidayFormValues = {
@@ -133,13 +180,17 @@ export function HolidaysClient({
   holidays: initialHolidays,
   branches,
   canAddEditHolidays = true,
+  initialYear,
+  initialMonth,
+  initialViewMode,
+  initialFocusedDate,
 }: HolidaysClientProps) {
   const [holidays, setHolidays] = useState(initialHolidays);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
+  const [displayMode, setDisplayMode] = useState<HolidayDisplayMode>("calendar");
 
   // Delete confirmation
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -147,8 +198,10 @@ export function HolidaysClient({
 
   // Calendar state
   const now = new Date();
-  const [calYear, setCalYear] = useState(now.getFullYear());
-  const [calMonth, setCalMonth] = useState(now.getMonth() + 1);
+  const [calYear, setCalYear] = useState(initialYear);
+  const [calMonth, setCalMonth] = useState(initialMonth);
+  const [calendarView, setCalendarView] = useState<HolidayCalendarView>(initialViewMode);
+  const [focusedDate, setFocusedDate] = useState(initialFocusedDate);
 
   // Form
   const form = useForm<HolidayFormValues>({
@@ -351,24 +404,55 @@ export function HolidaysClient({
     });
   }
 
-  // Calendar navigation
-  const prevMonth = useCallback(() => {
-    if (calMonth <= 1) {
-      setCalMonth(12);
-      setCalYear((y) => y - 1);
-    } else {
-      setCalMonth((m) => m - 1);
-    }
-  }, [calMonth]);
+  const replaceCalendarUrl = useCallback(
+    (year: number, month: number, view: HolidayCalendarView, date: string) => {
+      window.history.replaceState(
+        null,
+        "",
+        buildHolidayCalendarPath(year, month, view, date),
+      );
+    },
+    [],
+  );
 
-  const nextMonth = useCallback(() => {
-    if (calMonth >= 12) {
-      setCalMonth(1);
-      setCalYear((y) => y + 1);
-    } else {
-      setCalMonth((m) => m + 1);
-    }
-  }, [calMonth]);
+  // Calendar navigation
+  const movePeriod = useCallback(
+    (direction: -1 | 1) => {
+      const nextDate =
+        calendarView === "month"
+          ? new Date(calYear, calMonth - 1 + direction, 1)
+          : addDays(parseISODateKey(focusedDate), direction * (calendarView === "week" ? 7 : 1));
+      const nextYear = nextDate.getFullYear();
+      const nextMonth = nextDate.getMonth() + 1;
+      const nextFocusedDate = dateToString(nextDate);
+
+      setCalYear(nextYear);
+      setCalMonth(nextMonth);
+      setFocusedDate(nextFocusedDate);
+      replaceCalendarUrl(nextYear, nextMonth, calendarView, nextFocusedDate);
+    },
+    [calMonth, calYear, calendarView, focusedDate, replaceCalendarUrl],
+  );
+
+  const goToToday = useCallback(() => {
+    const today = new Date();
+    const nextYear = today.getFullYear();
+    const nextMonth = today.getMonth() + 1;
+    const nextFocusedDate = dateToString(today);
+
+    setCalYear(nextYear);
+    setCalMonth(nextMonth);
+    setFocusedDate(nextFocusedDate);
+    replaceCalendarUrl(nextYear, nextMonth, calendarView, nextFocusedDate);
+  }, [calendarView, replaceCalendarUrl]);
+
+  const handleCalendarViewChange = useCallback(
+    (nextView: HolidayCalendarView) => {
+      setCalendarView(nextView);
+      replaceCalendarUrl(calYear, calMonth, nextView, focusedDate);
+    },
+    [calMonth, calYear, focusedDate, replaceCalendarUrl],
+  );
 
   // Build calendar grid
   const daysInMonth = getDaysInMonth(calYear, calMonth);
@@ -467,6 +551,81 @@ export function HolidaysClient({
     }
     return result;
   }, [calendarWeeks, calYear, calMonth, holidaysByDate]);
+
+  const visibleDateKeys = useMemo(() => {
+    if (calendarView === "day") {
+      return [focusedDate];
+    }
+
+    if (calendarView === "week") {
+      const start = getStartOfWeek(parseISODateKey(focusedDate));
+      return Array.from({ length: 7 }, (_, index) => dateToString(addDays(start, index)));
+    }
+
+    return [];
+  }, [calendarView, focusedDate]);
+
+  const displayTitle = useMemo(() => {
+    if (calendarView === "day") {
+      return formatDateKey(focusedDate, {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      });
+    }
+
+    if (calendarView === "week") {
+      const firstDate = visibleDateKeys[0];
+      const lastDate = visibleDateKeys[visibleDateKeys.length - 1];
+      return `${formatDateKey(firstDate, { month: "short", day: "numeric" })} - ${formatDateKey(lastDate, { month: "short", day: "numeric", year: "numeric" })}`;
+    }
+
+    return `${MONTH_NAMES[calMonth - 1]} ${calYear}`;
+  }, [calMonth, calYear, calendarView, focusedDate, visibleDateKeys]);
+
+  const renderHolidayEvent = useCallback(
+    (holiday: Holiday, compact = false) => {
+      const isStrike = holiday.type === "STRIKE";
+      const label = isStrike ? "Strike" : "Holiday";
+      return (
+        <button
+          key={holiday.id}
+          type="button"
+          className={`min-w-0 rounded-sm px-2 py-1 text-left text-[11px] font-semibold leading-tight text-white transition-colors ${
+            isStrike
+              ? "bg-blue-500 shadow-sm shadow-blue-500/25"
+              : "bg-[#059669] shadow-sm shadow-[#059669]/25"
+          } ${
+            canAddEditHolidays
+              ? isStrike
+                ? "cursor-pointer hover:bg-blue-600"
+                : "cursor-pointer hover:bg-[#047857]"
+              : "cursor-default"
+          } ${!holiday.isActive ? "opacity-40 line-through" : ""} ${compact ? "truncate" : "flex flex-col gap-0.5"}`}
+          title={`${label}: ${holiday.name}${holiday.endDate ? ` (${holiday.date} - ${holiday.endDate})` : ""}`}
+          disabled={!canAddEditHolidays}
+          onClick={(event) => {
+            event.stopPropagation();
+            if (canAddEditHolidays) openEdit(holiday);
+          }}
+        >
+          {compact ? (
+            `${label}: ${holiday.name}`
+          ) : (
+            <>
+              <span className="truncate">{label}: {holiday.name}</span>
+              <span className="truncate text-[10px] font-medium opacity-90">
+                {holiday.branch}
+              </span>
+            </>
+          )}
+        </button>
+      );
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [canAddEditHolidays],
+  );
 
   const columns: ColumnDef<Holiday>[] = useMemo(
     () => {
@@ -568,19 +727,19 @@ export function HolidaysClient({
           <div className="flex items-center gap-2">
             <div className="flex items-center rounded-lg border p-0.5">
               <Button
-                variant={viewMode === "calendar" ? "default" : "ghost"}
+                variant={displayMode === "calendar" ? "default" : "ghost"}
                 size="sm"
-                className={viewMode === "calendar" ? "text-primary-foreground" : ""}
-                onClick={() => setViewMode("calendar")}
+                className={displayMode === "calendar" ? "text-primary-foreground" : ""}
+                onClick={() => setDisplayMode("calendar")}
               >
                 <LayoutGrid className="mr-1 size-4" />
                 Calendar
               </Button>
               <Button
-                variant={viewMode === "list" ? "default" : "ghost"}
+                variant={displayMode === "list" ? "default" : "ghost"}
                 size="sm"
-                className={viewMode === "list" ? "text-primary-foreground" : ""}
-                onClick={() => setViewMode("list")}
+                className={displayMode === "list" ? "text-primary-foreground" : ""}
+                onClick={() => setDisplayMode("list")}
               >
                 <List className="mr-1 size-4" />
                 List
@@ -601,36 +760,61 @@ export function HolidaysClient({
       />
 
       <div className="space-y-6 p-4 md:p-6">
-        {viewMode === "calendar" ? (
-          <Card className="overflow-hidden">
+        {displayMode === "calendar" ? (
+          <Card className="overflow-hidden" data-testid="holiday-calendar-surface">
             <CardContent className="p-0">
               {/* Calendar header */}
-              <div className="flex flex-wrap items-center justify-between border-b bg-muted/30 px-4 py-3">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b bg-muted/30 px-4 py-3">
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="icon" onClick={prevMonth}>
+                  <Button variant="outline" size="sm" onClick={goToToday}>
+                    <CalendarDays className="mr-1 size-4" />
+                    Today
+                  </Button>
+                  <Button variant="outline" size="icon" onClick={() => movePeriod(-1)}>
                     <ChevronLeft className="size-4" />
                   </Button>
                   <h3 className="text-base font-semibold text-foreground min-w-[180px] text-center">
-                    {MONTH_NAMES[calMonth - 1]} {calYear}
+                    {displayTitle}
                   </h3>
-                  <Button variant="outline" size="icon" onClick={nextMonth}>
+                  <Button variant="outline" size="icon" onClick={() => movePeriod(1)}>
                     <ChevronRight className="size-4" />
                   </Button>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1.5">
-                    <span className="inline-block size-3 rounded bg-[#059669]" />
-                    Holiday
-                  </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <span className="inline-block size-3 rounded bg-blue-500" />
-                    Strike
-                  </span>
+                <div className="flex flex-wrap items-center gap-3">
+                  <div
+                    className="inline-flex rounded-md border bg-background p-0.5"
+                    data-testid="holiday-calendar-view-controls"
+                  >
+                    {CALENDAR_VIEW_MODES.map((mode) => (
+                      <Button
+                        key={mode.value}
+                        type="button"
+                        variant={calendarView === mode.value ? "secondary" : "ghost"}
+                        size="sm"
+                        className="h-8 rounded-sm px-3"
+                        aria-pressed={calendarView === mode.value}
+                        onClick={() => handleCalendarViewChange(mode.value)}
+                      >
+                        {mode.label}
+                      </Button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="inline-block size-3 rounded bg-[#059669]" />
+                      Holiday
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="inline-block size-3 rounded bg-blue-500" />
+                      Strike
+                    </span>
+                  </div>
                 </div>
               </div>
 
               {/* Calendar grid */}
-              <div className="overflow-x-auto">
+              {calendarView === "month" ? (
+              <div className="overflow-x-auto" data-testid="holiday-calendar-month-view">
                 <table className="w-full border-collapse">
                   <thead>
                     <tr>
@@ -698,24 +882,11 @@ export function HolidaysClient({
                                 {barsByWeek[weekIdx]
                                   ?.filter((b) => b.startCol === dayIdx)
                                   .map((bar) => {
-                                    const isEvent = bar.holiday.type === "STRIKE";
                                     const isMultiDay = bar.span > 1;
                                     return (
                                       <div
                                         key={bar.holiday.id}
-                                        className={`truncate px-2 py-1 text-[11px] font-semibold leading-tight transition-colors ${
-                                          isMultiDay ? "rounded-lg" : "rounded-md"
-                                        } ${
-                                          isEvent
-                                            ? "bg-blue-500 text-white shadow-sm shadow-blue-500/25"
-                                            : "bg-[#059669] text-white shadow-sm shadow-[#059669]/25"
-                                        } ${
-                                          canAddEditHolidays
-                                            ? isEvent
-                                              ? "cursor-pointer hover:bg-blue-600"
-                                              : "cursor-pointer hover:bg-[#5A7A5E]"
-                                            : ""
-                                        } ${!bar.holiday.isActive ? "opacity-40 line-through" : ""}`}
+                                        className={isMultiDay ? "rounded-lg" : "rounded-md"}
                                         style={
                                           isMultiDay
                                             ? {
@@ -725,13 +896,8 @@ export function HolidaysClient({
                                               }
                                             : undefined
                                         }
-                                        title={`${bar.holiday.name}${bar.holiday.endDate ? ` (${bar.holiday.date} — ${bar.holiday.endDate})` : ""}`}
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          if (canAddEditHolidays) openEdit(bar.holiday);
-                                        }}
                                       >
-                                        {bar.holiday.name}
+                                        {renderHolidayEvent(bar.holiday, true)}
                                       </div>
                                     );
                                   })}
@@ -744,6 +910,72 @@ export function HolidaysClient({
                   </tbody>
                 </table>
               </div>
+              ) : (
+                <div
+                  className="divide-y"
+                  data-testid={`holiday-calendar-${calendarView}-view`}
+                >
+                  {visibleDateKeys.map((dateKey) => {
+                    const dayHolidays = holidaysByDate[dateKey] ?? [];
+                    const isToday = dateKey === dateToString(new Date());
+
+                    return (
+                      <div
+                        key={dateKey}
+                        role={canAddEditHolidays && dayHolidays.length === 0 ? "button" : undefined}
+                        tabIndex={canAddEditHolidays && dayHolidays.length === 0 ? 0 : undefined}
+                        className={`grid w-full grid-cols-[140px_1fr] gap-4 p-4 text-left transition-colors md:grid-cols-[190px_1fr] ${
+                          canAddEditHolidays && dayHolidays.length === 0
+                            ? "cursor-pointer hover:bg-primary/5"
+                            : ""
+                        } ${isToday ? "bg-primary/5" : ""}`}
+                        onClick={() => {
+                          if (canAddEditHolidays && dayHolidays.length === 0) openAdd(dateKey);
+                        }}
+                        onKeyDown={(event) => {
+                          if (
+                            canAddEditHolidays &&
+                            dayHolidays.length === 0 &&
+                            (event.key === "Enter" || event.key === " ")
+                          ) {
+                            event.preventDefault();
+                            openAdd(dateKey);
+                          }
+                        }}
+                      >
+                        <span className="space-y-1">
+                          <span className="block text-xs font-semibold uppercase text-muted-foreground">
+                            {formatDateKey(dateKey, { weekday: "long" })}
+                          </span>
+                          <span className="block text-sm font-medium text-foreground">
+                            {formatDateKey(dateKey, {
+                              month: "long",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </span>
+                        </span>
+                        {dayHolidays.length > 0 ? (
+                          <span className="flex min-w-0 flex-col gap-1">
+                            {dayHolidays.map((holiday) => renderHolidayEvent(holiday))}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                            {canAddEditHolidays ? (
+                              <>
+                                <Plus className="size-4" />
+                                Create Holiday
+                              </>
+                            ) : (
+                              "No holidays"
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </CardContent>
           </Card>
         ) : (
@@ -756,6 +988,9 @@ export function HolidaysClient({
         <DialogContent className="sm:max-w-[540px] rounded-sm">
           <DialogHeader>
             <DialogTitle>{dialogMode === "add" ? "Create Holiday" : "Update Holiday"}</DialogTitle>
+            <DialogDescription>
+              Configure the holiday date, recurrence, branch, and legacy notification reminders.
+            </DialogDescription>
           </DialogHeader>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2 max-h-[70vh] overflow-y-auto pr-1">
             {/* Name */}
