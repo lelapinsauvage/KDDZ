@@ -147,6 +147,23 @@ for (const actionName of [
   assert.match(text.actions, new RegExp(`export async function ${actionName}`));
 }
 
+for (const restoredScope of [
+  "const REQUEST_RECEIPT_SOURCE = \"custom_notifications_requests\"",
+  "const REQUEST_PARENT_RECEIPT_SOURCE = \"custom_notifications_requests_parents\"",
+  "const OTHER_RECEIPT_SOURCE = \"custom_notifications_others\"",
+  "const OTHER_PARENT_RECEIPT_SOURCE = \"custom_notifications_others_parents\"",
+  "sourceTables: [REQUEST_RECEIPT_SOURCE, REQUEST_PARENT_RECEIPT_SOURCE]",
+  "sourceTables: [OTHER_RECEIPT_SOURCE, OTHER_PARENT_RECEIPT_SOURCE]",
+  'historyRecipientTypes: ["USER", "PARENT_USER", "CHILD"]',
+  "includeCurrentUserInHistory: false",
+  'return { recipientId: userId, recipientType: "USER" }',
+]) {
+  assert.ok(
+    text.actions.includes(restoredScope),
+    `Missing request/other recipient-scope contract: ${restoredScope}`,
+  );
+}
+
 type MatrixRow = {
   legacyPhp?: string;
   modernRoute?: string;
@@ -168,7 +185,10 @@ assert.equal(
 assert.match(requestRow.verification ?? "", /Browser smoke confirmed `\/alarmsRequests\.php` redirects to `\/alarms\/requests`/);
 assert.match(requestRow.verification ?? "", /Dashboard and Notifications tabs/);
 assert.match(requestRow.verification ?? "", /Sent Requests Alarms/);
+assert.match(requestRow.verification ?? "", /Teacher notification tabs remain current-user scoped/);
+assert.match(requestRow.verification ?? "", /Sent history spans USER, PARENT_USER, and CHILD receipts/);
 assert.match(requestRow.verification ?? "", /no broken images or app errors/);
+assert.doesNotMatch(requestRow.verification ?? "", /exact parent-vs-teacher active table semantics/);
 
 const otherRow = matrix.find(
   (entry) => entry.legacyPhp === "Front/templates/admin/alarmsOthers.php",
@@ -182,7 +202,10 @@ assert.equal(
 assert.match(otherRow.verification ?? "", /Browser smoke confirmed `\/alarmsOthers\.php` redirects to `\/alarms\/others`/);
 assert.match(otherRow.verification ?? "", /Dashboard and Notifications tabs/);
 assert.match(otherRow.verification ?? "", /Sent Others Alarms/);
+assert.match(otherRow.verification ?? "", /Teacher notification tabs remain current-user scoped/);
+assert.match(otherRow.verification ?? "", /Sent history spans USER, PARENT_USER, and CHILD receipts/);
 assert.match(otherRow.verification ?? "", /no broken images or app errors/);
+assert.doesNotMatch(otherRow.verification ?? "", /exact parent-vs-teacher active table semantics/);
 
 for (const legacyPhp of ["alarmsRequests.php", "alarmsOthers.php"]) {
   const markdownRow = text.markdownMatrix
