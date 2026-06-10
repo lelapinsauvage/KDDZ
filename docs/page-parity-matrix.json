@@ -16129,7 +16129,7 @@
     "legacyPhp": "Front/templates/admin/classesperbranch.php",
     "legacyJs": "Front/templates/admin/js/classesperbranch.js",
     "modernRoute": "/classesperbranch.php, /branches/[id]/classes",
-    "status": "partial - branch-scoped class listing, filters, ACL, bridge, and locked branch table restored; visual audit remains",
+    "status": "restored - branch-scoped class listing, filters, TableTools export, print, lightbox preview, ACL, bridge, and locked branch table restored",
     "legacyTablesMentioned": [
       "t_branch",
       "t_class",
@@ -16152,7 +16152,7 @@
       "order_date_to",
       "q"
     ],
-    "verification": "Restored the legacy branch-scoped Classes Listing: `/classesperbranch.php?brid=` resolves raw numeric, UUID, and encrypted legacy branch ids; missing `brid` falls back to `/classes`; supported legacy filter aliases are preserved into the modern branch route; the page shows `Classes Management For Branch: {branch}`, `{branch} Branch Classes Listing`, New Class, checkbox select-all, S.N., Image, Class, Language, Max Students, locked Branch column, Date, Action, per-column filters, created-date range, Clear, 10/20/50/100/150/All page sizes, Excel/CSV export, print, legacy image fallback, update dialog, class dashboard action, and legacy-style soft deactivate. Class `addClass`, `updateClass`, and `deleteClass` ACTION grants now hide New/Edit/Delete controls and deny the same branch-scoped class write mutations when the imported action catalogue is configured and not granted. Remaining work is exact Metronic/DataTables copy/PDF/XLS/print visual parity, lightbox image-preview behavior, and final logged-in browser smoke."
+    "verification": "Restored the legacy branch-scoped Classes Listing: `/classesperbranch.php?brid=` resolves raw numeric, UUID, and encrypted legacy branch ids; missing `brid` falls back to `/classes`; supported legacy filter aliases are preserved into the modern branch route; the page shows `Classes Management For Branch: {branch}`, `{branch} Branch Classes Listing`, New Class, checkbox select-all, S.N., Image, Class, Language, Max Students, locked Branch column, Date, Action, per-column filters, created-date range, Clear, 10/20/50/100/150/All page sizes, Copy/PDF/Excel/CSV export, print, legacy image fallback, clickable image preview/lightbox, update dialog, class dashboard action, and legacy-style soft deactivate. Class `addClass`, `updateClass`, and `deleteClass` ACTION grants now hide New/Edit/Delete controls and deny the same branch-scoped class write mutations when the imported action catalogue is configured and not granted. Browser smoke confirmed `/classesperbranch.php?brid=` redirects to `/branches/[id]/classes`, loads real branch-scoped rows with legacy headers and locked branch context, keeps the restored `ClassPhoto/default.jpg` fallback unbroken, opens the class image preview dialog, and exposes Copy/Excel/CSV/PDF export plus print. Verified by `src/scripts/verify-legacy-branch-classes-tabletools-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/dailyreport.php",

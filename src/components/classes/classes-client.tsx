@@ -193,22 +193,47 @@ function statusClass(isActive: boolean) {
 
 function ClassThumbnail({ cls, size = "table" }: { cls: ClassItem; size?: "table" | "card" }) {
   const [src, setSrc] = useState(classPhotoSrc(cls.imageUrl));
+  const [previewOpen, setPreviewOpen] = useState(false);
   const dimension = size === "card" ? "size-14" : "size-16";
 
   return (
-    <div className={`${dimension} overflow-hidden rounded-sm border bg-muted`}>
-      <Image
-        src={src}
-        alt={cls.name}
-        width={size === "card" ? 56 : 64}
-        height={size === "card" ? 56 : 64}
-        className="h-full w-full object-cover"
-        unoptimized
-        onError={() => {
-          if (src !== DEFAULT_CLASS_PHOTO) setSrc(DEFAULT_CLASS_PHOTO);
-        }}
-      />
-    </div>
+    <>
+      <button
+        type="button"
+        className={`${dimension} overflow-hidden rounded-sm border bg-muted p-0 transition-opacity hover:opacity-85`}
+        onClick={() => setPreviewOpen(true)}
+        aria-label={`Preview ${cls.name} image`}
+      >
+        <Image
+          src={src}
+          alt={cls.name}
+          width={size === "card" ? 56 : 64}
+          height={size === "card" ? 56 : 64}
+          className="h-full w-full object-cover"
+          unoptimized
+          onError={() => {
+            if (src !== DEFAULT_CLASS_PHOTO) setSrc(DEFAULT_CLASS_PHOTO);
+          }}
+        />
+      </button>
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{cls.name}</DialogTitle>
+          </DialogHeader>
+          <div className="flex justify-center">
+            <Image
+              src={src}
+              alt={cls.name}
+              width={520}
+              height={390}
+              className="max-h-[70vh] w-auto rounded-sm object-contain"
+              unoptimized
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
