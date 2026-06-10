@@ -16,6 +16,7 @@ import {
 } from "./legacy-auth-identity";
 import {
   configuredLegacyOAuthProviders,
+  createLegacySocialSignupPrefill,
   isLegacySocialAuthProvider,
   recordLegacySocialLoginAudit,
   resolveLegacySocialAuthIdentity,
@@ -244,7 +245,7 @@ async function legacySocialSessionPayload(params: {
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
   callbacks: {
-    async signIn({ account, user }) {
+    async signIn({ account, user, profile }) {
       if (!isLegacySocialAuthProvider(account?.provider)) return true;
       const { db } = await import("./db");
       const identity = await resolveLegacySocialAuthIdentity({
@@ -252,7 +253,26 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         providerAccountId: account?.providerAccountId,
         email: user.email,
       });
-      if (!identity?.user) return false;
+      if (!identity?.user) {
+        const username =
+          typeof profile?.login === "string"
+            ? profile.login
+            : typeof profile?.username === "string"
+              ? profile.username
+              : typeof profile?.screen_name === "string"
+                ? profile.screen_name
+                : null;
+        const prefillKey = await createLegacySocialSignupPrefill({
+          provider: account?.provider ?? "",
+          providerAccountId: account?.providerAccountId,
+          email: user.email,
+          name: user.name,
+          username,
+        });
+        return prefillKey
+          ? `/signup?new_social=1&social=${encodeURIComponent(prefillKey)}`
+          : false;
+      }
 
       const disabledStatus = await getLegacyLoginDisabledStatus(db, identity);
       return !disabledStatus.isDisabled;

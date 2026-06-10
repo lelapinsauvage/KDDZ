@@ -46,7 +46,7 @@ assert.match(text.auth, /configuredLegacyOAuthProviders/);
 assert.match(text.auth, /isLegacySocialAuthProvider/);
 assert.match(text.auth, /resolveLegacySocialAuthIdentity/);
 assert.match(text.auth, /recordLegacySocialLoginAudit/);
-assert.match(text.auth, /async signIn\(\{ account, user \}\)/);
+assert.match(text.auth, /async signIn\(\{ account, user, profile \}\)/);
 assert.match(text.auth, /async jwt\(params\)/);
 assert.match(text.auth, /token\.legacyLogin = payload\.legacyLogin/);
 assert.match(text.auth, /token\.legacyAccess = payload\.legacyAccess/);

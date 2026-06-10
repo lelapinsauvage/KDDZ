@@ -6,7 +6,7 @@ import {
   type ResolvedStaffLoginIdentity,
 } from "@/lib/legacy-auth-identity";
 
-type LegacySocialProviderKey = "facebook" | "google" | "twitter" | "yahoo";
+export type LegacySocialProviderKey = "facebook" | "google" | "twitter" | "yahoo";
 
 type LegacySocialProviderDefinition = {
   key: LegacySocialProviderKey;
@@ -30,6 +30,16 @@ export type ConfiguredLegacyOAuthProvider = LegacySocialProviderStatus & {
   authProviderId: string;
   clientId: string;
   clientSecret: string;
+};
+
+export type LegacySocialSignupPrefill = {
+  key: string;
+  provider: LegacySocialProviderKey;
+  providerLabel: string;
+  providerAccountId: string;
+  email: string;
+  name: string;
+  username: string;
 };
 
 export const LEGACY_SOCIAL_PROVIDER_DEFINITIONS: LegacySocialProviderDefinition[] =
@@ -90,6 +100,22 @@ function legacyString(value: unknown, key: string) {
   return "";
 }
 
+function providerDefinitionForKey(key: LegacySocialProviderKey) {
+  return LEGACY_SOCIAL_PROVIDER_DEFINITIONS.find((provider) => provider.key === key);
+}
+
+function linkedSocialProviderList(data: Record<string, unknown>) {
+  return LEGACY_SOCIAL_PROVIDER_DEFINITIONS.flatMap((provider) => {
+    const identifier = legacyString(data, provider.key);
+    return identifier ? [provider.key] : [];
+  }).join(",");
+}
+
+function emailUsername(email: string) {
+  const local = email.split("@")[0]?.trim() ?? "";
+  return local.replace(/[^a-zA-Z0-9_.-]/g, "").slice(0, 15);
+}
+
 export function legacySocialProviderStatuses(): LegacySocialProviderStatus[] {
   return LEGACY_SOCIAL_PROVIDER_DEFINITIONS.map((provider) => {
     const clientId = envValue(provider.clientIdEnv);
@@ -141,6 +167,227 @@ export function legacySocialKeyForAuthProvider(
       (entry) => entry.authProviderId === provider,
     )?.key ?? null
   );
+}
+
+export async function createLegacySocialSignupPrefill(params: {
+  provider: string;
+  providerAccountId?: string | null;
+  email?: string | null;
+  name?: string | null;
+  username?: string | null;
+}) {
+  const legacyProviderKey = legacySocialKeyForAuthProvider(params.provider);
+  const providerAccountId = params.providerAccountId?.trim();
+  if (!legacyProviderKey || !providerAccountId) return null;
+
+  const email = params.email?.trim().toLowerCase() ?? "";
+  const username =
+    params.username?.trim() ||
+    (email ? emailUsername(email) : "") ||
+    `${legacyProviderKey}_${providerAccountId}`.slice(0, 15);
+  const name = params.name?.trim() || username || email || providerAccountId;
+  const key = randomBytes(24).toString("hex");
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + 30 * 60 * 1000);
+  const providerDefinition = providerDefinitionForKey(legacyProviderKey);
+
+  await db.legacyAuthRecord.create({
+    data: {
+      sourceDatabase: "modern",
+      legacyTable: "login_integration_signup",
+      legacyKey: `modern:login_integration_signup:${key}`,
+      legacyId: 0,
+      recordType: "social_signup_prefill",
+      email: email || null,
+      username,
+      recordKey: key,
+      recordValue: providerAccountId,
+      legacyData: {
+        provider: legacyProviderKey,
+        providerLabel: providerDefinition?.label ?? legacyProviderKey,
+        authProvider: params.provider,
+        providerAccountId,
+        email,
+        name,
+        username,
+        createdAt: now.toISOString(),
+        expiresAt: expiresAt.toISOString(),
+        inserted_from: "modern_oauth_new_social",
+      },
+    },
+  });
+
+  return key;
+}
+
+export async function getLegacySocialSignupPrefill(
+  key: string | null | undefined,
+): Promise<LegacySocialSignupPrefill | null> {
+  const trimmed = key?.trim();
+  if (!trimmed) return null;
+
+  const record = await db.legacyAuthRecord.findFirst({
+    where: {
+      legacyTable: "login_integration_signup",
+      recordType: "social_signup_prefill",
+      recordKey: trimmed,
+      OR: [{ isDisabled: false }, { isDisabled: null }],
+    },
+    orderBy: { createdAt: "desc" },
+    select: {
+      recordKey: true,
+      recordValue: true,
+      legacyData: true,
+    },
+  });
+  if (!record?.recordKey || !record.recordValue) return null;
+
+  const data = legacyObject(record.legacyData);
+  const provider = legacyString(data, "provider") as LegacySocialProviderKey;
+  const providerDefinition = providerDefinitionForKey(provider);
+  if (!providerDefinition) return null;
+
+  const expiresAt = legacyString(data, "expiresAt");
+  if (expiresAt && Date.parse(expiresAt) <= Date.now()) return null;
+
+  return {
+    key: record.recordKey,
+    provider,
+    providerLabel: legacyString(data, "providerLabel") || providerDefinition.label,
+    providerAccountId: legacyString(data, "providerAccountId") || record.recordValue,
+    email: legacyString(data, "email"),
+    name: legacyString(data, "name"),
+    username: legacyString(data, "username"),
+  };
+}
+
+export async function consumeLegacySocialSignupPrefill(
+  tx: Prisma.TransactionClient,
+  params: {
+    key?: string | null;
+    sourceDatabase: string;
+    userId: string;
+    legacyUserId: number;
+    username: string;
+    email: string;
+  },
+) {
+  const key = params.key?.trim();
+  if (!key) return null;
+
+  const record = await tx.legacyAuthRecord.findFirst({
+    where: {
+      legacyTable: "login_integration_signup",
+      recordType: "social_signup_prefill",
+      recordKey: key,
+      OR: [{ isDisabled: false }, { isDisabled: null }],
+    },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      recordValue: true,
+      legacyData: true,
+    },
+  });
+  if (!record?.recordValue) return null;
+
+  const data = legacyObject(record.legacyData);
+  const expiresAt = legacyString(data, "expiresAt");
+  if (expiresAt && Date.parse(expiresAt) <= Date.now()) {
+    await tx.legacyAuthRecord.update({
+      where: { id: record.id },
+      data: {
+        isDisabled: true,
+        recordType: "social_signup_prefill_expired",
+        legacyData: {
+          ...data,
+          expiredAt: new Date().toISOString(),
+          updated_from: "modern_legacy_signup",
+        },
+      },
+    });
+    return null;
+  }
+
+  const provider = legacyString(data, "provider") as LegacySocialProviderKey;
+  if (!providerDefinitionForKey(provider)) return null;
+
+  const existing = await tx.legacyAuthRecord.findFirst({
+    where: {
+      sourceDatabase: params.sourceDatabase,
+      legacyTable: "login_integration",
+      recordType: "social_integration",
+      legacyUserId: params.legacyUserId,
+    },
+    orderBy: [{ legacyId: "desc" }],
+    select: {
+      id: true,
+      legacyData: true,
+    },
+  });
+  const existingData = legacyObject(existing?.legacyData) as Prisma.InputJsonObject;
+  const updatedData: Prisma.InputJsonObject = {
+    ...existingData,
+    [provider]: record.recordValue,
+    user_id: params.legacyUserId,
+    [`${provider}_linked_at`]: new Date().toISOString(),
+    linked_from: "modern_legacy_social_signup",
+  };
+  const linkedProviders = linkedSocialProviderList(updatedData);
+
+  if (existing) {
+    await tx.legacyAuthRecord.update({
+      where: { id: existing.id },
+      data: {
+        userId: params.userId,
+        legacyUserId: params.legacyUserId,
+        username: params.username,
+        email: params.email,
+        recordValue: linkedProviders,
+        isDisabled: false,
+        legacyData: updatedData,
+      },
+    });
+  } else {
+    await tx.legacyAuthRecord.create({
+      data: {
+        sourceDatabase: params.sourceDatabase,
+        legacyTable: "login_integration",
+        legacyKey: `${params.sourceDatabase}:login_integration:${params.legacyUserId}`,
+        legacyId: params.legacyUserId,
+        recordType: "social_integration",
+        userId: params.userId,
+        legacyUserId: params.legacyUserId,
+        username: params.username,
+        email: params.email,
+        recordKey: String(params.legacyUserId),
+        recordValue: linkedProviders,
+        isDisabled: false,
+        legacyData: updatedData,
+      },
+    });
+  }
+
+  await tx.legacyAuthRecord.update({
+    where: { id: record.id },
+    data: {
+      isDisabled: true,
+      recordType: "social_signup_prefill_used",
+      userId: params.userId,
+      legacyUserId: params.legacyUserId,
+      username: params.username,
+      email: params.email,
+      legacyData: {
+        ...data,
+        consumedAt: new Date().toISOString(),
+        consumedByUserId: params.userId,
+        consumedByLegacyUserId: params.legacyUserId,
+        updated_from: "modern_legacy_signup",
+      },
+    },
+  });
+
+  return { provider, providerAccountId: record.recordValue };
 }
 
 function providerAccountCandidates(params: {

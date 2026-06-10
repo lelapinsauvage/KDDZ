@@ -8,6 +8,8 @@ export const dynamic = "force-dynamic";
 interface PageProps {
   searchParams: Promise<{
     source?: string | string[];
+    social?: string | string[];
+    new_social?: string | string[];
   }>;
 }
 
@@ -20,7 +22,10 @@ export default async function SignupPage({ searchParams }: PageProps) {
   if (session?.user) redirect("/dashboard");
 
   const params = await searchParams;
-  const result = await getLegacySignupPageData(firstParam(params.source));
+  const result = await getLegacySignupPageData(
+    firstParam(params.source),
+    firstParam(params.social),
+  );
 
   return (
     <LegacySignupClient
@@ -34,6 +39,8 @@ export default async function SignupPage({ searchParams }: PageProps) {
           recaptchaPublicKey: "",
           defaultLevelLabels: [],
           profileFields: [],
+          socialSignupPrefill: null,
+          socialSignupNotice: null,
         }
       }
       error={result.success ? null : (result.error ?? null)}

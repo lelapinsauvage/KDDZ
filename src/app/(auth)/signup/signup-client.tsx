@@ -70,9 +70,11 @@ function initialProfileState(fields: LegacySignupProfileField[]) {
 export function LegacySignupClient({ data, error }: LegacySignupClientProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [name, setName] = useState("");
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
+  const [name, setName] = useState(data.socialSignupPrefill?.name ?? "");
+  const [username, setUsername] = useState(
+    data.socialSignupPrefill?.username ?? "",
+  );
+  const [email, setEmail] = useState(data.socialSignupPrefill?.email ?? "");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [captchaNonce, setCaptchaNonce] = useState(0);
@@ -124,6 +126,7 @@ export function LegacySignupClient({ data, error }: LegacySignupClientProps) {
         password,
         passwordConfirm,
         captchaToken,
+        socialSignupKey: data.socialSignupPrefill?.key,
         profileValues: data.profileFields.map((field) => ({
           fieldLegacyId: field.legacyId,
           value: profileValues[fieldStateKey(field)] ?? null,
@@ -180,6 +183,11 @@ export function LegacySignupClient({ data, error }: LegacySignupClientProps) {
           </div>
 
           <StatusMessage status={status} />
+          {data.socialSignupNotice ? (
+            <div className="mb-4 rounded-sm border border-[#B7E4D6] bg-[#EFFCF8] px-3 py-2 text-sm font-medium text-[#0B7464]">
+              {data.socialSignupNotice}
+            </div>
+          ) : null}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">

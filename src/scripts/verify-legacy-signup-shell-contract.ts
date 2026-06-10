@@ -65,7 +65,10 @@ const row = matrix.find(
   (entry) => entry.legacyPhp === "Front/templates/admin/users/sign_up.php",
 );
 assert.ok(row);
-assert.match(row.status ?? "", /restored - legacy signup page shell, side copy, fields, and bridges restored/);
+assert.match(
+  row.status ?? "",
+  /restored - legacy signup page shell, (social signup prefill, )?side copy, fields, and bridges restored/,
+);
 assert.match(row.verification ?? "", /right-column legacy marketing copy/);
 assert.match(row.verification ?? "", /verify-legacy-signup-shell-contract\.ts/);
 assert.doesNotMatch(row.verification ?? "", /Remaining work is exact legacy marketing side-copy/);
@@ -78,7 +81,7 @@ const markdownRows = text.markdownMatrix
 assert.equal(markdownRows.length, 1);
 assert.match(
   markdownRows[0],
-  /restored - legacy signup page shell, side copy, fields, and bridges restored/,
+  /restored - legacy signup page shell, (social signup prefill, )?side copy, fields, and bridges restored/,
 );
 assert.doesNotMatch(markdownRows[0], /Remaining work is exact legacy marketing side-copy/);
 

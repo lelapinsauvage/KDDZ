@@ -6,6 +6,11 @@ import { revalidatePath } from "next/cache";
 import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import { deliverEmail, emailDeliveryAuditData } from "@/lib/email-delivery";
+import {
+  consumeLegacySocialSignupPrefill,
+  getLegacySocialSignupPrefill,
+  type LegacySocialSignupPrefill,
+} from "@/lib/legacy-social-auth";
 
 type UserRole = "ADMIN" | "TEACHER" | "NURSE" | "DOCTOR" | "MANAGER";
 
@@ -35,6 +40,8 @@ export type LegacySignupPageData = {
   recaptchaPublicKey: string;
   defaultLevelLabels: string[];
   profileFields: LegacySignupProfileField[];
+  socialSignupPrefill: LegacySocialSignupPrefill | null;
+  socialSignupNotice: string | null;
 };
 
 export type LegacySignupProfileValueInput = {
@@ -50,6 +57,7 @@ export type LegacySignupInput = {
   password: string;
   passwordConfirm: string;
   captchaToken?: string;
+  socialSignupKey?: string;
   profileValues?: LegacySignupProfileValueInput[];
 };
 
@@ -415,6 +423,7 @@ async function getSourceContext(sourceDatabase: string) {
 
 export async function getLegacySignupPageData(
   requestedSource?: string | null,
+  socialSignupKey?: string | null,
 ): Promise<ActionResult<LegacySignupPageData>> {
   try {
     const source = choosePreferredSource(
@@ -434,11 +443,14 @@ export async function getLegacySignupPageData(
           recaptchaPublicKey: "",
           defaultLevelLabels: [],
           profileFields: [],
+          socialSignupPrefill: null,
+          socialSignupNotice: null,
         },
       };
     }
 
     const context = await getSourceContext(source);
+    const socialSignupPrefill = await getLegacySocialSignupPrefill(socialSignupKey);
     return {
       success: true,
       data: {
@@ -456,6 +468,10 @@ export async function getLegacySignupPageData(
         recaptchaPublicKey: setting(context.settings, "reCAPTCHA-public-key"),
         defaultLevelLabels: context.defaultLevelLabels,
         profileFields: context.profileFields,
+        socialSignupPrefill,
+        socialSignupNotice: socialSignupPrefill
+          ? "We don't see you as a registered user. Perhaps you'd like to sign up :)"
+          : null,
       },
     };
   } catch (error) {
@@ -833,6 +849,15 @@ export async function createLegacySignup(
         values: submittedValues,
       });
 
+      const socialSignupLink = await consumeLegacySocialSignupPrefill(tx, {
+        key: input.socialSignupKey,
+        sourceDatabase,
+        userId: user.id,
+        legacyUserId,
+        username,
+        email,
+      });
+
       let activationRecordId: string | null = null;
       if (key && activationLegacyData) {
         const activationRecord = await tx.legacyAuthRecord.create({
@@ -887,6 +912,7 @@ export async function createLegacySignup(
         activationRecordId,
         adminNotificationRecipients,
         adminRecipientIds,
+        socialSignupLink,
       };
     });
     const welcomeDelivery = shouldSendWelcome
@@ -947,6 +973,15 @@ export async function createLegacySignup(
                   body: newUserBody,
                   deliveryConfigured: adminEmailDelivery.configured,
                   emailDelivery: emailDeliveryAuditData(adminEmailDelivery),
+                },
+              }
+            : {}),
+          ...(created.socialSignupLink
+            ? {
+                socialSignup: {
+                  provider: created.socialSignupLink.provider,
+                  providerAccountId: created.socialSignupLink.providerAccountId,
+                  linkedFrom: "modern_legacy_social_signup",
                 },
               }
             : {}),
