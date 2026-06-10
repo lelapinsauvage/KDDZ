@@ -11,6 +11,7 @@ const files = {
   receiptClient:
     "src/app/(app)/alarms/_components/staff-receipt-alarms-client.tsx",
   actions: "src/lib/actions/alarms.ts",
+  insuranceJob: "src/lib/jobs/insurance-alarms.ts",
   matrix: "docs/page-parity-matrix.json",
   markdownMatrix: "docs/page-parity-matrix.md",
   topGaps: "docs/top-20-restoration-gaps.md",
@@ -70,6 +71,10 @@ assert.match(text.actions, /export async function getInsuranceAlarmHistory/);
 assert.match(text.actions, /export async function generateInsuranceAlarms/);
 assert.match(text.actions, /export async function markInsuranceAlarmViewed/);
 assert.match(text.actions, /export async function markAllInsuranceAlarmsViewed/);
+assert.match(text.insuranceJob, /deliverPushNotification/);
+assert.match(text.insuranceJob, /pushDeliveryAuditData/);
+assert.match(text.insuranceJob, /pushDelivery/);
+assert.match(text.insuranceJob, /recipientUserIds: params\.recipientUserIds/);
 
 type MatrixRow = {
   legacyPhp?: string;
@@ -92,17 +97,21 @@ assert.match(row.verification ?? "", /Browser smoke confirmed `\/alarmsInsurance
 assert.match(row.verification ?? "", /Insurance Notifications Listing/);
 assert.match(row.verification ?? "", /Sent Insurance Reminders/);
 assert.match(row.verification ?? "", /no broken images or app errors/);
+assert.match(row.verification ?? "", /provider-neutral staff push delivery/);
+assert.match(row.verification ?? "", /pushDelivery/);
+assert.match(row.verification ?? "", /verify-insurance-push-delivery\.ts/);
 
 const markdownRow = text.markdownMatrix
   .split("\n")
   .find((line) => line.includes("| Front/templates/admin/alarmsInsurance.php |"));
 assert.match(markdownRow ?? "", /browser visual audit restored/);
 assert.match(markdownRow ?? "", /Browser smoke confirmed `\/alarmsInsurance\.php`/);
+assert.match(markdownRow ?? "", /provider-neutral staff push delivery/);
 assert.doesNotMatch(markdownRow ?? "", /final visual audit/);
 
 assert.match(
   text.topGaps,
-  /Insurance alarms browser smoke now confirms the legacy `\/alarmsInsurance\.php` bridge/,
+  /Insurance alarms now audit provider-neutral staff push delivery on generated expiry reminders/,
 );
 
 console.log("legacy insurance alarms visual contract assertions passed");
