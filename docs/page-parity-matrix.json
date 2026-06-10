@@ -16477,7 +16477,7 @@
     "legacyPhp": "Front/templates/admin/parent_users.php",
     "legacyJs": "Front/templates/admin/js/parent_users.js",
     "modernRoute": "/parent_users.php, /settings/parent-users",
-    "status": "partial - legacy parent-users roster, copy/PDF exports, and credential channel delivery restored",
+    "status": "restored - legacy parent-users roster, exports, bridge, and roster actions restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -16485,7 +16485,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "`/parent_users.php` now redirects to the modern parent-users listing. The modern roster now restores the legacy `Parent System Users Control` surface with separate `Children With Parent User` and `Children without Parent Users` tables, `#` child-number column, Name, Username, Status, Branch, Class, Action columns, create-user action for children without accounts, active/inactive status toggles, password reset feedback, reset-plus-send SMS/WhatsApp provider-neutral credential delivery, search filters, 10/20/50/100/150/All page sizes, and Copy/PDF/Excel/CSV export plus print actions. Remaining work is final `parent_user.php` visual/modal audit and production provider credential rollout."
+    "verification": "Restored the legacy `Parent System Users Control` roster from `parent_users.php`/`parent_users.js`: `/parent_users.php` redirects to `/settings/parent-users`, the modern page preserves the guarded parent-users surface with separate `Children With Parent User` and `Children without Parent Users` sections, legacy child `#` identifiers, Name, Username, Status, Branch, Class, and Action columns, child-account creation for children without accounts, active/inactive toggles, password reset, reset-plus-send SMS/WhatsApp credential delivery with audit data, table search filters, 10/20/50/100/150/All page sizes, Copy/PDF/Excel/CSV export, and print actions. Browser smoke confirmed the legacy bridge redirect, roster title, both legacy section captions, table headers, export/print controls, rows selector, and no broken media on `/settings/parent-users`. Verified by `src/scripts/verify-legacy-parent-users-roster-contract.ts`; remaining `parent_user.php` detail visual/provider rollout work stays tracked on the separate detail parity row."
   },
   {
     "legacyPhp": "Front/templates/admin/payroll_det_data.php",
