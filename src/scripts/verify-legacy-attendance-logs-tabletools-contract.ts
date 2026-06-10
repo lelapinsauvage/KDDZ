@@ -13,6 +13,7 @@ const files = {
   exportButton: "src/components/shared/export-button.tsx",
   migration: "src/scripts/migration/migrate-employees.ts",
   matrix: "docs/page-parity-matrix.json",
+  matrixMd: "docs/page-parity-matrix.md",
 };
 
 const contents = Object.fromEntries(
@@ -105,6 +106,27 @@ assert.match(
 assert.match(
   contents.matrix,
   /PA_logs\.php[\s\S]*verify-legacy-attendance-logs-tabletools-contract\.ts/,
+);
+
+assert.match(
+  contents.matrixMd,
+  /PA_logs\.php \| Front\/templates\/admin\/js\/pa_logs\.js \| \/PA_logs\.php, \/employees\/attendance-logs \| restored - legacy attendance logs columns, filters, TableTools export, print, and bridge restored/,
+);
+assert.match(
+  contents.matrixMd,
+  /PA_logs\.php[\s\S]*shared TableTools-equivalent Copy\/PDF\/Excel\/CSV export plus print in legacy column order/,
+);
+assert.match(
+  contents.matrixMd,
+  /PA_logs\.php[\s\S]*legacy websocket block in `pa_logs\.js` is commented out/,
+);
+assert.match(
+  contents.matrixMd,
+  /PA_logs\.php[\s\S]*verify-legacy-attendance-logs-tabletools-contract\.ts/,
+);
+assert.doesNotMatch(
+  contents.matrixMd,
+  /PA_logs\.php[^\n]*visual audit remains/,
 );
 
 console.log("legacy attendance logs TableTools contract assertions passed");
