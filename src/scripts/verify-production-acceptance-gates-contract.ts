@@ -135,7 +135,11 @@ assert.match(contents.topGaps, /legacy-production-acceptance-gates\.md/);
 assert.match(contents.cron, /legacy-production-acceptance-gates\.md/);
 assert.match(contents.native, /legacy-production-acceptance-gates\.md/);
 assert.match(contents.migrationReadme, /reconcile-migration-counts\.ts/);
-assert.match(readFileSync("src/scripts/audit-production-readiness.ts", "utf8"), /No environment values/);
+const readinessAudit = readFileSync("src/scripts/audit-production-readiness.ts", "utf8");
+assert.match(readinessAudit, /No environment values/);
+assert.match(readinessAudit, /--out/);
+assert.match(contents.gates, /--out=<path>/);
+assert.match(contents.cutoverRunbook, /--out=\/tmp\/kiddzonl-production-readiness\.json/);
 
 console.log("production acceptance gates contract assertions passed");
 

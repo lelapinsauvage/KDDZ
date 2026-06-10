@@ -12,6 +12,7 @@ Copy this template into the production release record or ticket system after eac
 | Legacy source package | short non-secret label |
 | Production approver | name or ticket id |
 | `audit-production-readiness.ts` result | ready count / total gates |
+| Redacted readiness report | non-secret JSON report id/path |
 
 ## PROD-DUMPS
 

@@ -81,7 +81,7 @@ HOSTED_SCHEDULER_EVIDENCE=<non-secret schedule report id/path>
 Run:
 
 ```bash
-pnpm tsx src/scripts/audit-production-readiness.ts
+pnpm tsx src/scripts/audit-production-readiness.ts --out=/tmp/kiddzonl-production-readiness.json
 ```
 
 Stop the cutover if the readiness audit still reports missing cron/provider evidence, or if any configured provider cannot produce sent/skipped/failed audit summaries without exposing secrets.
@@ -142,7 +142,7 @@ Populate `docs/production-acceptance-evidence-template.md` in the release record
 Final command:
 
 ```bash
-pnpm tsx src/scripts/audit-production-readiness.ts
+pnpm tsx src/scripts/audit-production-readiness.ts --out=/tmp/kiddzonl-production-readiness.json
 ```
 
 The legacy restoration goal can only be marked complete when:

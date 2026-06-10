@@ -1,4 +1,5 @@
-import { existsSync, statSync } from "node:fs";
+import { dirname } from "node:path";
+import { existsSync, mkdirSync, statSync, writeFileSync } from "node:fs";
 
 type GateId =
   | "PROD-DUMPS"
@@ -79,6 +80,7 @@ const evidenceGateRequirements: Array<{
 ];
 
 const json = process.argv.includes("--json");
+const outputPath = optionValue("--out");
 
 const evidenceAudits = evidenceGateRequirements.map(auditEvidenceGate);
 const providerAudits = [auditPushProvider(), auditEmailProvider(), auditChannelProvider("SMS"), auditChannelProvider("WHATSAPP")];
@@ -102,19 +104,21 @@ const summary = {
   needsEvidence: gateAudits.filter((audit) => audit.status === "needs-evidence").length,
   total: gateAudits.length,
 };
+const report = {
+  generatedAt: new Date().toISOString(),
+  redacted: true,
+  summary,
+  gates: gateAudits,
+  providers: providerAudits,
+  note: "No environment values, URLs, tokens, keys, passwords, or report contents are included.",
+};
+
+if (outputPath) {
+  writeRedactedReport(outputPath, report);
+}
 
 if (json) {
-  console.log(
-    JSON.stringify(
-      {
-        summary,
-        gates: gateAudits,
-        providers: providerAudits,
-      },
-      null,
-      2
-    )
-  );
+  console.log(JSON.stringify(report, null, 2));
 } else {
   console.log("Production readiness audit (redacted)");
   console.log(`Ready to review: ${summary.ready}/${summary.total}`);
@@ -128,6 +132,9 @@ if (json) {
     );
   }
   console.log("");
+  if (outputPath) {
+    console.log(`Redacted report written: ${outputPath}`);
+  }
   console.log("No environment values, URLs, tokens, keys, passwords, or report contents were printed.");
 }
 
@@ -307,4 +314,23 @@ function evidenceLabel(envName: string, value: string) {
 
 function formatList(items: string[]) {
   return items.length ? items.join(", ") : "-";
+}
+
+function optionValue(name: string) {
+  const prefix = `${name}=`;
+  const inline = process.argv.find((arg) => arg.startsWith(prefix));
+  if (inline) return inline.slice(prefix.length);
+
+  const index = process.argv.indexOf(name);
+  if (index >= 0) return process.argv[index + 1] ?? null;
+
+  return null;
+}
+
+function writeRedactedReport(path: string, report: object) {
+  const dir = dirname(path);
+  if (dir && dir !== ".") {
+    mkdirSync(dir, { recursive: true });
+  }
+  writeFileSync(path, `${JSON.stringify(report, null, 2)}\n`, "utf8");
 }
