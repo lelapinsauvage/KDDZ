@@ -29,6 +29,14 @@ const dailyPrintPage = readFileSync(
   "src/app/(app)/daily-reports/[id]/print/page.tsx",
   "utf8",
 );
+const dailyReportForm = readFileSync(
+  "src/components/daily-reports/daily-report-form.tsx",
+  "utf8",
+);
+const legacyDailyReportFields = readFileSync(
+  "src/lib/legacy-daily-report-fields.ts",
+  "utf8",
+);
 
 const foodNames = buildLegacyFoodNameMap([
   {
@@ -317,5 +325,48 @@ for (const page of [
 assert.match(dashboardPage, /recentReportsRaw\.map\(\(report\) => report\.legacyData\)/);
 assert.match(dashboardPage, /legacyDailyRecord\(r\.legacyData\)/);
 assert.match(dashboardPage, /legacyDailyText\(legacy\.dessert\)/);
+
+for (const legacyFormSurface of [
+  "ATTENDANCE STATUS",
+  "Breakfast",
+  "Lunch",
+  "Early Dinner",
+  "Dessert",
+  "Milk Intake",
+  "Second Nap",
+  "Third Nap",
+  "Constipation",
+  "Daily Needs",
+  "Wipes",
+  "Brush",
+  "Towel",
+  "Diapers",
+  "Baby Bottle",
+  "Attachments",
+  "Save as Draft",
+  "Submit Report",
+]) {
+  assert.match(dailyReportForm, new RegExp(legacyFormSurface, "i"));
+}
+
+for (const legacyFieldKey of [
+  "lunch_id2",
+  "lunchf2",
+  "lntime2",
+  "sleep_from1",
+  "sleep_to1",
+  "sleep_from2",
+  "sleep_to2",
+  "mood2",
+  "constipation",
+  "wipeschecked",
+  "brushchecked",
+  "towelchecked",
+  "diaperschecked",
+  "babybottlechecked",
+  "milkchecked",
+]) {
+  assert.match(legacyDailyReportFields, new RegExp(legacyFieldKey));
+}
 
 console.log("legacy daily report field contract assertions passed");
