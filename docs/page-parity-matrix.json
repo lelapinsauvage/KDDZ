@@ -1292,7 +1292,7 @@
     "legacyPhp": "Front/templates/admin/childrenperbranch.php",
     "legacyJs": "Front/templates/admin/js/childrenperbranch.js",
     "modernRoute": "/childrenperbranch.php, /branches/[id]/children",
-    "status": "partial - branch-scoped children listing, locked bulk class modal, copy/PDF exports, ACL, and legacy branch bridge restored; live refresh audit remains",
+    "status": "restored - branch-scoped children listing, locked branch/class controls, filters, exports, ACL, and legacy branch bridge restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest",
@@ -1302,7 +1302,7 @@
     "requestFieldsMentioned": [
       "brid"
     ],
-    "verification": "Restored the branch-dashboard entry point for `childrenperbranch.php` as `/branches/[id]/children`, with legacy title shape `Active Children For {branch} Branch`, branch-locked listing, S.N./image/F Name/L Name/DOB/Branch/Class/Status/Gender/Date/Action columns, branch class reassignment dropdown limited to classes in the same branch, status toggle, New Child, dashboard, print/view, edit, deactivate actions, legacy filters, Copy/PDF/Excel/CSV export, checkbox select-all-in-page selection, locked-branch Change Branch & Class modal for selected children, and 10/20/50/100/150 page sizes. Child `addChild`, `updateChild`, and `deleteChild` ACTION grants now hide New/Edit/status/class/bulk/deactivate controls and deny the same branch-scoped child write mutations when the imported action catalogue is configured and not granted. `/childrenperbranch.php?brid=` now resolves raw numeric, UUID, and encrypted legacy branch ids into that modern branch page. Remaining work is any live refresh behavior."
+    "verification": "Restored the branch-dashboard entry point for `childrenperbranch.php` as `/branches/[id]/children`, with legacy missing-`brid` fallback to `/children`, raw numeric/UUID/encrypted `brid` resolution, legacy title shape `Active Children For {branch} Branch`, legacy portlet caption `Active Children Listing`, branch-locked listing, S.N./image/F Name/L Name/DOB/Branch/Class/Status/Gender/Date/Action columns, branch class reassignment dropdown limited to classes in the same branch, status toggle, New Child, dashboard, print/view, edit, deactivate actions, legacy filters, Copy/PDF/Excel/CSV export, checkbox select-all-in-page selection, locked-branch Change Branch & Class modal for selected children, default 10-row page size, and 10/20/50/100/150/All page sizes. Child `addChild`, `updateChild`, and `deleteChild` ACTION grants hide New/Edit/status/class/bulk/deactivate controls and deny the same branch-scoped child write mutations when the imported action catalogue is configured and not granted. The legacy `childrenperbranch.js` local DataTable script has no `ab.Session` or `conn.subscribe` websocket block, so no live socket is required for parity. Browser smoke confirmed `/childrenperbranch.php?brid=` resolves to the authenticated branch child roster, and `/branches/[id]/children?pageSize=all` renders the legacy branch title/caption, locked branch context, legacy table headers, filter controls, Change Branch & Class, New Child, Export, accepts the restored All rows mode, and has no broken media. Verified by `src/scripts/verify-legacy-branch-children-roster-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/class.php",

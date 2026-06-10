@@ -31,7 +31,7 @@ interface PageProps {
 export default async function BranchChildrenPage({ params, searchParams }: PageProps) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const page = Math.max(1, Number(query.page) || 1);
-  const pageSize = Number(query.pageSize) || 20;
+  const pageSize = query.pageSize === "all" ? "all" : Number(query.pageSize) || 10;
   const ctx = await requireOrg();
 
   const [
@@ -81,36 +81,40 @@ export default async function BranchChildrenPage({ params, searchParams }: PageP
 
   return (
     <FadeIn>
+      <div className="px-4 pt-4 md:px-6 md:pt-6 print:hidden">
+        <h2 className="text-lg font-semibold">Active Children Listing</h2>
+      </div>
       <ChildrenPageClient
-        childrenList={childrenResult.children ?? []}
-        total={childrenResult.total ?? 0}
-        branches={branches}
-        classes={classes}
-        actionPermissions={actionPermissions}
-        title={title}
-        printTitle={title}
-        lockedBranchId={id}
-        lockedBranchName={branch.name}
-        addChildHref={`/children/new?branch=${id}`}
-        filters={{
-          search: query.search ?? "",
-          branch: id,
-          class: query.class ?? "ALL",
-          gender: query.gender ?? "ALL",
-          status: query.status ?? "ALL",
-          childNumber: query.childNumber ?? "",
-          firstName: query.firstName ?? "",
-          lastName: query.lastName ?? "",
-          dateOfBirth: query.dateOfBirth ?? "",
-          nationality: query.nationality ?? "",
-          createdFrom: query.createdFrom ?? "",
-          createdTo: query.createdTo ?? "",
-          page,
-          pageSize,
-          sort: query.sort ?? "",
-          order: (query.order as "asc" | "desc") ?? "asc",
-        }}
-      />
+          childrenList={childrenResult.children ?? []}
+          total={childrenResult.total ?? 0}
+          branches={branches}
+          classes={classes}
+          actionPermissions={actionPermissions}
+          contextTitle={title}
+          title="Active Children Listing"
+          printTitle={title}
+          lockedBranchId={id}
+          lockedBranchName={branch.name}
+          addChildHref={`/children/new?branch=${id}`}
+          filters={{
+            search: query.search ?? "",
+            branch: id,
+            class: query.class ?? "ALL",
+            gender: query.gender ?? "ALL",
+            status: query.status ?? "ALL",
+            childNumber: query.childNumber ?? "",
+            firstName: query.firstName ?? "",
+            lastName: query.lastName ?? "",
+            dateOfBirth: query.dateOfBirth ?? "",
+            nationality: query.nationality ?? "",
+            createdFrom: query.createdFrom ?? "",
+            createdTo: query.createdTo ?? "",
+            page,
+            pageSize,
+            sort: query.sort ?? "",
+            order: (query.order as "asc" | "desc") ?? "asc",
+          }}
+        />
     </FadeIn>
   );
 }

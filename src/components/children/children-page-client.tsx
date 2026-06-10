@@ -123,6 +123,7 @@ interface ChildrenPageClientProps {
   classes: ClassItem[];
   filters: Filters;
   actionPermissions?: LegacyChildActionPermissions;
+  contextTitle?: string;
   title?: string;
   printTitle?: string;
   lockedBranchId?: string;
@@ -197,6 +198,7 @@ export function ChildrenPageClient({
     canUpdateChild: true,
     canDeleteChild: true,
   },
+  contextTitle,
   title = "Children Listing",
   printTitle = title,
   lockedBranchId,
@@ -204,6 +206,10 @@ export function ChildrenPageClient({
   addChildHref = "/children/new",
   addChildLabel = "New Child",
 }: ChildrenPageClientProps) {
+  const legacyBranchTitle =
+    lockedBranchId && title.startsWith("Active Children For ") ? title : undefined;
+  const displayContextTitle = contextTitle ?? legacyBranchTitle;
+  const displayTitle = legacyBranchTitle ? "Active Children Listing" : title;
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -706,7 +712,12 @@ export function ChildrenPageClient({
 
       <Card className="m-4 md:m-6 print:m-0 print:border-none print:shadow-none">
         <CardHeader className="print:hidden">
-          <CardTitle className="text-lg">{title}</CardTitle>
+          <div className="space-y-1">
+            {displayContextTitle ? (
+              <p className="text-sm font-medium text-muted-foreground">{displayContextTitle}</p>
+            ) : null}
+            <CardTitle className="text-lg">{displayTitle}</CardTitle>
+          </div>
           {canAddChild ? (
             <CardAction>
               <Button asChild>
