@@ -49,6 +49,7 @@ try {
   assertNoSensitiveOutput(closeoutSummary);
   const closeoutPayload = JSON.parse(closeoutSummary) as {
     status?: string;
+    readinessSummary?: { ready?: number; needsEvidence?: number; total?: number };
     branch?: string;
     commit?: string;
     redacted?: boolean;
@@ -57,6 +58,7 @@ try {
     status: "production closeout verified",
     readinessReport: readinessReportPath,
     evidenceRecord: evidenceRecordPath,
+    readinessSummary: { ready: 12, needsEvidence: 0, total: 12 },
     branch: "legacy-parity-runbook",
     commit: "0404c6a",
     redacted: true,

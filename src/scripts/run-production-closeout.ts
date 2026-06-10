@@ -1,6 +1,14 @@
 import { execFileSync } from "node:child_process";
 import { dirname } from "node:path";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+
+type ReadinessReport = {
+  summary?: {
+    ready?: number;
+    needsEvidence?: number;
+    total?: number;
+  };
+};
 
 const envFilePath = optionValue("--env-file");
 const evidenceRecordPath = optionValue("--evidence-record");
@@ -34,10 +42,12 @@ run("pnpm", [
   `--commit=${commit}`,
 ]);
 
+const readinessSummary = readReadinessSummary(outputPath);
 const summary = {
   status: "production closeout verified",
   readinessReport: outputPath,
   evidenceRecord: evidenceRecordPath,
+  readinessSummary,
   branch,
   commit,
   redacted: true,
@@ -70,6 +80,15 @@ function ensureParentDir(path: string) {
   if (dir && dir !== ".") {
     mkdirSync(dir, { recursive: true });
   }
+}
+
+function readReadinessSummary(path: string) {
+  const report = JSON.parse(readFileSync(path, "utf8")) as ReadinessReport;
+  return {
+    ready: report.summary?.ready ?? null,
+    needsEvidence: report.summary?.needsEvidence ?? null,
+    total: report.summary?.total ?? null,
+  };
 }
 
 function optionValue(name: string) {

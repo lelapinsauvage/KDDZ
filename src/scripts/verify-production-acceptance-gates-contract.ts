@@ -220,6 +220,7 @@ assert.match(closeoutRunner, /audit-production-readiness\.ts/);
 assert.match(closeoutRunner, /verify-production-acceptance-evidence-record\.ts/);
 assert.match(closeoutRunner, /rev-parse/);
 assert.match(closeoutRunner, /--summary-out/);
+assert.match(closeoutRunner, /readinessSummary/);
 assert.match(productionGateSuite, /verify-production-acceptance-gates-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-readiness-audit-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-acceptance-evidence-record-contract\.ts/);
@@ -240,6 +241,7 @@ assert.match(contents.gates, /verify-production-acceptance-evidence-record\.ts/)
 assert.match(contents.gates, /pnpm run closeout:production/);
 assert.match(contents.gates, /--summary-out=<path>/);
 assert.match(contents.gates, /--summary-out=\/tmp\/kiddzonl-production-closeout-summary\.json/);
+assert.match(contents.gates, /summary includes the redacted readiness counts/);
 assert.match(contents.gates, /--readiness-report=<path>/);
 assert.match(contents.gates, /--readiness-report=\/tmp\/kiddzonl-production-readiness\.json/);
 assert.match(contents.gates, /--branch=legacy-parity-runbook/);
