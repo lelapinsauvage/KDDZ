@@ -319,7 +319,9 @@ assert.match(branchRow.verification ?? "", /verify-legacy-calls-contract\.ts/);
 assert.match(detailRow.verification ?? "", /verify-legacy-calls-contract\.ts/);
 assert.match(callsRow.verification ?? "", /default 10-row page size/);
 assert.match(branchRow.verification ?? "", /Browser smoke confirmed `\/bcalls\.php\?brid=` renders the branch-scoped calls listing/);
-assert.match(detailRow.verification ?? "", /Browser detail smoke is pending a local migrated CallLog row/);
+assert.match(detailRow.verification ?? "", /Browser detail smoke now uses a temporary source-provenanced Form 6 `CallLog` fixture/);
+assert.match(detailRow.verification ?? "", /`\/calls\/\[id\]` rendered `Call Report #910001`/);
+assert.match(detailRow.verification ?? "", /Canonical migrated-row detail acceptance remains part of production import verification/);
 
 const markdownRows = {
   branch: text.markdownMatrix
@@ -348,8 +350,9 @@ assert.match(
 );
 assert.match(
   markdownRows.detail ?? "",
-  /Browser detail smoke is pending a local migrated CallLog row/,
+  /Browser detail smoke now uses a temporary source-provenanced Form 6 `CallLog` fixture/,
 );
+assert.match(markdownRows.detail ?? "", /`\/calls\/\[id\]` rendered `Call Report #910001`/);
 assert.doesNotMatch(markdownRows.detail ?? "", /visual smoke remains/);
 assert.match(
   markdownRows.calls ?? "",
@@ -367,7 +370,11 @@ assert.match(
 );
 assert.match(
   text.topGaps,
-  /Remaining work is browser detail smoke against a migrated `CallLog` row/,
+  /Browser detail smoke now covers `\/calls\/\[id\]` with a temporary source-provenanced Form 6 `CallLog` fixture/,
+);
+assert.match(
+  text.topGaps,
+  /Remaining work is canonical production import acceptance against real migrated call rows/,
 );
 assert.doesNotMatch(
   text.topGaps,
