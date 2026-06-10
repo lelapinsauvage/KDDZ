@@ -126,6 +126,7 @@ export function DoctorDetailClient({ doctor, recentVisits }: DoctorDetailClientP
                     { label: "Nationality", value: doctor.nationality ?? "—" },
                     { label: "Mobile", value: doctor.mobile ?? "—" },
                     { label: "Specialization", value: doctor.specialization ?? "—" },
+                    { label: "Arabic Studied Domain", value: doctor.specializationAr ?? "—" },
                     { label: "License Number", value: doctor.licenseNumber ?? "—" },
                   ].map((item) => (
                     <div key={item.label} className="flex justify-between border-b pb-2">

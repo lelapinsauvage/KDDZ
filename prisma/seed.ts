@@ -355,6 +355,7 @@ async function main() {
         hireDate: new Date("2023-03-01"),
         branchId: downtownBranch.id,
         specialization: "Pediatrics",
+        specializationAr: "طب الأطفال",
         licenseNumber: "LB-PED-12345",
         isActive: true,
       },

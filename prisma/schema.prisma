@@ -1307,6 +1307,7 @@ model Doctor {
   hireDate               DateTime?      @db.Date
   branchId               String         @db.Uuid
   specialization         String?
+  specializationAr       String?
   licenseNumber          String?
   isActive               Boolean        @default(true)
   legacyData             Json?

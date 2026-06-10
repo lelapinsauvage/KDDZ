@@ -682,7 +682,7 @@ export function EmployeeFormClient({
                       placeholder={type === "doctor" || type === "manager" ? "Studied Domain" : "Specialization"}
                     />
                   </div>
-                  {type === "manager" && (
+                  {(type === "doctor" || type === "manager") && (
                     <div>
                       <Label htmlFor="specializationAr">Arabic Studied Domain</Label>
                       <Input

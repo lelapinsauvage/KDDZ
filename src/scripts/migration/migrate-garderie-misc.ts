@@ -471,6 +471,7 @@ async function migrateGarderieDoctors(
       email: cleanString(row.email),
       universityDegree: cleanString(row.uni_degree),
       specialization: cleanString(row.uni_degree),
+      specializationAr: cleanString(row.uni_degree_ar),
       licenseNumber: cleanString(row.reg_num),
       imageUrl: cleanLegacyFileName(row.image),
       branchId,
