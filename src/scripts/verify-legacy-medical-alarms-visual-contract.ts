@@ -10,6 +10,7 @@ const files = {
   page: "src/app/(app)/alarms/medical/page.tsx",
   client: "src/app/(app)/alarms/medical/medical-alarms-client.tsx",
   actions: "src/lib/actions/alarms.ts",
+  medicalJob: "src/lib/jobs/medical-alarms.ts",
   matrix: "docs/page-parity-matrix.json",
   markdownMatrix: "docs/page-parity-matrix.md",
   topGaps: "docs/top-20-restoration-gaps.md",
@@ -76,6 +77,10 @@ assert.match(text.actions, /export async function getMedicalAlarmHistory/);
 assert.match(text.actions, /export async function generateMedicalAlarms/);
 assert.match(text.actions, /export async function markMedicalAlarmViewed/);
 assert.match(text.actions, /export async function markAllMedicalAlarmsViewed/);
+assert.match(text.medicalJob, /deliverPushNotification/);
+assert.match(text.medicalJob, /pushDeliveryAuditData/);
+assert.match(text.medicalJob, /pushDelivery/);
+assert.match(text.medicalJob, /recipientUserIds: params\.recipientUserIds/);
 
 type MatrixRow = {
   legacyPhp?: string;
@@ -98,17 +103,21 @@ assert.match(row.verification ?? "", /Browser smoke confirmed `\/alarmsMedical\.
 assert.match(row.verification ?? "", /Medical Notifications Listing/);
 assert.match(row.verification ?? "", /Sent Reports Reminders/);
 assert.match(row.verification ?? "", /no broken images or app errors/);
+assert.match(row.verification ?? "", /provider-neutral staff push delivery/);
+assert.match(row.verification ?? "", /pushDelivery/);
+assert.match(row.verification ?? "", /verify-medical-push-delivery\.ts/);
 
 const markdownRow = text.markdownMatrix
   .split("\n")
   .find((line) => line.includes("| Front/templates/admin/alarmsMedical.php |"));
 assert.match(markdownRow ?? "", /browser visual audit restored/);
 assert.match(markdownRow ?? "", /Browser smoke confirmed `\/alarmsMedical\.php`/);
+assert.match(markdownRow ?? "", /provider-neutral staff push delivery/);
 assert.doesNotMatch(markdownRow ?? "", /final visual audit/);
 
 assert.match(
   text.topGaps,
-  /Medical alarms browser smoke now confirms the legacy `\/alarmsMedical\.php` bridge/,
+  /Medical alarms now audit provider-neutral staff push delivery on generated missing-report reminders/,
 );
 
 console.log("legacy medical alarms visual contract assertions passed");

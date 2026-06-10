@@ -2,6 +2,10 @@ import { db } from "@/lib/db";
 import { deliverEmail, emailDeliveryAuditData } from "@/lib/email-delivery";
 import { encryptLegacyId } from "@/lib/legacy-id";
 import { isLegacyNotificationGateEnabled } from "@/lib/legacy-notification-gates";
+import {
+  deliverPushNotification,
+  pushDeliveryAuditData,
+} from "@/lib/push-delivery";
 
 const MEDICAL_RECEIPT_SOURCE = "custom_notifications_medical";
 
@@ -221,6 +225,53 @@ async function storeMedicalEmailAudit(params: {
   });
 }
 
+async function storeMedicalPushAudit(params: {
+  alarmId: string;
+  recipientUserIds: string[];
+  title: string;
+  body: string;
+  legacyNotificationId: number;
+  childId: string;
+  legacyChildId: number | null;
+  legacyClassId: number | null;
+  report: MedicalReportConfig;
+  sourceDatabase: string | null;
+}) {
+  const pushDelivery = await deliverPushNotification({
+    recipientUserIds: params.recipientUserIds,
+    title: params.title,
+    body: params.body,
+    category: "MISSING_REPORTS",
+    url: "/alarms/medical",
+    metadata: {
+      source: "generateMedicalAlarms",
+      legacyNotificationId: params.legacyNotificationId,
+      legacyDeliveryTable: MEDICAL_RECEIPT_SOURCE,
+      childId: params.childId,
+      legacyChildId: params.legacyChildId,
+      legacyClassId: params.legacyClassId,
+      reportName: params.report.reportName,
+      legacyType: params.report.legacyType,
+      legacyHref: params.report.legacyHref,
+      sourceDatabase: params.sourceDatabase,
+    },
+  });
+
+  const alarm = await db.alarm.findUnique({
+    where: { id: params.alarmId },
+    select: { legacyData: true },
+  });
+  await db.alarm.update({
+    where: { id: params.alarmId },
+    data: {
+      legacyData: {
+        ...(asRecord(alarm?.legacyData) ?? {}),
+        pushDelivery: pushDeliveryAuditData(pushDelivery),
+      },
+    },
+  });
+}
+
 export async function generateMedicalAlarmsForOrganization(params: {
   organizationId: string;
   branchId?: string | null;
@@ -421,11 +472,15 @@ export async function generateMedicalAlarmsForOrganization(params: {
     }
     const href = childLegacyHref(report, child);
     let alarmId = existingAlarm?.id ?? null;
+    let shouldAttemptPushAudit = !existingAlarm;
     if (existingAlarm) {
       const existingData = asRecord(existingAlarm.legacyData) ?? {};
+      const needsPushAudit = !asRecord(existingData.pushDelivery);
+      shouldAttemptPushAudit = needsPushAudit;
       if (
         readNumber(existingData, ["aid"]) === null ||
-        existingData.sourceDeliveryTable !== MEDICAL_RECEIPT_SOURCE
+        existingData.sourceDeliveryTable !== MEDICAL_RECEIPT_SOURCE ||
+        needsPushAudit
       ) {
         await db.alarm.update({
           where: { id: existingAlarm.id },
@@ -506,7 +561,28 @@ export async function generateMedicalAlarmsForOrganization(params: {
     const newReceiptRecipients = recipients.filter(
       (recipient) => !existingReceiptIds.has(recipient.legacyRecipientId),
     );
-    if (newReceiptRecipients.length === 0) continue;
+    const title = renderNotificationText(subjectTemplate, variables);
+    const sourceDatabase =
+      child.sourceDatabase ?? child.class?.sourceDatabase ?? child.branch.sourceDatabase;
+    const legacyClassId = child.class?.legacyId ?? null;
+
+    if (newReceiptRecipients.length === 0) {
+      if (templateEnabled && shouldAttemptPushAudit) {
+        await storeMedicalPushAudit({
+          alarmId,
+          recipientUserIds: recipients.map((recipient) => recipient.userId),
+          title,
+          body: message,
+          legacyNotificationId,
+          childId: child.id,
+          legacyChildId: child.legacyId,
+          legacyClassId,
+          report,
+          sourceDatabase,
+        });
+      }
+      continue;
+    }
 
     const receiptResult = await db.notificationReceipt.createMany({
       data: newReceiptRecipients.map((recipient) => ({
@@ -521,7 +597,7 @@ export async function generateMedicalAlarmsForOrganization(params: {
         metadata: {
           modernGenerator: "generateMedicalAlarms",
           legacyMethod: "Data::AlarmsMedical",
-          legacyClassId: child.class?.legacyId ?? null,
+          legacyClassId,
           legacyClasses: recipient.legacyClasses,
           ntype: 0,
         },
@@ -535,7 +611,7 @@ export async function generateMedicalAlarmsForOrganization(params: {
     const notificationResult = await db.notification.createMany({
       data: newReceiptRecipients.map((recipient) => ({
         userId: recipient.userId,
-        title: renderNotificationText(subjectTemplate, variables),
+        title,
         body: message,
         type: "MEDICAL",
         category: "MISSING_REPORTS",
@@ -546,13 +622,27 @@ export async function generateMedicalAlarmsForOrganization(params: {
 
     await storeMedicalEmailAudit({
       alarmId,
-      subject: renderNotificationText(subjectTemplate, variables),
+      subject: title,
       body: message,
       recipients: newReceiptRecipients,
       legacyNotificationId,
-      sourceDatabase:
-        child.sourceDatabase ?? child.class?.sourceDatabase ?? child.branch.sourceDatabase,
+      sourceDatabase,
     });
+
+    if (shouldAttemptPushAudit) {
+      await storeMedicalPushAudit({
+        alarmId,
+        recipientUserIds: newReceiptRecipients.map((recipient) => recipient.userId),
+        title,
+        body: message,
+        legacyNotificationId,
+        childId: child.id,
+        legacyChildId: child.legacyId,
+        legacyClassId,
+        report,
+        sourceDatabase,
+      });
+    }
   }
 
   return summary;
