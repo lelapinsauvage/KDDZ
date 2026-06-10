@@ -76,7 +76,7 @@
     "legacyPhp": "Front/templates/admin/child_attend_det.php",
     "legacyJs": "Front/templates/admin/js/child_attend_det.js",
     "modernRoute": "/child_attend_det.php, /children/[id]/attendance",
-    "status": "partial - legacy attendance matrix and deep-link bridge restored; visual export audit remains",
+    "status": "restored - legacy attendance matrix, TableTools export, print, and deep-link bridge restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -84,7 +84,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "Restored the legacy school-year month/day attendance matrix with Month, day columns 1-31, P/A totals, P/A/N/W/H badge semantics, child header context, direct daily/absence report links, search/month/status filters, Excel/CSV export, and print action. `/child_attend_det.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy child ids into the modern attendance page. Remaining work is final visual/export parity against DataTables TableTools PDF/print output and exact production school-year selector behavior."
+    "verification": "Restored the legacy school-year month/day attendance matrix with Month, day columns 1-31, P/A totals, P/A/N/W/H badge semantics, child header context, direct daily/absence report links, search/month/status filters, Copy/PDF/Excel/CSV export, and print action. `/child_attend_det.php?id=` now resolves raw numeric, UUID, legacy key, and encrypted legacy child ids into the modern attendance page, and `/child_attend_det_data.php` preserves the legacy AJAX `id`-only table fragment contract. Legacy `child_attend_det.js` does not submit a separate school-year selector for the table; the modern matrix uses the child assigned school year with the same fallback behavior. Verified by `src/scripts/verify-legacy-child-attendance-tabletools-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/Doctor_Details.php",
