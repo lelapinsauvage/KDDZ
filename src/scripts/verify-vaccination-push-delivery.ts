@@ -36,6 +36,7 @@ async function main() {
   let branch: IdRecord | null = null;
   let child: ChildRecord | null = null;
   let user: IdRecord | null = null;
+  let manualVaccination: IdRecord | null = null;
 
   try {
     organization = await db.organization.create({
@@ -94,6 +95,19 @@ async function main() {
       },
       select: { id: true, legacyId: true },
     });
+    manualVaccination = await db.vaccination.create({
+      data: {
+        childId: child.id,
+        sourceDatabase: marker,
+        legacyId: legacyChildId + 30_000,
+        legacyChildId,
+        legacyTable: "manual-vaccination-next-due",
+        vaccineName: "Manual Next Due",
+        nextDueDate: addDays(today, 1),
+        notes: "Manual nextDueDate verification record",
+      },
+      select: { id: true },
+    });
 
     user = await db.user.create({
       data: {
@@ -135,7 +149,7 @@ async function main() {
       organizationId: organization.id,
       now: today,
     });
-    if (candidates.length !== 2) {
+    if (candidates.length !== 3) {
       const persistedChild = await db.child.findUnique({
         where: { id: child.id },
         select: { dateOfBirth: true, isActive: true, isDraft: true, branchId: true },
@@ -145,21 +159,28 @@ async function main() {
         select: { key: true, value: true },
       });
       assert.fail(
-        `expected two candidates, got ${candidates.length}; child=${JSON.stringify(
+        `expected three candidates, got ${candidates.length}; child=${JSON.stringify(
           persistedChild,
         )}; settings=${JSON.stringify(settings)}`,
       );
     }
     assert.ok(candidates.some((candidate) => candidate.vaccineName === "IPV"));
+    const manualCandidate = candidates.find(
+      (candidate) => candidate.vaccinationId === manualVaccination?.id,
+    );
+    assert.ok(manualCandidate, "manual Vaccination.nextDueDate should create a due candidate");
+    assert.equal(manualCandidate.sourceKind, "manualNextDueDate");
+    assert.equal(manualCandidate.vaccineName, "Manual Next Due");
+    assert.equal(manualCandidate.daysUntilDue, 1);
 
     const firstRun = await generateVaccinationAlarmsForOrganization({
       organizationId: organization.id,
       now: today,
     });
-    assert.equal(firstRun.remindersMatched, 2);
-    assert.equal(firstRun.alarmsCreated, 2);
-    assert.equal(firstRun.receiptsCreated, 2);
-    assert.equal(firstRun.notificationsCreated, 2);
+    assert.equal(firstRun.remindersMatched, 3);
+    assert.equal(firstRun.alarmsCreated, 3);
+    assert.equal(firstRun.receiptsCreated, 3);
+    assert.equal(firstRun.notificationsCreated, 3);
 
     const alarms = await db.alarm.findMany({
       where: {
@@ -178,6 +199,15 @@ async function main() {
     assert.ok(Number.isFinite(legacyNotificationId));
     assert.equal(alarmLegacy.vaccineName, "IPV");
     assert.equal(alarmLegacy.level, 0);
+
+    const manualAlarm = alarms.find(
+      (row) => asRecord(row.legacyData).vaccinationId === manualVaccination?.id,
+    );
+    assert.ok(manualAlarm, "manual nextDueDate should generate a vaccination alarm");
+    const manualAlarmLegacy = asRecord(manualAlarm.legacyData);
+    assert.equal(manualAlarmLegacy.sourceKind, "manualNextDueDate");
+    assert.equal(manualAlarmLegacy.candidateKey, `${child.id}:manual:${manualVaccination.id}`);
+    assert.equal(manualAlarmLegacy.vaccineName, "Manual Next Due");
 
     const receipt = await db.notificationReceipt.findFirst({
       where: {
@@ -205,7 +235,7 @@ async function main() {
     });
     assert.equal(secondRun.alarmsCreated, 0);
     assert.equal(secondRun.receiptsCreated, 0);
-    assert.equal(secondRun.skippedExisting, 2);
+    assert.equal(secondRun.skippedExisting, 3);
 
     console.log("vaccination push delivery assertions passed");
   } finally {
@@ -237,6 +267,9 @@ async function main() {
       await db.notification.deleteMany({ where: { userId: user.id } });
       await db.legacyAuthRecord.deleteMany({ where: { userId: user.id } });
       await db.user.deleteMany({ where: { id: user.id } });
+    }
+    if (manualVaccination) {
+      await db.vaccination.deleteMany({ where: { id: manualVaccination.id } });
     }
     if (child) await db.child.deleteMany({ where: { id: child.id } });
     if (branch) await db.branch.deleteMany({ where: { id: branch.id } });

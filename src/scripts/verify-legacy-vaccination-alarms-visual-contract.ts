@@ -87,6 +87,8 @@ assert.match(text.vaccinationJob, /deliverPushNotification/);
 assert.match(text.vaccinationJob, /pushDeliveryAuditData/);
 assert.match(text.vaccinationJob, /pushDelivery/);
 assert.match(text.vaccinationJob, /recipientUserIds: params\.recipientUserIds/);
+assert.match(text.vaccinationJob, /manualNextDueDate/);
+assert.match(text.vaccinationJob, /candidateKey/);
 
 type MatrixRow = {
   legacyPhp?: string;
@@ -113,6 +115,8 @@ assert.match(row.verification ?? "", /no broken images or app errors/);
 assert.match(row.verification ?? "", /provider-neutral staff push delivery/);
 assert.match(row.verification ?? "", /pushDelivery/);
 assert.match(row.verification ?? "", /verify-vaccination-push-delivery\.ts/);
+assert.match(row.verification ?? "", /Manual `Vaccination\.nextDueDate`/);
+assert.doesNotMatch(row.verification ?? "", /reconciliation with manual `Vaccination\.nextDueDate`/);
 
 const markdownRow = text.markdownMatrix
   .split("\n")
@@ -120,11 +124,16 @@ const markdownRow = text.markdownMatrix
 assert.match(markdownRow ?? "", /browser visual audit restored/);
 assert.match(markdownRow ?? "", /Browser smoke confirmed `\/alarmsVaccinations\.php`/);
 assert.match(markdownRow ?? "", /provider-neutral staff push delivery/);
+assert.match(markdownRow ?? "", /Manual `Vaccination\.nextDueDate`/);
 assert.doesNotMatch(markdownRow ?? "", /final visual audit/);
 
 assert.match(
   text.topGaps,
   /Vaccination alarms now audit provider-neutral staff push delivery on generated due reminders/,
+);
+assert.match(
+  text.topGaps,
+  /Manual `Vaccination\.nextDueDate` records now reconcile into the same generated alarm path/,
 );
 
 console.log("legacy vaccination alarms visual contract assertions passed");

@@ -11,6 +11,8 @@ const VACCINATION_RECEIPT_SOURCE = "custom_notifications_vaccinations";
 export interface VaccinationDueAlarm {
   id: string;
   childId: string;
+  vaccinationId: string | null;
+  sourceKind: "legacyDobSchedule" | "manualNextDueDate";
   sourceDatabase: string | null;
   legacyChildId: number | null;
   childNumber: string | null;
@@ -101,6 +103,18 @@ function addDays(date: Date, days: number) {
   next.setHours(0, 0, 0, 0);
   next.setDate(next.getDate() + days);
   return next;
+}
+
+function dateOnlyUtc(date: Date) {
+  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+}
+
+function utcDateOnly(date: Date) {
+  return new Date(dateOnlyUtc(date));
+}
+
+function daysUntilDate(dueDate: Date, today: Date) {
+  return Math.round((dateOnlyUtc(dueDate) - dateOnlyUtc(today)) / 86_400_000);
 }
 
 function dateKey(date: Date) {
@@ -285,6 +299,9 @@ function reminderDaysForBranch(
 function legacyAlarmKey(legacyData: unknown, referenceId: string | null) {
   if (!referenceId) return null;
   const data = asRecord(legacyData);
+  const candidateKey = readString(data, "candidateKey");
+  if (candidateKey) return candidateKey;
+
   const rawType = data?.type ?? data?.vaccineType ?? data?.vaccineName;
   const rawLevel = data?.level;
   const vaccineType =
@@ -298,6 +315,10 @@ function legacyAlarmKey(legacyData: unknown, referenceId: string | null) {
 
   if (!vaccineType || level === null || !Number.isFinite(level)) return null;
   return `${referenceId}:${vaccineType}:${level}`;
+}
+
+function childName(child: { firstName: string; lastName: string }) {
+  return `${child.firstName} ${child.lastName}`.trim();
 }
 
 function renderNotificationText(
@@ -390,30 +411,70 @@ export async function getVaccinationDueAlarmCandidates(params: {
       class: { select: { id: true, name: true, legacyId: true, sourceDatabase: true } },
     },
   });
+  const manualVaccinations = await db.vaccination.findMany({
+    where: {
+      nextDueDate: { not: null },
+      child: {
+        isActive: true,
+        isDraft: false,
+        branchId: { in: branchIds },
+        branch: { organizationId: params.organizationId },
+      },
+    },
+    select: {
+      id: true,
+      sourceDatabase: true,
+      legacyId: true,
+      legacyChildId: true,
+      vaccineName: true,
+      nextDueDate: true,
+      child: {
+        select: {
+          id: true,
+          sourceDatabase: true,
+          legacyId: true,
+          childNumber: true,
+          firstName: true,
+          lastName: true,
+          branchId: true,
+          classId: true,
+          branch: { select: { id: true, name: true, sourceDatabase: true } },
+          class: {
+            select: {
+              id: true,
+              name: true,
+              legacyId: true,
+              sourceDatabase: true,
+            },
+          },
+        },
+      },
+    },
+  });
 
   const candidates: VaccinationDueAlarm[] = [];
   for (const child of children) {
     const reminderDays = reminderDaysForBranch(settingsByBranch, child.branchId);
     if (reminderDays.size === 0 || !child.dateOfBirth) continue;
 
-    const childName = `${child.firstName} ${child.lastName}`;
+    const displayName = childName(child);
     for (const schedule of legacyVaccinationSchedule) {
       const vaccineType = normalizeVaccineType(schedule.vaccineName);
       for (const dose of schedule.doses) {
         const dueDate = addDays(child.dateOfBirth, dose.offsetDays);
-        const daysUntilDue = Math.ceil(
-          (dueDate.getTime() - today.getTime()) / 86_400_000,
-        );
+        const daysUntilDue = daysUntilDate(dueDate, today);
         if (!reminderDays.has(daysUntilDue)) continue;
 
         candidates.push({
           id: `${child.id}:${vaccineType}:${dose.level}`,
           childId: child.id,
+          vaccinationId: null,
+          sourceKind: "legacyDobSchedule",
           sourceDatabase:
             child.sourceDatabase ?? child.class?.sourceDatabase ?? child.branch.sourceDatabase,
           legacyChildId: child.legacyId ?? null,
           childNumber: child.childNumber,
-          childName,
+          childName: displayName,
           branchId: child.branchId,
           branchName: child.branch.name,
           classId: child.classId,
@@ -425,10 +486,50 @@ export async function getVaccinationDueAlarmCandidates(params: {
           offsetDays: dose.offsetDays,
           dueDate,
           daysUntilDue,
-          message: `${childName} Needs his ${schedule.vaccineName} Vaccination In ${daysUntilDue} Day(s)`,
+          message: `${displayName} Needs his ${schedule.vaccineName} Vaccination In ${daysUntilDue} Day(s)`,
         });
       }
     }
+  }
+  for (const vaccination of manualVaccinations) {
+    if (!vaccination.nextDueDate) continue;
+    const child = vaccination.child;
+    const reminderDays = reminderDaysForBranch(settingsByBranch, child.branchId);
+    if (reminderDays.size === 0) continue;
+
+    const dueDate = utcDateOnly(vaccination.nextDueDate);
+    const daysUntilDue = daysUntilDate(dueDate, today);
+    if (!reminderDays.has(daysUntilDue)) continue;
+
+    const vaccineName = vaccination.vaccineName.trim() || "Vaccination";
+    const vaccineType = normalizeVaccineType(vaccineName);
+    const displayName = childName(child);
+    candidates.push({
+      id: `${child.id}:manual:${vaccination.id}`,
+      childId: child.id,
+      vaccinationId: vaccination.id,
+      sourceKind: "manualNextDueDate",
+      sourceDatabase:
+        vaccination.sourceDatabase ??
+        child.sourceDatabase ??
+        child.class?.sourceDatabase ??
+        child.branch.sourceDatabase,
+      legacyChildId: vaccination.legacyChildId ?? child.legacyId ?? null,
+      childNumber: child.childNumber,
+      childName: displayName,
+      branchId: child.branchId,
+      branchName: child.branch.name,
+      classId: child.classId,
+      legacyClassId: child.class?.legacyId ?? null,
+      className: child.class?.name ?? null,
+      vaccineName,
+      vaccineType,
+      level: vaccination.legacyId ?? 0,
+      offsetDays: 0,
+      dueDate,
+      daysUntilDue,
+      message: `${displayName} Needs his ${vaccineName} Vaccination In ${daysUntilDue} Day(s)`,
+    });
   }
 
   candidates.sort((a, b) => {
@@ -591,7 +692,7 @@ export async function generateVaccinationAlarmsForOrganization(params: {
     Math.max(maxReceipt._max.legacyNotificationId ?? 0, maxExistingAlarmLegacyId) + 1;
 
   for (const candidate of candidates) {
-    const key = `${candidate.childId}:${candidate.vaccineType}:${candidate.level}`;
+    const key = candidate.id;
     const existingAlarm = existingByKey.get(key);
     let legacyNotificationId = existingAlarm
       ? readNumber(asRecord(existingAlarm.legacyData), "aid")
@@ -619,6 +720,9 @@ export async function generateVaccinationAlarmsForOrganization(params: {
               ...existingData,
               aid: legacyNotificationId,
               sourceDeliveryTable: VACCINATION_RECEIPT_SOURCE,
+              candidateKey: candidate.id,
+              sourceKind: candidate.sourceKind,
+              vaccinationId: candidate.vaccinationId,
               legacyChildId: candidate.legacyChildId,
               legacyClassId: candidate.legacyClassId,
               legacyClassAccess: "login_users.uclasses_exact",
@@ -642,6 +746,9 @@ export async function generateVaccinationAlarmsForOrganization(params: {
             aid: legacyNotificationId,
             sourceTable: "t_alarms_vaccinations",
             sourceDeliveryTable: VACCINATION_RECEIPT_SOURCE,
+            candidateKey: candidate.id,
+            sourceKind: candidate.sourceKind,
+            vaccinationId: candidate.vaccinationId,
             modernGenerator: "generateVaccinationAlarms",
             legacyMethod: "Data::AlarmsVaccinations",
             childId: candidate.childId,
