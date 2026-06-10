@@ -20,6 +20,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -385,6 +393,12 @@ interface PendingChildAttachment {
   file: File;
 }
 
+interface MapPickerState {
+  addressIndex: number;
+  latitude: string;
+  longitude: string;
+}
+
 /** Convert ChildFormValues to FormData for server action consumption */
 function toFormData(data: ChildFormValues, isDraft = false): FormData {
   const fd = new FormData();
@@ -611,6 +625,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
   const [pendingAttachments, setPendingAttachments] = useState<PendingChildAttachment[]>([]);
   const [removedAttachmentIds, setRemovedAttachmentIds] = useState<string[]>([]);
+  const [mapPicker, setMapPicker] = useState<MapPickerState | null>(null);
 
   const visibleExistingAttachments = attachmentValues.filter(
     (attachment): attachment is ChildAttachmentValue & { id: string } => {
@@ -654,6 +669,32 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
     setRemovedAttachmentIds((current) =>
       current.includes(id) ? current : [...current, id]
     );
+  }
+
+  function openMapPicker(addressIndex: number) {
+    setMapPicker({
+      addressIndex,
+      latitude:
+        watch(`addresses.${addressIndex}.latitude`) ||
+        DEFAULT_MAP_COORDINATES.latitude,
+      longitude:
+        watch(`addresses.${addressIndex}.longitude`) ||
+        DEFAULT_MAP_COORDINATES.longitude,
+    });
+  }
+
+  function applyMapPicker() {
+    if (!mapPicker) return;
+
+    setValue(`addresses.${mapPicker.addressIndex}.latitude`, mapPicker.latitude, {
+      shouldDirty: true,
+      shouldTouch: true,
+    });
+    setValue(`addresses.${mapPicker.addressIndex}.longitude`, mapPicker.longitude, {
+      shouldDirty: true,
+      shouldTouch: true,
+    });
+    setMapPicker(null);
   }
 
   useEffect(() => {
@@ -1343,18 +1384,7 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                                 type="button"
                                 variant="outline"
                                 size="sm"
-                                onClick={() => {
-                                  setValue(
-                                    `addresses.${index}.latitude`,
-                                    DEFAULT_MAP_COORDINATES.latitude,
-                                    { shouldDirty: true }
-                                  );
-                                  setValue(
-                                    `addresses.${index}.longitude`,
-                                    DEFAULT_MAP_COORDINATES.longitude,
-                                    { shouldDirty: true }
-                                  );
-                                }}
+                                onClick={() => openMapPicker(index)}
                               >
                                 <MapPin className="size-4" />
                                 Select From Map
@@ -2499,6 +2529,112 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
           </div>
         </div>
       </div>
+
+      {mapPicker ? (
+        <Dialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setMapPicker(null);
+          }}
+        >
+          <DialogContent className="sm:max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Select From Map</DialogTitle>
+              <DialogDescription>Address coordinates</DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div className="overflow-hidden rounded-md border border-border">
+                <iframe
+                  title="Address map preview"
+                  className="h-64 w-full"
+                  loading="lazy"
+                  src={`https://www.google.com/maps?q=${encodeURIComponent(
+                    `${mapPicker.latitude},${mapPicker.longitude}`,
+                  )}&output=embed`}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <Label htmlFor="map-picker-latitude">Latitude</Label>
+                  <Input
+                    id="map-picker-latitude"
+                    value={mapPicker.latitude}
+                    onChange={(event) =>
+                      setMapPicker((current) =>
+                        current
+                          ? { ...current, latitude: event.target.value }
+                          : current,
+                      )
+                    }
+                    placeholder={DEFAULT_MAP_COORDINATES.latitude}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="map-picker-longitude">Longitude</Label>
+                  <Input
+                    id="map-picker-longitude"
+                    value={mapPicker.longitude}
+                    onChange={(event) =>
+                      setMapPicker((current) =>
+                        current
+                          ? { ...current, longitude: event.target.value }
+                          : current,
+                      )
+                    }
+                    placeholder={DEFAULT_MAP_COORDINATES.longitude}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() =>
+                    setMapPicker((current) =>
+                      current
+                        ? {
+                            ...current,
+                            latitude: DEFAULT_MAP_COORDINATES.latitude,
+                            longitude: DEFAULT_MAP_COORDINATES.longitude,
+                          }
+                        : current,
+                    )
+                  }
+                >
+                  Use default
+                </Button>
+                {mapPreviewHref(mapPicker.latitude, mapPicker.longitude) ? (
+                  <Button asChild type="button" variant="outline">
+                    <a
+                      href={mapPreviewHref(mapPicker.latitude, mapPicker.longitude) ?? "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Preview Location
+                    </a>
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setMapPicker(null)}
+              >
+                Cancel
+              </Button>
+              <Button type="button" onClick={applyMapPicker}>
+                Apply Coordinates
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      ) : null}
     </form>
   );
 }

@@ -118,6 +118,11 @@ assert.match(text.form, /register\(`addresses\.\$\{index\}\.latitude`\)/);
 assert.match(text.form, /register\(`addresses\.\$\{index\}\.longitude`\)/);
 assert.match(text.form, /Select From Map/);
 assert.match(text.form, /Preview Location/);
+assert.match(text.form, /interface MapPickerState/);
+assert.match(text.form, /openMapPicker\(index\)/);
+assert.match(text.form, /iframe[\s\S]*Address map preview/);
+assert.match(text.form, /Apply Coordinates/);
+assert.match(text.form, /setMapPicker\(null\)/);
 assert.match(text.form, /register\(`siblings\.\$\{index\}\.recordId`\)/);
 assert.match(text.form, /register\(`relatives\.\$\{index\}\.recordId`\)/);
 assert.match(text.form, /register\(`accountingEntries\.\$\{index\}\.recordId`\)/);
@@ -136,17 +141,17 @@ const row = matrix.find(
 assert.ok(row);
 assert.match(row.status ?? "", /nested edit provenance/);
 assert.match(row.status ?? "", /address coordinates/);
-assert.match(row.status ?? "", /edit wizard visual smoke restored/);
+assert.match(row.status ?? "", /map picker restored/);
 assert.match(row.verification ?? "", /verify-legacy-child-edit-preservation-contract\.ts/);
 assert.match(row.verification ?? "", /preserves existing nested child rows in place/);
 assert.match(row.verification ?? "", /Browser smoke confirmed/);
 assert.match(row.verification ?? "", /core child info, address\/family, care, financial, attachments, and review\/submit wizard steps/);
-assert.match(row.verification ?? "", /map picker/);
+assert.match(row.verification ?? "", /map picker dialog/);
 assert.doesNotMatch(row.verification ?? "", /exact edit-form visual\/action audit/);
 
 assert.match(
   text.matrixMd,
-  /Child_Details\.php \| Front\/templates\/admin\/js\/Child_Details\.js \| \/Child_Details\.php, \/children\/\[id\] \| partial - legacy dossier landing, child deep-link bridge, nested edit provenance, address coordinates, and edit wizard visual smoke restored; map picker and write-flow smokes remain/,
+  /Child_Details\.php \| Front\/templates\/admin\/js\/Child_Details\.js \| \/Child_Details\.php, \/children\/\[id\] \| partial - legacy dossier landing, child deep-link bridge, nested edit provenance, address coordinates, edit wizard visual smoke, and map picker restored; write-flow smokes remain/,
 );
 assert.match(
   text.matrixMd,
@@ -163,6 +168,10 @@ assert.match(
 assert.match(
   text.matrixMd,
   /Child_Details\.php[\s\S]*Browser smoke confirmed `\/children\/7f48dd13-131e-4f4e-99bd-59a86a4b3b92`/,
+);
+assert.match(
+  text.matrixMd,
+  /Child_Details\.php[\s\S]*map picker dialog opens/,
 );
 assert.doesNotMatch(
   text.matrixMd
