@@ -56,6 +56,8 @@ python3 -m json.tool docs/page-parity-matrix.json >/dev/null
 
 `pnpm run closeout:production -- ...` is the one-command production closeout wrapper around `src/scripts/run-production-closeout.ts`. It writes the redacted readiness report from the private env/evidence file, verifies the filled production acceptance record against that report, binds the accepted evidence to the specified branch and commit, and can write a redacted closeout summary with `--summary-out=<path>`. The summary includes the redacted readiness counts, page-parity tracker counts, branch, commit, readiness report path, and evidence record path, and is safe for release notes.
 
+Use `--require-zero-partials` only for final legacy closure; it fails until `docs/page-parity-matrix.json` has no partial rows left.
+
 Use `--gate=PROD-CRON` or any other gate id to inspect one production blocker at a time; this works with normal output, `--json`, `--out=<path>`, and `--list-requirements`.
 
 The reconciliation command must be run with the same canonical MySQL import and target PostgreSQL database used for cutover, following `src/scripts/migration/README.md`. The `--help` command above is only a local command-shape sanity check.

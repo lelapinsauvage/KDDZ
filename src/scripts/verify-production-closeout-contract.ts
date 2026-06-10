@@ -61,6 +61,7 @@ try {
     evidenceRecord: evidenceRecordPath,
     readinessSummary: { ready: 12, needsEvidence: 0, total: 12 },
     parityTracker: { total: 1713, complete: 1696, partial: 17, donePct: 99, leftPct: 1 },
+    requireZeroPartials: false,
     branch: "legacy-parity-runbook",
     commit: "0404c6a",
     redacted: true,
@@ -76,6 +77,18 @@ try {
   assert.equal(staleCommit.status, 1);
   assert.match(staleCommit.stderr, /Modern branch\/commit must include commit deadbeef/);
   assertNoSensitiveOutput(staleCommit.stdout + staleCommit.stderr);
+
+  const unresolvedPartials = runCloseout([
+    `--env-file=${envFilePath}`,
+    `--evidence-record=${evidenceRecordPath}`,
+    `--out=${join(tmp, "unresolved-partials-readiness.json")}`,
+    "--branch=legacy-parity-runbook",
+    "--commit=0404c6a",
+    "--require-zero-partials",
+  ]);
+  assert.equal(unresolvedPartials.status, 1);
+  assert.match(unresolvedPartials.stderr, /requires zero partial parity rows; found 17/);
+  assertNoSensitiveOutput(unresolvedPartials.stdout + unresolvedPartials.stderr);
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }

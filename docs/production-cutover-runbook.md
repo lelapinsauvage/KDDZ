@@ -97,7 +97,7 @@ Run:
 ```bash
 pnpm tsx src/scripts/audit-production-readiness.ts --out=/tmp/kiddzonl-production-readiness.json
 pnpm tsx src/scripts/verify-production-acceptance-evidence-record.ts /secure/production-acceptance-evidence.md --readiness-report=/tmp/kiddzonl-production-readiness.json --branch=legacy-parity-runbook --commit=<release-commit-sha>
-pnpm run closeout:production -- --env-file=/secure/private-readiness.env --evidence-record=/secure/production-acceptance-evidence.md --out=/tmp/kiddzonl-production-readiness.json --summary-out=/tmp/kiddzonl-production-closeout-summary.json --branch=legacy-parity-runbook --commit=<release-commit-sha>
+pnpm run closeout:production -- --env-file=/secure/private-readiness.env --evidence-record=/secure/production-acceptance-evidence.md --out=/tmp/kiddzonl-production-readiness.json --summary-out=/tmp/kiddzonl-production-closeout-summary.json --branch=legacy-parity-runbook --commit=<release-commit-sha> --require-zero-partials
 ```
 
 Stop the cutover if the readiness audit still reports missing cron/provider evidence, or if any configured provider cannot produce sent/skipped/failed audit summaries without exposing secrets.
@@ -169,4 +169,5 @@ The legacy restoration goal can only be marked complete when:
 - `docs/page-parity-matrix.json` has no unresolved production/external partial rows,
 - the current branch/commit is recorded in the release evidence,
 - redacted readiness and closeout summary JSON files are archived with the release evidence,
+- the final closeout command passes with `--require-zero-partials`,
 - no stop condition above remains open.
