@@ -16868,7 +16868,7 @@
       "update-form",
       "user-profiles-form"
     ],
-    "verification": "The legacy `user-profiles-form` profile-field add/update/delete semantics are restored at `/settings/legacy-users/profile-fields` over migrated `login_profile_fields` / `login_profile_fields_man`, including Section, Input type, Input label, Sign Up (`hide`/`require`/`optional`), Public, Delete, source database grouping, soft-delete provenance, and preserved orphan profile values. `/settings/legacy-auth` now restores the `general-options-form`, `denied-form`, `integration-form`, and `update-form` save semantics over migrated `login_settings` / `login_settings_man`: Admin email validation, Site address slash normalization, numeric Default session validation, serialized default/notify levels, site-control toggles, new-user/password/redirect checkboxes, restricted signup domains, denied messages, social-login provider keys/toggles, captcha provider keys/radio choice, and update-check toggle. Legacy `disable-logins-enable` blocks credential auth with the old disabled-logins message, sign-in redirect settings drive successful `/login` redirects when no protected-route callback is present, sign-out redirect settings drive `/logout.php`, and signup reCAPTCHA runtime enforcement now consumes the imported Integration captcha settings before creating public accounts. Legacy notification settings remain surfaced in `/settings/notifications`, which loads the full migrated LegacySetting set for notification, accounting reminder, and auth-email rows instead of sampling the first 1000. Remaining work is active social/OAuth provider runtime and any retired PlayThru acceptance decision. Verified by `src/scripts/verify-legacy-signup-recaptcha-contract.ts`."
+    "verification": "The legacy `user-profiles-form` profile-field add/update/delete semantics are restored at `/settings/legacy-users/profile-fields` over migrated `login_profile_fields` / `login_profile_fields_man`, including Section, Input type, Input label, Sign Up (`hide`/`require`/`optional`), Public, Delete, source database grouping, soft-delete provenance, and preserved orphan profile values. `/settings/legacy-auth` now restores the `general-options-form`, `denied-form`, `integration-form`, and `update-form` save semantics over migrated `login_settings` / `login_settings_man`: Admin email validation, Site address slash normalization, numeric Default session validation, serialized default/notify levels, site-control toggles, new-user/password/redirect checkboxes, restricted signup domains, denied messages, social-login provider keys/toggles, captcha provider keys/radio choice, and update-check toggle. Legacy `disable-logins-enable` blocks credential auth with the old disabled-logins message, sign-in redirect settings drive successful `/login` redirects when no protected-route callback is present, sign-out redirect settings drive `/logout.php`, and signup reCAPTCHA runtime enforcement now consumes the imported Integration captcha settings before creating public accounts. Legacy notification settings remain surfaced in `/settings/notifications`, which loads the full migrated LegacySetting set for notification, accounting reminder, and auth-email rows instead of sampling the first 1000. Facebook, Google, and Twitter Auth.js OAuth runtime now honors enabled legacy integration settings when deployment credentials exist and resolves sign-ins through migrated `login_integration` rows. Remaining work is Yahoo replacement/retirement and any retired PlayThru acceptance decision. Verified by `src/scripts/verify-legacy-signup-recaptcha-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/footer.php",
@@ -17162,7 +17162,7 @@
     "legacyPhp": "Front/templates/admin/users/admin/page/integration.php",
     "legacyJs": "",
     "modernRoute": "/users/admin/page/integration.php, /settings/legacy-auth?tab=integration",
-    "status": "partial - legacy integration settings editable and signup reCAPTCHA runtime enforcement restored; OAuth provider runtime remains",
+    "status": "partial - legacy integration settings editable and supported OAuth/reCAPTCHA runtime restored; Yahoo/PlayThru decisions remain",
     "legacyTablesMentioned": [
       "login_settings",
       "login_settings_man"
@@ -17175,7 +17175,7 @@
       "integration-yahoo-enable",
       "integration-form"
     ],
-    "verification": "`/settings/legacy-auth?tab=integration` restores the legacy Social login and Captcha signup settings over migrated staff and manager login settings: Twitter, Facebook, Google, Yahoo enable toggles, provider credential fields, captcha provider selection (`disableCaptcha`/`reCAPTCHA`/`playThru`), and reCAPTCHA/PlayThru key fields. Saves preserve legacy option rows and `/users/admin/page/integration.php` redirects to the restored tab. The public signup runtime now consumes the imported `integration-captcha`, `reCAPTCHA-public-key`, and `reCAPTCHA-private-key` settings: enabled reCAPTCHA renders on `/signup`, submits the response token, and verifies it with Google `siteverify` before creating the legacy login row. Remaining work is active social/OAuth provider runtime and retired PlayThru provider acceptance if product still requires it. Verified by `src/scripts/verify-legacy-signup-recaptcha-contract.ts`."
+    "verification": "The legacy Integration settings surface remains editable for Facebook, Google, Twitter, Yahoo, captcha, and reCAPTCHA keys. Signup reCAPTCHA runtime enforcement is restored, and Facebook, Google, and Twitter Auth.js OAuth runtime now honors enabled legacy settings plus deployment `AUTH_*_ID`/`AUTH_*_SECRET` credentials by resolving `login_integration` provider ids to active migrated users and writing `social_login_audit` records. Yahoo is displayed/preserved as legacy metadata but unavailable at runtime until a modern provider strategy is selected; PlayThru remains archived. Verified by `src/scripts/verify-legacy-signup-recaptcha-contract.ts` and `src/scripts/verify-legacy-social-oauth-runtime-contract.ts`. Remaining work is Yahoo replacement/retirement and retired PlayThru provider acceptance if product still requires it."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/level-control.php",
@@ -17630,7 +17630,7 @@
     "legacyPhp": "Front/templates/admin/users/classes/integration.class.php",
     "legacyJs": "",
     "modernRoute": "/settings/legacy-users",
-    "status": "partial - archived social links restored; active OAuth flow remains",
+    "status": "partial - archived social links and supported OAuth runtime restored; Yahoo/PlayThru decisions remain",
     "legacyTablesMentioned": [
       "a",
       "login_integration"
@@ -17639,7 +17639,7 @@
       "link",
       "unlink"
     ],
-    "verification": "`login_integration` rows are now preserved by the auth metadata migration as `LegacyAuthRecord` rows, surfaced on `/settings/legacy-users` as read-only social-link badges/details, included in search, and soft-disabled when a migrated legacy user is deleted. Remaining work is a product/security decision on whether to re-enable active HybridAuth-style link/unlink social login against modern OAuth provider credentials."
+    "verification": "Legacy `Integration`/HybridAuth social metadata is preserved in `LegacyAuthRecord` rows from `login_integration`, exposed on profile/admin user surfaces, and now used by Facebook, Google, and Twitter Auth.js OAuth runtime to resolve provider account ids to linked active migrated users. OAuth sign-ins hydrate the same legacy session/access metadata as credential login and create `social_login_audit` records. Yahoo remains metadata-only because the installed Auth.js provider set has no Yahoo provider, and PlayThru remains archived. Verified by `src/scripts/verify-legacy-social-oauth-runtime-contract.ts`. Remaining work is a product/security decision on Yahoo replacement/retirement and whether the retired PlayThru provider still matters."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/integration/hybridauth/Hybrid/Auth.php",
@@ -18076,7 +18076,7 @@
     "legacyPhp": "Front/templates/admin/users/classes/login.class.php",
     "legacyJs": "",
     "modernRoute": "/login",
-    "status": "partial - legacy username/email, disabled-login guard, disabled fallback, password verification, login audit, session context, action-control session snapshot, remember control, and sign-in redirect restored; social/browser-session audit remains",
+    "status": "partial - legacy username/email, disabled-login guard, disabled fallback, password verification, login audit, session context, action-control session snapshot, supported OAuth runtime, remember control, and sign-in redirect restored; browser-session/Yahoo audit remains",
     "legacyTablesMentioned": [
       "actions_control",
       "if",
@@ -18100,7 +18100,7 @@
       "token",
       "username"
     ],
-    "verification": "`/login` now resolves migrated staff and manager PHP-login identities by username, email, or linked modern email before password verification; enforces `disable-logins-enable` with the legacy \"The admin has disabled logins.\" message; validates modern bcrypt passwords and migrated legacy passwords stored as bcrypt(`md5:{legacy hash}`); upgrades successful legacy-password logins to direct bcrypt; blocks legacy restricted users and users whose primary migrated `login_levels` / `login_levels_man` row is disabled by routing the failed sign-in to `/disabled.php`; honors explicit protected-route callback URLs first, then restored `signin-redirect-referrer-enable` / `signin-redirect-url` settings with legacy `home.php` mapped to `/dashboard`; hydrates Auth.js session metadata with source database, legacy login table/user id, `db_id`/`dbid`, `dbname`, and `sel_year` through migrated `LegacyYearDatabase`; hydrates Auth.js `legacyAccess` metadata analogous to legacy `$_SESSION['LEVELS']`, including source database, legacy login table/user id, serialized `user_level` level ids, configured action keys, level-granted allowed action keys, and direct `users_control` audit keys while runtime checks remain aligned to legacy `Check::protectPageOrFunction()` level/action grants; restores the `remember`/Stay signed in form control with legacy 100-day session metadata; enforces positive `default_session` minute expiry in both middleware authorization and the protected app-layout guard before DB-backed app routes render; records `default_session = 0` as browser-session intent for later cookie-level parity; and appends migrated-compatible `LegacyLoginTimestamp` rows for `login_timestamps` / `login_timestamps_man` when `profile-timestamps-enable` is enabled. Remaining work is exact browser-close cookie semantics for `default_session = 0` and social-login runtime audit. Verified by `src/scripts/verify-legacy-login-session-access-contract.ts`."
+    "verification": "`/login` now resolves migrated staff and manager PHP-login identities by username, email, linked modern email, or supported OAuth provider account before password/session hydration; enforces `disable-logins-enable` with the legacy \"The admin has disabled logins.\" message; validates modern bcrypt passwords and migrated legacy passwords stored as bcrypt(`md5:{legacy hash}`); upgrades successful legacy-password logins to direct bcrypt; blocks legacy restricted users and users whose primary migrated `login_levels` / `login_levels_man` row is disabled by routing the failed sign-in to `/disabled.php`; honors explicit protected-route callback URLs first, then restored `signin-redirect-referrer-enable` / `signin-redirect-url` settings with legacy `home.php` mapped to `/dashboard`; hydrates Auth.js session metadata with source database, legacy login table/user id, `db_id`/`dbid`, `dbname`, and `sel_year` through migrated `LegacyYearDatabase`; hydrates Auth.js `legacyAccess` metadata analogous to legacy `$_SESSION['LEVELS']`, including source database, legacy login table/user id, serialized `user_level` level ids, configured action keys, level-granted allowed action keys, and direct `users_control` audit keys while runtime checks remain aligned to legacy `Check::protectPageOrFunction()` level/action grants; restores the `remember`/Stay signed in form control with legacy 100-day session metadata; enforces positive `default_session` minute expiry in both middleware authorization and the protected app-layout guard before DB-backed app routes render; records `default_session = 0` as browser-session intent for later cookie-level parity; appends migrated-compatible `LegacyLoginTimestamp` rows for `login_timestamps` / `login_timestamps_man` when `profile-timestamps-enable` is enabled; and restores supported Facebook, Google, and Twitter Auth.js OAuth runtime through migrated `login_integration` rows plus `social_login_audit` records. Remaining work is exact browser-close cookie semantics for `default_session = 0` and Yahoo HybridAuth replacement/retirement decision. Verified by `src/scripts/verify-legacy-login-session-access-contract.ts` and `src/scripts/verify-legacy-social-oauth-runtime-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/prereqs.php",
@@ -18115,7 +18115,7 @@
     "legacyPhp": "Front/templates/admin/users/classes/profile.class.php",
     "legacyJs": "",
     "modernRoute": "/profile, /profile.php, /users/profile.php",
-    "status": "partial - legacy self-service, custom avatar, public UID profile, and provider confirmation email restored; OAuth remains",
+    "status": "partial - legacy self-service, custom avatar, public UID profile, provider email, supported OAuth login, and bridges restored; link/unlink remains",
     "legacyTablesMentioned": [
       "login_confirm",
       "login_profile_fields",
@@ -18136,7 +18136,7 @@
       "uploadAvatar",
       "p-*"
     ],
-    "verification": "`/profile` now restores the signed-in legacy PHP-login profile flow over migrated auth metadata: General tab fields, mandatory current-password validation, immediate name update, editable custom profile sections from `login_profile_fields` / `login_profiles`, checkbox normalization, `custom-avatar-enable` avatar upload with legacy success/failure messages, `User.image` plus migrated profile metadata sync, access-log tab visibility from `profile-timestamps-enable` and `profile-timestamps-admin-enable`, top 10 migrated login timestamps, social integration status badges from preserved `login_integration`, pending email/password confirmation rows in `login_confirm` / `login_confirm_man` with `update_emailPw`, provider-backed confirmation/success emails with delivery audit summaries, and `?key=` confirmation that applies the pending email/password update. `/profile.php?uid=` and `/users/profile.php?uid=` now render the legacy public read-only profile shell with the stored avatar when `profile-public-enable` is enabled, while signed-in/key links bridge into `/profile` with query strings preserved. Remaining work is live OAuth link/unlink."
+    "verification": "`/profile` now restores the signed-in legacy PHP-login profile flow over migrated auth metadata: General tab fields, mandatory current-password validation, immediate name update, editable custom profile sections from `login_profile_fields` / `login_profiles`, checkbox normalization, `custom-avatar-enable` avatar upload with legacy success/failure messages, `User.image` plus migrated profile metadata sync, access-log tab visibility from `profile-timestamps-enable` and `profile-timestamps-admin-enable`, top 10 migrated login timestamps, social integration status badges from preserved `login_integration`, pending email/password confirmation rows in `login_confirm` / `login_confirm_man` with `update_emailPw`, provider-backed confirmation/success emails with delivery audit summaries, and `?key=` confirmation that applies the pending email/password update. `/profile.php?uid=` and `/users/profile.php?uid=` now render the legacy public read-only profile shell with the stored avatar when `profile-public-enable` is enabled, while signed-in/key links bridge into `/profile` with query strings preserved. Facebook, Google, and Twitter Auth.js OAuth login now consumes preserved `login_integration` identifiers for linked active users. Remaining work is live OAuth link/unlink management from the profile page and Yahoo replacement/retirement."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/signup.class.php",
@@ -18313,7 +18313,7 @@
     "legacyPhp": "Front/templates/admin/users/login.php",
     "legacyJs": "",
     "modernRoute": "/login",
-    "status": "partial - legacy username/email sign-in form, Stay signed in control, disabled-login message, success redirect, and social visual parity restored",
+    "status": "partial - legacy username/email sign-in form, Stay signed in control, disabled-login message, success redirect, social visual parity, and supported OAuth runtime restored",
     "legacyTablesMentioned": [
       "login_integration",
       "login_settings"
@@ -18325,7 +18325,7 @@
       "token",
       "username"
     ],
-    "verification": "`/login` now accepts the legacy username-or-email credential shape, shows the legacy disabled-logins message when migrated settings block credential auth, restores the Stay signed in checkbox and sends the `remember` flag into the credentials flow, links failed restricted/disabled legacy identities to `/disabled.php`, keeps the existing forgot-password and signup flows, honors migrated sign-in redirect settings after successful credentials auth, and relies on the restored `classes/login.class.php` server behavior for password validation and login audit. The page now also mirrors the legacy `$jigowatt_integration->enabledMethods` visual surface by reading migrated `integration-facebook-enable`, `integration-google-enable`, `integration-twitter-enable`, and `integration-yahoo-enable` settings and rendering enabled social provider buttons that preserve the old `/login?login=<provider>` link shape. Remaining work is exact browser-close cookie semantics for zero-minute sessions, active social/OAuth runtime behavior, and CSRF/token visual parity beyond Auth.js protection. Verified by `src/scripts/verify-legacy-login-social-visual-contract.ts`."
+    "verification": "`/login` now accepts the legacy username-or-email credential shape, shows the legacy disabled-logins message when migrated settings block credential auth, restores the Stay signed in checkbox and sends the `remember` flag into the credentials flow, links failed restricted/disabled legacy identities to `/disabled.php`, keeps the existing forgot-password and signup flows, honors migrated sign-in redirect settings after successful credentials auth, and relies on the restored `classes/login.class.php` server behavior for password validation and login audit. The page mirrors the legacy `$jigowatt_integration->enabledMethods` visual surface by reading migrated `integration-facebook-enable`, `integration-google-enable`, `integration-twitter-enable`, and `integration-yahoo-enable` settings. Facebook, Google, and Twitter Auth.js OAuth runtime is now wired behind `AUTH_*_ID`/`AUTH_*_SECRET` deployment credentials; enabled legacy buttons call `signIn(provider)`, disabled/missing-credential providers remain visibly unavailable, provider account ids resolve against migrated `login_integration` metadata, linked active users receive the same legacy login/session/access payload as credential sign-in, and successful OAuth sign-ins create `social_login_audit` records. Remaining work is exact browser-close cookie semantics for zero-minute sessions, Yahoo HybridAuth replacement/retirement decision, and CSRF/token visual parity beyond Auth.js protection. Verified by `src/scripts/verify-legacy-login-social-visual-contract.ts` and `src/scripts/verify-legacy-social-oauth-runtime-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/logout.php",
@@ -18343,7 +18343,7 @@
     "legacyPhp": "Front/templates/admin/users/profile.php",
     "legacyJs": "",
     "modernRoute": "/profile, /profile.php, /users/profile.php",
-    "status": "partial - legacy profile page shell, custom avatar, public UID view, provider email, and bridges restored",
+    "status": "partial - legacy profile page shell, custom avatar, public UID view, provider email, supported OAuth login, and bridges restored; link/unlink remains",
     "legacyTablesMentioned": [
       "login_confirm",
       "login_profile_fields",
@@ -18364,7 +18364,7 @@
       "uploadAvatar",
       "p-*"
     ],
-    "verification": "The legacy profile page shell is now represented by `/profile` with tabs for General, migrated profile-field sections, Access Logs, and Integration status, plus Save changes backed by the legacy current-password, provider-backed confirmation/success email, and confirmation-token semantics. Custom avatar upload now honors `custom-avatar-enable`, stores browser-uploaded images through the profile avatar upload scope, syncs the modern session image, and renders on signed-in/public profile headers. Old PHP links `/profile.php` and `/users/profile.php` preserve query strings; `?uid=` renders the public read-only profile when legacy public profiles are enabled, while signed-in/key links route into `/profile`. Remaining work is active OAuth link/unlink."
+    "verification": "The legacy profile page shell is now represented by `/profile` with tabs for General, migrated profile-field sections, Access Logs, and Integration status, plus Save changes backed by the legacy current-password, provider-backed confirmation/success email, and confirmation-token semantics. Custom avatar upload now honors `custom-avatar-enable`, stores browser-uploaded images through the profile avatar upload scope, syncs the modern session image, and renders on signed-in/public profile headers. Old PHP links `/profile.php` and `/users/profile.php` preserve query strings; `?uid=` renders the public read-only profile when legacy public profiles are enabled, while signed-in/key links route into `/profile`. Facebook, Google, and Twitter Auth.js OAuth login now consumes preserved `login_integration` identifiers for linked active users. Remaining work is active OAuth link/unlink management from the profile page and Yahoo replacement/retirement."
   },
   {
     "legacyPhp": "Front/templates/admin/users/protected.php",

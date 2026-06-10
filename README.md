@@ -76,6 +76,21 @@ For `AUTH_SECRET`, you can generate a random one by running:
 openssl rand -base64 32
 ```
 
+Optional legacy social-login runtime can be enabled for providers that are active
+in the migrated Integration settings:
+
+```env
+AUTH_FACEBOOK_ID="..."
+AUTH_FACEBOOK_SECRET="..."
+AUTH_GOOGLE_ID="..."
+AUTH_GOOGLE_SECRET="..."
+AUTH_TWITTER_ID="..."
+AUTH_TWITTER_SECRET="..."
+```
+
+Yahoo HybridAuth from the legacy PHP app is preserved as migrated metadata, but
+this modern Auth.js runtime does not ship a Yahoo provider.
+
 ## Step 5: Set up the database tables
 
 This creates all the tables in your database:

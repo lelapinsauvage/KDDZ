@@ -11,6 +11,10 @@ import {
   legacyString,
   resolveStaffLoginIdentity,
 } from "@/lib/legacy-auth-identity";
+import {
+  LEGACY_SOCIAL_PROVIDER_DEFINITIONS,
+  legacySocialProviderStatuses,
+} from "@/lib/legacy-social-auth";
 
 type ActionResult<T = unknown> = {
   success: boolean;
@@ -21,21 +25,6 @@ type ActionResult<T = unknown> = {
 const SIGNIN_REDIRECT_SETTING_KEYS = [
   "signin-redirect-referrer-enable",
   "signin-redirect-url",
-] as const;
-
-const LEGACY_SOCIAL_LOGIN_METHODS = [
-  {
-    key: "facebook",
-    label: "Facebook",
-    settingKey: "integration-facebook-enable",
-  },
-  { key: "google", label: "Google", settingKey: "integration-google-enable" },
-  {
-    key: "twitter",
-    label: "Twitter",
-    settingKey: "integration-twitter-enable",
-  },
-  { key: "yahoo", label: "Yahoo", settingKey: "integration-yahoo-enable" },
 ] as const;
 
 export type LegacyDisabledContactInput = {
@@ -67,14 +56,31 @@ function legacyBool(value: string | null | undefined) {
 }
 
 export async function getLegacySocialLoginMethods(): Promise<
-  ActionResult<Array<{ key: string; label: string; href: string }>>
+  ActionResult<
+    Array<{
+      key: string;
+      label: string;
+      href: string;
+      authProviderId: string | null;
+      isConfigured: boolean;
+      isSupported: boolean;
+    }>
+  >
 > {
   try {
+    const deploymentStatuses = new Map(
+      legacySocialProviderStatuses().map((provider) => [
+        provider.key,
+        provider,
+      ]),
+    );
     const rows = await db.legacySetting.findMany({
       where: {
         legacyTable: { in: ["login_settings", "login_settings_man"] },
         settingKey: {
-          in: LEGACY_SOCIAL_LOGIN_METHODS.map((method) => method.settingKey),
+          in: LEGACY_SOCIAL_PROVIDER_DEFINITIONS.map(
+            (method) => method.settingKey,
+          ),
         },
       },
       orderBy: [
@@ -96,13 +102,19 @@ export async function getLegacySocialLoginMethods(): Promise<
 
     return {
       success: true,
-      data: LEGACY_SOCIAL_LOGIN_METHODS.filter((method) =>
+      data: LEGACY_SOCIAL_PROVIDER_DEFINITIONS.filter((method) =>
         enabled.has(method.settingKey),
-      ).map((method) => ({
-        key: method.key,
-        label: method.label,
-        href: `/login?login=${method.key}`,
-      })),
+      ).map((method) => {
+        const status = deploymentStatuses.get(method.key);
+        return {
+          key: method.key,
+          label: method.label,
+          href: `/login?login=${method.key}`,
+          authProviderId: status?.authProviderId ?? null,
+          isConfigured: status?.isConfigured ?? false,
+          isSupported: status?.isSupported ?? false,
+        };
+      }),
     };
   } catch (error) {
     console.warn("getLegacySocialLoginMethods fallback:", error);

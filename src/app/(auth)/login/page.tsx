@@ -18,6 +18,9 @@ type LegacySocialMethod = {
   key: string;
   label: string;
   href: string;
+  authProviderId: string | null;
+  isConfigured: boolean;
+  isSupported: boolean;
 };
 
 const legacySocialClasses: Record<string, string> = {
@@ -94,6 +97,13 @@ function LoginForm() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function handleSocialSignIn(method: LegacySocialMethod) {
+    if (!method.authProviderId || !method.isConfigured) return;
+    void signIn(method.authProviderId, {
+      callbackUrl: callbackUrl ?? "/dashboard",
+    });
   }
 
   return (
@@ -182,16 +192,23 @@ function LoginForm() {
             {socialMethods.length > 0 && (
               <div className="grid gap-2">
                 {socialMethods.map((method) => (
-                  <Link
+                  <button
                     key={method.key}
-                    href={method.href}
+                    type="button"
+                    onClick={() => handleSocialSignIn(method)}
+                    disabled={!method.authProviderId || !method.isConfigured}
+                    title={
+                      method.isConfigured
+                        ? `Sign in with ${method.label}`
+                        : `${method.label} sign-in is not configured`
+                    }
                     className={`flex h-10 items-center justify-center rounded-lg border px-3 text-sm font-semibold transition-colors ${
                       legacySocialClasses[method.key] ??
                       "border-[#E2E5E9] bg-[#F7F8FA] text-[#1A1D23] hover:bg-[#ECEFF3]"
-                    }`}
+                    } disabled:cursor-not-allowed disabled:opacity-60`}
                   >
                     {method.label}
-                  </Link>
+                  </button>
                 ))}
               </div>
             )}

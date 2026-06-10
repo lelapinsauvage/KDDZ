@@ -1,5 +1,9 @@
 import NextAuth from "next-auth";
+import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Facebook from "next-auth/providers/facebook";
+import Google from "next-auth/providers/google";
+import Twitter from "next-auth/providers/twitter";
 import { createHash } from "crypto";
 import { compare, hash } from "bcryptjs";
 import { authConfig } from "./auth.config";
@@ -10,8 +14,15 @@ import {
   type LegacyLoginSessionContext,
   resolveStaffLoginIdentity,
 } from "./legacy-auth-identity";
+import {
+  configuredLegacyOAuthProviders,
+  isLegacySocialAuthProvider,
+  recordLegacySocialLoginAudit,
+  resolveLegacySocialAuthIdentity,
+} from "./legacy-social-auth";
 
 type AppDb = typeof import("./db").db;
+type AuthProvider = NonNullable<NextAuthConfig["providers"]>[number];
 const LEGACY_REMEMBER_SESSION_MS = 100 * 24 * 60 * 60 * 1000;
 
 function legacyBool(value: string | null | undefined) {
@@ -182,12 +193,101 @@ async function recordLegacyLoginTimestamp(
   }
 }
 
+function legacyOAuthProviders(): AuthProvider[] {
+  return configuredLegacyOAuthProviders().flatMap<AuthProvider>((provider) => {
+    const options = {
+      clientId: provider.clientId,
+      clientSecret: provider.clientSecret,
+    };
+    if (provider.authProviderId === "facebook") return [Facebook(options)];
+    if (provider.authProviderId === "google") return [Google(options)];
+    if (provider.authProviderId === "twitter") return [Twitter(options)];
+    return [];
+  });
+}
+
+async function legacySocialSessionPayload(params: {
+  provider: string;
+  providerAccountId?: string | null;
+  email?: string | null;
+}) {
+  const { db } = await import("./db");
+  const identity = await resolveLegacySocialAuthIdentity(params);
+  if (!identity?.user) return null;
+
+  const disabledStatus = await getLegacyLoginDisabledStatus(db, identity);
+  if (disabledStatus.isDisabled) return null;
+
+  const legacyLogin = await getLegacyLoginSessionContext(db, identity);
+  const sessionPolicy = await legacySessionPolicy(db, legacyLogin, false);
+  const legacyAccess = await getLegacyAccessSessionSnapshot(identity.user.id);
+
+  await recordLegacySocialLoginAudit({
+    identity,
+    provider: params.provider,
+    providerAccountId: params.providerAccountId,
+  });
+  await recordLegacyLoginTimestamp(db, identity.user.id, new Request("http://localhost"));
+
+  return {
+    user: identity.user,
+    legacyLogin,
+    legacyAccess,
+    sessionPolicy,
+  };
+}
+
 /**
  * Full auth config WITH providers and database logic.
  * Used by API routes and server components (NOT middleware).
  */
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
+  callbacks: {
+    async signIn({ account, user }) {
+      if (!isLegacySocialAuthProvider(account?.provider)) return true;
+      const { db } = await import("./db");
+      const identity = await resolveLegacySocialAuthIdentity({
+        provider: account?.provider ?? "",
+        providerAccountId: account?.providerAccountId,
+        email: user.email,
+      });
+      if (!identity?.user) return false;
+
+      const disabledStatus = await getLegacyLoginDisabledStatus(db, identity);
+      return !disabledStatus.isDisabled;
+    },
+    async jwt(params) {
+      const token = await authConfig.callbacks.jwt(params);
+      const { account, user } = params;
+      if (!isLegacySocialAuthProvider(account?.provider)) return token;
+
+      const payload = await legacySocialSessionPayload({
+        provider: account?.provider ?? "",
+        providerAccountId: account?.providerAccountId,
+        email: user?.email,
+      });
+      if (!payload) return token;
+
+      token.id = payload.user.id;
+      token.email = payload.user.email;
+      token.name = payload.user.name;
+      token.picture = payload.user.image;
+      token.role = payload.user.role;
+      token.branchId = payload.user.branchId;
+      token.organizationId =
+        payload.user.organizationId ?? payload.user.branch?.organizationId ?? null;
+      token.legacyLogin = payload.legacyLogin;
+      token.legacyAccess = payload.legacyAccess;
+      token.legacySessionMode = payload.sessionPolicy.legacySessionMode;
+      token.legacySessionExpiresAt =
+        payload.sessionPolicy.legacySessionExpiresAt;
+
+      return token;
+    },
+    session: authConfig.callbacks.session,
+    authorized: authConfig.callbacks.authorized,
+  },
   providers: [
     Credentials({
       name: "credentials",
@@ -265,5 +365,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
       },
     }),
+    ...legacyOAuthProviders(),
   ],
 });
