@@ -531,7 +531,7 @@ export function getChildrenColumns(
     // Actions
     {
       id: "actions",
-      header: "",
+      header: "Action",
       meta: { className: "print:hidden" },
       cell: ({ row }) => {
         const child = row.original;

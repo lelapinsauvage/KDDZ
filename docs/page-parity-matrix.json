@@ -1260,7 +1260,7 @@
     "legacyPhp": "Front/templates/admin/children.php",
     "legacyJs": "Front/templates/admin/js/children.js",
     "modernRoute": "/children.php, /children",
-    "status": "partial - legacy child roster, bulk branch/class modal, filters, status toggle, copy/PDF exports, actions, ACL, and bridge restored; live refresh audit remains",
+    "status": "restored - legacy child roster, bulk branch/class modal, filters, exports, actions, ACL, and bridge restored",
     "legacyTablesMentioned": [
       "Form",
       "Selected",
@@ -1270,7 +1270,7 @@
       "actions_control"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Restored the legacy Children Listing roster shape with S.N./child number, Image, F Name, L Name, DOB, Branch, Class, Status, Gender, Date, and Action columns; child photo fallback handling for migrated `images/EmpPhoto` filenames; legacy column filters for S.N., first name, last name, DOB, nationality, created-date from/to, branch, class, gender, and status; 10/20/50/100/150 page sizes; inline class reassignment backed by an org-safe `updateChildClass` action; checkbox select-all-in-page selection; Change Branch & Class modal for selected children backed by an org-safe bulk action with target branch/class validation and history snapshots; status badge active/inactive toggle via org-safe action; dashboard, print, edit, and deactivate actions; and Copy/PDF/Excel/CSV child export with S.N. Child `addChild`, `updateChild`, and `deleteChild` ACTION grants now hide New/Edit/status/class/bulk/deactivate controls and deny direct create/update/status/class/bulk/deactivate server mutations when the imported action catalogue is configured and not granted. `/children.php` now redirects to the modern child roster. Remaining work is live WebSocket refresh behavior that was commented in legacy JS."
+    "verification": "Restored the legacy Children Listing contract from `children.php`/`children.js`: `/children.php` redirects to `/children`; the modern roster preserves the active guarded `Children Listing` surface with legacy `New Child` action, S.N./child number, Image, F Name, L Name, DOB, Branch, Class, Status, Gender, Date, and Action columns, child photo fallback handling for migrated `images/EmpPhoto` filenames, legacy column filters for S.N., first name, last name, DOB, branch, class, nationality, gender, and created-date from/to, default 10-row page size with 10/20/50/100/150/All choices, Copy/PDF/Excel/CSV export, checkbox select-all-in-page selection, Change Branch & Class modal for selected children with org-safe target validation/history snapshots, inline class reassignment, active/inactive status toggle, dashboard, print, edit, and deactivate actions. Child `addChild`, `updateChild`, and `deleteChild` ACTION grants hide New/Edit/status/class/bulk/deactivate controls and deny direct server mutations when the imported action catalogue is configured and not granted. The legacy websocket live-refresh code is a commented-out `ab.Session` block in `children.js`, so no active live socket is required for parity. Browser smoke confirmed `/children.php` renders the authenticated legacy roster, `Children Listing`, legacy table headers, filter controls, Change Branch & Class, Export, and no broken media; the current logged-in ACL hid `New Child`, while the code path preserves the legacy `addChild`-gated action. Verified by `src/scripts/verify-legacy-children-roster-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/children_drafts.php",

@@ -31,7 +31,7 @@ export default async function ChildrenListingPage({ searchParams }: PageProps) {
   const params = await searchParams;
 
   const page = Math.max(1, Number(params.page) || 1);
-  const pageSize = Number(params.pageSize) || 20;
+  const pageSize = params.pageSize === "all" ? "all" : Number(params.pageSize) || 10;
 
   const ctx = await requireOrg();
 

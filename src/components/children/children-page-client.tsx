@@ -111,7 +111,7 @@ interface Filters {
   createdFrom: string;
   createdTo: string;
   page: number;
-  pageSize: number;
+  pageSize: number | "all";
   sort: string;
   order: "asc" | "desc";
 }
@@ -128,6 +128,7 @@ interface ChildrenPageClientProps {
   lockedBranchId?: string;
   lockedBranchName?: string;
   addChildHref?: string;
+  addChildLabel?: string;
 }
 
 const childrenExportColumns: ExportColumn[] = [
@@ -196,11 +197,12 @@ export function ChildrenPageClient({
     canUpdateChild: true,
     canDeleteChild: true,
   },
-  title = "Children",
+  title = "Children Listing",
   printTitle = title,
   lockedBranchId,
   lockedBranchName,
   addChildHref = "/children/new",
+  addChildLabel = "New Child",
 }: ChildrenPageClientProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -677,14 +679,20 @@ export function ChildrenPageClient({
     manualPagination: true,
     onSortingChange: handleSortingChange,
     state: { sorting },
-    pageCount: Math.ceil(total / filters.pageSize),
+    pageCount: filters.pageSize === "all" ? 1 : Math.ceil(total / filters.pageSize),
   });
 
   // ── Pagination helpers ─────────────────────────
 
-  const pageCount = Math.ceil(total / filters.pageSize);
+  const pageCount = filters.pageSize === "all" ? 1 : Math.ceil(total / filters.pageSize);
   const canPreviousPage = filters.page > 1;
   const canNextPage = filters.page < pageCount;
+  const showingFrom = filters.pageSize === "all"
+    ? 1
+    : Math.min((filters.page - 1) * filters.pageSize + 1, total);
+  const showingTo = filters.pageSize === "all"
+    ? total
+    : Math.min(filters.page * filters.pageSize, total);
 
   return (
     <>
@@ -704,7 +712,7 @@ export function ChildrenPageClient({
               <Button asChild>
                 <Link href={addChildHref}>
                   <Plus className="mr-1 size-4" />
-                  Add Child
+                  {addChildLabel}
                 </Link>
               </Button>
             </CardAction>
@@ -1089,11 +1097,11 @@ export function ChildrenPageClient({
               <p className="text-sm text-muted-foreground">
                 Showing{" "}
                 <span className="font-medium text-foreground">
-                  {Math.min((filters.page - 1) * filters.pageSize + 1, total)}
+                  {showingFrom}
                 </span>
                 {" "}&ndash;{" "}
                 <span className="font-medium text-foreground">
-                  {Math.min(filters.page * filters.pageSize, total)}
+                  {showingTo}
                 </span>
                 {" "}of{" "}
                 <span className="font-medium text-foreground">{total}</span> children
@@ -1108,9 +1116,9 @@ export function ChildrenPageClient({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent side="top">
-                    {[10, 20, 50, 100, 150].map((size) => (
+                    {[10, 20, 50, 100, 150, "all"].map((size) => (
                       <SelectItem key={size} value={String(size)}>
-                        {size}
+                        {size === "all" ? "All" : size}
                       </SelectItem>
                     ))}
                   </SelectContent>
