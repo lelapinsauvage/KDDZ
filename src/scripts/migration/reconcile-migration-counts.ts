@@ -1047,6 +1047,14 @@ const RECONCILIATION_RULES: ReconciliationRule[] = [
     })
   ),
   provenancedRule({
+    id: "medical.t_medical_forms",
+    step: "19. Medical Forms",
+    sourceTable: "t_medical_forms",
+    targetTable: "legacy_medical_form_definitions",
+    notes:
+      "Legacy selectable medical form definitions preserve sourceDatabase, legacyKey, legacyId, form name, ref target, active flag, created timestamp, and raw legacy row.",
+  }),
+  provenancedRule({
     id: "medical.t_med_forms_info",
     step: "19. Medical Forms",
     sourceTable: "t_med_forms_info",

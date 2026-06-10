@@ -1850,6 +1850,26 @@ model MedicalFormEntry {
   @@map("medical_form_entries")
 }
 
+model LegacyMedicalFormDefinition {
+  id             String   @id @default(uuid()) @db.Uuid
+  sourceDatabase String
+  legacyKey      String   @unique
+  legacyId       Int
+  formName       String
+  ref            String?
+  isActive       Boolean  @default(true)
+  legacyData     Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([sourceDatabase])
+  @@index([legacyId])
+  @@index([formName])
+  @@index([ref])
+  @@index([isActive])
+  @@map("legacy_medical_form_definitions")
+}
+
 model Vaccination {
   id                String    @id @default(uuid()) @db.Uuid
   childId           String    @db.Uuid

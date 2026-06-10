@@ -45,6 +45,15 @@ type MedFormType =
   | "ACCIDENTS";
 type MedFormStatus = "DRAFT" | "SUBMITTED" | "REVIEWED";
 
+interface OldMedicalFormDefinition {
+  fid: number;
+  form_name: string;
+  ref: string;
+  active: number;
+  datetime: string;
+  [key: string]: unknown;
+}
+
 function legacyKey(sourceDatabase: string, table: string, legacyId: number) {
   return `${sourceDatabase}:${table}:${legacyId}`;
 }
@@ -62,6 +71,81 @@ function legacyRowData(
       legacyId,
       row,
     })
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Migrate t_medical_forms → LegacyMedicalFormDefinition
+// ---------------------------------------------------------------------------
+async function migrateMedicalFormDefinitions(
+  prisma: PrismaClient,
+  dryRun: boolean,
+  sourceDatabase: string
+) {
+  const rows = await queryMysql<OldMedicalFormDefinition>(
+    "SELECT * FROM t_medical_forms ORDER BY fid"
+  );
+  log(`Found ${rows.length} medical form definitions in t_medical_forms`);
+
+  let migrated = 0;
+  let updated = 0;
+  let skipped = 0;
+
+  for (const row of rows) {
+    const legacyId = toInt(row.fid, 0);
+    const formName = cleanString(row.form_name);
+    if (!legacyId || !formName) {
+      skipped++;
+      continue;
+    }
+
+    const key = legacyKey(sourceDatabase, "t_medical_forms", legacyId);
+    const data = {
+      sourceDatabase,
+      legacyKey: key,
+      legacyId,
+      formName,
+      ref: cleanString(row.ref),
+      isActive: toBool(row.active),
+      legacyData: legacyRowData(sourceDatabase, "t_medical_forms", legacyId, row),
+      createdAt: parseDate(row.datetime) ?? new Date(),
+    };
+
+    const existing = await prisma.legacyMedicalFormDefinition.findUnique({
+      where: { legacyKey: key },
+    });
+
+    let modernId = existing?.id ?? null;
+
+    if (!dryRun) {
+      if (existing) {
+        await prisma.legacyMedicalFormDefinition.update({
+          where: { id: existing.id },
+          data,
+        });
+        updated++;
+      } else {
+        modernId = generateUUID();
+        await prisma.legacyMedicalFormDefinition.create({
+          data: {
+            id: modernId,
+            ...data,
+          },
+        });
+        migrated++;
+      }
+    } else if (existing) {
+      updated++;
+    } else {
+      migrated++;
+    }
+
+    setMapping("medical_form_definition", legacyId, modernId ?? key);
+    logProgress(migrated + updated + skipped, rows.length, "Medical Form Definitions");
+  }
+
+  log(
+    `t_medical_forms: ${migrated} migrated, ${updated} updated, ${skipped} skipped`
   );
 }
 
@@ -549,6 +633,9 @@ export async function migrateMedical(prisma: PrismaClient) {
   log("=== Migrating Medical Forms ===");
   const dryRun = isDryRun();
   const sourceDatabase = getMysqlConfig().database || "unknown";
+
+  // Legacy selectable medical form catalogue used by getForms()/getFormRef().
+  await migrateMedicalFormDefinitions(prisma, dryRun, sourceDatabase);
 
   // Form 1 — Medical Dossier → GENERAL
   await migrateFormTable(
