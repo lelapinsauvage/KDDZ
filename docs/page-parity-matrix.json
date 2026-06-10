@@ -17124,7 +17124,7 @@
     "legacyPhp": "Front/templates/admin/users/admin/page/general-options.php",
     "legacyJs": "",
     "modernRoute": "/users/admin/page/general-options.php, /settings/legacy-auth?tab=general",
-    "status": "partial - legacy general auth options editable; active Auth.js enforcement audit remains",
+    "status": "restored - legacy general auth options editable and runtime enforcement restored",
     "legacyTablesMentioned": [
       "login_levels",
       "login_levels_man",
@@ -17138,7 +17138,7 @@
       "general-options-form",
       "restrict-signups-by-email"
     ],
-    "verification": "`/settings/legacy-auth?tab=general` restores the legacy General Options form over migrated staff and manager login settings: Admin email, Site address, Default session, Default level, site-control toggles, new-user activation/welcome/new-registration notification settings, restricted signup domains serialized like legacy PHP arrays, password encryption settings, and guest/new-user/sign-in/sign-out redirect options. Saves preserve legacy `option_name` / `option_value` metadata, create missing settings with next legacy ids, and the modern add-user default-level fallback now parses serialized legacy default levels. `/users/admin/page/general-options.php` redirects to the restored tab. Remaining work is deciding which imported legacy auth toggles should actively enforce modern Auth.js runtime behavior."
+    "verification": "`/settings/legacy-auth?tab=general` restores the legacy General Options form over migrated staff and manager login settings: Admin email, Site address, Default session, Default level, site-control toggles, new-user activation/welcome/new-registration notification settings, restricted signup domains serialized like legacy PHP arrays, password encryption settings, and guest/new-user/sign-in/sign-out redirect options. Saves preserve legacy `option_name` / `option_value` metadata, create missing settings with next legacy ids, and the modern add-user/default-level fallback parses serialized legacy default levels. `/users/admin/page/general-options.php` redirects to the restored tab. Runtime enforcement now covers `disable-logins-enable`, `default_session` positive expiry, `default_session = 0` browser-session intent, Stay signed in 100-day intent, legacy guest redirects for secured pages with callback preservation, sign-in and sign-out redirects, disabled registrations, email-as-username signup, restricted signup domains, activation tokens, welcome-email suppression, new-user admin notifications, and new-user redirect results. Password encryption options remain preserved as migrated settings while modern-created passwords use current bcrypt and imported MD5 hashes are verified/upgraded by the login class. Verified by `src/scripts/verify-legacy-auth-general-options-runtime-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/header.php",

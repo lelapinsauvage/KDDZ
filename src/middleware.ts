@@ -17,7 +17,19 @@ export default auth((request) => {
     return NextResponse.redirect(new URL("/dashboard", request.nextUrl));
   }
 
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-current-pathname", pathname);
+  requestHeaders.set("x-current-path", `${pathname}${search}`);
+
   if (!isPublicAuthPath(pathname) && !isLoggedIn) {
+    if (!pathname.startsWith("/api/")) {
+      return NextResponse.next({
+        request: {
+          headers: requestHeaders,
+        },
+      });
+    }
+
     const target = new URL("/login", request.nextUrl);
     target.searchParams.set(
       "callbackUrl",
@@ -25,9 +37,6 @@ export default auth((request) => {
     );
     return NextResponse.redirect(target);
   }
-
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-current-pathname", pathname);
 
   return NextResponse.next({
     request: {

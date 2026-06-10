@@ -20,6 +20,7 @@ import {
 } from "@/lib/legacy-page-guards"
 import { getLegacyNotificationGateVisibility } from "@/lib/legacy-notification-gates"
 import { getLegacySystemActionPermissions } from "@/lib/legacy-system-action-permissions"
+import { legacyGuestRedirectPath } from "@/lib/legacy-guest-redirect"
 import { isExpiredIsoDate } from "@/lib/auth-public-paths"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
@@ -28,12 +29,25 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const session = await auth()
   const requestHeaders = await headers()
   const currentPathname = requestHeaders.get("x-current-pathname")
+  const currentPath = requestHeaders.get("x-current-path") ?? currentPathname
   const legacySessionExpiresAt = session?.user?.legacySessionExpiresAt
   const legacySessionExpired = isExpiredIsoDate(legacySessionExpiresAt)
 
   if (!session?.user?.id || legacySessionExpired) {
-    const callbackPath = currentPathname && currentPathname !== "/" ? currentPathname : "/dashboard"
-    redirect(`/login?callbackUrl=${encodeURIComponent(callbackPath)}`)
+    const proto =
+      requestHeaders.get("x-forwarded-proto") ??
+      (process.env.NODE_ENV === "production" ? "https" : "http")
+    const host =
+      requestHeaders.get("x-forwarded-host") ??
+      requestHeaders.get("host") ??
+      "localhost:3000"
+    const callbackPath = currentPath && currentPath !== "/" ? currentPath : "/dashboard"
+    redirect(
+      await legacyGuestRedirectPath({
+        origin: `${proto}://${host}`,
+        callbackPath,
+      }),
+    )
   }
 
   const guardedLegacyPage = getLegacyPageNameForPath(currentPathname)
