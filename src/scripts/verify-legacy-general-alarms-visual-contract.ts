@@ -6,12 +6,16 @@ const files = {
     "/Users/karimsaab/Desktop/Garderie Project/Garderie-old-backup/Front/templates/admin/alarms.php",
   legacyAlarmsJs:
     "/Users/karimsaab/Desktop/Garderie Project/Garderie-old-backup/Front/templates/admin/js/alarms.js",
+  legacyDataClass:
+    "/Users/karimsaab/Desktop/Garderie Project/Garderie-old-backup/Front/templates/admin/classes/Data.class.php",
   alarmsBridge: "src/app/(app)/alarms.php/page.tsx",
   alarmsPage: "src/app/(app)/alarms/page.tsx",
   alarmsPageClient: "src/app/(app)/alarms/alarms-page-client.tsx",
   staffReceiptClient:
     "src/app/(app)/alarms/_components/staff-receipt-alarms-client.tsx",
   alarmsActions: "src/lib/actions/alarms.ts",
+  sideEffects: "src/lib/legacy-message-side-effects.ts",
+  sideEffectVerifier: "src/scripts/verify-general-closure-side-effects.ts",
   matrix: "docs/page-parity-matrix.json",
   markdownMatrix: "docs/page-parity-matrix.md",
   topGaps: "docs/top-20-restoration-gaps.md",
@@ -27,6 +31,10 @@ assert.match(text.legacyAlarmsPhp, /Notifications Listing/);
 assert.match(text.legacyAlarmsPhp, /Teachers/);
 assert.match(text.legacyAlarmsPhp, /Sent Alarms/);
 assert.match(text.legacyAlarmsJs, /Set All As Viewed|setallviewed|viewed/i);
+assert.match(text.legacyDataClass, /public function addToGeneral/);
+assert.match(text.legacyDataClass, /insert\("t_alarms", \["type","details","href","child_id", "level", "ntype"\]/);
+assert.match(text.legacyDataClass, /insert\("custom_notifications_parents", \["cusntf_notification_id","cusntf_user_id","cusntf_is_viewed"\]/);
+assert.match(text.legacyDataClass, /insert\("custom_notifications", \["cusntf_notification_id","cusntf_user_id","cusntf_is_viewed"\]/);
 
 assert.match(text.alarmsBridge, /redirect\("\/alarms"\)/);
 assert.match(text.alarmsPage, /getActionableAlarms\(\)/);
@@ -78,6 +86,24 @@ assert.match(text.alarmsActions, /export async function getGeneralAlarmNotificat
 assert.match(text.alarmsActions, /export async function getGeneralAlarmHistory/);
 assert.match(text.alarmsActions, /export async function markGeneralAlarmViewed/);
 assert.match(text.alarmsActions, /export async function markAllGeneralAlarmsViewed/);
+assert.match(text.sideEffects, /legacyMethod: "addToGeneral"/);
+assert.match(text.sideEffects, /contentTable: "t_alarms"/);
+assert.match(text.sideEffects, /parentDeliveryTable: "custom_notifications_parents"/);
+assert.match(text.sideEffects, /staffDeliveryTable: "custom_notifications"/);
+assert.match(text.sideEffects, /href: "alarms\.php"/);
+assert.match(text.sideEffects, /cusntf_is_viewed: 0/);
+assert.match(text.sideEffects, /status: 0/);
+assert.match(text.sideEffects, /sourceTable: config\.parentDeliveryTable/);
+assert.match(text.sideEffects, /sourceContentTable: config\.contentTable/);
+assert.match(text.sideEffectVerifier, /Closure nature should map to a legacy side-effect config/);
+assert.match(text.sideEffectVerifier, /legacyMethod, "addToGeneral"/);
+assert.match(text.sideEffectVerifier, /contentTable: "t_alarms"/);
+assert.match(text.sideEffectVerifier, /parentDeliveryTable: GENERAL_PARENT_RECEIPT_SOURCE/);
+assert.match(text.sideEffectVerifier, /staffDeliveryTable: GENERAL_STAFF_RECEIPT_SOURCE/);
+assert.match(text.sideEffectVerifier, /assert\.equal\(legacyData\.status, 0\)/);
+assert.match(text.sideEffectVerifier, /assert\.equal\(parentReceipt\.isRead, false\)/);
+assert.match(text.sideEffectVerifier, /assert\.equal\(staffReceipt\.isRead, false\)/);
+assert.match(text.sideEffectVerifier, /notifications_master\.php should return HTTP 200/);
 
 type MatrixRow = {
   legacyPhp?: string;
@@ -94,11 +120,17 @@ assert.ok(row);
 assert.equal(row.modernRoute, "/alarms.php, /alarms");
 assert.equal(
   row.status,
-  "partial - legacy general alarms bridge, read-state, sent history, and browser visual audit restored",
+  "restored - legacy general alarms bridge, read-state, sent history, source workflow, and browser visual audit restored",
 );
 assert.match(row.verification ?? "", /Browser smoke confirmed `\/alarms\.php` redirects to `\/alarms`/);
 assert.match(row.verification ?? "", /General Notifications/);
 assert.match(row.verification ?? "", /Sent Alarms/);
+assert.match(row.verification ?? "", /source workflow/);
+assert.match(row.verification ?? "", /`t_alarms`/);
+assert.match(row.verification ?? "", /`custom_notifications`/);
+assert.match(row.verification ?? "", /`custom_notifications_parents`/);
+assert.match(row.verification ?? "", /status\/read defaults/);
+assert.match(row.verification ?? "", /verify-general-closure-side-effects\.ts/);
 assert.match(row.verification ?? "", /no broken images or browser errors/);
 
 const markdownRow = text.markdownMatrix
@@ -106,10 +138,11 @@ const markdownRow = text.markdownMatrix
   .find((line) => line.includes("| Front/templates/admin/alarms.php |"));
 assert.match(
   markdownRow ?? "",
-  /partial - legacy general alarms bridge, read-state, sent history, and browser visual audit restored/,
+  /restored - legacy general alarms bridge, read-state, sent history, source workflow, and browser visual audit restored/,
 );
 assert.match(markdownRow ?? "", /Browser smoke confirmed `\/alarms\.php` redirects to `\/alarms`/);
-assert.match(markdownRow ?? "", /Remaining work is exact legacy `t_alarms\.status` semantics/);
+assert.match(markdownRow ?? "", /verify-general-closure-side-effects\.ts/);
+assert.doesNotMatch(markdownRow ?? "", /Remaining work is exact legacy `t_alarms\.status` semantics/);
 assert.doesNotMatch(markdownRow ?? "", /final visual audit/);
 
 assert.match(

@@ -205,6 +205,7 @@ async function main() {
     assert.equal(legacyData.details, body);
     assert.equal(legacyData.href, "alarms.php");
     assert.equal(legacyData.ntype, 1);
+    assert.equal(legacyData.status, 0);
 
     const legacyNotificationId = Number(legacyData.aid);
     assert.ok(Number.isFinite(legacyNotificationId), "alarm should preserve legacy aid");
