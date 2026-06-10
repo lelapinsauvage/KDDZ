@@ -21,10 +21,12 @@ type ReadinessReport = {
 
 const recordPath = positionalArgs()[0];
 const readinessReportPath = optionValue("--readiness-report");
+const expectedBranch = optionValue("--branch");
+const expectedCommit = optionValue("--commit");
 
 if (!recordPath || recordPath.startsWith("-")) {
   console.error(
-    "Usage: pnpm tsx src/scripts/verify-production-acceptance-evidence-record.ts <filled-production-evidence.md> [--readiness-report=<redacted-readiness.json>]"
+    "Usage: pnpm tsx src/scripts/verify-production-acceptance-evidence-record.ts <filled-production-evidence.md> [--readiness-report=<redacted-readiness.json>] [--branch=<branch>] [--commit=<sha>]"
   );
   process.exit(2);
 }
@@ -210,6 +212,7 @@ for (const spec of requiredSections) {
 if (readinessReportPath) {
   verifyReadinessReport(readinessReportPath, sections, errors);
 }
+verifyBranchAndCommit(sections, errors);
 
 if (errors.length > 0) {
   console.error("Production acceptance evidence record is incomplete:");
@@ -225,6 +228,8 @@ console.log(
       status: "production acceptance evidence record verified",
       record: recordPath,
       readinessReport: readinessReportPath ?? null,
+      branch: expectedBranch ?? null,
+      commit: expectedCommit ?? null,
       sections: requiredSections.length,
       fields: requiredSections.reduce((count, section) => count + section.fields.length, 0),
       redacted: true,
@@ -377,6 +382,23 @@ function verifyReadinessReport(
     if (!reportGates.has(section)) {
       errors.push(`readiness report: missing ${section}`);
     }
+  }
+}
+
+function verifyBranchAndCommit(
+  sections: Map<string, Map<string, string>>,
+  errors: string[]
+) {
+  if (!expectedBranch && !expectedCommit) {
+    return;
+  }
+
+  const value = sections.get("Run Metadata")?.get("Modern branch/commit") ?? "";
+  if (expectedBranch && !value.includes(expectedBranch)) {
+    errors.push(`Run Metadata: Modern branch/commit must include branch ${expectedBranch}`);
+  }
+  if (expectedCommit && !value.includes(expectedCommit)) {
+    errors.push(`Run Metadata: Modern branch/commit must include commit ${expectedCommit}`);
   }
 }
 

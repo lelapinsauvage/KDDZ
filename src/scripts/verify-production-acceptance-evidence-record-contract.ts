@@ -20,10 +20,16 @@ try {
   const readinessReportPath = join(tmp, "readiness.json");
   writeFileSync(readinessReportPath, JSON.stringify(readinessReport(), null, 2), "utf8");
 
-  const validRecord = runVerifier(validRecordPath, [`--readiness-report=${readinessReportPath}`]);
+  const validRecord = runVerifier(validRecordPath, [
+    `--readiness-report=${readinessReportPath}`,
+    "--branch=legacy-parity-runbook",
+    "--commit=0404c6a",
+  ]);
   assert.equal(validRecord.status, 0, validRecord.stdout + validRecord.stderr);
   assert.match(validRecord.stdout, /production acceptance evidence record verified/);
   assert.match(validRecord.stdout, /readiness\.json/);
+  assert.match(validRecord.stdout, /legacy-parity-runbook/);
+  assert.match(validRecord.stdout, /0404c6a/);
   assert.match(validRecord.stdout, /"redacted": true/);
 
   const placeholderRecordPath = join(tmp, "production-acceptance-placeholder.md");
@@ -62,6 +68,14 @@ try {
   assert.equal(blockedReadiness.status, 1);
   assert.match(blockedReadiness.stderr, /expected all gates ready/);
   assert.match(blockedReadiness.stderr, /PROD-NATIVE status is needs-evidence/);
+
+  const staleCommit = runVerifier(validRecordPath, [
+    `--readiness-report=${readinessReportPath}`,
+    "--branch=legacy-parity-runbook",
+    "--commit=deadbeef",
+  ]);
+  assert.equal(staleCommit.status, 1);
+  assert.match(staleCommit.stderr, /Modern branch\/commit must include commit deadbeef/);
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }
