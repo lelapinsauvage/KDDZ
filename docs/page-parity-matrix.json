@@ -16514,14 +16514,14 @@
     "legacyPhp": "Front/templates/admin/printFoodCal.php",
     "legacyJs": "",
     "modernRoute": "/printFoodCal.php, /food/calendar/print",
-    "status": "partial - legacy print link bridge, print state, and Early Dinner legend restored; food calendar visual audit remains",
+    "status": "restored - legacy print food calendar bridge, print state, Early Dinner legend, and browser visual audit restored",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [
       "brid",
       "month",
       "year"
     ],
-    "verification": "`/printFoodCal.php?brid=&month=&year=` now resolves raw numeric, UUID, and encrypted legacy branch ids into the modern print calendar, initializes branch/month/year from the legacy URL, triggers the print dialog for the bridge route, keeps print-page branch/month/year query state aligned while navigating, and labels the legacy `edid` slot as `ED = Early Dinner`. Remaining work is exact legacy FullCalendar print layout parity."
+    "verification": "`/printFoodCal.php?brid=&month=&year=` resolves raw numeric, UUID, and encrypted legacy branch ids into the modern print calendar, initializes branch/month/year from the legacy URL, triggers the print dialog for the bridge route, and keeps print-page branch/month/year query state aligned while navigating after `autoprint` is consumed. Browser smoke confirmed `/printFoodCal.php?brid=` with a raw UUID branch id redirects to `/food/calendar/print`, renders the Hamra October 2018 Monthly Food Calendar with populated migrated Breakfast/Lunch rows, B/L/D/ED meal prefixes, `ED = Early Dinner` legend, screen-only Print Food Calendar controls, and no unexpected browser errors beyond the known PostgreSQL SSL warning and existing Radix hydration-id warning. The old FullCalendar runtime is intentionally represented by a modern printable month table while preserving the visible legacy print contract. Verified by `src/scripts/verify-legacy-print-food-calendar-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/regions.php",
