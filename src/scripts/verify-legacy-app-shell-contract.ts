@@ -84,7 +84,12 @@ const modernAlarmNeedles = [
   /visibleKeys\.add\("medical"\)/,
   /<LegacyAlarmBar families=\{legacyBadges\} \/>/,
   /initialData\?: HeaderData/,
-  /const \[legacyBadges\] = useState<HeaderLegacyBadgeFamily\[\]>\(initialData\.legacyBadges\)/,
+  /import \{ getHeaderData \} from "@\/lib\/actions\/header"/,
+  /const \[legacyBadges, setLegacyBadges\] = useState<HeaderLegacyBadgeFamily\[\]>\(initialData\.legacyBadges\)/,
+  /setLegacyBadges\(next\.legacyBadges\)/,
+  /window\.setInterval\(refreshHeader, 60000\)/,
+  /document\.addEventListener\("visibilitychange", onVisibilityChange\)/,
+  /Keep the server-rendered legacy header state if refresh fails\./,
   /canManageSystem &&/,
   /href="\/users\/admin"/,
 ];

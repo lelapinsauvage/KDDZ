@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useSession, signOut } from "next-auth/react"
 import {
   User,
@@ -26,6 +26,7 @@ import { InboxTray } from "./inbox-tray"
 import { NotificationDropdown } from "./notification-dropdown"
 import { LegacyAlarmBar } from "./legacy-alarm-bar"
 import { GlobalSearch } from "./global-search"
+import { getHeaderData } from "@/lib/actions/header"
 import type {
   HeaderData,
   HeaderNotification,
@@ -56,14 +57,47 @@ export function Header({ canManageSystem = false, initialData = emptyHeaderData 
   const userInitial = userName.charAt(0).toUpperCase()
   const [searchOpen, setSearchOpen] = useState(false)
 
-  const [notifications] = useState<HeaderNotification[]>(initialData.notifications)
-  const [unreadNotificationCount] = useState(initialData.unreadNotificationCount)
-  const [unreadMessageCount] = useState(initialData.unreadMessageCount)
-  const [recentMessages] = useState<HeaderMessage[]>(initialData.recentMessages)
-  const [alarmCounts] = useState(initialData.alarmCounts)
-  const [recentAlarms] = useState<HeaderAlarm[]>(initialData.recentAlarms)
-  const [hasCriticalAlarms] = useState(initialData.hasCriticalAlarms)
-  const [legacyBadges] = useState<HeaderLegacyBadgeFamily[]>(initialData.legacyBadges)
+  const [notifications, setNotifications] = useState<HeaderNotification[]>(initialData.notifications)
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(initialData.unreadNotificationCount)
+  const [unreadMessageCount, setUnreadMessageCount] = useState(initialData.unreadMessageCount)
+  const [recentMessages, setRecentMessages] = useState<HeaderMessage[]>(initialData.recentMessages)
+  const [alarmCounts, setAlarmCounts] = useState(initialData.alarmCounts)
+  const [recentAlarms, setRecentAlarms] = useState<HeaderAlarm[]>(initialData.recentAlarms)
+  const [hasCriticalAlarms, setHasCriticalAlarms] = useState(initialData.hasCriticalAlarms)
+  const [legacyBadges, setLegacyBadges] = useState<HeaderLegacyBadgeFamily[]>(initialData.legacyBadges)
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function refreshHeader() {
+      try {
+        const next = await getHeaderData()
+        if (!isMounted) return
+        setNotifications(next.notifications)
+        setUnreadNotificationCount(next.unreadNotificationCount)
+        setUnreadMessageCount(next.unreadMessageCount)
+        setRecentMessages(next.recentMessages)
+        setAlarmCounts(next.alarmCounts)
+        setRecentAlarms(next.recentAlarms)
+        setHasCriticalAlarms(next.hasCriticalAlarms)
+        setLegacyBadges(next.legacyBadges)
+      } catch {
+        // Keep the server-rendered legacy header state if refresh fails.
+      }
+    }
+
+    const interval = window.setInterval(refreshHeader, 60000)
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") void refreshHeader()
+    }
+    document.addEventListener("visibilitychange", onVisibilityChange)
+
+    return () => {
+      isMounted = false
+      window.clearInterval(interval)
+      document.removeEventListener("visibilitychange", onVisibilityChange)
+    }
+  }, [])
 
   return (
     <header className="header-bar fixed top-0 left-0 right-0 z-50 flex h-14 items-center">
