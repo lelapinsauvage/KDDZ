@@ -23,25 +23,26 @@ assert.match(text.legacy, /\$jigowatt_integration->enabledMethods/);
 assert.match(text.legacy, /login\.php\?login=<\?php echo \$key; \?>/);
 assert.match(text.legacy, /assets\/img\/<\?php echo \$key; \?>_signin\.png/);
 
-for (const key of [
-  "integration-facebook-enable",
-  "integration-google-enable",
-  "integration-twitter-enable",
-  "integration-yahoo-enable",
-]) {
-  assert.match(text.loginActions, new RegExp(key));
-}
 assert.match(text.loginActions, /export async function getLegacySocialLoginMethods/);
 assert.match(text.loginActions, /legacyTable: \{ in: \["login_settings", "login_settings_man"\] \}/);
+assert.match(text.loginActions, /LEGACY_SOCIAL_PROVIDER_DEFINITIONS/);
+assert.match(text.loginActions, /legacySocialProviderStatuses/);
+assert.match(text.loginActions, /method\.settingKey/);
 assert.match(text.loginActions, /legacyBool\(row\.settingValue\)/);
 assert.match(text.loginActions, /href: `\/login\?login=\$\{method\.key\}`/);
+assert.match(text.loginActions, /authProviderId: status\?\.authProviderId \?\? null/);
+assert.match(text.loginActions, /isConfigured: status\?\.isConfigured \?\? false/);
+assert.match(text.loginActions, /isSupported: status\?\.isSupported \?\? false/);
 
 assert.match(text.loginPage, /getLegacySocialLoginMethods/);
 assert.match(text.loginPage, /useEffect/);
 assert.match(text.loginPage, /const \[socialMethods, setSocialMethods\]/);
 assert.match(text.loginPage, /socialMethods\.length > 0/);
 assert.match(text.loginPage, /socialMethods\.map/);
-assert.match(text.loginPage, /href=\{method\.href\}/);
+assert.match(text.loginPage, /handleSocialSignIn/);
+assert.match(text.loginPage, /signIn\(method\.authProviderId/);
+assert.match(text.loginPage, /disabled=\{!method\.authProviderId \|\| !method\.isConfigured\}/);
+assert.match(text.loginPage, /method\.isConfigured/);
 assert.match(text.loginPage, /legacySocialClasses/);
 for (const provider of ["facebook", "google", "twitter", "yahoo"]) {
   assert.match(text.loginPage, new RegExp(`${provider}:`));
@@ -59,7 +60,8 @@ const row = matrix.find(
 );
 assert.ok(row);
 assert.match(row.status ?? "", /social visual parity restored/);
-assert.match(row.verification ?? "", /enabled social provider buttons/);
+assert.match(row.verification ?? "", /enabled legacy buttons call `signIn\(provider\)`/);
+assert.match(row.verification ?? "", /disabled\/missing-credential providers remain visibly unavailable/);
 assert.match(row.verification ?? "", /integration-facebook-enable/);
 assert.match(row.verification ?? "", /verify-legacy-login-social-visual-contract\.ts/);
 assert.doesNotMatch(row.verification ?? "", /social visual audit remains/);

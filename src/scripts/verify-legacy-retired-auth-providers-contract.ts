@@ -63,16 +63,28 @@ const matrix = JSON.parse(text.matrix) as MatrixRow[];
 const rows = new Map(matrix.map((row) => [row.legacyPhp, row]));
 for (const legacyPhp of [
   "Front/templates/admin/users/admin/classes/settings.class.php",
+  "Front/templates/admin/users/admin/page/emails-welcome.php",
   "Front/templates/admin/users/admin/page/integration.php",
+  "Front/templates/admin/users/classes/integration.class.php",
+  "Front/templates/admin/users/classes/login.class.php",
+  "Front/templates/admin/users/classes/profile.class.php",
   "Front/templates/admin/users/classes/signup.class.php",
+  "Front/templates/admin/users/login.php",
+  "Front/templates/admin/users/profile.php",
 ]) {
   const row = rows.get(legacyPhp);
   assert.ok(row, `${legacyPhp} row exists`);
   assert.match(row.status ?? "", /^restored -/);
   assert.match(row.verification ?? "", /Yahoo OpenID and PlayThru are preserved as archived settings/);
   assert.match(row.verification ?? "", /verify-legacy-retired-auth-providers-contract\.ts/);
-  assert.doesNotMatch(row.status ?? "", /Yahoo\/PlayThru decisions remain|PlayThru\/Yahoo decisions remain/);
-  assert.doesNotMatch(row.verification ?? "", /Remaining work is Yahoo|Remaining work is PlayThru/);
+  assert.doesNotMatch(
+    row.status ?? "",
+    /Yahoo\/PlayThru decisions remain|PlayThru\/Yahoo decisions remain|Yahoo decision remains|Yahoo audit remains|Yahoo\/token audit remains|OAuth remains/,
+  );
+  assert.doesNotMatch(
+    row.verification ?? "",
+    /Remaining work is Yahoo|Remaining work is PlayThru|Remaining work is social signup\/OAuth parity|Remaining work is active OAuth reconnect|Remaining work is live OAuth reconnect/,
+  );
 }
 
 assert.match(text.markdownMatrix, /verify-legacy-retired-auth-providers-contract\.ts/);
