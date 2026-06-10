@@ -8,6 +8,8 @@ Use `docs/production-acceptance-evidence-template.md` as the non-secret release 
 
 Use `docs/production-cutover-runbook.md` for the ordered production execution sequence and stop conditions.
 
+Use `docs/partial-production-gate-map.md` to trace each remaining page-parity partial row to its blocking production gate.
+
 ## Gate Register
 
 | Gate | Scope | Evidence Required To Close |

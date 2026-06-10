@@ -20,6 +20,7 @@ const files = {
   migrationReadme: "src/scripts/migration/README.md",
   evidenceTemplate: "docs/production-acceptance-evidence-template.md",
   cutoverRunbook: "docs/production-cutover-runbook.md",
+  partialGateMap: "docs/partial-production-gate-map.md",
 };
 
 const contents = Object.fromEntries(
@@ -54,6 +55,7 @@ const requiredReferences = [
   "docs/native-acceptance-ledger.md",
   "docs/production-acceptance-evidence-template.md",
   "docs/production-cutover-runbook.md",
+  "docs/partial-production-gate-map.md",
   "src/scripts/migration/README.md",
   "src/scripts/audit-production-readiness.ts",
   "src/scripts/verify-production-readiness-audit-contract.ts",
@@ -91,9 +93,11 @@ for (const envName of [
 assert.doesNotMatch(contents.gates, /https?:\/\/[^\s)]+/i, "production gates must not include webhook URLs");
 assert.doesNotMatch(contents.evidenceTemplate, /https?:\/\/[^\s)]+/i, "evidence template must not include webhook URLs");
 assert.doesNotMatch(contents.cutoverRunbook, /https?:\/\/[^\s)]+/i, "cutover runbook must not include webhook URLs");
+assert.doesNotMatch(contents.partialGateMap, /https?:\/\/[^\s)]+/i, "partial gate map must not include webhook URLs");
 assert.doesNotMatch(contents.gates, /(api[_-]?key|secret|token)\s*[:=]\s*["']?[A-Za-z0-9_-]{12,}/i, "production gates must not include secret values");
 assert.doesNotMatch(contents.evidenceTemplate, /(api[_-]?key|secret|token)\s*[:=]\s*["']?[A-Za-z0-9_-]{12,}/i, "evidence template must not include secret values");
 assert.doesNotMatch(contents.cutoverRunbook, /(api[_-]?key|secret|token)\s*[:=]\s*["']?[A-Za-z0-9_-]{12,}/i, "cutover runbook must not include secret values");
+assert.doesNotMatch(contents.partialGateMap, /(api[_-]?key|secret|token)\s*[:=]\s*["']?[A-Za-z0-9_-]{12,}/i, "partial gate map must not include secret values");
 
 const matrix = JSON.parse(contents.matrix) as ParityRow[];
 const partialRows: ParityRow[] = [];
@@ -120,6 +124,32 @@ collectPartialRows(matrix);
 
 assert.equal(partialRows.length, 17, "the production gate contract must be updated when partial row count changes");
 
+const mappedRows = contents.partialGateMap
+  .split("\n")
+  .filter((line) => /^\| P\d{2} \|/.test(line));
+assert.equal(mappedRows.length, partialRows.length, "partial production gate map must cover every partial row");
+
+for (const [index, row] of mappedRows.entries()) {
+  assert.match(row, new RegExp(`\\| P${String(index + 1).padStart(2, "0")} \\|`));
+  const partial = partialRows[index];
+  const statusAnchor = row.split("|")[2]?.trim();
+  assert.ok(statusAnchor, `P${index + 1} is missing a status anchor`);
+  assert.match(partial.status ?? "", new RegExp(escapeRegExp(statusAnchor), "i"));
+
+  const gates = row
+    .split("|")[3]
+    ?.split(",")
+    .map((gate) => gate.trim())
+    .filter(Boolean);
+  assert.ok(gates?.length, `P${index + 1} is missing gate ids`);
+  for (const gate of gates) {
+    assert.ok(
+      (expectedGates as readonly string[]).includes(gate),
+      `P${index + 1} references unknown production gate ${gate}`
+    );
+  }
+}
+
 const externalGatePattern =
   /(production|provider|credential|hosted|schedule|cron|crontab|native-device|iOS|Android|canonical|import|print|stationery|notifications_nature|backfill|visual audit|SMS|WhatsApp|OneSignal|email)/i;
 
@@ -136,6 +166,7 @@ assert.match(contents.topGaps, /legacy-production-acceptance-gates\.md/);
 assert.match(contents.cron, /legacy-production-acceptance-gates\.md/);
 assert.match(contents.native, /legacy-production-acceptance-gates\.md/);
 assert.match(contents.migrationReadme, /reconcile-migration-counts\.ts/);
+assert.match(contents.gates, /partial-production-gate-map\.md/);
 const readinessAudit = readFileSync("src/scripts/audit-production-readiness.ts", "utf8");
 assert.match(readinessAudit, /No environment values/);
 assert.match(readinessAudit, /--out/);
