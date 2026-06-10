@@ -24,6 +24,7 @@ import { DataTable } from "@/components/shared/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -50,6 +51,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { deleteMedicalForm } from "@/lib/actions/medical";
+import type { ExportColumn } from "@/lib/export";
 
 type FormStatus = "DRAFT" | "SUBMITTED" | "REVIEWED";
 
@@ -80,6 +82,44 @@ interface VaccinationsPageClientProps {
   branches: Array<{ id: string; name: string }>;
   classes: Array<{ id: string; name: string; branchId: string }>;
 }
+
+interface LegacyFilters {
+  formId: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  className: string;
+  nationality: string;
+  gender: string;
+  createdFrom: string;
+  createdTo: string;
+}
+
+const legacyPageSizeOptions = [10, 20, 50, 100, 150, "all"] as const;
+
+const exportColumns: ExportColumn[] = [
+  { header: "Form #", key: "legacyFormId" },
+  { header: "F Name", key: "firstName" },
+  { header: "L Name", key: "lastName" },
+  {
+    header: "DOB",
+    key: "dateOfBirth",
+    transform: (value) => formatDate(value as string | null),
+  },
+  { header: "Branch", key: "branchName" },
+  { header: "Class", key: "className" },
+  { header: "Nationality", key: "nationality" },
+  {
+    header: "Gender",
+    key: "gender",
+    transform: (value) => formatGender(value as string | null),
+  },
+  {
+    header: "Date",
+    key: "formDate",
+    transform: (value) => formatDate(value as string | null),
+  },
+];
 
 function childPhotoSrc(photo: string | null) {
   if (!photo || photo === "default.jpg") return "";
@@ -113,24 +153,16 @@ function genderBadgeClass(gender: string | null) {
   return "bg-[#707070] text-white border-transparent";
 }
 
-function dateInRange(value: string, from: string, to: string) {
-  if (!from && !to) return true;
-  if (!value) return false;
+function dateValue(date: string) {
+  const parsed = new Date(date);
+  parsed.setHours(0, 0, 0, 0);
+  return parsed.getTime();
+}
 
-  const current = new Date(`${value}T00:00:00`);
-  if (Number.isNaN(current.getTime())) return true;
-
-  if (from) {
-    const min = new Date(`${from}T00:00:00`);
-    if (!Number.isNaN(min.getTime()) && current < min) return false;
-  }
-
-  if (to) {
-    const max = new Date(`${to}T23:59:59`);
-    if (!Number.isNaN(max.getTime()) && current > max) return false;
-  }
-
-  return true;
+function endOfDay(date: string) {
+  const parsed = new Date(date);
+  parsed.setHours(23, 59, 59, 999);
+  return parsed.getTime();
 }
 
 function ChildPhoto({ form }: { form: VaccinationFormRow }) {
@@ -171,9 +203,18 @@ export function VaccinationsPageClient({
   const [branchFilter, setBranchFilter] = useState("all");
   const [classFilter, setClassFilter] = useState("all");
   const [genderFilter, setGenderFilter] = useState("all");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [legacyFilters, setLegacyFilters] = useState<LegacyFilters>({
+    formId: "",
+    firstName: "",
+    lastName: "",
+    dateOfBirth: "",
+    className: "",
+    nationality: "",
+    gender: "",
+    createdFrom: "",
+    createdTo: "",
+  });
 
   const filteredClasses = useMemo(
     () =>
@@ -184,6 +225,8 @@ export function VaccinationsPageClient({
   );
 
   const filteredData = useMemo(() => {
+    const from = legacyFilters.createdFrom ? dateValue(legacyFilters.createdFrom) : null;
+    const to = legacyFilters.createdTo ? endOfDay(legacyFilters.createdTo) : null;
     let data = [...forms].sort((left, right) => {
       const rightId = right.legacyFormId ?? Number.NEGATIVE_INFINITY;
       const leftId = left.legacyFormId ?? Number.NEGATIVE_INFINITY;
@@ -205,6 +248,7 @@ export function VaccinationsPageClient({
           form.nationality,
           formatGender(form.gender),
           form.formDate,
+          form.createdAt,
         ]
           .join(" ")
           .toLowerCase()
@@ -224,10 +268,72 @@ export function VaccinationsPageClient({
       data = data.filter((form) => formatGender(form.gender).toLowerCase() === genderFilter);
     }
 
-    data = data.filter((form) => dateInRange(form.formDate, dateFrom, dateTo));
+    data = data.filter((form) => {
+      const formId = form.legacyFormId?.toString() ?? "";
+      if (legacyFilters.formId && !formId.includes(legacyFilters.formId.trim())) return false;
+      if (
+        legacyFilters.firstName &&
+        !form.firstName.toLowerCase().includes(legacyFilters.firstName.toLowerCase())
+      ) {
+        return false;
+      }
+      if (
+        legacyFilters.lastName &&
+        !form.lastName.toLowerCase().includes(legacyFilters.lastName.toLowerCase())
+      ) {
+        return false;
+      }
+      if (
+        legacyFilters.dateOfBirth &&
+        !formatDate(form.dateOfBirth).toLowerCase().includes(legacyFilters.dateOfBirth.toLowerCase())
+      ) {
+        return false;
+      }
+      if (
+        legacyFilters.className &&
+        !form.className.toLowerCase().includes(legacyFilters.className.toLowerCase())
+      ) {
+        return false;
+      }
+      if (
+        legacyFilters.nationality &&
+        !form.nationality.toLowerCase().includes(legacyFilters.nationality.toLowerCase())
+      ) {
+        return false;
+      }
+      if (
+        legacyFilters.gender &&
+        !formatGender(form.gender).toLowerCase().includes(legacyFilters.gender.toLowerCase())
+      ) {
+        return false;
+      }
+
+      const formTime = new Date(form.formDate).getTime();
+      if (from !== null && formTime < from) return false;
+      if (to !== null && formTime > to) return false;
+      return true;
+    });
 
     return data;
-  }, [forms, search, branchFilter, classFilter, genderFilter, dateFrom, dateTo]);
+  }, [forms, search, branchFilter, classFilter, genderFilter, legacyFilters]);
+
+  function clearAllFilters() {
+    setSearch("");
+    setBranchFilter("all");
+    setClassFilter("all");
+    setGenderFilter("all");
+    setLegacyFilters({
+      formId: "",
+      firstName: "",
+      lastName: "",
+      dateOfBirth: "",
+      className: "",
+      nationality: "",
+      gender: "",
+      createdFrom: "",
+      createdTo: "",
+    });
+  }
 
   function handleDelete() {
     if (!deleteId) return;
@@ -368,86 +474,140 @@ export function VaccinationsPageClient({
       />
 
       <div className="space-y-4 p-4 md:p-6">
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <div className="relative max-w-sm flex-1 min-w-0">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search vaccination forms..."
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              className="pl-9"
-            />
-          </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Vaccination Form Listing</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <div className="relative max-w-sm flex-1 min-w-0">
+                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search vaccination forms..."
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  className="pl-9"
+                />
+              </div>
 
-          <Select value={branchFilter} onValueChange={setBranchFilter}>
-            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[160px]">
-              <SelectValue placeholder="All Branches" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Branches</SelectItem>
-              {branches.map((branch) => (
-                <SelectItem key={branch.id} value={branch.id}>
-                  {branch.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+              <Select value={branchFilter} onValueChange={setBranchFilter}>
+                <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[160px]">
+                  <SelectValue placeholder="All Branches" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Branches</SelectItem>
+                  {branches.map((branch) => (
+                    <SelectItem key={branch.id} value={branch.id}>
+                      {branch.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-          <Select value={classFilter} onValueChange={setClassFilter}>
-            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[160px]">
-              <SelectValue placeholder="All Classes" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Classes</SelectItem>
-              {filteredClasses.map((classItem) => (
-                <SelectItem key={classItem.id} value={classItem.id}>
-                  {classItem.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+              <Select value={classFilter} onValueChange={setClassFilter}>
+                <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[160px]">
+                  <SelectValue placeholder="All Classes" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Classes</SelectItem>
+                  {filteredClasses.map((classItem) => (
+                    <SelectItem key={classItem.id} value={classItem.id}>
+                      {classItem.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-          <Select value={genderFilter} onValueChange={setGenderFilter}>
-            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[150px]">
-              <SelectValue placeholder="All Genders" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Genders</SelectItem>
-              <SelectItem value="male">Male</SelectItem>
-              <SelectItem value="female">Female</SelectItem>
-            </SelectContent>
-          </Select>
+              <Select value={genderFilter} onValueChange={setGenderFilter}>
+                <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-[150px]">
+                  <SelectValue placeholder="All Genders" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Genders</SelectItem>
+                  <SelectItem value="male">Male</SelectItem>
+                  <SelectItem value="female">Female</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative">
-              <CalendarCheck className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
+              <Input
+                placeholder="Form #"
+                value={legacyFilters.formId}
+                onChange={(event) => setLegacyFilters((current) => ({ ...current, formId: event.target.value }))}
+              />
+              <Input
+                placeholder="F Name"
+                value={legacyFilters.firstName}
+                onChange={(event) => setLegacyFilters((current) => ({ ...current, firstName: event.target.value }))}
+              />
+              <Input
+                placeholder="L Name"
+                value={legacyFilters.lastName}
+                onChange={(event) => setLegacyFilters((current) => ({ ...current, lastName: event.target.value }))}
+              />
+              <Input
+                placeholder="DOB"
+                value={legacyFilters.dateOfBirth}
+                onChange={(event) => setLegacyFilters((current) => ({ ...current, dateOfBirth: event.target.value }))}
+              />
+              <Input
+                placeholder="Class"
+                value={legacyFilters.className}
+                onChange={(event) => setLegacyFilters((current) => ({ ...current, className: event.target.value }))}
+              />
+              <Input
+                placeholder="Nationality"
+                value={legacyFilters.nationality}
+                onChange={(event) => setLegacyFilters((current) => ({ ...current, nationality: event.target.value }))}
+              />
+              <Input
+                placeholder="Gender"
+                value={legacyFilters.gender}
+                onChange={(event) => setLegacyFilters((current) => ({ ...current, gender: event.target.value }))}
+              />
+              <div className="relative">
+                <CalendarCheck className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="date"
+                  value={legacyFilters.createdFrom}
+                  aria-label="Date from"
+                  onChange={(event) => setLegacyFilters((current) => ({ ...current, createdFrom: event.target.value }))}
+                  className="pl-9"
+                />
+              </div>
               <Input
                 type="date"
-                value={dateFrom}
-                aria-label="Date from"
-                onChange={(event) => setDateFrom(event.target.value)}
-                className="w-[150px] pl-9"
+                value={legacyFilters.createdTo}
+                aria-label="Date to"
+                onChange={(event) => setLegacyFilters((current) => ({ ...current, createdTo: event.target.value }))}
               />
+              <Button variant="outline" onClick={clearAllFilters}>
+                Clear
+              </Button>
             </div>
-            <Input
-              type="date"
-              value={dateTo}
-              aria-label="Date to"
-              onChange={(event) => setDateTo(event.target.value)}
-              className="w-[150px]"
-            />
-          </div>
-        </div>
 
-        {filteredData.length === 0 ? (
-          <EmptyState
-            icon={Syringe}
-            title="No vaccination forms found"
-            description="No vaccination forms match your current filters."
-          />
-        ) : (
-          <DataTable columns={columns} data={filteredData} />
-        )}
+            {filteredData.length === 0 ? (
+              <EmptyState
+                icon={Syringe}
+                title="No vaccination forms found"
+                description="No vaccination forms match your current filters."
+              />
+            ) : (
+              <DataTable
+                columns={columns}
+                data={filteredData}
+                pageSizeOptions={[...legacyPageSizeOptions]}
+                exportOptions={{
+                  filename: "vaccination-medical-forms",
+                  sheetName: "Vaccination Form Listing",
+                  columns: exportColumns,
+                }}
+                printOptions={{ label: "Print" }}
+              />
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
