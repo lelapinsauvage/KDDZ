@@ -76,6 +76,23 @@ try {
   ]);
   assert.equal(staleCommit.status, 1);
   assert.match(staleCommit.stderr, /Modern branch\/commit must include commit deadbeef/);
+
+  const deferredDecisionPath = join(tmp, "production-acceptance-deferred.md");
+  writeFileSync(
+    deferredDecisionPath,
+    fillTemplate(template)
+      .replace("| Release decision | accepted |", "| Release decision | deferred |")
+      .replace("| Remaining production tickets | none |", "| Remaining production tickets | PROD-NATIVE-1 |"),
+    "utf8"
+  );
+  const deferredDecision = runVerifier(deferredDecisionPath, [
+    `--readiness-report=${readinessReportPath}`,
+    "--branch=legacy-parity-runbook",
+    "--commit=0404c6a",
+  ]);
+  assert.equal(deferredDecision.status, 1);
+  assert.match(deferredDecision.stderr, /remaining production tickets must be none/);
+  assert.match(deferredDecision.stderr, /release decision must be accepted/);
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }

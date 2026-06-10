@@ -213,6 +213,7 @@ if (readinessReportPath) {
   verifyReadinessReport(readinessReportPath, sections, errors);
 }
 verifyBranchAndCommit(sections, errors);
+verifyFinalDecision(sections, errors);
 
 if (errors.length > 0) {
   console.error("Production acceptance evidence record is incomplete:");
@@ -400,6 +401,35 @@ function verifyBranchAndCommit(
   if (expectedCommit && !value.includes(expectedCommit)) {
     errors.push(`Run Metadata: Modern branch/commit must include commit ${expectedCommit}`);
   }
+}
+
+function verifyFinalDecision(
+  sections: Map<string, Map<string, string>>,
+  errors: string[]
+) {
+  const decision = sections.get("Final Decision");
+  if (!decision) {
+    return;
+  }
+
+  const acceptedOrRetired = normalizedValue(decision.get("All gates accepted or explicitly retired") ?? "");
+  if (!/\b(yes|accepted|retired)\b/.test(acceptedOrRetired)) {
+    errors.push("Final Decision: all gates must be accepted or explicitly retired");
+  }
+
+  const remainingTickets = normalizedValue(decision.get("Remaining production tickets") ?? "");
+  if (remainingTickets !== "none") {
+    errors.push("Final Decision: remaining production tickets must be none");
+  }
+
+  const releaseDecision = normalizedValue(decision.get("Release decision") ?? "");
+  if (releaseDecision !== "accepted") {
+    errors.push("Final Decision: release decision must be accepted");
+  }
+}
+
+function normalizedValue(value: string) {
+  return value.trim().toLowerCase();
 }
 
 function optionValue(name: string) {

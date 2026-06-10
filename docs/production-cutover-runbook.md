@@ -164,6 +164,7 @@ The legacy restoration goal can only be marked complete when:
 
 - readiness audit reports all gates ready to review,
 - every ready gate has dated production evidence or an explicit retirement decision,
+- final acceptance evidence says release decision `accepted` and remaining production tickets `none`,
 - `docs/page-parity-matrix.json` has no unresolved production/external partial rows,
 - the current branch/commit is recorded in the release evidence,
 - no stop condition above remains open.

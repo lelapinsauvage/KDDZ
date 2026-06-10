@@ -211,6 +211,8 @@ assert.match(evidenceRecordVerifier, /phone numbers/);
 assert.match(evidenceRecordVerifier, /--readiness-report/);
 assert.match(evidenceRecordVerifier, /--branch/);
 assert.match(evidenceRecordVerifier, /--commit/);
+assert.match(evidenceRecordVerifier, /remaining production tickets must be none/);
+assert.match(evidenceRecordVerifier, /release decision must be accepted/);
 assert.match(productionGateSuite, /verify-production-acceptance-gates-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-readiness-audit-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-acceptance-evidence-record-contract\.ts/);
@@ -218,7 +220,7 @@ assert.match(productionGateSuite, /page-parity-matrix\.json/);
 assert.match(readFileSync("src/scripts/verify-production-readiness-audit-contract.ts", "utf8"), /assertNoSensitiveOutput/);
 assert.match(
   readFileSync("src/scripts/verify-production-acceptance-evidence-record-contract.ts", "utf8"),
-  /deadbeef/
+  /PROD-NATIVE-1/
 );
 assert.match(contents.gates, /--out=<path>/);
 assert.match(contents.gates, /--env-file=<path>/);
@@ -235,6 +237,7 @@ assert.match(contents.gates, /verify-production-readiness-audit-contract\.ts/);
 assert.match(contents.cutoverRunbook, /--out=\/tmp\/kiddzonl-production-readiness\.json/);
 assert.match(contents.cutoverRunbook, /--env-file=\/secure\/private-readiness\.env/);
 assert.match(contents.cutoverRunbook, /verify-production-acceptance-evidence-record\.ts \/secure\/production-acceptance-evidence\.md --readiness-report=\/tmp\/kiddzonl-production-readiness\.json --branch=legacy-parity-runbook --commit=<release-commit-sha>/);
+assert.match(contents.cutoverRunbook, /release decision `accepted` and remaining production tickets `none`/);
 assert.match(contents.cutoverRunbook, /--list-requirements/);
 assert.match(contents.cutoverRunbook, /--gate=PROD-CRON/);
 assert.match(contents.cutoverRunbook, /pnpm run verify:production-gates/);
