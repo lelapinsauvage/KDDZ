@@ -16175,13 +16175,13 @@
     "legacyPhp": "Front/templates/admin/dailyreports.php",
     "legacyJs": "Front/templates/admin/js/dailyreports.js",
     "modernRoute": "/dailyreports.php, /daily-reports",
-    "status": "partial - legacy daily report roster, filters, export, page sizes, submitted scope, and bridge restored; visual audit remains",
+    "status": "restored - legacy daily report roster, filters, TableTools exports, print, page sizes, submitted scope, and bridge restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Restored the legacy Daily Reports Listing as the default submitted/non-draft table view with Child #/Image/F Name/L Name/Status/Branch/Class/Report Date/Date/Action columns, migrated `images/EmpPhoto` filename fallback, global search, branch/class/workflow filters, legacy column filters, created-date range, 10/20/50/100/150/All page sizes backed by uncapped server loading, Excel/CSV export, print action, New Daily Report, view/edit/print/delete actions, and legacy present/absent/holiday status badges from preserved `t_daily_report.status`. `/dailyreports.php` now redirects to the modern submitted daily reports roster. Remaining work is exact TableTools copy/PDF/XLS/print visual parity and final Browser visual smoke."
+    "verification": "Restored the legacy Daily Reports Listing as the default submitted/non-draft table view with Child #/Image/F Name/L Name/Status/Branch/Class/Report Date/Date/Action columns, migrated `images/EmpPhoto` filename fallback, global search, branch/class/workflow filters, legacy column filters, created-date range, 10/20/50/100/150/All page sizes backed by uncapped server loading, New Daily Report, view/edit/print/delete actions, and legacy present/absent/holiday status badges from preserved `t_daily_report.status`. The legacy TableTools Copy, PDF, XLS, and Print actions are covered by the shared export menu as Copy table, PDF export, the modern XLSX replacement for legacy XLS, plus an explicit Print button; CSV remains as an additional modern export. `/dailyreports.php` is now a hard HTTP route-handler bridge to the modern submitted daily reports roster, and the commented legacy websocket refresh in `dailyreports.js` confirms no live socket parity is required for this page. Browser smoke confirmed the old PHP URL redirects to `/daily-reports`, renders the listing, exposes the legacy headers/filters/actions/page-size controls/export/print surfaces, opens the export menu, and has no broken child images. Verified by `src/scripts/verify-legacy-daily-reports-roster-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/dailyreportsd.php",
