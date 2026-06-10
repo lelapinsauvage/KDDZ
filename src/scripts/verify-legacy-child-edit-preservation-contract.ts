@@ -12,6 +12,7 @@ const files = {
   form: "src/components/children/child-form.tsx",
   validation: "src/lib/validations/child.ts",
   actions: "src/lib/actions/children.ts",
+  writeFlow: "src/scripts/verify-child-details-write-flow-contract.ts",
   matrix: "docs/page-parity-matrix.json",
   matrixMd: "docs/page-parity-matrix.md",
 };
@@ -90,6 +91,8 @@ assert.match(text.actions, /accountingEntries: \{ select: \{ id: true \} \}/);
 assert.match(text.actions, /function addressLegacyData\(/);
 assert.match(text.actions, /Latitude: latitude/);
 assert.match(text.actions, /Longitude: longitude/);
+assert.match(text.actions, /function revalidateChildPath\(path: string\)/);
+assert.match(text.actions, /static generation store missing/);
 assert.match(text.actions, /const existingAddressIds = new Set/);
 assert.match(text.actions, /const existingAddressLegacyData = new Map/);
 assert.match(text.actions, /const submittedAddressIds = data\.addresses/);
@@ -127,6 +130,13 @@ assert.match(text.form, /register\(`siblings\.\$\{index\}\.recordId`\)/);
 assert.match(text.form, /register\(`relatives\.\$\{index\}\.recordId`\)/);
 assert.match(text.form, /register\(`accountingEntries\.\$\{index\}\.recordId`\)/);
 
+assert.match(text.writeFlow, /GARDERIE_VERIFY_USER_ID/);
+assert.match(text.writeFlow, /createChild\(/);
+assert.match(text.writeFlow, /updateChild\(/);
+assert.match(text.writeFlow, /updatePreservedNestedRows/);
+assert.match(text.writeFlow, /legacyData\)\.Latitude/);
+assert.match(text.writeFlow, /childNumber:\s*\{[\s\S]*startsWith: "codex-write-flow-"/);
+
 type MatrixRow = {
   modernRoute?: string;
   status?: string;
@@ -139,19 +149,25 @@ const row = matrix.find(
 );
 
 assert.ok(row);
+assert.match(row.status ?? "", /restored - legacy dossier landing/);
 assert.match(row.status ?? "", /nested edit provenance/);
 assert.match(row.status ?? "", /address coordinates/);
-assert.match(row.status ?? "", /map picker restored/);
+assert.match(row.status ?? "", /map picker/);
+assert.match(row.status ?? "", /write flows restored/);
 assert.match(row.verification ?? "", /verify-legacy-child-edit-preservation-contract\.ts/);
+assert.match(row.verification ?? "", /verify-child-details-write-flow-contract\.ts/);
 assert.match(row.verification ?? "", /preserves existing nested child rows in place/);
 assert.match(row.verification ?? "", /Browser smoke confirmed/);
 assert.match(row.verification ?? "", /core child info, address\/family, care, financial, attachments, and review\/submit wizard steps/);
 assert.match(row.verification ?? "", /map picker dialog/);
+assert.match(row.verification ?? "", /Server-action write-flow verification/);
+assert.match(row.verification ?? "", /cleaned up the temporary rows/);
+assert.doesNotMatch(row.verification ?? "", /Remaining work/);
 assert.doesNotMatch(row.verification ?? "", /exact edit-form visual\/action audit/);
 
 assert.match(
   text.matrixMd,
-  /Child_Details\.php \| Front\/templates\/admin\/js\/Child_Details\.js \| \/Child_Details\.php, \/children\/\[id\] \| partial - legacy dossier landing, child deep-link bridge, nested edit provenance, address coordinates, edit wizard visual smoke, and map picker restored; write-flow smokes remain/,
+  /Child_Details\.php \| Front\/templates\/admin\/js\/Child_Details\.js \| \/Child_Details\.php, \/children\/\[id\] \| restored - legacy dossier landing, child deep-link bridge, nested edit provenance, address coordinates, edit wizard, map picker, and write flows restored/,
 );
 assert.match(
   text.matrixMd,
@@ -173,11 +189,21 @@ assert.match(
   text.matrixMd,
   /Child_Details\.php[\s\S]*map picker dialog opens/,
 );
+assert.match(
+  text.matrixMd,
+  /Child_Details\.php[\s\S]*verify-child-details-write-flow-contract\.ts/,
+);
 assert.doesNotMatch(
   text.matrixMd
     .split("\n")
     .find((line) => line.includes("| Front/templates/admin/Child_Details.php |")) ?? "",
   /exact edit-form visual\/action audit/,
+);
+assert.doesNotMatch(
+  text.matrixMd
+    .split("\n")
+    .find((line) => line.includes("| Front/templates/admin/Child_Details.php |")) ?? "",
+  /Remaining work|write-flow smokes remain|partial -/,
 );
 
 console.log("legacy child edit preservation assertions passed");

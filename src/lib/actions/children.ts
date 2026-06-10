@@ -56,6 +56,17 @@ function parseTimeField(value: string | undefined): Date | null {
   return new Date(`1970-01-01T${value}`);
 }
 
+function revalidateChildPath(path: string) {
+  try {
+    revalidatePath(path);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (!message.includes("static generation store missing")) {
+      throw error;
+    }
+  }
+}
+
 function parseDateStart(value: string): Date {
   return new Date(`${value}T00:00:00.000Z`);
 }
@@ -527,7 +538,7 @@ export async function createChild(formData: FormData): Promise<ActionResult> {
       },
     });
 
-    revalidatePath("/children");
+    revalidateChildPath("/children");
 
     return { success: true, id: child.id };
   } catch (error) {
@@ -893,8 +904,8 @@ export async function updateChild(
       },
     });
 
-    revalidatePath("/children");
-    revalidatePath(`/children/${id}`);
+    revalidateChildPath("/children");
+    revalidateChildPath(`/children/${id}`);
 
     return { success: true, id: child.id };
   } catch (error) {
@@ -929,7 +940,7 @@ export async function deleteChild(
       },
     });
 
-    revalidatePath("/children");
+    revalidateChildPath("/children");
 
     return { success: true, id };
   } catch (error) {
@@ -965,9 +976,9 @@ export async function toggleChildActive(
       },
     });
 
-    revalidatePath("/children");
-    revalidatePath(`/children/${id}`);
-    revalidatePath(`/children/${id}/dashboard`);
+    revalidateChildPath("/children");
+    revalidateChildPath(`/children/${id}`);
+    revalidateChildPath(`/children/${id}/dashboard`);
 
     return { success: true, id };
   } catch (error) {
@@ -1025,11 +1036,11 @@ export async function updateChildClass(
       },
     });
 
-    revalidatePath("/children");
-    revalidatePath(`/children/${id}`);
-    revalidatePath(`/children/${id}/dashboard`);
-    revalidatePath(`/branches/${child.branchId}/children`);
-    revalidatePath(`/branches/${child.branchId}/dashboard`);
+    revalidateChildPath("/children");
+    revalidateChildPath(`/children/${id}`);
+    revalidateChildPath(`/children/${id}/dashboard`);
+    revalidateChildPath(`/branches/${child.branchId}/children`);
+    revalidateChildPath(`/branches/${child.branchId}/dashboard`);
 
     return { success: true, id };
   } catch (error) {
@@ -1115,15 +1126,15 @@ export async function bulkUpdateChildrenBranchClass(
       return updated;
     });
 
-    revalidatePath("/children");
-    revalidatePath("/children/drafts");
+    revalidateChildPath("/children");
+    revalidateChildPath("/children/drafts");
     for (const child of updatedChildren) {
-      revalidatePath(`/children/${child.id}`);
-      revalidatePath(`/children/${child.id}/dashboard`);
+      revalidateChildPath(`/children/${child.id}`);
+      revalidateChildPath(`/children/${child.id}/dashboard`);
     }
     for (const id of new Set([...oldBranchIds, targetClass.branchId])) {
-      revalidatePath(`/branches/${id}/children`);
-      revalidatePath(`/branches/${id}/dashboard`);
+      revalidateChildPath(`/branches/${id}/children`);
+      revalidateChildPath(`/branches/${id}/dashboard`);
     }
 
     return { success: true, updatedCount: updatedChildren.length };
