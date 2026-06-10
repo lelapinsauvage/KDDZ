@@ -10,6 +10,7 @@ const files = {
   fragmentRoute: "src/app/child_attend_det_data.php/route.ts",
   exportButton: "src/components/shared/export-button.tsx",
   matrix: "docs/page-parity-matrix.json",
+  markdownMatrix: "docs/page-parity-matrix.md",
 };
 
 const contents = Object.fromEntries(
@@ -62,5 +63,17 @@ assert.match(
   contents.matrix,
   /child_attend_det\.php[\s\S]*verify-legacy-child-attendance-tabletools-contract\.ts/,
 );
+
+const markdownRow = contents.markdownMatrix
+  .split("\n")
+  .find((line) => line.includes("| Front/templates/admin/child_attend_det.php |"));
+assert.match(
+  markdownRow ?? "",
+  /restored - legacy attendance matrix, TableTools export, print, and deep-link bridge restored/,
+);
+assert.match(markdownRow ?? "", /Copy\/PDF\/Excel\/CSV export, and print action/);
+assert.match(markdownRow ?? "", /\/child_attend_det_data\.php/);
+assert.match(markdownRow ?? "", /verify-legacy-child-attendance-tabletools-contract\.ts/);
+assert.doesNotMatch(markdownRow ?? "", /visual export audit remains/);
 
 console.log("legacy child attendance TableTools contract assertions passed");
