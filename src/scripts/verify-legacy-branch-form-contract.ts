@@ -150,16 +150,21 @@ const row = matrix.find(
 );
 
 assert.ok(row);
-assert.match(row.status ?? "", /legacy branch add\/edit bridge and ACL restored/);
+assert.match(
+  row.status ?? "",
+  /restored - legacy branch add\/edit bridge, ACL, visual layout, and upload path parity restored/,
+);
 assert.match(row.verification ?? "", /Branch Name, Branch Location, Branch Prefix, Mobile, Telephone/);
 assert.match(row.verification ?? "", /addBranch/);
 assert.match(row.verification ?? "", /updateBranch/);
 assert.match(row.verification ?? "", /`\/branch\.php` without `id`/);
-assert.match(row.verification ?? "", /uploaded file storage path parity/);
+assert.match(row.verification ?? "", /runtime object-storage upload through the `branch` scope/);
+assert.match(row.verification ?? "", /Browser smoke confirmed `\/branch\.php` redirects to `\/branches\/new`/);
+assert.match(row.verification ?? "", /required-field validation for name, prefix, and location/);
 
 assert.match(
   text.matrixMd,
-  /branch\.php \| Front\/templates\/admin\/js\/branch\.js \| \/branch\.php, \/branches\/new, \/branches\/\[id\]\/edit \| partial - legacy branch add\/edit bridge and ACL restored; visual\/layout audit remains/,
+  /branch\.php \| Front\/templates\/admin\/js\/branch\.js \| \/branch\.php, \/branches\/new, \/branches\/\[id\]\/edit \| restored - legacy branch add\/edit bridge, ACL, visual layout, and upload path parity restored/,
 );
 assert.match(
   text.matrixMd,
@@ -167,7 +172,11 @@ assert.match(
 );
 assert.match(
   text.matrixMd,
-  /branch\.php[\s\S]*`\/branch\.php` without `id` now resolves to the modern New Branch form/,
+  /branch\.php[\s\S]*`\/branch\.php` without `id` resolves to the modern New Branch form/,
+);
+assert.match(
+  text.matrixMd,
+  /branch\.php[\s\S]*Browser smoke confirmed `\/branch\.php` redirects to `\/branches\/new`/,
 );
 
 function escapeRegExp(value: string) {
