@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getFoods } from "@/lib/actions/food";
+import { getCurrentDailyReportDirectSubmitPermission } from "@/lib/legacy-daily-report-approval";
 import { PageHeader } from "@/components/layout/page-header";
 import { BatchReportClient } from "./batch-report-client";
 
@@ -13,7 +14,16 @@ export default async function BatchDailyReportPage() {
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
-  const [children, todayReports, breakfastFoods, lunchFoods, dessertFoods, todayCalendar, classes] =
+  const [
+    children,
+    todayReports,
+    breakfastFoods,
+    lunchFoods,
+    dessertFoods,
+    todayCalendar,
+    classes,
+    canSubmitDirectly,
+  ] =
     await Promise.all([
       db.child.findMany({
         where: {
@@ -52,6 +62,7 @@ export default async function BatchDailyReportPage() {
         select: { id: true, name: true },
         orderBy: { name: "asc" },
       }),
+      getCurrentDailyReportDirectSubmitPermission(),
     ]);
 
   const reportMap = new Map(
@@ -97,6 +108,7 @@ export default async function BatchDailyReportPage() {
         classes={classes}
         foods={foods}
         todayMenu={todayMenu}
+        canSubmitDirectly={canSubmitDirectly}
       />
     </>
   );

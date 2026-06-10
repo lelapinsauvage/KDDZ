@@ -136,6 +136,8 @@ interface DailyReportFormProps {
   };
   defaultValues?: Partial<DailyReportFormValues>;
   reportId?: string;
+  workflowStatus?: "DRAFT" | "SUBMITTED";
+  canSubmitDirectly?: boolean;
   yesterdayData?: YesterdayData;
   existingAttachments?: ExistingDailyAttachment[];
 }
@@ -260,6 +262,8 @@ export function DailyReportForm({
   foods,
   defaultValues,
   reportId,
+  workflowStatus,
+  canSubmitDirectly = true,
   yesterdayData,
   existingAttachments = [],
 }: DailyReportFormProps) {
@@ -334,6 +338,9 @@ export function DailyReportForm({
   const visibleExistingAttachments = existingAttachments.filter(
     (attachment) => !removedAttachmentIds.includes(attachment.id),
   );
+  const showDraftButton = workflowStatus !== "SUBMITTED";
+  const showSubmitButton = canSubmitDirectly;
+  const defaultSubmitStatus = canSubmitDirectly ? "SUBMITTED" : "DRAFT";
 
   function appendAttachment(file?: File) {
     attachmentsArray.append({ title: "", fileName: file?.name ?? "" });
@@ -543,7 +550,7 @@ export function DailyReportForm({
 
   return (
     <form
-      onSubmit={handleSubmit((data) => submitReport(data, "SUBMITTED"))}
+      onSubmit={handleSubmit((data) => submitReport(data, defaultSubmitStatus))}
       className="space-y-6 p-4 md:p-6"
     >
       {error && (
@@ -1697,22 +1704,28 @@ export function DailyReportForm({
       )}
 
       {/* ── Action Bar (touch-friendly sizing) ── */}
-      <div className="sticky bottom-0 flex items-center justify-end gap-3 border-t border-border/40 bg-card px-4 py-3 md:px-6 md:py-4">
-        <Button
-          type="button"
-          variant="outline"
-          disabled={isPending}
-          onClick={handleSubmit((data) => submitReport(data, "DRAFT"))}
-          className="min-h-[44px] px-5"
-        >
-          {isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-          Save as Draft
-        </Button>
-        <Button type="submit" disabled={isPending} className="min-h-[44px] px-6">
-          {isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-          {reportId ? "Update Report" : "Submit Report"}
-        </Button>
-      </div>
+      {(showDraftButton || showSubmitButton) && (
+        <div className="sticky bottom-0 flex items-center justify-end gap-3 border-t border-border/40 bg-card px-4 py-3 md:px-6 md:py-4">
+          {showDraftButton && (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isPending}
+              onClick={handleSubmit((data) => submitReport(data, "DRAFT"))}
+              className="min-h-[44px] px-5"
+            >
+              {isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+              Save as Draft
+            </Button>
+          )}
+          {showSubmitButton && (
+            <Button type="submit" disabled={isPending} className="min-h-[44px] px-6">
+              {isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+              {reportId ? "Update Report" : "Submit Report"}
+            </Button>
+          )}
+        </div>
+      )}
     </form>
   );
 }

@@ -411,7 +411,7 @@ export function DailyReportsClient({
       </div>
 
       <div className="space-y-6 p-4 md:p-6 print:p-0">
-        <div className="grid grid-cols-1 gap-4 print:hidden sm:grid-cols-3">
+        <div className={`grid grid-cols-1 gap-4 print:hidden ${enableBulkApproval ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
           <div className="overflow-hidden rounded bg-[#327ad5] shadow-sm">
             <div className="flex items-center justify-between px-4 py-3">
               <div className="space-y-0.5">
@@ -430,15 +430,17 @@ export function DailyReportsClient({
               <Search className="size-14 text-white/20" strokeWidth={1.2} />
             </div>
           </div>
-          <div className="overflow-hidden rounded bg-[#c29d0b] shadow-sm">
-            <div className="flex items-center justify-between px-4 py-3">
-              <div className="space-y-0.5">
-                <p className="text-2xl font-bold text-white">{selectedReports.length}</p>
-                <p className="text-xs text-white/80">Selected</p>
+          {enableBulkApproval && (
+            <div className="overflow-hidden rounded bg-[#c29d0b] shadow-sm">
+              <div className="flex items-center justify-between px-4 py-3">
+                <div className="space-y-0.5">
+                  <p className="text-2xl font-bold text-white">{selectedReports.length}</p>
+                  <p className="text-xs text-white/80">Selected</p>
+                </div>
+                <CheckCircle2 className="size-14 text-white/20" strokeWidth={1.2} />
               </div>
-              <CheckCircle2 className="size-14 text-white/20" strokeWidth={1.2} />
             </div>
-          </div>
+          )}
         </div>
 
         <Card className="print:border-none print:shadow-none">

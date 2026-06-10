@@ -2,6 +2,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { DailyReportForm } from "@/components/daily-reports/daily-report-form";
 import { getChildren } from "@/lib/actions/children";
 import { getFoods } from "@/lib/actions/food";
+import { getCurrentDailyReportDirectSubmitPermission } from "@/lib/legacy-daily-report-approval";
 
 interface Props {
   searchParams: Promise<{ childId?: string; date?: string }>;
@@ -14,12 +15,19 @@ function isDateOnly(value?: string) {
 export default async function NewDailyReportPage({ searchParams }: Props) {
   const { childId, date } = await searchParams;
 
-  const [childrenResult, breakfastFoods, lunchFoods, dessertFoods] =
+  const [
+    childrenResult,
+    breakfastFoods,
+    lunchFoods,
+    dessertFoods,
+    canSubmitDirectly,
+  ] =
     await Promise.all([
       getChildren({ status: "ACTIVE", pageSize: "all" }),
       getFoods({ category: "BREAKFAST", isActive: true }),
       getFoods({ category: "LUNCH", isActive: true }),
       getFoods({ category: "DESSERT", isActive: true }),
+      getCurrentDailyReportDirectSubmitPermission(),
     ]);
 
   const children = (childrenResult.children ?? []).map((c) => ({
@@ -66,6 +74,7 @@ export default async function NewDailyReportPage({ searchParams }: Props) {
         childrenList={children}
         foods={foods}
         defaultValues={Object.keys(defaultValues).length ? defaultValues : undefined}
+        canSubmitDirectly={canSubmitDirectly}
       />
     </>
   );

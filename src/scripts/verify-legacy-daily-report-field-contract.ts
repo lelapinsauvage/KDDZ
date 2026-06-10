@@ -4,6 +4,8 @@ import {
   dailyReportClothingFlags,
   dailyReportFoodLabel,
   dailyReportLegacyDataPatch,
+  dailyReportLegacyProgress,
+  dailyReportLegacyWorkflowPatch,
   dailyReportNeedFlags,
   dailyReportSupplementalFields,
   legacyDailyFoodId,
@@ -144,6 +146,20 @@ assert.deepEqual(
 
 const patch = dailyReportLegacyDataPatch(
   {
+    attendanceMode: "PRESENT",
+    reportDate: "2026-06-10",
+    breakfastFoodId: "breakfast-food-id",
+    breakfastPortion: "ALL",
+    breakfastTime: "08:15",
+    lunchFoodId: "lunch-food-id",
+    lunchPortion: "HALF",
+    lunchTime: "12:05",
+    dessert: "Pudding",
+    dessertPortion: "LITTLE",
+    dessertTime: "13:00",
+    isSleep: true,
+    sleepFrom: "11:45",
+    sleepTo: "12:10",
     mood: "FUSSY",
     earlyDinnerFoodId: "modern-food-id",
     earlyDinnerLegacyId: "88",
@@ -166,17 +182,37 @@ const patch = dailyReportLegacyDataPatch(
     needsDiapers: false,
     needsBabyBottle: true,
     needsMilk: false,
+    applyFoodForAll: true,
+    absentReason: "",
+    absentFrom: "",
+    absentTo: "",
+    hospitalAttend: false,
   },
   {
     sourceDatabase: "garderie_2025",
     sourceTable: "t_daily_report",
     report_id: 42,
   },
+  { workflowStatus: "DRAFT" },
 ) as Record<string, unknown>;
 
 assert.equal(patch.sourceDatabase, "garderie_2025");
 assert.equal(patch.sourceTable, "t_daily_report");
 assert.equal(patch.report_id, 42);
+assert.equal(patch.status, "present");
+assert.equal(patch.reportdate, "2026-06-10");
+assert.equal(patch.breakf, "well");
+assert.equal(patch.lunchf, "half");
+assert.equal(patch.dessert, "Pudding");
+assert.equal(patch.dess_portion, "little");
+assert.equal(patch.desstime, "13:00");
+assert.equal(patch.has_dess, "1");
+assert.equal(patch.is_sleep, "1");
+assert.equal(patch.sleep_from, "11:45");
+assert.equal(patch.sleep_to, "12:10");
+assert.equal(patch.food_for_all, "1");
+assert.equal(patch.d_progress_all, 100);
+assert.equal(patch.is_rep_draft, "1");
 assert.equal(patch.mood, "sad");
 assert.equal(patch.earlyDinnerFoodId, "modern-food-id");
 assert.equal(patch.lunch_id2, "88");
@@ -202,5 +238,50 @@ assert.equal(patch.towelchecked, "1");
 assert.equal(patch.diaperschecked, "0");
 assert.equal(patch.babybottlechecked, "1");
 assert.equal(patch.milkchecked, "0");
+
+assert.equal(
+  dailyReportLegacyProgress({
+    attendanceMode: "PRESENT",
+    breakfastFoodId: "",
+    breakfastPortion: "ALL",
+    breakfastTime: "",
+    lunchFoodId: "lunch-food-id",
+    lunchPortion: "NONE",
+    lunchTime: "",
+    dessert: "",
+    dessertPortion: undefined,
+    dessertTime: "",
+    isSleep: true,
+    sleepFrom: "",
+    sleepTo: "12:10",
+  }),
+  50,
+);
+
+assert.equal(
+  dailyReportLegacyProgress({
+    attendanceMode: "ABSENT",
+    breakfastFoodId: "",
+    breakfastPortion: undefined,
+    breakfastTime: "",
+    lunchFoodId: "",
+    lunchPortion: undefined,
+    lunchTime: "",
+    dessert: "",
+    dessertPortion: undefined,
+    dessertTime: "",
+    isSleep: false,
+    sleepFrom: "",
+    sleepTo: "",
+  }),
+  100,
+);
+
+const submittedPatch = dailyReportLegacyWorkflowPatch("SUBMITTED", patch) as Record<
+  string,
+  unknown
+>;
+assert.equal(submittedPatch.is_rep_draft, "0");
+assert.equal(submittedPatch.report_id, 42);
 
 console.log("legacy daily report field contract assertions passed");

@@ -4,6 +4,7 @@ import {
   DailyReportsClient,
   type DailyReportRow,
 } from "../daily-reports-client";
+import { getCurrentLegacyDailyReportDirectApprovalEnabled } from "@/lib/legacy-daily-report-approval";
 
 function legacyString(legacyData: unknown, key: string) {
   if (!legacyData || typeof legacyData !== "object" || Array.isArray(legacyData)) {
@@ -25,9 +26,11 @@ function legacyNumber(legacyData: unknown, key: string) {
 }
 
 export default async function DraftDailyReportsPage() {
-  const [{ reports, total }, branchesResult] = await Promise.all([
+  const [{ reports, total }, branchesResult, directApprovalEnabled] =
+    await Promise.all([
     getDraftReports({ pageSize: "all" }),
     getBranches(),
+    getCurrentLegacyDailyReportDirectApprovalEnabled(),
   ]);
 
   const branches = (branchesResult.data ?? []) as Array<{
@@ -65,7 +68,7 @@ export default async function DraftDailyReportsPage() {
       branches={branches}
       initialStatusFilter="DRAFT"
       variant="drafts"
-      enableBulkApproval
+      enableBulkApproval={!directApprovalEnabled}
     />
   );
 }

@@ -74,6 +74,7 @@ interface BatchReportClientProps {
     breakfastFoodId: string;
     lunchFoodId: string;
   };
+  canSubmitDirectly?: boolean;
 }
 
 // -- Avatar helpers --
@@ -98,6 +99,7 @@ export function BatchReportClient({
   classes,
   foods,
   todayMenu,
+  canSubmitDirectly = true,
 }: BatchReportClientProps) {
   const router = useRouter();
   const [classFilter, setClassFilter] = useState("all");
@@ -260,6 +262,7 @@ export function BatchReportClient({
                             childName={child.name}
                             foods={foods}
                             todayMenu={todayMenu}
+                            canSubmitDirectly={canSubmitDirectly}
                             onSaved={() => handleSaved(child.id)}
                           />
                         </div>
@@ -298,12 +301,14 @@ function InlineReportForm({
   childName,
   foods,
   todayMenu,
+  canSubmitDirectly,
   onSaved,
 }: {
   childId: string;
   childName: string;
   foods: { breakfast: FoodOption[]; lunch: FoodOption[]; dessert: FoodOption[] };
   todayMenu: { breakfastFoodId: string; lunchFoodId: string };
+  canSubmitDirectly: boolean;
   onSaved: () => void;
 }) {
   const [isPending, startTransition] = useTransition();
@@ -489,14 +494,16 @@ function InlineReportForm({
           {isPending ? <Loader2 className="mr-1 size-3 animate-spin" /> : null}
           Save Draft
         </Button>
-        <Button
-          size="sm"
-          onClick={() => handleSubmit("SUBMITTED")}
-          disabled={isPending}
-        >
-          {isPending ? <Loader2 className="mr-1 size-3 animate-spin" /> : <Save className="mr-1 size-3" />}
-          Submit
-        </Button>
+        {canSubmitDirectly && (
+          <Button
+            size="sm"
+            onClick={() => handleSubmit("SUBMITTED")}
+            disabled={isPending}
+          >
+            {isPending ? <Loader2 className="mr-1 size-3 animate-spin" /> : <Save className="mr-1 size-3" />}
+            Submit
+          </Button>
+        )}
       </div>
     </div>
   );

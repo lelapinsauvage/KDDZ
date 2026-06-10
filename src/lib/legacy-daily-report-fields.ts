@@ -2,6 +2,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import type { DailyReportFormValues } from "@/lib/validations/daily-report";
 
 type LegacyRecord = Record<string, unknown>;
+type DailyReportWorkflowStatus = "DRAFT" | "SUBMITTED";
 
 export type LegacyFoodNameMap = Map<string, string>;
 
@@ -111,6 +112,125 @@ function legacyMoodFromModernMood(value: unknown) {
     default:
       return legacyDailyText(value)?.toLowerCase() ?? "";
   }
+}
+
+function legacyPortionFromModernPortion(value: unknown) {
+  switch (value) {
+    case "NONE":
+      return "none";
+    case "LITTLE":
+      return "little";
+    case "HALF":
+      return "half";
+    case "MOST":
+    case "ALL":
+      return "well";
+    default:
+      return legacyDailyText(value)?.toLowerCase() ?? "";
+  }
+}
+
+function legacyBooleanString(value: unknown) {
+  return value ? "1" : "0";
+}
+
+function legacyDailyReportStatus(data: Pick<DailyReportFormValues, "attendanceMode">) {
+  return data.attendanceMode === "ABSENT" ? "absent" : "present";
+}
+
+function hasLegacyDessertFields(
+  data: Pick<
+    DailyReportFormValues,
+    "dessert" | "dessertPortion" | "dessertTime"
+  >,
+) {
+  return Boolean(data.dessert || data.dessertPortion || data.dessertTime);
+}
+
+export function dailyReportLegacyProgress(
+  data: Pick<
+    DailyReportFormValues,
+    | "attendanceMode"
+    | "breakfastFoodId"
+    | "breakfastPortion"
+    | "breakfastTime"
+    | "lunchFoodId"
+    | "lunchPortion"
+    | "lunchTime"
+    | "dessert"
+    | "dessertPortion"
+    | "dessertTime"
+    | "isSleep"
+    | "sleepFrom"
+    | "sleepTo"
+  >,
+) {
+  if (legacyDailyReportStatus(data) === "absent") return 100;
+
+  let total = 0;
+  let missing = 0;
+
+  const breakfastPortion = legacyPortionFromModernPortion(data.breakfastPortion);
+  if (!breakfastPortion) {
+    total++;
+    missing++;
+  } else {
+    total++;
+    if (breakfastPortion !== "none") {
+      total++;
+      if (!data.breakfastFoodId) missing++;
+      total++;
+      if (!data.breakfastTime) missing++;
+    }
+  }
+
+  const lunchPortion = legacyPortionFromModernPortion(data.lunchPortion);
+  if (!lunchPortion) {
+    total++;
+    missing++;
+  } else {
+    total++;
+    if (lunchPortion !== "none") {
+      total++;
+      if (!data.lunchFoodId) missing++;
+      total++;
+      if (!data.lunchTime) missing++;
+    }
+  }
+
+  if (hasLegacyDessertFields(data)) {
+    total++;
+    if (!data.dessert) missing++;
+    total++;
+    if (!data.dessertPortion) missing++;
+    total++;
+    if (!data.dessertTime) missing++;
+  }
+
+  total++;
+  if (data.isSleep) {
+    total++;
+    if (!data.sleepFrom) missing++;
+    total++;
+    if (!data.sleepTo) missing++;
+  }
+
+  total++;
+  if (!data.breakfastFoodId) missing++;
+
+  return missing === 0 ? 100 : 100 - Math.round((missing * 100) / total);
+}
+
+export function dailyReportLegacyWorkflowPatch(
+  status: DailyReportWorkflowStatus,
+  current?: unknown,
+): Prisma.InputJsonValue {
+  const next: Record<string, unknown> = {
+    ...legacyDailyRecord(current),
+    is_rep_draft: status === "SUBMITTED" ? "0" : "1",
+  };
+
+  return JSON.parse(JSON.stringify(next)) as Prisma.InputJsonValue;
 }
 
 export function legacyDailyNumber(value: unknown): number | null {
@@ -267,6 +387,20 @@ export function dailyReportSupplementalFields(
 export function dailyReportLegacyDataPatch(
   data: Pick<
     DailyReportFormValues,
+    | "attendanceMode"
+    | "reportDate"
+    | "breakfastFoodId"
+    | "breakfastPortion"
+    | "breakfastTime"
+    | "lunchFoodId"
+    | "lunchPortion"
+    | "lunchTime"
+    | "dessert"
+    | "dessertPortion"
+    | "dessertTime"
+    | "isSleep"
+    | "sleepFrom"
+    | "sleepTo"
     | "mood"
     | "earlyDinnerFoodId"
     | "earlyDinnerLegacyId"
@@ -289,11 +423,38 @@ export function dailyReportLegacyDataPatch(
     | "needsDiapers"
     | "needsBabyBottle"
     | "needsMilk"
+    | "applyFoodForAll"
+    | "absentReason"
+    | "absentFrom"
+    | "absentTo"
+    | "hospitalAttend"
   >,
   current?: unknown,
+  options?: { workflowStatus?: DailyReportWorkflowStatus },
 ): Prisma.InputJsonValue {
+  const legacyStatus = legacyDailyReportStatus(data);
+  const breakfastPortion = legacyPortionFromModernPortion(data.breakfastPortion);
+  const lunchPortion = legacyPortionFromModernPortion(data.lunchPortion);
+  const dessertPortion = legacyPortionFromModernPortion(data.dessertPortion);
   const next: Record<string, unknown> = {
     ...legacyDailyRecord(current),
+    status: legacyStatus,
+    reportdate: data.reportDate,
+    breakf: breakfastPortion,
+    lunchf: lunchPortion,
+    dessert: legacyDailyText(data.dessert) ?? "",
+    dess_portion: dessertPortion,
+    desstime: legacyDailyText(data.dessertTime) ?? "",
+    has_dess: hasLegacyDessertFields(data) ? "1" : "0",
+    is_sleep: legacyBooleanString(data.isSleep),
+    sleep_from: legacyDailyText(data.sleepFrom) ?? "",
+    sleep_to: legacyDailyText(data.sleepTo) ?? "",
+    food_for_all: legacyBooleanString(data.applyFoodForAll),
+    d_progress_all: dailyReportLegacyProgress(data),
+    ab_reason: legacyDailyText(data.absentReason) ?? "",
+    ab_from: legacyDailyText(data.absentFrom) ?? "",
+    ab_to: legacyDailyText(data.absentTo) ?? "",
+    attend_hos: legacyBooleanString(data.hospitalAttend),
     clothesPants: data.clothesPants,
     clothesShirt: data.clothesSweater,
     clothesSweater: data.clothesSweater,
@@ -312,6 +473,10 @@ export function dailyReportLegacyDataPatch(
   const earlyDinnerFoodId = legacyDailyText(data.earlyDinnerFoodId) ?? "";
   const earlyDinnerLegacyId =
     legacyDailyText(data.earlyDinnerLegacyId) ?? earlyDinnerFoodId;
+
+  if (options?.workflowStatus) {
+    next.is_rep_draft = options.workflowStatus === "SUBMITTED" ? "0" : "1";
+  }
 
   next.mood = legacyMoodFromModernMood(data.mood);
   next.earlyDinnerFoodId = earlyDinnerFoodId;

@@ -4,6 +4,7 @@ import { DailyReportForm } from "@/components/daily-reports/daily-report-form";
 import { getDailyReport } from "@/lib/actions/daily-reports";
 import { getChildren } from "@/lib/actions/children";
 import { getFoods } from "@/lib/actions/food";
+import { getCurrentDailyReportDirectSubmitPermission } from "@/lib/legacy-daily-report-approval";
 import {
   dailyReportClothingFlags,
   dailyReportNeedFlags,
@@ -25,13 +26,21 @@ function toTimeString(date: Date | null): string {
 export default async function EditDailyReportPage({ params }: Props) {
   const { id } = await params;
 
-  const [result, childrenResult, breakfastFoods, lunchFoods, dessertFoods] =
+  const [
+    result,
+    childrenResult,
+    breakfastFoods,
+    lunchFoods,
+    dessertFoods,
+    canSubmitDirectly,
+  ] =
     await Promise.all([
       getDailyReport(id),
       getChildren({ status: "ACTIVE", pageSize: "all" }),
       getFoods({ category: "BREAKFAST", isActive: true }),
       getFoods({ category: "LUNCH", isActive: true }),
       getFoods({ category: "DESSERT", isActive: true }),
+      getCurrentDailyReportDirectSubmitPermission(),
     ]);
 
   if ("error" in result || !result.report) {
@@ -161,6 +170,8 @@ export default async function EditDailyReportPage({ params }: Props) {
         foods={foods}
         defaultValues={defaultValues}
         reportId={id}
+        workflowStatus={r.status}
+        canSubmitDirectly={canSubmitDirectly}
         existingAttachments={(r.attachments ?? []).map((attachment) => ({
           id: attachment.id,
           filename: attachment.filename,

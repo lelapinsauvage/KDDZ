@@ -6,7 +6,11 @@ import { db } from "@/lib/db";
 import { requireOrg, requireOrgSafe } from "@/lib/require-org";
 import { verifyChildAccess } from "@/lib/verify-org-access";
 import { dailyReportSchema } from "@/lib/validations/daily-report";
-import { dailyReportLegacyDataPatch } from "@/lib/legacy-daily-report-fields";
+import {
+  dailyReportLegacyDataPatch,
+  dailyReportLegacyWorkflowPatch,
+} from "@/lib/legacy-daily-report-fields";
+import { resolveDailyReportDirectSubmitPermission } from "@/lib/legacy-daily-report-approval";
 import type { DailyReportStatus, Prisma } from "@/generated/prisma/client";
 
 // ─────────────────────────────────────────────
@@ -112,6 +116,12 @@ function isLegacyDraftApprovable(report: {
   const breakfastPortion = legacyDailyValue(report.legacyData, "breakf");
   const lunchPortion = legacyDailyValue(report.legacyData, "lunchf");
   return breakfastPortion !== "undefined" && lunchPortion !== "undefined";
+}
+
+function requestedDailyReportStatus(rawData: Record<string, unknown>) {
+  return (rawData.status === "SUBMITTED"
+    ? "SUBMITTED"
+    : "DRAFT") as DailyReportStatus;
 }
 
 // ─────────────────────────────────────────────
@@ -288,10 +298,19 @@ export async function createDailyReport(formData: FormData) {
 
     const data = parsed.data;
     const attachmentCreates = dailyAttachmentCreates(data.attachments);
+    const requestedStatus = requestedDailyReportStatus(rawData);
 
     // Verify child belongs to this org
     const childOk = await verifyChildAccess(data.childId, ctx.organizationId);
     if (!childOk) return { error: "Invalid child" };
+
+    const canSubmitDirectly =
+      await resolveDailyReportDirectSubmitPermission(ctx);
+    if (requestedStatus === "SUBMITTED" && !canSubmitDirectly) {
+      return {
+        error: "Direct approval is disabled; save this report as a draft for approval",
+      };
+    }
 
     // Check unique constraint: childId + reportDate
     const existing = await db.dailyReport.findUnique({
@@ -311,7 +330,7 @@ export async function createDailyReport(formData: FormData) {
       data: {
         childId: data.childId,
         reportDate: new Date(data.reportDate),
-        status: (rawData.status === "SUBMITTED" ? "SUBMITTED" : "DRAFT") as DailyReportStatus,
+        status: requestedStatus,
         checkInTime: data.checkInTime ? new Date(`1970-01-01T${data.checkInTime}`) : null,
         checkOutTime: data.checkOutTime ? new Date(`1970-01-01T${data.checkOutTime}`) : null,
         breakfastFoodId: data.breakfastFoodId || null,
@@ -339,7 +358,9 @@ export async function createDailyReport(formData: FormData) {
         runnyNose: data.runnyNose,
         vomit: data.vomit,
         remarks: data.remarks || null,
-        legacyData: dailyReportLegacyDataPatch(data),
+        legacyData: dailyReportLegacyDataPatch(data, undefined, {
+          workflowStatus: requestedStatus,
+        }),
         createdById: ctx.userId,
         fevers: {
           create: data.feverEntries.map((f) => ({
@@ -420,9 +441,22 @@ export async function updateDailyReport(id: string, formData: FormData) {
     const removeAttachmentIds = parseRemoveAttachmentIds(
       rawData.removeAttachmentIds,
     );
+    const requestedStatus = requestedDailyReportStatus(rawData);
 
     const childOk = await verifyChildAccess(data.childId, ctx.organizationId);
     if (!childOk) return { error: "Invalid child" };
+
+    if (existing.status === "SUBMITTED" && requestedStatus === "DRAFT") {
+      return { error: "Submitted daily reports cannot be saved as drafts" };
+    }
+
+    const canSubmitDirectly =
+      await resolveDailyReportDirectSubmitPermission(ctx);
+    if (requestedStatus === "SUBMITTED" && !canSubmitDirectly) {
+      return {
+        error: "Direct approval is disabled; save this report as a draft for approval",
+      };
+    }
 
     // Check unique constraint if date/child changed
     if (data.childId !== existing.childId || new Date(data.reportDate).toISOString() !== existing.reportDate.toISOString()) {
@@ -456,6 +490,7 @@ export async function updateDailyReport(id: string, formData: FormData) {
       data: {
         childId: data.childId,
         reportDate: new Date(data.reportDate),
+        status: requestedStatus,
         checkInTime: data.checkInTime ? new Date(`1970-01-01T${data.checkInTime}`) : null,
         checkOutTime: data.checkOutTime ? new Date(`1970-01-01T${data.checkOutTime}`) : null,
         breakfastFoodId: data.breakfastFoodId || null,
@@ -483,7 +518,9 @@ export async function updateDailyReport(id: string, formData: FormData) {
         runnyNose: data.runnyNose,
         vomit: data.vomit,
         remarks: data.remarks || null,
-        legacyData: dailyReportLegacyDataPatch(data, existing.legacyData),
+        legacyData: dailyReportLegacyDataPatch(data, existing.legacyData, {
+          workflowStatus: requestedStatus,
+        }),
         fevers: {
           create: data.feverEntries.map((f) => ({
             temperature: parseFloat(f.temperature),
@@ -542,9 +579,23 @@ export async function submitDailyReport(id: string) {
       return { error: "Only draft reports can be submitted" };
     }
 
+    const canSubmitDirectly =
+      await resolveDailyReportDirectSubmitPermission(ctx);
+    if (!canSubmitDirectly) {
+      return {
+        error: "Direct approval is disabled; save this report as a draft for approval",
+      };
+    }
+
     await db.dailyReport.update({
       where: { id },
-      data: { status: "SUBMITTED" },
+      data: {
+        status: "SUBMITTED",
+        legacyData: dailyReportLegacyWorkflowPatch(
+          "SUBMITTED",
+          existing.legacyData,
+        ),
+      },
     });
 
     revalidatePath("/daily-reports");
@@ -584,9 +635,10 @@ export async function approveDailyReports(ids: string[]) {
       },
     });
 
-    const approvableIds = reports
-      .filter((report) => isLegacyDraftApprovable(report))
-      .map((report) => report.id);
+    const approvableReports = reports.filter((report) =>
+      isLegacyDraftApprovable(report),
+    );
+    const approvableIds = approvableReports.map((report) => report.id);
 
     if (!approvableIds.length) {
       return {
@@ -595,10 +647,20 @@ export async function approveDailyReports(ids: string[]) {
       };
     }
 
-    await db.dailyReport.updateMany({
-      where: { id: { in: approvableIds } },
-      data: { status: "SUBMITTED" },
-    });
+    await db.$transaction(
+      approvableReports.map((report) =>
+        db.dailyReport.update({
+          where: { id: report.id },
+          data: {
+            status: "SUBMITTED",
+            legacyData: dailyReportLegacyWorkflowPatch(
+              "SUBMITTED",
+              report.legacyData,
+            ),
+          },
+        }),
+      ),
+    );
 
     revalidatePath("/daily-reports");
     revalidatePath("/daily-reports/drafts");
