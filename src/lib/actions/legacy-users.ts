@@ -120,6 +120,7 @@ export type LegacyAdminLevelOption = {
   label: string;
   recordType: LegacyLevelRecordType;
   isDisabled: boolean;
+  welcomeEmail: boolean;
 };
 
 export type LegacyAdminUserGroup = {
@@ -1103,6 +1104,7 @@ async function getLevelsAndGroups() {
     label: level.recordKey ?? `Level ${level.legacyId}`,
     recordType: level.recordType as LegacyLevelRecordType,
     isDisabled: level.isDisabled ?? false,
+    welcomeEmail: level.welcomeEmail ?? false,
   }));
 
   const groupMap = new Map<string, LegacyAdminUserGroup>();
@@ -2108,6 +2110,18 @@ export async function updateLegacyAdminUser(
       ),
     );
     const userLevel = serializePhpStringArray(validated.levelIds);
+    const previousLevelIds = parsePhpLevelIds(existing.recordValue);
+    const relevantLevels = levels.filter(
+      (level) =>
+        level.sourceDatabase === validated.sourceDatabase &&
+        level.recordType === config.levelRecordType,
+    );
+    const newWelcomeLevels = relevantLevels.filter(
+      (level) =>
+        level.welcomeEmail &&
+        validated.levelIds.includes(level.legacyId) &&
+        !previousLevelIds.includes(level.legacyId),
+    );
 
     const duplicateModern = await db.user.findUnique({
       where: { email: validated.email },
@@ -2198,13 +2212,69 @@ export async function updateLegacyAdminUser(
       recordType,
       legacyUserId,
     );
+    let returnedLegacyRecord = updated.legacyRecord;
+    if (newWelcomeLevels.length > 0) {
+      const template = await legacyEmailTemplate(
+        validated.sourceDatabase,
+        "email-add-user-subj",
+        "email-add-user-msg",
+      );
+      const templateValues = {
+        site_address: siteAddress(),
+        full_name: validated.name,
+        username: validated.username,
+        email: validated.email,
+        password: input.password ?? "",
+      };
+      const emailSubject = renderTemplate(
+        template.subject ?? "Your account has been updated",
+        templateValues,
+      );
+      const emailBody = renderTemplate(
+        template.body ??
+          "Hello {{full_name}}, your account has been updated.\n\nUsername: {{username}}",
+        templateValues,
+      );
+      const emailDelivery = await deliverEmail({
+        recipients: [{ email: validated.email, name: validated.name }],
+        subject: emailSubject,
+        body: emailBody,
+        category: "ADD_USER",
+        metadata: {
+          source: "legacy_admin_edit_user_welcome_level",
+          legacyUserId,
+          welcomeLevelIds: newWelcomeLevels
+            .map((level) => level.legacyId)
+            .join(","),
+        },
+      });
+
+      returnedLegacyRecord = await db.legacyAuthRecord.update({
+        where: { id: updated.legacyRecord.id },
+        data: {
+          legacyData: {
+            ...legacyObject(updated.legacyRecord.legacyData),
+            welcomeLevelEmail: {
+              subject: emailSubject,
+              body: emailBody,
+              levels: newWelcomeLevels.map((level) => ({
+                id: level.legacyId,
+                label: level.label,
+              })),
+              deliveryConfigured: emailDelivery.configured,
+              emailDelivery: emailDeliveryAuditData(emailDelivery),
+            },
+          } satisfies Prisma.InputJsonObject,
+        },
+      });
+    }
 
     revalidatePath("/settings/legacy-users");
 
     return {
       success: true,
       data: mapUserRow({
-        record: updated.legacyRecord,
+        record: returnedLegacyRecord,
         levelOptions: levels,
         modernUser: updated.modernUser,
         profileValues,
