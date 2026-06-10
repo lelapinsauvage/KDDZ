@@ -12,6 +12,7 @@ const files = {
   receiptClient:
     "src/app/(app)/alarms/_components/staff-receipt-alarms-client.tsx",
   actions: "src/lib/actions/alarms.ts",
+  paymentJob: "src/lib/jobs/payment-alarms.ts",
   matrix: "docs/page-parity-matrix.json",
   markdownMatrix: "docs/page-parity-matrix.md",
   topGaps: "docs/top-20-restoration-gaps.md",
@@ -81,6 +82,10 @@ assert.match(text.actions, /export async function getPaymentAlarmHistory/);
 assert.match(text.actions, /export async function generatePaymentAlarms/);
 assert.match(text.actions, /export async function markPaymentAlarmViewed/);
 assert.match(text.actions, /export async function markAllPaymentAlarmsViewed/);
+assert.match(text.paymentJob, /deliverPushNotification/);
+assert.match(text.paymentJob, /pushDeliveryAuditData/);
+assert.match(text.paymentJob, /parentPushDelivery/);
+assert.match(text.paymentJob, /recipientParentUserIds: params\.parentUserIds/);
 
 type MatrixRow = {
   legacyPhp?: string;
@@ -103,6 +108,8 @@ assert.match(row.verification ?? "", /Browser smoke confirmed `\/alarmsPayments\
 assert.match(row.verification ?? "", /Payment Alarms/);
 assert.match(row.verification ?? "", /Dashboard and Notifications tabs/);
 assert.match(row.verification ?? "", /Sent Payment Alarms/);
+assert.match(row.verification ?? "", /provider-neutral parent push delivery/);
+assert.match(row.verification ?? "", /parentPushDelivery/);
 assert.match(row.verification ?? "", /no broken images or app errors/);
 
 const markdownRow = text.markdownMatrix
@@ -110,11 +117,11 @@ const markdownRow = text.markdownMatrix
   .find((line) => line.includes("| Front/templates/admin/alarmsPayments.php |"));
 assert.match(markdownRow ?? "", /browser visual audit restored/);
 assert.match(markdownRow ?? "", /Browser smoke confirmed `\/alarmsPayments\.php`/);
-assert.match(markdownRow ?? "", /final sent-state semantics/);
+assert.match(markdownRow ?? "", /provider-neutral parent push delivery/);
 
 assert.match(
   text.topGaps,
-  /Payment alarms browser smoke now confirms the legacy `\/alarmsPayments\.php` bridge/,
+  /Payment alarms now audit provider-neutral parent push delivery on generated payment reminders/,
 );
 
 console.log("legacy payment alarms visual contract assertions passed");

@@ -1,6 +1,10 @@
 import { db } from "@/lib/db";
 import { deliverEmail, emailDeliveryAuditData } from "@/lib/email-delivery";
 import { isLegacyNotificationGateEnabled } from "@/lib/legacy-notification-gates";
+import {
+  deliverPushNotification,
+  pushDeliveryAuditData,
+} from "@/lib/push-delivery";
 import type { PaymentCategory, PaymentStatus } from "@/generated/prisma/enums";
 
 type PaymentAlarmLegacyType = "Paid" | "Before" | "After";
@@ -379,6 +383,49 @@ async function storePaymentEmailAudit(params: {
   });
 }
 
+async function storePaymentParentPushAudit(params: {
+  alarmId: string;
+  parentUserIds: string[];
+  title: string;
+  body: string;
+  childId: string;
+  legacyChildId: number | null;
+  legacyNotificationId: number;
+  alarmType: PaymentAlarmLegacyType;
+  sourceDatabase: string | null;
+}) {
+  const pushDelivery = await deliverPushNotification({
+    recipientParentUserIds: params.parentUserIds,
+    title: params.title,
+    body: params.body,
+    category: "PAYMENT",
+    url: "/parent",
+    metadata: {
+      source: "generatePaymentAlarms",
+      legacyNotificationId: params.legacyNotificationId,
+      legacyDeliveryTable: PAYMENT_RECEIPT_SOURCE,
+      childId: params.childId,
+      legacyChildId: params.legacyChildId,
+      alarmType: params.alarmType,
+      sourceDatabase: params.sourceDatabase,
+    },
+  });
+
+  const alarm = await db.alarm.findUnique({
+    where: { id: params.alarmId },
+    select: { legacyData: true },
+  });
+  await db.alarm.update({
+    where: { id: params.alarmId },
+    data: {
+      legacyData: {
+        ...(asRecord(alarm?.legacyData) ?? {}),
+        parentPushDelivery: pushDeliveryAuditData(pushDelivery),
+      },
+    },
+  });
+}
+
 export async function generatePaymentAlarmsForOrganization(params: {
   organizationId: string;
   branchId?: string | null;
@@ -746,12 +793,16 @@ export async function generatePaymentAlarmsForOrganization(params: {
     }
 
     let alarmId = existingAlarm?.id ?? null;
+    let shouldAttemptParentPushAudit = !existingAlarm;
     if (existingAlarm) {
       summary.skippedExisting += 1;
       const existingData = asRecord(existingAlarm.legacyData) ?? {};
+      const needsParentPushAudit = !asRecord(existingData.parentPushDelivery);
+      shouldAttemptParentPushAudit = needsParentPushAudit;
       if (
         readNumber(existingData, "aid") === null ||
-        existingData.sourceDeliveryTable !== PAYMENT_RECEIPT_SOURCE
+        existingData.sourceDeliveryTable !== PAYMENT_RECEIPT_SOURCE ||
+        needsParentPushAudit
       ) {
         await db.alarm.update({
           where: { id: existingAlarm.id },
@@ -868,7 +919,25 @@ export async function generatePaymentAlarmsForOrganization(params: {
     const newReceiptRecipients = candidate.parentRecipients.filter(
       (recipient) => !existingReceiptIds.has(recipient.legacyRecipientId),
     );
-    if (newReceiptRecipients.length === 0) continue;
+    const parentUserIdsForPush = candidate.parentRecipients
+      .map((recipient) => recipient.parentUserId)
+      .filter(Boolean);
+    if (newReceiptRecipients.length === 0) {
+      if (alarmId && shouldAttemptParentPushAudit && parentUserIdsForPush.length > 0) {
+        await storePaymentParentPushAudit({
+          alarmId,
+          parentUserIds: parentUserIdsForPush,
+          title: renderNotificationText(template.subject, variables),
+          body: message,
+          childId: candidate.childId,
+          legacyChildId: candidate.legacyChildId,
+          legacyNotificationId,
+          alarmType: candidate.alarmType,
+          sourceDatabase: candidate.parentRecipients[0]?.sourceDatabase ?? null,
+        });
+      }
+      continue;
+    }
 
     const receiptResult = await db.notificationReceipt.createMany({
       data: newReceiptRecipients.map((recipient) => ({
@@ -893,6 +962,25 @@ export async function generatePaymentAlarmsForOrganization(params: {
       skipDuplicates: true,
     });
     summary.receiptsCreated += receiptResult.count;
+
+    if (
+      alarmId &&
+      shouldAttemptParentPushAudit &&
+      receiptResult.count > 0 &&
+      parentUserIdsForPush.length > 0
+    ) {
+      await storePaymentParentPushAudit({
+        alarmId,
+        parentUserIds: parentUserIdsForPush,
+        title: renderNotificationText(template.subject, variables),
+        body: message,
+        childId: candidate.childId,
+        legacyChildId: candidate.legacyChildId,
+        legacyNotificationId,
+        alarmType: candidate.alarmType,
+        sourceDatabase: newReceiptRecipients[0]?.sourceDatabase ?? null,
+      });
+    }
 
     if (!template.enabled || receiptResult.count === 0) continue;
 
