@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import { createHash } from "crypto";
 import { compare, hash } from "bcryptjs";
 import { authConfig } from "./auth.config";
+import { getLegacyAccessSessionSnapshot } from "./legacy-access-permissions";
 import {
   getLegacyLoginSessionContext,
   getLegacyLoginDisabledStatus,
@@ -243,6 +244,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             legacyLogin,
             remember,
           );
+          const legacyAccess = await getLegacyAccessSessionSnapshot(user.id);
           await recordLegacyLoginTimestamp(db, user.id, request);
 
           return {
@@ -254,6 +256,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             branchId: user.branchId,
             organizationId: user.organizationId ?? user.branch?.organizationId ?? null,
             legacyLogin,
+            legacyAccess,
             ...sessionPolicy,
           };
         } catch (error) {

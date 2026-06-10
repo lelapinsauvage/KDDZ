@@ -15,6 +15,19 @@ type LegacySessionMode =
   | "browser_session"
   | "modern_default";
 
+type LegacyAccessSessionSnapshot = {
+  generatedAt: string;
+  levels: Array<{
+    sourceDatabase: string;
+    legacyTable: "login_users" | "login_users_man";
+    legacyUserId: number | null;
+    legacyLevelIds: number[];
+  }>;
+  configuredActionKeys: string[];
+  allowedActionKeys: string[];
+  directUserActionKeys: string[];
+};
+
 declare module "next-auth" {
   interface Session {
     user: {
@@ -23,6 +36,7 @@ declare module "next-auth" {
       branchId: string | null;
       organizationId: string | null;
       legacyLogin: LegacyLoginSessionContext | null;
+      legacyAccess: LegacyAccessSessionSnapshot | null;
       legacySessionMode: LegacySessionMode | null;
       legacySessionExpiresAt: string | null;
     } & DefaultSession["user"];
@@ -33,6 +47,7 @@ declare module "next-auth" {
     branchId: string | null;
     organizationId: string | null;
     legacyLogin?: LegacyLoginSessionContext | null;
+    legacyAccess?: LegacyAccessSessionSnapshot | null;
     legacySessionMode?: LegacySessionMode | null;
     legacySessionExpiresAt?: string | null;
   }
@@ -45,6 +60,7 @@ declare module "next-auth/jwt" {
     branchId: string | null;
     organizationId: string | null;
     legacyLogin?: LegacyLoginSessionContext | null;
+    legacyAccess?: LegacyAccessSessionSnapshot | null;
     legacySessionMode?: LegacySessionMode | null;
     legacySessionExpiresAt?: string | null;
   }

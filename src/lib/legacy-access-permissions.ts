@@ -13,6 +13,12 @@ type LegacyLevelEntry = {
   config: LegacyAccessConfig;
 };
 
+type LegacyUserGrantEntry = {
+  sourceDatabase: string;
+  legacyUserId: number;
+  config: LegacyAccessConfig;
+};
+
 export type LegacyAccessPermissionDecision = {
   isConfigured: boolean;
   isAllowed: boolean;
@@ -21,6 +27,19 @@ export type LegacyAccessPermissionDecision = {
 export type LegacyAccessPermissionRequest = {
   actionName: string;
   actionType?: "PAGE" | "ACTION" | string;
+};
+
+export type LegacyAccessSessionSnapshot = {
+  generatedAt: string;
+  levels: Array<{
+    sourceDatabase: string;
+    legacyTable: "login_users" | "login_users_man";
+    legacyUserId: number | null;
+    legacyLevelIds: number[];
+  }>;
+  configuredActionKeys: string[];
+  allowedActionKeys: string[];
+  directUserActionKeys: string[];
 };
 
 export function legacyAccessAllows(
@@ -291,10 +310,8 @@ export async function getLegacyAccessPermissionDecisions(
     },
   });
 
-  for (const [requestKey, relevantActions] of relevantActionsByRequest) {
-    if (relevantActions.length === 0) continue;
-
-    const isAllowed = grants.some((grant) => {
+  function hasLevelGrant(relevantActions: typeof allRelevantActions) {
+    return grants.some((grant) => {
       const entry = levelEntries.find(
         (level) =>
           level.sourceDatabase === grant.sourceDatabase &&
@@ -313,8 +330,189 @@ export async function getLegacyAccessPermissionDecisions(
         );
       });
     });
-    decisions[requestKey] = { isConfigured: true, isAllowed };
+  }
+
+  for (const [requestKey, relevantActions] of relevantActionsByRequest) {
+    if (relevantActions.length === 0) continue;
+    decisions[requestKey] = {
+      isConfigured: true,
+      isAllowed: hasLevelGrant(relevantActions),
+    };
   }
 
   return decisions;
+}
+
+export async function getLegacyAccessSessionSnapshot(
+  userId: string,
+): Promise<LegacyAccessSessionSnapshot | null> {
+  const legacyUsers = await db.legacyAuthRecord.findMany({
+    where: {
+      userId,
+      recordType: {
+        in: LEGACY_ACCESS_CONFIGS.map((config) => config.userRecordType),
+      },
+    },
+    select: {
+      sourceDatabase: true,
+      recordType: true,
+      legacyTable: true,
+      legacyId: true,
+      legacyUserId: true,
+      recordValue: true,
+    },
+  });
+
+  const levelEntries: LegacyLevelEntry[] = [];
+  const userGrantEntries: LegacyUserGrantEntry[] = [];
+  const levels = legacyUsers.flatMap((legacyUser) => {
+    const config = configForUserRecordType(legacyUser.recordType);
+    if (!config) return [];
+    const legacyUserId = legacyUser.legacyUserId ?? legacyUser.legacyId;
+    if (Number.isInteger(legacyUserId) && legacyUserId > 0) {
+      userGrantEntries.push({
+        sourceDatabase: legacyUser.sourceDatabase,
+        legacyUserId,
+        config,
+      });
+    }
+    const legacyLevelIds = parsePhpLevelIds(legacyUser.recordValue);
+    for (const legacyLevelId of legacyLevelIds) {
+      levelEntries.push({
+        sourceDatabase: legacyUser.sourceDatabase,
+        legacyLevelId,
+        config,
+      });
+    }
+    return [
+      {
+        sourceDatabase: legacyUser.sourceDatabase,
+        legacyTable:
+          legacyUser.recordType === "manager_login_user"
+            ? ("login_users_man" as const)
+            : ("login_users" as const),
+        legacyUserId,
+        legacyLevelIds,
+      },
+    ];
+  });
+
+  if (levelEntries.length === 0 && userGrantEntries.length === 0) return null;
+
+  const sourceDatabases = Array.from(
+    new Set(
+      [...levelEntries, ...userGrantEntries].map(
+        (entry) => entry.sourceDatabase,
+      ),
+    ),
+  );
+  const actions = await db.legacyAccessControlRecord.findMany({
+    where: {
+      sourceDatabase: { in: sourceDatabases },
+      recordType: {
+        in: LEGACY_ACCESS_CONFIGS.map((config) => config.actionRecordType),
+      },
+    },
+    select: {
+      sourceDatabase: true,
+      recordType: true,
+      legacyActionId: true,
+      actionName: true,
+      actionType: true,
+    },
+  });
+  const actionIds = uniqueNumbers(
+    actions.map((action) => action.legacyActionId ?? 0),
+  );
+  const levelIds = uniqueNumbers(
+    levelEntries.map((entry) => entry.legacyLevelId),
+  );
+  const legacyUserIds = uniqueNumbers(
+    userGrantEntries.map((entry) => entry.legacyUserId),
+  );
+  const [grants, userGrants] = await Promise.all([
+    levelIds.length && actionIds.length
+      ? db.legacyAccessControlRecord.findMany({
+          where: {
+            sourceDatabase: { in: sourceDatabases },
+            recordType: {
+              in: LEGACY_ACCESS_CONFIGS.map((config) => config.grantRecordType),
+            },
+            legacyActionId: { in: actionIds },
+            legacyLevelId: { in: levelIds },
+            OR: [{ isActive: true }, { isActive: null }],
+          },
+          select: {
+            sourceDatabase: true,
+            recordType: true,
+            legacyActionId: true,
+            legacyLevelId: true,
+          },
+        })
+      : Promise.resolve([]),
+    legacyUserIds.length && actionIds.length
+      ? db.legacyAccessControlRecord.findMany({
+          where: {
+            sourceDatabase: { in: sourceDatabases },
+            recordType: "user_action_grant",
+            legacyActionId: { in: actionIds },
+            legacyUserId: { in: legacyUserIds },
+            OR: [{ isActive: true }, { isActive: null }],
+          },
+          select: {
+            sourceDatabase: true,
+            legacyActionId: true,
+            legacyUserId: true,
+          },
+        })
+      : Promise.resolve([]),
+  ]);
+
+  const configuredActionKeys = new Set<string>();
+  const allowedActionKeys = new Set<string>();
+  const directUserActionKeys = new Set<string>();
+  for (const action of actions) {
+    if (!action.actionName || !action.actionType || !action.legacyActionId) {
+      continue;
+    }
+    const actionKey = legacyAccessPermissionKey(
+      action.actionName,
+      action.actionType,
+    );
+    configuredActionKeys.add(actionKey);
+    const config = configForActionRecordType(action.recordType);
+    if (!config) continue;
+
+    const allowedByLevel = grants.some((grant) =>
+      levelEntries.some(
+        (entry) =>
+          entry.sourceDatabase === grant.sourceDatabase &&
+          entry.config.grantRecordType === grant.recordType &&
+          entry.legacyLevelId === grant.legacyLevelId &&
+          config.grantRecordType === grant.recordType &&
+          action.sourceDatabase === grant.sourceDatabase &&
+          action.legacyActionId === grant.legacyActionId,
+      ),
+    );
+    const allowedByUser = userGrants.some((grant) =>
+      userGrantEntries.some(
+        (entry) =>
+          entry.sourceDatabase === grant.sourceDatabase &&
+          entry.config.actionRecordType === config.actionRecordType &&
+          entry.legacyUserId === grant.legacyUserId &&
+          action.sourceDatabase === grant.sourceDatabase &&
+          action.legacyActionId === grant.legacyActionId,
+      ),
+    );
+    if (allowedByUser) directUserActionKeys.add(actionKey);
+    if (allowedByLevel) allowedActionKeys.add(actionKey);
+  }
+
+  return {
+    generatedAt: new Date().toISOString(),
+    levels,
+    configuredActionKeys: Array.from(configuredActionKeys).sort(),
+    allowedActionKeys: Array.from(allowedActionKeys).sort(),
+    directUserActionKeys: Array.from(directUserActionKeys).sort(),
+  };
 }

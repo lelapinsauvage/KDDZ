@@ -21,6 +21,7 @@ export const authConfig = {
         token.organizationId = user.organizationId;
         token.picture = user.image;
         token.legacyLogin = user.legacyLogin;
+        token.legacyAccess = user.legacyAccess;
         token.legacySessionMode = user.legacySessionMode;
         token.legacySessionExpiresAt = user.legacySessionExpiresAt;
       }
@@ -35,6 +36,9 @@ export const authConfig = {
         session.user.image = token.picture as string | null;
         session.user.legacyLogin = token.legacyLogin as
           | typeof session.user.legacyLogin
+          | null;
+        session.user.legacyAccess = token.legacyAccess as
+          | typeof session.user.legacyAccess
           | null;
         session.user.legacySessionMode =
           (token.legacySessionMode as typeof session.user.legacySessionMode) ??
