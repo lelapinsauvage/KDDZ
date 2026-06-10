@@ -17598,7 +17598,7 @@
     "legacyPhp": "Front/templates/admin/users/classes/generic_user_db.class.php",
     "legacyJs": "",
     "modernRoute": "/users/admin/classes/add_user.class.php, /users/admin/classes/add_level.class.php, /settings/legacy-users",
-    "status": "partial - mirrored user-db duplicate validators restored",
+    "status": "restored - mirrored user-db duplicate validators restored",
     "legacyTablesMentioned": [
       "login_levels",
       "login_profile_fields",
@@ -17615,7 +17615,7 @@
       "level",
       "username"
     ],
-    "verification": "The mirrored `Generic_User::checkExists()` behavior is restored through the same legacy class route handlers, with optional manager/source hints supported for `login_users_man` and `login_levels_man` metadata while defaulting to the staff tables the original add-user/add-level pages posted against. Remaining work is any live mirrored-database export/synchronization required during cutover."
+    "verification": "The mirrored `Generic_User::checkExists()` behavior is restored through the same protected legacy class route handlers while preserving the user-database distinction from `connect_user_db.class.php`: `/users/admin/classes/add_user.class.php` accepts legacy `checkusername` and `checkemail` requests and can target staff `login_users` or manager `login_users_man` metadata through source/record/table hints; `/users/admin/classes/add_level.class.php` accepts `checklevel` plus `searchLevels` and can target staff `login_levels` or manager `login_levels_man` metadata. Responses keep the legacy literal `true`/`false` remote-validator bodies and suggestion fragments with `users.php?uid=` / `levels.php?lid=` hrefs. Runtime cutover exports back to the old PHP SQL tables are intentionally outside the modern app runtime; migrated provenance remains in `LegacyAuthRecord`. Verified against archived `generic_user_db.class.php`, both route handlers, the shared validator mapper, and parity docs by `src/scripts/verify-legacy-mirrored-auth-validator-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/index.php",
