@@ -65,6 +65,7 @@ assert.equal(isExpiredIsoDate("2000-01-01T00:00:00.000Z"), true);
 
 const middleware = readFileSync("src/middleware.ts", "utf8");
 const authConfig = readFileSync("src/lib/auth.config.ts", "utf8");
+const appLayout = readFileSync("src/app/(app)/layout.tsx", "utf8");
 
 assert.match(middleware, /isPublicAuthPath\(pathname\)/);
 assert.match(middleware, /callbackUrl/);
@@ -72,5 +73,7 @@ assert.match(middleware, /x-current-pathname/);
 assert.doesNotMatch(middleware, /pathname\.includes\("\/ws\/"\)/);
 assert.match(authConfig, /isPublicAuthPath\(pathname\)/);
 assert.match(authConfig, /isExpiredIsoDate\(legacySessionExpiresAt\)/);
+assert.match(appLayout, /isExpiredIsoDate\(legacySessionExpiresAt\)/);
+assert.doesNotMatch(appLayout, /function isExpiredIsoDate/);
 
 console.log("auth public path contract assertions passed");

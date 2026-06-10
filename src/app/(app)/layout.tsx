@@ -19,12 +19,9 @@ import {
 } from "@/lib/legacy-page-guards"
 import { getLegacyNotificationGateVisibility } from "@/lib/legacy-notification-gates"
 import { getLegacySystemActionPermissions } from "@/lib/legacy-system-action-permissions"
+import { isExpiredIsoDate } from "@/lib/auth-public-paths"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
-
-function isExpiredIsoDate(value: string | null | undefined) {
-  return Boolean(value) && Date.parse(value as string) <= Date.now()
-}
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
