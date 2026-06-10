@@ -17252,7 +17252,7 @@
     "legacyPhp": "Front/templates/admin/users/admin/page/settings.php",
     "legacyJs": "Front/templates/admin/js/settings.js",
     "modernRoute": "/users/admin/page/settings.php, /settings/legacy-auth, /settings/notifications, /settings/legacy-users",
-    "status": "partial - legacy admin settings wrapper maps old tabs to restored auth, notification, and user-admin surfaces",
+    "status": "restored - legacy admin settings wrapper tab composition and bridge aliases restored",
     "legacyTablesMentioned": [
       "login_settings",
       "login_settings_man"
@@ -17266,7 +17266,7 @@
       "tab",
       "target"
     ],
-    "verification": "`/users/admin/page/settings.php` now resolves legacy tab/page/hash query aliases for General, Denied, Integration, Update, notification/email templates, Bulk Email, User Profiles, Reports, User Control, and Add User into the restored modern settings pages. Email template aliases preserve focus with `/settings/notifications?tab=templates&template=...`. Remaining work is exact old admin settings shell composition and any active OAuth/captcha runtime behavior if those archived integrations are re-enabled."
+    "verification": "`/users/admin/page/settings.php` now resolves the legacy tabs-left shell into restored modern pages while preserving all legacy tab aliases: General, Denied, Integration, Update, Welcome, Activate, Forgot, Add user, My Account changes, Birthday, Missing Reports, Medicine, Insurance, Assessment, Vaccinations, Expiration, Accounting, Control, Bulk Email, User Profiles, Reports, User Control, and Add User. Email template aliases preserve focus with `/settings/notifications?tab=templates&template=...`; notification control opens the Legacy tab, bulk send opens the Bulk tab, profiles/reports/users/add-user open their restored user-admin surfaces, and an empty legacy wrapper hit falls back to `/settings/legacy-auth`. Verified against the archived legacy tabs-left shell, both `/users/admin/settings.php` and `/users/admin/page/settings.php` bridges, and all redirect aliases by `src/scripts/verify-legacy-admin-settings-wrapper-contract.ts`. Active OAuth/captcha runtime behavior remains tracked on the specific integration/auth rows."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/update.php",
@@ -17344,7 +17344,7 @@
     "legacyPhp": "Front/templates/admin/users/admin/settings.php",
     "legacyJs": "Front/templates/admin/js/settings.js",
     "modernRoute": "/users/admin/settings.php, /settings/legacy-auth, /settings/notifications, /settings/legacy-users",
-    "status": "partial - legacy admin settings wrapper maps old tabs to restored auth, notification, and user-admin surfaces",
+    "status": "restored - legacy admin settings wrapper tab composition and bridge aliases restored",
     "legacyTablesMentioned": [
       "login_settings",
       "login_settings_man"
@@ -17358,7 +17358,7 @@
       "tab",
       "target"
     ],
-    "verification": "`/users/admin/settings.php` now resolves legacy tab/page/hash query aliases for General, Denied, Integration, Update, notification/email templates, Bulk Email, User Profiles, Reports, User Control, and Add User into the restored modern settings pages. Email template aliases preserve focus with `/settings/notifications?tab=templates&template=...`. Remaining work is exact old admin settings shell composition and any active OAuth/captcha runtime behavior if those archived integrations are re-enabled."
+    "verification": "`/users/admin/settings.php` now resolves the legacy tabs-left shell into restored modern pages while preserving all legacy tab aliases: General, Denied, Integration, Update, Welcome, Activate, Forgot, Add user, My Account changes, Birthday, Missing Reports, Medicine, Insurance, Assessment, Vaccinations, Expiration, Accounting, Control, Bulk Email, User Profiles, Reports, User Control, and Add User. Email template aliases preserve focus with `/settings/notifications?tab=templates&template=...`; notification control opens the Legacy tab, bulk send opens the Bulk tab, profiles/reports/users/add-user open their restored user-admin surfaces, and an empty legacy wrapper hit falls back to `/settings/legacy-auth`. Verified against the archived legacy tabs-left shell, both `/users/admin/settings.php` and `/users/admin/page/settings.php` bridges, and all redirect aliases by `src/scripts/verify-legacy-admin-settings-wrapper-contract.ts`. Active OAuth/captcha runtime behavior remains tracked on the specific integration/auth rows."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/users.php",
