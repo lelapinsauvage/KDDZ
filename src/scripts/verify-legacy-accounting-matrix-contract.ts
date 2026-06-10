@@ -15,6 +15,7 @@ const files = {
   paymentsActions: "src/lib/actions/payments.ts",
   matrix: "docs/page-parity-matrix.json",
   matrixMd: "docs/page-parity-matrix.md",
+  topGaps: "docs/top-20-restoration-gaps.md",
 };
 
 const text = Object.fromEntries(
@@ -38,6 +39,7 @@ assert.match(text.legacyPhp, /Update payment For/);
 assert.match(text.legacyPhp, /Payment Amount/);
 assert.match(text.legacyPhp, /Cash[\s\S]*Cheque[\s\S]*Credit Card[\s\S]*Bank Transfer/);
 assert.match(text.legacyPhp, /ProfileImage1[\s\S]*accept="image\/jpeg"/);
+assert.match(text.legacyPhp, /onclick="javascript:window\.print\(\);"/);
 
 assert.match(text.legacyJs, /var child_id = \$\('#emp_id'\)\.val\(\)/);
 assert.match(text.legacyJs, /getchild_paymentsExcel&child_id=' \+ child_id/);
@@ -54,6 +56,9 @@ assert.match(text.legacyJs, /function showmod\(child_id,month\)/);
 assert.match(text.legacyJs, /function updatePay\(tid\)/);
 assert.match(text.legacyJs, /function deleteDO\(did\)/);
 assert.match(text.legacyJs, /url: '\.\.\/\.\.\/\.\.\/ajax\/v1\/deletePayment'/);
+assert.match(text.legacyJs, /\/\/ var conn = new ab\.Session/);
+assert.match(text.legacyJs, /\/\/ conn\.subscribe\("newpayment"\+cat_master/);
+assert.match(text.legacyJs, /\/\/ console\.warn\('WebSocket connection closed'\)/);
 
 assert.match(text.bridge, /redirect\("\/accounting"\)/);
 assert.match(text.page, /await requireRole\("ADMIN", "MANAGER"\)/);
@@ -86,6 +91,13 @@ assert.match(text.client, /Child Info/);
 assert.match(text.client, /First Name/);
 assert.match(text.client, /Last Name/);
 assert.match(text.client, /Grand Total/);
+assert.match(text.client, /onClick=\{\(\) => window\.print\(\)\}/);
+assert.match(text.client, /<h1 className="text-xl font-semibold">Invoice - Receipt<\/h1>/);
+assert.match(text.client, /Accounting matrix - \{selectedAcademicYear\}-\{selectedAcademicYear \+ 1\}/);
+assert.match(text.client, /Printed on/);
+assert.match(text.client, /print:hidden/);
+assert.match(text.client, /print:overflow-visible/);
+assert.match(text.client, /print:text-\[8px\]/);
 assert.match(text.client, /handleCellClick\(row\.childId, monthDef\.month, amount\)/);
 assert.match(text.client, /if \(amount > 0\)[\s\S]*setDetailsCell/);
 assert.match(text.client, /setQuickDialogOpen\(true\)/);
@@ -135,8 +147,10 @@ const row = matrix.find((entry) => entry.modernRoute === "/accounting.php, /acco
 
 assert.ok(row);
 assert.match(row.status ?? "", /restored - legacy accounting bridge/);
+assert.match(row.status ?? "", /page print/);
 assert.match(row.verification ?? "", /Oct-Sep school-year\/category matrix/);
 assert.match(row.verification ?? "", /Browser smoke/);
+assert.match(row.verification ?? "", /enabled page-level Print and Record Payment actions/);
 assert.match(row.verification ?? "", /Record Payment sheet/);
 
 assert.match(
@@ -144,6 +158,20 @@ assert.match(
   /accounting\.php \| Front\/templates\/admin\/js\/accounting\.js \| \/accounting\.php, \/accounting \| restored - legacy accounting bridge/,
 );
 assert.match(text.matrixMd, /accounting\.php[\s\S]*Browser smoke/);
+assert.match(text.matrixMd, /accounting\.php[\s\S]*enabled page-level Print and Record Payment actions/);
+
+assert.match(
+  text.topGaps,
+  /Legacy `accounting\.js` WebSocket refresh blocks are commented out/,
+);
+assert.match(
+  text.topGaps,
+  /The page-level matrix print action is restored/,
+);
+assert.doesNotMatch(
+  text.topGaps,
+  /Remaining work is exact visual audit for any legacy WebSocket refresh\/status behavior that was commented out or environment-specific/,
+);
 
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

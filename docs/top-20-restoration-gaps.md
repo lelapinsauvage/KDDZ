@@ -161,7 +161,9 @@ This list is the first implementation backlog after the generated inventory/matr
 
 14. **Accounting monthly matrix**
    - `/accounting` now restores the legacy `accounting.php` Oct-Sep school-year matrix with category tabs, child number/first/last/branch/class columns, active-child zero rows, uncapped org-scoped payment loading, branch/class/search/year filters, month totals, zero-cell payment-dialog prefill, nonzero-cell payment detail modal, print/edit/delete/attachment actions, and legacy-style soft delete.
-   - Remaining work is exact visual audit for any legacy WebSocket refresh/status behavior that was commented out or environment-specific.
+   - Legacy `accounting.js` WebSocket refresh blocks are commented out, so no active `newpayment` socket is required for page parity.
+   - The page-level matrix print action is restored with a print-only `Invoice - Receipt` header, accounting year/category context, and browser print output for the Oct-Sep matrix.
+   - Remaining work is exact production visual acceptance for print/stationery and any environment-specific status behavior outside the commented legacy socket path.
 
 15. **Invoice/receipt parity**
    - Runtime payment receipt upload now stores files on `Payment.receiptFileUrl`; `/accounting/invoice/[id]` now restores the legacy `invo.php` Receipt Voucher fields, original migrated receipt number when available, amount-in-words text, child number/name, payer wording, category, month, validity dates, signature line, and print action.

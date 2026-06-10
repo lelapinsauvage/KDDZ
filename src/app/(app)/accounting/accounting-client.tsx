@@ -366,21 +366,41 @@ export function AccountingClient({
         title="Accounting"
         breadcrumbs={[{ label: "Accounting" }]}
         actions={
-          <Button
-            onClick={() => {
-              setSelectedCell(null);
-              setQuickDialogOpen(true);
-            }}
-          >
-            <Banknote className="mr-1 size-4" />
-            Record Payment
-          </Button>
+          <>
+            <Button variant="outline" onClick={() => window.print()}>
+              <Printer className="mr-1 size-4" />
+              Print
+            </Button>
+            <Button
+              onClick={() => {
+                setSelectedCell(null);
+                setQuickDialogOpen(true);
+              }}
+            >
+              <Banknote className="mr-1 size-4" />
+              Record Payment
+            </Button>
+          </>
         }
       />
 
       <div className="space-y-6 p-4 md:p-6">
         {/* ── Summary Cards ── */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="hidden print:block print:text-center">
+          <h1 className="text-xl font-semibold">Invoice - Receipt</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Accounting matrix - {selectedAcademicYear}-{selectedAcademicYear + 1} -{" "}
+            {FEE_TABS.find((tab) => tab.value === activeTab)?.label ?? "Total Payments"} -{" "}
+            Printed on{" "}
+            {new Date().toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 print:hidden sm:grid-cols-2 lg:grid-cols-4">
           <div className="group relative overflow-hidden rounded bg-[#1caf9a] shadow-sm">
             <div className="relative flex items-center justify-between px-4 py-3">
               <div className="space-y-0.5">
@@ -429,7 +449,7 @@ export function AccountingClient({
         {/* ── Fee Category Tabs ── */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="overflow-x-auto -mx-4 px-4 md:-mx-6 md:px-6">
-            <TabsList className="w-full">
+            <TabsList className="w-full print:hidden">
               {FEE_TABS.map((tab) => (
                 <TabsTrigger
                   key={tab.value}
@@ -443,7 +463,7 @@ export function AccountingClient({
           </div>
         </Tabs>
 
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[180px_1fr_220px_220px]">
+        <div className="grid grid-cols-1 gap-3 print:hidden lg:grid-cols-[180px_1fr_220px_220px]">
           <Select
             value={selectedAcademicYear.toString()}
             onValueChange={(value) => setSelectedAcademicYear(Number(value))}
@@ -510,9 +530,9 @@ export function AccountingClient({
 
         {/* ── Monthly Grid DataTable ── */}
         {monthlyGrid.length > 0 ? (
-          <div className="overflow-hidden rounded-sm border bg-card">
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-sm">
+          <div className="overflow-hidden rounded-sm border bg-card print:rounded-none print:border-gray-300">
+            <div className="overflow-x-auto print:overflow-visible">
+              <table className="w-full border-collapse text-sm print:text-[8px]">
                 <thead>
                   <tr>
                     <th

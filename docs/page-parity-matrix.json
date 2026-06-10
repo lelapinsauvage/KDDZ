@@ -468,7 +468,7 @@
     "legacyPhp": "Front/templates/admin/accounting.php",
     "legacyJs": "Front/templates/admin/js/accounting.js",
     "modernRoute": "/accounting.php, /accounting",
-    "status": "restored - legacy accounting bridge, Oct-Sep school-year matrix, category tabs, active-child rows, child info columns, filters, totals, zero-cell payment prefill, nonzero-cell payment details, print/edit/delete/attachment actions, and legacy-style soft delete restored",
+    "status": "restored - legacy accounting bridge, Oct-Sep school-year matrix, category tabs, active-child rows, child info columns, filters, totals, zero-cell payment prefill, nonzero-cell payment details, page print, print/edit/delete/attachment actions, and legacy-style soft delete restored",
     "legacyTablesMentioned": [
       "auto",
       "payment",
@@ -477,7 +477,7 @@
     "requestFieldsMentioned": [
       "id"
     ],
-    "verification": "`/accounting.php` now redirects to the modern accounting matrix, which loads the full uncapped org-scoped payment set before applying the Oct-Sep school-year/category matrix, totals, filters, payment details, print/edit/delete, attachment actions, and legacy-style soft delete behavior. Browser smoke confirmed the authenticated `/accounting` page renders the summary cards, fee tabs, academic-year selector, branch/class filters, legacy Child Info columns, Oct-Sep month headers, grand total row, real active-child rows, and Record Payment sheet with child, amount, fee type, payment method, coverage period, notes, and attachment controls. The Record Payment sheet now has an immediate header close action plus a bottom form close action. Legacy WebSocket refresh code was commented/environment-specific, and legacy `id` is retained only for child statement export rather than the main `getallpayments` matrix filter. Verified by `src/scripts/verify-legacy-accounting-matrix-contract.ts`."
+    "verification": "`/accounting.php` now redirects to the modern accounting matrix, which loads the full uncapped org-scoped payment set before applying the Oct-Sep school-year/category matrix, totals, filters, payment details, page-level print, print/edit/delete, attachment actions, and legacy-style soft delete behavior. Browser smoke confirmed the authenticated `/accounting` page renders the summary cards, fee tabs, academic-year selector, branch/class filters, legacy Child Info columns, Oct-Sep month headers, grand total row, real active-child rows, enabled page-level Print and Record Payment actions, and Record Payment sheet with child, amount, fee type, payment method, coverage period, notes, and attachment controls. The Record Payment sheet now has an immediate header close action plus a bottom form close action. Legacy WebSocket refresh code was commented/environment-specific, and legacy `id` is retained only for child statement export rather than the main `getallpayments` matrix filter. Verified by `src/scripts/verify-legacy-accounting-matrix-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/alarms.php",
