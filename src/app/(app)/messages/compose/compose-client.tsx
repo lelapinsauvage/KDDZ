@@ -109,6 +109,10 @@ function initials(first: string, last: string): string {
   return ((first[0] ?? "") + (last[0] ?? "")).toUpperCase();
 }
 
+function classGroupKey(child: ChildItem) {
+  return child.classId ?? "unassigned";
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -172,6 +176,39 @@ export function ComposeClient({
     return list;
   }, [children, branchFilter, classFilter, search]);
 
+  const groupedChildren = useMemo(() => {
+    const groups = new Map<
+      string,
+      {
+        key: string;
+        className: string;
+        branchName: string;
+        children: ChildItem[];
+      }
+    >();
+
+    for (const child of filteredChildren) {
+      const key = classGroupKey(child);
+      const current = groups.get(key);
+      if (current) {
+        current.children.push(child);
+      } else {
+        groups.set(key, {
+          key,
+          className: child.className ?? "No class",
+          branchName: child.branchName ?? "No branch",
+          children: [child],
+        });
+      }
+    }
+
+    return Array.from(groups.values()).sort((a, b) => {
+      const classSort = a.className.localeCompare(b.className);
+      if (classSort !== 0) return classSort;
+      return a.branchName.localeCompare(b.branchName);
+    });
+  }, [filteredChildren]);
+
   const filteredTeachers = useMemo(() => {
     let list = teachers;
 
@@ -224,6 +261,40 @@ export function ComposeClient({
 
   function unselectAll() {
     setSelectedIds(new Set());
+  }
+
+  function selectClassChildren(groupChildren: ChildItem[]) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      for (const child of groupChildren) next.add(child.id);
+      return next;
+    });
+  }
+
+  function selectClassActive(groupChildren: ChildItem[]) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      for (const child of groupChildren) {
+        if (child.isActive) next.add(child.id);
+      }
+      return next;
+    });
+  }
+
+  function unselectClassChildren(groupChildren: ChildItem[]) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      for (const child of groupChildren) next.delete(child.id);
+      return next;
+    });
+  }
+
+  function toggleClassChildren(groupChildren: ChildItem[], checked: boolean) {
+    if (checked) {
+      selectClassChildren(groupChildren);
+    } else {
+      unselectClassChildren(groupChildren);
+    }
   }
 
   function selectVisibleTeachers() {
@@ -385,43 +456,119 @@ export function ComposeClient({
               </div>
 
               {/* Children list */}
-              <div className="max-h-[420px] overflow-y-auto rounded-lg border divide-y">
+              <div className="max-h-[520px] overflow-y-auto space-y-3 rounded-lg border bg-background p-2">
                 {filteredChildren.length === 0 ? (
                   <div className="p-6 text-center text-sm text-muted-foreground">
                     No children found matching your filters.
                   </div>
                 ) : (
-                  filteredChildren.map((child) => {
-                    const fullName = `${child.firstName} ${child.lastName}`;
-                    const isChecked = selectedIds.has(child.id);
+                  groupedChildren.map((group) => {
+                    const allSelected = group.children.every((child) =>
+                      selectedIds.has(child.id),
+                    );
                     return (
-                      <label
-                        key={child.id}
-                        className={`flex cursor-pointer items-center gap-3 px-3 py-2.5 transition-colors hover:bg-muted/50 ${
-                          isChecked ? "bg-primary/5" : ""
-                        }`}
+                      <div
+                        key={group.key}
+                        className="overflow-hidden rounded-md border"
+                        data-legacy-bulk-recipient-table={group.key}
                       >
-                        <Checkbox
-                          checked={isChecked}
-                          onCheckedChange={() => toggleChild(child.id)}
-                        />
-                        <div
-                          className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white ${avatarColor(fullName)}`}
-                        >
-                          {initials(child.firstName, child.lastName)}
+                        <div className="border-b bg-muted/50 px-3 py-2">
+                          <div className="text-sm font-medium">
+                            Class: {group.className} | Branch: {group.branchName}
+                          </div>
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-xs"
+                              onClick={() => selectClassChildren(group.children)}
+                            >
+                              <CheckSquare className="mr-1 size-3" />
+                              Select All Children
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-xs"
+                              onClick={() => selectClassActive(group.children)}
+                            >
+                              <UserCheck className="mr-1 size-3" />
+                              Select All Active
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-xs"
+                              onClick={() => unselectClassChildren(group.children)}
+                            >
+                              <XSquare className="mr-1 size-3" />
+                              Unselect All
+                            </Button>
+                          </div>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium">
-                            {fullName}
-                          </p>
-                          <p className="truncate text-xs text-muted-foreground">
-                            {child.className ?? "No class"}
-                            {child.branchName
-                              ? ` \u00B7 ${child.branchName}`
-                              : ""}
-                          </p>
-                        </div>
-                      </label>
+
+                        <table className="w-full text-sm">
+                          <thead className="bg-muted/30 text-xs text-muted-foreground">
+                            <tr className="border-b">
+                              <th className="w-10 px-3 py-2 text-left font-medium">
+                                <Checkbox
+                                  aria-label={`Select all children in ${group.className}`}
+                                  checked={allSelected}
+                                  onCheckedChange={(next) =>
+                                    toggleClassChildren(
+                                      group.children,
+                                      next === true,
+                                    )
+                                  }
+                                />
+                              </th>
+                              <th className="w-14 px-3 py-2 text-left font-medium">
+                                #
+                              </th>
+                              <th className="px-3 py-2 text-left font-medium">
+                                Name
+                              </th>
+                              <th className="w-28 px-3 py-2 text-left font-medium">
+                                Status
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y">
+                            {group.children.map((child, index) => {
+                              const checked = selectedIds.has(child.id);
+                              return (
+                                <tr
+                                  key={child.id}
+                                  className={checked ? "bg-primary/5" : ""}
+                                >
+                                  <td className="px-3 py-2">
+                                    <Checkbox
+                                      aria-label={`Select ${child.firstName} ${child.lastName}`}
+                                      checked={checked}
+                                      onCheckedChange={() => toggleChild(child.id)}
+                                    />
+                                  </td>
+                                  <td className="px-3 py-2 text-muted-foreground">
+                                    {index + 1}
+                                  </td>
+                                  <td className="px-3 py-2 font-medium">
+                                    {child.firstName} {child.lastName}
+                                  </td>
+                                  <td className="px-3 py-2">
+                                    <Badge
+                                      variant={
+                                        child.isActive ? "secondary" : "outline"
+                                      }
+                                    >
+                                      {child.isActive ? "Active" : "Inactive"}
+                                    </Badge>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
                     );
                   })
                 )}
