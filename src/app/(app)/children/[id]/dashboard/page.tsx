@@ -6,6 +6,12 @@ import { getMedicalForms } from "@/lib/actions/medical";
 import { getVaccinations } from "@/lib/actions/medical";
 import { getAccountingSummary } from "@/lib/actions/accounting";
 import { getChildDailyComplianceStats } from "@/lib/actions/dashboard";
+import {
+  dailyReportFoodLabel,
+  legacyDailyRecord,
+  legacyDailyText,
+} from "@/lib/legacy-daily-report-fields";
+import { loadLegacyDailyReportFoodNames } from "@/lib/legacy-daily-report-food-lookup";
 import { DashboardClient } from "./dashboard-client";
 
 interface Props {
@@ -101,16 +107,35 @@ export default async function ChildDashboardPage({ params, searchParams }: Props
     })),
   };
 
+  const recentReportsRaw = allReportsRaw.slice(0, 10);
+  const legacyFoodNames = await loadLegacyDailyReportFoodNames(
+    recentReportsRaw.map((report) => report.legacyData),
+  );
+
   // Map recent reports for table (first 10)
-  const recentReports = allReportsRaw.slice(0, 10).map((r) => ({
-    id: r.id,
-    date: r.reportDate.toISOString().slice(0, 10),
-    breakfast: r.breakfastFood?.name ?? r.breakfastPortion ?? null,
-    lunch: r.lunchFood?.name ?? r.lunchPortion ?? null,
-    dessert: r.dessert ?? r.dessertPortion ?? null,
-    status: r.status,
-    mood: r.mood ?? null,
-  }));
+  const recentReports = recentReportsRaw.map((r) => {
+    const legacy = legacyDailyRecord(r.legacyData);
+
+    return {
+      id: r.id,
+      date: r.reportDate.toISOString().slice(0, 10),
+      breakfast: dailyReportFoodLabel({
+        relatedName: r.breakfastFood?.name,
+        legacyData: legacy,
+        legacyIdKey: "breakfast_id",
+        legacyFoodNames,
+      }) ?? r.breakfastPortion ?? null,
+      lunch: dailyReportFoodLabel({
+        relatedName: r.lunchFood?.name,
+        legacyData: legacy,
+        legacyIdKey: "lunch_id",
+        legacyFoodNames,
+      }) ?? r.lunchPortion ?? null,
+      dessert: r.dessert ?? legacyDailyText(legacy.dessert) ?? r.dessertPortion ?? null,
+      status: r.status,
+      mood: r.mood ?? null,
+    };
+  });
 
   // Map absence reports for table
   const absenceList = absences.slice(0, 10).map((a) => ({

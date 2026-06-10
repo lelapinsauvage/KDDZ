@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
   buildLegacyFoodNameMap,
   dailyReportClothingFlags,
@@ -11,6 +12,23 @@ import {
   legacyDailyFoodId,
   legacyDailyFoodName,
 } from "@/lib/legacy-daily-report-fields";
+
+const dashboardPage = readFileSync(
+  "src/app/(app)/children/[id]/dashboard/page.tsx",
+  "utf8",
+);
+const childReportPage = readFileSync(
+  "src/app/(app)/children/[id]/report/page.tsx",
+  "utf8",
+);
+const dailyDetailPage = readFileSync(
+  "src/app/(app)/daily-reports/[id]/page.tsx",
+  "utf8",
+);
+const dailyPrintPage = readFileSync(
+  "src/app/(app)/daily-reports/[id]/print/page.tsx",
+  "utf8",
+);
 
 const foodNames = buildLegacyFoodNameMap([
   {
@@ -283,5 +301,21 @@ const submittedPatch = dailyReportLegacyWorkflowPatch("SUBMITTED", patch) as Rec
 >;
 assert.equal(submittedPatch.is_rep_draft, "0");
 assert.equal(submittedPatch.report_id, 42);
+
+for (const page of [
+  dashboardPage,
+  childReportPage,
+  dailyDetailPage,
+  dailyPrintPage,
+]) {
+  assert.match(page, /dailyReportFoodLabel/);
+  assert.match(page, /loadLegacyDailyReportFoodNames/);
+  assert.match(page, /legacyIdKey: "breakfast_id"/);
+  assert.match(page, /legacyIdKey: "lunch_id"/);
+}
+
+assert.match(dashboardPage, /recentReportsRaw\.map\(\(report\) => report\.legacyData\)/);
+assert.match(dashboardPage, /legacyDailyRecord\(r\.legacyData\)/);
+assert.match(dashboardPage, /legacyDailyText\(legacy\.dessert\)/);
 
 console.log("legacy daily report field contract assertions passed");
