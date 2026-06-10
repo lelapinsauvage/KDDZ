@@ -17088,10 +17088,10 @@
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-missingReports.php",
     "legacyJs": "",
     "modernRoute": "/settings/notifications",
-    "status": "partial - legacy missing-report template fallback restored; delivery audit remains",
+    "status": "restored - legacy missing-report template fallback and provider delivery audit restored",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "/settings/notifications Missing Reports now falls back to migrated `email-missingReport-subj` and `email-missingReport-msg` rows and exposes legacy `{{child_name}}` and `{{report_name}}` shortcodes. Message-portal Reports Reminders parent receipts are verified through `notifications_master.php`; remaining work is scheduled generator approval and external provider delivery."
+    "verification": "/settings/notifications Missing Reports falls back to migrated `email-missingReport-subj` and `email-missingReport-msg` rows and exposes the legacy `{{child_name}}` and `{{report_name}}` shortcodes with the legacy character-count/SMS context preserved in the template contract. `generateMedicalAlarms()` now renders the saved MISSING_REPORTS subject/body for generated missing-report staff recipients, sends the rendered message through the provider-neutral `deliverEmail` bridge with MISSING_REPORTS metadata and `custom_notifications_medical` provenance, and stores `emailDeliveryAuditData` on the generated alarm legacy audit payload so skipped/unconfigured, failed, and sent delivery outcomes remain inspectable without hard-coding production credentials. Message-portal Reports Reminders parent receipts continue to be verified through `notifications_master.php`. Verified by `src/scripts/verify-legacy-missing-reports-email-template-delivery-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-vaccinations.php",

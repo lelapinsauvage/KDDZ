@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { deliverEmail, emailDeliveryAuditData } from "@/lib/email-delivery";
 import { encryptLegacyId } from "@/lib/legacy-id";
 import { isLegacyNotificationGateEnabled } from "@/lib/legacy-notification-gates";
 
@@ -13,6 +14,8 @@ interface MedicalReportConfig {
 
 interface LegacyMedicalRecipient {
   userId: string;
+  email: string | null;
+  name: string | null;
   legacyRecipientId: number;
   legacySourceDatabase: string;
   legacyClasses: string;
@@ -179,6 +182,45 @@ function existingMedicalKey(
   return `${alarm.referenceId}:${legacyType}:${status}`;
 }
 
+async function storeMedicalEmailAudit(params: {
+  alarmId: string;
+  subject: string;
+  body: string;
+  recipients: LegacyMedicalRecipient[];
+  legacyNotificationId: number;
+  sourceDatabase: string | null;
+}) {
+  const emailDelivery = await deliverEmail({
+    recipients: params.recipients.map((recipient) => ({
+      email: recipient.email ?? "",
+      name: recipient.name,
+    })),
+    subject: params.subject,
+    body: params.body,
+    category: "MISSING_REPORTS",
+    metadata: {
+      source: "generateMedicalAlarms",
+      legacyNotificationId: params.legacyNotificationId,
+      sourceDatabase: params.sourceDatabase,
+      legacyDeliveryTable: MEDICAL_RECEIPT_SOURCE,
+    },
+  });
+
+  const alarm = await db.alarm.findUnique({
+    where: { id: params.alarmId },
+    select: { legacyData: true },
+  });
+  await db.alarm.update({
+    where: { id: params.alarmId },
+    data: {
+      legacyData: {
+        ...(asRecord(alarm?.legacyData) ?? {}),
+        emailDelivery: emailDeliveryAuditData(emailDelivery),
+      },
+    },
+  });
+}
+
 export async function generateMedicalAlarmsForOrganization(params: {
   organizationId: string;
   branchId?: string | null;
@@ -295,7 +337,7 @@ export async function generateMedicalAlarmsForOrganization(params: {
           { branchId: null },
         ],
       },
-      select: { id: true },
+      select: { id: true, email: true, name: true },
     }),
     db.notificationTemplate.findUnique({
       where: {
@@ -333,10 +375,14 @@ export async function generateMedicalAlarmsForOrganization(params: {
     : [];
 
   const legacyRecipients: LegacyMedicalRecipient[] = [];
+  const usersById = new Map(users.map((user) => [user.id, user]));
   for (const record of legacyUsers) {
     if (!record.userId) continue;
+    const user = usersById.get(record.userId);
     legacyRecipients.push({
       userId: record.userId,
+      email: user?.email ?? null,
+      name: user?.name ?? null,
       legacyRecipientId: record.legacyUserId ?? record.legacyId,
       legacySourceDatabase: record.sourceDatabase,
       legacyClasses: readString(asRecord(record.legacyData), ["uclasses"]) ?? "0",
@@ -497,6 +543,16 @@ export async function generateMedicalAlarmsForOrganization(params: {
       })),
     });
     summary.notificationsCreated += notificationResult.count;
+
+    await storeMedicalEmailAudit({
+      alarmId,
+      subject: renderNotificationText(subjectTemplate, variables),
+      body: message,
+      recipients: newReceiptRecipients,
+      legacyNotificationId,
+      sourceDatabase:
+        child.sourceDatabase ?? child.class?.sourceDatabase ?? child.branch.sourceDatabase,
+    });
   }
 
   return summary;
