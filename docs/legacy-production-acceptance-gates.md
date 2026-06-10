@@ -4,6 +4,8 @@ This document tracks the final external gates that remain after local legacy par
 
 Do not put secrets in this file. Record provider names, environment variable names, command output summaries, response ids, counts, and dated acceptance notes only.
 
+Use `docs/production-acceptance-evidence-template.md` as the non-secret release record shape when collecting final evidence for these gates.
+
 ## Gate Register
 
 | Gate | Scope | Evidence Required To Close |

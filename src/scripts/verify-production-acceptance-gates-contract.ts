@@ -18,6 +18,7 @@ const files = {
   cron: "docs/cron-notification-matrix.md",
   native: "docs/native-acceptance-ledger.md",
   migrationReadme: "src/scripts/migration/README.md",
+  evidenceTemplate: "docs/production-acceptance-evidence-template.md",
 };
 
 const contents = Object.fromEntries(
@@ -41,6 +42,7 @@ const expectedGates = [
 
 for (const gate of expectedGates) {
   assert.match(contents.gates, new RegExp(`\\| ${gate} \\|`), `${gate} is missing from production gates`);
+  assert.match(contents.evidenceTemplate, new RegExp(`## ${gate}\\b`), `${gate} is missing from evidence template`);
 }
 
 const requiredReferences = [
@@ -48,6 +50,7 @@ const requiredReferences = [
   "docs/top-20-restoration-gaps.md",
   "docs/cron-notification-matrix.md",
   "docs/native-acceptance-ledger.md",
+  "docs/production-acceptance-evidence-template.md",
   "src/scripts/migration/README.md",
   "src/scripts/audit-production-readiness.ts",
   "src/scripts/verify-parent-credentialed-native-e2e.ts",
@@ -82,7 +85,9 @@ for (const envName of [
 }
 
 assert.doesNotMatch(contents.gates, /https?:\/\/[^\s)]+/i, "production gates must not include webhook URLs");
+assert.doesNotMatch(contents.evidenceTemplate, /https?:\/\/[^\s)]+/i, "evidence template must not include webhook URLs");
 assert.doesNotMatch(contents.gates, /(api[_-]?key|secret|token)\s*[:=]\s*["']?[A-Za-z0-9_-]{12,}/i, "production gates must not include secret values");
+assert.doesNotMatch(contents.evidenceTemplate, /(api[_-]?key|secret|token)\s*[:=]\s*["']?[A-Za-z0-9_-]{12,}/i, "evidence template must not include secret values");
 
 const matrix = JSON.parse(contents.matrix) as ParityRow[];
 const partialRows: ParityRow[] = [];
