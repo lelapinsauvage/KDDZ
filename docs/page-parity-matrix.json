@@ -45,7 +45,7 @@
     "legacyPhp": "Front/templates/admin/Branch_Dashboard.php",
     "legacyJs": "Front/templates/admin/js/Branch_Dashboard.js",
     "modernRoute": "/Branch_Dashboard.php, /branches/[id]/dashboard",
-    "status": "partial - legacy branch bridge, KPI filters, payments modal, and drilldown modals restored; visual audit remains",
+    "status": "restored - legacy branch dashboard bridge, KPI filters, payments modal, drilldown modals, and drilldown export/print restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest"
@@ -56,7 +56,7 @@
       "to",
       "year"
     ],
-    "verification": "Restored branch-scoped dashboard KPI groups for Total Classes, Total Active Children, staff counts, attendance, absence, missing daily/absence reports, payments, accidents, calls, medical reports, assessment totals/missing/drafts, plus branch-scoped children-per-class, gender, and attendance charts. `/Branch_Dashboard.php?id=` now resolves raw numeric, UUID, and encrypted legacy branch ids into the modern branch dashboard. The branch dashboard now restores legacy date range and scholastic-year switching through `/branches/[id]/dashboard?from=&to=&year=`, applies that range/year to KPI queries, preserves filter context in navigation links, and restores branch-scoped lazy modal drilldowns for legacy `getModal(type)` cards plus the `showmod()` Total Payments table with invoice print and receipt attachment actions. Remaining work is exact DataTables export/visual polish and final logged-in browser audit."
+    "verification": "Restored branch-scoped dashboard KPI groups for Total Classes, Total Active Children, staff counts, attendance, absence, missing daily/absence reports, payments, accidents, calls, medical reports, assessment totals/missing/drafts, plus branch-scoped children-per-class, gender, and attendance charts. `/Branch_Dashboard.php?id=` now resolves raw numeric, UUID, and encrypted legacy branch ids into the modern branch dashboard. The branch dashboard restores legacy date range and scholastic-year switching through `/branches/[id]/dashboard?from=&to=&year=`, applies that range/year to KPI queries, preserves filter context in navigation links, and restores branch-scoped lazy modal drilldowns for legacy `getModal(type)` cards plus the `showmod()` Total Payments table with invoice print and receipt attachment actions. Legacy `Branch_Dashboard.js` WebSocket refresh was commented out, so no active `new_change` socket is required for page parity. The shared dashboard drilldown modal now restores TableTools-style Copy/PDF/Excel/CSV export and Print controls over loaded rows, preserves 10/20/50/100/150/All page sizes, excludes the interactive Action column from exports, and keeps attachment labels exportable. Browser smoke confirmed the authenticated branch dashboard renders KPI cards, date/year controls, branch-scoped charts, operations cards, and the Total Payments drilldown modal with Export and Print controls and no fresh browser errors. Verified by `src/scripts/verify-legacy-branch-dashboard-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/Child_Details.php",

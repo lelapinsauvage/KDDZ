@@ -28,6 +28,7 @@ import type {
   DashboardDrilldownRow,
 } from "@/lib/actions/dashboard";
 import { getDashboardDrilldown } from "@/lib/actions/dashboard";
+import type { ExportColumn } from "@/lib/export";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -88,6 +89,31 @@ const columnLabels: Record<DashboardDrilldownColumn, string> = {
   attachment: "Attachment",
   action: "Action",
 };
+
+function exportKeyForColumn(column: DashboardDrilldownColumn) {
+  return column === "attachment" ? "attachmentLabel" : column;
+}
+
+function buildExportColumns(
+  drilldownColumns: DashboardDrilldownColumn[],
+): ExportColumn[] {
+  return drilldownColumns
+    .filter((column) => column !== "action")
+    .map((column) => ({
+      header: columnLabels[column],
+      key: exportKeyForColumn(column),
+    }));
+}
+
+function dashboardExportFilename(title: string) {
+  return (
+    title
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "dashboard-drilldown"
+  );
+}
 
 function actionIcon(label: DashboardDrilldownRow["actionLabel"]) {
   if (label === "Create") return FilePlus;
@@ -205,6 +231,14 @@ export function DashboardDrilldownCard({
     () => buildColumns(currentDrilldown.columns),
     [currentDrilldown.columns],
   );
+  const exportColumns = useMemo(
+    () => buildExportColumns(currentDrilldown.columns),
+    [currentDrilldown.columns],
+  );
+  const exportFilename = useMemo(
+    () => dashboardExportFilename(currentDrilldown.title),
+    [currentDrilldown.title],
+  );
 
   const loadDrilldown = useCallback(async () => {
     if (loaded || loading) return;
@@ -279,6 +313,12 @@ export function DashboardDrilldownCard({
           searchPlaceholder="Search rows..."
           isLoading={loading}
           pageSizeOptions={[10, 20, 50, 100, 150, "all"]}
+          exportOptions={{
+            filename: exportFilename,
+            sheetName: currentDrilldown.title,
+            columns: exportColumns,
+          }}
+          printOptions={{ label: "Print" }}
         />
       </DialogContent>
     </Dialog>
