@@ -31,6 +31,7 @@ export default async function SignupPage({ searchParams }: PageProps) {
           useEmailAsUsername: false,
           requireActivation: false,
           captchaMode: "disableCaptcha",
+          recaptchaPublicKey: "",
           defaultLevelLabels: [],
           profileFields: [],
         }

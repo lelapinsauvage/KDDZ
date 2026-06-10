@@ -32,6 +32,7 @@ export type LegacySignupPageData = {
   useEmailAsUsername: boolean;
   requireActivation: boolean;
   captchaMode: string;
+  recaptchaPublicKey: string;
   defaultLevelLabels: string[];
   profileFields: LegacySignupProfileField[];
 };
@@ -48,6 +49,7 @@ export type LegacySignupInput = {
   email: string;
   password: string;
   passwordConfirm: string;
+  captchaToken?: string;
   profileValues?: LegacySignupProfileValueInput[];
 };
 
@@ -195,6 +197,71 @@ function setting(
   fallback = "",
 ) {
   return map.get(key) ?? fallback;
+}
+
+async function verifyLegacySignupCaptcha(
+  settings: Map<string, string | null>,
+  token: string | null | undefined,
+) {
+  const mode = setting(settings, "integration-captcha", "disableCaptcha");
+  if (mode === "disableCaptcha" || !mode) return { ok: true };
+
+  if (mode === "playThru") {
+    return {
+      ok: false,
+      error: "Please enter the correct captcha!",
+      legacyData: { mode, verified: false, providerArchived: true },
+    };
+  }
+
+  if (mode !== "reCAPTCHA") return { ok: true };
+
+  const secret = setting(settings, "reCAPTCHA-private-key").trim();
+  const response = token?.trim();
+  if (!secret || !response) {
+    return {
+      ok: false,
+      error: "Please enter the correct captcha!",
+      legacyData: { mode, verified: false, reason: "missing-token-or-secret" },
+    };
+  }
+
+  try {
+    const body = new URLSearchParams({
+      secret,
+      response,
+    });
+    const verifyResponse = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body,
+    });
+    const payload = (await verifyResponse.json()) as {
+      success?: boolean;
+      challenge_ts?: string;
+      hostname?: string;
+      "error-codes"?: string[];
+    };
+
+    return {
+      ok: payload.success === true,
+      error: payload.success === true ? undefined : "Please enter the correct captcha!",
+      legacyData: {
+        mode,
+        verified: payload.success === true,
+        challengeTs: payload.challenge_ts ?? null,
+        hostname: payload.hostname ?? null,
+        errorCodes: payload["error-codes"] ?? [],
+      },
+    };
+  } catch (error) {
+    console.error("Legacy signup captcha verification failed:", error);
+    return {
+      ok: false,
+      error: "Please enter the correct captcha!",
+      legacyData: { mode, verified: false, reason: "verification-request-failed" },
+    };
+  }
 }
 
 function roleForLegacyLevels(
@@ -364,6 +431,7 @@ export async function getLegacySignupPageData(
           useEmailAsUsername: false,
           requireActivation: false,
           captchaMode: "disableCaptcha",
+          recaptchaPublicKey: "",
           defaultLevelLabels: [],
           profileFields: [],
         },
@@ -385,6 +453,7 @@ export async function getLegacySignupPageData(
           setting(context.settings, "user-activation-enable"),
         ),
         captchaMode: setting(context.settings, "integration-captcha", "disableCaptcha"),
+        recaptchaPublicKey: setting(context.settings, "reCAPTCHA-public-key"),
         defaultLevelLabels: context.defaultLevelLabels,
         profileFields: context.profileFields,
       },
@@ -521,6 +590,17 @@ export async function createLegacySignup(
       legacyBool(setting(context.settings, "disable-registrations-enable"))
     ) {
       return { success: false, error: "Registrations disabled." };
+    }
+
+    const captcha = await verifyLegacySignupCaptcha(
+      context.settings,
+      input.captchaToken,
+    );
+    if (!captcha.ok) {
+      return {
+        success: false,
+        error: captcha.error ?? "Please enter the correct captcha!",
+      };
     }
 
     const useEmailAsUsername = legacyBool(
@@ -691,6 +771,7 @@ export async function createLegacySignup(
       db_id: organizationId,
       timestamp: new Date().toISOString(),
       inserted_from: "modern_legacy_signup",
+      captcha: captcha.legacyData ?? null,
       welcomeEmail: shouldSendWelcome
         ? {
             subject: welcomeSubject,

@@ -16868,7 +16868,7 @@
       "update-form",
       "user-profiles-form"
     ],
-    "verification": "The legacy `user-profiles-form` profile-field add/update/delete semantics are restored at `/settings/legacy-users/profile-fields` over migrated `login_profile_fields` / `login_profile_fields_man`, including Section, Input type, Input label, Sign Up (`hide`/`require`/`optional`), Public, Delete, source database grouping, soft-delete provenance, and preserved orphan profile values. `/settings/legacy-auth` now restores the `general-options-form`, `denied-form`, `integration-form`, and `update-form` save semantics over migrated `login_settings` / `login_settings_man`: Admin email validation, Site address slash normalization, numeric Default session validation, serialized default/notify levels, site-control toggles, new-user/password/redirect checkboxes, restricted signup domains, denied messages, social-login provider keys/toggles, captcha provider keys/radio choice, and update-check toggle. Legacy `disable-logins-enable` now blocks credential auth with the old disabled-logins message, sign-in redirect settings drive successful `/login` redirects when no protected-route callback is present, and sign-out redirect settings already drive `/logout.php`. Legacy notification settings remain surfaced in `/settings/notifications`. /settings/notifications now loads the full migrated LegacySetting set for notification, accounting reminder, and auth-email rows instead of sampling the first 1000. Remaining work is deciding which remaining imported login settings actively drive modern Auth.js/OAuth/captcha/runtime update-check behavior."
+    "verification": "The legacy `user-profiles-form` profile-field add/update/delete semantics are restored at `/settings/legacy-users/profile-fields` over migrated `login_profile_fields` / `login_profile_fields_man`, including Section, Input type, Input label, Sign Up (`hide`/`require`/`optional`), Public, Delete, source database grouping, soft-delete provenance, and preserved orphan profile values. `/settings/legacy-auth` now restores the `general-options-form`, `denied-form`, `integration-form`, and `update-form` save semantics over migrated `login_settings` / `login_settings_man`: Admin email validation, Site address slash normalization, numeric Default session validation, serialized default/notify levels, site-control toggles, new-user/password/redirect checkboxes, restricted signup domains, denied messages, social-login provider keys/toggles, captcha provider keys/radio choice, and update-check toggle. Legacy `disable-logins-enable` blocks credential auth with the old disabled-logins message, sign-in redirect settings drive successful `/login` redirects when no protected-route callback is present, sign-out redirect settings drive `/logout.php`, and signup reCAPTCHA runtime enforcement now consumes the imported Integration captcha settings before creating public accounts. Legacy notification settings remain surfaced in `/settings/notifications`, which loads the full migrated LegacySetting set for notification, accounting reminder, and auth-email rows instead of sampling the first 1000. Remaining work is active social/OAuth provider runtime and any retired PlayThru acceptance decision. Verified by `src/scripts/verify-legacy-signup-recaptcha-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/footer.php",
@@ -17106,10 +17106,10 @@
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-welcome.php",
     "legacyJs": "",
     "modernRoute": "/settings/notifications",
-    "status": "partial - legacy welcome and new-user notification templates plus signup delivery restored; captcha/OAuth remain",
+    "status": "partial - legacy welcome and new-user notification templates plus signup delivery and reCAPTCHA runtime restored; OAuth remains",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "/settings/notifications now exposes Welcome and New User Notice template cards backed by migrated `email-welcome-subj`, `email-welcome-msg`, `email-new-user-subj`, and `email-new-user-msg` rows with legacy account shortcodes. Modern signup now renders those templates, sends welcome/activation and admin new-user email attempts through the provider-neutral bridge, keeps in-app admin notifications, and stores delivery summaries on created legacy auth records. Remaining work is captcha/social signup parity and production credential rollout."
+    "verification": "/settings/notifications now exposes Welcome and New User Notice template cards backed by migrated `email-welcome-subj`, `email-welcome-msg`, `email-new-user-subj`, and `email-new-user-msg` rows with legacy account shortcodes. Modern signup renders those templates, enforces migrated reCAPTCHA before account creation when `integration-captcha` is `reCAPTCHA`, sends welcome/activation and admin new-user email attempts through the provider-neutral bridge, keeps in-app admin notifications, and stores delivery/captcha summaries on created legacy auth records. Remaining work is social signup/OAuth parity and production credential rollout. Verified by `src/scripts/verify-legacy-signup-recaptcha-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/forbidden.php",
@@ -17162,7 +17162,7 @@
     "legacyPhp": "Front/templates/admin/users/admin/page/integration.php",
     "legacyJs": "",
     "modernRoute": "/users/admin/page/integration.php, /settings/legacy-auth?tab=integration",
-    "status": "partial - legacy integration settings editable; runtime provider enforcement remains",
+    "status": "partial - legacy integration settings editable and signup reCAPTCHA runtime enforcement restored; OAuth provider runtime remains",
     "legacyTablesMentioned": [
       "login_settings",
       "login_settings_man"
@@ -17175,7 +17175,7 @@
       "integration-yahoo-enable",
       "integration-form"
     ],
-    "verification": "`/settings/legacy-auth?tab=integration` restores the legacy Social login and Captcha signup settings over migrated staff and manager login settings: Twitter, Facebook, Google, Yahoo enable toggles, provider credential fields, captcha provider selection (`disableCaptcha`/`reCAPTCHA`/`playThru`), and reCAPTCHA/PlayThru key fields. Saves preserve legacy option rows and `/users/admin/page/integration.php` redirects to the restored tab. Remaining work is wiring these imported provider/captcha settings into active OAuth/captcha runtime behavior if those integrations are re-enabled."
+    "verification": "`/settings/legacy-auth?tab=integration` restores the legacy Social login and Captcha signup settings over migrated staff and manager login settings: Twitter, Facebook, Google, Yahoo enable toggles, provider credential fields, captcha provider selection (`disableCaptcha`/`reCAPTCHA`/`playThru`), and reCAPTCHA/PlayThru key fields. Saves preserve legacy option rows and `/users/admin/page/integration.php` redirects to the restored tab. The public signup runtime now consumes the imported `integration-captcha`, `reCAPTCHA-public-key`, and `reCAPTCHA-private-key` settings: enabled reCAPTCHA renders on `/signup`, submits the response token, and verifies it with Google `siteverify` before creating the legacy login row. Remaining work is active social/OAuth provider runtime and retired PlayThru provider acceptance if product still requires it. Verified by `src/scripts/verify-legacy-signup-recaptcha-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/level-control.php",
@@ -18142,7 +18142,7 @@
     "legacyPhp": "Front/templates/admin/users/classes/signup.class.php",
     "legacyJs": "",
     "modernRoute": "/signup, /sign_up.php, /users/sign_up.php",
-    "status": "partial - legacy public signup and provider email delivery restored; captcha/OAuth remain",
+    "status": "partial - legacy public signup, reCAPTCHA runtime enforcement, and provider email delivery restored; social OAuth signup remains",
     "legacyTablesMentioned": [
       "login_confirm",
       "login_profile_fields",
@@ -18158,7 +18158,7 @@
       "username",
       "p-*"
     ],
-    "verification": "`/signup` restores the legacy public account creation flow over migrated PHP-login metadata: disabled-registration guard, email-as-username mode, blocked email-domain validation from `restrict-signups-by-email`, uncapped distinct migrated login source discovery, default-level assignment from `default-level`, required/optional signup profile fields persisted to `login_profiles`, modern bcrypt user creation, activation-token creation in `login_confirm` when `user-activation-enable` is set, welcome/new-user template rendering, in-app admin notification fanout for configured legacy notify levels, provider-backed welcome/activation/admin-notice emails, and delivery audit summaries. `/sign_up.php` and `/users/sign_up.php` bridge into the modern route. Remaining work is active reCAPTCHA/PlayThru enforcement and social `new_social` prefill/linking."
+    "verification": "`/signup` restores the legacy public account creation flow over migrated PHP-login metadata: disabled-registration guard, email-as-username mode, blocked email-domain validation from `restrict-signups-by-email`, uncapped distinct migrated login source discovery, default-level assignment from `default-level`, required/optional signup profile fields persisted to `login_profiles`, modern bcrypt user creation, activation-token creation in `login_confirm` when `user-activation-enable` is set, welcome/new-user template rendering, in-app admin notification fanout for configured legacy notify levels, provider-backed welcome/activation/admin-notice emails, and delivery audit summaries. The signup page now also restores active legacy reCAPTCHA behavior: `getLegacySignupPageData()` exposes the migrated `integration-captcha` and `reCAPTCHA-public-key` settings, the client renders Google reCAPTCHA when enabled and submits the response token, and `verifyLegacySignupCaptcha()` verifies that token against Google `siteverify` using the migrated `reCAPTCHA-private-key` before account creation while preserving the legacy `Please enter the correct captcha!` failure copy and storing captcha audit data on the created legacy login record. `/sign_up.php` and `/users/sign_up.php` bridge into the modern route. Remaining work is social `new_social` prefill/linking and retired PlayThru provider acceptance if product still requires it. Verified by `src/scripts/verify-legacy-signup-recaptcha-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/classes/translate.class.php",

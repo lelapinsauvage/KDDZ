@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Script from "next/script";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { signIn } from "next-auth/react";
@@ -74,6 +75,7 @@ export function LegacySignupClient({ data, error }: LegacySignupClientProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
+  const [captchaNonce, setCaptchaNonce] = useState(0);
   const [profileValues, setProfileValues] = useState(() =>
     initialProfileState(data.profileFields),
   );
@@ -110,6 +112,7 @@ export function LegacySignupClient({ data, error }: LegacySignupClientProps) {
     event.preventDefault();
     const sourceDatabase = data.sourceDatabase;
     if (!sourceDatabase || data.registrationsDisabled) return;
+    const captchaToken = readRecaptchaToken();
 
     setStatus({ type: "idle" });
     startTransition(async () => {
@@ -120,6 +123,7 @@ export function LegacySignupClient({ data, error }: LegacySignupClientProps) {
         email,
         password,
         passwordConfirm,
+        captchaToken,
         profileValues: data.profileFields.map((field) => ({
           fieldLegacyId: field.legacyId,
           value: profileValues[fieldStateKey(field)] ?? null,
@@ -131,6 +135,8 @@ export function LegacySignupClient({ data, error }: LegacySignupClientProps) {
           type: "error",
           message: result.error ?? "Failed to create your account.",
         });
+        resetRecaptcha();
+        setCaptchaNonce((value) => value + 1);
         return;
       }
 
@@ -260,6 +266,12 @@ export function LegacySignupClient({ data, error }: LegacySignupClientProps) {
               </div>
             ))}
 
+            <LegacyCaptcha
+              key={captchaNonce}
+              data={data}
+              disabled={!canSubmit || pending}
+            />
+
             <Button type="submit" className="h-11 w-full" disabled={!canSubmit || pending}>
               <UserPlus className="size-4" />
               {pending ? "Creating..." : "Create my account"}
@@ -292,6 +304,49 @@ export function LegacySignupClient({ data, error }: LegacySignupClientProps) {
         </aside>
       </div>
     </AuthShell>
+  );
+}
+
+function readRecaptchaToken() {
+  const grecaptcha = (
+    window as Window & {
+      grecaptcha?: { getResponse?: () => string };
+    }
+  ).grecaptcha;
+  return grecaptcha?.getResponse?.() ?? "";
+}
+
+function resetRecaptcha() {
+  const grecaptcha = (
+    window as Window & {
+      grecaptcha?: { reset?: () => void };
+    }
+  ).grecaptcha;
+  grecaptcha?.reset?.();
+}
+
+function LegacyCaptcha({
+  data,
+  disabled,
+}: {
+  data: LegacySignupPageData;
+  disabled: boolean;
+}) {
+  if (data.captchaMode === "disableCaptcha") return null;
+
+  if (data.captchaMode === "reCAPTCHA" && data.recaptchaPublicKey) {
+    return (
+      <div className={disabled ? "pointer-events-none opacity-60" : undefined}>
+        <Script src="https://www.google.com/recaptcha/api.js" strategy="afterInteractive" />
+        <div className="g-recaptcha" data-sitekey={data.recaptchaPublicKey} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-sm border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+      Please enter the correct captcha!
+    </div>
   );
 }
 
