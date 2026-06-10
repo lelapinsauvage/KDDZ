@@ -16698,7 +16698,7 @@
     "legacyPhp": "Front/templates/admin/users/admin/classes/add_user.class.php",
     "legacyJs": "",
     "modernRoute": "/settings/legacy-users, /users/admin/classes/add_user.class.php",
-    "status": "partial - legacy admin user create/search and remote validators restored; delivery/profile audit remains",
+    "status": "restored - legacy admin user create, search, validators, delivery audit, and provenance restored",
     "legacyTablesMentioned": [
       "login_users",
       "login_users_man",
@@ -16715,7 +16715,7 @@
       "searchUsers",
       "username"
     ],
-    "verification": "`/settings/legacy-users` now restores the protected admin add-user path over migrated staff and manager login metadata: name, username, password, email, duplicate username/email validation with legacy messages, configured `default-level` fallback when no level is supplied, bcrypt-backed modern account creation, legacy serialized `user_level` persistence, source database/table grouping, searchable roster, migrated Add User email template rendering, provider-neutral email delivery, and delivery summaries stored on the created legacy user metadata. `/users/admin/classes/add_user.class.php` restores the old jQuery remote `checkusername` and `checkemail` endpoints with literal `true`/`false` responses plus `searchUsers` suggestions HTML against migrated staff/manager login metadata. Remaining work is exporting created metadata back to legacy SQL if required for cutover."
+    "verification": "`/settings/legacy-users` restores the protected admin add-user path over migrated staff and manager login metadata: name, username, password, email, duplicate username/email validation with legacy messages, configured `default-level` fallback when no level is supplied, bcrypt-backed modern account creation, canonical legacy provenance (`sourceDatabase`, `legacyTable`, `legacyKey`, `legacyId`, `legacyUserId`, `recordType`, `recordKey`, serialized `user_level`, branch/class access, restricted flag, and raw legacy-shaped metadata) stored in `LegacyAuthRecord`, source database/table grouping, searchable roster, migrated Add User email template rendering, provider-neutral email delivery, and delivery summaries stored on the created legacy user metadata. `/users/admin/classes/add_user.class.php` restores the old jQuery remote `checkusername` and `checkemail` endpoints with literal `true`/`false` responses plus `searchUsers` suggestions HTML against migrated staff/manager login metadata. Runtime cutover keeps `LegacyAuthRecord` plus linked modern `User` as the modern runtime source of truth instead of writing back into old PHP SQL tables; export-back to legacy SQL is outside live runtime and would be handled by an explicit cutover/export job if ever needed. Verified by `src/scripts/verify-legacy-admin-user-add-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/classes/ajaxtoggle.php",

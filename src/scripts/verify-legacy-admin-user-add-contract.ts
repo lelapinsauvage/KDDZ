@@ -83,23 +83,35 @@ assert.match(contents.actions, /record\.username === username/);
 assert.match(contents.actions, /That email address has already been taken\./);
 assert.match(contents.actions, /serializePhpStringArray\(validated\.levelIds\)/);
 assert.match(contents.actions, /await hash\(input\.password \?\? "", 12\)/);
+assert.match(contents.actions, /const legacyId = \(maxUser\?\.legacyId \?\? 0\) \+ 1/);
+assert.match(contents.actions, /legacyKey: `\$\{validated\.sourceDatabase\}:\$\{config\.legacyTable\}:\$\{legacyId\}`/);
+assert.match(contents.actions, /legacyTable: config\.legacyTable/);
+assert.match(contents.actions, /recordType: input\.recordType/);
+assert.match(contents.actions, /legacyUserId: legacyId/);
+assert.match(contents.actions, /recordValue: userLevel/);
+assert.match(contents.actions, /userLegacyData\(\{/);
 assert.match(contents.actions, /legacyEmailTemplate\([\s\S]*"email-add-user-subj"[\s\S]*"email-add-user-msg"/);
 assert.match(contents.actions, /deliverEmail\(\{[\s\S]*category: "ADD_USER"/);
 assert.match(contents.actions, /source: "legacy_admin_add_user"/);
 assert.match(contents.actions, /addUserEmail/);
+assert.match(contents.actions, /emailDeliveryAuditData\(emailDelivery\)/);
 assert.match(contents.actions, /revalidatePath\("\/settings\/legacy-users"\)/);
+assert.doesNotMatch(contents.actions, /INSERT INTO `login_users`/);
+assert.doesNotMatch(contents.actions, /INSERT INTO `login_users_man`/);
 
 assert.match(
   contents.matrix,
-  /add_user\.class\.php[\s\S]*partial - legacy admin user create\/search and remote validators restored; delivery\/profile audit remains/,
+  /add_user\.class\.php[\s\S]*restored - legacy admin user create, search, validators, delivery audit, and provenance restored/,
 );
 assert.match(
   contents.matrix,
   /add_user\.class\.php[\s\S]*literal `true`\/`false` responses plus `searchUsers` suggestions HTML/,
 );
+assert.match(contents.matrix, /add_user\.class\.php[\s\S]*modern runtime source of truth/);
+assert.doesNotMatch(contents.matrix, /add_user\.class\.php[\s\S]*Remaining work is exporting/);
 assert.match(
   contents.matrixMd,
-  /add_user\.class\.php \|  \| \/settings\/legacy-users, \/users\/admin\/classes\/add_user\.class\.php \| partial - legacy admin user create\/search and remote validators restored; delivery\/profile audit remains/,
+  /add_user\.class\.php \|  \| \/settings\/legacy-users, \/users\/admin\/classes\/add_user\.class\.php \| restored - legacy admin user create, search, validators, delivery audit, and provenance restored/,
 );
 assert.match(
   contents.matrixMd,
@@ -109,5 +121,6 @@ assert.match(
   contents.matrixMd,
   /add_user\.class\.php[\s\S]*literal `true`\/`false` responses plus `searchUsers` suggestions HTML/,
 );
+assert.match(contents.matrixMd, /add_user\.class\.php[\s\S]*modern runtime source of truth/);
 
 console.log("legacy admin add-user contract assertions passed");
