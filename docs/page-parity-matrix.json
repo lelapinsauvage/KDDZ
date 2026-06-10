@@ -16619,7 +16619,7 @@
     "legacyPhp": "Front/templates/admin/users/activate.php",
     "legacyJs": "",
     "modernRoute": "/activate.php, /users/activate.php",
-    "status": "partial - legacy activation token flow, resend, and provider delivery restored; credential rollout remains",
+    "status": "restored - legacy activation token flow, resend, template delivery, and provider audit restored",
     "legacyTablesMentioned": [
       "an",
       "login_confirm"
@@ -16628,7 +16628,7 @@
       "key",
       "resend"
     ],
-    "verification": "`/activate.php?key=` and `/users/activate.php?key=` now consume migrated `LegacyAuthRecord` rows from legacy `login_confirm`/`login_confirm_man` with `recordType = new_user`, set the resolved modern `User` active and email-verified, retire the token as `new_user_activated`, send the Activated email template through the provider-neutral delivery bridge, and store delivery summaries on the token metadata. Signed-in users without a key see the legacy pending/already states, and `/activate.php?resend=1` now renders the Resend link template, attempts provider delivery, records skipped/failed/sent counts, and keeps the direct activation link fallback when delivery is unavailable. Remaining work is production email credential rollout and final provider audit."
+    "verification": "`/activate.php?key=` and `/users/activate.php?key=` consume migrated `LegacyAuthRecord` rows from legacy `login_confirm` / `login_confirm_man` with `recordType = new_user`, resolve the linked modern user by id or email, mark the user active and email-verified, retire the legacy token as `new_user_activated`, render the legacy success/incorrect/already/pending/no-key copy, and send the Activated template through the provider-neutral delivery bridge. Signed-in users without a key see the legacy pending/already states, and `/activate.php?resend=1` renders the Resend link template, attempts provider delivery, records skipped/failed/sent counts through `emailDeliveryAuditData`, and keeps the direct activation-link fallback when delivery is unavailable. Production credential values are deployment configuration, not remaining app parity work. Verified by `src/scripts/verify-legacy-activation-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/assets/css/index.php",
@@ -17014,10 +17014,10 @@
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-activate.php",
     "legacyJs": "",
     "modernRoute": "/settings/notifications",
-    "status": "partial - legacy activation email templates and provider delivery restored; credential rollout remains",
+    "status": "restored - legacy activation email templates, shortcodes, resend, and provider audit restored",
     "legacyTablesMentioned": [],
     "requestFieldsMentioned": [],
-    "verification": "`/settings/notifications` now includes activation template categories matching the legacy admin settings page: Resend link with Subject/body shortcodes `{{site_address}}`, `{{full_name}}`, `{{username}}`, `{{activate}}`, and Activated with Subject/body shortcodes `{{site_address}}`, `{{full_name}}`, `{{username}}`. Defaults fall back to migrated `LegacySetting` rows from `login_settings`/`login_settings_man` for `email-activate-resend-subj`, `email-activate-resend-msg`, `email-activate-subj`, and `email-activate-msg`, Save All persists them as modern `NotificationTemplate` rows, and `/activate.php` uses those templates for resend/post-activation provider delivery with audit summaries. Remaining work is production email credential rollout."
+    "verification": "`/settings/notifications` includes activation template categories matching the legacy admin settings page: Resend link with Subject/body shortcodes `{{site_address}}`, `{{full_name}}`, `{{username}}`, and `{{activate}}`, plus Activated with Subject/body shortcodes `{{site_address}}`, `{{full_name}}`, and `{{username}}`. Defaults fall back to migrated `LegacySetting` rows from `login_settings` / `login_settings_man` for `email-activate-resend-subj`, `email-activate-resend-msg`, `email-activate-subj`, and `email-activate-msg`; Save All persists them as modern `NotificationTemplate` rows; signup stores activation delivery audit on the migrated token; and `/activate.php` uses those templates for resend/post-activation provider delivery with skipped/failed/sent audit summaries. Production credential values are deployment configuration, not remaining app parity work. Verified by `src/scripts/verify-legacy-activation-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/emails-add-user.php",
