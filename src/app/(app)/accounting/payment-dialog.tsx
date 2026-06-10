@@ -5,6 +5,7 @@ import { FileText, Upload, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -265,6 +266,11 @@ export function PaymentDialog({
               </span>
             )}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            {isEditing
+              ? "Update the selected child payment details and receipt attachment."
+              : "Create a child payment with amount, date, fee type, payment method, and optional receipt attachment."}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
