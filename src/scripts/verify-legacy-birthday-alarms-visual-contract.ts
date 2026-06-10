@@ -11,8 +11,10 @@ const files = {
   receiptClient:
     "src/app/(app)/alarms/_components/staff-receipt-alarms-client.tsx",
   actions: "src/lib/actions/alarms.ts",
+  birthdayJob: "src/lib/jobs/birthday-alarms.ts",
   matrix: "docs/page-parity-matrix.json",
   markdownMatrix: "docs/page-parity-matrix.md",
+  topGaps: "docs/top-20-restoration-gaps.md",
 };
 
 const text = Object.fromEntries(
@@ -65,6 +67,10 @@ assert.match(text.actions, /export async function getBirthdayAlarmHistory/);
 assert.match(text.actions, /export async function generateBirthdayAlarms/);
 assert.match(text.actions, /export async function markBirthdayAlarmViewed/);
 assert.match(text.actions, /export async function markAllBirthdayAlarmsViewed/);
+assert.match(text.birthdayJob, /deliverPushNotification/);
+assert.match(text.birthdayJob, /pushDeliveryAuditData/);
+assert.match(text.birthdayJob, /pushDelivery/);
+assert.match(text.birthdayJob, /recipientUserIds: params\.recipientUserIds/);
 
 type MatrixRow = {
   legacyPhp?: string;
@@ -87,12 +93,21 @@ assert.match(row.verification ?? "", /Browser smoke confirmed `\/alarmsBirthday\
 assert.match(row.verification ?? "", /Birthdays Notifications Listing/);
 assert.match(row.verification ?? "", /Sent Birthday Alarms/);
 assert.match(row.verification ?? "", /no broken images or app errors/);
+assert.match(row.verification ?? "", /provider-neutral staff push delivery/);
+assert.match(row.verification ?? "", /pushDelivery/);
+assert.match(row.verification ?? "", /verify-birthday-push-delivery\.ts/);
 
 const markdownRow = text.markdownMatrix
   .split("\n")
   .find((line) => line.includes("| Front/templates/admin/alarmsBirthday.php |"));
 assert.match(markdownRow ?? "", /browser visual audit restored/);
 assert.match(markdownRow ?? "", /Browser smoke confirmed `\/alarmsBirthday\.php`/);
+assert.match(markdownRow ?? "", /provider-neutral staff push delivery/);
 assert.doesNotMatch(markdownRow ?? "", /final visual audit/);
+
+assert.match(
+  text.topGaps,
+  /Birthday alarms now audit provider-neutral staff push delivery on generated birthday reminders/,
+);
 
 console.log("legacy birthday alarms visual contract assertions passed");

@@ -1,6 +1,10 @@
 import { db } from "@/lib/db";
 import { deliverEmail, emailDeliveryAuditData } from "@/lib/email-delivery";
 import { isLegacyNotificationGateEnabled } from "@/lib/legacy-notification-gates";
+import {
+  deliverPushNotification,
+  pushDeliveryAuditData,
+} from "@/lib/push-delivery";
 
 const BIRTHDAY_RECEIPT_SOURCE = "custom_notifications_birthday";
 
@@ -24,8 +28,8 @@ interface LegacyBirthdayRecipient {
   legacyClasses: string;
 }
 
-function startOfToday() {
-  const date = new Date();
+function startOfToday(now = new Date()) {
+  const date = new Date(now);
   date.setHours(0, 0, 0, 0);
   return date;
 }
@@ -151,6 +155,49 @@ async function storeBirthdayEmailAudit(params: {
   });
 }
 
+async function storeBirthdayPushAudit(params: {
+  alarmId: string;
+  recipientUserIds: string[];
+  title: string;
+  body: string;
+  childId: string;
+  legacyChildId: number | null;
+  legacyNotificationId: number;
+  daysUntil: number;
+  sourceDatabase: string | null;
+}) {
+  const pushDelivery = await deliverPushNotification({
+    recipientUserIds: params.recipientUserIds,
+    title: params.title,
+    body: params.body,
+    category: "BIRTHDAY",
+    url: "/alarms/birthdays",
+    metadata: {
+      source: "generateBirthdayAlarms",
+      legacyNotificationId: params.legacyNotificationId,
+      legacyDeliveryTable: BIRTHDAY_RECEIPT_SOURCE,
+      childId: params.childId,
+      legacyChildId: params.legacyChildId,
+      daysUntil: params.daysUntil,
+      sourceDatabase: params.sourceDatabase,
+    },
+  });
+
+  const alarm = await db.alarm.findUnique({
+    where: { id: params.alarmId },
+    select: { legacyData: true },
+  });
+  await db.alarm.update({
+    where: { id: params.alarmId },
+    data: {
+      legacyData: {
+        ...(asRecord(alarm?.legacyData) ?? {}),
+        pushDelivery: pushDeliveryAuditData(pushDelivery),
+      },
+    },
+  });
+}
+
 function renderNotificationText(
   text: string,
   variables: Record<string, string | number | null | undefined>,
@@ -180,6 +227,7 @@ function parsePositiveInteger(value: string | undefined, fallback: number) {
 export async function generateBirthdayAlarmsForOrganization(params: {
   organizationId: string;
   branchId?: string | null;
+  now?: Date;
 }): Promise<BirthdayGenerationSummary> {
   const branchRows = await db.branch.findMany({
     where: {
@@ -189,7 +237,7 @@ export async function generateBirthdayAlarmsForOrganization(params: {
     select: { id: true },
   });
   const branchIds = branchRows.map((branch) => branch.id);
-  const today = startOfToday();
+  const today = startOfToday(params.now);
 
   const settings = await db.settings.findMany({
     where: {
@@ -384,12 +432,16 @@ export async function generateBirthdayAlarmsForOrganization(params: {
     const legacyChildId = child.legacyId ?? null;
 
     let alarmId = existingAlarm?.id ?? null;
+    let shouldAttemptPushAudit = !existingAlarm;
     if (existingAlarm) {
       summary.skippedExisting += 1;
       const existingData = asRecord(existingAlarm.legacyData) ?? {};
+      const needsPushAudit = !asRecord(existingData.pushDelivery);
+      shouldAttemptPushAudit = needsPushAudit;
       if (
         readNumber(existingData, "aid") === null ||
-        existingData.sourceDeliveryTable !== BIRTHDAY_RECEIPT_SOURCE
+        existingData.sourceDeliveryTable !== BIRTHDAY_RECEIPT_SOURCE ||
+        needsPushAudit
       ) {
         await db.alarm.update({
           where: { id: existingAlarm.id },
@@ -475,7 +527,33 @@ export async function generateBirthdayAlarmsForOrganization(params: {
     const newReceiptRecipients = recipients.filter(
       (recipient) => !existingReceiptIds.has(recipient.legacyRecipientId),
     );
-    if (newReceiptRecipients.length === 0) continue;
+
+    const variables = {
+      child_name: childName,
+      parent_name: "Parent",
+      class_name: child.class?.name ?? "",
+      branch_name: child.branch.name,
+      date: dateKey(nextBirthday),
+    };
+    const title = renderNotificationText(subjectTemplate, variables);
+    const body = renderNotificationText(bodyTemplate, variables);
+
+    if (newReceiptRecipients.length === 0) {
+      if (templateEnabled && shouldAttemptPushAudit) {
+        await storeBirthdayPushAudit({
+          alarmId,
+          recipientUserIds: recipients.map((recipient) => recipient.userId),
+          title,
+          body,
+          childId: child.id,
+          legacyChildId,
+          legacyNotificationId,
+          daysUntil,
+          sourceDatabase,
+        });
+      }
+      continue;
+    }
 
     const receiptResult = await db.notificationReceipt.createMany({
       data: newReceiptRecipients.map((recipient) => ({
@@ -501,19 +579,11 @@ export async function generateBirthdayAlarmsForOrganization(params: {
 
     if (!templateEnabled || receiptResult.count === 0) continue;
 
-    const variables = {
-      child_name: childName,
-      parent_name: "Parent",
-      class_name: child.class?.name ?? "",
-      branch_name: child.branch.name,
-      date: dateKey(nextBirthday),
-    };
-
     const notificationResult = await db.notification.createMany({
       data: newReceiptRecipients.map((recipient) => ({
         userId: recipient.userId,
-        title: renderNotificationText(subjectTemplate, variables),
-        body: renderNotificationText(bodyTemplate, variables),
+        title,
+        body,
         type: "BIRTHDAY",
         category: "BIRTHDAY",
         isRead: false,
@@ -523,12 +593,26 @@ export async function generateBirthdayAlarmsForOrganization(params: {
 
     await storeBirthdayEmailAudit({
       alarmId,
-      subject: renderNotificationText(subjectTemplate, variables),
-      body: renderNotificationText(bodyTemplate, variables),
+      subject: title,
+      body,
       recipients: newReceiptRecipients,
       legacyNotificationId,
       sourceDatabase,
     });
+
+    if (shouldAttemptPushAudit) {
+      await storeBirthdayPushAudit({
+        alarmId,
+        recipientUserIds: newReceiptRecipients.map((recipient) => recipient.userId),
+        title,
+        body,
+        childId: child.id,
+        legacyChildId,
+        legacyNotificationId,
+        daysUntil,
+        sourceDatabase,
+      });
+    }
   }
 
   return summary;
