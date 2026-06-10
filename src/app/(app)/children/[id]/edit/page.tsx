@@ -127,6 +127,7 @@ export default async function ChildEditPage({ params }: ChildDetailsPageProps) {
 
     // Addresses
     addresses: (child.addresses ?? []).map((a) => ({
+      recordId: a.id,
       addressType: a.addressType ?? "",
       country: a.country ?? "Lebanon",
       street: a.street ?? "",
@@ -138,6 +139,7 @@ export default async function ChildEditPage({ params }: ChildDetailsPageProps) {
 
     // Siblings
     siblings: (child.siblings ?? []).map((s) => ({
+      recordId: s.id,
       relation: s.relation ?? "",
       firstName: s.firstName ?? "",
       dateOfBirth: toDateString(s.dateOfBirth),
@@ -147,6 +149,7 @@ export default async function ChildEditPage({ params }: ChildDetailsPageProps) {
 
     // Relatives
     relatives: (child.relatives ?? []).map((r) => ({
+      recordId: r.id,
       name: r.name,
       lastName: r.lastName ?? "",
       relation: r.relation ?? "",
@@ -170,6 +173,7 @@ export default async function ChildEditPage({ params }: ChildDetailsPageProps) {
 
     // Accounting entries
     accountingEntries: (child.accountingEntries ?? []).map((entry) => ({
+      recordId: entry.id,
       description: entry.description ?? "",
       amount: Number(entry.amount),
       type: entry.type as "FEE" | "DISCOUNT" | "PAYMENT" | "ADJUSTMENT",

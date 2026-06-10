@@ -550,7 +550,13 @@ export async function updateChild(
     // Verify child exists
     const existing = await db.child.findUnique({
       where: { id },
-      include: { parents: true },
+      include: {
+        parents: true,
+        addresses: { select: { id: true } },
+        siblings: { select: { id: true } },
+        relatives: { select: { id: true } },
+        accountingEntries: { select: { id: true } },
+      },
     });
     if (!existing) {
       return { success: false, error: "Child not found" };
@@ -665,67 +671,139 @@ export async function updateChild(
       }
     }
 
-    // Sync addresses: delete all then recreate
-    await db.childAddress.deleteMany({ where: { childId: id } });
-    if (data.addresses.length > 0) {
-      await db.childAddress.createMany({
-        data: data.addresses.map((a) => ({
-          childId: id,
-          addressType: a.addressType || null,
-          country: a.country || null,
-          street: a.street || null,
-          building: a.building || null,
-          floor: a.floor || null,
-          city: a.city || null,
-          telephone: a.telephone || null,
-        })),
-      });
+    const existingAddressIds = new Set(existing.addresses.map((row) => row.id));
+    const existingSiblingIds = new Set(existing.siblings.map((row) => row.id));
+    const existingRelativeIds = new Set(existing.relatives.map((row) => row.id));
+    const existingAccountingEntryIds = new Set(
+      existing.accountingEntries.map((row) => row.id)
+    );
+
+    const submittedAddressIds = data.addresses
+      .map((address) => address.recordId)
+      .filter((recordId): recordId is string =>
+        Boolean(recordId && existingAddressIds.has(recordId))
+      );
+    await db.childAddress.deleteMany({
+      where: {
+        childId: id,
+        ...(submittedAddressIds.length ? { id: { notIn: submittedAddressIds } } : {}),
+      },
+    });
+    for (const address of data.addresses) {
+      const addressData = {
+        addressType: address.addressType || null,
+        country: address.country || null,
+        street: address.street || null,
+        building: address.building || null,
+        floor: address.floor || null,
+        city: address.city || null,
+        telephone: address.telephone || null,
+      };
+      if (address.recordId && existingAddressIds.has(address.recordId)) {
+        await db.childAddress.update({
+          where: { id: address.recordId },
+          data: addressData,
+        });
+      } else {
+        await db.childAddress.create({
+          data: { childId: id, ...addressData },
+        });
+      }
     }
 
-    // Sync siblings: delete all then recreate
-    await db.childSibling.deleteMany({ where: { childId: id } });
-    if (data.siblings.length > 0) {
-      await db.childSibling.createMany({
-        data: data.siblings.map((s) => ({
-          childId: id,
-          relation: s.relation || null,
-          firstName: s.firstName || null,
-          dateOfBirth: s.dateOfBirth ? new Date(s.dateOfBirth) : null,
-          medicalCase: s.medicalCase || null,
-          canPickUp: s.canPickUp,
-        })),
-      });
+    const submittedSiblingIds = data.siblings
+      .map((sibling) => sibling.recordId)
+      .filter((recordId): recordId is string =>
+        Boolean(recordId && existingSiblingIds.has(recordId))
+      );
+    await db.childSibling.deleteMany({
+      where: {
+        childId: id,
+        ...(submittedSiblingIds.length ? { id: { notIn: submittedSiblingIds } } : {}),
+      },
+    });
+    for (const sibling of data.siblings) {
+      const siblingData = {
+        relation: sibling.relation || null,
+        firstName: sibling.firstName || null,
+        dateOfBirth: sibling.dateOfBirth ? new Date(sibling.dateOfBirth) : null,
+        medicalCase: sibling.medicalCase || null,
+        canPickUp: sibling.canPickUp,
+      };
+      if (sibling.recordId && existingSiblingIds.has(sibling.recordId)) {
+        await db.childSibling.update({
+          where: { id: sibling.recordId },
+          data: siblingData,
+        });
+      } else {
+        await db.childSibling.create({
+          data: { childId: id, ...siblingData },
+        });
+      }
     }
 
-    // Sync relatives: delete all then recreate
-    await db.relative.deleteMany({ where: { childId: id } });
-    if (data.relatives.length > 0) {
-      await db.relative.createMany({
-        data: data.relatives.map((r) => ({
-          childId: id,
-          name: r.name,
-          lastName: r.lastName || null,
-          relation: r.relation || null,
-          phone: r.phone || null,
-          mobile: r.mobile || null,
-          isAuthorized: r.isAuthorized,
-          isEmergencyContact: r.isEmergencyContact,
-        })),
-      });
+    const submittedRelativeIds = data.relatives
+      .map((relative) => relative.recordId)
+      .filter((recordId): recordId is string =>
+        Boolean(recordId && existingRelativeIds.has(recordId))
+      );
+    await db.relative.deleteMany({
+      where: {
+        childId: id,
+        ...(submittedRelativeIds.length ? { id: { notIn: submittedRelativeIds } } : {}),
+      },
+    });
+    for (const relative of data.relatives) {
+      const relativeData = {
+        name: relative.name,
+        lastName: relative.lastName || null,
+        relation: relative.relation || null,
+        phone: relative.phone || null,
+        mobile: relative.mobile || null,
+        isAuthorized: relative.isAuthorized,
+        isEmergencyContact: relative.isEmergencyContact,
+      };
+      if (relative.recordId && existingRelativeIds.has(relative.recordId)) {
+        await db.relative.update({
+          where: { id: relative.recordId },
+          data: relativeData,
+        });
+      } else {
+        await db.relative.create({
+          data: { childId: id, ...relativeData },
+        });
+      }
     }
 
-    // Sync accounting entries: delete all then recreate
-    await db.accountingEntry.deleteMany({ where: { childId: id } });
-    if (data.accountingEntries.length > 0) {
-      await db.accountingEntry.createMany({
-        data: data.accountingEntries.map((entry) => ({
-          childId: id,
-          description: entry.description,
-          amount: entry.amount,
-          type: entry.type,
-          date: new Date(),
-        })),
-      });
+    const submittedAccountingEntryIds = data.accountingEntries
+      .map((entry) => entry.recordId)
+      .filter((recordId): recordId is string =>
+        Boolean(recordId && existingAccountingEntryIds.has(recordId))
+      );
+    await db.accountingEntry.deleteMany({
+      where: {
+        childId: id,
+        ...(submittedAccountingEntryIds.length
+          ? { id: { notIn: submittedAccountingEntryIds } }
+          : {}),
+      },
+    });
+    for (const entry of data.accountingEntries) {
+      const entryData = {
+        description: entry.description,
+        amount: entry.amount,
+        type: entry.type,
+      };
+      if (entry.recordId && existingAccountingEntryIds.has(entry.recordId)) {
+        await db.accountingEntry.update({
+          where: { id: entry.recordId },
+          data: entryData,
+        });
+      } else {
+        await db.accountingEntry.create({
+          data: { childId: id, date: new Date(), ...entryData },
+        });
+      }
     }
 
     if (removeAttachmentIds.length) {

@@ -25,7 +25,6 @@ import {
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getAvatarColor, getInitials } from "@/components/children/children-columns";
 import { getChild } from "@/lib/actions/children";
 
 interface Props {
@@ -99,6 +98,31 @@ function calculateAge(date: Date | string | null | undefined) {
 
 function displayName(parts: Array<string | null | undefined>) {
   return parts.filter(Boolean).join(" ") || "-";
+}
+
+const AVATAR_COLORS = [
+  "bg-primary",
+  "bg-[#D97706]",
+  "bg-[#4F46E5]",
+  "bg-[#059669]",
+  "bg-[#EA580C]",
+  "bg-[#0284C7]",
+  "bg-[#E11D48]",
+  "bg-[#7C3AED]",
+  "bg-[#2563EB]",
+  "bg-[#9333EA]",
+] as const;
+
+function getInitials(firstName: string, lastName: string) {
+  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+}
+
+function getAvatarColor(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
 function completionStatus(child: ChildRecord) {

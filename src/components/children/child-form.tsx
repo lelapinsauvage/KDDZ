@@ -1226,6 +1226,10 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                           key={field.id}
                           className="rounded-lg border border-border bg-muted/30 p-4"
                         >
+                          <input
+                            type="hidden"
+                            {...register(`addresses.${index}.recordId`)}
+                          />
                           <div className="mb-3 flex items-center justify-between">
                             <span className="text-sm font-medium text-foreground">
                               Address #{index + 1}
@@ -1375,6 +1379,10 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                           key={field.id}
                           className="rounded-lg border border-border bg-muted/30 p-4"
                         >
+                          <input
+                            type="hidden"
+                            {...register(`siblings.${index}.recordId`)}
+                          />
                           <div className="mb-3 flex items-center justify-between">
                             <span className="text-sm font-medium text-foreground">
                               Sibling #{index + 1}
@@ -1522,6 +1530,10 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                           key={field.id}
                           className="rounded-lg border border-border bg-muted/30 p-4"
                         >
+                          <input
+                            type="hidden"
+                            {...register(`relatives.${index}.recordId`)}
+                          />
                           <div className="mb-3 flex items-center justify-between">
                             <span className="text-sm font-medium text-foreground">
                               Person #{index + 1}
@@ -2098,6 +2110,10 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                         key={field.id}
                         className="grid grid-cols-1 gap-4 rounded-lg border border-border bg-muted/30 p-4 md:grid-cols-[1fr_150px_180px_40px] md:items-start"
                       >
+                        <input
+                          type="hidden"
+                          {...register(`accountingEntries.${index}.recordId`)}
+                        />
                         <FormField
                           label="Description"
                           error={errors.accountingEntries?.[index]?.description?.message}

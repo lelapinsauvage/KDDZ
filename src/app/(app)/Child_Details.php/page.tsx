@@ -1,5 +1,8 @@
 import { notFound, redirect } from "next/navigation";
+
 import { resolveLegacyChildId } from "@/lib/legacy-child";
+
+import ChildDetailPage from "../children/[id]/page";
 
 interface PageProps {
   searchParams: Promise<{ id?: string }>;
@@ -19,5 +22,5 @@ export default async function LegacyChildDetailsRedirect({
     notFound();
   }
 
-  redirect(`/children/${encodeURIComponent(childId)}`);
+  return <ChildDetailPage params={Promise.resolve({ id: childId })} />;
 }

@@ -2,6 +2,7 @@ import { z } from "zod";
 
 // ── Address sub-schema ──
 const addressSchema = z.object({
+  recordId: z.string().uuid().optional(),
   addressType: z.string().default(""),
   country: z.string().default("Lebanon"),
   street: z.string().default(""),
@@ -31,6 +32,7 @@ const guardianSchema = z.object({
 
 // ── Sibling sub-schema ──
 const siblingSchema = z.object({
+  recordId: z.string().uuid().optional(),
   relation: z.string().default(""),
   firstName: z.string().default(""),
   dateOfBirth: z.string().default(""),
@@ -40,6 +42,7 @@ const siblingSchema = z.object({
 
 // ── Relative sub-schema ──
 const relativeSchema = z.object({
+  recordId: z.string().uuid().optional(),
   name: z.string().min(1, "Name is required"),
   lastName: z.string().default(""),
   relation: z.string().min(1, "Relation is required"),
@@ -51,6 +54,7 @@ const relativeSchema = z.object({
 
 // ── Accounting entry sub-schema ──
 const accountingEntrySchema = z.object({
+  recordId: z.string().uuid().optional(),
   description: z.string().min(1, "Description is required"),
   amount: z.coerce.number().min(0, "Amount must be positive"),
   type: z.enum(["FEE", "DISCOUNT", "PAYMENT", "ADJUSTMENT"]),
