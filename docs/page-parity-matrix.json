@@ -1344,7 +1344,7 @@
     "legacyPhp": "Front/templates/admin/classes.php",
     "legacyJs": "Front/templates/admin/js/classes.js",
     "modernRoute": "/classes.php, /classes",
-    "status": "partial - legacy class roster bridge, filters, copy/PDF exports, page sizes, soft delete, and ACL restored; visual audit remains",
+    "status": "restored - legacy class roster, filters, TableTools export, print, soft delete, ACL, bridge, and default image fallback restored",
     "legacyTablesMentioned": [
       "auto",
       "themeforest",
@@ -1352,7 +1352,7 @@
       "actions_control"
     ],
     "requestFieldsMentioned": [],
-    "verification": "Restored the legacy Classes Listing as the default table view with active-class default scope, checkbox/S.N./Image/Class/Language/Max Students/Branch/Date/Action columns, migrated `images/ClassPhoto` filename fallback, search, branch/status filters, legacy S.N./Class/Language/Max Students/created-date filter row, 10/20/50/100/150/All page sizes, Copy/PDF/Excel/CSV export, print action, New Class, edit/update dialog, dashboard open action, and legacy-style soft deactivate. Class `addClass`, `updateClass`, and `deleteClass` ACTION grants now hide New/Edit/Delete controls and deny direct create/update/deactivate server mutations when the imported action catalogue is configured and not granted. `/classes.php` now redirects to the modern classes listing. Fixed class import fidelity so `t_class.class_language`, `age_from`, `age_to`, `radiofrom`, `radioto`, `camera_number`, and `max_students` populate modern class fields. Remaining work is any selected-row bulk behavior if revived and final Browser visual smoke."
+    "verification": "Restored the legacy Classes Listing as the default table view with active-class default scope, checkbox/S.N./Image/Class/Language/Max Students/Branch/Date/Action columns, migrated `images/ClassPhoto` filename fallback, search, branch/status filters, legacy S.N./Class/Language/Max Students/created-date filter row, 10/20/50/100/150/All page sizes, Copy/PDF/Excel/CSV export, print action, New Class, edit/update dialog, dashboard open action, and legacy-style soft deactivate. Class `addClass`, `updateClass`, and `deleteClass` ACTION grants now hide New/Edit/Delete controls and deny direct create/update/deactivate server mutations when the imported action catalogue is configured and not granted. `/classes.php` now redirects to the modern classes listing. Fixed class import fidelity so `t_class.class_language`, `age_from`, `age_to`, `radiofrom`, `radioto`, `camera_number`, and `max_students` populate modern class fields. Restored the legacy default class JPEG to `public/images/ClassPhoto/default.jpg` so blank/missing class images render without a 404. Browser smoke confirmed `/classes.php` redirects to `/classes`, loads real rows with legacy headers, active default scope, filters, 10-row default page size, New Class, enabled Export/Print controls, and Copy/Excel/CSV/PDF export choices. Verified by `src/scripts/verify-legacy-classes-tabletools-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/classes/Connectter.php",
