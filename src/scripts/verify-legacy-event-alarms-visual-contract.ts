@@ -88,6 +88,8 @@ assert.match(text.actions, /export async function markEventAlarmViewed/);
 assert.match(text.actions, /export async function markAllEventAlarmsViewed/);
 assert.match(text.eventJob, /deliverPushNotification/);
 assert.match(text.eventJob, /pushDeliveryAuditData/);
+assert.match(text.eventJob, /pushDelivery/);
+assert.match(text.eventJob, /recipientUserIds: params\.recipientUserIds/);
 assert.match(text.eventJob, /parentPushDelivery/);
 assert.match(text.eventJob, /recipientParentUserIds: params\.parentUserIds/);
 
@@ -112,6 +114,9 @@ assert.match(row.verification ?? "", /Browser smoke confirmed `\/alarmsEvents\.p
 assert.match(row.verification ?? "", /Event Alarms/);
 assert.match(row.verification ?? "", /Dashboard and Notifications tabs/);
 assert.match(row.verification ?? "", /Sent Events Alarms/);
+assert.match(row.verification ?? "", /provider-neutral staff push delivery/);
+assert.match(row.verification ?? "", /pushDelivery/);
+assert.match(row.verification ?? "", /verify-event-staff-push-delivery\.ts/);
 assert.match(row.verification ?? "", /provider-neutral parent push delivery/);
 assert.match(row.verification ?? "", /parentPushDelivery/);
 assert.match(row.verification ?? "", /no broken images or app errors/);
@@ -122,10 +127,11 @@ const markdownRow = text.markdownMatrix
   .find((line) => line.includes("| Front/templates/admin/alarmsEvents.php |"));
 assert.match(markdownRow ?? "", /browser visual audit restored/);
 assert.match(markdownRow ?? "", /Browser smoke confirmed `\/alarmsEvents\.php`/);
+assert.match(markdownRow ?? "", /provider-neutral staff push delivery/);
 
 assert.match(
   text.topGaps,
-  /Event alarms browser smoke now confirms the legacy `\/alarmsEvents\.php` bridge/,
+  /Event alarms now audit provider-neutral staff push delivery on generated event reminders/,
 );
 
 console.log("legacy event alarms visual contract assertions passed");

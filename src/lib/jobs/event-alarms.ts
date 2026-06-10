@@ -147,6 +147,49 @@ async function storeEventParentPushAudit(params: {
   });
 }
 
+async function storeEventStaffPushAudit(params: {
+  alarmId: string;
+  recipientUserIds: string[];
+  title: string;
+  body: string;
+  eventId: string;
+  legacyNotificationId: number;
+  sourceDatabase: string | null;
+  targetBranchId: string;
+  daysBefore: number;
+}) {
+  const pushDelivery = await deliverPushNotification({
+    recipientUserIds: params.recipientUserIds,
+    title: params.title,
+    body: params.body,
+    category: "EVENT",
+    url: "/alarms/events",
+    metadata: {
+      source: "generateEventAlarms",
+      legacyNotificationId: params.legacyNotificationId,
+      sourceDatabase: params.sourceDatabase,
+      legacyDeliveryTable: EVENT_RECEIPT_SOURCE,
+      eventId: params.eventId,
+      targetBranchId: params.targetBranchId,
+      daysBefore: params.daysBefore,
+    },
+  });
+
+  const alarm = await db.alarm.findUnique({
+    where: { id: params.alarmId },
+    select: { legacyData: true },
+  });
+  await db.alarm.update({
+    where: { id: params.alarmId },
+    data: {
+      legacyData: {
+        ...(asRecord(alarm?.legacyData) ?? {}),
+        pushDelivery: pushDeliveryAuditData(pushDelivery),
+      },
+    },
+  });
+}
+
 function jsonStringArray(value: unknown) {
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === "string" && item.trim() !== "")
@@ -565,12 +608,16 @@ export async function generateEventAlarmsForOrganization(params: {
     }
 
     let alarmId = existingAlarm?.id ?? null;
+    let shouldAttemptStaffPushAudit = !existingAlarm;
     if (existingAlarm) {
       summary.skippedExisting += 1;
       const existingData = asRecord(existingAlarm.legacyData) ?? {};
+      const needsStaffPushAudit = !asRecord(existingData.pushDelivery);
+      shouldAttemptStaffPushAudit = needsStaffPushAudit;
       if (
         readNumber(existingData, ["legacyEventId", "aid"]) === null ||
-        existingData.sourceDeliveryTable !== EVENT_RECEIPT_SOURCE
+        existingData.sourceDeliveryTable !== EVENT_RECEIPT_SOURCE ||
+        needsStaffPushAudit
       ) {
         await db.alarm.update({
           where: { id: existingAlarm.id },
@@ -657,7 +704,21 @@ export async function generateEventAlarmsForOrganization(params: {
         (recipient) => !existingReceiptIds.has(recipient.legacyRecipientId),
       );
 
-      if (newReceiptRecipients.length > 0) {
+      if (newReceiptRecipients.length === 0) {
+        if (shouldAttemptStaffPushAudit) {
+          await storeEventStaffPushAudit({
+            alarmId,
+            recipientUserIds: recipients.map((recipient) => recipient.userId),
+            title: candidate.title,
+            body: candidate.message,
+            eventId: candidate.eventId,
+            legacyNotificationId,
+            sourceDatabase: candidate.sourceDatabase,
+            targetBranchId: candidate.branchId,
+            daysBefore: candidate.daysBefore,
+          });
+        }
+      } else {
         const receiptResult = await db.notificationReceipt.createMany({
           data: newReceiptRecipients.map((recipient) => ({
             sourceTable: EVENT_RECEIPT_SOURCE,
@@ -696,6 +757,20 @@ export async function generateEventAlarmsForOrganization(params: {
           })),
         });
         summary.notificationsCreated += created.count;
+
+        if (shouldAttemptStaffPushAudit) {
+          await storeEventStaffPushAudit({
+            alarmId,
+            recipientUserIds: newReceiptRecipients.map((recipient) => recipient.userId),
+            title: candidate.title,
+            body: candidate.message,
+            eventId: candidate.eventId,
+            legacyNotificationId,
+            sourceDatabase: candidate.sourceDatabase,
+            targetBranchId: candidate.branchId,
+            daysBefore: candidate.daysBefore,
+          });
+        }
       }
     }
 
