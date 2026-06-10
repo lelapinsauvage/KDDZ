@@ -10,6 +10,8 @@ const addressSchema = z.object({
   floor: z.string().default(""),
   city: z.string().default(""),
   telephone: z.string().default(""),
+  latitude: z.string().default(""),
+  longitude: z.string().default(""),
 });
 
 // ── Guardian sub-schema ──

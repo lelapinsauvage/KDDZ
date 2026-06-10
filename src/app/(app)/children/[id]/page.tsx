@@ -100,6 +100,25 @@ function displayName(parts: Array<string | null | undefined>) {
   return parts.filter(Boolean).join(" ") || "-";
 }
 
+function legacyString(value: unknown, ...keys: string[]) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return "";
+  const record = value as Record<string, unknown>;
+  for (const key of keys) {
+    const candidate = record[key];
+    if (candidate !== null && candidate !== undefined && candidate !== "") {
+      return String(candidate);
+    }
+  }
+  return "";
+}
+
+function mapPreviewHref(latitude: string, longitude: string) {
+  if (!latitude.trim() || !longitude.trim()) return null;
+  return `https://www.google.com/maps?q=${encodeURIComponent(
+    `${latitude.trim()},${longitude.trim()}`
+  )}`;
+}
+
 const AVATAR_COLORS = [
   "bg-primary",
   "bg-[#D97706]",
@@ -269,6 +288,10 @@ function ParentCard({ parent }: { parent: ParentRecord }) {
 }
 
 function AddressCard({ address }: { address: AddressRecord }) {
+  const latitude = legacyString(address.legacyData, "Latitude", "latitude");
+  const longitude = legacyString(address.legacyData, "Longitude", "longitude");
+  const previewHref = mapPreviewHref(latitude, longitude);
+
   return (
     <div className="rounded border border-border/60 p-3">
       <DetailGrid
@@ -281,8 +304,20 @@ function AddressCard({ address }: { address: AddressRecord }) {
           ["City", address.city ?? "-"],
           ["Region", address.region?.name ?? "-"],
           ["Telephone", address.telephone ?? "-"],
+          ["Latitude", latitude || "-"],
+          ["Longitude", longitude || "-"],
         ]}
       />
+      {previewHref ? (
+        <div className="mt-3">
+          <Button asChild variant="outline" size="sm">
+            <a href={previewHref} target="_blank" rel="noopener noreferrer">
+              <MapPin className="size-3.5" />
+              Preview Location
+            </a>
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }

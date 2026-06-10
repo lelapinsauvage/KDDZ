@@ -64,22 +64,33 @@ assert.doesNotMatch(
   text.detailPage,
   /from "@\/components\/children\/children-columns"/,
 );
+assert.match(text.detailPage, /legacyString\(address\.legacyData, "Latitude", "latitude"\)/);
+assert.match(text.detailPage, /legacyString\(address\.legacyData, "Longitude", "longitude"\)/);
+assert.match(text.detailPage, /Preview Location/);
 
 assert.match(text.validation, /const addressSchema = z\.object\(\{[\s\S]*recordId: z\.string\(\)\.uuid\(\)\.optional\(\)/);
+assert.match(text.validation, /latitude: z\.string\(\)\.default\(""\)/);
+assert.match(text.validation, /longitude: z\.string\(\)\.default\(""\)/);
 assert.match(text.validation, /const siblingSchema = z\.object\(\{[\s\S]*recordId: z\.string\(\)\.uuid\(\)\.optional\(\)/);
 assert.match(text.validation, /const relativeSchema = z\.object\(\{[\s\S]*recordId: z\.string\(\)\.uuid\(\)\.optional\(\)/);
 assert.match(text.validation, /const accountingEntrySchema = z\.object\(\{[\s\S]*recordId: z\.string\(\)\.uuid\(\)\.optional\(\)/);
 
 assert.match(text.editPage, /addresses: \(child\.addresses \?\? \[\]\)\.map\(\(a\) => \(\{[\s\S]*recordId: a\.id/);
+assert.match(text.editPage, /latitude: legacyString\(a\.legacyData, "Latitude", "latitude"\)/);
+assert.match(text.editPage, /longitude: legacyString\(a\.legacyData, "Longitude", "longitude"\)/);
 assert.match(text.editPage, /siblings: \(child\.siblings \?\? \[\]\)\.map\(\(s\) => \(\{[\s\S]*recordId: s\.id/);
 assert.match(text.editPage, /relatives: \(child\.relatives \?\? \[\]\)\.map\(\(r\) => \(\{[\s\S]*recordId: r\.id/);
 assert.match(text.editPage, /accountingEntries: \(child\.accountingEntries \?\? \[\]\)\.map\(\(entry\) => \(\{[\s\S]*recordId: entry\.id/);
 
-assert.match(text.actions, /addresses: \{ select: \{ id: true \} \}/);
+assert.match(text.actions, /addresses: \{ select: \{ id: true, legacyData: true \} \}/);
 assert.match(text.actions, /siblings: \{ select: \{ id: true \} \}/);
 assert.match(text.actions, /relatives: \{ select: \{ id: true \} \}/);
 assert.match(text.actions, /accountingEntries: \{ select: \{ id: true \} \}/);
+assert.match(text.actions, /function addressLegacyData\(/);
+assert.match(text.actions, /Latitude: latitude/);
+assert.match(text.actions, /Longitude: longitude/);
 assert.match(text.actions, /const existingAddressIds = new Set/);
+assert.match(text.actions, /const existingAddressLegacyData = new Map/);
 assert.match(text.actions, /const submittedAddressIds = data\.addresses/);
 assert.match(text.actions, /await db\.childAddress\.update\(/);
 assert.match(text.actions, /await db\.childAddress\.create\(/);
@@ -102,6 +113,10 @@ assert.match(text.form, /Save as Draft/);
 assert.match(text.form, /Update Child/);
 assert.match(text.form, /Submit Enrollment/);
 assert.match(text.form, /register\(`addresses\.\$\{index\}\.recordId`\)/);
+assert.match(text.form, /register\(`addresses\.\$\{index\}\.latitude`\)/);
+assert.match(text.form, /register\(`addresses\.\$\{index\}\.longitude`\)/);
+assert.match(text.form, /Select From Map/);
+assert.match(text.form, /Preview Location/);
 assert.match(text.form, /register\(`siblings\.\$\{index\}\.recordId`\)/);
 assert.match(text.form, /register\(`relatives\.\$\{index\}\.recordId`\)/);
 assert.match(text.form, /register\(`accountingEntries\.\$\{index\}\.recordId`\)/);
@@ -118,7 +133,8 @@ const row = matrix.find(
 );
 
 assert.ok(row);
-assert.match(row.status ?? "", /nested edit provenance preservation restored/);
+assert.match(row.status ?? "", /nested edit provenance/);
+assert.match(row.status ?? "", /address coordinates restored/);
 assert.match(row.verification ?? "", /verify-legacy-child-edit-preservation-contract\.ts/);
 assert.match(row.verification ?? "", /preserves existing nested child rows in place/);
 assert.match(row.verification ?? "", /map picker/);

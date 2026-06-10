@@ -93,6 +93,32 @@ function childAttachmentCreates(attachments: ChildAttachmentInput[]) {
     }));
 }
 
+function jsonObject(value: Prisma.JsonValue | null | undefined) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+  return { ...value } as Record<string, Prisma.JsonValue>;
+}
+
+function addressLegacyData(
+  address: { latitude?: string; longitude?: string },
+  existingLegacyData?: Prisma.JsonValue | null
+) {
+  const legacyData = jsonObject(existingLegacyData);
+  const latitude = address.latitude?.trim() ?? "";
+  const longitude = address.longitude?.trim() ?? "";
+
+  if (!Object.keys(legacyData).length && !latitude && !longitude) {
+    return undefined;
+  }
+
+  return {
+    ...legacyData,
+    Latitude: latitude,
+    Longitude: longitude,
+  } satisfies Prisma.InputJsonObject;
+}
+
 function parseParentData(raw: Record<string, unknown>) {
   return {
     ...raw,
@@ -427,6 +453,9 @@ export async function createChild(formData: FormData): Promise<ActionResult> {
                   floor: a.floor || null,
                   city: a.city || null,
                   telephone: a.telephone || null,
+                  ...(addressLegacyData(a)
+                    ? { legacyData: addressLegacyData(a) }
+                    : {}),
                 })),
               },
             }
@@ -552,7 +581,7 @@ export async function updateChild(
       where: { id },
       include: {
         parents: true,
-        addresses: { select: { id: true } },
+        addresses: { select: { id: true, legacyData: true } },
         siblings: { select: { id: true } },
         relatives: { select: { id: true } },
         accountingEntries: { select: { id: true } },
@@ -672,6 +701,9 @@ export async function updateChild(
     }
 
     const existingAddressIds = new Set(existing.addresses.map((row) => row.id));
+    const existingAddressLegacyData = new Map(
+      existing.addresses.map((row) => [row.id, row.legacyData])
+    );
     const existingSiblingIds = new Set(existing.siblings.map((row) => row.id));
     const existingRelativeIds = new Set(existing.relatives.map((row) => row.id));
     const existingAccountingEntryIds = new Set(
@@ -698,6 +730,21 @@ export async function updateChild(
         floor: address.floor || null,
         city: address.city || null,
         telephone: address.telephone || null,
+        ...(addressLegacyData(
+          address,
+          address.recordId
+            ? existingAddressLegacyData.get(address.recordId)
+            : undefined
+        )
+          ? {
+              legacyData: addressLegacyData(
+                address,
+                address.recordId
+                  ? existingAddressLegacyData.get(address.recordId)
+                  : undefined
+              ),
+            }
+          : {}),
       };
       if (address.recordId && existingAddressIds.has(address.recordId)) {
         await db.childAddress.update({

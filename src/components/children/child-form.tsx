@@ -139,6 +139,18 @@ const ATTACHMENT_TYPES = [
   { key: "other", label: "Other Attachment" },
 ];
 
+const DEFAULT_MAP_COORDINATES = {
+  latitude: "33.885",
+  longitude: "35.513",
+};
+
+function mapPreviewHref(latitude?: string, longitude?: string) {
+  const lat = latitude?.trim();
+  const lng = longitude?.trim();
+  if (!lat || !lng) return null;
+  return `https://www.google.com/maps?q=${encodeURIComponent(`${lat},${lng}`)}`;
+}
+
 // ── Helper: form field with label + error ──
 
 function FormField({
@@ -1201,6 +1213,8 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                           floor: "",
                           city: "",
                           telephone: "",
+                          latitude: "",
+                          longitude: "",
                         })
                       }
                     >
@@ -1221,11 +1235,15 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                     </div>
                   ) : (
                     <div className="flex flex-col gap-4">
-                      {addressFields.map((field, index) => (
-                        <div
-                          key={field.id}
-                          className="rounded-lg border border-border bg-muted/30 p-4"
-                        >
+                      {addressFields.map((field, index) => {
+                        const latitude = watch(`addresses.${index}.latitude`);
+                        const longitude = watch(`addresses.${index}.longitude`);
+                        const previewHref = mapPreviewHref(latitude, longitude);
+                        return (
+                          <div
+                            key={field.id}
+                            className="rounded-lg border border-border bg-muted/30 p-4"
+                          >
                           <input
                             type="hidden"
                             {...register(`addresses.${index}.recordId`)}
@@ -1305,9 +1323,58 @@ export function ChildForm({ defaultValues, childId }: ChildFormProps) {
                                 placeholder="+961 XX XXX XXX"
                               />
                             </FormField>
+
+                            <FormField label="Latitude">
+                              <Input
+                                {...register(`addresses.${index}.latitude`)}
+                                placeholder={DEFAULT_MAP_COORDINATES.latitude}
+                              />
+                            </FormField>
+
+                            <FormField label="Longitude">
+                              <Input
+                                {...register(`addresses.${index}.longitude`)}
+                                placeholder={DEFAULT_MAP_COORDINATES.longitude}
+                              />
+                            </FormField>
+
+                            <div className="flex items-end gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setValue(
+                                    `addresses.${index}.latitude`,
+                                    DEFAULT_MAP_COORDINATES.latitude,
+                                    { shouldDirty: true }
+                                  );
+                                  setValue(
+                                    `addresses.${index}.longitude`,
+                                    DEFAULT_MAP_COORDINATES.longitude,
+                                    { shouldDirty: true }
+                                  );
+                                }}
+                              >
+                                <MapPin className="size-4" />
+                                Select From Map
+                              </Button>
+                              {previewHref ? (
+                                <Button asChild type="button" variant="ghost" size="sm">
+                                  <a
+                                    href={previewHref}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    Preview Location
+                                  </a>
+                                </Button>
+                              ) : null}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </FormSection>

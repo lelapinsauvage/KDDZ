@@ -63,6 +63,18 @@ function mapParent(parent: {
   };
 }
 
+function legacyString(value: unknown, ...keys: string[]) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return "";
+  const record = value as Record<string, unknown>;
+  for (const key of keys) {
+    const candidate = record[key];
+    if (candidate !== null && candidate !== undefined && candidate !== "") {
+      return String(candidate);
+    }
+  }
+  return "";
+}
+
 export default async function ChildEditPage({ params }: ChildDetailsPageProps) {
   const { id } = await params;
   const ctx = await requireOrg();
@@ -135,6 +147,8 @@ export default async function ChildEditPage({ params }: ChildDetailsPageProps) {
       floor: a.floor ?? "",
       city: a.city ?? "",
       telephone: a.telephone ?? "",
+      latitude: legacyString(a.legacyData, "Latitude", "latitude"),
+      longitude: legacyString(a.legacyData, "Longitude", "longitude"),
     })),
 
     // Siblings
