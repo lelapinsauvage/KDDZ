@@ -20,6 +20,7 @@ try {
   const readinessReportPath = join(tmp, "readiness.json");
   const closeoutSummaryPath = join(tmp, "closeout-summary.json");
   const partialReportPath = join(tmp, "partials.json");
+  const checklistReportPath = join(tmp, "evidence-checklist.json");
   writeFileSync(envFilePath, readinessEnvFile(), "utf8");
   writeFileSync(evidenceRecordPath, fillTemplate(template), "utf8");
 
@@ -29,6 +30,7 @@ try {
     `--out=${readinessReportPath}`,
     `--summary-out=${closeoutSummaryPath}`,
     `--partials-out=${partialReportPath}`,
+    `--checklist-out=${checklistReportPath}`,
     "--branch=legacy-parity-runbook",
     "--commit=0404c6a",
   ]);
@@ -52,6 +54,7 @@ try {
   const closeoutPayload = JSON.parse(closeoutSummary) as {
     status?: string;
     partialReport?: string | null;
+    evidenceChecklist?: string | null;
     readinessSummary?: { ready?: number; needsEvidence?: number; total?: number };
     parityTracker?: { total?: number; complete?: number; partial?: number; donePct?: number; leftPct?: number };
     branch?: string;
@@ -63,6 +66,7 @@ try {
     readinessReport: readinessReportPath,
     evidenceRecord: evidenceRecordPath,
     partialReport: partialReportPath,
+    evidenceChecklist: checklistReportPath,
     readinessSummary: { ready: 12, needsEvidence: 0, total: 12 },
     parityTracker: { total: 1713, complete: 1696, partial: 17, donePct: 99, leftPct: 1 },
     requireZeroPartials: false,
@@ -82,6 +86,17 @@ try {
     "PROD-NATIVE": 3,
     "PROD-NATURE": 1,
     "PROD-PROVIDERS": 14,
+  });
+
+  const checklistReport = readFileSync(checklistReportPath, "utf8");
+  assertNoSensitiveOutput(checklistReport);
+  const checklistPayload = JSON.parse(checklistReport) as {
+    summary?: { gates?: number; requiredFields?: number; blockingPartialRows?: number };
+  };
+  assert.deepEqual(checklistPayload.summary, {
+    gates: 12,
+    requiredFields: 69,
+    blockingPartialRows: 17,
   });
 
   const staleCommit = runCloseout([

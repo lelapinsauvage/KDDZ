@@ -20,13 +20,14 @@ const evidenceRecordPath = optionValue("--evidence-record");
 const outputPath = optionValue("--out") ?? "/tmp/kiddzonl-production-readiness.json";
 const summaryOutputPath = optionValue("--summary-out");
 const partialsOutputPath = optionValue("--partials-out");
+const checklistOutputPath = optionValue("--checklist-out");
 const requireZeroPartials = process.argv.includes("--require-zero-partials");
 const branch = optionValue("--branch") ?? gitOutput(["branch", "--show-current"]);
 const commit = optionValue("--commit") ?? gitOutput(["rev-parse", "HEAD"]);
 
 if (!envFilePath || !evidenceRecordPath) {
   console.error(
-    "Usage: pnpm tsx src/scripts/run-production-closeout.ts --env-file=<private-readiness.env> --evidence-record=<production-acceptance-evidence.md> [--out=<readiness.json>] [--summary-out=<closeout-summary.json>] [--partials-out=<partials.json>] [--branch=<branch>] [--commit=<sha>] [--require-zero-partials]"
+    "Usage: pnpm tsx src/scripts/run-production-closeout.ts --env-file=<private-readiness.env> --evidence-record=<production-acceptance-evidence.md> [--out=<readiness.json>] [--summary-out=<closeout-summary.json>] [--partials-out=<partials.json>] [--checklist-out=<evidence-checklist.json>] [--branch=<branch>] [--commit=<sha>] [--require-zero-partials]"
   );
   process.exit(2);
 }
@@ -59,6 +60,14 @@ if (partialsOutputPath) {
     `--out=${partialsOutputPath}`,
   ]);
 }
+if (checklistOutputPath) {
+  run("pnpm", [
+    "tsx",
+    "src/scripts/report-production-evidence-checklist.ts",
+    "--json",
+    `--out=${checklistOutputPath}`,
+  ]);
+}
 if (requireZeroPartials && parityTracker.partial !== 0) {
   console.error(`Production closeout requires zero partial parity rows; found ${parityTracker.partial}.`);
   process.exit(1);
@@ -69,6 +78,7 @@ const summary = {
   readinessReport: outputPath,
   evidenceRecord: evidenceRecordPath,
   partialReport: partialsOutputPath ?? null,
+  evidenceChecklist: checklistOutputPath ?? null,
   readinessSummary,
   parityTracker,
   requireZeroPartials,
