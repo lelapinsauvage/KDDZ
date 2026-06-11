@@ -161,6 +161,7 @@ Final command:
 ```bash
 pnpm run closeout:production -- --env-file=/secure/private-readiness.env --evidence-record=/secure/production-acceptance-evidence.md --out=/tmp/kiddzonl-production-readiness.json --summary-out=/tmp/kiddzonl-production-closeout-summary.json --partials-out=/tmp/kiddzonl-production-partials.json --checklist-out=/tmp/kiddzonl-production-evidence-checklist.json --branch=legacy-parity-runbook --commit=<release-commit-sha> --require-zero-partials
 pnpm tsx src/scripts/verify-production-closeout-summary-contract.ts /tmp/kiddzonl-production-closeout-summary.json --readiness-report=/tmp/kiddzonl-production-readiness.json --evidence-record=/secure/production-acceptance-evidence.md --partial-report=/tmp/kiddzonl-production-partials.json --checklist-report=/tmp/kiddzonl-production-evidence-checklist.json
+pnpm tsx src/scripts/verify-production-evidence-package-contract.ts --summary-report=/tmp/kiddzonl-production-closeout-summary.json --readiness-report=/tmp/kiddzonl-production-readiness.json --evidence-record=/secure/production-acceptance-evidence.md --partial-report=/tmp/kiddzonl-production-partials.json --checklist-report=/tmp/kiddzonl-production-evidence-checklist.json --manifest-out=/tmp/kiddzonl-production-evidence-package.json
 ```
 
 The legacy restoration goal can only be marked complete when:
@@ -173,5 +174,6 @@ The legacy restoration goal can only be marked complete when:
 - redacted readiness and closeout summary JSON files are archived with the release evidence,
 - the filled production acceptance record is archived and hash-bound by the closeout summary,
 - the production evidence checklist JSON is archived with the release evidence,
+- the production evidence package manifest is archived and verifies all closeout artifact hashes,
 - the final closeout command passes with `--require-zero-partials`,
 - no stop condition above remains open.

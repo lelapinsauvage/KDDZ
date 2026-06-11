@@ -69,6 +69,7 @@ const requiredReferences = [
   "src/scripts/verify-production-acceptance-evidence-record-contract.ts",
   "src/scripts/verify-production-closeout-contract.ts",
   "src/scripts/verify-production-closeout-summary-contract.ts",
+  "src/scripts/verify-production-evidence-package-contract.ts",
   "src/scripts/verify-production-partial-report-contract.ts",
   "src/scripts/verify-production-evidence-checklist-contract.ts",
   "src/scripts/verify-production-artifact-consistency-contract.ts",
@@ -263,6 +264,7 @@ assert.match(productionGateSuite, /verify-production-readiness-audit-contract\.t
 assert.match(productionGateSuite, /verify-production-acceptance-evidence-record-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-closeout-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-closeout-summary-contract\.ts/);
+assert.match(productionGateSuite, /verify-production-evidence-package-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-partial-report-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-evidence-checklist-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-artifact-consistency-contract\.ts/);
@@ -291,6 +293,18 @@ assert.match(
 assert.match(
   readFileSync("src/scripts/verify-production-closeout-summary-contract.ts", "utf8"),
   /verify-production-artifact-consistency-contract\.ts/
+);
+assert.match(
+  readFileSync("src/scripts/verify-production-evidence-package-contract.ts", "utf8"),
+  /production evidence package verified/
+);
+assert.match(
+  readFileSync("src/scripts/verify-production-evidence-package-contract.ts", "utf8"),
+  /--manifest-out/
+);
+assert.match(
+  readFileSync("src/scripts/verify-production-evidence-package-contract.ts", "utf8"),
+  /--manifest/
 );
 assert.match(
   readFileSync("src/scripts/verify-production-partial-report-contract.ts", "utf8"),
@@ -330,7 +344,10 @@ assert.match(contents.gates, /artifact SHA-256 digests/);
 assert.match(contents.gates, /artifact consistency status/);
 assert.match(contents.gates, /verify-production-artifact-consistency-contract\.ts/);
 assert.match(contents.gates, /verify-production-closeout-summary-contract\.ts/);
+assert.match(contents.gates, /verify-production-evidence-package-contract\.ts/);
 assert.match(contents.gates, /reruns `verify-production-acceptance-evidence-record\.ts`/);
+assert.match(contents.gates, /--manifest-out=<path>/);
+assert.match(contents.gates, /--manifest=<path>/);
 assert.match(contents.gates, /archived closeout\/partial\/checklist artifact pointers/);
 assert.match(contents.gates, /archived closeout summary against the saved artifact paths and SHA-256 digests/);
 assert.match(contents.gates, /page-parity tracker counts/);
@@ -365,13 +382,16 @@ assert.match(contents.cutoverRunbook, /--summary-out=\/tmp\/kiddzonl-production-
 assert.match(contents.cutoverRunbook, /--partials-out=\/tmp\/kiddzonl-production-partials\.json/);
 assert.match(contents.cutoverRunbook, /--checklist-out=\/tmp\/kiddzonl-production-evidence-checklist\.json/);
 assert.match(contents.cutoverRunbook, /verify-production-closeout-summary-contract\.ts/);
+assert.match(contents.cutoverRunbook, /verify-production-evidence-package-contract\.ts/);
 assert.match(contents.cutoverRunbook, /--evidence-record=\/secure\/production-acceptance-evidence\.md/);
+assert.match(contents.cutoverRunbook, /--manifest-out=\/tmp\/kiddzonl-production-evidence-package\.json/);
 assert.match(contents.cutoverRunbook, /report-production-evidence-checklist\.ts --gate=PROD-CRON/);
 assert.match(contents.cutoverRunbook, /--require-zero-partials/);
 assert.match(contents.cutoverRunbook, /release decision `accepted` and remaining production tickets `none`/);
 assert.match(contents.cutoverRunbook, /closeout summary JSON files are archived/);
 assert.match(contents.cutoverRunbook, /production evidence checklist JSON is archived/);
 assert.match(contents.cutoverRunbook, /filled production acceptance record is archived and hash-bound/);
+assert.match(contents.cutoverRunbook, /production evidence package manifest is archived/);
 assert.match(contents.cutoverRunbook, /archived redacted readiness report, closeout summary, partial gate report, and production evidence checklist/);
 assert.match(contents.cutoverRunbook, /final closeout command passes with `--require-zero-partials`/);
 assert.match(contents.cutoverRunbook, /--list-requirements/);
