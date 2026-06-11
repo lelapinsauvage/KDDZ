@@ -96,6 +96,8 @@ function verifyEvidencePackage(closeoutSummaryPath: string) {
     `--evidence-record=${evidenceRecordPath}`,
     `--partial-report=${partialReportPath}`,
     `--checklist-report=${checklistReportPath}`,
+    ...optionalArg("--branch", expectedBranch),
+    ...optionalArg("--commit", expectedCommit),
     ...optionalFlag("--require-zero-partials", process.argv.includes("--require-zero-partials")),
   ], {
     cwd: process.cwd(),
@@ -437,6 +439,10 @@ function optionValue(name: string) {
 
 function optionalFlag(name: string, enabled: boolean) {
   return enabled ? [name] : [];
+}
+
+function optionalArg(name: string, value: string | null | undefined) {
+  return value ? [`${name}=${value}`] : [];
 }
 
 function sha256File(path: string) {

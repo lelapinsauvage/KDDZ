@@ -359,6 +359,14 @@ assert.match(
   /production evidence package commit drifted/
 );
 assert.match(
+  readFileSync("src/scripts/verify-production-evidence-package-contract.ts", "utf8"),
+  /optionalArg\("--branch", expectedBranch\)/
+);
+assert.match(
+  readFileSync("src/scripts/verify-production-evidence-package-contract.ts", "utf8"),
+  /optionalArg\("--commit", expectedCommit\)/
+);
+assert.match(
   readFileSync("src/scripts/verify-production-partial-report-contract.ts", "utf8"),
   /Partial rows: 17/
 );
