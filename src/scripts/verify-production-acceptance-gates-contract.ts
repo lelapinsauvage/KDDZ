@@ -549,6 +549,20 @@ for (const focusedGate of ["PROD-CRON", "PROD-PROVIDERS", "PROD-NATIVE", "PROD-N
     new RegExp(`report-production-partials\\.ts --json --gate=${focusedGate}`),
     `${focusedGate} focused partial report command is missing from cutover runbook`
   );
+  assert.match(
+    contents.cutoverRunbook,
+    new RegExp(`report-production-evidence-checklist\\.ts --json --gate=${focusedGate}`),
+    `${focusedGate} focused checklist command is missing from cutover runbook`
+  );
+}
+for (const focusedArtifact of ["cron", "provider", "native", "nature"]) {
+  assert.match(
+    contents.cutoverRunbook,
+    new RegExp(
+      `verify-production-artifact-consistency-contract\\.ts --partial-report=/tmp/kiddzonl-production-${focusedArtifact}-partials\\.json --checklist-report=/tmp/kiddzonl-production-${focusedArtifact}-checklist\\.json`
+    ),
+    `${focusedArtifact} focused artifact consistency command is missing from cutover runbook`
+  );
 }
 assert.match(contents.gates, /pnpm run verify:production-gates/);
 assert.match(contents.gates, /verify-production-gate-suite\.ts/);

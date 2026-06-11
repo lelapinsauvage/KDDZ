@@ -48,6 +48,17 @@ pnpm tsx src/scripts/verify-production-evidence-package-contract.ts
 pnpm tsx src/scripts/report-production-evidence-checklist.ts --gate=PROD-CRON
 pnpm tsx src/scripts/report-production-evidence-checklist.ts --json --out=/tmp/kiddzonl-production-evidence-checklist.json --generated-at=<release-generated-at-iso>
 pnpm tsx src/scripts/report-production-partials.ts --json --gate=PROD-CRON --out=/tmp/kiddzonl-production-cron-partials.json --generated-at=<release-generated-at-iso>
+pnpm tsx src/scripts/report-production-evidence-checklist.ts --json --gate=PROD-CRON --out=/tmp/kiddzonl-production-cron-checklist.json --generated-at=<release-generated-at-iso>
+pnpm tsx src/scripts/verify-production-artifact-consistency-contract.ts --partial-report=/tmp/kiddzonl-production-cron-partials.json --checklist-report=/tmp/kiddzonl-production-cron-checklist.json
+pnpm tsx src/scripts/report-production-partials.ts --json --gate=PROD-PROVIDERS --out=/tmp/kiddzonl-production-provider-partials.json --generated-at=<release-generated-at-iso>
+pnpm tsx src/scripts/report-production-evidence-checklist.ts --json --gate=PROD-PROVIDERS --out=/tmp/kiddzonl-production-provider-checklist.json --generated-at=<release-generated-at-iso>
+pnpm tsx src/scripts/verify-production-artifact-consistency-contract.ts --partial-report=/tmp/kiddzonl-production-provider-partials.json --checklist-report=/tmp/kiddzonl-production-provider-checklist.json
+pnpm tsx src/scripts/report-production-partials.ts --json --gate=PROD-NATIVE --out=/tmp/kiddzonl-production-native-partials.json --generated-at=<release-generated-at-iso>
+pnpm tsx src/scripts/report-production-evidence-checklist.ts --json --gate=PROD-NATIVE --out=/tmp/kiddzonl-production-native-checklist.json --generated-at=<release-generated-at-iso>
+pnpm tsx src/scripts/verify-production-artifact-consistency-contract.ts --partial-report=/tmp/kiddzonl-production-native-partials.json --checklist-report=/tmp/kiddzonl-production-native-checklist.json
+pnpm tsx src/scripts/report-production-partials.ts --json --gate=PROD-NATURE --out=/tmp/kiddzonl-production-nature-partials.json --generated-at=<release-generated-at-iso>
+pnpm tsx src/scripts/report-production-evidence-checklist.ts --json --gate=PROD-NATURE --out=/tmp/kiddzonl-production-nature-checklist.json --generated-at=<release-generated-at-iso>
+pnpm tsx src/scripts/verify-production-artifact-consistency-contract.ts --partial-report=/tmp/kiddzonl-production-nature-partials.json --checklist-report=/tmp/kiddzonl-production-nature-checklist.json
 pnpm tsx src/scripts/report-production-partials.ts --json --out=/tmp/kiddzonl-production-partials.json --generated-at=<release-generated-at-iso>
 pnpm tsx src/scripts/verify-production-evidence-checklist-contract.ts
 pnpm tsx src/scripts/verify-production-partial-report-contract.ts
