@@ -75,6 +75,7 @@ const requiredReferences = [
   "src/scripts/verify-production-partial-report-contract.ts",
   "src/scripts/verify-production-evidence-checklist-contract.ts",
   "src/scripts/verify-production-artifact-consistency-contract.ts",
+  "src/scripts/verify-production-focused-artifacts-contract.ts",
   "src/scripts/verify-production-readiness-audit-contract.ts",
   "src/scripts/verify-parent-credentialed-native-e2e.ts",
   "src/scripts/verify-legacy-calls-contract.ts",
@@ -552,6 +553,7 @@ for (const focusedGate of ["PROD-CRON", "PROD-PROVIDERS", "PROD-NATIVE", "PROD-N
 assert.match(contents.gates, /pnpm run verify:production-gates/);
 assert.match(contents.gates, /verify-production-gate-suite\.ts/);
 assert.match(contents.gates, /verify-production-artifact-consistency-contract\.ts/);
+assert.match(contents.gates, /verify-production-focused-artifacts-contract\.ts/);
 assert.match(contents.gates, /verify-production-readiness-audit-contract\.ts/);
 assert.match(contents.cutoverRunbook, /--out=\/tmp\/kiddzonl-production-readiness\.json/);
 assert.match(contents.cutoverRunbook, /--env-file=\/secure\/private-readiness\.env/);

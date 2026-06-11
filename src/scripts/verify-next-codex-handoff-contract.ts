@@ -56,6 +56,7 @@ for (const expected of [
   "verify focused production artifacts",
   "summary.gateFilter",
   "verify-production-artifact-consistency-contract.ts",
+  "verify-production-focused-artifacts-contract.ts",
   "--gate=PROD-PROVIDERS",
   "--gate=PROD-NATIVE",
   "--gate=PROD-NATURE",
