@@ -13,6 +13,9 @@ Copy this template into the production release record or ticket system after eac
 | Production approver | name or ticket id |
 | `audit-production-readiness.ts` result | ready count / total gates |
 | Redacted readiness report | non-secret JSON report id/path |
+| Redacted closeout summary | non-secret JSON report id/path |
+| Partial gate report | non-secret JSON report id/path |
+| Production evidence checklist | non-secret JSON report id/path |
 
 ## PROD-DUMPS
 

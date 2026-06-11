@@ -154,7 +154,7 @@ Stop the cutover if either native app crashes on parser-safe endpoints, if produ
 
 ## Phase 5: Final Gate Closure
 
-Populate `docs/production-acceptance-evidence-template.md` in the release record, not with private data in the repo.
+Populate `docs/production-acceptance-evidence-template.md` in the release record, not with private data in the repo. The Run Metadata section must name the archived redacted readiness report, closeout summary, partial gate report, and production evidence checklist.
 
 Final command:
 

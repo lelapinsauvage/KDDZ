@@ -14,6 +14,9 @@ export const requiredProductionEvidenceSections: SectionSpec[] = [
       "Production approver",
       "`audit-production-readiness.ts` result",
       "Redacted readiness report",
+      "Redacted closeout summary",
+      "Partial gate report",
+      "Production evidence checklist",
     ],
   },
   {

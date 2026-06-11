@@ -260,6 +260,10 @@ assert.match(
   readFileSync("src/scripts/verify-production-partial-report-contract.ts", "utf8"),
   /Partial rows: 17/
 );
+assert.match(contents.evidenceTemplate, /Redacted readiness report/);
+assert.match(contents.evidenceTemplate, /Redacted closeout summary/);
+assert.match(contents.evidenceTemplate, /Partial gate report/);
+assert.match(contents.evidenceTemplate, /Production evidence checklist/);
 assert.match(contents.gates, /--out=<path>/);
 assert.match(contents.gates, /--env-file=<path>/);
 assert.match(contents.gates, /verify-production-acceptance-evidence-record\.ts/);
@@ -273,6 +277,7 @@ assert.match(contents.gates, /--checklist-out=\/tmp\/kiddzonl-production-evidenc
 assert.match(contents.gates, /summary includes the redacted readiness counts/);
 assert.match(contents.gates, /partial report path/);
 assert.match(contents.gates, /evidence checklist path/);
+assert.match(contents.gates, /archived closeout\/partial\/checklist artifact pointers/);
 assert.match(contents.gates, /page-parity tracker counts/);
 assert.match(contents.gates, /--require-zero-partials/);
 assert.match(contents.gates, /report-production-partials\.ts/);
@@ -300,6 +305,7 @@ assert.match(contents.cutoverRunbook, /--require-zero-partials/);
 assert.match(contents.cutoverRunbook, /release decision `accepted` and remaining production tickets `none`/);
 assert.match(contents.cutoverRunbook, /closeout summary JSON files are archived/);
 assert.match(contents.cutoverRunbook, /production evidence checklist JSON is archived/);
+assert.match(contents.cutoverRunbook, /archived redacted readiness report, closeout summary, partial gate report, and production evidence checklist/);
 assert.match(contents.cutoverRunbook, /final closeout command passes with `--require-zero-partials`/);
 assert.match(contents.cutoverRunbook, /--list-requirements/);
 assert.match(contents.cutoverRunbook, /--gate=PROD-CRON/);
