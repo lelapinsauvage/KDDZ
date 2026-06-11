@@ -36,12 +36,14 @@ for (const expected of [
   "pnpm run verify:production-gates",
   "--generated-at=<release-generated-at-iso>",
   "--require-zero-partials",
+  "`d4d2251 chore: version closeout summaries`",
+  "`0cedd5b docs: refresh evidence package handoff`",
   "`e7bb81b chore: version evidence package manifests`",
   "`29e45e9 chore: timestamp evidence package manifests`",
   "`7b58b2f chore: freeze readiness evidence timestamps`",
   "`de7a99a chore: validate production artifact timestamps`",
   "Production Evidence Timestamp Hardening",
-  "evidence package manifest also carries a top-level `generatedAt` and `schemaVersion: 1`",
+  "closeout summary and evidence package manifest both carry `schemaVersion: 1`",
 ]) {
   assert.ok(handoff.includes(expected), `handoff missing current marker: ${expected}`);
 }
