@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import {
   productionEvidencePlaceholderValues,
@@ -24,12 +25,14 @@ const readinessReportPath = optionValue("--readiness-report");
 const closeoutSummaryPath = optionValue("--summary-report");
 const partialReportPath = optionValue("--partial-report");
 const checklistReportPath = optionValue("--checklist-report");
+const expectedPartialDigest = optionValue("--partial-digest");
+const expectedChecklistDigest = optionValue("--checklist-digest");
 const expectedBranch = optionValue("--branch");
 const expectedCommit = optionValue("--commit");
 
 if (!recordPath || recordPath.startsWith("-")) {
   console.error(
-    "Usage: pnpm tsx src/scripts/verify-production-acceptance-evidence-record.ts <filled-production-evidence.md> [--readiness-report=<redacted-readiness.json>] [--summary-report=<closeout-summary.json>] [--partial-report=<partials.json>] [--checklist-report=<evidence-checklist.json>] [--branch=<branch>] [--commit=<sha>]"
+    "Usage: pnpm tsx src/scripts/verify-production-acceptance-evidence-record.ts <filled-production-evidence.md> [--readiness-report=<redacted-readiness.json>] [--summary-report=<closeout-summary.json>] [--partial-report=<partials.json>] [--checklist-report=<evidence-checklist.json>] [--partial-digest=<sha256>] [--checklist-digest=<sha256>] [--branch=<branch>] [--commit=<sha>]"
   );
   process.exit(2);
 }
@@ -63,6 +66,7 @@ if (readinessReportPath) {
   verifyReadinessReport(readinessReportPath, sections, errors);
 }
 verifyArtifactPointers(sections, errors);
+verifyArtifactDigests(sections, errors);
 verifyBranchAndCommit(sections, errors);
 verifyFinalDecision(sections, errors);
 
@@ -83,6 +87,10 @@ console.log(
       closeoutSummary: closeoutSummaryPath ?? null,
       partialReport: partialReportPath ?? null,
       evidenceChecklist: checklistReportPath ?? null,
+      expectedDigests: {
+        partialReport: expectedPartialDigest ?? null,
+        evidenceChecklist: expectedChecklistDigest ?? null,
+      },
       branch: expectedBranch ?? null,
       commit: expectedCommit ?? null,
       sections: requiredProductionEvidenceSections.length,
@@ -154,6 +162,9 @@ function assertNoSensitiveContent(value: string) {
 function assertNoPhoneNumbers(value: string) {
   const candidates = value.match(/\b\+?\d[\d().\-\s]{8,}\d\b/g) ?? [];
   for (const candidate of candidates) {
+    if (/^[a-f0-9]{64}$/i.test(candidate.trim())) {
+      continue;
+    }
     const digitCount = candidate.replace(/\D/g, "").length;
     assert.ok(digitCount < 10, "evidence record must not contain phone numbers");
   }
@@ -253,6 +264,42 @@ function verifyArtifactPointers(
       errors.push(`Run Metadata: ${artifact.field} must include ${artifact.path}`);
     }
   }
+}
+
+function verifyArtifactDigests(
+  sections: Map<string, Map<string, string>>,
+  errors: string[]
+) {
+  const metadata = sections.get("Run Metadata");
+  if (!metadata) {
+    return;
+  }
+
+  const expectedArtifacts = [
+    { field: "Partial gate report SHA-256", path: partialReportPath, digest: expectedPartialDigest },
+    { field: "Production evidence checklist SHA-256", path: checklistReportPath, digest: expectedChecklistDigest },
+  ];
+
+  for (const artifact of expectedArtifacts) {
+    if (!artifact.digest) {
+      continue;
+    }
+
+    const expectedDigest = artifact.path ? sha256File(artifact.path) : artifact.digest;
+    if (artifact.path && artifact.digest !== expectedDigest) {
+      errors.push(`${artifact.field}: expected digest argument must match ${artifact.path}`);
+      continue;
+    }
+
+    const value = metadata.get(artifact.field) ?? "";
+    if (!value.includes(expectedDigest)) {
+      errors.push(`Run Metadata: ${artifact.field} must include ${expectedDigest}`);
+    }
+  }
+}
+
+function sha256File(path: string) {
+  return createHash("sha256").update(readFileSync(path)).digest("hex");
 }
 
 function verifyFinalDecision(

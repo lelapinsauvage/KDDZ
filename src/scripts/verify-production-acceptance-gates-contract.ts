@@ -222,6 +222,8 @@ assert.match(evidenceRecordVerifier, /--readiness-report/);
 assert.match(evidenceRecordVerifier, /--summary-report/);
 assert.match(evidenceRecordVerifier, /--partial-report/);
 assert.match(evidenceRecordVerifier, /--checklist-report/);
+assert.match(evidenceRecordVerifier, /--partial-digest/);
+assert.match(evidenceRecordVerifier, /--checklist-digest/);
 assert.match(evidenceRecordVerifier, /--branch/);
 assert.match(evidenceRecordVerifier, /--commit/);
 assert.match(evidenceRecordVerifier, /verifyArtifactPointers/);
@@ -279,7 +281,9 @@ assert.match(
 assert.match(contents.evidenceTemplate, /Redacted readiness report/);
 assert.match(contents.evidenceTemplate, /Redacted closeout summary/);
 assert.match(contents.evidenceTemplate, /Partial gate report/);
+assert.match(contents.evidenceTemplate, /Partial gate report SHA-256/);
 assert.match(contents.evidenceTemplate, /Production evidence checklist/);
+assert.match(contents.evidenceTemplate, /Production evidence checklist SHA-256/);
 assert.match(contents.gates, /--out=<path>/);
 assert.match(contents.gates, /--env-file=<path>/);
 assert.match(contents.gates, /verify-production-acceptance-evidence-record\.ts/);
@@ -310,6 +314,8 @@ assert.match(contents.gates, /--readiness-report=\/tmp\/kiddzonl-production-read
 assert.match(contents.gates, /--summary-report=<path>/);
 assert.match(contents.gates, /--partial-report=<path>/);
 assert.match(contents.gates, /--checklist-report=<path>/);
+assert.match(contents.gates, /--partial-digest=<sha256>/);
+assert.match(contents.gates, /--checklist-digest=<sha256>/);
 assert.match(contents.gates, /--branch=legacy-parity-runbook/);
 assert.match(contents.gates, /--commit=<release-commit-sha>/);
 assert.match(contents.gates, /--list-requirements/);

@@ -16,7 +16,9 @@ export const requiredProductionEvidenceSections: SectionSpec[] = [
       "Redacted readiness report",
       "Redacted closeout summary",
       "Partial gate report",
+      "Partial gate report SHA-256",
       "Production evidence checklist",
+      "Production evidence checklist SHA-256",
     ],
   },
   {
@@ -167,6 +169,7 @@ export const productionEvidencePlaceholderValues = [
   "name or ticket id",
   "ready count / total gates",
   "non-secret json report id/path",
+  "sha256 digest",
   "yes/no",
   "yes/no/family list",
   "disabled/onesignal/webhook",

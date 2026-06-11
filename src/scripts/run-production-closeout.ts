@@ -58,18 +58,6 @@ run("pnpm", [
   `--out=${outputPath}`,
 ]);
 
-run("pnpm", [
-  "tsx",
-  "src/scripts/verify-production-acceptance-evidence-record.ts",
-  evidenceRecordPath,
-  `--readiness-report=${outputPath}`,
-  ...optionalArg("--summary-report", summaryOutputPath),
-  ...optionalArg("--partial-report", partialsOutputPath),
-  ...optionalArg("--checklist-report", checklistOutputPath),
-  `--branch=${branch}`,
-  `--commit=${commit}`,
-]);
-
 const readinessSummary = readReadinessSummary(outputPath);
 const parityTracker = trackerSummary();
 if (partialsOutputPath) {
@@ -98,6 +86,19 @@ const artifactDigests = artifactDigestSummary({
   partialReport: partialsOutputPath,
   evidenceChecklist: checklistOutputPath,
 });
+run("pnpm", [
+  "tsx",
+  "src/scripts/verify-production-acceptance-evidence-record.ts",
+  evidenceRecordPath,
+  `--readiness-report=${outputPath}`,
+  ...optionalArg("--summary-report", summaryOutputPath),
+  ...optionalArg("--partial-report", partialsOutputPath),
+  ...optionalArg("--checklist-report", checklistOutputPath),
+  ...optionalDigestArg("--partial-digest", artifactDigests.partialReport?.digest),
+  ...optionalDigestArg("--checklist-digest", artifactDigests.evidenceChecklist?.digest),
+  `--branch=${branch}`,
+  `--commit=${commit}`,
+]);
 if (requireZeroPartials && parityTracker.partial !== 0) {
   console.error(`Production closeout requires zero partial parity rows; found ${parityTracker.partial}.`);
   process.exit(1);
@@ -247,6 +248,10 @@ function optionValue(name: string) {
 }
 
 function optionalArg(name: string, value: string | null) {
+  return value ? [`${name}=${value}`] : [];
+}
+
+function optionalDigestArg(name: string, value: string | undefined) {
   return value ? [`${name}=${value}`] : [];
 }
 

@@ -23,6 +23,14 @@ try {
   const partialReportPath = join(tmp, "partials.json");
   const checklistReportPath = join(tmp, "evidence-checklist.json");
   writeFileSync(envFilePath, readinessEnvFile(), "utf8");
+  execFileSync("pnpm", ["tsx", "src/scripts/report-production-partials.ts", "--json", `--out=${partialReportPath}`], {
+    cwd: process.cwd(),
+    stdio: "ignore",
+  });
+  execFileSync("pnpm", ["tsx", "src/scripts/report-production-evidence-checklist.ts", "--json", `--out=${checklistReportPath}`], {
+    cwd: process.cwd(),
+    stdio: "ignore",
+  });
   writeFileSync(
     evidenceRecordPath,
     fillTemplate(template, {
@@ -30,6 +38,8 @@ try {
       closeoutSummaryPath,
       partialReportPath,
       checklistReportPath,
+      partialReportDigest: sha256File(partialReportPath),
+      checklistReportDigest: sha256File(checklistReportPath),
     }),
     "utf8"
   );
@@ -236,6 +246,8 @@ type ArtifactPaths = {
   closeoutSummaryPath: string;
   partialReportPath: string;
   checklistReportPath: string;
+  partialReportDigest: string;
+  checklistReportDigest: string;
 };
 
 function filledValueFor(field: string, artifactPaths: ArtifactPaths) {
@@ -246,7 +258,9 @@ function filledValueFor(field: string, artifactPaths: ArtifactPaths) {
   if (field === "Redacted readiness report") return artifactPaths.readinessReportPath;
   if (field === "Redacted closeout summary") return artifactPaths.closeoutSummaryPath;
   if (field === "Partial gate report") return artifactPaths.partialReportPath;
+  if (field === "Partial gate report SHA-256") return artifactPaths.partialReportDigest;
   if (field === "Production evidence checklist") return artifactPaths.checklistReportPath;
+  if (field === "Production evidence checklist SHA-256") return artifactPaths.checklistReportDigest;
   if (field === "Release decision") return "accepted";
   if (field === "Remaining production tickets") return "none";
   if (field === "Approval link/id") return "release-ticket-verified";
