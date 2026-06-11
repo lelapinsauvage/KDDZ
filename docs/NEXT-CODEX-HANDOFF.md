@@ -337,12 +337,12 @@ Current progress:
 The remaining 17 partial rows are production/external acceptance gates: PROD-CRON, PROD-NATIVE, PROD-NATURE, and PROD-PROVIDERS.
 
 Recent pushed commits:
-9973efc chore: surface package artifact timestamps
-5eda6bf chore: forward package release ref
-14bd747 chore: align cutover generated-at examples
-547442e chore: timestamp production evidence artifacts
-18eb7ae chore: require explicit final closeout ref
-b60a5fd chore: require final closeout release ref
+d4d2251 chore: version closeout summaries
+0cedd5b docs: refresh evidence package handoff
+e7bb81b chore: version evidence package manifests
+29e45e9 chore: timestamp evidence package manifests
+7b58b2f chore: freeze readiness evidence timestamps
+de7a99a chore: validate production artifact timestamps
 
 Continue from the production/external acceptance gates. First run `pnpm tsx src/scripts/report-production-partials.ts --json`, `pnpm tsx src/scripts/report-production-evidence-checklist.ts --json`, and `pnpm run verify:production-gates`. Work the first gate with real evidence available: canonical production SQL/media import and reconciliation, hosted cron evidence, provider delivery rollout, iOS/Android native-device acceptance, production `notifications_nature` acceptance, or print/stationery acceptance. Do not mark the goal complete until the parity matrix has zero partial rows and the closeout summary plus evidence package verifiers pass with `--require-zero-partials`.
 ```

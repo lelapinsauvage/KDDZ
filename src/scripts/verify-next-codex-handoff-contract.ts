@@ -61,6 +61,9 @@ for (const stale of [
   "64.7%",
   "next recommended slice is parent native `notifications_master.php`",
   "Exact Next Best Slice\\n\\nContinue with parent native API compatibility",
+  "Recent pushed commits:\\n9973efc chore: surface package artifact timestamps",
+  "18eb7ae chore: require explicit final closeout ref",
+  "b60a5fd chore: require final closeout release ref",
 ]) {
   assert.doesNotMatch(handoff, new RegExp(stale), `handoff still contains stale marker: ${stale}`);
 }
