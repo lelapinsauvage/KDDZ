@@ -228,6 +228,7 @@ assert.match(closeoutRunner, /parityTracker/);
 assert.match(closeoutRunner, /--require-zero-partials/);
 assert.match(partialReporter, /partial-production-gate-map\.md/);
 assert.match(partialReporter, /page-parity-matrix\.json/);
+assert.match(partialReporter, /gateCounts/);
 assert.match(productionGateSuite, /verify-production-acceptance-gates-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-readiness-audit-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-acceptance-evidence-record-contract\.ts/);

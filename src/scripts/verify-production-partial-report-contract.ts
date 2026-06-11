@@ -10,13 +10,19 @@ const jsonOutput = execFileSync("pnpm", ["tsx", script, "--json"], {
 
 const payload = JSON.parse(jsonOutput) as {
   status?: string;
-  summary?: { partialRows?: number; gates?: string[] };
+  summary?: { partialRows?: number; gates?: string[]; gateCounts?: Record<string, number> };
   rows?: Array<{ row?: string; gates?: string[]; matrixStatus?: string; closureReason?: string }>;
 };
 
 assert.equal(payload.status, "production partial gate report");
 assert.equal(payload.summary?.partialRows, 17);
 assert.deepEqual(payload.summary?.gates, ["PROD-CRON", "PROD-NATIVE", "PROD-NATURE", "PROD-PROVIDERS"]);
+assert.deepEqual(payload.summary?.gateCounts, {
+  "PROD-CRON": 9,
+  "PROD-NATIVE": 3,
+  "PROD-NATURE": 1,
+  "PROD-PROVIDERS": 14,
+});
 assert.equal(payload.rows?.length, 17);
 assert.equal(payload.rows?.[0]?.row, "P01");
 assert.equal(payload.rows?.[16]?.row, "P17");
@@ -31,6 +37,7 @@ const markdownOutput = execFileSync("pnpm", ["tsx", script], {
 });
 assert.match(markdownOutput, /Production Partial Gate Report/);
 assert.match(markdownOutput, /Partial rows: 17/);
+assert.match(markdownOutput, /\| PROD-PROVIDERS \| 14 \|/);
 assert.match(markdownOutput, /P17/);
 
 console.log("production partial report contract assertions passed");

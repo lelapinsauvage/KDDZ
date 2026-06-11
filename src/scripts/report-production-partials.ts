@@ -1,6 +1,5 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import { mkdirSync } from "node:fs";
 
 type ParityRow = {
   status?: string;
@@ -42,6 +41,7 @@ const reportRows = mapRows.map((row, index): PartialGateRow => {
 const summary = {
   partialRows: reportRows.length,
   gates: [...new Set(reportRows.flatMap((row) => row.gates))].sort(),
+  gateCounts: gateCounts(reportRows),
 };
 const payload = {
   status: "production partial gate report",
@@ -109,10 +109,15 @@ function parsePartialGateMap() {
 }
 
 function renderMarkdown(rows: PartialGateRow[]) {
+  const counts = gateCounts(rows);
   const lines = [
     "# Production Partial Gate Report",
     "",
     `Partial rows: ${rows.length}`,
+    "",
+    "| Gate | Blocking partial rows |",
+    "| --- | --- |",
+    ...Object.entries(counts).map(([gate, count]) => `| ${gate} | ${count} |`),
     "",
     "| Row | Gates | Status anchor | Closure reason |",
     "| --- | --- | --- | --- |",
@@ -120,6 +125,16 @@ function renderMarkdown(rows: PartialGateRow[]) {
     "",
   ];
   return `${lines.join("\n")}\n`;
+}
+
+function gateCounts(rows: PartialGateRow[]) {
+  const counts: Record<string, number> = {};
+  for (const row of rows) {
+    for (const gate of row.gates) {
+      counts[gate] = (counts[gate] ?? 0) + 1;
+    }
+  }
+  return Object.fromEntries(Object.entries(counts).sort(([a], [b]) => a.localeCompare(b)));
 }
 
 function optionValue(name: string) {
