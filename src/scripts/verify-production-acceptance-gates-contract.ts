@@ -67,6 +67,7 @@ const requiredReferences = [
   "src/scripts/run-production-closeout.ts",
   "src/scripts/report-production-partials.ts",
   "src/scripts/report-production-focused-artifacts.ts",
+  "src/scripts/report-production-preflight-artifacts.ts",
   "src/scripts/report-production-gate-status.ts",
   "src/scripts/verify-production-focused-artifacts-manifest.ts",
   "src/scripts/verify-production-focused-artifacts-manifest-contract.ts",
@@ -82,6 +83,7 @@ const requiredReferences = [
   "src/scripts/verify-production-evidence-checklist-contract.ts",
   "src/scripts/verify-production-artifact-consistency-contract.ts",
   "src/scripts/verify-production-focused-artifacts-contract.ts",
+  "src/scripts/verify-production-preflight-artifacts-contract.ts",
   "src/scripts/verify-production-readiness-audit-contract.ts",
   "src/scripts/verify-production-readiness-env-template-contract.ts",
   "src/scripts/verify-parent-credentialed-native-e2e.ts",
@@ -349,6 +351,7 @@ assert.match(productionGateSuite, /verify-production-evidence-package-contract\.
 assert.match(productionGateSuite, /verify-production-partial-report-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-evidence-checklist-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-artifact-consistency-contract\.ts/);
+assert.match(productionGateSuite, /verify-production-preflight-artifacts-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-gate-ledger-contract\.ts/);
 assert.match(productionGateSuite, /verify-next-codex-handoff-contract\.ts/);
 assert.match(productionGateSuite, /page-parity-matrix\.json/);
@@ -529,6 +532,7 @@ assert.match(contents.gates, /page-parity tracker counts/);
 assert.match(contents.gates, /--require-zero-partials/);
 assert.match(contents.gates, /report-production-partials\.ts/);
 assert.match(contents.gates, /report-production-focused-artifacts\.ts/);
+assert.match(contents.gates, /report-production-preflight-artifacts\.ts/);
 assert.match(contents.gates, /report-production-gate-status\.ts/);
 assert.match(contents.gates, /--require-ready/);
 assert.match(contents.gates, /verify-production-focused-artifacts-manifest\.ts/);
@@ -537,6 +541,7 @@ assert.match(contents.gates, /`generatedAt` ISO timestamps/);
 assert.match(contents.gates, /readiness, partial, checklist, closeout summary, and evidence package JSON artifacts carry `schemaVersion: 1`/);
 assert.match(contents.gates, /kiddzonl-production-partials\.json/);
 assert.match(contents.gates, /kiddzonl-production-evidence-checklist\.json/);
+assert.match(contents.gates, /kiddzonl-production-preflight-artifacts\.json/);
 assert.match(contents.gates, /--readiness-report=<path>/);
 assert.match(contents.gates, /--readiness-report=\/tmp\/kiddzonl-production-readiness\.json/);
 assert.match(contents.gates, /verify-production-closeout-summary-contract\.ts .*--require-zero-partials/);
@@ -587,6 +592,8 @@ assert.match(contents.gates, /verify-production-gate-status-contract\.ts/);
 assert.match(contents.gates, /verify-production-readiness-audit-contract\.ts/);
 assert.match(contents.gates, /readiness env template contract/);
 assert.match(contents.gates, /report-production-gate-status\.ts --json --blocking-only --out=\/tmp\/kiddzonl-production-blocking-gate-status\.json --generated-at=<release-generated-at-iso>/);
+assert.match(contents.gates, /report-production-preflight-artifacts\.ts --out-dir=\/tmp\/kiddzonl-production-preflight-artifacts --generated-at=<release-generated-at-iso>/);
+assert.match(contents.gates, /verify-production-preflight-artifacts-contract\.ts/);
 assert.match(contents.gates, /`--blocking-only` to show only gates that still block partial parity rows/);
 assert.match(contents.cutoverRunbook, /render-production-readiness-env-template\.ts --out=\/secure\/private-readiness\.env/);
 assert.match(contents.cutoverRunbook, /render-production-readiness-env-template\.ts --gate=PROD-CRON/);
@@ -597,6 +604,7 @@ assert.equal(existsSync("docs/production-readiness.env.example"), false);
 assert.match(contents.cutoverRunbook, /--out=\/tmp\/kiddzonl-production-readiness\.json/);
 assert.match(contents.cutoverRunbook, /report-production-gate-status\.ts --json --out=\/tmp\/kiddzonl-production-gate-status\.json --generated-at=<release-generated-at-iso>/);
 assert.match(contents.cutoverRunbook, /report-production-gate-status\.ts --json --blocking-only --out=\/tmp\/kiddzonl-production-blocking-gate-status\.json --generated-at=<release-generated-at-iso>/);
+assert.match(contents.cutoverRunbook, /report-production-preflight-artifacts\.ts --out-dir=\/tmp\/kiddzonl-production-preflight-artifacts --generated-at=<release-generated-at-iso>/);
 assert.match(contents.cutoverRunbook, /report-production-gate-status\.ts --json --env-file=\/secure\/private-readiness\.env --out=\/tmp\/kiddzonl-production-gate-status\.json --generated-at=<release-generated-at-iso> --require-ready/);
 assert.match(contents.cutoverRunbook, /--env-file=\/secure\/private-readiness\.env/);
 assert.match(contents.cutoverRunbook, /verify-production-acceptance-evidence-record\.ts \/secure\/production-acceptance-evidence\.md --readiness-report=\/tmp\/kiddzonl-production-readiness\.json --branch=legacy-parity-runbook --commit=<release-commit-sha>/);

@@ -73,6 +73,8 @@ const generatedAt = generatedAtValue();
 const selectedGate = optionValue("--gate");
 const requireReady = process.argv.includes("--require-ready");
 const blockingOnly = process.argv.includes("--blocking-only");
+const parityMatrixPath = optionValue("--parity-matrix");
+const partialGateMapPath = optionValue("--partial-gate-map");
 
 const readiness = runJson<ReadinessReport>("src/scripts/audit-production-readiness.ts", [
   "--json",
@@ -84,11 +86,14 @@ const partials = runJson<PartialReport>("src/scripts/report-production-partials.
   "--json",
   `--generated-at=${generatedAt}`,
   ...optionalArg("--gate", selectedGate),
+  ...optionalArg("--parity-matrix", parityMatrixPath),
+  ...optionalArg("--partial-gate-map", partialGateMapPath),
 ]);
 const checklist = runJson<EvidenceChecklist>("src/scripts/report-production-evidence-checklist.ts", [
   "--json",
   `--generated-at=${generatedAt}`,
   ...optionalArg("--gate", selectedGate),
+  ...optionalArg("--partial-gate-map", partialGateMapPath),
 ]);
 
 assert.equal(readiness.redacted, true);

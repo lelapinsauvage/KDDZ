@@ -61,6 +61,10 @@ const checks = [
     command: ["pnpm", "tsx", "src/scripts/verify-production-focused-artifacts-manifest-contract.ts"],
   },
   {
+    label: "production preflight artifacts contract",
+    command: ["pnpm", "tsx", "src/scripts/verify-production-preflight-artifacts-contract.ts"],
+  },
+  {
     label: "production gate status contract",
     command: ["pnpm", "tsx", "src/scripts/verify-production-gate-status-contract.ts"],
   },
