@@ -121,24 +121,28 @@ const evidenceAudits = evidenceGateRequirements.map(auditEvidenceGate);
 const providerAudits = [auditPushProvider(), auditEmailProvider(), auditChannelProvider("SMS"), auditChannelProvider("WHATSAPP")];
 const providerDeliveryAudit = auditAnyEnv(["PROVIDER_DELIVERY_ACCEPTANCE_REPORT"]);
 const providerRolloutAudit = auditAnyEnv(["PROVIDER_CHANNEL_ROLLOUT_REPORT"]);
+const providerResponseIdAudit = auditAnyEnv(["PROVIDER_RESPONSE_ID_AUDIT_REPORT"]);
 const cronSecretAudit = auditAnyEnv(["CRON_SECRET", "VERCEL_CRON_SECRET"]);
 const providerGate: GateAudit = {
   gate: "PROD-PROVIDERS",
   status:
     providerAudits.every((audit) => audit.status !== "incomplete") &&
     providerDeliveryAudit.missing.length === 0 &&
-    providerRolloutAudit.missing.length === 0
+    providerRolloutAudit.missing.length === 0 &&
+    providerResponseIdAudit.missing.length === 0
       ? "ready-to-review"
       : "needs-evidence",
   present: [
     ...providerAudits.flatMap((audit) => audit.present.map((item) => `${audit.name}:${item}`)),
     ...providerDeliveryAudit.present.map((item) => `delivery-evidence:${item}`),
     ...providerRolloutAudit.present.map((item) => `rollout-evidence:${item}`),
+    ...providerResponseIdAudit.present.map((item) => `response-id-evidence:${item}`),
   ],
   missing: [
     ...providerAudits.flatMap((audit) => audit.missing.map((item) => `${audit.name}:${item}`)),
     ...providerDeliveryAudit.missing.map((item) => `delivery-evidence:${item}`),
     ...providerRolloutAudit.missing.map((item) => `rollout-evidence:${item}`),
+    ...providerResponseIdAudit.missing.map((item) => `response-id-evidence:${item}`),
   ],
 };
 const cronGate = evidenceAudits.find((audit) => audit.gate === "PROD-CRON");
@@ -428,6 +432,11 @@ function printRequirements(params: { json: boolean; gateFilter: GateId | null })
       provider: "rollout-evidence",
       acceptedSetup:
         "PROVIDER_CHANNEL_ROLLOUT_REPORT pointing to a non-secret family-by-family push/email/SMS/WhatsApp rollout matrix with sent/skipped/disabled decisions",
+    },
+    {
+      provider: "response-id-evidence",
+      acceptedSetup:
+        "PROVIDER_RESPONSE_ID_AUDIT_REPORT pointing to a non-secret provider response-id audit with secrets, URLs, phone numbers, and payload bodies removed",
     },
     {
       provider: "push",
