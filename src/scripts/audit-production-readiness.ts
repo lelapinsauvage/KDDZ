@@ -66,7 +66,11 @@ const evidenceGateRequirements: Array<{
   },
   {
     gate: "PROD-NATIVE",
-    env: ["NATIVE_IOS_ACCEPTANCE_REPORT", "NATIVE_ANDROID_ACCEPTANCE_REPORT"],
+    env: [
+      "NATIVE_IOS_ACCEPTANCE_REPORT",
+      "NATIVE_ANDROID_ACCEPTANCE_REPORT",
+      "NATIVE_LEGACY_ROUTE_ACCEPTANCE_REPORT",
+    ],
   },
   {
     gate: "PROD-NATURE",

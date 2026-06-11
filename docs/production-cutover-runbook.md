@@ -149,6 +149,7 @@ Evidence pointers to set:
 ```bash
 NATIVE_IOS_ACCEPTANCE_REPORT=<non-secret report id/path>
 NATIVE_ANDROID_ACCEPTANCE_REPORT=<non-secret report id/path>
+NATIVE_LEGACY_ROUTE_ACCEPTANCE_REPORT=<non-secret master.php and ws/*.php report id/path>
 NOTIFICATIONS_NATURE_ACCEPTANCE_REPORT=<non-secret report id/path>
 PRINT_STATIONERY_ACCEPTANCE_REPORT=<non-secret report id/path>
 REAL_CALL_ROWS_ACCEPTANCE_REPORT=<non-secret report id/path>
