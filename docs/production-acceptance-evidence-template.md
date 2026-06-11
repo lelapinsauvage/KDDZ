@@ -13,6 +13,7 @@ Copy this template into the production release record or ticket system after eac
 | Production approver | name or ticket id |
 | `audit-production-readiness.ts` result | ready count / total gates |
 | Redacted readiness report | non-secret JSON report id/path |
+| Redacted readiness report SHA-256 | sha256 digest |
 | Redacted closeout summary | non-secret JSON report id/path |
 | Partial gate report | non-secret JSON report id/path |
 | Partial gate report SHA-256 | sha256 digest |

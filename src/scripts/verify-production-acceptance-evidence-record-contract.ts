@@ -29,6 +29,10 @@ try {
     cwd: process.cwd(),
     stdio: "ignore",
   });
+  writeFileSync(readinessReportPath, JSON.stringify(readinessReport(), null, 2), "utf8");
+  const readinessReportDigest = sha256File(readinessReportPath);
+  const partialReportDigest = sha256File(partialReportPath);
+  const checklistReportDigest = sha256File(checklistReportPath);
   writeFileSync(
     validRecordPath,
     fillTemplate(template, {
@@ -36,20 +40,21 @@ try {
       closeoutSummaryPath,
       partialReportPath,
       checklistReportPath,
-      partialReportDigest: sha256File(partialReportPath),
-      checklistReportDigest: sha256File(checklistReportPath),
+      readinessReportDigest,
+      partialReportDigest,
+      checklistReportDigest,
     }),
     "utf8"
   );
-  writeFileSync(readinessReportPath, JSON.stringify(readinessReport(), null, 2), "utf8");
 
   const validRecord = runVerifier(validRecordPath, [
     `--readiness-report=${readinessReportPath}`,
     `--summary-report=${closeoutSummaryPath}`,
     `--partial-report=${partialReportPath}`,
     `--checklist-report=${checklistReportPath}`,
-    `--partial-digest=${sha256File(partialReportPath)}`,
-    `--checklist-digest=${sha256File(checklistReportPath)}`,
+    `--readiness-digest=${readinessReportDigest}`,
+    `--partial-digest=${partialReportDigest}`,
+    `--checklist-digest=${checklistReportDigest}`,
     "--branch=legacy-parity-runbook",
     "--commit=0404c6a",
   ]);
@@ -102,8 +107,9 @@ try {
     `--summary-report=${closeoutSummaryPath}`,
     `--partial-report=${partialReportPath}`,
     `--checklist-report=${checklistReportPath}`,
-    `--partial-digest=${sha256File(partialReportPath)}`,
-    `--checklist-digest=${sha256File(checklistReportPath)}`,
+    `--readiness-digest=${readinessReportDigest}`,
+    `--partial-digest=${partialReportDigest}`,
+    `--checklist-digest=${checklistReportDigest}`,
     "--branch=legacy-parity-runbook",
     "--commit=deadbeef",
   ]);
@@ -123,8 +129,9 @@ try {
     `--summary-report=${closeoutSummaryPath}`,
     `--partial-report=${partialReportPath}`,
     `--checklist-report=${checklistReportPath}`,
-    `--partial-digest=${sha256File(partialReportPath)}`,
-    `--checklist-digest=${sha256File(checklistReportPath)}`,
+    `--readiness-digest=${readinessReportDigest}`,
+    `--partial-digest=${partialReportDigest}`,
+    `--checklist-digest=${checklistReportDigest}`,
     "--branch=legacy-parity-runbook",
     "--commit=0404c6a",
   ]);
@@ -139,8 +146,9 @@ try {
     `--summary-report=${closeoutSummaryPath}`,
     `--partial-report=${partialReportPath}`,
     `--checklist-report=${checklistReportPath}`,
-    `--partial-digest=${sha256File(partialReportPath)}`,
-    `--checklist-digest=${sha256File(checklistReportPath)}`,
+    `--readiness-digest=${readinessReportDigest}`,
+    `--partial-digest=${partialReportDigest}`,
+    `--checklist-digest=${checklistReportDigest}`,
     "--branch=legacy-parity-runbook",
     "--commit=0404c6a",
   ]);
@@ -157,18 +165,22 @@ try {
       closeoutSummaryPath,
       partialReportPath,
       checklistReportPath,
+      readinessReportDigest: "0".repeat(64),
       partialReportDigest: "0".repeat(64),
       checklistReportDigest: "1".repeat(64),
     }),
     "utf8"
   );
   const staleDigest = runVerifier(staleDigestPath, [
+    `--readiness-report=${readinessReportPath}`,
+    `--readiness-digest=${readinessReportDigest}`,
     `--partial-report=${partialReportPath}`,
     `--checklist-report=${checklistReportPath}`,
-    `--partial-digest=${sha256File(partialReportPath)}`,
-    `--checklist-digest=${sha256File(checklistReportPath)}`,
+    `--partial-digest=${partialReportDigest}`,
+    `--checklist-digest=${checklistReportDigest}`,
   ]);
   assert.equal(staleDigest.status, 1);
+  assert.match(staleDigest.stderr, /Redacted readiness report SHA-256 must include/);
   assert.match(staleDigest.stderr, /Partial gate report SHA-256 must include/);
   assert.match(staleDigest.stderr, /Production evidence checklist SHA-256 must include/);
 } finally {
@@ -209,6 +221,7 @@ type ArtifactPaths = {
   closeoutSummaryPath: string;
   partialReportPath: string;
   checklistReportPath: string;
+  readinessReportDigest: string;
   partialReportDigest: string;
   checklistReportDigest: string;
 };
@@ -219,6 +232,7 @@ function filledValueFor(field: string, artifactPaths: ArtifactPaths | null) {
   if (field === "Modern branch/commit") return "`legacy-parity-runbook` / 0404c6a";
   if (field === "`audit-production-readiness.ts` result") return "12/12 ready";
   if (field === "Redacted readiness report") return artifactPaths?.readinessReportPath ?? "accepted evidence recorded in release-ticket-verified";
+  if (field === "Redacted readiness report SHA-256") return artifactPaths?.readinessReportDigest ?? "accepted evidence recorded in release-ticket-verified";
   if (field === "Redacted closeout summary") return artifactPaths?.closeoutSummaryPath ?? "accepted evidence recorded in release-ticket-verified";
   if (field === "Partial gate report") return artifactPaths?.partialReportPath ?? "accepted evidence recorded in release-ticket-verified";
   if (field === "Partial gate report SHA-256") return artifactPaths?.partialReportDigest ?? "accepted evidence recorded in release-ticket-verified";

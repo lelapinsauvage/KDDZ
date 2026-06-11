@@ -223,6 +223,7 @@ assert.match(evidenceRecordVerifier, /--readiness-report/);
 assert.match(evidenceRecordVerifier, /--summary-report/);
 assert.match(evidenceRecordVerifier, /--partial-report/);
 assert.match(evidenceRecordVerifier, /--checklist-report/);
+assert.match(evidenceRecordVerifier, /--readiness-digest/);
 assert.match(evidenceRecordVerifier, /--partial-digest/);
 assert.match(evidenceRecordVerifier, /--checklist-digest/);
 assert.match(evidenceRecordVerifier, /--branch/);
@@ -295,6 +296,7 @@ assert.match(
   /readFileSync/
 );
 assert.match(contents.evidenceTemplate, /Redacted readiness report/);
+assert.match(contents.evidenceTemplate, /Redacted readiness report SHA-256/);
 assert.match(contents.evidenceTemplate, /Redacted closeout summary/);
 assert.match(contents.evidenceTemplate, /Partial gate report/);
 assert.match(contents.evidenceTemplate, /Partial gate report SHA-256/);
@@ -332,6 +334,7 @@ assert.match(contents.gates, /--readiness-report=\/tmp\/kiddzonl-production-read
 assert.match(contents.gates, /--summary-report=<path>/);
 assert.match(contents.gates, /--partial-report=<path>/);
 assert.match(contents.gates, /--checklist-report=<path>/);
+assert.match(contents.gates, /--readiness-digest=<sha256>/);
 assert.match(contents.gates, /--partial-digest=<sha256>/);
 assert.match(contents.gates, /--checklist-digest=<sha256>/);
 assert.match(contents.gates, /--branch=legacy-parity-runbook/);

@@ -155,6 +155,7 @@ function verifySelfTestContract() {
         closeoutSummaryPath,
         partialReportPath,
         checklistReportPath,
+        readinessReportDigest: "verified in closeout summary artifact digests",
         partialReportDigest: sha256File(partialReportPath),
         checklistReportDigest: sha256File(checklistReportPath),
       }),
@@ -305,6 +306,7 @@ type ArtifactPaths = {
   closeoutSummaryPath: string;
   partialReportPath: string;
   checklistReportPath: string;
+  readinessReportDigest: string;
   partialReportDigest: string;
   checklistReportDigest: string;
 };
@@ -337,6 +339,7 @@ function filledValueFor(field: string, artifactPaths: ArtifactPaths) {
   if (field === "Modern branch/commit") return "`legacy-parity-runbook` / 0404c6a";
   if (field === "`audit-production-readiness.ts` result") return "12/12 ready";
   if (field === "Redacted readiness report") return artifactPaths.readinessReportPath;
+  if (field === "Redacted readiness report SHA-256") return artifactPaths.readinessReportDigest;
   if (field === "Redacted closeout summary") return artifactPaths.closeoutSummaryPath;
   if (field === "Partial gate report") return artifactPaths.partialReportPath;
   if (field === "Partial gate report SHA-256") return artifactPaths.partialReportDigest;

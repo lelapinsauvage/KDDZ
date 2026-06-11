@@ -25,6 +25,7 @@ const readinessReportPath = optionValue("--readiness-report");
 const closeoutSummaryPath = optionValue("--summary-report");
 const partialReportPath = optionValue("--partial-report");
 const checklistReportPath = optionValue("--checklist-report");
+const expectedReadinessDigest = optionValue("--readiness-digest");
 const expectedPartialDigest = optionValue("--partial-digest");
 const expectedChecklistDigest = optionValue("--checklist-digest");
 const expectedBranch = optionValue("--branch");
@@ -32,7 +33,7 @@ const expectedCommit = optionValue("--commit");
 
 if (!recordPath || recordPath.startsWith("-")) {
   console.error(
-    "Usage: pnpm tsx src/scripts/verify-production-acceptance-evidence-record.ts <filled-production-evidence.md> [--readiness-report=<redacted-readiness.json>] [--summary-report=<closeout-summary.json>] [--partial-report=<partials.json>] [--checklist-report=<evidence-checklist.json>] [--partial-digest=<sha256>] [--checklist-digest=<sha256>] [--branch=<branch>] [--commit=<sha>]"
+    "Usage: pnpm tsx src/scripts/verify-production-acceptance-evidence-record.ts <filled-production-evidence.md> [--readiness-report=<redacted-readiness.json>] [--summary-report=<closeout-summary.json>] [--partial-report=<partials.json>] [--checklist-report=<evidence-checklist.json>] [--readiness-digest=<sha256>] [--partial-digest=<sha256>] [--checklist-digest=<sha256>] [--branch=<branch>] [--commit=<sha>]"
   );
   process.exit(2);
 }
@@ -88,6 +89,7 @@ console.log(
       partialReport: partialReportPath ?? null,
       evidenceChecklist: checklistReportPath ?? null,
       expectedDigests: {
+        readinessReport: expectedReadinessDigest ?? null,
         partialReport: expectedPartialDigest ?? null,
         evidenceChecklist: expectedChecklistDigest ?? null,
       },
@@ -276,6 +278,7 @@ function verifyArtifactDigests(
   }
 
   const expectedArtifacts = [
+    { field: "Redacted readiness report SHA-256", path: readinessReportPath, digest: expectedReadinessDigest },
     { field: "Partial gate report SHA-256", path: partialReportPath, digest: expectedPartialDigest },
     { field: "Production evidence checklist SHA-256", path: checklistReportPath, digest: expectedChecklistDigest },
   ];
