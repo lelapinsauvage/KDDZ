@@ -27,16 +27,19 @@ Preview the full evidence/provider requirement list before collecting values:
 
 ```bash
 pnpm tsx src/scripts/audit-production-readiness.ts --list-requirements
+pnpm tsx src/scripts/render-production-readiness-env-template.ts --out=/secure/private-readiness.env
 pnpm tsx src/scripts/audit-production-readiness.ts --list-requirements --gate=PROD-CRON
+pnpm tsx src/scripts/render-production-readiness-env-template.ts --gate=PROD-CRON
 pnpm tsx src/scripts/report-production-evidence-checklist.ts --gate=PROD-CRON
 pnpm tsx src/scripts/audit-production-readiness.ts --env-file=/secure/private-readiness.env --gate=PROD-CRON --generated-at=<release-generated-at-iso>
 pnpm tsx src/scripts/verify-production-acceptance-evidence-record.ts /secure/production-acceptance-evidence.md --readiness-report=/tmp/kiddzonl-production-readiness.json --branch=legacy-parity-runbook --commit=<release-commit-sha>
 pnpm run closeout:production -- --env-file=/secure/private-readiness.env --evidence-record=/secure/production-acceptance-evidence.md --out=/tmp/kiddzonl-production-readiness.json --summary-out=/tmp/kiddzonl-production-closeout-summary.json --partials-out=/tmp/kiddzonl-production-partials.json --checklist-out=/tmp/kiddzonl-production-evidence-checklist.json --branch=legacy-parity-runbook --commit=<release-commit-sha> --generated-at=<release-generated-at-iso>
 pnpm run verify:production-gates
+pnpm tsx src/scripts/verify-production-readiness-env-template-contract.ts
 pnpm tsx src/scripts/verify-production-readiness-audit-contract.ts
 ```
 
-Use `docs/production-readiness.env.example` as the non-secret list of evidence pointer names to configure in the production secret/evidence manager.
+Use `render-production-readiness-env-template.ts` to create the private readiness env skeleton outside git, then fill that private file with evidence pointers in the production secret/evidence manager.
 
 Stop the cutover if the authoritative dump set is ambiguous, the selected first migration dump is not approved, or cron ownership cannot decide whether commented legacy blocks remain disabled.
 

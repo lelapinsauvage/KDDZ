@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import packageJson from "../../package.json";
 
 type ParityRow = {
@@ -22,7 +22,6 @@ const files = {
   evidenceTemplate: "docs/production-acceptance-evidence-template.md",
   cutoverRunbook: "docs/production-cutover-runbook.md",
   partialGateMap: "docs/partial-production-gate-map.md",
-  readinessEnvExample: "docs/production-readiness.env.example",
   fileStoragePipeline: "docs/file-storage-pipeline.md",
   legacyFileStorageRules: "docs/legacy-file-storage-rules.md",
 };
@@ -60,9 +59,9 @@ const requiredReferences = [
   "docs/production-acceptance-evidence-template.md",
   "docs/production-cutover-runbook.md",
   "docs/partial-production-gate-map.md",
-  "docs/production-readiness.env.example",
   "src/scripts/migration/README.md",
   "src/scripts/audit-production-readiness.ts",
+  "src/scripts/render-production-readiness-env-template.ts",
   "src/scripts/verify-production-acceptance-evidence-record.ts",
   "src/scripts/render-production-acceptance-evidence-record.ts",
   "src/scripts/run-production-closeout.ts",
@@ -84,6 +83,7 @@ const requiredReferences = [
   "src/scripts/verify-production-artifact-consistency-contract.ts",
   "src/scripts/verify-production-focused-artifacts-contract.ts",
   "src/scripts/verify-production-readiness-audit-contract.ts",
+  "src/scripts/verify-production-readiness-env-template-contract.ts",
   "src/scripts/verify-parent-credentialed-native-e2e.ts",
   "src/scripts/verify-legacy-calls-contract.ts",
   "src/scripts/migration/reconcile-migration-counts.ts",
@@ -117,7 +117,6 @@ for (const envName of [
   "LEGACY_CHANNEL_DELIVERY_WEBHOOK_URL",
 ]) {
   assert.match(contents.gates, new RegExp(`\\b${envName}\\b`), `${envName} must be named without a value`);
-  assert.match(contents.readinessEnvExample, new RegExp(`\\b${envName}\\b`), `${envName} is missing from readiness env example`);
   assert.doesNotMatch(contents.gates, new RegExp(`${envName}\\s*=`), `${envName} must not have an inline value`);
 }
 
@@ -175,19 +174,17 @@ for (const evidenceEnvName of [
   "LEGACY_BACKFILL_RERUN_REPORT",
   "LEGACY_BACKFILL_TICKET_TRIAGE_REPORT",
 ]) {
-  assert.match(contents.readinessEnvExample, new RegExp(`\\b${evidenceEnvName}\\b`), `${evidenceEnvName} is missing from readiness env example`);
+  assert.match(contents.gates, new RegExp(`\\b${evidenceEnvName}\\b`), `${evidenceEnvName} must be documented in production gates`);
 }
 
 assert.doesNotMatch(contents.gates, /https?:\/\/[^\s)]+/i, "production gates must not include webhook URLs");
 assert.doesNotMatch(contents.evidenceTemplate, /https?:\/\/[^\s)]+/i, "evidence template must not include webhook URLs");
 assert.doesNotMatch(contents.cutoverRunbook, /https?:\/\/[^\s)]+/i, "cutover runbook must not include webhook URLs");
 assert.doesNotMatch(contents.partialGateMap, /https?:\/\/[^\s)]+/i, "partial gate map must not include webhook URLs");
-assert.doesNotMatch(contents.readinessEnvExample, /https?:\/\/[^\s)]+/i, "readiness env example must not include URLs");
 assert.doesNotMatch(contents.gates, /(api[_-]?key|secret|token)\s*[:=]\s*["']?[A-Za-z0-9_-]{12,}/i, "production gates must not include secret values");
 assert.doesNotMatch(contents.evidenceTemplate, /(api[_-]?key|secret|token)\s*[:=]\s*["']?[A-Za-z0-9_-]{12,}/i, "evidence template must not include secret values");
 assert.doesNotMatch(contents.cutoverRunbook, /(api[_-]?key|secret|token)\s*[:=]\s*["']?[A-Za-z0-9_-]{12,}/i, "cutover runbook must not include secret values");
 assert.doesNotMatch(contents.partialGateMap, /(api[_-]?key|secret|token)\s*[:=]\s*["']?[A-Za-z0-9_-]{12,}/i, "partial gate map must not include secret values");
-assert.doesNotMatch(contents.readinessEnvExample, /(api[_-]?key|secret|token)\s*[:=]\s*["']?[A-Za-z0-9_-]{12,}/i, "readiness env example must not include secret values");
 
 const matrix = JSON.parse(contents.matrix) as ParityRow[];
 const partialRows: ParityRow[] = [];
@@ -274,7 +271,8 @@ assert.match(readinessAudit, /--generated-at must be an ISO timestamp/);
 assert.match(readinessAudit, /--list-requirements/);
 assert.match(readinessAudit, /--gate/);
 assert.match(readinessAudit, /isPlaceholderValue/);
-assert.match(contents.readinessEnvExample, /treats the sample `non-secret-report-id` value as missing evidence/);
+assert.match(readinessAudit, /replace-me/);
+assert.match(readinessAudit, /non-secret-report-id/);
 assert.match(evidenceRecordVerifier, /placeholder\/empty value/);
 assert.match(evidenceRecordVerifier, /\^<\[\^>\]\+\>\$/);
 assert.match(evidenceRecordVerifier, /non-secret\\s\+\.\*\\b\(id\|path\|label\|pointer\)\\b/);
@@ -555,6 +553,9 @@ assert.match(contents.gates, /--branch=legacy-parity-runbook/);
 assert.match(contents.gates, /--commit=<release-commit-sha>/);
 assert.match(contents.gates, /--generated-at=<release-generated-at-iso>/);
 assert.match(contents.gates, /--list-requirements/);
+assert.match(contents.gates, /render-production-readiness-env-template\.ts --out=\/secure\/private-readiness\.env/);
+assert.match(contents.gates, /render-production-readiness-env-template\.ts` generates a private `\.env` skeleton/);
+assert.match(contents.gates, /verify-production-readiness-env-template-contract\.ts/);
 assert.match(contents.gates, /--gate=PROD-CRON/);
 for (const focusedGate of ["PROD-CRON", "PROD-PROVIDERS", "PROD-NATIVE", "PROD-NATURE"]) {
   assert.match(
@@ -584,6 +585,12 @@ assert.match(contents.gates, /verify-production-focused-artifacts-contract\.ts/)
 assert.match(contents.gates, /verify-production-focused-artifacts-manifest-contract\.ts/);
 assert.match(contents.gates, /verify-production-gate-status-contract\.ts/);
 assert.match(contents.gates, /verify-production-readiness-audit-contract\.ts/);
+assert.match(contents.cutoverRunbook, /render-production-readiness-env-template\.ts --out=\/secure\/private-readiness\.env/);
+assert.match(contents.cutoverRunbook, /render-production-readiness-env-template\.ts --gate=PROD-CRON/);
+assert.match(contents.cutoverRunbook, /verify-production-readiness-env-template-contract\.ts/);
+assert.doesNotMatch(contents.gates, /docs\/production-readiness\.env\.example/);
+assert.doesNotMatch(contents.cutoverRunbook, /docs\/production-readiness\.env\.example/);
+assert.equal(existsSync("docs/production-readiness.env.example"), false);
 assert.match(contents.cutoverRunbook, /--out=\/tmp\/kiddzonl-production-readiness\.json/);
 assert.match(contents.cutoverRunbook, /report-production-gate-status\.ts --json --out=\/tmp\/kiddzonl-production-gate-status\.json --generated-at=<release-generated-at-iso>/);
 assert.match(contents.cutoverRunbook, /report-production-gate-status\.ts --json --env-file=\/secure\/private-readiness\.env --out=\/tmp\/kiddzonl-production-gate-status\.json --generated-at=<release-generated-at-iso> --require-ready/);

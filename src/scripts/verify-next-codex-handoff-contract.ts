@@ -33,6 +33,7 @@ for (const expected of [
   "`PROD-CRON`, `PROD-NATIVE`, `PROD-NATURE`, and `PROD-PROVIDERS`",
   "pnpm tsx src/scripts/report-production-partials.ts --json",
   "pnpm tsx src/scripts/report-production-evidence-checklist.ts --json",
+  "pnpm tsx src/scripts/render-production-readiness-env-template.ts --out=/secure/private-readiness.env",
   "pnpm run verify:production-gates",
   "`da487a0 chore: render production acceptance evidence`",
   "`1b5f27c chore: gate production status on readiness`",

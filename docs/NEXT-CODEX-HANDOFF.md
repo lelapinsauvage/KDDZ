@@ -230,6 +230,7 @@ First run:
 
 ```bash
 git status --short --branch
+pnpm tsx src/scripts/render-production-readiness-env-template.ts --out=/secure/private-readiness.env
 pnpm tsx src/scripts/report-production-partials.ts --json
 pnpm tsx src/scripts/report-production-evidence-checklist.ts --json
 pnpm run verify:production-gates

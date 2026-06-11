@@ -17,6 +17,10 @@ const checks = [
     command: ["pnpm", "tsx", "src/scripts/verify-production-readiness-audit-contract.ts"],
   },
   {
+    label: "production readiness env template contract",
+    command: ["pnpm", "tsx", "src/scripts/verify-production-readiness-env-template-contract.ts"],
+  },
+  {
     label: "production acceptance evidence record contract",
     command: ["pnpm", "tsx", "src/scripts/verify-production-acceptance-evidence-record-contract.ts"],
   },
