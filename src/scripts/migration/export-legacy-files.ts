@@ -61,6 +61,7 @@ interface RuleExportSummary {
 }
 
 interface LegacyFileExportManifest {
+  schemaVersion: 1;
   generatedAt: string;
   dryRun: boolean;
   sourceDatabase: string;
@@ -439,6 +440,7 @@ async function exportLegacyFiles(): Promise<LegacyFileExportManifest> {
   }
 
   const manifest: LegacyFileExportManifest = {
+    schemaVersion: 1,
     generatedAt: new Date().toISOString(),
     dryRun,
     sourceDatabase: config.database,

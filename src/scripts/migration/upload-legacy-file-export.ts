@@ -50,6 +50,7 @@ interface LegacyFileExportEntry {
 }
 
 interface LegacyFileExportManifest {
+  schemaVersion?: number;
   generatedAt: string;
   dryRun: boolean;
   sourceDatabase: string;
@@ -92,9 +93,11 @@ interface LegacyFileUploadEntry {
 }
 
 interface LegacyFileUploadManifest {
+  schemaVersion: 1;
   generatedAt: string;
   sourceManifest: string;
   sourceManifestGeneratedAt: string;
+  sourceManifestSchemaVersion: number | null;
   sourceDatabase: string;
   packageDir: string;
   dryRun: boolean;
@@ -405,9 +408,11 @@ async function uploadLegacyFileExport(): Promise<LegacyFileUploadManifest> {
   }
 
   const manifest: LegacyFileUploadManifest = {
+    schemaVersion: 1,
     generatedAt: new Date().toISOString(),
     sourceManifest: manifestPath,
     sourceManifestGeneratedAt: exportManifest.generatedAt,
+    sourceManifestSchemaVersion: exportManifest.schemaVersion ?? null,
     sourceDatabase: exportManifest.sourceDatabase,
     packageDir,
     dryRun,

@@ -16,6 +16,8 @@ The legacy PHP app stored uploads in `Front/templates/admin/images/<directory>` 
 
 The upload manifest is the cutover artifact for the database URL rewrite step. It preserves `sourceDatabase`, `legacyTable`, `legacyColumn`, `legacyId`, `ownerId`, `ruleId`, `modernDestination`, `storageKey`, `objectKey`, and `publicUrl`.
 
+The export, upload, and URL-apply manifests all carry `schemaVersion: 1`. Upload and apply manifests also preserve the upstream manifest `generatedAt` timestamp and schema version so the archived restore evidence can prove lineage from legacy file package to object storage to database URL rewrite.
+
 ## Storage Providers
 
 The shared server-side adapter lives in `src/lib/storage/object-storage.ts`.

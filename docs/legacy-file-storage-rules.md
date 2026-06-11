@@ -21,6 +21,8 @@ pnpm tsx src/scripts/migration/export-legacy-files.ts \
 
 The export script copies found files under deterministic keys like `legacy/<database>/<rule>/<legacy-id>/<filename>` and writes a `manifest.json` with every exported, missing, default, unsafe, table-missing, or column-missing reference.
 
+The export, upload, and URL-apply manifests are versioned with `schemaVersion: 1`; downstream manifests record the source manifest timestamp and schema version so cutover evidence can trace the full restore chain.
+
 Then upload the package with the configured storage provider:
 
 ```bash

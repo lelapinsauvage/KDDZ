@@ -23,6 +23,8 @@ const files = {
   cutoverRunbook: "docs/production-cutover-runbook.md",
   partialGateMap: "docs/partial-production-gate-map.md",
   readinessEnvExample: "docs/production-readiness.env.example",
+  fileStoragePipeline: "docs/file-storage-pipeline.md",
+  legacyFileStorageRules: "docs/legacy-file-storage-rules.md",
 };
 
 const contents = Object.fromEntries(
@@ -212,6 +214,9 @@ const closeoutRunner = readFileSync("src/scripts/run-production-closeout.ts", "u
 const partialReporter = readFileSync("src/scripts/report-production-partials.ts", "utf8");
 const evidenceChecklistReporter = readFileSync("src/scripts/report-production-evidence-checklist.ts", "utf8");
 const productionGateSuite = readFileSync("src/scripts/verify-production-gate-suite.ts", "utf8");
+const legacyFileExporter = readFileSync("src/scripts/migration/export-legacy-files.ts", "utf8");
+const legacyFileUploader = readFileSync("src/scripts/migration/upload-legacy-file-export.ts", "utf8");
+const legacyFileUrlApplier = readFileSync("src/scripts/migration/apply-legacy-file-urls.ts", "utf8");
 assert.match(readinessAudit, /No environment values/);
 assert.match(readinessAudit, /schemaVersion: 1/);
 assert.match(readinessAudit, /--out/);
@@ -278,6 +283,15 @@ assert.match(evidenceChecklistReporter, /generatedAt/);
 assert.match(evidenceChecklistReporter, /schemaVersion: 1/);
 assert.match(evidenceChecklistReporter, /--gate/);
 assert.match(evidenceChecklistReporter, /--out/);
+assert.match(legacyFileExporter, /schemaVersion: 1/);
+assert.match(legacyFileUploader, /schemaVersion: 1/);
+assert.match(legacyFileUploader, /sourceManifestSchemaVersion/);
+assert.match(legacyFileUrlApplier, /schemaVersion: 1/);
+assert.match(legacyFileUrlApplier, /sourceUploadManifestSchemaVersion/);
+assert.match(contents.fileStoragePipeline, /schemaVersion: 1/);
+assert.match(contents.fileStoragePipeline, /prove lineage from legacy file package to object storage to database URL rewrite/);
+assert.match(contents.legacyFileStorageRules, /schemaVersion: 1/);
+assert.match(contents.legacyFileStorageRules, /trace the full restore chain/);
 assert.match(productionGateSuite, /verify-production-acceptance-gates-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-readiness-audit-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-acceptance-evidence-record-contract\.ts/);

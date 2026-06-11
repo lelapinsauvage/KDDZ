@@ -50,6 +50,7 @@ interface LegacyFileUploadEntry {
 }
 
 interface LegacyFileUploadManifest {
+  schemaVersion?: number;
   generatedAt: string;
   sourceManifest: string;
   sourceDatabase: string;
@@ -81,9 +82,11 @@ interface LegacyFileUrlApplyEntry {
 }
 
 interface LegacyFileUrlApplyManifest {
+  schemaVersion: 1;
   generatedAt: string;
   sourceUploadManifest: string;
   sourceUploadManifestGeneratedAt: string;
+  sourceUploadManifestSchemaVersion: number | null;
   sourceDatabase: string;
   dryRun: boolean;
   uploadWasDryRun: boolean;
@@ -1163,9 +1166,11 @@ async function applyLegacyFileUrls(): Promise<LegacyFileUrlApplyManifest> {
   }
 
   const manifest: LegacyFileUrlApplyManifest = {
+    schemaVersion: 1,
     generatedAt: new Date().toISOString(),
     sourceUploadManifest: manifestPath,
     sourceUploadManifestGeneratedAt: uploadManifest.generatedAt,
+    sourceUploadManifestSchemaVersion: uploadManifest.schemaVersion ?? null,
     sourceDatabase: uploadManifest.sourceDatabase,
     dryRun,
     uploadWasDryRun: uploadManifest.dryRun,
