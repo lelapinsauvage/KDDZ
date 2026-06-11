@@ -18,6 +18,7 @@ type DigestRecord = {
 
 type CloseoutSummary = {
   status?: string;
+  generatedAt?: string;
   readinessReport?: string;
   evidenceRecord?: string;
   partialReport?: string | null;
@@ -88,6 +89,7 @@ function verifyCloseoutSummary(path: string) {
 
   const summary = JSON.parse(summaryText) as CloseoutSummary;
   assert.equal(summary.status, "production closeout verified");
+  assertValidIsoTimestamp(summary.generatedAt, "closeout summary generatedAt");
   assert.equal(summary.redacted, true);
   assert.deepEqual(summary.readinessSummary, { ready: 12, needsEvidence: 0, total: 12 });
   const expectedBranch = optionValue("--branch");
@@ -515,6 +517,11 @@ function assertNoSensitiveOutput(output: string) {
   }
   assert.doesNotMatch(outputWithoutDigests, /(api[_-]?key|secret|token)\s*[:=]\s*["']?[A-Za-z0-9_-]{12,}/i);
   assert.doesNotMatch(outputWithoutDigests, /\b(?:\+?\d[\s().-]?){10,}\b/);
+}
+
+function assertValidIsoTimestamp(value: string | undefined, label: string) {
+  assert.ok(value, `${label} is missing`);
+  assert.equal(new Date(value).toISOString(), value, `${label} must be an ISO timestamp`);
 }
 
 function positionalArg() {

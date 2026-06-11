@@ -44,6 +44,7 @@ const commit = optionValue("--commit") ?? gitOutput(["rev-parse", "HEAD"]);
 const explicitBranch = optionValue("--branch");
 const explicitCommit = optionValue("--commit");
 const generatedAt = optionValue("--generated-at");
+const summaryGeneratedAt = generatedAt ?? new Date().toISOString();
 
 if (!envFilePath || !evidenceRecordPath) {
   console.error(
@@ -124,6 +125,7 @@ if (requireZeroPartials && parityTracker.partial !== 0) {
 
 const summary = {
   status: "production closeout verified",
+  generatedAt: summaryGeneratedAt,
   readinessReport: outputPath,
   evidenceRecord: evidenceRecordPath,
   partialReport: partialsOutputPath ?? null,

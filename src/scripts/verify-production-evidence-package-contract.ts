@@ -193,6 +193,7 @@ function verifySelfTestContract() {
     const packageManifest = readJson<PackageManifest>(packageManifestPath);
     const readinessGeneratedAt = readJson<{ generatedAt?: string }>(readinessReportPath).generatedAt;
     assertValidIsoTimestamp(readinessGeneratedAt, "readiness report generatedAt");
+    assert.equal(packageManifest.artifacts.closeoutSummary.generatedAt, generatedAt);
     assert.equal(packageManifest.artifacts.readinessReport.generatedAt, readinessGeneratedAt);
     assert.equal(packageManifest.artifacts.partialReport.generatedAt, generatedAt);
     assert.equal(packageManifest.artifacts.evidenceChecklist.generatedAt, generatedAt);
