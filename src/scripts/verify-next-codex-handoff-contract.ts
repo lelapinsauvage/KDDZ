@@ -34,6 +34,10 @@ for (const expected of [
   "pnpm tsx src/scripts/report-production-partials.ts --json",
   "pnpm tsx src/scripts/report-production-evidence-checklist.ts --json",
   "pnpm run verify:production-gates",
+  "`da487a0 chore: render production acceptance evidence`",
+  "`1b5f27c chore: gate production status on readiness`",
+  "`d9690f9 chore: add production gate status report`",
+  "`16a6e11 docs: refresh focused artifact handoff`",
   "CRON_PARTIAL_ROW_COVERAGE_REPORT",
   "PROVIDER_PARTIAL_ROW_COVERAGE_REPORT",
   "NATIVE_PARTIAL_ROW_COVERAGE_REPORT",
@@ -65,6 +69,8 @@ for (const expected of [
   "kiddzonl-production-focused-artifacts.json",
   "pnpm tsx src/scripts/report-production-focused-artifacts.ts --out-dir=/tmp/kiddzonl-production-focused-artifacts --generated-at=<release-generated-at-iso>",
   "pnpm tsx src/scripts/verify-production-focused-artifacts-manifest.ts --manifest=/tmp/kiddzonl-production-focused-artifacts/kiddzonl-production-focused-artifacts.json",
+  "pnpm tsx src/scripts/render-production-acceptance-evidence-record.ts --out=/secure/production-acceptance-evidence.md --readiness-report=/tmp/kiddzonl-production-readiness.json --summary-report=/tmp/kiddzonl-production-closeout-summary.json --partial-report=/tmp/kiddzonl-production-partials.json --checklist-report=/tmp/kiddzonl-production-evidence-checklist.json --branch=legacy-parity-runbook --commit=<release-commit-sha> --acceptance-date=<YYYY-MM-DD>",
+  "pnpm tsx src/scripts/report-production-gate-status.ts --json --env-file=/secure/private-readiness.env --out=/tmp/kiddzonl-production-gate-status.json --generated-at=<release-generated-at-iso> --require-ready",
   "--gate=PROD-PROVIDERS",
   "--gate=PROD-NATIVE",
   "--gate=PROD-NATURE",
@@ -74,6 +80,11 @@ for (const expected of [
   "--partial-gate-map=<path>",
   "Production Evidence Timestamp Hardening",
   "closeout summary and evidence package manifest both carry `schemaVersion: 1`",
+  "Production Acceptance Closure",
+  "report-production-gate-status.ts --require-ready",
+  "render-production-acceptance-evidence-record.ts",
+  "verify-production-gate-status-contract.ts",
+  "verify-production-acceptance-evidence-renderer-contract.ts",
 ]) {
   assert.ok(handoff.includes(expected), `handoff missing current marker: ${expected}`);
 }

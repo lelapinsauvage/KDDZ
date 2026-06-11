@@ -85,14 +85,14 @@ When modernizing native/parent APIs, compare all three:
 
 Recent commits on `legacy-parity-runbook`:
 
+- `da487a0 chore: render production acceptance evidence`
+- `1b5f27c chore: gate production status on readiness`
+- `d9690f9 chore: add production gate status report`
+- `16a6e11 docs: refresh focused artifact handoff`
 - `317b06e chore: verify focused production artifact manifests`
 - `df68947 chore: generate focused production artifact bundle`
 - `63db45e docs: require focused gate artifact pairs`
 - `1d33c58 chore: verify all focused production artifacts`
-- `f60d416 docs: refresh focused artifact handoff`
-- `b593e4c chore: verify focused production artifacts`
-- `60ef356 docs: guard focused partial report handoff`
-- `4440183 chore: add focused production partial reports`
 
 Do not assume these are complete for the whole app. They are slices.
 
@@ -107,6 +107,10 @@ Commits `93d580f`, `e378e55`, and `663bd0e` hardened final production closure. A
 ### Production Evidence Timestamp Hardening
 
 Commits `de7a99a`, `7b58b2f`, `29e45e9`, `e7bb81b`, and `d4d2251` tightened generated production evidence artifacts. The partial report, production evidence checklist, readiness audit, closeout runner, closeout summary, and evidence package manifest now use validated ISO `--generated-at` timestamps such as `2026-06-10T00:00:00.000Z`. The closeout summary and evidence package manifest both carry `schemaVersion: 1`; the evidence package manifest also carries a top-level `generatedAt`, with contract coverage for saved-manifest verification.
+
+### Production Acceptance Closure
+
+Commits `d9690f9`, `1b5f27c`, and `da487a0` made the final evidence closure auditable before cutover. `report-production-gate-status.ts --require-ready` now joins readiness, partial rows, and checklist status into a redacted closure board that fails until every production gate is ready. `render-production-acceptance-evidence-record.ts` fills `docs/production-acceptance-evidence-template.md`, computes readiness/partial/checklist SHA-256 values, binds the release branch and commit, and immediately verifies the filled record. `verify-production-gate-status-contract.ts` and `verify-production-acceptance-evidence-renderer-contract.ts` are part of `pnpm run verify:production-gates`.
 
 ## What Was Done Recently
 
@@ -245,7 +249,9 @@ Final closure command sequence:
 ```bash
 pnpm tsx src/scripts/report-production-focused-artifacts.ts --out-dir=/tmp/kiddzonl-production-focused-artifacts --generated-at=<release-generated-at-iso>
 pnpm tsx src/scripts/verify-production-focused-artifacts-manifest.ts --manifest=/tmp/kiddzonl-production-focused-artifacts/kiddzonl-production-focused-artifacts.json
+pnpm tsx src/scripts/render-production-acceptance-evidence-record.ts --out=/secure/production-acceptance-evidence.md --readiness-report=/tmp/kiddzonl-production-readiness.json --summary-report=/tmp/kiddzonl-production-closeout-summary.json --partial-report=/tmp/kiddzonl-production-partials.json --checklist-report=/tmp/kiddzonl-production-evidence-checklist.json --branch=legacy-parity-runbook --commit=<release-commit-sha> --acceptance-date=<YYYY-MM-DD>
 pnpm run closeout:production -- --env-file=/secure/private-readiness.env --evidence-record=/secure/production-acceptance-evidence.md --out=/tmp/kiddzonl-production-readiness.json --summary-out=/tmp/kiddzonl-production-closeout-summary.json --partials-out=/tmp/kiddzonl-production-partials.json --checklist-out=/tmp/kiddzonl-production-evidence-checklist.json --branch=legacy-parity-runbook --commit=<release-commit-sha> --generated-at=<release-generated-at-iso> --require-zero-partials
+pnpm tsx src/scripts/report-production-gate-status.ts --json --env-file=/secure/private-readiness.env --out=/tmp/kiddzonl-production-gate-status.json --generated-at=<release-generated-at-iso> --require-ready
 pnpm tsx src/scripts/verify-production-closeout-summary-contract.ts /tmp/kiddzonl-production-closeout-summary.json --readiness-report=/tmp/kiddzonl-production-readiness.json --evidence-record=/secure/production-acceptance-evidence.md --partial-report=/tmp/kiddzonl-production-partials.json --checklist-report=/tmp/kiddzonl-production-evidence-checklist.json --branch=legacy-parity-runbook --commit=<release-commit-sha> --require-zero-partials
 pnpm tsx src/scripts/verify-production-evidence-package-contract.ts --summary-report=/tmp/kiddzonl-production-closeout-summary.json --readiness-report=/tmp/kiddzonl-production-readiness.json --evidence-record=/secure/production-acceptance-evidence.md --partial-report=/tmp/kiddzonl-production-partials.json --checklist-report=/tmp/kiddzonl-production-evidence-checklist.json --manifest-out=/tmp/kiddzonl-production-evidence-package.json --branch=legacy-parity-runbook --commit=<release-commit-sha> --require-zero-partials
 ```
@@ -349,11 +355,18 @@ Current progress:
 The remaining 17 partial rows are production/external acceptance gates: PROD-CRON, PROD-NATIVE, PROD-NATURE, and PROD-PROVIDERS.
 
 Recent pushed commits:
+`da487a0 chore: render production acceptance evidence`
+`1b5f27c chore: gate production status on readiness`
+`d9690f9 chore: add production gate status report`
+`16a6e11 docs: refresh focused artifact handoff`
 `317b06e chore: verify focused production artifact manifests`
 `df68947 chore: generate focused production artifact bundle`
 `63db45e docs: require focused gate artifact pairs`
 `1d33c58 chore: verify all focused production artifacts`
 `f60d416 docs: refresh focused artifact handoff`
+`b593e4c chore: verify focused production artifacts`
+`60ef356 docs: guard focused partial report handoff`
+`4440183 chore: add focused production partial reports`
 `a57ce71 chore: require nature partial row coverage evidence`
 `5dde0d3 chore: require native partial row coverage evidence`
 `6eb8828 chore: require cron partial row coverage evidence`
