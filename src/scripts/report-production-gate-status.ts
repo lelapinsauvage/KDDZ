@@ -72,6 +72,7 @@ const envFilePath = optionValue("--env-file");
 const generatedAt = generatedAtValue();
 const selectedGate = optionValue("--gate");
 const requireReady = process.argv.includes("--require-ready");
+const blockingOnly = process.argv.includes("--blocking-only");
 
 const readiness = runJson<ReadinessReport>("src/scripts/audit-production-readiness.ts", [
   "--json",
@@ -116,7 +117,9 @@ const gates: GateClosureStatus[] = allGates.map((gate) => {
       closureReason: row.closureReason ?? "unknown",
     })),
   };
-});
+}).filter((gate) => !blockingOnly || gate.blockingPartialRows.length > 0);
+
+const blockingRows = uniqueRows(gates.flatMap((gate) => gate.blockingPartialRows));
 
 const payload = {
   status: "production gate status report",
@@ -132,7 +135,7 @@ const payload = {
     gates: gates.length,
     ready: gates.filter((gate) => gate.status === "ready-to-review").length,
     needsEvidence: gates.filter((gate) => gate.status === "needs-evidence").length,
-    blockingPartialRows: uniqueRows(partials.rows ?? []).size,
+    blockingPartialRows: blockingRows.size,
     missingEvidenceItems: gates.reduce((count, gate) => count + gate.missingEvidence.length, 0),
   },
   partialReportSummary: partials.summary,

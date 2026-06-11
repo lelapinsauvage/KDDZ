@@ -52,6 +52,7 @@ pnpm tsx src/scripts/verify-production-evidence-package-contract.ts
 pnpm tsx src/scripts/report-production-evidence-checklist.ts --gate=PROD-CRON
 pnpm tsx src/scripts/report-production-evidence-checklist.ts --json --out=/tmp/kiddzonl-production-evidence-checklist.json --generated-at=<release-generated-at-iso>
 pnpm tsx src/scripts/report-production-gate-status.ts --json --out=/tmp/kiddzonl-production-gate-status.json --generated-at=<release-generated-at-iso>
+pnpm tsx src/scripts/report-production-gate-status.ts --json --blocking-only --out=/tmp/kiddzonl-production-blocking-gate-status.json --generated-at=<release-generated-at-iso>
 pnpm tsx src/scripts/report-production-focused-artifacts.ts --out-dir=/tmp/kiddzonl-production-focused-artifacts --generated-at=<release-generated-at-iso>
 pnpm tsx src/scripts/verify-production-focused-artifacts-manifest.ts --manifest=/tmp/kiddzonl-production-focused-artifacts/kiddzonl-production-focused-artifacts.json
 pnpm tsx src/scripts/report-production-partials.ts --json --gate=PROD-CRON --out=/tmp/kiddzonl-production-cron-partials.json --generated-at=<release-generated-at-iso>
@@ -102,7 +103,7 @@ Use `--require-zero-partials` only for final legacy closure; it fails until `doc
 
 `report-production-focused-artifacts.ts --out-dir=<dir>` generates all four focused partial/checklist artifact pairs with the same `--generated-at=<iso>` value, verifies each pair with `verify-production-artifact-consistency-contract.ts`, and writes `kiddzonl-production-focused-artifacts.json` with SHA-256 digests and blocking row ids for archive handoff. `verify-production-focused-artifacts-manifest.ts --manifest=<path>` rechecks a saved manifest by recomputing artifact hashes and rerunning consistency verification on every archived pair.
 
-`report-production-gate-status.ts` joins the readiness audit, partial report, and evidence checklist into one redacted closure board. Use `--json --out=<path>` to archive the current gate status, `--gate=<gate>` to focus a single gate, `--env-file=<path>` to test a private evidence pointer file, and `--generated-at=<iso>` when freezing release artifacts. Add `--require-ready` in final closure automation so the command exits nonzero until every gate is ready. It reports gate status, missing evidence pointer names, required acceptance fields, and blocking partial rows without printing values.
+`report-production-gate-status.ts` joins the readiness audit, partial report, and evidence checklist into one redacted closure board. Use `--json --out=<path>` to archive the current gate status, `--gate=<gate>` to focus a single gate, `--blocking-only` to show only gates that still block partial parity rows, `--env-file=<path>` to test a private evidence pointer file, and `--generated-at=<iso>` when freezing release artifacts. Add `--require-ready` in final closure automation so the command exits nonzero until every gate is ready. It reports gate status, missing evidence pointer names, required acceptance fields, and blocking partial rows without printing values.
 
 Use `--gate=PROD-CRON` or any other gate id to inspect one production blocker at a time with the readiness audit, partial report, and evidence checklist commands.
 

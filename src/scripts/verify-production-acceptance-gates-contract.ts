@@ -586,6 +586,8 @@ assert.match(contents.gates, /verify-production-focused-artifacts-manifest-contr
 assert.match(contents.gates, /verify-production-gate-status-contract\.ts/);
 assert.match(contents.gates, /verify-production-readiness-audit-contract\.ts/);
 assert.match(contents.gates, /readiness env template contract/);
+assert.match(contents.gates, /report-production-gate-status\.ts --json --blocking-only --out=\/tmp\/kiddzonl-production-blocking-gate-status\.json --generated-at=<release-generated-at-iso>/);
+assert.match(contents.gates, /`--blocking-only` to show only gates that still block partial parity rows/);
 assert.match(contents.cutoverRunbook, /render-production-readiness-env-template\.ts --out=\/secure\/private-readiness\.env/);
 assert.match(contents.cutoverRunbook, /render-production-readiness-env-template\.ts --gate=PROD-CRON/);
 assert.match(contents.cutoverRunbook, /verify-production-readiness-env-template-contract\.ts/);
@@ -594,6 +596,7 @@ assert.doesNotMatch(contents.cutoverRunbook, /docs\/production-readiness\.env\.e
 assert.equal(existsSync("docs/production-readiness.env.example"), false);
 assert.match(contents.cutoverRunbook, /--out=\/tmp\/kiddzonl-production-readiness\.json/);
 assert.match(contents.cutoverRunbook, /report-production-gate-status\.ts --json --out=\/tmp\/kiddzonl-production-gate-status\.json --generated-at=<release-generated-at-iso>/);
+assert.match(contents.cutoverRunbook, /report-production-gate-status\.ts --json --blocking-only --out=\/tmp\/kiddzonl-production-blocking-gate-status\.json --generated-at=<release-generated-at-iso>/);
 assert.match(contents.cutoverRunbook, /report-production-gate-status\.ts --json --env-file=\/secure\/private-readiness\.env --out=\/tmp\/kiddzonl-production-gate-status\.json --generated-at=<release-generated-at-iso> --require-ready/);
 assert.match(contents.cutoverRunbook, /--env-file=\/secure\/private-readiness\.env/);
 assert.match(contents.cutoverRunbook, /verify-production-acceptance-evidence-record\.ts \/secure\/production-acceptance-evidence\.md --readiness-report=\/tmp\/kiddzonl-production-readiness\.json --branch=legacy-parity-runbook --commit=<release-commit-sha>/);

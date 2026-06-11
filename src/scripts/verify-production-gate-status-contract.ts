@@ -76,6 +76,32 @@ try {
   assert.equal(provider?.blockingPartialRows?.length, 14);
   assert.ok(provider?.missingEvidence?.includes("partial-row-evidence:PROVIDER_PARTIAL_ROW_COVERAGE_REPORT"));
 
+  const blockingOnlyOutput = execFileSync("pnpm", [
+    "tsx",
+    "src/scripts/report-production-gate-status.ts",
+    "--json",
+    "--blocking-only",
+    `--generated-at=${generatedAt}`,
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  const blockingOnly = JSON.parse(blockingOnlyOutput) as GateStatusReport;
+  assert.deepEqual(blockingOnly.summary, {
+    gates: 4,
+    ready: 0,
+    needsEvidence: 4,
+    blockingPartialRows: 17,
+    missingEvidenceItems: 28,
+  });
+  assert.deepEqual(blockingOnly.gates?.map((gate) => gate.gate), [
+    "PROD-CRON",
+    "PROD-NATIVE",
+    "PROD-NATURE",
+    "PROD-PROVIDERS",
+  ]);
+  assert.ok(blockingOnly.gates?.every((gate) => (gate.blockingPartialRows?.length ?? 0) > 0));
+
   const nativeOutput = execFileSync("pnpm", [
     "tsx",
     "src/scripts/report-production-gate-status.ts",
@@ -103,6 +129,20 @@ try {
   assert.match(markdown, /# Production Gate Status Report/);
   assert.match(markdown, /PROD-NATURE/);
   assert.match(markdown, /P17/);
+
+  const blockingMarkdown = execFileSync("pnpm", [
+    "tsx",
+    "src/scripts/report-production-gate-status.ts",
+    "--blocking-only",
+    `--generated-at=${generatedAt}`,
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.match(blockingMarkdown, /Ready gates: 0\/4/);
+  assert.match(blockingMarkdown, /PROD-CRON/);
+  assert.match(blockingMarkdown, /PROD-PROVIDERS/);
+  assert.doesNotMatch(blockingMarkdown, /PROD-PRINT/);
 
   const invalidGeneratedAt = spawnSync("pnpm", [
     "tsx",
