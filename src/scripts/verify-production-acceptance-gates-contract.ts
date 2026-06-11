@@ -592,6 +592,7 @@ assert.match(contents.gates, /verify-production-focused-artifacts-contract\.ts/)
 assert.match(contents.gates, /verify-production-focused-artifacts-manifest-contract\.ts/);
 assert.match(contents.gates, /verify-production-gate-status-contract\.ts/);
 assert.match(contents.gates, /verify-production-readiness-audit-contract\.ts/);
+assert.match(contents.gates, /preflight artifact contract/);
 assert.match(contents.gates, /readiness env template contract/);
 assert.match(contents.gates, /report-production-gate-status\.ts --json --blocking-only --out=\/tmp\/kiddzonl-production-blocking-gate-status\.json --generated-at=<release-generated-at-iso>/);
 assert.match(contents.gates, /report-production-preflight-artifacts\.ts --out-dir=\/tmp\/kiddzonl-production-preflight-artifacts --generated-at=<release-generated-at-iso>/);

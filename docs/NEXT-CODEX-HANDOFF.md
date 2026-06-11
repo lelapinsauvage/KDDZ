@@ -85,6 +85,8 @@ When modernizing native/parent APIs, compare all three:
 
 Recent commits on `legacy-parity-runbook`:
 
+- `8557360 chore: verify production preflight manifests`
+- `388567c chore: generate production preflight artifacts`
 - `fc63539 chore: focus production gate status on blockers`
 - `f200c9e chore: generate production readiness env template`
 - `da487a0 chore: render production acceptance evidence`
@@ -113,6 +115,10 @@ Commits `de7a99a`, `7b58b2f`, `29e45e9`, `e7bb81b`, and `d4d2251` tightened gene
 ### Production Acceptance Closure
 
 Commits `d9690f9`, `1b5f27c`, `da487a0`, and `fc63539` made the final evidence closure auditable before cutover. `report-production-gate-status.ts --require-ready` now joins readiness, partial rows, and checklist status into a redacted closure board that fails until every production gate is ready. Use `report-production-gate-status.ts --blocking-only` to focus that board on the four gates still blocking page-parity rows. `render-production-acceptance-evidence-record.ts` fills `docs/production-acceptance-evidence-template.md`, computes readiness/partial/checklist SHA-256 values, binds the release branch and commit, and immediately verifies the filled record. `verify-production-gate-status-contract.ts` and `verify-production-acceptance-evidence-renderer-contract.ts` are part of `pnpm run verify:production-gates`.
+
+### Production Preflight Bundle
+
+Commits `388567c` and `8557360` added `report-production-preflight-artifacts.ts --out-dir=<dir>` and `verify-production-preflight-artifacts-manifest.ts --manifest=<path>`. Use them to create and recheck the archived non-secret preflight bundle containing the full partial report, full evidence checklist, blocker-only gate status report, focused artifact manifest, and SHA-256 digests before collecting private production evidence.
 
 ## What Was Done Recently
 
@@ -361,6 +367,8 @@ Current progress:
 The remaining 17 partial rows are production/external acceptance gates: PROD-CRON, PROD-NATIVE, PROD-NATURE, and PROD-PROVIDERS.
 
 Recent pushed commits:
+`8557360 chore: verify production preflight manifests`
+`388567c chore: generate production preflight artifacts`
 `fc63539 chore: focus production gate status on blockers`
 `f200c9e chore: generate production readiness env template`
 `da487a0 chore: render production acceptance evidence`
