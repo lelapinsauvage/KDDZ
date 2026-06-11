@@ -67,6 +67,14 @@ function verifyEvidencePackage(closeoutSummaryPath: string) {
     assert.equal(summary.requireZeroPartials, true, "production evidence package must come from a require-zero-partials closeout");
     assert.equal(summary.parityTracker?.partial, 0, "production evidence package still has unresolved partial rows");
   }
+  const expectedBranch = optionValue("--branch");
+  const expectedCommit = optionValue("--commit");
+  if (expectedBranch) {
+    assert.equal(summary.branch, expectedBranch, "production evidence package branch drifted");
+  }
+  if (expectedCommit) {
+    assert.equal(summary.commit, expectedCommit, "production evidence package commit drifted");
+  }
 
   const readinessReportPath = optionValue("--readiness-report") ?? summary.readinessReport;
   const evidenceRecordPath = optionValue("--evidence-record") ?? summary.evidenceRecord;
@@ -210,6 +218,19 @@ function verifySelfTestContract() {
     assert.equal(unresolvedFinal.status, 1);
     assert.match(unresolvedFinal.stderr, /must come from a require-zero-partials closeout/);
     assertNoSensitiveOutput(unresolvedFinal.stdout + unresolvedFinal.stderr);
+
+    const wrongCommit = runVerifier([
+      `--summary-report=${closeoutSummaryPath}`,
+      `--readiness-report=${readinessReportPath}`,
+      `--evidence-record=${evidenceRecordPath}`,
+      `--partial-report=${partialReportPath}`,
+      `--checklist-report=${checklistReportPath}`,
+      "--branch=legacy-parity-runbook",
+      "--commit=deadbeef",
+    ], false);
+    assert.equal(wrongCommit.status, 1);
+    assert.match(wrongCommit.stderr, /production evidence package commit drifted/);
+    assertNoSensitiveOutput(wrongCommit.stdout + wrongCommit.stderr);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
