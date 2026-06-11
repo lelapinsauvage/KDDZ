@@ -8,6 +8,7 @@ import { mkdirSync } from "node:fs";
 
 type CloseoutSummary = {
   status?: string;
+  generatedAt?: string;
   readinessReport?: string;
   evidenceRecord?: string;
   partialReport?: string | null;
@@ -32,6 +33,7 @@ type CloseoutSummary = {
 
 type PackageManifest = {
   status: "production evidence package verified";
+  generatedAt?: string;
   artifacts: Record<string, ArtifactManifest>;
   closeout: {
     branch?: string;
@@ -193,6 +195,7 @@ function verifySelfTestContract() {
     const packageManifest = readJson<PackageManifest>(packageManifestPath);
     const readinessGeneratedAt = readJson<{ generatedAt?: string }>(readinessReportPath).generatedAt;
     assert.equal(readinessGeneratedAt, generatedAt);
+    assert.equal(packageManifest.generatedAt, generatedAt);
     assert.equal(packageManifest.artifacts.closeoutSummary.generatedAt, generatedAt);
     assert.equal(packageManifest.artifacts.readinessReport.generatedAt, generatedAt);
     assert.equal(packageManifest.artifacts.partialReport.generatedAt, generatedAt);
@@ -277,6 +280,7 @@ function buildManifest(params: {
 }): PackageManifest {
   return {
     status: "production evidence package verified",
+    generatedAt: params.summary.generatedAt,
     artifacts: {
       closeoutSummary: artifact(params.closeoutSummaryPath),
       readinessReport: artifact(params.readinessReportPath),
