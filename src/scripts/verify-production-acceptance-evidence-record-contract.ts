@@ -16,12 +16,27 @@ const tmp = mkdtempSync(join(tmpdir(), "kiddzonl-evidence-record-"));
 
 try {
   const validRecordPath = join(tmp, "production-acceptance-filled.md");
-  writeFileSync(validRecordPath, fillTemplate(template), "utf8");
   const readinessReportPath = join(tmp, "readiness.json");
+  const closeoutSummaryPath = join(tmp, "closeout-summary.json");
+  const partialReportPath = join(tmp, "partials.json");
+  const checklistReportPath = join(tmp, "evidence-checklist.json");
+  writeFileSync(
+    validRecordPath,
+    fillTemplate(template, {
+      readinessReportPath,
+      closeoutSummaryPath,
+      partialReportPath,
+      checklistReportPath,
+    }),
+    "utf8"
+  );
   writeFileSync(readinessReportPath, JSON.stringify(readinessReport(), null, 2), "utf8");
 
   const validRecord = runVerifier(validRecordPath, [
     `--readiness-report=${readinessReportPath}`,
+    `--summary-report=${closeoutSummaryPath}`,
+    `--partial-report=${partialReportPath}`,
+    `--checklist-report=${checklistReportPath}`,
     "--branch=legacy-parity-runbook",
     "--commit=0404c6a",
   ]);
@@ -71,6 +86,9 @@ try {
 
   const staleCommit = runVerifier(validRecordPath, [
     `--readiness-report=${readinessReportPath}`,
+    `--summary-report=${closeoutSummaryPath}`,
+    `--partial-report=${partialReportPath}`,
+    `--checklist-report=${checklistReportPath}`,
     "--branch=legacy-parity-runbook",
     "--commit=deadbeef",
   ]);
@@ -87,19 +105,37 @@ try {
   );
   const deferredDecision = runVerifier(deferredDecisionPath, [
     `--readiness-report=${readinessReportPath}`,
+    `--summary-report=${closeoutSummaryPath}`,
+    `--partial-report=${partialReportPath}`,
+    `--checklist-report=${checklistReportPath}`,
     "--branch=legacy-parity-runbook",
     "--commit=0404c6a",
   ]);
   assert.equal(deferredDecision.status, 1);
   assert.match(deferredDecision.stderr, /remaining production tickets must be none/);
   assert.match(deferredDecision.stderr, /release decision must be accepted/);
+
+  const staleArtifactPath = join(tmp, "production-acceptance-stale-artifact.md");
+  writeFileSync(staleArtifactPath, fillTemplate(template), "utf8");
+  const staleArtifact = runVerifier(staleArtifactPath, [
+    `--readiness-report=${readinessReportPath}`,
+    `--summary-report=${closeoutSummaryPath}`,
+    `--partial-report=${partialReportPath}`,
+    `--checklist-report=${checklistReportPath}`,
+    "--branch=legacy-parity-runbook",
+    "--commit=0404c6a",
+  ]);
+  assert.equal(staleArtifact.status, 1);
+  assert.match(staleArtifact.stderr, /Redacted closeout summary must include/);
+  assert.match(staleArtifact.stderr, /Partial gate report must include/);
+  assert.match(staleArtifact.stderr, /Production evidence checklist must include/);
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }
 
 console.log("production acceptance evidence record contract assertions passed");
 
-function fillTemplate(markdown: string) {
+function fillTemplate(markdown: string, artifactPaths: ArtifactPaths | null = null) {
   return markdown
     .split(/\r?\n/)
     .map((line) => {
@@ -121,16 +157,27 @@ function fillTemplate(markdown: string) {
         return line;
       }
 
-      return `| ${field} | ${filledValueFor(field)} |`;
+      return `| ${field} | ${filledValueFor(field, artifactPaths)} |`;
     })
     .join("\n");
 }
 
-function filledValueFor(field: string) {
+type ArtifactPaths = {
+  readinessReportPath: string;
+  closeoutSummaryPath: string;
+  partialReportPath: string;
+  checklistReportPath: string;
+};
+
+function filledValueFor(field: string, artifactPaths: ArtifactPaths | null) {
   if (field === "Acceptance date") return "2026-06-10";
   if (field === "Environment") return "staging-production-import";
   if (field === "Modern branch/commit") return "`legacy-parity-runbook` / 0404c6a";
   if (field === "`audit-production-readiness.ts` result") return "12/12 ready";
+  if (field === "Redacted readiness report") return artifactPaths?.readinessReportPath ?? "accepted evidence recorded in release-ticket-verified";
+  if (field === "Redacted closeout summary") return artifactPaths?.closeoutSummaryPath ?? "accepted evidence recorded in release-ticket-verified";
+  if (field === "Partial gate report") return artifactPaths?.partialReportPath ?? "accepted evidence recorded in release-ticket-verified";
+  if (field === "Production evidence checklist") return artifactPaths?.checklistReportPath ?? "accepted evidence recorded in release-ticket-verified";
   if (field === "Release decision") return "accepted";
   if (field === "Remaining production tickets") return "none";
   if (field === "Approval link/id") return "release-ticket-verified";

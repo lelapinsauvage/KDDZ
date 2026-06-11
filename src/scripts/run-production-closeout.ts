@@ -46,6 +46,9 @@ run("pnpm", [
   "src/scripts/verify-production-acceptance-evidence-record.ts",
   evidenceRecordPath,
   `--readiness-report=${outputPath}`,
+  ...optionalArg("--summary-report", summaryOutputPath),
+  ...optionalArg("--partial-report", partialsOutputPath),
+  ...optionalArg("--checklist-report", checklistOutputPath),
   `--branch=${branch}`,
   `--commit=${commit}`,
 ]);
@@ -174,4 +177,8 @@ function optionValue(name: string) {
   if (index >= 0) return process.argv[index + 1] ?? null;
 
   return null;
+}
+
+function optionalArg(name: string, value: string | null) {
+  return value ? [`${name}=${value}`] : [];
 }

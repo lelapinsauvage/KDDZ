@@ -21,12 +21,15 @@ type ReadinessReport = {
 
 const recordPath = positionalArgs()[0];
 const readinessReportPath = optionValue("--readiness-report");
+const closeoutSummaryPath = optionValue("--summary-report");
+const partialReportPath = optionValue("--partial-report");
+const checklistReportPath = optionValue("--checklist-report");
 const expectedBranch = optionValue("--branch");
 const expectedCommit = optionValue("--commit");
 
 if (!recordPath || recordPath.startsWith("-")) {
   console.error(
-    "Usage: pnpm tsx src/scripts/verify-production-acceptance-evidence-record.ts <filled-production-evidence.md> [--readiness-report=<redacted-readiness.json>] [--branch=<branch>] [--commit=<sha>]"
+    "Usage: pnpm tsx src/scripts/verify-production-acceptance-evidence-record.ts <filled-production-evidence.md> [--readiness-report=<redacted-readiness.json>] [--summary-report=<closeout-summary.json>] [--partial-report=<partials.json>] [--checklist-report=<evidence-checklist.json>] [--branch=<branch>] [--commit=<sha>]"
   );
   process.exit(2);
 }
@@ -59,6 +62,7 @@ for (const spec of requiredProductionEvidenceSections) {
 if (readinessReportPath) {
   verifyReadinessReport(readinessReportPath, sections, errors);
 }
+verifyArtifactPointers(sections, errors);
 verifyBranchAndCommit(sections, errors);
 verifyFinalDecision(sections, errors);
 
@@ -76,6 +80,9 @@ console.log(
       status: "production acceptance evidence record verified",
       record: recordPath,
       readinessReport: readinessReportPath ?? null,
+      closeoutSummary: closeoutSummaryPath ?? null,
+      partialReport: partialReportPath ?? null,
+      evidenceChecklist: checklistReportPath ?? null,
       branch: expectedBranch ?? null,
       commit: expectedCommit ?? null,
       sections: requiredProductionEvidenceSections.length,
@@ -218,6 +225,33 @@ function verifyBranchAndCommit(
   }
   if (expectedCommit && !value.includes(expectedCommit)) {
     errors.push(`Run Metadata: Modern branch/commit must include commit ${expectedCommit}`);
+  }
+}
+
+function verifyArtifactPointers(
+  sections: Map<string, Map<string, string>>,
+  errors: string[]
+) {
+  const metadata = sections.get("Run Metadata");
+  if (!metadata) {
+    return;
+  }
+
+  const expectedArtifacts = [
+    { field: "Redacted readiness report", path: readinessReportPath },
+    { field: "Redacted closeout summary", path: closeoutSummaryPath },
+    { field: "Partial gate report", path: partialReportPath },
+    { field: "Production evidence checklist", path: checklistReportPath },
+  ];
+
+  for (const artifact of expectedArtifacts) {
+    if (!artifact.path) {
+      continue;
+    }
+    const value = metadata.get(artifact.field) ?? "";
+    if (!value.includes(artifact.path)) {
+      errors.push(`Run Metadata: ${artifact.field} must include ${artifact.path}`);
+    }
   }
 }
 

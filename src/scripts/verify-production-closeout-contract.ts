@@ -22,7 +22,16 @@ try {
   const partialReportPath = join(tmp, "partials.json");
   const checklistReportPath = join(tmp, "evidence-checklist.json");
   writeFileSync(envFilePath, readinessEnvFile(), "utf8");
-  writeFileSync(evidenceRecordPath, fillTemplate(template), "utf8");
+  writeFileSync(
+    evidenceRecordPath,
+    fillTemplate(template, {
+      readinessReportPath,
+      closeoutSummaryPath,
+      partialReportPath,
+      checklistReportPath,
+    }),
+    "utf8"
+  );
 
   const closeout = runCloseout([
     `--env-file=${envFilePath}`,
@@ -102,7 +111,7 @@ try {
   const staleCommit = runCloseout([
     `--env-file=${envFilePath}`,
     `--evidence-record=${evidenceRecordPath}`,
-    `--out=${join(tmp, "stale-readiness.json")}`,
+    `--out=${readinessReportPath}`,
     "--branch=legacy-parity-runbook",
     "--commit=deadbeef",
   ]);
@@ -113,7 +122,7 @@ try {
   const unresolvedPartials = runCloseout([
     `--env-file=${envFilePath}`,
     `--evidence-record=${evidenceRecordPath}`,
-    `--out=${join(tmp, "unresolved-partials-readiness.json")}`,
+    `--out=${readinessReportPath}`,
     "--branch=legacy-parity-runbook",
     "--commit=0404c6a",
     "--require-zero-partials",
@@ -157,7 +166,7 @@ function readinessEnvFile() {
   ].join("\n");
 }
 
-function fillTemplate(markdown: string) {
+function fillTemplate(markdown: string, artifactPaths: ArtifactPaths) {
   return markdown
     .split(/\r?\n/)
     .map((line) => {
@@ -179,16 +188,27 @@ function fillTemplate(markdown: string) {
         return line;
       }
 
-      return `| ${field} | ${filledValueFor(field)} |`;
+      return `| ${field} | ${filledValueFor(field, artifactPaths)} |`;
     })
     .join("\n");
 }
 
-function filledValueFor(field: string) {
+type ArtifactPaths = {
+  readinessReportPath: string;
+  closeoutSummaryPath: string;
+  partialReportPath: string;
+  checklistReportPath: string;
+};
+
+function filledValueFor(field: string, artifactPaths: ArtifactPaths) {
   if (field === "Acceptance date") return "2026-06-10";
   if (field === "Environment") return "staging-production-import";
   if (field === "Modern branch/commit") return "`legacy-parity-runbook` / 0404c6a";
   if (field === "`audit-production-readiness.ts` result") return "12/12 ready";
+  if (field === "Redacted readiness report") return artifactPaths.readinessReportPath;
+  if (field === "Redacted closeout summary") return artifactPaths.closeoutSummaryPath;
+  if (field === "Partial gate report") return artifactPaths.partialReportPath;
+  if (field === "Production evidence checklist") return artifactPaths.checklistReportPath;
   if (field === "Release decision") return "accepted";
   if (field === "Remaining production tickets") return "none";
   if (field === "Approval link/id") return "release-ticket-verified";
