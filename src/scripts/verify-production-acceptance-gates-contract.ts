@@ -63,9 +63,11 @@ const requiredReferences = [
   "src/scripts/audit-production-readiness.ts",
   "src/scripts/verify-production-acceptance-evidence-record.ts",
   "src/scripts/run-production-closeout.ts",
+  "src/scripts/report-production-partials.ts",
   "src/scripts/verify-production-gate-suite.ts",
   "src/scripts/verify-production-acceptance-evidence-record-contract.ts",
   "src/scripts/verify-production-closeout-contract.ts",
+  "src/scripts/verify-production-partial-report-contract.ts",
   "src/scripts/verify-production-readiness-audit-contract.ts",
   "src/scripts/verify-parent-credentialed-native-e2e.ts",
   "src/scripts/verify-legacy-calls-contract.ts",
@@ -202,6 +204,7 @@ assert.match(contents.gates, /partial-production-gate-map\.md/);
 const readinessAudit = readFileSync("src/scripts/audit-production-readiness.ts", "utf8");
 const evidenceRecordVerifier = readFileSync("src/scripts/verify-production-acceptance-evidence-record.ts", "utf8");
 const closeoutRunner = readFileSync("src/scripts/run-production-closeout.ts", "utf8");
+const partialReporter = readFileSync("src/scripts/report-production-partials.ts", "utf8");
 const productionGateSuite = readFileSync("src/scripts/verify-production-gate-suite.ts", "utf8");
 assert.match(readinessAudit, /No environment values/);
 assert.match(readinessAudit, /--out/);
@@ -223,10 +226,13 @@ assert.match(closeoutRunner, /--summary-out/);
 assert.match(closeoutRunner, /readinessSummary/);
 assert.match(closeoutRunner, /parityTracker/);
 assert.match(closeoutRunner, /--require-zero-partials/);
+assert.match(partialReporter, /partial-production-gate-map\.md/);
+assert.match(partialReporter, /page-parity-matrix\.json/);
 assert.match(productionGateSuite, /verify-production-acceptance-gates-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-readiness-audit-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-acceptance-evidence-record-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-closeout-contract\.ts/);
+assert.match(productionGateSuite, /verify-production-partial-report-contract\.ts/);
 assert.match(productionGateSuite, /page-parity-matrix\.json/);
 assert.match(readFileSync("src/scripts/verify-production-readiness-audit-contract.ts", "utf8"), /assertNoSensitiveOutput/);
 assert.match(
@@ -237,6 +243,10 @@ assert.match(
   readFileSync("src/scripts/verify-production-closeout-contract.ts", "utf8"),
   /requires zero partial parity rows/
 );
+assert.match(
+  readFileSync("src/scripts/verify-production-partial-report-contract.ts", "utf8"),
+  /Partial rows: 17/
+);
 assert.match(contents.gates, /--out=<path>/);
 assert.match(contents.gates, /--env-file=<path>/);
 assert.match(contents.gates, /verify-production-acceptance-evidence-record\.ts/);
@@ -246,6 +256,8 @@ assert.match(contents.gates, /--summary-out=\/tmp\/kiddzonl-production-closeout-
 assert.match(contents.gates, /summary includes the redacted readiness counts/);
 assert.match(contents.gates, /page-parity tracker counts/);
 assert.match(contents.gates, /--require-zero-partials/);
+assert.match(contents.gates, /report-production-partials\.ts/);
+assert.match(contents.gates, /kiddzonl-production-partials\.json/);
 assert.match(contents.gates, /--readiness-report=<path>/);
 assert.match(contents.gates, /--readiness-report=\/tmp\/kiddzonl-production-readiness\.json/);
 assert.match(contents.gates, /--branch=legacy-parity-runbook/);

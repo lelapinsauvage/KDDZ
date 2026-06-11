@@ -41,6 +41,8 @@ pnpm run closeout:production -- --env-file=/secure/private-readiness.env --evide
 pnpm run verify:production-gates
 pnpm tsx src/scripts/verify-production-acceptance-evidence-record-contract.ts
 pnpm tsx src/scripts/verify-production-closeout-contract.ts
+pnpm tsx src/scripts/report-production-partials.ts --json --out=/tmp/kiddzonl-production-partials.json
+pnpm tsx src/scripts/verify-production-partial-report-contract.ts
 pnpm tsx src/scripts/verify-production-readiness-audit-contract.ts
 pnpm tsx src/scripts/verify-parent-credentialed-native-e2e.ts
 pnpm tsx src/scripts/verify-legacy-calls-contract.ts
@@ -57,6 +59,8 @@ python3 -m json.tool docs/page-parity-matrix.json >/dev/null
 `pnpm run closeout:production -- ...` is the one-command production closeout wrapper around `src/scripts/run-production-closeout.ts`. It writes the redacted readiness report from the private env/evidence file, verifies the filled production acceptance record against that report, binds the accepted evidence to the specified branch and commit, and can write a redacted closeout summary with `--summary-out=<path>`. The summary includes the redacted readiness counts, page-parity tracker counts, branch, commit, readiness report path, and evidence record path, and is safe for release notes.
 
 Use `--require-zero-partials` only for final legacy closure; it fails until `docs/page-parity-matrix.json` has no partial rows left.
+
+`report-production-partials.ts` joins `docs/page-parity-matrix.json` with `docs/partial-production-gate-map.md` and emits the remaining partial rows, blocking gate ids, and closure reasons as markdown or redacted JSON for production tracking.
 
 Use `--gate=PROD-CRON` or any other gate id to inspect one production blocker at a time; this works with normal output, `--json`, `--out=<path>`, and `--list-requirements`.
 

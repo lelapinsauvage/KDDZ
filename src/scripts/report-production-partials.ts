@@ -1,0 +1,134 @@
+import { readFileSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
+import { mkdirSync } from "node:fs";
+
+type ParityRow = {
+  status?: string;
+  verification?: string;
+  notes?: string;
+  [key: string]: unknown;
+};
+
+type PartialGateRow = {
+  row: string;
+  statusAnchor: string;
+  gates: string[];
+  closureReason: string;
+  matrixStatus: string;
+};
+
+const json = process.argv.includes("--json");
+const outputPath = optionValue("--out");
+
+const partialRows = collectPartialRows();
+const mapRows = parsePartialGateMap();
+
+if (partialRows.length !== mapRows.length) {
+  throw new Error(`Partial matrix/map mismatch: matrix=${partialRows.length} map=${mapRows.length}`);
+}
+
+const reportRows = mapRows.map((row, index): PartialGateRow => {
+  const partial = partialRows[index];
+  if (!partial.status?.toLowerCase().includes(row.statusAnchor.toLowerCase())) {
+    throw new Error(`${row.row} anchor mismatch: "${row.statusAnchor}" not found in "${partial.status ?? ""}"`);
+  }
+
+  return {
+    ...row,
+    matrixStatus: partial.status ?? "",
+  };
+});
+
+const summary = {
+  partialRows: reportRows.length,
+  gates: [...new Set(reportRows.flatMap((row) => row.gates))].sort(),
+};
+const payload = {
+  status: "production partial gate report",
+  generatedFrom: {
+    matrix: "docs/page-parity-matrix.json",
+    gateMap: "docs/partial-production-gate-map.md",
+  },
+  summary,
+  rows: reportRows,
+};
+
+const rendered = json ? `${JSON.stringify(payload, null, 2)}\n` : renderMarkdown(reportRows);
+if (outputPath) {
+  const dir = dirname(outputPath);
+  if (dir && dir !== ".") {
+    mkdirSync(dir, { recursive: true });
+  }
+  writeFileSync(outputPath, rendered, "utf8");
+}
+
+process.stdout.write(rendered);
+
+function collectPartialRows() {
+  const matrix = JSON.parse(readFileSync("docs/page-parity-matrix.json", "utf8")) as unknown;
+  const rows: ParityRow[] = [];
+
+  function walk(value: unknown): void {
+    if (Array.isArray(value)) {
+      value.forEach(walk);
+      return;
+    }
+    if (!value || typeof value !== "object") {
+      return;
+    }
+
+    const row = value as ParityRow;
+    if (typeof row.status === "string" && row.status.toLowerCase().startsWith("partial")) {
+      rows.push(row);
+    }
+    Object.values(row).forEach(walk);
+  }
+
+  walk(matrix);
+  return rows;
+}
+
+function parsePartialGateMap() {
+  const markdown = readFileSync("docs/partial-production-gate-map.md", "utf8");
+  return markdown
+    .split(/\r?\n/)
+    .filter((line) => /^\| P\d{2} \|/.test(line))
+    .map((line) => {
+      const cells = line
+        .split("|")
+        .slice(1, -1)
+        .map((cell) => cell.trim());
+      const [row, statusAnchor, gates, closureReason] = cells;
+      return {
+        row,
+        statusAnchor,
+        gates: gates.split(",").map((gate) => gate.trim()).filter(Boolean),
+        closureReason,
+      };
+    });
+}
+
+function renderMarkdown(rows: PartialGateRow[]) {
+  const lines = [
+    "# Production Partial Gate Report",
+    "",
+    `Partial rows: ${rows.length}`,
+    "",
+    "| Row | Gates | Status anchor | Closure reason |",
+    "| --- | --- | --- | --- |",
+    ...rows.map((row) => `| ${row.row} | ${row.gates.join(", ")} | ${row.statusAnchor} | ${row.closureReason} |`),
+    "",
+  ];
+  return `${lines.join("\n")}\n`;
+}
+
+function optionValue(name: string) {
+  const prefix = `${name}=`;
+  const inline = process.argv.find((arg) => arg.startsWith(prefix));
+  if (inline) return inline.slice(prefix.length);
+
+  const index = process.argv.indexOf(name);
+  if (index >= 0) return process.argv[index + 1] ?? null;
+
+  return null;
+}
