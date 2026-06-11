@@ -363,6 +363,7 @@ assert.match(contents.gates, /--manifest-out=<path>/);
 assert.match(contents.gates, /--manifest=<path>/);
 assert.match(contents.gates, /--branch=<branch>/);
 assert.match(contents.gates, /--commit=<sha>/);
+assert.match(contents.gates, /--manifest-out=\/tmp\/kiddzonl-production-evidence-package\.json --branch=legacy-parity-runbook --commit=<release-commit-sha>/);
 assert.match(contents.gates, /--require-zero-partials/);
 assert.match(contents.gates, /archived closeout\/partial\/checklist artifact pointers/);
 assert.match(contents.gates, /archived closeout summary against the saved artifact paths and SHA-256 digests/);
