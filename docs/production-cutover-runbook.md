@@ -100,6 +100,7 @@ PROVIDER_DELIVERY_ACCEPTANCE_REPORT=<non-secret delivery summary id/path>
 PROVIDER_CHANNEL_ROLLOUT_REPORT=<non-secret family/channel rollout matrix id/path>
 PROVIDER_RESPONSE_ID_AUDIT_REPORT=<non-secret provider response-id audit id/path>
 CRON_SCHEDULE_COVERAGE_REPORT=<non-secret timezone, gid/code, daily, and 10-minute coverage id/path>
+HOSTED_DAILY_SCHEDULE_EVIDENCE=<non-secret hosted daily schedule family list id/path>
 HOSTED_SCHEDULER_EVIDENCE=<non-secret schedule report id/path>
 ```
 
