@@ -37,6 +37,8 @@ const evidenceGateRequirements: Array<{
     gate: "PROD-DUMPS",
     env: [
       "LEGACY_PRODUCTION_DUMP_MANIFEST",
+      "LEGACY_SCHOOL_YEAR_DUMP_COVERAGE_REPORT",
+      "LEGACY_DUMP_CHECKSUM_MANIFEST",
       "LEGACY_FIRST_MIGRATION_SOURCE_REPORT",
     ],
   },

@@ -15,6 +15,8 @@ Evidence pointers to set for the readiness audit:
 
 ```bash
 LEGACY_PRODUCTION_DUMP_MANIFEST=<non-secret report id or local evidence file>
+LEGACY_SCHOOL_YEAR_DUMP_COVERAGE_REPORT=<non-secret every school-year dump coverage id/path>
+LEGACY_DUMP_CHECKSUM_MANIFEST=<non-secret dump checksum manifest id/path>
 LEGACY_FIRST_MIGRATION_SOURCE_REPORT=<non-secret first migration source and import timing id/path>
 PRODUCTION_CRONTAB_EVIDENCE=<non-secret report id or local evidence file>
 CRON_HELPER_DECISION_REPORT=<non-secret recovered-or-retired helper decision id/path>
