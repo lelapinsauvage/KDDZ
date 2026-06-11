@@ -72,6 +72,16 @@ try {
   assert.equal(placeholderRecord.status, 1);
   assert.match(placeholderRecord.stderr, /placeholder\/empty value/);
 
+  const genericPlaceholderRecordPath = join(tmp, "production-acceptance-generic-placeholder.md");
+  writeFileSync(
+    genericPlaceholderRecordPath,
+    fillTemplate(template).replaceAll("release-ticket-verified", "<non-secret report id or local evidence file>"),
+    "utf8"
+  );
+  const genericPlaceholderRecord = runVerifier(genericPlaceholderRecordPath);
+  assert.equal(genericPlaceholderRecord.status, 1);
+  assert.match(genericPlaceholderRecord.stderr, /placeholder\/empty value/);
+
   const secretRecordPath = join(tmp, "production-acceptance-secret.md");
   writeFileSync(
     secretRecordPath,

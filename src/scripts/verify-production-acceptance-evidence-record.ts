@@ -148,7 +148,12 @@ function isPlaceholder(value: string) {
   const normalized = value.trim().toLowerCase();
   if (!normalized) return true;
 
-  return productionEvidencePlaceholderValues.includes(normalized);
+  if (productionEvidencePlaceholderValues.includes(normalized)) return true;
+  if (/^<[^>]+>$/.test(normalized)) return true;
+  if (/^non-secret\s+.*\b(id|path|label|pointer)\b/.test(normalized)) return true;
+  if (/^(replace|todo|tbd|changeme)\b/.test(normalized)) return true;
+
+  return false;
 }
 
 function assertNoSensitiveContent(value: string) {
