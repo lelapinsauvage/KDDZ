@@ -59,6 +59,7 @@ pnpm tsx src/scripts/migration/reconcile-migration-counts.ts \
 Evidence pointers to set:
 
 ```bash
+LEGACY_MEDIA_AUDIT_REPORT=<non-secret audit report id/path>
 LEGACY_MEDIA_EXPORT_MANIFEST=<non-secret export manifest id/path>
 LEGACY_MEDIA_UPLOAD_MANIFEST=<non-secret upload manifest id/path>
 LEGACY_MEDIA_URL_APPLY_MANIFEST=<non-secret URL apply manifest id/path>
