@@ -85,6 +85,7 @@ When modernizing native/parent APIs, compare all three:
 
 Recent commits on `legacy-parity-runbook`:
 
+- `fc63539 chore: focus production gate status on blockers`
 - `f200c9e chore: generate production readiness env template`
 - `da487a0 chore: render production acceptance evidence`
 - `1b5f27c chore: gate production status on readiness`
@@ -111,7 +112,7 @@ Commits `de7a99a`, `7b58b2f`, `29e45e9`, `e7bb81b`, and `d4d2251` tightened gene
 
 ### Production Acceptance Closure
 
-Commits `d9690f9`, `1b5f27c`, and `da487a0` made the final evidence closure auditable before cutover. `report-production-gate-status.ts --require-ready` now joins readiness, partial rows, and checklist status into a redacted closure board that fails until every production gate is ready. `render-production-acceptance-evidence-record.ts` fills `docs/production-acceptance-evidence-template.md`, computes readiness/partial/checklist SHA-256 values, binds the release branch and commit, and immediately verifies the filled record. `verify-production-gate-status-contract.ts` and `verify-production-acceptance-evidence-renderer-contract.ts` are part of `pnpm run verify:production-gates`.
+Commits `d9690f9`, `1b5f27c`, `da487a0`, and `fc63539` made the final evidence closure auditable before cutover. `report-production-gate-status.ts --require-ready` now joins readiness, partial rows, and checklist status into a redacted closure board that fails until every production gate is ready. Use `report-production-gate-status.ts --blocking-only` to focus that board on the four gates still blocking page-parity rows. `render-production-acceptance-evidence-record.ts` fills `docs/production-acceptance-evidence-template.md`, computes readiness/partial/checklist SHA-256 values, binds the release branch and commit, and immediately verifies the filled record. `verify-production-gate-status-contract.ts` and `verify-production-acceptance-evidence-renderer-contract.ts` are part of `pnpm run verify:production-gates`.
 
 ## What Was Done Recently
 
@@ -234,6 +235,7 @@ git status --short --branch
 pnpm tsx src/scripts/render-production-readiness-env-template.ts --out=/secure/private-readiness.env
 pnpm tsx src/scripts/report-production-partials.ts --json
 pnpm tsx src/scripts/report-production-evidence-checklist.ts --json
+pnpm tsx src/scripts/report-production-gate-status.ts --json --blocking-only --out=/tmp/kiddzonl-production-blocking-gate-status.json --generated-at=<release-generated-at-iso>
 pnpm run verify:production-gates
 ```
 
@@ -357,6 +359,8 @@ Current progress:
 The remaining 17 partial rows are production/external acceptance gates: PROD-CRON, PROD-NATIVE, PROD-NATURE, and PROD-PROVIDERS.
 
 Recent pushed commits:
+`fc63539 chore: focus production gate status on blockers`
+`f200c9e chore: generate production readiness env template`
 `da487a0 chore: render production acceptance evidence`
 `1b5f27c chore: gate production status on readiness`
 `d9690f9 chore: add production gate status report`
@@ -376,5 +380,5 @@ Recent pushed commits:
 `dc56542 chore: require provider channel decision evidence`
 `14707cd chore: require reconciliation triage evidence`
 
-Continue from the production/external acceptance gates. First run `pnpm tsx src/scripts/report-production-partials.ts --json`, `pnpm tsx src/scripts/report-production-evidence-checklist.ts --json`, `pnpm tsx src/scripts/report-production-focused-artifacts.ts --out-dir=/tmp/kiddzonl-production-focused-artifacts --generated-at=<release-generated-at-iso>`, `pnpm tsx src/scripts/verify-production-focused-artifacts-manifest.ts --manifest=/tmp/kiddzonl-production-focused-artifacts/kiddzonl-production-focused-artifacts.json`, and `pnpm run verify:production-gates`. Work the first gate with real evidence available: canonical production SQL/media import and reconciliation, hosted cron evidence with `CRON_PARTIAL_ROW_COVERAGE_REPORT`, provider delivery rollout with `PROVIDER_PARTIAL_ROW_COVERAGE_REPORT`, iOS/Android native-device acceptance with `NATIVE_PARTIAL_ROW_COVERAGE_REPORT`, production `notifications_nature` acceptance with `NOTIFICATIONS_NATURE_PARTIAL_ROW_COVERAGE_REPORT`, or print/stationery acceptance. Do not mark the goal complete until the parity matrix has zero partial rows and the closeout summary plus evidence package verifiers pass with `--require-zero-partials`.
+Continue from the production/external acceptance gates. First run `pnpm tsx src/scripts/render-production-readiness-env-template.ts --out=/secure/private-readiness.env`, `pnpm tsx src/scripts/report-production-partials.ts --json`, `pnpm tsx src/scripts/report-production-evidence-checklist.ts --json`, `pnpm tsx src/scripts/report-production-gate-status.ts --json --blocking-only --out=/tmp/kiddzonl-production-blocking-gate-status.json --generated-at=<release-generated-at-iso>`, `pnpm tsx src/scripts/report-production-focused-artifacts.ts --out-dir=/tmp/kiddzonl-production-focused-artifacts --generated-at=<release-generated-at-iso>`, `pnpm tsx src/scripts/verify-production-focused-artifacts-manifest.ts --manifest=/tmp/kiddzonl-production-focused-artifacts/kiddzonl-production-focused-artifacts.json`, and `pnpm run verify:production-gates`. Work the first gate with real evidence available: canonical production SQL/media import and reconciliation, hosted cron evidence with `CRON_PARTIAL_ROW_COVERAGE_REPORT`, provider delivery rollout with `PROVIDER_PARTIAL_ROW_COVERAGE_REPORT`, iOS/Android native-device acceptance with `NATIVE_PARTIAL_ROW_COVERAGE_REPORT`, production `notifications_nature` acceptance with `NOTIFICATIONS_NATURE_PARTIAL_ROW_COVERAGE_REPORT`, or print/stationery acceptance. Do not mark the goal complete until the parity matrix has zero partial rows and the closeout summary plus evidence package verifiers pass with `--require-zero-partials`.
 ```
