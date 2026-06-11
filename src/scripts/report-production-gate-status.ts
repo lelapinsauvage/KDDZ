@@ -71,6 +71,7 @@ const outputPath = optionValue("--out");
 const envFilePath = optionValue("--env-file");
 const generatedAt = generatedAtValue();
 const selectedGate = optionValue("--gate");
+const requireReady = process.argv.includes("--require-ready");
 
 const readiness = runJson<ReadinessReport>("src/scripts/audit-production-readiness.ts", [
   "--json",
@@ -147,6 +148,10 @@ if (outputPath) {
   writeFileSync(outputPath, rendered, "utf8");
 }
 process.stdout.write(rendered);
+
+if (requireReady && payload.summary.needsEvidence > 0) {
+  process.exitCode = 1;
+}
 
 function runJson<T>(script: string, args: string[]) {
   const result = spawnSync("pnpm", ["tsx", script, ...args], {

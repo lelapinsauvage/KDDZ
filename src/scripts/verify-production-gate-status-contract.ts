@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -114,8 +114,106 @@ try {
   });
   assert.equal(invalidGeneratedAt.status, 2);
   assert.match(invalidGeneratedAt.stderr, /--generated-at must be an ISO timestamp/);
+
+  const unresolvedRequireReady = spawnSync("pnpm", [
+    "tsx",
+    "src/scripts/report-production-gate-status.ts",
+    "--json",
+    "--require-ready",
+    `--generated-at=${generatedAt}`,
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.equal(unresolvedRequireReady.status, 1);
+  assert.match(unresolvedRequireReady.stdout, /"needsEvidence": 12/);
+
+  const readyEnvPath = join(tmp, "ready-private-readiness.env");
+  writeFileSync(readyEnvPath, readyEnvFile(), "utf8");
+  const readyRequireReady = spawnSync("pnpm", [
+    "tsx",
+    "src/scripts/report-production-gate-status.ts",
+    "--json",
+    "--require-ready",
+    `--env-file=${readyEnvPath}`,
+    `--generated-at=${generatedAt}`,
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.equal(readyRequireReady.status, 0, readyRequireReady.stdout + readyRequireReady.stderr);
+  const ready = JSON.parse(readyRequireReady.stdout) as GateStatusReport;
+  assert.deepEqual(ready.summary, {
+    gates: 12,
+    ready: 12,
+    needsEvidence: 0,
+    blockingPartialRows: 17,
+    missingEvidenceItems: 0,
+  });
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }
 
 console.log("production gate status contract assertions passed");
+
+function readyEnvFile() {
+  return [
+    "LEGACY_PRODUCTION_DUMP_MANIFEST=gate-status-dump",
+    "LEGACY_SCHOOL_YEAR_DUMP_COVERAGE_REPORT=gate-status-school-year",
+    "LEGACY_DUMP_CHECKSUM_MANIFEST=gate-status-checksum",
+    "LEGACY_FIRST_MIGRATION_SOURCE_REPORT=gate-status-first-source",
+    "LEGACY_MEDIA_AUDIT_REPORT=gate-status-media-audit",
+    "LEGACY_MEDIA_EXPORT_MANIFEST=gate-status-media-export",
+    "LEGACY_MEDIA_UPLOAD_MANIFEST=gate-status-media-upload",
+    "LEGACY_MEDIA_STORAGE_INTEGRITY_REPORT=gate-status-media-integrity",
+    "LEGACY_MEDIA_MISSING_FILE_TRIAGE_REPORT=gate-status-media-missing",
+    "LEGACY_MEDIA_URL_APPLY_MANIFEST=gate-status-media-url-apply",
+    "MIGRATION_RECONCILIATION_REPORT=gate-status-recon",
+    "MIGRATION_RECONCILIATION_MISMATCH_TRIAGE_REPORT=gate-status-recon-mismatch",
+    "MIGRATION_RECONCILIATION_ACCEPTANCE_REPORT=gate-status-recon-acceptance",
+    "PRODUCTION_CRONTAB_EVIDENCE=gate-status-crontab",
+    "CRON_HELPER_DECISION_REPORT=gate-status-cron-helper",
+    "CRON_SCHEDULE_COVERAGE_REPORT=gate-status-cron-schedule",
+    "HOSTED_DAILY_SCHEDULE_EVIDENCE=gate-status-daily",
+    "HOSTED_TEN_MINUTE_SCHEDULE_EVIDENCE=gate-status-ten-minute",
+    "HOSTED_SCHEDULER_EVIDENCE=gate-status-scheduler",
+    "CRON_PARTIAL_ROW_COVERAGE_REPORT=gate-status-cron-partials",
+    "CRON_SECRET=gate_status_cron_secret",
+    "PROVIDER_DELIVERY_ACCEPTANCE_REPORT=gate-status-provider-delivery",
+    "PROVIDER_CHANNEL_ROLLOUT_REPORT=gate-status-provider-rollout",
+    "PROVIDER_RESPONSE_ID_AUDIT_REPORT=gate-status-provider-response",
+    "PROVIDER_CHANNEL_DECISION_REPORT=gate-status-provider-decision",
+    "PROVIDER_PARTIAL_ROW_COVERAGE_REPORT=gate-status-provider-partials",
+    "PUSH_DELIVERY_PROVIDER=disabled",
+    "EMAIL_DELIVERY_PROVIDER=disabled",
+    "SMS_DELIVERY_PROVIDER=disabled",
+    "WHATSAPP_DELIVERY_PROVIDER=disabled",
+    "NATIVE_IOS_ACCEPTANCE_REPORT=gate-status-ios",
+    "NATIVE_ANDROID_ACCEPTANCE_REPORT=gate-status-android",
+    "NATIVE_LEGACY_ROUTE_ACCEPTANCE_REPORT=gate-status-native-routes",
+    "NATIVE_CRASH_PARSER_AUDIT_REPORT=gate-status-native-crash",
+    "NATIVE_PARENT_FLOW_ACCEPTANCE_REPORT=gate-status-native-parent",
+    "NATIVE_NOTIFICATIONS_MESSAGES_ALARMS_REPORT=gate-status-native-notifications",
+    "NATIVE_PUSH_TOKEN_ACCEPTANCE_REPORT=gate-status-native-push",
+    "NATIVE_PARTIAL_ROW_COVERAGE_REPORT=gate-status-native-partials",
+    "NOTIFICATIONS_NATURE_ACCEPTANCE_REPORT=gate-status-nature",
+    "NOTIFICATIONS_NATURE_GROUP_COMPARISON_REPORT=gate-status-nature-groups",
+    "NOTIFICATIONS_NATURE_PARTIAL_ROW_COVERAGE_REPORT=gate-status-nature-partials",
+    "PRINT_ACCOUNTING_MATRIX_ACCEPTANCE_REPORT=gate-status-print-matrix",
+    "PRINT_INVOICE_RECEIPT_ACCEPTANCE_REPORT=gate-status-print-invoice",
+    "PRINT_STATIONERY_ACCEPTANCE_REPORT=gate-status-print-stationery",
+    "REAL_CALL_ROWS_ACCEPTANCE_REPORT=gate-status-calls-real",
+    "CALL_SUBMITTED_DRAFT_ACCEPTANCE_REPORT=gate-status-calls-draft",
+    "CALL_PHP_BRIDGE_ACCEPTANCE_REPORT=gate-status-calls-bridge",
+    "NURSERY_COMPLIANCE_ACCEPTANCE_REPORT=gate-status-nursery",
+    "NURSERY_BRANCH_BRIDGE_ACCEPTANCE_REPORT=gate-status-nursery-branch",
+    "NURSERY_DOCUMENT_UPLOAD_ACCEPTANCE_REPORT=gate-status-nursery-docs",
+    "LEGACY_ACL_ACCEPTANCE_REPORT=gate-status-acl",
+    "LEGACY_PAGE_GUARD_ACCEPTANCE_REPORT=gate-status-page-guard",
+    "LEGACY_ACTION_GUARD_ACCEPTANCE_REPORT=gate-status-action-guard",
+    "LEGACY_BACKFILL_ACCEPTANCE_REPORT=gate-status-backfill",
+    "LEGACY_BACKFILL_RERUN_REPORT=gate-status-backfill-rerun",
+    "LEGACY_BACKFILL_TICKET_TRIAGE_REPORT=gate-status-backfill-triage",
+    "",
+  ].join("\n");
+}
