@@ -213,6 +213,7 @@ const partialReporter = readFileSync("src/scripts/report-production-partials.ts"
 const evidenceChecklistReporter = readFileSync("src/scripts/report-production-evidence-checklist.ts", "utf8");
 const productionGateSuite = readFileSync("src/scripts/verify-production-gate-suite.ts", "utf8");
 assert.match(readinessAudit, /No environment values/);
+assert.match(readinessAudit, /schemaVersion: 1/);
 assert.match(readinessAudit, /--out/);
 assert.match(readinessAudit, /--env-file/);
 assert.match(readinessAudit, /--generated-at must be an ISO timestamp/);
@@ -269,10 +270,12 @@ assert.match(closeoutRunner, /must include explicit --branch and --commit releas
 assert.match(partialReporter, /partial-production-gate-map\.md/);
 assert.match(partialReporter, /page-parity-matrix\.json/);
 assert.match(partialReporter, /generatedAt/);
+assert.match(partialReporter, /schemaVersion: 1/);
 assert.match(partialReporter, /gateCounts/);
 assert.match(evidenceChecklistReporter, /production-acceptance-evidence-spec/);
 assert.match(evidenceChecklistReporter, /partial-production-gate-map\.md/);
 assert.match(evidenceChecklistReporter, /generatedAt/);
+assert.match(evidenceChecklistReporter, /schemaVersion: 1/);
 assert.match(evidenceChecklistReporter, /--gate/);
 assert.match(evidenceChecklistReporter, /--out/);
 assert.match(productionGateSuite, /verify-production-acceptance-gates-contract\.ts/);
@@ -464,6 +467,7 @@ assert.match(contents.gates, /--require-zero-partials/);
 assert.match(contents.gates, /report-production-partials\.ts/);
 assert.match(contents.gates, /report-production-evidence-checklist\.ts/);
 assert.match(contents.gates, /`generatedAt` ISO timestamps/);
+assert.match(contents.gates, /readiness, partial, checklist, closeout summary, and evidence package JSON artifacts carry `schemaVersion: 1`/);
 assert.match(contents.gates, /kiddzonl-production-partials\.json/);
 assert.match(contents.gates, /kiddzonl-production-evidence-checklist\.json/);
 assert.match(contents.gates, /--readiness-report=<path>/);

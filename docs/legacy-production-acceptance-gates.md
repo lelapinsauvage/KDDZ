@@ -76,7 +76,7 @@ Use `--require-zero-partials` only for final legacy closure; it fails until `doc
 
 Use `--gate=PROD-CRON` or any other gate id to inspect one production blocker at a time with the readiness audit and evidence checklist commands.
 
-`report-production-partials.ts` and `report-production-evidence-checklist.ts` emit redacted JSON artifacts with `generatedAt` ISO timestamps so archived release packages can prove when the current partial-gate map and required evidence checklist were produced.
+`report-production-partials.ts` and `report-production-evidence-checklist.ts` emit redacted JSON artifacts with `generatedAt` ISO timestamps so archived release packages can prove when the current partial-gate map and required evidence checklist were produced. The readiness, partial, checklist, closeout summary, and evidence package JSON artifacts carry `schemaVersion: 1`.
 
 `report-production-evidence-checklist.ts` emits the non-secret evidence fields required by `docs/production-acceptance-evidence-template.md` for each production gate, plus the mapped partial rows that each gate can close. Use `--gate=PROD-CRON` to focus one gate, or `--json --out=<path>` to archive the full checklist beside the readiness, closeout, and partial reports.
 

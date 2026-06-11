@@ -10,12 +10,14 @@ const jsonOutput = execFileSync("pnpm", ["tsx", script, "--json"], {
 
 const payload = JSON.parse(jsonOutput) as {
   status?: string;
+  schemaVersion?: number;
   generatedAt?: string;
   summary?: { gates?: number; requiredFields?: number; blockingPartialRows?: number };
   gates?: Array<{ gate?: string; requiredFields?: string[]; blockingPartialRows?: Array<{ row?: string }> }>;
 };
 
 assert.equal(payload.status, "production evidence checklist");
+assert.equal(payload.schemaVersion, 1);
 assertValidIsoTimestamp(payload.generatedAt, "evidence checklist generatedAt");
 assert.equal(payload.summary?.gates, 12);
 assert.equal(payload.summary?.requiredFields, 69);

@@ -46,6 +46,7 @@ const summary = {
 };
 const payload = {
   status: "production partial gate report",
+  schemaVersion: 1,
   generatedAt,
   generatedFrom: {
     matrix: "docs/page-parity-matrix.json",

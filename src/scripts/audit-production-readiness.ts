@@ -118,6 +118,7 @@ const summary = {
   total: gateAudits.length,
 };
 const report = {
+  schemaVersion: 1,
   generatedAt,
   redacted: true,
   summary,

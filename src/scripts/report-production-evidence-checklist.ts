@@ -50,6 +50,7 @@ const gates = gateSections
 
 const payload = {
   status: "production evidence checklist",
+  schemaVersion: 1,
   generatedAt,
   generatedFrom: {
     evidenceSpec: "src/scripts/production-acceptance-evidence-spec.ts",

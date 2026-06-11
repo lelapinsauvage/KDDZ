@@ -111,12 +111,14 @@ try {
   const report = readFileSync(outPath, "utf8");
   assertNoSensitiveOutput(report);
   const payload = JSON.parse(report) as {
+    schemaVersion?: number;
     generatedAt?: string;
     redacted?: boolean;
     summary?: { ready?: number; needsEvidence?: number; total?: number };
     gates?: unknown[];
     providers?: unknown[];
   };
+  assert.equal(payload.schemaVersion, 1);
   assertValidIsoTimestamp(payload.generatedAt, "readiness report generatedAt");
   assert.equal(payload.redacted, true);
   assert.deepEqual(payload.summary, { ready: 12, needsEvidence: 0, total: 12 });
