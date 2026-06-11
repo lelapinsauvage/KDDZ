@@ -269,6 +269,7 @@ assert.match(productionGateSuite, /verify-production-evidence-package-contract\.
 assert.match(productionGateSuite, /verify-production-partial-report-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-evidence-checklist-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-artifact-consistency-contract\.ts/);
+assert.match(productionGateSuite, /verify-next-codex-handoff-contract\.ts/);
 assert.match(productionGateSuite, /page-parity-matrix\.json/);
 assert.match(readFileSync("src/scripts/verify-production-readiness-audit-contract.ts", "utf8"), /assertNoSensitiveOutput/);
 assert.match(

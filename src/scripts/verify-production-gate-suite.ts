@@ -45,6 +45,10 @@ const checks = [
     command: ["pnpm", "tsx", "src/scripts/verify-production-artifact-consistency-contract.ts"],
   },
   {
+    label: "next Codex handoff contract",
+    command: ["pnpm", "tsx", "src/scripts/verify-next-codex-handoff-contract.ts"],
+  },
+  {
     label: "page parity matrix JSON",
     command: ["python3", "-m", "json.tool", "docs/page-parity-matrix.json"],
   },

@@ -34,13 +34,12 @@ Important: do not stage or commit `overnight-ui-fix-log.txt`. It is an unrelated
 From `docs/page-parity-matrix.json`:
 
 - Total matrix rows: `1713`
-- Real app surfaces excluding mapped/retired files: `167`
-- Fully restored app surfaces: `59`
-- Partial app surfaces: `108`
-- Weighted implementation progress: about `70.9% done / 29.1% left`
-- Strict fully signed-off parity: about `35.3% done / 64.7% left`
+- Complete rows: `1696`
+- Partial rows: `17`
+- Current tracker: `99% done / 1% left`
+- Remaining gate ids: `PROD-CRON`, `PROD-NATIVE`, `PROD-NATURE`, and `PROD-PROVIDERS`
 
-The weighted number counts partial implementations as meaningful progress. The strict number only counts rows whose status starts with `restored`.
+The remaining 17 partial rows are production/external acceptance gates, not known local feature-code gaps. Run `pnpm tsx src/scripts/report-production-partials.ts --json` for the authoritative row list and `pnpm run verify:production-gates` for the control-plane preflight. Do not mark the restoration goal complete until `docs/page-parity-matrix.json` has zero partial rows and the final closeout/evidence package commands pass with `--require-zero-partials`.
 
 ## Authoritative Docs
 
@@ -86,11 +85,11 @@ When modernizing native/parent APIs, compare all three:
 
 Recent commits on `legacy-parity-runbook`:
 
-- `4d891ea fix: harden parent native list contracts`
-- `83e722e fix: harden parent daily legacy contract`
-- `f786716 fix: harden parent legacy empty feeds`
-- `2730ed8 fix: restore legacy parent ws routes`
-- `1890993 fix: restore legacy admin settings tab redirects`
+- `5afd1e4 chore: require zero partial closeout summary`
+- `b8bbdd4 chore: bind package command release ref`
+- `28a35b6 chore: require final closeout artifacts`
+- `23b80a9 chore: bind evidence package release ref`
+- `60da114 chore: require zero partial evidence package`
 
 Do not assume these are complete for the whole app. They are slices.
 
@@ -206,127 +205,51 @@ Stop the dev server before ending the turn unless intentionally leaving it runni
 
 ## Exact Next Best Slice
 
-Continue with parent native API compatibility, specifically `notifications_master.php`.
+Continue from the remaining production/external gates, not the already-restored native notification slice.
 
-Why:
-
-- `docs/parent-api-contract-matrix.md` still marks `notifications_master.php` as needing credentialed/native parser tolerance work.
-- iOS force-unwraps notification groups and notification detail fields in `WebFunctions.swift`.
-- Modern route already has `buildEmptyNotificationPayload()`, but DB errors can still happen before the route reaches its guarded section, especially while resolving unauthenticated `POST usites` context or loading notification natures/details.
-
-Files to inspect:
-
-- `src/app/api/parent/notifications/[childId]/route.ts`
-- `src/app/ws/notifications_master.php/route.ts`
-- `src/app/ws/notifications.php/route.ts`
-- `/Users/karimsaab/Desktop/Garderie Project/Garderie-old-backup/ws/notifications_master.php`
-- `/Users/karimsaab/Desktop/Garderie Project/KiddzOnline/KiddzOnline/Classes/WebFunctions.swift`
-
-iOS force-read snippet:
-
-```swift
-for i in 1...11 {
-    let myNotifications: NSArray = (jsonResult["notification\\(i)" ] as! NSDictionary) ["details"] as! NSArray
-    for myNotification in myNotifications {
-        let item:AppNotification = AppNotification()
-        item.type = (jsonResult["notification\\(i)"] as! NSDictionary) ["name"] as? String
-        item.subject = ((myNotification as! NSDictionary)["subject"] as? String)!
-        item.body = ((myNotification as! NSDictionary)["body"] as? String)!
-        item.dateTime = ((myNotification as! NSDictionary)["datetime"] as? String)!
-        items.append(item)
-    }
-}
-```
-
-This means the payload must always include:
-
-- top-level object, not array
-- `info`
-- `notification1` through `notification11`
-- each notification group must be an object
-- each group must have `name` as string
-- each group must have `details` as array
-- every detail must have `subject`, `body`, and `datetime` as strings
-
-Recommended implementation:
-
-1. Extract notification payload shape helpers into a shared module such as `src/lib/parent-notification-contract.ts`.
-2. Export `DEFAULT_NATURES`, `buildEmptyNotificationPayload`, `buildNotificationGroup`, and detail mapping guards if useful.
-3. Make the route catch `isPrismaConnectionError` around:
-   - auth lookup
-   - unauthenticated child/parent context lookup
-   - notification nature loading
-   - detail loading
-4. On DB connection failure for native POST/no auth, return `buildEmptyNotificationPayload()` instead of 500.
-5. Add `src/scripts/verify-parent-notification-contract.ts` that proves:
-   - empty payload has `notification1` through `notification11`
-   - each group has string `name`
-   - each group has array `details`
-   - a sample group with detail returns string `subject`, `body`, `datetime`
-   - quote cleaning still removes `"` from bodies, matching PHP `clean()`
-6. Update:
-   - `docs/parent-api-contract-matrix.md`
-   - `docs/top-20-restoration-gaps.md`
-   - `docs/page-parity-matrix.md`
-   - `docs/page-parity-matrix.json`
-7. Verify with:
+First run:
 
 ```bash
-PARENT_JWT_SECRET=test-secret pnpm exec tsx src/scripts/verify-parent-notification-contract.ts
-PARENT_JWT_SECRET=test-secret pnpm exec tsx src/scripts/verify-parent-daily-contract.ts
-PARENT_JWT_SECRET=test-secret pnpm exec tsx src/scripts/verify-parent-native-list-contracts.ts
-pnpm exec tsc --noEmit
-pnpm exec eslint <touched files>
-python3 -m json.tool docs/page-parity-matrix.json >/dev/null
-git diff --check
+git status --short --branch
+pnpm tsx src/scripts/report-production-partials.ts --json
+pnpm tsx src/scripts/report-production-evidence-checklist.ts --json
+pnpm run verify:production-gates
 ```
 
-If starting a dev server:
+Then work the first gate where real evidence is available:
+
+- `PROD-CRON`: obtain production crontab or hosted scheduler evidence, confirm birthday/assessment/medicine/insurance/vaccination/payment/event schedule enablement, then archive `PRODUCTION_CRONTAB_EVIDENCE` and `HOSTED_SCHEDULER_EVIDENCE`.
+- `PROD-PROVIDERS`: configure production-like email, push, SMS, and WhatsApp providers, run delivery summaries for the remaining message/alarm families, then archive provider rollout evidence.
+- `PROD-NATIVE`: run exact iOS and Android native-device acceptance against the restored direct PHP routes, including parent login, message/thread flows, push token register/show/delete, alarm feeds, and `notifications_master.php`.
+- `PROD-NATURE`: accept the imported production `notifications_nature` ordering/active groups after canonical production import.
+- Canonical import/media: run production SQL/media import, file URL application, and migration reconciliation against the canonical production dump/package before removing any source-data blockers.
+- Print/stationery: accept accounting invoice/receipt and monthly matrix print output against production stationery.
+
+Final closure command sequence:
 
 ```bash
-lsof -nP -iTCP:3001 -sTCP:LISTEN || true
-PORT=3001 pnpm dev
-curl -sS -i -X POST -d 'usites=0' http://localhost:3001/ws/notifications_master.php
+pnpm run closeout:production -- --env-file=/secure/private-readiness.env --evidence-record=/secure/production-acceptance-evidence.md --out=/tmp/kiddzonl-production-readiness.json --summary-out=/tmp/kiddzonl-production-closeout-summary.json --partials-out=/tmp/kiddzonl-production-partials.json --checklist-out=/tmp/kiddzonl-production-evidence-checklist.json --branch=legacy-parity-runbook --commit=<release-commit-sha> --require-zero-partials
+pnpm tsx src/scripts/verify-production-closeout-summary-contract.ts /tmp/kiddzonl-production-closeout-summary.json --readiness-report=/tmp/kiddzonl-production-readiness.json --evidence-record=/secure/production-acceptance-evidence.md --partial-report=/tmp/kiddzonl-production-partials.json --checklist-report=/tmp/kiddzonl-production-evidence-checklist.json --require-zero-partials
+pnpm tsx src/scripts/verify-production-evidence-package-contract.ts --summary-report=/tmp/kiddzonl-production-closeout-summary.json --readiness-report=/tmp/kiddzonl-production-readiness.json --evidence-record=/secure/production-acceptance-evidence.md --partial-report=/tmp/kiddzonl-production-partials.json --checklist-report=/tmp/kiddzonl-production-evidence-checklist.json --manifest-out=/tmp/kiddzonl-production-evidence-package.json --branch=legacy-parity-runbook --commit=<release-commit-sha> --require-zero-partials
 ```
-
-Expected native-safe empty notification response:
-
-- HTTP `200`
-- `content-type: application/json`
-- object with `info`
-- object with `notification1` through `notification11`
-- each `details` is `[]`
 
 ## Broader Remaining High-Risk Areas
 
-After `notifications_master.php`, continue through these clusters:
+The remaining work is now concentrated in final acceptance and production evidence:
 
-- Parent message list/thread/send contracts:
-  - `messages.php`
-  - `messagesList.php`
-  - `message.php`
-  - `sendMessage.php`
-  - exact iOS/Android parser audit
-  - credentialed send/open tests
-  - parent/mobile read reset behavior
-- Parent push token flow:
-  - `pnotifications.php`
-  - credentialed DB write verification
-  - external OneSignal/webhook delivery rollout
-- Parent alarm feeds:
-  - birthday, medicine, insurance, vaccination, payment, missing medical, assessment, event, general
-  - parser shape guardrails
-  - push delivery/provider rollout
-  - hosted cron schedule after production crontab confirmation
-- Production data foundations:
+- Production database foundations:
   - canonical production SQL dumps
-  - media/file export/import and object storage
-  - migration reconciliation against production imports
-- Visual/behavioral audits for `partial` desktop/admin surfaces:
-  - DataTables export/print
-  - Metronic visual parity
-  - legacy modal/action/ACL edge cases
-  - credentialed logged-in browser smokes
+  - canonical media/file export/import
+  - object-storage upload/apply manifests
+  - reconciliation against production imports
+- Production operations:
+  - hosted cron/scheduler evidence
+  - provider credential rollout
+  - delivery summary evidence for push/SMS/WhatsApp/email
+- Production device/stationery acceptance:
+  - iOS and Android native-device acceptance
+  - production `notifications_nature` acceptance
+  - accounting/receipt print-stationery acceptance
 
 ## Quality Bar
 
@@ -357,6 +280,7 @@ Do not:
 git status --short --branch
 pnpm exec tsc --noEmit
 pnpm exec eslint <touched files>
+pnpm exec tsx src/scripts/verify-next-codex-handoff-contract.ts
 PARENT_JWT_SECRET=test-secret pnpm exec tsx src/scripts/verify-parent-daily-contract.ts
 PARENT_JWT_SECRET=test-secret pnpm exec tsx src/scripts/verify-parent-native-list-contracts.ts
 python3 -m json.tool docs/page-parity-matrix.json >/dev/null
@@ -404,15 +328,15 @@ Do not stage or commit:
 overnight-ui-fix-log.txt
 
 Current progress:
-About 70.9% implemented / 29.1% left by weighted progress.
-Strict fully signed-off parity is about 35.3% done / 64.7% still partial.
+99% done / 1% left by the current page-parity tracker.
+The remaining 17 partial rows are production/external acceptance gates: PROD-CRON, PROD-NATIVE, PROD-NATURE, and PROD-PROVIDERS.
 
 Recent pushed commits:
-4d891ea fix: harden parent native list contracts
-83e722e fix: harden parent daily legacy contract
-f786716 fix: harden parent legacy empty feeds
-2730ed8 fix: restore legacy parent ws routes
-1890993 fix: restore legacy admin settings tab redirects
+5afd1e4 chore: require zero partial closeout summary
+b8bbdd4 chore: bind package command release ref
+28a35b6 chore: require final closeout artifacts
+23b80a9 chore: bind evidence package release ref
+60da114 chore: require zero partial evidence package
 
-Continue from the documented parity matrix. The next recommended slice is parent native `notifications_master.php` parser-safety and DB-fallback hardening. Inspect legacy PHP/iOS/Android sources, patch modern app, add focused verifier, update docs, run TypeScript/ESLint/runtime checks, commit, and push to legacy-parity-runbook. Keep going slice by slice until the full legacy restoration objective is genuinely complete.
+Continue from the production/external acceptance gates. First run `pnpm tsx src/scripts/report-production-partials.ts --json`, `pnpm tsx src/scripts/report-production-evidence-checklist.ts --json`, and `pnpm run verify:production-gates`. Work the first gate with real evidence available: canonical production SQL/media import and reconciliation, hosted cron evidence, provider delivery rollout, iOS/Android native-device acceptance, production `notifications_nature` acceptance, or print/stationery acceptance. Do not mark the goal complete until the parity matrix has zero partial rows and the closeout summary plus evidence package verifiers pass with `--require-zero-partials`.
 ```
