@@ -203,6 +203,8 @@ pnpm tsx src/scripts/verify-production-closeout-summary-contract.ts /tmp/kiddzon
 pnpm tsx src/scripts/verify-production-evidence-package-contract.ts --summary-report=/tmp/kiddzonl-production-closeout-summary.json --readiness-report=/tmp/kiddzonl-production-readiness.json --evidence-record=/secure/production-acceptance-evidence.md --partial-report=/tmp/kiddzonl-production-partials.json --checklist-report=/tmp/kiddzonl-production-evidence-checklist.json --manifest-out=/tmp/kiddzonl-production-evidence-package.json --branch=legacy-parity-runbook --commit=<release-commit-sha> --require-zero-partials
 ```
 
+The final command reads `docs/page-parity-matrix.json` and `docs/partial-production-gate-map.md` by default. Use `--parity-matrix=<path>` and `--partial-gate-map=<path>` only when reproducing an archived release package from already-frozen evidence artifacts or running contract tests against a controlled fixture.
+
 The legacy restoration goal can only be marked complete when:
 
 - readiness audit reports all gates ready to review,

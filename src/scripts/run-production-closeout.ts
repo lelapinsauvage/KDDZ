@@ -45,10 +45,12 @@ const explicitBranch = optionValue("--branch");
 const explicitCommit = optionValue("--commit");
 const generatedAt = generatedAtValue();
 const summaryGeneratedAt = generatedAt ?? new Date().toISOString();
+const parityMatrixPath = optionValue("--parity-matrix") ?? "docs/page-parity-matrix.json";
+const partialGateMapPath = optionValue("--partial-gate-map") ?? "docs/partial-production-gate-map.md";
 
 if (!envFilePath || !evidenceRecordPath) {
   console.error(
-    "Usage: pnpm tsx src/scripts/run-production-closeout.ts --env-file=<private-readiness.env> --evidence-record=<production-acceptance-evidence.md> [--out=<readiness.json>] [--summary-out=<closeout-summary.json>] [--partials-out=<partials.json>] [--checklist-out=<evidence-checklist.json>] [--branch=<branch>] [--commit=<sha>] [--generated-at=<iso>] [--require-zero-partials]"
+    "Usage: pnpm tsx src/scripts/run-production-closeout.ts --env-file=<private-readiness.env> --evidence-record=<production-acceptance-evidence.md> [--out=<readiness.json>] [--summary-out=<closeout-summary.json>] [--partials-out=<partials.json>] [--checklist-out=<evidence-checklist.json>] [--branch=<branch>] [--commit=<sha>] [--generated-at=<iso>] [--parity-matrix=<path>] [--partial-gate-map=<path>] [--require-zero-partials]"
   );
   process.exit(2);
 }
@@ -83,6 +85,8 @@ if (partialsOutputPath) {
     "src/scripts/report-production-partials.ts",
     "--json",
     `--out=${partialsOutputPath}`,
+    `--parity-matrix=${parityMatrixPath}`,
+    `--partial-gate-map=${partialGateMapPath}`,
     ...optionalArg("--generated-at", generatedAt),
   ]);
 }
@@ -92,6 +96,7 @@ if (checklistOutputPath) {
     "src/scripts/report-production-evidence-checklist.ts",
     "--json",
     `--out=${checklistOutputPath}`,
+    `--partial-gate-map=${partialGateMapPath}`,
     ...optionalArg("--generated-at", generatedAt),
   ]);
 }
@@ -219,7 +224,7 @@ function sha256File(path: string) {
 }
 
 function trackerSummary() {
-  const matrix = JSON.parse(readFileSync("docs/page-parity-matrix.json", "utf8")) as ParityRow[];
+  const matrix = JSON.parse(readFileSync(parityMatrixPath, "utf8")) as ParityRow[];
   let total = 0;
   let partial = 0;
 

@@ -19,6 +19,8 @@ type PartialGateRow = {
 const json = process.argv.includes("--json");
 const outputPath = optionValue("--out");
 const generatedAt = generatedAtValue();
+const parityMatrixPath = optionValue("--parity-matrix") ?? "docs/page-parity-matrix.json";
+const partialGateMapPath = optionValue("--partial-gate-map") ?? "docs/partial-production-gate-map.md";
 
 const partialRows = collectPartialRows();
 const mapRows = parsePartialGateMap();
@@ -49,8 +51,8 @@ const payload = {
   schemaVersion: 1,
   generatedAt,
   generatedFrom: {
-    matrix: "docs/page-parity-matrix.json",
-    gateMap: "docs/partial-production-gate-map.md",
+    matrix: parityMatrixPath,
+    gateMap: partialGateMapPath,
   },
   summary,
   rows: reportRows,
@@ -68,7 +70,7 @@ if (outputPath) {
 process.stdout.write(rendered);
 
 function collectPartialRows() {
-  const matrix = JSON.parse(readFileSync("docs/page-parity-matrix.json", "utf8")) as unknown;
+  const matrix = JSON.parse(readFileSync(parityMatrixPath, "utf8")) as unknown;
   const rows: ParityRow[] = [];
 
   function walk(value: unknown): void {
@@ -92,7 +94,7 @@ function collectPartialRows() {
 }
 
 function parsePartialGateMap() {
-  const markdown = readFileSync("docs/partial-production-gate-map.md", "utf8");
+  const markdown = readFileSync(partialGateMapPath, "utf8");
   return markdown
     .split(/\r?\n/)
     .filter((line) => /^\| P\d{2} \|/.test(line))

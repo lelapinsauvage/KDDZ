@@ -159,6 +159,14 @@ function verifySelfTestContract() {
     const partialReportPath = join(tmp, "partials.json");
     const checklistReportPath = join(tmp, "evidence-checklist.json");
     const packageManifestPath = join(tmp, "evidence-package.json");
+    const zeroParityMatrixPath = join(tmp, "zero-page-parity-matrix.json");
+    const zeroPartialGateMapPath = join(tmp, "zero-partial-production-gate-map.md");
+    const zeroEvidenceRecordPath = join(tmp, "zero-production-acceptance-evidence.md");
+    const zeroReadinessReportPath = join(tmp, "zero-readiness.json");
+    const zeroCloseoutSummaryPath = join(tmp, "zero-closeout-summary.json");
+    const zeroPartialReportPath = join(tmp, "zero-partials.json");
+    const zeroChecklistReportPath = join(tmp, "zero-evidence-checklist.json");
+    const zeroPackageManifestPath = join(tmp, "zero-evidence-package.json");
 
     writeFileSync(envFilePath, readinessEnvFile(), "utf8");
     execFileSync("pnpm", ["tsx", "src/scripts/report-production-partials.ts", "--json", `--out=${partialReportPath}`, `--generated-at=${generatedAt}`], {
@@ -283,6 +291,101 @@ function verifySelfTestContract() {
     assert.equal(unresolvedFinalWithRef.status, 1);
     assert.match(unresolvedFinalWithRef.stderr, /must come from a require-zero-partials closeout/);
     assertNoSensitiveOutput(unresolvedFinalWithRef.stdout + unresolvedFinalWithRef.stderr);
+
+    writeFileSync(zeroParityMatrixPath, zeroPartialMatrixJson(), "utf8");
+    writeFileSync(zeroPartialGateMapPath, zeroPartialGateMapMarkdown(), "utf8");
+    execFileSync("pnpm", [
+      "tsx",
+      "src/scripts/report-production-partials.ts",
+      "--json",
+      `--out=${zeroPartialReportPath}`,
+      `--generated-at=${generatedAt}`,
+      `--parity-matrix=${zeroParityMatrixPath}`,
+      `--partial-gate-map=${zeroPartialGateMapPath}`,
+    ], {
+      cwd: process.cwd(),
+      stdio: "ignore",
+    });
+    execFileSync("pnpm", [
+      "tsx",
+      "src/scripts/report-production-evidence-checklist.ts",
+      "--json",
+      `--out=${zeroChecklistReportPath}`,
+      `--generated-at=${generatedAt}`,
+      `--partial-gate-map=${zeroPartialGateMapPath}`,
+    ], {
+      cwd: process.cwd(),
+      stdio: "ignore",
+    });
+    writeFileSync(
+      zeroEvidenceRecordPath,
+      fillTemplate(readFileSync("docs/production-acceptance-evidence-template.md", "utf8"), {
+        readinessReportPath: zeroReadinessReportPath,
+        closeoutSummaryPath: zeroCloseoutSummaryPath,
+        partialReportPath: zeroPartialReportPath,
+        checklistReportPath: zeroChecklistReportPath,
+        readinessReportDigest: "verified in closeout summary artifact digests",
+        partialReportDigest: sha256File(zeroPartialReportPath),
+        checklistReportDigest: sha256File(zeroChecklistReportPath),
+      }),
+      "utf8"
+    );
+    execFileSync("pnpm", [
+      "tsx",
+      "src/scripts/run-production-closeout.ts",
+      `--env-file=${envFilePath}`,
+      `--evidence-record=${zeroEvidenceRecordPath}`,
+      `--out=${zeroReadinessReportPath}`,
+      `--summary-out=${zeroCloseoutSummaryPath}`,
+      `--partials-out=${zeroPartialReportPath}`,
+      `--checklist-out=${zeroChecklistReportPath}`,
+      "--branch=legacy-parity-runbook",
+      "--commit=0404c6a",
+      `--generated-at=${generatedAt}`,
+      `--parity-matrix=${zeroParityMatrixPath}`,
+      `--partial-gate-map=${zeroPartialGateMapPath}`,
+      "--require-zero-partials",
+    ], {
+      cwd: process.cwd(),
+      stdio: "ignore",
+    });
+    runVerifier([
+      `--summary-report=${zeroCloseoutSummaryPath}`,
+      `--readiness-report=${zeroReadinessReportPath}`,
+      `--evidence-record=${zeroEvidenceRecordPath}`,
+      `--partial-report=${zeroPartialReportPath}`,
+      `--checklist-report=${zeroChecklistReportPath}`,
+      `--manifest-out=${zeroPackageManifestPath}`,
+      "--branch=legacy-parity-runbook",
+      "--commit=0404c6a",
+      "--require-zero-partials",
+    ]);
+    const zeroPackageManifest = readJson<PackageManifest>(zeroPackageManifestPath);
+    assert.deepEqual(zeroPackageManifest.closeout.partialReportSummary, {
+      partialRows: 0,
+      gates: [],
+      gateCounts: {},
+    });
+    assert.equal(zeroPackageManifest.closeout.evidenceChecklistSummary?.blockingPartialRows, 0);
+    assert.deepEqual(zeroPackageManifest.closeout.parityTracker, {
+      total: 1713,
+      complete: 1713,
+      partial: 0,
+      donePct: 100,
+      leftPct: 0,
+    });
+    assert.equal(zeroPackageManifest.closeout.requireZeroPartials, true);
+    runVerifier([
+      `--summary-report=${zeroCloseoutSummaryPath}`,
+      `--readiness-report=${zeroReadinessReportPath}`,
+      `--evidence-record=${zeroEvidenceRecordPath}`,
+      `--partial-report=${zeroPartialReportPath}`,
+      `--checklist-report=${zeroChecklistReportPath}`,
+      `--manifest=${zeroPackageManifestPath}`,
+      "--branch=legacy-parity-runbook",
+      "--commit=0404c6a",
+      "--require-zero-partials",
+    ]);
 
     const wrongCommit = runVerifier([
       `--summary-report=${closeoutSummaryPath}`,
@@ -557,6 +660,39 @@ function readJson<T>(path: string) {
   const text = readFileSync(path, "utf8");
   assertNoSensitiveOutput(text);
   return JSON.parse(text) as T;
+}
+
+function zeroPartialMatrixJson() {
+  const matrix = JSON.parse(readFileSync("docs/page-parity-matrix.json", "utf8")) as unknown;
+
+  function walk(value: unknown): void {
+    if (Array.isArray(value)) {
+      value.forEach(walk);
+      return;
+    }
+    if (!value || typeof value !== "object") {
+      return;
+    }
+
+    const row = value as { status?: unknown };
+    if (typeof row.status === "string" && row.status.toLowerCase().startsWith("partial")) {
+      row.status = "complete - production evidence accepted for zero-partial package contract";
+    }
+    Object.values(value).forEach(walk);
+  }
+
+  walk(matrix);
+  return `${JSON.stringify(matrix, null, 2)}\n`;
+}
+
+function zeroPartialGateMapMarkdown() {
+  return [
+    "# Partial Production Gate Map",
+    "",
+    "| Row | Status anchor | Gates | Closure reason |",
+    "| --- | --- | --- | --- |",
+    "",
+  ].join("\n");
 }
 
 function ensureParentDir(path: string) {

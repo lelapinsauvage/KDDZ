@@ -23,6 +23,13 @@ try {
   const closeoutSummaryPath = join(tmp, "closeout-summary.json");
   const partialReportPath = join(tmp, "partials.json");
   const checklistReportPath = join(tmp, "evidence-checklist.json");
+  const zeroParityMatrixPath = join(tmp, "zero-page-parity-matrix.json");
+  const zeroPartialGateMapPath = join(tmp, "zero-partial-production-gate-map.md");
+  const zeroEvidenceRecordPath = join(tmp, "zero-production-acceptance-evidence.md");
+  const zeroReadinessReportPath = join(tmp, "zero-readiness.json");
+  const zeroCloseoutSummaryPath = join(tmp, "zero-closeout-summary.json");
+  const zeroPartialReportPath = join(tmp, "zero-partials.json");
+  const zeroChecklistReportPath = join(tmp, "zero-evidence-checklist.json");
   writeFileSync(envFilePath, readinessEnvFile(), "utf8");
   execFileSync("pnpm", ["tsx", "src/scripts/report-production-partials.ts", "--json", `--out=${partialReportPath}`, `--generated-at=${generatedAt}`], {
     cwd: process.cwd(),
@@ -193,6 +200,83 @@ try {
   assert.equal(unresolvedPartials.status, 1);
   assert.match(unresolvedPartials.stderr, /requires zero partial parity rows; found 17/);
   assertNoSensitiveOutput(unresolvedPartials.stdout + unresolvedPartials.stderr);
+
+  writeFileSync(zeroParityMatrixPath, zeroPartialMatrixJson(), "utf8");
+  writeFileSync(zeroPartialGateMapPath, zeroPartialGateMapMarkdown(), "utf8");
+  execFileSync("pnpm", [
+    "tsx",
+    "src/scripts/report-production-partials.ts",
+    "--json",
+    `--out=${zeroPartialReportPath}`,
+    `--generated-at=${generatedAt}`,
+    `--parity-matrix=${zeroParityMatrixPath}`,
+    `--partial-gate-map=${zeroPartialGateMapPath}`,
+  ], {
+    cwd: process.cwd(),
+    stdio: "ignore",
+  });
+  execFileSync("pnpm", [
+    "tsx",
+    "src/scripts/report-production-evidence-checklist.ts",
+    "--json",
+    `--out=${zeroChecklistReportPath}`,
+    `--generated-at=${generatedAt}`,
+    `--partial-gate-map=${zeroPartialGateMapPath}`,
+  ], {
+    cwd: process.cwd(),
+    stdio: "ignore",
+  });
+  writeFileSync(
+    zeroEvidenceRecordPath,
+    fillTemplate(template, {
+      readinessReportPath: zeroReadinessReportPath,
+      closeoutSummaryPath: zeroCloseoutSummaryPath,
+      partialReportPath: zeroPartialReportPath,
+      checklistReportPath: zeroChecklistReportPath,
+      readinessReportDigest: "verified in closeout summary artifact digests",
+      partialReportDigest: sha256File(zeroPartialReportPath),
+      checklistReportDigest: sha256File(zeroChecklistReportPath),
+    }),
+    "utf8"
+  );
+  const zeroCloseout = runCloseout([
+    `--env-file=${envFilePath}`,
+    `--evidence-record=${zeroEvidenceRecordPath}`,
+    `--out=${zeroReadinessReportPath}`,
+    `--summary-out=${zeroCloseoutSummaryPath}`,
+    `--partials-out=${zeroPartialReportPath}`,
+    `--checklist-out=${zeroChecklistReportPath}`,
+    "--branch=legacy-parity-runbook",
+    "--commit=0404c6a",
+    `--generated-at=${generatedAt}`,
+    `--parity-matrix=${zeroParityMatrixPath}`,
+    `--partial-gate-map=${zeroPartialGateMapPath}`,
+    "--require-zero-partials",
+  ]);
+  assert.equal(zeroCloseout.status, 0, zeroCloseout.stdout + zeroCloseout.stderr);
+  assertNoSensitiveOutput(zeroCloseout.stdout + zeroCloseout.stderr);
+  const zeroCloseoutPayload = JSON.parse(readFileSync(zeroCloseoutSummaryPath, "utf8")) as {
+    requireZeroPartials?: boolean;
+    partialReportSummary?: { partialRows?: number; gates?: string[]; gateCounts?: Record<string, number> } | null;
+    evidenceChecklistSummary?: { blockingPartialRows?: number } | null;
+    parityTracker?: { total?: number; complete?: number; partial?: number; donePct?: number; leftPct?: number };
+    artifactConsistency?: { status?: string } | null;
+  };
+  assert.deepEqual(zeroCloseoutPayload.partialReportSummary, {
+    partialRows: 0,
+    gates: [],
+    gateCounts: {},
+  });
+  assert.equal(zeroCloseoutPayload.evidenceChecklistSummary?.blockingPartialRows, 0);
+  assert.deepEqual(zeroCloseoutPayload.parityTracker, {
+    total: 1713,
+    complete: 1713,
+    partial: 0,
+    donePct: 100,
+    leftPct: 0,
+  });
+  assert.equal(zeroCloseoutPayload.requireZeroPartials, true);
+  assert.equal(zeroCloseoutPayload.artifactConsistency?.status, "verified");
 
   const missingFinalArtifacts = runCloseout([
     `--env-file=${envFilePath}`,
@@ -378,6 +462,39 @@ function runCloseout(args: string[]): CommandResult {
       stderr: String(result.stderr ?? ""),
     };
   }
+}
+
+function zeroPartialMatrixJson() {
+  const matrix = JSON.parse(readFileSync("docs/page-parity-matrix.json", "utf8")) as unknown;
+
+  function walk(value: unknown): void {
+    if (Array.isArray(value)) {
+      value.forEach(walk);
+      return;
+    }
+    if (!value || typeof value !== "object") {
+      return;
+    }
+
+    const row = value as { status?: unknown };
+    if (typeof row.status === "string" && row.status.toLowerCase().startsWith("partial")) {
+      row.status = "complete - production evidence accepted for zero-partial closeout contract";
+    }
+    Object.values(value).forEach(walk);
+  }
+
+  walk(matrix);
+  return `${JSON.stringify(matrix, null, 2)}\n`;
+}
+
+function zeroPartialGateMapMarkdown() {
+  return [
+    "# Partial Production Gate Map",
+    "",
+    "| Row | Status anchor | Gates | Closure reason |",
+    "| --- | --- | --- | --- |",
+    "",
+  ].join("\n");
 }
 
 function assertNoSensitiveOutput(output: string) {

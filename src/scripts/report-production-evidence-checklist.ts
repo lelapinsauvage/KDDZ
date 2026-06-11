@@ -22,6 +22,7 @@ const json = process.argv.includes("--json");
 const outputPath = optionValue("--out");
 const selectedGate = optionValue("--gate");
 const generatedAt = generatedAtValue();
+const partialGateMapPath = optionValue("--partial-gate-map") ?? "docs/partial-production-gate-map.md";
 
 const gateSections = productionGateSections();
 if (selectedGate && !gateSections.includes(selectedGate)) {
@@ -55,7 +56,7 @@ const payload = {
   generatedFrom: {
     evidenceSpec: "src/scripts/production-acceptance-evidence-spec.ts",
     evidenceTemplate: "docs/production-acceptance-evidence-template.md",
-    partialGateMap: "docs/partial-production-gate-map.md",
+    partialGateMap: partialGateMapPath,
   },
   summary: {
     gates: gates.length,
@@ -77,7 +78,7 @@ if (outputPath) {
 process.stdout.write(rendered);
 
 function parsePartialGateMap() {
-  const markdown = readFileSync("docs/partial-production-gate-map.md", "utf8");
+  const markdown = readFileSync(partialGateMapPath, "utf8");
   return markdown
     .split(/\r?\n/)
     .filter((line) => /^\| P\d{2} \|/.test(line))
