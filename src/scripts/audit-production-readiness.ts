@@ -71,6 +71,7 @@ const evidenceGateRequirements: Array<{
       "NATIVE_IOS_ACCEPTANCE_REPORT",
       "NATIVE_ANDROID_ACCEPTANCE_REPORT",
       "NATIVE_LEGACY_ROUTE_ACCEPTANCE_REPORT",
+      "NATIVE_CRASH_PARSER_AUDIT_REPORT",
     ],
   },
   {
