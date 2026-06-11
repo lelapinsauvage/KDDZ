@@ -18,6 +18,7 @@ type PartialGateRow = {
 
 const json = process.argv.includes("--json");
 const outputPath = optionValue("--out");
+const generatedAt = optionValue("--generated-at") ?? new Date().toISOString();
 
 const partialRows = collectPartialRows();
 const mapRows = parsePartialGateMap();
@@ -45,6 +46,7 @@ const summary = {
 };
 const payload = {
   status: "production partial gate report",
+  generatedAt,
   generatedFrom: {
     matrix: "docs/page-parity-matrix.json",
     gateMap: "docs/partial-production-gate-map.md",
@@ -112,6 +114,8 @@ function renderMarkdown(rows: PartialGateRow[]) {
   const counts = gateCounts(rows);
   const lines = [
     "# Production Partial Gate Report",
+    "",
+    `Generated at: ${generatedAt}`,
     "",
     `Partial rows: ${rows.length}`,
     "",

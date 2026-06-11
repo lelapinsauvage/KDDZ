@@ -10,11 +10,13 @@ const jsonOutput = execFileSync("pnpm", ["tsx", script, "--json"], {
 
 const payload = JSON.parse(jsonOutput) as {
   status?: string;
+  generatedAt?: string;
   summary?: { gates?: number; requiredFields?: number; blockingPartialRows?: number };
   gates?: Array<{ gate?: string; requiredFields?: string[]; blockingPartialRows?: Array<{ row?: string }> }>;
 };
 
 assert.equal(payload.status, "production evidence checklist");
+assertValidIsoTimestamp(payload.generatedAt, "evidence checklist generatedAt");
 assert.equal(payload.summary?.gates, 12);
 assert.equal(payload.summary?.requiredFields, 69);
 assert.equal(payload.summary?.blockingPartialRows, 17);
@@ -52,9 +54,17 @@ const markdownOutput = execFileSync("pnpm", ["tsx", script, "--gate=PROD-NATIVE"
   encoding: "utf8",
 });
 assert.match(markdownOutput, /Production Evidence Checklist/);
+assert.match(markdownOutput, /Generated at: \d{4}-\d{2}-\d{2}T/);
 assert.match(markdownOutput, /## PROD-NATIVE/);
 assert.match(markdownOutput, /iOS build tested against `master.php`/);
 assert.match(markdownOutput, /P17/);
+
+const frozenOutput = execFileSync("pnpm", ["tsx", script, "--json", "--generated-at=2026-06-10T00:00:00.000Z"], {
+  cwd: process.cwd(),
+  encoding: "utf8",
+});
+const frozenPayload = JSON.parse(frozenOutput) as typeof payload;
+assert.equal(frozenPayload.generatedAt, "2026-06-10T00:00:00.000Z");
 
 const unknownGate = spawnSync("pnpm", ["tsx", script, "--gate=PROD-UNKNOWN"], {
   cwd: process.cwd(),
@@ -64,3 +74,8 @@ assert.equal(unknownGate.status, 2);
 assert.match(unknownGate.stderr, /Unknown production gate: PROD-UNKNOWN/);
 
 console.log("production evidence checklist contract assertions passed");
+
+function assertValidIsoTimestamp(value: string | undefined, label: string) {
+  assert.ok(value, `${label} is missing`);
+  assert.equal(new Date(value).toISOString(), value, `${label} must be an ISO timestamp`);
+}

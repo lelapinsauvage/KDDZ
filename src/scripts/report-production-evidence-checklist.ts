@@ -21,6 +21,7 @@ type ChecklistGate = {
 const json = process.argv.includes("--json");
 const outputPath = optionValue("--out");
 const selectedGate = optionValue("--gate");
+const generatedAt = optionValue("--generated-at") ?? new Date().toISOString();
 
 const gateSections = productionGateSections();
 if (selectedGate && !gateSections.includes(selectedGate)) {
@@ -49,6 +50,7 @@ const gates = gateSections
 
 const payload = {
   status: "production evidence checklist",
+  generatedAt,
   generatedFrom: {
     evidenceSpec: "src/scripts/production-acceptance-evidence-spec.ts",
     evidenceTemplate: "docs/production-acceptance-evidence-template.md",
@@ -95,6 +97,7 @@ function parsePartialGateMap() {
 
 function renderMarkdown(gates: ChecklistGate[]) {
   const lines = ["# Production Evidence Checklist", ""];
+  lines.push(`Generated at: ${generatedAt}`, "");
 
   for (const gate of gates) {
     lines.push(`## ${gate.gate}`, "");

@@ -34,6 +34,7 @@ for (const expected of [
   "pnpm tsx src/scripts/report-production-partials.ts --json",
   "pnpm tsx src/scripts/report-production-evidence-checklist.ts --json",
   "pnpm run verify:production-gates",
+  "--generated-at=<release-generated-at-iso>",
   "--require-zero-partials",
 ]) {
   assert.ok(handoff.includes(expected), `handoff missing current marker: ${expected}`);

@@ -130,6 +130,7 @@ function verifyEvidencePackage(closeoutSummaryPath: string) {
 
 function verifySelfTestContract() {
   const tmp = mkdtempSync(join(tmpdir(), "kiddzonl-evidence-package-"));
+  const generatedAt = "2026-06-10T00:00:00.000Z";
   try {
     const envFilePath = join(tmp, "private-readiness.env");
     const evidenceRecordPath = join(tmp, "production-acceptance-evidence.md");
@@ -140,11 +141,11 @@ function verifySelfTestContract() {
     const packageManifestPath = join(tmp, "evidence-package.json");
 
     writeFileSync(envFilePath, readinessEnvFile(), "utf8");
-    execFileSync("pnpm", ["tsx", "src/scripts/report-production-partials.ts", "--json", `--out=${partialReportPath}`], {
+    execFileSync("pnpm", ["tsx", "src/scripts/report-production-partials.ts", "--json", `--out=${partialReportPath}`, `--generated-at=${generatedAt}`], {
       cwd: process.cwd(),
       stdio: "ignore",
     });
-    execFileSync("pnpm", ["tsx", "src/scripts/report-production-evidence-checklist.ts", "--json", `--out=${checklistReportPath}`], {
+    execFileSync("pnpm", ["tsx", "src/scripts/report-production-evidence-checklist.ts", "--json", `--out=${checklistReportPath}`, `--generated-at=${generatedAt}`], {
       cwd: process.cwd(),
       stdio: "ignore",
     });
@@ -172,6 +173,7 @@ function verifySelfTestContract() {
       `--checklist-out=${checklistReportPath}`,
       "--branch=legacy-parity-runbook",
       "--commit=0404c6a",
+      `--generated-at=${generatedAt}`,
     ], {
       cwd: process.cwd(),
       stdio: "ignore",

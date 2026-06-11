@@ -43,10 +43,11 @@ const branch = optionValue("--branch") ?? gitOutput(["branch", "--show-current"]
 const commit = optionValue("--commit") ?? gitOutput(["rev-parse", "HEAD"]);
 const explicitBranch = optionValue("--branch");
 const explicitCommit = optionValue("--commit");
+const generatedAt = optionValue("--generated-at");
 
 if (!envFilePath || !evidenceRecordPath) {
   console.error(
-    "Usage: pnpm tsx src/scripts/run-production-closeout.ts --env-file=<private-readiness.env> --evidence-record=<production-acceptance-evidence.md> [--out=<readiness.json>] [--summary-out=<closeout-summary.json>] [--partials-out=<partials.json>] [--checklist-out=<evidence-checklist.json>] [--branch=<branch>] [--commit=<sha>] [--require-zero-partials]"
+    "Usage: pnpm tsx src/scripts/run-production-closeout.ts --env-file=<private-readiness.env> --evidence-record=<production-acceptance-evidence.md> [--out=<readiness.json>] [--summary-out=<closeout-summary.json>] [--partials-out=<partials.json>] [--checklist-out=<evidence-checklist.json>] [--branch=<branch>] [--commit=<sha>] [--generated-at=<iso>] [--require-zero-partials]"
   );
   process.exit(2);
 }
@@ -80,6 +81,7 @@ if (partialsOutputPath) {
     "src/scripts/report-production-partials.ts",
     "--json",
     `--out=${partialsOutputPath}`,
+    ...optionalArg("--generated-at", generatedAt),
   ]);
 }
 if (checklistOutputPath) {
@@ -88,6 +90,7 @@ if (checklistOutputPath) {
     "src/scripts/report-production-evidence-checklist.ts",
     "--json",
     `--out=${checklistOutputPath}`,
+    ...optionalArg("--generated-at", generatedAt),
   ]);
 }
 const artifactConsistency = partialsOutputPath && checklistOutputPath
