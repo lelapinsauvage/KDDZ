@@ -103,6 +103,7 @@ const manifest: PreflightManifest = {
   verifiedBy: [
     "src/scripts/verify-production-artifact-consistency-contract.ts",
     "src/scripts/verify-production-focused-artifacts-manifest.ts",
+    "src/scripts/verify-production-preflight-artifacts-manifest.ts",
   ],
   redacted: true,
 };

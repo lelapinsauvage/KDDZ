@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -72,6 +72,7 @@ try {
   assert.deepEqual(manifest.verifiedBy, [
     "src/scripts/verify-production-artifact-consistency-contract.ts",
     "src/scripts/verify-production-focused-artifacts-manifest.ts",
+    "src/scripts/verify-production-preflight-artifacts-manifest.ts",
   ]);
 
   verifyArtifactRef("partial report", manifest.artifacts?.partialReport);
@@ -92,6 +93,14 @@ try {
     "tsx",
     "src/scripts/verify-production-focused-artifacts-manifest.ts",
     `--manifest=${manifest.artifacts?.focusedArtifactsManifest?.path}`,
+  ], {
+    cwd: process.cwd(),
+    stdio: "ignore",
+  });
+  execFileSync("pnpm", [
+    "tsx",
+    "src/scripts/verify-production-preflight-artifacts-manifest.ts",
+    `--manifest=${join(bundleDir, "kiddzonl-production-preflight-artifacts.json")}`,
   ], {
     cwd: process.cwd(),
     stdio: "ignore",
@@ -131,6 +140,22 @@ try {
   });
   assert.equal(invalidGeneratedAt.status, 2);
   assert.match(invalidGeneratedAt.stderr, /--generated-at must be an ISO timestamp/);
+
+  const staleManifestPath = join(tmp, "stale-preflight-artifacts.json");
+  const staleManifest = JSON.parse(JSON.stringify(manifest)) as PreflightManifest;
+  assert.ok(staleManifest.artifacts?.partialReport);
+  staleManifest.artifacts.partialReport.digest = "0".repeat(64);
+  writeFileSync(staleManifestPath, `${JSON.stringify(staleManifest, null, 2)}\n`, "utf8");
+  const stale = spawnSync("pnpm", [
+    "tsx",
+    "src/scripts/verify-production-preflight-artifacts-manifest.ts",
+    `--manifest=${staleManifestPath}`,
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.equal(stale.status, 1);
+  assert.match(stale.stderr, /digest drifted/);
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }

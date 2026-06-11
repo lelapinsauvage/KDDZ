@@ -69,6 +69,7 @@ const requiredReferences = [
   "src/scripts/report-production-focused-artifacts.ts",
   "src/scripts/report-production-preflight-artifacts.ts",
   "src/scripts/report-production-gate-status.ts",
+  "src/scripts/verify-production-preflight-artifacts-manifest.ts",
   "src/scripts/verify-production-focused-artifacts-manifest.ts",
   "src/scripts/verify-production-focused-artifacts-manifest-contract.ts",
   "src/scripts/verify-production-gate-status-contract.ts",
@@ -535,6 +536,7 @@ assert.match(contents.gates, /report-production-focused-artifacts\.ts/);
 assert.match(contents.gates, /report-production-preflight-artifacts\.ts/);
 assert.match(contents.gates, /report-production-gate-status\.ts/);
 assert.match(contents.gates, /--require-ready/);
+assert.match(contents.gates, /verify-production-preflight-artifacts-manifest\.ts/);
 assert.match(contents.gates, /verify-production-focused-artifacts-manifest\.ts/);
 assert.match(contents.gates, /report-production-evidence-checklist\.ts/);
 assert.match(contents.gates, /`generatedAt` ISO timestamps/);
@@ -593,6 +595,7 @@ assert.match(contents.gates, /verify-production-readiness-audit-contract\.ts/);
 assert.match(contents.gates, /readiness env template contract/);
 assert.match(contents.gates, /report-production-gate-status\.ts --json --blocking-only --out=\/tmp\/kiddzonl-production-blocking-gate-status\.json --generated-at=<release-generated-at-iso>/);
 assert.match(contents.gates, /report-production-preflight-artifacts\.ts --out-dir=\/tmp\/kiddzonl-production-preflight-artifacts --generated-at=<release-generated-at-iso>/);
+assert.match(contents.gates, /verify-production-preflight-artifacts-manifest\.ts --manifest=\/tmp\/kiddzonl-production-preflight-artifacts\/kiddzonl-production-preflight-artifacts\.json/);
 assert.match(contents.gates, /verify-production-preflight-artifacts-contract\.ts/);
 assert.match(contents.gates, /`--blocking-only` to show only gates that still block partial parity rows/);
 assert.match(contents.cutoverRunbook, /render-production-readiness-env-template\.ts --out=\/secure\/private-readiness\.env/);
@@ -605,6 +608,7 @@ assert.match(contents.cutoverRunbook, /--out=\/tmp\/kiddzonl-production-readines
 assert.match(contents.cutoverRunbook, /report-production-gate-status\.ts --json --out=\/tmp\/kiddzonl-production-gate-status\.json --generated-at=<release-generated-at-iso>/);
 assert.match(contents.cutoverRunbook, /report-production-gate-status\.ts --json --blocking-only --out=\/tmp\/kiddzonl-production-blocking-gate-status\.json --generated-at=<release-generated-at-iso>/);
 assert.match(contents.cutoverRunbook, /report-production-preflight-artifacts\.ts --out-dir=\/tmp\/kiddzonl-production-preflight-artifacts --generated-at=<release-generated-at-iso>/);
+assert.match(contents.cutoverRunbook, /verify-production-preflight-artifacts-manifest\.ts --manifest=\/tmp\/kiddzonl-production-preflight-artifacts\/kiddzonl-production-preflight-artifacts\.json/);
 assert.match(contents.cutoverRunbook, /report-production-gate-status\.ts --json --env-file=\/secure\/private-readiness\.env --out=\/tmp\/kiddzonl-production-gate-status\.json --generated-at=<release-generated-at-iso> --require-ready/);
 assert.match(contents.cutoverRunbook, /--env-file=\/secure\/private-readiness\.env/);
 assert.match(contents.cutoverRunbook, /verify-production-acceptance-evidence-record\.ts \/secure\/production-acceptance-evidence\.md --readiness-report=\/tmp\/kiddzonl-production-readiness\.json --branch=legacy-parity-runbook --commit=<release-commit-sha>/);
@@ -629,6 +633,7 @@ assert.match(contents.cutoverRunbook, /Generate focused non-secret coverage repo
 assert.match(contents.cutoverRunbook, /report-production-focused-artifacts\.ts --out-dir=\/tmp\/kiddzonl-production-focused-artifacts --generated-at=<release-generated-at-iso>/);
 assert.match(contents.cutoverRunbook, /verify-production-focused-artifacts-manifest\.ts --manifest=\/tmp\/kiddzonl-production-focused-artifacts\/kiddzonl-production-focused-artifacts\.json/);
 assert.match(contents.gates, /report-production-focused-artifacts\.ts --out-dir=<dir>/);
+assert.match(contents.gates, /verify-production-preflight-artifacts-manifest\.ts --manifest=<path>/);
 assert.match(contents.gates, /verify-production-focused-artifacts-manifest\.ts --manifest=<path>/);
 assert.match(contents.gates, /kiddzonl-production-focused-artifacts\.json/);
 assert.match(contents.cutoverRunbook, /--require-zero-partials/);

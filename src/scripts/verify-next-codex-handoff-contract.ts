@@ -36,6 +36,7 @@ for (const expected of [
   "pnpm tsx src/scripts/render-production-readiness-env-template.ts --out=/secure/private-readiness.env",
   "pnpm tsx src/scripts/report-production-gate-status.ts --json --blocking-only --out=/tmp/kiddzonl-production-blocking-gate-status.json --generated-at=<release-generated-at-iso>",
   "pnpm tsx src/scripts/report-production-preflight-artifacts.ts --out-dir=/tmp/kiddzonl-production-preflight-artifacts --generated-at=<release-generated-at-iso>",
+  "pnpm tsx src/scripts/verify-production-preflight-artifacts-manifest.ts --manifest=/tmp/kiddzonl-production-preflight-artifacts/kiddzonl-production-preflight-artifacts.json",
   "pnpm run verify:production-gates",
   "`fc63539 chore: focus production gate status on blockers`",
   "`f200c9e chore: generate production readiness env template`",
