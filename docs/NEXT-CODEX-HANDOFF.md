@@ -85,18 +85,18 @@ When modernizing native/parent APIs, compare all three:
 
 Recent commits on `legacy-parity-runbook`:
 
+- `b593e4c chore: verify focused production artifacts`
+- `60ef356 docs: guard focused partial report handoff`
 - `4440183 chore: add focused production partial reports`
 - `663bd0e chore: prove zero partial closeout summaries`
 - `e378e55 chore: prove zero partial production closeout`
 - `93d580f chore: allow zero partial consistency artifacts`
-- `97d62d0 chore: surface closeout summaries in package manifest`
-- `b74088e chore: require zero blocking closeout artifacts`
 
 Do not assume these are complete for the whole app. They are slices.
 
 ### Focused Production Partial Reports
 
-Commit `4440183` added `--gate=<gate>` filtering to `report-production-partials.ts`. Use it to generate the four non-secret row-coverage artifacts required by the remaining external gates: `--gate=PROD-CRON`, `--gate=PROD-PROVIDERS`, `--gate=PROD-NATIVE`, and `--gate=PROD-NATURE`. The full, unfiltered partial report is still the artifact used by final closeout.
+Commit `4440183` added `--gate=<gate>` filtering to `report-production-partials.ts`. Use it to generate the four non-secret row-coverage artifacts required by the remaining external gates: `--gate=PROD-CRON`, `--gate=PROD-PROVIDERS`, `--gate=PROD-NATIVE`, and `--gate=PROD-NATURE`. Commit `b593e4c` added matching `summary.gateFilter` metadata to focused evidence checklists and taught `verify-production-artifact-consistency-contract.ts` to verify a focused partial report against the focused checklist for the same gate. The full, unfiltered partial report is still the artifact used by final closeout.
 
 ### Zero-Partial Closeout Hardening
 
