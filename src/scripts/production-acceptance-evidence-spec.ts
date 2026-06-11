@@ -74,6 +74,7 @@ export const requiredProductionEvidenceSections: SectionSpec[] = [
       "Test families sent",
       "Sent/skipped/failed counts recorded",
       "Provider response ids recorded without secrets",
+      "Provider partial row coverage reviewed",
     ],
   },
   {
@@ -177,6 +178,7 @@ export const productionEvidencePlaceholderValues = [
   "disabled/resend/webhook",
   "disabled/webhook",
   "family/channel list",
+  "p01-p17 report id/path",
   "found/missing/default/unsafe counts",
   "rewritten/skipped/unsupported counts",
   "accepted/fixed/ticket ids",

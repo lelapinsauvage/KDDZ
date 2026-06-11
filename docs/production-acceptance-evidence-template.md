@@ -73,6 +73,7 @@ Copy this template into the production release record or ticket system after eac
 | Test families sent | family/channel list |
 | Sent/skipped/failed counts recorded | yes/no |
 | Provider response ids recorded without secrets | yes/no |
+| Provider partial row coverage reviewed | P01-P17 report id/path |
 
 ## PROD-NATIVE
 

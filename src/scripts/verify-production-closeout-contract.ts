@@ -110,7 +110,7 @@ try {
     },
     evidenceChecklistSummary: {
       gates: 12,
-      requiredFields: 69,
+      requiredFields: 70,
       blockingPartialRows: 17,
     },
     artifactDigests: {
@@ -163,7 +163,7 @@ try {
   };
   assert.deepEqual(checklistPayload.summary, {
     gates: 12,
-    requiredFields: 69,
+    requiredFields: 70,
     blockingPartialRows: 17,
   });
 
@@ -251,6 +251,7 @@ function readinessEnvFile() {
     "PROVIDER_CHANNEL_ROLLOUT_REPORT=closeout-secret-provider-rollout-id",
     "PROVIDER_RESPONSE_ID_AUDIT_REPORT=closeout-secret-provider-response-id-audit-id",
     "PROVIDER_CHANNEL_DECISION_REPORT=closeout-secret-provider-decision-id",
+    "PROVIDER_PARTIAL_ROW_COVERAGE_REPORT=closeout-secret-provider-partial-row-coverage-id",
     "CRON_SECRET=closeout_cron_secret_should_not_print",
     "LEGACY_PRODUCTION_DUMP_MANIFEST=closeout-secret-dump-id",
     "LEGACY_SCHOOL_YEAR_DUMP_COVERAGE_REPORT=closeout-secret-school-year-dump-coverage-id",
@@ -394,6 +395,7 @@ function assertNoSensitiveOutput(output: string) {
     "closeout-secret-provider-rollout-id",
     "closeout-secret-provider-response-id-audit-id",
     "closeout-secret-provider-decision-id",
+    "closeout-secret-provider-partial-row-coverage-id",
     "closeout-secret-reconciliation-id",
     "closeout-secret-reconciliation-mismatch-triage-id",
     "closeout-secret-reconciliation-acceptance-id",

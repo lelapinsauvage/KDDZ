@@ -32,6 +32,7 @@ const safeEnv: NodeJS.ProcessEnv = {
   PROVIDER_CHANNEL_ROLLOUT_REPORT: "secret-provider-rollout-id",
   PROVIDER_RESPONSE_ID_AUDIT_REPORT: "secret-provider-response-id-audit-id",
   PROVIDER_CHANNEL_DECISION_REPORT: "secret-provider-decision-id",
+  PROVIDER_PARTIAL_ROW_COVERAGE_REPORT: "secret-provider-partial-row-coverage-id",
   CRON_SECRET: "cron_secret_should_not_print",
   LEGACY_PRODUCTION_DUMP_MANIFEST: "secret-dump-manifest-id",
   LEGACY_SCHOOL_YEAR_DUMP_COVERAGE_REPORT: "secret-school-year-dump-coverage-id",
@@ -95,6 +96,7 @@ const sensitiveFragments = [
   "secret-provider-rollout-id",
   "secret-provider-response-id-audit-id",
   "secret-provider-decision-id",
+  "secret-provider-partial-row-coverage-id",
   "secret-reconciliation-id",
   "secret-reconciliation-mismatch-triage-id",
   "secret-reconciliation-acceptance-id",
@@ -146,7 +148,7 @@ const requirementsPayload = JSON.parse(requirementsJson.stdout) as {
 };
 assert.equal(requirementsPayload.redacted, true);
 assert.equal(requirementsPayload.evidenceRequirements?.length, 11);
-assert.equal(requirementsPayload.providerRequirements?.length, 8);
+assert.equal(requirementsPayload.providerRequirements?.length, 9);
 assertNoSensitiveOutput(requirementsJson.stdout + requirementsJson.stderr);
 
 const providerRequirements = runAudit(["--list-requirements", "--gate=PROD-PROVIDERS", "--json"]);
@@ -156,7 +158,7 @@ const providerRequirementPayload = JSON.parse(providerRequirements.stdout) as {
   providerRequirements?: unknown[];
 };
 assert.equal(providerRequirementPayload.evidenceRequirements?.length, 0);
-assert.equal(providerRequirementPayload.providerRequirements?.length, 8);
+assert.equal(providerRequirementPayload.providerRequirements?.length, 9);
 assertNoSensitiveOutput(providerRequirements.stdout + providerRequirements.stderr);
 
 const cronRequirements = runAudit(["--list-requirements", "--gate=PROD-CRON"]);
@@ -226,6 +228,7 @@ try {
       PROVIDER_CHANNEL_ROLLOUT_REPORT: "disabled-provider-rollout-matrix-id",
       PROVIDER_RESPONSE_ID_AUDIT_REPORT: "disabled-provider-response-id-audit-id",
       PROVIDER_CHANNEL_DECISION_REPORT: "disabled-provider-decision-id",
+      PROVIDER_PARTIAL_ROW_COVERAGE_REPORT: "disabled-provider-partial-row-coverage-id",
       PUSH_DELIVERY_PROVIDER: "disabled",
       EMAIL_DELIVERY_PROVIDER: "disabled",
       SMS_DELIVERY_PROVIDER: "disabled",
@@ -250,6 +253,7 @@ try {
     "rollout-evidence:PROVIDER_CHANNEL_ROLLOUT_REPORT",
     "response-id-evidence:PROVIDER_RESPONSE_ID_AUDIT_REPORT",
     "decision-evidence:PROVIDER_CHANNEL_DECISION_REPORT",
+    "partial-row-evidence:PROVIDER_PARTIAL_ROW_COVERAGE_REPORT",
   ]);
 
   const envFilePath = join(tmp, "private-readiness.env");
@@ -270,6 +274,7 @@ try {
       "PROVIDER_CHANNEL_ROLLOUT_REPORT=env-file-secret-provider-rollout-id",
       "PROVIDER_RESPONSE_ID_AUDIT_REPORT=env-file-secret-provider-response-id-audit-id",
       "PROVIDER_CHANNEL_DECISION_REPORT=env-file-secret-provider-decision-id",
+      "PROVIDER_PARTIAL_ROW_COVERAGE_REPORT=env-file-secret-provider-partial-row-coverage-id",
       "CRON_SECRET=env_file_cron_secret_should_not_print",
       "LEGACY_PRODUCTION_DUMP_MANIFEST=env-file-secret-dump-id",
       "LEGACY_SCHOOL_YEAR_DUMP_COVERAGE_REPORT=env-file-secret-school-year-dump-coverage-id",
@@ -347,6 +352,7 @@ try {
       "PROVIDER_CHANNEL_ROLLOUT_REPORT=non-secret-report-id",
       "PROVIDER_RESPONSE_ID_AUDIT_REPORT=non-secret-report-id",
       "PROVIDER_CHANNEL_DECISION_REPORT=non-secret-report-id",
+      "PROVIDER_PARTIAL_ROW_COVERAGE_REPORT=non-secret-report-id",
       "CRON_SECRET=placeholder_cron_secret_should_not_print",
       "LEGACY_PRODUCTION_DUMP_MANIFEST=non-secret-report-id",
       "LEGACY_SCHOOL_YEAR_DUMP_COVERAGE_REPORT=non-secret-report-id",

@@ -20,7 +20,7 @@ assert.equal(payload.status, "production evidence checklist");
 assert.equal(payload.schemaVersion, 1);
 assertValidIsoTimestamp(payload.generatedAt, "evidence checklist generatedAt");
 assert.equal(payload.summary?.gates, 12);
-assert.equal(payload.summary?.requiredFields, 69);
+assert.equal(payload.summary?.requiredFields, 70);
 assert.equal(payload.summary?.blockingPartialRows, 17);
 assert.equal(payload.gates?.length, 12);
 assert.equal(payload.gates?.[0]?.gate, "PROD-DUMPS");
@@ -36,6 +36,7 @@ assert.deepEqual(providerGate.requiredFields, [
   "Test families sent",
   "Sent/skipped/failed counts recorded",
   "Provider response ids recorded without secrets",
+  "Provider partial row coverage reviewed",
 ]);
 assert.equal(providerGate.blockingPartialRows?.length, 14);
 assert.equal(providerGate.blockingPartialRows?.[0]?.row, "P01");

@@ -154,6 +154,7 @@ const providerDeliveryAudit = auditAnyEnv(["PROVIDER_DELIVERY_ACCEPTANCE_REPORT"
 const providerRolloutAudit = auditAnyEnv(["PROVIDER_CHANNEL_ROLLOUT_REPORT"]);
 const providerResponseIdAudit = auditAnyEnv(["PROVIDER_RESPONSE_ID_AUDIT_REPORT"]);
 const providerDecisionAudit = auditAnyEnv(["PROVIDER_CHANNEL_DECISION_REPORT"]);
+const providerPartialRowsAudit = auditAnyEnv(["PROVIDER_PARTIAL_ROW_COVERAGE_REPORT"]);
 const cronSecretAudit = auditAnyEnv(["CRON_SECRET", "VERCEL_CRON_SECRET"]);
 const providerGate: GateAudit = {
   gate: "PROD-PROVIDERS",
@@ -162,7 +163,8 @@ const providerGate: GateAudit = {
     providerDeliveryAudit.missing.length === 0 &&
     providerRolloutAudit.missing.length === 0 &&
     providerResponseIdAudit.missing.length === 0 &&
-    providerDecisionAudit.missing.length === 0
+    providerDecisionAudit.missing.length === 0 &&
+    providerPartialRowsAudit.missing.length === 0
       ? "ready-to-review"
       : "needs-evidence",
   present: [
@@ -171,6 +173,7 @@ const providerGate: GateAudit = {
     ...providerRolloutAudit.present.map((item) => `rollout-evidence:${item}`),
     ...providerResponseIdAudit.present.map((item) => `response-id-evidence:${item}`),
     ...providerDecisionAudit.present.map((item) => `decision-evidence:${item}`),
+    ...providerPartialRowsAudit.present.map((item) => `partial-row-evidence:${item}`),
   ],
   missing: [
     ...providerAudits.flatMap((audit) => audit.missing.map((item) => `${audit.name}:${item}`)),
@@ -178,6 +181,7 @@ const providerGate: GateAudit = {
     ...providerRolloutAudit.missing.map((item) => `rollout-evidence:${item}`),
     ...providerResponseIdAudit.missing.map((item) => `response-id-evidence:${item}`),
     ...providerDecisionAudit.missing.map((item) => `decision-evidence:${item}`),
+    ...providerPartialRowsAudit.missing.map((item) => `partial-row-evidence:${item}`),
   ],
 };
 const cronGate = evidenceAudits.find((audit) => audit.gate === "PROD-CRON");
@@ -477,6 +481,11 @@ function printRequirements(params: { json: boolean; gateFilter: GateId | null })
       provider: "decision-evidence",
       acceptedSetup:
         "PROVIDER_CHANNEL_DECISION_REPORT pointing to a non-secret channel enablement/disabled decision record for push/email/SMS/WhatsApp",
+    },
+    {
+      provider: "partial-row-evidence",
+      acceptedSetup:
+        "PROVIDER_PARTIAL_ROW_COVERAGE_REPORT pointing to a non-secret P01-P17 provider gate coverage report with sent/skipped/disabled outcomes",
     },
     {
       provider: "push",
