@@ -99,6 +99,7 @@ export const requiredProductionEvidenceSections: SectionSpec[] = [
       "Table/column mappings compared",
       "Populated parent groups compared",
       "Differences accepted or fixed",
+      "Nature partial row coverage reviewed",
     ],
   },
   {
@@ -178,6 +179,7 @@ export const productionEvidencePlaceholderValues = [
   "yes/no/family list",
   "p01-p07/p10/p12 report id/path",
   "p15-p17 report id/path",
+  "p17 report id/path",
   "disabled/onesignal/webhook",
   "disabled/resend/webhook",
   "disabled/webhook",

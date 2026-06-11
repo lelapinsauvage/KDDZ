@@ -168,6 +168,7 @@ NATIVE_PUSH_TOKEN_ACCEPTANCE_REPORT=<non-secret push-token registration/show/del
 NATIVE_PARTIAL_ROW_COVERAGE_REPORT=<non-secret P15-P17 native coverage id/path>
 NOTIFICATIONS_NATURE_ACCEPTANCE_REPORT=<non-secret report id/path>
 NOTIFICATIONS_NATURE_GROUP_COMPARISON_REPORT=<non-secret populated parent group comparison id/path>
+NOTIFICATIONS_NATURE_PARTIAL_ROW_COVERAGE_REPORT=<non-secret P17 notifications_nature coverage id/path>
 PRINT_ACCOUNTING_MATRIX_ACCEPTANCE_REPORT=<non-secret accounting matrix print report id/path>
 PRINT_INVOICE_RECEIPT_ACCEPTANCE_REPORT=<non-secret invoice receipt print report id/path>
 PRINT_STATIONERY_ACCEPTANCE_REPORT=<non-secret report id/path>

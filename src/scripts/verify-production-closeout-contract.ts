@@ -110,7 +110,7 @@ try {
     },
     evidenceChecklistSummary: {
       gates: 12,
-      requiredFields: 72,
+      requiredFields: 73,
       blockingPartialRows: 17,
     },
     artifactDigests: {
@@ -163,7 +163,7 @@ try {
   };
   assert.deepEqual(checklistPayload.summary, {
     gates: 12,
-    requiredFields: 72,
+    requiredFields: 73,
     blockingPartialRows: 17,
   });
 
@@ -283,6 +283,7 @@ function readinessEnvFile() {
     "NATIVE_PARTIAL_ROW_COVERAGE_REPORT=closeout-secret-native-partial-row-coverage-id",
     "NOTIFICATIONS_NATURE_ACCEPTANCE_REPORT=closeout-secret-nature-id",
     "NOTIFICATIONS_NATURE_GROUP_COMPARISON_REPORT=closeout-secret-nature-group-comparison-id",
+    "NOTIFICATIONS_NATURE_PARTIAL_ROW_COVERAGE_REPORT=closeout-secret-nature-partial-row-coverage-id",
     "PRINT_ACCOUNTING_MATRIX_ACCEPTANCE_REPORT=closeout-secret-print-accounting-matrix-id",
     "PRINT_INVOICE_RECEIPT_ACCEPTANCE_REPORT=closeout-secret-print-invoice-receipt-id",
     "PRINT_STATIONERY_ACCEPTANCE_REPORT=closeout-secret-print-id",
@@ -418,6 +419,7 @@ function assertNoSensitiveOutput(output: string) {
     "closeout-secret-native-partial-row-coverage-id",
     "closeout-secret-nature-id",
     "closeout-secret-nature-group-comparison-id",
+    "closeout-secret-nature-partial-row-coverage-id",
     "closeout-secret-print-accounting-matrix-id",
     "closeout-secret-print-invoice-receipt-id",
     "closeout-secret-print-id",

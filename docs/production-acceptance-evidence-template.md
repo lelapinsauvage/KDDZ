@@ -98,6 +98,7 @@ Copy this template into the production release record or ticket system after eac
 | Table/column mappings compared | yes/no |
 | Populated parent groups compared | yes/no |
 | Differences accepted or fixed | accepted/fixed/ticket ids |
+| Nature partial row coverage reviewed | P17 report id/path |
 
 ## PROD-PRINT
 

@@ -20,7 +20,7 @@ assert.equal(payload.status, "production evidence checklist");
 assert.equal(payload.schemaVersion, 1);
 assertValidIsoTimestamp(payload.generatedAt, "evidence checklist generatedAt");
 assert.equal(payload.summary?.gates, 12);
-assert.equal(payload.summary?.requiredFields, 72);
+assert.equal(payload.summary?.requiredFields, 73);
 assert.equal(payload.summary?.blockingPartialRows, 17);
 assert.equal(payload.gates?.length, 12);
 assert.equal(payload.gates?.[0]?.gate, "PROD-DUMPS");
@@ -52,6 +52,17 @@ assert.equal(cronPayload.summary?.requiredFields, 8);
 assert.equal(cronPayload.summary?.blockingPartialRows, 9);
 assert.equal(cronPayload.gates?.[0]?.gate, "PROD-CRON");
 assert.ok(cronPayload.gates?.[0]?.requiredFields?.includes("Cron partial row coverage reviewed"));
+
+const natureOutput = execFileSync("pnpm", ["tsx", script, "--json", "--gate=PROD-NATURE"], {
+  cwd: process.cwd(),
+  encoding: "utf8",
+});
+const naturePayload = JSON.parse(natureOutput) as typeof payload;
+assert.equal(naturePayload.summary?.gates, 1);
+assert.equal(naturePayload.summary?.requiredFields, 6);
+assert.equal(naturePayload.summary?.blockingPartialRows, 1);
+assert.equal(naturePayload.gates?.[0]?.gate, "PROD-NATURE");
+assert.ok(naturePayload.gates?.[0]?.requiredFields?.includes("Nature partial row coverage reviewed"));
 
 const markdownOutput = execFileSync("pnpm", ["tsx", script, "--gate=PROD-NATIVE"], {
   cwd: process.cwd(),
