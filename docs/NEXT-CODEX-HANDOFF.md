@@ -223,10 +223,10 @@ pnpm run verify:production-gates
 
 Then work the first gate where real evidence is available:
 
-- `PROD-CRON`: obtain production crontab or hosted scheduler evidence, confirm birthday/assessment/medicine/insurance/vaccination/payment/event schedule enablement, then archive `PRODUCTION_CRONTAB_EVIDENCE` and `HOSTED_SCHEDULER_EVIDENCE`.
-- `PROD-PROVIDERS`: configure production-like email, push, SMS, and WhatsApp providers, run delivery summaries for the remaining message/alarm families, then archive provider rollout evidence.
-- `PROD-NATIVE`: run exact iOS and Android native-device acceptance against the restored direct PHP routes, including parent login, message/thread flows, push token register/show/delete, alarm feeds, and `notifications_master.php`.
-- `PROD-NATURE`: accept the imported production `notifications_nature` ordering/active groups after canonical production import.
+- `PROD-CRON`: obtain production crontab or hosted scheduler evidence, confirm birthday/assessment/medicine/insurance/vaccination/payment/event schedule enablement, then archive `PRODUCTION_CRONTAB_EVIDENCE`, `HOSTED_SCHEDULER_EVIDENCE`, and `CRON_PARTIAL_ROW_COVERAGE_REPORT` covering P01-P07/P10/P12.
+- `PROD-PROVIDERS`: configure production-like email, push, SMS, and WhatsApp providers, run delivery summaries for the remaining message/alarm families, then archive `PROVIDER_CHANNEL_DECISION_REPORT`, `PROVIDER_PARTIAL_ROW_COVERAGE_REPORT`, provider rollout evidence, and response-id audit evidence.
+- `PROD-NATIVE`: run exact iOS and Android native-device acceptance against the restored direct PHP routes, including parent login, message/thread flows, push token register/show/delete, alarm feeds, `notifications_master.php`, and `NATIVE_PARTIAL_ROW_COVERAGE_REPORT` for P15-P17.
+- `PROD-NATURE`: accept the imported production `notifications_nature` ordering/active groups after canonical production import, then archive `NOTIFICATIONS_NATURE_PARTIAL_ROW_COVERAGE_REPORT` for P17.
 - Canonical import/media: run production SQL/media import, file URL application, and migration reconciliation against the canonical production dump/package before removing any source-data blockers.
 - Print/stationery: accept accounting invoice/receipt and monthly matrix print output against production stationery.
 
@@ -337,12 +337,12 @@ Current progress:
 The remaining 17 partial rows are production/external acceptance gates: PROD-CRON, PROD-NATIVE, PROD-NATURE, and PROD-PROVIDERS.
 
 Recent pushed commits:
-d4d2251 chore: version closeout summaries
-0cedd5b docs: refresh evidence package handoff
-e7bb81b chore: version evidence package manifests
-29e45e9 chore: timestamp evidence package manifests
-7b58b2f chore: freeze readiness evidence timestamps
-de7a99a chore: validate production artifact timestamps
+`a57ce71 chore: require nature partial row coverage evidence`
+`5dde0d3 chore: require native partial row coverage evidence`
+`6eb8828 chore: require cron partial row coverage evidence`
+`58dc92b chore: require provider partial row coverage evidence`
+`dc56542 chore: require provider channel decision evidence`
+`14707cd chore: require reconciliation triage evidence`
 
-Continue from the production/external acceptance gates. First run `pnpm tsx src/scripts/report-production-partials.ts --json`, `pnpm tsx src/scripts/report-production-evidence-checklist.ts --json`, and `pnpm run verify:production-gates`. Work the first gate with real evidence available: canonical production SQL/media import and reconciliation, hosted cron evidence, provider delivery rollout, iOS/Android native-device acceptance, production `notifications_nature` acceptance, or print/stationery acceptance. Do not mark the goal complete until the parity matrix has zero partial rows and the closeout summary plus evidence package verifiers pass with `--require-zero-partials`.
+Continue from the production/external acceptance gates. First run `pnpm tsx src/scripts/report-production-partials.ts --json`, `pnpm tsx src/scripts/report-production-evidence-checklist.ts --json`, and `pnpm run verify:production-gates`. Work the first gate with real evidence available: canonical production SQL/media import and reconciliation, hosted cron evidence with `CRON_PARTIAL_ROW_COVERAGE_REPORT`, provider delivery rollout with `PROVIDER_PARTIAL_ROW_COVERAGE_REPORT`, iOS/Android native-device acceptance with `NATIVE_PARTIAL_ROW_COVERAGE_REPORT`, production `notifications_nature` acceptance with `NOTIFICATIONS_NATURE_PARTIAL_ROW_COVERAGE_REPORT`, or print/stationery acceptance. Do not mark the goal complete until the parity matrix has zero partial rows and the closeout summary plus evidence package verifiers pass with `--require-zero-partials`.
 ```
