@@ -41,6 +41,8 @@ const checklistOutputPath = optionValue("--checklist-out");
 const requireZeroPartials = process.argv.includes("--require-zero-partials");
 const branch = optionValue("--branch") ?? gitOutput(["branch", "--show-current"]);
 const commit = optionValue("--commit") ?? gitOutput(["rev-parse", "HEAD"]);
+const explicitBranch = optionValue("--branch");
+const explicitCommit = optionValue("--commit");
 
 if (!envFilePath || !evidenceRecordPath) {
   console.error(
@@ -51,6 +53,12 @@ if (!envFilePath || !evidenceRecordPath) {
 if (requireZeroPartials && (!summaryOutputPath || !partialsOutputPath || !checklistOutputPath)) {
   console.error(
     "Production closeout with --require-zero-partials must also include --summary-out, --partials-out, and --checklist-out so final evidence artifacts are archived."
+  );
+  process.exit(2);
+}
+if (requireZeroPartials && (!explicitBranch || !explicitCommit)) {
+  console.error(
+    "Production closeout with --require-zero-partials must include explicit --branch and --commit release refs."
   );
   process.exit(2);
 }

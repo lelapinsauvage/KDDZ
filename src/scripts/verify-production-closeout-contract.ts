@@ -198,6 +198,19 @@ try {
   assert.equal(missingFinalArtifacts.status, 2);
   assert.match(missingFinalArtifacts.stderr, /must also include --summary-out, --partials-out, and --checklist-out/);
   assertNoSensitiveOutput(missingFinalArtifacts.stdout + missingFinalArtifacts.stderr);
+
+  const missingFinalReleaseRef = runCloseout([
+    `--env-file=${envFilePath}`,
+    `--evidence-record=${evidenceRecordPath}`,
+    `--out=${readinessReportPath}`,
+    `--summary-out=${closeoutSummaryPath}`,
+    `--partials-out=${partialReportPath}`,
+    `--checklist-out=${checklistReportPath}`,
+    "--require-zero-partials",
+  ]);
+  assert.equal(missingFinalReleaseRef.status, 2);
+  assert.match(missingFinalReleaseRef.stderr, /must include explicit --branch and --commit release refs/);
+  assertNoSensitiveOutput(missingFinalReleaseRef.stdout + missingFinalReleaseRef.stderr);
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }
