@@ -33,6 +33,7 @@ type CloseoutSummary = {
 
 type PackageManifest = {
   status: "production evidence package verified";
+  schemaVersion: 1;
   generatedAt?: string;
   artifacts: Record<string, ArtifactManifest>;
   closeout: {
@@ -195,6 +196,7 @@ function verifySelfTestContract() {
     const packageManifest = readJson<PackageManifest>(packageManifestPath);
     const readinessGeneratedAt = readJson<{ generatedAt?: string }>(readinessReportPath).generatedAt;
     assert.equal(readinessGeneratedAt, generatedAt);
+    assert.equal(packageManifest.schemaVersion, 1);
     assert.equal(packageManifest.generatedAt, generatedAt);
     assert.equal(packageManifest.artifacts.closeoutSummary.generatedAt, generatedAt);
     assert.equal(packageManifest.artifacts.readinessReport.generatedAt, generatedAt);
@@ -280,6 +282,7 @@ function buildManifest(params: {
 }): PackageManifest {
   return {
     status: "production evidence package verified",
+    schemaVersion: 1,
     generatedAt: params.summary.generatedAt,
     artifacts: {
       closeoutSummary: artifact(params.closeoutSummaryPath),

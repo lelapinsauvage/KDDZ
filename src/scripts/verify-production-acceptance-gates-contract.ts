@@ -365,6 +365,10 @@ assert.match(
 );
 assert.match(
   readFileSync("src/scripts/verify-production-evidence-package-contract.ts", "utf8"),
+  /schemaVersion: 1/
+);
+assert.match(
+  readFileSync("src/scripts/verify-production-evidence-package-contract.ts", "utf8"),
   /generatedAt: params\.summary\.generatedAt/
 );
 assert.match(
@@ -439,6 +443,7 @@ assert.match(contents.gates, /--manifest-out=<path>/);
 assert.match(contents.gates, /--manifest=<path>/);
 assert.match(contents.gates, /`generatedAt` metadata for JSON artifacts/);
 assert.match(contents.gates, /top-level `generatedAt` timestamp from the closeout summary/);
+assert.match(contents.gates, /schemaVersion: 1/);
 assert.match(contents.gates, /--branch=<branch>/);
 assert.match(contents.gates, /--commit=<sha>/);
 assert.match(contents.gates, /bind the archived summary to the intended release ref/);
