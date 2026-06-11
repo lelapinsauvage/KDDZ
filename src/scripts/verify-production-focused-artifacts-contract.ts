@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -86,6 +86,7 @@ try {
     stdio: "ignore",
   });
   const manifest = readJson<FocusedManifest>(join(bundleDir, "kiddzonl-production-focused-artifacts.json"));
+  const manifestPath = join(bundleDir, "kiddzonl-production-focused-artifacts.json");
   assert.equal(manifest.status, "production focused artifacts verified");
   assert.equal(manifest.schemaVersion, 1);
   assert.equal(manifest.generatedAt, generatedAt);
@@ -107,6 +108,32 @@ try {
     assert.ok(artifact.partialReport?.path?.endsWith(`${slug}-partials.json`));
     assert.ok(artifact.evidenceChecklist?.path?.endsWith(`${slug}-checklist.json`));
   }
+
+  execFileSync("pnpm", [
+    "tsx",
+    "src/scripts/verify-production-focused-artifacts-manifest.ts",
+    `--manifest=${manifestPath}`,
+  ], {
+    cwd: process.cwd(),
+    stdio: "ignore",
+  });
+
+  const staleManifestPath = join(tmp, "stale-focused-artifacts.json");
+  const staleManifest = readJson<FocusedManifest>(manifestPath);
+  const firstArtifact = staleManifest.artifacts?.[0];
+  assert.ok(firstArtifact?.partialReport);
+  firstArtifact.partialReport.digest = "0".repeat(64);
+  writeFileSync(staleManifestPath, `${JSON.stringify(staleManifest, null, 2)}\n`, "utf8");
+  const stale = spawnSync("pnpm", [
+    "tsx",
+    "src/scripts/verify-production-focused-artifacts-manifest.ts",
+    `--manifest=${staleManifestPath}`,
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.equal(stale.status, 1);
+  assert.match(stale.stderr, /digest drifted/);
 
   const missingOutDir = spawnSync("pnpm", ["tsx", "src/scripts/report-production-focused-artifacts.ts"], {
     cwd: process.cwd(),

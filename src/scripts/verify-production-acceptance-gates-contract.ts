@@ -67,6 +67,8 @@ const requiredReferences = [
   "src/scripts/run-production-closeout.ts",
   "src/scripts/report-production-partials.ts",
   "src/scripts/report-production-focused-artifacts.ts",
+  "src/scripts/verify-production-focused-artifacts-manifest.ts",
+  "src/scripts/verify-production-focused-artifacts-manifest-contract.ts",
   "src/scripts/report-production-evidence-checklist.ts",
   "src/scripts/verify-production-gate-suite.ts",
   "src/scripts/verify-production-acceptance-evidence-record-contract.ts",
@@ -523,6 +525,7 @@ assert.match(contents.gates, /page-parity tracker counts/);
 assert.match(contents.gates, /--require-zero-partials/);
 assert.match(contents.gates, /report-production-partials\.ts/);
 assert.match(contents.gates, /report-production-focused-artifacts\.ts/);
+assert.match(contents.gates, /verify-production-focused-artifacts-manifest\.ts/);
 assert.match(contents.gates, /report-production-evidence-checklist\.ts/);
 assert.match(contents.gates, /`generatedAt` ISO timestamps/);
 assert.match(contents.gates, /readiness, partial, checklist, closeout summary, and evidence package JSON artifacts carry `schemaVersion: 1`/);
@@ -570,6 +573,7 @@ assert.match(contents.gates, /pnpm run verify:production-gates/);
 assert.match(contents.gates, /verify-production-gate-suite\.ts/);
 assert.match(contents.gates, /verify-production-artifact-consistency-contract\.ts/);
 assert.match(contents.gates, /verify-production-focused-artifacts-contract\.ts/);
+assert.match(contents.gates, /verify-production-focused-artifacts-manifest-contract\.ts/);
 assert.match(contents.gates, /verify-production-readiness-audit-contract\.ts/);
 assert.match(contents.cutoverRunbook, /--out=\/tmp\/kiddzonl-production-readiness\.json/);
 assert.match(contents.cutoverRunbook, /--env-file=\/secure\/private-readiness\.env/);
@@ -592,7 +596,9 @@ assert.match(contents.cutoverRunbook, /--manifest-out=\/tmp\/kiddzonl-production
 assert.match(contents.cutoverRunbook, /report-production-evidence-checklist\.ts --gate=PROD-CRON/);
 assert.match(contents.cutoverRunbook, /Generate focused non-secret coverage reports from the parity matrix/);
 assert.match(contents.cutoverRunbook, /report-production-focused-artifacts\.ts --out-dir=\/tmp\/kiddzonl-production-focused-artifacts --generated-at=<release-generated-at-iso>/);
+assert.match(contents.cutoverRunbook, /verify-production-focused-artifacts-manifest\.ts --manifest=\/tmp\/kiddzonl-production-focused-artifacts\/kiddzonl-production-focused-artifacts\.json/);
 assert.match(contents.gates, /report-production-focused-artifacts\.ts --out-dir=<dir>/);
+assert.match(contents.gates, /verify-production-focused-artifacts-manifest\.ts --manifest=<path>/);
 assert.match(contents.gates, /kiddzonl-production-focused-artifacts\.json/);
 assert.match(contents.cutoverRunbook, /--require-zero-partials/);
 assert.match(contents.cutoverRunbook, /release decision `accepted` and remaining production tickets `none`/);

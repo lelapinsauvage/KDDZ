@@ -48,6 +48,7 @@ pnpm tsx src/scripts/verify-production-evidence-package-contract.ts
 pnpm tsx src/scripts/report-production-evidence-checklist.ts --gate=PROD-CRON
 pnpm tsx src/scripts/report-production-evidence-checklist.ts --json --out=/tmp/kiddzonl-production-evidence-checklist.json --generated-at=<release-generated-at-iso>
 pnpm tsx src/scripts/report-production-focused-artifacts.ts --out-dir=/tmp/kiddzonl-production-focused-artifacts --generated-at=<release-generated-at-iso>
+pnpm tsx src/scripts/verify-production-focused-artifacts-manifest.ts --manifest=/tmp/kiddzonl-production-focused-artifacts/kiddzonl-production-focused-artifacts.json
 pnpm tsx src/scripts/report-production-partials.ts --json --gate=PROD-CRON --out=/tmp/kiddzonl-production-cron-partials.json --generated-at=<release-generated-at-iso>
 pnpm tsx src/scripts/report-production-evidence-checklist.ts --json --gate=PROD-CRON --out=/tmp/kiddzonl-production-cron-checklist.json --generated-at=<release-generated-at-iso>
 pnpm tsx src/scripts/verify-production-artifact-consistency-contract.ts --partial-report=/tmp/kiddzonl-production-cron-partials.json --checklist-report=/tmp/kiddzonl-production-cron-checklist.json
@@ -65,6 +66,7 @@ pnpm tsx src/scripts/verify-production-evidence-checklist-contract.ts
 pnpm tsx src/scripts/verify-production-partial-report-contract.ts
 pnpm tsx src/scripts/verify-production-artifact-consistency-contract.ts
 pnpm tsx src/scripts/verify-production-focused-artifacts-contract.ts
+pnpm tsx src/scripts/verify-production-focused-artifacts-manifest-contract.ts
 pnpm tsx src/scripts/verify-production-readiness-audit-contract.ts
 pnpm tsx src/scripts/verify-parent-credentialed-native-e2e.ts
 pnpm tsx src/scripts/verify-legacy-calls-contract.ts
@@ -88,7 +90,7 @@ Use `--require-zero-partials` only for final legacy closure; it fails until `doc
 
 `report-production-partials.ts` joins `docs/page-parity-matrix.json` with `docs/partial-production-gate-map.md` and emits the remaining partial rows, blocking gate ids, and closure reasons as markdown or redacted JSON for production tracking. Use `--gate=PROD-CRON`, `--gate=PROD-PROVIDERS`, `--gate=PROD-NATIVE`, or `--gate=PROD-NATURE` to generate focused non-secret row-coverage artifacts for the remaining production evidence pointers; focused reports include `summary.gateFilter` and keep overlapping gate counts for the selected rows. It records the source matrix/map paths in JSON output and accepts `--parity-matrix=<path>` plus `--partial-gate-map=<path>` for controlled archived evidence reproduction.
 
-`report-production-focused-artifacts.ts --out-dir=<dir>` generates all four focused partial/checklist artifact pairs with the same `--generated-at=<iso>` value, verifies each pair with `verify-production-artifact-consistency-contract.ts`, and writes `kiddzonl-production-focused-artifacts.json` with SHA-256 digests and blocking row ids for archive handoff.
+`report-production-focused-artifacts.ts --out-dir=<dir>` generates all four focused partial/checklist artifact pairs with the same `--generated-at=<iso>` value, verifies each pair with `verify-production-artifact-consistency-contract.ts`, and writes `kiddzonl-production-focused-artifacts.json` with SHA-256 digests and blocking row ids for archive handoff. `verify-production-focused-artifacts-manifest.ts --manifest=<path>` rechecks a saved manifest by recomputing artifact hashes and rerunning consistency verification on every archived pair.
 
 Use `--gate=PROD-CRON` or any other gate id to inspect one production blocker at a time with the readiness audit, partial report, and evidence checklist commands.
 

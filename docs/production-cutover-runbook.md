@@ -114,6 +114,7 @@ Generate focused non-secret coverage reports from the parity matrix before filli
 
 ```bash
 pnpm tsx src/scripts/report-production-focused-artifacts.ts --out-dir=/tmp/kiddzonl-production-focused-artifacts --generated-at=<release-generated-at-iso>
+pnpm tsx src/scripts/verify-production-focused-artifacts-manifest.ts --manifest=/tmp/kiddzonl-production-focused-artifacts/kiddzonl-production-focused-artifacts.json
 pnpm tsx src/scripts/report-production-partials.ts --json --gate=PROD-CRON --out=/tmp/kiddzonl-production-cron-partials.json --generated-at=<release-generated-at-iso>
 pnpm tsx src/scripts/report-production-evidence-checklist.ts --json --gate=PROD-CRON --out=/tmp/kiddzonl-production-cron-checklist.json --generated-at=<release-generated-at-iso>
 pnpm tsx src/scripts/verify-production-artifact-consistency-contract.ts --partial-report=/tmp/kiddzonl-production-cron-partials.json --checklist-report=/tmp/kiddzonl-production-cron-checklist.json

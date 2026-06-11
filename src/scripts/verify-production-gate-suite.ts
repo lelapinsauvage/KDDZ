@@ -49,6 +49,10 @@ const checks = [
     command: ["pnpm", "tsx", "src/scripts/verify-production-focused-artifacts-contract.ts"],
   },
   {
+    label: "production focused artifact manifest contract",
+    command: ["pnpm", "tsx", "src/scripts/verify-production-focused-artifacts-manifest-contract.ts"],
+  },
+  {
     label: "production gate ledger contract",
     command: ["pnpm", "tsx", "src/scripts/verify-production-gate-ledger-contract.ts"],
   },
