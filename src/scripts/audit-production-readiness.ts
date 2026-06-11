@@ -96,7 +96,10 @@ const evidenceGateRequirements: Array<{
   },
   {
     gate: "PROD-CALLS",
-    env: ["REAL_CALL_ROWS_ACCEPTANCE_REPORT"],
+    env: [
+      "REAL_CALL_ROWS_ACCEPTANCE_REPORT",
+      "CALL_SUBMITTED_DRAFT_ACCEPTANCE_REPORT",
+    ],
   },
   {
     gate: "PROD-NURSERY",
