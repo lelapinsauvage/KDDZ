@@ -460,6 +460,8 @@ function readinessEnvFile() {
     "CALL_SUBMITTED_DRAFT_ACCEPTANCE_REPORT=summary-secret-call-submitted-draft-id",
     "CALL_PHP_BRIDGE_ACCEPTANCE_REPORT=summary-secret-call-php-bridge-id",
     "NURSERY_COMPLIANCE_ACCEPTANCE_REPORT=summary-secret-nursery-id",
+    "NURSERY_BRANCH_BRIDGE_ACCEPTANCE_REPORT=summary-secret-nursery-branch-bridge-id",
+    "NURSERY_DOCUMENT_UPLOAD_ACCEPTANCE_REPORT=summary-secret-nursery-document-upload-id",
     "LEGACY_ACL_ACCEPTANCE_REPORT=summary-secret-acl-id",
     "LEGACY_BACKFILL_ACCEPTANCE_REPORT=summary-secret-backfill-id",
     "",
@@ -554,6 +556,8 @@ function assertNoSensitiveOutput(output: string) {
     "summary-secret-call-submitted-draft-id",
     "summary-secret-call-php-bridge-id",
     "summary-secret-nursery-id",
+    "summary-secret-nursery-branch-bridge-id",
+    "summary-secret-nursery-document-upload-id",
     "summary-secret-acl-id",
     "summary-secret-backfill-id",
   ]) {

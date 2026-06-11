@@ -104,7 +104,11 @@ const evidenceGateRequirements: Array<{
   },
   {
     gate: "PROD-NURSERY",
-    env: ["NURSERY_COMPLIANCE_ACCEPTANCE_REPORT"],
+    env: [
+      "NURSERY_COMPLIANCE_ACCEPTANCE_REPORT",
+      "NURSERY_BRANCH_BRIDGE_ACCEPTANCE_REPORT",
+      "NURSERY_DOCUMENT_UPLOAD_ACCEPTANCE_REPORT",
+    ],
   },
   {
     gate: "PROD-ACL",

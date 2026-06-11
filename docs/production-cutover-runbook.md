@@ -169,6 +169,8 @@ REAL_CALL_ROWS_ACCEPTANCE_REPORT=<non-secret report id/path>
 CALL_SUBMITTED_DRAFT_ACCEPTANCE_REPORT=<non-secret submitted/draft call report id/path>
 CALL_PHP_BRIDGE_ACCEPTANCE_REPORT=<non-secret call.php fid bridge report id/path>
 NURSERY_COMPLIANCE_ACCEPTANCE_REPORT=<non-secret report id/path>
+NURSERY_BRANCH_BRIDGE_ACCEPTANCE_REPORT=<non-secret nurseryinfo.php branch bridge report id/path>
+NURSERY_DOCUMENT_UPLOAD_ACCEPTANCE_REPORT=<non-secret ministry attachment upload report id/path>
 LEGACY_ACL_ACCEPTANCE_REPORT=<non-secret report id/path>
 ```
 
