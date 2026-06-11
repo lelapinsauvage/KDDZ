@@ -159,6 +159,35 @@ try {
   assert.deepEqual(filteredPayload.summary, { ready: 1, needsEvidence: 0, total: 1 });
   assert.deepEqual(filteredPayload.gates?.map((gate) => gate.gate), ["PROD-PROVIDERS"]);
 
+  const disabledProviderOutPath = join(tmp, "disabled-providers.json");
+  const disabledProviderReport = runAudit(
+    [`--out=${disabledProviderOutPath}`, "--gate=PROD-PROVIDERS"],
+    {
+      ...baseEnv,
+      PROVIDER_DELIVERY_ACCEPTANCE_REPORT: "disabled-provider-delivery-summary-id",
+      PUSH_DELIVERY_PROVIDER: "disabled",
+      EMAIL_DELIVERY_PROVIDER: "disabled",
+      SMS_DELIVERY_PROVIDER: "disabled",
+      WHATSAPP_DELIVERY_PROVIDER: "disabled",
+    }
+  );
+  assert.equal(disabledProviderReport.status, 0);
+  assert.match(disabledProviderReport.stdout, /Ready to review: 1\/1/);
+  assertNoSensitiveOutput(disabledProviderReport.stdout + disabledProviderReport.stderr);
+  const disabledProviderPayload = JSON.parse(readFileSync(disabledProviderOutPath, "utf8")) as {
+    summary?: { ready?: number; needsEvidence?: number; total?: number };
+    gates?: Array<{ present?: string[]; missing?: string[] }>;
+  };
+  assert.deepEqual(disabledProviderPayload.summary, { ready: 1, needsEvidence: 0, total: 1 });
+  assert.deepEqual(disabledProviderPayload.gates?.[0]?.missing, []);
+  assert.deepEqual(disabledProviderPayload.gates?.[0]?.present, [
+    "push:PUSH_DELIVERY_PROVIDER=disabled",
+    "email:EMAIL_DELIVERY_PROVIDER=disabled",
+    "sms:SMS_DELIVERY_PROVIDER=disabled",
+    "whatsapp:WHATSAPP_DELIVERY_PROVIDER=disabled",
+    "delivery-evidence:PROVIDER_DELIVERY_ACCEPTANCE_REPORT",
+  ]);
+
   const envFilePath = join(tmp, "private-readiness.env");
   const envFileReportPath = join(tmp, "env-file-readiness.json");
   writeFileSync(

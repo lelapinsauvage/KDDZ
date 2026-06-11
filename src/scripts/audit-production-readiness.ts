@@ -110,7 +110,7 @@ const cronSecretAudit = auditAnyEnv(["CRON_SECRET", "VERCEL_CRON_SECRET"]);
 const providerGate: GateAudit = {
   gate: "PROD-PROVIDERS",
   status:
-    providerAudits.every((audit) => audit.status === "configured") &&
+    providerAudits.every((audit) => audit.status !== "incomplete") &&
     providerDeliveryAudit.missing.length === 0
       ? "ready-to-review"
       : "needs-evidence",
@@ -204,6 +204,15 @@ function auditPushProvider(): ProviderAudit {
       : "disabled";
   const provider = explicitProvider ?? inferredProvider;
 
+  if (provider === "disabled" && explicitProvider === "disabled") {
+    return {
+      name: "push",
+      status: "disabled",
+      present: ["PUSH_DELIVERY_PROVIDER=disabled"],
+      missing: [],
+    };
+  }
+
   if (provider === "disabled") {
     return {
       name: "push",
@@ -233,6 +242,15 @@ function auditEmailProvider(): ProviderAudit {
   const explicitProvider = readEnv("EMAIL_DELIVERY_PROVIDER")?.toLowerCase();
   const inferredProvider = readEnv("RESEND_API_KEY") ? "resend" : readEnv("EMAIL_DELIVERY_WEBHOOK_URL") ? "webhook" : "disabled";
   const provider = explicitProvider ?? inferredProvider;
+
+  if (provider === "disabled" && explicitProvider === "disabled") {
+    return {
+      name: "email",
+      status: "disabled",
+      present: ["EMAIL_DELIVERY_PROVIDER=disabled"],
+      missing: [],
+    };
+  }
 
   if (provider === "disabled") {
     return {
@@ -269,6 +287,15 @@ function auditChannelProvider(prefix: "SMS" | "WHATSAPP"): ProviderAudit {
       readEnv("MESSAGE_CHANNEL_DELIVERY_WEBHOOK_URL")
   );
   const provider = explicitProvider ?? (hasWebhook ? "webhook" : "disabled");
+
+  if (provider === "disabled" && explicitProvider === "disabled") {
+    return {
+      name: providerName,
+      status: "disabled",
+      present: [`${prefix}_DELIVERY_PROVIDER=disabled`],
+      missing: [],
+    };
+  }
 
   if (provider === "disabled") {
     return {
@@ -382,22 +409,22 @@ function printRequirements(params: { json: boolean; gateFilter: GateId | null })
     {
       provider: "push",
       acceptedSetup:
-        "PUSH_DELIVERY_PROVIDER=webhook with PUSH_DELIVERY_WEBHOOK_URL, or PUSH_DELIVERY_PROVIDER=onesignal with ONESIGNAL_APP_ID plus ONESIGNAL_REST_API_KEY/ONESIGNAL_API_KEY",
+        "PUSH_DELIVERY_PROVIDER=disabled, PUSH_DELIVERY_PROVIDER=webhook with PUSH_DELIVERY_WEBHOOK_URL, or PUSH_DELIVERY_PROVIDER=onesignal with ONESIGNAL_APP_ID plus ONESIGNAL_REST_API_KEY/ONESIGNAL_API_KEY",
     },
     {
       provider: "email",
       acceptedSetup:
-        "EMAIL_DELIVERY_PROVIDER=webhook with EMAIL_DELIVERY_WEBHOOK_URL plus EMAIL_FROM, or EMAIL_DELIVERY_PROVIDER=resend with RESEND_API_KEY plus EMAIL_FROM",
+        "EMAIL_DELIVERY_PROVIDER=disabled, EMAIL_DELIVERY_PROVIDER=webhook with EMAIL_DELIVERY_WEBHOOK_URL plus EMAIL_FROM, or EMAIL_DELIVERY_PROVIDER=resend with RESEND_API_KEY plus EMAIL_FROM",
     },
     {
       provider: "sms",
       acceptedSetup:
-        "SMS_DELIVERY_PROVIDER=webhook with SMS_DELIVERY_WEBHOOK_URL, or shared LEGACY_CHANNEL_DELIVERY_WEBHOOK_URL/MESSAGE_CHANNEL_DELIVERY_WEBHOOK_URL",
+        "SMS_DELIVERY_PROVIDER=disabled, SMS_DELIVERY_PROVIDER=webhook with SMS_DELIVERY_WEBHOOK_URL, or shared LEGACY_CHANNEL_DELIVERY_WEBHOOK_URL/MESSAGE_CHANNEL_DELIVERY_WEBHOOK_URL",
     },
     {
       provider: "whatsapp",
       acceptedSetup:
-        "WHATSAPP_DELIVERY_PROVIDER=webhook with WHATSAPP_DELIVERY_WEBHOOK_URL, or shared LEGACY_CHANNEL_DELIVERY_WEBHOOK_URL/MESSAGE_CHANNEL_DELIVERY_WEBHOOK_URL",
+        "WHATSAPP_DELIVERY_PROVIDER=disabled, WHATSAPP_DELIVERY_PROVIDER=webhook with WHATSAPP_DELIVERY_WEBHOOK_URL, or shared LEGACY_CHANNEL_DELIVERY_WEBHOOK_URL/MESSAGE_CHANNEL_DELIVERY_WEBHOOK_URL",
     },
   ];
   const payload = {
