@@ -64,6 +64,7 @@ try {
     status?: string;
     partialReport?: string | null;
     evidenceChecklist?: string | null;
+    artifactConsistency?: { status?: string; script?: string } | null;
     readinessSummary?: { ready?: number; needsEvidence?: number; total?: number };
     parityTracker?: { total?: number; complete?: number; partial?: number; donePct?: number; leftPct?: number };
     branch?: string;
@@ -76,6 +77,10 @@ try {
     evidenceRecord: evidenceRecordPath,
     partialReport: partialReportPath,
     evidenceChecklist: checklistReportPath,
+    artifactConsistency: {
+      status: "verified",
+      script: "src/scripts/verify-production-artifact-consistency-contract.ts",
+    },
     readinessSummary: { ready: 12, needsEvidence: 0, total: 12 },
     parityTracker: { total: 1713, complete: 1696, partial: 17, donePct: 99, leftPct: 1 },
     requireZeroPartials: false,

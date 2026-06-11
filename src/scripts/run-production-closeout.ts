@@ -71,6 +71,9 @@ if (checklistOutputPath) {
     `--out=${checklistOutputPath}`,
   ]);
 }
+const artifactConsistency = partialsOutputPath && checklistOutputPath
+  ? verifyArtifactConsistency()
+  : null;
 if (requireZeroPartials && parityTracker.partial !== 0) {
   console.error(`Production closeout requires zero partial parity rows; found ${parityTracker.partial}.`);
   process.exit(1);
@@ -82,6 +85,7 @@ const summary = {
   evidenceRecord: evidenceRecordPath,
   partialReport: partialsOutputPath ?? null,
   evidenceChecklist: checklistOutputPath ?? null,
+  artifactConsistency,
   readinessSummary,
   parityTracker,
   requireZeroPartials,
@@ -181,4 +185,15 @@ function optionValue(name: string) {
 
 function optionalArg(name: string, value: string | null) {
   return value ? [`${name}=${value}`] : [];
+}
+
+function verifyArtifactConsistency() {
+  run("pnpm", [
+    "tsx",
+    "src/scripts/verify-production-artifact-consistency-contract.ts",
+  ]);
+  return {
+    status: "verified",
+    script: "src/scripts/verify-production-artifact-consistency-contract.ts",
+  };
 }
