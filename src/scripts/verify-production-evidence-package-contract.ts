@@ -94,6 +94,7 @@ function verifyEvidencePackage(closeoutSummaryPath: string) {
     `--evidence-record=${evidenceRecordPath}`,
     `--partial-report=${partialReportPath}`,
     `--checklist-report=${checklistReportPath}`,
+    ...optionalFlag("--require-zero-partials", process.argv.includes("--require-zero-partials")),
   ], {
     cwd: process.cwd(),
     stdio: "ignore",
@@ -414,6 +415,10 @@ function optionValue(name: string) {
   if (index >= 0) return process.argv[index + 1] ?? null;
 
   return null;
+}
+
+function optionalFlag(name: string, enabled: boolean) {
+  return enabled ? [name] : [];
 }
 
 function sha256File(path: string) {

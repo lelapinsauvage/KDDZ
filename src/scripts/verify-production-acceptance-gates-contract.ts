@@ -300,6 +300,14 @@ assert.match(
   /verify-production-artifact-consistency-contract\.ts/
 );
 assert.match(
+  readFileSync("src/scripts/verify-production-closeout-summary-contract.ts", "utf8"),
+  /production closeout summary must come from a require-zero-partials run/
+);
+assert.match(
+  readFileSync("src/scripts/verify-production-closeout-summary-contract.ts", "utf8"),
+  /production closeout summary still has unresolved partial rows/
+);
+assert.match(
   readFileSync("src/scripts/verify-production-evidence-package-contract.ts", "utf8"),
   /production evidence package verified/
 );
@@ -375,6 +383,7 @@ assert.match(contents.gates, /kiddzonl-production-partials\.json/);
 assert.match(contents.gates, /kiddzonl-production-evidence-checklist\.json/);
 assert.match(contents.gates, /--readiness-report=<path>/);
 assert.match(contents.gates, /--readiness-report=\/tmp\/kiddzonl-production-readiness\.json/);
+assert.match(contents.gates, /verify-production-closeout-summary-contract\.ts .*--require-zero-partials/);
 assert.match(contents.gates, /--evidence-record=<path>/);
 assert.match(contents.gates, /--evidence-record=\/secure\/production-acceptance-evidence\.md/);
 assert.match(contents.gates, /--summary-report=<path>/);
@@ -399,6 +408,7 @@ assert.match(contents.cutoverRunbook, /--summary-out=\/tmp\/kiddzonl-production-
 assert.match(contents.cutoverRunbook, /--partials-out=\/tmp\/kiddzonl-production-partials\.json/);
 assert.match(contents.cutoverRunbook, /--checklist-out=\/tmp\/kiddzonl-production-evidence-checklist\.json/);
 assert.match(contents.cutoverRunbook, /verify-production-closeout-summary-contract\.ts/);
+assert.match(contents.cutoverRunbook, /verify-production-closeout-summary-contract\.ts .*--require-zero-partials/);
 assert.match(contents.cutoverRunbook, /verify-production-evidence-package-contract\.ts/);
 assert.match(contents.cutoverRunbook, /--evidence-record=\/secure\/production-acceptance-evidence\.md/);
 assert.match(contents.cutoverRunbook, /--manifest-out=\/tmp\/kiddzonl-production-evidence-package\.json/);

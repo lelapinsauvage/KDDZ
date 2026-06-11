@@ -46,6 +46,7 @@ type CloseoutSummary = {
     donePct?: number;
     leftPct?: number;
   };
+  requireZeroPartials?: boolean;
   branch?: string;
   commit?: string;
   redacted?: boolean;
@@ -89,7 +90,16 @@ function verifyCloseoutSummary(path: string) {
   assert.equal(summary.status, "production closeout verified");
   assert.equal(summary.redacted, true);
   assert.deepEqual(summary.readinessSummary, { ready: 12, needsEvidence: 0, total: 12 });
-  assert.deepEqual(summary.parityTracker, { total: 1713, complete: 1696, partial: 17, donePct: 99, leftPct: 1 });
+  if (process.argv.includes("--require-zero-partials")) {
+    assert.equal(summary.requireZeroPartials, true, "production closeout summary must come from a require-zero-partials run");
+    assert.equal(summary.parityTracker?.total, 1713, "production closeout summary tracker total drifted");
+    assert.equal(summary.parityTracker?.complete, 1713, "production closeout summary complete count is not final");
+    assert.equal(summary.parityTracker?.partial, 0, "production closeout summary still has unresolved partial rows");
+    assert.equal(summary.parityTracker?.donePct, 100, "production closeout summary is not fully complete");
+    assert.equal(summary.parityTracker?.leftPct, 0, "production closeout summary still has work left");
+  } else {
+    assert.deepEqual(summary.parityTracker, { total: 1713, complete: 1696, partial: 17, donePct: 99, leftPct: 1 });
+  }
 
   const readinessReportPath = optionValue("--readiness-report") ?? summary.readinessReport;
   const evidenceRecordPath = optionValue("--evidence-record") ?? summary.evidenceRecord;
@@ -202,6 +212,17 @@ function verifySelfTestContract() {
       `--partial-report=${partialReportPath}`,
       `--checklist-report=${checklistReportPath}`,
     ]);
+    assertFailingVerifier(
+      [
+        closeoutSummaryPath,
+        `--evidence-record=${evidenceRecordPath}`,
+        `--readiness-report=${readinessReportPath}`,
+        `--partial-report=${partialReportPath}`,
+        `--checklist-report=${checklistReportPath}`,
+        "--require-zero-partials",
+      ],
+      /must come from a require-zero-partials run/
+    );
 
     const staleDigestPath = join(tmp, "stale-digest-summary.json");
     const staleDigestSummary = readJson<CloseoutSummary>(closeoutSummaryPath);
