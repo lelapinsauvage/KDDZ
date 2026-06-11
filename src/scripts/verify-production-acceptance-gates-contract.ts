@@ -223,6 +223,7 @@ assert.match(closeoutRunner, /audit-production-readiness\.ts/);
 assert.match(closeoutRunner, /verify-production-acceptance-evidence-record\.ts/);
 assert.match(closeoutRunner, /rev-parse/);
 assert.match(closeoutRunner, /--summary-out/);
+assert.match(closeoutRunner, /--partials-out/);
 assert.match(closeoutRunner, /readinessSummary/);
 assert.match(closeoutRunner, /parityTracker/);
 assert.match(closeoutRunner, /--require-zero-partials/);
@@ -254,7 +255,10 @@ assert.match(contents.gates, /verify-production-acceptance-evidence-record\.ts/)
 assert.match(contents.gates, /pnpm run closeout:production/);
 assert.match(contents.gates, /--summary-out=<path>/);
 assert.match(contents.gates, /--summary-out=\/tmp\/kiddzonl-production-closeout-summary\.json/);
+assert.match(contents.gates, /--partials-out=<path>/);
+assert.match(contents.gates, /--partials-out=\/tmp\/kiddzonl-production-partials\.json/);
 assert.match(contents.gates, /summary includes the redacted readiness counts/);
+assert.match(contents.gates, /partial report path/);
 assert.match(contents.gates, /page-parity tracker counts/);
 assert.match(contents.gates, /--require-zero-partials/);
 assert.match(contents.gates, /report-production-partials\.ts/);
@@ -273,6 +277,7 @@ assert.match(contents.cutoverRunbook, /--env-file=\/secure\/private-readiness\.e
 assert.match(contents.cutoverRunbook, /verify-production-acceptance-evidence-record\.ts \/secure\/production-acceptance-evidence\.md --readiness-report=\/tmp\/kiddzonl-production-readiness\.json --branch=legacy-parity-runbook --commit=<release-commit-sha>/);
 assert.match(contents.cutoverRunbook, /pnpm run closeout:production/);
 assert.match(contents.cutoverRunbook, /--summary-out=\/tmp\/kiddzonl-production-closeout-summary\.json/);
+assert.match(contents.cutoverRunbook, /--partials-out=\/tmp\/kiddzonl-production-partials\.json/);
 assert.match(contents.cutoverRunbook, /--require-zero-partials/);
 assert.match(contents.cutoverRunbook, /release decision `accepted` and remaining production tickets `none`/);
 assert.match(contents.cutoverRunbook, /closeout summary JSON files are archived/);

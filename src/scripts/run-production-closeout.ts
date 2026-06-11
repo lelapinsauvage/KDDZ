@@ -19,13 +19,14 @@ const envFilePath = optionValue("--env-file");
 const evidenceRecordPath = optionValue("--evidence-record");
 const outputPath = optionValue("--out") ?? "/tmp/kiddzonl-production-readiness.json";
 const summaryOutputPath = optionValue("--summary-out");
+const partialsOutputPath = optionValue("--partials-out");
 const requireZeroPartials = process.argv.includes("--require-zero-partials");
 const branch = optionValue("--branch") ?? gitOutput(["branch", "--show-current"]);
 const commit = optionValue("--commit") ?? gitOutput(["rev-parse", "HEAD"]);
 
 if (!envFilePath || !evidenceRecordPath) {
   console.error(
-    "Usage: pnpm tsx src/scripts/run-production-closeout.ts --env-file=<private-readiness.env> --evidence-record=<production-acceptance-evidence.md> [--out=<readiness.json>] [--summary-out=<closeout-summary.json>] [--branch=<branch>] [--commit=<sha>] [--require-zero-partials]"
+    "Usage: pnpm tsx src/scripts/run-production-closeout.ts --env-file=<private-readiness.env> --evidence-record=<production-acceptance-evidence.md> [--out=<readiness.json>] [--summary-out=<closeout-summary.json>] [--partials-out=<partials.json>] [--branch=<branch>] [--commit=<sha>] [--require-zero-partials]"
   );
   process.exit(2);
 }
@@ -50,6 +51,14 @@ run("pnpm", [
 
 const readinessSummary = readReadinessSummary(outputPath);
 const parityTracker = trackerSummary();
+if (partialsOutputPath) {
+  run("pnpm", [
+    "tsx",
+    "src/scripts/report-production-partials.ts",
+    "--json",
+    `--out=${partialsOutputPath}`,
+  ]);
+}
 if (requireZeroPartials && parityTracker.partial !== 0) {
   console.error(`Production closeout requires zero partial parity rows; found ${parityTracker.partial}.`);
   process.exit(1);
@@ -59,6 +68,7 @@ const summary = {
   status: "production closeout verified",
   readinessReport: outputPath,
   evidenceRecord: evidenceRecordPath,
+  partialReport: partialsOutputPath ?? null,
   readinessSummary,
   parityTracker,
   requireZeroPartials,

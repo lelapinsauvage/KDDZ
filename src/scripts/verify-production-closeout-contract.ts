@@ -19,6 +19,7 @@ try {
   const evidenceRecordPath = join(tmp, "production-acceptance-evidence.md");
   const readinessReportPath = join(tmp, "readiness.json");
   const closeoutSummaryPath = join(tmp, "closeout-summary.json");
+  const partialReportPath = join(tmp, "partials.json");
   writeFileSync(envFilePath, readinessEnvFile(), "utf8");
   writeFileSync(evidenceRecordPath, fillTemplate(template), "utf8");
 
@@ -27,6 +28,7 @@ try {
     `--evidence-record=${evidenceRecordPath}`,
     `--out=${readinessReportPath}`,
     `--summary-out=${closeoutSummaryPath}`,
+    `--partials-out=${partialReportPath}`,
     "--branch=legacy-parity-runbook",
     "--commit=0404c6a",
   ]);
@@ -49,6 +51,7 @@ try {
   assertNoSensitiveOutput(closeoutSummary);
   const closeoutPayload = JSON.parse(closeoutSummary) as {
     status?: string;
+    partialReport?: string | null;
     readinessSummary?: { ready?: number; needsEvidence?: number; total?: number };
     parityTracker?: { total?: number; complete?: number; partial?: number; donePct?: number; leftPct?: number };
     branch?: string;
@@ -59,12 +62,26 @@ try {
     status: "production closeout verified",
     readinessReport: readinessReportPath,
     evidenceRecord: evidenceRecordPath,
+    partialReport: partialReportPath,
     readinessSummary: { ready: 12, needsEvidence: 0, total: 12 },
     parityTracker: { total: 1713, complete: 1696, partial: 17, donePct: 99, leftPct: 1 },
     requireZeroPartials: false,
     branch: "legacy-parity-runbook",
     commit: "0404c6a",
     redacted: true,
+  });
+
+  const partialReport = readFileSync(partialReportPath, "utf8");
+  assertNoSensitiveOutput(partialReport);
+  const partialPayload = JSON.parse(partialReport) as {
+    summary?: { partialRows?: number; gateCounts?: Record<string, number> };
+  };
+  assert.equal(partialPayload.summary?.partialRows, 17);
+  assert.deepEqual(partialPayload.summary?.gateCounts, {
+    "PROD-CRON": 9,
+    "PROD-NATIVE": 3,
+    "PROD-NATURE": 1,
+    "PROD-PROVIDERS": 14,
   });
 
   const staleCommit = runCloseout([
