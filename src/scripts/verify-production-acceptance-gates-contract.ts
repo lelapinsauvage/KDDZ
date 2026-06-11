@@ -585,6 +585,7 @@ assert.match(contents.gates, /verify-production-focused-artifacts-contract\.ts/)
 assert.match(contents.gates, /verify-production-focused-artifacts-manifest-contract\.ts/);
 assert.match(contents.gates, /verify-production-gate-status-contract\.ts/);
 assert.match(contents.gates, /verify-production-readiness-audit-contract\.ts/);
+assert.match(contents.gates, /readiness env template contract/);
 assert.match(contents.cutoverRunbook, /render-production-readiness-env-template\.ts --out=\/secure\/private-readiness\.env/);
 assert.match(contents.cutoverRunbook, /render-production-readiness-env-template\.ts --gate=PROD-CRON/);
 assert.match(contents.cutoverRunbook, /verify-production-readiness-env-template-contract\.ts/);

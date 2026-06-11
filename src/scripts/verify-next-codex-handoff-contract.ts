@@ -35,6 +35,7 @@ for (const expected of [
   "pnpm tsx src/scripts/report-production-evidence-checklist.ts --json",
   "pnpm tsx src/scripts/render-production-readiness-env-template.ts --out=/secure/private-readiness.env",
   "pnpm run verify:production-gates",
+  "`f200c9e chore: generate production readiness env template`",
   "`da487a0 chore: render production acceptance evidence`",
   "`1b5f27c chore: gate production status on readiness`",
   "`d9690f9 chore: add production gate status report`",

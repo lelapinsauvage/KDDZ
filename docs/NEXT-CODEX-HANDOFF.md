@@ -85,6 +85,7 @@ When modernizing native/parent APIs, compare all three:
 
 Recent commits on `legacy-parity-runbook`:
 
+- `f200c9e chore: generate production readiness env template`
 - `da487a0 chore: render production acceptance evidence`
 - `1b5f27c chore: gate production status on readiness`
 - `d9690f9 chore: add production gate status report`
