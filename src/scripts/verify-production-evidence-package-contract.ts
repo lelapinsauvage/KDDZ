@@ -47,6 +47,7 @@ type ArtifactManifest = {
   path: string;
   algorithm: "sha256";
   digest: string;
+  generatedAt?: string;
 };
 
 const summaryReportPath = optionValue("--summary-report");
@@ -189,6 +190,14 @@ function verifySelfTestContract() {
       `--checklist-report=${checklistReportPath}`,
       `--manifest-out=${packageManifestPath}`,
     ]);
+    const packageManifest = readJson<PackageManifest>(packageManifestPath);
+    const readinessGeneratedAt = readJson<{ generatedAt?: string }>(readinessReportPath).generatedAt;
+    assertValidIsoTimestamp(readinessGeneratedAt, "readiness report generatedAt");
+    assert.equal(packageManifest.artifacts.readinessReport.generatedAt, readinessGeneratedAt);
+    assert.equal(packageManifest.artifacts.partialReport.generatedAt, generatedAt);
+    assert.equal(packageManifest.artifacts.evidenceChecklist.generatedAt, generatedAt);
+    assert.equal(packageManifest.artifacts.evidenceRecord.generatedAt, undefined);
+
     runVerifier([
       `--summary-report=${closeoutSummaryPath}`,
       `--readiness-report=${readinessReportPath}`,
@@ -288,11 +297,34 @@ function buildManifest(params: {
 function artifact(path: string): ArtifactManifest {
   const text = readFileSync(path, "utf8");
   assertNoSensitiveOutput(text);
+  const generatedAt = generatedAtFromJson(text);
   return {
     path,
     algorithm: "sha256",
     digest: sha256File(path),
+    ...(generatedAt ? { generatedAt } : {}),
   };
+}
+
+function generatedAtFromJson(text: string) {
+  try {
+    const payload = JSON.parse(text) as { generatedAt?: unknown };
+    if (typeof payload.generatedAt !== "string") {
+      return null;
+    }
+    assert.equal(new Date(payload.generatedAt).toISOString(), payload.generatedAt, "artifact generatedAt must be an ISO timestamp");
+    return payload.generatedAt;
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+function assertValidIsoTimestamp(value: string | undefined, label: string) {
+  assert.ok(value, `${label} is missing`);
+  assert.equal(new Date(value).toISOString(), value, `${label} must be an ISO timestamp`);
 }
 
 function runVerifier(args: string[], expectSuccess = true) {
