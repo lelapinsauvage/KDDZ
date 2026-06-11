@@ -278,18 +278,18 @@ function verifyArtifactDigests(
   }
 
   const expectedArtifacts = [
-    { field: "Redacted readiness report SHA-256", path: readinessReportPath, digest: expectedReadinessDigest },
+    { field: "Redacted readiness report SHA-256", path: expectedReadinessDigest ? readinessReportPath : null, digest: expectedReadinessDigest },
     { field: "Partial gate report SHA-256", path: partialReportPath, digest: expectedPartialDigest },
     { field: "Production evidence checklist SHA-256", path: checklistReportPath, digest: expectedChecklistDigest },
   ];
 
   for (const artifact of expectedArtifacts) {
-    if (!artifact.digest) {
+    if (!artifact.path && !artifact.digest) {
       continue;
     }
 
-    const expectedDigest = artifact.path ? sha256File(artifact.path) : artifact.digest;
-    if (artifact.path && artifact.digest !== expectedDigest) {
+    const expectedDigest = artifact.path ? sha256File(artifact.path) : artifact.digest!;
+    if (artifact.path && artifact.digest && artifact.digest !== expectedDigest) {
       errors.push(`${artifact.field}: expected digest argument must match ${artifact.path}`);
       continue;
     }

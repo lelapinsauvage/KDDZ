@@ -231,6 +231,7 @@ assert.match(evidenceRecordVerifier, /--partial-digest/);
 assert.match(evidenceRecordVerifier, /--checklist-digest/);
 assert.match(evidenceRecordVerifier, /--branch/);
 assert.match(evidenceRecordVerifier, /--commit/);
+assert.match(evidenceRecordVerifier, /sha256File\(artifact\.path\)/);
 assert.match(evidenceRecordVerifier, /verifyArtifactPointers/);
 assert.match(evidenceRecordVerifier, /remaining production tickets must be none/);
 assert.match(evidenceRecordVerifier, /release decision must be accepted/);

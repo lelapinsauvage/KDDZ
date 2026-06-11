@@ -183,6 +183,15 @@ try {
   assert.match(staleDigest.stderr, /Redacted readiness report SHA-256 must include/);
   assert.match(staleDigest.stderr, /Partial gate report SHA-256 must include/);
   assert.match(staleDigest.stderr, /Production evidence checklist SHA-256 must include/);
+
+  const staleDigestFromPath = runVerifier(staleDigestPath, [
+    `--readiness-report=${readinessReportPath}`,
+    `--partial-report=${partialReportPath}`,
+    `--checklist-report=${checklistReportPath}`,
+  ]);
+  assert.equal(staleDigestFromPath.status, 1);
+  assert.match(staleDigestFromPath.stderr, /Partial gate report SHA-256 must include/);
+  assert.match(staleDigestFromPath.stderr, /Production evidence checklist SHA-256 must include/);
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }
