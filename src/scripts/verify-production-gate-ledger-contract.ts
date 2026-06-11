@@ -120,6 +120,7 @@ for (const marker of [
   "NATIVE_IOS_ACCEPTANCE_REPORT",
   "NATIVE_ANDROID_ACCEPTANCE_REPORT",
   "NOTIFICATIONS_NATURE_ACCEPTANCE_REPORT",
+  "NOTIFICATIONS_NATURE_GROUP_COMPARISON_REPORT",
 ]) {
   assertIncludes(docs.gates, marker, "production gates");
 }

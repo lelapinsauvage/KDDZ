@@ -75,7 +75,10 @@ const evidenceGateRequirements: Array<{
   },
   {
     gate: "PROD-NATURE",
-    env: ["NOTIFICATIONS_NATURE_ACCEPTANCE_REPORT"],
+    env: [
+      "NOTIFICATIONS_NATURE_ACCEPTANCE_REPORT",
+      "NOTIFICATIONS_NATURE_GROUP_COMPARISON_REPORT",
+    ],
   },
   {
     gate: "PROD-PRINT",
