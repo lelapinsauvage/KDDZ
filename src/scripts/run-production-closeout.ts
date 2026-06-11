@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { dirname } from "node:path";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
@@ -92,6 +93,11 @@ const artifactConsistency = partialsOutputPath && checklistOutputPath
   : null;
 const partialReportSummary = partialsOutputPath ? readPartialReportSummary(partialsOutputPath) : null;
 const evidenceChecklistSummary = checklistOutputPath ? readEvidenceChecklistSummary(checklistOutputPath) : null;
+const artifactDigests = artifactDigestSummary({
+  readinessReport: outputPath,
+  partialReport: partialsOutputPath,
+  evidenceChecklist: checklistOutputPath,
+});
 if (requireZeroPartials && parityTracker.partial !== 0) {
   console.error(`Production closeout requires zero partial parity rows; found ${parityTracker.partial}.`);
   process.exit(1);
@@ -105,6 +111,7 @@ const summary = {
   evidenceChecklist: checklistOutputPath ?? null,
   partialReportSummary,
   evidenceChecklistSummary,
+  artifactDigests,
   artifactConsistency,
   readinessSummary,
   parityTracker,
@@ -168,6 +175,24 @@ function readEvidenceChecklistSummary(path: string) {
     requiredFields: report.summary?.requiredFields ?? null,
     blockingPartialRows: report.summary?.blockingPartialRows ?? null,
   };
+}
+
+function artifactDigestSummary(paths: Record<string, string | null>) {
+  return Object.fromEntries(
+    Object.entries(paths)
+      .filter((entry): entry is [string, string] => Boolean(entry[1]))
+      .map(([name, path]) => [
+        name,
+        {
+          algorithm: "sha256",
+          digest: sha256File(path),
+        },
+      ])
+  );
+}
+
+function sha256File(path: string) {
+  return createHash("sha256").update(readFileSync(path)).digest("hex");
 }
 
 function trackerSummary() {

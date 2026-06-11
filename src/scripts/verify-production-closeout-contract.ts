@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -66,6 +67,7 @@ try {
     evidenceChecklist?: string | null;
     partialReportSummary?: { partialRows?: number; gates?: string[]; gateCounts?: Record<string, number> } | null;
     evidenceChecklistSummary?: { gates?: number; requiredFields?: number; blockingPartialRows?: number } | null;
+    artifactDigests?: Record<string, { algorithm?: string; digest?: string }>;
     artifactConsistency?: { status?: string; script?: string } | null;
     readinessSummary?: { ready?: number; needsEvidence?: number; total?: number };
     parityTracker?: { total?: number; complete?: number; partial?: number; donePct?: number; leftPct?: number };
@@ -93,6 +95,20 @@ try {
       gates: 12,
       requiredFields: 69,
       blockingPartialRows: 17,
+    },
+    artifactDigests: {
+      readinessReport: {
+        algorithm: "sha256",
+        digest: sha256File(readinessReportPath),
+      },
+      partialReport: {
+        algorithm: "sha256",
+        digest: sha256File(partialReportPath),
+      },
+      evidenceChecklist: {
+        algorithm: "sha256",
+        digest: sha256File(checklistReportPath),
+      },
     },
     artifactConsistency: {
       status: "verified",
@@ -284,4 +300,8 @@ function assertNoSensitiveOutput(output: string) {
 
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function sha256File(path: string) {
+  return createHash("sha256").update(readFileSync(path)).digest("hex");
 }
