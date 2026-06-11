@@ -132,6 +132,18 @@ function verifyCloseoutSummary(path: string) {
       stdio: "ignore",
     });
   }
+
+  verifyEvidenceRecordAgainstSummary({
+    evidenceRecordPath,
+    readinessReportPath,
+    closeoutSummaryPath: path,
+    partialReportPath,
+    checklistReportPath,
+    partialReportDigest: summary.artifactDigests?.partialReport?.digest,
+    checklistReportDigest: summary.artifactDigests?.evidenceChecklist?.digest,
+    branch: summary.branch,
+    commit: summary.commit,
+  });
 }
 
 function verifySelfTestContract() {
@@ -213,6 +225,30 @@ function verifySelfTestContract() {
       /evidence record digest mismatch/
     );
 
+    const staleEvidenceRecordPath = join(tmp, "stale-production-acceptance-evidence.md");
+    const staleEvidenceRecord = readFileSync(evidenceRecordPath, "utf8").replace(
+      "legacy-parity-runbook` / 0404c6a",
+      "legacy-parity-runbook` / deadbeef"
+    );
+    writeFileSync(staleEvidenceRecordPath, staleEvidenceRecord, "utf8");
+    const staleEvidenceRecordSummaryPath = join(tmp, "stale-evidence-record-summary.json");
+    const staleEvidenceRecordSummary = readJson<CloseoutSummary>(closeoutSummaryPath);
+    staleEvidenceRecordSummary.evidenceRecord = staleEvidenceRecordPath;
+    if (staleEvidenceRecordSummary.artifactDigests?.evidenceRecord) {
+      staleEvidenceRecordSummary.artifactDigests.evidenceRecord.digest = sha256File(staleEvidenceRecordPath);
+    }
+    writeJson(staleEvidenceRecordSummaryPath, staleEvidenceRecordSummary);
+    assertFailingVerifier(
+      [
+        staleEvidenceRecordSummaryPath,
+        `--evidence-record=${staleEvidenceRecordPath}`,
+        `--readiness-report=${readinessReportPath}`,
+        `--partial-report=${partialReportPath}`,
+        `--checklist-report=${checklistReportPath}`,
+      ],
+      /Modern branch\/commit must include commit 0404c6a/
+    );
+
     const staleCountPath = join(tmp, "stale-count-summary.json");
     const staleCountSummary = readJson<CloseoutSummary>(closeoutSummaryPath);
     if (staleCountSummary.evidenceChecklistSummary) {
@@ -231,6 +267,35 @@ function verifySelfTestContract() {
 function assertDigest(record: DigestRecord | undefined, path: string, label: string) {
   assert.equal(record?.algorithm, "sha256", `${label} digest algorithm must be sha256`);
   assert.equal(record?.digest, sha256File(path), `${label} digest mismatch`);
+}
+
+function verifyEvidenceRecordAgainstSummary(params: {
+  evidenceRecordPath: string;
+  readinessReportPath: string;
+  closeoutSummaryPath: string;
+  partialReportPath: string | null;
+  checklistReportPath: string | null;
+  partialReportDigest?: string;
+  checklistReportDigest?: string;
+  branch?: string;
+  commit?: string;
+}) {
+  execFileSync("pnpm", [
+    "tsx",
+    "src/scripts/verify-production-acceptance-evidence-record.ts",
+    params.evidenceRecordPath,
+    `--readiness-report=${params.readinessReportPath}`,
+    `--summary-report=${params.closeoutSummaryPath}`,
+    ...optionalArg("--partial-report", params.partialReportPath),
+    ...optionalArg("--checklist-report", params.checklistReportPath),
+    ...optionalArg("--partial-digest", params.partialReportDigest),
+    ...optionalArg("--checklist-digest", params.checklistReportDigest),
+    ...optionalArg("--branch", params.branch),
+    ...optionalArg("--commit", params.commit),
+  ], {
+    cwd: process.cwd(),
+    stdio: ["ignore", "pipe", "pipe"],
+  });
 }
 
 function readArtifact<T>(path: string) {
@@ -407,6 +472,10 @@ function optionValue(name: string) {
   if (index >= 0) return process.argv[index + 1] ?? null;
 
   return null;
+}
+
+function optionalArg(name: string, value: string | null | undefined) {
+  return value ? [`${name}=${value}`] : [];
 }
 
 function sha256File(path: string) {

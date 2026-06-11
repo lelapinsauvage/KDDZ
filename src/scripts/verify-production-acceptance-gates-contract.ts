@@ -286,6 +286,10 @@ assert.match(
 );
 assert.match(
   readFileSync("src/scripts/verify-production-closeout-summary-contract.ts", "utf8"),
+  /verify-production-acceptance-evidence-record\.ts/
+);
+assert.match(
+  readFileSync("src/scripts/verify-production-closeout-summary-contract.ts", "utf8"),
   /verify-production-artifact-consistency-contract\.ts/
 );
 assert.match(
@@ -326,6 +330,7 @@ assert.match(contents.gates, /artifact SHA-256 digests/);
 assert.match(contents.gates, /artifact consistency status/);
 assert.match(contents.gates, /verify-production-artifact-consistency-contract\.ts/);
 assert.match(contents.gates, /verify-production-closeout-summary-contract\.ts/);
+assert.match(contents.gates, /reruns `verify-production-acceptance-evidence-record\.ts`/);
 assert.match(contents.gates, /archived closeout\/partial\/checklist artifact pointers/);
 assert.match(contents.gates, /archived closeout summary against the saved artifact paths and SHA-256 digests/);
 assert.match(contents.gates, /page-parity tracker counts/);
