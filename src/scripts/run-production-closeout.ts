@@ -48,6 +48,12 @@ if (!envFilePath || !evidenceRecordPath) {
   );
   process.exit(2);
 }
+if (requireZeroPartials && (!summaryOutputPath || !partialsOutputPath || !checklistOutputPath)) {
+  console.error(
+    "Production closeout with --require-zero-partials must also include --summary-out, --partials-out, and --checklist-out so final evidence artifacts are archived."
+  );
+  process.exit(2);
+}
 
 ensureParentDir(outputPath);
 

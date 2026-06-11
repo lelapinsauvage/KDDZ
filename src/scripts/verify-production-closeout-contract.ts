@@ -176,6 +176,9 @@ try {
     `--env-file=${envFilePath}`,
     `--evidence-record=${evidenceRecordPath}`,
     `--out=${readinessReportPath}`,
+    `--summary-out=${closeoutSummaryPath}`,
+    `--partials-out=${partialReportPath}`,
+    `--checklist-out=${checklistReportPath}`,
     "--branch=legacy-parity-runbook",
     "--commit=0404c6a",
     "--require-zero-partials",
@@ -183,6 +186,18 @@ try {
   assert.equal(unresolvedPartials.status, 1);
   assert.match(unresolvedPartials.stderr, /requires zero partial parity rows; found 17/);
   assertNoSensitiveOutput(unresolvedPartials.stdout + unresolvedPartials.stderr);
+
+  const missingFinalArtifacts = runCloseout([
+    `--env-file=${envFilePath}`,
+    `--evidence-record=${evidenceRecordPath}`,
+    `--out=${readinessReportPath}`,
+    "--branch=legacy-parity-runbook",
+    "--commit=0404c6a",
+    "--require-zero-partials",
+  ]);
+  assert.equal(missingFinalArtifacts.status, 2);
+  assert.match(missingFinalArtifacts.stderr, /must also include --summary-out, --partials-out, and --checklist-out/);
+  assertNoSensitiveOutput(missingFinalArtifacts.stdout + missingFinalArtifacts.stderr);
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }

@@ -70,7 +70,7 @@ python3 -m json.tool docs/page-parity-matrix.json >/dev/null
 
 `verify-production-evidence-package-contract.ts` verifies the full archived evidence package and can write a redacted package manifest with `--manifest-out=<path>`. The manifest includes SHA-256 digests for the closeout summary itself, redacted readiness report, filled production acceptance record, partial gate report, and evidence checklist. Pass `--manifest=<path>` later to prove the archived package still matches the saved manifest. Pass `--branch=<branch>` and `--commit=<sha>` to bind the package to the intended release branch/commit, and pass `--require-zero-partials` during final closure to require the package to come from a zero-partial closeout summary.
 
-Use `--require-zero-partials` only for final legacy closure; it fails until `docs/page-parity-matrix.json` has no partial rows left.
+Use `--require-zero-partials` only for final legacy closure; it fails until `docs/page-parity-matrix.json` has no partial rows left and requires `--summary-out`, `--partials-out`, and `--checklist-out` so the final evidence artifacts are archived.
 
 `report-production-partials.ts` joins `docs/page-parity-matrix.json` with `docs/partial-production-gate-map.md` and emits the remaining partial rows, blocking gate ids, and closure reasons as markdown or redacted JSON for production tracking.
 

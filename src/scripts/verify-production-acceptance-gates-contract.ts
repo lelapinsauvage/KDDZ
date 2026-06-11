@@ -252,6 +252,7 @@ assert.match(closeoutRunner, /artifactDigests/);
 assert.match(closeoutRunner, /sha256/);
 assert.match(closeoutRunner, /artifactConsistency/);
 assert.match(closeoutRunner, /--require-zero-partials/);
+assert.match(closeoutRunner, /must also include --summary-out, --partials-out, and --checklist-out/);
 assert.match(partialReporter, /partial-production-gate-map\.md/);
 assert.match(partialReporter, /page-parity-matrix\.json/);
 assert.match(partialReporter, /gateCounts/);
@@ -277,6 +278,10 @@ assert.match(
 assert.match(
   readFileSync("src/scripts/verify-production-closeout-contract.ts", "utf8"),
   /requires zero partial parity rows/
+);
+assert.match(
+  readFileSync("src/scripts/verify-production-closeout-contract.ts", "utf8"),
+  /missingFinalArtifacts/
 );
 assert.match(
   readFileSync("src/scripts/verify-production-closeout-summary-contract.ts", "utf8"),
