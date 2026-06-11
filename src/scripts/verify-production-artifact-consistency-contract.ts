@@ -9,6 +9,7 @@ type PartialReport = {
     partialRows?: number;
     gates?: string[];
     gateCounts?: Record<string, number>;
+    gateFilter?: string;
   };
   rows?: Array<{
     row?: string;
@@ -22,6 +23,7 @@ type EvidenceChecklist = {
   summary?: {
     gates?: number;
     blockingPartialRows?: number;
+    gateFilter?: string;
   };
   gates?: Array<{
     gate?: string;
@@ -54,8 +56,10 @@ const checklistBlockingGates = evidenceChecklist.gates
   .map((gate) => gate.gate)
   .filter(Boolean)
   .sort() ?? [];
+const partialGateFilter = partialReport.summary?.gateFilter;
+const checklistGateFilter = evidenceChecklist.summary?.gateFilter;
+const focusedGate = partialGateFilter ?? checklistGateFilter ?? null;
 
-assert.deepEqual(checklistBlockingGates, partialGates);
 assert.equal(evidenceChecklist.summary?.gates, checklistGates.length);
 
 const partialRowsByGate = new Map<string, Set<string>>();
@@ -80,12 +84,30 @@ for (const gate of evidenceChecklist.gates ?? []) {
   );
 }
 
-for (const [gate, rows] of partialRowsByGate) {
-  assert.deepEqual([...checklistRowsByGate.get(gate) ?? []].sort(), [...rows].sort(), `${gate} blocker rows drifted`);
-  assert.equal(partialReport.summary?.gateCounts?.[gate], rows.size, `${gate} gate count drifted`);
-}
-for (const gate of Object.keys(partialReport.summary?.gateCounts ?? {})) {
-  assert.ok(partialRowsByGate.has(gate), `${gate} gate count has no mapped partial rows`);
+if (focusedGate) {
+  assert.equal(partialGateFilter, focusedGate, "focused partial report gateFilter drifted");
+  assert.equal(checklistGateFilter, focusedGate, "focused checklist gateFilter drifted");
+  assert.deepEqual(checklistGates, [focusedGate], "focused checklist must contain only the selected gate");
+  assert.deepEqual(checklistBlockingGates, uniquePartialRows.size ? [focusedGate] : []);
+  assert.ok(
+    (partialReport.rows ?? []).every((row) => row.gates?.includes(focusedGate)),
+    "focused partial report contains a row outside the selected gate"
+  );
+  assert.deepEqual(
+    [...checklistRowsByGate.get(focusedGate) ?? []].sort(),
+    [...uniquePartialRows].sort(),
+    `${focusedGate} focused blocker rows drifted`
+  );
+  assert.equal(partialReport.summary?.gateCounts?.[focusedGate], uniquePartialRows.size, `${focusedGate} gate count drifted`);
+} else {
+  assert.deepEqual(checklistBlockingGates, partialGates);
+  for (const [gate, rows] of partialRowsByGate) {
+    assert.deepEqual([...checklistRowsByGate.get(gate) ?? []].sort(), [...rows].sort(), `${gate} blocker rows drifted`);
+    assert.equal(partialReport.summary?.gateCounts?.[gate], rows.size, `${gate} gate count drifted`);
+  }
+  for (const gate of Object.keys(partialReport.summary?.gateCounts ?? {})) {
+    assert.ok(partialRowsByGate.has(gate), `${gate} gate count has no mapped partial rows`);
+  }
 }
 
 const partialRows = new Map(partialReport.rows?.map((row) => [row.row, row]) ?? []);
@@ -150,6 +172,38 @@ function verifyPathModeContract() {
       "src/scripts/verify-production-artifact-consistency-contract.ts",
       `--partial-report=${partialPath}`,
       `--checklist-report=${checklistPath}`,
+    ], {
+      cwd: process.cwd(),
+      stdio: "ignore",
+    });
+
+    const focusedPartialPath = join(tmp, "cron-partials.json");
+    const focusedChecklistPath = join(tmp, "cron-checklist.json");
+    execFileSync("pnpm", [
+      "tsx",
+      "src/scripts/report-production-partials.ts",
+      "--json",
+      "--gate=PROD-CRON",
+      `--out=${focusedPartialPath}`,
+    ], {
+      cwd: process.cwd(),
+      stdio: "ignore",
+    });
+    execFileSync("pnpm", [
+      "tsx",
+      "src/scripts/report-production-evidence-checklist.ts",
+      "--json",
+      "--gate=PROD-CRON",
+      `--out=${focusedChecklistPath}`,
+    ], {
+      cwd: process.cwd(),
+      stdio: "ignore",
+    });
+    execFileSync("pnpm", [
+      "tsx",
+      "src/scripts/verify-production-artifact-consistency-contract.ts",
+      `--partial-report=${focusedPartialPath}`,
+      `--checklist-report=${focusedChecklistPath}`,
     ], {
       cwd: process.cwd(),
       stdio: "ignore",

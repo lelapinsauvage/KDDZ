@@ -62,6 +62,7 @@ const payload = {
     gates: gates.length,
     requiredFields: gates.reduce((count, gate) => count + gate.requiredFields.length, 0),
     blockingPartialRows: [...new Set(gates.flatMap((gate) => gate.blockingPartialRows.map((row) => row.row)))].length,
+    ...(selectedGate ? { gateFilter: selectedGate } : {}),
   },
   gates,
 };

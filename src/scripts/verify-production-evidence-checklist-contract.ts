@@ -12,7 +12,7 @@ const payload = JSON.parse(jsonOutput) as {
   status?: string;
   schemaVersion?: number;
   generatedAt?: string;
-  summary?: { gates?: number; requiredFields?: number; blockingPartialRows?: number };
+  summary?: { gates?: number; requiredFields?: number; blockingPartialRows?: number; gateFilter?: string };
   gates?: Array<{ gate?: string; requiredFields?: string[]; blockingPartialRows?: Array<{ row?: string }> }>;
 };
 
@@ -50,6 +50,7 @@ const cronPayload = JSON.parse(cronOutput) as typeof payload;
 assert.equal(cronPayload.summary?.gates, 1);
 assert.equal(cronPayload.summary?.requiredFields, 8);
 assert.equal(cronPayload.summary?.blockingPartialRows, 9);
+assert.equal(cronPayload.summary?.gateFilter, "PROD-CRON");
 assert.equal(cronPayload.gates?.[0]?.gate, "PROD-CRON");
 assert.ok(cronPayload.gates?.[0]?.requiredFields?.includes("Cron partial row coverage reviewed"));
 
@@ -61,6 +62,7 @@ const naturePayload = JSON.parse(natureOutput) as typeof payload;
 assert.equal(naturePayload.summary?.gates, 1);
 assert.equal(naturePayload.summary?.requiredFields, 6);
 assert.equal(naturePayload.summary?.blockingPartialRows, 1);
+assert.equal(naturePayload.summary?.gateFilter, "PROD-NATURE");
 assert.equal(naturePayload.gates?.[0]?.gate, "PROD-NATURE");
 assert.ok(naturePayload.gates?.[0]?.requiredFields?.includes("Nature partial row coverage reviewed"));
 
