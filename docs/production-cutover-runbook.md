@@ -167,6 +167,7 @@ PRINT_INVOICE_RECEIPT_ACCEPTANCE_REPORT=<non-secret invoice receipt print report
 PRINT_STATIONERY_ACCEPTANCE_REPORT=<non-secret report id/path>
 REAL_CALL_ROWS_ACCEPTANCE_REPORT=<non-secret report id/path>
 CALL_SUBMITTED_DRAFT_ACCEPTANCE_REPORT=<non-secret submitted/draft call report id/path>
+CALL_PHP_BRIDGE_ACCEPTANCE_REPORT=<non-secret call.php fid bridge report id/path>
 NURSERY_COMPLIANCE_ACCEPTANCE_REPORT=<non-secret report id/path>
 LEGACY_ACL_ACCEPTANCE_REPORT=<non-secret report id/path>
 ```

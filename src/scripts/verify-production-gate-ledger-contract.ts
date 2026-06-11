@@ -133,6 +133,7 @@ for (const marker of [
   "PRINT_INVOICE_RECEIPT_ACCEPTANCE_REPORT",
   "REAL_CALL_ROWS_ACCEPTANCE_REPORT",
   "CALL_SUBMITTED_DRAFT_ACCEPTANCE_REPORT",
+  "CALL_PHP_BRIDGE_ACCEPTANCE_REPORT",
 ]) {
   assertIncludes(docs.gates, marker, "production gates");
 }

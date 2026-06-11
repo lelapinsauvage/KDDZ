@@ -99,6 +99,7 @@ const evidenceGateRequirements: Array<{
     env: [
       "REAL_CALL_ROWS_ACCEPTANCE_REPORT",
       "CALL_SUBMITTED_DRAFT_ACCEPTANCE_REPORT",
+      "CALL_PHP_BRIDGE_ACCEPTANCE_REPORT",
     ],
   },
   {
