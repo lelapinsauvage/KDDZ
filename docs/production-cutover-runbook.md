@@ -210,6 +210,7 @@ The legacy restoration goal can only be marked complete when:
 - final acceptance evidence says release decision `accepted` and remaining production tickets `none`,
 - `docs/page-parity-matrix.json` has no unresolved production/external partial rows,
 - the archived partial gate report and production evidence checklist both show zero unresolved/blocking rows,
+- artifact consistency verification passes against those archived zero-partial artifacts,
 - the current branch/commit is recorded in the release evidence,
 - redacted readiness and closeout summary JSON files are archived with the release evidence,
 - the filled production acceptance record is archived and hash-bound by the closeout summary,

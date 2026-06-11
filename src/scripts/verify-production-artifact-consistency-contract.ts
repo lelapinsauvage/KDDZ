@@ -43,8 +43,9 @@ const evidenceChecklist = checklistReportPath
   ? readJson<EvidenceChecklist>(checklistReportPath)
   : runJson<EvidenceChecklist>("src/scripts/report-production-evidence-checklist.ts");
 
-assert.equal(partialReport.summary?.partialRows, 17);
-assert.equal(evidenceChecklist.summary?.blockingPartialRows, partialReport.summary?.partialRows);
+const uniquePartialRows = new Set((partialReport.rows ?? []).map((row) => row.row).filter(isString));
+assert.equal(partialReport.summary?.partialRows, uniquePartialRows.size);
+assert.equal(evidenceChecklist.summary?.blockingPartialRows, uniquePartialRows.size);
 
 const partialGates = partialReport.summary?.gates ?? [];
 const checklistGates = evidenceChecklist.gates?.map((gate) => gate.gate).filter(Boolean).sort() ?? [];
@@ -82,6 +83,9 @@ for (const gate of evidenceChecklist.gates ?? []) {
 for (const [gate, rows] of partialRowsByGate) {
   assert.deepEqual([...checklistRowsByGate.get(gate) ?? []].sort(), [...rows].sort(), `${gate} blocker rows drifted`);
   assert.equal(partialReport.summary?.gateCounts?.[gate], rows.size, `${gate} gate count drifted`);
+}
+for (const gate of Object.keys(partialReport.summary?.gateCounts ?? {})) {
+  assert.ok(partialRowsByGate.has(gate), `${gate} gate count has no mapped partial rows`);
 }
 
 const partialRows = new Map(partialReport.rows?.map((row) => [row.row, row]) ?? []);
@@ -168,6 +172,38 @@ function verifyPathModeContract() {
     });
     assert.equal(stale.status, 1);
     assert.match(stale.stderr, /PROD-CRON blocker rows drifted/);
+
+    const zeroPartialPath = join(tmp, "zero-partials.json");
+    const zeroChecklistPath = join(tmp, "zero-checklist.json");
+    const zeroPartialReport: PartialReport = {
+      summary: {
+        partialRows: 0,
+        gates: [],
+        gateCounts: {},
+      },
+      rows: [],
+    };
+    const zeroChecklist: EvidenceChecklist = {
+      summary: {
+        gates: 12,
+        blockingPartialRows: 0,
+      },
+      gates: (readJson<EvidenceChecklist>(checklistPath).gates ?? []).map((gate) => ({
+        ...gate,
+        blockingPartialRows: [],
+      })),
+    };
+    writeFileSync(zeroPartialPath, `${JSON.stringify(zeroPartialReport, null, 2)}\n`, "utf8");
+    writeFileSync(zeroChecklistPath, `${JSON.stringify(zeroChecklist, null, 2)}\n`, "utf8");
+    execFileSync("pnpm", [
+      "tsx",
+      "src/scripts/verify-production-artifact-consistency-contract.ts",
+      `--partial-report=${zeroPartialPath}`,
+      `--checklist-report=${zeroChecklistPath}`,
+    ], {
+      cwd: process.cwd(),
+      stdio: "ignore",
+    });
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
