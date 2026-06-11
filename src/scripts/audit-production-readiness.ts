@@ -57,6 +57,7 @@ const evidenceGateRequirements: Array<{
     gate: "PROD-RECON",
     env: [
       "MIGRATION_RECONCILIATION_REPORT",
+      "MIGRATION_RECONCILIATION_MISMATCH_TRIAGE_REPORT",
       "MIGRATION_RECONCILIATION_ACCEPTANCE_REPORT",
     ],
   },

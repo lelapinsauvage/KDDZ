@@ -181,6 +181,7 @@ LEGACY_BACKFILL_RERUN_REPORT=<non-secret import/backfill rerun report id/path>
 LEGACY_BACKFILL_TICKET_TRIAGE_REPORT=<non-secret remaining backfill ticket triage report id/path>
 LEGACY_MEDIA_STORAGE_INTEGRITY_REPORT=<non-secret object storage upload integrity report id/path>
 LEGACY_MEDIA_MISSING_FILE_TRIAGE_REPORT=<non-secret default/no-file/missing media triage report id/path>
+MIGRATION_RECONCILIATION_MISMATCH_TRIAGE_REPORT=<non-secret skipped/orphan/mismatch triage report id/path>
 ```
 
 Stop the cutover if either native app crashes on parser-safe endpoints, if production `notifications_nature` creates missing or reordered parent groups, if print output is rejected, or if any denied production user can access a guarded page/action.
