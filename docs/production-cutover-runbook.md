@@ -16,6 +16,7 @@ Evidence pointers to set for the readiness audit:
 ```bash
 LEGACY_PRODUCTION_DUMP_MANIFEST=<non-secret report id or local evidence file>
 PRODUCTION_CRONTAB_EVIDENCE=<non-secret report id or local evidence file>
+CRON_HELPER_DECISION_REPORT=<non-secret recovered-or-retired helper decision id/path>
 ```
 
 Preview the full evidence/provider requirement list before collecting values:

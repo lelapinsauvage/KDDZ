@@ -52,7 +52,11 @@ const evidenceGateRequirements: Array<{
   },
   {
     gate: "PROD-CRON",
-    env: ["PRODUCTION_CRONTAB_EVIDENCE", "HOSTED_SCHEDULER_EVIDENCE"],
+    env: [
+      "PRODUCTION_CRONTAB_EVIDENCE",
+      "CRON_HELPER_DECISION_REPORT",
+      "HOSTED_SCHEDULER_EVIDENCE",
+    ],
   },
   {
     gate: "PROD-NATIVE",
