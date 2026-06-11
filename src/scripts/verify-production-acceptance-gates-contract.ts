@@ -542,6 +542,13 @@ assert.match(contents.gates, /--commit=<release-commit-sha>/);
 assert.match(contents.gates, /--generated-at=<release-generated-at-iso>/);
 assert.match(contents.gates, /--list-requirements/);
 assert.match(contents.gates, /--gate=PROD-CRON/);
+for (const focusedGate of ["PROD-CRON", "PROD-PROVIDERS", "PROD-NATIVE", "PROD-NATURE"]) {
+  assert.match(
+    contents.cutoverRunbook,
+    new RegExp(`report-production-partials\\.ts --json --gate=${focusedGate}`),
+    `${focusedGate} focused partial report command is missing from cutover runbook`
+  );
+}
 assert.match(contents.gates, /pnpm run verify:production-gates/);
 assert.match(contents.gates, /verify-production-gate-suite\.ts/);
 assert.match(contents.gates, /verify-production-artifact-consistency-contract\.ts/);
@@ -565,6 +572,7 @@ assert.match(contents.cutoverRunbook, /--evidence-record=\/secure\/production-ac
 assert.match(contents.cutoverRunbook, /--manifest-out=\/tmp\/kiddzonl-production-evidence-package\.json/);
 assert.match(contents.cutoverRunbook, /--manifest-out=\/tmp\/kiddzonl-production-evidence-package\.json --branch=legacy-parity-runbook --commit=<release-commit-sha> --require-zero-partials/);
 assert.match(contents.cutoverRunbook, /report-production-evidence-checklist\.ts --gate=PROD-CRON/);
+assert.match(contents.cutoverRunbook, /Generate focused non-secret coverage reports from the parity matrix/);
 assert.match(contents.cutoverRunbook, /--require-zero-partials/);
 assert.match(contents.cutoverRunbook, /release decision `accepted` and remaining production tickets `none`/);
 assert.match(contents.cutoverRunbook, /closeout summary JSON files are archived/);

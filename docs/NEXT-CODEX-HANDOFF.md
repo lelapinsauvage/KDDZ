@@ -85,14 +85,18 @@ When modernizing native/parent APIs, compare all three:
 
 Recent commits on `legacy-parity-runbook`:
 
+- `4440183 chore: add focused production partial reports`
 - `663bd0e chore: prove zero partial closeout summaries`
 - `e378e55 chore: prove zero partial production closeout`
 - `93d580f chore: allow zero partial consistency artifacts`
 - `97d62d0 chore: surface closeout summaries in package manifest`
 - `b74088e chore: require zero blocking closeout artifacts`
-- `5c3ff6c docs: refresh row coverage handoff`
 
 Do not assume these are complete for the whole app. They are slices.
+
+### Focused Production Partial Reports
+
+Commit `4440183` added `--gate=<gate>` filtering to `report-production-partials.ts`. Use it to generate the four non-secret row-coverage artifacts required by the remaining external gates: `--gate=PROD-CRON`, `--gate=PROD-PROVIDERS`, `--gate=PROD-NATIVE`, and `--gate=PROD-NATURE`. The full, unfiltered partial report is still the artifact used by final closeout.
 
 ### Zero-Partial Closeout Hardening
 
