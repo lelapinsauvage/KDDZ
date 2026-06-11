@@ -112,6 +112,10 @@ try {
         algorithm: "sha256",
         digest: sha256File(readinessReportPath),
       },
+      evidenceRecord: {
+        algorithm: "sha256",
+        digest: sha256File(evidenceRecordPath),
+      },
       partialReport: {
         algorithm: "sha256",
         digest: sha256File(partialReportPath),

@@ -26,6 +26,7 @@ type CloseoutSummary = {
   evidenceChecklistSummary?: EvidenceChecklistSummary | null;
   artifactDigests?: {
     readinessReport?: DigestRecord;
+    evidenceRecord?: DigestRecord;
     partialReport?: DigestRecord;
     evidenceChecklist?: DigestRecord;
   };
@@ -91,12 +92,16 @@ function verifyCloseoutSummary(path: string) {
   assert.deepEqual(summary.parityTracker, { total: 1713, complete: 1696, partial: 17, donePct: 99, leftPct: 1 });
 
   const readinessReportPath = optionValue("--readiness-report") ?? summary.readinessReport;
+  const evidenceRecordPath = optionValue("--evidence-record") ?? summary.evidenceRecord;
   const partialReportPath = optionValue("--partial-report") ?? summary.partialReport ?? null;
   const checklistReportPath = optionValue("--checklist-report") ?? summary.evidenceChecklist ?? null;
 
   assert.ok(readinessReportPath, "closeout summary is missing readiness report path");
   assert.equal(summary.readinessReport, readinessReportPath);
   assertDigest(summary.artifactDigests?.readinessReport, readinessReportPath, "readiness report");
+  assert.ok(evidenceRecordPath, "closeout summary is missing evidence record path");
+  assert.equal(summary.evidenceRecord, evidenceRecordPath);
+  assertDigest(summary.artifactDigests?.evidenceRecord, evidenceRecordPath, "evidence record");
 
   if (partialReportPath) {
     assert.equal(summary.partialReport, partialReportPath);
@@ -180,6 +185,7 @@ function verifySelfTestContract() {
 
     assertSuccessfulVerifier([
       closeoutSummaryPath,
+      `--evidence-record=${evidenceRecordPath}`,
       `--readiness-report=${readinessReportPath}`,
       `--partial-report=${partialReportPath}`,
       `--checklist-report=${checklistReportPath}`,
@@ -194,6 +200,17 @@ function verifySelfTestContract() {
     assertFailingVerifier(
       [staleDigestPath, `--partial-report=${partialReportPath}`],
       /partial report digest mismatch/
+    );
+
+    const staleEvidenceDigestPath = join(tmp, "stale-evidence-digest-summary.json");
+    const staleEvidenceDigestSummary = readJson<CloseoutSummary>(closeoutSummaryPath);
+    if (staleEvidenceDigestSummary.artifactDigests?.evidenceRecord) {
+      staleEvidenceDigestSummary.artifactDigests.evidenceRecord.digest = "1".repeat(64);
+    }
+    writeJson(staleEvidenceDigestPath, staleEvidenceDigestSummary);
+    assertFailingVerifier(
+      [staleEvidenceDigestPath, `--evidence-record=${evidenceRecordPath}`],
+      /evidence record digest mismatch/
     );
 
     const staleCountPath = join(tmp, "stale-count-summary.json");

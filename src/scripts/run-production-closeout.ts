@@ -83,6 +83,7 @@ const partialReportSummary = partialsOutputPath ? readPartialReportSummary(parti
 const evidenceChecklistSummary = checklistOutputPath ? readEvidenceChecklistSummary(checklistOutputPath) : null;
 const artifactDigests = artifactDigestSummary({
   readinessReport: outputPath,
+  evidenceRecord: evidenceRecordPath,
   partialReport: partialsOutputPath,
   evidenceChecklist: checklistOutputPath,
 });

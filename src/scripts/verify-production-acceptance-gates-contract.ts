@@ -244,6 +244,7 @@ assert.match(closeoutRunner, /--checklist-report/);
 assert.match(closeoutRunner, /readinessSummary/);
 assert.match(closeoutRunner, /parityTracker/);
 assert.match(closeoutRunner, /evidenceChecklist/);
+assert.match(closeoutRunner, /evidenceRecord/);
 assert.match(closeoutRunner, /partialReportSummary/);
 assert.match(closeoutRunner, /evidenceChecklistSummary/);
 assert.match(closeoutRunner, /artifactDigests/);
@@ -278,6 +279,10 @@ assert.match(
 assert.match(
   readFileSync("src/scripts/verify-production-closeout-summary-contract.ts", "utf8"),
   /partial report digest mismatch/
+);
+assert.match(
+  readFileSync("src/scripts/verify-production-closeout-summary-contract.ts", "utf8"),
+  /evidence record digest mismatch/
 );
 assert.match(
   readFileSync("src/scripts/verify-production-closeout-summary-contract.ts", "utf8"),
@@ -331,6 +336,8 @@ assert.match(contents.gates, /kiddzonl-production-partials\.json/);
 assert.match(contents.gates, /kiddzonl-production-evidence-checklist\.json/);
 assert.match(contents.gates, /--readiness-report=<path>/);
 assert.match(contents.gates, /--readiness-report=\/tmp\/kiddzonl-production-readiness\.json/);
+assert.match(contents.gates, /--evidence-record=<path>/);
+assert.match(contents.gates, /--evidence-record=\/secure\/production-acceptance-evidence\.md/);
 assert.match(contents.gates, /--summary-report=<path>/);
 assert.match(contents.gates, /--partial-report=<path>/);
 assert.match(contents.gates, /--checklist-report=<path>/);
@@ -352,11 +359,14 @@ assert.match(contents.cutoverRunbook, /pnpm run closeout:production/);
 assert.match(contents.cutoverRunbook, /--summary-out=\/tmp\/kiddzonl-production-closeout-summary\.json/);
 assert.match(contents.cutoverRunbook, /--partials-out=\/tmp\/kiddzonl-production-partials\.json/);
 assert.match(contents.cutoverRunbook, /--checklist-out=\/tmp\/kiddzonl-production-evidence-checklist\.json/);
+assert.match(contents.cutoverRunbook, /verify-production-closeout-summary-contract\.ts/);
+assert.match(contents.cutoverRunbook, /--evidence-record=\/secure\/production-acceptance-evidence\.md/);
 assert.match(contents.cutoverRunbook, /report-production-evidence-checklist\.ts --gate=PROD-CRON/);
 assert.match(contents.cutoverRunbook, /--require-zero-partials/);
 assert.match(contents.cutoverRunbook, /release decision `accepted` and remaining production tickets `none`/);
 assert.match(contents.cutoverRunbook, /closeout summary JSON files are archived/);
 assert.match(contents.cutoverRunbook, /production evidence checklist JSON is archived/);
+assert.match(contents.cutoverRunbook, /filled production acceptance record is archived and hash-bound/);
 assert.match(contents.cutoverRunbook, /archived redacted readiness report, closeout summary, partial gate report, and production evidence checklist/);
 assert.match(contents.cutoverRunbook, /final closeout command passes with `--require-zero-partials`/);
 assert.match(contents.cutoverRunbook, /--list-requirements/);
