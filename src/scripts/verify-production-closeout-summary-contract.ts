@@ -105,6 +105,14 @@ function verifyCloseoutSummary(path: string) {
     assert.equal(summary.parityTracker?.partial, 0, "production closeout summary still has unresolved partial rows");
     assert.equal(summary.parityTracker?.donePct, 100, "production closeout summary is not fully complete");
     assert.equal(summary.parityTracker?.leftPct, 0, "production closeout summary still has work left");
+    assert.equal(summary.partialReportSummary?.partialRows, 0, "production closeout partial report summary still has unresolved partial rows");
+    assert.deepEqual(summary.partialReportSummary?.gates, [], "production closeout partial report summary still lists blocking gates");
+    assert.deepEqual(summary.partialReportSummary?.gateCounts, {}, "production closeout partial report summary still has gate counts");
+    assert.equal(
+      summary.evidenceChecklistSummary?.blockingPartialRows,
+      0,
+      "production closeout evidence checklist summary still has blocking partial rows"
+    );
   } else {
     assert.deepEqual(summary.parityTracker, { total: 1713, complete: 1696, partial: 17, donePct: 99, leftPct: 1 });
   }
@@ -251,6 +259,24 @@ function verifySelfTestContract() {
         "--require-zero-partials",
       ],
       /must come from a require-zero-partials run/
+    );
+    const staleFinalSummaryPath = join(tmp, "stale-final-summary.json");
+    const staleFinalSummary = readJson<CloseoutSummary>(closeoutSummaryPath);
+    staleFinalSummary.requireZeroPartials = true;
+    staleFinalSummary.parityTracker = { total: 1713, complete: 1713, partial: 0, donePct: 100, leftPct: 0 };
+    writeJson(staleFinalSummaryPath, staleFinalSummary);
+    assertFailingVerifier(
+      [
+        staleFinalSummaryPath,
+        `--evidence-record=${evidenceRecordPath}`,
+        `--readiness-report=${readinessReportPath}`,
+        `--partial-report=${partialReportPath}`,
+        `--checklist-report=${checklistReportPath}`,
+        "--branch=legacy-parity-runbook",
+        "--commit=0404c6a",
+        "--require-zero-partials",
+      ],
+      /partial report summary still has unresolved partial rows/
     );
     assertFailingVerifier(
       [
