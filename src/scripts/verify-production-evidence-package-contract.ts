@@ -19,6 +19,16 @@ type CloseoutSummary = {
     needsEvidence?: number;
     total?: number;
   };
+  partialReportSummary?: {
+    partialRows?: number | null;
+    gates?: string[];
+    gateCounts?: Record<string, number>;
+  } | null;
+  evidenceChecklistSummary?: {
+    gates?: number | null;
+    requiredFields?: number | null;
+    blockingPartialRows?: number | null;
+  } | null;
   parityTracker?: {
     total?: number;
     complete?: number;
@@ -41,6 +51,8 @@ type PackageManifest = {
     branch?: string;
     commit?: string;
     readinessSummary?: CloseoutSummary["readinessSummary"];
+    partialReportSummary?: CloseoutSummary["partialReportSummary"];
+    evidenceChecklistSummary?: CloseoutSummary["evidenceChecklistSummary"];
     parityTracker?: CloseoutSummary["parityTracker"];
     requireZeroPartials?: boolean;
   };
@@ -205,6 +217,21 @@ function verifySelfTestContract() {
     assert.equal(packageManifest.artifacts.partialReport.generatedAt, generatedAt);
     assert.equal(packageManifest.artifacts.evidenceChecklist.generatedAt, generatedAt);
     assert.equal(packageManifest.artifacts.evidenceRecord.generatedAt, undefined);
+    assert.deepEqual(packageManifest.closeout.partialReportSummary, {
+      partialRows: 17,
+      gates: ["PROD-CRON", "PROD-NATIVE", "PROD-NATURE", "PROD-PROVIDERS"],
+      gateCounts: {
+        "PROD-CRON": 9,
+        "PROD-NATIVE": 3,
+        "PROD-NATURE": 1,
+        "PROD-PROVIDERS": 14,
+      },
+    });
+    assert.deepEqual(packageManifest.closeout.evidenceChecklistSummary, {
+      gates: 12,
+      requiredFields: 73,
+      blockingPartialRows: 17,
+    });
 
     runVerifier([
       `--summary-report=${closeoutSummaryPath}`,
@@ -297,6 +324,8 @@ function buildManifest(params: {
       branch: params.summary.branch,
       commit: params.summary.commit,
       readinessSummary: params.summary.readinessSummary,
+      partialReportSummary: params.summary.partialReportSummary,
+      evidenceChecklistSummary: params.summary.evidenceChecklistSummary,
       parityTracker: params.summary.parityTracker,
       requireZeroPartials: params.summary.requireZeroPartials,
     },

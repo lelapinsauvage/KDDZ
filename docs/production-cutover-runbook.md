@@ -214,6 +214,6 @@ The legacy restoration goal can only be marked complete when:
 - redacted readiness and closeout summary JSON files are archived with the release evidence,
 - the filled production acceptance record is archived and hash-bound by the closeout summary,
 - the production evidence checklist JSON is archived with the release evidence,
-- the production evidence package manifest is archived and verifies all closeout artifact hashes,
+- the production evidence package manifest is archived and verifies all closeout artifact hashes plus the closeout readiness, partial report, and evidence checklist summaries,
 - the final closeout command passes with `--require-zero-partials`,
 - no stop condition above remains open.
