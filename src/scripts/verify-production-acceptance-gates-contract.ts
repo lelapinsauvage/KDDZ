@@ -312,6 +312,18 @@ assert.match(
 );
 assert.match(
   readFileSync("src/scripts/verify-production-closeout-summary-contract.ts", "utf8"),
+  /requires --branch/
+);
+assert.match(
+  readFileSync("src/scripts/verify-production-closeout-summary-contract.ts", "utf8"),
+  /requires --commit/
+);
+assert.match(
+  readFileSync("src/scripts/verify-production-closeout-summary-contract.ts", "utf8"),
+  /production closeout summary commit drifted/
+);
+assert.match(
+  readFileSync("src/scripts/verify-production-closeout-summary-contract.ts", "utf8"),
   /production closeout summary still has unresolved partial rows/
 );
 assert.match(
@@ -394,7 +406,9 @@ assert.match(contents.gates, /--manifest-out=<path>/);
 assert.match(contents.gates, /--manifest=<path>/);
 assert.match(contents.gates, /--branch=<branch>/);
 assert.match(contents.gates, /--commit=<sha>/);
-assert.match(contents.gates, /both are required with `--require-zero-partials`/);
+assert.match(contents.gates, /bind the archived summary to the intended release ref/);
+assert.match(contents.gates, /both are required with `--require-zero-partials` during final closure so the summary cannot be accepted without an explicit release ref/);
+assert.match(contents.gates, /both are required with `--require-zero-partials` during final closure so the package cannot be accepted without an explicit release ref/);
 assert.match(contents.gates, /--manifest-out=\/tmp\/kiddzonl-production-evidence-package\.json --branch=legacy-parity-runbook --commit=<release-commit-sha>/);
 assert.match(contents.gates, /--require-zero-partials/);
 assert.match(contents.gates, /archived closeout\/partial\/checklist artifact pointers/);
@@ -408,6 +422,7 @@ assert.match(contents.gates, /kiddzonl-production-evidence-checklist\.json/);
 assert.match(contents.gates, /--readiness-report=<path>/);
 assert.match(contents.gates, /--readiness-report=\/tmp\/kiddzonl-production-readiness\.json/);
 assert.match(contents.gates, /verify-production-closeout-summary-contract\.ts .*--require-zero-partials/);
+assert.match(contents.gates, /verify-production-closeout-summary-contract\.ts .*--branch=legacy-parity-runbook --commit=<release-commit-sha> --require-zero-partials/);
 assert.match(contents.gates, /--evidence-record=<path>/);
 assert.match(contents.gates, /--evidence-record=\/secure\/production-acceptance-evidence\.md/);
 assert.match(contents.gates, /--summary-report=<path>/);
@@ -433,6 +448,7 @@ assert.match(contents.cutoverRunbook, /--partials-out=\/tmp\/kiddzonl-production
 assert.match(contents.cutoverRunbook, /--checklist-out=\/tmp\/kiddzonl-production-evidence-checklist\.json/);
 assert.match(contents.cutoverRunbook, /verify-production-closeout-summary-contract\.ts/);
 assert.match(contents.cutoverRunbook, /verify-production-closeout-summary-contract\.ts .*--require-zero-partials/);
+assert.match(contents.cutoverRunbook, /verify-production-closeout-summary-contract\.ts .*--branch=legacy-parity-runbook --commit=<release-commit-sha> --require-zero-partials/);
 assert.match(contents.cutoverRunbook, /verify-production-evidence-package-contract\.ts/);
 assert.match(contents.cutoverRunbook, /--evidence-record=\/secure\/production-acceptance-evidence\.md/);
 assert.match(contents.cutoverRunbook, /--manifest-out=\/tmp\/kiddzonl-production-evidence-package\.json/);

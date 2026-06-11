@@ -90,7 +90,11 @@ function verifyCloseoutSummary(path: string) {
   assert.equal(summary.status, "production closeout verified");
   assert.equal(summary.redacted, true);
   assert.deepEqual(summary.readinessSummary, { ready: 12, needsEvidence: 0, total: 12 });
+  const expectedBranch = optionValue("--branch");
+  const expectedCommit = optionValue("--commit");
   if (process.argv.includes("--require-zero-partials")) {
+    assert.ok(expectedBranch, "final production closeout summary requires --branch with --require-zero-partials");
+    assert.ok(expectedCommit, "final production closeout summary requires --commit with --require-zero-partials");
     assert.equal(summary.requireZeroPartials, true, "production closeout summary must come from a require-zero-partials run");
     assert.equal(summary.parityTracker?.total, 1713, "production closeout summary tracker total drifted");
     assert.equal(summary.parityTracker?.complete, 1713, "production closeout summary complete count is not final");
@@ -99,6 +103,12 @@ function verifyCloseoutSummary(path: string) {
     assert.equal(summary.parityTracker?.leftPct, 0, "production closeout summary still has work left");
   } else {
     assert.deepEqual(summary.parityTracker, { total: 1713, complete: 1696, partial: 17, donePct: 99, leftPct: 1 });
+  }
+  if (expectedBranch) {
+    assert.equal(summary.branch, expectedBranch, "production closeout summary branch drifted");
+  }
+  if (expectedCommit) {
+    assert.equal(summary.commit, expectedCommit, "production closeout summary commit drifted");
   }
 
   const readinessReportPath = optionValue("--readiness-report") ?? summary.readinessReport;
@@ -221,7 +231,32 @@ function verifySelfTestContract() {
         `--checklist-report=${checklistReportPath}`,
         "--require-zero-partials",
       ],
+      /requires --branch/
+    );
+    assertFailingVerifier(
+      [
+        closeoutSummaryPath,
+        `--evidence-record=${evidenceRecordPath}`,
+        `--readiness-report=${readinessReportPath}`,
+        `--partial-report=${partialReportPath}`,
+        `--checklist-report=${checklistReportPath}`,
+        "--branch=legacy-parity-runbook",
+        "--commit=0404c6a",
+        "--require-zero-partials",
+      ],
       /must come from a require-zero-partials run/
+    );
+    assertFailingVerifier(
+      [
+        closeoutSummaryPath,
+        `--evidence-record=${evidenceRecordPath}`,
+        `--readiness-report=${readinessReportPath}`,
+        `--partial-report=${partialReportPath}`,
+        `--checklist-report=${checklistReportPath}`,
+        "--branch=legacy-parity-runbook",
+        "--commit=deadbeef",
+      ],
+      /production closeout summary commit drifted/
     );
 
     const staleDigestPath = join(tmp, "stale-digest-summary.json");

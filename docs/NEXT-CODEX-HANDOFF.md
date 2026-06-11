@@ -85,11 +85,12 @@ When modernizing native/parent APIs, compare all three:
 
 Recent commits on `legacy-parity-runbook`:
 
+- `6eff3c8 chore: require final package release ref`
+- `bcacc95 chore: reject generic evidence placeholders`
+- `de8f77f chore: bind evidence artifact digests`
+- `87bc6b6 chore: reject placeholder readiness evidence`
+- `558c60e chore: verify production gate ledgers`
 - `5afd1e4 chore: require zero partial closeout summary`
-- `b8bbdd4 chore: bind package command release ref`
-- `28a35b6 chore: require final closeout artifacts`
-- `23b80a9 chore: bind evidence package release ref`
-- `60da114 chore: require zero partial evidence package`
 
 Do not assume these are complete for the whole app. They are slices.
 
@@ -229,7 +230,7 @@ Final closure command sequence:
 
 ```bash
 pnpm run closeout:production -- --env-file=/secure/private-readiness.env --evidence-record=/secure/production-acceptance-evidence.md --out=/tmp/kiddzonl-production-readiness.json --summary-out=/tmp/kiddzonl-production-closeout-summary.json --partials-out=/tmp/kiddzonl-production-partials.json --checklist-out=/tmp/kiddzonl-production-evidence-checklist.json --branch=legacy-parity-runbook --commit=<release-commit-sha> --require-zero-partials
-pnpm tsx src/scripts/verify-production-closeout-summary-contract.ts /tmp/kiddzonl-production-closeout-summary.json --readiness-report=/tmp/kiddzonl-production-readiness.json --evidence-record=/secure/production-acceptance-evidence.md --partial-report=/tmp/kiddzonl-production-partials.json --checklist-report=/tmp/kiddzonl-production-evidence-checklist.json --require-zero-partials
+pnpm tsx src/scripts/verify-production-closeout-summary-contract.ts /tmp/kiddzonl-production-closeout-summary.json --readiness-report=/tmp/kiddzonl-production-readiness.json --evidence-record=/secure/production-acceptance-evidence.md --partial-report=/tmp/kiddzonl-production-partials.json --checklist-report=/tmp/kiddzonl-production-evidence-checklist.json --branch=legacy-parity-runbook --commit=<release-commit-sha> --require-zero-partials
 pnpm tsx src/scripts/verify-production-evidence-package-contract.ts --summary-report=/tmp/kiddzonl-production-closeout-summary.json --readiness-report=/tmp/kiddzonl-production-readiness.json --evidence-record=/secure/production-acceptance-evidence.md --partial-report=/tmp/kiddzonl-production-partials.json --checklist-report=/tmp/kiddzonl-production-evidence-checklist.json --manifest-out=/tmp/kiddzonl-production-evidence-package.json --branch=legacy-parity-runbook --commit=<release-commit-sha> --require-zero-partials
 ```
 
@@ -332,11 +333,12 @@ Current progress:
 The remaining 17 partial rows are production/external acceptance gates: PROD-CRON, PROD-NATIVE, PROD-NATURE, and PROD-PROVIDERS.
 
 Recent pushed commits:
+6eff3c8 chore: require final package release ref
+bcacc95 chore: reject generic evidence placeholders
+de8f77f chore: bind evidence artifact digests
+87bc6b6 chore: reject placeholder readiness evidence
+558c60e chore: verify production gate ledgers
 5afd1e4 chore: require zero partial closeout summary
-b8bbdd4 chore: bind package command release ref
-28a35b6 chore: require final closeout artifacts
-23b80a9 chore: bind evidence package release ref
-60da114 chore: require zero partial evidence package
 
 Continue from the production/external acceptance gates. First run `pnpm tsx src/scripts/report-production-partials.ts --json`, `pnpm tsx src/scripts/report-production-evidence-checklist.ts --json`, and `pnpm run verify:production-gates`. Work the first gate with real evidence available: canonical production SQL/media import and reconciliation, hosted cron evidence, provider delivery rollout, iOS/Android native-device acceptance, production `notifications_nature` acceptance, or print/stationery acceptance. Do not mark the goal complete until the parity matrix has zero partial rows and the closeout summary plus evidence package verifiers pass with `--require-zero-partials`.
 ```
