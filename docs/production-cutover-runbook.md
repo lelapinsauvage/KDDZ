@@ -66,6 +66,7 @@ LEGACY_MEDIA_EXPORT_MANIFEST=<non-secret export manifest id/path>
 LEGACY_MEDIA_UPLOAD_MANIFEST=<non-secret upload manifest id/path>
 LEGACY_MEDIA_URL_APPLY_MANIFEST=<non-secret URL apply manifest id/path>
 MIGRATION_RECONCILIATION_REPORT=<non-secret reconciliation report id/path>
+MIGRATION_RECONCILIATION_ACCEPTANCE_REPORT=<non-secret mismatch/skipped/orphan acceptance id/path>
 ```
 
 Stop the cutover if reconciliation has unresolved `warning`, `missing`, or `error` rows, if media URL application has unsupported strong-provenance rows that should have been rewritten, or if skipped/orphan counts were not reviewed and accepted.
