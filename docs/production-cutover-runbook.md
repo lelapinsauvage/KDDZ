@@ -157,6 +157,7 @@ NATIVE_LEGACY_ROUTE_ACCEPTANCE_REPORT=<non-secret master.php and ws/*.php report
 NATIVE_CRASH_PARSER_AUDIT_REPORT=<non-secret crash/parser audit id/path>
 NATIVE_PARENT_FLOW_ACCEPTANCE_REPORT=<non-secret parent login/daily/absence/finance/food/holiday report id/path>
 NATIVE_NOTIFICATIONS_MESSAGES_ALARMS_REPORT=<non-secret notifications/messages/alarms report id/path>
+NATIVE_PUSH_TOKEN_ACCEPTANCE_REPORT=<non-secret push-token registration/show/delete report id/path>
 NOTIFICATIONS_NATURE_ACCEPTANCE_REPORT=<non-secret report id/path>
 NOTIFICATIONS_NATURE_GROUP_COMPARISON_REPORT=<non-secret populated parent group comparison id/path>
 PRINT_STATIONERY_ACCEPTANCE_REPORT=<non-secret report id/path>
