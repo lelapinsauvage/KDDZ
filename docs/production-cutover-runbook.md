@@ -110,6 +110,15 @@ HOSTED_SCHEDULER_EVIDENCE=<non-secret schedule report id/path>
 CRON_PARTIAL_ROW_COVERAGE_REPORT=<non-secret P01-P07/P10/P12 cron coverage id/path>
 ```
 
+Generate focused non-secret coverage reports from the parity matrix before filling the gate-specific evidence pointers:
+
+```bash
+pnpm tsx src/scripts/report-production-partials.ts --json --gate=PROD-CRON --out=/tmp/kiddzonl-production-cron-partials.json --generated-at=<release-generated-at-iso>
+pnpm tsx src/scripts/report-production-partials.ts --json --gate=PROD-PROVIDERS --out=/tmp/kiddzonl-production-provider-partials.json --generated-at=<release-generated-at-iso>
+pnpm tsx src/scripts/report-production-partials.ts --json --gate=PROD-NATIVE --out=/tmp/kiddzonl-production-native-partials.json --generated-at=<release-generated-at-iso>
+pnpm tsx src/scripts/report-production-partials.ts --json --gate=PROD-NATURE --out=/tmp/kiddzonl-production-nature-partials.json --generated-at=<release-generated-at-iso>
+```
+
 Run:
 
 ```bash

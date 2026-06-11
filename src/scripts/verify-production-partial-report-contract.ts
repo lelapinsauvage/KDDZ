@@ -52,6 +52,42 @@ const frozenOutput = execFileSync("pnpm", ["tsx", script, "--json", "--generated
 const frozenPayload = JSON.parse(frozenOutput) as typeof payload;
 assert.equal(frozenPayload.generatedAt, "2026-06-10T00:00:00.000Z");
 
+const cronOutput = execFileSync("pnpm", ["tsx", script, "--json", "--gate=PROD-CRON", "--generated-at=2026-06-10T00:00:00.000Z"], {
+  cwd: process.cwd(),
+  encoding: "utf8",
+});
+const cronPayload = JSON.parse(cronOutput) as typeof payload & {
+  summary?: typeof payload.summary & { gateFilter?: string };
+};
+assert.equal(cronPayload.generatedAt, "2026-06-10T00:00:00.000Z");
+assert.equal(cronPayload.summary?.partialRows, 9);
+assert.equal(cronPayload.summary?.gateFilter, "PROD-CRON");
+assert.deepEqual(cronPayload.summary?.gateCounts, {
+  "PROD-CRON": 9,
+  "PROD-PROVIDERS": 7,
+});
+assert.equal(cronPayload.rows?.length, 9);
+assert.ok(cronPayload.rows?.every((row) => row.gates?.includes("PROD-CRON")), "focused report must only include selected-gate rows");
+assert.equal(cronPayload.rows?.[0]?.row, "P01");
+assert.equal(cronPayload.rows?.[8]?.row, "P12");
+
+const nativeMarkdown = execFileSync("pnpm", ["tsx", script, "--gate=PROD-NATIVE", "--generated-at=2026-06-10T00:00:00.000Z"], {
+  cwd: process.cwd(),
+  encoding: "utf8",
+});
+assert.match(nativeMarkdown, /Partial rows: 3/);
+assert.match(nativeMarkdown, /\| PROD-NATIVE \| 3 \|/);
+assert.doesNotMatch(nativeMarkdown, /P01/);
+assert.match(nativeMarkdown, /P15/);
+assert.match(nativeMarkdown, /P17/);
+
+const invalidGate = spawnSync("pnpm", ["tsx", script, "--json", "--gate=PROD-UNKNOWN"], {
+  cwd: process.cwd(),
+  encoding: "utf8",
+});
+assert.equal(invalidGate.status, 2);
+assert.match(invalidGate.stderr, /Unknown production gate or no mapped partial rows/);
+
 const invalidGeneratedAt = spawnSync("pnpm", ["tsx", script, "--json", "--generated-at=not-a-date"], {
   cwd: process.cwd(),
   encoding: "utf8",

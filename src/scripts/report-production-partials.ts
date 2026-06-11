@@ -21,6 +21,7 @@ const outputPath = optionValue("--out");
 const generatedAt = generatedAtValue();
 const parityMatrixPath = optionValue("--parity-matrix") ?? "docs/page-parity-matrix.json";
 const partialGateMapPath = optionValue("--partial-gate-map") ?? "docs/partial-production-gate-map.md";
+const selectedGate = optionValue("--gate");
 
 const partialRows = collectPartialRows();
 const mapRows = parsePartialGateMap();
@@ -41,10 +42,12 @@ const reportRows = mapRows.map((row, index): PartialGateRow => {
   };
 });
 
+const filteredRows = selectedGate ? filterRowsForGate(reportRows, selectedGate) : reportRows;
 const summary = {
-  partialRows: reportRows.length,
-  gates: [...new Set(reportRows.flatMap((row) => row.gates))].sort(),
-  gateCounts: gateCounts(reportRows),
+  partialRows: filteredRows.length,
+  gates: [...new Set(filteredRows.flatMap((row) => row.gates))].sort(),
+  gateCounts: gateCounts(filteredRows),
+  ...(selectedGate ? { gateFilter: selectedGate } : {}),
 };
 const payload = {
   status: "production partial gate report",
@@ -55,10 +58,10 @@ const payload = {
     gateMap: partialGateMapPath,
   },
   summary,
-  rows: reportRows,
+  rows: filteredRows,
 };
 
-const rendered = json ? `${JSON.stringify(payload, null, 2)}\n` : renderMarkdown(reportRows);
+const rendered = json ? `${JSON.stringify(payload, null, 2)}\n` : renderMarkdown(filteredRows);
 if (outputPath) {
   const dir = dirname(outputPath);
   if (dir && dir !== ".") {
@@ -111,6 +114,17 @@ function parsePartialGateMap() {
         closureReason,
       };
     });
+}
+
+function filterRowsForGate(rows: PartialGateRow[], gate: string) {
+  if (!rows.some((row) => row.gates.includes(gate))) {
+    const knownGates = [...new Set(rows.flatMap((row) => row.gates))].sort();
+    console.error(`Unknown production gate or no mapped partial rows for gate: ${gate}`);
+    console.error(`Known mapped gates: ${knownGates.join(", ") || "none"}`);
+    process.exit(2);
+  }
+
+  return rows.filter((row) => row.gates.includes(gate));
 }
 
 function renderMarkdown(rows: PartialGateRow[]) {

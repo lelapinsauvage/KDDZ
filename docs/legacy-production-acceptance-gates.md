@@ -47,6 +47,7 @@ pnpm tsx src/scripts/verify-production-closeout-summary-contract.ts
 pnpm tsx src/scripts/verify-production-evidence-package-contract.ts
 pnpm tsx src/scripts/report-production-evidence-checklist.ts --gate=PROD-CRON
 pnpm tsx src/scripts/report-production-evidence-checklist.ts --json --out=/tmp/kiddzonl-production-evidence-checklist.json --generated-at=<release-generated-at-iso>
+pnpm tsx src/scripts/report-production-partials.ts --json --gate=PROD-CRON --out=/tmp/kiddzonl-production-cron-partials.json --generated-at=<release-generated-at-iso>
 pnpm tsx src/scripts/report-production-partials.ts --json --out=/tmp/kiddzonl-production-partials.json --generated-at=<release-generated-at-iso>
 pnpm tsx src/scripts/verify-production-evidence-checklist-contract.ts
 pnpm tsx src/scripts/verify-production-partial-report-contract.ts
@@ -72,9 +73,9 @@ python3 -m json.tool docs/page-parity-matrix.json >/dev/null
 
 Use `--require-zero-partials` only for final legacy closure; it fails until `docs/page-parity-matrix.json` has no partial rows left and requires `--summary-out`, `--partials-out`, and `--checklist-out` so the final evidence artifacts are archived.
 
-`report-production-partials.ts` joins `docs/page-parity-matrix.json` with `docs/partial-production-gate-map.md` and emits the remaining partial rows, blocking gate ids, and closure reasons as markdown or redacted JSON for production tracking. It records the source matrix/map paths in JSON output and accepts `--parity-matrix=<path>` plus `--partial-gate-map=<path>` for controlled archived evidence reproduction.
+`report-production-partials.ts` joins `docs/page-parity-matrix.json` with `docs/partial-production-gate-map.md` and emits the remaining partial rows, blocking gate ids, and closure reasons as markdown or redacted JSON for production tracking. Use `--gate=PROD-CRON`, `--gate=PROD-PROVIDERS`, `--gate=PROD-NATIVE`, or `--gate=PROD-NATURE` to generate focused non-secret row-coverage artifacts for the remaining production evidence pointers; focused reports include `summary.gateFilter` and keep overlapping gate counts for the selected rows. It records the source matrix/map paths in JSON output and accepts `--parity-matrix=<path>` plus `--partial-gate-map=<path>` for controlled archived evidence reproduction.
 
-Use `--gate=PROD-CRON` or any other gate id to inspect one production blocker at a time with the readiness audit and evidence checklist commands.
+Use `--gate=PROD-CRON` or any other gate id to inspect one production blocker at a time with the readiness audit, partial report, and evidence checklist commands.
 
 `report-production-partials.ts` and `report-production-evidence-checklist.ts` emit redacted JSON artifacts with `generatedAt` ISO timestamps so archived release packages can prove when the current partial-gate map and required evidence checklist were produced. The readiness, partial, checklist, closeout summary, and evidence package JSON artifacts carry `schemaVersion: 1`.
 
