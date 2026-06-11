@@ -92,6 +92,7 @@ WHATSAPP_DELIVERY_PROVIDER=webhook|disabled
 Evidence pointers to set:
 
 ```bash
+PROVIDER_DELIVERY_ACCEPTANCE_REPORT=<non-secret delivery summary id/path>
 HOSTED_SCHEDULER_EVIDENCE=<non-secret schedule report id/path>
 ```
 

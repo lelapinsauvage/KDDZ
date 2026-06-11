@@ -101,12 +101,23 @@ if (listRequirements) {
 
 const evidenceAudits = evidenceGateRequirements.map(auditEvidenceGate);
 const providerAudits = [auditPushProvider(), auditEmailProvider(), auditChannelProvider("SMS"), auditChannelProvider("WHATSAPP")];
+const providerDeliveryAudit = auditAnyEnv(["PROVIDER_DELIVERY_ACCEPTANCE_REPORT"]);
 const cronSecretAudit = auditAnyEnv(["CRON_SECRET", "VERCEL_CRON_SECRET"]);
 const providerGate: GateAudit = {
   gate: "PROD-PROVIDERS",
-  status: providerAudits.every((audit) => audit.status === "configured") ? "ready-to-review" : "needs-evidence",
-  present: providerAudits.flatMap((audit) => audit.present.map((item) => `${audit.name}:${item}`)),
-  missing: providerAudits.flatMap((audit) => audit.missing.map((item) => `${audit.name}:${item}`)),
+  status:
+    providerAudits.every((audit) => audit.status === "configured") &&
+    providerDeliveryAudit.missing.length === 0
+      ? "ready-to-review"
+      : "needs-evidence",
+  present: [
+    ...providerAudits.flatMap((audit) => audit.present.map((item) => `${audit.name}:${item}`)),
+    ...providerDeliveryAudit.present.map((item) => `delivery-evidence:${item}`),
+  ],
+  missing: [
+    ...providerAudits.flatMap((audit) => audit.missing.map((item) => `${audit.name}:${item}`)),
+    ...providerDeliveryAudit.missing.map((item) => `delivery-evidence:${item}`),
+  ],
 };
 const cronGate = evidenceAudits.find((audit) => audit.gate === "PROD-CRON");
 if (cronGate) {
@@ -359,6 +370,11 @@ function printRequirements(params: { json: boolean; gateFilter: GateId | null })
     ],
   }));
   const providerRequirements = params.gateFilter && params.gateFilter !== "PROD-PROVIDERS" ? [] : [
+    {
+      provider: "delivery-evidence",
+      acceptedSetup:
+        "PROVIDER_DELIVERY_ACCEPTANCE_REPORT pointing to a non-secret sent/skipped/failed summary and provider response-id record",
+    },
     {
       provider: "push",
       acceptedSetup:

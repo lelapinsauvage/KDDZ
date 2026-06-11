@@ -28,6 +28,7 @@ const safeEnv: NodeJS.ProcessEnv = {
   SMS_DELIVERY_WEBHOOK_URL: "https://example.invalid/sms-secret-path",
   WHATSAPP_DELIVERY_PROVIDER: "webhook",
   WHATSAPP_DELIVERY_WEBHOOK_URL: "https://example.invalid/whatsapp-secret-path",
+  PROVIDER_DELIVERY_ACCEPTANCE_REPORT: "secret-provider-delivery-id",
   CRON_SECRET: "cron_secret_should_not_print",
   LEGACY_PRODUCTION_DUMP_MANIFEST: "secret-dump-manifest-id",
   LEGACY_MEDIA_AUDIT_REPORT: "secret-media-audit-id",
@@ -55,6 +56,7 @@ const sensitiveFragments = [
   "secret-media-export-id",
   "secret-media-upload-id",
   "secret-media-url-apply-id",
+  "secret-provider-delivery-id",
   "secret-reconciliation-id",
   "secret-crontab-id",
   "secret-scheduler-id",
@@ -84,7 +86,7 @@ const requirementsPayload = JSON.parse(requirementsJson.stdout) as {
 };
 assert.equal(requirementsPayload.redacted, true);
 assert.equal(requirementsPayload.evidenceRequirements?.length, 11);
-assert.equal(requirementsPayload.providerRequirements?.length, 4);
+assert.equal(requirementsPayload.providerRequirements?.length, 5);
 assertNoSensitiveOutput(requirementsJson.stdout + requirementsJson.stderr);
 
 const providerRequirements = runAudit(["--list-requirements", "--gate=PROD-PROVIDERS", "--json"]);
@@ -94,7 +96,7 @@ const providerRequirementPayload = JSON.parse(providerRequirements.stdout) as {
   providerRequirements?: unknown[];
 };
 assert.equal(providerRequirementPayload.evidenceRequirements?.length, 0);
-assert.equal(providerRequirementPayload.providerRequirements?.length, 4);
+assert.equal(providerRequirementPayload.providerRequirements?.length, 5);
 assertNoSensitiveOutput(providerRequirements.stdout + providerRequirements.stderr);
 
 const cronRequirements = runAudit(["--list-requirements", "--gate=PROD-CRON"]);
@@ -169,6 +171,7 @@ try {
       "SMS_DELIVERY_WEBHOOK_URL=https://example.invalid/env-file-sms-secret",
       "WHATSAPP_DELIVERY_PROVIDER=webhook",
       "WHATSAPP_DELIVERY_WEBHOOK_URL=https://example.invalid/env-file-whatsapp-secret",
+      "PROVIDER_DELIVERY_ACCEPTANCE_REPORT=env-file-secret-provider-delivery-id",
       "CRON_SECRET=env_file_cron_secret_should_not_print",
       "LEGACY_PRODUCTION_DUMP_MANIFEST=env-file-secret-dump-id",
       "LEGACY_MEDIA_AUDIT_REPORT=env-file-secret-media-audit-id",
@@ -215,6 +218,7 @@ try {
       "SMS_DELIVERY_WEBHOOK_URL=https://example.invalid/placeholder-sms-secret",
       "WHATSAPP_DELIVERY_PROVIDER=webhook",
       "WHATSAPP_DELIVERY_WEBHOOK_URL=https://example.invalid/placeholder-whatsapp-secret",
+      "PROVIDER_DELIVERY_ACCEPTANCE_REPORT=non-secret-report-id",
       "CRON_SECRET=placeholder_cron_secret_should_not_print",
       "LEGACY_PRODUCTION_DUMP_MANIFEST=non-secret-report-id",
       "LEGACY_MEDIA_AUDIT_REPORT=non-secret-report-id",
@@ -238,7 +242,7 @@ try {
   );
   const placeholderReport = runAudit([`--env-file=${placeholderEnvFilePath}`], baseEnv);
   assert.equal(placeholderReport.status, 1);
-  assert.match(placeholderReport.stdout, /Needs evidence: 11\/12/);
+  assert.match(placeholderReport.stdout, /Needs evidence: 12\/12/);
   assert.match(placeholderReport.stdout, /LEGACY_PRODUCTION_DUMP_MANIFEST/);
   assert.match(placeholderReport.stdout, /NATIVE_IOS_ACCEPTANCE_REPORT/);
   assertNoSensitiveOutput(placeholderReport.stdout + placeholderReport.stderr);
