@@ -120,7 +120,11 @@ const evidenceGateRequirements: Array<{
   },
   {
     gate: "PROD-BACKFILL",
-    env: ["LEGACY_BACKFILL_ACCEPTANCE_REPORT"],
+    env: [
+      "LEGACY_BACKFILL_ACCEPTANCE_REPORT",
+      "LEGACY_BACKFILL_RERUN_REPORT",
+      "LEGACY_BACKFILL_TICKET_TRIAGE_REPORT",
+    ],
   },
 ];
 

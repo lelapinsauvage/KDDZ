@@ -68,6 +68,8 @@ const safeEnv: NodeJS.ProcessEnv = {
   LEGACY_PAGE_GUARD_ACCEPTANCE_REPORT: "secret-legacy-page-guard-id",
   LEGACY_ACTION_GUARD_ACCEPTANCE_REPORT: "secret-legacy-action-guard-id",
   LEGACY_BACKFILL_ACCEPTANCE_REPORT: "secret-backfill-id",
+  LEGACY_BACKFILL_RERUN_REPORT: "secret-backfill-rerun-id",
+  LEGACY_BACKFILL_TICKET_TRIAGE_REPORT: "secret-backfill-ticket-triage-id",
 };
 
 const sensitiveFragments = [
@@ -112,6 +114,8 @@ const sensitiveFragments = [
   "secret-legacy-page-guard-id",
   "secret-legacy-action-guard-id",
   "secret-backfill-id",
+  "secret-backfill-rerun-id",
+  "secret-backfill-ticket-triage-id",
 ];
 
 const requirementsText = runAudit(["--list-requirements"]);
@@ -288,6 +292,8 @@ try {
       "LEGACY_PAGE_GUARD_ACCEPTANCE_REPORT=env-file-secret-legacy-page-guard-id",
       "LEGACY_ACTION_GUARD_ACCEPTANCE_REPORT=env-file-secret-legacy-action-guard-id",
       "LEGACY_BACKFILL_ACCEPTANCE_REPORT=env-file-secret-backfill-id",
+      "LEGACY_BACKFILL_RERUN_REPORT=env-file-secret-backfill-rerun-id",
+      "LEGACY_BACKFILL_TICKET_TRIAGE_REPORT=env-file-secret-backfill-ticket-triage-id",
       "",
     ].join("\n"),
     "utf8"
@@ -357,6 +363,8 @@ try {
       "LEGACY_PAGE_GUARD_ACCEPTANCE_REPORT=non-secret-report-id",
       "LEGACY_ACTION_GUARD_ACCEPTANCE_REPORT=non-secret-report-id",
       "LEGACY_BACKFILL_ACCEPTANCE_REPORT=non-secret-report-id",
+      "LEGACY_BACKFILL_RERUN_REPORT=non-secret-report-id",
+      "LEGACY_BACKFILL_TICKET_TRIAGE_REPORT=non-secret-report-id",
       "",
     ].join("\n"),
     "utf8"

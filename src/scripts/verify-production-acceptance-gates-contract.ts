@@ -152,6 +152,8 @@ for (const evidenceEnvName of [
   "LEGACY_PAGE_GUARD_ACCEPTANCE_REPORT",
   "LEGACY_ACTION_GUARD_ACCEPTANCE_REPORT",
   "LEGACY_BACKFILL_ACCEPTANCE_REPORT",
+  "LEGACY_BACKFILL_RERUN_REPORT",
+  "LEGACY_BACKFILL_TICKET_TRIAGE_REPORT",
 ]) {
   assert.match(contents.readinessEnvExample, new RegExp(`\\b${evidenceEnvName}\\b`), `${evidenceEnvName} is missing from readiness env example`);
 }

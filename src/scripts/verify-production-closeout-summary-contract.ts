@@ -466,6 +466,8 @@ function readinessEnvFile() {
     "LEGACY_PAGE_GUARD_ACCEPTANCE_REPORT=summary-secret-legacy-page-guard-id",
     "LEGACY_ACTION_GUARD_ACCEPTANCE_REPORT=summary-secret-legacy-action-guard-id",
     "LEGACY_BACKFILL_ACCEPTANCE_REPORT=summary-secret-backfill-id",
+    "LEGACY_BACKFILL_RERUN_REPORT=summary-secret-backfill-rerun-id",
+    "LEGACY_BACKFILL_TICKET_TRIAGE_REPORT=summary-secret-backfill-ticket-triage-id",
     "",
   ].join("\n");
 }
@@ -564,6 +566,8 @@ function assertNoSensitiveOutput(output: string) {
     "summary-secret-legacy-page-guard-id",
     "summary-secret-legacy-action-guard-id",
     "summary-secret-backfill-id",
+    "summary-secret-backfill-rerun-id",
+    "summary-secret-backfill-ticket-triage-id",
   ]) {
     assert.doesNotMatch(outputWithoutDigests, new RegExp(escapeRegExp(fragment)), `${fragment} leaked in closeout summary output`);
   }
