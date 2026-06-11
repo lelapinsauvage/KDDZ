@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -111,15 +111,27 @@ try {
   const report = readFileSync(outPath, "utf8");
   assertNoSensitiveOutput(report);
   const payload = JSON.parse(report) as {
+    generatedAt?: string;
     redacted?: boolean;
     summary?: { ready?: number; needsEvidence?: number; total?: number };
     gates?: unknown[];
     providers?: unknown[];
   };
+  assertValidIsoTimestamp(payload.generatedAt, "readiness report generatedAt");
   assert.equal(payload.redacted, true);
   assert.deepEqual(payload.summary, { ready: 12, needsEvidence: 0, total: 12 });
   assert.equal(payload.gates?.length, 12);
   assert.equal(payload.providers?.length, 4);
+
+  const frozenOutPath = join(tmp, "frozen-readiness.json");
+  const frozenReportText = runAudit([
+    `--out=${frozenOutPath}`,
+    "--generated-at=2026-06-10T00:00:00.000Z",
+  ]);
+  assert.equal(frozenReportText.status, 0);
+  assertNoSensitiveOutput(frozenReportText.stdout + frozenReportText.stderr);
+  const frozenPayload = JSON.parse(readFileSync(frozenOutPath, "utf8")) as typeof payload;
+  assert.equal(frozenPayload.generatedAt, "2026-06-10T00:00:00.000Z");
 
   const providerOutPath = join(tmp, "providers.json");
   const filteredReportText = runAudit([`--out=${providerOutPath}`, "--gate=PROD-PROVIDERS"]);
@@ -236,6 +248,15 @@ assert.match(filteredMissingEvidence.stdout, /PROD-CRON/);
 assert.doesNotMatch(filteredMissingEvidence.stdout, /PROD-DUMPS/);
 assertNoSensitiveOutput(filteredMissingEvidence.stdout + filteredMissingEvidence.stderr);
 
+const invalidGeneratedAt = spawnSync("pnpm", ["tsx", script, "--generated-at=not-a-date"], {
+  cwd: process.cwd(),
+  env: safeEnv,
+  encoding: "utf8",
+});
+assert.equal(invalidGeneratedAt.status, 2);
+assert.match(invalidGeneratedAt.stderr, /--generated-at must be an ISO timestamp/);
+assertNoSensitiveOutput(invalidGeneratedAt.stdout + invalidGeneratedAt.stderr);
+
 console.log("production readiness audit contract assertions passed");
 
 function runAudit(args: string[], env: NodeJS.ProcessEnv = safeEnv): CommandResult {
@@ -269,4 +290,9 @@ function assertNoSensitiveOutput(output: string) {
 
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function assertValidIsoTimestamp(value: string | undefined, label: string) {
+  assert.ok(value, `${label} is missing`);
+  assert.equal(new Date(value).toISOString(), value, `${label} must be an ISO timestamp`);
 }

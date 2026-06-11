@@ -72,6 +72,7 @@ run("pnpm", [
   "src/scripts/audit-production-readiness.ts",
   `--env-file=${envFilePath}`,
   `--out=${outputPath}`,
+  ...optionalArg("--generated-at", generatedAt),
 ]);
 
 const readinessSummary = readReadinessSummary(outputPath);

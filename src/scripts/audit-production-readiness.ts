@@ -82,6 +82,7 @@ const evidenceGateRequirements: Array<{
 const json = process.argv.includes("--json");
 const outputPath = optionValue("--out");
 const envFilePath = optionValue("--env-file");
+const generatedAt = generatedAtValue();
 if (envFilePath) {
   loadEnvFile(envFilePath);
 }
@@ -117,7 +118,7 @@ const summary = {
   total: gateAudits.length,
 };
 const report = {
-  generatedAt: new Date().toISOString(),
+  generatedAt,
   redacted: true,
   summary,
   gates: gateAudits,
@@ -424,6 +425,22 @@ function optionValue(name: string) {
   if (index >= 0) return process.argv[index + 1] ?? null;
 
   return null;
+}
+
+function generatedAtValue() {
+  const value = optionValue("--generated-at");
+  if (!value) return new Date().toISOString();
+
+  try {
+    if (new Date(value).toISOString() === value) {
+      return value;
+    }
+  } catch {
+    // Report a stable CLI error below.
+  }
+
+  console.error("--generated-at must be an ISO timestamp, for example 2026-06-10T00:00:00.000Z");
+  process.exit(2);
 }
 
 function writeRedactedReport(path: string, report: object) {

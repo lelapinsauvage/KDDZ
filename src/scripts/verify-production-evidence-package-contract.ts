@@ -192,9 +192,9 @@ function verifySelfTestContract() {
     ]);
     const packageManifest = readJson<PackageManifest>(packageManifestPath);
     const readinessGeneratedAt = readJson<{ generatedAt?: string }>(readinessReportPath).generatedAt;
-    assertValidIsoTimestamp(readinessGeneratedAt, "readiness report generatedAt");
+    assert.equal(readinessGeneratedAt, generatedAt);
     assert.equal(packageManifest.artifacts.closeoutSummary.generatedAt, generatedAt);
-    assert.equal(packageManifest.artifacts.readinessReport.generatedAt, readinessGeneratedAt);
+    assert.equal(packageManifest.artifacts.readinessReport.generatedAt, generatedAt);
     assert.equal(packageManifest.artifacts.partialReport.generatedAt, generatedAt);
     assert.equal(packageManifest.artifacts.evidenceChecklist.generatedAt, generatedAt);
     assert.equal(packageManifest.artifacts.evidenceRecord.generatedAt, undefined);
@@ -321,11 +321,6 @@ function generatedAtFromJson(text: string) {
     }
     throw error;
   }
-}
-
-function assertValidIsoTimestamp(value: string | undefined, label: string) {
-  assert.ok(value, `${label} is missing`);
-  assert.equal(new Date(value).toISOString(), value, `${label} must be an ISO timestamp`);
 }
 
 function runVerifier(args: string[], expectSuccess = true) {
