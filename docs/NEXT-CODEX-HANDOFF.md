@@ -85,18 +85,19 @@ When modernizing native/parent APIs, compare all three:
 
 Recent commits on `legacy-parity-runbook`:
 
+- `e7bb81b chore: version evidence package manifests`
+- `29e45e9 chore: timestamp evidence package manifests`
+- `7b58b2f chore: freeze readiness evidence timestamps`
+- `69baf15 docs: refresh production handoff status`
 - `de7a99a chore: validate production artifact timestamps`
 - `b207520 chore: timestamp closeout summaries`
 - `9973efc chore: surface package artifact timestamps`
-- `5eda6bf chore: forward package release ref`
-- `14bd747 chore: align cutover generated-at examples`
-- `547442e chore: timestamp production evidence artifacts`
 
 Do not assume these are complete for the whole app. They are slices.
 
 ### Production Evidence Timestamp Hardening
 
-Commit `de7a99a` made generated production evidence artifacts reject invalid explicit `--generated-at` values before writing closeout evidence. The partial report, production evidence checklist, and closeout runner now require ISO timestamps such as `2026-06-10T00:00:00.000Z`, and their contract tests cover the invalid timestamp path.
+Commits `de7a99a`, `7b58b2f`, `29e45e9`, and `e7bb81b` tightened generated production evidence artifacts. The partial report, production evidence checklist, readiness audit, closeout runner, and evidence package manifest now use validated ISO `--generated-at` timestamps such as `2026-06-10T00:00:00.000Z`. The evidence package manifest also carries a top-level `generatedAt` and `schemaVersion: 1`, with contract coverage for saved-manifest verification.
 
 ## What Was Done Recently
 
