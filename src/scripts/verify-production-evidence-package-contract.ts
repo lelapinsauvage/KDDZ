@@ -24,6 +24,7 @@ type CloseoutSummary = {
     donePct?: number;
     leftPct?: number;
   };
+  requireZeroPartials?: boolean;
   branch?: string;
   commit?: string;
   redacted?: boolean;
@@ -37,6 +38,7 @@ type PackageManifest = {
     commit?: string;
     readinessSummary?: CloseoutSummary["readinessSummary"];
     parityTracker?: CloseoutSummary["parityTracker"];
+    requireZeroPartials?: boolean;
   };
   redacted: true;
 };
@@ -61,6 +63,10 @@ function verifyEvidencePackage(closeoutSummaryPath: string) {
   const summary = readJson<CloseoutSummary>(closeoutSummaryPath);
   assert.equal(summary.status, "production closeout verified");
   assert.equal(summary.redacted, true);
+  if (process.argv.includes("--require-zero-partials")) {
+    assert.equal(summary.requireZeroPartials, true, "production evidence package must come from a require-zero-partials closeout");
+    assert.equal(summary.parityTracker?.partial, 0, "production evidence package still has unresolved partial rows");
+  }
 
   const readinessReportPath = optionValue("--readiness-report") ?? summary.readinessReport;
   const evidenceRecordPath = optionValue("--evidence-record") ?? summary.evidenceRecord;
@@ -192,6 +198,18 @@ function verifySelfTestContract() {
     assert.equal(stale.status, 1);
     assert.match(stale.stderr, /Expected values to be strictly deep-equal/);
     assertNoSensitiveOutput(stale.stdout + stale.stderr);
+
+    const unresolvedFinal = runVerifier([
+      `--summary-report=${closeoutSummaryPath}`,
+      `--readiness-report=${readinessReportPath}`,
+      `--evidence-record=${evidenceRecordPath}`,
+      `--partial-report=${partialReportPath}`,
+      `--checklist-report=${checklistReportPath}`,
+      "--require-zero-partials",
+    ], false);
+    assert.equal(unresolvedFinal.status, 1);
+    assert.match(unresolvedFinal.stderr, /must come from a require-zero-partials closeout/);
+    assertNoSensitiveOutput(unresolvedFinal.stdout + unresolvedFinal.stderr);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
@@ -219,6 +237,7 @@ function buildManifest(params: {
       commit: params.summary.commit,
       readinessSummary: params.summary.readinessSummary,
       parityTracker: params.summary.parityTracker,
+      requireZeroPartials: params.summary.requireZeroPartials,
     },
     redacted: true,
   };
