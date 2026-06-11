@@ -63,12 +63,14 @@ function verifyEvidencePackage(closeoutSummaryPath: string) {
   const summary = readJson<CloseoutSummary>(closeoutSummaryPath);
   assert.equal(summary.status, "production closeout verified");
   assert.equal(summary.redacted, true);
+  const expectedBranch = optionValue("--branch");
+  const expectedCommit = optionValue("--commit");
   if (process.argv.includes("--require-zero-partials")) {
+    assert.ok(expectedBranch, "final production evidence package requires --branch with --require-zero-partials");
+    assert.ok(expectedCommit, "final production evidence package requires --commit with --require-zero-partials");
     assert.equal(summary.requireZeroPartials, true, "production evidence package must come from a require-zero-partials closeout");
     assert.equal(summary.parityTracker?.partial, 0, "production evidence package still has unresolved partial rows");
   }
-  const expectedBranch = optionValue("--branch");
-  const expectedCommit = optionValue("--commit");
   if (expectedBranch) {
     assert.equal(summary.branch, expectedBranch, "production evidence package branch drifted");
   }
@@ -217,8 +219,22 @@ function verifySelfTestContract() {
       "--require-zero-partials",
     ], false);
     assert.equal(unresolvedFinal.status, 1);
-    assert.match(unresolvedFinal.stderr, /must come from a require-zero-partials closeout/);
+    assert.match(unresolvedFinal.stderr, /requires --branch/);
     assertNoSensitiveOutput(unresolvedFinal.stdout + unresolvedFinal.stderr);
+
+    const unresolvedFinalWithRef = runVerifier([
+      `--summary-report=${closeoutSummaryPath}`,
+      `--readiness-report=${readinessReportPath}`,
+      `--evidence-record=${evidenceRecordPath}`,
+      `--partial-report=${partialReportPath}`,
+      `--checklist-report=${checklistReportPath}`,
+      "--branch=legacy-parity-runbook",
+      "--commit=0404c6a",
+      "--require-zero-partials",
+    ], false);
+    assert.equal(unresolvedFinalWithRef.status, 1);
+    assert.match(unresolvedFinalWithRef.stderr, /must come from a require-zero-partials closeout/);
+    assertNoSensitiveOutput(unresolvedFinalWithRef.stdout + unresolvedFinalWithRef.stderr);
 
     const wrongCommit = runVerifier([
       `--summary-report=${closeoutSummaryPath}`,

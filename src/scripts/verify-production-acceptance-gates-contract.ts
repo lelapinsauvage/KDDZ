@@ -332,6 +332,14 @@ assert.match(
 );
 assert.match(
   readFileSync("src/scripts/verify-production-evidence-package-contract.ts", "utf8"),
+  /requires --branch/
+);
+assert.match(
+  readFileSync("src/scripts/verify-production-evidence-package-contract.ts", "utf8"),
+  /requires --commit/
+);
+assert.match(
+  readFileSync("src/scripts/verify-production-evidence-package-contract.ts", "utf8"),
   /production evidence package commit drifted/
 );
 assert.match(
@@ -386,6 +394,7 @@ assert.match(contents.gates, /--manifest-out=<path>/);
 assert.match(contents.gates, /--manifest=<path>/);
 assert.match(contents.gates, /--branch=<branch>/);
 assert.match(contents.gates, /--commit=<sha>/);
+assert.match(contents.gates, /both are required with `--require-zero-partials`/);
 assert.match(contents.gates, /--manifest-out=\/tmp\/kiddzonl-production-evidence-package\.json --branch=legacy-parity-runbook --commit=<release-commit-sha>/);
 assert.match(contents.gates, /--require-zero-partials/);
 assert.match(contents.gates, /archived closeout\/partial\/checklist artifact pointers/);
