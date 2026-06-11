@@ -85,14 +85,18 @@ When modernizing native/parent APIs, compare all three:
 
 Recent commits on `legacy-parity-runbook`:
 
-- `d4d2251 chore: version closeout summaries`
-- `0cedd5b docs: refresh evidence package handoff`
-- `e7bb81b chore: version evidence package manifests`
-- `29e45e9 chore: timestamp evidence package manifests`
-- `7b58b2f chore: freeze readiness evidence timestamps`
-- `de7a99a chore: validate production artifact timestamps`
+- `663bd0e chore: prove zero partial closeout summaries`
+- `e378e55 chore: prove zero partial production closeout`
+- `93d580f chore: allow zero partial consistency artifacts`
+- `97d62d0 chore: surface closeout summaries in package manifest`
+- `b74088e chore: require zero blocking closeout artifacts`
+- `5c3ff6c docs: refresh row coverage handoff`
 
 Do not assume these are complete for the whole app. They are slices.
+
+### Zero-Partial Closeout Hardening
+
+Commits `93d580f`, `e378e55`, and `663bd0e` hardened final production closure. Artifact consistency no longer hardcodes today's 17 partial rows, and the closeout, closeout summary, and evidence package contracts now build controlled zero-partial fixtures to prove the final `--require-zero-partials` package can pass when `docs/page-parity-matrix.json` truly has no partial rows. The normal closeout path still reads `docs/page-parity-matrix.json` and `docs/partial-production-gate-map.md` by default; `--parity-matrix=<path>` and `--partial-gate-map=<path>` are documented for controlled archived evidence reproduction and contract tests only.
 
 ### Production Evidence Timestamp Hardening
 
