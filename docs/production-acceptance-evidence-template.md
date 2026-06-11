@@ -87,6 +87,7 @@ Copy this template into the production release record or ticket system after eac
 | Notifications/messages/alarms verified | yes/no |
 | Push-token registration verified | yes/no |
 | Crash/parser issues remaining | count and ticket ids |
+| Native partial row coverage reviewed | P15-P17 report id/path |
 
 ## PROD-NATURE
 

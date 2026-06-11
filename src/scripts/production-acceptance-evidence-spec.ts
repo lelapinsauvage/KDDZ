@@ -88,6 +88,7 @@ export const requiredProductionEvidenceSections: SectionSpec[] = [
       "Notifications/messages/alarms verified",
       "Push-token registration verified",
       "Crash/parser issues remaining",
+      "Native partial row coverage reviewed",
     ],
   },
   {
@@ -176,6 +177,7 @@ export const productionEvidencePlaceholderValues = [
   "yes/no",
   "yes/no/family list",
   "p01-p07/p10/p12 report id/path",
+  "p15-p17 report id/path",
   "disabled/onesignal/webhook",
   "disabled/resend/webhook",
   "disabled/webhook",

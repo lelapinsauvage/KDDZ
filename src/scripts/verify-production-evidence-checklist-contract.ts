@@ -20,7 +20,7 @@ assert.equal(payload.status, "production evidence checklist");
 assert.equal(payload.schemaVersion, 1);
 assertValidIsoTimestamp(payload.generatedAt, "evidence checklist generatedAt");
 assert.equal(payload.summary?.gates, 12);
-assert.equal(payload.summary?.requiredFields, 71);
+assert.equal(payload.summary?.requiredFields, 72);
 assert.equal(payload.summary?.blockingPartialRows, 17);
 assert.equal(payload.gates?.length, 12);
 assert.equal(payload.gates?.[0]?.gate, "PROD-DUMPS");
@@ -61,6 +61,7 @@ assert.match(markdownOutput, /Production Evidence Checklist/);
 assert.match(markdownOutput, /Generated at: \d{4}-\d{2}-\d{2}T/);
 assert.match(markdownOutput, /## PROD-NATIVE/);
 assert.match(markdownOutput, /iOS build tested against `master.php`/);
+assert.match(markdownOutput, /Native partial row coverage reviewed/);
 assert.match(markdownOutput, /P17/);
 
 const frozenOutput = execFileSync("pnpm", ["tsx", script, "--json", "--generated-at=2026-06-10T00:00:00.000Z"], {
