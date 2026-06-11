@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 
 const script = "src/scripts/report-production-partials.ts";
 
@@ -49,6 +49,13 @@ const frozenOutput = execFileSync("pnpm", ["tsx", script, "--json", "--generated
 });
 const frozenPayload = JSON.parse(frozenOutput) as typeof payload;
 assert.equal(frozenPayload.generatedAt, "2026-06-10T00:00:00.000Z");
+
+const invalidGeneratedAt = spawnSync("pnpm", ["tsx", script, "--json", "--generated-at=not-a-date"], {
+  cwd: process.cwd(),
+  encoding: "utf8",
+});
+assert.equal(invalidGeneratedAt.status, 2);
+assert.match(invalidGeneratedAt.stderr, /--generated-at must be an ISO timestamp/);
 
 console.log("production partial report contract assertions passed");
 

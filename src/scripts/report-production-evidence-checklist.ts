@@ -21,7 +21,7 @@ type ChecklistGate = {
 const json = process.argv.includes("--json");
 const outputPath = optionValue("--out");
 const selectedGate = optionValue("--gate");
-const generatedAt = optionValue("--generated-at") ?? new Date().toISOString();
+const generatedAt = generatedAtValue();
 
 const gateSections = productionGateSections();
 if (selectedGate && !gateSections.includes(selectedGate)) {
@@ -131,4 +131,20 @@ function optionValue(name: string) {
   if (index >= 0) return process.argv[index + 1] ?? null;
 
   return null;
+}
+
+function generatedAtValue() {
+  const value = optionValue("--generated-at");
+  if (!value) return new Date().toISOString();
+
+  try {
+    if (new Date(value).toISOString() === value) {
+      return value;
+    }
+  } catch {
+    // Report a stable CLI error below.
+  }
+
+  console.error("--generated-at must be an ISO timestamp, for example 2026-06-10T00:00:00.000Z");
+  process.exit(2);
 }

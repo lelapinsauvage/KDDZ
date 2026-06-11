@@ -66,6 +66,13 @@ const frozenOutput = execFileSync("pnpm", ["tsx", script, "--json", "--generated
 const frozenPayload = JSON.parse(frozenOutput) as typeof payload;
 assert.equal(frozenPayload.generatedAt, "2026-06-10T00:00:00.000Z");
 
+const invalidGeneratedAt = spawnSync("pnpm", ["tsx", script, "--json", "--generated-at=not-a-date"], {
+  cwd: process.cwd(),
+  encoding: "utf8",
+});
+assert.equal(invalidGeneratedAt.status, 2);
+assert.match(invalidGeneratedAt.stderr, /--generated-at must be an ISO timestamp/);
+
 const unknownGate = spawnSync("pnpm", ["tsx", script, "--gate=PROD-UNKNOWN"], {
   cwd: process.cwd(),
   encoding: "utf8",

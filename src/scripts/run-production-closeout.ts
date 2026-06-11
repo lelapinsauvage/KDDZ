@@ -43,7 +43,7 @@ const branch = optionValue("--branch") ?? gitOutput(["branch", "--show-current"]
 const commit = optionValue("--commit") ?? gitOutput(["rev-parse", "HEAD"]);
 const explicitBranch = optionValue("--branch");
 const explicitCommit = optionValue("--commit");
-const generatedAt = optionValue("--generated-at");
+const generatedAt = generatedAtValue();
 const summaryGeneratedAt = generatedAt ?? new Date().toISOString();
 
 if (!envFilePath || !evidenceRecordPath) {
@@ -265,6 +265,22 @@ function optionValue(name: string) {
   if (index >= 0) return process.argv[index + 1] ?? null;
 
   return null;
+}
+
+function generatedAtValue() {
+  const value = optionValue("--generated-at");
+  if (!value) return null;
+
+  try {
+    if (new Date(value).toISOString() === value) {
+      return value;
+    }
+  } catch {
+    // Report a stable CLI error below.
+  }
+
+  console.error("--generated-at must be an ISO timestamp, for example 2026-06-10T00:00:00.000Z");
+  process.exit(2);
 }
 
 function optionalArg(name: string, value: string | null) {

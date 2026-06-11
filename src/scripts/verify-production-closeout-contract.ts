@@ -216,6 +216,18 @@ try {
   assert.equal(missingFinalReleaseRef.status, 2);
   assert.match(missingFinalReleaseRef.stderr, /must include explicit --branch and --commit release refs/);
   assertNoSensitiveOutput(missingFinalReleaseRef.stdout + missingFinalReleaseRef.stderr);
+
+  const invalidGeneratedAt = runCloseout([
+    `--env-file=${envFilePath}`,
+    `--evidence-record=${evidenceRecordPath}`,
+    `--out=${readinessReportPath}`,
+    "--branch=legacy-parity-runbook",
+    "--commit=0404c6a",
+    "--generated-at=not-a-date",
+  ]);
+  assert.equal(invalidGeneratedAt.status, 2);
+  assert.match(invalidGeneratedAt.stderr, /--generated-at must be an ISO timestamp/);
+  assertNoSensitiveOutput(invalidGeneratedAt.stdout + invalidGeneratedAt.stderr);
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }
