@@ -85,18 +85,20 @@ When modernizing native/parent APIs, compare all three:
 
 Recent commits on `legacy-parity-runbook`:
 
+- `317b06e chore: verify focused production artifact manifests`
+- `df68947 chore: generate focused production artifact bundle`
+- `63db45e docs: require focused gate artifact pairs`
+- `1d33c58 chore: verify all focused production artifacts`
+- `f60d416 docs: refresh focused artifact handoff`
 - `b593e4c chore: verify focused production artifacts`
 - `60ef356 docs: guard focused partial report handoff`
 - `4440183 chore: add focused production partial reports`
-- `663bd0e chore: prove zero partial closeout summaries`
-- `e378e55 chore: prove zero partial production closeout`
-- `93d580f chore: allow zero partial consistency artifacts`
 
 Do not assume these are complete for the whole app. They are slices.
 
 ### Focused Production Partial Reports
 
-Commit `4440183` added `--gate=<gate>` filtering to `report-production-partials.ts`. Use it to generate the four non-secret row-coverage artifacts required by the remaining external gates: `--gate=PROD-CRON`, `--gate=PROD-PROVIDERS`, `--gate=PROD-NATIVE`, and `--gate=PROD-NATURE`. Commit `b593e4c` added matching `summary.gateFilter` metadata to focused evidence checklists and taught `verify-production-artifact-consistency-contract.ts` to verify a focused partial report against the focused checklist for the same gate. `verify-production-focused-artifacts-contract.ts` now proves all four focused artifact pairs can be generated from the same frozen timestamp and source docs. The full, unfiltered partial report is still the artifact used by final closeout.
+Commit `4440183` added `--gate=<gate>` filtering to `report-production-partials.ts`. Use it to generate the four non-secret row-coverage artifacts required by the remaining external gates: `--gate=PROD-CRON`, `--gate=PROD-PROVIDERS`, `--gate=PROD-NATIVE`, and `--gate=PROD-NATURE`. Commit `b593e4c` added matching `summary.gateFilter` metadata to focused evidence checklists and taught `verify-production-artifact-consistency-contract.ts` to verify a focused partial report against the focused checklist for the same gate. Commit `63db45e` made the cutover runbook require focused partial/checklist pairs and consistency verification for all four remaining focused gates. Commit `df68947` added `report-production-focused-artifacts.ts --out-dir=<dir>` to generate the whole focused artifact bundle with one frozen timestamp and a digest manifest. Commit `317b06e` added `verify-production-focused-artifacts-manifest.ts --manifest=<path>` so archived focused bundles can be hash-checked and consistency-checked later. `verify-production-focused-artifacts-contract.ts` and `verify-production-focused-artifacts-manifest-contract.ts` prove both generation and saved-manifest verification. The full, unfiltered partial report is still the artifact used by final closeout.
 
 ### Zero-Partial Closeout Hardening
 
@@ -241,6 +243,8 @@ Then work the first gate where real evidence is available:
 Final closure command sequence:
 
 ```bash
+pnpm tsx src/scripts/report-production-focused-artifacts.ts --out-dir=/tmp/kiddzonl-production-focused-artifacts --generated-at=<release-generated-at-iso>
+pnpm tsx src/scripts/verify-production-focused-artifacts-manifest.ts --manifest=/tmp/kiddzonl-production-focused-artifacts/kiddzonl-production-focused-artifacts.json
 pnpm run closeout:production -- --env-file=/secure/private-readiness.env --evidence-record=/secure/production-acceptance-evidence.md --out=/tmp/kiddzonl-production-readiness.json --summary-out=/tmp/kiddzonl-production-closeout-summary.json --partials-out=/tmp/kiddzonl-production-partials.json --checklist-out=/tmp/kiddzonl-production-evidence-checklist.json --branch=legacy-parity-runbook --commit=<release-commit-sha> --generated-at=<release-generated-at-iso> --require-zero-partials
 pnpm tsx src/scripts/verify-production-closeout-summary-contract.ts /tmp/kiddzonl-production-closeout-summary.json --readiness-report=/tmp/kiddzonl-production-readiness.json --evidence-record=/secure/production-acceptance-evidence.md --partial-report=/tmp/kiddzonl-production-partials.json --checklist-report=/tmp/kiddzonl-production-evidence-checklist.json --branch=legacy-parity-runbook --commit=<release-commit-sha> --require-zero-partials
 pnpm tsx src/scripts/verify-production-evidence-package-contract.ts --summary-report=/tmp/kiddzonl-production-closeout-summary.json --readiness-report=/tmp/kiddzonl-production-readiness.json --evidence-record=/secure/production-acceptance-evidence.md --partial-report=/tmp/kiddzonl-production-partials.json --checklist-report=/tmp/kiddzonl-production-evidence-checklist.json --manifest-out=/tmp/kiddzonl-production-evidence-package.json --branch=legacy-parity-runbook --commit=<release-commit-sha> --require-zero-partials
@@ -345,6 +349,11 @@ Current progress:
 The remaining 17 partial rows are production/external acceptance gates: PROD-CRON, PROD-NATIVE, PROD-NATURE, and PROD-PROVIDERS.
 
 Recent pushed commits:
+`317b06e chore: verify focused production artifact manifests`
+`df68947 chore: generate focused production artifact bundle`
+`63db45e docs: require focused gate artifact pairs`
+`1d33c58 chore: verify all focused production artifacts`
+`f60d416 docs: refresh focused artifact handoff`
 `a57ce71 chore: require nature partial row coverage evidence`
 `5dde0d3 chore: require native partial row coverage evidence`
 `6eb8828 chore: require cron partial row coverage evidence`
@@ -352,5 +361,5 @@ Recent pushed commits:
 `dc56542 chore: require provider channel decision evidence`
 `14707cd chore: require reconciliation triage evidence`
 
-Continue from the production/external acceptance gates. First run `pnpm tsx src/scripts/report-production-partials.ts --json`, `pnpm tsx src/scripts/report-production-evidence-checklist.ts --json`, and `pnpm run verify:production-gates`. Work the first gate with real evidence available: canonical production SQL/media import and reconciliation, hosted cron evidence with `CRON_PARTIAL_ROW_COVERAGE_REPORT`, provider delivery rollout with `PROVIDER_PARTIAL_ROW_COVERAGE_REPORT`, iOS/Android native-device acceptance with `NATIVE_PARTIAL_ROW_COVERAGE_REPORT`, production `notifications_nature` acceptance with `NOTIFICATIONS_NATURE_PARTIAL_ROW_COVERAGE_REPORT`, or print/stationery acceptance. Do not mark the goal complete until the parity matrix has zero partial rows and the closeout summary plus evidence package verifiers pass with `--require-zero-partials`.
+Continue from the production/external acceptance gates. First run `pnpm tsx src/scripts/report-production-partials.ts --json`, `pnpm tsx src/scripts/report-production-evidence-checklist.ts --json`, `pnpm tsx src/scripts/report-production-focused-artifacts.ts --out-dir=/tmp/kiddzonl-production-focused-artifacts --generated-at=<release-generated-at-iso>`, `pnpm tsx src/scripts/verify-production-focused-artifacts-manifest.ts --manifest=/tmp/kiddzonl-production-focused-artifacts/kiddzonl-production-focused-artifacts.json`, and `pnpm run verify:production-gates`. Work the first gate with real evidence available: canonical production SQL/media import and reconciliation, hosted cron evidence with `CRON_PARTIAL_ROW_COVERAGE_REPORT`, provider delivery rollout with `PROVIDER_PARTIAL_ROW_COVERAGE_REPORT`, iOS/Android native-device acceptance with `NATIVE_PARTIAL_ROW_COVERAGE_REPORT`, production `notifications_nature` acceptance with `NOTIFICATIONS_NATURE_PARTIAL_ROW_COVERAGE_REPORT`, or print/stationery acceptance. Do not mark the goal complete until the parity matrix has zero partial rows and the closeout summary plus evidence package verifiers pass with `--require-zero-partials`.
 ```

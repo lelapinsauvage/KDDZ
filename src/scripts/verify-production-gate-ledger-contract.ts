@@ -161,8 +161,19 @@ for (const marker of [
   "LEGACY_BACKFILL_ACCEPTANCE_REPORT",
   "LEGACY_BACKFILL_RERUN_REPORT",
   "LEGACY_BACKFILL_TICKET_TRIAGE_REPORT",
+  "focused artifact manifest contract",
+  "verify-production-focused-artifacts-manifest.ts --manifest=<path>",
 ]) {
   assertIncludes(docs.gates, marker, "production gates");
+}
+
+for (const marker of [
+  "317b06e chore: verify focused production artifact manifests",
+  "df68947 chore: generate focused production artifact bundle",
+  "report-production-focused-artifacts.ts --out-dir=/tmp/kiddzonl-production-focused-artifacts",
+  "verify-production-focused-artifacts-manifest.ts --manifest=/tmp/kiddzonl-production-focused-artifacts/kiddzonl-production-focused-artifacts.json",
+]) {
+  assertIncludes(docs.handoff, marker, "next handoff");
 }
 
 for (const marker of [
