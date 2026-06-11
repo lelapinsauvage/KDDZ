@@ -36,6 +36,9 @@ for (const expected of [
   "pnpm run verify:production-gates",
   "--generated-at=<release-generated-at-iso>",
   "--require-zero-partials",
+  "`de7a99a chore: validate production artifact timestamps`",
+  "Production Evidence Timestamp Hardening",
+  "reject invalid explicit `--generated-at` values",
 ]) {
   assert.ok(handoff.includes(expected), `handoff missing current marker: ${expected}`);
 }

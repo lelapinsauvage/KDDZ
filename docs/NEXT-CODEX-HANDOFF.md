@@ -85,14 +85,18 @@ When modernizing native/parent APIs, compare all three:
 
 Recent commits on `legacy-parity-runbook`:
 
+- `de7a99a chore: validate production artifact timestamps`
+- `b207520 chore: timestamp closeout summaries`
 - `9973efc chore: surface package artifact timestamps`
 - `5eda6bf chore: forward package release ref`
 - `14bd747 chore: align cutover generated-at examples`
 - `547442e chore: timestamp production evidence artifacts`
-- `18eb7ae chore: require explicit final closeout ref`
-- `b60a5fd chore: require final closeout release ref`
 
 Do not assume these are complete for the whole app. They are slices.
+
+### Production Evidence Timestamp Hardening
+
+Commit `de7a99a` made generated production evidence artifacts reject invalid explicit `--generated-at` values before writing closeout evidence. The partial report, production evidence checklist, and closeout runner now require ISO timestamps such as `2026-06-10T00:00:00.000Z`, and their contract tests cover the invalid timestamp path.
 
 ## What Was Done Recently
 
