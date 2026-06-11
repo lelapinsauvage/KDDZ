@@ -162,6 +162,7 @@ NATIVE_NOTIFICATIONS_MESSAGES_ALARMS_REPORT=<non-secret notifications/messages/a
 NATIVE_PUSH_TOKEN_ACCEPTANCE_REPORT=<non-secret push-token registration/show/delete report id/path>
 NOTIFICATIONS_NATURE_ACCEPTANCE_REPORT=<non-secret report id/path>
 NOTIFICATIONS_NATURE_GROUP_COMPARISON_REPORT=<non-secret populated parent group comparison id/path>
+PRINT_ACCOUNTING_MATRIX_ACCEPTANCE_REPORT=<non-secret accounting matrix print report id/path>
 PRINT_STATIONERY_ACCEPTANCE_REPORT=<non-secret report id/path>
 REAL_CALL_ROWS_ACCEPTANCE_REPORT=<non-secret report id/path>
 NURSERY_COMPLIANCE_ACCEPTANCE_REPORT=<non-secret report id/path>

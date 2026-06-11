@@ -88,7 +88,10 @@ const evidenceGateRequirements: Array<{
   },
   {
     gate: "PROD-PRINT",
-    env: ["PRINT_STATIONERY_ACCEPTANCE_REPORT"],
+    env: [
+      "PRINT_ACCOUNTING_MATRIX_ACCEPTANCE_REPORT",
+      "PRINT_STATIONERY_ACCEPTANCE_REPORT",
+    ],
   },
   {
     gate: "PROD-CALLS",
