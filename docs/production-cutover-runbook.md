@@ -107,6 +107,7 @@ CRON_SCHEDULE_COVERAGE_REPORT=<non-secret timezone, gid/code, daily, and 10-minu
 HOSTED_DAILY_SCHEDULE_EVIDENCE=<non-secret hosted daily schedule family list id/path>
 HOSTED_TEN_MINUTE_SCHEDULE_EVIDENCE=<non-secret hosted 10-minute schedule family list id/path>
 HOSTED_SCHEDULER_EVIDENCE=<non-secret schedule report id/path>
+CRON_PARTIAL_ROW_COVERAGE_REPORT=<non-secret P01-P07/P10/P12 cron coverage id/path>
 ```
 
 Run:

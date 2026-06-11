@@ -61,6 +61,7 @@ Copy this template into the production release record or ticket system after eac
 | Hosted daily schedules configured | yes/no/family list |
 | Hosted 10-minute schedules configured | yes/no/family list |
 | `CRON_SECRET` or `VERCEL_CRON_SECRET` configured | yes/no |
+| Cron partial row coverage reviewed | P01-P07/P10/P12 report id/path |
 
 ## PROD-PROVIDERS
 

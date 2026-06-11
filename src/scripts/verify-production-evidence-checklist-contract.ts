@@ -20,7 +20,7 @@ assert.equal(payload.status, "production evidence checklist");
 assert.equal(payload.schemaVersion, 1);
 assertValidIsoTimestamp(payload.generatedAt, "evidence checklist generatedAt");
 assert.equal(payload.summary?.gates, 12);
-assert.equal(payload.summary?.requiredFields, 70);
+assert.equal(payload.summary?.requiredFields, 71);
 assert.equal(payload.summary?.blockingPartialRows, 17);
 assert.equal(payload.gates?.length, 12);
 assert.equal(payload.gates?.[0]?.gate, "PROD-DUMPS");
@@ -48,9 +48,10 @@ const cronOutput = execFileSync("pnpm", ["tsx", script, "--json", "--gate=PROD-C
 });
 const cronPayload = JSON.parse(cronOutput) as typeof payload;
 assert.equal(cronPayload.summary?.gates, 1);
-assert.equal(cronPayload.summary?.requiredFields, 7);
+assert.equal(cronPayload.summary?.requiredFields, 8);
 assert.equal(cronPayload.summary?.blockingPartialRows, 9);
 assert.equal(cronPayload.gates?.[0]?.gate, "PROD-CRON");
+assert.ok(cronPayload.gates?.[0]?.requiredFields?.includes("Cron partial row coverage reviewed"));
 
 const markdownOutput = execFileSync("pnpm", ["tsx", script, "--gate=PROD-NATIVE"], {
   cwd: process.cwd(),

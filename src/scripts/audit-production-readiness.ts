@@ -70,6 +70,7 @@ const evidenceGateRequirements: Array<{
       "HOSTED_DAILY_SCHEDULE_EVIDENCE",
       "HOSTED_TEN_MINUTE_SCHEDULE_EVIDENCE",
       "HOSTED_SCHEDULER_EVIDENCE",
+      "CRON_PARTIAL_ROW_COVERAGE_REPORT",
     ],
   },
   {

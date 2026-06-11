@@ -62,6 +62,7 @@ export const requiredProductionEvidenceSections: SectionSpec[] = [
       "Hosted daily schedules configured",
       "Hosted 10-minute schedules configured",
       "`CRON_SECRET` or `VERCEL_CRON_SECRET` configured",
+      "Cron partial row coverage reviewed",
     ],
   },
   {
@@ -174,6 +175,7 @@ export const productionEvidencePlaceholderValues = [
   "sha256 digest",
   "yes/no",
   "yes/no/family list",
+  "p01-p07/p10/p12 report id/path",
   "disabled/onesignal/webhook",
   "disabled/resend/webhook",
   "disabled/webhook",

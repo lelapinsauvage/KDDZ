@@ -110,7 +110,7 @@ try {
     },
     evidenceChecklistSummary: {
       gates: 12,
-      requiredFields: 70,
+      requiredFields: 71,
       blockingPartialRows: 17,
     },
     artifactDigests: {
@@ -163,7 +163,7 @@ try {
   };
   assert.deepEqual(checklistPayload.summary, {
     gates: 12,
-    requiredFields: 70,
+    requiredFields: 71,
     blockingPartialRows: 17,
   });
 
@@ -272,6 +272,7 @@ function readinessEnvFile() {
     "HOSTED_DAILY_SCHEDULE_EVIDENCE=closeout-secret-hosted-daily-schedule-id",
     "HOSTED_TEN_MINUTE_SCHEDULE_EVIDENCE=closeout-secret-hosted-ten-minute-schedule-id",
     "HOSTED_SCHEDULER_EVIDENCE=closeout-secret-scheduler-id",
+    "CRON_PARTIAL_ROW_COVERAGE_REPORT=closeout-secret-cron-partial-row-coverage-id",
     "NATIVE_IOS_ACCEPTANCE_REPORT=closeout-secret-ios-id",
     "NATIVE_ANDROID_ACCEPTANCE_REPORT=closeout-secret-android-id",
     "NATIVE_LEGACY_ROUTE_ACCEPTANCE_REPORT=closeout-secret-native-route-id",
@@ -405,6 +406,7 @@ function assertNoSensitiveOutput(output: string) {
     "closeout-secret-hosted-daily-schedule-id",
     "closeout-secret-hosted-ten-minute-schedule-id",
     "closeout-secret-scheduler-id",
+    "closeout-secret-cron-partial-row-coverage-id",
     "closeout-secret-ios-id",
     "closeout-secret-android-id",
     "closeout-secret-native-route-id",
