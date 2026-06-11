@@ -70,6 +70,7 @@ const requiredReferences = [
   "src/scripts/verify-production-closeout-contract.ts",
   "src/scripts/verify-production-partial-report-contract.ts",
   "src/scripts/verify-production-evidence-checklist-contract.ts",
+  "src/scripts/verify-production-artifact-consistency-contract.ts",
   "src/scripts/verify-production-readiness-audit-contract.ts",
   "src/scripts/verify-parent-credentialed-native-e2e.ts",
   "src/scripts/verify-legacy-calls-contract.ts",
@@ -250,6 +251,7 @@ assert.match(productionGateSuite, /verify-production-acceptance-evidence-record-
 assert.match(productionGateSuite, /verify-production-closeout-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-partial-report-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-evidence-checklist-contract\.ts/);
+assert.match(productionGateSuite, /verify-production-artifact-consistency-contract\.ts/);
 assert.match(productionGateSuite, /page-parity-matrix\.json/);
 assert.match(readFileSync("src/scripts/verify-production-readiness-audit-contract.ts", "utf8"), /assertNoSensitiveOutput/);
 assert.match(
@@ -263,6 +265,10 @@ assert.match(
 assert.match(
   readFileSync("src/scripts/verify-production-partial-report-contract.ts", "utf8"),
   /Partial rows: 17/
+);
+assert.match(
+  readFileSync("src/scripts/verify-production-artifact-consistency-contract.ts", "utf8"),
+  /blocker rows drifted/
 );
 assert.match(contents.evidenceTemplate, /Redacted readiness report/);
 assert.match(contents.evidenceTemplate, /Redacted closeout summary/);
@@ -299,6 +305,7 @@ assert.match(contents.gates, /--list-requirements/);
 assert.match(contents.gates, /--gate=PROD-CRON/);
 assert.match(contents.gates, /pnpm run verify:production-gates/);
 assert.match(contents.gates, /verify-production-gate-suite\.ts/);
+assert.match(contents.gates, /verify-production-artifact-consistency-contract\.ts/);
 assert.match(contents.gates, /verify-production-readiness-audit-contract\.ts/);
 assert.match(contents.cutoverRunbook, /--out=\/tmp\/kiddzonl-production-readiness\.json/);
 assert.match(contents.cutoverRunbook, /--env-file=\/secure\/private-readiness\.env/);

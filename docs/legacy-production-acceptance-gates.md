@@ -46,6 +46,7 @@ pnpm tsx src/scripts/report-production-evidence-checklist.ts --json --out=/tmp/k
 pnpm tsx src/scripts/report-production-partials.ts --json --out=/tmp/kiddzonl-production-partials.json
 pnpm tsx src/scripts/verify-production-evidence-checklist-contract.ts
 pnpm tsx src/scripts/verify-production-partial-report-contract.ts
+pnpm tsx src/scripts/verify-production-artifact-consistency-contract.ts
 pnpm tsx src/scripts/verify-production-readiness-audit-contract.ts
 pnpm tsx src/scripts/verify-parent-credentialed-native-e2e.ts
 pnpm tsx src/scripts/verify-legacy-calls-contract.ts
@@ -53,7 +54,7 @@ pnpm tsx src/scripts/migration/reconcile-migration-counts.ts --help
 python3 -m json.tool docs/page-parity-matrix.json >/dev/null
 ```
 
-`pnpm run verify:production-gates` is the local preflight suite for the production gate control plane. It wraps `src/scripts/verify-production-gate-suite.ts`, which runs the production gate contract, readiness audit contract, `src/scripts/verify-production-acceptance-evidence-record-contract.ts`, closeout contract, partial report contract, evidence checklist contract, matrix JSON validation, and tracker assertion.
+`pnpm run verify:production-gates` is the local preflight suite for the production gate control plane. It wraps `src/scripts/verify-production-gate-suite.ts`, which runs the production gate contract, readiness audit contract, `src/scripts/verify-production-acceptance-evidence-record-contract.ts`, closeout contract, partial report contract, evidence checklist contract, artifact consistency contract, matrix JSON validation, and tracker assertion.
 
 `audit-production-readiness.ts` is redacted by design: it prints only whether evidence pointers and provider variables are present, never their values. Use `--list-requirements` to print the required evidence pointers/provider setups before credentials exist, `--env-file=<path>` to load a private env/evidence file outside the repo, and `--out=<path>` to write the same redacted JSON report into the production evidence package. It exits nonzero until all production evidence pointers are configured. Evidence pointers may be file paths or external record identifiers and are named `LEGACY_PRODUCTION_DUMP_MANIFEST`, `LEGACY_MEDIA_EXPORT_MANIFEST`, `LEGACY_MEDIA_UPLOAD_MANIFEST`, `MIGRATION_RECONCILIATION_REPORT`, `PRODUCTION_CRONTAB_EVIDENCE`, `HOSTED_SCHEDULER_EVIDENCE`, `NATIVE_IOS_ACCEPTANCE_REPORT`, `NATIVE_ANDROID_ACCEPTANCE_REPORT`, `NOTIFICATIONS_NATURE_ACCEPTANCE_REPORT`, `PRINT_STATIONERY_ACCEPTANCE_REPORT`, `REAL_CALL_ROWS_ACCEPTANCE_REPORT`, `NURSERY_COMPLIANCE_ACCEPTANCE_REPORT`, `LEGACY_ACL_ACCEPTANCE_REPORT`, and `LEGACY_BACKFILL_ACCEPTANCE_REPORT`.
 
