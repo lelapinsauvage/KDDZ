@@ -15,6 +15,22 @@ type ParityRow = {
   [key: string]: unknown;
 };
 
+type PartialReport = {
+  summary?: {
+    partialRows?: number;
+    gates?: string[];
+    gateCounts?: Record<string, number>;
+  };
+};
+
+type EvidenceChecklist = {
+  summary?: {
+    gates?: number;
+    requiredFields?: number;
+    blockingPartialRows?: number;
+  };
+};
+
 const envFilePath = optionValue("--env-file");
 const evidenceRecordPath = optionValue("--evidence-record");
 const outputPath = optionValue("--out") ?? "/tmp/kiddzonl-production-readiness.json";
@@ -74,6 +90,8 @@ if (checklistOutputPath) {
 const artifactConsistency = partialsOutputPath && checklistOutputPath
   ? verifyArtifactConsistency()
   : null;
+const partialReportSummary = partialsOutputPath ? readPartialReportSummary(partialsOutputPath) : null;
+const evidenceChecklistSummary = checklistOutputPath ? readEvidenceChecklistSummary(checklistOutputPath) : null;
 if (requireZeroPartials && parityTracker.partial !== 0) {
   console.error(`Production closeout requires zero partial parity rows; found ${parityTracker.partial}.`);
   process.exit(1);
@@ -85,6 +103,8 @@ const summary = {
   evidenceRecord: evidenceRecordPath,
   partialReport: partialsOutputPath ?? null,
   evidenceChecklist: checklistOutputPath ?? null,
+  partialReportSummary,
+  evidenceChecklistSummary,
   artifactConsistency,
   readinessSummary,
   parityTracker,
@@ -129,6 +149,24 @@ function readReadinessSummary(path: string) {
     ready: report.summary?.ready ?? null,
     needsEvidence: report.summary?.needsEvidence ?? null,
     total: report.summary?.total ?? null,
+  };
+}
+
+function readPartialReportSummary(path: string) {
+  const report = JSON.parse(readFileSync(path, "utf8")) as PartialReport;
+  return {
+    partialRows: report.summary?.partialRows ?? null,
+    gates: report.summary?.gates ?? [],
+    gateCounts: report.summary?.gateCounts ?? {},
+  };
+}
+
+function readEvidenceChecklistSummary(path: string) {
+  const report = JSON.parse(readFileSync(path, "utf8")) as EvidenceChecklist;
+  return {
+    gates: report.summary?.gates ?? null,
+    requiredFields: report.summary?.requiredFields ?? null,
+    blockingPartialRows: report.summary?.blockingPartialRows ?? null,
   };
 }
 

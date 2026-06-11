@@ -238,6 +238,8 @@ assert.match(closeoutRunner, /verify-production-artifact-consistency-contract\.t
 assert.match(closeoutRunner, /readinessSummary/);
 assert.match(closeoutRunner, /parityTracker/);
 assert.match(closeoutRunner, /evidenceChecklist/);
+assert.match(closeoutRunner, /partialReportSummary/);
+assert.match(closeoutRunner, /evidenceChecklistSummary/);
 assert.match(closeoutRunner, /artifactConsistency/);
 assert.match(closeoutRunner, /--require-zero-partials/);
 assert.match(partialReporter, /partial-production-gate-map\.md/);
@@ -288,7 +290,9 @@ assert.match(contents.gates, /--checklist-out=<path>/);
 assert.match(contents.gates, /--checklist-out=\/tmp\/kiddzonl-production-evidence-checklist\.json/);
 assert.match(contents.gates, /summary includes the redacted readiness counts/);
 assert.match(contents.gates, /partial report path/);
+assert.match(contents.gates, /partial report counts/);
 assert.match(contents.gates, /evidence checklist path/);
+assert.match(contents.gates, /evidence checklist counts/);
 assert.match(contents.gates, /artifact consistency status/);
 assert.match(contents.gates, /verify-production-artifact-consistency-contract\.ts/);
 assert.match(contents.gates, /archived closeout\/partial\/checklist artifact pointers/);

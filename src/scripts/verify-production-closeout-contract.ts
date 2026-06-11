@@ -64,6 +64,8 @@ try {
     status?: string;
     partialReport?: string | null;
     evidenceChecklist?: string | null;
+    partialReportSummary?: { partialRows?: number; gates?: string[]; gateCounts?: Record<string, number> } | null;
+    evidenceChecklistSummary?: { gates?: number; requiredFields?: number; blockingPartialRows?: number } | null;
     artifactConsistency?: { status?: string; script?: string } | null;
     readinessSummary?: { ready?: number; needsEvidence?: number; total?: number };
     parityTracker?: { total?: number; complete?: number; partial?: number; donePct?: number; leftPct?: number };
@@ -77,6 +79,21 @@ try {
     evidenceRecord: evidenceRecordPath,
     partialReport: partialReportPath,
     evidenceChecklist: checklistReportPath,
+    partialReportSummary: {
+      partialRows: 17,
+      gates: ["PROD-CRON", "PROD-NATIVE", "PROD-NATURE", "PROD-PROVIDERS"],
+      gateCounts: {
+        "PROD-CRON": 9,
+        "PROD-NATIVE": 3,
+        "PROD-NATURE": 1,
+        "PROD-PROVIDERS": 14,
+      },
+    },
+    evidenceChecklistSummary: {
+      gates: 12,
+      requiredFields: 69,
+      blockingPartialRows: 17,
+    },
     artifactConsistency: {
       status: "verified",
       script: "src/scripts/verify-production-artifact-consistency-contract.ts",
