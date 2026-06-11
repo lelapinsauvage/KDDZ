@@ -67,8 +67,10 @@ const requiredReferences = [
   "src/scripts/run-production-closeout.ts",
   "src/scripts/report-production-partials.ts",
   "src/scripts/report-production-focused-artifacts.ts",
+  "src/scripts/report-production-gate-status.ts",
   "src/scripts/verify-production-focused-artifacts-manifest.ts",
   "src/scripts/verify-production-focused-artifacts-manifest-contract.ts",
+  "src/scripts/verify-production-gate-status-contract.ts",
   "src/scripts/report-production-evidence-checklist.ts",
   "src/scripts/verify-production-gate-suite.ts",
   "src/scripts/verify-production-acceptance-evidence-record-contract.ts",
@@ -525,6 +527,7 @@ assert.match(contents.gates, /page-parity tracker counts/);
 assert.match(contents.gates, /--require-zero-partials/);
 assert.match(contents.gates, /report-production-partials\.ts/);
 assert.match(contents.gates, /report-production-focused-artifacts\.ts/);
+assert.match(contents.gates, /report-production-gate-status\.ts/);
 assert.match(contents.gates, /verify-production-focused-artifacts-manifest\.ts/);
 assert.match(contents.gates, /report-production-evidence-checklist\.ts/);
 assert.match(contents.gates, /`generatedAt` ISO timestamps/);
@@ -574,8 +577,10 @@ assert.match(contents.gates, /verify-production-gate-suite\.ts/);
 assert.match(contents.gates, /verify-production-artifact-consistency-contract\.ts/);
 assert.match(contents.gates, /verify-production-focused-artifacts-contract\.ts/);
 assert.match(contents.gates, /verify-production-focused-artifacts-manifest-contract\.ts/);
+assert.match(contents.gates, /verify-production-gate-status-contract\.ts/);
 assert.match(contents.gates, /verify-production-readiness-audit-contract\.ts/);
 assert.match(contents.cutoverRunbook, /--out=\/tmp\/kiddzonl-production-readiness\.json/);
+assert.match(contents.cutoverRunbook, /report-production-gate-status\.ts --json --out=\/tmp\/kiddzonl-production-gate-status\.json --generated-at=<release-generated-at-iso>/);
 assert.match(contents.cutoverRunbook, /--env-file=\/secure\/private-readiness\.env/);
 assert.match(contents.cutoverRunbook, /verify-production-acceptance-evidence-record\.ts \/secure\/production-acceptance-evidence\.md --readiness-report=\/tmp\/kiddzonl-production-readiness\.json --branch=legacy-parity-runbook --commit=<release-commit-sha>/);
 assert.match(contents.cutoverRunbook, /pnpm run closeout:production/);

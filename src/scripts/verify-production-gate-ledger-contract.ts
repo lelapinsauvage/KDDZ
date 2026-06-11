@@ -162,6 +162,8 @@ for (const marker of [
   "LEGACY_BACKFILL_RERUN_REPORT",
   "LEGACY_BACKFILL_TICKET_TRIAGE_REPORT",
   "focused artifact manifest contract",
+  "gate status contract",
+  "report-production-gate-status.ts",
   "verify-production-focused-artifacts-manifest.ts --manifest=<path>",
 ]) {
   assertIncludes(docs.gates, marker, "production gates");
