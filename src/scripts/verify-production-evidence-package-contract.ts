@@ -8,6 +8,7 @@ import { mkdirSync } from "node:fs";
 
 type CloseoutSummary = {
   status?: string;
+  schemaVersion?: number;
   generatedAt?: string;
   readinessReport?: string;
   evidenceRecord?: string;
@@ -66,6 +67,7 @@ console.log("production evidence package contract assertions passed");
 function verifyEvidencePackage(closeoutSummaryPath: string) {
   const summary = readJson<CloseoutSummary>(closeoutSummaryPath);
   assert.equal(summary.status, "production closeout verified");
+  assert.equal(summary.schemaVersion, 1, "production evidence package closeout summary schema version drifted");
   assert.equal(summary.redacted, true);
   const expectedBranch = optionValue("--branch");
   const expectedCommit = optionValue("--commit");

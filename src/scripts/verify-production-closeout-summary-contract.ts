@@ -18,6 +18,7 @@ type DigestRecord = {
 
 type CloseoutSummary = {
   status?: string;
+  schemaVersion?: number;
   generatedAt?: string;
   readinessReport?: string;
   evidenceRecord?: string;
@@ -89,6 +90,7 @@ function verifyCloseoutSummary(path: string) {
 
   const summary = JSON.parse(summaryText) as CloseoutSummary;
   assert.equal(summary.status, "production closeout verified");
+  assert.equal(summary.schemaVersion, 1, "production closeout summary schema version drifted");
   assertValidIsoTimestamp(summary.generatedAt, "closeout summary generatedAt");
   assert.equal(summary.redacted, true);
   assert.deepEqual(summary.readinessSummary, { ready: 12, needsEvidence: 0, total: 12 });

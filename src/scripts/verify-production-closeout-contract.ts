@@ -76,6 +76,7 @@ try {
   assertNoSensitiveOutput(closeoutSummary);
   const closeoutPayload = JSON.parse(closeoutSummary) as {
     status?: string;
+    schemaVersion?: number;
     generatedAt?: string;
     partialReport?: string | null;
     evidenceChecklist?: string | null;
@@ -91,6 +92,7 @@ try {
   };
   assert.deepEqual(closeoutPayload, {
     status: "production closeout verified",
+    schemaVersion: 1,
     generatedAt,
     readinessReport: readinessReportPath,
     evidenceRecord: evidenceRecordPath,

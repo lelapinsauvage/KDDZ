@@ -250,6 +250,7 @@ assert.match(closeoutRunner, /--partial-report/);
 assert.match(closeoutRunner, /--checklist-report/);
 assert.match(closeoutRunner, /readinessSummary/);
 assert.match(closeoutRunner, /parityTracker/);
+assert.match(closeoutRunner, /schemaVersion: 1/);
 assert.match(closeoutRunner, /generatedAt/);
 assert.match(closeoutRunner, /evidenceChecklist/);
 assert.match(closeoutRunner, /evidenceRecord/);
@@ -298,6 +299,10 @@ assert.match(
 assert.match(
   readFileSync("src/scripts/verify-production-closeout-contract.ts", "utf8"),
   /missingFinalArtifacts/
+);
+assert.match(
+  readFileSync("src/scripts/verify-production-closeout-summary-contract.ts", "utf8"),
+  /production closeout summary schema version drifted/
 );
 assert.match(
   readFileSync("src/scripts/verify-production-closeout-summary-contract.ts", "utf8"),
@@ -424,7 +429,8 @@ assert.match(contents.gates, /--partials-out=<path>/);
 assert.match(contents.gates, /--partials-out=\/tmp\/kiddzonl-production-partials\.json/);
 assert.match(contents.gates, /--checklist-out=<path>/);
 assert.match(contents.gates, /--checklist-out=\/tmp\/kiddzonl-production-evidence-checklist\.json/);
-assert.match(contents.gates, /The summary includes its own `generatedAt` ISO timestamp/);
+assert.match(contents.gates, /The summary includes `schemaVersion: 1`, its own `generatedAt` ISO timestamp/);
+assert.match(contents.gates, /`schemaVersion: 1`/);
 assert.match(contents.gates, /redacted readiness counts/);
 assert.match(contents.gates, /partial report path/);
 assert.match(contents.gates, /partial report counts/);

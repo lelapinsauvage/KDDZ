@@ -126,6 +126,7 @@ if (requireZeroPartials && parityTracker.partial !== 0) {
 
 const summary = {
   status: "production closeout verified",
+  schemaVersion: 1,
   generatedAt: summaryGeneratedAt,
   readinessReport: outputPath,
   evidenceRecord: evidenceRecordPath,
