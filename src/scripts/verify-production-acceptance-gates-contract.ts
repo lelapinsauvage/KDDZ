@@ -68,6 +68,7 @@ const requiredReferences = [
   "src/scripts/verify-production-gate-suite.ts",
   "src/scripts/verify-production-acceptance-evidence-record-contract.ts",
   "src/scripts/verify-production-closeout-contract.ts",
+  "src/scripts/verify-production-closeout-summary-contract.ts",
   "src/scripts/verify-production-partial-report-contract.ts",
   "src/scripts/verify-production-evidence-checklist-contract.ts",
   "src/scripts/verify-production-artifact-consistency-contract.ts",
@@ -259,6 +260,7 @@ assert.match(productionGateSuite, /verify-production-acceptance-gates-contract\.
 assert.match(productionGateSuite, /verify-production-readiness-audit-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-acceptance-evidence-record-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-closeout-contract\.ts/);
+assert.match(productionGateSuite, /verify-production-closeout-summary-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-partial-report-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-evidence-checklist-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-artifact-consistency-contract\.ts/);
@@ -271,6 +273,14 @@ assert.match(
 assert.match(
   readFileSync("src/scripts/verify-production-closeout-contract.ts", "utf8"),
   /requires zero partial parity rows/
+);
+assert.match(
+  readFileSync("src/scripts/verify-production-closeout-summary-contract.ts", "utf8"),
+  /partial report digest mismatch/
+);
+assert.match(
+  readFileSync("src/scripts/verify-production-closeout-summary-contract.ts", "utf8"),
+  /verify-production-artifact-consistency-contract\.ts/
 );
 assert.match(
   readFileSync("src/scripts/verify-production-partial-report-contract.ts", "utf8"),
@@ -308,7 +318,9 @@ assert.match(contents.gates, /evidence checklist counts/);
 assert.match(contents.gates, /artifact SHA-256 digests/);
 assert.match(contents.gates, /artifact consistency status/);
 assert.match(contents.gates, /verify-production-artifact-consistency-contract\.ts/);
+assert.match(contents.gates, /verify-production-closeout-summary-contract\.ts/);
 assert.match(contents.gates, /archived closeout\/partial\/checklist artifact pointers/);
+assert.match(contents.gates, /archived closeout summary against the saved artifact paths and SHA-256 digests/);
 assert.match(contents.gates, /page-parity tracker counts/);
 assert.match(contents.gates, /--require-zero-partials/);
 assert.match(contents.gates, /report-production-partials\.ts/);

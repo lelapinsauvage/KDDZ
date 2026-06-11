@@ -25,6 +25,10 @@ const checks = [
     command: ["pnpm", "tsx", "src/scripts/verify-production-closeout-contract.ts"],
   },
   {
+    label: "production closeout summary contract",
+    command: ["pnpm", "tsx", "src/scripts/verify-production-closeout-summary-contract.ts"],
+  },
+  {
     label: "production partial report contract",
     command: ["pnpm", "tsx", "src/scripts/verify-production-partial-report-contract.ts"],
   },
