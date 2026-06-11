@@ -18,6 +18,7 @@ LEGACY_PRODUCTION_DUMP_MANIFEST=<non-secret report id or local evidence file>
 LEGACY_FIRST_MIGRATION_SOURCE_REPORT=<non-secret first migration source and import timing id/path>
 PRODUCTION_CRONTAB_EVIDENCE=<non-secret report id or local evidence file>
 CRON_HELPER_DECISION_REPORT=<non-secret recovered-or-retired helper decision id/path>
+CRON_SCHEDULE_COVERAGE_REPORT=<non-secret timezone, gid/code, daily, and 10-minute coverage id/path>
 ```
 
 Preview the full evidence/provider requirement list before collecting values:
@@ -96,6 +97,7 @@ Evidence pointers to set:
 
 ```bash
 PROVIDER_DELIVERY_ACCEPTANCE_REPORT=<non-secret delivery summary id/path>
+CRON_SCHEDULE_COVERAGE_REPORT=<non-secret timezone, gid/code, daily, and 10-minute coverage id/path>
 HOSTED_SCHEDULER_EVIDENCE=<non-secret schedule report id/path>
 ```
 

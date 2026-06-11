@@ -61,6 +61,7 @@ const evidenceGateRequirements: Array<{
     env: [
       "PRODUCTION_CRONTAB_EVIDENCE",
       "CRON_HELPER_DECISION_REPORT",
+      "CRON_SCHEDULE_COVERAGE_REPORT",
       "HOSTED_SCHEDULER_EVIDENCE",
     ],
   },
