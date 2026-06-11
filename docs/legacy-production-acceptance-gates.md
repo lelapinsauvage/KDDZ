@@ -46,8 +46,8 @@ pnpm tsx src/scripts/verify-production-closeout-contract.ts
 pnpm tsx src/scripts/verify-production-closeout-summary-contract.ts
 pnpm tsx src/scripts/verify-production-evidence-package-contract.ts
 pnpm tsx src/scripts/report-production-evidence-checklist.ts --gate=PROD-CRON
-pnpm tsx src/scripts/report-production-evidence-checklist.ts --json --out=/tmp/kiddzonl-production-evidence-checklist.json
-pnpm tsx src/scripts/report-production-partials.ts --json --out=/tmp/kiddzonl-production-partials.json
+pnpm tsx src/scripts/report-production-evidence-checklist.ts --json --out=/tmp/kiddzonl-production-evidence-checklist.json --generated-at=<release-generated-at-iso>
+pnpm tsx src/scripts/report-production-partials.ts --json --out=/tmp/kiddzonl-production-partials.json --generated-at=<release-generated-at-iso>
 pnpm tsx src/scripts/verify-production-evidence-checklist-contract.ts
 pnpm tsx src/scripts/verify-production-partial-report-contract.ts
 pnpm tsx src/scripts/verify-production-artifact-consistency-contract.ts

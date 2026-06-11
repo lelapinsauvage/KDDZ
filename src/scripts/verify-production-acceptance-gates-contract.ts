@@ -451,6 +451,9 @@ assert.match(contents.cutoverRunbook, /--out=\/tmp\/kiddzonl-production-readines
 assert.match(contents.cutoverRunbook, /--env-file=\/secure\/private-readiness\.env/);
 assert.match(contents.cutoverRunbook, /verify-production-acceptance-evidence-record\.ts \/secure\/production-acceptance-evidence\.md --readiness-report=\/tmp\/kiddzonl-production-readiness\.json --branch=legacy-parity-runbook --commit=<release-commit-sha>/);
 assert.match(contents.cutoverRunbook, /pnpm run closeout:production/);
+for (const line of contents.cutoverRunbook.split(/\r?\n/).filter((entry) => entry.includes("pnpm run closeout:production"))) {
+  assert.match(line, /--generated-at=<release-generated-at-iso>/);
+}
 assert.match(contents.cutoverRunbook, /--summary-out=\/tmp\/kiddzonl-production-closeout-summary\.json/);
 assert.match(contents.cutoverRunbook, /--partials-out=\/tmp\/kiddzonl-production-partials\.json/);
 assert.match(contents.cutoverRunbook, /--checklist-out=\/tmp\/kiddzonl-production-evidence-checklist\.json/);
