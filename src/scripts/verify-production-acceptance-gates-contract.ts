@@ -64,6 +64,7 @@ const requiredReferences = [
   "src/scripts/migration/README.md",
   "src/scripts/audit-production-readiness.ts",
   "src/scripts/verify-production-acceptance-evidence-record.ts",
+  "src/scripts/render-production-acceptance-evidence-record.ts",
   "src/scripts/run-production-closeout.ts",
   "src/scripts/report-production-partials.ts",
   "src/scripts/report-production-focused-artifacts.ts",
@@ -74,6 +75,7 @@ const requiredReferences = [
   "src/scripts/report-production-evidence-checklist.ts",
   "src/scripts/verify-production-gate-suite.ts",
   "src/scripts/verify-production-acceptance-evidence-record-contract.ts",
+  "src/scripts/verify-production-acceptance-evidence-renderer-contract.ts",
   "src/scripts/verify-production-closeout-contract.ts",
   "src/scripts/verify-production-closeout-summary-contract.ts",
   "src/scripts/verify-production-evidence-package-contract.ts",
@@ -342,6 +344,7 @@ assert.match(contents.legacyFileStorageRules, /trace the full restore chain/);
 assert.match(productionGateSuite, /verify-production-acceptance-gates-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-readiness-audit-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-acceptance-evidence-record-contract\.ts/);
+assert.match(productionGateSuite, /verify-production-acceptance-evidence-renderer-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-closeout-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-closeout-summary-contract\.ts/);
 assert.match(productionGateSuite, /verify-production-evidence-package-contract\.ts/);
@@ -486,6 +489,7 @@ assert.match(contents.evidenceTemplate, /Production evidence checklist SHA-256/)
 assert.match(contents.gates, /--out=<path>/);
 assert.match(contents.gates, /--env-file=<path>/);
 assert.match(contents.gates, /verify-production-acceptance-evidence-record\.ts/);
+assert.match(contents.gates, /render-production-acceptance-evidence-record\.ts/);
 assert.match(contents.gates, /pnpm run closeout:production/);
 assert.match(contents.gates, /--summary-out=<path>/);
 assert.match(contents.gates, /--summary-out=\/tmp\/kiddzonl-production-closeout-summary\.json/);
@@ -598,6 +602,7 @@ assert.match(contents.cutoverRunbook, /verify-production-closeout-summary-contra
 assert.match(contents.cutoverRunbook, /verify-production-closeout-summary-contract\.ts .*--branch=legacy-parity-runbook --commit=<release-commit-sha> --require-zero-partials/);
 assert.match(contents.cutoverRunbook, /verify-production-evidence-package-contract\.ts/);
 assert.match(contents.cutoverRunbook, /--evidence-record=\/secure\/production-acceptance-evidence\.md/);
+assert.match(contents.cutoverRunbook, /render-production-acceptance-evidence-record\.ts --out=\/secure\/production-acceptance-evidence\.md/);
 assert.match(contents.cutoverRunbook, /--manifest-out=\/tmp\/kiddzonl-production-evidence-package\.json/);
 assert.match(contents.cutoverRunbook, /--manifest-out=\/tmp\/kiddzonl-production-evidence-package\.json --branch=legacy-parity-runbook --commit=<release-commit-sha> --require-zero-partials/);
 assert.match(contents.cutoverRunbook, /report-production-evidence-checklist\.ts --gate=PROD-CRON/);
