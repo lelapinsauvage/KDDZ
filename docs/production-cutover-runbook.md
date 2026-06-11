@@ -172,6 +172,8 @@ NURSERY_COMPLIANCE_ACCEPTANCE_REPORT=<non-secret report id/path>
 NURSERY_BRANCH_BRIDGE_ACCEPTANCE_REPORT=<non-secret nurseryinfo.php branch bridge report id/path>
 NURSERY_DOCUMENT_UPLOAD_ACCEPTANCE_REPORT=<non-secret ministry attachment upload report id/path>
 LEGACY_ACL_ACCEPTANCE_REPORT=<non-secret report id/path>
+LEGACY_PAGE_GUARD_ACCEPTANCE_REPORT=<non-secret PAGE direct URL denial report id/path>
+LEGACY_ACTION_GUARD_ACCEPTANCE_REPORT=<non-secret ACTION mutation/control guard report id/path>
 ```
 
 Stop the cutover if either native app crashes on parser-safe endpoints, if production `notifications_nature` creates missing or reordered parent groups, if print output is rejected, or if any denied production user can access a guarded page/action.

@@ -442,6 +442,8 @@ function readinessEnvFile() {
     "NURSERY_BRANCH_BRIDGE_ACCEPTANCE_REPORT=package-secret-nursery-branch-bridge-id",
     "NURSERY_DOCUMENT_UPLOAD_ACCEPTANCE_REPORT=package-secret-nursery-document-upload-id",
     "LEGACY_ACL_ACCEPTANCE_REPORT=package-secret-acl-id",
+    "LEGACY_PAGE_GUARD_ACCEPTANCE_REPORT=package-secret-legacy-page-guard-id",
+    "LEGACY_ACTION_GUARD_ACCEPTANCE_REPORT=package-secret-legacy-action-guard-id",
     "LEGACY_BACKFILL_ACCEPTANCE_REPORT=package-secret-backfill-id",
     "",
   ].join("\n");
@@ -488,6 +490,8 @@ function assertNoSensitiveOutput(output: string) {
     "package-secret-nursery-branch-bridge-id",
     "package-secret-nursery-document-upload-id",
     "package-secret-acl-id",
+    "package-secret-legacy-page-guard-id",
+    "package-secret-legacy-action-guard-id",
     "package-secret-backfill-id",
   ]) {
     assert.doesNotMatch(outputWithoutDigests, new RegExp(escapeRegExp(fragment)), `${fragment} leaked in package output`);

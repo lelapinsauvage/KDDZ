@@ -65,6 +65,8 @@ const safeEnv: NodeJS.ProcessEnv = {
   NURSERY_BRANCH_BRIDGE_ACCEPTANCE_REPORT: "secret-nursery-branch-bridge-id",
   NURSERY_DOCUMENT_UPLOAD_ACCEPTANCE_REPORT: "secret-nursery-document-upload-id",
   LEGACY_ACL_ACCEPTANCE_REPORT: "secret-acl-id",
+  LEGACY_PAGE_GUARD_ACCEPTANCE_REPORT: "secret-legacy-page-guard-id",
+  LEGACY_ACTION_GUARD_ACCEPTANCE_REPORT: "secret-legacy-action-guard-id",
   LEGACY_BACKFILL_ACCEPTANCE_REPORT: "secret-backfill-id",
 };
 
@@ -107,6 +109,8 @@ const sensitiveFragments = [
   "secret-nursery-branch-bridge-id",
   "secret-nursery-document-upload-id",
   "secret-acl-id",
+  "secret-legacy-page-guard-id",
+  "secret-legacy-action-guard-id",
   "secret-backfill-id",
 ];
 
@@ -281,6 +285,8 @@ try {
       "NURSERY_BRANCH_BRIDGE_ACCEPTANCE_REPORT=env-file-secret-nursery-branch-bridge-id",
       "NURSERY_DOCUMENT_UPLOAD_ACCEPTANCE_REPORT=env-file-secret-nursery-document-upload-id",
       "LEGACY_ACL_ACCEPTANCE_REPORT=env-file-secret-acl-id",
+      "LEGACY_PAGE_GUARD_ACCEPTANCE_REPORT=env-file-secret-legacy-page-guard-id",
+      "LEGACY_ACTION_GUARD_ACCEPTANCE_REPORT=env-file-secret-legacy-action-guard-id",
       "LEGACY_BACKFILL_ACCEPTANCE_REPORT=env-file-secret-backfill-id",
       "",
     ].join("\n"),
@@ -348,6 +354,8 @@ try {
       "NURSERY_BRANCH_BRIDGE_ACCEPTANCE_REPORT=non-secret-report-id",
       "NURSERY_DOCUMENT_UPLOAD_ACCEPTANCE_REPORT=non-secret-report-id",
       "LEGACY_ACL_ACCEPTANCE_REPORT=non-secret-report-id",
+      "LEGACY_PAGE_GUARD_ACCEPTANCE_REPORT=non-secret-report-id",
+      "LEGACY_ACTION_GUARD_ACCEPTANCE_REPORT=non-secret-report-id",
       "LEGACY_BACKFILL_ACCEPTANCE_REPORT=non-secret-report-id",
       "",
     ].join("\n"),

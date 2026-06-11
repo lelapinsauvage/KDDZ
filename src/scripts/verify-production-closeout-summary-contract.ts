@@ -463,6 +463,8 @@ function readinessEnvFile() {
     "NURSERY_BRANCH_BRIDGE_ACCEPTANCE_REPORT=summary-secret-nursery-branch-bridge-id",
     "NURSERY_DOCUMENT_UPLOAD_ACCEPTANCE_REPORT=summary-secret-nursery-document-upload-id",
     "LEGACY_ACL_ACCEPTANCE_REPORT=summary-secret-acl-id",
+    "LEGACY_PAGE_GUARD_ACCEPTANCE_REPORT=summary-secret-legacy-page-guard-id",
+    "LEGACY_ACTION_GUARD_ACCEPTANCE_REPORT=summary-secret-legacy-action-guard-id",
     "LEGACY_BACKFILL_ACCEPTANCE_REPORT=summary-secret-backfill-id",
     "",
   ].join("\n");
@@ -559,6 +561,8 @@ function assertNoSensitiveOutput(output: string) {
     "summary-secret-nursery-branch-bridge-id",
     "summary-secret-nursery-document-upload-id",
     "summary-secret-acl-id",
+    "summary-secret-legacy-page-guard-id",
+    "summary-secret-legacy-action-guard-id",
     "summary-secret-backfill-id",
   ]) {
     assert.doesNotMatch(outputWithoutDigests, new RegExp(escapeRegExp(fragment)), `${fragment} leaked in closeout summary output`);

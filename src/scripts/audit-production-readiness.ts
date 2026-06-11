@@ -112,7 +112,11 @@ const evidenceGateRequirements: Array<{
   },
   {
     gate: "PROD-ACL",
-    env: ["LEGACY_ACL_ACCEPTANCE_REPORT"],
+    env: [
+      "LEGACY_ACL_ACCEPTANCE_REPORT",
+      "LEGACY_PAGE_GUARD_ACCEPTANCE_REPORT",
+      "LEGACY_ACTION_GUARD_ACCEPTANCE_REPORT",
+    ],
   },
   {
     gate: "PROD-BACKFILL",
