@@ -23,9 +23,11 @@ Preview the full evidence/provider requirement list before collecting values:
 ```bash
 pnpm tsx src/scripts/audit-production-readiness.ts --list-requirements
 pnpm tsx src/scripts/audit-production-readiness.ts --list-requirements --gate=PROD-CRON
+pnpm tsx src/scripts/report-production-evidence-checklist.ts --gate=PROD-CRON
 pnpm tsx src/scripts/audit-production-readiness.ts --env-file=/secure/private-readiness.env --gate=PROD-CRON
 pnpm tsx src/scripts/verify-production-acceptance-evidence-record.ts /secure/production-acceptance-evidence.md --readiness-report=/tmp/kiddzonl-production-readiness.json --branch=legacy-parity-runbook --commit=<release-commit-sha>
 pnpm run closeout:production -- --env-file=/secure/private-readiness.env --evidence-record=/secure/production-acceptance-evidence.md --out=/tmp/kiddzonl-production-readiness.json --summary-out=/tmp/kiddzonl-production-closeout-summary.json --partials-out=/tmp/kiddzonl-production-partials.json --branch=legacy-parity-runbook --commit=<release-commit-sha>
+pnpm tsx src/scripts/report-production-evidence-checklist.ts --json --out=/tmp/kiddzonl-production-evidence-checklist.json
 pnpm run verify:production-gates
 pnpm tsx src/scripts/verify-production-readiness-audit-contract.ts
 ```
@@ -98,6 +100,7 @@ Run:
 pnpm tsx src/scripts/audit-production-readiness.ts --out=/tmp/kiddzonl-production-readiness.json
 pnpm tsx src/scripts/verify-production-acceptance-evidence-record.ts /secure/production-acceptance-evidence.md --readiness-report=/tmp/kiddzonl-production-readiness.json --branch=legacy-parity-runbook --commit=<release-commit-sha>
 pnpm run closeout:production -- --env-file=/secure/private-readiness.env --evidence-record=/secure/production-acceptance-evidence.md --out=/tmp/kiddzonl-production-readiness.json --summary-out=/tmp/kiddzonl-production-closeout-summary.json --partials-out=/tmp/kiddzonl-production-partials.json --branch=legacy-parity-runbook --commit=<release-commit-sha>
+pnpm tsx src/scripts/report-production-evidence-checklist.ts --json --out=/tmp/kiddzonl-production-evidence-checklist.json
 ```
 
 Stop the cutover if the readiness audit still reports missing cron/provider evidence, or if any configured provider cannot produce sent/skipped/failed audit summaries without exposing secrets.
@@ -159,6 +162,7 @@ Final command:
 
 ```bash
 pnpm run closeout:production -- --env-file=/secure/private-readiness.env --evidence-record=/secure/production-acceptance-evidence.md --out=/tmp/kiddzonl-production-readiness.json --summary-out=/tmp/kiddzonl-production-closeout-summary.json --partials-out=/tmp/kiddzonl-production-partials.json --branch=legacy-parity-runbook --commit=<release-commit-sha> --require-zero-partials
+pnpm tsx src/scripts/report-production-evidence-checklist.ts --json --out=/tmp/kiddzonl-production-evidence-checklist.json
 ```
 
 The legacy restoration goal can only be marked complete when:
@@ -169,5 +173,6 @@ The legacy restoration goal can only be marked complete when:
 - `docs/page-parity-matrix.json` has no unresolved production/external partial rows,
 - the current branch/commit is recorded in the release evidence,
 - redacted readiness and closeout summary JSON files are archived with the release evidence,
+- the production evidence checklist JSON is archived with the release evidence,
 - the final closeout command passes with `--require-zero-partials`,
 - no stop condition above remains open.

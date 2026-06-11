@@ -41,7 +41,10 @@ pnpm run closeout:production -- --env-file=/secure/private-readiness.env --evide
 pnpm run verify:production-gates
 pnpm tsx src/scripts/verify-production-acceptance-evidence-record-contract.ts
 pnpm tsx src/scripts/verify-production-closeout-contract.ts
+pnpm tsx src/scripts/report-production-evidence-checklist.ts --gate=PROD-CRON
+pnpm tsx src/scripts/report-production-evidence-checklist.ts --json --out=/tmp/kiddzonl-production-evidence-checklist.json
 pnpm tsx src/scripts/report-production-partials.ts --json --out=/tmp/kiddzonl-production-partials.json
+pnpm tsx src/scripts/verify-production-evidence-checklist-contract.ts
 pnpm tsx src/scripts/verify-production-partial-report-contract.ts
 pnpm tsx src/scripts/verify-production-readiness-audit-contract.ts
 pnpm tsx src/scripts/verify-parent-credentialed-native-e2e.ts
@@ -50,7 +53,7 @@ pnpm tsx src/scripts/migration/reconcile-migration-counts.ts --help
 python3 -m json.tool docs/page-parity-matrix.json >/dev/null
 ```
 
-`pnpm run verify:production-gates` is the local preflight suite for the production gate control plane. It wraps `src/scripts/verify-production-gate-suite.ts`, which runs the production gate contract, readiness audit contract, `src/scripts/verify-production-acceptance-evidence-record-contract.ts`, matrix JSON validation, and tracker assertion.
+`pnpm run verify:production-gates` is the local preflight suite for the production gate control plane. It wraps `src/scripts/verify-production-gate-suite.ts`, which runs the production gate contract, readiness audit contract, `src/scripts/verify-production-acceptance-evidence-record-contract.ts`, closeout contract, partial report contract, evidence checklist contract, matrix JSON validation, and tracker assertion.
 
 `audit-production-readiness.ts` is redacted by design: it prints only whether evidence pointers and provider variables are present, never their values. Use `--list-requirements` to print the required evidence pointers/provider setups before credentials exist, `--env-file=<path>` to load a private env/evidence file outside the repo, and `--out=<path>` to write the same redacted JSON report into the production evidence package. It exits nonzero until all production evidence pointers are configured. Evidence pointers may be file paths or external record identifiers and are named `LEGACY_PRODUCTION_DUMP_MANIFEST`, `LEGACY_MEDIA_EXPORT_MANIFEST`, `LEGACY_MEDIA_UPLOAD_MANIFEST`, `MIGRATION_RECONCILIATION_REPORT`, `PRODUCTION_CRONTAB_EVIDENCE`, `HOSTED_SCHEDULER_EVIDENCE`, `NATIVE_IOS_ACCEPTANCE_REPORT`, `NATIVE_ANDROID_ACCEPTANCE_REPORT`, `NOTIFICATIONS_NATURE_ACCEPTANCE_REPORT`, `PRINT_STATIONERY_ACCEPTANCE_REPORT`, `REAL_CALL_ROWS_ACCEPTANCE_REPORT`, `NURSERY_COMPLIANCE_ACCEPTANCE_REPORT`, `LEGACY_ACL_ACCEPTANCE_REPORT`, and `LEGACY_BACKFILL_ACCEPTANCE_REPORT`.
 
@@ -62,7 +65,9 @@ Use `--require-zero-partials` only for final legacy closure; it fails until `doc
 
 `report-production-partials.ts` joins `docs/page-parity-matrix.json` with `docs/partial-production-gate-map.md` and emits the remaining partial rows, blocking gate ids, and closure reasons as markdown or redacted JSON for production tracking.
 
-Use `--gate=PROD-CRON` or any other gate id to inspect one production blocker at a time; this works with normal output, `--json`, `--out=<path>`, and `--list-requirements`.
+Use `--gate=PROD-CRON` or any other gate id to inspect one production blocker at a time with the readiness audit and evidence checklist commands.
+
+`report-production-evidence-checklist.ts` emits the non-secret evidence fields required by `docs/production-acceptance-evidence-template.md` for each production gate, plus the mapped partial rows that each gate can close. Use `--gate=PROD-CRON` to focus one gate, or `--json --out=<path>` to archive the full checklist beside the readiness, closeout, and partial reports.
 
 The reconciliation command must be run with the same canonical MySQL import and target PostgreSQL database used for cutover, following `src/scripts/migration/README.md`. The `--help` command above is only a local command-shape sanity check.
 
