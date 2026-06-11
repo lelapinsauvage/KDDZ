@@ -39,7 +39,11 @@ const evidenceGateRequirements: Array<{
   },
   {
     gate: "PROD-MEDIA",
-    env: ["LEGACY_MEDIA_EXPORT_MANIFEST", "LEGACY_MEDIA_UPLOAD_MANIFEST"],
+    env: [
+      "LEGACY_MEDIA_EXPORT_MANIFEST",
+      "LEGACY_MEDIA_UPLOAD_MANIFEST",
+      "LEGACY_MEDIA_URL_APPLY_MANIFEST",
+    ],
   },
   {
     gate: "PROD-RECON",

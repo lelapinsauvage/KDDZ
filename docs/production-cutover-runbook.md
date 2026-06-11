@@ -61,6 +61,7 @@ Evidence pointers to set:
 ```bash
 LEGACY_MEDIA_EXPORT_MANIFEST=<non-secret export manifest id/path>
 LEGACY_MEDIA_UPLOAD_MANIFEST=<non-secret upload manifest id/path>
+LEGACY_MEDIA_URL_APPLY_MANIFEST=<non-secret URL apply manifest id/path>
 MIGRATION_RECONCILIATION_REPORT=<non-secret reconciliation report id/path>
 ```
 
