@@ -120,21 +120,25 @@ if (listRequirements) {
 const evidenceAudits = evidenceGateRequirements.map(auditEvidenceGate);
 const providerAudits = [auditPushProvider(), auditEmailProvider(), auditChannelProvider("SMS"), auditChannelProvider("WHATSAPP")];
 const providerDeliveryAudit = auditAnyEnv(["PROVIDER_DELIVERY_ACCEPTANCE_REPORT"]);
+const providerRolloutAudit = auditAnyEnv(["PROVIDER_CHANNEL_ROLLOUT_REPORT"]);
 const cronSecretAudit = auditAnyEnv(["CRON_SECRET", "VERCEL_CRON_SECRET"]);
 const providerGate: GateAudit = {
   gate: "PROD-PROVIDERS",
   status:
     providerAudits.every((audit) => audit.status !== "incomplete") &&
-    providerDeliveryAudit.missing.length === 0
+    providerDeliveryAudit.missing.length === 0 &&
+    providerRolloutAudit.missing.length === 0
       ? "ready-to-review"
       : "needs-evidence",
   present: [
     ...providerAudits.flatMap((audit) => audit.present.map((item) => `${audit.name}:${item}`)),
     ...providerDeliveryAudit.present.map((item) => `delivery-evidence:${item}`),
+    ...providerRolloutAudit.present.map((item) => `rollout-evidence:${item}`),
   ],
   missing: [
     ...providerAudits.flatMap((audit) => audit.missing.map((item) => `${audit.name}:${item}`)),
     ...providerDeliveryAudit.missing.map((item) => `delivery-evidence:${item}`),
+    ...providerRolloutAudit.missing.map((item) => `rollout-evidence:${item}`),
   ],
 };
 const cronGate = evidenceAudits.find((audit) => audit.gate === "PROD-CRON");
@@ -419,6 +423,11 @@ function printRequirements(params: { json: boolean; gateFilter: GateId | null })
       provider: "delivery-evidence",
       acceptedSetup:
         "PROVIDER_DELIVERY_ACCEPTANCE_REPORT pointing to a non-secret sent/skipped/failed summary and provider response-id record",
+    },
+    {
+      provider: "rollout-evidence",
+      acceptedSetup:
+        "PROVIDER_CHANNEL_ROLLOUT_REPORT pointing to a non-secret family-by-family push/email/SMS/WhatsApp rollout matrix with sent/skipped/disabled decisions",
     },
     {
       provider: "push",

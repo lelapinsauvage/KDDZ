@@ -29,6 +29,7 @@ const safeEnv: NodeJS.ProcessEnv = {
   WHATSAPP_DELIVERY_PROVIDER: "webhook",
   WHATSAPP_DELIVERY_WEBHOOK_URL: "https://example.invalid/whatsapp-secret-path",
   PROVIDER_DELIVERY_ACCEPTANCE_REPORT: "secret-provider-delivery-id",
+  PROVIDER_CHANNEL_ROLLOUT_REPORT: "secret-provider-rollout-id",
   CRON_SECRET: "cron_secret_should_not_print",
   LEGACY_PRODUCTION_DUMP_MANIFEST: "secret-dump-manifest-id",
   LEGACY_FIRST_MIGRATION_SOURCE_REPORT: "secret-first-migration-source-id",
@@ -64,6 +65,7 @@ const sensitiveFragments = [
   "secret-media-upload-id",
   "secret-media-url-apply-id",
   "secret-provider-delivery-id",
+  "secret-provider-rollout-id",
   "secret-reconciliation-id",
   "secret-reconciliation-acceptance-id",
   "secret-crontab-id",
@@ -98,7 +100,7 @@ const requirementsPayload = JSON.parse(requirementsJson.stdout) as {
 };
 assert.equal(requirementsPayload.redacted, true);
 assert.equal(requirementsPayload.evidenceRequirements?.length, 11);
-assert.equal(requirementsPayload.providerRequirements?.length, 5);
+assert.equal(requirementsPayload.providerRequirements?.length, 6);
 assertNoSensitiveOutput(requirementsJson.stdout + requirementsJson.stderr);
 
 const providerRequirements = runAudit(["--list-requirements", "--gate=PROD-PROVIDERS", "--json"]);
@@ -108,7 +110,7 @@ const providerRequirementPayload = JSON.parse(providerRequirements.stdout) as {
   providerRequirements?: unknown[];
 };
 assert.equal(providerRequirementPayload.evidenceRequirements?.length, 0);
-assert.equal(providerRequirementPayload.providerRequirements?.length, 5);
+assert.equal(providerRequirementPayload.providerRequirements?.length, 6);
 assertNoSensitiveOutput(providerRequirements.stdout + providerRequirements.stderr);
 
 const cronRequirements = runAudit(["--list-requirements", "--gate=PROD-CRON"]);
@@ -175,6 +177,7 @@ try {
     {
       ...baseEnv,
       PROVIDER_DELIVERY_ACCEPTANCE_REPORT: "disabled-provider-delivery-summary-id",
+      PROVIDER_CHANNEL_ROLLOUT_REPORT: "disabled-provider-rollout-matrix-id",
       PUSH_DELIVERY_PROVIDER: "disabled",
       EMAIL_DELIVERY_PROVIDER: "disabled",
       SMS_DELIVERY_PROVIDER: "disabled",
@@ -196,6 +199,7 @@ try {
     "sms:SMS_DELIVERY_PROVIDER=disabled",
     "whatsapp:WHATSAPP_DELIVERY_PROVIDER=disabled",
     "delivery-evidence:PROVIDER_DELIVERY_ACCEPTANCE_REPORT",
+    "rollout-evidence:PROVIDER_CHANNEL_ROLLOUT_REPORT",
   ]);
 
   const envFilePath = join(tmp, "private-readiness.env");
@@ -213,6 +217,7 @@ try {
       "WHATSAPP_DELIVERY_PROVIDER=webhook",
       "WHATSAPP_DELIVERY_WEBHOOK_URL=https://example.invalid/env-file-whatsapp-secret",
       "PROVIDER_DELIVERY_ACCEPTANCE_REPORT=env-file-secret-provider-delivery-id",
+      "PROVIDER_CHANNEL_ROLLOUT_REPORT=env-file-secret-provider-rollout-id",
       "CRON_SECRET=env_file_cron_secret_should_not_print",
       "LEGACY_PRODUCTION_DUMP_MANIFEST=env-file-secret-dump-id",
       "LEGACY_FIRST_MIGRATION_SOURCE_REPORT=env-file-secret-first-migration-source-id",
@@ -266,6 +271,7 @@ try {
       "WHATSAPP_DELIVERY_PROVIDER=webhook",
       "WHATSAPP_DELIVERY_WEBHOOK_URL=https://example.invalid/placeholder-whatsapp-secret",
       "PROVIDER_DELIVERY_ACCEPTANCE_REPORT=non-secret-report-id",
+      "PROVIDER_CHANNEL_ROLLOUT_REPORT=non-secret-report-id",
       "CRON_SECRET=placeholder_cron_secret_should_not_print",
       "LEGACY_PRODUCTION_DUMP_MANIFEST=non-secret-report-id",
       "LEGACY_FIRST_MIGRATION_SOURCE_REPORT=non-secret-report-id",
