@@ -217,6 +217,8 @@ assert.match(readinessAudit, /--out/);
 assert.match(readinessAudit, /--env-file/);
 assert.match(readinessAudit, /--list-requirements/);
 assert.match(readinessAudit, /--gate/);
+assert.match(readinessAudit, /isPlaceholderValue/);
+assert.match(contents.readinessEnvExample, /treats the sample `non-secret-report-id` value as missing evidence/);
 assert.match(evidenceRecordVerifier, /placeholder\/empty value/);
 assert.match(evidenceRecordVerifier, /raw URLs/);
 assert.match(evidenceRecordVerifier, /phone numbers/);

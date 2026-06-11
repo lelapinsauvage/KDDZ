@@ -181,6 +181,45 @@ try {
     summary?: { ready?: number; needsEvidence?: number; total?: number };
   };
   assert.deepEqual(envFilePayload.summary, { ready: 12, needsEvidence: 0, total: 12 });
+
+  const placeholderEnvFilePath = join(tmp, "placeholder-readiness.env");
+  writeFileSync(
+    placeholderEnvFilePath,
+    [
+      "PUSH_DELIVERY_PROVIDER=webhook",
+      "PUSH_DELIVERY_WEBHOOK_URL=https://example.invalid/placeholder-push-secret",
+      "EMAIL_DELIVERY_PROVIDER=resend",
+      "RESEND_API_KEY=re_placeholder_secret_should_not_print",
+      "EMAIL_FROM=noreply@example.invalid",
+      "SMS_DELIVERY_PROVIDER=webhook",
+      "SMS_DELIVERY_WEBHOOK_URL=https://example.invalid/placeholder-sms-secret",
+      "WHATSAPP_DELIVERY_PROVIDER=webhook",
+      "WHATSAPP_DELIVERY_WEBHOOK_URL=https://example.invalid/placeholder-whatsapp-secret",
+      "CRON_SECRET=placeholder_cron_secret_should_not_print",
+      "LEGACY_PRODUCTION_DUMP_MANIFEST=non-secret-report-id",
+      "LEGACY_MEDIA_EXPORT_MANIFEST=non-secret-report-id",
+      "LEGACY_MEDIA_UPLOAD_MANIFEST=non-secret-report-id",
+      "MIGRATION_RECONCILIATION_REPORT=non-secret-report-id",
+      "PRODUCTION_CRONTAB_EVIDENCE=non-secret-report-id",
+      "HOSTED_SCHEDULER_EVIDENCE=non-secret-report-id",
+      "NATIVE_IOS_ACCEPTANCE_REPORT=non-secret-report-id",
+      "NATIVE_ANDROID_ACCEPTANCE_REPORT=non-secret-report-id",
+      "NOTIFICATIONS_NATURE_ACCEPTANCE_REPORT=non-secret-report-id",
+      "PRINT_STATIONERY_ACCEPTANCE_REPORT=non-secret-report-id",
+      "REAL_CALL_ROWS_ACCEPTANCE_REPORT=non-secret-report-id",
+      "NURSERY_COMPLIANCE_ACCEPTANCE_REPORT=non-secret-report-id",
+      "LEGACY_ACL_ACCEPTANCE_REPORT=non-secret-report-id",
+      "LEGACY_BACKFILL_ACCEPTANCE_REPORT=non-secret-report-id",
+      "",
+    ].join("\n"),
+    "utf8"
+  );
+  const placeholderReport = runAudit([`--env-file=${placeholderEnvFilePath}`], baseEnv);
+  assert.equal(placeholderReport.status, 1);
+  assert.match(placeholderReport.stdout, /Needs evidence: 11\/12/);
+  assert.match(placeholderReport.stdout, /LEGACY_PRODUCTION_DUMP_MANIFEST/);
+  assert.match(placeholderReport.stdout, /NATIVE_IOS_ACCEPTANCE_REPORT/);
+  assertNoSensitiveOutput(placeholderReport.stdout + placeholderReport.stderr);
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }

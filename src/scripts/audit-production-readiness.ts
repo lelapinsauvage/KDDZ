@@ -312,7 +312,20 @@ function auditAnyEnv(envNames: string[]) {
 
 function readEnv(name: string) {
   const value = process.env[name]?.trim();
+  if (isPlaceholderValue(value)) return null;
   return value ? value : null;
+}
+
+function isPlaceholderValue(value: string | undefined) {
+  if (!value) return false;
+  return [
+    "non-secret-report-id",
+    "replace-me",
+    "replace_me",
+    "todo",
+    "tbd",
+    "changeme",
+  ].includes(value.trim().toLowerCase());
 }
 
 function evidenceLabel(envName: string, value: string) {
