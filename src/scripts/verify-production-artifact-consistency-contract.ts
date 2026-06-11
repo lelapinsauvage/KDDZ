@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 type PartialReport = {
   summary?: {
@@ -30,8 +33,15 @@ type EvidenceChecklist = {
   }>;
 };
 
-const partialReport = runJson<PartialReport>("src/scripts/report-production-partials.ts");
-const evidenceChecklist = runJson<EvidenceChecklist>("src/scripts/report-production-evidence-checklist.ts");
+const partialReportPath = optionValue("--partial-report");
+const checklistReportPath = optionValue("--checklist-report");
+
+const partialReport = partialReportPath
+  ? readJson<PartialReport>(partialReportPath)
+  : runJson<PartialReport>("src/scripts/report-production-partials.ts");
+const evidenceChecklist = checklistReportPath
+  ? readJson<EvidenceChecklist>(checklistReportPath)
+  : runJson<EvidenceChecklist>("src/scripts/report-production-evidence-checklist.ts");
 
 assert.equal(partialReport.summary?.partialRows, 17);
 assert.equal(evidenceChecklist.summary?.blockingPartialRows, partialReport.summary?.partialRows);
@@ -84,6 +94,10 @@ for (const gate of evidenceChecklist.gates ?? []) {
   }
 }
 
+if (!partialReportPath && !checklistReportPath) {
+  verifyPathModeContract();
+}
+
 console.log("production artifact consistency contract assertions passed");
 
 function runJson<T>(script: string) {
@@ -94,6 +108,67 @@ function runJson<T>(script: string) {
   return JSON.parse(output) as T;
 }
 
+function readJson<T>(path: string) {
+  return JSON.parse(readFileSync(path, "utf8")) as T;
+}
+
 function isString(value: unknown): value is string {
   return typeof value === "string";
+}
+
+function optionValue(name: string) {
+  const prefix = `${name}=`;
+  const inline = process.argv.find((arg) => arg.startsWith(prefix));
+  if (inline) return inline.slice(prefix.length);
+
+  const index = process.argv.indexOf(name);
+  if (index >= 0) return process.argv[index + 1] ?? null;
+
+  return null;
+}
+
+function verifyPathModeContract() {
+  const tmp = mkdtempSync(join(tmpdir(), "kiddzonl-artifact-consistency-"));
+  try {
+    const partialPath = join(tmp, "partials.json");
+    const checklistPath = join(tmp, "checklist.json");
+    execFileSync("pnpm", ["tsx", "src/scripts/report-production-partials.ts", "--json", `--out=${partialPath}`], {
+      cwd: process.cwd(),
+      stdio: "ignore",
+    });
+    execFileSync("pnpm", ["tsx", "src/scripts/report-production-evidence-checklist.ts", "--json", `--out=${checklistPath}`], {
+      cwd: process.cwd(),
+      stdio: "ignore",
+    });
+
+    execFileSync("pnpm", [
+      "tsx",
+      "src/scripts/verify-production-artifact-consistency-contract.ts",
+      `--partial-report=${partialPath}`,
+      `--checklist-report=${checklistPath}`,
+    ], {
+      cwd: process.cwd(),
+      stdio: "ignore",
+    });
+
+    const staleChecklist = JSON.parse(readFileSync(checklistPath, "utf8")) as EvidenceChecklist;
+    const cronGate = staleChecklist.gates?.find((gate) => gate.gate === "PROD-CRON");
+    cronGate?.blockingPartialRows?.pop();
+    const staleChecklistPath = join(tmp, "stale-checklist.json");
+    writeFileSync(staleChecklistPath, `${JSON.stringify(staleChecklist, null, 2)}\n`, "utf8");
+
+    const stale = spawnSync("pnpm", [
+      "tsx",
+      "src/scripts/verify-production-artifact-consistency-contract.ts",
+      `--partial-report=${partialPath}`,
+      `--checklist-report=${staleChecklistPath}`,
+    ], {
+      cwd: process.cwd(),
+      encoding: "utf8",
+    });
+    assert.equal(stale.status, 1);
+    assert.match(stale.stderr, /PROD-CRON blocker rows drifted/);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
 }

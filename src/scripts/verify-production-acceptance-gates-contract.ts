@@ -237,6 +237,8 @@ assert.match(closeoutRunner, /--partials-out/);
 assert.match(closeoutRunner, /--checklist-out/);
 assert.match(closeoutRunner, /report-production-evidence-checklist\.ts/);
 assert.match(closeoutRunner, /verify-production-artifact-consistency-contract\.ts/);
+assert.match(closeoutRunner, /--partial-report/);
+assert.match(closeoutRunner, /--checklist-report/);
 assert.match(closeoutRunner, /readinessSummary/);
 assert.match(closeoutRunner, /parityTracker/);
 assert.match(closeoutRunner, /evidenceChecklist/);
@@ -277,6 +279,10 @@ assert.match(
 assert.match(
   readFileSync("src/scripts/verify-production-artifact-consistency-contract.ts", "utf8"),
   /blocker rows drifted/
+);
+assert.match(
+  readFileSync("src/scripts/verify-production-artifact-consistency-contract.ts", "utf8"),
+  /readFileSync/
 );
 assert.match(contents.evidenceTemplate, /Redacted readiness report/);
 assert.match(contents.evidenceTemplate, /Redacted closeout summary/);

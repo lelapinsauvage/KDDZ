@@ -259,6 +259,8 @@ function verifyArtifactConsistency() {
   run("pnpm", [
     "tsx",
     "src/scripts/verify-production-artifact-consistency-contract.ts",
+    ...optionalArg("--partial-report", partialsOutputPath),
+    ...optionalArg("--checklist-report", checklistOutputPath),
   ]);
   return {
     status: "verified",
