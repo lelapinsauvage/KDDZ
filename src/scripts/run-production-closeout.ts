@@ -32,6 +32,12 @@ type EvidenceChecklist = {
   };
 };
 
+type ReleaseMetadata = {
+  branch?: string;
+  commit?: string;
+  acceptanceDate?: string;
+};
+
 const envFilePath = optionValue("--env-file");
 const evidenceRecordPath = optionValue("--evidence-record");
 const outputPath = optionValue("--out") ?? "/tmp/kiddzonl-production-readiness.json";
@@ -117,6 +123,7 @@ const artifactDigests = artifactDigestSummary({
   preflightManifest: preflightManifestPath,
 });
 const nestedPreflightDigests = preflightManifestPath ? preflightNestedArtifactDigestSummary(preflightManifestPath) : {};
+const preflightReleaseMetadata = preflightManifestPath ? readPreflightReleaseMetadata(preflightManifestPath) : undefined;
 if (requireZeroPartials && parityTracker.partial !== 0) {
   console.error(`Production closeout requires zero partial parity rows; found ${parityTracker.partial}.`);
   process.exit(1);
@@ -151,6 +158,7 @@ const summary = {
   partialReport: partialsOutputPath ?? null,
   evidenceChecklist: checklistOutputPath ?? null,
   preflightManifest: preflightManifestPath ?? null,
+  ...(preflightReleaseMetadata ? { preflightReleaseMetadata } : {}),
   partialReportSummary,
   evidenceChecklistSummary,
   artifactDigests: {
@@ -291,6 +299,28 @@ function preflightNestedArtifactDigestSummary(preflightManifestPath: string) {
       digest,
     },
     ...(Object.keys(readinessEnvTemplates).length > 0 ? { preflightReadinessEnvTemplates: readinessEnvTemplates } : {}),
+  };
+}
+
+function readPreflightReleaseMetadata(preflightManifestPath: string) {
+  const manifest = JSON.parse(readFileSync(preflightManifestPath, "utf8")) as {
+    releaseMetadata?: ReleaseMetadata;
+  };
+  const metadata = manifest.releaseMetadata;
+  if (!metadata) return undefined;
+  if (metadata.branch !== branch) {
+    throw new Error("Preflight release branch drifted from closeout summary.");
+  }
+  if (metadata.commit !== commit) {
+    throw new Error("Preflight release commit drifted from closeout summary.");
+  }
+  if (!metadata.acceptanceDate || !/^\d{4}-\d{2}-\d{2}$/.test(metadata.acceptanceDate)) {
+    throw new Error("Preflight release acceptanceDate must use YYYY-MM-DD.");
+  }
+  return {
+    branch: metadata.branch,
+    commit: metadata.commit,
+    acceptanceDate: metadata.acceptanceDate,
   };
 }
 

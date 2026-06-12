@@ -20,6 +20,7 @@ type CloseoutSummary = {
   partialReport?: string | null;
   evidenceChecklist?: string | null;
   preflightManifest?: string | null;
+  preflightReleaseMetadata?: ReleaseMetadata;
   readinessSummary?: {
     ready?: number;
     needsEvidence?: number;
@@ -85,6 +86,7 @@ type PackageManifest = {
   closeout: {
     branch?: string;
     commit?: string;
+    preflightReleaseMetadata?: ReleaseMetadata;
     generatedFrom?: CloseoutSummary["generatedFrom"];
     readinessSummary?: CloseoutSummary["readinessSummary"];
     partialReportSummary?: CloseoutSummary["partialReportSummary"];
@@ -358,6 +360,7 @@ function verifySelfTestContract() {
       commit: "0404c6a",
       acceptanceDate: "2026-06-10",
     });
+    assert.deepEqual(packageManifest.closeout.preflightReleaseMetadata, packageManifest.preflight.releaseMetadata);
     assert.deepEqual(packageManifest.preflight.blockingGateSummary, readPreflightBlockingGateSummary(preflightManifestPath));
     assert.deepEqual(packageManifest.preflight.closeoutPlan, artifact(closeoutPlanPath));
     assert.deepEqual(packageManifest.preflight.closeoutPlanWorkOrders, closeoutPlanWorkOrderSummary(closeoutPlanPath));
@@ -596,6 +599,7 @@ function verifySelfTestContract() {
       commit: "0404c6a",
       acceptanceDate: "2026-06-10",
     });
+    assert.deepEqual(zeroPackageManifest.closeout.preflightReleaseMetadata, zeroPackageManifest.preflight.releaseMetadata);
     assert.equal(zeroPackageManifest.preflight.blockingGateSummary?.blockingPartialRows, 0);
     assert.equal(zeroPackageManifest.preflight.blockingGateSummary?.blockingGateLinks, 0);
     assert.equal(zeroPackageManifest.preflight.blockingGateSummary?.closeoutMode, "ready-for-final-closeout");
@@ -762,6 +766,7 @@ function buildManifest(params: {
     closeout: {
       branch: params.summary.branch,
       commit: params.summary.commit,
+      preflightReleaseMetadata: params.summary.preflightReleaseMetadata,
       generatedFrom: params.summary.generatedFrom,
       readinessSummary: params.summary.readinessSummary,
       partialReportSummary: params.summary.partialReportSummary,
@@ -779,6 +784,9 @@ function preflightReleaseMetadata(preflight: PreflightManifest, summary: Closeou
   assert.equal(metadata.branch, summary.branch, "preflight release branch drifted from closeout summary");
   assert.equal(metadata.commit, summary.commit, "preflight release commit drifted from closeout summary");
   assert.match(metadata.acceptanceDate ?? "", /^\d{4}-\d{2}-\d{2}$/, "preflight release acceptanceDate must use YYYY-MM-DD");
+  if (summary.preflightReleaseMetadata) {
+    assert.deepEqual(summary.preflightReleaseMetadata, metadata, "closeout summary preflight release metadata drifted from preflight manifest");
+  }
   return {
     branch: metadata.branch,
     commit: metadata.commit,

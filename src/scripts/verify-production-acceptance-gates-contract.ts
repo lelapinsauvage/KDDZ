@@ -591,6 +591,9 @@ assert.match(contents.gates, /Package verification requires the closeout summary
 assert.match(contents.gates, /preflight `releaseMetadata`/);
 assert.match(contents.gates, /rejects preflight release branch\/commit drift from the closeout summary/);
 assert.match(contents.gates, /preflight `releaseMetadata`, `blockingGateSummary`, closeout-plan artifact hash, redacted closeout-plan work-order summary, and hash-bound readiness env template artifacts/);
+assert.match(contents.gates, /copied preflight release metadata/);
+assert.match(contents.gates, /preflight release metadata, and preflight readiness env template artifacts/);
+assert.match(contents.gates, /rejects drift in copied preflight release metadata/);
 assert.match(contents.gates, /hash-bound readiness env template artifacts/);
 assert.match(contents.gates, /redacted closeout-plan work-order summary, and hash-bound readiness env template artifacts from the archived preflight bundle/);
 assert.match(contents.gates, /nested closeout-plan artifact digest/);
