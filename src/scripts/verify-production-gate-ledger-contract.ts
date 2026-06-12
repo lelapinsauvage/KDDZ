@@ -46,7 +46,7 @@ for (const gate of Object.keys(expectedGateCounts)) {
 for (const marker of [
   "production crontab",
   "hosted scheduler",
-  "birthday, assessment, insurance, vaccination, payment, event, and holiday generation",
+  "birthday, assessment, insurance, vaccination, payment, event, holiday, medical, and contract generation",
   "contract alarm generation",
   "10-minute medication cycle",
   "external provider push/SMS/email execution",

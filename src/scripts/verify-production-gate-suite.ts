@@ -107,6 +107,10 @@ const checks = [
     command: ["pnpm", "tsx", "src/scripts/verify-legacy-invoice-receipt-contract.ts"],
   },
   {
+    label: "legacy cron surface closure contract",
+    command: ["pnpm", "tsx", "src/scripts/verify-legacy-cron-surface-closure-contract.ts"],
+  },
+  {
     label: "next Codex handoff contract",
     command: ["pnpm", "tsx", "src/scripts/verify-next-codex-handoff-contract.ts"],
   },
