@@ -346,6 +346,41 @@ try {
   };
   assert.deepEqual(envFilePayload.summary, { ready: 12, needsEvidence: 0, total: 12 });
 
+  const validMediaExportManifestPath = join(tmp, "valid-media-export.json");
+  writeFileSync(
+    validMediaExportManifestPath,
+    JSON.stringify(
+      {
+        schemaVersion: 1,
+        generatedAt: "2026-06-10T00:00:00.000Z",
+        totals: { exported: 0, found: 0, missing: 0, defaults: 0, unsafe: 0, skipped: 0 },
+        entries: [],
+      },
+      null,
+      2
+    ),
+    "utf8"
+  );
+  const validLocalManifestReport = runAudit(["--gate=PROD-MEDIA"], {
+    ...safeEnv,
+    LEGACY_MEDIA_EXPORT_MANIFEST: validMediaExportManifestPath,
+  });
+  assert.equal(validLocalManifestReport.status, 0);
+  assert.match(validLocalManifestReport.stdout, /LEGACY_MEDIA_EXPORT_MANIFEST \(file:json\)/);
+  assert.doesNotMatch(validLocalManifestReport.stdout, new RegExp(escapeRegExp(validMediaExportManifestPath)));
+  assertNoSensitiveOutput(validLocalManifestReport.stdout + validLocalManifestReport.stderr);
+
+  const invalidMediaExportManifestPath = join(tmp, "invalid-media-export.json");
+  writeFileSync(invalidMediaExportManifestPath, JSON.stringify({ generatedAt: "2026-06-10T00:00:00.000Z" }), "utf8");
+  const invalidLocalManifestReport = runAudit(["--gate=PROD-MEDIA"], {
+    ...safeEnv,
+    LEGACY_MEDIA_EXPORT_MANIFEST: invalidMediaExportManifestPath,
+  });
+  assert.equal(invalidLocalManifestReport.status, 1);
+  assert.match(invalidLocalManifestReport.stdout, /LEGACY_MEDIA_EXPORT_MANIFEST \(invalid local artifact\)/);
+  assert.doesNotMatch(invalidLocalManifestReport.stdout, new RegExp(escapeRegExp(invalidMediaExportManifestPath)));
+  assertNoSensitiveOutput(invalidLocalManifestReport.stdout + invalidLocalManifestReport.stderr);
+
   const placeholderEnvFilePath = join(tmp, "placeholder-readiness.env");
   writeFileSync(
     placeholderEnvFilePath,

@@ -29,6 +29,12 @@ type ProviderAudit = {
   missing: string[];
 };
 
+type EvidencePointerAudit = {
+  ok: boolean;
+  label: string;
+  missingLabel: string;
+};
+
 const evidenceGateRequirements: Array<{
   gate: GateId;
   env: string[];
@@ -248,7 +254,12 @@ function auditEvidenceGate(requirement: { gate: GateId; env: string[] }): GateAu
       missing.push(envName);
       continue;
     }
-    present.push(evidenceLabel(envName, value));
+    const pointer = auditEvidencePointer(envName, value);
+    if (pointer.ok) {
+      present.push(pointer.label);
+    } else {
+      missing.push(pointer.missingLabel);
+    }
   }
 
   return {
@@ -441,13 +452,87 @@ function isPlaceholderValue(value: string | undefined) {
   ].includes(value.trim().toLowerCase());
 }
 
-function evidenceLabel(envName: string, value: string) {
-  if (existsSync(value)) {
-    const stat = statSync(value);
-    return `${envName} (${stat.isDirectory() ? "directory" : "file"})`;
+function auditEvidencePointer(envName: string, value: string): EvidencePointerAudit {
+  if (!existsSync(value)) {
+    return {
+      ok: true,
+      label: `${envName} (configured)`,
+      missingLabel: envName,
+    };
   }
 
-  return `${envName} (configured)`;
+  const stat = statSync(value);
+  if (stat.isDirectory()) {
+    return {
+      ok: true,
+      label: `${envName} (directory)`,
+      missingLabel: envName,
+    };
+  }
+
+  const validation = validateLocalEvidenceArtifact(envName, value);
+  return validation.ok
+    ? {
+        ok: true,
+        label: validation.kind ? `${envName} (file:${validation.kind})` : `${envName} (file)`,
+        missingLabel: envName,
+      }
+    : {
+        ok: false,
+        label: envName,
+        missingLabel: `${envName} (invalid local artifact)`,
+      };
+}
+
+function validateLocalEvidenceArtifact(envName: string, path: string): { ok: boolean; kind?: string } {
+  if (!path.toLowerCase().endsWith(".json")) {
+    return { ok: true };
+  }
+
+  const validator = localEvidenceValidator(envName);
+  if (!validator) {
+    return { ok: true, kind: "json" };
+  }
+
+  try {
+    const payload = JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>;
+    return validator(payload) ? { ok: true, kind: "json" } : { ok: false };
+  } catch {
+    return { ok: false };
+  }
+}
+
+function localEvidenceValidator(envName: string): ((payload: Record<string, unknown>) => boolean) | undefined {
+  const validators: Record<string, (payload: Record<string, unknown>) => boolean> = {
+    LEGACY_MEDIA_AUDIT_REPORT: (payload) =>
+      typeof payload.generatedAt === "string" &&
+      isObject(payload.totals) &&
+      Array.isArray(payload.results),
+    LEGACY_MEDIA_EXPORT_MANIFEST: (payload) =>
+      payload.schemaVersion === 1 &&
+      typeof payload.generatedAt === "string" &&
+      isObject(payload.totals) &&
+      Array.isArray(payload.entries),
+    LEGACY_MEDIA_UPLOAD_MANIFEST: (payload) =>
+      payload.schemaVersion === 1 &&
+      typeof payload.generatedAt === "string" &&
+      isObject(payload.totals) &&
+      Array.isArray(payload.entries),
+    LEGACY_MEDIA_URL_APPLY_MANIFEST: (payload) =>
+      payload.schemaVersion === 1 &&
+      typeof payload.generatedAt === "string" &&
+      isObject(payload.totals) &&
+      Array.isArray(payload.entries),
+    MIGRATION_RECONCILIATION_REPORT: (payload) =>
+      typeof payload.generatedAt === "string" &&
+      isObject(payload.totals) &&
+      Array.isArray(payload.results),
+  };
+  return validators[envName];
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
 function formatList(items: string[]) {
