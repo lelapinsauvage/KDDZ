@@ -121,6 +121,8 @@ for (const marker of [
   "confirm hosted schedule enablement",
   "encrypted `Medical_form1.php?id=` generated-row bridge parity",
   "current-user teacher scoping, USER/PARENT_USER/CHILD sent-history tabs, and browser visual parity",
+  "Alarm pages, migrated/generated receipts, New/Viewed filters, row/bulk/all mark-viewed actions",
+  "Configure hosted schedules after production crontab confirmation",
 ]) {
   assert.ok(cronMatrix.includes(marker), `cron matrix missing marker: ${marker}`);
 }
@@ -128,6 +130,7 @@ for (const marker of [
 assert.doesNotMatch(cronMatrix, /remaining restoration work is future job generation/);
 assert.doesNotMatch(cronMatrix, /exact encrypted deep-link parity/);
 assert.doesNotMatch(cronMatrix, /Finish exact legacy active table\/status semantics, final visual audit/);
+assert.doesNotMatch(cronMatrix, /Add hosted schedules and preserve read-state semantics/);
 
 assert.match(
   topGaps,
