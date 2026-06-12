@@ -655,7 +655,9 @@ assert.match(contents.gates, /--commit=<release-commit-sha>/);
 assert.match(contents.gates, /--generated-at=<release-generated-at-iso>/);
 assert.match(contents.gates, /--list-requirements/);
 assert.match(contents.gates, /render-production-readiness-env-template\.ts --out=\/secure\/private-readiness\.env/);
+assert.match(contents.gates, /render-production-readiness-env-template\.ts --out=\/secure\/private-readiness\.env --include-work-orders/);
 assert.match(contents.gates, /render-production-readiness-env-template\.ts` generates a private `\.env` skeleton/);
+assert.match(contents.gates, /Add `--include-work-orders` to include redacted closeout finish conditions, focused coverage rows, and proof commands/);
 assert.match(contents.gates, /verify-production-readiness-env-template-contract\.ts/);
 assert.match(contents.gates, /--gate=PROD-CRON/);
 for (const focusedGate of ["PROD-CRON", "PROD-PROVIDERS", "PROD-NATIVE", "PROD-NATURE"]) {
@@ -703,6 +705,9 @@ assert.match(contents.gates, /`--blocking-only` to show only gates that still bl
 assert.match(contents.gates, /focused coverage artifact pointer names/);
 assert.match(contents.gates, /focused artifact consistency verification commands/);
 assert.match(contents.cutoverRunbook, /render-production-readiness-env-template\.ts --out=\/secure\/private-readiness\.env/);
+assert.match(contents.cutoverRunbook, /render-production-readiness-env-template\.ts --out=\/secure\/private-readiness\.env --include-work-orders/);
+assert.match(contents.cutoverRunbook, /render-production-readiness-env-template\.ts --gate=PROD-CRON --include-work-orders/);
+assert.match(contents.cutoverRunbook, /Add `--include-work-orders` when collecting the last external gates/);
 for (const focusedReadinessGate of ["PROD-CRON", "PROD-PROVIDERS", "PROD-NATIVE", "PROD-NATURE"]) {
   assert.match(
     contents.cutoverRunbook,

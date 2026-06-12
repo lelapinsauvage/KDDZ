@@ -28,8 +28,10 @@ Preview the full evidence/provider requirement list before collecting values:
 ```bash
 pnpm tsx src/scripts/audit-production-readiness.ts --list-requirements
 pnpm tsx src/scripts/render-production-readiness-env-template.ts --out=/secure/private-readiness.env
+pnpm tsx src/scripts/render-production-readiness-env-template.ts --out=/secure/private-readiness.env --include-work-orders
 pnpm tsx src/scripts/audit-production-readiness.ts --list-requirements --gate=PROD-CRON
 pnpm tsx src/scripts/render-production-readiness-env-template.ts --gate=PROD-CRON
+pnpm tsx src/scripts/render-production-readiness-env-template.ts --gate=PROD-CRON --include-work-orders
 pnpm tsx src/scripts/render-production-readiness-env-template.ts --gate=PROD-PROVIDERS
 pnpm tsx src/scripts/render-production-readiness-env-template.ts --gate=PROD-NATIVE
 pnpm tsx src/scripts/render-production-readiness-env-template.ts --gate=PROD-NATURE
@@ -45,7 +47,7 @@ pnpm tsx src/scripts/verify-production-readiness-env-template-contract.ts
 pnpm tsx src/scripts/verify-production-readiness-audit-contract.ts
 ```
 
-Use `render-production-readiness-env-template.ts` to create the private readiness env skeleton outside git, then fill that private file with evidence pointers in the production secret/evidence manager.
+Use `render-production-readiness-env-template.ts` to create the private readiness env skeleton outside git, then fill that private file with evidence pointers in the production secret/evidence manager. Add `--include-work-orders` when collecting the last external gates so each private env section carries the redacted closeout finish condition, focused coverage rows, and proof commands beside the variable placeholders.
 
 Stop the cutover if the authoritative dump set is ambiguous, the selected first migration dump is not approved, or cron ownership cannot decide whether commented legacy blocks remain disabled.
 

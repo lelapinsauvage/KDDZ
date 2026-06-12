@@ -18,10 +18,23 @@ type RequirementPayload = {
   providerRequirements?: ProviderRequirement[];
 };
 
+type CloseoutPlan = {
+  gates?: Array<{
+    gate?: string;
+    evidenceWorkOrder?: {
+      finishCondition?: string;
+      focusedCoverageRows?: string[];
+      proofCommands?: string[];
+    };
+  }>;
+};
+
 const outputPath = optionValue("--out");
 const gate = optionValue("--gate");
+const includeWorkOrders = process.argv.includes("--include-work-orders");
 const payload = loadRequirements(gate);
-const rendered = renderTemplate(payload, gate);
+const closeoutWorkOrders = includeWorkOrders ? loadCloseoutWorkOrders(gate) : new Map<string, NonNullable<NonNullable<CloseoutPlan["gates"]>[number]["evidenceWorkOrder"]>>();
+const rendered = renderTemplate(payload, gate, closeoutWorkOrders);
 
 if (outputPath) {
   const dir = dirname(outputPath);
@@ -52,7 +65,30 @@ function loadRequirements(gate: string | null) {
   return parsed;
 }
 
-function renderTemplate(payload: RequirementPayload, gate: string | null) {
+function loadCloseoutWorkOrders(gate: string | null) {
+  const raw = execFileSync("pnpm", [
+    "tsx",
+    "src/scripts/report-production-closeout-plan.ts",
+    "--json",
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  const plan = JSON.parse(raw) as CloseoutPlan;
+  const workOrders = new Map<string, NonNullable<NonNullable<CloseoutPlan["gates"]>[number]["evidenceWorkOrder"]>>();
+  for (const entry of plan.gates ?? []) {
+    if (!entry.gate || !entry.evidenceWorkOrder) continue;
+    if (gate && entry.gate !== gate.trim().toUpperCase()) continue;
+    workOrders.set(entry.gate, entry.evidenceWorkOrder);
+  }
+  return workOrders;
+}
+
+function renderTemplate(
+  payload: RequirementPayload,
+  gate: string | null,
+  closeoutWorkOrders: Map<string, NonNullable<NonNullable<CloseoutPlan["gates"]>[number]["evidenceWorkOrder"]>>
+) {
   const lines = [
     "# KiddzOnline production readiness private env template",
     "# Fill this file outside git, then pass it with:",
@@ -67,6 +103,7 @@ function renderTemplate(payload: RequirementPayload, gate: string | null) {
   const seen = new Set<string>();
   for (const requirement of payload.evidenceRequirements ?? []) {
     lines.push(`# ${requirement.gate}`);
+    addWorkOrderComments(lines, closeoutWorkOrders.get(requirement.gate));
     for (const pointer of requirement.requiredEvidencePointers ?? []) {
       const names = pointer.split(/\s+or\s+/i).map((name) => name.trim()).filter(Boolean);
       if (names.length > 1) {
@@ -82,6 +119,7 @@ function renderTemplate(payload: RequirementPayload, gate: string | null) {
   const providerRequirements = payload.providerRequirements ?? [];
   if (providerRequirements.length > 0) {
     lines.push("# PROD-PROVIDERS");
+    addWorkOrderComments(lines, closeoutWorkOrders.get("PROD-PROVIDERS"));
     for (const requirement of providerRequirements) {
       lines.push(`# ${requirement.provider}: ${requirement.acceptedSetup}`);
     }
@@ -97,6 +135,19 @@ function renderTemplate(payload: RequirementPayload, gate: string | null) {
   lines.push("");
 
   return `${lines.join("\n")}\n`;
+}
+
+function addWorkOrderComments(lines: string[], workOrder: NonNullable<NonNullable<CloseoutPlan["gates"]>[number]["evidenceWorkOrder"]> | undefined) {
+  if (!workOrder) return;
+  if (workOrder.finishCondition) {
+    lines.push(`# Finish condition: ${workOrder.finishCondition}`);
+  }
+  if ((workOrder.focusedCoverageRows?.length ?? 0) > 0) {
+    lines.push(`# Focused coverage rows: ${workOrder.focusedCoverageRows?.join(", ")}`);
+  }
+  for (const command of workOrder.proofCommands ?? []) {
+    lines.push(`# Proof command: ${command}`);
+  }
 }
 
 function addEnvLine(lines: string[], seen: Set<string>, name: string) {

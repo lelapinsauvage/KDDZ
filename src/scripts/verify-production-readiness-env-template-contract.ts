@@ -59,6 +59,22 @@ try {
   assert.match(cron, /VERCEL_CRON_SECRET=replace-me/);
   assert.doesNotMatch(cron, /PROVIDER_PARTIAL_ROW_COVERAGE_REPORT=replace-me/);
 
+  const cronWithWorkOrder = execFileSync("pnpm", [
+    "tsx",
+    script,
+    "--gate=PROD-CRON",
+    "--include-work-orders",
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.match(cronWithWorkOrder, /Finish condition: Set every PROD-CRON evidence pointer/);
+  assert.match(cronWithWorkOrder, /Focused coverage rows: P01, P02, P03, P04, P05, P06, P07, P10, P12/);
+  assert.match(cronWithWorkOrder, /Proof command: pnpm tsx src\/scripts\/audit-production-readiness\.ts --env-file=\/secure\/private-readiness\.env --gate=PROD-CRON/);
+  assert.match(cronWithWorkOrder, /Proof command: pnpm tsx src\/scripts\/report-production-gate-status\.ts --json --env-file=\/secure\/private-readiness\.env --gate=PROD-CRON/);
+  assert.doesNotMatch(cronWithWorkOrder, /https?:\/\//);
+  assert.doesNotMatch(cronWithWorkOrder, /secret-value|token-value|phone-number/i);
+
   const providers = execFileSync("pnpm", [
     "tsx",
     script,
@@ -100,6 +116,19 @@ try {
   assert.match(nature, /NOTIFICATIONS_NATURE_GROUP_COMPARISON_REPORT=replace-me/);
   assert.match(nature, /NOTIFICATIONS_NATURE_PARTIAL_ROW_COVERAGE_REPORT=replace-me/);
   assert.doesNotMatch(nature, /NATIVE_PARTIAL_ROW_COVERAGE_REPORT=replace-me/);
+
+  const fullWithWorkOrders = execFileSync("pnpm", [
+    "tsx",
+    script,
+    "--include-work-orders",
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.match(fullWithWorkOrders, /Finish condition: Set every PROD-CRON evidence pointer/);
+  assert.match(fullWithWorkOrders, /Finish condition: Set every PROD-PROVIDERS evidence pointer/);
+  assert.match(fullWithWorkOrders, /Finish condition: Set every PROD-NATIVE evidence pointer/);
+  assert.match(fullWithWorkOrders, /Finish condition: Set every PROD-NATURE evidence pointer/);
 
   const invalidGate = spawnSync("pnpm", [
     "tsx",
