@@ -46,6 +46,7 @@ type PreflightManifest = {
     evidenceChecklist?: ArtifactRef;
     blockingGateStatus?: ArtifactRef;
     focusedArtifactsManifest?: ArtifactRef;
+    closeoutPlan?: ArtifactRef;
   };
   blockingGateSummary?: BlockingGateSummary;
   verifiedBy?: string[];
@@ -117,6 +118,36 @@ type FocusedManifest = {
   };
 };
 
+type CloseoutPlan = {
+  status?: string;
+  generatedAt?: string;
+  generatedFrom?: {
+    matrix?: string;
+    gateMap?: string;
+    productionGates?: string;
+  };
+  summary?: {
+    gates?: number;
+    ready?: number;
+    needsEvidence?: number;
+    blockingPartialRows?: number;
+    blockingGateLinks?: number;
+    missingEvidenceItems?: number;
+    closeoutMode?: string;
+    canCloseLocally?: boolean;
+    requiredGateOrder?: string[];
+  };
+  sourceAlignment?: {
+    status?: string;
+  };
+  gates?: Array<{
+    gate?: string;
+    blockingRows?: string[];
+    focusedArtifactCommands?: string[];
+  }>;
+  finalCloseoutCommands?: string[];
+};
+
 const manifestPath = optionValue("--manifest") ?? positionalArgs()[0];
 
 if (!manifestPath || manifestPath.startsWith("-")) {
@@ -145,6 +176,7 @@ verifyArtifactRef("partial report", manifest.artifacts?.partialReport);
 verifyArtifactRef("evidence checklist", manifest.artifacts?.evidenceChecklist);
 verifyArtifactRef("blocking gate status", manifest.artifacts?.blockingGateStatus);
 verifyArtifactRef("focused artifacts manifest", manifest.artifacts?.focusedArtifactsManifest);
+verifyArtifactRef("closeout plan", manifest.artifacts?.closeoutPlan);
 
 const partialReport = readJson<PartialReport>(manifest.artifacts?.partialReport?.path ?? "");
 const evidenceChecklist = readJson<EvidenceChecklist>(manifest.artifacts?.evidenceChecklist?.path ?? "");
@@ -204,6 +236,29 @@ assert.equal(focusedManifest.generatedAt, manifest.generatedAt);
 assert.equal(focusedManifest.generatedFrom?.matrix, manifest.generatedFrom.matrix);
 assert.equal(focusedManifest.generatedFrom?.gateMap, manifest.generatedFrom.gateMap);
 assert.equal(focusedManifest.generatedFrom?.productionGates, manifest.generatedFrom.productionGates);
+
+const closeoutPlan = readJson<CloseoutPlan>(manifest.artifacts?.closeoutPlan?.path ?? "");
+assert.equal(closeoutPlan.status, "production closeout plan");
+assert.equal(closeoutPlan.generatedAt, manifest.generatedAt);
+assert.equal(closeoutPlan.generatedFrom?.matrix, manifest.generatedFrom.matrix);
+assert.equal(closeoutPlan.generatedFrom?.gateMap, manifest.generatedFrom.gateMap);
+assert.equal(closeoutPlan.generatedFrom?.productionGates, manifest.generatedFrom.productionGates);
+assert.equal(closeoutPlan.sourceAlignment?.status, "verified");
+assert.equal(closeoutPlan.summary?.gates, manifest.blockingGateSummary?.gates);
+assert.equal(closeoutPlan.summary?.ready, manifest.blockingGateSummary?.ready);
+assert.equal(closeoutPlan.summary?.needsEvidence, manifest.blockingGateSummary?.needsEvidence);
+assert.equal(closeoutPlan.summary?.blockingPartialRows, manifest.blockingGateSummary?.blockingPartialRows);
+assert.equal(closeoutPlan.summary?.blockingGateLinks, manifest.blockingGateSummary?.blockingGateLinks);
+assert.equal(closeoutPlan.summary?.missingEvidenceItems, manifest.blockingGateSummary?.missingEvidenceItems);
+assert.equal(closeoutPlan.summary?.closeoutMode, manifest.blockingGateSummary?.closeoutMode);
+assert.equal(closeoutPlan.summary?.canCloseLocally, manifest.blockingGateSummary?.canCloseLocally);
+assert.deepEqual(closeoutPlan.summary?.requiredGateOrder, ["PROD-CRON", "PROD-PROVIDERS", "PROD-NATIVE", "PROD-NATURE"]);
+assert.deepEqual(
+  Object.fromEntries((closeoutPlan.gates ?? []).map((gate) => [gate.gate, gate.blockingRows?.length ?? 0]).sort(([a], [b]) => String(a).localeCompare(String(b)))),
+  gateCounts(blockingStatus.gates ?? [])
+);
+assert.ok(closeoutPlan.finalCloseoutCommands?.some((command) => command.includes("verify-production-preflight-artifacts-manifest.ts")));
+assert.ok(closeoutPlan.finalCloseoutCommands?.some((command) => command.includes("--manifest=/tmp/kiddzonl-production-evidence-package.json")));
 
 console.log("production preflight artifacts manifest assertions passed");
 

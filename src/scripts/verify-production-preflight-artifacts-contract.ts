@@ -47,6 +47,7 @@ type PreflightManifest = {
     evidenceChecklist?: ArtifactRef;
     blockingGateStatus?: ArtifactRef;
     focusedArtifactsManifest?: ArtifactRef;
+    closeoutPlan?: ArtifactRef;
   };
   blockingGateSummary?: BlockingGateSummary;
   verifiedBy?: string[];
@@ -111,6 +112,35 @@ type FocusedManifest = {
   };
 };
 
+type CloseoutPlan = {
+  status?: string;
+  generatedAt?: string;
+  generatedFrom?: {
+    matrix?: string;
+    gateMap?: string;
+    productionGates?: string;
+  };
+  summary?: {
+    gates?: number;
+    ready?: number;
+    needsEvidence?: number;
+    blockingPartialRows?: number;
+    blockingGateLinks?: number;
+    missingEvidenceItems?: number;
+    closeoutMode?: string;
+    canCloseLocally?: boolean;
+    requiredGateOrder?: string[];
+  };
+  sourceAlignment?: {
+    status?: string;
+  };
+  gates?: Array<{
+    gate?: string;
+    blockingRows?: string[];
+  }>;
+  finalCloseoutCommands?: string[];
+};
+
 const generatedAt = "2026-06-10T00:00:00.000Z";
 const tmp = mkdtempSync(join(tmpdir(), "kiddzonl-preflight-artifacts-"));
 
@@ -149,6 +179,7 @@ try {
   verifyArtifactRef("evidence checklist", manifest.artifacts?.evidenceChecklist);
   verifyArtifactRef("blocking gate status", manifest.artifacts?.blockingGateStatus);
   verifyArtifactRef("focused artifacts manifest", manifest.artifacts?.focusedArtifactsManifest);
+  verifyArtifactRef("closeout plan", manifest.artifacts?.closeoutPlan);
 
   const partial = readJson<PartialReport>(manifest.artifacts?.partialReport?.path ?? "");
   const checklist = readJson<EvidenceChecklist>(manifest.artifacts?.evidenceChecklist?.path ?? "");
@@ -221,6 +252,24 @@ try {
   assert.equal(focused.generatedFrom?.matrix, manifest.generatedFrom?.matrix);
   assert.equal(focused.generatedFrom?.gateMap, manifest.generatedFrom?.gateMap);
   assert.equal(focused.generatedFrom?.productionGates, manifest.generatedFrom?.productionGates);
+  const closeoutPlan = readJson<CloseoutPlan>(manifest.artifacts?.closeoutPlan?.path ?? "");
+  assert.equal(closeoutPlan.status, "production closeout plan");
+  assert.equal(closeoutPlan.generatedAt, manifest.generatedAt);
+  assert.equal(closeoutPlan.generatedFrom?.matrix, manifest.generatedFrom?.matrix);
+  assert.equal(closeoutPlan.generatedFrom?.gateMap, manifest.generatedFrom?.gateMap);
+  assert.equal(closeoutPlan.generatedFrom?.productionGates, manifest.generatedFrom?.productionGates);
+  assert.equal(closeoutPlan.sourceAlignment?.status, "verified");
+  assert.equal(closeoutPlan.summary?.blockingPartialRows, manifest.blockingGateSummary?.blockingPartialRows);
+  assert.equal(closeoutPlan.summary?.blockingGateLinks, manifest.blockingGateSummary?.blockingGateLinks);
+  assert.equal(closeoutPlan.summary?.closeoutMode, manifest.blockingGateSummary?.closeoutMode);
+  assert.equal(closeoutPlan.summary?.canCloseLocally, manifest.blockingGateSummary?.canCloseLocally);
+  assert.deepEqual(closeoutPlan.summary?.requiredGateOrder, ["PROD-CRON", "PROD-PROVIDERS", "PROD-NATIVE", "PROD-NATURE"]);
+  assert.deepEqual(
+    Object.fromEntries((closeoutPlan.gates ?? []).map((gate) => [gate.gate, gate.blockingRows?.length ?? 0]).sort(([a], [b]) => String(a).localeCompare(String(b)))),
+    expectedGateCounts
+  );
+  assert.ok(closeoutPlan.finalCloseoutCommands?.some((command) => command.includes("verify-production-preflight-artifacts-manifest.ts")));
+  assert.ok(closeoutPlan.finalCloseoutCommands?.some((command) => command.includes("--manifest=/tmp/kiddzonl-production-evidence-package.json")));
 
   const missingOutDir = spawnSync("pnpm", ["tsx", "src/scripts/report-production-preflight-artifacts.ts"], {
     cwd: process.cwd(),

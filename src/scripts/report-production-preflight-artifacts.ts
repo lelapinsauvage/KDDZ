@@ -25,6 +25,7 @@ type PreflightManifest = {
     evidenceChecklist: ArtifactRef;
     blockingGateStatus: ArtifactRef;
     focusedArtifactsManifest: ArtifactRef;
+    closeoutPlan: ArtifactRef;
   };
   blockingGateSummary: BlockingGateSummary;
   verifiedBy: string[];
@@ -97,6 +98,7 @@ mkdirSync(outputDir, { recursive: true });
 const partialReportPath = join(outputDir, "kiddzonl-production-partials.json");
 const evidenceChecklistPath = join(outputDir, "kiddzonl-production-evidence-checklist.json");
 const blockingGateStatusPath = join(outputDir, "kiddzonl-production-blocking-gate-status.json");
+const closeoutPlanPath = join(outputDir, "kiddzonl-production-closeout-plan.json");
 const focusedArtifactsDir = join(outputDir, "focused");
 const focusedManifestPath = join(focusedArtifactsDir, "kiddzonl-production-focused-artifacts.json");
 
@@ -119,6 +121,14 @@ run("src/scripts/report-production-gate-status.ts", [
   "--json",
   "--blocking-only",
   `--out=${blockingGateStatusPath}`,
+  `--generated-at=${generatedAt}`,
+  `--parity-matrix=${parityMatrixPath}`,
+  `--partial-gate-map=${partialGateMapPath}`,
+  `--production-gates=${productionGatesPath}`,
+]);
+run("src/scripts/report-production-closeout-plan.ts", [
+  "--json",
+  `--out=${closeoutPlanPath}`,
   `--generated-at=${generatedAt}`,
   `--parity-matrix=${parityMatrixPath}`,
   `--partial-gate-map=${partialGateMapPath}`,
@@ -157,6 +167,7 @@ const manifest: PreflightManifest = {
     evidenceChecklist: artifact(evidenceChecklistPath),
     blockingGateStatus: artifact(blockingGateStatusPath),
     focusedArtifactsManifest: artifact(focusedManifestPath),
+    closeoutPlan: artifact(closeoutPlanPath),
   },
   blockingGateSummary,
   verifiedBy: [
