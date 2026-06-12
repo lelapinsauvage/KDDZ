@@ -24,6 +24,25 @@ const expectedGateCounts = gateCounts(rows);
 assert.equal(payload.summary?.partialRows, rows.length);
 assert.deepEqual(payload.summary?.gates, Object.keys(expectedGateCounts));
 assert.deepEqual(payload.summary?.gateCounts, expectedGateCounts);
+assert.deepEqual(rowsForGate("PROD-CRON"), ["P01", "P02", "P03", "P04", "P05", "P06", "P07", "P10", "P12"]);
+assert.deepEqual(rowsForGate("PROD-PROVIDERS"), [
+  "P01",
+  "P02",
+  "P03",
+  "P05",
+  "P06",
+  "P07",
+  "P08",
+  "P09",
+  "P11",
+  "P12",
+  "P13",
+  "P14",
+  "P15",
+  "P17",
+]);
+assert.deepEqual(rowsForGate("PROD-NATIVE"), ["P15", "P16", "P17"]);
+assert.deepEqual(rowsForGate("PROD-NATURE"), ["P17"]);
 assert.ok(rows.length > 0, "live production partial report should currently list unresolved rows");
 assert.equal(payload.rows?.[0]?.row, "P01");
 assert.equal(payload.rows?.at(-1)?.row, `P${String(rows.length).padStart(2, "0")}`);
@@ -108,6 +127,13 @@ function gateCounts(rows: Array<{ gates?: string[] }>) {
     }
   }
   return Object.fromEntries(Object.entries(counts).sort(([a], [b]) => a.localeCompare(b)));
+}
+
+function rowsForGate(gate: string) {
+  return rows
+    .filter((row) => row.gates?.includes(gate))
+    .map((row) => row.row)
+    .filter((row): row is string => typeof row === "string");
 }
 
 function escapeRegExp(value: string) {
