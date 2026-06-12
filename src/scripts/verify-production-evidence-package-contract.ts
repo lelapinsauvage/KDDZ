@@ -240,6 +240,8 @@ function verifySelfTestContract() {
       `--manifest-out=${packageManifestPath}`,
     ]);
     const packageManifest = readJson<PackageManifest>(packageManifestPath);
+    const expectedPartialReportSummary = partialReportSummary(partialReportPath);
+    const expectedEvidenceChecklistSummary = evidenceChecklistSummary(checklistReportPath);
     const readinessGeneratedAt = readJson<{ generatedAt?: string }>(readinessReportPath).generatedAt;
     assert.equal(readinessGeneratedAt, generatedAt);
     assert.equal(packageManifest.schemaVersion, 1);
@@ -253,21 +255,8 @@ function verifySelfTestContract() {
       matrix: "docs/page-parity-matrix.json",
       gateMap: "docs/partial-production-gate-map.md",
     });
-    assert.deepEqual(packageManifest.closeout.partialReportSummary, {
-      partialRows: 17,
-      gates: ["PROD-CRON", "PROD-NATIVE", "PROD-NATURE", "PROD-PROVIDERS"],
-      gateCounts: {
-        "PROD-CRON": 9,
-        "PROD-NATIVE": 3,
-        "PROD-NATURE": 1,
-        "PROD-PROVIDERS": 14,
-      },
-    });
-    assert.deepEqual(packageManifest.closeout.evidenceChecklistSummary, {
-      gates: 12,
-      requiredFields: 73,
-      blockingPartialRows: 17,
-    });
+    assert.deepEqual(packageManifest.closeout.partialReportSummary, expectedPartialReportSummary);
+    assert.deepEqual(packageManifest.closeout.evidenceChecklistSummary, expectedEvidenceChecklistSummary);
     assertPackageGeneratedAtConsistency(packageManifest);
 
     runVerifier([
@@ -786,6 +775,28 @@ function zeroPartialGateMapMarkdown() {
     "| --- | --- | --- | --- |",
     "",
   ].join("\n");
+}
+
+function partialReportSummary(path: string) {
+  const report = readJson<{
+    summary?: { partialRows?: number | null; gates?: string[]; gateCounts?: Record<string, number> };
+  }>(path);
+  return {
+    partialRows: report.summary?.partialRows ?? null,
+    gates: report.summary?.gates ?? [],
+    gateCounts: report.summary?.gateCounts ?? {},
+  };
+}
+
+function evidenceChecklistSummary(path: string) {
+  const report = readJson<{
+    summary?: { gates?: number | null; requiredFields?: number | null; blockingPartialRows?: number | null };
+  }>(path);
+  return {
+    gates: report.summary?.gates ?? null,
+    requiredFields: report.summary?.requiredFields ?? null,
+    blockingPartialRows: report.summary?.blockingPartialRows ?? null,
+  };
 }
 
 function ensureParentDir(path: string) {

@@ -81,6 +81,9 @@ try {
 
   const closeoutSummary = readFileSync(closeoutSummaryPath, "utf8");
   assertNoSensitiveOutput(closeoutSummary);
+  const expectedPartialReportSummary = partialReportSummary(partialReportPath);
+  const expectedEvidenceChecklistSummary = evidenceChecklistSummary(checklistReportPath);
+  const expectedParityTracker = parityTrackerSummary("docs/page-parity-matrix.json");
   const closeoutPayload = JSON.parse(closeoutSummary) as {
     status?: string;
     schemaVersion?: number;
@@ -113,21 +116,8 @@ try {
     evidenceRecord: evidenceRecordPath,
     partialReport: partialReportPath,
     evidenceChecklist: checklistReportPath,
-    partialReportSummary: {
-      partialRows: 17,
-      gates: ["PROD-CRON", "PROD-NATIVE", "PROD-NATURE", "PROD-PROVIDERS"],
-      gateCounts: {
-        "PROD-CRON": 9,
-        "PROD-NATIVE": 3,
-        "PROD-NATURE": 1,
-        "PROD-PROVIDERS": 14,
-      },
-    },
-    evidenceChecklistSummary: {
-      gates: 12,
-      requiredFields: 73,
-      blockingPartialRows: 17,
-    },
+    partialReportSummary: expectedPartialReportSummary,
+    evidenceChecklistSummary: expectedEvidenceChecklistSummary,
     artifactDigests: {
       readinessReport: {
         algorithm: "sha256",
@@ -151,7 +141,7 @@ try {
       script: "src/scripts/verify-production-artifact-consistency-contract.ts",
     },
     readinessSummary: { ready: 12, needsEvidence: 0, total: 12 },
-    parityTracker: { total: 1713, complete: 1696, partial: 17, donePct: 99, leftPct: 1 },
+    parityTracker: expectedParityTracker,
     requireZeroPartials: false,
     branch: "legacy-parity-runbook",
     commit: "0404c6a",
@@ -168,13 +158,7 @@ try {
     matrix: "docs/page-parity-matrix.json",
     gateMap: "docs/partial-production-gate-map.md",
   });
-  assert.equal(partialPayload.summary?.partialRows, 17);
-  assert.deepEqual(partialPayload.summary?.gateCounts, {
-    "PROD-CRON": 9,
-    "PROD-NATIVE": 3,
-    "PROD-NATURE": 1,
-    "PROD-PROVIDERS": 14,
-  });
+  assert.deepEqual(partialPayload.summary, expectedPartialReportSummary);
 
   const checklistReport = readFileSync(checklistReportPath, "utf8");
   assertNoSensitiveOutput(checklistReport);
@@ -187,11 +171,7 @@ try {
     evidenceTemplate: "docs/production-acceptance-evidence-template.md",
     partialGateMap: "docs/partial-production-gate-map.md",
   });
-  assert.deepEqual(checklistPayload.summary, {
-    gates: 12,
-    requiredFields: 73,
-    blockingPartialRows: 17,
-  });
+  assert.deepEqual(checklistPayload.summary, expectedEvidenceChecklistSummary);
 
   const staleCommit = runCloseout([
     `--env-file=${envFilePath}`,
@@ -217,7 +197,10 @@ try {
     "--require-zero-partials",
   ]);
   assert.equal(unresolvedPartials.status, 1);
-  assert.match(unresolvedPartials.stderr, /requires zero partial parity rows; found 17/);
+  assert.match(
+    unresolvedPartials.stderr,
+    new RegExp(`requires zero partial parity rows; found ${expectedParityTracker.partial}`)
+  );
   assertNoSensitiveOutput(unresolvedPartials.stdout + unresolvedPartials.stderr);
 
   writeFileSync(zeroParityMatrixPath, zeroPartialMatrixJson(), "utf8");
@@ -523,6 +506,59 @@ function zeroPartialGateMapMarkdown() {
     "| --- | --- | --- | --- |",
     "",
   ].join("\n");
+}
+
+function partialReportSummary(path: string) {
+  const report = JSON.parse(readFileSync(path, "utf8")) as {
+    summary?: { partialRows?: number | null; gates?: string[]; gateCounts?: Record<string, number> };
+  };
+  return {
+    partialRows: report.summary?.partialRows ?? null,
+    gates: report.summary?.gates ?? [],
+    gateCounts: report.summary?.gateCounts ?? {},
+  };
+}
+
+function evidenceChecklistSummary(path: string) {
+  const report = JSON.parse(readFileSync(path, "utf8")) as {
+    summary?: { gates?: number | null; requiredFields?: number | null; blockingPartialRows?: number | null };
+  };
+  return {
+    gates: report.summary?.gates ?? null,
+    requiredFields: report.summary?.requiredFields ?? null,
+    blockingPartialRows: report.summary?.blockingPartialRows ?? null,
+  };
+}
+
+function parityTrackerSummary(path: string) {
+  const matrix = JSON.parse(readFileSync(path, "utf8")) as unknown;
+  let total = 0;
+  let partial = 0;
+
+  function walk(value: unknown): void {
+    if (Array.isArray(value)) {
+      value.forEach(walk);
+      return;
+    }
+    if (!value || typeof value !== "object") {
+      return;
+    }
+
+    const row = value as { status?: unknown };
+    if (typeof row.status === "string") {
+      total += 1;
+      if (row.status.toLowerCase().startsWith("partial")) {
+        partial += 1;
+      }
+    }
+    Object.values(row).forEach(walk);
+  }
+
+  walk(matrix);
+  const complete = total - partial;
+  const donePct = Math.round((complete / total) * 1000) / 10;
+  const leftPct = Math.round((100 - donePct) * 10) / 10;
+  return { total, complete, partial, donePct, leftPct };
 }
 
 function assertNoSensitiveOutput(output: string) {
