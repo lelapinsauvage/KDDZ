@@ -45,6 +45,15 @@ type BlockingGateSummary = {
 };
 
 type BlockingGateStatus = {
+  generatedAt?: string;
+  generatedFrom?: {
+    matrix?: string;
+    gateMap?: string;
+  };
+  sourceAlignment?: {
+    status?: string;
+    generatedAt?: string;
+  };
   summary?: {
     gates?: number;
     ready?: number;
@@ -115,6 +124,7 @@ run("src/scripts/verify-production-focused-artifacts-manifest.ts", [
   `--manifest=${focusedManifestPath}`,
 ]);
 
+assertVerifiedBlockingGateStatus(blockingGateStatusPath);
 const blockingGateSummary = summarizeBlockingGateStatus(blockingGateStatusPath);
 const manifest: PreflightManifest = {
   status: "production preflight artifacts verified",
@@ -175,6 +185,25 @@ function summarizeBlockingGateStatus(path: string): BlockingGateSummary {
       nextActions: gate.nextActions ?? [],
     })),
   };
+}
+
+function assertVerifiedBlockingGateStatus(path: string) {
+  const status = JSON.parse(readFileSync(path, "utf8")) as BlockingGateStatus;
+  if (status.generatedAt !== generatedAt) {
+    throw new Error("Blocking gate status timestamp drifted before preflight manifest generation");
+  }
+  if (status.generatedFrom?.matrix !== parityMatrixPath) {
+    throw new Error("Blocking gate status matrix source drifted before preflight manifest generation");
+  }
+  if (status.generatedFrom?.gateMap !== partialGateMapPath) {
+    throw new Error("Blocking gate status gate-map source drifted before preflight manifest generation");
+  }
+  if (status.sourceAlignment?.status !== "verified") {
+    throw new Error("Blocking gate status source alignment must be verified before preflight manifest generation");
+  }
+  if (status.sourceAlignment.generatedAt !== generatedAt) {
+    throw new Error("Blocking gate status source-alignment timestamp drifted before preflight manifest generation");
+  }
 }
 
 function optionValue(name: string) {
