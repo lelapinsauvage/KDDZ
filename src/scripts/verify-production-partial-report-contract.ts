@@ -64,6 +64,9 @@ const markdownOutput = execFileSync("pnpm", ["tsx", script], {
 });
 assert.match(markdownOutput, /Production Partial Gate Report/);
 assert.match(markdownOutput, /Generated at: \d{4}-\d{2}-\d{2}T/);
+assert.match(markdownOutput, /Source matrix: docs\/page-parity-matrix\.json/);
+assert.match(markdownOutput, /Source gate map: docs\/partial-production-gate-map\.md/);
+assert.match(markdownOutput, /Source production gates: docs\/legacy-production-acceptance-gates\.md/);
 assert.match(markdownOutput, new RegExp(`Partial rows: ${rows.length}`));
 for (const [gate, count] of Object.entries(expectedGateCounts)) {
   assert.match(markdownOutput, new RegExp(`\\| ${escapeRegExp(gate)} \\| ${count} \\|`));
@@ -99,6 +102,9 @@ const nativeMarkdown = execFileSync("pnpm", ["tsx", script, "--gate=PROD-NATIVE"
   encoding: "utf8",
 });
 const nativeRows = rows.filter((row) => row.gates?.includes("PROD-NATIVE"));
+assert.match(nativeMarkdown, /Source matrix: docs\/page-parity-matrix\.json/);
+assert.match(nativeMarkdown, /Source gate map: docs\/partial-production-gate-map\.md/);
+assert.match(nativeMarkdown, /Source production gates: docs\/legacy-production-acceptance-gates\.md/);
 assert.match(nativeMarkdown, new RegExp(`Partial rows: ${nativeRows.length}`));
 assert.match(nativeMarkdown, new RegExp(`\\| PROD-NATIVE \\| ${nativeRows.length} \\|`));
 assert.doesNotMatch(nativeMarkdown, /P01/);
