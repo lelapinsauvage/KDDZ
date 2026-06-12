@@ -149,5 +149,14 @@ assert.match(
   text.topGaps,
   /General alarms browser smoke now confirms the restored `\/alarms\.php` bridge/,
 );
+assert.match(text.topGaps, /`t_alarms`\/receipt read-state defaults/);
+assert.match(
+  text.topGaps,
+  /remaining acceptance is limited to the shared production cron\/provider gates/i,
+);
+assert.doesNotMatch(
+  text.topGaps,
+  /exact legacy `t_alarms\.status` source semantics remain open/,
+);
 
 console.log("legacy general alarms visual contract assertions passed");
