@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -26,6 +26,7 @@ try {
   const preflightManifestPath = join(tmp, "preflight-artifacts.json");
   const zeroParityMatrixPath = join(tmp, "zero-page-parity-matrix.json");
   const zeroPartialGateMapPath = join(tmp, "zero-partial-production-gate-map.md");
+  const zeroProductionGatesPath = join(tmp, "zero-legacy-production-acceptance-gates.md");
   const zeroEvidenceRecordPath = join(tmp, "zero-production-acceptance-evidence.md");
   const zeroReadinessReportPath = join(tmp, "zero-readiness.json");
   const zeroCloseoutSummaryPath = join(tmp, "zero-closeout-summary.json");
@@ -218,6 +219,7 @@ try {
 
   writeFileSync(zeroParityMatrixPath, zeroPartialMatrixJson(), "utf8");
   writeFileSync(zeroPartialGateMapPath, zeroPartialGateMapMarkdown(), "utf8");
+  copyFileSync("docs/legacy-production-acceptance-gates.md", zeroProductionGatesPath);
   execFileSync("pnpm", [
     "tsx",
     "src/scripts/report-production-partials.ts",
@@ -270,6 +272,7 @@ try {
     `--generated-at=${generatedAt}`,
     `--parity-matrix=${zeroParityMatrixPath}`,
     `--partial-gate-map=${zeroPartialGateMapPath}`,
+    `--production-gates=${zeroProductionGatesPath}`,
     "--require-zero-partials",
   ]);
   assert.equal(zeroCloseout.status, 0, zeroCloseout.stdout + zeroCloseout.stderr);

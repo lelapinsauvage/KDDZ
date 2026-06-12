@@ -79,6 +79,7 @@ const requireNoBlockers = process.argv.includes("--require-no-blockers");
 const blockingOnly = process.argv.includes("--blocking-only");
 const parityMatrixPath = optionValue("--parity-matrix") ?? "docs/page-parity-matrix.json";
 const partialGateMapPath = optionValue("--partial-gate-map") ?? "docs/partial-production-gate-map.md";
+const productionGatesPath = optionValue("--production-gates") ?? "docs/legacy-production-acceptance-gates.md";
 
 const readiness = runJson<ReadinessReport>("src/scripts/audit-production-readiness.ts", [
   "--json",
@@ -92,6 +93,7 @@ const partials = runJson<PartialReport>("src/scripts/report-production-partials.
   ...optionalArg("--gate", selectedGate),
   ...optionalArg("--parity-matrix", parityMatrixPath),
   ...optionalArg("--partial-gate-map", partialGateMapPath),
+  ...optionalArg("--production-gates", productionGatesPath),
 ]);
 const checklist = runJson<EvidenceChecklist>("src/scripts/report-production-evidence-checklist.ts", [
   "--json",

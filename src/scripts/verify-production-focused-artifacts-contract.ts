@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -153,6 +153,29 @@ try {
   });
   assert.equal(invalidGeneratedAt.status, 2);
   assert.match(invalidGeneratedAt.stderr, /--generated-at must be an ISO timestamp/);
+
+  const archiveMatrixPath = join(tmp, "archived-page-parity-matrix.json");
+  const archiveGateMapPath = join(tmp, "archived-partial-production-gate-map.md");
+  const archiveProductionGatesPath = join(tmp, "archived-legacy-production-acceptance-gates.md");
+  const archiveBundleDir = join(tmp, "archive-bundle");
+  copyFileSync("docs/page-parity-matrix.json", archiveMatrixPath);
+  copyFileSync("docs/partial-production-gate-map.md", archiveGateMapPath);
+  copyFileSync("docs/legacy-production-acceptance-gates.md", archiveProductionGatesPath);
+  execFileSync("pnpm", [
+    "tsx",
+    "src/scripts/report-production-focused-artifacts.ts",
+    `--out-dir=${archiveBundleDir}`,
+    `--generated-at=${generatedAt}`,
+    `--parity-matrix=${archiveMatrixPath}`,
+    `--partial-gate-map=${archiveGateMapPath}`,
+    `--production-gates=${archiveProductionGatesPath}`,
+  ], {
+    cwd: process.cwd(),
+    stdio: "ignore",
+  });
+  const archiveManifest = readJson<FocusedManifest>(join(archiveBundleDir, "kiddzonl-production-focused-artifacts.json"));
+  assert.equal(archiveManifest.generatedFrom?.matrix, archiveMatrixPath);
+  assert.equal(archiveManifest.generatedFrom?.gateMap, archiveGateMapPath);
 
   for (const { gate, rows } of gates) {
     const partialPath = join(tmp, `${gate.toLowerCase()}-partials.json`);

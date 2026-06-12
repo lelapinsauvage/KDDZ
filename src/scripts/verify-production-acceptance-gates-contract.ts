@@ -24,6 +24,7 @@ const files = {
   partialGateMap: "docs/partial-production-gate-map.md",
   fileStoragePipeline: "docs/file-storage-pipeline.md",
   legacyFileStorageRules: "docs/legacy-file-storage-rules.md",
+  handoff: "docs/NEXT-CODEX-HANDOFF.md",
 };
 
 const contents = Object.fromEntries(
@@ -693,6 +694,10 @@ assert.match(contents.cutoverRunbook, /verify-production-focused-artifacts-manif
 assert.match(contents.gates, /report-production-focused-artifacts\.ts --out-dir=<dir>/);
 assert.match(contents.gates, /verify-production-preflight-artifacts-manifest\.ts --manifest=<path>/);
 assert.match(contents.gates, /verify-production-focused-artifacts-manifest\.ts --manifest=<path>/);
+assert.match(contents.gates, /--production-gates=<path>/);
+assert.match(contents.gates, /docs\/legacy-production-acceptance-gates\.md/);
+assert.match(contents.cutoverRunbook, /--production-gates=<path>/);
+assert.match(contents.handoff, /--production-gates=<path>/);
 assert.match(contents.gates, /kiddzonl-production-focused-artifacts\.json/);
 assert.match(contents.cutoverRunbook, /--require-zero-partials/);
 assert.match(contents.cutoverRunbook, /release decision `accepted` and remaining production tickets `none`/);

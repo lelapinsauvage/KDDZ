@@ -47,10 +47,11 @@ const outputDir = optionValue("--out-dir");
 const generatedAt = generatedAtValue();
 const parityMatrixPath = optionValue("--parity-matrix") ?? "docs/page-parity-matrix.json";
 const partialGateMapPath = optionValue("--partial-gate-map") ?? "docs/partial-production-gate-map.md";
+const productionGatesPath = optionValue("--production-gates") ?? "docs/legacy-production-acceptance-gates.md";
 
 if (!outputDir) {
   console.error(
-    "Usage: pnpm tsx src/scripts/report-production-focused-artifacts.ts --out-dir=<dir> [--generated-at=<iso>] [--parity-matrix=<path>] [--partial-gate-map=<path>]"
+    "Usage: pnpm tsx src/scripts/report-production-focused-artifacts.ts --out-dir=<dir> [--generated-at=<iso>] [--parity-matrix=<path>] [--partial-gate-map=<path>] [--production-gates=<path>]"
   );
   process.exit(2);
 }
@@ -68,6 +69,7 @@ const artifacts = focusedGates.map((entry): ArtifactEntry => {
     `--generated-at=${generatedAt}`,
     `--parity-matrix=${parityMatrixPath}`,
     `--partial-gate-map=${partialGateMapPath}`,
+    `--production-gates=${productionGatesPath}`,
   ]);
   run("src/scripts/report-production-evidence-checklist.ts", [
     "--json",

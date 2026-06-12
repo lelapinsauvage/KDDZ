@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -63,6 +63,7 @@ try {
   const reportPath = join(tmp, "production-gate-status.json");
   const zeroParityMatrixPath = join(tmp, "zero-page-parity-matrix.json");
   const zeroPartialGateMapPath = join(tmp, "zero-partial-production-gate-map.md");
+  const zeroProductionGatesPath = join(tmp, "zero-legacy-production-acceptance-gates.md");
   const output = execFileSync("pnpm", [
     "tsx",
     "src/scripts/report-production-gate-status.ts",
@@ -269,6 +270,7 @@ try {
 
   writeFileSync(zeroParityMatrixPath, zeroPartialMatrixJson(), "utf8");
   writeFileSync(zeroPartialGateMapPath, zeroPartialGateMapMarkdown(), "utf8");
+  copyFileSync("docs/legacy-production-acceptance-gates.md", zeroProductionGatesPath);
   const readyWithoutBlockers = spawnSync("pnpm", [
     "tsx",
     "src/scripts/report-production-gate-status.ts",
@@ -279,6 +281,7 @@ try {
     `--generated-at=${generatedAt}`,
     `--parity-matrix=${zeroParityMatrixPath}`,
     `--partial-gate-map=${zeroPartialGateMapPath}`,
+    `--production-gates=${zeroProductionGatesPath}`,
   ], {
     cwd: process.cwd(),
     encoding: "utf8",

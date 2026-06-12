@@ -73,10 +73,11 @@ const outputDir = optionValue("--out-dir");
 const generatedAt = generatedAtValue();
 const parityMatrixPath = optionValue("--parity-matrix") ?? "docs/page-parity-matrix.json";
 const partialGateMapPath = optionValue("--partial-gate-map") ?? "docs/partial-production-gate-map.md";
+const productionGatesPath = optionValue("--production-gates") ?? "docs/legacy-production-acceptance-gates.md";
 
 if (!outputDir) {
   console.error(
-    "Usage: pnpm tsx src/scripts/report-production-preflight-artifacts.ts --out-dir=<dir> [--generated-at=<iso>] [--parity-matrix=<path>] [--partial-gate-map=<path>]"
+    "Usage: pnpm tsx src/scripts/report-production-preflight-artifacts.ts --out-dir=<dir> [--generated-at=<iso>] [--parity-matrix=<path>] [--partial-gate-map=<path>] [--production-gates=<path>]"
   );
   process.exit(2);
 }
@@ -95,6 +96,7 @@ run("src/scripts/report-production-partials.ts", [
   `--generated-at=${generatedAt}`,
   `--parity-matrix=${parityMatrixPath}`,
   `--partial-gate-map=${partialGateMapPath}`,
+  `--production-gates=${productionGatesPath}`,
 ]);
 run("src/scripts/report-production-evidence-checklist.ts", [
   "--json",
@@ -109,6 +111,7 @@ run("src/scripts/report-production-gate-status.ts", [
   `--generated-at=${generatedAt}`,
   `--parity-matrix=${parityMatrixPath}`,
   `--partial-gate-map=${partialGateMapPath}`,
+  `--production-gates=${productionGatesPath}`,
 ]);
 run("src/scripts/verify-production-artifact-consistency-contract.ts", [
   `--partial-report=${partialReportPath}`,
@@ -119,6 +122,7 @@ run("src/scripts/report-production-focused-artifacts.ts", [
   `--generated-at=${generatedAt}`,
   `--parity-matrix=${parityMatrixPath}`,
   `--partial-gate-map=${partialGateMapPath}`,
+  `--production-gates=${productionGatesPath}`,
 ]);
 run("src/scripts/verify-production-focused-artifacts-manifest.ts", [
   `--manifest=${focusedManifestPath}`,

@@ -234,9 +234,11 @@ try {
 
   const archiveMatrixPath = join(tmp, "archived-page-parity-matrix.json");
   const archiveGateMapPath = join(tmp, "archived-partial-production-gate-map.md");
+  const archiveProductionGatesPath = join(tmp, "archived-legacy-production-acceptance-gates.md");
   const archiveBundleDir = join(tmp, "archive-bundle");
   copyFileSync("docs/page-parity-matrix.json", archiveMatrixPath);
   copyFileSync("docs/partial-production-gate-map.md", archiveGateMapPath);
+  copyFileSync("docs/legacy-production-acceptance-gates.md", archiveProductionGatesPath);
 
   const archiveOutput = execFileSync("pnpm", [
     "tsx",
@@ -245,6 +247,7 @@ try {
     `--generated-at=${generatedAt}`,
     `--parity-matrix=${archiveMatrixPath}`,
     `--partial-gate-map=${archiveGateMapPath}`,
+    `--production-gates=${archiveProductionGatesPath}`,
   ], {
     cwd: process.cwd(),
     encoding: "utf8",

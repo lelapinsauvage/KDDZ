@@ -48,10 +48,11 @@ const generatedAt = generatedAtValue();
 const summaryGeneratedAt = generatedAt ?? new Date().toISOString();
 const parityMatrixPath = optionValue("--parity-matrix") ?? "docs/page-parity-matrix.json";
 const partialGateMapPath = optionValue("--partial-gate-map") ?? "docs/partial-production-gate-map.md";
+const productionGatesPath = optionValue("--production-gates") ?? "docs/legacy-production-acceptance-gates.md";
 
 if (!envFilePath || !evidenceRecordPath) {
   console.error(
-    "Usage: pnpm tsx src/scripts/run-production-closeout.ts --env-file=<private-readiness.env> --evidence-record=<production-acceptance-evidence.md> [--out=<readiness.json>] [--summary-out=<closeout-summary.json>] [--partials-out=<partials.json>] [--checklist-out=<evidence-checklist.json>] [--preflight-manifest=<preflight-artifacts.json>] [--branch=<branch>] [--commit=<sha>] [--generated-at=<iso>] [--parity-matrix=<path>] [--partial-gate-map=<path>] [--require-zero-partials]"
+    "Usage: pnpm tsx src/scripts/run-production-closeout.ts --env-file=<private-readiness.env> --evidence-record=<production-acceptance-evidence.md> [--out=<readiness.json>] [--summary-out=<closeout-summary.json>] [--partials-out=<partials.json>] [--checklist-out=<evidence-checklist.json>] [--preflight-manifest=<preflight-artifacts.json>] [--branch=<branch>] [--commit=<sha>] [--generated-at=<iso>] [--parity-matrix=<path>] [--partial-gate-map=<path>] [--production-gates=<path>] [--require-zero-partials]"
   );
   process.exit(2);
 }
@@ -88,6 +89,7 @@ if (partialsOutputPath) {
     `--out=${partialsOutputPath}`,
     `--parity-matrix=${parityMatrixPath}`,
     `--partial-gate-map=${partialGateMapPath}`,
+    `--production-gates=${productionGatesPath}`,
     ...optionalArg("--generated-at", generatedAt),
   ]);
 }
