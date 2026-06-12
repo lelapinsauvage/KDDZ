@@ -103,6 +103,10 @@ const markdownOutput = execFileSync("pnpm", ["tsx", script, "--gate=PROD-NATIVE"
 });
 assert.match(markdownOutput, /Production Evidence Checklist/);
 assert.match(markdownOutput, /Generated at: \d{4}-\d{2}-\d{2}T/);
+assert.match(markdownOutput, /Source evidence spec: src\/scripts\/production-acceptance-evidence-spec\.ts/);
+assert.match(markdownOutput, /Source evidence template: docs\/production-acceptance-evidence-template\.md/);
+assert.match(markdownOutput, /Source partial gate map: docs\/partial-production-gate-map\.md/);
+assert.match(markdownOutput, /Source production gates: docs\/legacy-production-acceptance-gates\.md/);
 assert.match(markdownOutput, /## PROD-NATIVE/);
 assert.match(markdownOutput, /iOS build tested against `master.php`/);
 assert.match(markdownOutput, /Native partial row coverage reviewed/);

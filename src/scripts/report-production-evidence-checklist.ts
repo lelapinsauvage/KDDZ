@@ -150,6 +150,11 @@ function validatePartialRows(rows: PartialGateRow[], knownGates: string[], docum
 function renderMarkdown(gates: ChecklistGate[]) {
   const lines = ["# Production Evidence Checklist", ""];
   lines.push(`Generated at: ${generatedAt}`, "");
+  lines.push("Source evidence spec: src/scripts/production-acceptance-evidence-spec.ts");
+  lines.push("Source evidence template: docs/production-acceptance-evidence-template.md");
+  lines.push(`Source partial gate map: ${partialGateMapPath}`);
+  lines.push(`Source production gates: ${productionGatesPath}`);
+  lines.push("");
 
   for (const gate of gates) {
     lines.push(`## ${gate.gate}`, "");
