@@ -146,6 +146,42 @@ try {
   });
   assert.equal(unknownMappedGate.status, 1);
   assert.match(unknownMappedGate.stderr, /references unknown production gate\(s\): PROD-BOGUS/);
+
+  const sourceGateMap = readFileSync("docs/partial-production-gate-map.md", "utf8");
+  const duplicateRowPath = join(tmp, "duplicate-row-gate-map.md");
+  writeFileSync(duplicateRowPath, sourceGateMap.replace("| P02 |", "| P01 |"), "utf8");
+  const duplicateRow = spawnSync("pnpm", [
+    "tsx",
+    script,
+    "--json",
+    `--partial-gate-map=${duplicateRowPath}`,
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.equal(duplicateRow.status, 1);
+  assert.match(duplicateRow.stderr, /contains duplicate partial row id: P01/);
+
+  const missingClosurePath = join(tmp, "missing-closure-gate-map.md");
+  writeFileSync(
+    missingClosurePath,
+    sourceGateMap.replace(
+      "| P01 | legacy assessment alarms bridge | PROD-CRON, PROD-PROVIDERS | Needs hosted assessment schedule confirmation plus production external channel execution if enabled. |",
+      "| P01 | legacy assessment alarms bridge | PROD-CRON, PROD-PROVIDERS |  |"
+    ),
+    "utf8"
+  );
+  const missingClosure = spawnSync("pnpm", [
+    "tsx",
+    script,
+    "--json",
+    `--partial-gate-map=${missingClosurePath}`,
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.equal(missingClosure.status, 1);
+  assert.match(missingClosure.stderr, /row P01 is missing a closure reason/);
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }

@@ -101,7 +101,18 @@ function parsePartialGateMap() {
 
 function validatePartialRows(rows: PartialGateRow[], knownGates: string[]) {
   const known = new Set(knownGates);
+  const seen = new Set<string>();
   for (const row of rows) {
+    if (seen.has(row.row)) {
+      throw new Error(`${partialGateMapPath} contains duplicate partial row id: ${row.row}`);
+    }
+    seen.add(row.row);
+    if (!row.statusAnchor) {
+      throw new Error(`${partialGateMapPath} row ${row.row} is missing a status anchor`);
+    }
+    if (!row.closureReason) {
+      throw new Error(`${partialGateMapPath} row ${row.row} is missing a closure reason`);
+    }
     if (row.gates.length === 0) {
       throw new Error(`${partialGateMapPath} row ${row.row} must name at least one production gate`);
     }
