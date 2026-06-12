@@ -61,17 +61,36 @@ const row = matrix.find(
     entry.legacyPhp ===
     "Front/templates/admin/users/admin/classes/functions.php",
 );
+const bridgeRow = matrix.find(
+  (entry) =>
+    entry.legacyPhp ===
+    "Front/templates/admin/users/admin/page/user-control.php",
+);
 
 assert.ok(row, "functions.php matrix row exists");
 assert.match(row.verification ?? "", /legacy pagination window/);
 assert.match(row.verification ?? "", /verify-legacy-admin-pagination-closure-contract\.ts/);
 assert.doesNotMatch(row.verification ?? "", /Remaining work is exact old pagination visual styling/);
+assert.ok(bridgeRow, "page/user-control.php matrix row exists");
+assert.match(bridgeRow.verification ?? "", /legacy pagination window/);
+assert.match(
+  bridgeRow.verification ?? "",
+  /verify-legacy-admin-pagination-closure-contract\.ts/,
+);
+assert.doesNotMatch(
+  bridgeRow.verification ?? "",
+  /Remaining work is limited to exact old pagination visual styling/,
+);
 
 assert.match(text.markdownMatrix, /legacy pagination window/);
 assert.match(text.markdownMatrix, /verify-legacy-admin-pagination-closure-contract\.ts/);
 assert.doesNotMatch(
   text.markdownMatrix,
   /Remaining work is exact old pagination visual styling if required/,
+);
+assert.doesNotMatch(
+  text.markdownMatrix,
+  /Remaining work is limited to exact old pagination visual styling if product requires pixel-level parity/,
 );
 
 console.log("legacy admin pagination closure contract assertions passed");

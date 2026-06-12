@@ -17318,7 +17318,7 @@
       "searchUsers",
       "showUsers"
     ],
-    "verification": "`/settings/legacy-users` restores the control-users surface with source filters, search across username/name/email/id/level/social provider, add-user action, edit/delete actions, level badges, restricted state, modern account state, migrated branch/class access summaries, profile-value counts, social-link counts, latest login time/IP/count from `login_timestamps`, legacy `showUsers` page-size choices (10/20/50/100/150/All), numbered pagination, filtered Excel/CSV export, and print. `/users/admin/page/user-control.php` bridges to the restored roster and preserves a search query when supplied. Remaining work is limited to exact old pagination visual styling if product requires pixel-level parity."
+    "verification": "`/settings/legacy-users` restores the control-users surface with source filters, search across username/name/email/id/level/social provider, add-user action, edit/delete actions, level badges, restricted state, modern account state, migrated branch/class access summaries, profile-value counts, social-link counts, latest login time/IP/count from `login_timestamps`, legacy `showUsers` page-size choices (10/20/50/100/150/All), numbered legacy pagination window, Previous/Next controls, ellipsis behavior, active-page styling, filtered Excel/CSV export, and print. `/users/admin/page/user-control.php` bridges to the restored roster and preserves a search query when supplied. Verified by `src/scripts/verify-legacy-admin-pagination-closure-contract.ts` and `src/scripts/verify-legacy-admin-user-export-contract.ts`."
   },
   {
     "legacyPhp": "Front/templates/admin/users/admin/page/user-profiles.php",
