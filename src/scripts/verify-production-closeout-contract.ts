@@ -24,6 +24,7 @@ try {
   const partialReportPath = join(tmp, "partials.json");
   const checklistReportPath = join(tmp, "evidence-checklist.json");
   const preflightManifestPath = join(tmp, "preflight-artifacts.json");
+  const closeoutPlanPath = join(tmp, "closeout-plan.json");
   const zeroParityMatrixPath = join(tmp, "zero-page-parity-matrix.json");
   const zeroPartialGateMapPath = join(tmp, "zero-partial-production-gate-map.md");
   const zeroProductionGatesPath = join(tmp, "zero-legacy-production-acceptance-gates.md");
@@ -33,6 +34,7 @@ try {
   const zeroPartialReportPath = join(tmp, "zero-partials.json");
   const zeroChecklistReportPath = join(tmp, "zero-evidence-checklist.json");
   const zeroPreflightManifestPath = join(tmp, "zero-preflight-artifacts.json");
+  const zeroCloseoutPlanPath = join(tmp, "zero-closeout-plan.json");
   writeFileSync(envFilePath, readinessEnvFile(), "utf8");
   execFileSync("pnpm", ["tsx", "src/scripts/report-production-partials.ts", "--json", `--out=${partialReportPath}`, `--generated-at=${generatedAt}`], {
     cwd: process.cwd(),
@@ -42,7 +44,8 @@ try {
     cwd: process.cwd(),
     stdio: "ignore",
   });
-  writeFileSync(preflightManifestPath, preflightManifest(partialReportPath, checklistReportPath), "utf8");
+  writeCloseoutPlan(closeoutPlanPath, partialReportPath);
+  writeFileSync(preflightManifestPath, preflightManifest(partialReportPath, checklistReportPath, closeoutPlanPath), "utf8");
   writeFileSync(
     evidenceRecordPath,
     fillTemplate(template, {
@@ -150,6 +153,10 @@ try {
         algorithm: "sha256",
         digest: sha256File(preflightManifestPath),
       },
+      preflightCloseoutPlan: {
+        algorithm: "sha256",
+        digest: sha256File(closeoutPlanPath),
+      },
     },
     artifactConsistency: {
       status: "verified",
@@ -252,7 +259,8 @@ try {
     cwd: process.cwd(),
     stdio: "ignore",
   });
-  writeFileSync(zeroPreflightManifestPath, preflightManifest(zeroPartialReportPath, zeroChecklistReportPath), "utf8");
+  writeCloseoutPlan(zeroCloseoutPlanPath, zeroPartialReportPath);
+  writeFileSync(zeroPreflightManifestPath, preflightManifest(zeroPartialReportPath, zeroChecklistReportPath, zeroCloseoutPlanPath), "utf8");
   writeFileSync(
     zeroEvidenceRecordPath,
     fillTemplate(template, {
@@ -537,7 +545,7 @@ function zeroPartialGateMapMarkdown() {
   ].join("\n");
 }
 
-function preflightManifest(partialReportPath: string, checklistReportPath: string) {
+function preflightManifest(partialReportPath: string, checklistReportPath: string, closeoutPlanPath: string) {
   const blockingGateSummary = buildBlockingGateSummary(partialReportPath);
   return `${JSON.stringify(
     {
@@ -551,11 +559,18 @@ function preflightManifest(partialReportPath: string, checklistReportPath: strin
       artifacts: {
         partialReport: {
           path: partialReportPath,
-          sha256: sha256File(partialReportPath),
+          algorithm: "sha256",
+          digest: sha256File(partialReportPath),
         },
         evidenceChecklist: {
           path: checklistReportPath,
-          sha256: sha256File(checklistReportPath),
+          algorithm: "sha256",
+          digest: sha256File(checklistReportPath),
+        },
+        closeoutPlan: {
+          path: closeoutPlanPath,
+          algorithm: "sha256",
+          digest: sha256File(closeoutPlanPath),
         },
       },
       blockingGateSummary,
@@ -564,6 +579,25 @@ function preflightManifest(partialReportPath: string, checklistReportPath: strin
     null,
     2
   )}\n`;
+}
+
+function writeCloseoutPlan(path: string, partialReportPath: string) {
+  const partialReport = JSON.parse(readFileSync(partialReportPath, "utf8")) as {
+    generatedFrom?: { matrix?: string; gateMap?: string; productionGates?: string };
+  };
+  execFileSync("pnpm", [
+    "tsx",
+    "src/scripts/report-production-closeout-plan.ts",
+    "--json",
+    `--out=${path}`,
+    `--generated-at=${generatedAt}`,
+    ...optionalArg("--parity-matrix", partialReport.generatedFrom?.matrix),
+    ...optionalArg("--partial-gate-map", partialReport.generatedFrom?.gateMap),
+    ...optionalArg("--production-gates", partialReport.generatedFrom?.productionGates),
+  ], {
+    cwd: process.cwd(),
+    stdio: "ignore",
+  });
 }
 
 function buildBlockingGateSummary(partialReportPath: string) {

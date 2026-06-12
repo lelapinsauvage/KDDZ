@@ -38,6 +38,7 @@ type CloseoutSummary = {
     partialReport?: DigestRecord;
     evidenceChecklist?: DigestRecord;
     preflightManifest?: DigestRecord;
+    preflightCloseoutPlan?: DigestRecord;
   };
   artifactConsistency?: {
     status?: string;
@@ -184,6 +185,11 @@ function verifyCloseoutSummary(path: string) {
   if (preflightManifestPath) {
     assert.equal(summary.preflightManifest, preflightManifestPath);
     assertDigest(summary.artifactDigests?.preflightManifest, preflightManifestPath, "preflight manifest");
+    assertDigest(
+      summary.artifactDigests?.preflightCloseoutPlan,
+      preflightCloseoutPlanPath(preflightManifestPath),
+      "preflight closeout plan"
+    );
   }
 
   if (partialReportPath && checklistReportPath) {
@@ -228,6 +234,7 @@ function verifySelfTestContract() {
     const partialReportPath = join(tmp, "partials.json");
     const checklistReportPath = join(tmp, "evidence-checklist.json");
     const preflightManifestPath = join(tmp, "preflight-artifacts.json");
+    const closeoutPlanPath = join(tmp, "closeout-plan.json");
     const zeroParityMatrixPath = join(tmp, "zero-page-parity-matrix.json");
     const zeroPartialGateMapPath = join(tmp, "zero-partial-production-gate-map.md");
     const zeroEvidenceRecordPath = join(tmp, "zero-production-acceptance-evidence.md");
@@ -236,6 +243,7 @@ function verifySelfTestContract() {
     const zeroPartialReportPath = join(tmp, "zero-partials.json");
     const zeroChecklistReportPath = join(tmp, "zero-evidence-checklist.json");
     const zeroPreflightManifestPath = join(tmp, "zero-preflight-artifacts.json");
+    const zeroCloseoutPlanPath = join(tmp, "zero-closeout-plan.json");
 
     writeFileSync(envFilePath, readinessEnvFile(), "utf8");
     execFileSync("pnpm", ["tsx", "src/scripts/report-production-partials.ts", "--json", `--out=${partialReportPath}`, `--generated-at=${generatedAt}`], {
@@ -246,7 +254,8 @@ function verifySelfTestContract() {
       cwd: process.cwd(),
       stdio: "ignore",
     });
-    writeFileSync(preflightManifestPath, preflightManifest(partialReportPath, checklistReportPath, generatedAt), "utf8");
+    writeCloseoutPlan(closeoutPlanPath, partialReportPath, generatedAt);
+    writeFileSync(preflightManifestPath, preflightManifest(partialReportPath, checklistReportPath, closeoutPlanPath, generatedAt), "utf8");
     writeFileSync(
       evidenceRecordPath,
       fillTemplate(readFileSync("docs/production-acceptance-evidence-template.md", "utf8"), {
@@ -290,6 +299,7 @@ function verifySelfTestContract() {
       `--preflight-manifest=${preflightManifestPath}`,
     ]);
     const closeoutSummary = readJson<CloseoutSummary>(closeoutSummaryPath);
+    assertDigest(closeoutSummary.artifactDigests?.preflightCloseoutPlan, closeoutPlanPath, "preflight closeout plan");
     assert.deepEqual(closeoutSummary.generatedFrom, {
       matrix: "docs/page-parity-matrix.json",
       gateMap: "docs/partial-production-gate-map.md",
@@ -347,7 +357,8 @@ function verifySelfTestContract() {
       cwd: process.cwd(),
       stdio: "ignore",
     });
-    writeFileSync(zeroPreflightManifestPath, preflightManifest(zeroPartialReportPath, zeroChecklistReportPath, generatedAt), "utf8");
+    writeCloseoutPlan(zeroCloseoutPlanPath, zeroPartialReportPath, generatedAt);
+    writeFileSync(zeroPreflightManifestPath, preflightManifest(zeroPartialReportPath, zeroChecklistReportPath, zeroCloseoutPlanPath, generatedAt), "utf8");
     writeFileSync(
       zeroEvidenceRecordPath,
       fillTemplate(readFileSync("docs/production-acceptance-evidence-template.md", "utf8"), {
@@ -384,6 +395,7 @@ function verifySelfTestContract() {
       stdio: "ignore",
     });
     const zeroCloseoutSummary = readJson<CloseoutSummary>(zeroCloseoutSummaryPath);
+    assertDigest(zeroCloseoutSummary.artifactDigests?.preflightCloseoutPlan, zeroCloseoutPlanPath, "preflight closeout plan");
     assert.deepEqual(zeroCloseoutSummary.generatedFrom, {
       matrix: zeroParityMatrixPath,
       gateMap: zeroPartialGateMapPath,
@@ -684,7 +696,7 @@ function zeroPartialGateMapMarkdown() {
   ].join("\n");
 }
 
-function preflightManifest(partialReportPath: string, checklistReportPath: string, generatedAt: string) {
+function preflightManifest(partialReportPath: string, checklistReportPath: string, closeoutPlanPath: string, generatedAt: string) {
   const blockingGateSummary = buildBlockingGateSummary(partialReportPath, generatedAt);
   return `${JSON.stringify(
     {
@@ -698,11 +710,18 @@ function preflightManifest(partialReportPath: string, checklistReportPath: strin
       artifacts: {
         partialReport: {
           path: partialReportPath,
-          sha256: sha256File(partialReportPath),
+          algorithm: "sha256",
+          digest: sha256File(partialReportPath),
         },
         evidenceChecklist: {
           path: checklistReportPath,
-          sha256: sha256File(checklistReportPath),
+          algorithm: "sha256",
+          digest: sha256File(checklistReportPath),
+        },
+        closeoutPlan: {
+          path: closeoutPlanPath,
+          algorithm: "sha256",
+          digest: sha256File(closeoutPlanPath),
         },
       },
       blockingGateSummary,
@@ -711,6 +730,37 @@ function preflightManifest(partialReportPath: string, checklistReportPath: strin
     null,
     2
   )}\n`;
+}
+
+function preflightCloseoutPlanPath(preflightManifestPath: string) {
+  const manifest = readJson<{
+    artifacts?: {
+      closeoutPlan?: {
+        path?: string;
+      };
+    };
+  }>(preflightManifestPath);
+  assert.ok(manifest.artifacts?.closeoutPlan?.path, "preflight manifest is missing closeout plan artifact path");
+  return manifest.artifacts.closeoutPlan.path;
+}
+
+function writeCloseoutPlan(path: string, partialReportPath: string, generatedAt: string) {
+  const partialReport = readJson<{
+    generatedFrom?: { matrix?: string; gateMap?: string; productionGates?: string };
+  }>(partialReportPath);
+  execFileSync("pnpm", [
+    "tsx",
+    "src/scripts/report-production-closeout-plan.ts",
+    "--json",
+    `--out=${path}`,
+    `--generated-at=${generatedAt}`,
+    ...optionalArg("--parity-matrix", partialReport.generatedFrom?.matrix),
+    ...optionalArg("--partial-gate-map", partialReport.generatedFrom?.gateMap),
+    ...optionalArg("--production-gates", partialReport.generatedFrom?.productionGates),
+  ], {
+    cwd: process.cwd(),
+    stdio: "ignore",
+  });
 }
 
 function buildBlockingGateSummary(partialReportPath: string, generatedAt: string) {

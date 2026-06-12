@@ -568,6 +568,7 @@ assert.match(contents.gates, /partial report path/);
 assert.match(contents.gates, /partial report counts/);
 assert.match(contents.gates, /evidence checklist path/);
 assert.match(contents.gates, /evidence checklist counts/);
+assert.match(contents.gates, /preflight closeout-plan digest/);
 assert.match(contents.gates, /artifact SHA-256 digests/);
 assert.match(contents.gates, /artifact consistency status/);
 assert.match(contents.gates, /final closeout cannot fall back to an implicit local git ref/);
@@ -598,6 +599,7 @@ assert.match(contents.gates, /--preflight-manifest=\/tmp\/kiddzonl-production-pr
 assert.match(contents.gates, /--require-zero-partials/);
 assert.match(contents.gates, /archived closeout\/partial\/checklist\/preflight artifact pointers/);
 assert.match(contents.gates, /archived closeout summary against the saved artifact paths and SHA-256 digests/);
+assert.match(contents.gates, /nested preflight closeout-plan artifact/);
 assert.match(contents.gates, /page-parity tracker counts/);
 assert.match(contents.gates, /source matrix\/gate-map\/production-gates paths/);
 assert.match(contents.gates, /requires the archived partial report and evidence checklist to match the closeout summary's recorded source matrix\/gate-map\/production-gates paths/);

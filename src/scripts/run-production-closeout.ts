@@ -116,6 +116,7 @@ const artifactDigests = artifactDigestSummary({
   evidenceChecklist: checklistOutputPath,
   preflightManifest: preflightManifestPath,
 });
+const nestedPreflightDigests = preflightManifestPath ? preflightNestedArtifactDigestSummary(preflightManifestPath) : {};
 if (requireZeroPartials && parityTracker.partial !== 0) {
   console.error(`Production closeout requires zero partial parity rows; found ${parityTracker.partial}.`);
   process.exit(1);
@@ -152,7 +153,10 @@ const summary = {
   preflightManifest: preflightManifestPath ?? null,
   partialReportSummary,
   evidenceChecklistSummary,
-  artifactDigests,
+  artifactDigests: {
+    ...artifactDigests,
+    ...nestedPreflightDigests,
+  },
   artifactConsistency,
   readinessSummary,
   parityTracker,
@@ -230,6 +234,36 @@ function artifactDigestSummary(paths: Record<string, string | null>) {
         },
       ])
   );
+}
+
+function preflightNestedArtifactDigestSummary(preflightManifestPath: string) {
+  const manifest = JSON.parse(readFileSync(preflightManifestPath, "utf8")) as {
+    artifacts?: {
+      closeoutPlan?: {
+        path?: string;
+        algorithm?: string;
+        digest?: string;
+        sha256?: string;
+      };
+    };
+  };
+  const closeoutPlan = manifest.artifacts?.closeoutPlan;
+  if (!closeoutPlan?.path) {
+    throw new Error("Preflight manifest is missing closeout plan artifact path.");
+  }
+  if ((closeoutPlan.algorithm ?? "sha256") !== "sha256") {
+    throw new Error("Preflight closeout plan artifact must use sha256.");
+  }
+  const digest = sha256File(closeoutPlan.path);
+  if ((closeoutPlan.digest ?? closeoutPlan.sha256) !== digest) {
+    throw new Error("Preflight closeout plan artifact digest drifted.");
+  }
+  return {
+    preflightCloseoutPlan: {
+      algorithm: "sha256",
+      digest,
+    },
+  };
 }
 
 function sha256File(path: string) {
