@@ -32,6 +32,10 @@ type PreflightManifest = {
 };
 
 type GateStatusReport = {
+  generatedFrom?: {
+    matrix?: string;
+    gateMap?: string;
+  };
   summary?: {
     gates?: number;
     ready?: number;
@@ -40,6 +44,14 @@ type GateStatusReport = {
     missingEvidenceItems?: number;
   };
   gates?: Array<{ gate?: string; blockingPartialRows?: unknown[] }>;
+};
+
+type FocusedManifest = {
+  status?: string;
+  generatedFrom?: {
+    matrix?: string;
+    gateMap?: string;
+  };
 };
 
 const generatedAt = "2026-06-10T00:00:00.000Z";
@@ -107,6 +119,8 @@ try {
   });
 
   const blocking = readJson<GateStatusReport>(manifest.artifacts?.blockingGateStatus?.path ?? "");
+  assert.equal(blocking.generatedFrom?.matrix, manifest.generatedFrom?.matrix);
+  assert.equal(blocking.generatedFrom?.gateMap, manifest.generatedFrom?.gateMap);
   assert.deepEqual(blocking.gates?.map((gate) => gate.gate), [
     "PROD-CRON",
     "PROD-NATIVE",
@@ -121,6 +135,9 @@ try {
     missingEvidenceItems: 28,
   });
   assert.ok(blocking.gates?.every((gate) => (gate.blockingPartialRows?.length ?? 0) > 0));
+  const focused = readJson<FocusedManifest>(manifest.artifacts?.focusedArtifactsManifest?.path ?? "");
+  assert.equal(focused.generatedFrom?.matrix, manifest.generatedFrom?.matrix);
+  assert.equal(focused.generatedFrom?.gateMap, manifest.generatedFrom?.gateMap);
 
   const missingOutDir = spawnSync("pnpm", ["tsx", "src/scripts/report-production-preflight-artifacts.ts"], {
     cwd: process.cwd(),
@@ -185,6 +202,27 @@ try {
     cwd: process.cwd(),
     stdio: "ignore",
   });
+
+  const mismatchedFocusedManifestPath = archiveManifest.artifacts?.focusedArtifactsManifest?.path;
+  assert.ok(mismatchedFocusedManifestPath);
+  assert.ok(archiveManifest.artifacts?.focusedArtifactsManifest);
+  const mismatchedFocusedManifest = readJson<FocusedManifest>(mismatchedFocusedManifestPath);
+  assert.ok(mismatchedFocusedManifest.generatedFrom);
+  mismatchedFocusedManifest.generatedFrom.matrix = "docs/page-parity-matrix.json";
+  writeFileSync(mismatchedFocusedManifestPath, `${JSON.stringify(mismatchedFocusedManifest, null, 2)}\n`, "utf8");
+  archiveManifest.artifacts.focusedArtifactsManifest.digest = sha256File(mismatchedFocusedManifestPath);
+  const sourceMismatchManifestPath = join(tmp, "source-mismatch-preflight-artifacts.json");
+  writeFileSync(sourceMismatchManifestPath, `${JSON.stringify(archiveManifest, null, 2)}\n`, "utf8");
+  const sourceMismatch = spawnSync("pnpm", [
+    "tsx",
+    "src/scripts/verify-production-preflight-artifacts-manifest.ts",
+    `--manifest=${sourceMismatchManifestPath}`,
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.equal(sourceMismatch.status, 1);
+  assert.match(sourceMismatch.stderr, /Expected values to be strictly equal/);
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }

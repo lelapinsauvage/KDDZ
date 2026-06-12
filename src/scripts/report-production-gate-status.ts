@@ -73,8 +73,8 @@ const generatedAt = generatedAtValue();
 const selectedGate = optionValue("--gate");
 const requireReady = process.argv.includes("--require-ready");
 const blockingOnly = process.argv.includes("--blocking-only");
-const parityMatrixPath = optionValue("--parity-matrix");
-const partialGateMapPath = optionValue("--partial-gate-map");
+const parityMatrixPath = optionValue("--parity-matrix") ?? "docs/page-parity-matrix.json";
+const partialGateMapPath = optionValue("--partial-gate-map") ?? "docs/partial-production-gate-map.md";
 
 const readiness = runJson<ReadinessReport>("src/scripts/audit-production-readiness.ts", [
   "--json",
@@ -135,6 +135,8 @@ const payload = {
     readinessAudit: "src/scripts/audit-production-readiness.ts",
     partialReport: "src/scripts/report-production-partials.ts",
     evidenceChecklist: "src/scripts/report-production-evidence-checklist.ts",
+    matrix: parityMatrixPath,
+    gateMap: partialGateMapPath,
   },
   summary: {
     gates: gates.length,

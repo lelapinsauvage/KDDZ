@@ -31,6 +31,10 @@ type PreflightManifest = {
 
 type BlockingGateStatus = {
   status?: string;
+  generatedFrom?: {
+    matrix?: string;
+    gateMap?: string;
+  };
   summary?: {
     gates?: number;
     ready?: number;
@@ -41,6 +45,14 @@ type BlockingGateStatus = {
     gate?: string;
     blockingPartialRows?: unknown[];
   }>;
+};
+
+type FocusedManifest = {
+  status?: string;
+  generatedFrom?: {
+    matrix?: string;
+    gateMap?: string;
+  };
 };
 
 const manifestPath = optionValue("--manifest") ?? positionalArgs()[0];
@@ -91,6 +103,8 @@ execFileSync("pnpm", [
 
 const blockingStatus = readJson<BlockingGateStatus>(manifest.artifacts?.blockingGateStatus?.path ?? "");
 assert.equal(blockingStatus.status, "production gate status report");
+assert.equal(blockingStatus.generatedFrom?.matrix, manifest.generatedFrom.matrix);
+assert.equal(blockingStatus.generatedFrom?.gateMap, manifest.generatedFrom.gateMap);
 assert.deepEqual(blockingStatus.gates?.map((gate) => gate.gate), [
   "PROD-CRON",
   "PROD-NATIVE",
@@ -100,6 +114,11 @@ assert.deepEqual(blockingStatus.gates?.map((gate) => gate.gate), [
 assert.equal(blockingStatus.summary?.gates, 4);
 assert.equal(blockingStatus.summary?.blockingPartialRows, 17);
 assert.ok(blockingStatus.gates?.every((gate) => (gate.blockingPartialRows?.length ?? 0) > 0));
+
+const focusedManifest = readJson<FocusedManifest>(manifest.artifacts?.focusedArtifactsManifest?.path ?? "");
+assert.equal(focusedManifest.status, "production focused artifacts verified");
+assert.equal(focusedManifest.generatedFrom?.matrix, manifest.generatedFrom.matrix);
+assert.equal(focusedManifest.generatedFrom?.gateMap, manifest.generatedFrom.gateMap);
 
 console.log("production preflight artifacts manifest assertions passed");
 
