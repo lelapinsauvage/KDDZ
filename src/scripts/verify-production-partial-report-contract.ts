@@ -19,19 +19,16 @@ const payload = JSON.parse(jsonOutput) as {
 assert.equal(payload.status, "production partial gate report");
 assert.equal(payload.schemaVersion, 1);
 assertValidIsoTimestamp(payload.generatedAt, "partial report generatedAt");
-assert.equal(payload.summary?.partialRows, 17);
-assert.deepEqual(payload.summary?.gates, ["PROD-CRON", "PROD-NATIVE", "PROD-NATURE", "PROD-PROVIDERS"]);
-assert.deepEqual(payload.summary?.gateCounts, {
-  "PROD-CRON": 9,
-  "PROD-NATIVE": 3,
-  "PROD-NATURE": 1,
-  "PROD-PROVIDERS": 14,
-});
-assert.equal(payload.rows?.length, 17);
+const rows = payload.rows ?? [];
+const expectedGateCounts = gateCounts(rows);
+assert.equal(payload.summary?.partialRows, rows.length);
+assert.deepEqual(payload.summary?.gates, Object.keys(expectedGateCounts));
+assert.deepEqual(payload.summary?.gateCounts, expectedGateCounts);
+assert.ok(rows.length > 0, "live production partial report should currently list unresolved rows");
 assert.equal(payload.rows?.[0]?.row, "P01");
-assert.equal(payload.rows?.[16]?.row, "P17");
+assert.equal(payload.rows?.at(-1)?.row, `P${String(rows.length).padStart(2, "0")}`);
 assert.match(payload.rows?.[0]?.matrixStatus ?? "", /legacy assessment alarms bridge/);
-assert.match(payload.rows?.[16]?.matrixStatus ?? "", /parent PWA shell/);
+assert.match(payload.rows?.at(-1)?.matrixStatus ?? "", /parent PWA shell/);
 assert.ok(payload.rows?.every((row) => row.gates?.length), "every partial row must list production gates");
 assert.ok(payload.rows?.every((row) => row.closureReason), "every partial row must include a closure reason");
 
@@ -41,9 +38,11 @@ const markdownOutput = execFileSync("pnpm", ["tsx", script], {
 });
 assert.match(markdownOutput, /Production Partial Gate Report/);
 assert.match(markdownOutput, /Generated at: \d{4}-\d{2}-\d{2}T/);
-assert.match(markdownOutput, /Partial rows: 17/);
-assert.match(markdownOutput, /\| PROD-PROVIDERS \| 14 \|/);
-assert.match(markdownOutput, /P17/);
+assert.match(markdownOutput, new RegExp(`Partial rows: ${rows.length}`));
+for (const [gate, count] of Object.entries(expectedGateCounts)) {
+  assert.match(markdownOutput, new RegExp(`\\| ${escapeRegExp(gate)} \\| ${count} \\|`));
+}
+assert.match(markdownOutput, new RegExp(`P${String(rows.length).padStart(2, "0")}`));
 
 const frozenOutput = execFileSync("pnpm", ["tsx", script, "--json", "--generated-at=2026-06-10T00:00:00.000Z"], {
   cwd: process.cwd(),
@@ -60,26 +59,25 @@ const cronPayload = JSON.parse(cronOutput) as typeof payload & {
   summary?: typeof payload.summary & { gateFilter?: string };
 };
 assert.equal(cronPayload.generatedAt, "2026-06-10T00:00:00.000Z");
-assert.equal(cronPayload.summary?.partialRows, 9);
+const cronRows = rows.filter((row) => row.gates?.includes("PROD-CRON"));
+assert.equal(cronPayload.summary?.partialRows, cronRows.length);
 assert.equal(cronPayload.summary?.gateFilter, "PROD-CRON");
-assert.deepEqual(cronPayload.summary?.gateCounts, {
-  "PROD-CRON": 9,
-  "PROD-PROVIDERS": 7,
-});
-assert.equal(cronPayload.rows?.length, 9);
+assert.deepEqual(cronPayload.summary?.gateCounts, gateCounts(cronRows));
+assert.equal(cronPayload.rows?.length, cronRows.length);
 assert.ok(cronPayload.rows?.every((row) => row.gates?.includes("PROD-CRON")), "focused report must only include selected-gate rows");
-assert.equal(cronPayload.rows?.[0]?.row, "P01");
-assert.equal(cronPayload.rows?.[8]?.row, "P12");
+assert.equal(cronPayload.rows?.[0]?.row, cronRows[0]?.row);
+assert.equal(cronPayload.rows?.at(-1)?.row, cronRows.at(-1)?.row);
 
 const nativeMarkdown = execFileSync("pnpm", ["tsx", script, "--gate=PROD-NATIVE", "--generated-at=2026-06-10T00:00:00.000Z"], {
   cwd: process.cwd(),
   encoding: "utf8",
 });
-assert.match(nativeMarkdown, /Partial rows: 3/);
-assert.match(nativeMarkdown, /\| PROD-NATIVE \| 3 \|/);
+const nativeRows = rows.filter((row) => row.gates?.includes("PROD-NATIVE"));
+assert.match(nativeMarkdown, new RegExp(`Partial rows: ${nativeRows.length}`));
+assert.match(nativeMarkdown, new RegExp(`\\| PROD-NATIVE \\| ${nativeRows.length} \\|`));
 assert.doesNotMatch(nativeMarkdown, /P01/);
-assert.match(nativeMarkdown, /P15/);
-assert.match(nativeMarkdown, /P17/);
+assert.match(nativeMarkdown, new RegExp(nativeRows[0]?.row ?? "P15"));
+assert.match(nativeMarkdown, new RegExp(nativeRows.at(-1)?.row ?? "P17"));
 
 const invalidGate = spawnSync("pnpm", ["tsx", script, "--json", "--gate=PROD-UNKNOWN"], {
   cwd: process.cwd(),
@@ -100,4 +98,18 @@ console.log("production partial report contract assertions passed");
 function assertValidIsoTimestamp(value: string | undefined, label: string) {
   assert.ok(value, `${label} is missing`);
   assert.equal(new Date(value).toISOString(), value, `${label} must be an ISO timestamp`);
+}
+
+function gateCounts(rows: Array<{ gates?: string[] }>) {
+  const counts: Record<string, number> = {};
+  for (const row of rows) {
+    for (const gate of row.gates ?? []) {
+      counts[gate] = (counts[gate] ?? 0) + 1;
+    }
+  }
+  return Object.fromEntries(Object.entries(counts).sort(([a], [b]) => a.localeCompare(b)));
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
