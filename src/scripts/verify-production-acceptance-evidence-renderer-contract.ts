@@ -16,16 +16,10 @@ try {
   const preflightManifestPath = join(tmp, "preflight.json");
   const recordPath = join(tmp, "production-acceptance-evidence.md");
 
-  execFileSync("pnpm", ["tsx", "src/scripts/report-production-partials.ts", "--json", `--out=${partialPath}`, `--generated-at=${generatedAt}`], {
-    cwd: process.cwd(),
-    stdio: "ignore",
-  });
-  execFileSync("pnpm", ["tsx", "src/scripts/report-production-evidence-checklist.ts", "--json", `--out=${checklistPath}`, `--generated-at=${generatedAt}`], {
-    cwd: process.cwd(),
-    stdio: "ignore",
-  });
   writeFileSync(readinessPath, `${JSON.stringify(readinessReport(), null, 2)}\n`, "utf8");
   writeFileSync(closeoutSummaryPath, `${JSON.stringify(closeoutSummary(), null, 2)}\n`, "utf8");
+  writeFileSync(partialPath, `${JSON.stringify(partialReport(), null, 2)}\n`, "utf8");
+  writeFileSync(checklistPath, `${JSON.stringify(evidenceChecklist(), null, 2)}\n`, "utf8");
   writeFileSync(preflightManifestPath, `${JSON.stringify(preflightManifest(), null, 2)}\n`, "utf8");
 
   const output = execFileSync("pnpm", [
@@ -208,11 +202,43 @@ function closeoutSummary() {
       commit: "0404c6a",
       acceptanceDate: "2026-06-10",
     },
+    requireZeroPartials: true,
+    parityTracker: { total: 1713, complete: 1713, partial: 0, donePct: 100, leftPct: 0 },
+    partialReportSummary: { partialRows: 0, gates: [], gateCounts: {} },
+    evidenceChecklistSummary: { blockingPartialRows: 0 },
     generatedFrom: {
       matrix: "docs/page-parity-matrix.json",
       gateMap: "docs/partial-production-gate-map.md",
     },
     redacted: true,
+  };
+}
+
+function partialReport() {
+  return {
+    status: "production partial gate report",
+    schemaVersion: 1,
+    generatedAt,
+    summary: {
+      partialRows: 0,
+      gates: [],
+      gateCounts: {},
+    },
+    rows: [],
+  };
+}
+
+function evidenceChecklist() {
+  return {
+    status: "production evidence checklist",
+    schemaVersion: 1,
+    generatedAt,
+    summary: {
+      gates: 12,
+      requiredFields: 64,
+      blockingPartialRows: 0,
+    },
+    gates: [],
   };
 }
 

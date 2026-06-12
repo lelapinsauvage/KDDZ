@@ -8,6 +8,7 @@ import {
 } from "./production-acceptance-evidence-spec";
 
 type ReadinessReport = {
+  generatedAt?: string;
   redacted?: boolean;
   summary?: {
     ready?: number;
@@ -18,6 +19,44 @@ type ReadinessReport = {
     gate?: string;
     status?: string;
   }>;
+};
+
+type CloseoutSummary = {
+  generatedAt?: string;
+  requireZeroPartials?: boolean;
+  parityTracker?: {
+    partial?: number | null;
+  };
+  partialReportSummary?: {
+    partialRows?: number | null;
+  };
+  evidenceChecklistSummary?: {
+    blockingPartialRows?: number | null;
+  };
+};
+
+type PartialReport = {
+  generatedAt?: string;
+  summary?: {
+    partialRows?: number;
+  };
+};
+
+type EvidenceChecklist = {
+  generatedAt?: string;
+  summary?: {
+    blockingPartialRows?: number;
+  };
+};
+
+type PreflightManifest = {
+  generatedAt?: string;
+  blockingGateSummary?: {
+    blockingPartialRows?: number;
+    blockingGateLinks?: number;
+    closeoutMode?: string;
+    canCloseLocally?: boolean;
+  };
 };
 
 const recordPath = positionalArgs()[0];
@@ -34,10 +73,11 @@ const expectedPreflightDigest = optionValue("--preflight-digest");
 const expectedBranch = optionValue("--branch");
 const expectedCommit = optionValue("--commit");
 const expectedAcceptanceDate = optionValue("--acceptance-date");
+const requireZeroArtifacts = process.argv.includes("--require-zero-artifacts");
 
 if (!recordPath || recordPath.startsWith("-")) {
   console.error(
-    "Usage: pnpm tsx src/scripts/verify-production-acceptance-evidence-record.ts <filled-production-evidence.md> [--readiness-report=<redacted-readiness.json>] [--summary-report=<closeout-summary.json>] [--partial-report=<partials.json>] [--checklist-report=<evidence-checklist.json>] [--preflight-manifest=<preflight-artifacts.json>] [--readiness-digest=<sha256>] [--summary-digest=<sha256>] [--partial-digest=<sha256>] [--checklist-digest=<sha256>] [--preflight-digest=<sha256>] [--branch=<branch>] [--commit=<sha>] [--acceptance-date=<YYYY-MM-DD>]"
+    "Usage: pnpm tsx src/scripts/verify-production-acceptance-evidence-record.ts <filled-production-evidence.md> [--readiness-report=<redacted-readiness.json>] [--summary-report=<closeout-summary.json>] [--partial-report=<partials.json>] [--checklist-report=<evidence-checklist.json>] [--preflight-manifest=<preflight-artifacts.json>] [--readiness-digest=<sha256>] [--summary-digest=<sha256>] [--partial-digest=<sha256>] [--checklist-digest=<sha256>] [--preflight-digest=<sha256>] [--branch=<branch>] [--commit=<sha>] [--acceptance-date=<YYYY-MM-DD>] [--require-zero-artifacts]"
   );
   process.exit(2);
 }
@@ -72,6 +112,9 @@ if (readinessReportPath) {
 }
 verifyArtifactPointers(sections, errors);
 verifyArtifactDigests(sections, errors);
+if (requireZeroArtifacts) {
+  verifyFinalArtifactClosure(errors);
+}
 verifyBranchAndCommit(sections, errors);
 verifyAcceptanceDate(sections, errors);
 verifyFinalDecision(sections, errors);
@@ -338,6 +381,114 @@ function verifyArtifactDigests(
         "Run Metadata: Redacted closeout summary SHA-256 must say verified in evidence package manifest when --summary-digest is not supplied"
       );
     }
+  }
+}
+
+function verifyFinalArtifactClosure(errors: string[]) {
+  const generatedAtValues = new Map<string, string>();
+
+  if (readinessReportPath) {
+    const report = readJsonArtifact<ReadinessReport>(readinessReportPath, "readiness report", errors);
+    collectGeneratedAt(generatedAtValues, "readiness report", report?.generatedAt, errors);
+  }
+
+  if (closeoutSummaryPath) {
+    const summary = readJsonArtifact<CloseoutSummary>(closeoutSummaryPath, "closeout summary", errors);
+    collectGeneratedAt(generatedAtValues, "closeout summary", summary?.generatedAt, errors);
+    if (summary?.requireZeroPartials === false) {
+      errors.push("closeout summary: requireZeroPartials must not be false for final acceptance");
+    }
+    requireZero(summary?.parityTracker?.partial, "closeout summary parityTracker.partial", errors);
+    requireZero(summary?.partialReportSummary?.partialRows, "closeout summary partialReportSummary.partialRows", errors);
+    requireZero(
+      summary?.evidenceChecklistSummary?.blockingPartialRows,
+      "closeout summary evidenceChecklistSummary.blockingPartialRows",
+      errors
+    );
+  }
+
+  if (partialReportPath) {
+    const partialReport = readJsonArtifact<PartialReport>(partialReportPath, "partial report", errors);
+    collectGeneratedAt(generatedAtValues, "partial report", partialReport?.generatedAt, errors);
+    requireZero(partialReport?.summary?.partialRows, "partial report summary.partialRows", errors);
+  }
+
+  if (checklistReportPath) {
+    const checklist = readJsonArtifact<EvidenceChecklist>(checklistReportPath, "evidence checklist", errors);
+    collectGeneratedAt(generatedAtValues, "evidence checklist", checklist?.generatedAt, errors);
+    requireZero(checklist?.summary?.blockingPartialRows, "evidence checklist summary.blockingPartialRows", errors);
+  }
+
+  if (preflightManifestPath) {
+    const preflight = readJsonArtifact<PreflightManifest>(preflightManifestPath, "preflight manifest", errors);
+    collectGeneratedAt(generatedAtValues, "preflight manifest", preflight?.generatedAt, errors);
+    requireZero(
+      preflight?.blockingGateSummary?.blockingPartialRows,
+      "preflight manifest blockingGateSummary.blockingPartialRows",
+      errors
+    );
+    requireZero(
+      preflight?.blockingGateSummary?.blockingGateLinks,
+      "preflight manifest blockingGateSummary.blockingGateLinks",
+      errors
+    );
+    if (preflight?.blockingGateSummary?.canCloseLocally !== true) {
+      errors.push("preflight manifest: blockingGateSummary.canCloseLocally must be true for final acceptance");
+    }
+    if (preflight?.blockingGateSummary?.closeoutMode && preflight.blockingGateSummary.closeoutMode !== "ready-for-final-closeout") {
+      errors.push("preflight manifest: blockingGateSummary.closeoutMode must be ready-for-final-closeout");
+    }
+  }
+
+  const uniqueGeneratedAt = new Set(generatedAtValues.values());
+  if (uniqueGeneratedAt.size > 1) {
+    errors.push(
+      `artifact generatedAt values must match: ${[...generatedAtValues.entries()]
+        .map(([label, value]) => `${label}=${value}`)
+        .join(", ")}`
+    );
+  }
+}
+
+function readJsonArtifact<T>(path: string, label: string, errors: string[]) {
+  try {
+    const text = readFileSync(path, "utf8");
+    assertNoSensitiveContent(text);
+    return JSON.parse(text) as T;
+  } catch (error) {
+    errors.push(`${label}: could not read JSON artifact (${(error as Error).message})`);
+    return null;
+  }
+}
+
+function collectGeneratedAt(
+  generatedAtValues: Map<string, string>,
+  label: string,
+  value: string | undefined,
+  errors: string[]
+) {
+  if (!value) {
+    errors.push(`${label}: missing generatedAt`);
+    return;
+  }
+  try {
+    if (new Date(value).toISOString() !== value) {
+      errors.push(`${label}: generatedAt must be an ISO timestamp`);
+      return;
+    }
+  } catch {
+    errors.push(`${label}: generatedAt must be an ISO timestamp`);
+    return;
+  }
+  generatedAtValues.set(label, value);
+}
+
+function requireZero(value: number | null | undefined, label: string, errors: string[]) {
+  if (value === undefined || value === null) {
+    return;
+  }
+  if (value !== 0) {
+    errors.push(`${label} must be 0 for final acceptance, got ${value}`);
   }
 }
 

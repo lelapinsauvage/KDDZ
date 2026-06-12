@@ -22,16 +22,10 @@ try {
   const partialReportPath = join(tmp, "partials.json");
   const checklistReportPath = join(tmp, "evidence-checklist.json");
   const preflightManifestPath = join(tmp, "preflight-artifacts.json");
-  execFileSync("pnpm", ["tsx", "src/scripts/report-production-partials.ts", "--json", `--out=${partialReportPath}`], {
-    cwd: process.cwd(),
-    stdio: "ignore",
-  });
-  execFileSync("pnpm", ["tsx", "src/scripts/report-production-evidence-checklist.ts", "--json", `--out=${checklistReportPath}`], {
-    cwd: process.cwd(),
-    stdio: "ignore",
-  });
   writeFileSync(readinessReportPath, JSON.stringify(readinessReport(), null, 2), "utf8");
   writeFileSync(closeoutSummaryPath, JSON.stringify(closeoutSummary(), null, 2), "utf8");
+  writeFileSync(partialReportPath, JSON.stringify(partialReport(), null, 2), "utf8");
+  writeFileSync(checklistReportPath, JSON.stringify(evidenceChecklist(), null, 2), "utf8");
   writeFileSync(preflightManifestPath, JSON.stringify(preflightManifest(), null, 2), "utf8");
   const readinessReportDigest = sha256File(readinessReportPath);
   const closeoutSummaryDigest = sha256File(closeoutSummaryPath);
@@ -69,6 +63,7 @@ try {
     "--branch=legacy-parity-runbook",
     "--commit=0404c6a",
     "--acceptance-date=2026-06-10",
+    "--require-zero-artifacts",
   ]);
   assert.equal(validRecord.status, 0, validRecord.stdout + validRecord.stderr);
   assert.match(validRecord.stdout, /production acceptance evidence record verified/);
@@ -164,6 +159,7 @@ try {
     "--branch=legacy-parity-runbook",
     "--commit=0404c6a",
     "--acceptance-date=2026-06-10",
+    "--require-zero-artifacts",
   ]);
   assert.equal(deferredDecision.status, 1);
   assert.match(deferredDecision.stderr, /remaining production tickets must be none/);
@@ -285,6 +281,46 @@ try {
   ]);
   assert.equal(staleAcceptanceDate.status, 1);
   assert.match(staleAcceptanceDate.stderr, /Acceptance date must include 2026-06-11/);
+
+  const blockedPartialReportPath = join(tmp, "blocked-partials.json");
+  const blockedChecklistReportPath = join(tmp, "blocked-checklist.json");
+  const blockedPreflightManifestPath = join(tmp, "blocked-preflight.json");
+  writeFileSync(blockedPartialReportPath, JSON.stringify(partialReport({ partialRows: 1 }), null, 2), "utf8");
+  writeFileSync(blockedChecklistReportPath, JSON.stringify(evidenceChecklist({ blockingPartialRows: 1 }), null, 2), "utf8");
+  writeFileSync(
+    blockedPreflightManifestPath,
+    JSON.stringify(
+      preflightManifest({
+        blockingPartialRows: 1,
+        blockingGateLinks: 1,
+        closeoutMode: "external-production-evidence",
+        canCloseLocally: false,
+      }),
+      null,
+      2
+    ),
+    "utf8"
+  );
+  const blockedFinalArtifacts = runVerifier(validRecordPath, [
+    `--readiness-report=${readinessReportPath}`,
+    `--summary-report=${closeoutSummaryPath}`,
+    `--partial-report=${blockedPartialReportPath}`,
+    `--checklist-report=${blockedChecklistReportPath}`,
+    `--preflight-manifest=${blockedPreflightManifestPath}`,
+    `--readiness-digest=${readinessReportDigest}`,
+    `--partial-digest=${sha256File(blockedPartialReportPath)}`,
+    `--checklist-digest=${sha256File(blockedChecklistReportPath)}`,
+    `--preflight-digest=${sha256File(blockedPreflightManifestPath)}`,
+    "--branch=legacy-parity-runbook",
+    "--commit=0404c6a",
+    "--acceptance-date=2026-06-10",
+    "--require-zero-artifacts",
+  ]);
+  assert.equal(blockedFinalArtifacts.status, 1);
+  assert.match(blockedFinalArtifacts.stderr, /partial report summary\.partialRows must be 0/);
+  assert.match(blockedFinalArtifacts.stderr, /evidence checklist summary\.blockingPartialRows must be 0/);
+  assert.match(blockedFinalArtifacts.stderr, /preflight manifest blockingGateSummary\.blockingPartialRows must be 0/);
+  assert.match(blockedFinalArtifacts.stderr, /canCloseLocally must be true/);
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }
@@ -391,6 +427,10 @@ function closeoutSummary() {
     status: "production closeout verified",
     schemaVersion: 1,
     generatedAt: "2026-06-10T00:00:00.000Z",
+    requireZeroPartials: true,
+    parityTracker: { total: 1713, complete: 1713, partial: 0, donePct: 100, leftPct: 0 },
+    partialReportSummary: { partialRows: 0, gates: [], gateCounts: {} },
+    evidenceChecklistSummary: { blockingPartialRows: 0 },
     generatedFrom: {
       matrix: "docs/page-parity-matrix.json",
       gateMap: "docs/partial-production-gate-map.md",
@@ -399,7 +439,40 @@ function closeoutSummary() {
   };
 }
 
-function preflightManifest() {
+function partialReport(options: { partialRows?: number } = {}) {
+  return {
+    status: "production partial gate report",
+    schemaVersion: 1,
+    generatedAt: "2026-06-10T00:00:00.000Z",
+    summary: {
+      partialRows: options.partialRows ?? 0,
+      gates: options.partialRows ? ["PROD-NATIVE"] : [],
+      gateCounts: options.partialRows ? { "PROD-NATIVE": options.partialRows } : {},
+    },
+    rows: [],
+  };
+}
+
+function evidenceChecklist(options: { blockingPartialRows?: number } = {}) {
+  return {
+    status: "production evidence checklist",
+    schemaVersion: 1,
+    generatedAt: "2026-06-10T00:00:00.000Z",
+    summary: {
+      gates: 12,
+      requiredFields: 64,
+      blockingPartialRows: options.blockingPartialRows ?? 0,
+    },
+    gates: [],
+  };
+}
+
+function preflightManifest(options: {
+  blockingPartialRows?: number;
+  blockingGateLinks?: number;
+  closeoutMode?: string;
+  canCloseLocally?: boolean;
+} = {}) {
   return {
     status: "production preflight artifacts verified",
     schemaVersion: 1,
@@ -409,11 +482,11 @@ function preflightManifest() {
       gates: 0,
       ready: 12,
       needsEvidence: 0,
-      blockingPartialRows: 0,
-      blockingGateLinks: 0,
+      blockingPartialRows: options.blockingPartialRows ?? 0,
+      blockingGateLinks: options.blockingGateLinks ?? 0,
       missingEvidenceItems: 0,
-      closeoutMode: "ready-for-final-closeout",
-      canCloseLocally: true,
+      closeoutMode: options.closeoutMode ?? "ready-for-final-closeout",
+      canCloseLocally: options.canCloseLocally ?? true,
       gatesToClose: [],
     },
   };

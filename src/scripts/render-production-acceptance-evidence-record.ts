@@ -89,6 +89,7 @@ const verification = spawnSync("pnpm", [
   `--branch=${branch}`,
   `--commit=${commit}`,
   `--acceptance-date=${acceptanceDate}`,
+  "--require-zero-artifacts",
 ], {
   cwd: process.cwd(),
   encoding: "utf8",
