@@ -100,7 +100,13 @@ type BlockingGateSummary = {
   missingEvidenceItems?: number;
   closeoutMode?: string;
   canCloseLocally?: boolean;
-  gatesToClose?: unknown[];
+  gatesToClose?: Array<{
+    gate?: string;
+    blockingPartialRows?: number;
+    blockingGateLinks?: number;
+    missingEvidenceItems?: number;
+    nextActions?: string[];
+  }>;
 };
 
 type ArtifactManifest = {
@@ -293,6 +299,12 @@ function verifySelfTestContract() {
     assert.deepEqual(packageManifest.closeout.evidenceChecklistSummary, expectedEvidenceChecklistSummary);
     assert.deepEqual(packageManifest.preflight.blockingGateSummary, readPreflightBlockingGateSummary(preflightManifestPath));
     assert.equal(packageManifest.preflight.blockingGateSummary?.blockingGateLinks, 27);
+    assert.deepEqual(preflightGateLinkCounts(packageManifest.preflight.blockingGateSummary), {
+      "PROD-CRON": 9,
+      "PROD-NATIVE": 3,
+      "PROD-NATURE": 1,
+      "PROD-PROVIDERS": 14,
+    });
     assert.equal(packageManifest.preflight.blockingGateSummary?.closeoutMode, "external-production-evidence");
     assert.equal(packageManifest.preflight.blockingGateSummary?.canCloseLocally, false);
     assertPackageGeneratedAtConsistency(packageManifest);
@@ -555,6 +567,25 @@ function verifySelfTestContract() {
     assert.equal(preflightSummaryMismatch.status, 1);
     assert.match(preflightSummaryMismatch.stderr, /ready-for-final-closeout/);
     assertNoSensitiveOutput(preflightSummaryMismatch.stdout + preflightSummaryMismatch.stderr);
+
+    const preflightGateLinkMismatchManifestPath = join(tmp, "preflight-gate-link-mismatch-evidence-package.json");
+    const preflightGateLinkMismatchManifest = readJson<PackageManifest>(packageManifestPath);
+    const firstGateToClose = preflightGateLinkMismatchManifest.preflight.blockingGateSummary?.gatesToClose?.[0];
+    assert.ok(firstGateToClose);
+    firstGateToClose.blockingGateLinks = 999;
+    writeFileSync(preflightGateLinkMismatchManifestPath, `${JSON.stringify(preflightGateLinkMismatchManifest, null, 2)}\n`, "utf8");
+    const preflightGateLinkMismatch = runVerifier([
+      `--summary-report=${closeoutSummaryPath}`,
+      `--readiness-report=${readinessReportPath}`,
+      `--evidence-record=${evidenceRecordPath}`,
+      `--partial-report=${partialReportPath}`,
+      `--checklist-report=${checklistReportPath}`,
+      `--preflight-manifest=${preflightManifestPath}`,
+      `--manifest=${preflightGateLinkMismatchManifestPath}`,
+    ], false);
+    assert.equal(preflightGateLinkMismatch.status, 1);
+    assert.match(preflightGateLinkMismatch.stderr, /blockingGateLinks: 999/);
+    assertNoSensitiveOutput(preflightGateLinkMismatch.stdout + preflightGateLinkMismatch.stderr);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
@@ -602,6 +633,14 @@ function buildManifest(params: {
 function readPreflightBlockingGateSummary(path: string) {
   const preflight = readJson<{ blockingGateSummary?: BlockingGateSummary }>(path);
   return preflight.blockingGateSummary;
+}
+
+function preflightGateLinkCounts(summary: BlockingGateSummary | undefined) {
+  return Object.fromEntries(
+    (summary?.gatesToClose ?? [])
+      .map((gate): [string, number] => [gate.gate ?? "unknown", gate.blockingGateLinks ?? 0])
+      .sort(([a], [b]) => a.localeCompare(b))
+  );
 }
 
 function artifact(path: string): ArtifactManifest {
