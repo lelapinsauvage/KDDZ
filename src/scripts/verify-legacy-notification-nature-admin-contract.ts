@@ -11,6 +11,7 @@ const files = {
   client:
     "src/app/(app)/settings/notifications/notification-settings-client.tsx",
   parentNotifications: "src/app/api/parent/notifications/[childId]/route.ts",
+  topGaps: "docs/top-20-restoration-gaps.md",
   matrix: "docs/page-parity-matrix.json",
   matrixMd: "docs/page-parity-matrix.md",
 };
@@ -84,6 +85,18 @@ assert.match(contents.matrix, /verify-legacy-notification-nature-admin-contract\
 assert.doesNotMatch(
   contents.matrix,
   /notifications\.php[\s\S]*custom notification send\/edit workflows still need audit/,
+);
+assert.doesNotMatch(
+  contents.topGaps,
+  /Remaining work is parent\/custom notification families and production external provider send-job parity/,
+);
+assert.match(
+  contents.topGaps,
+  /Parent\/custom notification family restoration is now covered across birthday, assessment, medical, medicine, insurance, vaccination, payment, general\/closure, request, other, event, message, and `notifications_nature` admin\/runtime surfaces/,
+);
+assert.match(
+  contents.topGaps,
+  /Remaining acceptance is production external provider send-job execution plus canonical `notifications_nature` acceptance after production import/,
 );
 
 assert.match(

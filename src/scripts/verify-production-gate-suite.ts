@@ -99,6 +99,10 @@ const checks = [
     command: ["pnpm", "tsx", "src/scripts/verify-legacy-upload-surface-closure-contract.ts"],
   },
   {
+    label: "legacy notification nature admin contract",
+    command: ["pnpm", "tsx", "src/scripts/verify-legacy-notification-nature-admin-contract.ts"],
+  },
+  {
     label: "next Codex handoff contract",
     command: ["pnpm", "tsx", "src/scripts/verify-next-codex-handoff-contract.ts"],
   },
