@@ -118,7 +118,7 @@ const gates = (gateStatus.gates ?? []).map((gate) => {
     requiredEvidenceFields: gate.requiredEvidenceFields ?? [],
     blockingRows,
     blockingGateLinks: gate.blockingGateLinks ?? 0,
-    envTemplateCommand: `pnpm tsx src/scripts/render-production-readiness-env-template.ts --gate=${gate.gate} --out=/secure/private-readiness-${artifact.slug}.env`,
+    envTemplateCommand: `pnpm tsx src/scripts/render-production-readiness-env-template.ts --gate=${gate.gate} --include-work-orders --out=/secure/private-readiness-${artifact.slug}.env`,
     focusedArtifactCommands,
     evidenceWorkOrder: {
       externalDependency: "production evidence",

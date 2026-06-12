@@ -77,6 +77,7 @@ for (const gate of ["PROD-CRON", "PROD-PROVIDERS", "PROD-NATIVE", "PROD-NATURE"]
   assert.ok((entry.requiredEvidenceFields?.length ?? 0) > 0, `${gate} should list required evidence fields`);
   assert.ok((entry.blockingRows?.length ?? 0) > 0, `${gate} should list blocking rows`);
   assert.match(entry.envTemplateCommand ?? "", new RegExp(`render-production-readiness-env-template\\.ts --gate=${gate}`));
+  assert.match(entry.envTemplateCommand ?? "", /--include-work-orders/);
   assert.equal(entry.focusedArtifactCommands?.length, 3);
   assert.equal(entry.evidenceWorkOrder?.externalDependency, "production evidence");
   assert.match(entry.evidenceWorkOrder?.finishCondition ?? "", new RegExp(`Set every ${gate} evidence pointer`));
