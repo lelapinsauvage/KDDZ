@@ -34,6 +34,7 @@ type PreflightManifest = {
   status?: string;
   schemaVersion?: number;
   generatedAt?: string;
+  releaseMetadata?: ReleaseMetadata;
   generatedFrom?: {
     matrix?: string;
     gateMap?: string;
@@ -52,6 +53,12 @@ type PreflightManifest = {
   blockingGateSummary?: BlockingGateSummary;
   verifiedBy?: string[];
   redacted?: boolean;
+};
+
+type ReleaseMetadata = {
+  branch?: string;
+  commit?: string;
+  acceptanceDate?: string;
 };
 
 type BlockingGateSummary = {
@@ -188,6 +195,7 @@ verifyArtifactRef("blocking gate status", manifest.artifacts?.blockingGateStatus
 verifyArtifactRef("focused artifacts manifest", manifest.artifacts?.focusedArtifactsManifest);
 verifyArtifactRef("closeout plan", manifest.artifacts?.closeoutPlan);
 verifyReadinessEnvTemplates(manifest.artifacts?.readinessEnvTemplates);
+verifyReleaseMetadata(manifest.releaseMetadata);
 
 const partialReport = readJson<PartialReport>(manifest.artifacts?.partialReport?.path ?? "");
 const evidenceChecklist = readJson<EvidenceChecklist>(manifest.artifacts?.evidenceChecklist?.path ?? "");
@@ -271,6 +279,8 @@ assert.deepEqual(
 assertCloseoutPlanWorkOrders(closeoutPlan, blockingStatus);
 assert.ok(closeoutPlan.finalCloseoutCommands?.some((command) => command.includes("verify-production-preflight-artifacts-manifest.ts")));
 assert.ok(closeoutPlan.finalCloseoutCommands?.some((command) => command.includes("--manifest=/tmp/kiddzonl-production-evidence-package.json")));
+assertReleaseMetadataAppliedToCloseoutPlan(closeoutPlan, manifest.releaseMetadata);
+assertReleaseMetadataAppliedToReadinessEnvTemplates(manifest.artifacts?.readinessEnvTemplates, manifest.releaseMetadata);
 
 console.log("production preflight artifacts manifest assertions passed");
 
@@ -301,6 +311,42 @@ function verifyReadinessEnvTemplates(templates: Record<string, ArtifactRef> | un
       assert.match(text, new RegExp(`Finish condition: Set every ${expectedScopes[key]} evidence pointer`), `${key} readiness env template is missing work order finish condition`);
       assert.match(text, new RegExp(`--gate=${expectedScopes[key]}`), `${key} readiness env template is missing focused proof command`);
     }
+  }
+}
+
+function verifyReleaseMetadata(metadata: ReleaseMetadata | undefined) {
+  if (!metadata) return;
+  assertNonEmptyString(metadata.branch, "preflight release metadata is missing branch");
+  assertNonEmptyString(metadata.commit, "preflight release metadata is missing commit");
+  assertNonEmptyString(metadata.acceptanceDate, "preflight release metadata is missing acceptanceDate");
+  assert.match(metadata.acceptanceDate, /^\d{4}-\d{2}-\d{2}$/, "preflight release acceptanceDate must use YYYY-MM-DD");
+}
+
+function assertReleaseMetadataAppliedToCloseoutPlan(plan: CloseoutPlan, metadata: ReleaseMetadata | undefined) {
+  if (!metadata) return;
+  const expectedRef = `--branch=${metadata.branch} --commit=${metadata.commit}`;
+  assert.ok(
+    plan.finalCloseoutCommands?.some((command) => command.includes(`${expectedRef} --acceptance-date=${metadata.acceptanceDate}`)),
+    "preflight closeout plan is missing release-bound evidence record command"
+  );
+  assert.ok(
+    plan.finalCloseoutCommands?.some((command) => command.includes(expectedRef) && command.includes("--require-zero-partials")),
+    "preflight closeout plan is missing release-bound final package commands"
+  );
+  assert.ok(plan.finalCloseoutCommands?.every((command) => !command.includes("<release-commit-sha>")));
+  assert.ok(plan.finalCloseoutCommands?.every((command) => !command.includes("<YYYY-MM-DD>")));
+}
+
+function assertReleaseMetadataAppliedToReadinessEnvTemplates(
+  templates: Record<string, ArtifactRef> | undefined,
+  metadata: ReleaseMetadata | undefined
+) {
+  if (!metadata) return;
+  for (const [key, artifact] of Object.entries(templates ?? {})) {
+    const text = readFileSync(artifact.path ?? "", "utf8");
+    assert.match(text, new RegExp(`# Release branch: ${escapeRegExp(metadata.branch ?? "")}`), `${key} readiness env template release branch drifted`);
+    assert.match(text, new RegExp(`# Release commit: ${escapeRegExp(metadata.commit ?? "")}`), `${key} readiness env template release commit drifted`);
+    assert.match(text, new RegExp(`# Acceptance date: ${escapeRegExp(metadata.acceptanceDate ?? "")}`), `${key} readiness env template acceptance date drifted`);
   }
 }
 
@@ -422,4 +468,8 @@ function optionValue(name: string) {
 function assertNonEmptyString(value: unknown, message: string): asserts value is string {
   assert.ok(typeof value === "string", message);
   assert.ok(value.trim(), message);
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

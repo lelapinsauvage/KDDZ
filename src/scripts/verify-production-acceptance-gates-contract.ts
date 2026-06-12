@@ -617,7 +617,7 @@ assert.match(contents.gates, /validates mapped gate ids against `docs\/legacy-pr
 assert.match(contents.gates, /--production-gates=<path>/);
 assert.match(contents.gates, /report-production-focused-artifacts\.ts/);
 assert.match(contents.gates, /report-production-preflight-artifacts\.ts/);
-assert.match(contents.gates, /nested closeout plan's final commands and stamp the readiness env template work-order comments with the exact release ref inside the archived preflight bundle/);
+assert.match(contents.gates, /record `releaseMetadata` in the preflight manifest with the exact release ref inside the archived preflight bundle/);
 assert.match(contents.gates, /report-production-closeout-plan\.ts/);
 assert.match(contents.gates, /--release-branch=<branch>/);
 assert.match(contents.gates, /--release-commit=<sha>/);
@@ -630,6 +630,7 @@ assert.match(contents.gates, /full partial report, full evidence checklist, bloc
 assert.match(contents.gates, /unique blocking rows, total blocking gate links, missing evidence count, `closeoutMode`, `canCloseLocally`, and per-gate next actions/);
 assert.match(contents.gates, /rejecting drift in `blockingGateSummary`, including `blockingGateLinks`, `closeoutMode`, or `canCloseLocally`/);
 assert.match(contents.gates, /readiness env template placeholders/);
+assert.match(contents.gates, /release metadata binding/);
 assert.match(contents.gates, /checking the archived closeout plan summary and final commands/);
 assert.match(contents.gates, /report-production-gate-status\.ts/);
 assert.match(contents.gates, /--require-ready/);

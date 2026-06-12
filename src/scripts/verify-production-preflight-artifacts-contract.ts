@@ -35,6 +35,11 @@ type PreflightManifest = {
   status?: string;
   schemaVersion?: number;
   generatedAt?: string;
+  releaseMetadata?: {
+    branch?: string;
+    commit?: string;
+    acceptanceDate?: string;
+  };
   generatedFrom?: {
     matrix?: string;
     gateMap?: string;
@@ -301,6 +306,11 @@ try {
     encoding: "utf8",
   });
   const releaseBoundManifest = JSON.parse(releaseBoundOutput) as PreflightManifest;
+  assert.deepEqual(releaseBoundManifest.releaseMetadata, {
+    branch: "legacy-parity-runbook",
+    commit: "c3cdaab",
+    acceptanceDate: "2026-06-12",
+  });
   const releaseBoundCloseoutPlan = readJson<CloseoutPlan>(releaseBoundManifest.artifacts?.closeoutPlan?.path ?? "");
   assert.ok(releaseBoundCloseoutPlan.finalCloseoutCommands?.some((command) =>
     command.includes("--branch=legacy-parity-runbook --commit=c3cdaab --acceptance-date=2026-06-12")
@@ -319,6 +329,19 @@ try {
     cwd: process.cwd(),
     stdio: "ignore",
   });
+
+  const partialReleaseMetadata = spawnSync("pnpm", [
+    "tsx",
+    "src/scripts/report-production-preflight-artifacts.ts",
+    `--out-dir=${join(tmp, "partial-release-metadata")}`,
+    `--generated-at=${generatedAt}`,
+    "--release-branch=legacy-parity-runbook",
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.equal(partialReleaseMetadata.status, 2);
+  assert.match(partialReleaseMetadata.stderr, /must be provided together/);
 
   const missingOutDir = spawnSync("pnpm", ["tsx", "src/scripts/report-production-preflight-artifacts.ts"], {
     cwd: process.cwd(),

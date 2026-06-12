@@ -13,6 +13,7 @@ type PreflightManifest = {
   status: "production preflight artifacts verified";
   schemaVersion: 1;
   generatedAt: string;
+  releaseMetadata?: ReleaseMetadata;
   generatedFrom: {
     matrix: string;
     gateMap: string;
@@ -31,6 +32,12 @@ type PreflightManifest = {
   blockingGateSummary: BlockingGateSummary;
   verifiedBy: string[];
   redacted: true;
+};
+
+type ReleaseMetadata = {
+  branch: string;
+  commit: string;
+  acceptanceDate: string;
 };
 
 type BlockingGateSummary = {
@@ -86,9 +93,7 @@ const generatedAt = generatedAtValue();
 const parityMatrixPath = optionValue("--parity-matrix") ?? "docs/page-parity-matrix.json";
 const partialGateMapPath = optionValue("--partial-gate-map") ?? "docs/partial-production-gate-map.md";
 const productionGatesPath = optionValue("--production-gates") ?? "docs/legacy-production-acceptance-gates.md";
-const releaseBranch = optionValue("--release-branch");
-const releaseCommit = optionValue("--release-commit");
-const acceptanceDate = optionValue("--acceptance-date");
+const releaseMetadata = releaseMetadataValue();
 
 if (!outputDir) {
   console.error(
@@ -138,9 +143,9 @@ run("src/scripts/report-production-closeout-plan.ts", [
   `--parity-matrix=${parityMatrixPath}`,
   `--partial-gate-map=${partialGateMapPath}`,
   `--production-gates=${productionGatesPath}`,
-  ...optionalArg("--release-branch", releaseBranch),
-  ...optionalArg("--release-commit", releaseCommit),
-  ...optionalArg("--acceptance-date", acceptanceDate),
+  ...optionalArg("--release-branch", releaseMetadata?.branch),
+  ...optionalArg("--release-commit", releaseMetadata?.commit),
+  ...optionalArg("--acceptance-date", releaseMetadata?.acceptanceDate),
 ]);
 const readinessEnvTemplates = writeReadinessEnvTemplates(readinessEnvTemplateDir);
 run("src/scripts/verify-production-artifact-consistency-contract.ts", [
@@ -164,6 +169,7 @@ const manifest: PreflightManifest = {
   status: "production preflight artifacts verified",
   schemaVersion: 1,
   generatedAt,
+  ...(releaseMetadata ? { releaseMetadata } : {}),
   generatedFrom: {
     matrix: parityMatrixPath,
     gateMap: partialGateMapPath,
@@ -221,9 +227,9 @@ function writeReadinessEnvTemplates(outputDir: string) {
       "--include-work-orders",
       `--out=${template.path}`,
       ...optionalArg("--gate", template.gate),
-      ...optionalArg("--release-branch", releaseBranch),
-      ...optionalArg("--release-commit", releaseCommit),
-      ...optionalArg("--acceptance-date", acceptanceDate),
+      ...optionalArg("--release-branch", releaseMetadata?.branch),
+      ...optionalArg("--release-commit", releaseMetadata?.commit),
+      ...optionalArg("--acceptance-date", releaseMetadata?.acceptanceDate),
     ]);
   }
   return Object.fromEntries(
@@ -287,6 +293,22 @@ function optionValue(name: string) {
 
 function optionalArg(name: string, value: string | null | undefined) {
   return value ? [`${name}=${value}`] : [];
+}
+
+function releaseMetadataValue(): ReleaseMetadata | undefined {
+  const branch = optionValue("--release-branch");
+  const commit = optionValue("--release-commit");
+  const acceptanceDate = optionValue("--acceptance-date");
+  if (!branch && !commit && !acceptanceDate) return undefined;
+  if (!branch || !commit || !acceptanceDate) {
+    console.error("--release-branch, --release-commit, and --acceptance-date must be provided together");
+    process.exit(2);
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(acceptanceDate)) {
+    console.error("--acceptance-date must use YYYY-MM-DD format");
+    process.exit(2);
+  }
+  return { branch, commit, acceptanceDate };
 }
 
 function generatedAtValue() {
