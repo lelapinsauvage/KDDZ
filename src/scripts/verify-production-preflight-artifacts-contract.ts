@@ -44,8 +44,23 @@ type PreflightManifest = {
     blockingGateStatus?: ArtifactRef;
     focusedArtifactsManifest?: ArtifactRef;
   };
+  blockingGateSummary?: BlockingGateSummary;
   verifiedBy?: string[];
   redacted?: boolean;
+};
+
+type BlockingGateSummary = {
+  gates?: number;
+  ready?: number;
+  needsEvidence?: number;
+  blockingPartialRows?: number;
+  missingEvidenceItems?: number;
+  gatesToClose?: Array<{
+    gate?: string;
+    blockingPartialRows?: number;
+    missingEvidenceItems?: number;
+    nextActions?: string[];
+  }>;
 };
 
 type GateStatusReport = {
@@ -71,7 +86,7 @@ type GateStatusReport = {
     blockingPartialRows?: number;
     missingEvidenceItems?: number;
   };
-  gates?: Array<{ gate?: string; blockingPartialRows?: unknown[] }>;
+  gates?: Array<{ gate?: string; missingEvidence?: unknown[]; blockingPartialRows?: unknown[]; nextActions?: string[] }>;
 };
 
 type FocusedManifest = {
@@ -175,6 +190,8 @@ try {
   assert.equal(blocking.summary?.blockingPartialRows, partial.summary?.partialRows);
   assert.ok((blocking.summary?.missingEvidenceItems ?? 0) > 0);
   assert.ok(blocking.gates?.every((gate) => (gate.blockingPartialRows?.length ?? 0) > 0));
+  assert.deepEqual(manifest.blockingGateSummary, blockingGateSummary(blocking));
+  assert.ok(manifest.blockingGateSummary?.gatesToClose?.every((gate) => (gate.nextActions?.length ?? 0) > 0));
   const focused = readJson<FocusedManifest>(manifest.artifacts?.focusedArtifactsManifest?.path ?? "");
   assert.equal(focused.generatedAt, manifest.generatedAt);
   assert.equal(focused.generatedFrom?.matrix, manifest.generatedFrom?.matrix);
@@ -265,6 +282,22 @@ try {
   assert.equal(sourceMismatch.status, 1);
   assert.match(sourceMismatch.stderr, /verify-production-focused-artifacts-manifest\.ts/);
 
+  const blockingSummaryMismatchManifest = JSON.parse(JSON.stringify(manifest)) as PreflightManifest;
+  assert.ok(blockingSummaryMismatchManifest.blockingGateSummary);
+  blockingSummaryMismatchManifest.blockingGateSummary.blockingPartialRows = 999;
+  const blockingSummaryMismatchPath = join(tmp, "blocking-summary-mismatch-preflight-artifacts.json");
+  writeFileSync(blockingSummaryMismatchPath, `${JSON.stringify(blockingSummaryMismatchManifest, null, 2)}\n`, "utf8");
+  const blockingSummaryMismatch = spawnSync("pnpm", [
+    "tsx",
+    "src/scripts/verify-production-preflight-artifacts-manifest.ts",
+    `--manifest=${blockingSummaryMismatchPath}`,
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.equal(blockingSummaryMismatch.status, 1);
+  assert.match(blockingSummaryMismatch.stderr, /blockingPartialRows: 999/);
+
   const generatedAtMismatchManifest = JSON.parse(JSON.stringify(manifest)) as PreflightManifest;
   const generatedAtMismatchStatusPath = generatedAtMismatchManifest.artifacts?.blockingGateStatus?.path;
   assert.ok(generatedAtMismatchStatusPath);
@@ -334,6 +367,7 @@ try {
   });
   assert.equal(sourceAlignmentMismatch.status, 1);
   assert.match(sourceAlignmentMismatch.stderr, /status: 'stale'/);
+
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }
@@ -365,6 +399,22 @@ function gateCounts(gates: Array<{ gate?: string; blockingPartialRows?: unknown[
       .map((gate): [string, number] => [gate.gate as string, gate.blockingPartialRows?.length ?? 0])
       .sort(([a], [b]) => a.localeCompare(b))
   );
+}
+
+function blockingGateSummary(status: GateStatusReport): BlockingGateSummary {
+  return {
+    gates: status.summary?.gates ?? 0,
+    ready: status.summary?.ready ?? 0,
+    needsEvidence: status.summary?.needsEvidence ?? 0,
+    blockingPartialRows: status.summary?.blockingPartialRows ?? 0,
+    missingEvidenceItems: status.summary?.missingEvidenceItems ?? 0,
+    gatesToClose: (status.gates ?? []).map((gate) => ({
+      gate: gate.gate ?? "unknown",
+      blockingPartialRows: gate.blockingPartialRows?.length ?? 0,
+      missingEvidenceItems: gate.missingEvidence?.length ?? 0,
+      nextActions: gate.nextActions ?? [],
+    })),
+  };
 }
 
 function assertNoSensitiveOutput(output: string) {

@@ -43,8 +43,23 @@ type PreflightManifest = {
     blockingGateStatus?: ArtifactRef;
     focusedArtifactsManifest?: ArtifactRef;
   };
+  blockingGateSummary?: BlockingGateSummary;
   verifiedBy?: string[];
   redacted?: boolean;
+};
+
+type BlockingGateSummary = {
+  gates?: number;
+  ready?: number;
+  needsEvidence?: number;
+  blockingPartialRows?: number;
+  missingEvidenceItems?: number;
+  gatesToClose?: Array<{
+    gate?: string;
+    blockingPartialRows?: number;
+    missingEvidenceItems?: number;
+    nextActions?: string[];
+  }>;
 };
 
 type BlockingGateStatus = {
@@ -69,10 +84,13 @@ type BlockingGateStatus = {
     ready?: number;
     needsEvidence?: number;
     blockingPartialRows?: number;
+    missingEvidenceItems?: number;
   };
   gates?: Array<{
     gate?: string;
+    missingEvidence?: unknown[];
     blockingPartialRows?: unknown[];
+    nextActions?: string[];
   }>;
 };
 
@@ -157,6 +175,7 @@ assert.deepEqual(blockingStatus.gates?.map((gate) => gate.gate), Object.keys(exp
 assert.equal(blockingStatus.summary?.gates, Object.keys(expectedGateCounts).length);
 assert.equal(blockingStatus.summary?.blockingPartialRows, partialReport.summary?.partialRows);
 assert.ok(blockingStatus.gates?.every((gate) => (gate.blockingPartialRows?.length ?? 0) > 0));
+assert.deepEqual(manifest.blockingGateSummary, blockingGateSummary(blockingStatus));
 
 const focusedManifest = readJson<FocusedManifest>(manifest.artifacts?.focusedArtifactsManifest?.path ?? "");
 assert.equal(focusedManifest.status, "production focused artifacts verified");
@@ -191,6 +210,22 @@ function gateCounts(gates: Array<{ gate?: string; blockingPartialRows?: unknown[
       .map((gate): [string, number] => [gate.gate as string, gate.blockingPartialRows?.length ?? 0])
       .sort(([a], [b]) => a.localeCompare(b))
   );
+}
+
+function blockingGateSummary(status: BlockingGateStatus): BlockingGateSummary {
+  return {
+    gates: status.summary?.gates ?? 0,
+    ready: status.summary?.ready ?? 0,
+    needsEvidence: status.summary?.needsEvidence ?? 0,
+    blockingPartialRows: status.summary?.blockingPartialRows ?? 0,
+    missingEvidenceItems: status.summary?.missingEvidenceItems ?? 0,
+    gatesToClose: (status.gates ?? []).map((gate) => ({
+      gate: gate.gate ?? "unknown",
+      blockingPartialRows: gate.blockingPartialRows?.length ?? 0,
+      missingEvidenceItems: gate.missingEvidence?.length ?? 0,
+      nextActions: gate.nextActions ?? [],
+    })),
+  };
 }
 
 function assertNoSensitiveOutput(output: string) {

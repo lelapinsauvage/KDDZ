@@ -25,8 +25,39 @@ type PreflightManifest = {
     blockingGateStatus: ArtifactRef;
     focusedArtifactsManifest: ArtifactRef;
   };
+  blockingGateSummary: BlockingGateSummary;
   verifiedBy: string[];
   redacted: true;
+};
+
+type BlockingGateSummary = {
+  gates: number;
+  ready: number;
+  needsEvidence: number;
+  blockingPartialRows: number;
+  missingEvidenceItems: number;
+  gatesToClose: Array<{
+    gate: string;
+    blockingPartialRows: number;
+    missingEvidenceItems: number;
+    nextActions: string[];
+  }>;
+};
+
+type BlockingGateStatus = {
+  summary?: {
+    gates?: number;
+    ready?: number;
+    needsEvidence?: number;
+    blockingPartialRows?: number;
+    missingEvidenceItems?: number;
+  };
+  gates?: Array<{
+    gate?: string;
+    missingEvidence?: string[];
+    blockingPartialRows?: unknown[];
+    nextActions?: string[];
+  }>;
 };
 
 const outputDir = optionValue("--out-dir");
@@ -84,6 +115,7 @@ run("src/scripts/verify-production-focused-artifacts-manifest.ts", [
   `--manifest=${focusedManifestPath}`,
 ]);
 
+const blockingGateSummary = summarizeBlockingGateStatus(blockingGateStatusPath);
 const manifest: PreflightManifest = {
   status: "production preflight artifacts verified",
   schemaVersion: 1,
@@ -100,6 +132,7 @@ const manifest: PreflightManifest = {
     blockingGateStatus: artifact(blockingGateStatusPath),
     focusedArtifactsManifest: artifact(focusedManifestPath),
   },
+  blockingGateSummary,
   verifiedBy: [
     "src/scripts/verify-production-artifact-consistency-contract.ts",
     "src/scripts/verify-production-focused-artifacts-manifest.ts",
@@ -124,6 +157,23 @@ function artifact(path: string): ArtifactRef {
     path,
     algorithm: "sha256",
     digest: createHash("sha256").update(readFileSync(path)).digest("hex"),
+  };
+}
+
+function summarizeBlockingGateStatus(path: string): BlockingGateSummary {
+  const status = JSON.parse(readFileSync(path, "utf8")) as BlockingGateStatus;
+  return {
+    gates: status.summary?.gates ?? 0,
+    ready: status.summary?.ready ?? 0,
+    needsEvidence: status.summary?.needsEvidence ?? 0,
+    blockingPartialRows: status.summary?.blockingPartialRows ?? 0,
+    missingEvidenceItems: status.summary?.missingEvidenceItems ?? 0,
+    gatesToClose: (status.gates ?? []).map((gate) => ({
+      gate: gate.gate ?? "unknown",
+      blockingPartialRows: gate.blockingPartialRows?.length ?? 0,
+      missingEvidenceItems: gate.missingEvidence?.length ?? 0,
+      nextActions: gate.nextActions ?? [],
+    })),
   };
 }
 
