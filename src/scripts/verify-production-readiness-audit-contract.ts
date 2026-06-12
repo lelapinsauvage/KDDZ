@@ -165,6 +165,8 @@ const providerRequirementPayload = JSON.parse(providerRequirements.stdout) as {
 };
 assert.equal(providerRequirementPayload.evidenceRequirements?.length, 0);
 assert.equal(providerRequirementPayload.providerRequirements?.length, 9);
+assert.match(providerRequirements.stdout, /P01-P03\/P05-P09\/P11-P15\/P17 provider gate coverage/);
+assert.doesNotMatch(providerRequirements.stdout, /P01-P17 provider gate coverage/);
 assertNoSensitiveOutput(providerRequirements.stdout + providerRequirements.stderr);
 
 const cronRequirements = runAudit(["--list-requirements", "--gate=PROD-CRON"]);

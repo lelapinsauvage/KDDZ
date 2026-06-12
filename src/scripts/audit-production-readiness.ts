@@ -488,7 +488,7 @@ function printRequirements(params: { json: boolean; gateFilter: GateId | null })
     {
       provider: "partial-row-evidence",
       acceptedSetup:
-        "PROVIDER_PARTIAL_ROW_COVERAGE_REPORT pointing to a non-secret P01-P17 provider gate coverage report with sent/skipped/disabled outcomes",
+        "PROVIDER_PARTIAL_ROW_COVERAGE_REPORT pointing to a non-secret P01-P03/P05-P09/P11-P15/P17 provider gate coverage report with sent/skipped/disabled outcomes",
     },
     {
       provider: "push",

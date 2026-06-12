@@ -188,7 +188,7 @@ export const productionEvidencePlaceholderValues = [
   "disabled/resend/webhook",
   "disabled/webhook",
   "family/channel list",
-  "p01-p17 report id/path",
+  "p01-p03/p05-p09/p11-p15/p17 report id/path",
   "found/missing/default/unsafe counts",
   "rewritten/skipped/unsupported counts",
   "accepted/fixed/ticket ids",
