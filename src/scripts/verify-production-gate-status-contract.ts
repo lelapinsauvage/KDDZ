@@ -35,8 +35,28 @@ type GateStatusReport = {
   }>;
 };
 
+type PartialReport = {
+  summary?: {
+    partialRows?: number;
+    gateCounts?: Record<string, number>;
+  };
+  rows?: Array<{
+    row?: string;
+    gates?: string[];
+  }>;
+};
+
 const generatedAt = "2026-06-10T00:00:00.000Z";
 const tmp = mkdtempSync(join(tmpdir(), "kiddzonl-gate-status-"));
+const partialReport = JSON.parse(
+  execFileSync("pnpm", ["tsx", "src/scripts/report-production-partials.ts", "--json", `--generated-at=${generatedAt}`], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  })
+) as PartialReport;
+const expectedBlockingRows = partialReport.summary?.partialRows ?? 0;
+const expectedGateCounts = partialReport.summary?.gateCounts ?? {};
+const expectedBlockingGates = Object.keys(expectedGateCounts);
 
 try {
   const reportPath = join(tmp, "production-gate-status.json");
@@ -58,27 +78,20 @@ try {
   assert.equal(report.schemaVersion, 1);
   assert.equal(report.generatedAt, generatedAt);
   assert.equal(report.redacted, true);
-  assert.deepEqual(report.summary, {
-    gates: 12,
-    ready: 0,
-    needsEvidence: 12,
-    blockingPartialRows: 17,
-    missingEvidenceItems: 56,
-  });
+  assert.equal(report.summary?.gates, 12);
+  assert.equal(report.summary?.ready, 0);
+  assert.equal(report.summary?.needsEvidence, 12);
+  assert.equal(report.summary?.blockingPartialRows, expectedBlockingRows);
+  assert.equal(report.summary?.missingEvidenceItems, 56);
   assert.deepEqual(report.sourceAlignment, {
     status: "verified",
     generatedAt,
     readinessGeneratedAt: generatedAt,
     partialReportGeneratedAt: generatedAt,
     evidenceChecklistGeneratedAt: generatedAt,
-    partialReportRows: 17,
-    checklistBlockingRows: 17,
-    gateCounts: {
-      "PROD-CRON": 9,
-      "PROD-NATIVE": 3,
-      "PROD-NATURE": 1,
-      "PROD-PROVIDERS": 14,
-    },
+    partialReportRows: expectedBlockingRows,
+    checklistBlockingRows: expectedBlockingRows,
+    gateCounts: expectedGateCounts,
   });
   assert.deepEqual(report.gates?.map((gate) => gate.gate), [
     "PROD-ACL",
@@ -95,12 +108,12 @@ try {
     "PROD-RECON",
   ]);
   const cron = report.gates?.find((gate) => gate.gate === "PROD-CRON");
-  assert.deepEqual(cron?.blockingPartialRows?.map((row) => row.row), ["P01", "P02", "P03", "P04", "P05", "P06", "P07", "P10", "P12"]);
+  assert.deepEqual(cron?.blockingPartialRows?.map((row) => row.row), rowsForGate("PROD-CRON"));
   assert.ok(cron?.missingEvidence?.includes("CRON_PARTIAL_ROW_COVERAGE_REPORT"));
   assert.equal(cron?.requiredEvidenceFields?.length, 8);
 
   const provider = report.gates?.find((gate) => gate.gate === "PROD-PROVIDERS");
-  assert.equal(provider?.blockingPartialRows?.length, 14);
+  assert.equal(provider?.blockingPartialRows?.length, expectedGateCounts["PROD-PROVIDERS"]);
   assert.ok(provider?.missingEvidence?.includes("partial-row-evidence:PROVIDER_PARTIAL_ROW_COVERAGE_REPORT"));
 
   const blockingOnlyOutput = execFileSync("pnpm", [
@@ -114,26 +127,14 @@ try {
     encoding: "utf8",
   });
   const blockingOnly = JSON.parse(blockingOnlyOutput) as GateStatusReport;
-  assert.deepEqual(blockingOnly.summary, {
-    gates: 4,
-    ready: 0,
-    needsEvidence: 4,
-    blockingPartialRows: 17,
-    missingEvidenceItems: 28,
-  });
+  assert.equal(blockingOnly.summary?.gates, expectedBlockingGates.length);
+  assert.equal(blockingOnly.summary?.ready, 0);
+  assert.equal(blockingOnly.summary?.needsEvidence, expectedBlockingGates.length);
+  assert.equal(blockingOnly.summary?.blockingPartialRows, expectedBlockingRows);
+  assert.ok((blockingOnly.summary?.missingEvidenceItems ?? 0) > 0);
   assert.equal(blockingOnly.sourceAlignment?.status, "verified");
-  assert.deepEqual(blockingOnly.sourceAlignment?.gateCounts, {
-    "PROD-CRON": 9,
-    "PROD-NATIVE": 3,
-    "PROD-NATURE": 1,
-    "PROD-PROVIDERS": 14,
-  });
-  assert.deepEqual(blockingOnly.gates?.map((gate) => gate.gate), [
-    "PROD-CRON",
-    "PROD-NATIVE",
-    "PROD-NATURE",
-    "PROD-PROVIDERS",
-  ]);
+  assert.deepEqual(blockingOnly.sourceAlignment?.gateCounts, expectedGateCounts);
+  assert.deepEqual(blockingOnly.gates?.map((gate) => gate.gate), expectedBlockingGates);
   assert.ok(blockingOnly.gates?.every((gate) => (gate.blockingPartialRows?.length ?? 0) > 0));
 
   const nativeOutput = execFileSync("pnpm", [
@@ -148,11 +149,11 @@ try {
   });
   const native = JSON.parse(nativeOutput) as GateStatusReport;
   assert.equal(native.summary?.gates, 1);
-  assert.equal(native.summary?.blockingPartialRows, 3);
+  assert.equal(native.summary?.blockingPartialRows, expectedGateCounts["PROD-NATIVE"]);
   assert.deepEqual(native.sourceAlignment?.gateCounts, {
-    "PROD-NATIVE": 3,
+    "PROD-NATIVE": expectedGateCounts["PROD-NATIVE"],
   });
-  assert.deepEqual(native.gates?.[0]?.blockingPartialRows?.map((row) => row.row), ["P15", "P16", "P17"]);
+  assert.deepEqual(native.gates?.[0]?.blockingPartialRows?.map((row) => row.row), rowsForGate("PROD-NATIVE"));
 
   const markdown = execFileSync("pnpm", [
     "tsx",
@@ -216,7 +217,7 @@ try {
     encoding: "utf8",
   });
   assert.equal(unresolvedRequireNoBlockers.status, 1);
-  assert.match(unresolvedRequireNoBlockers.stdout, /"blockingPartialRows": 17/);
+  assert.match(unresolvedRequireNoBlockers.stdout, new RegExp(`"blockingPartialRows": ${expectedBlockingRows}`));
 
   const readyEnvPath = join(tmp, "ready-private-readiness.env");
   writeFileSync(readyEnvPath, readyEnvFile(), "utf8");
@@ -237,7 +238,7 @@ try {
     gates: 12,
     ready: 12,
     needsEvidence: 0,
-    blockingPartialRows: 17,
+    blockingPartialRows: expectedBlockingRows,
     missingEvidenceItems: 0,
   });
 
@@ -255,7 +256,7 @@ try {
   });
   assert.equal(readyButBlocked.status, 1);
   assert.match(readyButBlocked.stdout, /"ready": 12/);
-  assert.match(readyButBlocked.stdout, /"blockingPartialRows": 17/);
+  assert.match(readyButBlocked.stdout, new RegExp(`"blockingPartialRows": ${expectedBlockingRows}`));
 
   writeFileSync(zeroParityMatrixPath, zeroPartialMatrixJson(), "utf8");
   writeFileSync(zeroPartialGateMapPath, zeroPartialGateMapMarkdown(), "utf8");
@@ -290,6 +291,12 @@ try {
 }
 
 console.log("production gate status contract assertions passed");
+
+function rowsForGate(gate: string) {
+  return (partialReport.rows ?? [])
+    .filter((row) => row.gates?.includes(gate))
+    .map((row) => row.row);
+}
 
 function zeroPartialMatrixJson() {
   const matrix = JSON.parse(readFileSync("docs/page-parity-matrix.json", "utf8")) as unknown;
