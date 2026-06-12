@@ -50,6 +50,47 @@ try {
   assert.equal(stale.status, 1);
   assert.match(stale.stderr, /digest drifted/);
 
+  const productionGateSourceMismatchManifestPath = join(tmp, "production-gates-source-mismatch-focused-artifacts.json");
+  const productionGateSourceMismatchManifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
+    artifacts?: Array<{ partialReport?: { path?: string; digest?: string } }>;
+  };
+  const productionGateSourceMismatchPartialPath = productionGateSourceMismatchManifest.artifacts?.[0]?.partialReport?.path;
+  assert.ok(productionGateSourceMismatchPartialPath);
+  const productionGateSourceMismatchPartial = JSON.parse(readFileSync(productionGateSourceMismatchPartialPath, "utf8")) as {
+    generatedFrom?: { productionGates?: string };
+  };
+  productionGateSourceMismatchPartial.generatedFrom = {
+    ...productionGateSourceMismatchPartial.generatedFrom,
+    productionGates: "docs/other-legacy-production-acceptance-gates.md",
+  };
+  writeFileSync(productionGateSourceMismatchPartialPath, `${JSON.stringify(productionGateSourceMismatchPartial, null, 2)}\n`, "utf8");
+  productionGateSourceMismatchManifest.artifacts![0]!.partialReport!.digest = sha256File(productionGateSourceMismatchPartialPath);
+  writeFileSync(
+    productionGateSourceMismatchManifestPath,
+    `${JSON.stringify(productionGateSourceMismatchManifest, null, 2)}\n`,
+    "utf8"
+  );
+  const productionGateSourceMismatch = spawnSync("pnpm", [
+    "tsx",
+    "src/scripts/verify-production-focused-artifacts-manifest.ts",
+    `--manifest=${productionGateSourceMismatchManifestPath}`,
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.equal(productionGateSourceMismatch.status, 1);
+  assert.match(productionGateSourceMismatch.stderr, /partial report production-gates source drifted/);
+
+  execFileSync("pnpm", [
+    "tsx",
+    "src/scripts/report-production-focused-artifacts.ts",
+    `--out-dir=${tmp}`,
+    `--generated-at=${generatedAt}`,
+  ], {
+    cwd: process.cwd(),
+    stdio: "ignore",
+  });
+
   const timestampMismatchManifestPath = join(tmp, "timestamp-mismatch-focused-artifacts.json");
   const timestampMismatchManifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
     artifacts?: Array<{ partialReport?: { path?: string; digest?: string } }>;
