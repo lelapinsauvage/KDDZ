@@ -61,6 +61,7 @@ type GateClosureStatus = {
   missingEvidence: string[];
   presentEvidence: string[];
   requiredEvidenceFields: string[];
+  blockingGateLinks: number;
   blockingPartialRows: Array<{
     row: string;
     statusAnchor: string;
@@ -118,22 +119,24 @@ const allGates = [...new Set([
 const gates: GateClosureStatus[] = allGates.map((gate) => {
   const readinessGate = readinessByGate.get(gate);
   const checklistGate = checklistByGate.get(gate);
+  const blockingPartialRows = (checklistGate?.blockingPartialRows ?? []).map((row) => ({
+    row: row.row ?? "unknown",
+    statusAnchor: row.statusAnchor ?? "unknown",
+    closureReason: row.closureReason ?? "unknown",
+  }));
   return {
     gate,
     status: readinessGate?.status ?? "needs-evidence",
     missingEvidence: readinessGate?.missing ?? [],
     presentEvidence: readinessGate?.present ?? [],
     requiredEvidenceFields: checklistGate?.requiredFields ?? [],
-    blockingPartialRows: (checklistGate?.blockingPartialRows ?? []).map((row) => ({
-      row: row.row ?? "unknown",
-      statusAnchor: row.statusAnchor ?? "unknown",
-      closureReason: row.closureReason ?? "unknown",
-    })),
+    blockingGateLinks: blockingPartialRows.length,
+    blockingPartialRows,
     nextActions: nextActionsForGate({
       gate,
       status: readinessGate?.status ?? "needs-evidence",
       missingEvidence: readinessGate?.missing ?? [],
-      blockingPartialRows: (checklistGate?.blockingPartialRows ?? []).map((row) => row.row).filter(isString),
+      blockingPartialRows: blockingPartialRows.map((row) => row.row).filter(isString),
     }),
   };
 }).filter((gate) => !blockingOnly || gate.blockingPartialRows.length > 0);
@@ -158,7 +161,7 @@ const payload = {
     ready: gates.filter((gate) => gate.status === "ready-to-review").length,
     needsEvidence: gates.filter((gate) => gate.status === "needs-evidence").length,
     blockingPartialRows: blockingRows.size,
-    blockingGateLinks: gates.reduce((count, gate) => count + gate.blockingPartialRows.length, 0),
+    blockingGateLinks: gates.reduce((count, gate) => count + gate.blockingGateLinks, 0),
     missingEvidenceItems: gates.reduce((count, gate) => count + gate.missingEvidence.length, 0),
     closeoutMode:
       blockingRows.size === 0 ? "ready-for-final-closeout" : "external-production-evidence",

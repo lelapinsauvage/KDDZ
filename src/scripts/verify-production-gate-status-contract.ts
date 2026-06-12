@@ -39,6 +39,7 @@ type GateStatusReport = {
     status?: string;
     missingEvidence?: string[];
     requiredEvidenceFields?: string[];
+    blockingGateLinks?: number;
     blockingPartialRows?: Array<{ row?: string }>;
     nextActions?: string[];
   }>;
@@ -125,6 +126,7 @@ try {
     "PROD-RECON",
   ]);
   const cron = report.gates?.find((gate) => gate.gate === "PROD-CRON");
+  assert.equal(cron?.blockingGateLinks, expectedGateCounts["PROD-CRON"]);
   assert.deepEqual(cron?.blockingPartialRows?.map((row) => row.row), rowsForGate("PROD-CRON"));
   assert.ok(cron?.missingEvidence?.includes("CRON_PARTIAL_ROW_COVERAGE_REPORT"));
   assert.equal(cron?.requiredEvidenceFields?.length, 8);
@@ -134,6 +136,7 @@ try {
   assert.ok(cron?.nextActions?.some((action) => action.includes("verify-production-artifact-consistency-contract.ts")));
 
   const provider = report.gates?.find((gate) => gate.gate === "PROD-PROVIDERS");
+  assert.equal(provider?.blockingGateLinks, expectedGateCounts["PROD-PROVIDERS"]);
   assert.equal(provider?.blockingPartialRows?.length, expectedGateCounts["PROD-PROVIDERS"]);
   assert.ok(provider?.missingEvidence?.includes("partial-row-evidence:PROVIDER_PARTIAL_ROW_COVERAGE_REPORT"));
   assert.ok(provider?.nextActions?.some((action) => action.includes("PROVIDER_PARTIAL_ROW_COVERAGE_REPORT")));
@@ -164,6 +167,10 @@ try {
   assert.deepEqual(blockingOnly.sourceAlignment?.gateCounts, expectedGateCounts);
   assert.deepEqual(blockingOnly.gates?.map((gate) => gate.gate), expectedBlockingGates);
   assert.ok(blockingOnly.gates?.every((gate) => (gate.blockingPartialRows?.length ?? 0) > 0));
+  assert.equal(
+    blockingOnly.gates?.reduce((total, gate) => total + (gate.blockingGateLinks ?? 0), 0),
+    expectedBlockingGateLinks
+  );
 
   const nativeOutput = execFileSync("pnpm", [
     "tsx",
@@ -182,6 +189,7 @@ try {
   assert.deepEqual(native.sourceAlignment?.gateCounts, {
     "PROD-NATIVE": expectedGateCounts["PROD-NATIVE"],
   });
+  assert.equal(native.gates?.[0]?.blockingGateLinks, expectedGateCounts["PROD-NATIVE"]);
   assert.deepEqual(native.gates?.[0]?.blockingPartialRows?.map((row) => row.row), rowsForGate("PROD-NATIVE"));
   assert.ok(native.gates?.[0]?.nextActions?.some((action) => action.includes("--gate=PROD-NATIVE")));
   assert.ok(native.gates?.[0]?.nextActions?.some((action) => action.includes("NATIVE_PARTIAL_ROW_COVERAGE_REPORT")));
