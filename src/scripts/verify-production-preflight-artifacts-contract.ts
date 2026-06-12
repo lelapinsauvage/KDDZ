@@ -283,12 +283,38 @@ try {
   assert.equal(generatedAtMismatch.status, 1);
   assert.match(generatedAtMismatch.stderr, /Expected values to be strictly equal/);
 
+  const sourceAlignmentCountMismatchManifest = JSON.parse(JSON.stringify(manifest)) as PreflightManifest;
+  const sourceAlignmentCountMismatchStatusPath = sourceAlignmentCountMismatchManifest.artifacts?.blockingGateStatus?.path;
+  assert.ok(sourceAlignmentCountMismatchStatusPath);
+  assert.ok(sourceAlignmentCountMismatchManifest.artifacts?.blockingGateStatus);
+  const sourceAlignmentCountMismatchStatus = readJson<GateStatusReport>(sourceAlignmentCountMismatchStatusPath);
+  sourceAlignmentCountMismatchStatus.generatedAt = generatedAt;
+  assert.ok(sourceAlignmentCountMismatchStatus.sourceAlignment?.gateCounts);
+  sourceAlignmentCountMismatchStatus.sourceAlignment.gateCounts["PROD-CRON"] = 8;
+  writeFileSync(sourceAlignmentCountMismatchStatusPath, `${JSON.stringify(sourceAlignmentCountMismatchStatus, null, 2)}\n`, "utf8");
+  sourceAlignmentCountMismatchManifest.artifacts.blockingGateStatus.digest = sha256File(sourceAlignmentCountMismatchStatusPath);
+  const sourceAlignmentCountMismatchManifestPath = join(tmp, "source-alignment-count-mismatch-preflight-artifacts.json");
+  writeFileSync(sourceAlignmentCountMismatchManifestPath, `${JSON.stringify(sourceAlignmentCountMismatchManifest, null, 2)}\n`, "utf8");
+  const sourceAlignmentCountMismatch = spawnSync("pnpm", [
+    "tsx",
+    "src/scripts/verify-production-preflight-artifacts-manifest.ts",
+    `--manifest=${sourceAlignmentCountMismatchManifestPath}`,
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.equal(sourceAlignmentCountMismatch.status, 1);
+  assert.match(sourceAlignmentCountMismatch.stderr, /'PROD-CRON': 8/);
+
   const sourceAlignmentMismatchManifest = JSON.parse(JSON.stringify(manifest)) as PreflightManifest;
   const sourceAlignmentMismatchStatusPath = sourceAlignmentMismatchManifest.artifacts?.blockingGateStatus?.path;
   assert.ok(sourceAlignmentMismatchStatusPath);
   assert.ok(sourceAlignmentMismatchManifest.artifacts?.blockingGateStatus);
   const sourceAlignmentMismatchStatus = readJson<GateStatusReport>(sourceAlignmentMismatchStatusPath);
   sourceAlignmentMismatchStatus.generatedAt = generatedAt;
+  if (sourceAlignmentMismatchStatus.sourceAlignment?.gateCounts) {
+    sourceAlignmentMismatchStatus.sourceAlignment.gateCounts["PROD-CRON"] = 9;
+  }
   assert.ok(sourceAlignmentMismatchStatus.sourceAlignment);
   sourceAlignmentMismatchStatus.sourceAlignment.status = "stale";
   writeFileSync(sourceAlignmentMismatchStatusPath, `${JSON.stringify(sourceAlignmentMismatchStatus, null, 2)}\n`, "utf8");
