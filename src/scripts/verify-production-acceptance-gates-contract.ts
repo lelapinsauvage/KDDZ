@@ -617,6 +617,7 @@ assert.match(contents.gates, /validates mapped gate ids against `docs\/legacy-pr
 assert.match(contents.gates, /--production-gates=<path>/);
 assert.match(contents.gates, /report-production-focused-artifacts\.ts/);
 assert.match(contents.gates, /report-production-preflight-artifacts\.ts/);
+assert.match(contents.gates, /nested closeout plan's final commands to the exact release ref inside the archived preflight bundle/);
 assert.match(contents.gates, /report-production-closeout-plan\.ts/);
 assert.match(contents.gates, /--release-branch=<branch>/);
 assert.match(contents.gates, /--release-commit=<sha>/);
@@ -733,7 +734,7 @@ assert.equal(existsSync("docs/production-readiness.env.example"), false);
 assert.match(contents.cutoverRunbook, /audit-production-readiness\.ts --env-file=\/secure\/private-readiness\.env --out=\/tmp\/kiddzonl-production-readiness\.json --generated-at=<release-generated-at-iso>/);
 assert.match(contents.cutoverRunbook, /report-production-gate-status\.ts --json --env-file=\/secure\/private-readiness\.env --out=\/tmp\/kiddzonl-production-gate-status\.json --generated-at=<release-generated-at-iso>/);
 assert.match(contents.cutoverRunbook, /report-production-gate-status\.ts --json --blocking-only --out=\/tmp\/kiddzonl-production-blocking-gate-status\.json --generated-at=<release-generated-at-iso>/);
-assert.match(contents.cutoverRunbook, /report-production-preflight-artifacts\.ts --out-dir=\/tmp\/kiddzonl-production-preflight-artifacts --generated-at=<release-generated-at-iso>/);
+assert.match(contents.cutoverRunbook, /report-production-preflight-artifacts\.ts --out-dir=\/tmp\/kiddzonl-production-preflight-artifacts --generated-at=<release-generated-at-iso> --release-branch=legacy-parity-runbook --release-commit=<release-commit-sha> --acceptance-date=<YYYY-MM-DD>/);
 assert.match(contents.cutoverRunbook, /report-production-closeout-plan\.ts --json --out=\/tmp\/kiddzonl-production-closeout-plan\.json --generated-at=<release-generated-at-iso> --release-branch=legacy-parity-runbook --release-commit=<release-commit-sha> --acceptance-date=<YYYY-MM-DD>/);
 assert.match(contents.cutoverRunbook, /generated closeout\/evidence-package command is bound to the exact pushed release ref/);
 assert.match(contents.cutoverRunbook, /inspect its per-gate evidence work orders/);
@@ -759,7 +760,7 @@ assert.match(contents.cutoverRunbook, /--evidence-record=\/secure\/production-ac
 assert.match(contents.cutoverRunbook, /render-production-acceptance-evidence-record\.ts --out=\/secure\/production-acceptance-evidence\.md/);
 assert.match(
   contents.cutoverRunbook,
-  /Final command:[\s\S]*report-production-closeout-plan\.ts --json --out=\/tmp\/kiddzonl-production-closeout-plan\.json --generated-at=<release-generated-at-iso> --release-branch=legacy-parity-runbook --release-commit=<release-commit-sha> --acceptance-date=<YYYY-MM-DD>\npnpm tsx src\/scripts\/verify-production-preflight-artifacts-manifest\.ts --manifest=\/tmp\/kiddzonl-production-preflight-artifacts\/kiddzonl-production-preflight-artifacts\.json\npnpm tsx src\/scripts\/render-production-acceptance-evidence-record\.ts --out=\/secure\/production-acceptance-evidence\.md/
+  /Final command:[\s\S]*report-production-preflight-artifacts\.ts --out-dir=\/tmp\/kiddzonl-production-preflight-artifacts --generated-at=<release-generated-at-iso> --release-branch=legacy-parity-runbook --release-commit=<release-commit-sha> --acceptance-date=<YYYY-MM-DD>\npnpm tsx src\/scripts\/report-production-closeout-plan\.ts --json --out=\/tmp\/kiddzonl-production-closeout-plan\.json --generated-at=<release-generated-at-iso> --release-branch=legacy-parity-runbook --release-commit=<release-commit-sha> --acceptance-date=<YYYY-MM-DD>\npnpm tsx src\/scripts\/verify-production-preflight-artifacts-manifest\.ts --manifest=\/tmp\/kiddzonl-production-preflight-artifacts\/kiddzonl-production-preflight-artifacts\.json\npnpm tsx src\/scripts\/render-production-acceptance-evidence-record\.ts --out=\/secure\/production-acceptance-evidence\.md/
 );
 assert.match(contents.cutoverRunbook, /--preflight-manifest=\/tmp\/kiddzonl-production-preflight-artifacts\/kiddzonl-production-preflight-artifacts\.json/);
 assert.match(contents.cutoverRunbook, /--manifest-out=\/tmp\/kiddzonl-production-evidence-package\.json/);

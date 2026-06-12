@@ -287,6 +287,35 @@ try {
   assert.match(readFileSync(manifest.artifacts?.readinessEnvTemplates?.provider?.path ?? "", "utf8"), /Finish condition: Set every PROD-PROVIDERS evidence pointer/);
   assert.match(readFileSync(manifest.artifacts?.readinessEnvTemplates?.cron?.path ?? "", "utf8"), /CRON_PARTIAL_ROW_COVERAGE_REPORT=replace-me/);
 
+  const releaseBoundBundleDir = join(tmp, "release-bound-bundle");
+  const releaseBoundOutput = execFileSync("pnpm", [
+    "tsx",
+    "src/scripts/report-production-preflight-artifacts.ts",
+    `--out-dir=${releaseBoundBundleDir}`,
+    `--generated-at=${generatedAt}`,
+    "--release-branch=legacy-parity-runbook",
+    "--release-commit=c3cdaab",
+    "--acceptance-date=2026-06-12",
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  const releaseBoundManifest = JSON.parse(releaseBoundOutput) as PreflightManifest;
+  const releaseBoundCloseoutPlan = readJson<CloseoutPlan>(releaseBoundManifest.artifacts?.closeoutPlan?.path ?? "");
+  assert.ok(releaseBoundCloseoutPlan.finalCloseoutCommands?.some((command) =>
+    command.includes("--branch=legacy-parity-runbook --commit=c3cdaab --acceptance-date=2026-06-12")
+  ));
+  assert.ok(releaseBoundCloseoutPlan.finalCloseoutCommands?.every((command) => !command.includes("<release-commit-sha>")));
+  assert.ok(releaseBoundCloseoutPlan.finalCloseoutCommands?.every((command) => !command.includes("<YYYY-MM-DD>")));
+  execFileSync("pnpm", [
+    "tsx",
+    "src/scripts/verify-production-preflight-artifacts-manifest.ts",
+    `--manifest=${join(releaseBoundBundleDir, "kiddzonl-production-preflight-artifacts.json")}`,
+  ], {
+    cwd: process.cwd(),
+    stdio: "ignore",
+  });
+
   const missingOutDir = spawnSync("pnpm", ["tsx", "src/scripts/report-production-preflight-artifacts.ts"], {
     cwd: process.cwd(),
     encoding: "utf8",

@@ -86,10 +86,13 @@ const generatedAt = generatedAtValue();
 const parityMatrixPath = optionValue("--parity-matrix") ?? "docs/page-parity-matrix.json";
 const partialGateMapPath = optionValue("--partial-gate-map") ?? "docs/partial-production-gate-map.md";
 const productionGatesPath = optionValue("--production-gates") ?? "docs/legacy-production-acceptance-gates.md";
+const releaseBranch = optionValue("--release-branch");
+const releaseCommit = optionValue("--release-commit");
+const acceptanceDate = optionValue("--acceptance-date");
 
 if (!outputDir) {
   console.error(
-    "Usage: pnpm tsx src/scripts/report-production-preflight-artifacts.ts --out-dir=<dir> [--generated-at=<iso>] [--parity-matrix=<path>] [--partial-gate-map=<path>] [--production-gates=<path>]"
+    "Usage: pnpm tsx src/scripts/report-production-preflight-artifacts.ts --out-dir=<dir> [--generated-at=<iso>] [--parity-matrix=<path>] [--partial-gate-map=<path>] [--production-gates=<path>] [--release-branch=<branch>] [--release-commit=<sha>] [--acceptance-date=<YYYY-MM-DD>]"
   );
   process.exit(2);
 }
@@ -135,6 +138,9 @@ run("src/scripts/report-production-closeout-plan.ts", [
   `--parity-matrix=${parityMatrixPath}`,
   `--partial-gate-map=${partialGateMapPath}`,
   `--production-gates=${productionGatesPath}`,
+  ...optionalArg("--release-branch", releaseBranch),
+  ...optionalArg("--release-commit", releaseCommit),
+  ...optionalArg("--acceptance-date", acceptanceDate),
 ]);
 const readinessEnvTemplates = writeReadinessEnvTemplates(readinessEnvTemplateDir);
 run("src/scripts/verify-production-artifact-consistency-contract.ts", [
