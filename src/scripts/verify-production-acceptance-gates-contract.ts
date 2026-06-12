@@ -617,7 +617,7 @@ assert.match(contents.gates, /validates mapped gate ids against `docs\/legacy-pr
 assert.match(contents.gates, /--production-gates=<path>/);
 assert.match(contents.gates, /report-production-focused-artifacts\.ts/);
 assert.match(contents.gates, /report-production-preflight-artifacts\.ts/);
-assert.match(contents.gates, /nested closeout plan's final commands to the exact release ref inside the archived preflight bundle/);
+assert.match(contents.gates, /nested closeout plan's final commands and stamp the readiness env template work-order comments with the exact release ref inside the archived preflight bundle/);
 assert.match(contents.gates, /report-production-closeout-plan\.ts/);
 assert.match(contents.gates, /--release-branch=<branch>/);
 assert.match(contents.gates, /--release-commit=<sha>/);
@@ -669,6 +669,7 @@ assert.match(contents.gates, /render-production-readiness-env-template\.ts --out
 assert.match(contents.gates, /render-production-readiness-env-template\.ts --out=\/secure\/private-readiness\.env --include-work-orders/);
 assert.match(contents.gates, /render-production-readiness-env-template\.ts` generates a private `\.env` skeleton/);
 assert.match(contents.gates, /Add `--include-work-orders` to include redacted closeout finish conditions, focused coverage rows, and proof commands/);
+assert.match(contents.gates, /template records the exact release ref beside the work-order comments/);
 assert.match(contents.gates, /verify-production-readiness-env-template-contract\.ts/);
 assert.match(contents.gates, /--gate=PROD-CRON/);
 for (const focusedGate of ["PROD-CRON", "PROD-PROVIDERS", "PROD-NATIVE", "PROD-NATURE"]) {

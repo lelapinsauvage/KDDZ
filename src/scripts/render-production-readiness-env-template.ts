@@ -31,10 +31,17 @@ type CloseoutPlan = {
 
 const outputPath = optionValue("--out");
 const gate = optionValue("--gate");
+const releaseBranch = optionValue("--release-branch");
+const releaseCommit = optionValue("--release-commit");
+const acceptanceDate = optionValue("--acceptance-date");
 const includeWorkOrders = process.argv.includes("--include-work-orders");
 const payload = loadRequirements(gate);
 const closeoutWorkOrders = includeWorkOrders ? loadCloseoutWorkOrders(gate) : new Map<string, NonNullable<NonNullable<CloseoutPlan["gates"]>[number]["evidenceWorkOrder"]>>();
-const rendered = renderTemplate(payload, gate, closeoutWorkOrders);
+const rendered = renderTemplate(payload, gate, closeoutWorkOrders, {
+  releaseBranch,
+  releaseCommit,
+  acceptanceDate,
+});
 
 if (outputPath) {
   const dir = dirname(outputPath);
@@ -70,6 +77,9 @@ function loadCloseoutWorkOrders(gate: string | null) {
     "tsx",
     "src/scripts/report-production-closeout-plan.ts",
     "--json",
+    ...optionalArg("--release-branch", releaseBranch),
+    ...optionalArg("--release-commit", releaseCommit),
+    ...optionalArg("--acceptance-date", acceptanceDate),
   ], {
     cwd: process.cwd(),
     encoding: "utf8",
@@ -87,7 +97,12 @@ function loadCloseoutWorkOrders(gate: string | null) {
 function renderTemplate(
   payload: RequirementPayload,
   gate: string | null,
-  closeoutWorkOrders: Map<string, NonNullable<NonNullable<CloseoutPlan["gates"]>[number]["evidenceWorkOrder"]>>
+  closeoutWorkOrders: Map<string, NonNullable<NonNullable<CloseoutPlan["gates"]>[number]["evidenceWorkOrder"]>>,
+  release: {
+    releaseBranch: string | null;
+    releaseCommit: string | null;
+    acceptanceDate: string | null;
+  }
 ) {
   const lines = [
     "# KiddzOnline production readiness private env template",
@@ -97,8 +112,15 @@ function renderTemplate(
     "# Keep URLs, tokens, keys, phone numbers, and payload bodies out of committed docs.",
     "",
     `# Scope: ${gate ? gate.trim().toUpperCase() : "all production acceptance gates"}`,
-    "",
   ];
+  if (release.releaseBranch || release.releaseCommit || release.acceptanceDate) {
+    lines.push(
+      `# Release branch: ${release.releaseBranch ?? "unspecified"}`,
+      `# Release commit: ${release.releaseCommit ?? "unspecified"}`,
+      `# Acceptance date: ${release.acceptanceDate ?? "unspecified"}`
+    );
+  }
+  lines.push("");
 
   const seen = new Set<string>();
   for (const requirement of payload.evidenceRequirements ?? []) {
@@ -192,4 +214,8 @@ function optionValue(name: string) {
   if (index >= 0) return process.argv[index + 1] ?? null;
 
   return null;
+}
+
+function optionalArg(name: string, value: string | null | undefined) {
+  return value ? [`${name}=${value}`] : [];
 }

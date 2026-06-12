@@ -221,6 +221,9 @@ function writeReadinessEnvTemplates(outputDir: string) {
       "--include-work-orders",
       `--out=${template.path}`,
       ...optionalArg("--gate", template.gate),
+      ...optionalArg("--release-branch", releaseBranch),
+      ...optionalArg("--release-commit", releaseCommit),
+      ...optionalArg("--acceptance-date", acceptanceDate),
     ]);
   }
   return Object.fromEntries(

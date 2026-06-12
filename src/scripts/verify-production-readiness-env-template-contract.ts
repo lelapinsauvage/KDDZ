@@ -75,6 +75,22 @@ try {
   assert.doesNotMatch(cronWithWorkOrder, /https?:\/\//);
   assert.doesNotMatch(cronWithWorkOrder, /secret-value|token-value|phone-number/i);
 
+  const cronWithBoundWorkOrder = execFileSync("pnpm", [
+    "tsx",
+    script,
+    "--gate=PROD-CRON",
+    "--include-work-orders",
+    "--release-branch=legacy-parity-runbook",
+    "--release-commit=0252d1e",
+    "--acceptance-date=2026-06-12",
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.match(cronWithBoundWorkOrder, /Release branch: legacy-parity-runbook/);
+  assert.match(cronWithBoundWorkOrder, /Release commit: 0252d1e/);
+  assert.match(cronWithBoundWorkOrder, /Acceptance date: 2026-06-12/);
+
   const providers = execFileSync("pnpm", [
     "tsx",
     script,

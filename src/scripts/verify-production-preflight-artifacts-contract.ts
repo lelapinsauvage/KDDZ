@@ -307,6 +307,10 @@ try {
   ));
   assert.ok(releaseBoundCloseoutPlan.finalCloseoutCommands?.every((command) => !command.includes("<release-commit-sha>")));
   assert.ok(releaseBoundCloseoutPlan.finalCloseoutCommands?.every((command) => !command.includes("<YYYY-MM-DD>")));
+  const releaseBoundCronTemplate = readFileSync(releaseBoundManifest.artifacts?.readinessEnvTemplates?.cron?.path ?? "", "utf8");
+  assert.match(releaseBoundCronTemplate, /Release branch: legacy-parity-runbook/);
+  assert.match(releaseBoundCronTemplate, /Release commit: c3cdaab/);
+  assert.match(releaseBoundCronTemplate, /Acceptance date: 2026-06-12/);
   execFileSync("pnpm", [
     "tsx",
     "src/scripts/verify-production-preflight-artifacts-manifest.ts",
