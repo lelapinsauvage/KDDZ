@@ -112,11 +112,13 @@ const gates = (gateStatus.gates ?? []).map((gate) => {
 });
 
 const requiredGateOrder = ["PROD-CRON", "PROD-PROVIDERS", "PROD-NATIVE", "PROD-NATURE"];
-assert.deepEqual(
-  [...gates.map((gate) => gate.gate)].sort(),
-  [...requiredGateOrder].sort(),
-  "closeout plan must cover the four current external production blocker gates"
-);
+if (gates.length > 0) {
+  assert.deepEqual(
+    [...gates.map((gate) => gate.gate)].sort(),
+    [...requiredGateOrder].sort(),
+    "closeout plan must cover the four current external production blocker gates while blockers remain"
+  );
+}
 
 const plan: CloseoutPlan = {
   status: "production closeout plan",

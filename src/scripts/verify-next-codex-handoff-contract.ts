@@ -153,6 +153,8 @@ for (const expected of [
   "Production Evidence Timestamp Hardening",
   "closeout summary and evidence package manifest both carry `schemaVersion: 1`",
   "Package verification requires the closeout summary, readiness report, partial report, evidence checklist, and preflight manifest to share that same package `generatedAt`",
+  "The package manifest also carries the nested preflight closeout-plan artifact hash",
+  "nested closeout-plan artifact digest",
   "source matrix/gate-map/production-gates paths",
   "closeout plus evidence package contracts reject archived partial/checklist/preflight artifacts or saved package manifests whose source provenance drifts from the closeout",
   "markdown partial report now prints source matrix, partial gate map, and production-gates paths",
