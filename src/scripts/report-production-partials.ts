@@ -22,9 +22,12 @@ const generatedAt = generatedAtValue();
 const parityMatrixPath = optionValue("--parity-matrix") ?? "docs/page-parity-matrix.json";
 const partialGateMapPath = optionValue("--partial-gate-map") ?? "docs/partial-production-gate-map.md";
 const selectedGate = optionValue("--gate");
+const productionGatesPath = optionValue("--production-gates") ?? "docs/legacy-production-acceptance-gates.md";
 
 const partialRows = collectPartialRows();
 const mapRows = parsePartialGateMap();
+const knownProductionGates = parseProductionGates();
+validatePartialGateMap(mapRows, knownProductionGates);
 
 if (partialRows.length !== mapRows.length) {
   throw new Error(`Partial matrix/map mismatch: matrix=${partialRows.length} map=${mapRows.length}`);
@@ -114,6 +117,44 @@ function parsePartialGateMap() {
         closureReason,
       };
     });
+}
+
+function parseProductionGates() {
+  const markdown = readFileSync(productionGatesPath, "utf8");
+  return new Set(
+    markdown
+      .split(/\r?\n/)
+      .map((line) => line.match(/^\| (PROD-[A-Z]+) \|/)?.[1])
+      .filter((gate): gate is string => Boolean(gate)),
+  );
+}
+
+function validatePartialGateMap(rows: Array<Omit<PartialGateRow, "matrixStatus">>, knownGates: Set<string>) {
+  const seen = new Set<string>();
+  rows.forEach((row, index) => {
+    const expectedRow = `P${String(index + 1).padStart(2, "0")}`;
+    if (row.row !== expectedRow) {
+      throw new Error(`Partial gate map row order drifted: expected ${expectedRow}, found ${row.row || "empty"}`);
+    }
+    if (seen.has(row.row)) {
+      throw new Error(`Partial gate map contains duplicate row id: ${row.row}`);
+    }
+    seen.add(row.row);
+    if (!row.statusAnchor) {
+      throw new Error(`${row.row} is missing a status anchor`);
+    }
+    if (!row.closureReason) {
+      throw new Error(`${row.row} is missing a closure reason`);
+    }
+    if (row.gates.length === 0) {
+      throw new Error(`${row.row} is missing production gate ids`);
+    }
+    for (const gate of row.gates) {
+      if (!knownGates.has(gate)) {
+        throw new Error(`${row.row} references unknown production gate ${gate}`);
+      }
+    }
+  });
 }
 
 function filterRowsForGate(rows: PartialGateRow[], gate: string) {

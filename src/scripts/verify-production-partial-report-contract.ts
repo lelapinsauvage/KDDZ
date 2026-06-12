@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
+import { copyFileSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 const script = "src/scripts/report-production-partials.ts";
 
@@ -111,6 +114,52 @@ const invalidGeneratedAt = spawnSync("pnpm", ["tsx", script, "--json", "--genera
 });
 assert.equal(invalidGeneratedAt.status, 2);
 assert.match(invalidGeneratedAt.stderr, /--generated-at must be an ISO timestamp/);
+
+const tmp = mkdtempSync(join(tmpdir(), "kiddzonl-partial-report-"));
+const archiveMatrixPath = join(tmp, "archived-page-parity-matrix.json");
+const archiveGateMapPath = join(tmp, "archived-partial-production-gate-map.md");
+const archiveProductionGatesPath = join(tmp, "archived-legacy-production-acceptance-gates.md");
+copyFileSync("docs/page-parity-matrix.json", archiveMatrixPath);
+copyFileSync("docs/partial-production-gate-map.md", archiveGateMapPath);
+copyFileSync("docs/legacy-production-acceptance-gates.md", archiveProductionGatesPath);
+
+const archivedOutput = execFileSync("pnpm", [
+  "tsx",
+  script,
+  "--json",
+  `--parity-matrix=${archiveMatrixPath}`,
+  `--partial-gate-map=${archiveGateMapPath}`,
+  `--production-gates=${archiveProductionGatesPath}`,
+], {
+  cwd: process.cwd(),
+  encoding: "utf8",
+});
+const archivedPayload = JSON.parse(archivedOutput) as typeof payload & {
+  generatedFrom?: { matrix?: string; gateMap?: string };
+};
+assert.equal(archivedPayload.generatedFrom?.matrix, archiveMatrixPath);
+assert.equal(archivedPayload.generatedFrom?.gateMap, archiveGateMapPath);
+assert.deepEqual(archivedPayload.summary?.gateCounts, expectedGateCounts);
+
+const badGateMapPath = join(tmp, "bad-partial-production-gate-map.md");
+writeFileSync(
+  badGateMapPath,
+  readFileSync(archiveGateMapPath, "utf8").replace("PROD-CRON", "PROD-FAKE"),
+  "utf8",
+);
+const unknownMappedGate = spawnSync("pnpm", [
+  "tsx",
+  script,
+  "--json",
+  `--parity-matrix=${archiveMatrixPath}`,
+  `--partial-gate-map=${badGateMapPath}`,
+  `--production-gates=${archiveProductionGatesPath}`,
+], {
+  cwd: process.cwd(),
+  encoding: "utf8",
+});
+assert.equal(unknownMappedGate.status, 1);
+assert.match(unknownMappedGate.stderr, /references unknown production gate PROD-FAKE/);
 
 console.log("production partial report contract assertions passed");
 
