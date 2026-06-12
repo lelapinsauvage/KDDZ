@@ -73,6 +73,7 @@ for (const expected of [
   "consistency verifier also requires both artifacts to name the same gate-map source path",
   "verify-production-focused-artifacts-contract.ts",
   "verify-production-focused-artifacts-manifest-contract.ts",
+  "saved-manifest verification now also requires every nested focused partial/checklist artifact to match the manifest timestamp, source matrix/gate-map paths, and gate filter",
   "report-production-focused-artifacts.ts --out-dir=<dir>",
   "verify-production-focused-artifacts-manifest.ts --manifest=<path>",
   "kiddzonl-production-focused-artifacts.json",

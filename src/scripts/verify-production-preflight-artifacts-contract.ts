@@ -235,7 +235,7 @@ try {
     encoding: "utf8",
   });
   assert.equal(sourceMismatch.status, 1);
-  assert.match(sourceMismatch.stderr, /Expected values to be strictly equal/);
+  assert.match(sourceMismatch.stderr, /verify-production-focused-artifacts-manifest\.ts/);
 
   const generatedAtMismatchManifest = JSON.parse(JSON.stringify(manifest)) as PreflightManifest;
   const generatedAtMismatchStatusPath = generatedAtMismatchManifest.artifacts?.blockingGateStatus?.path;

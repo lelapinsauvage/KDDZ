@@ -31,6 +31,27 @@ type ArtifactRef = {
   digest?: string;
 };
 
+type GeneratedPartialReport = {
+  generatedAt?: string;
+  generatedFrom?: {
+    matrix?: string;
+    gateMap?: string;
+  };
+  summary?: {
+    gateFilter?: string;
+  };
+};
+
+type GeneratedEvidenceChecklist = {
+  generatedAt?: string;
+  generatedFrom?: {
+    partialGateMap?: string;
+  };
+  summary?: {
+    gateFilter?: string;
+  };
+};
+
 const expectedGates = [
   { gate: "PROD-CRON", rows: ["P01", "P02", "P03", "P04", "P05", "P06", "P07", "P10", "P12"] },
   {
@@ -67,6 +88,15 @@ for (const expected of expectedGates) {
   assert.equal(artifact.verifiedBy, "src/scripts/verify-production-artifact-consistency-contract.ts");
   verifyArtifactRef(`${expected.gate} partial report`, artifact.partialReport);
   verifyArtifactRef(`${expected.gate} evidence checklist`, artifact.evidenceChecklist);
+  const partial: GeneratedPartialReport = readJson<GeneratedPartialReport>(artifact.partialReport?.path ?? "");
+  const checklist: GeneratedEvidenceChecklist = readJson<GeneratedEvidenceChecklist>(artifact.evidenceChecklist?.path ?? "");
+  assert.equal(partial.generatedAt, manifest.generatedAt, `${expected.gate} partial report generatedAt drifted`);
+  assert.equal(checklist.generatedAt, manifest.generatedAt, `${expected.gate} evidence checklist generatedAt drifted`);
+  assert.equal(partial.generatedFrom?.matrix, manifest.generatedFrom.matrix, `${expected.gate} partial report matrix source drifted`);
+  assert.equal(partial.generatedFrom?.gateMap, manifest.generatedFrom.gateMap, `${expected.gate} partial report gate-map source drifted`);
+  assert.equal(checklist.generatedFrom?.partialGateMap, manifest.generatedFrom.gateMap, `${expected.gate} checklist gate-map source drifted`);
+  assert.equal(partial.summary?.gateFilter, expected.gate, `${expected.gate} partial report gate filter drifted`);
+  assert.equal(checklist.summary?.gateFilter, expected.gate, `${expected.gate} checklist gate filter drifted`);
   execFileSync("pnpm", [
     "tsx",
     "src/scripts/verify-production-artifact-consistency-contract.ts",
