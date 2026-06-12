@@ -32,6 +32,7 @@ if (selectedGate && !gateSections.includes(selectedGate)) {
 }
 
 const partialRows = parsePartialGateMap();
+validatePartialRows(partialRows, gateSections);
 const gates = gateSections
   .filter((gate) => !selectedGate || gate === selectedGate)
   .map((gate): ChecklistGate => {
@@ -96,6 +97,21 @@ function parsePartialGateMap() {
         closureReason,
       };
     });
+}
+
+function validatePartialRows(rows: PartialGateRow[], knownGates: string[]) {
+  const known = new Set(knownGates);
+  for (const row of rows) {
+    if (row.gates.length === 0) {
+      throw new Error(`${partialGateMapPath} row ${row.row} must name at least one production gate`);
+    }
+    const unknownGates = row.gates.filter((gate) => !known.has(gate));
+    if (unknownGates.length > 0) {
+      throw new Error(
+        `${partialGateMapPath} row ${row.row} references unknown production gate(s): ${unknownGates.join(", ")}`
+      );
+    }
+  }
 }
 
 function renderMarkdown(gates: ChecklistGate[]) {

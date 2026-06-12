@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { requiredProductionEvidenceSections } from "./production-acceptance-evidence-spec";
 
 const script = "src/scripts/report-production-evidence-checklist.ts";
@@ -120,6 +123,32 @@ const unknownGate = spawnSync("pnpm", ["tsx", script, "--gate=PROD-UNKNOWN"], {
 });
 assert.equal(unknownGate.status, 2);
 assert.match(unknownGate.stderr, /Unknown production gate: PROD-UNKNOWN/);
+
+const tmp = mkdtempSync(join(tmpdir(), "kiddzonl-evidence-checklist-"));
+try {
+  const unknownMappedGatePath = join(tmp, "unknown-gate-map.md");
+  writeFileSync(
+    unknownMappedGatePath,
+    readFileSync("docs/partial-production-gate-map.md", "utf8").replace(
+      "PROD-CRON, PROD-PROVIDERS",
+      "PROD-CRON, PROD-BOGUS"
+    ),
+    "utf8"
+  );
+  const unknownMappedGate = spawnSync("pnpm", [
+    "tsx",
+    script,
+    "--json",
+    `--partial-gate-map=${unknownMappedGatePath}`,
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.equal(unknownMappedGate.status, 1);
+  assert.match(unknownMappedGate.stderr, /references unknown production gate\(s\): PROD-BOGUS/);
+} finally {
+  rmSync(tmp, { recursive: true, force: true });
+}
 
 console.log("production evidence checklist contract assertions passed");
 
