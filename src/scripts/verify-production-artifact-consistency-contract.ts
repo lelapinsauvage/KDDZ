@@ -8,6 +8,7 @@ type PartialReport = {
   generatedFrom?: {
     matrix?: string;
     gateMap?: string;
+    productionGates?: string;
   };
   summary?: {
     partialRows?: number;
@@ -28,6 +29,7 @@ type EvidenceChecklist = {
     evidenceSpec?: string;
     evidenceTemplate?: string;
     partialGateMap?: string;
+    productionGates?: string;
   };
   summary?: {
     gates?: number;
@@ -58,6 +60,11 @@ assert.equal(
   evidenceChecklist.generatedFrom?.partialGateMap,
   partialReport.generatedFrom?.gateMap,
   "partial report and evidence checklist gate-map sources drifted"
+);
+assert.equal(
+  evidenceChecklist.generatedFrom?.productionGates,
+  partialReport.generatedFrom?.productionGates,
+  "partial report and evidence checklist production-gates sources drifted"
 );
 const uniquePartialRows = new Set((partialReport.rows ?? []).map((row) => row.row).filter(isString));
 assert.equal(partialReport.summary?.partialRows, uniquePartialRows.size);
@@ -257,6 +264,27 @@ function verifyPathModeContract() {
     });
     assert.equal(sourceMismatch.status, 1);
     assert.match(sourceMismatch.stderr, /gate-map sources drifted/);
+
+    const productionGateSourceMismatchChecklist = readJson<EvidenceChecklist>(checklistPath);
+    assert.ok(productionGateSourceMismatchChecklist.generatedFrom);
+    productionGateSourceMismatchChecklist.generatedFrom.productionGates = "docs/other-legacy-production-acceptance-gates.md";
+    const productionGateSourceMismatchChecklistPath = join(tmp, "production-gates-source-mismatch-checklist.json");
+    writeFileSync(
+      productionGateSourceMismatchChecklistPath,
+      `${JSON.stringify(productionGateSourceMismatchChecklist, null, 2)}\n`,
+      "utf8"
+    );
+    const productionGateSourceMismatch = spawnSync("pnpm", [
+      "tsx",
+      "src/scripts/verify-production-artifact-consistency-contract.ts",
+      `--partial-report=${partialPath}`,
+      `--checklist-report=${productionGateSourceMismatchChecklistPath}`,
+    ], {
+      cwd: process.cwd(),
+      encoding: "utf8",
+    });
+    assert.equal(productionGateSourceMismatch.status, 1);
+    assert.match(productionGateSourceMismatch.stderr, /production-gates sources drifted/);
 
     const zeroPartialPath = join(tmp, "zero-partials.json");
     const zeroChecklistPath = join(tmp, "zero-checklist.json");

@@ -78,6 +78,7 @@ const artifacts = focusedGates.map((entry): ArtifactEntry => {
     `--out=${checklistPath}`,
     `--generated-at=${generatedAt}`,
     `--partial-gate-map=${partialGateMapPath}`,
+    `--production-gates=${productionGatesPath}`,
   ]);
   run("src/scripts/verify-production-artifact-consistency-contract.ts", [
     `--partial-report=${partialReportPath}`,

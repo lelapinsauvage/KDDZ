@@ -23,6 +23,9 @@ type PartialReport = GeneratedArtifact & {
 };
 
 type EvidenceChecklist = GeneratedArtifact & {
+  generatedFrom?: {
+    productionGates?: string;
+  };
   summary?: {
     blockingPartialRows?: number;
   };
@@ -144,6 +147,7 @@ try {
   const checklist = readJson<EvidenceChecklist>(manifest.artifacts?.evidenceChecklist?.path ?? "");
   assert.equal(partial.generatedAt, manifest.generatedAt);
   assert.equal(checklist.generatedAt, manifest.generatedAt);
+  assert.equal(checklist.generatedFrom?.productionGates, manifest.generatedFrom?.productionGates);
 
   execFileSync("pnpm", [
     "tsx",

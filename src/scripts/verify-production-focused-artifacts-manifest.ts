@@ -48,6 +48,7 @@ type GeneratedEvidenceChecklist = {
   generatedAt?: string;
   generatedFrom?: {
     partialGateMap?: string;
+    productionGates?: string;
   };
   summary?: {
     gateFilter?: string;
@@ -103,6 +104,11 @@ for (const expected of expectedGates) {
     `${expected.gate} partial report production-gates source drifted`
   );
   assert.equal(checklist.generatedFrom?.partialGateMap, manifest.generatedFrom.gateMap, `${expected.gate} checklist gate-map source drifted`);
+  assert.equal(
+    checklist.generatedFrom?.productionGates,
+    manifest.generatedFrom.productionGates,
+    `${expected.gate} checklist production-gates source drifted`
+  );
   assert.equal(partial.summary?.gateFilter, expected.gate, `${expected.gate} partial report gate filter drifted`);
   assert.equal(checklist.summary?.gateFilter, expected.gate, `${expected.gate} checklist gate filter drifted`);
   execFileSync("pnpm", [

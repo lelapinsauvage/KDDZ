@@ -179,13 +179,14 @@ try {
   const checklistReport = readFileSync(checklistReportPath, "utf8");
   assertNoSensitiveOutput(checklistReport);
   const checklistPayload = JSON.parse(checklistReport) as {
-    generatedFrom?: { partialGateMap?: string };
+    generatedFrom?: { partialGateMap?: string; productionGates?: string };
     summary?: { gates?: number; requiredFields?: number; blockingPartialRows?: number };
   };
   assert.deepEqual(checklistPayload.generatedFrom, {
     evidenceSpec: "src/scripts/production-acceptance-evidence-spec.ts",
     evidenceTemplate: "docs/production-acceptance-evidence-template.md",
     partialGateMap: "docs/partial-production-gate-map.md",
+    productionGates: "docs/legacy-production-acceptance-gates.md",
   });
   assert.deepEqual(checklistPayload.summary, expectedEvidenceChecklistSummary);
 
@@ -243,6 +244,7 @@ try {
     `--out=${zeroChecklistReportPath}`,
     `--generated-at=${generatedAt}`,
     `--partial-gate-map=${zeroPartialGateMapPath}`,
+    `--production-gates=${zeroProductionGatesPath}`,
   ], {
     cwd: process.cwd(),
     stdio: "ignore",

@@ -100,6 +100,7 @@ const checklist = runJson<EvidenceChecklist>("src/scripts/report-production-evid
   `--generated-at=${generatedAt}`,
   ...optionalArg("--gate", selectedGate),
   ...optionalArg("--partial-gate-map", partialGateMapPath),
+  ...optionalArg("--production-gates", productionGatesPath),
 ]);
 
 assert.equal(readiness.redacted, true);

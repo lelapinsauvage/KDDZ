@@ -100,6 +100,7 @@ if (checklistOutputPath) {
     "--json",
     `--out=${checklistOutputPath}`,
     `--partial-gate-map=${partialGateMapPath}`,
+    `--production-gates=${productionGatesPath}`,
     ...optionalArg("--generated-at", generatedAt),
   ]);
 }

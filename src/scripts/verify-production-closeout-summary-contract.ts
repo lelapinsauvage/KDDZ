@@ -84,6 +84,7 @@ type PartialReport = {
 type EvidenceChecklist = {
   generatedFrom?: {
     partialGateMap?: string;
+    productionGates?: string;
   };
   summary?: EvidenceChecklistSummary;
 };
@@ -172,6 +173,11 @@ function verifyCloseoutSummary(path: string) {
     assertDigest(summary.artifactDigests?.evidenceChecklist, checklistReportPath, "evidence checklist");
     const checklist = readArtifact<EvidenceChecklist>(checklistReportPath);
     assert.equal(checklist.generatedFrom?.partialGateMap, summary.generatedFrom.gateMap, "evidence checklist gate-map source drifted");
+    assert.equal(
+      checklist.generatedFrom?.productionGates,
+      summary.generatedFrom.productionGates,
+      "evidence checklist production-gates source drifted"
+    );
     assert.deepEqual(summary.evidenceChecklistSummary, normalizeChecklistSummary(checklist.summary));
   }
 

@@ -27,6 +27,7 @@ type EvidenceChecklist = {
   generatedAt?: string;
   generatedFrom?: {
     partialGateMap?: string;
+    productionGates?: string;
   };
   summary?: {
     gates?: number;
@@ -225,6 +226,7 @@ try {
     assert.equal(partial.generatedFrom?.gateMap, "docs/partial-production-gate-map.md");
     assert.equal(partial.generatedFrom?.productionGates, "docs/legacy-production-acceptance-gates.md");
     assert.equal(checklist.generatedFrom?.partialGateMap, "docs/partial-production-gate-map.md");
+    assert.equal(checklist.generatedFrom?.productionGates, "docs/legacy-production-acceptance-gates.md");
     assert.equal(partial.summary?.gateFilter, gate);
     assert.equal(checklist.summary?.gateFilter, gate);
     assert.equal(partial.summary?.partialRows, rows.length);

@@ -105,6 +105,7 @@ run("src/scripts/report-production-evidence-checklist.ts", [
   `--out=${evidenceChecklistPath}`,
   `--generated-at=${generatedAt}`,
   `--partial-gate-map=${partialGateMapPath}`,
+  `--production-gates=${productionGatesPath}`,
 ]);
 run("src/scripts/report-production-gate-status.ts", [
   "--json",

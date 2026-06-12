@@ -36,6 +36,7 @@ const payload = JSON.parse(jsonOutput) as {
   status?: string;
   schemaVersion?: number;
   generatedAt?: string;
+  generatedFrom?: { evidenceSpec?: string; evidenceTemplate?: string; partialGateMap?: string; productionGates?: string };
   summary?: { gates?: number; requiredFields?: number; blockingPartialRows?: number; gateFilter?: string };
   gates?: Array<{ gate?: string; requiredFields?: string[]; blockingPartialRows?: Array<{ row?: string }> }>;
 };
@@ -43,6 +44,12 @@ const payload = JSON.parse(jsonOutput) as {
 assert.equal(payload.status, "production evidence checklist");
 assert.equal(payload.schemaVersion, 1);
 assertValidIsoTimestamp(payload.generatedAt, "evidence checklist generatedAt");
+assert.deepEqual(payload.generatedFrom, {
+  evidenceSpec: "src/scripts/production-acceptance-evidence-spec.ts",
+  evidenceTemplate: "docs/production-acceptance-evidence-template.md",
+  partialGateMap: "docs/partial-production-gate-map.md",
+  productionGates: "docs/legacy-production-acceptance-gates.md",
+});
 assert.equal(payload.summary?.gates, 12);
 assert.equal(payload.summary?.requiredFields, expectedRequiredFields);
 assert.equal(payload.summary?.blockingPartialRows, partialReport.summary?.partialRows);
@@ -148,6 +155,24 @@ try {
   assert.match(unknownMappedGate.stderr, /references unknown production gate\(s\): PROD-BOGUS/);
 
   const sourceGateMap = readFileSync("docs/partial-production-gate-map.md", "utf8");
+  const missingDocumentedGatePath = join(tmp, "missing-documented-gate.md");
+  writeFileSync(
+    missingDocumentedGatePath,
+    readFileSync("docs/legacy-production-acceptance-gates.md", "utf8").replace(/^\| PROD-CRON \|.*\n/m, ""),
+    "utf8"
+  );
+  const missingDocumentedGate = spawnSync("pnpm", [
+    "tsx",
+    script,
+    "--json",
+    `--production-gates=${missingDocumentedGatePath}`,
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.equal(missingDocumentedGate.status, 1);
+  assert.match(missingDocumentedGate.stderr, /references production gate\(s\) missing from .*PROD-CRON/);
+
   const duplicateRowPath = join(tmp, "duplicate-row-gate-map.md");
   writeFileSync(duplicateRowPath, sourceGateMap.replace("| P02 |", "| P01 |"), "utf8");
   const duplicateRow = spawnSync("pnpm", [

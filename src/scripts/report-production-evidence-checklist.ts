@@ -23,6 +23,7 @@ const outputPath = optionValue("--out");
 const selectedGate = optionValue("--gate");
 const generatedAt = generatedAtValue();
 const partialGateMapPath = optionValue("--partial-gate-map") ?? "docs/partial-production-gate-map.md";
+const productionGatesPath = optionValue("--production-gates") ?? "docs/legacy-production-acceptance-gates.md";
 
 const gateSections = productionGateSections();
 if (selectedGate && !gateSections.includes(selectedGate)) {
@@ -32,7 +33,7 @@ if (selectedGate && !gateSections.includes(selectedGate)) {
 }
 
 const partialRows = parsePartialGateMap();
-validatePartialRows(partialRows, gateSections);
+validatePartialRows(partialRows, gateSections, parseProductionGates());
 const gates = gateSections
   .filter((gate) => !selectedGate || gate === selectedGate)
   .map((gate): ChecklistGate => {
@@ -58,6 +59,7 @@ const payload = {
     evidenceSpec: "src/scripts/production-acceptance-evidence-spec.ts",
     evidenceTemplate: "docs/production-acceptance-evidence-template.md",
     partialGateMap: partialGateMapPath,
+    productionGates: productionGatesPath,
   },
   summary: {
     gates: gates.length,
@@ -99,7 +101,17 @@ function parsePartialGateMap() {
     });
 }
 
-function validatePartialRows(rows: PartialGateRow[], knownGates: string[]) {
+function parseProductionGates() {
+  const markdown = readFileSync(productionGatesPath, "utf8");
+  return new Set(
+    markdown
+      .split(/\r?\n/)
+      .map((line) => line.match(/^\| (PROD-[A-Z]+) \|/)?.[1])
+      .filter((gate): gate is string => Boolean(gate)),
+  );
+}
+
+function validatePartialRows(rows: PartialGateRow[], knownGates: string[], documentedGates: Set<string>) {
   const known = new Set(knownGates);
   const seen = new Set<string>();
   rows.forEach((row, index) => {
@@ -124,6 +136,12 @@ function validatePartialRows(rows: PartialGateRow[], knownGates: string[]) {
     if (unknownGates.length > 0) {
       throw new Error(
         `${partialGateMapPath} row ${row.row} references unknown production gate(s): ${unknownGates.join(", ")}`
+      );
+    }
+    const undocumentedGates = row.gates.filter((gate) => !documentedGates.has(gate));
+    if (undocumentedGates.length > 0) {
+      throw new Error(
+        `${partialGateMapPath} row ${row.row} references production gate(s) missing from ${productionGatesPath}: ${undocumentedGates.join(", ")}`
       );
     }
   });
