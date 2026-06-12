@@ -7,6 +7,7 @@ const files = {
   parentApiMatrix: "docs/parent-api-contract-matrix.md",
   cronMatrix: "docs/cron-notification-matrix.md",
   nativeLedger: "docs/native-acceptance-ledger.md",
+  topGaps: "docs/top-20-restoration-gaps.md",
   e2e: "src/scripts/verify-parent-credentialed-native-e2e.ts",
 };
 
@@ -60,6 +61,11 @@ assert.doesNotMatch(
 assert.match(text.matrixMd, /credentialed native route-handler acceptance restored/);
 assert.doesNotMatch(text.matrixMd, /credentialed native acceptance remains/);
 assert.doesNotMatch(text.matrixMd, /broader endpoint\/native-device E2E/);
+assert.doesNotMatch(text.matrixMd, /offline\/mobile polish/);
+assert.match(
+  text.matrixMd,
+  /Remaining work is production provider credential\/native-device acceptance and exact production `notifications_nature` acceptance after import\./,
+);
 
 assert.match(text.parentApiMatrix, /docs\/native-acceptance-ledger\.md/);
 assert.match(
@@ -74,6 +80,11 @@ assert.doesNotMatch(text.cronMatrix, /Verify credentialed native parser toleranc
 assert.match(text.nativeLedger, /Local Credentialed Route-Handler E2E/);
 assert.match(text.nativeLedger, /This is not an iOS Simulator/);
 assert.match(text.nativeLedger, /Remaining native acceptance gates/);
+assert.match(
+  text.topGaps,
+  /Remaining work is exact native-app screen audit plus production provider credential\/native-device acceptance\./,
+);
+assert.doesNotMatch(text.topGaps, /offline\/mobile polish/);
 
 assert.match(text.e2e, /verifyTemporaryMessageThread/);
 assert.match(text.e2e, /ws\/sendMessage\.php/);
