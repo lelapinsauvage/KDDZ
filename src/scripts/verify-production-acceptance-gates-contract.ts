@@ -603,6 +603,7 @@ for (const focusedArtifact of ["cron", "provider", "native", "nature"]) {
 }
 assert.match(contents.gates, /pnpm run verify:production-gates/);
 assert.match(contents.gates, /verify-production-gate-suite\.ts/);
+assert.match(contents.gates, /tracker assertion derived from `report-production-partials\.ts --json`/);
 assert.match(contents.gates, /verify-production-artifact-consistency-contract\.ts/);
 assert.match(contents.gates, /verify-production-focused-artifacts-contract\.ts/);
 assert.match(contents.gates, /verify-production-focused-artifacts-manifest-contract\.ts/);

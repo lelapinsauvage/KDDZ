@@ -7,6 +7,12 @@ type ParityRow = {
   [key: string]: unknown;
 };
 
+type PartialReport = {
+  summary?: {
+    partialRows?: number;
+  };
+};
+
 const checks = [
   {
     label: "production acceptance gates contract",
@@ -91,11 +97,19 @@ for (const check of checks) {
 }
 
 const tracker = trackerSummary();
+const partialReport = JSON.parse(
+  execFileSync("pnpm", ["tsx", "src/scripts/report-production-partials.ts", "--json"], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  })
+) as PartialReport;
+const expectedDonePct = Math.round((tracker.complete / tracker.total) * 1000) / 10;
+const expectedLeftPct = Math.round((100 - expectedDonePct) * 10) / 10;
 
 assert.equal(tracker.total, 1713, "production gate suite must be updated when total parity rows change");
-assert.equal(tracker.partial, 17, "production gate suite must be updated when partial parity rows change");
-assert.equal(tracker.donePct, 99);
-assert.equal(tracker.leftPct, 1);
+assert.equal(tracker.partial, partialReport.summary?.partialRows, "page-parity tracker must match production partial report");
+assert.equal(tracker.donePct, expectedDonePct);
+assert.equal(tracker.leftPct, expectedLeftPct);
 
 console.log(
   JSON.stringify(

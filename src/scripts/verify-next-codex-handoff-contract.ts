@@ -87,6 +87,7 @@ for (const expected of [
   "--gate=PROD-NATURE",
   "Zero-Partial Closeout Hardening",
   "Artifact consistency no longer hardcodes today's 17 partial rows",
+  "production gate suite also derives its tracker assertion from `report-production-partials.ts --json`",
   "--parity-matrix=<path>",
   "--partial-gate-map=<path>",
   "Production Evidence Timestamp Hardening",
