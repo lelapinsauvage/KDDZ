@@ -109,12 +109,12 @@ function verifyCloseoutSummary(path: string) {
   assert.deepEqual(summary.readinessSummary, { ready: 12, needsEvidence: 0, total: 12 });
   const expectedBranch = optionValue("--branch");
   const expectedCommit = optionValue("--commit");
+  const expectedParityTracker = parityTrackerSummary(summary.generatedFrom?.matrix ?? "docs/page-parity-matrix.json");
   if (process.argv.includes("--require-zero-partials")) {
     assert.ok(expectedBranch, "final production closeout summary requires --branch with --require-zero-partials");
     assert.ok(expectedCommit, "final production closeout summary requires --commit with --require-zero-partials");
     assert.equal(summary.requireZeroPartials, true, "production closeout summary must come from a require-zero-partials run");
-    assert.equal(summary.parityTracker?.total, 1713, "production closeout summary tracker total drifted");
-    assert.equal(summary.parityTracker?.complete, 1713, "production closeout summary complete count is not final");
+    assert.deepEqual(summary.parityTracker, expectedParityTracker, "production closeout summary tracker drifted");
     assert.equal(summary.parityTracker?.partial, 0, "production closeout summary still has unresolved partial rows");
     assert.equal(summary.parityTracker?.donePct, 100, "production closeout summary is not fully complete");
     assert.equal(summary.parityTracker?.leftPct, 0, "production closeout summary still has work left");
@@ -127,7 +127,7 @@ function verifyCloseoutSummary(path: string) {
       "production closeout evidence checklist summary still has blocking partial rows"
     );
   } else {
-    assert.deepEqual(summary.parityTracker, { total: 1713, complete: 1696, partial: 17, donePct: 99, leftPct: 1 });
+    assert.deepEqual(summary.parityTracker, expectedParityTracker);
   }
   if (expectedBranch) {
     assert.equal(summary.branch, expectedBranch, "production closeout summary branch drifted");
@@ -366,6 +366,9 @@ function verifySelfTestContract() {
     const staleFinalSummary = readJson<CloseoutSummary>(closeoutSummaryPath);
     staleFinalSummary.requireZeroPartials = true;
     staleFinalSummary.parityTracker = { total: 1713, complete: 1713, partial: 0, donePct: 100, leftPct: 0 };
+    if (staleFinalSummary.generatedFrom) {
+      staleFinalSummary.generatedFrom.matrix = zeroParityMatrixPath;
+    }
     writeJson(staleFinalSummaryPath, staleFinalSummary);
     assertFailingVerifier(
       [
@@ -539,6 +542,37 @@ function normalizeChecklistSummary(summary: EvidenceChecklistSummary | undefined
     requiredFields: summary?.requiredFields ?? null,
     blockingPartialRows: summary?.blockingPartialRows ?? null,
   };
+}
+
+function parityTrackerSummary(path: string) {
+  const matrix = JSON.parse(readFileSync(path, "utf8")) as unknown;
+  let total = 0;
+  let partial = 0;
+
+  function walk(value: unknown): void {
+    if (Array.isArray(value)) {
+      value.forEach(walk);
+      return;
+    }
+    if (!value || typeof value !== "object") {
+      return;
+    }
+
+    const row = value as { status?: unknown };
+    if (typeof row.status === "string") {
+      total += 1;
+      if (row.status.toLowerCase().startsWith("partial")) {
+        partial += 1;
+      }
+    }
+    Object.values(row).forEach(walk);
+  }
+
+  walk(matrix);
+  const complete = total - partial;
+  const donePct = Math.round((complete / total) * 1000) / 10;
+  const leftPct = Math.round((100 - donePct) * 10) / 10;
+  return { total, complete, partial, donePct, leftPct };
 }
 
 function assertSuccessfulVerifier(args: string[]) {
