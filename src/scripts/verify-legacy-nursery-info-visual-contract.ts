@@ -25,6 +25,7 @@ const text = {
   staffCompliance: read("src/components/branches/compliance/staff-compliance-section.tsx"),
   matrixMd: read("docs/page-parity-matrix.md"),
   matrixJson: read("docs/page-parity-matrix.json"),
+  topGaps: read("docs/top-20-restoration-gaps.md"),
 };
 
 assert.match(text.legacyPhp, /<title>Nursery Info<\/title>/);
@@ -157,5 +158,12 @@ assert.match(
 assert.match(mdRow, /verify-legacy-nursery-info-visual-contract\.ts/);
 assert.doesNotMatch(mdRow, /exact legacy visual\/finalization audit/);
 assert.doesNotMatch(mdRow, /Remaining work is final production data\/provider acceptance/);
+
+assert.match(text.topGaps, /nurseryinfo\.php` \/ `nurseryinfo\.js` parity audit/);
+assert.match(text.topGaps, /verify-legacy-nursery-info-visual-contract\.ts/);
+assert.doesNotMatch(
+  text.topGaps,
+  /Remaining work is exact `nurseryinfo\.php` \/ `nurseryinfo\.js` visual audit/,
+);
 
 console.log("legacy nursery info visual contract assertions passed");

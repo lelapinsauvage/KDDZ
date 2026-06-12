@@ -11,6 +11,7 @@ const files = {
   exporter: "src/lib/database-sql-export.ts",
   matrix: "docs/page-parity-matrix.json",
   matrixMd: "docs/page-parity-matrix.md",
+  topGaps: "docs/top-20-restoration-gaps.md",
 };
 
 const text = Object.fromEntries(
@@ -101,5 +102,12 @@ const markdownRow = text.matrixMd
 assert.match(markdownRow ?? "", /archive snapshot/);
 assert.match(markdownRow ?? "", /LegacyYearDatabase/);
 assert.doesNotMatch(markdownRow ?? "", /physical archive\/import parity remains/);
+
+assert.match(text.topGaps, /legacy `ArchiveAndCreate` backup\/import contract/);
+assert.match(text.topGaps, /sql_snapshot_plus_transactional_progression/);
+assert.doesNotMatch(
+  text.topGaps,
+  /Remaining work is exact parity for legacy physical database backup\/truncate\/import behavior/,
+);
 
 console.log("legacy newyear archive contract assertions passed");

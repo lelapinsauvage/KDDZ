@@ -154,7 +154,7 @@ The final external acceptance work is tracked in `docs/legacy-production-accepta
 
 12. **New academic year workflow**
    - `/settings/new-year` now restores the legacy optional/mandatory import selection UI, teacher reassignment table, child class progression table, legacy-style S.N. generation, and a transactional action that creates the next active `SchoolYear`, updates selected teachers/children, and snapshots child history.
-   - Remaining work is exact parity for legacy physical database backup/truncate/import behavior from `ArchiveAndCreate`; modern currently records import selections in `SchoolYear.legacyData` and avoids destructive deletion.
+   - The legacy `ArchiveAndCreate` backup/import contract is now represented by a SQL archive snapshot before mutation, object-storage archive persistence, `SchoolYear.legacyData.archiveAndCreate`, and a `LegacyYearDatabase` manifest with the legacy archive database name, optional/mandatory import selections, teacher/child reassignment payloads, target class ids, generated child S.N. values, previous class/year ids, and `legacyArchiveMode: "sql_snapshot_plus_transactional_progression"`; this preserves auditability without reintroducing destructive physical database truncation.
 
 13. **Class dashboard depth**
    - `/classes/[id]` now restores the legacy `class_dashboard.php` depth for class capacity/gender summary, seven-day birthdays, daily report roster, absent report roster, medical/general/suffering/visits/vaccination/accident/call breakdowns, and seven assessment age-band summaries with eligible child rows.
@@ -176,7 +176,7 @@ The final external acceptance work is tracked in `docs/legacy-production-accepta
 
 16. **Government/nursery compliance parity**
    - Legacy `t_garderie`, `t_garderie_attachments`, `t_old_garderie`, and `t_garderie_doctor*` rows now have migration coverage, and `/settings/nursery` now restores the government compliance workflow as the first tab using migrated `BranchCompliance`, `BranchDocument`, and all staff groups for the Arabic Ministry form, completion state, staff compliance tables, and ministry attachment uploads.
-   - Remaining work is exact `nurseryinfo.php` / `nurseryinfo.js` visual audit, legacy finalization/progress semantics, and any branch-selection edge cases beyond the current branch.
+   - The `nurseryinfo.php` / `nurseryinfo.js` parity audit is now covered by the legacy branch bridge, branch completion progress, Arabic Ministry header/sections, A-J navigation, staff document status, 11-document Ministry attachment workflow, storage-backed upload path, operational settings tab, and `Upnurseryinfo` action guard verification in `src/scripts/verify-legacy-nursery-info-visual-contract.ts`.
 
 17. **Address hierarchy reference fields**
    - Legacy `t_mouhafaza`, `t_quadaa`, and `t_region` reference numbers and created dates are migrated and now displayed across `/settings/zones`, `/settings/areas`, and `/settings/regions`; `/settings/zones` restores Mouhafaza listing/modal labels, `/settings/areas` restores Quadaa listing/modal labels, and `/settings/regions` restores the legacy Region listing, field/date filters, Quadaa selector, create/update/delete labels, and parent-Quadaa reassignment.
