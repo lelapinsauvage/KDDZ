@@ -698,8 +698,8 @@ assert.match(contents.cutoverRunbook, /verify-production-readiness-env-template-
 assert.doesNotMatch(contents.gates, /docs\/production-readiness\.env\.example/);
 assert.doesNotMatch(contents.cutoverRunbook, /docs\/production-readiness\.env\.example/);
 assert.equal(existsSync("docs/production-readiness.env.example"), false);
-assert.match(contents.cutoverRunbook, /--out=\/tmp\/kiddzonl-production-readiness\.json/);
-assert.match(contents.cutoverRunbook, /report-production-gate-status\.ts --json --out=\/tmp\/kiddzonl-production-gate-status\.json --generated-at=<release-generated-at-iso>/);
+assert.match(contents.cutoverRunbook, /audit-production-readiness\.ts --env-file=\/secure\/private-readiness\.env --out=\/tmp\/kiddzonl-production-readiness\.json --generated-at=<release-generated-at-iso>/);
+assert.match(contents.cutoverRunbook, /report-production-gate-status\.ts --json --env-file=\/secure\/private-readiness\.env --out=\/tmp\/kiddzonl-production-gate-status\.json --generated-at=<release-generated-at-iso>/);
 assert.match(contents.cutoverRunbook, /report-production-gate-status\.ts --json --blocking-only --out=\/tmp\/kiddzonl-production-blocking-gate-status\.json --generated-at=<release-generated-at-iso>/);
 assert.match(contents.cutoverRunbook, /report-production-preflight-artifacts\.ts --out-dir=\/tmp\/kiddzonl-production-preflight-artifacts --generated-at=<release-generated-at-iso>/);
 assert.match(contents.cutoverRunbook, /verify-production-preflight-artifacts-manifest\.ts --manifest=\/tmp\/kiddzonl-production-preflight-artifacts\/kiddzonl-production-preflight-artifacts\.json/);
