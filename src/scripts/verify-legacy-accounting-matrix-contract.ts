@@ -168,9 +168,18 @@ assert.match(
   text.topGaps,
   /The page-level matrix print action is restored/,
 );
+assert.match(
+  text.topGaps,
+  /Local accounting matrix implementation is closed; remaining acceptance is exact production print\/stationery review/,
+);
+assert.match(text.topGaps, /under `PROD-PRINT`/);
 assert.doesNotMatch(
   text.topGaps,
   /Remaining work is exact visual audit for any legacy WebSocket refresh\/status behavior that was commented out or environment-specific/,
+);
+assert.doesNotMatch(
+  text.topGaps,
+  /Remaining work is exact production visual acceptance for print\/stationery/,
 );
 
 function escapeRegExp(value: string) {
