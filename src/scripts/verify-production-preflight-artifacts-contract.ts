@@ -41,6 +41,16 @@ type GateStatusReport = {
     matrix?: string;
     gateMap?: string;
   };
+  sourceAlignment?: {
+    status?: string;
+    generatedAt?: string;
+    readinessGeneratedAt?: string;
+    partialReportGeneratedAt?: string;
+    evidenceChecklistGeneratedAt?: string;
+    partialReportRows?: number;
+    checklistBlockingRows?: number;
+    gateCounts?: Record<string, number>;
+  };
   summary?: {
     gates?: number;
     ready?: number;
@@ -133,6 +143,21 @@ try {
   assert.equal(blocking.generatedAt, manifest.generatedAt);
   assert.equal(blocking.generatedFrom?.matrix, manifest.generatedFrom?.matrix);
   assert.equal(blocking.generatedFrom?.gateMap, manifest.generatedFrom?.gateMap);
+  assert.deepEqual(blocking.sourceAlignment, {
+    status: "verified",
+    generatedAt,
+    readinessGeneratedAt: generatedAt,
+    partialReportGeneratedAt: generatedAt,
+    evidenceChecklistGeneratedAt: generatedAt,
+    partialReportRows: 17,
+    checklistBlockingRows: 17,
+    gateCounts: {
+      "PROD-CRON": 9,
+      "PROD-NATIVE": 3,
+      "PROD-NATURE": 1,
+      "PROD-PROVIDERS": 14,
+    },
+  });
   assert.deepEqual(blocking.gates?.map((gate) => gate.gate), [
     "PROD-CRON",
     "PROD-NATIVE",
@@ -257,6 +282,29 @@ try {
   });
   assert.equal(generatedAtMismatch.status, 1);
   assert.match(generatedAtMismatch.stderr, /Expected values to be strictly equal/);
+
+  const sourceAlignmentMismatchManifest = JSON.parse(JSON.stringify(manifest)) as PreflightManifest;
+  const sourceAlignmentMismatchStatusPath = sourceAlignmentMismatchManifest.artifacts?.blockingGateStatus?.path;
+  assert.ok(sourceAlignmentMismatchStatusPath);
+  assert.ok(sourceAlignmentMismatchManifest.artifacts?.blockingGateStatus);
+  const sourceAlignmentMismatchStatus = readJson<GateStatusReport>(sourceAlignmentMismatchStatusPath);
+  sourceAlignmentMismatchStatus.generatedAt = generatedAt;
+  assert.ok(sourceAlignmentMismatchStatus.sourceAlignment);
+  sourceAlignmentMismatchStatus.sourceAlignment.status = "stale";
+  writeFileSync(sourceAlignmentMismatchStatusPath, `${JSON.stringify(sourceAlignmentMismatchStatus, null, 2)}\n`, "utf8");
+  sourceAlignmentMismatchManifest.artifacts.blockingGateStatus.digest = sha256File(sourceAlignmentMismatchStatusPath);
+  const sourceAlignmentMismatchManifestPath = join(tmp, "source-alignment-mismatch-preflight-artifacts.json");
+  writeFileSync(sourceAlignmentMismatchManifestPath, `${JSON.stringify(sourceAlignmentMismatchManifest, null, 2)}\n`, "utf8");
+  const sourceAlignmentMismatch = spawnSync("pnpm", [
+    "tsx",
+    "src/scripts/verify-production-preflight-artifacts-manifest.ts",
+    `--manifest=${sourceAlignmentMismatchManifestPath}`,
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.equal(sourceAlignmentMismatch.status, 1);
+  assert.match(sourceAlignmentMismatch.stderr, /status: 'stale'/);
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }

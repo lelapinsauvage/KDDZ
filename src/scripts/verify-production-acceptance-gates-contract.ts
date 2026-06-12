@@ -545,6 +545,7 @@ assert.match(contents.gates, /--require-zero-partials/);
 assert.match(contents.gates, /report-production-partials\.ts/);
 assert.match(contents.gates, /report-production-focused-artifacts\.ts/);
 assert.match(contents.gates, /report-production-preflight-artifacts\.ts/);
+assert.match(contents.gates, /requiring `sourceAlignment\.status=verified`/);
 assert.match(contents.gates, /report-production-gate-status\.ts/);
 assert.match(contents.gates, /--require-ready/);
 assert.match(contents.gates, /--require-no-blockers/);

@@ -41,6 +41,16 @@ type BlockingGateStatus = {
     matrix?: string;
     gateMap?: string;
   };
+  sourceAlignment?: {
+    status?: string;
+    generatedAt?: string;
+    readinessGeneratedAt?: string;
+    partialReportGeneratedAt?: string;
+    evidenceChecklistGeneratedAt?: string;
+    partialReportRows?: number;
+    checklistBlockingRows?: number;
+    gateCounts?: Record<string, number>;
+  };
   summary?: {
     gates?: number;
     ready?: number;
@@ -118,6 +128,21 @@ assert.equal(blockingStatus.status, "production gate status report");
 assert.equal(blockingStatus.generatedAt, manifest.generatedAt);
 assert.equal(blockingStatus.generatedFrom?.matrix, manifest.generatedFrom.matrix);
 assert.equal(blockingStatus.generatedFrom?.gateMap, manifest.generatedFrom.gateMap);
+assert.deepEqual(blockingStatus.sourceAlignment, {
+  status: "verified",
+  generatedAt: manifest.generatedAt,
+  readinessGeneratedAt: manifest.generatedAt,
+  partialReportGeneratedAt: manifest.generatedAt,
+  evidenceChecklistGeneratedAt: manifest.generatedAt,
+  partialReportRows: 17,
+  checklistBlockingRows: 17,
+  gateCounts: {
+    "PROD-CRON": 9,
+    "PROD-NATIVE": 3,
+    "PROD-NATURE": 1,
+    "PROD-PROVIDERS": 14,
+  },
+});
 assert.deepEqual(blockingStatus.gates?.map((gate) => gate.gate), [
   "PROD-CRON",
   "PROD-NATIVE",
