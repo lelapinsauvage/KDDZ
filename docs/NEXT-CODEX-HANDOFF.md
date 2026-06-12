@@ -109,6 +109,9 @@ Recent commits on `legacy-parity-runbook`:
 - `8557360 chore: verify production preflight manifests`
 - `388567c chore: generate production preflight artifacts`
 - `fc63539 chore: focus production gate status on blockers`
+- `7deab7d docs: document partial report provenance`
+- `6b1fba4 chore: expose partial report source provenance`
+- `33899e2 chore: expose checklist source provenance`
 - `e605cdf docs: cover focused readiness templates`
 - `f200c9e chore: generate production readiness env template`
 - `da487a0 chore: render production acceptance evidence`
@@ -133,6 +136,8 @@ Commits `93d580f`, `e378e55`, and `663bd0e` hardened final production closure. A
 ### Production Evidence Timestamp Hardening
 
 Commits `de7a99a`, `7b58b2f`, `29e45e9`, `e7bb81b`, and `d4d2251` tightened generated production evidence artifacts. The partial report, production evidence checklist, readiness audit, closeout runner, closeout summary, and evidence package manifest now use validated ISO `--generated-at` timestamps such as `2026-06-10T00:00:00.000Z`. The closeout summary and evidence package manifest both carry `schemaVersion: 1`; the evidence package manifest also carries a top-level `generatedAt`, with contract coverage for saved-manifest verification. Package verification requires the closeout summary, readiness report, partial report, evidence checklist, and preflight manifest to share that same package `generatedAt`. The closeout summary now records the source matrix/gate-map/production-gates paths, and the closeout plus evidence package contracts reject archived partial/checklist/preflight artifacts or saved package manifests whose source provenance drifts from the closeout.
+
+Commits `33899e2`, `6b1fba4`, and `7deab7d` made the human production artifacts match the JSON provenance boundary. The markdown partial report now prints source matrix, partial gate map, and production-gates paths; the markdown evidence checklist now prints its evidence spec, template, partial gate map, and production-gates paths; and `docs/legacy-production-acceptance-gates.md` documents that `report-production-partials.ts` emits source matrix/gate-map/production-gates paths as markdown or redacted JSON.
 
 ### Production Acceptance Closure
 
@@ -395,6 +400,9 @@ Current progress:
 The remaining 17 partial rows are production/external acceptance gates: PROD-CRON, PROD-NATIVE, PROD-NATURE, and PROD-PROVIDERS.
 
 Recent pushed commits:
+`7deab7d docs: document partial report provenance`
+`6b1fba4 chore: expose partial report source provenance`
+`33899e2 chore: expose checklist source provenance`
 `e605cdf docs: cover focused readiness templates`
 `8557360 chore: verify production preflight manifests`
 `388567c chore: generate production preflight artifacts`
