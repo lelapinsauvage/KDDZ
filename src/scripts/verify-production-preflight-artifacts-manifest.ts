@@ -102,8 +102,9 @@ type BlockingGateStatus = {
   gates?: Array<{
     gate?: string;
     missingEvidence?: unknown[];
+    requiredEvidenceFields?: unknown[];
     blockingGateLinks?: number;
-    blockingPartialRows?: unknown[];
+    blockingPartialRows?: Array<{ row?: string }>;
     nextActions?: string[];
   }>;
 };
@@ -144,6 +145,14 @@ type CloseoutPlan = {
     gate?: string;
     blockingRows?: string[];
     focusedArtifactCommands?: string[];
+    evidenceWorkOrder?: {
+      externalDependency?: string;
+      finishCondition?: string;
+      evidencePointers?: string[];
+      acceptanceCriteria?: string[];
+      focusedCoverageRows?: string[];
+      proofCommands?: string[];
+    };
   }>;
   finalCloseoutCommands?: string[];
 };
@@ -257,6 +266,7 @@ assert.deepEqual(
   Object.fromEntries((closeoutPlan.gates ?? []).map((gate) => [gate.gate, gate.blockingRows?.length ?? 0]).sort(([a], [b]) => String(a).localeCompare(String(b)))),
   gateCounts(blockingStatus.gates ?? [])
 );
+assertCloseoutPlanWorkOrders(closeoutPlan, blockingStatus);
 assert.ok(closeoutPlan.finalCloseoutCommands?.some((command) => command.includes("verify-production-preflight-artifacts-manifest.ts")));
 assert.ok(closeoutPlan.finalCloseoutCommands?.some((command) => command.includes("--manifest=/tmp/kiddzonl-production-evidence-package.json")));
 
@@ -316,6 +326,40 @@ function blockingGateSummary(status: BlockingGateStatus): BlockingGateSummary {
       nextActions: gate.nextActions ?? [],
     })),
   };
+}
+
+function assertCloseoutPlanWorkOrders(plan: CloseoutPlan, status: BlockingGateStatus) {
+  const statusByGate = new Map((status.gates ?? []).map((gate) => [gate.gate, gate]));
+  for (const gate of plan.gates ?? []) {
+    assertNonEmptyString(gate.gate, "closeout plan work order is missing gate id");
+    const statusGate = statusByGate.get(gate.gate);
+    assert.ok(statusGate, `${gate.gate} is missing from blocking gate status`);
+    const workOrder = gate.evidenceWorkOrder;
+    assert.ok(workOrder, `${gate.gate} is missing evidence work order`);
+    const blockingRows = (statusGate.blockingPartialRows ?? []).map((row) => {
+      assertNonEmptyString(row.row, `${gate.gate} blocking row is missing row id`);
+      return row.row;
+    });
+    assert.equal(workOrder.externalDependency, "production evidence");
+    assert.match(workOrder.finishCondition ?? "", new RegExp(`Set every ${gate.gate} evidence pointer`));
+    assert.deepEqual(workOrder.evidencePointers, statusGate.missingEvidence ?? []);
+    assert.deepEqual(workOrder.acceptanceCriteria, statusGate.requiredEvidenceFields ?? []);
+    assert.deepEqual(workOrder.focusedCoverageRows, blockingRows, `${gate.gate} evidence work order focusedCoverageRows drifted`);
+    assert.deepEqual(gate.blockingRows, blockingRows);
+    assert.ok(
+      workOrder.proofCommands?.some((command) =>
+        command.includes(`audit-production-readiness.ts --env-file=/secure/private-readiness.env --gate=${gate.gate}`)
+      ),
+      `${gate.gate} work order is missing readiness proof command`
+    );
+    assert.ok(
+      workOrder.proofCommands?.some((command) => command.includes(`report-production-gate-status.ts --json --env-file=/secure/private-readiness.env --gate=${gate.gate}`)),
+      `${gate.gate} work order is missing gate-status proof command`
+    );
+    for (const command of gate.focusedArtifactCommands ?? []) {
+      assert.ok(workOrder.proofCommands?.includes(command), `${gate.gate} work order is missing focused artifact proof command`);
+    }
+  }
 }
 
 function sumValues(counts: Record<string, number>) {

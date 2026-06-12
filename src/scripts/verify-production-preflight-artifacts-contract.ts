@@ -137,6 +137,15 @@ type CloseoutPlan = {
   gates?: Array<{
     gate?: string;
     blockingRows?: string[];
+    focusedArtifactCommands?: string[];
+    evidenceWorkOrder?: {
+      externalDependency?: string;
+      finishCondition?: string;
+      evidencePointers?: string[];
+      acceptanceCriteria?: string[];
+      focusedCoverageRows?: string[];
+      proofCommands?: string[];
+    };
   }>;
   finalCloseoutCommands?: string[];
 };
@@ -268,6 +277,8 @@ try {
     Object.fromEntries((closeoutPlan.gates ?? []).map((gate) => [gate.gate, gate.blockingRows?.length ?? 0]).sort(([a], [b]) => String(a).localeCompare(String(b)))),
     expectedGateCounts
   );
+  assert.ok(closeoutPlan.gates?.every((gate) => gate.evidenceWorkOrder?.externalDependency === "production evidence"));
+  assert.ok(closeoutPlan.gates?.every((gate) => gate.evidenceWorkOrder?.proofCommands?.some((command) => command.includes(`--gate=${gate.gate}`))));
   assert.ok(closeoutPlan.finalCloseoutCommands?.some((command) => command.includes("verify-production-preflight-artifacts-manifest.ts")));
   assert.ok(closeoutPlan.finalCloseoutCommands?.some((command) => command.includes("--manifest=/tmp/kiddzonl-production-evidence-package.json")));
 
@@ -391,6 +402,30 @@ try {
   });
   assert.equal(gateLinkMismatch.status, 1);
   assert.match(gateLinkMismatch.stderr, /blockingGateLinks: 999/);
+
+  const workOrderMismatchManifest = JSON.parse(JSON.stringify(manifest)) as PreflightManifest;
+  const workOrderMismatchPlanPath = workOrderMismatchManifest.artifacts?.closeoutPlan?.path;
+  assert.ok(workOrderMismatchPlanPath);
+  assert.ok(workOrderMismatchManifest.artifacts?.closeoutPlan);
+  const originalWorkOrderPlan = readFileSync(workOrderMismatchPlanPath, "utf8");
+  const workOrderMismatchPlan = readJson<CloseoutPlan>(workOrderMismatchPlanPath);
+  assert.ok(workOrderMismatchPlan.gates?.[0]?.evidenceWorkOrder?.focusedCoverageRows);
+  workOrderMismatchPlan.gates[0].evidenceWorkOrder.focusedCoverageRows = [];
+  writeFileSync(workOrderMismatchPlanPath, `${JSON.stringify(workOrderMismatchPlan, null, 2)}\n`, "utf8");
+  workOrderMismatchManifest.artifacts.closeoutPlan.digest = sha256File(workOrderMismatchPlanPath);
+  const workOrderMismatchPath = join(tmp, "work-order-mismatch-preflight-artifacts.json");
+  writeFileSync(workOrderMismatchPath, `${JSON.stringify(workOrderMismatchManifest, null, 2)}\n`, "utf8");
+  const workOrderMismatch = spawnSync("pnpm", [
+    "tsx",
+    "src/scripts/verify-production-preflight-artifacts-manifest.ts",
+    `--manifest=${workOrderMismatchPath}`,
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.equal(workOrderMismatch.status, 1);
+  assert.match(workOrderMismatch.stderr, /focusedCoverageRows/);
+  writeFileSync(workOrderMismatchPlanPath, originalWorkOrderPlan, "utf8");
 
   const closeoutModeMismatchManifest = JSON.parse(JSON.stringify(manifest)) as PreflightManifest;
   assert.ok(closeoutModeMismatchManifest.blockingGateSummary);
