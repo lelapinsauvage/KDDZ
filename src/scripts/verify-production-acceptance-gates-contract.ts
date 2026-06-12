@@ -188,9 +188,17 @@ assert.doesNotMatch(contents.gates, /(api[_-]?key|secret|token)\s*[:=]\s*["']?[A
 assert.doesNotMatch(contents.evidenceTemplate, /(api[_-]?key|secret|token)\s*[:=]\s*["']?[A-Za-z0-9_-]{12,}/i, "evidence template must not include secret values");
 assert.doesNotMatch(contents.cutoverRunbook, /(api[_-]?key|secret|token)\s*[:=]\s*["']?[A-Za-z0-9_-]{12,}/i, "cutover runbook must not include secret values");
 assert.doesNotMatch(contents.partialGateMap, /(api[_-]?key|secret|token)\s*[:=]\s*["']?[A-Za-z0-9_-]{12,}/i, "partial gate map must not include secret values");
+assert.match(contents.gates, /P01-P07\/P10\/P12 cron gate coverage/);
 assert.match(contents.gates, /P01-P03\/P05-P09\/P11-P15\/P17 provider gate coverage/);
+assert.match(contents.gates, /P15-P17 native gate coverage/);
+assert.match(contents.evidenceTemplate, /P01-P07\/P10\/P12 report id\/path/);
 assert.match(contents.evidenceTemplate, /P01-P03\/P05-P09\/P11-P15\/P17 report id\/path/);
+assert.match(contents.evidenceTemplate, /P15-P17 report id\/path/);
+assert.match(contents.evidenceTemplate, /P17 report id\/path/);
+assert.match(contents.cutoverRunbook, /P01-P07\/P10\/P12 cron coverage id\/path/);
 assert.match(contents.cutoverRunbook, /P01-P03\/P05-P09\/P11-P15\/P17 provider coverage id\/path/);
+assert.match(contents.cutoverRunbook, /P15-P17 native coverage id\/path/);
+assert.match(contents.cutoverRunbook, /P17 notifications_nature coverage id\/path/);
 assert.doesNotMatch(contents.gates, /P01-P17 provider gate coverage/);
 assert.doesNotMatch(contents.evidenceTemplate, /P01-P17 report id\/path/);
 assert.doesNotMatch(contents.cutoverRunbook, /P01-P17 provider coverage/);
