@@ -684,7 +684,13 @@ assert.match(contents.gates, /`--blocking-only` to show only gates that still bl
 assert.match(contents.gates, /focused coverage artifact pointer names/);
 assert.match(contents.gates, /focused artifact consistency verification commands/);
 assert.match(contents.cutoverRunbook, /render-production-readiness-env-template\.ts --out=\/secure\/private-readiness\.env/);
-assert.match(contents.cutoverRunbook, /render-production-readiness-env-template\.ts --gate=PROD-CRON/);
+for (const focusedReadinessGate of ["PROD-CRON", "PROD-PROVIDERS", "PROD-NATIVE", "PROD-NATURE"]) {
+  assert.match(
+    contents.cutoverRunbook,
+    new RegExp(`render-production-readiness-env-template\\.ts --gate=${focusedReadinessGate}`),
+    `${focusedReadinessGate} focused readiness env template command is missing from cutover runbook`
+  );
+}
 assert.match(contents.cutoverRunbook, /verify-production-readiness-env-template-contract\.ts/);
 assert.doesNotMatch(contents.gates, /docs\/production-readiness\.env\.example/);
 assert.doesNotMatch(contents.cutoverRunbook, /docs\/production-readiness\.env\.example/);

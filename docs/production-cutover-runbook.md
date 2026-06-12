@@ -30,6 +30,9 @@ pnpm tsx src/scripts/audit-production-readiness.ts --list-requirements
 pnpm tsx src/scripts/render-production-readiness-env-template.ts --out=/secure/private-readiness.env
 pnpm tsx src/scripts/audit-production-readiness.ts --list-requirements --gate=PROD-CRON
 pnpm tsx src/scripts/render-production-readiness-env-template.ts --gate=PROD-CRON
+pnpm tsx src/scripts/render-production-readiness-env-template.ts --gate=PROD-PROVIDERS
+pnpm tsx src/scripts/render-production-readiness-env-template.ts --gate=PROD-NATIVE
+pnpm tsx src/scripts/render-production-readiness-env-template.ts --gate=PROD-NATURE
 pnpm tsx src/scripts/report-production-evidence-checklist.ts --gate=PROD-CRON
 pnpm tsx src/scripts/report-production-gate-status.ts --json --blocking-only --out=/tmp/kiddzonl-production-blocking-gate-status.json --generated-at=<release-generated-at-iso>
 pnpm tsx src/scripts/report-production-preflight-artifacts.ts --out-dir=/tmp/kiddzonl-production-preflight-artifacts --generated-at=<release-generated-at-iso>

@@ -72,6 +72,35 @@ try {
   assert.match(providers, /LEGACY_CHANNEL_DELIVERY_WEBHOOK_URL=replace-me/);
   assert.doesNotMatch(providers, /PRODUCTION_CRONTAB_EVIDENCE=replace-me/);
 
+  const native = execFileSync("pnpm", [
+    "tsx",
+    script,
+    "--gate=PROD-NATIVE",
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.match(native, /Scope: PROD-NATIVE/);
+  assert.match(native, /NATIVE_IOS_ACCEPTANCE_REPORT=replace-me/);
+  assert.match(native, /NATIVE_ANDROID_ACCEPTANCE_REPORT=replace-me/);
+  assert.match(native, /NATIVE_LEGACY_ROUTE_ACCEPTANCE_REPORT=replace-me/);
+  assert.match(native, /NATIVE_PARTIAL_ROW_COVERAGE_REPORT=replace-me/);
+  assert.doesNotMatch(native, /PROVIDER_PARTIAL_ROW_COVERAGE_REPORT=replace-me/);
+
+  const nature = execFileSync("pnpm", [
+    "tsx",
+    script,
+    "--gate=PROD-NATURE",
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.match(nature, /Scope: PROD-NATURE/);
+  assert.match(nature, /NOTIFICATIONS_NATURE_ACCEPTANCE_REPORT=replace-me/);
+  assert.match(nature, /NOTIFICATIONS_NATURE_GROUP_COMPARISON_REPORT=replace-me/);
+  assert.match(nature, /NOTIFICATIONS_NATURE_PARTIAL_ROW_COVERAGE_REPORT=replace-me/);
+  assert.doesNotMatch(nature, /NATIVE_PARTIAL_ROW_COVERAGE_REPORT=replace-me/);
+
   const invalidGate = spawnSync("pnpm", [
     "tsx",
     script,
