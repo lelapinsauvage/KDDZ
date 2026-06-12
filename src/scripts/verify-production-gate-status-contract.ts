@@ -185,6 +185,12 @@ try {
     encoding: "utf8",
   });
   assert.match(markdown, /# Production Gate Status Report/);
+  assert.match(markdown, /Source alignment: verified/);
+  assert.match(markdown, /Source timestamp: 2026-06-10T00:00:00\.000Z/);
+  assert.match(markdown, /Source matrix: docs\/page-parity-matrix\.json/);
+  assert.match(markdown, /Source gate map: docs\/partial-production-gate-map\.md/);
+  assert.match(markdown, /Source production gates: docs\/legacy-production-acceptance-gates\.md/);
+  assert.match(markdown, /Aligned partial\/checklist rows: 1\/1/);
   assert.match(markdown, /PROD-NATURE/);
   assert.match(markdown, /P17/);
   assert.match(markdown, /Next actions/);

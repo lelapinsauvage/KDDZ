@@ -197,12 +197,23 @@ function runJson<T>(script: string, args: string[]) {
 
 function renderMarkdown(payload: {
   generatedAt: string;
+  generatedFrom: {
+    matrix: string;
+    gateMap: string;
+    productionGates: string;
+  };
   summary: {
     gates: number;
     ready: number;
     needsEvidence: number;
     blockingPartialRows: number;
     missingEvidenceItems: number;
+  };
+  sourceAlignment: {
+    status: string;
+    generatedAt: string;
+    partialReportRows: number;
+    checklistBlockingRows: number;
   };
   gates: GateClosureStatus[];
 }) {
@@ -215,6 +226,13 @@ function renderMarkdown(payload: {
     `Needs evidence: ${payload.summary.needsEvidence}/${payload.summary.gates}`,
     `Blocking partial rows: ${payload.summary.blockingPartialRows}`,
     `Missing evidence items: ${payload.summary.missingEvidenceItems}`,
+    "",
+    `Source alignment: ${payload.sourceAlignment.status}`,
+    `Source timestamp: ${payload.sourceAlignment.generatedAt}`,
+    `Source matrix: ${payload.generatedFrom.matrix}`,
+    `Source gate map: ${payload.generatedFrom.gateMap}`,
+    `Source production gates: ${payload.generatedFrom.productionGates}`,
+    `Aligned partial/checklist rows: ${payload.sourceAlignment.partialReportRows}/${payload.sourceAlignment.checklistBlockingRows}`,
     "",
     "| Gate | Status | Blocking rows | Missing evidence | Required fields | Next actions |",
     "| --- | --- | --- | --- | --- | --- |",
