@@ -59,6 +59,14 @@ type CloseoutPlan = {
     blockingGateLinks: number;
     envTemplateCommand: string;
     focusedArtifactCommands: string[];
+    evidenceWorkOrder: {
+      externalDependency: "production evidence";
+      finishCondition: string;
+      evidencePointers: string[];
+      acceptanceCriteria: string[];
+      focusedCoverageRows: string[];
+      proofCommands: string[];
+    };
     nextActions: string[];
   }>;
   finalCloseoutCommands: string[];
@@ -91,22 +99,36 @@ assertNoSensitiveOutput(JSON.stringify(gateStatus));
 const gates = (gateStatus.gates ?? []).map((gate) => {
   assert.ok(gate.gate, "closeout plan gate is missing an id");
   const artifact = focusedArtifactForGate(gate.gate);
+  const blockingRows = (gate.blockingPartialRows ?? []).map((row) => {
+    assert.ok(row.row, `${gate.gate} blocking row is missing an id`);
+    return row.row;
+  });
+  const focusedArtifactCommands = [
+    `pnpm tsx src/scripts/report-production-partials.ts --json --gate=${gate.gate} --out=/tmp/kiddzonl-production-${artifact.slug}-partials.json --generated-at=<release-generated-at-iso>`,
+    `pnpm tsx src/scripts/report-production-evidence-checklist.ts --json --gate=${gate.gate} --out=/tmp/kiddzonl-production-${artifact.slug}-checklist.json --generated-at=<release-generated-at-iso>`,
+    `pnpm tsx src/scripts/verify-production-artifact-consistency-contract.ts --partial-report=/tmp/kiddzonl-production-${artifact.slug}-partials.json --checklist-report=/tmp/kiddzonl-production-${artifact.slug}-checklist.json`,
+  ];
   return {
     gate: gate.gate,
     status: gate.status ?? "needs-evidence",
     missingEvidence: gate.missingEvidence ?? [],
     requiredEvidenceFields: gate.requiredEvidenceFields ?? [],
-    blockingRows: (gate.blockingPartialRows ?? []).map((row) => {
-      assert.ok(row.row, `${gate.gate} blocking row is missing an id`);
-      return row.row;
-    }),
+    blockingRows,
     blockingGateLinks: gate.blockingGateLinks ?? 0,
     envTemplateCommand: `pnpm tsx src/scripts/render-production-readiness-env-template.ts --gate=${gate.gate} --out=/secure/private-readiness-${artifact.slug}.env`,
-    focusedArtifactCommands: [
-      `pnpm tsx src/scripts/report-production-partials.ts --json --gate=${gate.gate} --out=/tmp/kiddzonl-production-${artifact.slug}-partials.json --generated-at=<release-generated-at-iso>`,
-      `pnpm tsx src/scripts/report-production-evidence-checklist.ts --json --gate=${gate.gate} --out=/tmp/kiddzonl-production-${artifact.slug}-checklist.json --generated-at=<release-generated-at-iso>`,
-      `pnpm tsx src/scripts/verify-production-artifact-consistency-contract.ts --partial-report=/tmp/kiddzonl-production-${artifact.slug}-partials.json --checklist-report=/tmp/kiddzonl-production-${artifact.slug}-checklist.json`,
-    ],
+    focusedArtifactCommands,
+    evidenceWorkOrder: {
+      externalDependency: "production evidence",
+      finishCondition: `Set every ${gate.gate} evidence pointer, archive focused coverage for ${blockingRows.join(", ")}, then rerun gate status with --require-ready --require-no-blockers.`,
+      evidencePointers: gate.missingEvidence ?? [],
+      acceptanceCriteria: gate.requiredEvidenceFields ?? [],
+      focusedCoverageRows: blockingRows,
+      proofCommands: [
+        `pnpm tsx src/scripts/audit-production-readiness.ts --env-file=/secure/private-readiness.env --gate=${gate.gate} --generated-at=<release-generated-at-iso>`,
+        ...focusedArtifactCommands,
+        `pnpm tsx src/scripts/report-production-gate-status.ts --json --env-file=/secure/private-readiness.env --gate=${gate.gate} --generated-at=<release-generated-at-iso> --require-ready`,
+      ],
+    },
     nextActions: gate.nextActions ?? [],
   };
 });
@@ -182,6 +204,24 @@ function renderMarkdown(plan: CloseoutPlan) {
     `Source gate map: ${plan.generatedFrom?.gateMap ?? "unknown"}`,
     `Source production gates: ${plan.generatedFrom?.productionGates ?? "unknown"}`,
     "",
+    "## Evidence Work Orders",
+    "",
+    ...plan.gates.flatMap((gate) => [
+      `### ${gate.gate}`,
+      "",
+      `Finish condition: ${gate.evidenceWorkOrder.finishCondition}`,
+      "",
+      `Evidence pointers: ${gate.evidenceWorkOrder.evidencePointers.join(", ") || "-"}`,
+      "",
+      `Acceptance criteria: ${gate.evidenceWorkOrder.acceptanceCriteria.join("; ") || "-"}`,
+      "",
+      `Focused coverage rows: ${gate.evidenceWorkOrder.focusedCoverageRows.join(", ") || "-"}`,
+      "",
+      "```bash",
+      ...gate.evidenceWorkOrder.proofCommands,
+      "```",
+      "",
+    ]),
     "| Gate | Missing evidence | Blocking rows | Env template | Focused artifact commands |",
     "| --- | --- | --- | --- | --- |",
     ...plan.gates.map((gate) =>

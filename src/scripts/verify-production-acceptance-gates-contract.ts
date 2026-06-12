@@ -612,6 +612,7 @@ assert.match(contents.gates, /--production-gates=<path>/);
 assert.match(contents.gates, /report-production-focused-artifacts\.ts/);
 assert.match(contents.gates, /report-production-preflight-artifacts\.ts/);
 assert.match(contents.gates, /report-production-closeout-plan\.ts/);
+assert.match(contents.gates, /evidence work orders with finish conditions, acceptance criteria, focused coverage rows, proof commands/);
 assert.match(contents.gates, /requiring `sourceAlignment\.status=verified`/);
 assert.match(contents.gates, /full partial report, full evidence checklist, blocker-only gate status report, focused artifact bundle, closeout plan/);
 assert.match(contents.gates, /unique blocking rows, total blocking gate links, missing evidence count, `closeoutMode`, `canCloseLocally`, and per-gate next actions/);
@@ -716,6 +717,8 @@ assert.match(contents.cutoverRunbook, /report-production-gate-status\.ts --json 
 assert.match(contents.cutoverRunbook, /report-production-gate-status\.ts --json --blocking-only --out=\/tmp\/kiddzonl-production-blocking-gate-status\.json --generated-at=<release-generated-at-iso>/);
 assert.match(contents.cutoverRunbook, /report-production-preflight-artifacts\.ts --out-dir=\/tmp\/kiddzonl-production-preflight-artifacts --generated-at=<release-generated-at-iso>/);
 assert.match(contents.cutoverRunbook, /report-production-closeout-plan\.ts --json --out=\/tmp\/kiddzonl-production-closeout-plan\.json --generated-at=<release-generated-at-iso>/);
+assert.match(contents.cutoverRunbook, /inspect its per-gate evidence work orders/);
+assert.match(contents.cutoverRunbook, /proof commands rerun successfully/);
 assert.match(contents.cutoverRunbook, /verify-production-preflight-artifacts-manifest\.ts --manifest=\/tmp\/kiddzonl-production-preflight-artifacts\/kiddzonl-production-preflight-artifacts\.json/);
 assert.match(contents.cutoverRunbook, /report-production-gate-status\.ts --json --env-file=\/secure\/private-readiness\.env --out=\/tmp\/kiddzonl-production-gate-status\.json --generated-at=<release-generated-at-iso> --require-ready --require-no-blockers/);
 assert.match(contents.cutoverRunbook, /--env-file=\/secure\/private-readiness\.env/);

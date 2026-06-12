@@ -224,6 +224,8 @@ Stop the cutover if either native app crashes on parser-safe endpoints, if produ
 
 Populate `docs/production-acceptance-evidence-template.md` in the release record, not with private data in the repo. The Run Metadata section must name the archived redacted readiness report, closeout summary, partial gate report, production evidence checklist, and production preflight manifest.
 
+Before running final closeout, archive `report-production-closeout-plan.ts --json` and inspect its per-gate evidence work orders. Each work order must have its evidence pointers filled in the private readiness env, focused coverage rows archived, and proof commands rerun successfully.
+
 Final command:
 
 ```bash

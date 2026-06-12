@@ -30,6 +30,14 @@ type CloseoutPlan = {
     blockingRows?: string[];
     envTemplateCommand?: string;
     focusedArtifactCommands?: string[];
+    evidenceWorkOrder?: {
+      externalDependency?: string;
+      finishCondition?: string;
+      evidencePointers?: string[];
+      acceptanceCriteria?: string[];
+      focusedCoverageRows?: string[];
+      proofCommands?: string[];
+    };
   }>;
   finalCloseoutCommands?: string[];
 };
@@ -70,6 +78,13 @@ for (const gate of ["PROD-CRON", "PROD-PROVIDERS", "PROD-NATIVE", "PROD-NATURE"]
   assert.ok((entry.blockingRows?.length ?? 0) > 0, `${gate} should list blocking rows`);
   assert.match(entry.envTemplateCommand ?? "", new RegExp(`render-production-readiness-env-template\\.ts --gate=${gate}`));
   assert.equal(entry.focusedArtifactCommands?.length, 3);
+  assert.equal(entry.evidenceWorkOrder?.externalDependency, "production evidence");
+  assert.match(entry.evidenceWorkOrder?.finishCondition ?? "", new RegExp(`Set every ${gate} evidence pointer`));
+  assert.deepEqual(entry.evidenceWorkOrder?.evidencePointers, entry.missingEvidence);
+  assert.deepEqual(entry.evidenceWorkOrder?.acceptanceCriteria, entry.requiredEvidenceFields);
+  assert.deepEqual(entry.evidenceWorkOrder?.focusedCoverageRows, entry.blockingRows);
+  assert.ok(entry.evidenceWorkOrder?.proofCommands?.some((command) => command.includes(`audit-production-readiness.ts --env-file=/secure/private-readiness.env --gate=${gate}`)));
+  assert.ok(entry.evidenceWorkOrder?.proofCommands?.some((command) => command.includes(`report-production-gate-status.ts --json --env-file=/secure/private-readiness.env --gate=${gate}`)));
 }
 
 assert.deepEqual(gates.get("PROD-CRON")?.blockingRows, ["P01", "P02", "P03", "P04", "P05", "P06", "P07", "P10", "P12"]);
@@ -108,6 +123,8 @@ const markdown = execFileSync("pnpm", [
 });
 assert.match(markdown, /# Production Closeout Plan/);
 assert.match(markdown, /PROD-CRON/);
+assert.match(markdown, /Evidence Work Orders/);
+assert.match(markdown, /Finish condition: Set every PROD-CRON evidence pointer/);
 assert.match(markdown, /Final Closeout Commands/);
 assertNoSensitiveOutput(markdown);
 
