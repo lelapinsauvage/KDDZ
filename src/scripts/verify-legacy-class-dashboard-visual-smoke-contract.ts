@@ -87,9 +87,18 @@ assert.doesNotMatch(
 
 assert.doesNotMatch(
   text.gaps,
-  /Class dashboard depth[\s\S]*?Remaining work is re-running\/backfilling legacy imports that happened before `db_id` was preserved and final logged-in visual smoke/,
-  "top-gap class dashboard item should no longer list local visual smoke as remaining work",
+  /Class dashboard depth[\s\S]*?Remaining work is re-running\/backfilling legacy imports that happened before `db_id` was preserved/,
+  "top-gap class dashboard item should no longer list reimport/backfill as local implementation work",
 );
 assert.match(text.gaps, /Browser smoke confirmed `\/class_dashboard\.php\?id=` redirects/);
+assert.match(
+  text.gaps,
+  /Local implementation is closed; remaining acceptance is the production reimport\/backfill evidence captured by the production gate package/,
+);
+assert.match(
+  row,
+  /production reimport\/backfill acceptance for any pre-fix Form 3 rows migrated before `db_id` preservation is tracked by the production evidence package/,
+);
+assert.doesNotMatch(row, /Pre-fix imports without `db_id` retain the existing unfiltered fallback until reimport\/backfill/);
 
 console.log("legacy class dashboard visual smoke contract assertions passed");

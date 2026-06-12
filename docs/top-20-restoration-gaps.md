@@ -162,7 +162,7 @@ The final external acceptance work is tracked in `docs/legacy-production-accepta
    - Daily report counts now match legacy `WREP`/`INCOMP`/`DREP` semantics by reading preserved `t_daily_report.d_progress_all` from `DailyReport.legacyData` and separating completed, incomplete, and draft reports.
    - Medical visit counts now restore legacy `db_curr` year switching by resolving the selected school year to `year_select`/`year_db` and filtering Form 3 rows by preserved `db_id`; the medical migration now keeps `db_id`/`f_progress`, and control-plane migration stores joined `sel_year` on `year_db`.
    - Browser smoke confirmed `/class_dashboard.php?id=` redirects into `/classes/[id]` for a real class, renders the class summary, school-year selector, class Message Portal link, Daily Reports cards/table, Absent Reports table, Medical Reports tab with medical/call breakdown links, and Assessments tab with Create/Open Assessment actions without a fresh app error overlay.
-   - Remaining work is re-running/backfilling legacy imports that happened before `db_id` was preserved.
+   - Local implementation is closed; remaining acceptance is the production reimport/backfill evidence captured by the production gate package for any pre-fix Form 3 rows migrated before `db_id` preservation.
 
 14. **Accounting monthly matrix**
    - `/accounting` now restores the legacy `accounting.php` Oct-Sep school-year matrix with category tabs, child number/first/last/branch/class columns, active-child zero rows, uncapped org-scoped payment loading, branch/class/search/year filters, month totals, zero-cell payment-dialog prefill, nonzero-cell payment detail modal, print/edit/delete/attachment actions, and legacy-style soft delete.
