@@ -659,7 +659,7 @@ assert.match(contents.cutoverRunbook, /--checklist-out=\/tmp\/kiddzonl-productio
 assert.match(contents.cutoverRunbook, /--generated-at=<release-generated-at-iso>/);
 assert.match(contents.cutoverRunbook, /verify-production-closeout-summary-contract\.ts/);
 assert.match(contents.cutoverRunbook, /verify-production-closeout-summary-contract\.ts .*--require-zero-partials/);
-assert.match(contents.cutoverRunbook, /verify-production-closeout-summary-contract\.ts .*--branch=legacy-parity-runbook --commit=<release-commit-sha> --require-zero-partials/);
+assert.match(contents.cutoverRunbook, /verify-production-closeout-summary-contract\.ts .*--preflight-manifest=\/tmp\/kiddzonl-production-preflight-artifacts\/kiddzonl-production-preflight-artifacts\.json --branch=legacy-parity-runbook --commit=<release-commit-sha> --require-zero-partials/);
 assert.match(contents.cutoverRunbook, /verify-production-evidence-package-contract\.ts/);
 assert.match(contents.cutoverRunbook, /--evidence-record=\/secure\/production-acceptance-evidence\.md/);
 assert.match(contents.cutoverRunbook, /render-production-acceptance-evidence-record\.ts --out=\/secure\/production-acceptance-evidence\.md/);
