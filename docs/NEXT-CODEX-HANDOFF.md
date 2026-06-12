@@ -85,6 +85,13 @@ When modernizing native/parent APIs, compare all three:
 
 Recent commits on `legacy-parity-runbook`:
 
+- `d01bddd test: guard production gate row coverage labels`
+- `109c237 docs: narrow provider gate row coverage`
+- `7d0bf44 chore: guard preflight artifact source alignment`
+- `0a5c2d4 chore: derive focused artifact blocking rows`
+- `33a6932 docs: refresh top gaps acceptance framing`
+- `5016930 docs: tighten native acceptance boundary`
+- `8718d1f docs: close general alarm read-state wording`
 - `b40bfe3 docs: require preflight manifest in summary verification`
 - `1c37842 chore: bind preflight manifest in evidence package`
 - `4a1745b chore: bind preflight manifest in closeout`
