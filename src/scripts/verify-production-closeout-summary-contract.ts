@@ -737,9 +737,18 @@ function buildBlockingGateSummary(partialReportPath: string, generatedAt: string
       ready?: number;
       needsEvidence?: number;
       blockingPartialRows?: number;
+      blockingGateLinks?: number;
       missingEvidenceItems?: number;
+      closeoutMode?: string;
+      canCloseLocally?: boolean;
     };
-    gates?: Array<{ gate?: string }>;
+    gates?: Array<{
+      gate?: string;
+      missingEvidence?: unknown[];
+      blockingGateLinks?: number;
+      blockingPartialRows?: unknown[];
+      nextActions?: string[];
+    }>;
   };
 
   return {
@@ -747,8 +756,17 @@ function buildBlockingGateSummary(partialReportPath: string, generatedAt: string
     ready: status.summary?.ready ?? 0,
     needsEvidence: status.summary?.needsEvidence ?? 0,
     blockingPartialRows: status.summary?.blockingPartialRows ?? 0,
+    blockingGateLinks: status.summary?.blockingGateLinks ?? 0,
     missingEvidenceItems: status.summary?.missingEvidenceItems ?? 0,
-    gatesToClose: (status.gates ?? []).map((gate) => gate.gate).filter((gate): gate is string => Boolean(gate)),
+    closeoutMode: status.summary?.closeoutMode ?? "unknown",
+    canCloseLocally: status.summary?.canCloseLocally === true,
+    gatesToClose: (status.gates ?? []).map((gate) => ({
+      gate: gate.gate ?? "unknown",
+      blockingPartialRows: gate.blockingPartialRows?.length ?? 0,
+      blockingGateLinks: gate.blockingGateLinks ?? gate.blockingPartialRows?.length ?? 0,
+      missingEvidenceItems: gate.missingEvidence?.length ?? 0,
+      nextActions: gate.nextActions ?? [],
+    })),
   };
 }
 

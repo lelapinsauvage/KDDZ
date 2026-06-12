@@ -945,7 +945,13 @@ function buildBlockingGateSummary(partialReportPath: string, generatedAt: string
       closeoutMode?: string;
       canCloseLocally?: boolean;
     };
-    gates?: Array<{ gate?: string }>;
+    gates?: Array<{
+      gate?: string;
+      missingEvidence?: unknown[];
+      blockingGateLinks?: number;
+      blockingPartialRows?: unknown[];
+      nextActions?: string[];
+    }>;
   };
 
   return {
@@ -957,7 +963,13 @@ function buildBlockingGateSummary(partialReportPath: string, generatedAt: string
     missingEvidenceItems: status.summary?.missingEvidenceItems ?? 0,
     closeoutMode: status.summary?.closeoutMode ?? "unknown",
     canCloseLocally: status.summary?.canCloseLocally === true,
-    gatesToClose: (status.gates ?? []).map((gate) => gate.gate).filter((gate): gate is string => Boolean(gate)),
+    gatesToClose: (status.gates ?? []).map((gate) => ({
+      gate: gate.gate ?? "unknown",
+      blockingPartialRows: gate.blockingPartialRows?.length ?? 0,
+      blockingGateLinks: gate.blockingGateLinks ?? gate.blockingPartialRows?.length ?? 0,
+      missingEvidenceItems: gate.missingEvidence?.length ?? 0,
+      nextActions: gate.nextActions ?? [],
+    })),
   };
 }
 
