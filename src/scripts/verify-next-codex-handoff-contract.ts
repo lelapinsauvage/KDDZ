@@ -96,6 +96,7 @@ for (const expected of [
   "report-production-preflight-artifacts.ts --out-dir=<dir>",
   "verify-production-preflight-artifacts-manifest.ts --manifest=<path>",
   "preflight verifier now requires the blocker-status report plus nested focused manifest to match those recorded source paths",
+  "all bundled JSON artifacts to share the preflight `generatedAt`",
   "render-production-acceptance-evidence-record.ts",
   "verify-production-gate-status-contract.ts",
   "verify-production-acceptance-evidence-renderer-contract.ts",

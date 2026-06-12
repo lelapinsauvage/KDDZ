@@ -11,6 +11,10 @@ type ArtifactRef = {
   digest?: string;
 };
 
+type GeneratedArtifact = {
+  generatedAt?: string;
+};
+
 type PreflightManifest = {
   status?: string;
   schemaVersion?: number;
@@ -32,6 +36,7 @@ type PreflightManifest = {
 };
 
 type GateStatusReport = {
+  generatedAt?: string;
   generatedFrom?: {
     matrix?: string;
     gateMap?: string;
@@ -48,6 +53,7 @@ type GateStatusReport = {
 
 type FocusedManifest = {
   status?: string;
+  generatedAt?: string;
   generatedFrom?: {
     matrix?: string;
     gateMap?: string;
@@ -92,6 +98,11 @@ try {
   verifyArtifactRef("blocking gate status", manifest.artifacts?.blockingGateStatus);
   verifyArtifactRef("focused artifacts manifest", manifest.artifacts?.focusedArtifactsManifest);
 
+  const partial = readJson<GeneratedArtifact>(manifest.artifacts?.partialReport?.path ?? "");
+  const checklist = readJson<GeneratedArtifact>(manifest.artifacts?.evidenceChecklist?.path ?? "");
+  assert.equal(partial.generatedAt, manifest.generatedAt);
+  assert.equal(checklist.generatedAt, manifest.generatedAt);
+
   execFileSync("pnpm", [
     "tsx",
     "src/scripts/verify-production-artifact-consistency-contract.ts",
@@ -119,6 +130,7 @@ try {
   });
 
   const blocking = readJson<GateStatusReport>(manifest.artifacts?.blockingGateStatus?.path ?? "");
+  assert.equal(blocking.generatedAt, manifest.generatedAt);
   assert.equal(blocking.generatedFrom?.matrix, manifest.generatedFrom?.matrix);
   assert.equal(blocking.generatedFrom?.gateMap, manifest.generatedFrom?.gateMap);
   assert.deepEqual(blocking.gates?.map((gate) => gate.gate), [
@@ -136,6 +148,7 @@ try {
   });
   assert.ok(blocking.gates?.every((gate) => (gate.blockingPartialRows?.length ?? 0) > 0));
   const focused = readJson<FocusedManifest>(manifest.artifacts?.focusedArtifactsManifest?.path ?? "");
+  assert.equal(focused.generatedAt, manifest.generatedAt);
   assert.equal(focused.generatedFrom?.matrix, manifest.generatedFrom?.matrix);
   assert.equal(focused.generatedFrom?.gateMap, manifest.generatedFrom?.gateMap);
 
@@ -223,6 +236,27 @@ try {
   });
   assert.equal(sourceMismatch.status, 1);
   assert.match(sourceMismatch.stderr, /Expected values to be strictly equal/);
+
+  const generatedAtMismatchManifest = JSON.parse(JSON.stringify(manifest)) as PreflightManifest;
+  const generatedAtMismatchStatusPath = generatedAtMismatchManifest.artifacts?.blockingGateStatus?.path;
+  assert.ok(generatedAtMismatchStatusPath);
+  assert.ok(generatedAtMismatchManifest.artifacts?.blockingGateStatus);
+  const generatedAtMismatchStatus = readJson<GateStatusReport>(generatedAtMismatchStatusPath);
+  generatedAtMismatchStatus.generatedAt = "2026-06-10T00:00:01.000Z";
+  writeFileSync(generatedAtMismatchStatusPath, `${JSON.stringify(generatedAtMismatchStatus, null, 2)}\n`, "utf8");
+  generatedAtMismatchManifest.artifacts.blockingGateStatus.digest = sha256File(generatedAtMismatchStatusPath);
+  const generatedAtMismatchManifestPath = join(tmp, "generated-at-mismatch-preflight-artifacts.json");
+  writeFileSync(generatedAtMismatchManifestPath, `${JSON.stringify(generatedAtMismatchManifest, null, 2)}\n`, "utf8");
+  const generatedAtMismatch = spawnSync("pnpm", [
+    "tsx",
+    "src/scripts/verify-production-preflight-artifacts-manifest.ts",
+    `--manifest=${generatedAtMismatchManifestPath}`,
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.equal(generatedAtMismatch.status, 1);
+  assert.match(generatedAtMismatch.stderr, /Expected values to be strictly equal/);
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }

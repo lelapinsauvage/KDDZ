@@ -598,6 +598,7 @@ assert.match(contents.gates, /report-production-gate-status\.ts --json --blockin
 assert.match(contents.gates, /report-production-preflight-artifacts\.ts --out-dir=\/tmp\/kiddzonl-production-preflight-artifacts --generated-at=<release-generated-at-iso>/);
 assert.match(contents.gates, /verify-production-preflight-artifacts-manifest\.ts --manifest=\/tmp\/kiddzonl-production-preflight-artifacts\/kiddzonl-production-preflight-artifacts\.json/);
 assert.match(contents.gates, /requiring the blocker-status report plus nested focused manifest to match the source matrix\/gate-map paths recorded in the saved manifest/);
+assert.match(contents.gates, /requiring all bundled JSON artifacts to share the preflight manifest `generatedAt` timestamp/);
 assert.match(contents.gates, /source matrix\/gate-map paths without printing values/);
 assert.match(contents.gates, /verify-production-preflight-artifacts-contract\.ts/);
 assert.match(contents.gates, /`--blocking-only` to show only gates that still block partial parity rows/);

@@ -9,6 +9,11 @@ type ArtifactRef = {
   digest?: string;
 };
 
+type GeneratedArtifact = {
+  status?: string;
+  generatedAt?: string;
+};
+
 type PreflightManifest = {
   status?: string;
   schemaVersion?: number;
@@ -31,6 +36,7 @@ type PreflightManifest = {
 
 type BlockingGateStatus = {
   status?: string;
+  generatedAt?: string;
   generatedFrom?: {
     matrix?: string;
     gateMap?: string;
@@ -49,6 +55,7 @@ type BlockingGateStatus = {
 
 type FocusedManifest = {
   status?: string;
+  generatedAt?: string;
   generatedFrom?: {
     matrix?: string;
     gateMap?: string;
@@ -83,6 +90,11 @@ verifyArtifactRef("evidence checklist", manifest.artifacts?.evidenceChecklist);
 verifyArtifactRef("blocking gate status", manifest.artifacts?.blockingGateStatus);
 verifyArtifactRef("focused artifacts manifest", manifest.artifacts?.focusedArtifactsManifest);
 
+const partialReport = readJson<GeneratedArtifact>(manifest.artifacts?.partialReport?.path ?? "");
+const evidenceChecklist = readJson<GeneratedArtifact>(manifest.artifacts?.evidenceChecklist?.path ?? "");
+assert.equal(partialReport.generatedAt, manifest.generatedAt);
+assert.equal(evidenceChecklist.generatedAt, manifest.generatedAt);
+
 execFileSync("pnpm", [
   "tsx",
   "src/scripts/verify-production-artifact-consistency-contract.ts",
@@ -103,6 +115,7 @@ execFileSync("pnpm", [
 
 const blockingStatus = readJson<BlockingGateStatus>(manifest.artifacts?.blockingGateStatus?.path ?? "");
 assert.equal(blockingStatus.status, "production gate status report");
+assert.equal(blockingStatus.generatedAt, manifest.generatedAt);
 assert.equal(blockingStatus.generatedFrom?.matrix, manifest.generatedFrom.matrix);
 assert.equal(blockingStatus.generatedFrom?.gateMap, manifest.generatedFrom.gateMap);
 assert.deepEqual(blockingStatus.gates?.map((gate) => gate.gate), [
@@ -117,6 +130,7 @@ assert.ok(blockingStatus.gates?.every((gate) => (gate.blockingPartialRows?.lengt
 
 const focusedManifest = readJson<FocusedManifest>(manifest.artifacts?.focusedArtifactsManifest?.path ?? "");
 assert.equal(focusedManifest.status, "production focused artifacts verified");
+assert.equal(focusedManifest.generatedAt, manifest.generatedAt);
 assert.equal(focusedManifest.generatedFrom?.matrix, manifest.generatedFrom.matrix);
 assert.equal(focusedManifest.generatedFrom?.gateMap, manifest.generatedFrom.gateMap);
 
