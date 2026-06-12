@@ -609,6 +609,7 @@ assert.match(contents.gates, /report-production-gate-status\.ts/);
 assert.match(contents.gates, /--require-ready/);
 assert.match(contents.gates, /--require-no-blockers/);
 assert.match(contents.gates, /sourceAlignment\.status=verified/);
+assert.match(contents.gates, /unique blocking partial rows, total blocking gate links, whether local closeout is possible without external production evidence/);
 assert.match(contents.gates, /verify-production-preflight-artifacts-manifest\.ts/);
 assert.match(contents.gates, /verify-production-focused-artifacts-manifest\.ts/);
 assert.match(contents.gates, /report-production-evidence-checklist\.ts/);

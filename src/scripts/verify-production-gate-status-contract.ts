@@ -19,7 +19,10 @@ type GateStatusReport = {
     ready?: number;
     needsEvidence?: number;
     blockingPartialRows?: number;
+    blockingGateLinks?: number;
     missingEvidenceItems?: number;
+    closeoutMode?: string;
+    canCloseLocally?: boolean;
   };
   sourceAlignment?: {
     status?: string;
@@ -63,6 +66,7 @@ const partialReport = JSON.parse(
 const expectedBlockingRows = partialReport.summary?.partialRows ?? 0;
 const expectedGateCounts = partialReport.summary?.gateCounts ?? {};
 const expectedBlockingGates = Object.keys(expectedGateCounts);
+const expectedBlockingGateLinks = Object.values(expectedGateCounts).reduce((total, count) => total + count, 0);
 
 try {
   const reportPath = join(tmp, "production-gate-status.json");
@@ -92,7 +96,10 @@ try {
   assert.equal(report.summary?.ready, 0);
   assert.equal(report.summary?.needsEvidence, 12);
   assert.equal(report.summary?.blockingPartialRows, expectedBlockingRows);
+  assert.equal(report.summary?.blockingGateLinks, expectedBlockingGateLinks);
   assert.equal(report.summary?.missingEvidenceItems, 56);
+  assert.equal(report.summary?.closeoutMode, "external-production-evidence");
+  assert.equal(report.summary?.canCloseLocally, false);
   assert.deepEqual(report.sourceAlignment, {
     status: "verified",
     generatedAt,
@@ -149,7 +156,10 @@ try {
   assert.equal(blockingOnly.summary?.ready, 0);
   assert.equal(blockingOnly.summary?.needsEvidence, expectedBlockingGates.length);
   assert.equal(blockingOnly.summary?.blockingPartialRows, expectedBlockingRows);
+  assert.equal(blockingOnly.summary?.blockingGateLinks, expectedBlockingGateLinks);
   assert.ok((blockingOnly.summary?.missingEvidenceItems ?? 0) > 0);
+  assert.equal(blockingOnly.summary?.closeoutMode, "external-production-evidence");
+  assert.equal(blockingOnly.summary?.canCloseLocally, false);
   assert.equal(blockingOnly.sourceAlignment?.status, "verified");
   assert.deepEqual(blockingOnly.sourceAlignment?.gateCounts, expectedGateCounts);
   assert.deepEqual(blockingOnly.gates?.map((gate) => gate.gate), expectedBlockingGates);
@@ -168,6 +178,7 @@ try {
   const native = JSON.parse(nativeOutput) as GateStatusReport;
   assert.equal(native.summary?.gates, 1);
   assert.equal(native.summary?.blockingPartialRows, expectedGateCounts["PROD-NATIVE"]);
+  assert.equal(native.summary?.blockingGateLinks, expectedGateCounts["PROD-NATIVE"]);
   assert.deepEqual(native.sourceAlignment?.gateCounts, {
     "PROD-NATIVE": expectedGateCounts["PROD-NATIVE"],
   });
@@ -191,6 +202,9 @@ try {
   assert.match(markdown, /Source gate map: docs\/partial-production-gate-map\.md/);
   assert.match(markdown, /Source production gates: docs\/legacy-production-acceptance-gates\.md/);
   assert.match(markdown, /Aligned partial\/checklist rows: 1\/1/);
+  assert.match(markdown, /Blocking gate links: 1/);
+  assert.match(markdown, /Closeout mode: external-production-evidence/);
+  assert.match(markdown, /Can close locally: no/);
   assert.match(markdown, /PROD-NATURE/);
   assert.match(markdown, /P17/);
   assert.match(markdown, /Next actions/);
@@ -208,6 +222,7 @@ try {
     encoding: "utf8",
   });
   assert.match(blockingMarkdown, /Ready gates: 0\/4/);
+  assert.match(blockingMarkdown, new RegExp(`Blocking gate links: ${expectedBlockingGateLinks}`));
   assert.match(blockingMarkdown, /PROD-CRON/);
   assert.match(blockingMarkdown, /PROD-PROVIDERS/);
   assert.match(blockingMarkdown, /Archive focused partial coverage/);
@@ -270,7 +285,10 @@ try {
     ready: 12,
     needsEvidence: 0,
     blockingPartialRows: expectedBlockingRows,
+    blockingGateLinks: expectedBlockingGateLinks,
     missingEvidenceItems: 0,
+    closeoutMode: "external-production-evidence",
+    canCloseLocally: false,
   });
 
   const readyButBlocked = spawnSync("pnpm", [
@@ -314,7 +332,10 @@ try {
     ready: 12,
     needsEvidence: 0,
     blockingPartialRows: 0,
+    blockingGateLinks: 0,
     missingEvidenceItems: 0,
+    closeoutMode: "ready-for-final-closeout",
+    canCloseLocally: true,
   });
   assert.ok(zeroReady.gates?.every((gate) => gate.nextActions?.includes("No blocking rows remain; include this gate in final closeout review.")));
   assert.deepEqual(zeroReady.sourceAlignment?.gateCounts, {});

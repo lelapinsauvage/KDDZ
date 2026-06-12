@@ -158,7 +158,12 @@ const payload = {
     ready: gates.filter((gate) => gate.status === "ready-to-review").length,
     needsEvidence: gates.filter((gate) => gate.status === "needs-evidence").length,
     blockingPartialRows: blockingRows.size,
+    blockingGateLinks: gates.reduce((count, gate) => count + gate.blockingPartialRows.length, 0),
     missingEvidenceItems: gates.reduce((count, gate) => count + gate.missingEvidence.length, 0),
+    closeoutMode:
+      blockingRows.size === 0 ? "ready-for-final-closeout" : "external-production-evidence",
+    canCloseLocally:
+      blockingRows.size === 0 && gates.every((gate) => gate.status === "ready-to-review"),
   },
   sourceAlignment,
   partialReportSummary: partials.summary,
@@ -207,7 +212,10 @@ function renderMarkdown(payload: {
     ready: number;
     needsEvidence: number;
     blockingPartialRows: number;
+    blockingGateLinks: number;
     missingEvidenceItems: number;
+    closeoutMode: string;
+    canCloseLocally: boolean;
   };
   sourceAlignment: {
     status: string;
@@ -225,7 +233,10 @@ function renderMarkdown(payload: {
     `Ready gates: ${payload.summary.ready}/${payload.summary.gates}`,
     `Needs evidence: ${payload.summary.needsEvidence}/${payload.summary.gates}`,
     `Blocking partial rows: ${payload.summary.blockingPartialRows}`,
+    `Blocking gate links: ${payload.summary.blockingGateLinks}`,
     `Missing evidence items: ${payload.summary.missingEvidenceItems}`,
+    `Closeout mode: ${payload.summary.closeoutMode}`,
+    `Can close locally: ${payload.summary.canCloseLocally ? "yes" : "no"}`,
     "",
     `Source alignment: ${payload.sourceAlignment.status}`,
     `Source timestamp: ${payload.sourceAlignment.generatedAt}`,
