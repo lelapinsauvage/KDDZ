@@ -143,6 +143,7 @@ type CloseoutPlan = {
   gates?: Array<{
     gate?: string;
     blockingRows?: string[];
+    envTemplateCommand?: string;
     focusedArtifactCommands?: string[];
     evidenceWorkOrder?: {
       externalDependency?: string;
@@ -322,6 +323,11 @@ try {
   assert.ok(releaseBoundCloseoutPlan.finalCloseoutCommands?.every((command) => !command.includes("<release-commit-sha>")));
   assert.ok(releaseBoundCloseoutPlan.finalCloseoutCommands?.every((command) => !command.includes("<YYYY-MM-DD>")));
   assert.ok(releaseBoundCloseoutPlan.finalCloseoutCommands?.every((command) => !command.includes("<release-generated-at-iso>")));
+  assert.ok(releaseBoundCloseoutPlan.gates?.every((gate) => gate.envTemplateCommand?.includes("--release-branch=legacy-parity-runbook")));
+  assert.ok(releaseBoundCloseoutPlan.gates?.every((gate) => gate.envTemplateCommand?.includes("--release-commit=c3cdaab")));
+  assert.ok(releaseBoundCloseoutPlan.gates?.every((gate) => gate.envTemplateCommand?.includes("--acceptance-date=2026-06-12")));
+  assert.ok(releaseBoundCloseoutPlan.gates?.every((gate) => gate.envTemplateCommand?.includes(`--generated-at=${generatedAt}`)));
+  assert.ok(releaseBoundCloseoutPlan.gates?.every((gate) => gate.envTemplateCommand?.includes("--include-work-orders")));
   const releaseBoundCronTemplate = readFileSync(releaseBoundManifest.artifacts?.readinessEnvTemplates?.cron?.path ?? "", "utf8");
   assert.match(releaseBoundCronTemplate, /Release branch: legacy-parity-runbook/);
   assert.match(releaseBoundCronTemplate, /Release commit: c3cdaab/);
@@ -336,6 +342,33 @@ try {
     cwd: process.cwd(),
     stdio: "ignore",
   });
+
+  const releaseEnvCommandMismatchManifest = JSON.parse(JSON.stringify(releaseBoundManifest)) as PreflightManifest;
+  const releaseEnvCommandMismatchPlanPath = releaseEnvCommandMismatchManifest.artifacts?.closeoutPlan?.path;
+  assert.ok(releaseEnvCommandMismatchPlanPath);
+  assert.ok(releaseEnvCommandMismatchManifest.artifacts?.closeoutPlan);
+  const originalReleaseEnvCommandPlan = readFileSync(releaseEnvCommandMismatchPlanPath, "utf8");
+  const releaseEnvCommandMismatchPlan = readJson<CloseoutPlan>(releaseEnvCommandMismatchPlanPath);
+  assert.ok(releaseEnvCommandMismatchPlan.gates?.[0]?.envTemplateCommand);
+  releaseEnvCommandMismatchPlan.gates[0].envTemplateCommand = releaseEnvCommandMismatchPlan.gates[0].envTemplateCommand.replace(
+    "--release-commit=c3cdaab",
+    "--release-commit=stale"
+  );
+  writeFileSync(releaseEnvCommandMismatchPlanPath, `${JSON.stringify(releaseEnvCommandMismatchPlan, null, 2)}\n`, "utf8");
+  releaseEnvCommandMismatchManifest.artifacts.closeoutPlan.digest = sha256File(releaseEnvCommandMismatchPlanPath);
+  const releaseEnvCommandMismatchPath = join(tmp, "release-env-command-mismatch-preflight-artifacts.json");
+  writeFileSync(releaseEnvCommandMismatchPath, `${JSON.stringify(releaseEnvCommandMismatchManifest, null, 2)}\n`, "utf8");
+  const releaseEnvCommandMismatch = spawnSync("pnpm", [
+    "tsx",
+    "src/scripts/verify-production-preflight-artifacts-manifest.ts",
+    `--manifest=${releaseEnvCommandMismatchPath}`,
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.equal(releaseEnvCommandMismatch.status, 1);
+  assert.match(releaseEnvCommandMismatch.stderr, /env template command release commit drifted/);
+  writeFileSync(releaseEnvCommandMismatchPlanPath, originalReleaseEnvCommandPlan, "utf8");
 
   const partialReleaseMetadata = spawnSync("pnpm", [
     "tsx",

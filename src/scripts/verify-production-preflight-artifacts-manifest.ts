@@ -152,6 +152,7 @@ type CloseoutPlan = {
   gates?: Array<{
     gate?: string;
     blockingRows?: string[];
+    envTemplateCommand?: string;
     focusedArtifactCommands?: string[];
     evidenceWorkOrder?: {
       externalDependency?: string;
@@ -325,6 +326,13 @@ function verifyReleaseMetadata(metadata: ReleaseMetadata | undefined) {
 function assertReleaseMetadataAppliedToCloseoutPlan(plan: CloseoutPlan, metadata: ReleaseMetadata | undefined) {
   if (!metadata) return;
   const expectedRef = `--branch=${metadata.branch} --commit=${metadata.commit}`;
+  for (const gate of plan.gates ?? []) {
+    assert.ok(gate.envTemplateCommand?.includes(`--release-branch=${metadata.branch}`), `${gate.gate} env template command release branch drifted`);
+    assert.ok(gate.envTemplateCommand?.includes(`--release-commit=${metadata.commit}`), `${gate.gate} env template command release commit drifted`);
+    assert.ok(gate.envTemplateCommand?.includes(`--acceptance-date=${metadata.acceptanceDate}`), `${gate.gate} env template command acceptance date drifted`);
+    assert.ok(gate.envTemplateCommand?.includes("--include-work-orders"), `${gate.gate} env template command is missing work orders`);
+    assert.ok(gate.envTemplateCommand?.includes(`--generated-at=${plan.generatedAt}`), `${gate.gate} env template command generatedAt drifted`);
+  }
   assert.ok(
     plan.finalCloseoutCommands?.some((command) =>
       command.includes("report-production-preflight-artifacts.ts") &&
