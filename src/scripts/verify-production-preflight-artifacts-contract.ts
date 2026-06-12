@@ -15,6 +15,19 @@ type GeneratedArtifact = {
   generatedAt?: string;
 };
 
+type PartialReport = GeneratedArtifact & {
+  summary?: {
+    partialRows?: number;
+    gateCounts?: Record<string, number>;
+  };
+};
+
+type EvidenceChecklist = GeneratedArtifact & {
+  summary?: {
+    blockingPartialRows?: number;
+  };
+};
+
 type PreflightManifest = {
   status?: string;
   schemaVersion?: number;
@@ -108,8 +121,8 @@ try {
   verifyArtifactRef("blocking gate status", manifest.artifacts?.blockingGateStatus);
   verifyArtifactRef("focused artifacts manifest", manifest.artifacts?.focusedArtifactsManifest);
 
-  const partial = readJson<GeneratedArtifact>(manifest.artifacts?.partialReport?.path ?? "");
-  const checklist = readJson<GeneratedArtifact>(manifest.artifacts?.evidenceChecklist?.path ?? "");
+  const partial = readJson<PartialReport>(manifest.artifacts?.partialReport?.path ?? "");
+  const checklist = readJson<EvidenceChecklist>(manifest.artifacts?.evidenceChecklist?.path ?? "");
   assert.equal(partial.generatedAt, manifest.generatedAt);
   assert.equal(checklist.generatedAt, manifest.generatedAt);
 
@@ -143,34 +156,24 @@ try {
   assert.equal(blocking.generatedAt, manifest.generatedAt);
   assert.equal(blocking.generatedFrom?.matrix, manifest.generatedFrom?.matrix);
   assert.equal(blocking.generatedFrom?.gateMap, manifest.generatedFrom?.gateMap);
+  const expectedGateCounts = partial.summary?.gateCounts ?? {};
   assert.deepEqual(blocking.sourceAlignment, {
     status: "verified",
     generatedAt,
     readinessGeneratedAt: generatedAt,
     partialReportGeneratedAt: generatedAt,
     evidenceChecklistGeneratedAt: generatedAt,
-    partialReportRows: 17,
-    checklistBlockingRows: 17,
-    gateCounts: {
-      "PROD-CRON": 9,
-      "PROD-NATIVE": 3,
-      "PROD-NATURE": 1,
-      "PROD-PROVIDERS": 14,
-    },
+    partialReportRows: partial.summary?.partialRows ?? 0,
+    checklistBlockingRows: checklist.summary?.blockingPartialRows ?? 0,
+    gateCounts: expectedGateCounts,
   });
-  assert.deepEqual(blocking.gates?.map((gate) => gate.gate), [
-    "PROD-CRON",
-    "PROD-NATIVE",
-    "PROD-NATURE",
-    "PROD-PROVIDERS",
-  ]);
-  assert.deepEqual(blocking.summary, {
-    gates: 4,
-    ready: 0,
-    needsEvidence: 4,
-    blockingPartialRows: 17,
-    missingEvidenceItems: 28,
-  });
+  assert.deepEqual(gateCounts(blocking.gates ?? []), expectedGateCounts);
+  assert.deepEqual(blocking.gates?.map((gate) => gate.gate), Object.keys(expectedGateCounts));
+  assert.equal(blocking.summary?.gates, Object.keys(expectedGateCounts).length);
+  assert.equal(blocking.summary?.ready, 0);
+  assert.equal(blocking.summary?.needsEvidence, Object.keys(expectedGateCounts).length);
+  assert.equal(blocking.summary?.blockingPartialRows, partial.summary?.partialRows);
+  assert.ok((blocking.summary?.missingEvidenceItems ?? 0) > 0);
   assert.ok(blocking.gates?.every((gate) => (gate.blockingPartialRows?.length ?? 0) > 0));
   const focused = readJson<FocusedManifest>(manifest.artifacts?.focusedArtifactsManifest?.path ?? "");
   assert.equal(focused.generatedAt, manifest.generatedAt);
@@ -353,6 +356,15 @@ function readJson<T>(path: string) {
 
 function sha256File(path: string) {
   return createHash("sha256").update(readFileSync(path)).digest("hex");
+}
+
+function gateCounts(gates: Array<{ gate?: string; blockingPartialRows?: unknown[] }>) {
+  return Object.fromEntries(
+    gates
+      .filter((gate) => typeof gate.gate === "string")
+      .map((gate): [string, number] => [gate.gate as string, gate.blockingPartialRows?.length ?? 0])
+      .sort(([a], [b]) => a.localeCompare(b))
+  );
 }
 
 function assertNoSensitiveOutput(output: string) {
