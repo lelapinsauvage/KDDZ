@@ -115,12 +115,16 @@ try {
   assert.equal(cron?.requiredEvidenceFields?.length, 8);
   assert.ok(cron?.nextActions?.some((action) => action.includes("CRON_PARTIAL_ROW_COVERAGE_REPORT")));
   assert.ok(cron?.nextActions?.some((action) => action.includes("--gate=PROD-CRON")));
+  assert.ok(cron?.nextActions?.some((action) => action.includes("/tmp/kiddzonl-production-cron-partials.json")));
+  assert.ok(cron?.nextActions?.some((action) => action.includes("verify-production-artifact-consistency-contract.ts")));
 
   const provider = report.gates?.find((gate) => gate.gate === "PROD-PROVIDERS");
   assert.equal(provider?.blockingPartialRows?.length, expectedGateCounts["PROD-PROVIDERS"]);
   assert.ok(provider?.missingEvidence?.includes("partial-row-evidence:PROVIDER_PARTIAL_ROW_COVERAGE_REPORT"));
   assert.ok(provider?.nextActions?.some((action) => action.includes("PROVIDER_PARTIAL_ROW_COVERAGE_REPORT")));
   assert.ok(provider?.nextActions?.some((action) => action.includes("--gate=PROD-PROVIDERS")));
+  assert.ok(provider?.nextActions?.some((action) => action.includes("/tmp/kiddzonl-production-provider-checklist.json")));
+  assert.ok(provider?.nextActions?.some((action) => action.includes("--generated-at=<release-generated-at-iso>")));
 
   const blockingOnlyOutput = execFileSync("pnpm", [
     "tsx",
@@ -161,6 +165,7 @@ try {
   });
   assert.deepEqual(native.gates?.[0]?.blockingPartialRows?.map((row) => row.row), rowsForGate("PROD-NATIVE"));
   assert.ok(native.gates?.[0]?.nextActions?.some((action) => action.includes("--gate=PROD-NATIVE")));
+  assert.ok(native.gates?.[0]?.nextActions?.some((action) => action.includes("NATIVE_PARTIAL_ROW_COVERAGE_REPORT")));
 
   const markdown = execFileSync("pnpm", [
     "tsx",
@@ -176,6 +181,8 @@ try {
   assert.match(markdown, /P17/);
   assert.match(markdown, /Next actions/);
   assert.match(markdown, /--gate=PROD-NATURE/);
+  assert.match(markdown, /NOTIFICATIONS_NATURE_PARTIAL_ROW_COVERAGE_REPORT/);
+  assert.match(markdown, /verify-production-artifact-consistency-contract\.ts/);
 
   const blockingMarkdown = execFileSync("pnpm", [
     "tsx",

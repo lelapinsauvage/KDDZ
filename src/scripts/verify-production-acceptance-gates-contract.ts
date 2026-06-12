@@ -655,6 +655,8 @@ assert.match(contents.gates, /blockingGateSummary/);
 assert.match(contents.gates, /source matrix\/gate-map paths without printing values/);
 assert.match(contents.gates, /verify-production-preflight-artifacts-contract\.ts/);
 assert.match(contents.gates, /`--blocking-only` to show only gates that still block partial parity rows/);
+assert.match(contents.gates, /focused coverage artifact pointer names/);
+assert.match(contents.gates, /focused artifact consistency verification commands/);
 assert.match(contents.cutoverRunbook, /render-production-readiness-env-template\.ts --out=\/secure\/private-readiness\.env/);
 assert.match(contents.cutoverRunbook, /render-production-readiness-env-template\.ts --gate=PROD-CRON/);
 assert.match(contents.cutoverRunbook, /verify-production-readiness-env-template-contract\.ts/);

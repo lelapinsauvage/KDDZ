@@ -232,20 +232,56 @@ function nextActionsForGate(params: {
   blockingPartialRows: string[];
 }) {
   const actions: string[] = [];
+  const focusedArtifact = focusedArtifactForGate(params.gate);
 
   if (params.missingEvidence.length > 0) {
     actions.push(`Fill missing evidence pointers: ${params.missingEvidence.join(", ")}`);
   }
   if (params.blockingPartialRows.length > 0) {
     actions.push(`Archive focused partial coverage for ${params.blockingPartialRows.join(", ")}`);
-    actions.push(`Run: pnpm tsx src/scripts/report-production-partials.ts --json --gate=${params.gate}`);
-    actions.push(`Run: pnpm tsx src/scripts/report-production-evidence-checklist.ts --json --gate=${params.gate}`);
+    if (focusedArtifact) {
+      actions.push(`Store the verified focused coverage artifact in ${focusedArtifact.pointer}`);
+      actions.push(
+        `Run: pnpm tsx src/scripts/report-production-partials.ts --json --gate=${params.gate} --out=/tmp/kiddzonl-production-${focusedArtifact.slug}-partials.json --generated-at=<release-generated-at-iso>`
+      );
+      actions.push(
+        `Run: pnpm tsx src/scripts/report-production-evidence-checklist.ts --json --gate=${params.gate} --out=/tmp/kiddzonl-production-${focusedArtifact.slug}-checklist.json --generated-at=<release-generated-at-iso>`
+      );
+      actions.push(
+        `Run: pnpm tsx src/scripts/verify-production-artifact-consistency-contract.ts --partial-report=/tmp/kiddzonl-production-${focusedArtifact.slug}-partials.json --checklist-report=/tmp/kiddzonl-production-${focusedArtifact.slug}-checklist.json`
+      );
+    } else {
+      actions.push(`Run: pnpm tsx src/scripts/report-production-partials.ts --json --gate=${params.gate}`);
+      actions.push(`Run: pnpm tsx src/scripts/report-production-evidence-checklist.ts --json --gate=${params.gate}`);
+    }
   }
   if (params.status === "ready-to-review" && params.blockingPartialRows.length === 0) {
     actions.push("No blocking rows remain; include this gate in final closeout review.");
   }
 
   return actions;
+}
+
+function focusedArtifactForGate(gate: string) {
+  const artifacts: Record<string, { pointer: string; slug: string }> = {
+    "PROD-CRON": {
+      pointer: "CRON_PARTIAL_ROW_COVERAGE_REPORT",
+      slug: "cron",
+    },
+    "PROD-PROVIDERS": {
+      pointer: "PROVIDER_PARTIAL_ROW_COVERAGE_REPORT",
+      slug: "provider",
+    },
+    "PROD-NATIVE": {
+      pointer: "NATIVE_PARTIAL_ROW_COVERAGE_REPORT",
+      slug: "native",
+    },
+    "PROD-NATURE": {
+      pointer: "NOTIFICATIONS_NATURE_PARTIAL_ROW_COVERAGE_REPORT",
+      slug: "nature",
+    },
+  };
+  return artifacts[gate] ?? null;
 }
 
 function uniqueRows(rows: Array<{ row?: string }>) {
