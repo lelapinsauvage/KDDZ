@@ -174,7 +174,8 @@ The final external acceptance work is tracked in `docs/legacy-production-accepta
 
 15. **Invoice/receipt parity**
    - Runtime payment receipt upload now stores files on `Payment.receiptFileUrl`; `/accounting/invoice/[id]` now restores the legacy `invo.php` Receipt Voucher fields, original migrated receipt number when available, amount-in-words text, child number/name, payer wording, category, month, validity dates, signature line, and print action.
-   - Remaining work is exact logo/print stylesheet acceptance against production stationery.
+   - `/invo.php?po=` now resolves raw numeric, UUID, legacy key, and encrypted legacy payment ids into `/accounting/invoice/[id]`, preserving old receipt links from dashboards/accounting tables.
+   - Local invoice implementation and `/invo.php?po=` bridge parity are closed; remaining acceptance is production logo/stationery and browser print review under `PROD-PRINT`.
 
 16. **Government/nursery compliance parity**
    - Legacy `t_garderie`, `t_garderie_attachments`, `t_old_garderie`, and `t_garderie_doctor*` rows now have migration coverage, and `/settings/nursery` now restores the government compliance workflow as the first tab using migrated `BranchCompliance`, `BranchDocument`, and all staff groups for the Arabic Ministry form, completion state, staff compliance tables, and ministry attachment uploads.

@@ -103,6 +103,10 @@ const checks = [
     command: ["pnpm", "tsx", "src/scripts/verify-legacy-notification-nature-admin-contract.ts"],
   },
   {
+    label: "legacy invoice receipt contract",
+    command: ["pnpm", "tsx", "src/scripts/verify-legacy-invoice-receipt-contract.ts"],
+  },
+  {
     label: "next Codex handoff contract",
     command: ["pnpm", "tsx", "src/scripts/verify-next-codex-handoff-contract.ts"],
   },

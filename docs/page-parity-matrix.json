@@ -16312,8 +16312,8 @@
   {
     "legacyPhp": "Front/templates/admin/invo.php",
     "legacyJs": "",
-    "modernRoute": "/accounting/invoice/[id]",
-    "status": "restored - Receipt Voucher fields, migrated receipt number, amount in words, child number/name, payer wording, category, month, validity dates, signature line, and print action restored",
+    "modernRoute": "/invo.php, /accounting/invoice/[id]",
+    "status": "restored - legacy invoice bridge, Receipt Voucher fields, migrated receipt number, amount in words, child context, validity dates, signature, and print action restored",
     "legacyTablesMentioned": [
       "Mr",
       "auto",
@@ -16322,7 +16322,7 @@
     "requestFieldsMentioned": [
       "po"
     ],
-    "verification": "Final logo/stationery and browser print stylesheet acceptance remains."
+    "verification": "`/invo.php?po=` now resolves raw numeric, UUID, legacy key, and encrypted legacy payment ids into `/accounting/invoice/[id]`. The modern receipt preserves the legacy `children.php` PAGE guard, migrated `pay_num` receipt number fallback, Receipt Voucher title, Child No., Invoice Date, Child Name, received-from `Mr/Mrs.` wording, amount and amount-in-words text, category, month, Valid From/To dates, optional remarks, signature line, and print action. Verified by `src/scripts/verify-legacy-invoice-receipt-contract.ts`. Production logo/stationery and browser print acceptance remains tracked under `PROD-PRINT`."
   },
   {
     "legacyPhp": "Front/templates/admin/leftmenu.php",
