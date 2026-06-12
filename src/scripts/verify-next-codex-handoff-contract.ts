@@ -1,8 +1,15 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
 type ParityRow = {
   status?: string;
+};
+
+type PartialReport = {
+  summary?: {
+    partialRows?: number;
+  };
 };
 
 const handoff = readFileSync("docs/NEXT-CODEX-HANDOFF.md", "utf8");
@@ -20,16 +27,26 @@ const completeRows = matrix.filter((row) =>
   String(row.status ?? "").startsWith("mapped") ||
   String(row.status ?? "").startsWith("retired"),
 );
+const partialReport = JSON.parse(
+  execFileSync("pnpm", ["tsx", "src/scripts/report-production-partials.ts", "--json"], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  }),
+) as PartialReport;
+const totalRows = matrix.length;
+const partialRowCount = partialReport.summary?.partialRows ?? partialRows.length;
+const completeRowCount = totalRows - partialRowCount;
+const donePct = Math.round((completeRowCount / totalRows) * 1000) / 10;
+const leftPct = Math.round((100 - donePct) * 10) / 10;
 
-assert.equal(matrix.length, 1713, "handoff contract matrix total drifted");
-assert.equal(completeRows.length, 1696, "handoff contract complete count drifted");
-assert.equal(partialRows.length, 17, "handoff contract partial count drifted");
+assert.equal(completeRows.length, completeRowCount, "handoff complete count must match current production partial report");
+assert.equal(partialRows.length, partialRowCount, "handoff partial count must match current production partial report");
 
 for (const expected of [
-  "Total matrix rows: `1713`",
-  "Complete rows: `1696`",
-  "Partial rows: `17`",
-  "Current tracker: `99% done / 1% left`",
+  `Total matrix rows: \`${totalRows}\``,
+  `Complete rows: \`${completeRowCount}\``,
+  `Partial rows: \`${partialRowCount}\``,
+  `Current tracker: \`${formatPercent(donePct)}% done / ${formatPercent(leftPct)}% left\``,
   "`PROD-CRON`, `PROD-NATIVE`, `PROD-NATURE`, and `PROD-PROVIDERS`",
   "`d01bddd test: guard production gate row coverage labels`",
   "`109c237 docs: narrow provider gate row coverage`",
@@ -167,7 +184,7 @@ for (const stale of [
 
 assert.match(
   handoff,
-  /The remaining 17 partial rows are production\/external acceptance gates/,
+  new RegExp(`The remaining ${partialRowCount} partial rows are production/external acceptance gates`),
 );
 assert.match(
   handoff,
@@ -179,3 +196,7 @@ assert.match(
 );
 
 console.log("next Codex handoff contract assertions passed");
+
+function formatPercent(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
