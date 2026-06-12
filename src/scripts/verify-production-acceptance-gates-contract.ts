@@ -599,6 +599,7 @@ assert.match(contents.gates, /requires the archived partial report and evidence 
 assert.match(contents.gates, /manifest also carries the closeout source matrix\/gate-map\/production-gates paths/);
 assert.match(contents.gates, /--require-zero-partials/);
 assert.match(contents.gates, /report-production-partials\.ts/);
+assert.match(contents.gates, /emits the remaining partial rows, blocking gate ids, closure reasons, and source matrix\/gate-map\/production-gates paths as markdown or redacted JSON/);
 assert.match(contents.gates, /validates mapped gate ids against `docs\/legacy-production-acceptance-gates\.md`/);
 assert.match(contents.gates, /--production-gates=<path>/);
 assert.match(contents.gates, /report-production-focused-artifacts\.ts/);
