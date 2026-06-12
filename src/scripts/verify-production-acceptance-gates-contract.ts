@@ -597,6 +597,7 @@ assert.match(contents.gates, /readiness env template contract/);
 assert.match(contents.gates, /report-production-gate-status\.ts --json --blocking-only --out=\/tmp\/kiddzonl-production-blocking-gate-status\.json --generated-at=<release-generated-at-iso>/);
 assert.match(contents.gates, /report-production-preflight-artifacts\.ts --out-dir=\/tmp\/kiddzonl-production-preflight-artifacts --generated-at=<release-generated-at-iso>/);
 assert.match(contents.gates, /verify-production-preflight-artifacts-manifest\.ts --manifest=\/tmp\/kiddzonl-production-preflight-artifacts\/kiddzonl-production-preflight-artifacts\.json/);
+assert.match(contents.gates, /honoring the source matrix\/gate-map paths recorded in the saved manifest/);
 assert.match(contents.gates, /verify-production-preflight-artifacts-contract\.ts/);
 assert.match(contents.gates, /`--blocking-only` to show only gates that still block partial parity rows/);
 assert.match(contents.cutoverRunbook, /render-production-readiness-env-template\.ts --out=\/secure\/private-readiness\.env/);

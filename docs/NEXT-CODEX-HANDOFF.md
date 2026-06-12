@@ -118,7 +118,7 @@ Commits `d9690f9`, `1b5f27c`, `da487a0`, and `fc63539` made the final evidence c
 
 ### Production Preflight Bundle
 
-Commits `388567c` and `8557360` added `report-production-preflight-artifacts.ts --out-dir=<dir>` and `verify-production-preflight-artifacts-manifest.ts --manifest=<path>`. Use them to create and recheck the archived non-secret preflight bundle containing the full partial report, full evidence checklist, blocker-only gate status report, focused artifact manifest, and SHA-256 digests before collecting private production evidence.
+Commits `388567c` and `8557360` added `report-production-preflight-artifacts.ts --out-dir=<dir>` and `verify-production-preflight-artifacts-manifest.ts --manifest=<path>`. Use them to create and recheck the archived non-secret preflight bundle containing the full partial report, full evidence checklist, blocker-only gate status report, focused artifact manifest, and SHA-256 digests before collecting private production evidence. The saved preflight and focused-manifest verifiers honor the source matrix/gate-map paths recorded in the archived manifests, so controlled reproduction bundles do not have to point at the live default docs.
 
 ## What Was Done Recently
 

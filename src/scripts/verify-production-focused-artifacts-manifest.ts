@@ -54,8 +54,8 @@ assert.equal(manifest.schemaVersion, 1);
 assert.equal(manifest.redacted, true);
 assert.ok(manifest.generatedAt, "focused artifact manifest is missing generatedAt");
 assert.equal(new Date(manifest.generatedAt).toISOString(), manifest.generatedAt, "focused artifact manifest generatedAt must be ISO");
-assert.equal(manifest.generatedFrom?.matrix, "docs/page-parity-matrix.json");
-assert.equal(manifest.generatedFrom?.gateMap, "docs/partial-production-gate-map.md");
+assertNonEmptyString(manifest.generatedFrom?.matrix, "focused artifact manifest is missing source matrix path");
+assertNonEmptyString(manifest.generatedFrom?.gateMap, "focused artifact manifest is missing source gate-map path");
 assert.equal(manifest.generatedFrom?.evidenceSpec, "src/scripts/production-acceptance-evidence-spec.ts");
 assert.equal(manifest.generatedFrom?.evidenceTemplate, "docs/production-acceptance-evidence-template.md");
 assert.deepEqual(manifest.artifacts?.map((artifact) => artifact.gate), expectedGates.map((entry) => entry.gate));
@@ -117,4 +117,9 @@ function optionValue(name: string) {
   if (index >= 0) return process.argv[index + 1] ?? null;
 
   return null;
+}
+
+function assertNonEmptyString(value: unknown, message: string): asserts value is string {
+  assert.ok(typeof value === "string", message);
+  assert.ok(value.trim(), message);
 }

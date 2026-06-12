@@ -95,6 +95,7 @@ for (const expected of [
   "report-production-gate-status.ts --blocking-only",
   "report-production-preflight-artifacts.ts --out-dir=<dir>",
   "verify-production-preflight-artifacts-manifest.ts --manifest=<path>",
+  "saved preflight and focused-manifest verifiers honor the source matrix/gate-map paths recorded in the archived manifests",
   "render-production-acceptance-evidence-record.ts",
   "verify-production-gate-status-contract.ts",
   "verify-production-acceptance-evidence-renderer-contract.ts",

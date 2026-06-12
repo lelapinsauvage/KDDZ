@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -156,6 +156,35 @@ try {
   });
   assert.equal(stale.status, 1);
   assert.match(stale.stderr, /digest drifted/);
+
+  const archiveMatrixPath = join(tmp, "archived-page-parity-matrix.json");
+  const archiveGateMapPath = join(tmp, "archived-partial-production-gate-map.md");
+  const archiveBundleDir = join(tmp, "archive-bundle");
+  copyFileSync("docs/page-parity-matrix.json", archiveMatrixPath);
+  copyFileSync("docs/partial-production-gate-map.md", archiveGateMapPath);
+
+  const archiveOutput = execFileSync("pnpm", [
+    "tsx",
+    "src/scripts/report-production-preflight-artifacts.ts",
+    `--out-dir=${archiveBundleDir}`,
+    `--generated-at=${generatedAt}`,
+    `--parity-matrix=${archiveMatrixPath}`,
+    `--partial-gate-map=${archiveGateMapPath}`,
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  const archiveManifest = JSON.parse(archiveOutput) as PreflightManifest;
+  assert.equal(archiveManifest.generatedFrom?.matrix, archiveMatrixPath);
+  assert.equal(archiveManifest.generatedFrom?.gateMap, archiveGateMapPath);
+  execFileSync("pnpm", [
+    "tsx",
+    "src/scripts/verify-production-preflight-artifacts-manifest.ts",
+    `--manifest=${join(archiveBundleDir, "kiddzonl-production-preflight-artifacts.json")}`,
+  ], {
+    cwd: process.cwd(),
+    stdio: "ignore",
+  });
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }
