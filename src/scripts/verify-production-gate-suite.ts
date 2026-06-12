@@ -75,6 +75,10 @@ const checks = [
     command: ["pnpm", "tsx", "src/scripts/verify-production-gate-status-contract.ts"],
   },
   {
+    label: "production closeout plan contract",
+    command: ["pnpm", "tsx", "src/scripts/verify-production-closeout-plan-contract.ts"],
+  },
+  {
     label: "production gate ledger contract",
     command: ["pnpm", "tsx", "src/scripts/verify-production-gate-ledger-contract.ts"],
   },
