@@ -68,6 +68,7 @@ try {
     `--preflight-digest=${preflightManifestDigest}`,
     "--branch=legacy-parity-runbook",
     "--commit=0404c6a",
+    "--acceptance-date=2026-06-10",
   ]);
   assert.equal(validRecord.status, 0, validRecord.stdout + validRecord.stderr);
   assert.match(validRecord.stdout, /production acceptance evidence record verified/);
@@ -136,6 +137,7 @@ try {
     `--preflight-digest=${preflightManifestDigest}`,
     "--branch=legacy-parity-runbook",
     "--commit=deadbeef",
+    "--acceptance-date=2026-06-10",
   ]);
   assert.equal(staleCommit.status, 1);
   assert.match(staleCommit.stderr, /Modern branch\/commit must include commit deadbeef/);
@@ -161,6 +163,7 @@ try {
     `--preflight-digest=${preflightManifestDigest}`,
     "--branch=legacy-parity-runbook",
     "--commit=0404c6a",
+    "--acceptance-date=2026-06-10",
   ]);
   assert.equal(deferredDecision.status, 1);
   assert.match(deferredDecision.stderr, /remaining production tickets must be none/);
@@ -264,6 +267,24 @@ try {
   ]);
   assert.equal(staleManifestMarker.status, 1);
   assert.match(staleManifestMarker.stderr, /verified in evidence package manifest/);
+
+  const staleAcceptanceDate = runVerifier(validRecordPath, [
+    `--readiness-report=${readinessReportPath}`,
+    `--summary-report=${closeoutSummaryPath}`,
+    `--partial-report=${partialReportPath}`,
+    `--checklist-report=${checklistReportPath}`,
+    `--preflight-manifest=${preflightManifestPath}`,
+    `--readiness-digest=${readinessReportDigest}`,
+    `--summary-digest=${closeoutSummaryDigest}`,
+    `--partial-digest=${partialReportDigest}`,
+    `--checklist-digest=${checklistReportDigest}`,
+    `--preflight-digest=${preflightManifestDigest}`,
+    "--branch=legacy-parity-runbook",
+    "--commit=0404c6a",
+    "--acceptance-date=2026-06-11",
+  ]);
+  assert.equal(staleAcceptanceDate.status, 1);
+  assert.match(staleAcceptanceDate.stderr, /Acceptance date must include 2026-06-11/);
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }

@@ -141,6 +141,25 @@ try {
   });
   assert.equal(deferred.status, 1);
   assert.match(deferred.stderr, /release decision must be accepted/);
+
+  const staleAcceptanceDate = spawnSync("pnpm", [
+    "tsx",
+    "src/scripts/render-production-acceptance-evidence-record.ts",
+    `--out=${join(tmp, "stale-date.md")}`,
+    `--readiness-report=${readinessPath}`,
+    `--summary-report=${closeoutSummaryPath}`,
+    `--partial-report=${partialPath}`,
+    `--checklist-report=${checklistPath}`,
+    `--preflight-manifest=${preflightManifestPath}`,
+    "--branch=legacy-parity-runbook",
+    "--commit=0404c6a",
+    "--acceptance-date=2026-06-11",
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.equal(staleAcceptanceDate.status, 1);
+  assert.match(staleAcceptanceDate.stderr, /closeout summary preflight release metadata drifted from requested release/);
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }
@@ -184,6 +203,11 @@ function closeoutSummary() {
     status: "production closeout verified",
     schemaVersion: 1,
     generatedAt,
+    preflightReleaseMetadata: {
+      branch: "legacy-parity-runbook",
+      commit: "0404c6a",
+      acceptanceDate: "2026-06-10",
+    },
     generatedFrom: {
       matrix: "docs/page-parity-matrix.json",
       gateMap: "docs/partial-production-gate-map.md",
@@ -197,6 +221,11 @@ function preflightManifest() {
     status: "production preflight artifacts verified",
     schemaVersion: 1,
     generatedAt,
+    releaseMetadata: {
+      branch: "legacy-parity-runbook",
+      commit: "0404c6a",
+      acceptanceDate: "2026-06-10",
+    },
     redacted: true,
     blockingGateSummary: {
       gates: 0,

@@ -142,6 +142,7 @@ run("pnpm", [
   ...optionalDigestArg("--preflight-digest", artifactDigests.preflightManifest?.digest),
   `--branch=${branch}`,
   `--commit=${commit}`,
+  ...optionalArg("--acceptance-date", preflightReleaseMetadata?.acceptanceDate),
 ]);
 
 const summary = {
@@ -395,7 +396,7 @@ function generatedAtValue() {
   process.exit(2);
 }
 
-function optionalArg(name: string, value: string | null) {
+function optionalArg(name: string, value: string | null | undefined) {
   return value ? [`${name}=${value}`] : [];
 }
 

@@ -21,6 +21,12 @@ const remainingTickets = optionValue("--remaining-production-tickets") ?? "none"
 const releaseDecision = optionValue("--release-decision") ?? "accepted";
 const closeoutDigest = optionValue("--summary-digest") ?? "verified in evidence package manifest";
 
+type ReleaseMetadata = {
+  branch?: string;
+  commit?: string;
+  acceptanceDate?: string;
+};
+
 if (!outputPath) {
   console.error(
     "Usage: pnpm tsx src/scripts/render-production-acceptance-evidence-record.ts --out=<production-acceptance-evidence.md> --readiness-report=<readiness.json> --summary-report=<closeout-summary.json> --partial-report=<partials.json> --checklist-report=<evidence-checklist.json> --branch=<branch> --commit=<sha> --acceptance-date=<YYYY-MM-DD> [--preflight-manifest=<preflight-artifacts.json>] [--summary-digest=<sha256>]"
@@ -29,6 +35,7 @@ if (!outputPath) {
 }
 
 assertDate(acceptanceDate);
+assertReleaseMetadata();
 assertNoSensitiveOutput(
   JSON.stringify({
     outputPath,
@@ -81,6 +88,7 @@ const verification = spawnSync("pnpm", [
   ...optionalArg("--preflight-digest", preflightDigest),
   `--branch=${branch}`,
   `--commit=${commit}`,
+  `--acceptance-date=${acceptanceDate}`,
 ], {
   cwd: process.cwd(),
   encoding: "utf8",
@@ -192,6 +200,45 @@ function assertDate(value: string) {
     console.error("--acceptance-date must use YYYY-MM-DD");
     process.exit(2);
   }
+}
+
+function assertReleaseMetadata() {
+  const expected = { branch, commit, acceptanceDate };
+  const closeout = readJson<{ preflightReleaseMetadata?: ReleaseMetadata }>(closeoutSummaryPath);
+  assertOptionalReleaseMetadata(closeout.preflightReleaseMetadata, expected, "closeout summary preflight release metadata");
+
+  if (preflightManifestPath) {
+    const preflight = readJson<{ releaseMetadata?: ReleaseMetadata }>(preflightManifestPath);
+    assertOptionalReleaseMetadata(preflight.releaseMetadata, expected, "preflight release metadata");
+    if (closeout.preflightReleaseMetadata && preflight.releaseMetadata) {
+      assertMetadataMatch(closeout.preflightReleaseMetadata, preflight.releaseMetadata, "closeout summary preflight release metadata drifted from preflight manifest");
+    }
+  }
+}
+
+function assertOptionalReleaseMetadata(
+  metadata: ReleaseMetadata | undefined,
+  expected: Required<ReleaseMetadata>,
+  label: string
+) {
+  if (!metadata) return;
+  assertMetadataMatch(metadata, expected, `${label} drifted from requested release`);
+}
+
+function assertMetadataMatch(actual: ReleaseMetadata, expected: ReleaseMetadata, message: string) {
+  if (
+    actual.branch !== expected.branch ||
+    actual.commit !== expected.commit ||
+    actual.acceptanceDate !== expected.acceptanceDate
+  ) {
+    throw new Error(message);
+  }
+}
+
+function readJson<T>(path: string) {
+  const text = readFileSync(path, "utf8");
+  assertNoSensitiveOutput(text);
+  return JSON.parse(text) as T;
 }
 
 function optionalArg(name: string, value: string | null) {

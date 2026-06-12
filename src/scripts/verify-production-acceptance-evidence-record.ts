@@ -33,10 +33,11 @@ const expectedChecklistDigest = optionValue("--checklist-digest");
 const expectedPreflightDigest = optionValue("--preflight-digest");
 const expectedBranch = optionValue("--branch");
 const expectedCommit = optionValue("--commit");
+const expectedAcceptanceDate = optionValue("--acceptance-date");
 
 if (!recordPath || recordPath.startsWith("-")) {
   console.error(
-    "Usage: pnpm tsx src/scripts/verify-production-acceptance-evidence-record.ts <filled-production-evidence.md> [--readiness-report=<redacted-readiness.json>] [--summary-report=<closeout-summary.json>] [--partial-report=<partials.json>] [--checklist-report=<evidence-checklist.json>] [--preflight-manifest=<preflight-artifacts.json>] [--readiness-digest=<sha256>] [--summary-digest=<sha256>] [--partial-digest=<sha256>] [--checklist-digest=<sha256>] [--preflight-digest=<sha256>] [--branch=<branch>] [--commit=<sha>]"
+    "Usage: pnpm tsx src/scripts/verify-production-acceptance-evidence-record.ts <filled-production-evidence.md> [--readiness-report=<redacted-readiness.json>] [--summary-report=<closeout-summary.json>] [--partial-report=<partials.json>] [--checklist-report=<evidence-checklist.json>] [--preflight-manifest=<preflight-artifacts.json>] [--readiness-digest=<sha256>] [--summary-digest=<sha256>] [--partial-digest=<sha256>] [--checklist-digest=<sha256>] [--preflight-digest=<sha256>] [--branch=<branch>] [--commit=<sha>] [--acceptance-date=<YYYY-MM-DD>]"
   );
   process.exit(2);
 }
@@ -72,6 +73,7 @@ if (readinessReportPath) {
 verifyArtifactPointers(sections, errors);
 verifyArtifactDigests(sections, errors);
 verifyBranchAndCommit(sections, errors);
+verifyAcceptanceDate(sections, errors);
 verifyFinalDecision(sections, errors);
 
 if (errors.length > 0) {
@@ -101,6 +103,7 @@ console.log(
       },
       branch: expectedBranch ?? null,
       commit: expectedCommit ?? null,
+      acceptanceDate: expectedAcceptanceDate ?? null,
       sections: requiredProductionEvidenceSections.length,
       fields: requiredProductionEvidenceSections.reduce((count, section) => count + section.fields.length, 0),
       redacted: true,
@@ -232,6 +235,20 @@ function verifyReadinessReport(
     if (!reportGates.has(section)) {
       errors.push(`readiness report: missing ${section}`);
     }
+  }
+}
+
+function verifyAcceptanceDate(
+  sections: Map<string, Map<string, string>>,
+  errors: string[]
+) {
+  if (!expectedAcceptanceDate) {
+    return;
+  }
+
+  const value = sections.get("Run Metadata")?.get("Acceptance date") ?? "";
+  if (!value.includes(expectedAcceptanceDate)) {
+    errors.push(`Run Metadata: Acceptance date must include ${expectedAcceptanceDate}`);
   }
 }
 
