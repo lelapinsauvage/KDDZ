@@ -22,7 +22,7 @@ const closeoutDigest = optionValue("--summary-digest") ?? "verified in evidence 
 
 if (!outputPath) {
   console.error(
-    "Usage: pnpm tsx src/scripts/render-production-acceptance-evidence-record.ts --out=<production-acceptance-evidence.md> --readiness-report=<readiness.json> --summary-report=<closeout-summary.json> --partial-report=<partials.json> --checklist-report=<evidence-checklist.json> --branch=<branch> --commit=<sha> --acceptance-date=<YYYY-MM-DD>"
+    "Usage: pnpm tsx src/scripts/render-production-acceptance-evidence-record.ts --out=<production-acceptance-evidence.md> --readiness-report=<readiness.json> --summary-report=<closeout-summary.json> --partial-report=<partials.json> --checklist-report=<evidence-checklist.json> --branch=<branch> --commit=<sha> --acceptance-date=<YYYY-MM-DD> [--summary-digest=<sha256>]"
   );
   process.exit(2);
 }

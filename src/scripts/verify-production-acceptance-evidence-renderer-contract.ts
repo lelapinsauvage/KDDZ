@@ -55,6 +55,29 @@ try {
   assert.match(record, new RegExp(`\\| Partial gate report SHA-256 \\| ${sha256File(partialPath)} \\|`));
   assert.match(record, new RegExp(`\\| Production evidence checklist SHA-256 \\| ${sha256File(checklistPath)} \\|`));
 
+  const explicitSummaryDigestRecordPath = join(tmp, "explicit-summary-digest.md");
+  execFileSync("pnpm", [
+    "tsx",
+    "src/scripts/render-production-acceptance-evidence-record.ts",
+    `--out=${explicitSummaryDigestRecordPath}`,
+    `--readiness-report=${readinessPath}`,
+    `--summary-report=${closeoutSummaryPath}`,
+    `--partial-report=${partialPath}`,
+    `--checklist-report=${checklistPath}`,
+    "--branch=legacy-parity-runbook",
+    "--commit=0404c6a",
+    "--acceptance-date=2026-06-10",
+    `--summary-digest=${sha256File(closeoutSummaryPath)}`,
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  const explicitSummaryDigestRecord = readFileSync(explicitSummaryDigestRecordPath, "utf8");
+  assert.match(
+    explicitSummaryDigestRecord,
+    new RegExp(`\\| Redacted closeout summary SHA-256 \\| ${sha256File(closeoutSummaryPath)} \\|`)
+  );
+
   execFileSync("pnpm", [
     "tsx",
     "src/scripts/verify-production-acceptance-evidence-record.ts",
