@@ -233,6 +233,8 @@ pnpm tsx src/scripts/verify-production-evidence-package-contract.ts --summary-re
 
 The final command reads `docs/page-parity-matrix.json`, `docs/partial-production-gate-map.md`, and `docs/legacy-production-acceptance-gates.md` by default. Use `--parity-matrix=<path>`, `--partial-gate-map=<path>`, and `--production-gates=<path>` only when reproducing an archived release package from already-frozen evidence artifacts or running contract tests against a controlled fixture.
 
+The archived closeout summary, partial gate report, production evidence checklist, preflight manifest, and package manifest must preserve matching source matrix/gate-map/production-gates paths so a final zero-partial package cannot mix evidence generated from different control-plane inputs.
+
 The legacy restoration goal can only be marked complete when:
 
 - readiness audit reports all gates ready to review,
