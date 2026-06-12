@@ -95,6 +95,10 @@ const checks = [
     command: ["pnpm", "tsx", "src/scripts/verify-legacy-nursery-info-visual-contract.ts"],
   },
   {
+    label: "legacy upload surface closure contract",
+    command: ["pnpm", "tsx", "src/scripts/verify-legacy-upload-surface-closure-contract.ts"],
+  },
+  {
     label: "next Codex handoff contract",
     command: ["pnpm", "tsx", "src/scripts/verify-next-codex-handoff-contract.ts"],
   },

@@ -37,7 +37,8 @@ The final external acceptance work is tracked in `docs/legacy-production-accepta
    - Legacy `t_forms_attachments` upload manifests now use the `medical-form-document` rule to rewrite imported medical form attachment files onto `FormAttachment.fileUrl`; runtime call/accident uploads still use the `form-attachment` scope for the same target table.
    - Medical general, condition, visit, accident, and suffering form screens now upload runtime attachments through the `medical-form` scope, load existing active attachments, and sync added/removed files through `FormAttachment.fileUrl`.
    - Attachment migration scripts now skip no-file/default legacy rows instead of creating fake `default.jpg`, `missing`, or title-only file records for child, daily report, absence report, medical form, teacher, nurse, doctor, and manager attachment tables.
-   - Remaining work is upload attach/update actions for any remaining non-compliance surfaces and production-dump file audit cleanup after canonical media exports are available.
+   - Runtime upload attach/update actions are closed across branch, class, child, staff, profile, payment, daily report, absence report, call, accident, medical form, and nursery compliance surfaces through authenticated presign/local upload scopes and legacy-compatible attachment persistence.
+   - Remaining acceptance is production-dump media audit and URL rewrite cleanup after canonical media exports are available.
 
 4. **Full data reconciliation**
    - `reconcile-migration-counts.ts` now provides curated source/target count checks across the migration order and distinguishes strong provenance from weaker count-only evidence.
