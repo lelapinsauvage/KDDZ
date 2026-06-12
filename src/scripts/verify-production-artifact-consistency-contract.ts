@@ -5,6 +5,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 type PartialReport = {
+  generatedFrom?: {
+    matrix?: string;
+    gateMap?: string;
+  };
   summary?: {
     partialRows?: number;
     gates?: string[];
@@ -20,6 +24,11 @@ type PartialReport = {
 };
 
 type EvidenceChecklist = {
+  generatedFrom?: {
+    evidenceSpec?: string;
+    evidenceTemplate?: string;
+    partialGateMap?: string;
+  };
   summary?: {
     gates?: number;
     blockingPartialRows?: number;
@@ -45,6 +54,11 @@ const evidenceChecklist = checklistReportPath
   ? readJson<EvidenceChecklist>(checklistReportPath)
   : runJson<EvidenceChecklist>("src/scripts/report-production-evidence-checklist.ts");
 
+assert.equal(
+  evidenceChecklist.generatedFrom?.partialGateMap,
+  partialReport.generatedFrom?.gateMap,
+  "partial report and evidence checklist gate-map sources drifted"
+);
 const uniquePartialRows = new Set((partialReport.rows ?? []).map((row) => row.row).filter(isString));
 assert.equal(partialReport.summary?.partialRows, uniquePartialRows.size);
 assert.equal(evidenceChecklist.summary?.blockingPartialRows, uniquePartialRows.size);
@@ -226,6 +240,23 @@ function verifyPathModeContract() {
     });
     assert.equal(stale.status, 1);
     assert.match(stale.stderr, /PROD-CRON blocker rows drifted/);
+
+    const sourceMismatchChecklist = readJson<EvidenceChecklist>(checklistPath);
+    assert.ok(sourceMismatchChecklist.generatedFrom);
+    sourceMismatchChecklist.generatedFrom.partialGateMap = "docs/other-partial-production-gate-map.md";
+    const sourceMismatchChecklistPath = join(tmp, "source-mismatch-checklist.json");
+    writeFileSync(sourceMismatchChecklistPath, `${JSON.stringify(sourceMismatchChecklist, null, 2)}\n`, "utf8");
+    const sourceMismatch = spawnSync("pnpm", [
+      "tsx",
+      "src/scripts/verify-production-artifact-consistency-contract.ts",
+      `--partial-report=${partialPath}`,
+      `--checklist-report=${sourceMismatchChecklistPath}`,
+    ], {
+      cwd: process.cwd(),
+      encoding: "utf8",
+    });
+    assert.equal(sourceMismatch.status, 1);
+    assert.match(sourceMismatch.stderr, /gate-map sources drifted/);
 
     const zeroPartialPath = join(tmp, "zero-partials.json");
     const zeroChecklistPath = join(tmp, "zero-checklist.json");

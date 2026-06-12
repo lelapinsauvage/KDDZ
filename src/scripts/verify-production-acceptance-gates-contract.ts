@@ -512,6 +512,8 @@ assert.match(contents.gates, /final closeout cannot fall back to an implicit loc
 assert.match(contents.gates, /Use the same `--generated-at=<iso>` value/);
 assert.match(contents.gates, /readiness, partial, checklist, and closeout artifacts/);
 assert.match(contents.gates, /verify-production-artifact-consistency-contract\.ts/);
+assert.match(contents.gates, /compares rows, gates, summaries, and gate-map source paths/);
+assert.match(contents.gates, /requires both artifacts to name the same gate-map source path/);
 assert.match(contents.gates, /verify-production-closeout-summary-contract\.ts/);
 assert.match(contents.gates, /verify-production-evidence-package-contract\.ts/);
 assert.match(contents.gates, /reruns `verify-production-acceptance-evidence-record\.ts`/);

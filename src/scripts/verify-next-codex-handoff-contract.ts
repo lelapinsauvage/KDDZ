@@ -70,6 +70,7 @@ for (const expected of [
   "verify focused production artifacts",
   "summary.gateFilter",
   "verify-production-artifact-consistency-contract.ts",
+  "consistency verifier also requires both artifacts to name the same gate-map source path",
   "verify-production-focused-artifacts-contract.ts",
   "verify-production-focused-artifacts-manifest-contract.ts",
   "report-production-focused-artifacts.ts --out-dir=<dir>",
