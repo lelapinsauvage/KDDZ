@@ -98,6 +98,7 @@ try {
     generatedFrom?: {
       matrix?: string;
       gateMap?: string;
+      productionGates?: string;
     };
     partialReport?: string | null;
     evidenceChecklist?: string | null;
@@ -119,6 +120,7 @@ try {
     generatedFrom: {
       matrix: "docs/page-parity-matrix.json",
       gateMap: "docs/partial-production-gate-map.md",
+      productionGates: "docs/legacy-production-acceptance-gates.md",
     },
     readinessReport: readinessReportPath,
     evidenceRecord: evidenceRecordPath,
@@ -164,12 +166,13 @@ try {
   const partialReport = readFileSync(partialReportPath, "utf8");
   assertNoSensitiveOutput(partialReport);
   const partialPayload = JSON.parse(partialReport) as {
-    generatedFrom?: { matrix?: string; gateMap?: string };
+    generatedFrom?: { matrix?: string; gateMap?: string; productionGates?: string };
     summary?: { partialRows?: number; gateCounts?: Record<string, number> };
   };
   assert.deepEqual(partialPayload.generatedFrom, {
     matrix: "docs/page-parity-matrix.json",
     gateMap: "docs/partial-production-gate-map.md",
+    productionGates: "docs/legacy-production-acceptance-gates.md",
   });
   assert.deepEqual(partialPayload.summary, expectedPartialReportSummary);
 
@@ -228,6 +231,7 @@ try {
     `--generated-at=${generatedAt}`,
     `--parity-matrix=${zeroParityMatrixPath}`,
     `--partial-gate-map=${zeroPartialGateMapPath}`,
+    `--production-gates=${zeroProductionGatesPath}`,
   ], {
     cwd: process.cwd(),
     stdio: "ignore",
@@ -281,6 +285,7 @@ try {
     generatedFrom?: {
       matrix?: string;
       gateMap?: string;
+      productionGates?: string;
     };
     requireZeroPartials?: boolean;
     partialReportSummary?: { partialRows?: number; gates?: string[]; gateCounts?: Record<string, number> } | null;
@@ -291,6 +296,7 @@ try {
   assert.deepEqual(zeroCloseoutPayload.generatedFrom, {
     matrix: zeroParityMatrixPath,
     gateMap: zeroPartialGateMapPath,
+    productionGates: zeroProductionGatesPath,
   });
   assert.deepEqual(zeroCloseoutPayload.partialReportSummary, {
     partialRows: 0,
@@ -557,7 +563,7 @@ function preflightManifest(partialReportPath: string, checklistReportPath: strin
 
 function buildBlockingGateSummary(partialReportPath: string) {
   const partialReport = JSON.parse(readFileSync(partialReportPath, "utf8")) as {
-    generatedFrom?: { matrix?: string; gateMap?: string };
+    generatedFrom?: { matrix?: string; gateMap?: string; productionGates?: string };
   };
   const status = JSON.parse(
     execFileSync("pnpm", [
@@ -568,6 +574,7 @@ function buildBlockingGateSummary(partialReportPath: string) {
       `--generated-at=${generatedAt}`,
       ...optionalArg("--parity-matrix", partialReport.generatedFrom?.matrix),
       ...optionalArg("--partial-gate-map", partialReport.generatedFrom?.gateMap),
+      ...optionalArg("--production-gates", partialReport.generatedFrom?.productionGates),
     ], {
       cwd: process.cwd(),
       encoding: "utf8",

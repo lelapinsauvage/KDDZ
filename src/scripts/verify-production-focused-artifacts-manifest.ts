@@ -10,6 +10,7 @@ type FocusedManifest = {
   generatedFrom?: {
     matrix?: string;
     gateMap?: string;
+    productionGates?: string;
     evidenceSpec?: string;
     evidenceTemplate?: string;
   };
@@ -36,6 +37,7 @@ type GeneratedPartialReport = {
   generatedFrom?: {
     matrix?: string;
     gateMap?: string;
+    productionGates?: string;
   };
   summary?: {
     gateFilter?: string;
@@ -77,6 +79,7 @@ assert.ok(manifest.generatedAt, "focused artifact manifest is missing generatedA
 assert.equal(new Date(manifest.generatedAt).toISOString(), manifest.generatedAt, "focused artifact manifest generatedAt must be ISO");
 assertNonEmptyString(manifest.generatedFrom?.matrix, "focused artifact manifest is missing source matrix path");
 assertNonEmptyString(manifest.generatedFrom?.gateMap, "focused artifact manifest is missing source gate-map path");
+assertNonEmptyString(manifest.generatedFrom?.productionGates, "focused artifact manifest is missing source production-gates path");
 assert.equal(manifest.generatedFrom?.evidenceSpec, "src/scripts/production-acceptance-evidence-spec.ts");
 assert.equal(manifest.generatedFrom?.evidenceTemplate, "docs/production-acceptance-evidence-template.md");
 assert.deepEqual(manifest.artifacts?.map((artifact) => artifact.gate), expectedGates.map((entry) => entry.gate));
@@ -94,6 +97,11 @@ for (const expected of expectedGates) {
   assert.equal(checklist.generatedAt, manifest.generatedAt, `${expected.gate} evidence checklist generatedAt drifted`);
   assert.equal(partial.generatedFrom?.matrix, manifest.generatedFrom.matrix, `${expected.gate} partial report matrix source drifted`);
   assert.equal(partial.generatedFrom?.gateMap, manifest.generatedFrom.gateMap, `${expected.gate} partial report gate-map source drifted`);
+  assert.equal(
+    partial.generatedFrom?.productionGates,
+    manifest.generatedFrom.productionGates,
+    `${expected.gate} partial report production-gates source drifted`
+  );
   assert.equal(checklist.generatedFrom?.partialGateMap, manifest.generatedFrom.gateMap, `${expected.gate} checklist gate-map source drifted`);
   assert.equal(partial.summary?.gateFilter, expected.gate, `${expected.gate} partial report gate filter drifted`);
   assert.equal(checklist.summary?.gateFilter, expected.gate, `${expected.gate} checklist gate filter drifted`);

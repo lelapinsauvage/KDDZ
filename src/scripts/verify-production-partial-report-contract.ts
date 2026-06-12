@@ -15,6 +15,7 @@ const payload = JSON.parse(jsonOutput) as {
   status?: string;
   schemaVersion?: number;
   generatedAt?: string;
+  generatedFrom?: { matrix?: string; gateMap?: string; productionGates?: string };
   summary?: { partialRows?: number; gates?: string[]; gateCounts?: Record<string, number> };
   rows?: Array<{ row?: string; gates?: string[]; matrixStatus?: string; closureReason?: string }>;
 };
@@ -22,6 +23,9 @@ const payload = JSON.parse(jsonOutput) as {
 assert.equal(payload.status, "production partial gate report");
 assert.equal(payload.schemaVersion, 1);
 assertValidIsoTimestamp(payload.generatedAt, "partial report generatedAt");
+assert.equal(payload.generatedFrom?.matrix, "docs/page-parity-matrix.json");
+assert.equal(payload.generatedFrom?.gateMap, "docs/partial-production-gate-map.md");
+assert.equal(payload.generatedFrom?.productionGates, "docs/legacy-production-acceptance-gates.md");
 const rows = payload.rows ?? [];
 const expectedGateCounts = gateCounts(rows);
 assert.equal(payload.summary?.partialRows, rows.length);
@@ -135,10 +139,11 @@ const archivedOutput = execFileSync("pnpm", [
   encoding: "utf8",
 });
 const archivedPayload = JSON.parse(archivedOutput) as typeof payload & {
-  generatedFrom?: { matrix?: string; gateMap?: string };
+  generatedFrom?: { matrix?: string; gateMap?: string; productionGates?: string };
 };
 assert.equal(archivedPayload.generatedFrom?.matrix, archiveMatrixPath);
 assert.equal(archivedPayload.generatedFrom?.gateMap, archiveGateMapPath);
+assert.equal(archivedPayload.generatedFrom?.productionGates, archiveProductionGatesPath);
 assert.deepEqual(archivedPayload.summary?.gateCounts, expectedGateCounts);
 
 const badGateMapPath = join(tmp, "bad-partial-production-gate-map.md");

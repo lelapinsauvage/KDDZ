@@ -23,6 +23,7 @@ type CloseoutSummary = {
   generatedFrom?: {
     matrix?: string;
     gateMap?: string;
+    productionGates?: string;
   };
   readinessReport?: string;
   evidenceRecord?: string;
@@ -107,6 +108,7 @@ function verifyCloseoutSummary(path: string) {
   assertValidIsoTimestamp(summary.generatedAt, "closeout summary generatedAt");
   assertNonEmptyString(summary.generatedFrom?.matrix, "production closeout summary is missing source matrix path");
   assertNonEmptyString(summary.generatedFrom?.gateMap, "production closeout summary is missing source gate-map path");
+  assertNonEmptyString(summary.generatedFrom?.productionGates, "production closeout summary is missing source production-gates path");
   assert.equal(summary.redacted, true);
   assert.deepEqual(summary.readinessSummary, { ready: 12, needsEvidence: 0, total: 12 });
   const expectedBranch = optionValue("--branch");
@@ -157,6 +159,11 @@ function verifyCloseoutSummary(path: string) {
     const partialReport = readArtifact<PartialReport>(partialReportPath);
     assert.equal(partialReport.generatedFrom?.matrix, summary.generatedFrom.matrix, "partial report matrix source drifted");
     assert.equal(partialReport.generatedFrom?.gateMap, summary.generatedFrom.gateMap, "partial report gate-map source drifted");
+    assert.equal(
+      partialReport.generatedFrom?.productionGates,
+      summary.generatedFrom.productionGates,
+      "partial report production-gates source drifted"
+    );
     assert.deepEqual(summary.partialReportSummary, normalizePartialSummary(partialReport.summary));
   }
 
@@ -280,6 +287,7 @@ function verifySelfTestContract() {
     assert.deepEqual(closeoutSummary.generatedFrom, {
       matrix: "docs/page-parity-matrix.json",
       gateMap: "docs/partial-production-gate-map.md",
+      productionGates: "docs/legacy-production-acceptance-gates.md",
     });
     assertFailingVerifier(
       [
@@ -373,6 +381,7 @@ function verifySelfTestContract() {
     assert.deepEqual(zeroCloseoutSummary.generatedFrom, {
       matrix: zeroParityMatrixPath,
       gateMap: zeroPartialGateMapPath,
+      productionGates: "docs/legacy-production-acceptance-gates.md",
     });
     assertSuccessfulVerifier([
       zeroCloseoutSummaryPath,
@@ -700,7 +709,7 @@ function preflightManifest(partialReportPath: string, checklistReportPath: strin
 
 function buildBlockingGateSummary(partialReportPath: string, generatedAt: string) {
   const partialReport = readJson<{
-    generatedFrom?: { matrix?: string; gateMap?: string };
+    generatedFrom?: { matrix?: string; gateMap?: string; productionGates?: string };
   }>(partialReportPath);
   const status = JSON.parse(
     execFileSync("pnpm", [
@@ -711,6 +720,7 @@ function buildBlockingGateSummary(partialReportPath: string, generatedAt: string
       `--generated-at=${generatedAt}`,
       ...optionalArg("--parity-matrix", partialReport.generatedFrom?.matrix),
       ...optionalArg("--partial-gate-map", partialReport.generatedFrom?.gateMap),
+      ...optionalArg("--production-gates", partialReport.generatedFrom?.productionGates),
     ], {
       cwd: process.cwd(),
       encoding: "utf8",

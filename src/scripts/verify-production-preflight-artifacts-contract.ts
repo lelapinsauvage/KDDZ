@@ -35,6 +35,7 @@ type PreflightManifest = {
   generatedFrom?: {
     matrix?: string;
     gateMap?: string;
+    productionGates?: string;
     evidenceSpec?: string;
     evidenceTemplate?: string;
   };
@@ -68,6 +69,7 @@ type GateStatusReport = {
   generatedFrom?: {
     matrix?: string;
     gateMap?: string;
+    productionGates?: string;
   };
   sourceAlignment?: {
     status?: string;
@@ -95,6 +97,7 @@ type FocusedManifest = {
   generatedFrom?: {
     matrix?: string;
     gateMap?: string;
+    productionGates?: string;
   };
 };
 
@@ -123,6 +126,7 @@ try {
   assert.equal(manifest.redacted, true);
   assert.equal(manifest.generatedFrom?.matrix, "docs/page-parity-matrix.json");
   assert.equal(manifest.generatedFrom?.gateMap, "docs/partial-production-gate-map.md");
+  assert.equal(manifest.generatedFrom?.productionGates, "docs/legacy-production-acceptance-gates.md");
   assert.equal(manifest.generatedFrom?.evidenceSpec, "src/scripts/production-acceptance-evidence-spec.ts");
   assert.equal(manifest.generatedFrom?.evidenceTemplate, "docs/production-acceptance-evidence-template.md");
   assert.deepEqual(manifest.verifiedBy, [
@@ -171,6 +175,7 @@ try {
   assert.equal(blocking.generatedAt, manifest.generatedAt);
   assert.equal(blocking.generatedFrom?.matrix, manifest.generatedFrom?.matrix);
   assert.equal(blocking.generatedFrom?.gateMap, manifest.generatedFrom?.gateMap);
+  assert.equal(blocking.generatedFrom?.productionGates, manifest.generatedFrom?.productionGates);
   const expectedGateCounts = partial.summary?.gateCounts ?? {};
   assert.deepEqual(blocking.sourceAlignment, {
     status: "verified",
@@ -196,6 +201,7 @@ try {
   assert.equal(focused.generatedAt, manifest.generatedAt);
   assert.equal(focused.generatedFrom?.matrix, manifest.generatedFrom?.matrix);
   assert.equal(focused.generatedFrom?.gateMap, manifest.generatedFrom?.gateMap);
+  assert.equal(focused.generatedFrom?.productionGates, manifest.generatedFrom?.productionGates);
 
   const missingOutDir = spawnSync("pnpm", ["tsx", "src/scripts/report-production-preflight-artifacts.ts"], {
     cwd: process.cwd(),
@@ -255,6 +261,7 @@ try {
   const archiveManifest = JSON.parse(archiveOutput) as PreflightManifest;
   assert.equal(archiveManifest.generatedFrom?.matrix, archiveMatrixPath);
   assert.equal(archiveManifest.generatedFrom?.gateMap, archiveGateMapPath);
+  assert.equal(archiveManifest.generatedFrom?.productionGates, archiveProductionGatesPath);
   execFileSync("pnpm", [
     "tsx",
     "src/scripts/verify-production-preflight-artifacts-manifest.ts",

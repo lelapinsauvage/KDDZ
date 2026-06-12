@@ -29,6 +29,7 @@ type FocusedArtifactManifest = {
   generatedFrom: {
     matrix: string;
     gateMap: string;
+    productionGates: string;
     evidenceSpec: string;
     evidenceTemplate: string;
   };
@@ -109,6 +110,7 @@ const manifest: FocusedArtifactManifest = {
   generatedFrom: {
     matrix: parityMatrixPath,
     gateMap: partialGateMapPath,
+    productionGates: productionGatesPath,
     evidenceSpec: "src/scripts/production-acceptance-evidence-spec.ts",
     evidenceTemplate: "docs/production-acceptance-evidence-template.md",
   },

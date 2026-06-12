@@ -150,6 +150,7 @@ const payload = {
     evidenceChecklist: "src/scripts/report-production-evidence-checklist.ts",
     matrix: parityMatrixPath,
     gateMap: partialGateMapPath,
+    productionGates: productionGatesPath,
   },
   summary: {
     gates: gates.length,

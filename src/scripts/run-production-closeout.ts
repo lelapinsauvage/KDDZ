@@ -142,6 +142,7 @@ const summary = {
   generatedFrom: {
     matrix: parityMatrixPath,
     gateMap: partialGateMapPath,
+    productionGates: productionGatesPath,
   },
   readinessReport: outputPath,
   evidenceRecord: evidenceRecordPath,

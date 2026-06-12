@@ -59,6 +59,7 @@ const payload = {
   generatedFrom: {
     matrix: parityMatrixPath,
     gateMap: partialGateMapPath,
+    productionGates: productionGatesPath,
   },
   summary,
   rows: filteredRows,

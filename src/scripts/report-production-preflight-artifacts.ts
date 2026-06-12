@@ -16,6 +16,7 @@ type PreflightManifest = {
   generatedFrom: {
     matrix: string;
     gateMap: string;
+    productionGates: string;
     evidenceSpec: string;
     evidenceTemplate: string;
   };
@@ -49,6 +50,7 @@ type BlockingGateStatus = {
   generatedFrom?: {
     matrix?: string;
     gateMap?: string;
+    productionGates?: string;
   };
   sourceAlignment?: {
     status?: string;
@@ -137,6 +139,7 @@ const manifest: PreflightManifest = {
   generatedFrom: {
     matrix: parityMatrixPath,
     gateMap: partialGateMapPath,
+    productionGates: productionGatesPath,
     evidenceSpec: "src/scripts/production-acceptance-evidence-spec.ts",
     evidenceTemplate: "docs/production-acceptance-evidence-template.md",
   },
@@ -201,6 +204,9 @@ function assertVerifiedBlockingGateStatus(path: string) {
   }
   if (status.generatedFrom?.gateMap !== partialGateMapPath) {
     throw new Error("Blocking gate status gate-map source drifted before preflight manifest generation");
+  }
+  if (status.generatedFrom?.productionGates !== productionGatesPath) {
+    throw new Error("Blocking gate status production-gates source drifted before preflight manifest generation");
   }
   if (status.sourceAlignment?.status !== "verified") {
     throw new Error("Blocking gate status source alignment must be verified before preflight manifest generation");

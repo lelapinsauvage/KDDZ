@@ -13,6 +13,7 @@ type CloseoutSummary = {
   generatedFrom?: {
     matrix?: string;
     gateMap?: string;
+    productionGates?: string;
   };
   readinessReport?: string;
   evidenceRecord?: string;
@@ -271,6 +272,7 @@ function verifySelfTestContract() {
     assert.deepEqual(packageManifest.closeout.generatedFrom, {
       matrix: "docs/page-parity-matrix.json",
       gateMap: "docs/partial-production-gate-map.md",
+      productionGates: "docs/legacy-production-acceptance-gates.md",
     });
     assert.deepEqual(packageManifest.closeout.partialReportSummary, expectedPartialReportSummary);
     assert.deepEqual(packageManifest.closeout.evidenceChecklistSummary, expectedEvidenceChecklistSummary);
@@ -449,6 +451,7 @@ function verifySelfTestContract() {
     assert.deepEqual(zeroPackageManifest.closeout.generatedFrom, {
       matrix: zeroParityMatrixPath,
       gateMap: zeroPartialGateMapPath,
+      productionGates: "docs/legacy-production-acceptance-gates.md",
     });
     assert.deepEqual(zeroPackageManifest.closeout.partialReportSummary, {
       partialRows: 0,
@@ -838,7 +841,7 @@ function preflightManifest(partialReportPath: string, checklistReportPath: strin
 
 function buildBlockingGateSummary(partialReportPath: string, generatedAt: string) {
   const partialReport = readJson<{
-    generatedFrom?: { matrix?: string; gateMap?: string };
+    generatedFrom?: { matrix?: string; gateMap?: string; productionGates?: string };
   }>(partialReportPath);
   const status = JSON.parse(
     execFileSync("pnpm", [
@@ -849,6 +852,7 @@ function buildBlockingGateSummary(partialReportPath: string, generatedAt: string
       `--generated-at=${generatedAt}`,
       ...optionalArg("--parity-matrix", partialReport.generatedFrom?.matrix),
       ...optionalArg("--partial-gate-map", partialReport.generatedFrom?.gateMap),
+      ...optionalArg("--production-gates", partialReport.generatedFrom?.productionGates),
     ], {
       cwd: process.cwd(),
       encoding: "utf8",

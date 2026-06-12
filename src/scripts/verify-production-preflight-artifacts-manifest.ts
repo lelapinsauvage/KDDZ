@@ -34,6 +34,7 @@ type PreflightManifest = {
   generatedFrom?: {
     matrix?: string;
     gateMap?: string;
+    productionGates?: string;
     evidenceSpec?: string;
     evidenceTemplate?: string;
   };
@@ -68,6 +69,7 @@ type BlockingGateStatus = {
   generatedFrom?: {
     matrix?: string;
     gateMap?: string;
+    productionGates?: string;
   };
   sourceAlignment?: {
     status?: string;
@@ -100,6 +102,7 @@ type FocusedManifest = {
   generatedFrom?: {
     matrix?: string;
     gateMap?: string;
+    productionGates?: string;
   };
 };
 
@@ -118,6 +121,7 @@ assert.ok(manifest.generatedAt, "preflight artifact manifest is missing generate
 assert.equal(new Date(manifest.generatedAt).toISOString(), manifest.generatedAt, "preflight artifact manifest generatedAt must be ISO");
 assertNonEmptyString(manifest.generatedFrom?.matrix, "preflight artifact manifest is missing source matrix path");
 assertNonEmptyString(manifest.generatedFrom?.gateMap, "preflight artifact manifest is missing source gate-map path");
+assertNonEmptyString(manifest.generatedFrom?.productionGates, "preflight artifact manifest is missing source production-gates path");
 assert.equal(manifest.generatedFrom?.evidenceSpec, "src/scripts/production-acceptance-evidence-spec.ts");
 assert.equal(manifest.generatedFrom?.evidenceTemplate, "docs/production-acceptance-evidence-template.md");
 assert.deepEqual(manifest.verifiedBy, [
@@ -159,6 +163,7 @@ assert.equal(blockingStatus.status, "production gate status report");
 assert.equal(blockingStatus.generatedAt, manifest.generatedAt);
 assert.equal(blockingStatus.generatedFrom?.matrix, manifest.generatedFrom.matrix);
 assert.equal(blockingStatus.generatedFrom?.gateMap, manifest.generatedFrom.gateMap);
+assert.equal(blockingStatus.generatedFrom?.productionGates, manifest.generatedFrom.productionGates);
 const expectedGateCounts = partialReport.summary?.gateCounts ?? {};
 assert.deepEqual(blockingStatus.sourceAlignment, {
   status: "verified",
@@ -182,6 +187,7 @@ assert.equal(focusedManifest.status, "production focused artifacts verified");
 assert.equal(focusedManifest.generatedAt, manifest.generatedAt);
 assert.equal(focusedManifest.generatedFrom?.matrix, manifest.generatedFrom.matrix);
 assert.equal(focusedManifest.generatedFrom?.gateMap, manifest.generatedFrom.gateMap);
+assert.equal(focusedManifest.generatedFrom?.productionGates, manifest.generatedFrom.productionGates);
 
 console.log("production preflight artifacts manifest assertions passed");
 

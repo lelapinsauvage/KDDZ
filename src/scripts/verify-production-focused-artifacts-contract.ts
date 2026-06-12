@@ -9,6 +9,7 @@ type PartialReport = {
   generatedFrom?: {
     matrix?: string;
     gateMap?: string;
+    productionGates?: string;
   };
   summary?: {
     partialRows?: number;
@@ -45,6 +46,7 @@ type FocusedManifest = {
   generatedFrom?: {
     matrix?: string;
     gateMap?: string;
+    productionGates?: string;
     evidenceSpec?: string;
     evidenceTemplate?: string;
   };
@@ -92,6 +94,7 @@ try {
   assert.equal(manifest.generatedAt, generatedAt);
   assert.equal(manifest.generatedFrom?.matrix, "docs/page-parity-matrix.json");
   assert.equal(manifest.generatedFrom?.gateMap, "docs/partial-production-gate-map.md");
+  assert.equal(manifest.generatedFrom?.productionGates, "docs/legacy-production-acceptance-gates.md");
   assert.equal(manifest.generatedFrom?.evidenceSpec, "src/scripts/production-acceptance-evidence-spec.ts");
   assert.equal(manifest.generatedFrom?.evidenceTemplate, "docs/production-acceptance-evidence-template.md");
   assert.equal(manifest.redacted, true);
@@ -176,6 +179,7 @@ try {
   const archiveManifest = readJson<FocusedManifest>(join(archiveBundleDir, "kiddzonl-production-focused-artifacts.json"));
   assert.equal(archiveManifest.generatedFrom?.matrix, archiveMatrixPath);
   assert.equal(archiveManifest.generatedFrom?.gateMap, archiveGateMapPath);
+  assert.equal(archiveManifest.generatedFrom?.productionGates, archiveProductionGatesPath);
 
   for (const { gate, rows } of gates) {
     const partialPath = join(tmp, `${gate.toLowerCase()}-partials.json`);
@@ -219,6 +223,7 @@ try {
     assert.equal(checklist.generatedAt, generatedAt, `${gate} checklist generatedAt drifted`);
     assert.equal(partial.generatedFrom?.matrix, "docs/page-parity-matrix.json");
     assert.equal(partial.generatedFrom?.gateMap, "docs/partial-production-gate-map.md");
+    assert.equal(partial.generatedFrom?.productionGates, "docs/legacy-production-acceptance-gates.md");
     assert.equal(checklist.generatedFrom?.partialGateMap, "docs/partial-production-gate-map.md");
     assert.equal(partial.summary?.gateFilter, gate);
     assert.equal(checklist.summary?.gateFilter, gate);

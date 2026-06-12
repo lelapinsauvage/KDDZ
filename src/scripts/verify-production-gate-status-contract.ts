@@ -9,6 +9,11 @@ type GateStatusReport = {
   schemaVersion?: number;
   generatedAt?: string;
   redacted?: boolean;
+  generatedFrom?: {
+    matrix?: string;
+    gateMap?: string;
+    productionGates?: string;
+  };
   summary?: {
     gates?: number;
     ready?: number;
@@ -80,6 +85,9 @@ try {
   assert.equal(report.schemaVersion, 1);
   assert.equal(report.generatedAt, generatedAt);
   assert.equal(report.redacted, true);
+  assert.equal(report.generatedFrom?.matrix, "docs/page-parity-matrix.json");
+  assert.equal(report.generatedFrom?.gateMap, "docs/partial-production-gate-map.md");
+  assert.equal(report.generatedFrom?.productionGates, "docs/legacy-production-acceptance-gates.md");
   assert.equal(report.summary?.gates, 12);
   assert.equal(report.summary?.ready, 0);
   assert.equal(report.summary?.needsEvidence, 12);
