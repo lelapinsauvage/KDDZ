@@ -193,6 +193,12 @@ function verifyEvidencePackage(closeoutSummaryPath: string) {
     assert.ok(expectedCommit, "final production evidence package requires --commit with --require-zero-partials");
     assert.equal(summary.requireZeroPartials, true, "production evidence package must come from a require-zero-partials closeout");
     assert.equal(summary.parityTracker?.partial, 0, "production evidence package still has unresolved partial rows");
+    assert.equal(summary.partialReportSummary?.partialRows, 0, "production evidence package partial report still has unresolved rows");
+    assert.equal(
+      summary.evidenceChecklistSummary?.blockingPartialRows,
+      0,
+      "production evidence package checklist still has blocking rows"
+    );
   }
   if (expectedBranch) {
     assert.equal(summary.branch, expectedBranch, "production evidence package branch drifted");
@@ -222,6 +228,34 @@ function verifyEvidencePackage(closeoutSummaryPath: string) {
     preflightManifestPath,
     summary,
   });
+  if (process.argv.includes("--require-zero-partials")) {
+    assert.equal(manifest.closeout.partialReportSummary?.partialRows, 0, "production evidence package manifest partial report still has unresolved rows");
+    assert.equal(
+      manifest.closeout.evidenceChecklistSummary?.blockingPartialRows,
+      0,
+      "production evidence package manifest checklist still has blocking rows"
+    );
+    assert.equal(
+      manifest.preflight.blockingGateSummary?.blockingPartialRows,
+      0,
+      "production evidence package manifest preflight still has blocking rows"
+    );
+    assert.equal(
+      manifest.preflight.blockingGateSummary?.blockingGateLinks,
+      0,
+      "production evidence package manifest preflight still has blocking gate links"
+    );
+    assert.equal(
+      manifest.preflight.blockingGateSummary?.closeoutMode,
+      "ready-for-final-closeout",
+      "production evidence package manifest preflight is not ready for final closeout"
+    );
+    assert.equal(
+      manifest.preflight.blockingGateSummary?.canCloseLocally,
+      true,
+      "production evidence package manifest preflight cannot close locally"
+    );
+  }
   assertPackageGeneratedAtConsistency(manifest);
   assertNoSensitiveOutput(JSON.stringify(manifest));
 
@@ -619,6 +653,31 @@ function verifySelfTestContract() {
       "--commit=0404c6a",
       "--require-zero-partials",
     ]);
+
+    const staleZeroPackageManifestPath = join(tmp, "stale-zero-evidence-package.json");
+    const staleZeroPackageManifest = readJson<PackageManifest>(zeroPackageManifestPath);
+    if (staleZeroPackageManifest.preflight.blockingGateSummary) {
+      staleZeroPackageManifest.preflight.blockingGateSummary.blockingPartialRows = 1;
+      staleZeroPackageManifest.preflight.blockingGateSummary.blockingGateLinks = 1;
+      staleZeroPackageManifest.preflight.blockingGateSummary.closeoutMode = "external-production-evidence";
+      staleZeroPackageManifest.preflight.blockingGateSummary.canCloseLocally = false;
+    }
+    writeFileSync(staleZeroPackageManifestPath, `${JSON.stringify(staleZeroPackageManifest, null, 2)}\n`, "utf8");
+    const staleZeroPackage = runVerifier([
+      `--summary-report=${zeroCloseoutSummaryPath}`,
+      `--readiness-report=${zeroReadinessReportPath}`,
+      `--evidence-record=${zeroEvidenceRecordPath}`,
+      `--partial-report=${zeroPartialReportPath}`,
+      `--checklist-report=${zeroChecklistReportPath}`,
+      `--preflight-manifest=${zeroPreflightManifestPath}`,
+      `--manifest=${staleZeroPackageManifestPath}`,
+      "--branch=legacy-parity-runbook",
+      "--commit=0404c6a",
+      "--require-zero-partials",
+    ], false);
+    assert.equal(staleZeroPackage.status, 1);
+    assert.match(staleZeroPackage.stderr, /Expected values to be strictly deep-equal/);
+    assertNoSensitiveOutput(staleZeroPackage.stdout + staleZeroPackage.stderr);
 
     const wrongCommit = runVerifier([
       `--summary-report=${closeoutSummaryPath}`,
