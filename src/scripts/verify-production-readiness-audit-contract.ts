@@ -257,11 +257,11 @@ try {
     "email:EMAIL_DELIVERY_PROVIDER=disabled",
     "sms:SMS_DELIVERY_PROVIDER=disabled",
     "whatsapp:WHATSAPP_DELIVERY_PROVIDER=disabled",
-    "delivery-evidence:PROVIDER_DELIVERY_ACCEPTANCE_REPORT",
-    "rollout-evidence:PROVIDER_CHANNEL_ROLLOUT_REPORT",
-    "response-id-evidence:PROVIDER_RESPONSE_ID_AUDIT_REPORT",
-    "decision-evidence:PROVIDER_CHANNEL_DECISION_REPORT",
-    "partial-row-evidence:PROVIDER_PARTIAL_ROW_COVERAGE_REPORT",
+    "delivery-evidence:PROVIDER_DELIVERY_ACCEPTANCE_REPORT (configured)",
+    "rollout-evidence:PROVIDER_CHANNEL_ROLLOUT_REPORT (configured)",
+    "response-id-evidence:PROVIDER_RESPONSE_ID_AUDIT_REPORT (configured)",
+    "decision-evidence:PROVIDER_CHANNEL_DECISION_REPORT (configured)",
+    "partial-row-evidence:PROVIDER_PARTIAL_ROW_COVERAGE_REPORT (configured)",
   ]);
 
   const envFilePath = join(tmp, "private-readiness.env");
@@ -380,6 +380,48 @@ try {
   assert.match(invalidLocalManifestReport.stdout, /LEGACY_MEDIA_EXPORT_MANIFEST \(invalid local artifact\)/);
   assert.doesNotMatch(invalidLocalManifestReport.stdout, new RegExp(escapeRegExp(invalidMediaExportManifestPath)));
   assertNoSensitiveOutput(invalidLocalManifestReport.stdout + invalidLocalManifestReport.stderr);
+
+  const validNativePartialCoveragePath = join(tmp, "valid-native-partial-coverage.json");
+  writeFileSync(
+    validNativePartialCoveragePath,
+    JSON.stringify(
+      {
+        generatedAt: "2026-06-10T00:00:00.000Z",
+        summary: { partialRows: 3, gates: ["PROD-NATIVE"] },
+        rows: [
+          { row: "P15", gate: "PROD-NATIVE", status: "accepted" },
+          { row: "P16", gate: "PROD-NATIVE", status: "accepted" },
+          { row: "P17", gate: "PROD-NATIVE", status: "accepted" },
+        ],
+      },
+      null,
+      2
+    ),
+    "utf8"
+  );
+  const validNativeCoverageReport = runAudit(["--gate=PROD-NATIVE"], {
+    ...safeEnv,
+    NATIVE_PARTIAL_ROW_COVERAGE_REPORT: validNativePartialCoveragePath,
+  });
+  assert.equal(validNativeCoverageReport.status, 0);
+  assert.match(validNativeCoverageReport.stdout, /NATIVE_PARTIAL_ROW_COVERAGE_REPORT \(file:json\)/);
+  assert.doesNotMatch(validNativeCoverageReport.stdout, new RegExp(escapeRegExp(validNativePartialCoveragePath)));
+  assertNoSensitiveOutput(validNativeCoverageReport.stdout + validNativeCoverageReport.stderr);
+
+  const invalidProviderDecisionReportPath = join(tmp, "invalid-provider-decision.json");
+  writeFileSync(
+    invalidProviderDecisionReportPath,
+    JSON.stringify({ generatedAt: "2026-06-10T00:00:00.000Z", summary: { decisions: 1 } }),
+    "utf8"
+  );
+  const invalidProviderLocalReport = runAudit(["--gate=PROD-PROVIDERS"], {
+    ...safeEnv,
+    PROVIDER_CHANNEL_DECISION_REPORT: invalidProviderDecisionReportPath,
+  });
+  assert.equal(invalidProviderLocalReport.status, 1);
+  assert.match(invalidProviderLocalReport.stdout, /decision-evidence:PROVIDER_CHANNEL_DECISION_REPORT \(invalid local artifact\)/);
+  assert.doesNotMatch(invalidProviderLocalReport.stdout, new RegExp(escapeRegExp(invalidProviderDecisionReportPath)));
+  assertNoSensitiveOutput(invalidProviderLocalReport.stdout + invalidProviderLocalReport.stderr);
 
   const placeholderEnvFilePath = join(tmp, "placeholder-readiness.env");
   writeFileSync(

@@ -159,11 +159,11 @@ if (listRequirements) {
 
 const evidenceAudits = evidenceGateRequirements.map(auditEvidenceGate);
 const providerAudits = [auditPushProvider(), auditEmailProvider(), auditChannelProvider("SMS"), auditChannelProvider("WHATSAPP")];
-const providerDeliveryAudit = auditAnyEnv(["PROVIDER_DELIVERY_ACCEPTANCE_REPORT"]);
-const providerRolloutAudit = auditAnyEnv(["PROVIDER_CHANNEL_ROLLOUT_REPORT"]);
-const providerResponseIdAudit = auditAnyEnv(["PROVIDER_RESPONSE_ID_AUDIT_REPORT"]);
-const providerDecisionAudit = auditAnyEnv(["PROVIDER_CHANNEL_DECISION_REPORT"]);
-const providerPartialRowsAudit = auditAnyEnv(["PROVIDER_PARTIAL_ROW_COVERAGE_REPORT"]);
+const providerDeliveryAudit = auditAnyEnv(["PROVIDER_DELIVERY_ACCEPTANCE_REPORT"], { validateEvidence: true });
+const providerRolloutAudit = auditAnyEnv(["PROVIDER_CHANNEL_ROLLOUT_REPORT"], { validateEvidence: true });
+const providerResponseIdAudit = auditAnyEnv(["PROVIDER_RESPONSE_ID_AUDIT_REPORT"], { validateEvidence: true });
+const providerDecisionAudit = auditAnyEnv(["PROVIDER_CHANNEL_DECISION_REPORT"], { validateEvidence: true });
+const providerPartialRowsAudit = auditAnyEnv(["PROVIDER_PARTIAL_ROW_COVERAGE_REPORT"], { validateEvidence: true });
 const cronSecretAudit = auditAnyEnv(["CRON_SECRET", "VERCEL_CRON_SECRET"]);
 const providerGate: GateAudit = {
   gate: "PROD-PROVIDERS",
@@ -427,11 +427,24 @@ function auditProvider(name: string, requirements: Array<string | string[]>): Pr
   };
 }
 
-function auditAnyEnv(envNames: string[]) {
+function auditAnyEnv(envNames: string[], options: { validateEvidence?: boolean } = {}) {
   const configured = envNames.find((envName) => Boolean(readEnv(envName)));
-  return configured
-    ? { present: [configured], missing: [] as string[] }
-    : { present: [] as string[], missing: [envNames.join(" or ")] };
+  if (!configured) {
+    return { present: [] as string[], missing: [envNames.join(" or ")] };
+  }
+
+  if (!options.validateEvidence) {
+    return { present: [configured], missing: [] as string[] };
+  }
+
+  const value = readEnv(configured);
+  if (!value) {
+    return { present: [] as string[], missing: [configured] };
+  }
+  const pointer = auditEvidencePointer(configured, value);
+  return pointer.ok
+    ? { present: [pointer.label], missing: [] as string[] }
+    : { present: [] as string[], missing: [pointer.missingLabel] };
 }
 
 function readEnv(name: string) {
@@ -528,11 +541,26 @@ function localEvidenceValidator(envName: string): ((payload: Record<string, unkn
       isObject(payload.totals) &&
       Array.isArray(payload.results),
   };
-  return validators[envName];
+  if (validators[envName]) return validators[envName];
+  if (envName.endsWith("_MANIFEST")) return genericManifestEvidence;
+  if (envName.endsWith("_REPORT") || envName.endsWith("_EVIDENCE")) return genericReportEvidence;
+  return undefined;
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function genericManifestEvidence(payload: Record<string, unknown>) {
+  return payload.schemaVersion === 1 && typeof payload.generatedAt === "string";
+}
+
+function genericReportEvidence(payload: Record<string, unknown>) {
+  return (
+    typeof payload.generatedAt === "string" &&
+    (isObject(payload.summary) || isObject(payload.totals)) &&
+    ["rows", "results", "entries", "checks", "items", "decisions"].some((key) => Array.isArray(payload[key]))
+  );
 }
 
 function formatList(items: string[]) {
