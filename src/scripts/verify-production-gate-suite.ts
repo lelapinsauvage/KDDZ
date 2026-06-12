@@ -111,6 +111,10 @@ const checks = [
     command: ["pnpm", "tsx", "src/scripts/verify-legacy-cron-surface-closure-contract.ts"],
   },
   {
+    label: "parent native acceptance boundary contract",
+    command: ["pnpm", "tsx", "src/scripts/verify-parent-native-acceptance-boundary-contract.ts"],
+  },
+  {
     label: "next Codex handoff contract",
     command: ["pnpm", "tsx", "src/scripts/verify-next-codex-handoff-contract.ts"],
   },

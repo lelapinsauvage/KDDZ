@@ -5,6 +5,7 @@ const files = {
   matrixJson: "docs/page-parity-matrix.json",
   matrixMd: "docs/page-parity-matrix.md",
   parentApiMatrix: "docs/parent-api-contract-matrix.md",
+  cronMatrix: "docs/cron-notification-matrix.md",
   nativeLedger: "docs/native-acceptance-ledger.md",
   e2e: "src/scripts/verify-parent-credentialed-native-e2e.ts",
 };
@@ -61,6 +62,15 @@ assert.doesNotMatch(text.matrixMd, /credentialed native acceptance remains/);
 assert.doesNotMatch(text.matrixMd, /broader endpoint\/native-device E2E/);
 
 assert.match(text.parentApiMatrix, /docs\/native-acceptance-ledger\.md/);
+assert.match(
+  text.cronMatrix,
+  /covered by local credentialed route-handler E2E for `\/ws\/sendMessage\.php`, `\/ws\/messagesList\.php`, and `\/ws\/message\.php`/,
+);
+assert.match(
+  text.cronMatrix,
+  /Roll out production push\/SMS\/WhatsApp credentials and run real native-device acceptance/,
+);
+assert.doesNotMatch(text.cronMatrix, /Verify credentialed native parser tolerance/);
 assert.match(text.nativeLedger, /Local Credentialed Route-Handler E2E/);
 assert.match(text.nativeLedger, /This is not an iOS Simulator/);
 assert.match(text.nativeLedger, /Remaining native acceptance gates/);
