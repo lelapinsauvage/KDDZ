@@ -113,14 +113,21 @@ for (const family of families) {
 }
 
 for (const marker of [
+  "Local approved generator jobs, manual actions, and protected cron-safe endpoints are restored",
   "birthday, assessment, insurance, vaccination, payment, event, holiday, medical, and contract generation now have idempotent manual/server/cron-safe paths",
   "Local approved generator endpoints are closed",
   "remaining acceptance is hosted scheduler configuration",
   "production crontab recovery",
   "confirm hosted schedule enablement",
+  "encrypted `Medical_form1.php?id=` generated-row bridge parity",
+  "current-user teacher scoping, USER/PARENT_USER/CHILD sent-history tabs, and browser visual parity",
 ]) {
   assert.ok(cronMatrix.includes(marker), `cron matrix missing marker: ${marker}`);
 }
+
+assert.doesNotMatch(cronMatrix, /remaining restoration work is future job generation/);
+assert.doesNotMatch(cronMatrix, /exact encrypted deep-link parity/);
+assert.doesNotMatch(cronMatrix, /Finish exact legacy active table\/status semantics, final visual audit/);
 
 assert.match(
   topGaps,
