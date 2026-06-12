@@ -53,6 +53,7 @@ pnpm tsx src/scripts/verify-production-evidence-package-contract.ts
 pnpm tsx src/scripts/report-production-evidence-checklist.ts --gate=PROD-CRON
 pnpm tsx src/scripts/report-production-evidence-checklist.ts --json --out=/tmp/kiddzonl-production-evidence-checklist.json --generated-at=<release-generated-at-iso>
 pnpm tsx src/scripts/report-production-gate-status.ts --json --out=/tmp/kiddzonl-production-gate-status.json --generated-at=<release-generated-at-iso>
+pnpm tsx src/scripts/report-production-closeout-plan.ts --json --out=/tmp/kiddzonl-production-closeout-plan.json --generated-at=<release-generated-at-iso>
 pnpm tsx src/scripts/report-production-gate-status.ts --json --blocking-only --out=/tmp/kiddzonl-production-blocking-gate-status.json --generated-at=<release-generated-at-iso>
 pnpm tsx src/scripts/report-production-preflight-artifacts.ts --out-dir=/tmp/kiddzonl-production-preflight-artifacts --generated-at=<release-generated-at-iso>
 pnpm tsx src/scripts/verify-production-preflight-artifacts-manifest.ts --manifest=/tmp/kiddzonl-production-preflight-artifacts/kiddzonl-production-preflight-artifacts.json
