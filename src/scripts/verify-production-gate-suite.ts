@@ -83,6 +83,10 @@ const checks = [
     command: ["pnpm", "tsx", "src/scripts/verify-legacy-action-catalogue-closure-contract.ts"],
   },
   {
+    label: "legacy admin pagination closure contract",
+    command: ["pnpm", "tsx", "src/scripts/verify-legacy-admin-pagination-closure-contract.ts"],
+  },
+  {
     label: "next Codex handoff contract",
     command: ["pnpm", "tsx", "src/scripts/verify-next-codex-handoff-contract.ts"],
   },

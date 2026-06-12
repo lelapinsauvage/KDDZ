@@ -99,32 +99,38 @@ function formatLegacyDateTime(value: string | null) {
 }
 
 function paginationItems(currentPage: number, totalPages: number) {
-  const pages: Array<number | "ellipsis-start" | "ellipsis-end"> = [];
-  if (totalPages <= 9) {
-    for (let page = 1; page <= totalPages; page += 1) pages.push(page);
-    return pages;
+  const stages = 3;
+  const items: Array<number | "ellipsis-start" | "ellipsis-end"> = [];
+
+  if (totalPages < 7 + stages * 2) {
+    for (let page = 1; page <= totalPages; page += 1) items.push(page);
+    return items;
   }
 
-  if (currentPage <= 5) {
-    for (let page = 1; page <= 7; page += 1) pages.push(page);
-    pages.push("ellipsis-end", totalPages);
-    return pages;
+  if (currentPage < 1 + stages * 2) {
+    for (let page = 1; page < 4 + stages * 2; page += 1) items.push(page);
+    items.push("ellipsis-end", totalPages - 1, totalPages);
+    return items;
   }
 
-  if (currentPage >= totalPages - 4) {
-    pages.push(1, "ellipsis-start");
-    for (let page = totalPages - 6; page <= totalPages; page += 1) {
-      pages.push(page);
+  if (totalPages - stages * 2 > currentPage && currentPage > stages * 2) {
+    items.push(1, 2, "ellipsis-start");
+    for (
+      let page = currentPage - stages;
+      page <= currentPage + stages;
+      page += 1
+    ) {
+      items.push(page);
     }
-    return pages;
+    items.push("ellipsis-end", totalPages - 1, totalPages);
+    return items;
   }
 
-  pages.push(1, "ellipsis-start");
-  for (let page = currentPage - 2; page <= currentPage + 2; page += 1) {
-    pages.push(page);
+  items.push(1, 2, "ellipsis-start");
+  for (let page = totalPages - (2 + stages * 2); page <= totalPages; page += 1) {
+    items.push(page);
   }
-  pages.push("ellipsis-end", totalPages);
-  return pages;
+  return items;
 }
 
 function filterActions(
