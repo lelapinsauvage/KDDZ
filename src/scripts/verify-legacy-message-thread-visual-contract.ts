@@ -95,5 +95,17 @@ assert.doesNotMatch(
   /Remaining work is exact legacy reply-thread visual audit/,
 );
 assert.match(text.topGaps, /Message reply-thread browser contract now covers/);
+assert.match(
+  text.topGaps,
+  /Local message portal, read-state, visual, native route-handler, and provider-neutral delivery-audit implementation is closed/,
+);
+assert.match(
+  text.topGaps,
+  /remaining acceptance is real native-device execution and production push\/SMS\/WhatsApp credential rollout/,
+);
+assert.doesNotMatch(
+  text.topGaps,
+  /Remaining work is native-device acceptance and production push\/SMS\/WhatsApp credential rollout/,
+);
 
 console.log("legacy message thread visual contract assertions passed");
