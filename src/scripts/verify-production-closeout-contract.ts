@@ -219,6 +219,9 @@ try {
     unresolvedPartials.stderr,
     new RegExp(`requires zero partial parity rows; found ${expectedParityTracker.partial}`)
   );
+  assert.match(unresolvedPartials.stdout, /production artifact consistency contract assertions passed/);
+  assert.doesNotMatch(unresolvedPartials.stderr, /remaining production tickets/i);
+  assert.doesNotMatch(unresolvedPartials.stderr, /Production acceptance evidence failed/i);
   assertNoSensitiveOutput(unresolvedPartials.stdout + unresolvedPartials.stderr);
 
   writeFileSync(zeroParityMatrixPath, zeroPartialMatrixJson(), "utf8");

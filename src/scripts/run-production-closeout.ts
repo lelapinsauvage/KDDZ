@@ -116,6 +116,10 @@ const artifactDigests = artifactDigestSummary({
   evidenceChecklist: checklistOutputPath,
   preflightManifest: preflightManifestPath,
 });
+if (requireZeroPartials && parityTracker.partial !== 0) {
+  console.error(`Production closeout requires zero partial parity rows; found ${parityTracker.partial}.`);
+  process.exit(1);
+}
 run("pnpm", [
   "tsx",
   "src/scripts/verify-production-acceptance-evidence-record.ts",
@@ -131,10 +135,6 @@ run("pnpm", [
   `--branch=${branch}`,
   `--commit=${commit}`,
 ]);
-if (requireZeroPartials && parityTracker.partial !== 0) {
-  console.error(`Production closeout requires zero partial parity rows; found ${parityTracker.partial}.`);
-  process.exit(1);
-}
 
 const summary = {
   status: "production closeout verified",
