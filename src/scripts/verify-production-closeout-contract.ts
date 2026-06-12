@@ -85,6 +85,10 @@ try {
     status?: string;
     schemaVersion?: number;
     generatedAt?: string;
+    generatedFrom?: {
+      matrix?: string;
+      gateMap?: string;
+    };
     partialReport?: string | null;
     evidenceChecklist?: string | null;
     partialReportSummary?: { partialRows?: number; gates?: string[]; gateCounts?: Record<string, number> } | null;
@@ -101,6 +105,10 @@ try {
     status: "production closeout verified",
     schemaVersion: 1,
     generatedAt,
+    generatedFrom: {
+      matrix: "docs/page-parity-matrix.json",
+      gateMap: "docs/partial-production-gate-map.md",
+    },
     readinessReport: readinessReportPath,
     evidenceRecord: evidenceRecordPath,
     partialReport: partialReportPath,
@@ -153,8 +161,13 @@ try {
   const partialReport = readFileSync(partialReportPath, "utf8");
   assertNoSensitiveOutput(partialReport);
   const partialPayload = JSON.parse(partialReport) as {
+    generatedFrom?: { matrix?: string; gateMap?: string };
     summary?: { partialRows?: number; gateCounts?: Record<string, number> };
   };
+  assert.deepEqual(partialPayload.generatedFrom, {
+    matrix: "docs/page-parity-matrix.json",
+    gateMap: "docs/partial-production-gate-map.md",
+  });
   assert.equal(partialPayload.summary?.partialRows, 17);
   assert.deepEqual(partialPayload.summary?.gateCounts, {
     "PROD-CRON": 9,
@@ -166,8 +179,14 @@ try {
   const checklistReport = readFileSync(checklistReportPath, "utf8");
   assertNoSensitiveOutput(checklistReport);
   const checklistPayload = JSON.parse(checklistReport) as {
+    generatedFrom?: { partialGateMap?: string };
     summary?: { gates?: number; requiredFields?: number; blockingPartialRows?: number };
   };
+  assert.deepEqual(checklistPayload.generatedFrom, {
+    evidenceSpec: "src/scripts/production-acceptance-evidence-spec.ts",
+    evidenceTemplate: "docs/production-acceptance-evidence-template.md",
+    partialGateMap: "docs/partial-production-gate-map.md",
+  });
   assert.deepEqual(checklistPayload.summary, {
     gates: 12,
     requiredFields: 73,
@@ -256,12 +275,20 @@ try {
   assert.equal(zeroCloseout.status, 0, zeroCloseout.stdout + zeroCloseout.stderr);
   assertNoSensitiveOutput(zeroCloseout.stdout + zeroCloseout.stderr);
   const zeroCloseoutPayload = JSON.parse(readFileSync(zeroCloseoutSummaryPath, "utf8")) as {
+    generatedFrom?: {
+      matrix?: string;
+      gateMap?: string;
+    };
     requireZeroPartials?: boolean;
     partialReportSummary?: { partialRows?: number; gates?: string[]; gateCounts?: Record<string, number> } | null;
     evidenceChecklistSummary?: { blockingPartialRows?: number } | null;
     parityTracker?: { total?: number; complete?: number; partial?: number; donePct?: number; leftPct?: number };
     artifactConsistency?: { status?: string } | null;
   };
+  assert.deepEqual(zeroCloseoutPayload.generatedFrom, {
+    matrix: zeroParityMatrixPath,
+    gateMap: zeroPartialGateMapPath,
+  });
   assert.deepEqual(zeroCloseoutPayload.partialReportSummary, {
     partialRows: 0,
     gates: [],

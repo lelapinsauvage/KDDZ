@@ -133,6 +133,10 @@ const summary = {
   status: "production closeout verified",
   schemaVersion: 1,
   generatedAt: summaryGeneratedAt,
+  generatedFrom: {
+    matrix: parityMatrixPath,
+    gateMap: partialGateMapPath,
+  },
   readinessReport: outputPath,
   evidenceRecord: evidenceRecordPath,
   partialReport: partialsOutputPath ?? null,

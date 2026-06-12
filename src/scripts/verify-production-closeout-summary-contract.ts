@@ -20,6 +20,10 @@ type CloseoutSummary = {
   status?: string;
   schemaVersion?: number;
   generatedAt?: string;
+  generatedFrom?: {
+    matrix?: string;
+    gateMap?: string;
+  };
   readinessReport?: string;
   evidenceRecord?: string;
   partialReport?: string | null;
@@ -67,10 +71,17 @@ type EvidenceChecklistSummary = {
 };
 
 type PartialReport = {
+  generatedFrom?: {
+    matrix?: string;
+    gateMap?: string;
+  };
   summary?: PartialReportSummary;
 };
 
 type EvidenceChecklist = {
+  generatedFrom?: {
+    partialGateMap?: string;
+  };
   summary?: EvidenceChecklistSummary;
 };
 
@@ -92,6 +103,8 @@ function verifyCloseoutSummary(path: string) {
   assert.equal(summary.status, "production closeout verified");
   assert.equal(summary.schemaVersion, 1, "production closeout summary schema version drifted");
   assertValidIsoTimestamp(summary.generatedAt, "closeout summary generatedAt");
+  assertNonEmptyString(summary.generatedFrom?.matrix, "production closeout summary is missing source matrix path");
+  assertNonEmptyString(summary.generatedFrom?.gateMap, "production closeout summary is missing source gate-map path");
   assert.equal(summary.redacted, true);
   assert.deepEqual(summary.readinessSummary, { ready: 12, needsEvidence: 0, total: 12 });
   const expectedBranch = optionValue("--branch");
@@ -139,6 +152,8 @@ function verifyCloseoutSummary(path: string) {
     assert.equal(summary.partialReport, partialReportPath);
     assertDigest(summary.artifactDigests?.partialReport, partialReportPath, "partial report");
     const partialReport = readArtifact<PartialReport>(partialReportPath);
+    assert.equal(partialReport.generatedFrom?.matrix, summary.generatedFrom.matrix, "partial report matrix source drifted");
+    assert.equal(partialReport.generatedFrom?.gateMap, summary.generatedFrom.gateMap, "partial report gate-map source drifted");
     assert.deepEqual(summary.partialReportSummary, normalizePartialSummary(partialReport.summary));
   }
 
@@ -146,6 +161,7 @@ function verifyCloseoutSummary(path: string) {
     assert.equal(summary.evidenceChecklist, checklistReportPath);
     assertDigest(summary.artifactDigests?.evidenceChecklist, checklistReportPath, "evidence checklist");
     const checklist = readArtifact<EvidenceChecklist>(checklistReportPath);
+    assert.equal(checklist.generatedFrom?.partialGateMap, summary.generatedFrom.gateMap, "evidence checklist gate-map source drifted");
     assert.deepEqual(summary.evidenceChecklistSummary, normalizeChecklistSummary(checklist.summary));
   }
 
@@ -243,6 +259,11 @@ function verifySelfTestContract() {
       `--partial-report=${partialReportPath}`,
       `--checklist-report=${checklistReportPath}`,
     ]);
+    const closeoutSummary = readJson<CloseoutSummary>(closeoutSummaryPath);
+    assert.deepEqual(closeoutSummary.generatedFrom, {
+      matrix: "docs/page-parity-matrix.json",
+      gateMap: "docs/partial-production-gate-map.md",
+    });
     assertFailingVerifier(
       [
         closeoutSummaryPath,
@@ -325,6 +346,11 @@ function verifySelfTestContract() {
       cwd: process.cwd(),
       stdio: "ignore",
     });
+    const zeroCloseoutSummary = readJson<CloseoutSummary>(zeroCloseoutSummaryPath);
+    assert.deepEqual(zeroCloseoutSummary.generatedFrom, {
+      matrix: zeroParityMatrixPath,
+      gateMap: zeroPartialGateMapPath,
+    });
     assertSuccessfulVerifier([
       zeroCloseoutSummaryPath,
       `--evidence-record=${zeroEvidenceRecordPath}`,
@@ -389,6 +415,30 @@ function verifySelfTestContract() {
       /evidence record digest mismatch/
     );
 
+    const sourceMismatchPartialPath = join(tmp, "source-mismatch-partials.json");
+    const sourceMismatchPartial = readJson<PartialReport>(partialReportPath);
+    if (sourceMismatchPartial.generatedFrom) {
+      sourceMismatchPartial.generatedFrom.gateMap = "docs/other-partial-production-gate-map.md";
+    }
+    writeJson(sourceMismatchPartialPath, sourceMismatchPartial);
+    const sourceMismatchSummaryPath = join(tmp, "source-mismatch-summary.json");
+    const sourceMismatchSummary = readJson<CloseoutSummary>(closeoutSummaryPath);
+    sourceMismatchSummary.partialReport = sourceMismatchPartialPath;
+    if (sourceMismatchSummary.artifactDigests?.partialReport) {
+      sourceMismatchSummary.artifactDigests.partialReport.digest = sha256File(sourceMismatchPartialPath);
+    }
+    writeJson(sourceMismatchSummaryPath, sourceMismatchSummary);
+    assertFailingVerifier(
+      [
+        sourceMismatchSummaryPath,
+        `--evidence-record=${evidenceRecordPath}`,
+        `--readiness-report=${readinessReportPath}`,
+        `--partial-report=${sourceMismatchPartialPath}`,
+        `--checklist-report=${checklistReportPath}`,
+      ],
+      /partial report gate-map source drifted/
+    );
+
     const staleEvidenceRecordPath = join(tmp, "stale-production-acceptance-evidence.md");
     const staleEvidenceRecord = readFileSync(evidenceRecordPath, "utf8").replace(
       "legacy-parity-runbook` / 0404c6a",
@@ -431,6 +481,13 @@ function verifySelfTestContract() {
 function assertDigest(record: DigestRecord | undefined, path: string, label: string) {
   assert.equal(record?.algorithm, "sha256", `${label} digest algorithm must be sha256`);
   assert.equal(record?.digest, sha256File(path), `${label} digest mismatch`);
+}
+
+function assertNonEmptyString(value: unknown, message: string): asserts value is string {
+  if (typeof value !== "string") {
+    assert.fail(message);
+  }
+  assert.notEqual(value.trim(), "", message);
 }
 
 function verifyEvidenceRecordAgainstSummary(params: {

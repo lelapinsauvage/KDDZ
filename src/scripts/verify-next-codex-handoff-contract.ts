@@ -92,6 +92,7 @@ for (const expected of [
   "Production Evidence Timestamp Hardening",
   "closeout summary and evidence package manifest both carry `schemaVersion: 1`",
   "Package verification requires the closeout summary, readiness report, partial report, and evidence checklist to share that same package `generatedAt`",
+  "closeout plus evidence package contracts reject archived partial/checklist artifacts or saved package manifests whose source provenance drifts from the closeout",
   "Production Acceptance Closure",
   "Production Preflight Bundle",
   "report-production-gate-status.ts --require-ready",

@@ -10,6 +10,10 @@ type CloseoutSummary = {
   status?: string;
   schemaVersion?: number;
   generatedAt?: string;
+  generatedFrom?: {
+    matrix?: string;
+    gateMap?: string;
+  };
   readinessReport?: string;
   evidenceRecord?: string;
   partialReport?: string | null;
@@ -68,6 +72,7 @@ type PackageManifest = {
   closeout: {
     branch?: string;
     commit?: string;
+    generatedFrom?: CloseoutSummary["generatedFrom"];
     readinessSummary?: CloseoutSummary["readinessSummary"];
     partialReportSummary?: CloseoutSummary["partialReportSummary"];
     evidenceChecklistSummary?: CloseoutSummary["evidenceChecklistSummary"];
@@ -244,6 +249,10 @@ function verifySelfTestContract() {
     assert.equal(packageManifest.artifacts.partialReport.generatedAt, generatedAt);
     assert.equal(packageManifest.artifacts.evidenceChecklist.generatedAt, generatedAt);
     assert.equal(packageManifest.artifacts.evidenceRecord.generatedAt, undefined);
+    assert.deepEqual(packageManifest.closeout.generatedFrom, {
+      matrix: "docs/page-parity-matrix.json",
+      gateMap: "docs/partial-production-gate-map.md",
+    });
     assert.deepEqual(packageManifest.closeout.partialReportSummary, {
       partialRows: 17,
       gates: ["PROD-CRON", "PROD-NATIVE", "PROD-NATURE", "PROD-PROVIDERS"],
@@ -285,6 +294,24 @@ function verifySelfTestContract() {
     assert.equal(stale.status, 1);
     assert.match(stale.stderr, /Expected values to be strictly deep-equal/);
     assertNoSensitiveOutput(stale.stdout + stale.stderr);
+
+    const sourceMismatchManifestPath = join(tmp, "source-mismatch-evidence-package.json");
+    const sourceMismatchManifest = readJson<PackageManifest>(packageManifestPath);
+    if (sourceMismatchManifest.closeout.generatedFrom) {
+      sourceMismatchManifest.closeout.generatedFrom.gateMap = "docs/other-partial-production-gate-map.md";
+    }
+    writeFileSync(sourceMismatchManifestPath, `${JSON.stringify(sourceMismatchManifest, null, 2)}\n`, "utf8");
+    const sourceMismatch = runVerifier([
+      `--summary-report=${closeoutSummaryPath}`,
+      `--readiness-report=${readinessReportPath}`,
+      `--evidence-record=${evidenceRecordPath}`,
+      `--partial-report=${partialReportPath}`,
+      `--checklist-report=${checklistReportPath}`,
+      `--manifest=${sourceMismatchManifestPath}`,
+    ], false);
+    assert.equal(sourceMismatch.status, 1);
+    assert.match(sourceMismatch.stderr, /Expected values to be strictly deep-equal/);
+    assertNoSensitiveOutput(sourceMismatch.stdout + sourceMismatch.stderr);
 
     const generatedAtMismatchReadiness = readJson<Record<string, unknown>>(readinessReportPath);
     generatedAtMismatchReadiness.generatedAt = "2026-06-10T00:00:01.000Z";
@@ -402,6 +429,10 @@ function verifySelfTestContract() {
       "--require-zero-partials",
     ]);
     const zeroPackageManifest = readJson<PackageManifest>(zeroPackageManifestPath);
+    assert.deepEqual(zeroPackageManifest.closeout.generatedFrom, {
+      matrix: zeroParityMatrixPath,
+      gateMap: zeroPartialGateMapPath,
+    });
     assert.deepEqual(zeroPackageManifest.closeout.partialReportSummary, {
       partialRows: 0,
       gates: [],
@@ -467,6 +498,7 @@ function buildManifest(params: {
     closeout: {
       branch: params.summary.branch,
       commit: params.summary.commit,
+      generatedFrom: params.summary.generatedFrom,
       readinessSummary: params.summary.readinessSummary,
       partialReportSummary: params.summary.partialReportSummary,
       evidenceChecklistSummary: params.summary.evidenceChecklistSummary,
