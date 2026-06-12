@@ -667,7 +667,7 @@ assert.match(contents.gates, /tracker assertion derived from `report-production-
 assert.match(contents.gates, /verify-production-artifact-consistency-contract\.ts/);
 assert.match(contents.gates, /verify-production-focused-artifacts-contract\.ts/);
 assert.match(contents.gates, /verify-production-focused-artifacts-manifest-contract\.ts/);
-assert.match(contents.gates, /requiring every nested focused partial\/checklist artifact to match the manifest timestamp, source matrix\/gate-map paths, and gate filter/);
+assert.match(contents.gates, /requiring every nested focused partial\/checklist artifact to match the manifest timestamp, source matrix\/gate-map\/production-gates paths, and gate filter/);
 assert.match(contents.gates, /verify-production-gate-status-contract\.ts/);
 assert.match(contents.gates, /verify-production-readiness-audit-contract\.ts/);
 assert.match(contents.gates, /preflight artifact contract/);
