@@ -525,6 +525,31 @@ try {
   assert.match(envTemplateMismatch.stderr, /replace-me/);
   writeFileSync(envTemplatePath, originalEnvTemplate, "utf8");
 
+  const envTemplateProofMismatchManifest = JSON.parse(JSON.stringify(manifest)) as PreflightManifest;
+  const envTemplateProofPath = envTemplateProofMismatchManifest.artifacts?.readinessEnvTemplates?.cron?.path;
+  assert.ok(envTemplateProofPath);
+  assert.ok(envTemplateProofMismatchManifest.artifacts?.readinessEnvTemplates?.cron);
+  const originalEnvTemplateProof = readFileSync(envTemplateProofPath, "utf8");
+  writeFileSync(
+    envTemplateProofPath,
+    originalEnvTemplateProof.replace("report-production-gate-status.ts", "report-production-gate-status-stale.ts"),
+    "utf8"
+  );
+  envTemplateProofMismatchManifest.artifacts.readinessEnvTemplates.cron.digest = sha256File(envTemplateProofPath);
+  const envTemplateProofMismatchPath = join(tmp, "env-template-proof-mismatch-preflight-artifacts.json");
+  writeFileSync(envTemplateProofMismatchPath, `${JSON.stringify(envTemplateProofMismatchManifest, null, 2)}\n`, "utf8");
+  const envTemplateProofMismatch = spawnSync("pnpm", [
+    "tsx",
+    "src/scripts/verify-production-preflight-artifacts-manifest.ts",
+    `--manifest=${envTemplateProofMismatchPath}`,
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.equal(envTemplateProofMismatch.status, 1);
+  assert.match(envTemplateProofMismatch.stderr, /cron readiness env template is missing PROD-CRON proof command/);
+  writeFileSync(envTemplateProofPath, originalEnvTemplateProof, "utf8");
+
   const workOrderMismatchManifest = JSON.parse(JSON.stringify(manifest)) as PreflightManifest;
   const workOrderMismatchPlanPath = workOrderMismatchManifest.artifacts?.closeoutPlan?.path;
   assert.ok(workOrderMismatchPlanPath);

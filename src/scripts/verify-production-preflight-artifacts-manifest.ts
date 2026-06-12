@@ -278,6 +278,7 @@ assert.deepEqual(
   gateCounts(blockingStatus.gates ?? [])
 );
 assertCloseoutPlanWorkOrders(closeoutPlan, blockingStatus);
+assertReadinessEnvTemplatesMatchCloseoutPlan(manifest.artifacts?.readinessEnvTemplates, closeoutPlan);
 assert.ok(closeoutPlan.finalCloseoutCommands?.some((command) => command.includes("verify-production-preflight-artifacts-manifest.ts")));
 assert.ok(closeoutPlan.finalCloseoutCommands?.some((command) => command.includes("--manifest=/tmp/kiddzonl-production-evidence-package.json")));
 assertReleaseMetadataAppliedToCloseoutPlan(closeoutPlan, manifest.releaseMetadata);
@@ -453,6 +454,53 @@ function assertCloseoutPlanWorkOrders(plan: CloseoutPlan, status: BlockingGateSt
     for (const command of gate.focusedArtifactCommands ?? []) {
       assert.ok(workOrder.proofCommands?.includes(command), `${gate.gate} work order is missing focused artifact proof command`);
     }
+  }
+}
+
+function assertReadinessEnvTemplatesMatchCloseoutPlan(
+  templates: Record<string, ArtifactRef> | undefined,
+  plan: CloseoutPlan
+) {
+  const templateKeysByGate: Record<string, string> = {
+    "PROD-CRON": "cron",
+    "PROD-PROVIDERS": "provider",
+    "PROD-NATIVE": "native",
+    "PROD-NATURE": "nature",
+  };
+  const fullTemplate = readFileSync(templates?.full?.path ?? "", "utf8");
+  for (const gate of plan.gates ?? []) {
+    assertNonEmptyString(gate.gate, "closeout plan gate is missing id for readiness env template verification");
+    const focusedKey = templateKeysByGate[gate.gate];
+    assertNonEmptyString(focusedKey, `${gate.gate} has no readiness env template key`);
+    const focusedTemplate = readFileSync(templates?.[focusedKey]?.path ?? "", "utf8");
+    assertReadinessEnvTemplateWorkOrder(focusedTemplate, gate, focusedKey);
+    assertReadinessEnvTemplateWorkOrder(fullTemplate, gate, "full");
+  }
+}
+
+function assertReadinessEnvTemplateWorkOrder(
+  text: string,
+  gate: NonNullable<CloseoutPlan["gates"]>[number],
+  templateKey: string
+) {
+  const workOrder = gate.evidenceWorkOrder;
+  assert.ok(workOrder, `${gate.gate} is missing evidence work order for readiness env template verification`);
+  assert.match(
+    text,
+    new RegExp(`Finish condition: ${escapeRegExp(workOrder.finishCondition ?? "")}`),
+    `${templateKey} readiness env template is missing ${gate.gate} finish condition`
+  );
+  assert.match(
+    text,
+    new RegExp(`Focused coverage rows: ${escapeRegExp(workOrder.focusedCoverageRows?.join(", ") ?? "")}`),
+    `${templateKey} readiness env template is missing ${gate.gate} focused coverage rows`
+  );
+  for (const command of workOrder.proofCommands ?? []) {
+    assert.match(
+      text,
+      new RegExp(`Proof command: ${escapeRegExp(command)}`),
+      `${templateKey} readiness env template is missing ${gate.gate} proof command`
+    );
   }
 }
 
