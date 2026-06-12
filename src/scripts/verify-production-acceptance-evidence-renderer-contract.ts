@@ -203,7 +203,10 @@ function preflightManifest() {
       ready: 12,
       needsEvidence: 0,
       blockingPartialRows: 0,
+      blockingGateLinks: 0,
       missingEvidenceItems: 0,
+      closeoutMode: "ready-for-final-closeout",
+      canCloseLocally: true,
       gatesToClose: [],
     },
   };
