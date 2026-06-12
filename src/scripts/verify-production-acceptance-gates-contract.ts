@@ -547,6 +547,7 @@ assert.match(contents.gates, /report-production-focused-artifacts\.ts/);
 assert.match(contents.gates, /report-production-preflight-artifacts\.ts/);
 assert.match(contents.gates, /report-production-gate-status\.ts/);
 assert.match(contents.gates, /--require-ready/);
+assert.match(contents.gates, /--require-no-blockers/);
 assert.match(contents.gates, /verify-production-preflight-artifacts-manifest\.ts/);
 assert.match(contents.gates, /verify-production-focused-artifacts-manifest\.ts/);
 assert.match(contents.gates, /report-production-evidence-checklist\.ts/);
@@ -627,7 +628,7 @@ assert.match(contents.cutoverRunbook, /report-production-gate-status\.ts --json 
 assert.match(contents.cutoverRunbook, /report-production-gate-status\.ts --json --blocking-only --out=\/tmp\/kiddzonl-production-blocking-gate-status\.json --generated-at=<release-generated-at-iso>/);
 assert.match(contents.cutoverRunbook, /report-production-preflight-artifacts\.ts --out-dir=\/tmp\/kiddzonl-production-preflight-artifacts --generated-at=<release-generated-at-iso>/);
 assert.match(contents.cutoverRunbook, /verify-production-preflight-artifacts-manifest\.ts --manifest=\/tmp\/kiddzonl-production-preflight-artifacts\/kiddzonl-production-preflight-artifacts\.json/);
-assert.match(contents.cutoverRunbook, /report-production-gate-status\.ts --json --env-file=\/secure\/private-readiness\.env --out=\/tmp\/kiddzonl-production-gate-status\.json --generated-at=<release-generated-at-iso> --require-ready/);
+assert.match(contents.cutoverRunbook, /report-production-gate-status\.ts --json --env-file=\/secure\/private-readiness\.env --out=\/tmp\/kiddzonl-production-gate-status\.json --generated-at=<release-generated-at-iso> --require-ready --require-no-blockers/);
 assert.match(contents.cutoverRunbook, /--env-file=\/secure\/private-readiness\.env/);
 assert.match(contents.cutoverRunbook, /verify-production-acceptance-evidence-record\.ts \/secure\/production-acceptance-evidence\.md --readiness-report=\/tmp\/kiddzonl-production-readiness\.json --summary-report=\/tmp\/kiddzonl-production-closeout-summary\.json --partial-report=\/tmp\/kiddzonl-production-partials\.json --checklist-report=\/tmp\/kiddzonl-production-evidence-checklist\.json --readiness-digest=<readiness-sha256> --partial-digest=<partials-sha256> --checklist-digest=<checklist-sha256> --branch=legacy-parity-runbook --commit=<release-commit-sha>/);
 assert.match(contents.cutoverRunbook, /pnpm run closeout:production/);

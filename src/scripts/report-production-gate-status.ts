@@ -72,6 +72,7 @@ const envFilePath = optionValue("--env-file");
 const generatedAt = generatedAtValue();
 const selectedGate = optionValue("--gate");
 const requireReady = process.argv.includes("--require-ready");
+const requireNoBlockers = process.argv.includes("--require-no-blockers");
 const blockingOnly = process.argv.includes("--blocking-only");
 const parityMatrixPath = optionValue("--parity-matrix") ?? "docs/page-parity-matrix.json";
 const partialGateMapPath = optionValue("--partial-gate-map") ?? "docs/partial-production-gate-map.md";
@@ -160,6 +161,9 @@ if (outputPath) {
 process.stdout.write(rendered);
 
 if (requireReady && payload.summary.needsEvidence > 0) {
+  process.exitCode = 1;
+}
+if (requireNoBlockers && payload.summary.blockingPartialRows > 0) {
   process.exitCode = 1;
 }
 

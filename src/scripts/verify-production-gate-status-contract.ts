@@ -30,6 +30,8 @@ const tmp = mkdtempSync(join(tmpdir(), "kiddzonl-gate-status-"));
 
 try {
   const reportPath = join(tmp, "production-gate-status.json");
+  const zeroParityMatrixPath = join(tmp, "zero-page-parity-matrix.json");
+  const zeroPartialGateMapPath = join(tmp, "zero-partial-production-gate-map.md");
   const output = execFileSync("pnpm", [
     "tsx",
     "src/scripts/report-production-gate-status.ts",
@@ -168,6 +170,19 @@ try {
   assert.equal(unresolvedRequireReady.status, 1);
   assert.match(unresolvedRequireReady.stdout, /"needsEvidence": 12/);
 
+  const unresolvedRequireNoBlockers = spawnSync("pnpm", [
+    "tsx",
+    "src/scripts/report-production-gate-status.ts",
+    "--json",
+    "--require-no-blockers",
+    `--generated-at=${generatedAt}`,
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.equal(unresolvedRequireNoBlockers.status, 1);
+  assert.match(unresolvedRequireNoBlockers.stdout, /"blockingPartialRows": 17/);
+
   const readyEnvPath = join(tmp, "ready-private-readiness.env");
   writeFileSync(readyEnvPath, readyEnvFile(), "utf8");
   const readyRequireReady = spawnSync("pnpm", [
@@ -190,11 +205,86 @@ try {
     blockingPartialRows: 17,
     missingEvidenceItems: 0,
   });
+
+  const readyButBlocked = spawnSync("pnpm", [
+    "tsx",
+    "src/scripts/report-production-gate-status.ts",
+    "--json",
+    "--require-ready",
+    "--require-no-blockers",
+    `--env-file=${readyEnvPath}`,
+    `--generated-at=${generatedAt}`,
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.equal(readyButBlocked.status, 1);
+  assert.match(readyButBlocked.stdout, /"ready": 12/);
+  assert.match(readyButBlocked.stdout, /"blockingPartialRows": 17/);
+
+  writeFileSync(zeroParityMatrixPath, zeroPartialMatrixJson(), "utf8");
+  writeFileSync(zeroPartialGateMapPath, zeroPartialGateMapMarkdown(), "utf8");
+  const readyWithoutBlockers = spawnSync("pnpm", [
+    "tsx",
+    "src/scripts/report-production-gate-status.ts",
+    "--json",
+    "--require-ready",
+    "--require-no-blockers",
+    `--env-file=${readyEnvPath}`,
+    `--generated-at=${generatedAt}`,
+    `--parity-matrix=${zeroParityMatrixPath}`,
+    `--partial-gate-map=${zeroPartialGateMapPath}`,
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.equal(readyWithoutBlockers.status, 0, readyWithoutBlockers.stdout + readyWithoutBlockers.stderr);
+  const zeroReady = JSON.parse(readyWithoutBlockers.stdout) as GateStatusReport;
+  assert.deepEqual(zeroReady.summary, {
+    gates: 12,
+    ready: 12,
+    needsEvidence: 0,
+    blockingPartialRows: 0,
+    missingEvidenceItems: 0,
+  });
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }
 
 console.log("production gate status contract assertions passed");
+
+function zeroPartialMatrixJson() {
+  const matrix = JSON.parse(readFileSync("docs/page-parity-matrix.json", "utf8")) as unknown;
+
+  function walk(value: unknown): void {
+    if (Array.isArray(value)) {
+      value.forEach(walk);
+      return;
+    }
+    if (!value || typeof value !== "object") {
+      return;
+    }
+
+    const row = value as { status?: unknown };
+    if (typeof row.status === "string" && row.status.toLowerCase().startsWith("partial")) {
+      row.status = "complete - production evidence accepted for zero-blocker gate status contract";
+    }
+    Object.values(value).forEach(walk);
+  }
+
+  walk(matrix);
+  return `${JSON.stringify(matrix, null, 2)}\n`;
+}
+
+function zeroPartialGateMapMarkdown() {
+  return [
+    "# Partial Production Gate Map",
+    "",
+    "| Row | Status anchor | Gates | Closure reason |",
+    "| --- | --- | --- | --- |",
+    "",
+  ].join("\n");
+}
 
 function readyEnvFile() {
   return [
