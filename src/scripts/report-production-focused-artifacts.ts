@@ -6,7 +6,6 @@ import { join } from "node:path";
 type FocusedGate = {
   gate: string;
   slug: string;
-  rows: string[];
 };
 
 type ArtifactEntry = {
@@ -38,14 +37,10 @@ type FocusedArtifactManifest = {
 };
 
 const focusedGates: FocusedGate[] = [
-  { gate: "PROD-CRON", slug: "cron", rows: ["P01", "P02", "P03", "P04", "P05", "P06", "P07", "P10", "P12"] },
-  {
-    gate: "PROD-PROVIDERS",
-    slug: "provider",
-    rows: ["P01", "P02", "P03", "P05", "P06", "P07", "P08", "P09", "P11", "P12", "P13", "P14", "P15", "P17"],
-  },
-  { gate: "PROD-NATIVE", slug: "native", rows: ["P15", "P16", "P17"] },
-  { gate: "PROD-NATURE", slug: "nature", rows: ["P17"] },
+  { gate: "PROD-CRON", slug: "cron" },
+  { gate: "PROD-PROVIDERS", slug: "provider" },
+  { gate: "PROD-NATIVE", slug: "native" },
+  { gate: "PROD-NATURE", slug: "nature" },
 ];
 
 const outputDir = optionValue("--out-dir");
@@ -86,11 +81,21 @@ const artifacts = focusedGates.map((entry): ArtifactEntry => {
     `--checklist-report=${checklistPath}`,
   ]);
 
+  const partialReport = JSON.parse(readFileSync(partialReportPath, "utf8")) as {
+    rows?: Array<{ row?: string }>;
+  };
+  const blockingRows = (partialReport.rows ?? []).map((row) => {
+    if (!row.row) {
+      throw new Error(`${entry.gate} partial report has a row without an id`);
+    }
+    return row.row;
+  });
+
   return {
     gate: entry.gate,
     partialReport: artifact(partialReportPath),
     evidenceChecklist: artifact(checklistPath),
-    blockingRows: entry.rows,
+    blockingRows,
     verifiedBy: "src/scripts/verify-production-artifact-consistency-contract.ts",
   };
 });
