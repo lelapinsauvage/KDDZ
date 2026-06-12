@@ -75,6 +75,9 @@ type PackageManifest = {
   schemaVersion: 1;
   generatedAt?: string;
   artifacts: Record<string, ArtifactManifest>;
+  preflight: {
+    blockingGateSummary?: BlockingGateSummary;
+  };
   closeout: {
     branch?: string;
     commit?: string;
@@ -86,6 +89,18 @@ type PackageManifest = {
     requireZeroPartials?: boolean;
   };
   redacted: true;
+};
+
+type BlockingGateSummary = {
+  gates?: number;
+  ready?: number;
+  needsEvidence?: number;
+  blockingPartialRows?: number;
+  blockingGateLinks?: number;
+  missingEvidenceItems?: number;
+  closeoutMode?: string;
+  canCloseLocally?: boolean;
+  gatesToClose?: unknown[];
 };
 
 type ArtifactManifest = {
@@ -276,6 +291,10 @@ function verifySelfTestContract() {
     });
     assert.deepEqual(packageManifest.closeout.partialReportSummary, expectedPartialReportSummary);
     assert.deepEqual(packageManifest.closeout.evidenceChecklistSummary, expectedEvidenceChecklistSummary);
+    assert.deepEqual(packageManifest.preflight.blockingGateSummary, readPreflightBlockingGateSummary(preflightManifestPath));
+    assert.equal(packageManifest.preflight.blockingGateSummary?.blockingGateLinks, 27);
+    assert.equal(packageManifest.preflight.blockingGateSummary?.closeoutMode, "external-production-evidence");
+    assert.equal(packageManifest.preflight.blockingGateSummary?.canCloseLocally, false);
     assertPackageGeneratedAtConsistency(packageManifest);
 
     runVerifier([
@@ -485,6 +504,10 @@ function verifySelfTestContract() {
     assert.equal(zeroPackageManifest.closeout.evidenceChecklistSummary?.blockingPartialRows, 0);
     assert.deepEqual(zeroPackageManifest.closeout.parityTracker, parityTrackerSummary(zeroParityMatrixPath));
     assert.equal(zeroPackageManifest.closeout.requireZeroPartials, true);
+    assert.equal(zeroPackageManifest.preflight.blockingGateSummary?.blockingPartialRows, 0);
+    assert.equal(zeroPackageManifest.preflight.blockingGateSummary?.blockingGateLinks, 0);
+    assert.equal(zeroPackageManifest.preflight.blockingGateSummary?.closeoutMode, "ready-for-final-closeout");
+    assert.equal(zeroPackageManifest.preflight.blockingGateSummary?.canCloseLocally, true);
     runVerifier([
       `--summary-report=${zeroCloseoutSummaryPath}`,
       `--readiness-report=${zeroReadinessReportPath}`,
@@ -511,6 +534,27 @@ function verifySelfTestContract() {
     assert.equal(wrongCommit.status, 1);
     assert.match(wrongCommit.stderr, /production evidence package commit drifted/);
     assertNoSensitiveOutput(wrongCommit.stdout + wrongCommit.stderr);
+
+    const preflightSummaryMismatchManifestPath = join(tmp, "preflight-summary-mismatch-evidence-package.json");
+    const preflightSummaryMismatchManifest = readJson<PackageManifest>(packageManifestPath);
+    preflightSummaryMismatchManifest.preflight.blockingGateSummary = {
+      ...preflightSummaryMismatchManifest.preflight.blockingGateSummary,
+      closeoutMode: "ready-for-final-closeout",
+      canCloseLocally: true,
+    };
+    writeFileSync(preflightSummaryMismatchManifestPath, `${JSON.stringify(preflightSummaryMismatchManifest, null, 2)}\n`, "utf8");
+    const preflightSummaryMismatch = runVerifier([
+      `--summary-report=${closeoutSummaryPath}`,
+      `--readiness-report=${readinessReportPath}`,
+      `--evidence-record=${evidenceRecordPath}`,
+      `--partial-report=${partialReportPath}`,
+      `--checklist-report=${checklistReportPath}`,
+      `--preflight-manifest=${preflightManifestPath}`,
+      `--manifest=${preflightSummaryMismatchManifestPath}`,
+    ], false);
+    assert.equal(preflightSummaryMismatch.status, 1);
+    assert.match(preflightSummaryMismatch.stderr, /ready-for-final-closeout/);
+    assertNoSensitiveOutput(preflightSummaryMismatch.stdout + preflightSummaryMismatch.stderr);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
@@ -525,6 +569,7 @@ function buildManifest(params: {
   preflightManifestPath: string;
   summary: CloseoutSummary;
 }): PackageManifest {
+  const preflightBlockingGateSummary = readPreflightBlockingGateSummary(params.preflightManifestPath);
   return {
     status: "production evidence package verified",
     schemaVersion: 1,
@@ -536,6 +581,9 @@ function buildManifest(params: {
       partialReport: artifact(params.partialReportPath),
       evidenceChecklist: artifact(params.checklistReportPath),
       preflightManifest: artifact(params.preflightManifestPath),
+    },
+    preflight: {
+      blockingGateSummary: preflightBlockingGateSummary,
     },
     closeout: {
       branch: params.summary.branch,
@@ -549,6 +597,11 @@ function buildManifest(params: {
     },
     redacted: true,
   };
+}
+
+function readPreflightBlockingGateSummary(path: string) {
+  const preflight = readJson<{ blockingGateSummary?: BlockingGateSummary }>(path);
+  return preflight.blockingGateSummary;
 }
 
 function artifact(path: string): ArtifactManifest {
@@ -887,7 +940,10 @@ function buildBlockingGateSummary(partialReportPath: string, generatedAt: string
       ready?: number;
       needsEvidence?: number;
       blockingPartialRows?: number;
+      blockingGateLinks?: number;
       missingEvidenceItems?: number;
+      closeoutMode?: string;
+      canCloseLocally?: boolean;
     };
     gates?: Array<{ gate?: string }>;
   };
@@ -897,7 +953,10 @@ function buildBlockingGateSummary(partialReportPath: string, generatedAt: string
     ready: status.summary?.ready ?? 0,
     needsEvidence: status.summary?.needsEvidence ?? 0,
     blockingPartialRows: status.summary?.blockingPartialRows ?? 0,
+    blockingGateLinks: status.summary?.blockingGateLinks ?? 0,
     missingEvidenceItems: status.summary?.missingEvidenceItems ?? 0,
+    closeoutMode: status.summary?.closeoutMode ?? "unknown",
+    canCloseLocally: status.summary?.canCloseLocally === true,
     gatesToClose: (status.gates ?? []).map((gate) => gate.gate).filter((gate): gate is string => Boolean(gate)),
   };
 }
