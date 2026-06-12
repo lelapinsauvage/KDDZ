@@ -29,6 +29,24 @@ type CloseoutSummary = {
     requiredFields?: number | null;
     blockingPartialRows?: number | null;
   } | null;
+  artifactDigests?: {
+    readinessReport?: {
+      algorithm?: string;
+      digest?: string;
+    };
+    evidenceRecord?: {
+      algorithm?: string;
+      digest?: string;
+    };
+    partialReport?: {
+      algorithm?: string;
+      digest?: string;
+    };
+    evidenceChecklist?: {
+      algorithm?: string;
+      digest?: string;
+    };
+  };
   parityTracker?: {
     total?: number;
     complete?: number;
@@ -106,6 +124,17 @@ function verifyEvidencePackage(closeoutSummaryPath: string) {
   assert.ok(partialReportPath, "production evidence package is missing partial report path");
   assert.ok(checklistReportPath, "production evidence package is missing evidence checklist path");
 
+  const manifest = buildManifest({
+    closeoutSummaryPath,
+    readinessReportPath,
+    evidenceRecordPath,
+    partialReportPath,
+    checklistReportPath,
+    summary,
+  });
+  assertPackageGeneratedAtConsistency(manifest);
+  assertNoSensitiveOutput(JSON.stringify(manifest));
+
   execFileSync("pnpm", [
     "tsx",
     "src/scripts/verify-production-closeout-summary-contract.ts",
@@ -121,16 +150,6 @@ function verifyEvidencePackage(closeoutSummaryPath: string) {
     cwd: process.cwd(),
     stdio: "ignore",
   });
-
-  const manifest = buildManifest({
-    closeoutSummaryPath,
-    readinessReportPath,
-    evidenceRecordPath,
-    partialReportPath,
-    checklistReportPath,
-    summary,
-  });
-  assertNoSensitiveOutput(JSON.stringify(manifest));
 
   const expectedManifestPath = optionValue("--manifest");
   if (expectedManifestPath) {
@@ -240,6 +259,7 @@ function verifySelfTestContract() {
       requiredFields: 73,
       blockingPartialRows: 17,
     });
+    assertPackageGeneratedAtConsistency(packageManifest);
 
     runVerifier([
       `--summary-report=${closeoutSummaryPath}`,
@@ -265,6 +285,27 @@ function verifySelfTestContract() {
     assert.equal(stale.status, 1);
     assert.match(stale.stderr, /Expected values to be strictly deep-equal/);
     assertNoSensitiveOutput(stale.stdout + stale.stderr);
+
+    const generatedAtMismatchReadiness = readJson<Record<string, unknown>>(readinessReportPath);
+    generatedAtMismatchReadiness.generatedAt = "2026-06-10T00:00:01.000Z";
+    const generatedAtMismatchReadinessPath = join(tmp, "generated-at-mismatch-readiness.json");
+    writeFileSync(generatedAtMismatchReadinessPath, `${JSON.stringify(generatedAtMismatchReadiness, null, 2)}\n`, "utf8");
+    const generatedAtMismatchSummary = readJson<CloseoutSummary>(closeoutSummaryPath);
+    assert.ok(generatedAtMismatchSummary.artifactDigests?.readinessReport);
+    generatedAtMismatchSummary.readinessReport = generatedAtMismatchReadinessPath;
+    generatedAtMismatchSummary.artifactDigests.readinessReport.digest = sha256File(generatedAtMismatchReadinessPath);
+    const generatedAtMismatchSummaryPath = join(tmp, "generated-at-mismatch-closeout-summary.json");
+    writeFileSync(generatedAtMismatchSummaryPath, `${JSON.stringify(generatedAtMismatchSummary, null, 2)}\n`, "utf8");
+    const generatedAtMismatch = runVerifier([
+      `--summary-report=${generatedAtMismatchSummaryPath}`,
+      `--readiness-report=${generatedAtMismatchReadinessPath}`,
+      `--evidence-record=${evidenceRecordPath}`,
+      `--partial-report=${partialReportPath}`,
+      `--checklist-report=${checklistReportPath}`,
+    ], false);
+    assert.equal(generatedAtMismatch.status, 1);
+    assert.match(generatedAtMismatch.stderr, /readinessReport generatedAt drifted from package generatedAt/);
+    assertNoSensitiveOutput(generatedAtMismatch.stdout + generatedAtMismatch.stderr);
 
     const unresolvedFinal = runVerifier([
       `--summary-report=${closeoutSummaryPath}`,
@@ -446,6 +487,25 @@ function artifact(path: string): ArtifactManifest {
     digest: sha256File(path),
     ...(generatedAt ? { generatedAt } : {}),
   };
+}
+
+function assertPackageGeneratedAtConsistency(manifest: PackageManifest) {
+  assertValidIsoTimestamp(manifest.generatedAt, "production evidence package generatedAt");
+  for (const artifactName of ["closeoutSummary", "readinessReport", "partialReport", "evidenceChecklist"] as const) {
+    const artifact = manifest.artifacts[artifactName];
+    assert.equal(
+      artifact.generatedAt,
+      manifest.generatedAt,
+      `${artifactName} generatedAt drifted from package generatedAt`
+    );
+  }
+  assert.equal(manifest.artifacts.evidenceRecord.generatedAt, undefined);
+}
+
+function assertValidIsoTimestamp(value: unknown, label: string): asserts value is string {
+  assert.equal(typeof value, "string", `${label} is missing`);
+  const timestamp = value as string;
+  assert.equal(new Date(timestamp).toISOString(), timestamp, `${label} must be an ISO timestamp`);
 }
 
 function generatedAtFromJson(text: string) {

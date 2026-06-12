@@ -519,6 +519,7 @@ assert.match(contents.gates, /--manifest-out=<path>/);
 assert.match(contents.gates, /--manifest=<path>/);
 assert.match(contents.gates, /`generatedAt` metadata for JSON artifacts/);
 assert.match(contents.gates, /top-level `generatedAt` timestamp from the closeout summary/);
+assert.match(contents.gates, /Package verification requires the closeout summary, readiness report, partial report, and evidence checklist to share that same `generatedAt` timestamp/);
 assert.match(contents.gates, /schemaVersion: 1/);
 assert.match(contents.gates, /--branch=<branch>/);
 assert.match(contents.gates, /--commit=<sha>/);

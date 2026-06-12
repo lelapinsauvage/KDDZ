@@ -89,6 +89,7 @@ for (const expected of [
   "--partial-gate-map=<path>",
   "Production Evidence Timestamp Hardening",
   "closeout summary and evidence package manifest both carry `schemaVersion: 1`",
+  "Package verification requires the closeout summary, readiness report, partial report, and evidence checklist to share that same package `generatedAt`",
   "Production Acceptance Closure",
   "Production Preflight Bundle",
   "report-production-gate-status.ts --require-ready",
