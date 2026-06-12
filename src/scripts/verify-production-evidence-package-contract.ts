@@ -79,6 +79,7 @@ type PackageManifest = {
     blockingGateSummary?: BlockingGateSummary;
     closeoutPlan?: ArtifactManifest;
     closeoutPlanWorkOrders?: CloseoutPlanWorkOrderSummary[];
+    readinessEnvTemplates?: Record<string, ArtifactManifest>;
   };
   closeout: {
     branch?: string;
@@ -126,6 +127,12 @@ type PreflightManifest = {
       digest?: string;
       sha256?: string;
     };
+    readinessEnvTemplates?: Record<string, {
+      path?: string;
+      algorithm?: string;
+      digest?: string;
+      sha256?: string;
+    }>;
   };
   blockingGateSummary?: BlockingGateSummary;
 };
@@ -341,6 +348,8 @@ function verifySelfTestContract() {
     assert.deepEqual(packageManifest.preflight.blockingGateSummary, readPreflightBlockingGateSummary(preflightManifestPath));
     assert.deepEqual(packageManifest.preflight.closeoutPlan, artifact(closeoutPlanPath));
     assert.deepEqual(packageManifest.preflight.closeoutPlanWorkOrders, closeoutPlanWorkOrderSummary(closeoutPlanPath));
+    assert.deepEqual(Object.keys(packageManifest.preflight.readinessEnvTemplates ?? {}).sort(), ["cron", "full", "native", "nature", "provider"]);
+    assert.match(readFileSync(packageManifest.preflight.readinessEnvTemplates?.cron?.path ?? "", "utf8"), /CRON_PARTIAL_ROW_COVERAGE_REPORT=replace-me/);
     assert.deepEqual(
       Object.fromEntries((packageManifest.preflight.closeoutPlanWorkOrders ?? []).map((workOrder) => [workOrder.gate, workOrder.focusedCoverageRows.length])),
       {
@@ -575,6 +584,7 @@ function verifySelfTestContract() {
     assert.equal(zeroPackageManifest.preflight.blockingGateSummary?.canCloseLocally, true);
     assert.deepEqual(zeroPackageManifest.preflight.closeoutPlan, artifact(zeroCloseoutPlanPath));
     assert.deepEqual(zeroPackageManifest.preflight.closeoutPlanWorkOrders, []);
+    assert.deepEqual(Object.keys(zeroPackageManifest.preflight.readinessEnvTemplates ?? {}).sort(), ["cron", "full", "native", "nature", "provider"]);
     runVerifier([
       `--summary-report=${zeroCloseoutSummaryPath}`,
       `--readiness-report=${zeroReadinessReportPath}`,
@@ -659,6 +669,24 @@ function verifySelfTestContract() {
     assert.equal(preflightWorkOrderMismatch.status, 1);
     assert.match(preflightWorkOrderMismatch.stderr, /focusedCoverageRows/);
     assertNoSensitiveOutput(preflightWorkOrderMismatch.stdout + preflightWorkOrderMismatch.stderr);
+
+    const preflightTemplateMismatchManifestPath = join(tmp, "preflight-template-mismatch-evidence-package.json");
+    const preflightTemplateMismatchManifest = readJson<PackageManifest>(packageManifestPath);
+    assert.ok(preflightTemplateMismatchManifest.preflight.readinessEnvTemplates?.cron);
+    preflightTemplateMismatchManifest.preflight.readinessEnvTemplates.cron.digest = "0".repeat(64);
+    writeFileSync(preflightTemplateMismatchManifestPath, `${JSON.stringify(preflightTemplateMismatchManifest, null, 2)}\n`, "utf8");
+    const preflightTemplateMismatch = runVerifier([
+      `--summary-report=${closeoutSummaryPath}`,
+      `--readiness-report=${readinessReportPath}`,
+      `--evidence-record=${evidenceRecordPath}`,
+      `--partial-report=${partialReportPath}`,
+      `--checklist-report=${checklistReportPath}`,
+      `--preflight-manifest=${preflightManifestPath}`,
+      `--manifest=${preflightTemplateMismatchManifestPath}`,
+    ], false);
+    assert.equal(preflightTemplateMismatch.status, 1);
+    assert.match(preflightTemplateMismatch.stderr, /Expected values to be strictly deep-equal/);
+    assertNoSensitiveOutput(preflightTemplateMismatch.stdout + preflightTemplateMismatch.stderr);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
@@ -690,6 +718,7 @@ function buildManifest(params: {
       blockingGateSummary: preflight.blockingGateSummary,
       closeoutPlan: preflightCloseoutPlanArtifact(preflight),
       closeoutPlanWorkOrders: preflightCloseoutPlanWorkOrders(preflight),
+      readinessEnvTemplates: preflightReadinessEnvTemplateArtifacts(preflight),
     },
     closeout: {
       branch: params.summary.branch,
@@ -726,6 +755,20 @@ function preflightCloseoutPlanWorkOrders(preflight: PreflightManifest) {
   const closeoutPlan = preflight.artifacts?.closeoutPlan;
   assert.ok(closeoutPlan?.path, "preflight manifest is missing closeout plan artifact path");
   return closeoutPlanWorkOrderSummary(closeoutPlan.path);
+}
+
+function preflightReadinessEnvTemplateArtifacts(preflight: PreflightManifest) {
+  const templates = preflight.artifacts?.readinessEnvTemplates;
+  assert.deepEqual(Object.keys(templates ?? {}).sort(), ["cron", "full", "native", "nature", "provider"]);
+  return Object.fromEntries(
+    Object.entries(templates ?? {}).map(([key, template]) => {
+      assert.ok(template.path, `preflight readiness env template ${key} is missing artifact path`);
+      assert.equal(template.algorithm ?? "sha256", "sha256", `preflight readiness env template ${key} must use sha256`);
+      assert.equal(template.digest ?? template.sha256, sha256File(template.path), `preflight readiness env template ${key} digest drifted`);
+      assert.match(readFileSync(template.path, "utf8"), /replace-me/, `preflight readiness env template ${key} must keep placeholders`);
+      return [key, artifact(template.path)];
+    })
+  );
 }
 
 function closeoutPlanWorkOrderSummary(path: string): CloseoutPlanWorkOrderSummary[] {
@@ -1041,6 +1084,7 @@ function zeroPartialGateMapMarkdown() {
 
 function preflightManifest(partialReportPath: string, checklistReportPath: string, closeoutPlanPath: string, generatedAt: string) {
   const blockingGateSummary = buildBlockingGateSummary(partialReportPath, generatedAt);
+  const readinessEnvTemplates = writeReadinessEnvTemplates(join(dirname(closeoutPlanPath), "readiness-env"));
   return `${JSON.stringify(
     {
       status: "production preflight artifacts verified",
@@ -1066,6 +1110,7 @@ function preflightManifest(partialReportPath: string, checklistReportPath: strin
           algorithm: "sha256",
           digest: sha256File(closeoutPlanPath),
         },
+        readinessEnvTemplates,
       },
       blockingGateSummary,
       redacted: true,
@@ -1073,6 +1118,54 @@ function preflightManifest(partialReportPath: string, checklistReportPath: strin
     null,
     2
   )}\n`;
+}
+
+function writeReadinessEnvTemplates(outputDir: string) {
+  mkdirSync(outputDir, { recursive: true });
+  const templates: Record<string, { scope: string; path: string; fields: string[] }> = {
+    full: {
+      scope: "all production acceptance gates",
+      path: join(outputDir, "private-readiness.env"),
+      fields: ["CRON_PARTIAL_ROW_COVERAGE_REPORT", "PROVIDER_PARTIAL_ROW_COVERAGE_REPORT", "NATIVE_PARTIAL_ROW_COVERAGE_REPORT", "NOTIFICATIONS_NATURE_PARTIAL_ROW_COVERAGE_REPORT"],
+    },
+    cron: {
+      scope: "PROD-CRON",
+      path: join(outputDir, "private-readiness-cron.env"),
+      fields: ["CRON_PARTIAL_ROW_COVERAGE_REPORT"],
+    },
+    provider: {
+      scope: "PROD-PROVIDERS",
+      path: join(outputDir, "private-readiness-provider.env"),
+      fields: ["PROVIDER_PARTIAL_ROW_COVERAGE_REPORT"],
+    },
+    native: {
+      scope: "PROD-NATIVE",
+      path: join(outputDir, "private-readiness-native.env"),
+      fields: ["NATIVE_PARTIAL_ROW_COVERAGE_REPORT"],
+    },
+    nature: {
+      scope: "PROD-NATURE",
+      path: join(outputDir, "private-readiness-nature.env"),
+      fields: ["NOTIFICATIONS_NATURE_PARTIAL_ROW_COVERAGE_REPORT"],
+    },
+  };
+  for (const template of Object.values(templates)) {
+    writeFileSync(template.path, [
+      `# Scope: ${template.scope}`,
+      ...template.fields.map((field) => `${field}=replace-me`),
+      "",
+    ].join("\n"), "utf8");
+  }
+  return Object.fromEntries(
+    Object.entries(templates).map(([key, template]) => [
+      key,
+      {
+        path: template.path,
+        algorithm: "sha256",
+        digest: sha256File(template.path),
+      },
+    ])
+  );
 }
 
 function writeCloseoutPlan(path: string, partialReportPath: string, generatedAt: string) {

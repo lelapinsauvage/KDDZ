@@ -243,7 +243,7 @@ pnpm tsx src/scripts/verify-production-evidence-package-contract.ts --summary-re
 
 The final command reads `docs/page-parity-matrix.json`, `docs/partial-production-gate-map.md`, and `docs/legacy-production-acceptance-gates.md` by default. Use `--parity-matrix=<path>`, `--partial-gate-map=<path>`, and `--production-gates=<path>` only when reproducing an archived release package from already-frozen evidence artifacts or running contract tests against a controlled fixture.
 
-The archived closeout summary, partial gate report, production evidence checklist, preflight manifest, and package manifest must preserve matching source matrix/gate-map/production-gates paths so a final zero-partial package cannot mix evidence generated from different control-plane inputs.
+The archived closeout summary, partial gate report, production evidence checklist, preflight manifest, and package manifest must preserve matching source matrix/gate-map/production-gates paths so a final zero-partial package cannot mix evidence generated from different control-plane inputs. The closeout summary and package manifest must also preserve the archived preflight readiness env template hashes so the private evidence placeholders and work-order templates remain tied to the release package.
 
 The legacy restoration goal can only be marked complete when:
 
@@ -257,6 +257,6 @@ The legacy restoration goal can only be marked complete when:
 - redacted readiness and closeout summary JSON files are archived with the release evidence,
 - the filled production acceptance record is archived and hash-bound by the closeout summary,
 - the production evidence checklist JSON is archived with the release evidence,
-- the production evidence package manifest is archived and verifies all closeout artifact hashes plus the closeout readiness, partial report, evidence checklist, and preflight manifest summaries,
+- the production evidence package manifest is archived and verifies all closeout artifact hashes plus the closeout readiness, partial report, evidence checklist, preflight manifest summaries, and preflight readiness env template hashes,
 - the final closeout command passes with `--require-zero-partials`,
 - no stop condition above remains open.

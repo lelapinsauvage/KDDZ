@@ -245,6 +245,12 @@ function preflightNestedArtifactDigestSummary(preflightManifestPath: string) {
         digest?: string;
         sha256?: string;
       };
+      readinessEnvTemplates?: Record<string, {
+        path?: string;
+        algorithm?: string;
+        digest?: string;
+        sha256?: string;
+      }>;
     };
   };
   const closeoutPlan = manifest.artifacts?.closeoutPlan;
@@ -258,11 +264,33 @@ function preflightNestedArtifactDigestSummary(preflightManifestPath: string) {
   if ((closeoutPlan.digest ?? closeoutPlan.sha256) !== digest) {
     throw new Error("Preflight closeout plan artifact digest drifted.");
   }
+  const readinessEnvTemplates = Object.fromEntries(
+    Object.entries(manifest.artifacts?.readinessEnvTemplates ?? {}).map(([key, template]) => {
+      if (!template.path) {
+        throw new Error(`Preflight readiness env template ${key} is missing artifact path.`);
+      }
+      if ((template.algorithm ?? "sha256") !== "sha256") {
+        throw new Error(`Preflight readiness env template ${key} must use sha256.`);
+      }
+      const templateDigest = sha256File(template.path);
+      if ((template.digest ?? template.sha256) !== templateDigest) {
+        throw new Error(`Preflight readiness env template ${key} digest drifted.`);
+      }
+      return [
+        key,
+        {
+          algorithm: "sha256",
+          digest: templateDigest,
+        },
+      ];
+    })
+  );
   return {
     preflightCloseoutPlan: {
       algorithm: "sha256",
       digest,
     },
+    ...(Object.keys(readinessEnvTemplates).length > 0 ? { preflightReadinessEnvTemplates: readinessEnvTemplates } : {}),
   };
 }
 

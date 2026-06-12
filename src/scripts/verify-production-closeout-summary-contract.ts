@@ -39,6 +39,7 @@ type CloseoutSummary = {
     evidenceChecklist?: DigestRecord;
     preflightManifest?: DigestRecord;
     preflightCloseoutPlan?: DigestRecord;
+    preflightReadinessEnvTemplates?: Record<string, DigestRecord>;
   };
   artifactConsistency?: {
     status?: string;
@@ -189,6 +190,10 @@ function verifyCloseoutSummary(path: string) {
       summary.artifactDigests?.preflightCloseoutPlan,
       preflightCloseoutPlanPath(preflightManifestPath),
       "preflight closeout plan"
+    );
+    assertPreflightReadinessEnvTemplateDigests(
+      summary.artifactDigests?.preflightReadinessEnvTemplates,
+      preflightReadinessEnvTemplatePaths(preflightManifestPath)
     );
   }
 
@@ -742,6 +747,33 @@ function preflightCloseoutPlanPath(preflightManifestPath: string) {
   }>(preflightManifestPath);
   assert.ok(manifest.artifacts?.closeoutPlan?.path, "preflight manifest is missing closeout plan artifact path");
   return manifest.artifacts.closeoutPlan.path;
+}
+
+function preflightReadinessEnvTemplatePaths(preflightManifestPath: string) {
+  const manifest = readJson<{
+    artifacts?: {
+      readinessEnvTemplates?: Record<string, {
+        path?: string;
+      }>;
+    };
+  }>(preflightManifestPath);
+  return Object.fromEntries(
+    Object.entries(manifest.artifacts?.readinessEnvTemplates ?? {}).map(([key, template]) => {
+      assert.ok(template.path, `preflight readiness env template ${key} is missing artifact path`);
+      return [key, template.path];
+    })
+  );
+}
+
+function assertPreflightReadinessEnvTemplateDigests(
+  digests: Record<string, DigestRecord> | undefined,
+  paths: Record<string, string>
+) {
+  if (Object.keys(paths).length === 0) return;
+  assert.deepEqual(Object.keys(digests ?? {}).sort(), Object.keys(paths).sort());
+  for (const [key, path] of Object.entries(paths)) {
+    assertDigest(digests?.[key], path, `preflight readiness env template ${key}`);
+  }
 }
 
 function writeCloseoutPlan(path: string, partialReportPath: string, generatedAt: string) {
