@@ -95,6 +95,32 @@ try {
   assert.match(cronWithBoundWorkOrder, new RegExp(`--generated-at=${generatedAt}`));
   assert.doesNotMatch(cronWithBoundWorkOrder, /<release-generated-at-iso>/);
 
+  const partialReleaseMetadata = spawnSync("pnpm", [
+    "tsx",
+    script,
+    "--gate=PROD-CRON",
+    "--release-branch=legacy-parity-runbook",
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.equal(partialReleaseMetadata.status, 2);
+  assert.match(partialReleaseMetadata.stderr, /must be provided together/);
+
+  const invalidAcceptanceDate = spawnSync("pnpm", [
+    "tsx",
+    script,
+    "--gate=PROD-CRON",
+    "--release-branch=legacy-parity-runbook",
+    "--release-commit=0252d1e",
+    "--acceptance-date=06-12-2026",
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.equal(invalidAcceptanceDate.status, 2);
+  assert.match(invalidAcceptanceDate.stderr, /--acceptance-date must use YYYY-MM-DD format/);
+
   const providers = execFileSync("pnpm", [
     "tsx",
     script,

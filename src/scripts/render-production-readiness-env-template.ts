@@ -35,6 +35,7 @@ const releaseBranch = optionValue("--release-branch");
 const releaseCommit = optionValue("--release-commit");
 const acceptanceDate = optionValue("--acceptance-date");
 const generatedAt = optionValue("--generated-at");
+validateReleaseMetadata(releaseBranch, releaseCommit, acceptanceDate);
 const includeWorkOrders = process.argv.includes("--include-work-orders");
 const payload = loadRequirements(gate);
 const closeoutWorkOrders = includeWorkOrders ? loadCloseoutWorkOrders(gate) : new Map<string, NonNullable<NonNullable<CloseoutPlan["gates"]>[number]["evidenceWorkOrder"]>>();
@@ -220,4 +221,20 @@ function optionValue(name: string) {
 
 function optionalArg(name: string, value: string | null | undefined) {
   return value ? [`${name}=${value}`] : [];
+}
+
+function validateReleaseMetadata(
+  branch: string | null,
+  commit: string | null,
+  date: string | null
+) {
+  if (!branch && !commit && !date) return;
+  if (!branch || !commit || !date) {
+    console.error("--release-branch, --release-commit, and --acceptance-date must be provided together");
+    process.exit(2);
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    console.error("--acceptance-date must use YYYY-MM-DD format");
+    process.exit(2);
+  }
 }
