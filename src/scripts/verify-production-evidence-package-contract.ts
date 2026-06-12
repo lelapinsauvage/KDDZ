@@ -814,6 +814,7 @@ function zeroPartialGateMapMarkdown() {
 }
 
 function preflightManifest(partialReportPath: string, checklistReportPath: string, generatedAt: string) {
+  const blockingGateSummary = buildBlockingGateSummary(partialReportPath, generatedAt);
   return `${JSON.stringify(
     {
       status: "production preflight artifacts verified",
@@ -833,19 +834,50 @@ function preflightManifest(partialReportPath: string, checklistReportPath: strin
           sha256: sha256File(checklistReportPath),
         },
       },
-      blockingGateSummary: {
-        gates: 4,
-        ready: 8,
-        needsEvidence: 4,
-        blockingPartialRows: 17,
-        missingEvidenceItems: 32,
-        gatesToClose: ["PROD-CRON", "PROD-PROVIDERS", "PROD-NATIVE", "PROD-NATURE"],
-      },
+      blockingGateSummary,
       redacted: true,
     },
     null,
     2
   )}\n`;
+}
+
+function buildBlockingGateSummary(partialReportPath: string, generatedAt: string) {
+  const partialReport = readJson<{
+    generatedFrom?: { matrix?: string; gateMap?: string };
+  }>(partialReportPath);
+  const status = JSON.parse(
+    execFileSync("pnpm", [
+      "tsx",
+      "src/scripts/report-production-gate-status.ts",
+      "--json",
+      "--blocking-only",
+      `--generated-at=${generatedAt}`,
+      ...optionalArg("--parity-matrix", partialReport.generatedFrom?.matrix),
+      ...optionalArg("--partial-gate-map", partialReport.generatedFrom?.gateMap),
+    ], {
+      cwd: process.cwd(),
+      encoding: "utf8",
+    })
+  ) as {
+    summary?: {
+      gates?: number;
+      ready?: number;
+      needsEvidence?: number;
+      blockingPartialRows?: number;
+      missingEvidenceItems?: number;
+    };
+    gates?: Array<{ gate?: string }>;
+  };
+
+  return {
+    gates: status.summary?.gates ?? 0,
+    ready: status.summary?.ready ?? 0,
+    needsEvidence: status.summary?.needsEvidence ?? 0,
+    blockingPartialRows: status.summary?.blockingPartialRows ?? 0,
+    missingEvidenceItems: status.summary?.missingEvidenceItems ?? 0,
+    gatesToClose: (status.gates ?? []).map((gate) => gate.gate).filter((gate): gate is string => Boolean(gate)),
+  };
 }
 
 function partialReportSummary(path: string) {
