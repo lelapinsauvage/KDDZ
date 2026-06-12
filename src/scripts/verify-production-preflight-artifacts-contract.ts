@@ -58,7 +58,10 @@ type BlockingGateSummary = {
   ready?: number;
   needsEvidence?: number;
   blockingPartialRows?: number;
+  blockingGateLinks?: number;
   missingEvidenceItems?: number;
+  closeoutMode?: string;
+  canCloseLocally?: boolean;
   gatesToClose?: Array<{
     gate?: string;
     blockingPartialRows?: number;
@@ -89,7 +92,10 @@ type GateStatusReport = {
     ready?: number;
     needsEvidence?: number;
     blockingPartialRows?: number;
+    blockingGateLinks?: number;
     missingEvidenceItems?: number;
+    closeoutMode?: string;
+    canCloseLocally?: boolean;
   };
   gates?: Array<{ gate?: string; missingEvidence?: unknown[]; blockingPartialRows?: unknown[]; nextActions?: string[] }>;
 };
@@ -197,6 +203,9 @@ try {
   assert.equal(blocking.summary?.ready, 0);
   assert.equal(blocking.summary?.needsEvidence, Object.keys(expectedGateCounts).length);
   assert.equal(blocking.summary?.blockingPartialRows, partial.summary?.partialRows);
+  assert.equal(blocking.summary?.blockingGateLinks, sumValues(expectedGateCounts));
+  assert.equal(blocking.summary?.closeoutMode, "external-production-evidence");
+  assert.equal(blocking.summary?.canCloseLocally, false);
   assert.ok((blocking.summary?.missingEvidenceItems ?? 0) > 0);
   assert.ok(blocking.gates?.every((gate) => (gate.blockingPartialRows?.length ?? 0) > 0));
   assert.deepEqual(manifest.blockingGateSummary, blockingGateSummary(blocking));
@@ -312,6 +321,23 @@ try {
   assert.equal(blockingSummaryMismatch.status, 1);
   assert.match(blockingSummaryMismatch.stderr, /blockingPartialRows: 999/);
 
+  const closeoutModeMismatchManifest = JSON.parse(JSON.stringify(manifest)) as PreflightManifest;
+  assert.ok(closeoutModeMismatchManifest.blockingGateSummary);
+  closeoutModeMismatchManifest.blockingGateSummary.closeoutMode = "ready-for-final-closeout";
+  closeoutModeMismatchManifest.blockingGateSummary.canCloseLocally = true;
+  const closeoutModeMismatchPath = join(tmp, "closeout-mode-mismatch-preflight-artifacts.json");
+  writeFileSync(closeoutModeMismatchPath, `${JSON.stringify(closeoutModeMismatchManifest, null, 2)}\n`, "utf8");
+  const closeoutModeMismatch = spawnSync("pnpm", [
+    "tsx",
+    "src/scripts/verify-production-preflight-artifacts-manifest.ts",
+    `--manifest=${closeoutModeMismatchPath}`,
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.equal(closeoutModeMismatch.status, 1);
+  assert.match(closeoutModeMismatch.stderr, /ready-for-final-closeout/);
+
   const generatedAtMismatchManifest = JSON.parse(JSON.stringify(manifest)) as PreflightManifest;
   const generatedAtMismatchStatusPath = generatedAtMismatchManifest.artifacts?.blockingGateStatus?.path;
   assert.ok(generatedAtMismatchStatusPath);
@@ -421,7 +447,10 @@ function blockingGateSummary(status: GateStatusReport): BlockingGateSummary {
     ready: status.summary?.ready ?? 0,
     needsEvidence: status.summary?.needsEvidence ?? 0,
     blockingPartialRows: status.summary?.blockingPartialRows ?? 0,
+    blockingGateLinks: status.summary?.blockingGateLinks ?? 0,
     missingEvidenceItems: status.summary?.missingEvidenceItems ?? 0,
+    closeoutMode: status.summary?.closeoutMode ?? "unknown",
+    canCloseLocally: status.summary?.canCloseLocally === true,
     gatesToClose: (status.gates ?? []).map((gate) => ({
       gate: gate.gate ?? "unknown",
       blockingPartialRows: gate.blockingPartialRows?.length ?? 0,
@@ -429,6 +458,10 @@ function blockingGateSummary(status: GateStatusReport): BlockingGateSummary {
       nextActions: gate.nextActions ?? [],
     })),
   };
+}
+
+function sumValues(counts: Record<string, number>) {
+  return Object.values(counts).reduce((total, count) => total + count, 0);
 }
 
 function assertNoSensitiveOutput(output: string) {

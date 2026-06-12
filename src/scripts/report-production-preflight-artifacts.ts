@@ -36,7 +36,10 @@ type BlockingGateSummary = {
   ready: number;
   needsEvidence: number;
   blockingPartialRows: number;
+  blockingGateLinks: number;
   missingEvidenceItems: number;
+  closeoutMode: string;
+  canCloseLocally: boolean;
   gatesToClose: Array<{
     gate: string;
     blockingPartialRows: number;
@@ -61,7 +64,10 @@ type BlockingGateStatus = {
     ready?: number;
     needsEvidence?: number;
     blockingPartialRows?: number;
+    blockingGateLinks?: number;
     missingEvidenceItems?: number;
+    closeoutMode?: string;
+    canCloseLocally?: boolean;
   };
   gates?: Array<{
     gate?: string;
@@ -185,7 +191,10 @@ function summarizeBlockingGateStatus(path: string): BlockingGateSummary {
     ready: status.summary?.ready ?? 0,
     needsEvidence: status.summary?.needsEvidence ?? 0,
     blockingPartialRows: status.summary?.blockingPartialRows ?? 0,
+    blockingGateLinks: status.summary?.blockingGateLinks ?? 0,
     missingEvidenceItems: status.summary?.missingEvidenceItems ?? 0,
+    closeoutMode: status.summary?.closeoutMode ?? "unknown",
+    canCloseLocally: status.summary?.canCloseLocally === true,
     gatesToClose: (status.gates ?? []).map((gate) => ({
       gate: gate.gate ?? "unknown",
       blockingPartialRows: gate.blockingPartialRows?.length ?? 0,

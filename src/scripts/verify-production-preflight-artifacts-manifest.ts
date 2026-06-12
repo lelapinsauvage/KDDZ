@@ -57,7 +57,10 @@ type BlockingGateSummary = {
   ready?: number;
   needsEvidence?: number;
   blockingPartialRows?: number;
+  blockingGateLinks?: number;
   missingEvidenceItems?: number;
+  closeoutMode?: string;
+  canCloseLocally?: boolean;
   gatesToClose?: Array<{
     gate?: string;
     blockingPartialRows?: number;
@@ -89,7 +92,10 @@ type BlockingGateStatus = {
     ready?: number;
     needsEvidence?: number;
     blockingPartialRows?: number;
+    blockingGateLinks?: number;
     missingEvidenceItems?: number;
+    closeoutMode?: string;
+    canCloseLocally?: boolean;
   };
   gates?: Array<{
     gate?: string;
@@ -183,6 +189,9 @@ assert.deepEqual(gateCounts(blockingStatus.gates ?? []), expectedGateCounts);
 assert.deepEqual(blockingStatus.gates?.map((gate) => gate.gate), Object.keys(expectedGateCounts));
 assert.equal(blockingStatus.summary?.gates, Object.keys(expectedGateCounts).length);
 assert.equal(blockingStatus.summary?.blockingPartialRows, partialReport.summary?.partialRows);
+assert.equal(blockingStatus.summary?.blockingGateLinks, sumValues(expectedGateCounts));
+assert.equal(blockingStatus.summary?.closeoutMode, manifest.blockingGateSummary?.closeoutMode);
+assert.equal(blockingStatus.summary?.canCloseLocally, manifest.blockingGateSummary?.canCloseLocally);
 assert.ok(blockingStatus.gates?.every((gate) => (gate.blockingPartialRows?.length ?? 0) > 0));
 assert.deepEqual(manifest.blockingGateSummary, blockingGateSummary(blockingStatus));
 
@@ -228,7 +237,10 @@ function blockingGateSummary(status: BlockingGateStatus): BlockingGateSummary {
     ready: status.summary?.ready ?? 0,
     needsEvidence: status.summary?.needsEvidence ?? 0,
     blockingPartialRows: status.summary?.blockingPartialRows ?? 0,
+    blockingGateLinks: status.summary?.blockingGateLinks ?? 0,
     missingEvidenceItems: status.summary?.missingEvidenceItems ?? 0,
+    closeoutMode: status.summary?.closeoutMode ?? "unknown",
+    canCloseLocally: status.summary?.canCloseLocally === true,
     gatesToClose: (status.gates ?? []).map((gate) => ({
       gate: gate.gate ?? "unknown",
       blockingPartialRows: gate.blockingPartialRows?.length ?? 0,
@@ -236,6 +248,10 @@ function blockingGateSummary(status: BlockingGateStatus): BlockingGateSummary {
       nextActions: gate.nextActions ?? [],
     })),
   };
+}
+
+function sumValues(counts: Record<string, number>) {
+  return Object.values(counts).reduce((total, count) => total + count, 0);
 }
 
 function assertNoSensitiveOutput(output: string) {
