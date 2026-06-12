@@ -76,6 +76,7 @@ type PackageManifest = {
   generatedAt?: string;
   artifacts: Record<string, ArtifactManifest>;
   preflight: {
+    releaseMetadata?: ReleaseMetadata;
     blockingGateSummary?: BlockingGateSummary;
     closeoutPlan?: ArtifactManifest;
     closeoutPlanWorkOrders?: CloseoutPlanWorkOrderSummary[];
@@ -120,6 +121,7 @@ type ArtifactManifest = {
 };
 
 type PreflightManifest = {
+  releaseMetadata?: ReleaseMetadata;
   artifacts?: {
     closeoutPlan?: {
       path?: string;
@@ -135,6 +137,12 @@ type PreflightManifest = {
     }>;
   };
   blockingGateSummary?: BlockingGateSummary;
+};
+
+type ReleaseMetadata = {
+  branch?: string;
+  commit?: string;
+  acceptanceDate?: string;
 };
 
 type CloseoutPlan = {
@@ -345,6 +353,11 @@ function verifySelfTestContract() {
     });
     assert.deepEqual(packageManifest.closeout.partialReportSummary, expectedPartialReportSummary);
     assert.deepEqual(packageManifest.closeout.evidenceChecklistSummary, expectedEvidenceChecklistSummary);
+    assert.deepEqual(packageManifest.preflight.releaseMetadata, {
+      branch: "legacy-parity-runbook",
+      commit: "0404c6a",
+      acceptanceDate: "2026-06-10",
+    });
     assert.deepEqual(packageManifest.preflight.blockingGateSummary, readPreflightBlockingGateSummary(preflightManifestPath));
     assert.deepEqual(packageManifest.preflight.closeoutPlan, artifact(closeoutPlanPath));
     assert.deepEqual(packageManifest.preflight.closeoutPlanWorkOrders, closeoutPlanWorkOrderSummary(closeoutPlanPath));
@@ -578,6 +591,11 @@ function verifySelfTestContract() {
     assert.equal(zeroPackageManifest.closeout.evidenceChecklistSummary?.blockingPartialRows, 0);
     assert.deepEqual(zeroPackageManifest.closeout.parityTracker, parityTrackerSummary(zeroParityMatrixPath));
     assert.equal(zeroPackageManifest.closeout.requireZeroPartials, true);
+    assert.deepEqual(zeroPackageManifest.preflight.releaseMetadata, {
+      branch: "legacy-parity-runbook",
+      commit: "0404c6a",
+      acceptanceDate: "2026-06-10",
+    });
     assert.equal(zeroPackageManifest.preflight.blockingGateSummary?.blockingPartialRows, 0);
     assert.equal(zeroPackageManifest.preflight.blockingGateSummary?.blockingGateLinks, 0);
     assert.equal(zeroPackageManifest.preflight.blockingGateSummary?.closeoutMode, "ready-for-final-closeout");
@@ -687,6 +705,26 @@ function verifySelfTestContract() {
     assert.equal(preflightTemplateMismatch.status, 1);
     assert.match(preflightTemplateMismatch.stderr, /Expected values to be strictly deep-equal/);
     assertNoSensitiveOutput(preflightTemplateMismatch.stdout + preflightTemplateMismatch.stderr);
+
+    const preflightReleaseMetadataMismatchPath = join(tmp, "preflight-release-metadata-mismatch.json");
+    const preflightReleaseMetadataMismatch = readJson<PreflightManifest>(preflightManifestPath);
+    preflightReleaseMetadataMismatch.releaseMetadata = {
+      branch: "legacy-parity-runbook",
+      commit: "deadbeef",
+      acceptanceDate: "2026-06-10",
+    };
+    writeFileSync(preflightReleaseMetadataMismatchPath, `${JSON.stringify(preflightReleaseMetadataMismatch, null, 2)}\n`, "utf8");
+    const preflightReleaseMetadataMismatchResult = runVerifier([
+      `--summary-report=${closeoutSummaryPath}`,
+      `--readiness-report=${readinessReportPath}`,
+      `--evidence-record=${evidenceRecordPath}`,
+      `--partial-report=${partialReportPath}`,
+      `--checklist-report=${checklistReportPath}`,
+      `--preflight-manifest=${preflightReleaseMetadataMismatchPath}`,
+    ], false);
+    assert.equal(preflightReleaseMetadataMismatchResult.status, 1);
+    assert.match(preflightReleaseMetadataMismatchResult.stderr, /preflight release commit drifted from closeout summary/);
+    assertNoSensitiveOutput(preflightReleaseMetadataMismatchResult.stdout + preflightReleaseMetadataMismatchResult.stderr);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
@@ -715,6 +753,7 @@ function buildManifest(params: {
       preflightManifest: artifact(params.preflightManifestPath),
     },
     preflight: {
+      ...optionalObject("releaseMetadata", preflightReleaseMetadata(preflight, params.summary)),
       blockingGateSummary: preflight.blockingGateSummary,
       closeoutPlan: preflightCloseoutPlanArtifact(preflight),
       closeoutPlanWorkOrders: preflightCloseoutPlanWorkOrders(preflight),
@@ -732,6 +771,23 @@ function buildManifest(params: {
     },
     redacted: true,
   };
+}
+
+function preflightReleaseMetadata(preflight: PreflightManifest, summary: CloseoutSummary) {
+  const metadata = preflight.releaseMetadata;
+  if (!metadata) return undefined;
+  assert.equal(metadata.branch, summary.branch, "preflight release branch drifted from closeout summary");
+  assert.equal(metadata.commit, summary.commit, "preflight release commit drifted from closeout summary");
+  assert.match(metadata.acceptanceDate ?? "", /^\d{4}-\d{2}-\d{2}$/, "preflight release acceptanceDate must use YYYY-MM-DD");
+  return {
+    branch: metadata.branch,
+    commit: metadata.commit,
+    acceptanceDate: metadata.acceptanceDate,
+  };
+}
+
+function optionalObject<T>(key: string, value: T | undefined) {
+  return value === undefined ? {} : { [key]: value };
 }
 
 function readPreflightBlockingGateSummary(path: string) {
@@ -1090,6 +1146,11 @@ function preflightManifest(partialReportPath: string, checklistReportPath: strin
       status: "production preflight artifacts verified",
       schemaVersion: 1,
       generatedAt,
+      releaseMetadata: {
+        branch: "legacy-parity-runbook",
+        commit: "0404c6a",
+        acceptanceDate: "2026-06-10",
+      },
       generatedFrom: {
         matrix: "docs/page-parity-matrix.json",
         gateMap: "docs/partial-production-gate-map.md",
