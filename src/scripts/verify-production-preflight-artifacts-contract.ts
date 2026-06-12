@@ -315,12 +315,19 @@ try {
   assert.ok(releaseBoundCloseoutPlan.finalCloseoutCommands?.some((command) =>
     command.includes("--branch=legacy-parity-runbook --commit=c3cdaab --acceptance-date=2026-06-12")
   ));
+  assert.ok(releaseBoundCloseoutPlan.finalCloseoutCommands?.some((command) =>
+    command.includes("report-production-preflight-artifacts.ts") &&
+    command.includes("--release-branch=legacy-parity-runbook --release-commit=c3cdaab --acceptance-date=2026-06-12")
+  ));
   assert.ok(releaseBoundCloseoutPlan.finalCloseoutCommands?.every((command) => !command.includes("<release-commit-sha>")));
   assert.ok(releaseBoundCloseoutPlan.finalCloseoutCommands?.every((command) => !command.includes("<YYYY-MM-DD>")));
+  assert.ok(releaseBoundCloseoutPlan.finalCloseoutCommands?.every((command) => !command.includes("<release-generated-at-iso>")));
   const releaseBoundCronTemplate = readFileSync(releaseBoundManifest.artifacts?.readinessEnvTemplates?.cron?.path ?? "", "utf8");
   assert.match(releaseBoundCronTemplate, /Release branch: legacy-parity-runbook/);
   assert.match(releaseBoundCronTemplate, /Release commit: c3cdaab/);
   assert.match(releaseBoundCronTemplate, /Acceptance date: 2026-06-12/);
+  assert.match(releaseBoundCronTemplate, new RegExp(`--generated-at=${generatedAt}`));
+  assert.doesNotMatch(releaseBoundCronTemplate, /<release-generated-at-iso>/);
   execFileSync("pnpm", [
     "tsx",
     "src/scripts/verify-production-preflight-artifacts-manifest.ts",

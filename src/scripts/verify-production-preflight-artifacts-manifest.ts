@@ -326,6 +326,13 @@ function assertReleaseMetadataAppliedToCloseoutPlan(plan: CloseoutPlan, metadata
   if (!metadata) return;
   const expectedRef = `--branch=${metadata.branch} --commit=${metadata.commit}`;
   assert.ok(
+    plan.finalCloseoutCommands?.some((command) =>
+      command.includes("report-production-preflight-artifacts.ts") &&
+      command.includes(`--release-branch=${metadata.branch} --release-commit=${metadata.commit} --acceptance-date=${metadata.acceptanceDate}`)
+    ),
+    "preflight closeout plan is missing release-bound preflight regeneration command"
+  );
+  assert.ok(
     plan.finalCloseoutCommands?.some((command) => command.includes(`${expectedRef} --acceptance-date=${metadata.acceptanceDate}`)),
     "preflight closeout plan is missing release-bound evidence record command"
   );
@@ -335,6 +342,7 @@ function assertReleaseMetadataAppliedToCloseoutPlan(plan: CloseoutPlan, metadata
   );
   assert.ok(plan.finalCloseoutCommands?.every((command) => !command.includes("<release-commit-sha>")));
   assert.ok(plan.finalCloseoutCommands?.every((command) => !command.includes("<YYYY-MM-DD>")));
+  assert.ok(plan.finalCloseoutCommands?.every((command) => !command.includes("<release-generated-at-iso>")));
 }
 
 function assertReleaseMetadataAppliedToReadinessEnvTemplates(
@@ -347,6 +355,7 @@ function assertReleaseMetadataAppliedToReadinessEnvTemplates(
     assert.match(text, new RegExp(`# Release branch: ${escapeRegExp(metadata.branch ?? "")}`), `${key} readiness env template release branch drifted`);
     assert.match(text, new RegExp(`# Release commit: ${escapeRegExp(metadata.commit ?? "")}`), `${key} readiness env template release commit drifted`);
     assert.match(text, new RegExp(`# Acceptance date: ${escapeRegExp(metadata.acceptanceDate ?? "")}`), `${key} readiness env template acceptance date drifted`);
+    assert.doesNotMatch(text, /<release-generated-at-iso>/, `${key} readiness env template has an unbound generatedAt placeholder`);
   }
 }
 

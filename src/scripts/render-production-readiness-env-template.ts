@@ -34,6 +34,7 @@ const gate = optionValue("--gate");
 const releaseBranch = optionValue("--release-branch");
 const releaseCommit = optionValue("--release-commit");
 const acceptanceDate = optionValue("--acceptance-date");
+const generatedAt = optionValue("--generated-at");
 const includeWorkOrders = process.argv.includes("--include-work-orders");
 const payload = loadRequirements(gate);
 const closeoutWorkOrders = includeWorkOrders ? loadCloseoutWorkOrders(gate) : new Map<string, NonNullable<NonNullable<CloseoutPlan["gates"]>[number]["evidenceWorkOrder"]>>();
@@ -77,6 +78,7 @@ function loadCloseoutWorkOrders(gate: string | null) {
     "tsx",
     "src/scripts/report-production-closeout-plan.ts",
     "--json",
+    ...optionalArg("--generated-at", generatedAt),
     ...optionalArg("--release-branch", releaseBranch),
     ...optionalArg("--release-commit", releaseCommit),
     ...optionalArg("--acceptance-date", acceptanceDate),
@@ -153,7 +155,7 @@ function renderTemplate(
   }
 
   lines.push("# After filling the file, archive only redacted command output:");
-  lines.push("# pnpm tsx src/scripts/audit-production-readiness.ts --env-file=/secure/private-readiness.env --json --out=/tmp/kiddzonl-production-readiness.json --generated-at=<release-generated-at-iso>");
+  lines.push(`# pnpm tsx src/scripts/audit-production-readiness.ts --env-file=/secure/private-readiness.env --json --out=/tmp/kiddzonl-production-readiness.json --generated-at=${generatedAt ?? "<release-generated-at-iso>"}`);
   lines.push("");
 
   return `${lines.join("\n")}\n`;

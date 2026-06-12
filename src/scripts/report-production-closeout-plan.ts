@@ -107,8 +107,8 @@ const gates = (gateStatus.gates ?? []).map((gate) => {
     return row.row;
   });
   const focusedArtifactCommands = [
-    `pnpm tsx src/scripts/report-production-partials.ts --json --gate=${gate.gate} --out=/tmp/kiddzonl-production-${artifact.slug}-partials.json --generated-at=<release-generated-at-iso>`,
-    `pnpm tsx src/scripts/report-production-evidence-checklist.ts --json --gate=${gate.gate} --out=/tmp/kiddzonl-production-${artifact.slug}-checklist.json --generated-at=<release-generated-at-iso>`,
+    `pnpm tsx src/scripts/report-production-partials.ts --json --gate=${gate.gate} --out=/tmp/kiddzonl-production-${artifact.slug}-partials.json --generated-at=${generatedAt}`,
+    `pnpm tsx src/scripts/report-production-evidence-checklist.ts --json --gate=${gate.gate} --out=/tmp/kiddzonl-production-${artifact.slug}-checklist.json --generated-at=${generatedAt}`,
     `pnpm tsx src/scripts/verify-production-artifact-consistency-contract.ts --partial-report=/tmp/kiddzonl-production-${artifact.slug}-partials.json --checklist-report=/tmp/kiddzonl-production-${artifact.slug}-checklist.json`,
   ];
   return {
@@ -127,9 +127,9 @@ const gates = (gateStatus.gates ?? []).map((gate) => {
       acceptanceCriteria: gate.requiredEvidenceFields ?? [],
       focusedCoverageRows: blockingRows,
       proofCommands: [
-        `pnpm tsx src/scripts/audit-production-readiness.ts --env-file=/secure/private-readiness.env --gate=${gate.gate} --generated-at=<release-generated-at-iso>`,
+        `pnpm tsx src/scripts/audit-production-readiness.ts --env-file=/secure/private-readiness.env --gate=${gate.gate} --generated-at=${generatedAt}`,
         ...focusedArtifactCommands,
-        `pnpm tsx src/scripts/report-production-gate-status.ts --json --env-file=/secure/private-readiness.env --gate=${gate.gate} --generated-at=<release-generated-at-iso> --require-ready`,
+        `pnpm tsx src/scripts/report-production-gate-status.ts --json --env-file=/secure/private-readiness.env --gate=${gate.gate} --generated-at=${generatedAt} --require-ready`,
       ],
     },
     nextActions: gate.nextActions ?? [],
@@ -168,6 +168,7 @@ const plan: CloseoutPlan = {
     releaseBranch,
     releaseCommit,
     acceptanceDate,
+    generatedAt,
   }),
 };
 
@@ -267,17 +268,35 @@ function finalCloseoutCommands(params: {
   releaseBranch: string;
   releaseCommit: string;
   acceptanceDate: string;
+  generatedAt: string;
 }) {
+  const releaseArgs = isReleaseBound(params)
+    ? ` --release-branch=${params.releaseBranch} --release-commit=${params.releaseCommit} --acceptance-date=${params.acceptanceDate}`
+    : "";
   return [
-    "pnpm tsx src/scripts/report-production-preflight-artifacts.ts --out-dir=/tmp/kiddzonl-production-preflight-artifacts --generated-at=<release-generated-at-iso>",
+    `pnpm tsx src/scripts/report-production-preflight-artifacts.ts --out-dir=/tmp/kiddzonl-production-preflight-artifacts --generated-at=${params.generatedAt}${releaseArgs}`,
     "pnpm tsx src/scripts/verify-production-preflight-artifacts-manifest.ts --manifest=/tmp/kiddzonl-production-preflight-artifacts/kiddzonl-production-preflight-artifacts.json",
     `pnpm tsx src/scripts/render-production-acceptance-evidence-record.ts --out=/secure/production-acceptance-evidence.md --readiness-report=/tmp/kiddzonl-production-readiness.json --summary-report=/tmp/kiddzonl-production-closeout-summary.json --partial-report=/tmp/kiddzonl-production-partials.json --checklist-report=/tmp/kiddzonl-production-evidence-checklist.json --preflight-manifest=/tmp/kiddzonl-production-preflight-artifacts/kiddzonl-production-preflight-artifacts.json --branch=${params.releaseBranch} --commit=${params.releaseCommit} --acceptance-date=${params.acceptanceDate}`,
-    `pnpm run closeout:production -- --env-file=/secure/private-readiness.env --evidence-record=/secure/production-acceptance-evidence.md --out=/tmp/kiddzonl-production-readiness.json --summary-out=/tmp/kiddzonl-production-closeout-summary.json --partials-out=/tmp/kiddzonl-production-partials.json --checklist-out=/tmp/kiddzonl-production-evidence-checklist.json --preflight-manifest=/tmp/kiddzonl-production-preflight-artifacts/kiddzonl-production-preflight-artifacts.json --branch=${params.releaseBranch} --commit=${params.releaseCommit} --generated-at=<release-generated-at-iso> --require-zero-partials`,
-    "pnpm tsx src/scripts/report-production-gate-status.ts --json --env-file=/secure/private-readiness.env --out=/tmp/kiddzonl-production-gate-status.json --generated-at=<release-generated-at-iso> --require-ready --require-no-blockers",
+    `pnpm run closeout:production -- --env-file=/secure/private-readiness.env --evidence-record=/secure/production-acceptance-evidence.md --out=/tmp/kiddzonl-production-readiness.json --summary-out=/tmp/kiddzonl-production-closeout-summary.json --partials-out=/tmp/kiddzonl-production-partials.json --checklist-out=/tmp/kiddzonl-production-evidence-checklist.json --preflight-manifest=/tmp/kiddzonl-production-preflight-artifacts/kiddzonl-production-preflight-artifacts.json --branch=${params.releaseBranch} --commit=${params.releaseCommit} --generated-at=${params.generatedAt} --require-zero-partials`,
+    `pnpm tsx src/scripts/report-production-gate-status.ts --json --env-file=/secure/private-readiness.env --out=/tmp/kiddzonl-production-gate-status.json --generated-at=${params.generatedAt} --require-ready --require-no-blockers`,
     `pnpm tsx src/scripts/verify-production-closeout-summary-contract.ts /tmp/kiddzonl-production-closeout-summary.json --readiness-report=/tmp/kiddzonl-production-readiness.json --evidence-record=/secure/production-acceptance-evidence.md --partial-report=/tmp/kiddzonl-production-partials.json --checklist-report=/tmp/kiddzonl-production-evidence-checklist.json --preflight-manifest=/tmp/kiddzonl-production-preflight-artifacts/kiddzonl-production-preflight-artifacts.json --branch=${params.releaseBranch} --commit=${params.releaseCommit} --require-zero-partials`,
     `pnpm tsx src/scripts/verify-production-evidence-package-contract.ts --summary-report=/tmp/kiddzonl-production-closeout-summary.json --readiness-report=/tmp/kiddzonl-production-readiness.json --evidence-record=/secure/production-acceptance-evidence.md --partial-report=/tmp/kiddzonl-production-partials.json --checklist-report=/tmp/kiddzonl-production-evidence-checklist.json --preflight-manifest=/tmp/kiddzonl-production-preflight-artifacts/kiddzonl-production-preflight-artifacts.json --manifest-out=/tmp/kiddzonl-production-evidence-package.json --branch=${params.releaseBranch} --commit=${params.releaseCommit} --require-zero-partials`,
     `pnpm tsx src/scripts/verify-production-evidence-package-contract.ts --summary-report=/tmp/kiddzonl-production-closeout-summary.json --readiness-report=/tmp/kiddzonl-production-readiness.json --evidence-record=/secure/production-acceptance-evidence.md --partial-report=/tmp/kiddzonl-production-partials.json --checklist-report=/tmp/kiddzonl-production-evidence-checklist.json --preflight-manifest=/tmp/kiddzonl-production-preflight-artifacts/kiddzonl-production-preflight-artifacts.json --manifest=/tmp/kiddzonl-production-evidence-package.json --branch=${params.releaseBranch} --commit=${params.releaseCommit} --require-zero-partials`,
   ];
+}
+
+function isReleaseBound(params: {
+  releaseBranch: string;
+  releaseCommit: string;
+  acceptanceDate: string;
+}) {
+  return (
+    params.releaseBranch.trim() !== "" &&
+    !params.releaseBranch.includes("<") &&
+    params.releaseCommit.trim() !== "" &&
+    !params.releaseCommit.includes("<") &&
+    /^\d{4}-\d{2}-\d{2}$/.test(params.acceptanceDate)
+  );
 }
 
 function ensureParentDir(path: string) {

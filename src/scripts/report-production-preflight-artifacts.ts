@@ -226,6 +226,7 @@ function writeReadinessEnvTemplates(outputDir: string) {
     run("src/scripts/render-production-readiness-env-template.ts", [
       "--include-work-orders",
       `--out=${template.path}`,
+      `--generated-at=${generatedAt}`,
       ...optionalArg("--gate", template.gate),
       ...optionalArg("--release-branch", releaseMetadata?.branch),
       ...optionalArg("--release-commit", releaseMetadata?.commit),

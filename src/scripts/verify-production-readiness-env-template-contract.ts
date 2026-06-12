@@ -6,6 +6,7 @@ import { join } from "node:path";
 
 const script = "src/scripts/render-production-readiness-env-template.ts";
 const tmp = mkdtempSync(join(tmpdir(), "kiddzonl-readiness-env-template-"));
+const generatedAt = "2026-06-12T00:00:00.000Z";
 
 try {
   const fullPath = join(tmp, "private-readiness.env");
@@ -83,6 +84,7 @@ try {
     "--release-branch=legacy-parity-runbook",
     "--release-commit=0252d1e",
     "--acceptance-date=2026-06-12",
+    `--generated-at=${generatedAt}`,
   ], {
     cwd: process.cwd(),
     encoding: "utf8",
@@ -90,6 +92,8 @@ try {
   assert.match(cronWithBoundWorkOrder, /Release branch: legacy-parity-runbook/);
   assert.match(cronWithBoundWorkOrder, /Release commit: 0252d1e/);
   assert.match(cronWithBoundWorkOrder, /Acceptance date: 2026-06-12/);
+  assert.match(cronWithBoundWorkOrder, new RegExp(`--generated-at=${generatedAt}`));
+  assert.doesNotMatch(cronWithBoundWorkOrder, /<release-generated-at-iso>/);
 
   const providers = execFileSync("pnpm", [
     "tsx",

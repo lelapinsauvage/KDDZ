@@ -85,6 +85,9 @@ for (const gate of ["PROD-CRON", "PROD-PROVIDERS", "PROD-NATIVE", "PROD-NATURE"]
   assert.deepEqual(entry.evidenceWorkOrder?.focusedCoverageRows, entry.blockingRows);
   assert.ok(entry.evidenceWorkOrder?.proofCommands?.some((command) => command.includes(`audit-production-readiness.ts --env-file=/secure/private-readiness.env --gate=${gate}`)));
   assert.ok(entry.evidenceWorkOrder?.proofCommands?.some((command) => command.includes(`report-production-gate-status.ts --json --env-file=/secure/private-readiness.env --gate=${gate}`)));
+  assert.ok(entry.evidenceWorkOrder?.proofCommands?.every((command) => !command.includes("<release-generated-at-iso>")));
+  assert.ok(entry.evidenceWorkOrder?.proofCommands?.some((command) => command.includes(`--generated-at=${generatedAt}`)));
+  assert.ok(entry.focusedArtifactCommands?.every((command) => !command.includes("<release-generated-at-iso>")));
 }
 
 assert.deepEqual(gates.get("PROD-CRON")?.blockingRows, ["P01", "P02", "P03", "P04", "P05", "P06", "P07", "P10", "P12"]);
@@ -112,6 +115,8 @@ assert.ok(plan.finalCloseoutCommands?.some((command) => command.includes("--mani
 assert.ok(plan.finalCloseoutCommands?.some((command) => command.includes("--manifest=/tmp/kiddzonl-production-evidence-package.json")));
 assert.ok(plan.finalCloseoutCommands?.some((command) => command.includes("--require-ready --require-no-blockers")));
 assert.ok(plan.finalCloseoutCommands?.some((command) => command.includes("--branch=legacy-parity-runbook --commit=<release-commit-sha>")));
+assert.ok(plan.finalCloseoutCommands?.every((command) => !command.includes("<release-generated-at-iso>")));
+assert.ok(plan.finalCloseoutCommands?.some((command) => command.includes(`--generated-at=${generatedAt}`)));
 assertNoSensitiveOutput(output);
 
 const boundOutput = execFileSync("pnpm", [
@@ -130,8 +135,13 @@ const boundPlan = JSON.parse(boundOutput) as CloseoutPlan;
 assert.ok(boundPlan.finalCloseoutCommands?.some((command) =>
   command.includes("--branch=legacy-parity-runbook --commit=0d26d0c --acceptance-date=2026-06-12")
 ));
+assert.ok(boundPlan.finalCloseoutCommands?.some((command) =>
+  command.includes("report-production-preflight-artifacts.ts") &&
+  command.includes("--release-branch=legacy-parity-runbook --release-commit=0d26d0c --acceptance-date=2026-06-12")
+));
 assert.ok(boundPlan.finalCloseoutCommands?.every((command) => !command.includes("<release-commit-sha>")));
 assert.ok(boundPlan.finalCloseoutCommands?.every((command) => !command.includes("<YYYY-MM-DD>")));
+assert.ok(boundPlan.finalCloseoutCommands?.every((command) => !command.includes("<release-generated-at-iso>")));
 assertNoSensitiveOutput(boundOutput);
 
 const markdown = execFileSync("pnpm", [
