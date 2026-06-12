@@ -64,6 +64,7 @@ type BlockingGateSummary = {
   gatesToClose?: Array<{
     gate?: string;
     blockingPartialRows?: number;
+    blockingGateLinks?: number;
     missingEvidenceItems?: number;
     nextActions?: string[];
   }>;
@@ -100,6 +101,7 @@ type BlockingGateStatus = {
   gates?: Array<{
     gate?: string;
     missingEvidence?: unknown[];
+    blockingGateLinks?: number;
     blockingPartialRows?: unknown[];
     nextActions?: string[];
   }>;
@@ -186,6 +188,7 @@ assert.deepEqual(blockingStatus.sourceAlignment, {
   gateCounts: expectedGateCounts,
 });
 assert.deepEqual(gateCounts(blockingStatus.gates ?? []), expectedGateCounts);
+assert.deepEqual(gateLinkCounts(blockingStatus.gates ?? []), expectedGateCounts);
 assert.deepEqual(blockingStatus.gates?.map((gate) => gate.gate), Object.keys(expectedGateCounts));
 assert.equal(blockingStatus.summary?.gates, Object.keys(expectedGateCounts).length);
 assert.equal(blockingStatus.summary?.blockingPartialRows, partialReport.summary?.partialRows);
@@ -231,6 +234,15 @@ function gateCounts(gates: Array<{ gate?: string; blockingPartialRows?: unknown[
   );
 }
 
+function gateLinkCounts(gates: Array<{ gate?: string; blockingGateLinks?: number }>) {
+  return Object.fromEntries(
+    gates
+      .filter((gate) => typeof gate.gate === "string")
+      .map((gate): [string, number] => [gate.gate as string, gate.blockingGateLinks ?? 0])
+      .sort(([a], [b]) => a.localeCompare(b))
+  );
+}
+
 function blockingGateSummary(status: BlockingGateStatus): BlockingGateSummary {
   return {
     gates: status.summary?.gates ?? 0,
@@ -244,6 +256,7 @@ function blockingGateSummary(status: BlockingGateStatus): BlockingGateSummary {
     gatesToClose: (status.gates ?? []).map((gate) => ({
       gate: gate.gate ?? "unknown",
       blockingPartialRows: gate.blockingPartialRows?.length ?? 0,
+      blockingGateLinks: gate.blockingGateLinks ?? gate.blockingPartialRows?.length ?? 0,
       missingEvidenceItems: gate.missingEvidence?.length ?? 0,
       nextActions: gate.nextActions ?? [],
     })),

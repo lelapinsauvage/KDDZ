@@ -65,6 +65,7 @@ type BlockingGateSummary = {
   gatesToClose?: Array<{
     gate?: string;
     blockingPartialRows?: number;
+    blockingGateLinks?: number;
     missingEvidenceItems?: number;
     nextActions?: string[];
   }>;
@@ -97,7 +98,7 @@ type GateStatusReport = {
     closeoutMode?: string;
     canCloseLocally?: boolean;
   };
-  gates?: Array<{ gate?: string; missingEvidence?: unknown[]; blockingPartialRows?: unknown[]; nextActions?: string[] }>;
+  gates?: Array<{ gate?: string; missingEvidence?: unknown[]; blockingGateLinks?: number; blockingPartialRows?: unknown[]; nextActions?: string[] }>;
 };
 
 type FocusedManifest = {
@@ -198,6 +199,7 @@ try {
     gateCounts: expectedGateCounts,
   });
   assert.deepEqual(gateCounts(blocking.gates ?? []), expectedGateCounts);
+  assert.deepEqual(gateLinkCounts(blocking.gates ?? []), expectedGateCounts);
   assert.deepEqual(blocking.gates?.map((gate) => gate.gate), Object.keys(expectedGateCounts));
   assert.equal(blocking.summary?.gates, Object.keys(expectedGateCounts).length);
   assert.equal(blocking.summary?.ready, 0);
@@ -209,6 +211,10 @@ try {
   assert.ok((blocking.summary?.missingEvidenceItems ?? 0) > 0);
   assert.ok(blocking.gates?.every((gate) => (gate.blockingPartialRows?.length ?? 0) > 0));
   assert.deepEqual(manifest.blockingGateSummary, blockingGateSummary(blocking));
+  assert.deepEqual(
+    Object.fromEntries((manifest.blockingGateSummary?.gatesToClose ?? []).map((gate) => [gate.gate, gate.blockingGateLinks])),
+    expectedGateCounts
+  );
   assert.ok(manifest.blockingGateSummary?.gatesToClose?.every((gate) => (gate.nextActions?.length ?? 0) > 0));
   const focused = readJson<FocusedManifest>(manifest.artifacts?.focusedArtifactsManifest?.path ?? "");
   assert.equal(focused.generatedAt, manifest.generatedAt);
@@ -320,6 +326,22 @@ try {
   });
   assert.equal(blockingSummaryMismatch.status, 1);
   assert.match(blockingSummaryMismatch.stderr, /blockingPartialRows: 999/);
+
+  const gateLinkMismatchManifest = JSON.parse(JSON.stringify(manifest)) as PreflightManifest;
+  assert.ok(gateLinkMismatchManifest.blockingGateSummary?.gatesToClose?.[0]);
+  gateLinkMismatchManifest.blockingGateSummary.gatesToClose[0].blockingGateLinks = 999;
+  const gateLinkMismatchPath = join(tmp, "gate-link-mismatch-preflight-artifacts.json");
+  writeFileSync(gateLinkMismatchPath, `${JSON.stringify(gateLinkMismatchManifest, null, 2)}\n`, "utf8");
+  const gateLinkMismatch = spawnSync("pnpm", [
+    "tsx",
+    "src/scripts/verify-production-preflight-artifacts-manifest.ts",
+    `--manifest=${gateLinkMismatchPath}`,
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.equal(gateLinkMismatch.status, 1);
+  assert.match(gateLinkMismatch.stderr, /blockingGateLinks: 999/);
 
   const closeoutModeMismatchManifest = JSON.parse(JSON.stringify(manifest)) as PreflightManifest;
   assert.ok(closeoutModeMismatchManifest.blockingGateSummary);
@@ -441,6 +463,15 @@ function gateCounts(gates: Array<{ gate?: string; blockingPartialRows?: unknown[
   );
 }
 
+function gateLinkCounts(gates: Array<{ gate?: string; blockingGateLinks?: number }>) {
+  return Object.fromEntries(
+    gates
+      .filter((gate) => typeof gate.gate === "string")
+      .map((gate): [string, number] => [gate.gate as string, gate.blockingGateLinks ?? 0])
+      .sort(([a], [b]) => a.localeCompare(b))
+  );
+}
+
 function blockingGateSummary(status: GateStatusReport): BlockingGateSummary {
   return {
     gates: status.summary?.gates ?? 0,
@@ -454,6 +485,7 @@ function blockingGateSummary(status: GateStatusReport): BlockingGateSummary {
     gatesToClose: (status.gates ?? []).map((gate) => ({
       gate: gate.gate ?? "unknown",
       blockingPartialRows: gate.blockingPartialRows?.length ?? 0,
+      blockingGateLinks: gate.blockingGateLinks ?? gate.blockingPartialRows?.length ?? 0,
       missingEvidenceItems: gate.missingEvidence?.length ?? 0,
       nextActions: gate.nextActions ?? [],
     })),
