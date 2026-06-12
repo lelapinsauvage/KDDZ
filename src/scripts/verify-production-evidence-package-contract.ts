@@ -324,6 +324,30 @@ function verifySelfTestContract() {
     assert.match(sourceMismatch.stderr, /Expected values to be strictly deep-equal/);
     assertNoSensitiveOutput(sourceMismatch.stdout + sourceMismatch.stderr);
 
+    const productionGatesSourceMismatchManifestPath = join(tmp, "production-gates-source-mismatch-evidence-package.json");
+    const productionGatesSourceMismatchManifest = readJson<PackageManifest>(packageManifestPath);
+    if (productionGatesSourceMismatchManifest.closeout.generatedFrom) {
+      productionGatesSourceMismatchManifest.closeout.generatedFrom.productionGates =
+        "docs/other-legacy-production-acceptance-gates.md";
+    }
+    writeFileSync(
+      productionGatesSourceMismatchManifestPath,
+      `${JSON.stringify(productionGatesSourceMismatchManifest, null, 2)}\n`,
+      "utf8"
+    );
+    const productionGatesSourceMismatch = runVerifier([
+      `--summary-report=${closeoutSummaryPath}`,
+      `--readiness-report=${readinessReportPath}`,
+      `--evidence-record=${evidenceRecordPath}`,
+      `--partial-report=${partialReportPath}`,
+      `--checklist-report=${checklistReportPath}`,
+      `--preflight-manifest=${preflightManifestPath}`,
+      `--manifest=${productionGatesSourceMismatchManifestPath}`,
+    ], false);
+    assert.equal(productionGatesSourceMismatch.status, 1);
+    assert.match(productionGatesSourceMismatch.stderr, /Expected values to be strictly deep-equal/);
+    assertNoSensitiveOutput(productionGatesSourceMismatch.stdout + productionGatesSourceMismatch.stderr);
+
     const generatedAtMismatchReadiness = readJson<Record<string, unknown>>(readinessReportPath);
     generatedAtMismatchReadiness.generatedAt = "2026-06-10T00:00:01.000Z";
     const generatedAtMismatchReadinessPath = join(tmp, "generated-at-mismatch-readiness.json");
