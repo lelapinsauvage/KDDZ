@@ -724,6 +724,10 @@ assert.match(contents.cutoverRunbook, /verify-production-closeout-summary-contra
 assert.match(contents.cutoverRunbook, /verify-production-evidence-package-contract\.ts/);
 assert.match(contents.cutoverRunbook, /--evidence-record=\/secure\/production-acceptance-evidence\.md/);
 assert.match(contents.cutoverRunbook, /render-production-acceptance-evidence-record\.ts --out=\/secure\/production-acceptance-evidence\.md/);
+assert.match(
+  contents.cutoverRunbook,
+  /Final command:[\s\S]*verify-production-preflight-artifacts-manifest\.ts --manifest=\/tmp\/kiddzonl-production-preflight-artifacts\/kiddzonl-production-preflight-artifacts\.json\npnpm tsx src\/scripts\/render-production-acceptance-evidence-record\.ts --out=\/secure\/production-acceptance-evidence\.md/
+);
 assert.match(contents.cutoverRunbook, /--preflight-manifest=\/tmp\/kiddzonl-production-preflight-artifacts\/kiddzonl-production-preflight-artifacts\.json/);
 assert.match(contents.cutoverRunbook, /--manifest-out=\/tmp\/kiddzonl-production-evidence-package\.json/);
 assert.match(contents.cutoverRunbook, /--preflight-manifest=\/tmp\/kiddzonl-production-preflight-artifacts\/kiddzonl-production-preflight-artifacts\.json --manifest-out=\/tmp\/kiddzonl-production-evidence-package\.json --branch=legacy-parity-runbook --commit=<release-commit-sha> --require-zero-partials/);
