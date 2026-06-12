@@ -491,6 +491,8 @@ assert.match(contents.evidenceTemplate, /Partial gate report/);
 assert.match(contents.evidenceTemplate, /Partial gate report SHA-256/);
 assert.match(contents.evidenceTemplate, /Production evidence checklist/);
 assert.match(contents.evidenceTemplate, /Production evidence checklist SHA-256/);
+assert.match(contents.evidenceTemplate, /Production preflight manifest/);
+assert.match(contents.evidenceTemplate, /Production preflight manifest SHA-256/);
 assert.match(contents.gates, /--out=<path>/);
 assert.match(contents.gates, /--env-file=<path>/);
 assert.match(contents.gates, /verify-production-acceptance-evidence-record\.ts/);
@@ -533,7 +535,7 @@ assert.match(contents.gates, /both are required with `--require-zero-partials` d
 assert.match(contents.gates, /both are required with `--require-zero-partials` during final closure so the package cannot be accepted without an explicit release ref/);
 assert.match(contents.gates, /--manifest-out=\/tmp\/kiddzonl-production-evidence-package\.json --branch=legacy-parity-runbook --commit=<release-commit-sha>/);
 assert.match(contents.gates, /--require-zero-partials/);
-assert.match(contents.gates, /archived closeout\/partial\/checklist artifact pointers/);
+assert.match(contents.gates, /archived closeout\/partial\/checklist\/preflight artifact pointers/);
 assert.match(contents.gates, /archived closeout summary against the saved artifact paths and SHA-256 digests/);
 assert.match(contents.gates, /page-parity tracker counts/);
 assert.match(contents.gates, /source matrix\/gate-map paths/);
@@ -566,10 +568,12 @@ assert.match(contents.gates, /--evidence-record=\/secure\/production-acceptance-
 assert.match(contents.gates, /--summary-report=<path>/);
 assert.match(contents.gates, /--partial-report=<path>/);
 assert.match(contents.gates, /--checklist-report=<path>/);
+assert.match(contents.gates, /--preflight-manifest=<path>/);
 assert.match(contents.gates, /--readiness-digest=<sha256>/);
 assert.match(contents.gates, /--summary-digest=<sha256>/);
 assert.match(contents.gates, /--partial-digest=<sha256>/);
 assert.match(contents.gates, /--checklist-digest=<sha256>/);
+assert.match(contents.gates, /--preflight-digest=<sha256>/);
 assert.match(contents.gates, /--branch=legacy-parity-runbook/);
 assert.match(contents.gates, /--commit=<release-commit-sha>/);
 assert.match(contents.gates, /--generated-at=<release-generated-at-iso>/);
@@ -615,6 +619,7 @@ assert.match(contents.gates, /report-production-preflight-artifacts\.ts --out-di
 assert.match(contents.gates, /verify-production-preflight-artifacts-manifest\.ts --manifest=\/tmp\/kiddzonl-production-preflight-artifacts\/kiddzonl-production-preflight-artifacts\.json/);
 assert.match(contents.gates, /requiring the blocker-status report plus nested focused manifest to match the source matrix\/gate-map paths recorded in the saved manifest/);
 assert.match(contents.gates, /requiring all bundled JSON artifacts to share the preflight manifest `generatedAt` timestamp/);
+assert.match(contents.gates, /blockingGateSummary/);
 assert.match(contents.gates, /source matrix\/gate-map paths without printing values/);
 assert.match(contents.gates, /verify-production-preflight-artifacts-contract\.ts/);
 assert.match(contents.gates, /`--blocking-only` to show only gates that still block partial parity rows/);
@@ -631,7 +636,7 @@ assert.match(contents.cutoverRunbook, /report-production-preflight-artifacts\.ts
 assert.match(contents.cutoverRunbook, /verify-production-preflight-artifacts-manifest\.ts --manifest=\/tmp\/kiddzonl-production-preflight-artifacts\/kiddzonl-production-preflight-artifacts\.json/);
 assert.match(contents.cutoverRunbook, /report-production-gate-status\.ts --json --env-file=\/secure\/private-readiness\.env --out=\/tmp\/kiddzonl-production-gate-status\.json --generated-at=<release-generated-at-iso> --require-ready --require-no-blockers/);
 assert.match(contents.cutoverRunbook, /--env-file=\/secure\/private-readiness\.env/);
-assert.match(contents.cutoverRunbook, /verify-production-acceptance-evidence-record\.ts \/secure\/production-acceptance-evidence\.md --readiness-report=\/tmp\/kiddzonl-production-readiness\.json --summary-report=\/tmp\/kiddzonl-production-closeout-summary\.json --partial-report=\/tmp\/kiddzonl-production-partials\.json --checklist-report=\/tmp\/kiddzonl-production-evidence-checklist\.json --readiness-digest=<readiness-sha256> --partial-digest=<partials-sha256> --checklist-digest=<checklist-sha256> --branch=legacy-parity-runbook --commit=<release-commit-sha>/);
+assert.match(contents.cutoverRunbook, /verify-production-acceptance-evidence-record\.ts \/secure\/production-acceptance-evidence\.md --readiness-report=\/tmp\/kiddzonl-production-readiness\.json --summary-report=\/tmp\/kiddzonl-production-closeout-summary\.json --partial-report=\/tmp\/kiddzonl-production-partials\.json --checklist-report=\/tmp\/kiddzonl-production-evidence-checklist\.json --preflight-manifest=\/tmp\/kiddzonl-production-preflight-artifacts\/kiddzonl-production-preflight-artifacts\.json --readiness-digest=<readiness-sha256> --partial-digest=<partials-sha256> --checklist-digest=<checklist-sha256> --preflight-digest=<preflight-sha256> --branch=legacy-parity-runbook --commit=<release-commit-sha>/);
 assert.match(contents.cutoverRunbook, /pnpm run closeout:production/);
 for (const line of contents.cutoverRunbook.split(/\r?\n/).filter((entry) => entry.includes("pnpm run closeout:production"))) {
   assert.match(line, /--generated-at=<release-generated-at-iso>/);
@@ -646,6 +651,7 @@ assert.match(contents.cutoverRunbook, /verify-production-closeout-summary-contra
 assert.match(contents.cutoverRunbook, /verify-production-evidence-package-contract\.ts/);
 assert.match(contents.cutoverRunbook, /--evidence-record=\/secure\/production-acceptance-evidence\.md/);
 assert.match(contents.cutoverRunbook, /render-production-acceptance-evidence-record\.ts --out=\/secure\/production-acceptance-evidence\.md/);
+assert.match(contents.cutoverRunbook, /--preflight-manifest=\/tmp\/kiddzonl-production-preflight-artifacts\/kiddzonl-production-preflight-artifacts\.json/);
 assert.match(contents.cutoverRunbook, /--manifest-out=\/tmp\/kiddzonl-production-evidence-package\.json/);
 assert.match(contents.cutoverRunbook, /--manifest-out=\/tmp\/kiddzonl-production-evidence-package\.json --branch=legacy-parity-runbook --commit=<release-commit-sha> --require-zero-partials/);
 assert.match(contents.cutoverRunbook, /report-production-evidence-checklist\.ts --gate=PROD-CRON/);
@@ -662,7 +668,7 @@ assert.match(contents.cutoverRunbook, /closeout summary JSON files are archived/
 assert.match(contents.cutoverRunbook, /production evidence checklist JSON is archived/);
 assert.match(contents.cutoverRunbook, /filled production acceptance record is archived and hash-bound/);
 assert.match(contents.cutoverRunbook, /production evidence package manifest is archived/);
-assert.match(contents.cutoverRunbook, /archived redacted readiness report, closeout summary, partial gate report, and production evidence checklist/);
+assert.match(contents.cutoverRunbook, /archived redacted readiness report, closeout summary, partial gate report, production evidence checklist, and production preflight manifest/);
 assert.match(contents.cutoverRunbook, /final closeout command passes with `--require-zero-partials`/);
 assert.match(contents.cutoverRunbook, /--list-requirements/);
 assert.match(contents.cutoverRunbook, /--gate=PROD-CRON/);

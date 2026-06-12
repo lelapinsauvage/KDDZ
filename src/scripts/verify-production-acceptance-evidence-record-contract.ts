@@ -21,6 +21,7 @@ try {
   const closeoutSummaryPath = join(tmp, "closeout-summary.json");
   const partialReportPath = join(tmp, "partials.json");
   const checklistReportPath = join(tmp, "evidence-checklist.json");
+  const preflightManifestPath = join(tmp, "preflight-artifacts.json");
   execFileSync("pnpm", ["tsx", "src/scripts/report-production-partials.ts", "--json", `--out=${partialReportPath}`], {
     cwd: process.cwd(),
     stdio: "ignore",
@@ -31,10 +32,12 @@ try {
   });
   writeFileSync(readinessReportPath, JSON.stringify(readinessReport(), null, 2), "utf8");
   writeFileSync(closeoutSummaryPath, JSON.stringify(closeoutSummary(), null, 2), "utf8");
+  writeFileSync(preflightManifestPath, JSON.stringify(preflightManifest(), null, 2), "utf8");
   const readinessReportDigest = sha256File(readinessReportPath);
   const closeoutSummaryDigest = sha256File(closeoutSummaryPath);
   const partialReportDigest = sha256File(partialReportPath);
   const checklistReportDigest = sha256File(checklistReportPath);
+  const preflightManifestDigest = sha256File(preflightManifestPath);
   writeFileSync(
     validRecordPath,
     fillTemplate(template, {
@@ -42,10 +45,12 @@ try {
       closeoutSummaryPath,
       partialReportPath,
       checklistReportPath,
+      preflightManifestPath,
       readinessReportDigest,
       closeoutSummaryDigest,
       partialReportDigest,
       checklistReportDigest,
+      preflightManifestDigest,
     }),
     "utf8"
   );
@@ -55,10 +60,12 @@ try {
     `--summary-report=${closeoutSummaryPath}`,
     `--partial-report=${partialReportPath}`,
     `--checklist-report=${checklistReportPath}`,
+    `--preflight-manifest=${preflightManifestPath}`,
     `--readiness-digest=${readinessReportDigest}`,
     `--summary-digest=${closeoutSummaryDigest}`,
     `--partial-digest=${partialReportDigest}`,
     `--checklist-digest=${checklistReportDigest}`,
+    `--preflight-digest=${preflightManifestDigest}`,
     "--branch=legacy-parity-runbook",
     "--commit=0404c6a",
   ]);
@@ -121,10 +128,12 @@ try {
     `--summary-report=${closeoutSummaryPath}`,
     `--partial-report=${partialReportPath}`,
     `--checklist-report=${checklistReportPath}`,
+    `--preflight-manifest=${preflightManifestPath}`,
     `--readiness-digest=${readinessReportDigest}`,
     `--summary-digest=${closeoutSummaryDigest}`,
     `--partial-digest=${partialReportDigest}`,
     `--checklist-digest=${checklistReportDigest}`,
+    `--preflight-digest=${preflightManifestDigest}`,
     "--branch=legacy-parity-runbook",
     "--commit=deadbeef",
   ]);
@@ -144,10 +153,12 @@ try {
     `--summary-report=${closeoutSummaryPath}`,
     `--partial-report=${partialReportPath}`,
     `--checklist-report=${checklistReportPath}`,
+    `--preflight-manifest=${preflightManifestPath}`,
     `--readiness-digest=${readinessReportDigest}`,
     `--summary-digest=${closeoutSummaryDigest}`,
     `--partial-digest=${partialReportDigest}`,
     `--checklist-digest=${checklistReportDigest}`,
+    `--preflight-digest=${preflightManifestDigest}`,
     "--branch=legacy-parity-runbook",
     "--commit=0404c6a",
   ]);
@@ -162,10 +173,12 @@ try {
     `--summary-report=${closeoutSummaryPath}`,
     `--partial-report=${partialReportPath}`,
     `--checklist-report=${checklistReportPath}`,
+    `--preflight-manifest=${preflightManifestPath}`,
     `--readiness-digest=${readinessReportDigest}`,
     `--summary-digest=${closeoutSummaryDigest}`,
     `--partial-digest=${partialReportDigest}`,
     `--checklist-digest=${checklistReportDigest}`,
+    `--preflight-digest=${preflightManifestDigest}`,
     "--branch=legacy-parity-runbook",
     "--commit=0404c6a",
   ]);
@@ -173,6 +186,7 @@ try {
   assert.match(staleArtifact.stderr, /Redacted closeout summary must include/);
   assert.match(staleArtifact.stderr, /Partial gate report must include/);
   assert.match(staleArtifact.stderr, /Production evidence checklist must include/);
+  assert.match(staleArtifact.stderr, /Production preflight manifest must include/);
 
   const staleDigestPath = join(tmp, "production-acceptance-stale-digest.md");
   writeFileSync(
@@ -182,10 +196,12 @@ try {
       closeoutSummaryPath,
       partialReportPath,
       checklistReportPath,
+      preflightManifestPath,
       readinessReportDigest: "0".repeat(64),
       closeoutSummaryDigest: "2".repeat(64),
       partialReportDigest: "0".repeat(64),
       checklistReportDigest: "1".repeat(64),
+      preflightManifestDigest: "3".repeat(64),
     }),
     "utf8"
   );
@@ -195,23 +211,28 @@ try {
     `--summary-digest=${closeoutSummaryDigest}`,
     `--partial-report=${partialReportPath}`,
     `--checklist-report=${checklistReportPath}`,
+    `--preflight-manifest=${preflightManifestPath}`,
     `--partial-digest=${partialReportDigest}`,
     `--checklist-digest=${checklistReportDigest}`,
+    `--preflight-digest=${preflightManifestDigest}`,
   ]);
   assert.equal(staleDigest.status, 1);
   assert.match(staleDigest.stderr, /Redacted readiness report SHA-256 must include/);
   assert.match(staleDigest.stderr, /Redacted closeout summary SHA-256 must include/);
   assert.match(staleDigest.stderr, /Partial gate report SHA-256 must include/);
   assert.match(staleDigest.stderr, /Production evidence checklist SHA-256 must include/);
+  assert.match(staleDigest.stderr, /Production preflight manifest SHA-256 must include/);
 
   const staleDigestFromPath = runVerifier(staleDigestPath, [
     `--readiness-report=${readinessReportPath}`,
     `--partial-report=${partialReportPath}`,
     `--checklist-report=${checklistReportPath}`,
+    `--preflight-manifest=${preflightManifestPath}`,
   ]);
   assert.equal(staleDigestFromPath.status, 1);
   assert.match(staleDigestFromPath.stderr, /Partial gate report SHA-256 must include/);
   assert.match(staleDigestFromPath.stderr, /Production evidence checklist SHA-256 must include/);
+  assert.match(staleDigestFromPath.stderr, /Production preflight manifest SHA-256 must include/);
 
   const staleManifestMarkerPath = join(tmp, "production-acceptance-stale-manifest-marker.md");
   writeFileSync(
@@ -221,10 +242,12 @@ try {
       closeoutSummaryPath,
       partialReportPath,
       checklistReportPath,
+      preflightManifestPath,
       readinessReportDigest,
       closeoutSummaryDigest: "accepted evidence recorded in release-ticket-verified",
       partialReportDigest,
       checklistReportDigest,
+      preflightManifestDigest,
     }),
     "utf8"
   );
@@ -233,9 +256,11 @@ try {
     `--summary-report=${closeoutSummaryPath}`,
     `--partial-report=${partialReportPath}`,
     `--checklist-report=${checklistReportPath}`,
+    `--preflight-manifest=${preflightManifestPath}`,
     `--readiness-digest=${readinessReportDigest}`,
     `--partial-digest=${partialReportDigest}`,
     `--checklist-digest=${checklistReportDigest}`,
+    `--preflight-digest=${preflightManifestDigest}`,
   ]);
   assert.equal(staleManifestMarker.status, 1);
   assert.match(staleManifestMarker.stderr, /verified in evidence package manifest/);
@@ -277,10 +302,12 @@ type ArtifactPaths = {
   closeoutSummaryPath: string;
   partialReportPath: string;
   checklistReportPath: string;
+  preflightManifestPath: string;
   readinessReportDigest: string;
   closeoutSummaryDigest: string;
   partialReportDigest: string;
   checklistReportDigest: string;
+  preflightManifestDigest: string;
 };
 
 function filledValueFor(field: string, artifactPaths: ArtifactPaths | null) {
@@ -296,6 +323,8 @@ function filledValueFor(field: string, artifactPaths: ArtifactPaths | null) {
   if (field === "Partial gate report SHA-256") return artifactPaths?.partialReportDigest ?? "accepted evidence recorded in release-ticket-verified";
   if (field === "Production evidence checklist") return artifactPaths?.checklistReportPath ?? "accepted evidence recorded in release-ticket-verified";
   if (field === "Production evidence checklist SHA-256") return artifactPaths?.checklistReportDigest ?? "accepted evidence recorded in release-ticket-verified";
+  if (field === "Production preflight manifest") return artifactPaths?.preflightManifestPath ?? "accepted evidence recorded in release-ticket-verified";
+  if (field === "Production preflight manifest SHA-256") return artifactPaths?.preflightManifestDigest ?? "accepted evidence recorded in release-ticket-verified";
   if (field === "Release decision") return "accepted";
   if (field === "Remaining production tickets") return "none";
   if (field === "Approval link/id") return "release-ticket-verified";
@@ -346,6 +375,23 @@ function closeoutSummary() {
       gateMap: "docs/partial-production-gate-map.md",
     },
     redacted: true,
+  };
+}
+
+function preflightManifest() {
+  return {
+    status: "production preflight artifacts verified",
+    schemaVersion: 1,
+    generatedAt: "2026-06-10T00:00:00.000Z",
+    redacted: true,
+    blockingGateSummary: {
+      gates: 0,
+      ready: 12,
+      needsEvidence: 0,
+      blockingPartialRows: 0,
+      missingEvidenceItems: 0,
+      gatesToClose: [],
+    },
   };
 }
 

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
+import { requiredProductionEvidenceSections } from "./production-acceptance-evidence-spec";
 
 const script = "src/scripts/report-production-evidence-checklist.ts";
 
@@ -19,6 +20,9 @@ const partialReport = JSON.parse(
     encoding: "utf8",
   })
 ) as PartialReport;
+const expectedRequiredFields = requiredProductionEvidenceSections
+  .filter((section) => section.section.startsWith("PROD-"))
+  .reduce((count, section) => count + section.fields.length, 0);
 
 const jsonOutput = execFileSync("pnpm", ["tsx", script, "--json"], {
   cwd: process.cwd(),
@@ -37,7 +41,7 @@ assert.equal(payload.status, "production evidence checklist");
 assert.equal(payload.schemaVersion, 1);
 assertValidIsoTimestamp(payload.generatedAt, "evidence checklist generatedAt");
 assert.equal(payload.summary?.gates, 12);
-assert.equal(payload.summary?.requiredFields, 73);
+assert.equal(payload.summary?.requiredFields, expectedRequiredFields);
 assert.equal(payload.summary?.blockingPartialRows, partialReport.summary?.partialRows);
 assert.equal(payload.gates?.length, 12);
 assert.equal(payload.gates?.[0]?.gate, "PROD-DUMPS");

@@ -21,6 +21,8 @@ export const requiredProductionEvidenceSections: SectionSpec[] = [
       "Partial gate report SHA-256",
       "Production evidence checklist",
       "Production evidence checklist SHA-256",
+      "Production preflight manifest",
+      "Production preflight manifest SHA-256",
     ],
   },
   {
@@ -181,6 +183,7 @@ export const productionEvidencePlaceholderValues = [
   "p01-p07/p10/p12 report id/path",
   "p15-p17 report id/path",
   "p17 report id/path",
+  "preflight manifest id/path",
   "disabled/onesignal/webhook",
   "disabled/resend/webhook",
   "disabled/webhook",

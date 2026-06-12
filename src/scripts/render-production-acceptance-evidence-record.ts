@@ -9,6 +9,7 @@ const readinessReportPath = requiredOption("--readiness-report");
 const closeoutSummaryPath = requiredOption("--summary-report");
 const partialReportPath = requiredOption("--partial-report");
 const checklistReportPath = requiredOption("--checklist-report");
+const preflightManifestPath = optionValue("--preflight-manifest");
 const branch = requiredOption("--branch");
 const commit = requiredOption("--commit");
 const acceptanceDate = requiredOption("--acceptance-date");
@@ -22,7 +23,7 @@ const closeoutDigest = optionValue("--summary-digest") ?? "verified in evidence 
 
 if (!outputPath) {
   console.error(
-    "Usage: pnpm tsx src/scripts/render-production-acceptance-evidence-record.ts --out=<production-acceptance-evidence.md> --readiness-report=<readiness.json> --summary-report=<closeout-summary.json> --partial-report=<partials.json> --checklist-report=<evidence-checklist.json> --branch=<branch> --commit=<sha> --acceptance-date=<YYYY-MM-DD> [--summary-digest=<sha256>]"
+    "Usage: pnpm tsx src/scripts/render-production-acceptance-evidence-record.ts --out=<production-acceptance-evidence.md> --readiness-report=<readiness.json> --summary-report=<closeout-summary.json> --partial-report=<partials.json> --checklist-report=<evidence-checklist.json> --branch=<branch> --commit=<sha> --acceptance-date=<YYYY-MM-DD> [--preflight-manifest=<preflight-artifacts.json>] [--summary-digest=<sha256>]"
   );
   process.exit(2);
 }
@@ -35,6 +36,7 @@ assertNoSensitiveOutput(
     closeoutSummaryPath,
     partialReportPath,
     checklistReportPath,
+    preflightManifestPath,
     branch,
     commit,
     acceptanceDate,
@@ -50,6 +52,7 @@ assertNoSensitiveOutput(
 const readinessDigest = sha256File(readinessReportPath);
 const partialDigest = sha256File(partialReportPath);
 const checklistDigest = sha256File(checklistReportPath);
+const preflightDigest = preflightManifestPath ? sha256File(preflightManifestPath) : null;
 const readiness = JSON.parse(readFileSync(readinessReportPath, "utf8")) as {
   summary?: { ready?: number; total?: number };
 };
@@ -70,10 +73,12 @@ const verification = spawnSync("pnpm", [
   `--summary-report=${closeoutSummaryPath}`,
   `--partial-report=${partialReportPath}`,
   `--checklist-report=${checklistReportPath}`,
+  ...optionalArg("--preflight-manifest", preflightManifestPath),
   `--readiness-digest=${readinessDigest}`,
   ...optionalArg("--summary-digest", optionValue("--summary-digest")),
   `--partial-digest=${partialDigest}`,
   `--checklist-digest=${checklistDigest}`,
+  ...optionalArg("--preflight-digest", preflightDigest),
   `--branch=${branch}`,
   `--commit=${commit}`,
 ], {
@@ -95,6 +100,7 @@ console.log(
       closeoutSummary: closeoutSummaryPath,
       partialReport: partialReportPath,
       evidenceChecklist: checklistReportPath,
+      preflightManifest: preflightManifestPath ?? null,
       branch,
       commit,
       redacted: true,
@@ -141,6 +147,8 @@ function filledValueFor(field: string) {
   if (field === "Partial gate report SHA-256") return partialDigest;
   if (field === "Production evidence checklist") return checklistReportPath;
   if (field === "Production evidence checklist SHA-256") return checklistDigest;
+  if (field === "Production preflight manifest") return preflightManifestPath ?? "accepted evidence recorded in release-ticket-verified";
+  if (field === "Production preflight manifest SHA-256") return preflightDigest ?? "accepted evidence recorded in release-ticket-verified";
   if (field === "All gates accepted or explicitly retired") return "yes";
   if (field === "Remaining production tickets") return remainingTickets;
   if (field === "Approval link/id") return approval;

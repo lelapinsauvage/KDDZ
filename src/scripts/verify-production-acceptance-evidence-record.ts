@@ -25,16 +25,18 @@ const readinessReportPath = optionValue("--readiness-report");
 const closeoutSummaryPath = optionValue("--summary-report");
 const partialReportPath = optionValue("--partial-report");
 const checklistReportPath = optionValue("--checklist-report");
+const preflightManifestPath = optionValue("--preflight-manifest");
 const expectedReadinessDigest = optionValue("--readiness-digest");
 const expectedCloseoutDigest = optionValue("--summary-digest");
 const expectedPartialDigest = optionValue("--partial-digest");
 const expectedChecklistDigest = optionValue("--checklist-digest");
+const expectedPreflightDigest = optionValue("--preflight-digest");
 const expectedBranch = optionValue("--branch");
 const expectedCommit = optionValue("--commit");
 
 if (!recordPath || recordPath.startsWith("-")) {
   console.error(
-    "Usage: pnpm tsx src/scripts/verify-production-acceptance-evidence-record.ts <filled-production-evidence.md> [--readiness-report=<redacted-readiness.json>] [--summary-report=<closeout-summary.json>] [--partial-report=<partials.json>] [--checklist-report=<evidence-checklist.json>] [--readiness-digest=<sha256>] [--summary-digest=<sha256>] [--partial-digest=<sha256>] [--checklist-digest=<sha256>] [--branch=<branch>] [--commit=<sha>]"
+    "Usage: pnpm tsx src/scripts/verify-production-acceptance-evidence-record.ts <filled-production-evidence.md> [--readiness-report=<redacted-readiness.json>] [--summary-report=<closeout-summary.json>] [--partial-report=<partials.json>] [--checklist-report=<evidence-checklist.json>] [--preflight-manifest=<preflight-artifacts.json>] [--readiness-digest=<sha256>] [--summary-digest=<sha256>] [--partial-digest=<sha256>] [--checklist-digest=<sha256>] [--preflight-digest=<sha256>] [--branch=<branch>] [--commit=<sha>]"
   );
   process.exit(2);
 }
@@ -89,11 +91,13 @@ console.log(
       closeoutSummary: closeoutSummaryPath ?? null,
       partialReport: partialReportPath ?? null,
       evidenceChecklist: checklistReportPath ?? null,
+      preflightManifest: preflightManifestPath ?? null,
       expectedDigests: {
         readinessReport: expectedReadinessDigest ?? null,
         closeoutSummary: expectedCloseoutDigest ?? null,
         partialReport: expectedPartialDigest ?? null,
         evidenceChecklist: expectedChecklistDigest ?? null,
+        preflightManifest: expectedPreflightDigest ?? null,
       },
       branch: expectedBranch ?? null,
       commit: expectedCommit ?? null,
@@ -262,6 +266,7 @@ function verifyArtifactPointers(
     { field: "Redacted closeout summary", path: closeoutSummaryPath },
     { field: "Partial gate report", path: partialReportPath },
     { field: "Production evidence checklist", path: checklistReportPath },
+    { field: "Production preflight manifest", path: preflightManifestPath },
   ];
 
   for (const artifact of expectedArtifacts) {
@@ -289,6 +294,7 @@ function verifyArtifactDigests(
     { field: "Redacted closeout summary SHA-256", path: expectedCloseoutDigest ? closeoutSummaryPath : null, digest: expectedCloseoutDigest },
     { field: "Partial gate report SHA-256", path: partialReportPath, digest: expectedPartialDigest },
     { field: "Production evidence checklist SHA-256", path: checklistReportPath, digest: expectedChecklistDigest },
+    { field: "Production preflight manifest SHA-256", path: preflightManifestPath, digest: expectedPreflightDigest },
   ];
 
   for (const artifact of expectedArtifacts) {

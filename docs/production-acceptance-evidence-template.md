@@ -20,6 +20,8 @@ Copy this template into the production release record or ticket system after eac
 | Partial gate report SHA-256 | sha256 digest |
 | Production evidence checklist | non-secret JSON report id/path |
 | Production evidence checklist SHA-256 | sha256 digest |
+| Production preflight manifest | preflight manifest id/path |
+| Production preflight manifest SHA-256 | sha256 digest |
 
 ## PROD-DUMPS
 

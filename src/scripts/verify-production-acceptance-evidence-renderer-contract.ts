@@ -13,6 +13,7 @@ try {
   const closeoutSummaryPath = join(tmp, "closeout-summary.json");
   const partialPath = join(tmp, "partials.json");
   const checklistPath = join(tmp, "checklist.json");
+  const preflightManifestPath = join(tmp, "preflight.json");
   const recordPath = join(tmp, "production-acceptance-evidence.md");
 
   execFileSync("pnpm", ["tsx", "src/scripts/report-production-partials.ts", "--json", `--out=${partialPath}`, `--generated-at=${generatedAt}`], {
@@ -25,6 +26,7 @@ try {
   });
   writeFileSync(readinessPath, `${JSON.stringify(readinessReport(), null, 2)}\n`, "utf8");
   writeFileSync(closeoutSummaryPath, `${JSON.stringify(closeoutSummary(), null, 2)}\n`, "utf8");
+  writeFileSync(preflightManifestPath, `${JSON.stringify(preflightManifest(), null, 2)}\n`, "utf8");
 
   const output = execFileSync("pnpm", [
     "tsx",
@@ -34,6 +36,7 @@ try {
     `--summary-report=${closeoutSummaryPath}`,
     `--partial-report=${partialPath}`,
     `--checklist-report=${checklistPath}`,
+    `--preflight-manifest=${preflightManifestPath}`,
     "--branch=legacy-parity-runbook",
     "--commit=0404c6a",
     "--acceptance-date=2026-06-10",
@@ -54,6 +57,7 @@ try {
   assert.match(record, /\| Redacted closeout summary SHA-256 \| verified in evidence package manifest \|/);
   assert.match(record, new RegExp(`\\| Partial gate report SHA-256 \\| ${sha256File(partialPath)} \\|`));
   assert.match(record, new RegExp(`\\| Production evidence checklist SHA-256 \\| ${sha256File(checklistPath)} \\|`));
+  assert.match(record, new RegExp(`\\| Production preflight manifest SHA-256 \\| ${sha256File(preflightManifestPath)} \\|`));
 
   const explicitSummaryDigestRecordPath = join(tmp, "explicit-summary-digest.md");
   execFileSync("pnpm", [
@@ -64,6 +68,7 @@ try {
     `--summary-report=${closeoutSummaryPath}`,
     `--partial-report=${partialPath}`,
     `--checklist-report=${checklistPath}`,
+    `--preflight-manifest=${preflightManifestPath}`,
     "--branch=legacy-parity-runbook",
     "--commit=0404c6a",
     "--acceptance-date=2026-06-10",
@@ -86,9 +91,11 @@ try {
     `--summary-report=${closeoutSummaryPath}`,
     `--partial-report=${partialPath}`,
     `--checklist-report=${checklistPath}`,
+    `--preflight-manifest=${preflightManifestPath}`,
     `--readiness-digest=${sha256File(readinessPath)}`,
     `--partial-digest=${sha256File(partialPath)}`,
     `--checklist-digest=${sha256File(checklistPath)}`,
+    `--preflight-digest=${sha256File(preflightManifestPath)}`,
     "--branch=legacy-parity-runbook",
     "--commit=0404c6a",
   ], {
@@ -104,6 +111,7 @@ try {
     `--summary-report=${closeoutSummaryPath}`,
     `--partial-report=${partialPath}`,
     `--checklist-report=${checklistPath}`,
+    `--preflight-manifest=${preflightManifestPath}`,
     "--branch=legacy-parity-runbook",
     "--commit=0404c6a",
     "--acceptance-date=06-10-2026",
@@ -122,6 +130,7 @@ try {
     `--summary-report=${closeoutSummaryPath}`,
     `--partial-report=${partialPath}`,
     `--checklist-report=${checklistPath}`,
+    `--preflight-manifest=${preflightManifestPath}`,
     "--branch=legacy-parity-runbook",
     "--commit=0404c6a",
     "--acceptance-date=2026-06-10",
@@ -180,6 +189,23 @@ function closeoutSummary() {
       gateMap: "docs/partial-production-gate-map.md",
     },
     redacted: true,
+  };
+}
+
+function preflightManifest() {
+  return {
+    status: "production preflight artifacts verified",
+    schemaVersion: 1,
+    generatedAt,
+    redacted: true,
+    blockingGateSummary: {
+      gates: 0,
+      ready: 12,
+      needsEvidence: 0,
+      blockingPartialRows: 0,
+      missingEvidenceItems: 0,
+      gatesToClose: [],
+    },
   };
 }
 
