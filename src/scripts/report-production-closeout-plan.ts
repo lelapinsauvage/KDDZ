@@ -78,6 +78,7 @@ const envFilePath = optionValue("--env-file");
 const releaseBranch = optionValue("--release-branch") ?? "legacy-parity-runbook";
 const releaseCommit = optionValue("--release-commit") ?? "<release-commit-sha>";
 const acceptanceDate = optionValue("--acceptance-date") ?? "<YYYY-MM-DD>";
+validateReleaseMetadata();
 const generatedAt = generatedAtValue();
 const parityMatrixPath = optionValue("--parity-matrix") ?? "docs/page-parity-matrix.json";
 const partialGateMapPath = optionValue("--partial-gate-map") ?? "docs/partial-production-gate-map.md";
@@ -326,6 +327,21 @@ function optionValue(name: string) {
 
 function optionalArg(name: string, value: string | null | undefined) {
   return value ? [`${name}=${value}`] : [];
+}
+
+function validateReleaseMetadata() {
+  const branch = optionValue("--release-branch");
+  const commit = optionValue("--release-commit");
+  const date = optionValue("--acceptance-date");
+  if (!branch && !commit && !date) return;
+  if (!branch || !commit || !date) {
+    console.error("--release-branch, --release-commit, and --acceptance-date must be provided together");
+    process.exit(2);
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    console.error("--acceptance-date must use YYYY-MM-DD format");
+    process.exit(2);
+  }
 }
 
 function generatedAtValue() {

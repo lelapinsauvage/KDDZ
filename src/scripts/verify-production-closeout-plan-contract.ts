@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -153,6 +153,34 @@ assert.ok(boundPlan.gates?.every((gate) => gate.envTemplateCommand?.includes(`--
 assert.ok(boundPlan.gates?.every((gate) => !gate.envTemplateCommand?.includes("<release-commit-sha>")));
 assert.ok(boundPlan.gates?.every((gate) => !gate.envTemplateCommand?.includes("<YYYY-MM-DD>")));
 assertNoSensitiveOutput(boundOutput);
+
+const partialReleaseMetadata = spawnSync("pnpm", [
+  "tsx",
+  "src/scripts/report-production-closeout-plan.ts",
+  "--json",
+  `--generated-at=${generatedAt}`,
+  "--release-branch=legacy-parity-runbook",
+], {
+  cwd: process.cwd(),
+  encoding: "utf8",
+});
+assert.equal(partialReleaseMetadata.status, 2);
+assert.match(partialReleaseMetadata.stderr, /must be provided together/);
+
+const invalidAcceptanceDate = spawnSync("pnpm", [
+  "tsx",
+  "src/scripts/report-production-closeout-plan.ts",
+  "--json",
+  `--generated-at=${generatedAt}`,
+  "--release-branch=legacy-parity-runbook",
+  "--release-commit=0d26d0c",
+  "--acceptance-date=12-06-2026",
+], {
+  cwd: process.cwd(),
+  encoding: "utf8",
+});
+assert.equal(invalidAcceptanceDate.status, 2);
+assert.match(invalidAcceptanceDate.stderr, /--acceptance-date must use YYYY-MM-DD format/);
 
 const markdown = execFileSync("pnpm", [
   "tsx",
