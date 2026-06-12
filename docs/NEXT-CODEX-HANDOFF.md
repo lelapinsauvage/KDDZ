@@ -85,6 +85,14 @@ When modernizing native/parent APIs, compare all three:
 
 Recent commits on `legacy-parity-runbook`:
 
+- `ee2b8ce chore: summarize blocking gates in preflight manifest`
+- `378a1ae chore: add gate status next actions`
+- `f786c73 chore: derive closeout summary tracker`
+- `7c3c7d2 chore: derive closeout blocker summaries`
+- `e0911c8 chore: derive gate ledger blocker counts`
+- `b3ac002 chore: derive evidence checklist blocker rows`
+- `3ece949 chore: derive gate status blocker counts`
+- `f3b1477 chore: derive preflight contract blocker counts`
 - `8557360 chore: verify production preflight manifests`
 - `388567c chore: generate production preflight artifacts`
 - `fc63539 chore: focus production gate status on blockers`
@@ -114,11 +122,11 @@ Commits `de7a99a`, `7b58b2f`, `29e45e9`, `e7bb81b`, and `d4d2251` tightened gene
 
 ### Production Acceptance Closure
 
-Commits `d9690f9`, `1b5f27c`, `da487a0`, and `fc63539` made the final evidence closure auditable before cutover. `report-production-gate-status.ts --require-ready` now joins readiness, partial rows, and checklist status into a redacted closure board that fails until every production gate is ready. Add `--require-no-blockers` for final closure so the same board also fails while any partial parity rows remain. The gate-status JSON includes `sourceAlignment.status=verified` after proving the readiness audit, partial report, and evidence checklist share the frozen timestamp and matching per-gate blocker rows. Use `report-production-gate-status.ts --blocking-only` to focus that board on the four gates still blocking page-parity rows. `render-production-acceptance-evidence-record.ts` fills `docs/production-acceptance-evidence-template.md`, computes readiness, partial, and checklist SHA-256 values, records that the closeout summary hash is verified in the evidence package manifest, binds the release branch and commit, and immediately verifies the filled record. `verify-production-gate-status-contract.ts` and `verify-production-acceptance-evidence-renderer-contract.ts` are part of `pnpm run verify:production-gates`.
+Commits `d9690f9`, `1b5f27c`, `da487a0`, `fc63539`, and `378a1ae` made the final evidence closure auditable before cutover. `report-production-gate-status.ts --require-ready` now joins readiness, partial rows, and checklist status into a redacted closure board that fails until every production gate is ready. Add `--require-no-blockers` for final closure so the same board also fails while any partial parity rows remain. The gate-status JSON includes `sourceAlignment.status=verified` after proving the readiness audit, partial report, and evidence checklist share the frozen timestamp and matching per-gate blocker rows. Use `report-production-gate-status.ts --blocking-only` to focus that board on the four gates still blocking page-parity rows. Gate status entries now include redacted `nextActions` with missing evidence pointer names, focused partial/checklist archive commands, and the mapped partial rows each gate can unblock. `render-production-acceptance-evidence-record.ts` fills `docs/production-acceptance-evidence-template.md`, computes readiness, partial, and checklist SHA-256 values, records that the closeout summary hash is verified in the evidence package manifest, binds the release branch and commit, and immediately verifies the filled record. `verify-production-gate-status-contract.ts` and `verify-production-acceptance-evidence-renderer-contract.ts` are part of `pnpm run verify:production-gates`.
 
 ### Production Preflight Bundle
 
-Commits `388567c` and `8557360` added `report-production-preflight-artifacts.ts --out-dir=<dir>` and `verify-production-preflight-artifacts-manifest.ts --manifest=<path>`. Use them to create and recheck the archived non-secret preflight bundle containing the full partial report, full evidence checklist, blocker-only gate status report, focused artifact manifest, and SHA-256 digests before collecting private production evidence. The saved preflight and focused-manifest verifiers honor the source matrix/gate-map paths recorded in the archived manifests, and the preflight verifier now requires the blocker-status report plus nested focused manifest to match those recorded source paths, requires the blocker-status report to retain `sourceAlignment.status=verified`, and requires all bundled JSON artifacts to share the preflight `generatedAt`, so controlled reproduction bundles do not have to point at the live default docs.
+Commits `388567c`, `8557360`, and `ee2b8ce` added `report-production-preflight-artifacts.ts --out-dir=<dir>` and `verify-production-preflight-artifacts-manifest.ts --manifest=<path>`. Use them to create and recheck the archived non-secret preflight bundle containing the full partial report, full evidence checklist, blocker-only gate status report, focused artifact manifest, SHA-256 digests, and top-level `blockingGateSummary` before collecting private production evidence. The saved preflight and focused-manifest verifiers honor the source matrix/gate-map paths recorded in the archived manifests, and the preflight verifier now requires the blocker-status report plus nested focused manifest to match those recorded source paths, requires the blocker-status report to retain `sourceAlignment.status=verified`, requires all bundled JSON artifacts to share the preflight `generatedAt`, and rejects drift between `blockingGateSummary` and the nested blocker-only gate-status report, so controlled reproduction bundles do not have to point at the live default docs.
 
 ## What Was Done Recently
 
