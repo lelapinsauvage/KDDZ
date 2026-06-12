@@ -268,6 +268,11 @@ function nextActionsForGate(params: {
   const actions: string[] = [];
   const focusedArtifact = focusedArtifactForGate(params.gate);
 
+  if (focusedArtifact && (params.missingEvidence.length > 0 || params.blockingPartialRows.length > 0)) {
+    actions.push(
+      `Run: pnpm tsx src/scripts/render-production-readiness-env-template.ts --gate=${params.gate} --include-work-orders --out=/secure/private-readiness-${focusedArtifact.slug}.env`
+    );
+  }
   if (params.missingEvidence.length > 0) {
     actions.push(`Fill missing evidence pointers: ${params.missingEvidence.join(", ")}`);
   }

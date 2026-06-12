@@ -132,6 +132,8 @@ try {
   assert.equal(cron?.requiredEvidenceFields?.length, 8);
   assert.ok(cron?.nextActions?.some((action) => action.includes("CRON_PARTIAL_ROW_COVERAGE_REPORT")));
   assert.ok(cron?.nextActions?.some((action) => action.includes("--gate=PROD-CRON")));
+  assert.ok(cron?.nextActions?.some((action) => action.includes("render-production-readiness-env-template.ts --gate=PROD-CRON --include-work-orders")));
+  assert.ok(cron?.nextActions?.some((action) => action.includes("/secure/private-readiness-cron.env")));
   assert.ok(cron?.nextActions?.some((action) => action.includes("/tmp/kiddzonl-production-cron-partials.json")));
   assert.ok(cron?.nextActions?.some((action) => action.includes("verify-production-artifact-consistency-contract.ts")));
 
@@ -141,6 +143,7 @@ try {
   assert.ok(provider?.missingEvidence?.includes("partial-row-evidence:PROVIDER_PARTIAL_ROW_COVERAGE_REPORT"));
   assert.ok(provider?.nextActions?.some((action) => action.includes("PROVIDER_PARTIAL_ROW_COVERAGE_REPORT")));
   assert.ok(provider?.nextActions?.some((action) => action.includes("--gate=PROD-PROVIDERS")));
+  assert.ok(provider?.nextActions?.some((action) => action.includes("render-production-readiness-env-template.ts --gate=PROD-PROVIDERS --include-work-orders")));
   assert.ok(provider?.nextActions?.some((action) => action.includes("/tmp/kiddzonl-production-provider-checklist.json")));
   assert.ok(provider?.nextActions?.some((action) => action.includes("--generated-at=<release-generated-at-iso>")));
 
@@ -192,6 +195,7 @@ try {
   assert.equal(native.gates?.[0]?.blockingGateLinks, expectedGateCounts["PROD-NATIVE"]);
   assert.deepEqual(native.gates?.[0]?.blockingPartialRows?.map((row) => row.row), rowsForGate("PROD-NATIVE"));
   assert.ok(native.gates?.[0]?.nextActions?.some((action) => action.includes("--gate=PROD-NATIVE")));
+  assert.ok(native.gates?.[0]?.nextActions?.some((action) => action.includes("--include-work-orders")));
   assert.ok(native.gates?.[0]?.nextActions?.some((action) => action.includes("NATIVE_PARTIAL_ROW_COVERAGE_REPORT")));
 
   const markdown = execFileSync("pnpm", [
@@ -217,6 +221,7 @@ try {
   assert.match(markdown, /P17/);
   assert.match(markdown, /Next actions/);
   assert.match(markdown, /--gate=PROD-NATURE/);
+  assert.match(markdown, /--include-work-orders/);
   assert.match(markdown, /NOTIFICATIONS_NATURE_PARTIAL_ROW_COVERAGE_REPORT/);
   assert.match(markdown, /verify-production-artifact-consistency-contract\.ts/);
 

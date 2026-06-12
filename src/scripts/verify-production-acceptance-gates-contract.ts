@@ -703,6 +703,7 @@ assert.match(contents.gates, /source matrix\/gate-map\/production-gates paths wi
 assert.match(contents.gates, /verify-production-preflight-artifacts-contract\.ts/);
 assert.match(contents.gates, /`--blocking-only` to show only gates that still block partial parity rows/);
 assert.match(contents.gates, /focused coverage artifact pointer names/);
+assert.match(contents.gates, /ready-to-run private readiness template commands with `--include-work-orders`/);
 assert.match(contents.gates, /focused artifact consistency verification commands/);
 assert.match(contents.cutoverRunbook, /render-production-readiness-env-template\.ts --out=\/secure\/private-readiness\.env/);
 assert.match(contents.cutoverRunbook, /render-production-readiness-env-template\.ts --out=\/secure\/private-readiness\.env --include-work-orders/);
