@@ -15,6 +15,7 @@ Copy this template into the production release record or ticket system after eac
 | Redacted readiness report | non-secret JSON report id/path |
 | Redacted readiness report SHA-256 | sha256 digest |
 | Redacted closeout summary | non-secret JSON report id/path |
+| Redacted closeout summary SHA-256 | sha256 digest |
 | Partial gate report | non-secret JSON report id/path |
 | Partial gate report SHA-256 | sha256 digest |
 | Production evidence checklist | non-secret JSON report id/path |

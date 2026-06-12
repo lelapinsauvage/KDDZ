@@ -608,6 +608,7 @@ function filledValueFor(field: string, artifactPaths: ArtifactPaths) {
   if (field === "Redacted readiness report") return artifactPaths.readinessReportPath;
   if (field === "Redacted readiness report SHA-256") return artifactPaths.readinessReportDigest;
   if (field === "Redacted closeout summary") return artifactPaths.closeoutSummaryPath;
+  if (field === "Redacted closeout summary SHA-256") return "verified in evidence package manifest";
   if (field === "Partial gate report") return artifactPaths.partialReportPath;
   if (field === "Partial gate report SHA-256") return artifactPaths.partialReportDigest;
   if (field === "Production evidence checklist") return artifactPaths.checklistReportPath;

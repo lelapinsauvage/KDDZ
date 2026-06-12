@@ -24,7 +24,7 @@ try {
     stdio: "ignore",
   });
   writeFileSync(readinessPath, `${JSON.stringify(readinessReport(), null, 2)}\n`, "utf8");
-  writeFileSync(closeoutSummaryPath, `${JSON.stringify({ status: "production closeout verified", schemaVersion: 1, generatedAt, redacted: true }, null, 2)}\n`, "utf8");
+  writeFileSync(closeoutSummaryPath, `${JSON.stringify(closeoutSummary(), null, 2)}\n`, "utf8");
 
   const output = execFileSync("pnpm", [
     "tsx",
@@ -51,6 +51,7 @@ try {
   assert.match(record, /\| Acceptance date \| 2026-06-10 \|/);
   assert.match(record, /\| Modern branch\/commit \| `legacy-parity-runbook` \/ 0404c6a \|/);
   assert.match(record, new RegExp(`\\| Redacted readiness report SHA-256 \\| ${sha256File(readinessPath)} \\|`));
+  assert.match(record, /\| Redacted closeout summary SHA-256 \| verified in evidence package manifest \|/);
   assert.match(record, new RegExp(`\\| Partial gate report SHA-256 \\| ${sha256File(partialPath)} \\|`));
   assert.match(record, new RegExp(`\\| Production evidence checklist SHA-256 \\| ${sha256File(checklistPath)} \\|`));
 
@@ -143,6 +144,19 @@ function readinessReport() {
     gates,
     providers: [],
     note: "No environment values, URLs, tokens, keys, passwords, or report contents are included.",
+  };
+}
+
+function closeoutSummary() {
+  return {
+    status: "production closeout verified",
+    schemaVersion: 1,
+    generatedAt,
+    generatedFrom: {
+      matrix: "docs/page-parity-matrix.json",
+      gateMap: "docs/partial-production-gate-map.md",
+    },
+    redacted: true,
   };
 }
 

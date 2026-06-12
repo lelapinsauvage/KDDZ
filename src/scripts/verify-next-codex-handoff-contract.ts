@@ -102,6 +102,8 @@ for (const expected of [
   "preflight verifier now requires the blocker-status report plus nested focused manifest to match those recorded source paths",
   "all bundled JSON artifacts to share the preflight `generatedAt`",
   "render-production-acceptance-evidence-record.ts",
+  "computes readiness, partial, and checklist SHA-256 values",
+  "records that the closeout summary hash is verified in the evidence package manifest",
   "verify-production-gate-status-contract.ts",
   "verify-production-acceptance-evidence-renderer-contract.ts",
 ]) {

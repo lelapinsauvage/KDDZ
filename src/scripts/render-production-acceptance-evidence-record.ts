@@ -18,6 +18,7 @@ const productionApprover = optionValue("--production-approver") ?? "release-tick
 const approval = optionValue("--approval") ?? "release-ticket-verified";
 const remainingTickets = optionValue("--remaining-production-tickets") ?? "none";
 const releaseDecision = optionValue("--release-decision") ?? "accepted";
+const closeoutDigest = optionValue("--summary-digest") ?? "verified in evidence package manifest";
 
 if (!outputPath) {
   console.error(
@@ -70,6 +71,7 @@ const verification = spawnSync("pnpm", [
   `--partial-report=${partialReportPath}`,
   `--checklist-report=${checklistReportPath}`,
   `--readiness-digest=${readinessDigest}`,
+  ...optionalArg("--summary-digest", optionValue("--summary-digest")),
   `--partial-digest=${partialDigest}`,
   `--checklist-digest=${checklistDigest}`,
   `--branch=${branch}`,
@@ -134,6 +136,7 @@ function filledValueFor(field: string) {
   if (field === "Redacted readiness report") return readinessReportPath;
   if (field === "Redacted readiness report SHA-256") return readinessDigest;
   if (field === "Redacted closeout summary") return closeoutSummaryPath;
+  if (field === "Redacted closeout summary SHA-256") return closeoutDigest;
   if (field === "Partial gate report") return partialReportPath;
   if (field === "Partial gate report SHA-256") return partialDigest;
   if (field === "Production evidence checklist") return checklistReportPath;
@@ -181,6 +184,10 @@ function assertDate(value: string) {
     console.error("--acceptance-date must use YYYY-MM-DD");
     process.exit(2);
   }
+}
+
+function optionalArg(name: string, value: string | null) {
+  return value ? [`${name}=${value}`] : [];
 }
 
 function assertNoSensitiveOutput(output: string) {

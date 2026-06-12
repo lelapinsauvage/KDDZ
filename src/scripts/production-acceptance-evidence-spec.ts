@@ -16,6 +16,7 @@ export const requiredProductionEvidenceSections: SectionSpec[] = [
       "Redacted readiness report",
       "Redacted readiness report SHA-256",
       "Redacted closeout summary",
+      "Redacted closeout summary SHA-256",
       "Partial gate report",
       "Partial gate report SHA-256",
       "Production evidence checklist",
