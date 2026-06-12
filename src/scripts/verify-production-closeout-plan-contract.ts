@@ -78,6 +78,10 @@ for (const gate of ["PROD-CRON", "PROD-PROVIDERS", "PROD-NATIVE", "PROD-NATURE"]
   assert.ok((entry.blockingRows?.length ?? 0) > 0, `${gate} should list blocking rows`);
   assert.match(entry.envTemplateCommand ?? "", new RegExp(`render-production-readiness-env-template\\.ts --gate=${gate}`));
   assert.match(entry.envTemplateCommand ?? "", /--include-work-orders/);
+  assert.match(entry.envTemplateCommand ?? "", new RegExp(`--generated-at=${generatedAt}`));
+  assert.match(entry.envTemplateCommand ?? "", /--release-branch=legacy-parity-runbook/);
+  assert.match(entry.envTemplateCommand ?? "", /--release-commit=<release-commit-sha>/);
+  assert.match(entry.envTemplateCommand ?? "", /--acceptance-date=<YYYY-MM-DD>/);
   assert.equal(entry.focusedArtifactCommands?.length, 3);
   assert.equal(entry.evidenceWorkOrder?.externalDependency, "production evidence");
   assert.match(entry.evidenceWorkOrder?.finishCondition ?? "", new RegExp(`Set every ${gate} evidence pointer`));
@@ -143,6 +147,11 @@ assert.ok(boundPlan.finalCloseoutCommands?.some((command) =>
 assert.ok(boundPlan.finalCloseoutCommands?.every((command) => !command.includes("<release-commit-sha>")));
 assert.ok(boundPlan.finalCloseoutCommands?.every((command) => !command.includes("<YYYY-MM-DD>")));
 assert.ok(boundPlan.finalCloseoutCommands?.every((command) => !command.includes("<release-generated-at-iso>")));
+assert.ok(boundPlan.gates?.every((gate) => gate.envTemplateCommand?.includes("--release-commit=0d26d0c")));
+assert.ok(boundPlan.gates?.every((gate) => gate.envTemplateCommand?.includes("--acceptance-date=2026-06-12")));
+assert.ok(boundPlan.gates?.every((gate) => gate.envTemplateCommand?.includes(`--generated-at=${generatedAt}`)));
+assert.ok(boundPlan.gates?.every((gate) => !gate.envTemplateCommand?.includes("<release-commit-sha>")));
+assert.ok(boundPlan.gates?.every((gate) => !gate.envTemplateCommand?.includes("<YYYY-MM-DD>")));
 assertNoSensitiveOutput(boundOutput);
 
 const markdown = execFileSync("pnpm", [
