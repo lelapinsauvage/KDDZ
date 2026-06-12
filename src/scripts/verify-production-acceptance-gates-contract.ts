@@ -587,8 +587,10 @@ assert.match(contents.gates, /--manifest=\/tmp\/kiddzonl-production-evidence-pac
 assert.match(contents.gates, /`generatedAt` metadata for JSON artifacts/);
 assert.match(contents.gates, /top-level `generatedAt` timestamp from the closeout summary/);
 assert.match(contents.gates, /Package verification requires the closeout summary, readiness report, partial report, evidence checklist, and preflight manifest to share that same `generatedAt` timestamp/);
-assert.match(contents.gates, /preflight `blockingGateSummary` and closeout-plan artifact hash from the archived preflight bundle/);
+assert.match(contents.gates, /preflight `blockingGateSummary`, closeout-plan artifact hash, and redacted closeout-plan work-order summary from the archived preflight bundle/);
+assert.match(contents.gates, /redacted closeout-plan work-order summary from the archived preflight bundle/);
 assert.match(contents.gates, /nested closeout-plan artifact digest/);
+assert.match(contents.gates, /packaged closeout-plan work-order rows\/counts/);
 assert.match(contents.gates, /schemaVersion: 1/);
 assert.match(contents.gates, /--branch=<branch>/);
 assert.match(contents.gates, /--commit=<sha>/);

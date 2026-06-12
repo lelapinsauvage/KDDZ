@@ -78,6 +78,7 @@ type PackageManifest = {
   preflight: {
     blockingGateSummary?: BlockingGateSummary;
     closeoutPlan?: ArtifactManifest;
+    closeoutPlanWorkOrders?: CloseoutPlanWorkOrderSummary[];
   };
   closeout: {
     branch?: string;
@@ -127,6 +128,30 @@ type PreflightManifest = {
     };
   };
   blockingGateSummary?: BlockingGateSummary;
+};
+
+type CloseoutPlan = {
+  gates?: Array<{
+    gate?: string;
+    evidenceWorkOrder?: {
+      externalDependency?: string;
+      finishCondition?: string;
+      evidencePointers?: string[];
+      acceptanceCriteria?: string[];
+      focusedCoverageRows?: string[];
+      proofCommands?: string[];
+    };
+  }>;
+};
+
+type CloseoutPlanWorkOrderSummary = {
+  gate: string;
+  externalDependency: "production evidence";
+  finishCondition: string;
+  evidencePointerCount: number;
+  acceptanceCriteriaCount: number;
+  focusedCoverageRows: string[];
+  proofCommandCount: number;
 };
 
 const summaryReportPath = optionValue("--summary-report");
@@ -315,6 +340,16 @@ function verifySelfTestContract() {
     assert.deepEqual(packageManifest.closeout.evidenceChecklistSummary, expectedEvidenceChecklistSummary);
     assert.deepEqual(packageManifest.preflight.blockingGateSummary, readPreflightBlockingGateSummary(preflightManifestPath));
     assert.deepEqual(packageManifest.preflight.closeoutPlan, artifact(closeoutPlanPath));
+    assert.deepEqual(packageManifest.preflight.closeoutPlanWorkOrders, closeoutPlanWorkOrderSummary(closeoutPlanPath));
+    assert.deepEqual(
+      Object.fromEntries((packageManifest.preflight.closeoutPlanWorkOrders ?? []).map((workOrder) => [workOrder.gate, workOrder.focusedCoverageRows.length])),
+      {
+        "PROD-CRON": 9,
+        "PROD-NATIVE": 3,
+        "PROD-NATURE": 1,
+        "PROD-PROVIDERS": 14,
+      }
+    );
     assert.equal(packageManifest.preflight.blockingGateSummary?.blockingGateLinks, 27);
     assert.deepEqual(preflightGateLinkCounts(packageManifest.preflight.blockingGateSummary), {
       "PROD-CRON": 9,
@@ -539,6 +574,7 @@ function verifySelfTestContract() {
     assert.equal(zeroPackageManifest.preflight.blockingGateSummary?.closeoutMode, "ready-for-final-closeout");
     assert.equal(zeroPackageManifest.preflight.blockingGateSummary?.canCloseLocally, true);
     assert.deepEqual(zeroPackageManifest.preflight.closeoutPlan, artifact(zeroCloseoutPlanPath));
+    assert.deepEqual(zeroPackageManifest.preflight.closeoutPlanWorkOrders, []);
     runVerifier([
       `--summary-report=${zeroCloseoutSummaryPath}`,
       `--readiness-report=${zeroReadinessReportPath}`,
@@ -605,6 +641,24 @@ function verifySelfTestContract() {
     assert.equal(preflightGateLinkMismatch.status, 1);
     assert.match(preflightGateLinkMismatch.stderr, /blockingGateLinks: 999/);
     assertNoSensitiveOutput(preflightGateLinkMismatch.stdout + preflightGateLinkMismatch.stderr);
+
+    const preflightWorkOrderMismatchManifestPath = join(tmp, "preflight-work-order-mismatch-evidence-package.json");
+    const preflightWorkOrderMismatchManifest = readJson<PackageManifest>(packageManifestPath);
+    assert.ok(preflightWorkOrderMismatchManifest.preflight.closeoutPlanWorkOrders?.[0]);
+    preflightWorkOrderMismatchManifest.preflight.closeoutPlanWorkOrders[0].focusedCoverageRows = [];
+    writeFileSync(preflightWorkOrderMismatchManifestPath, `${JSON.stringify(preflightWorkOrderMismatchManifest, null, 2)}\n`, "utf8");
+    const preflightWorkOrderMismatch = runVerifier([
+      `--summary-report=${closeoutSummaryPath}`,
+      `--readiness-report=${readinessReportPath}`,
+      `--evidence-record=${evidenceRecordPath}`,
+      `--partial-report=${partialReportPath}`,
+      `--checklist-report=${checklistReportPath}`,
+      `--preflight-manifest=${preflightManifestPath}`,
+      `--manifest=${preflightWorkOrderMismatchManifestPath}`,
+    ], false);
+    assert.equal(preflightWorkOrderMismatch.status, 1);
+    assert.match(preflightWorkOrderMismatch.stderr, /focusedCoverageRows/);
+    assertNoSensitiveOutput(preflightWorkOrderMismatch.stdout + preflightWorkOrderMismatch.stderr);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
@@ -635,6 +689,7 @@ function buildManifest(params: {
     preflight: {
       blockingGateSummary: preflight.blockingGateSummary,
       closeoutPlan: preflightCloseoutPlanArtifact(preflight),
+      closeoutPlanWorkOrders: preflightCloseoutPlanWorkOrders(preflight),
     },
     closeout: {
       branch: params.summary.branch,
@@ -665,6 +720,32 @@ function preflightCloseoutPlanArtifact(preflight: PreflightManifest) {
   assert.equal(closeoutPlan.algorithm ?? "sha256", "sha256", "preflight closeout plan must use sha256");
   assert.equal(manifestDigest, sha256File(closeoutPlan.path), "preflight closeout plan digest drifted");
   return artifact(closeoutPlan.path);
+}
+
+function preflightCloseoutPlanWorkOrders(preflight: PreflightManifest) {
+  const closeoutPlan = preflight.artifacts?.closeoutPlan;
+  assert.ok(closeoutPlan?.path, "preflight manifest is missing closeout plan artifact path");
+  return closeoutPlanWorkOrderSummary(closeoutPlan.path);
+}
+
+function closeoutPlanWorkOrderSummary(path: string): CloseoutPlanWorkOrderSummary[] {
+  const plan = readJson<CloseoutPlan>(path);
+  return (plan.gates ?? []).map((gate) => {
+    assert.ok(gate.gate, "closeout plan work order is missing gate id");
+    const workOrder = gate.evidenceWorkOrder;
+    assert.ok(workOrder, `${gate.gate} is missing evidence work order`);
+    assert.equal(workOrder.externalDependency, "production evidence");
+    assert.ok(workOrder.finishCondition, `${gate.gate} evidence work order is missing finish condition`);
+    return {
+      gate: gate.gate,
+      externalDependency: "production evidence",
+      finishCondition: workOrder.finishCondition,
+      evidencePointerCount: workOrder.evidencePointers?.length ?? 0,
+      acceptanceCriteriaCount: workOrder.acceptanceCriteria?.length ?? 0,
+      focusedCoverageRows: workOrder.focusedCoverageRows ?? [],
+      proofCommandCount: workOrder.proofCommands?.length ?? 0,
+    };
+  });
 }
 
 function preflightGateLinkCounts(summary: BlockingGateSummary | undefined) {
