@@ -38,6 +38,7 @@ const outputPath = optionValue("--out") ?? "/tmp/kiddzonl-production-readiness.j
 const summaryOutputPath = optionValue("--summary-out");
 const partialsOutputPath = optionValue("--partials-out");
 const checklistOutputPath = optionValue("--checklist-out");
+const preflightManifestPath = optionValue("--preflight-manifest");
 const requireZeroPartials = process.argv.includes("--require-zero-partials");
 const branch = optionValue("--branch") ?? gitOutput(["branch", "--show-current"]);
 const commit = optionValue("--commit") ?? gitOutput(["rev-parse", "HEAD"]);
@@ -50,7 +51,7 @@ const partialGateMapPath = optionValue("--partial-gate-map") ?? "docs/partial-pr
 
 if (!envFilePath || !evidenceRecordPath) {
   console.error(
-    "Usage: pnpm tsx src/scripts/run-production-closeout.ts --env-file=<private-readiness.env> --evidence-record=<production-acceptance-evidence.md> [--out=<readiness.json>] [--summary-out=<closeout-summary.json>] [--partials-out=<partials.json>] [--checklist-out=<evidence-checklist.json>] [--branch=<branch>] [--commit=<sha>] [--generated-at=<iso>] [--parity-matrix=<path>] [--partial-gate-map=<path>] [--require-zero-partials]"
+    "Usage: pnpm tsx src/scripts/run-production-closeout.ts --env-file=<private-readiness.env> --evidence-record=<production-acceptance-evidence.md> [--out=<readiness.json>] [--summary-out=<closeout-summary.json>] [--partials-out=<partials.json>] [--checklist-out=<evidence-checklist.json>] [--preflight-manifest=<preflight-artifacts.json>] [--branch=<branch>] [--commit=<sha>] [--generated-at=<iso>] [--parity-matrix=<path>] [--partial-gate-map=<path>] [--require-zero-partials]"
   );
   process.exit(2);
 }
@@ -110,6 +111,7 @@ const artifactDigests = artifactDigestSummary({
   evidenceRecord: evidenceRecordPath,
   partialReport: partialsOutputPath,
   evidenceChecklist: checklistOutputPath,
+  preflightManifest: preflightManifestPath,
 });
 run("pnpm", [
   "tsx",
@@ -119,8 +121,10 @@ run("pnpm", [
   ...optionalArg("--summary-report", summaryOutputPath),
   ...optionalArg("--partial-report", partialsOutputPath),
   ...optionalArg("--checklist-report", checklistOutputPath),
+  ...optionalArg("--preflight-manifest", preflightManifestPath),
   ...optionalDigestArg("--partial-digest", artifactDigests.partialReport?.digest),
   ...optionalDigestArg("--checklist-digest", artifactDigests.evidenceChecklist?.digest),
+  ...optionalDigestArg("--preflight-digest", artifactDigests.preflightManifest?.digest),
   `--branch=${branch}`,
   `--commit=${commit}`,
 ]);
@@ -141,6 +145,7 @@ const summary = {
   evidenceRecord: evidenceRecordPath,
   partialReport: partialsOutputPath ?? null,
   evidenceChecklist: checklistOutputPath ?? null,
+  preflightManifest: preflightManifestPath ?? null,
   partialReportSummary,
   evidenceChecklistSummary,
   artifactDigests,

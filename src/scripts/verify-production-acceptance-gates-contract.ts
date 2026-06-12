@@ -323,6 +323,9 @@ assert.match(partialReporter, /--generated-at must be an ISO timestamp/);
 assert.match(evidenceChecklistReporter, /--generated-at must be an ISO timestamp/);
 assert.match(closeoutRunner, /--generated-at/);
 assert.match(closeoutRunner, /must also include --summary-out, --partials-out, and --checklist-out/);
+assert.match(closeoutRunner, /--preflight-manifest=<preflight-artifacts\.json>/);
+assert.match(closeoutRunner, /preflightManifest: preflightManifestPath/);
+assert.match(closeoutRunner, /--preflight-digest/);
 assert.match(closeoutRunner, /must include explicit --branch and --commit release refs/);
 assert.match(partialReporter, /partial-production-gate-map\.md/);
 assert.match(partialReporter, /page-parity-matrix\.json/);
@@ -515,7 +518,7 @@ assert.match(contents.gates, /artifact SHA-256 digests/);
 assert.match(contents.gates, /artifact consistency status/);
 assert.match(contents.gates, /final closeout cannot fall back to an implicit local git ref/);
 assert.match(contents.gates, /Use the same `--generated-at=<iso>` value/);
-assert.match(contents.gates, /readiness, partial, checklist, and closeout artifacts/);
+assert.match(contents.gates, /readiness, partial, checklist, preflight, and closeout artifacts/);
 assert.match(contents.gates, /verify-production-artifact-consistency-contract\.ts/);
 assert.match(contents.gates, /compares rows, gates, summaries, and gate-map source paths/);
 assert.match(contents.gates, /requires both artifacts to name the same gate-map source path/);
@@ -640,6 +643,7 @@ assert.match(contents.cutoverRunbook, /verify-production-acceptance-evidence-rec
 assert.match(contents.cutoverRunbook, /pnpm run closeout:production/);
 for (const line of contents.cutoverRunbook.split(/\r?\n/).filter((entry) => entry.includes("pnpm run closeout:production"))) {
   assert.match(line, /--generated-at=<release-generated-at-iso>/);
+  assert.match(line, /--preflight-manifest=\/tmp\/kiddzonl-production-preflight-artifacts\/kiddzonl-production-preflight-artifacts\.json/);
 }
 assert.match(contents.cutoverRunbook, /--summary-out=\/tmp\/kiddzonl-production-closeout-summary\.json/);
 assert.match(contents.cutoverRunbook, /--partials-out=\/tmp\/kiddzonl-production-partials\.json/);

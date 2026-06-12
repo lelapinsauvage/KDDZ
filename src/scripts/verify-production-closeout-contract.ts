@@ -23,6 +23,7 @@ try {
   const closeoutSummaryPath = join(tmp, "closeout-summary.json");
   const partialReportPath = join(tmp, "partials.json");
   const checklistReportPath = join(tmp, "evidence-checklist.json");
+  const preflightManifestPath = join(tmp, "preflight-artifacts.json");
   const zeroParityMatrixPath = join(tmp, "zero-page-parity-matrix.json");
   const zeroPartialGateMapPath = join(tmp, "zero-partial-production-gate-map.md");
   const zeroEvidenceRecordPath = join(tmp, "zero-production-acceptance-evidence.md");
@@ -30,6 +31,7 @@ try {
   const zeroCloseoutSummaryPath = join(tmp, "zero-closeout-summary.json");
   const zeroPartialReportPath = join(tmp, "zero-partials.json");
   const zeroChecklistReportPath = join(tmp, "zero-evidence-checklist.json");
+  const zeroPreflightManifestPath = join(tmp, "zero-preflight-artifacts.json");
   writeFileSync(envFilePath, readinessEnvFile(), "utf8");
   execFileSync("pnpm", ["tsx", "src/scripts/report-production-partials.ts", "--json", `--out=${partialReportPath}`, `--generated-at=${generatedAt}`], {
     cwd: process.cwd(),
@@ -39,6 +41,7 @@ try {
     cwd: process.cwd(),
     stdio: "ignore",
   });
+  writeFileSync(preflightManifestPath, preflightManifest(partialReportPath, checklistReportPath), "utf8");
   writeFileSync(
     evidenceRecordPath,
     fillTemplate(template, {
@@ -46,9 +49,11 @@ try {
       closeoutSummaryPath,
       partialReportPath,
       checklistReportPath,
+      preflightManifestPath,
       readinessReportDigest: "verified in closeout summary artifact digests",
       partialReportDigest: sha256File(partialReportPath),
       checklistReportDigest: sha256File(checklistReportPath),
+      preflightManifestDigest: sha256File(preflightManifestPath),
     }),
     "utf8"
   );
@@ -60,6 +65,7 @@ try {
     `--summary-out=${closeoutSummaryPath}`,
     `--partials-out=${partialReportPath}`,
     `--checklist-out=${checklistReportPath}`,
+    `--preflight-manifest=${preflightManifestPath}`,
     "--branch=legacy-parity-runbook",
     "--commit=0404c6a",
     `--generated-at=${generatedAt}`,
@@ -94,6 +100,7 @@ try {
     };
     partialReport?: string | null;
     evidenceChecklist?: string | null;
+    preflightManifest?: string | null;
     partialReportSummary?: { partialRows?: number; gates?: string[]; gateCounts?: Record<string, number> } | null;
     evidenceChecklistSummary?: { gates?: number; requiredFields?: number; blockingPartialRows?: number } | null;
     artifactDigests?: Record<string, { algorithm?: string; digest?: string }>;
@@ -116,6 +123,7 @@ try {
     evidenceRecord: evidenceRecordPath,
     partialReport: partialReportPath,
     evidenceChecklist: checklistReportPath,
+    preflightManifest: preflightManifestPath,
     partialReportSummary: expectedPartialReportSummary,
     evidenceChecklistSummary: expectedEvidenceChecklistSummary,
     artifactDigests: {
@@ -134,6 +142,10 @@ try {
       evidenceChecklist: {
         algorithm: "sha256",
         digest: sha256File(checklistReportPath),
+      },
+      preflightManifest: {
+        algorithm: "sha256",
+        digest: sha256File(preflightManifestPath),
       },
     },
     artifactConsistency: {
@@ -191,6 +203,7 @@ try {
     `--summary-out=${closeoutSummaryPath}`,
     `--partials-out=${partialReportPath}`,
     `--checklist-out=${checklistReportPath}`,
+    `--preflight-manifest=${preflightManifestPath}`,
     "--branch=legacy-parity-runbook",
     "--commit=0404c6a",
     `--generated-at=${generatedAt}`,
@@ -228,6 +241,7 @@ try {
     cwd: process.cwd(),
     stdio: "ignore",
   });
+  writeFileSync(zeroPreflightManifestPath, preflightManifest(zeroPartialReportPath, zeroChecklistReportPath), "utf8");
   writeFileSync(
     zeroEvidenceRecordPath,
     fillTemplate(template, {
@@ -235,9 +249,11 @@ try {
       closeoutSummaryPath: zeroCloseoutSummaryPath,
       partialReportPath: zeroPartialReportPath,
       checklistReportPath: zeroChecklistReportPath,
+      preflightManifestPath: zeroPreflightManifestPath,
       readinessReportDigest: "verified in closeout summary artifact digests",
       partialReportDigest: sha256File(zeroPartialReportPath),
       checklistReportDigest: sha256File(zeroChecklistReportPath),
+      preflightManifestDigest: sha256File(zeroPreflightManifestPath),
     }),
     "utf8"
   );
@@ -248,6 +264,7 @@ try {
     `--summary-out=${zeroCloseoutSummaryPath}`,
     `--partials-out=${zeroPartialReportPath}`,
     `--checklist-out=${zeroChecklistReportPath}`,
+    `--preflight-manifest=${zeroPreflightManifestPath}`,
     "--branch=legacy-parity-runbook",
     "--commit=0404c6a",
     `--generated-at=${generatedAt}`,
@@ -429,9 +446,11 @@ type ArtifactPaths = {
   closeoutSummaryPath: string;
   partialReportPath: string;
   checklistReportPath: string;
+  preflightManifestPath: string;
   readinessReportDigest: string;
   partialReportDigest: string;
   checklistReportDigest: string;
+  preflightManifestDigest: string;
 };
 
 function filledValueFor(field: string, artifactPaths: ArtifactPaths) {
@@ -447,6 +466,8 @@ function filledValueFor(field: string, artifactPaths: ArtifactPaths) {
   if (field === "Partial gate report SHA-256") return artifactPaths.partialReportDigest;
   if (field === "Production evidence checklist") return artifactPaths.checklistReportPath;
   if (field === "Production evidence checklist SHA-256") return artifactPaths.checklistReportDigest;
+  if (field === "Production preflight manifest") return artifactPaths.preflightManifestPath;
+  if (field === "Production preflight manifest SHA-256") return artifactPaths.preflightManifestDigest;
   if (field === "Release decision") return "accepted";
   if (field === "Remaining production tickets") return "none";
   if (field === "Approval link/id") return "release-ticket-verified";
@@ -506,6 +527,41 @@ function zeroPartialGateMapMarkdown() {
     "| --- | --- | --- | --- |",
     "",
   ].join("\n");
+}
+
+function preflightManifest(partialReportPath: string, checklistReportPath: string) {
+  return `${JSON.stringify(
+    {
+      status: "production preflight artifacts verified",
+      schemaVersion: 1,
+      generatedAt,
+      generatedFrom: {
+        matrix: "docs/page-parity-matrix.json",
+        gateMap: "docs/partial-production-gate-map.md",
+      },
+      artifacts: {
+        partialReport: {
+          path: partialReportPath,
+          sha256: sha256File(partialReportPath),
+        },
+        evidenceChecklist: {
+          path: checklistReportPath,
+          sha256: sha256File(checklistReportPath),
+        },
+      },
+      blockingGateSummary: {
+        gates: 4,
+        ready: 8,
+        needsEvidence: 4,
+        blockingPartialRows: 17,
+        missingEvidenceItems: 32,
+        gatesToClose: ["PROD-CRON", "PROD-PROVIDERS", "PROD-NATIVE", "PROD-NATURE"],
+      },
+      redacted: true,
+    },
+    null,
+    2
+  )}\n`;
 }
 
 function partialReportSummary(path: string) {
