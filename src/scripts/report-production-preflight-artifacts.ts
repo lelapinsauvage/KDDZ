@@ -26,6 +26,7 @@ type PreflightManifest = {
     blockingGateStatus: ArtifactRef;
     focusedArtifactsManifest: ArtifactRef;
     closeoutPlan: ArtifactRef;
+    readinessEnvTemplates: Record<string, ArtifactRef>;
   };
   blockingGateSummary: BlockingGateSummary;
   verifiedBy: string[];
@@ -101,6 +102,7 @@ const blockingGateStatusPath = join(outputDir, "kiddzonl-production-blocking-gat
 const closeoutPlanPath = join(outputDir, "kiddzonl-production-closeout-plan.json");
 const focusedArtifactsDir = join(outputDir, "focused");
 const focusedManifestPath = join(focusedArtifactsDir, "kiddzonl-production-focused-artifacts.json");
+const readinessEnvTemplateDir = join(outputDir, "readiness-env");
 
 run("src/scripts/report-production-partials.ts", [
   "--json",
@@ -134,6 +136,7 @@ run("src/scripts/report-production-closeout-plan.ts", [
   `--partial-gate-map=${partialGateMapPath}`,
   `--production-gates=${productionGatesPath}`,
 ]);
+const readinessEnvTemplates = writeReadinessEnvTemplates(readinessEnvTemplateDir);
 run("src/scripts/verify-production-artifact-consistency-contract.ts", [
   `--partial-report=${partialReportPath}`,
   `--checklist-report=${evidenceChecklistPath}`,
@@ -168,6 +171,7 @@ const manifest: PreflightManifest = {
     blockingGateStatus: artifact(blockingGateStatusPath),
     focusedArtifactsManifest: artifact(focusedManifestPath),
     closeoutPlan: artifact(closeoutPlanPath),
+    readinessEnvTemplates,
   },
   blockingGateSummary,
   verifiedBy: [
@@ -195,6 +199,27 @@ function artifact(path: string): ArtifactRef {
     algorithm: "sha256",
     digest: createHash("sha256").update(readFileSync(path)).digest("hex"),
   };
+}
+
+function writeReadinessEnvTemplates(outputDir: string) {
+  mkdirSync(outputDir, { recursive: true });
+  const templates: Record<string, { gate?: string; path: string }> = {
+    full: { path: join(outputDir, "private-readiness.env") },
+    cron: { gate: "PROD-CRON", path: join(outputDir, "private-readiness-cron.env") },
+    provider: { gate: "PROD-PROVIDERS", path: join(outputDir, "private-readiness-provider.env") },
+    native: { gate: "PROD-NATIVE", path: join(outputDir, "private-readiness-native.env") },
+    nature: { gate: "PROD-NATURE", path: join(outputDir, "private-readiness-nature.env") },
+  };
+  for (const template of Object.values(templates)) {
+    run("src/scripts/render-production-readiness-env-template.ts", [
+      "--include-work-orders",
+      `--out=${template.path}`,
+      ...optionalArg("--gate", template.gate),
+    ]);
+  }
+  return Object.fromEntries(
+    Object.entries(templates).map(([key, template]) => [key, artifact(template.path)])
+  );
 }
 
 function summarizeBlockingGateStatus(path: string): BlockingGateSummary {
@@ -249,6 +274,10 @@ function optionValue(name: string) {
   if (index >= 0) return process.argv[index + 1] ?? null;
 
   return null;
+}
+
+function optionalArg(name: string, value: string | null | undefined) {
+  return value ? [`${name}=${value}`] : [];
 }
 
 function generatedAtValue() {

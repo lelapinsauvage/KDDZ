@@ -47,6 +47,7 @@ type PreflightManifest = {
     blockingGateStatus?: ArtifactRef;
     focusedArtifactsManifest?: ArtifactRef;
     closeoutPlan?: ArtifactRef;
+    readinessEnvTemplates?: Record<string, ArtifactRef>;
   };
   blockingGateSummary?: BlockingGateSummary;
   verifiedBy?: string[];
@@ -186,6 +187,7 @@ verifyArtifactRef("evidence checklist", manifest.artifacts?.evidenceChecklist);
 verifyArtifactRef("blocking gate status", manifest.artifacts?.blockingGateStatus);
 verifyArtifactRef("focused artifacts manifest", manifest.artifacts?.focusedArtifactsManifest);
 verifyArtifactRef("closeout plan", manifest.artifacts?.closeoutPlan);
+verifyReadinessEnvTemplates(manifest.artifacts?.readinessEnvTemplates);
 
 const partialReport = readJson<PartialReport>(manifest.artifacts?.partialReport?.path ?? "");
 const evidenceChecklist = readJson<EvidenceChecklist>(manifest.artifacts?.evidenceChecklist?.path ?? "");
@@ -278,6 +280,35 @@ function verifyArtifactRef(label: string, artifact: ArtifactRef | undefined) {
   assert.match(artifact.digest ?? "", /^[a-f0-9]{64}$/, `${label} digest must be a sha256 hex value`);
   assert.equal(artifact.digest, sha256File(artifact.path), `${label} digest drifted`);
   assertNoSensitiveOutput(readFileSync(artifact.path, "utf8"));
+}
+
+function verifyReadinessEnvTemplates(templates: Record<string, ArtifactRef> | undefined) {
+  assert.deepEqual(Object.keys(templates ?? {}).sort(), ["cron", "full", "native", "nature", "provider"]);
+  const expectedScopes: Record<string, string> = {
+    full: "all production acceptance gates",
+    cron: "PROD-CRON",
+    provider: "PROD-PROVIDERS",
+    native: "PROD-NATIVE",
+    nature: "PROD-NATURE",
+  };
+  for (const [key, artifact] of Object.entries(templates ?? {})) {
+    verifyArtifactRef(`readiness env template ${key}`, artifact);
+    const text = readFileSync(artifact.path ?? "", "utf8");
+    assert.match(text, new RegExp(`# Scope: ${expectedScopes[key]}`), `${key} readiness env template scope drifted`);
+    assert.match(text, /replace-me/, `${key} readiness env template must keep placeholders`);
+    assertReadinessEnvTemplatePlaceholders(text, key);
+    if (key !== "full") {
+      assert.match(text, new RegExp(`Finish condition: Set every ${expectedScopes[key]} evidence pointer`), `${key} readiness env template is missing work order finish condition`);
+      assert.match(text, new RegExp(`--gate=${expectedScopes[key]}`), `${key} readiness env template is missing focused proof command`);
+    }
+  }
+}
+
+function assertReadinessEnvTemplatePlaceholders(text: string, key: string) {
+  for (const line of text.split(/\r?\n/)) {
+    if (!line || line.startsWith("#")) continue;
+    assert.match(line, /^[A-Z_][A-Z0-9_]*=replace-me$/, `${key} readiness env template contains a non-placeholder assignment`);
+  }
 }
 
 function readJson<T>(path: string) {

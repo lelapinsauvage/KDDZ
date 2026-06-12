@@ -48,6 +48,7 @@ type PreflightManifest = {
     blockingGateStatus?: ArtifactRef;
     focusedArtifactsManifest?: ArtifactRef;
     closeoutPlan?: ArtifactRef;
+    readinessEnvTemplates?: Record<string, ArtifactRef>;
   };
   blockingGateSummary?: BlockingGateSummary;
   verifiedBy?: string[];
@@ -189,6 +190,7 @@ try {
   verifyArtifactRef("blocking gate status", manifest.artifacts?.blockingGateStatus);
   verifyArtifactRef("focused artifacts manifest", manifest.artifacts?.focusedArtifactsManifest);
   verifyArtifactRef("closeout plan", manifest.artifacts?.closeoutPlan);
+  verifyReadinessEnvTemplates(manifest.artifacts?.readinessEnvTemplates);
 
   const partial = readJson<PartialReport>(manifest.artifacts?.partialReport?.path ?? "");
   const checklist = readJson<EvidenceChecklist>(manifest.artifacts?.evidenceChecklist?.path ?? "");
@@ -281,6 +283,9 @@ try {
   assert.ok(closeoutPlan.gates?.every((gate) => gate.evidenceWorkOrder?.proofCommands?.some((command) => command.includes(`--gate=${gate.gate}`))));
   assert.ok(closeoutPlan.finalCloseoutCommands?.some((command) => command.includes("verify-production-preflight-artifacts-manifest.ts")));
   assert.ok(closeoutPlan.finalCloseoutCommands?.some((command) => command.includes("--manifest=/tmp/kiddzonl-production-evidence-package.json")));
+
+  assert.match(readFileSync(manifest.artifacts?.readinessEnvTemplates?.provider?.path ?? "", "utf8"), /Finish condition: Set every PROD-PROVIDERS evidence pointer/);
+  assert.match(readFileSync(manifest.artifacts?.readinessEnvTemplates?.cron?.path ?? "", "utf8"), /CRON_PARTIAL_ROW_COVERAGE_REPORT=replace-me/);
 
   const missingOutDir = spawnSync("pnpm", ["tsx", "src/scripts/report-production-preflight-artifacts.ts"], {
     cwd: process.cwd(),
@@ -402,6 +407,27 @@ try {
   });
   assert.equal(gateLinkMismatch.status, 1);
   assert.match(gateLinkMismatch.stderr, /blockingGateLinks: 999/);
+
+  const envTemplateMismatchManifest = JSON.parse(JSON.stringify(manifest)) as PreflightManifest;
+  const envTemplatePath = envTemplateMismatchManifest.artifacts?.readinessEnvTemplates?.cron?.path;
+  assert.ok(envTemplatePath);
+  assert.ok(envTemplateMismatchManifest.artifacts?.readinessEnvTemplates?.cron);
+  const originalEnvTemplate = readFileSync(envTemplatePath, "utf8");
+  writeFileSync(envTemplatePath, originalEnvTemplate.replace("CRON_PARTIAL_ROW_COVERAGE_REPORT=replace-me", "CRON_PARTIAL_ROW_COVERAGE_REPORT=done"), "utf8");
+  envTemplateMismatchManifest.artifacts.readinessEnvTemplates.cron.digest = sha256File(envTemplatePath);
+  const envTemplateMismatchPath = join(tmp, "env-template-mismatch-preflight-artifacts.json");
+  writeFileSync(envTemplateMismatchPath, `${JSON.stringify(envTemplateMismatchManifest, null, 2)}\n`, "utf8");
+  const envTemplateMismatch = spawnSync("pnpm", [
+    "tsx",
+    "src/scripts/verify-production-preflight-artifacts-manifest.ts",
+    `--manifest=${envTemplateMismatchPath}`,
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.equal(envTemplateMismatch.status, 1);
+  assert.match(envTemplateMismatch.stderr, /replace-me/);
+  writeFileSync(envTemplatePath, originalEnvTemplate, "utf8");
 
   const workOrderMismatchManifest = JSON.parse(JSON.stringify(manifest)) as PreflightManifest;
   const workOrderMismatchPlanPath = workOrderMismatchManifest.artifacts?.closeoutPlan?.path;
@@ -526,6 +552,13 @@ function verifyArtifactRef(label: string, artifact: ArtifactRef | undefined) {
   assert.match(artifact.digest ?? "", /^[a-f0-9]{64}$/, `${label} digest must be sha256 hex`);
   assert.equal(artifact.digest, sha256File(artifact.path), `${label} digest drifted`);
   assertNoSensitiveOutput(readFileSync(artifact.path, "utf8"));
+}
+
+function verifyReadinessEnvTemplates(templates: Record<string, ArtifactRef> | undefined) {
+  assert.deepEqual(Object.keys(templates ?? {}).sort(), ["cron", "full", "native", "nature", "provider"]);
+  for (const artifact of Object.values(templates ?? {})) {
+    verifyArtifactRef("readiness env template", artifact);
+  }
 }
 
 function readJson<T>(path: string) {
