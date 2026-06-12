@@ -3,6 +3,23 @@ import { execFileSync, spawnSync } from "node:child_process";
 
 const script = "src/scripts/report-production-evidence-checklist.ts";
 
+type PartialReport = {
+  summary?: {
+    partialRows?: number;
+  };
+  rows?: Array<{
+    row?: string;
+    gates?: string[];
+  }>;
+};
+
+const partialReport = JSON.parse(
+  execFileSync("pnpm", ["tsx", "src/scripts/report-production-partials.ts", "--json"], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  })
+) as PartialReport;
+
 const jsonOutput = execFileSync("pnpm", ["tsx", script, "--json"], {
   cwd: process.cwd(),
   encoding: "utf8",
@@ -21,7 +38,7 @@ assert.equal(payload.schemaVersion, 1);
 assertValidIsoTimestamp(payload.generatedAt, "evidence checklist generatedAt");
 assert.equal(payload.summary?.gates, 12);
 assert.equal(payload.summary?.requiredFields, 73);
-assert.equal(payload.summary?.blockingPartialRows, 17);
+assert.equal(payload.summary?.blockingPartialRows, partialReport.summary?.partialRows);
 assert.equal(payload.gates?.length, 12);
 assert.equal(payload.gates?.[0]?.gate, "PROD-DUMPS");
 assert.equal(payload.gates?.[11]?.gate, "PROD-BACKFILL");
@@ -38,9 +55,7 @@ assert.deepEqual(providerGate.requiredFields, [
   "Provider response ids recorded without secrets",
   "Provider partial row coverage reviewed",
 ]);
-assert.equal(providerGate.blockingPartialRows?.length, 14);
-assert.equal(providerGate.blockingPartialRows?.[0]?.row, "P01");
-assert.equal(providerGate.blockingPartialRows?.[13]?.row, "P17");
+assert.deepEqual(providerGate.blockingPartialRows?.map((row) => row.row), rowsForGate("PROD-PROVIDERS"));
 
 const cronOutput = execFileSync("pnpm", ["tsx", script, "--json", "--gate=PROD-CRON"], {
   cwd: process.cwd(),
@@ -49,9 +64,10 @@ const cronOutput = execFileSync("pnpm", ["tsx", script, "--json", "--gate=PROD-C
 const cronPayload = JSON.parse(cronOutput) as typeof payload;
 assert.equal(cronPayload.summary?.gates, 1);
 assert.equal(cronPayload.summary?.requiredFields, 8);
-assert.equal(cronPayload.summary?.blockingPartialRows, 9);
+assert.equal(cronPayload.summary?.blockingPartialRows, rowsForGate("PROD-CRON").length);
 assert.equal(cronPayload.summary?.gateFilter, "PROD-CRON");
 assert.equal(cronPayload.gates?.[0]?.gate, "PROD-CRON");
+assert.deepEqual(cronPayload.gates?.[0]?.blockingPartialRows?.map((row) => row.row), rowsForGate("PROD-CRON"));
 assert.ok(cronPayload.gates?.[0]?.requiredFields?.includes("Cron partial row coverage reviewed"));
 
 const natureOutput = execFileSync("pnpm", ["tsx", script, "--json", "--gate=PROD-NATURE"], {
@@ -61,9 +77,10 @@ const natureOutput = execFileSync("pnpm", ["tsx", script, "--json", "--gate=PROD
 const naturePayload = JSON.parse(natureOutput) as typeof payload;
 assert.equal(naturePayload.summary?.gates, 1);
 assert.equal(naturePayload.summary?.requiredFields, 6);
-assert.equal(naturePayload.summary?.blockingPartialRows, 1);
+assert.equal(naturePayload.summary?.blockingPartialRows, rowsForGate("PROD-NATURE").length);
 assert.equal(naturePayload.summary?.gateFilter, "PROD-NATURE");
 assert.equal(naturePayload.gates?.[0]?.gate, "PROD-NATURE");
+assert.deepEqual(naturePayload.gates?.[0]?.blockingPartialRows?.map((row) => row.row), rowsForGate("PROD-NATURE"));
 assert.ok(naturePayload.gates?.[0]?.requiredFields?.includes("Nature partial row coverage reviewed"));
 
 const markdownOutput = execFileSync("pnpm", ["tsx", script, "--gate=PROD-NATIVE"], {
@@ -75,7 +92,9 @@ assert.match(markdownOutput, /Generated at: \d{4}-\d{2}-\d{2}T/);
 assert.match(markdownOutput, /## PROD-NATIVE/);
 assert.match(markdownOutput, /iOS build tested against `master.php`/);
 assert.match(markdownOutput, /Native partial row coverage reviewed/);
-assert.match(markdownOutput, /P17/);
+for (const row of rowsForGate("PROD-NATIVE")) {
+  assert.match(markdownOutput, new RegExp(row));
+}
 
 const frozenOutput = execFileSync("pnpm", ["tsx", script, "--json", "--generated-at=2026-06-10T00:00:00.000Z"], {
   cwd: process.cwd(),
@@ -103,4 +122,15 @@ console.log("production evidence checklist contract assertions passed");
 function assertValidIsoTimestamp(value: string | undefined, label: string) {
   assert.ok(value, `${label} is missing`);
   assert.equal(new Date(value).toISOString(), value, `${label} must be an ISO timestamp`);
+}
+
+function rowsForGate(gate: string) {
+  return (partialReport.rows ?? [])
+    .filter((row) => row.gates?.includes(gate))
+    .map((row) => row.row)
+    .filter(isString);
+}
+
+function isString(value: unknown): value is string {
+  return typeof value === "string";
 }
