@@ -574,6 +574,7 @@ assert.match(contents.gates, /Use the same `--generated-at=<iso>` value/);
 assert.match(contents.gates, /readiness, partial, checklist, preflight, and closeout artifacts/);
 assert.match(contents.gates, /verify-production-artifact-consistency-contract\.ts/);
 assert.match(contents.gates, /compares rows, gates, summaries, gate-map source paths, and production-gates source paths/);
+assert.match(contents.gates, /fails immediately after generating and consistency-checking the archived partial\/checklist artifacts if the tracker still has partial rows, before validating the final acceptance record/);
 assert.match(contents.gates, /requires both artifacts to name the same gate-map and production-gates source paths/);
 assert.match(contents.gates, /verify-production-closeout-summary-contract\.ts/);
 assert.match(contents.gates, /verify-production-evidence-package-contract\.ts/);

@@ -89,6 +89,8 @@ for (const expected of [
   "`388567c chore: generate production preflight artifacts`",
   "`fc63539 chore: focus production gate status on blockers`",
   "`f200c9e chore: generate production readiness env template`",
+  "`cacf7ef chore: fail zero-partial closeout early`",
+  "fails immediately after generating and consistency-checking the partial/checklist artifacts when `--require-zero-partials` sees unresolved partial rows, before validating the final acceptance record",
   "17 unique blocking partial rows, 27 blocking gate links",
   "`closeoutMode: \"external-production-evidence\"`",
   "`canCloseLocally: false`",
