@@ -389,7 +389,7 @@ function verifySelfTestContract() {
     const staleFinalSummaryPath = join(tmp, "stale-final-summary.json");
     const staleFinalSummary = readJson<CloseoutSummary>(closeoutSummaryPath);
     staleFinalSummary.requireZeroPartials = true;
-    staleFinalSummary.parityTracker = { total: 1713, complete: 1713, partial: 0, donePct: 100, leftPct: 0 };
+    staleFinalSummary.parityTracker = parityTrackerSummary(zeroParityMatrixPath);
     if (staleFinalSummary.generatedFrom) {
       staleFinalSummary.generatedFrom.matrix = zeroParityMatrixPath;
     }

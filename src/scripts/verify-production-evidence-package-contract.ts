@@ -456,13 +456,7 @@ function verifySelfTestContract() {
       gateCounts: {},
     });
     assert.equal(zeroPackageManifest.closeout.evidenceChecklistSummary?.blockingPartialRows, 0);
-    assert.deepEqual(zeroPackageManifest.closeout.parityTracker, {
-      total: 1713,
-      complete: 1713,
-      partial: 0,
-      donePct: 100,
-      leftPct: 0,
-    });
+    assert.deepEqual(zeroPackageManifest.closeout.parityTracker, parityTrackerSummary(zeroParityMatrixPath));
     assert.equal(zeroPackageManifest.closeout.requireZeroPartials, true);
     runVerifier([
       `--summary-report=${zeroCloseoutSummaryPath}`,
@@ -900,6 +894,37 @@ function evidenceChecklistSummary(path: string) {
     requiredFields: report.summary?.requiredFields ?? null,
     blockingPartialRows: report.summary?.blockingPartialRows ?? null,
   };
+}
+
+function parityTrackerSummary(path: string) {
+  const matrix = JSON.parse(readFileSync(path, "utf8")) as unknown;
+  let total = 0;
+  let partial = 0;
+
+  function walk(value: unknown): void {
+    if (Array.isArray(value)) {
+      value.forEach(walk);
+      return;
+    }
+    if (!value || typeof value !== "object") {
+      return;
+    }
+
+    const row = value as { status?: unknown };
+    if (typeof row.status === "string") {
+      total += 1;
+      if (row.status.toLowerCase().startsWith("partial")) {
+        partial += 1;
+      }
+    }
+    Object.values(row).forEach(walk);
+  }
+
+  walk(matrix);
+  const complete = total - partial;
+  const donePct = Math.round((complete / total) * 1000) / 10;
+  const leftPct = Math.round((100 - donePct) * 10) / 10;
+  return { total, complete, partial, donePct, leftPct };
 }
 
 function ensureParentDir(path: string) {

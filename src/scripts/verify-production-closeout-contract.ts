@@ -298,13 +298,7 @@ try {
     gateCounts: {},
   });
   assert.equal(zeroCloseoutPayload.evidenceChecklistSummary?.blockingPartialRows, 0);
-  assert.deepEqual(zeroCloseoutPayload.parityTracker, {
-    total: 1713,
-    complete: 1713,
-    partial: 0,
-    donePct: 100,
-    leftPct: 0,
-  });
+  assert.deepEqual(zeroCloseoutPayload.parityTracker, parityTrackerSummary(zeroParityMatrixPath));
   assert.equal(zeroCloseoutPayload.requireZeroPartials, true);
   assert.equal(zeroCloseoutPayload.artifactConsistency?.status, "verified");
 
