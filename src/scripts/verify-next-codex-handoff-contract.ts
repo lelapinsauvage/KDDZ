@@ -87,6 +87,8 @@ for (const expected of [
   "`33899e2 chore: expose checklist source provenance`",
   "`8557360 chore: verify production preflight manifests`",
   "`388567c chore: generate production preflight artifacts`",
+  "`06aa0df chore: preserve preflight closeout summary`",
+  "including `blockingGateLinks`, `closeoutMode`, and `canCloseLocally`",
   "`fc63539 chore: focus production gate status on blockers`",
   "`f200c9e chore: generate production readiness env template`",
   "`cacf7ef chore: fail zero-partial closeout early`",

@@ -606,6 +606,8 @@ assert.match(contents.gates, /--production-gates=<path>/);
 assert.match(contents.gates, /report-production-focused-artifacts\.ts/);
 assert.match(contents.gates, /report-production-preflight-artifacts\.ts/);
 assert.match(contents.gates, /requiring `sourceAlignment\.status=verified`/);
+assert.match(contents.gates, /unique blocking rows, total blocking gate links, missing evidence count, `closeoutMode`, `canCloseLocally`, and per-gate next actions/);
+assert.match(contents.gates, /rejecting drift in `blockingGateSummary`, including `blockingGateLinks`, `closeoutMode`, or `canCloseLocally`/);
 assert.match(contents.gates, /report-production-gate-status\.ts/);
 assert.match(contents.gates, /--require-ready/);
 assert.match(contents.gates, /--require-no-blockers/);
