@@ -226,12 +226,12 @@ Stop the cutover if either native app crashes on parser-safe endpoints, if produ
 
 Populate `docs/production-acceptance-evidence-template.md` in the release record, not with private data in the repo. The Run Metadata section must name the archived redacted readiness report, closeout summary, partial gate report, production evidence checklist, and production preflight manifest.
 
-Before running final closeout, archive `report-production-closeout-plan.ts --json` and inspect its per-gate evidence work orders. Each work order must have its evidence pointers filled in the private readiness env, focused coverage rows archived, and proof commands rerun successfully.
+Before running final closeout, archive `report-production-closeout-plan.ts --json` and inspect its per-gate evidence work orders. Use `--release-branch=<branch>`, `--release-commit=<sha>`, and `--acceptance-date=<YYYY-MM-DD>` when rendering the final command list so every generated closeout/evidence-package command is bound to the exact pushed release ref. Each work order must have its evidence pointers filled in the private readiness env, focused coverage rows archived, and proof commands rerun successfully.
 
 Final command:
 
 ```bash
-pnpm tsx src/scripts/report-production-closeout-plan.ts --json --out=/tmp/kiddzonl-production-closeout-plan.json --generated-at=<release-generated-at-iso>
+pnpm tsx src/scripts/report-production-closeout-plan.ts --json --out=/tmp/kiddzonl-production-closeout-plan.json --generated-at=<release-generated-at-iso> --release-branch=legacy-parity-runbook --release-commit=<release-commit-sha> --acceptance-date=<YYYY-MM-DD>
 pnpm tsx src/scripts/verify-production-preflight-artifacts-manifest.ts --manifest=/tmp/kiddzonl-production-preflight-artifacts/kiddzonl-production-preflight-artifacts.json
 pnpm tsx src/scripts/render-production-acceptance-evidence-record.ts --out=/secure/production-acceptance-evidence.md --readiness-report=/tmp/kiddzonl-production-readiness.json --summary-report=/tmp/kiddzonl-production-closeout-summary.json --partial-report=/tmp/kiddzonl-production-partials.json --checklist-report=/tmp/kiddzonl-production-evidence-checklist.json --preflight-manifest=/tmp/kiddzonl-production-preflight-artifacts/kiddzonl-production-preflight-artifacts.json --branch=legacy-parity-runbook --commit=<release-commit-sha> --acceptance-date=<YYYY-MM-DD>
 pnpm run closeout:production -- --env-file=/secure/private-readiness.env --evidence-record=/secure/production-acceptance-evidence.md --out=/tmp/kiddzonl-production-readiness.json --summary-out=/tmp/kiddzonl-production-closeout-summary.json --partials-out=/tmp/kiddzonl-production-partials.json --checklist-out=/tmp/kiddzonl-production-evidence-checklist.json --preflight-manifest=/tmp/kiddzonl-production-preflight-artifacts/kiddzonl-production-preflight-artifacts.json --branch=legacy-parity-runbook --commit=<release-commit-sha> --generated-at=<release-generated-at-iso> --require-zero-partials

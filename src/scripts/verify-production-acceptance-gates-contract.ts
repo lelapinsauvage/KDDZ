@@ -618,6 +618,10 @@ assert.match(contents.gates, /--production-gates=<path>/);
 assert.match(contents.gates, /report-production-focused-artifacts\.ts/);
 assert.match(contents.gates, /report-production-preflight-artifacts\.ts/);
 assert.match(contents.gates, /report-production-closeout-plan\.ts/);
+assert.match(contents.gates, /--release-branch=<branch>/);
+assert.match(contents.gates, /--release-commit=<sha>/);
+assert.match(contents.gates, /--acceptance-date=<YYYY-MM-DD>/);
+assert.match(contents.gates, /exact pushed release ref instead of placeholder values/);
 assert.match(contents.gates, /evidence work orders with finish conditions, acceptance criteria, focused coverage rows, proof commands/);
 assert.match(contents.gates, /redacted private readiness env templates with `--include-work-orders`/);
 assert.match(contents.gates, /requiring `sourceAlignment\.status=verified`/);
@@ -730,7 +734,8 @@ assert.match(contents.cutoverRunbook, /audit-production-readiness\.ts --env-file
 assert.match(contents.cutoverRunbook, /report-production-gate-status\.ts --json --env-file=\/secure\/private-readiness\.env --out=\/tmp\/kiddzonl-production-gate-status\.json --generated-at=<release-generated-at-iso>/);
 assert.match(contents.cutoverRunbook, /report-production-gate-status\.ts --json --blocking-only --out=\/tmp\/kiddzonl-production-blocking-gate-status\.json --generated-at=<release-generated-at-iso>/);
 assert.match(contents.cutoverRunbook, /report-production-preflight-artifacts\.ts --out-dir=\/tmp\/kiddzonl-production-preflight-artifacts --generated-at=<release-generated-at-iso>/);
-assert.match(contents.cutoverRunbook, /report-production-closeout-plan\.ts --json --out=\/tmp\/kiddzonl-production-closeout-plan\.json --generated-at=<release-generated-at-iso>/);
+assert.match(contents.cutoverRunbook, /report-production-closeout-plan\.ts --json --out=\/tmp\/kiddzonl-production-closeout-plan\.json --generated-at=<release-generated-at-iso> --release-branch=legacy-parity-runbook --release-commit=<release-commit-sha> --acceptance-date=<YYYY-MM-DD>/);
+assert.match(contents.cutoverRunbook, /generated closeout\/evidence-package command is bound to the exact pushed release ref/);
 assert.match(contents.cutoverRunbook, /inspect its per-gate evidence work orders/);
 assert.match(contents.cutoverRunbook, /proof commands rerun successfully/);
 assert.match(contents.cutoverRunbook, /verify-production-preflight-artifacts-manifest\.ts --manifest=\/tmp\/kiddzonl-production-preflight-artifacts\/kiddzonl-production-preflight-artifacts\.json/);
@@ -754,7 +759,7 @@ assert.match(contents.cutoverRunbook, /--evidence-record=\/secure\/production-ac
 assert.match(contents.cutoverRunbook, /render-production-acceptance-evidence-record\.ts --out=\/secure\/production-acceptance-evidence\.md/);
 assert.match(
   contents.cutoverRunbook,
-  /Final command:[\s\S]*report-production-closeout-plan\.ts --json --out=\/tmp\/kiddzonl-production-closeout-plan\.json --generated-at=<release-generated-at-iso>\npnpm tsx src\/scripts\/verify-production-preflight-artifacts-manifest\.ts --manifest=\/tmp\/kiddzonl-production-preflight-artifacts\/kiddzonl-production-preflight-artifacts\.json\npnpm tsx src\/scripts\/render-production-acceptance-evidence-record\.ts --out=\/secure\/production-acceptance-evidence\.md/
+  /Final command:[\s\S]*report-production-closeout-plan\.ts --json --out=\/tmp\/kiddzonl-production-closeout-plan\.json --generated-at=<release-generated-at-iso> --release-branch=legacy-parity-runbook --release-commit=<release-commit-sha> --acceptance-date=<YYYY-MM-DD>\npnpm tsx src\/scripts\/verify-production-preflight-artifacts-manifest\.ts --manifest=\/tmp\/kiddzonl-production-preflight-artifacts\/kiddzonl-production-preflight-artifacts\.json\npnpm tsx src\/scripts\/render-production-acceptance-evidence-record\.ts --out=\/secure\/production-acceptance-evidence\.md/
 );
 assert.match(contents.cutoverRunbook, /--preflight-manifest=\/tmp\/kiddzonl-production-preflight-artifacts\/kiddzonl-production-preflight-artifacts\.json/);
 assert.match(contents.cutoverRunbook, /--manifest-out=\/tmp\/kiddzonl-production-evidence-package\.json/);

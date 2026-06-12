@@ -111,7 +111,28 @@ assert.ok(plan.finalCloseoutCommands?.some((command) => command.includes("verify
 assert.ok(plan.finalCloseoutCommands?.some((command) => command.includes("--manifest-out=/tmp/kiddzonl-production-evidence-package.json")));
 assert.ok(plan.finalCloseoutCommands?.some((command) => command.includes("--manifest=/tmp/kiddzonl-production-evidence-package.json")));
 assert.ok(plan.finalCloseoutCommands?.some((command) => command.includes("--require-ready --require-no-blockers")));
+assert.ok(plan.finalCloseoutCommands?.some((command) => command.includes("--branch=legacy-parity-runbook --commit=<release-commit-sha>")));
 assertNoSensitiveOutput(output);
+
+const boundOutput = execFileSync("pnpm", [
+  "tsx",
+  "src/scripts/report-production-closeout-plan.ts",
+  "--json",
+  `--generated-at=${generatedAt}`,
+  "--release-branch=legacy-parity-runbook",
+  "--release-commit=0d26d0c",
+  "--acceptance-date=2026-06-12",
+], {
+  cwd: process.cwd(),
+  encoding: "utf8",
+});
+const boundPlan = JSON.parse(boundOutput) as CloseoutPlan;
+assert.ok(boundPlan.finalCloseoutCommands?.some((command) =>
+  command.includes("--branch=legacy-parity-runbook --commit=0d26d0c --acceptance-date=2026-06-12")
+));
+assert.ok(boundPlan.finalCloseoutCommands?.every((command) => !command.includes("<release-commit-sha>")));
+assert.ok(boundPlan.finalCloseoutCommands?.every((command) => !command.includes("<YYYY-MM-DD>")));
+assertNoSensitiveOutput(boundOutput);
 
 const markdown = execFileSync("pnpm", [
   "tsx",
