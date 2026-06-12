@@ -307,6 +307,15 @@ function verifyArtifactDigests(
       errors.push(`Run Metadata: ${artifact.field} must include ${expectedDigest}`);
     }
   }
+
+  if (closeoutSummaryPath && !expectedCloseoutDigest) {
+    const value = metadata.get("Redacted closeout summary SHA-256") ?? "";
+    if (!value.includes("verified in evidence package manifest")) {
+      errors.push(
+        "Run Metadata: Redacted closeout summary SHA-256 must say verified in evidence package manifest when --summary-digest is not supplied"
+      );
+    }
+  }
 }
 
 function sha256File(path: string) {

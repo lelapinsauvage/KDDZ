@@ -212,6 +212,33 @@ try {
   assert.equal(staleDigestFromPath.status, 1);
   assert.match(staleDigestFromPath.stderr, /Partial gate report SHA-256 must include/);
   assert.match(staleDigestFromPath.stderr, /Production evidence checklist SHA-256 must include/);
+
+  const staleManifestMarkerPath = join(tmp, "production-acceptance-stale-manifest-marker.md");
+  writeFileSync(
+    staleManifestMarkerPath,
+    fillTemplate(template, {
+      readinessReportPath,
+      closeoutSummaryPath,
+      partialReportPath,
+      checklistReportPath,
+      readinessReportDigest,
+      closeoutSummaryDigest: "accepted evidence recorded in release-ticket-verified",
+      partialReportDigest,
+      checklistReportDigest,
+    }),
+    "utf8"
+  );
+  const staleManifestMarker = runVerifier(staleManifestMarkerPath, [
+    `--readiness-report=${readinessReportPath}`,
+    `--summary-report=${closeoutSummaryPath}`,
+    `--partial-report=${partialReportPath}`,
+    `--checklist-report=${checklistReportPath}`,
+    `--readiness-digest=${readinessReportDigest}`,
+    `--partial-digest=${partialReportDigest}`,
+    `--checklist-digest=${checklistReportDigest}`,
+  ]);
+  assert.equal(staleManifestMarker.status, 1);
+  assert.match(staleManifestMarker.stderr, /verified in evidence package manifest/);
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }
