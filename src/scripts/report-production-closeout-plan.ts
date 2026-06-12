@@ -100,7 +100,7 @@ assert.equal(gateStatus.generatedAt, generatedAt);
 assert.equal(gateStatus.sourceAlignment?.status, "verified");
 assertNoSensitiveOutput(JSON.stringify(gateStatus));
 
-const gates = (gateStatus.gates ?? []).map((gate) => {
+const gates: CloseoutPlan["gates"] = (gateStatus.gates ?? []).map((gate) => {
   assert.ok(gate.gate, "closeout plan gate is missing an id");
   const artifact = focusedArtifactForGate(gate.gate);
   const blockingRows = (gate.blockingPartialRows ?? []).map((row) => {
@@ -122,7 +122,7 @@ const gates = (gateStatus.gates ?? []).map((gate) => {
     envTemplateCommand: `pnpm tsx src/scripts/render-production-readiness-env-template.ts --gate=${gate.gate} --include-work-orders --out=/secure/private-readiness-${artifact.slug}.env --generated-at=${generatedAt} --release-branch=${releaseBranch} --release-commit=${releaseCommit} --acceptance-date=${acceptanceDate}`,
     focusedArtifactCommands,
     evidenceWorkOrder: {
-      externalDependency: "production evidence",
+      externalDependency: "production evidence" as const,
       finishCondition: `Set every ${gate.gate} evidence pointer, archive focused coverage for ${blockingRows.join(", ")}, then rerun gate status with --require-ready --require-no-blockers.`,
       evidencePointers: gate.missingEvidence ?? [],
       acceptanceCriteria: gate.requiredEvidenceFields ?? [],

@@ -86,6 +86,7 @@ type PartialReport = {
   generatedFrom?: {
     matrix?: string;
     gateMap?: string;
+    productionGates?: string;
   };
   summary?: PartialReportSummary;
 };
