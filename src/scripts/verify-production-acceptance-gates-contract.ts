@@ -612,6 +612,7 @@ assert.match(contents.gates, /sourceAlignment\.status=verified/);
 assert.match(contents.gates, /verify-production-preflight-artifacts-manifest\.ts/);
 assert.match(contents.gates, /verify-production-focused-artifacts-manifest\.ts/);
 assert.match(contents.gates, /report-production-evidence-checklist\.ts/);
+assert.match(contents.gates, /source evidence spec\/template\/partial-gate-map\/production-gates paths in markdown or redacted JSON/);
 assert.match(contents.gates, /`generatedAt` ISO timestamps/);
 assert.match(contents.gates, /readiness, partial, checklist, closeout summary, and evidence package JSON artifacts carry `schemaVersion: 1`/);
 assert.match(contents.gates, /kiddzonl-production-partials\.json/);
