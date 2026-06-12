@@ -16,6 +16,16 @@ type GateStatusReport = {
     blockingPartialRows?: number;
     missingEvidenceItems?: number;
   };
+  sourceAlignment?: {
+    status?: string;
+    generatedAt?: string;
+    readinessGeneratedAt?: string;
+    partialReportGeneratedAt?: string;
+    evidenceChecklistGeneratedAt?: string;
+    partialReportRows?: number;
+    checklistBlockingRows?: number;
+    gateCounts?: Record<string, number>;
+  };
   gates?: Array<{
     gate?: string;
     status?: string;
@@ -54,6 +64,21 @@ try {
     needsEvidence: 12,
     blockingPartialRows: 17,
     missingEvidenceItems: 56,
+  });
+  assert.deepEqual(report.sourceAlignment, {
+    status: "verified",
+    generatedAt,
+    readinessGeneratedAt: generatedAt,
+    partialReportGeneratedAt: generatedAt,
+    evidenceChecklistGeneratedAt: generatedAt,
+    partialReportRows: 17,
+    checklistBlockingRows: 17,
+    gateCounts: {
+      "PROD-CRON": 9,
+      "PROD-NATIVE": 3,
+      "PROD-NATURE": 1,
+      "PROD-PROVIDERS": 14,
+    },
   });
   assert.deepEqual(report.gates?.map((gate) => gate.gate), [
     "PROD-ACL",
@@ -96,6 +121,13 @@ try {
     blockingPartialRows: 17,
     missingEvidenceItems: 28,
   });
+  assert.equal(blockingOnly.sourceAlignment?.status, "verified");
+  assert.deepEqual(blockingOnly.sourceAlignment?.gateCounts, {
+    "PROD-CRON": 9,
+    "PROD-NATIVE": 3,
+    "PROD-NATURE": 1,
+    "PROD-PROVIDERS": 14,
+  });
   assert.deepEqual(blockingOnly.gates?.map((gate) => gate.gate), [
     "PROD-CRON",
     "PROD-NATIVE",
@@ -117,6 +149,9 @@ try {
   const native = JSON.parse(nativeOutput) as GateStatusReport;
   assert.equal(native.summary?.gates, 1);
   assert.equal(native.summary?.blockingPartialRows, 3);
+  assert.deepEqual(native.sourceAlignment?.gateCounts, {
+    "PROD-NATIVE": 3,
+  });
   assert.deepEqual(native.gates?.[0]?.blockingPartialRows?.map((row) => row.row), ["P15", "P16", "P17"]);
 
   const markdown = execFileSync("pnpm", [
@@ -247,6 +282,9 @@ try {
     blockingPartialRows: 0,
     missingEvidenceItems: 0,
   });
+  assert.deepEqual(zeroReady.sourceAlignment?.gateCounts, {});
+  assert.equal(zeroReady.sourceAlignment?.partialReportRows, 0);
+  assert.equal(zeroReady.sourceAlignment?.checklistBlockingRows, 0);
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }

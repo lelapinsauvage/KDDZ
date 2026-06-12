@@ -548,6 +548,7 @@ assert.match(contents.gates, /report-production-preflight-artifacts\.ts/);
 assert.match(contents.gates, /report-production-gate-status\.ts/);
 assert.match(contents.gates, /--require-ready/);
 assert.match(contents.gates, /--require-no-blockers/);
+assert.match(contents.gates, /sourceAlignment\.status=verified/);
 assert.match(contents.gates, /verify-production-preflight-artifacts-manifest\.ts/);
 assert.match(contents.gates, /verify-production-focused-artifacts-manifest\.ts/);
 assert.match(contents.gates, /report-production-evidence-checklist\.ts/);

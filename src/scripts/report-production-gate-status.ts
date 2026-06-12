@@ -23,6 +23,7 @@ type ReadinessReport = {
 };
 
 type PartialReport = {
+  generatedAt?: string;
   summary?: {
     partialRows?: number;
     gates?: string[];
@@ -37,6 +38,7 @@ type PartialReport = {
 };
 
 type EvidenceChecklist = {
+  generatedAt?: string;
   summary?: {
     gates?: number;
     requiredFields?: number;
@@ -100,6 +102,7 @@ const checklist = runJson<EvidenceChecklist>("src/scripts/report-production-evid
 assert.equal(readiness.redacted, true);
 assert.equal(partials.summary?.partialRows, uniqueRows(partials.rows ?? []).size);
 assert.equal(checklist.summary?.blockingPartialRows, uniqueChecklistRows(checklist).size);
+const sourceAlignment = verifySourceAlignment({ readiness, partials, checklist, generatedAt, selectedGate });
 
 const readinessByGate = new Map((readiness.gates ?? []).map((gate) => [gate.gate, gate]));
 const checklistByGate = new Map((checklist.gates ?? []).map((gate) => [gate.gate, gate]));
@@ -146,6 +149,7 @@ const payload = {
     blockingPartialRows: blockingRows.size,
     missingEvidenceItems: gates.reduce((count, gate) => count + gate.missingEvidence.length, 0),
   },
+  sourceAlignment,
   partialReportSummary: partials.summary,
   evidenceChecklistSummary: checklist.summary,
   gates,
@@ -223,6 +227,69 @@ function uniqueChecklistRows(checklist: EvidenceChecklist) {
       .map((row) => row.row)
       .filter(isString)
   );
+}
+
+function verifySourceAlignment(params: {
+  readiness: ReadinessReport;
+  partials: PartialReport;
+  checklist: EvidenceChecklist;
+  generatedAt: string;
+  selectedGate: string | null;
+}) {
+  assert.equal(params.readiness.generatedAt, params.generatedAt);
+  assert.equal(params.partials.generatedAt, params.generatedAt);
+  assert.equal(params.checklist.generatedAt, params.generatedAt);
+
+  const partialCounts = params.partials.summary?.gateCounts ?? {};
+  const checklistCounts = Object.fromEntries(
+    (params.checklist.gates ?? [])
+      .map((gate) => [
+        gate.gate,
+        new Set((gate.blockingPartialRows ?? []).map((row) => row.row).filter(isString)).size,
+      ])
+      .filter(([gate]) => isString(gate))
+  ) as Record<string, number>;
+
+  const gatesToVerify = params.selectedGate ? [params.selectedGate] : Object.keys(partialCounts);
+  for (const gate of gatesToVerify) {
+    const count = partialCounts[gate] ?? 0;
+    assert.equal(checklistCounts[gate] ?? 0, count, `${gate} blocking row count drifted between partial report and checklist`);
+  }
+
+  const partialRowsByGate = rowsByGate(params.partials.rows ?? []);
+  const checklistRowsByGate = rowsByGate(
+    (params.checklist.gates ?? []).flatMap((gate) =>
+      (gate.blockingPartialRows ?? []).map((row) => ({ ...row, gates: gate.gate ? [gate.gate] : [] }))
+    )
+  );
+
+  for (const gate of gatesToVerify) {
+    const rows = partialRowsByGate.get(gate) ?? [];
+    assert.deepEqual(checklistRowsByGate.get(gate) ?? [], rows, `${gate} blocking rows drifted between partial report and checklist`);
+  }
+
+  return {
+    status: "verified",
+    generatedAt: params.generatedAt,
+    readinessGeneratedAt: params.readiness.generatedAt,
+    partialReportGeneratedAt: params.partials.generatedAt,
+    evidenceChecklistGeneratedAt: params.checklist.generatedAt,
+    partialReportRows: params.partials.summary?.partialRows ?? 0,
+    checklistBlockingRows: params.checklist.summary?.blockingPartialRows ?? 0,
+    gateCounts: Object.fromEntries(gatesToVerify.map((gate) => [gate, partialCounts[gate] ?? 0])),
+  };
+}
+
+function rowsByGate(rows: Array<{ row?: string; gates?: string[] }>) {
+  const byGate = new Map<string, string[]>();
+  for (const row of rows) {
+    if (!row.row) continue;
+    for (const gate of row.gates ?? []) {
+      byGate.set(gate, [...(byGate.get(gate) ?? []), row.row]);
+    }
+  }
+
+  return new Map([...byGate.entries()].map(([gate, gateRows]) => [gate, gateRows.sort()]));
 }
 
 function isString(value: unknown): value is string {

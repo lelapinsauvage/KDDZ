@@ -97,6 +97,7 @@ for (const expected of [
   "Production Preflight Bundle",
   "report-production-gate-status.ts --require-ready",
   "--require-no-blockers",
+  "sourceAlignment.status=verified",
   "report-production-gate-status.ts --blocking-only",
   "report-production-preflight-artifacts.ts --out-dir=<dir>",
   "verify-production-preflight-artifacts-manifest.ts --manifest=<path>",
