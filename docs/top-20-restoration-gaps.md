@@ -1,6 +1,6 @@
 # Top 20 Legacy Restoration Gaps
 
-This list is the first implementation backlog after the generated inventory/matrix pass. It is based on direct inspection of the legacy PHP/SQL/mobile sources and the current modern app structure. Each item still requires page-level verification against `docs/page-parity-matrix.md` before implementation.
+This list started as the first implementation backlog after the generated inventory/matrix pass. It now records the restored local implementation evidence, the remaining production/external acceptance gates, and the source notes that still constrain final parity decisions.
 
 The final external acceptance work is tracked in `docs/legacy-production-acceptance-gates.md`. Do not mark the legacy restoration goal complete until every gate in that register has production evidence or an explicit owner-approved retirement decision.
 

@@ -146,6 +146,11 @@ for (const marker of [
 
 assert.match(docs.topGaps, /production provider credential\/native-device acceptance/);
 assert.match(docs.topGaps, /dynamic `notifications_nature` ordering\/names\/active flags/);
+assert.match(
+  docs.topGaps,
+  /records the restored local implementation evidence, the remaining production\/external acceptance gates/,
+);
+assert.doesNotMatch(docs.topGaps, /Each item still requires page-level verification/);
 assert.match(docs.handoff, /Continue from the remaining production\/external gates/);
 
 console.log("production gate ledger contract assertions passed");
