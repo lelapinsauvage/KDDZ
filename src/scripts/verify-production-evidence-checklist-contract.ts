@@ -160,7 +160,21 @@ try {
     encoding: "utf8",
   });
   assert.equal(duplicateRow.status, 1);
-  assert.match(duplicateRow.stderr, /contains duplicate partial row id: P01/);
+  assert.match(duplicateRow.stderr, /row order drifted: expected P02, found P01/);
+
+  const outOfOrderPath = join(tmp, "out-of-order-gate-map.md");
+  writeFileSync(outOfOrderPath, sourceGateMap.replace("| P02 |", "| P03 |"), "utf8");
+  const outOfOrder = spawnSync("pnpm", [
+    "tsx",
+    script,
+    "--json",
+    `--partial-gate-map=${outOfOrderPath}`,
+  ], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+  assert.equal(outOfOrder.status, 1);
+  assert.match(outOfOrder.stderr, /row order drifted: expected P02, found P03/);
 
   const missingClosurePath = join(tmp, "missing-closure-gate-map.md");
   writeFileSync(

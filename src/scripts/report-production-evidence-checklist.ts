@@ -102,7 +102,11 @@ function parsePartialGateMap() {
 function validatePartialRows(rows: PartialGateRow[], knownGates: string[]) {
   const known = new Set(knownGates);
   const seen = new Set<string>();
-  for (const row of rows) {
+  rows.forEach((row, index) => {
+    const expectedRow = `P${String(index + 1).padStart(2, "0")}`;
+    if (row.row !== expectedRow) {
+      throw new Error(`${partialGateMapPath} row order drifted: expected ${expectedRow}, found ${row.row || "empty"}`);
+    }
     if (seen.has(row.row)) {
       throw new Error(`${partialGateMapPath} contains duplicate partial row id: ${row.row}`);
     }
@@ -122,7 +126,7 @@ function validatePartialRows(rows: PartialGateRow[], knownGates: string[]) {
         `${partialGateMapPath} row ${row.row} references unknown production gate(s): ${unknownGates.join(", ")}`
       );
     }
-  }
+  });
 }
 
 function renderMarkdown(gates: ChecklistGate[]) {
