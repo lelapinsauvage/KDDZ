@@ -581,6 +581,7 @@ assert.match(contents.gates, /verify-production-evidence-package-contract\.ts/);
 assert.match(contents.gates, /reruns `verify-production-acceptance-evidence-record\.ts`/);
 assert.match(contents.gates, /--manifest-out=<path>/);
 assert.match(contents.gates, /--manifest=<path>/);
+assert.match(contents.gates, /--manifest=\/tmp\/kiddzonl-production-evidence-package\.json --branch=legacy-parity-runbook --commit=<release-commit-sha> --require-zero-partials/);
 assert.match(contents.gates, /`generatedAt` metadata for JSON artifacts/);
 assert.match(contents.gates, /top-level `generatedAt` timestamp from the closeout summary/);
 assert.match(contents.gates, /Package verification requires the closeout summary, readiness report, partial report, evidence checklist, and preflight manifest to share that same `generatedAt` timestamp/);
