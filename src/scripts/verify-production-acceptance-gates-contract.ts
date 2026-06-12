@@ -731,6 +731,7 @@ assert.match(
 assert.match(contents.cutoverRunbook, /--preflight-manifest=\/tmp\/kiddzonl-production-preflight-artifacts\/kiddzonl-production-preflight-artifacts\.json/);
 assert.match(contents.cutoverRunbook, /--manifest-out=\/tmp\/kiddzonl-production-evidence-package\.json/);
 assert.match(contents.cutoverRunbook, /--preflight-manifest=\/tmp\/kiddzonl-production-preflight-artifacts\/kiddzonl-production-preflight-artifacts\.json --manifest-out=\/tmp\/kiddzonl-production-evidence-package\.json --branch=legacy-parity-runbook --commit=<release-commit-sha> --require-zero-partials/);
+assert.match(contents.cutoverRunbook, /--preflight-manifest=\/tmp\/kiddzonl-production-preflight-artifacts\/kiddzonl-production-preflight-artifacts\.json --manifest=\/tmp\/kiddzonl-production-evidence-package\.json --branch=legacy-parity-runbook --commit=<release-commit-sha> --require-zero-partials/);
 assert.match(contents.cutoverRunbook, /report-production-evidence-checklist\.ts --gate=PROD-CRON/);
 assert.match(contents.cutoverRunbook, /Generate focused non-secret coverage reports from the parity matrix/);
 assert.match(contents.cutoverRunbook, /report-production-focused-artifacts\.ts --out-dir=\/tmp\/kiddzonl-production-focused-artifacts --generated-at=<release-generated-at-iso>/);
