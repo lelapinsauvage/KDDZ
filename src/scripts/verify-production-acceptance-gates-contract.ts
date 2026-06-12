@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import packageJson from "../../package.json";
 
@@ -10,6 +11,12 @@ type ParityRow = {
   modern?: string;
   children?: ParityRow[];
   [key: string]: unknown;
+};
+
+type PartialReport = {
+  summary?: {
+    partialRows?: number;
+  };
 };
 
 const files = {
@@ -226,6 +233,25 @@ function collectPartialRows(value: unknown): void {
 }
 
 collectPartialRows(matrix);
+const partialReport = JSON.parse(
+  execFileSync("pnpm", ["tsx", "src/scripts/report-production-partials.ts", "--json"], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  })
+) as PartialReport;
+const totalRows = matrix.length;
+const partialRowCount = partialReport.summary?.partialRows ?? partialRows.length;
+const completeRowCount = totalRows - partialRowCount;
+const donePct = Math.round((completeRowCount / totalRows) * 1000) / 10;
+const leftPct = Math.round((100 - donePct) * 10) / 10;
+assert.equal(partialRows.length, partialRowCount, "production gates doc tracker must match current partial report");
+assert.match(
+  contents.gates,
+  new RegExp(
+    `local tracker currently reports ${completeRowCount} complete rows out of ${totalRows} total rows, or ${formatPercent(donePct)}% done and ${formatPercent(leftPct)}% left`
+  ),
+  "production gates progress summary must match the current tracker"
+);
 
 const mappedRows = contents.partialGateMap
   .split("\n")
@@ -726,4 +752,8 @@ console.log("production acceptance gates contract assertions passed");
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function formatPercent(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
