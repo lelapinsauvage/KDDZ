@@ -32,6 +32,7 @@ type GateStatusReport = {
     missingEvidence?: string[];
     requiredEvidenceFields?: string[];
     blockingPartialRows?: Array<{ row?: string }>;
+    nextActions?: string[];
   }>;
 };
 
@@ -111,10 +112,14 @@ try {
   assert.deepEqual(cron?.blockingPartialRows?.map((row) => row.row), rowsForGate("PROD-CRON"));
   assert.ok(cron?.missingEvidence?.includes("CRON_PARTIAL_ROW_COVERAGE_REPORT"));
   assert.equal(cron?.requiredEvidenceFields?.length, 8);
+  assert.ok(cron?.nextActions?.some((action) => action.includes("CRON_PARTIAL_ROW_COVERAGE_REPORT")));
+  assert.ok(cron?.nextActions?.some((action) => action.includes("--gate=PROD-CRON")));
 
   const provider = report.gates?.find((gate) => gate.gate === "PROD-PROVIDERS");
   assert.equal(provider?.blockingPartialRows?.length, expectedGateCounts["PROD-PROVIDERS"]);
   assert.ok(provider?.missingEvidence?.includes("partial-row-evidence:PROVIDER_PARTIAL_ROW_COVERAGE_REPORT"));
+  assert.ok(provider?.nextActions?.some((action) => action.includes("PROVIDER_PARTIAL_ROW_COVERAGE_REPORT")));
+  assert.ok(provider?.nextActions?.some((action) => action.includes("--gate=PROD-PROVIDERS")));
 
   const blockingOnlyOutput = execFileSync("pnpm", [
     "tsx",
@@ -154,6 +159,7 @@ try {
     "PROD-NATIVE": expectedGateCounts["PROD-NATIVE"],
   });
   assert.deepEqual(native.gates?.[0]?.blockingPartialRows?.map((row) => row.row), rowsForGate("PROD-NATIVE"));
+  assert.ok(native.gates?.[0]?.nextActions?.some((action) => action.includes("--gate=PROD-NATIVE")));
 
   const markdown = execFileSync("pnpm", [
     "tsx",
@@ -167,6 +173,8 @@ try {
   assert.match(markdown, /# Production Gate Status Report/);
   assert.match(markdown, /PROD-NATURE/);
   assert.match(markdown, /P17/);
+  assert.match(markdown, /Next actions/);
+  assert.match(markdown, /--gate=PROD-NATURE/);
 
   const blockingMarkdown = execFileSync("pnpm", [
     "tsx",
@@ -180,6 +188,7 @@ try {
   assert.match(blockingMarkdown, /Ready gates: 0\/4/);
   assert.match(blockingMarkdown, /PROD-CRON/);
   assert.match(blockingMarkdown, /PROD-PROVIDERS/);
+  assert.match(blockingMarkdown, /Archive focused partial coverage/);
   assert.doesNotMatch(blockingMarkdown, /PROD-PRINT/);
 
   const invalidGeneratedAt = spawnSync("pnpm", [
@@ -283,6 +292,7 @@ try {
     blockingPartialRows: 0,
     missingEvidenceItems: 0,
   });
+  assert.ok(zeroReady.gates?.every((gate) => gate.nextActions?.includes("No blocking rows remain; include this gate in final closeout review.")));
   assert.deepEqual(zeroReady.sourceAlignment?.gateCounts, {});
   assert.equal(zeroReady.sourceAlignment?.partialReportRows, 0);
   assert.equal(zeroReady.sourceAlignment?.checklistBlockingRows, 0);

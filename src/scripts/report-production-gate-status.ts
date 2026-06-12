@@ -66,6 +66,7 @@ type GateClosureStatus = {
     statusAnchor: string;
     closureReason: string;
   }>;
+  nextActions: string[];
 };
 
 const json = process.argv.includes("--json");
@@ -125,6 +126,12 @@ const gates: GateClosureStatus[] = allGates.map((gate) => {
       statusAnchor: row.statusAnchor ?? "unknown",
       closureReason: row.closureReason ?? "unknown",
     })),
+    nextActions: nextActionsForGate({
+      gate,
+      status: readinessGate?.status ?? "needs-evidence",
+      missingEvidence: readinessGate?.missing ?? [],
+      blockingPartialRows: (checklistGate?.blockingPartialRows ?? []).map((row) => row.row).filter(isString),
+    }),
   };
 }).filter((gate) => !blockingOnly || gate.blockingPartialRows.length > 0);
 
@@ -205,15 +212,38 @@ function renderMarkdown(payload: {
     `Blocking partial rows: ${payload.summary.blockingPartialRows}`,
     `Missing evidence items: ${payload.summary.missingEvidenceItems}`,
     "",
-    "| Gate | Status | Blocking rows | Missing evidence | Required fields |",
-    "| --- | --- | --- | --- | --- |",
+    "| Gate | Status | Blocking rows | Missing evidence | Required fields | Next actions |",
+    "| --- | --- | --- | --- | --- | --- |",
     ...payload.gates.map((gate) => {
       const rows = gate.blockingPartialRows.map((row) => row.row).join(", ") || "-";
-      return `| ${gate.gate} | ${gate.status} | ${rows} | ${gate.missingEvidence.join(", ") || "-"} | ${gate.requiredEvidenceFields.length} |`;
+      return `| ${gate.gate} | ${gate.status} | ${rows} | ${gate.missingEvidence.join(", ") || "-"} | ${gate.requiredEvidenceFields.length} | ${gate.nextActions.join("<br>") || "-"} |`;
     }),
     "",
   ];
   return `${lines.join("\n")}\n`;
+}
+
+function nextActionsForGate(params: {
+  gate: string;
+  status: GateStatus;
+  missingEvidence: string[];
+  blockingPartialRows: string[];
+}) {
+  const actions: string[] = [];
+
+  if (params.missingEvidence.length > 0) {
+    actions.push(`Fill missing evidence pointers: ${params.missingEvidence.join(", ")}`);
+  }
+  if (params.blockingPartialRows.length > 0) {
+    actions.push(`Archive focused partial coverage for ${params.blockingPartialRows.join(", ")}`);
+    actions.push(`Run: pnpm tsx src/scripts/report-production-partials.ts --json --gate=${params.gate}`);
+    actions.push(`Run: pnpm tsx src/scripts/report-production-evidence-checklist.ts --json --gate=${params.gate}`);
+  }
+  if (params.status === "ready-to-review" && params.blockingPartialRows.length === 0) {
+    actions.push("No blocking rows remain; include this gate in final closeout review.");
+  }
+
+  return actions;
 }
 
 function uniqueRows(rows: Array<{ row?: string }>) {
