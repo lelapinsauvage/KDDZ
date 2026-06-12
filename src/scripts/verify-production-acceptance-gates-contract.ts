@@ -460,6 +460,14 @@ assert.match(
 );
 assert.match(
   readFileSync("src/scripts/verify-production-evidence-package-contract.ts", "utf8"),
+  /artifacts\.preflightManifest\.generatedAt/
+);
+assert.match(
+  readFileSync("src/scripts/verify-production-evidence-package-contract.ts", "utf8"),
+  /preflightManifest: artifact\(params\.preflightManifestPath\)/
+);
+assert.match(
+  readFileSync("src/scripts/verify-production-evidence-package-contract.ts", "utf8"),
   /optionalArg\("--branch", expectedBranch\)/
 );
 assert.match(
@@ -529,14 +537,14 @@ assert.match(contents.gates, /--manifest-out=<path>/);
 assert.match(contents.gates, /--manifest=<path>/);
 assert.match(contents.gates, /`generatedAt` metadata for JSON artifacts/);
 assert.match(contents.gates, /top-level `generatedAt` timestamp from the closeout summary/);
-assert.match(contents.gates, /Package verification requires the closeout summary, readiness report, partial report, and evidence checklist to share that same `generatedAt` timestamp/);
+assert.match(contents.gates, /Package verification requires the closeout summary, readiness report, partial report, evidence checklist, and preflight manifest to share that same `generatedAt` timestamp/);
 assert.match(contents.gates, /schemaVersion: 1/);
 assert.match(contents.gates, /--branch=<branch>/);
 assert.match(contents.gates, /--commit=<sha>/);
 assert.match(contents.gates, /bind the archived summary to the intended release ref/);
 assert.match(contents.gates, /both are required with `--require-zero-partials` during final closure so the summary cannot be accepted without an explicit release ref/);
 assert.match(contents.gates, /both are required with `--require-zero-partials` during final closure so the package cannot be accepted without an explicit release ref/);
-assert.match(contents.gates, /--manifest-out=\/tmp\/kiddzonl-production-evidence-package\.json --branch=legacy-parity-runbook --commit=<release-commit-sha>/);
+assert.match(contents.gates, /--preflight-manifest=\/tmp\/kiddzonl-production-preflight-artifacts\/kiddzonl-production-preflight-artifacts\.json --manifest-out=\/tmp\/kiddzonl-production-evidence-package\.json --branch=legacy-parity-runbook --commit=<release-commit-sha>/);
 assert.match(contents.gates, /--require-zero-partials/);
 assert.match(contents.gates, /archived closeout\/partial\/checklist\/preflight artifact pointers/);
 assert.match(contents.gates, /archived closeout summary against the saved artifact paths and SHA-256 digests/);
@@ -657,7 +665,7 @@ assert.match(contents.cutoverRunbook, /--evidence-record=\/secure\/production-ac
 assert.match(contents.cutoverRunbook, /render-production-acceptance-evidence-record\.ts --out=\/secure\/production-acceptance-evidence\.md/);
 assert.match(contents.cutoverRunbook, /--preflight-manifest=\/tmp\/kiddzonl-production-preflight-artifacts\/kiddzonl-production-preflight-artifacts\.json/);
 assert.match(contents.cutoverRunbook, /--manifest-out=\/tmp\/kiddzonl-production-evidence-package\.json/);
-assert.match(contents.cutoverRunbook, /--manifest-out=\/tmp\/kiddzonl-production-evidence-package\.json --branch=legacy-parity-runbook --commit=<release-commit-sha> --require-zero-partials/);
+assert.match(contents.cutoverRunbook, /--preflight-manifest=\/tmp\/kiddzonl-production-preflight-artifacts\/kiddzonl-production-preflight-artifacts\.json --manifest-out=\/tmp\/kiddzonl-production-evidence-package\.json --branch=legacy-parity-runbook --commit=<release-commit-sha> --require-zero-partials/);
 assert.match(contents.cutoverRunbook, /report-production-evidence-checklist\.ts --gate=PROD-CRON/);
 assert.match(contents.cutoverRunbook, /Generate focused non-secret coverage reports from the parity matrix/);
 assert.match(contents.cutoverRunbook, /report-production-focused-artifacts\.ts --out-dir=\/tmp\/kiddzonl-production-focused-artifacts --generated-at=<release-generated-at-iso>/);

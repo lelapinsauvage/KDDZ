@@ -18,6 +18,7 @@ type CloseoutSummary = {
   evidenceRecord?: string;
   partialReport?: string | null;
   evidenceChecklist?: string | null;
+  preflightManifest?: string | null;
   readinessSummary?: {
     ready?: number;
     needsEvidence?: number;
@@ -47,6 +48,10 @@ type CloseoutSummary = {
       digest?: string;
     };
     evidenceChecklist?: {
+      algorithm?: string;
+      digest?: string;
+    };
+    preflightManifest?: {
       algorithm?: string;
       digest?: string;
     };
@@ -123,11 +128,13 @@ function verifyEvidencePackage(closeoutSummaryPath: string) {
   const evidenceRecordPath = optionValue("--evidence-record") ?? summary.evidenceRecord;
   const partialReportPath = optionValue("--partial-report") ?? summary.partialReport ?? null;
   const checklistReportPath = optionValue("--checklist-report") ?? summary.evidenceChecklist ?? null;
+  const preflightManifestPath = optionValue("--preflight-manifest") ?? summary.preflightManifest ?? null;
 
   assert.ok(readinessReportPath, "production evidence package is missing readiness report path");
   assert.ok(evidenceRecordPath, "production evidence package is missing evidence record path");
   assert.ok(partialReportPath, "production evidence package is missing partial report path");
   assert.ok(checklistReportPath, "production evidence package is missing evidence checklist path");
+  assert.ok(preflightManifestPath, "production evidence package is missing preflight manifest path");
 
   const manifest = buildManifest({
     closeoutSummaryPath,
@@ -135,6 +142,7 @@ function verifyEvidencePackage(closeoutSummaryPath: string) {
     evidenceRecordPath,
     partialReportPath,
     checklistReportPath,
+    preflightManifestPath,
     summary,
   });
   assertPackageGeneratedAtConsistency(manifest);
@@ -148,6 +156,7 @@ function verifyEvidencePackage(closeoutSummaryPath: string) {
     `--evidence-record=${evidenceRecordPath}`,
     `--partial-report=${partialReportPath}`,
     `--checklist-report=${checklistReportPath}`,
+    `--preflight-manifest=${preflightManifestPath}`,
     ...optionalArg("--branch", expectedBranch),
     ...optionalArg("--commit", expectedCommit),
     ...optionalFlag("--require-zero-partials", process.argv.includes("--require-zero-partials")),
@@ -182,6 +191,7 @@ function verifySelfTestContract() {
     const closeoutSummaryPath = join(tmp, "closeout-summary.json");
     const partialReportPath = join(tmp, "partials.json");
     const checklistReportPath = join(tmp, "evidence-checklist.json");
+    const preflightManifestPath = join(tmp, "preflight-artifacts.json");
     const packageManifestPath = join(tmp, "evidence-package.json");
     const zeroParityMatrixPath = join(tmp, "zero-page-parity-matrix.json");
     const zeroPartialGateMapPath = join(tmp, "zero-partial-production-gate-map.md");
@@ -190,6 +200,7 @@ function verifySelfTestContract() {
     const zeroCloseoutSummaryPath = join(tmp, "zero-closeout-summary.json");
     const zeroPartialReportPath = join(tmp, "zero-partials.json");
     const zeroChecklistReportPath = join(tmp, "zero-evidence-checklist.json");
+    const zeroPreflightManifestPath = join(tmp, "zero-preflight-artifacts.json");
     const zeroPackageManifestPath = join(tmp, "zero-evidence-package.json");
 
     writeFileSync(envFilePath, readinessEnvFile(), "utf8");
@@ -201,6 +212,7 @@ function verifySelfTestContract() {
       cwd: process.cwd(),
       stdio: "ignore",
     });
+    writeFileSync(preflightManifestPath, preflightManifest(partialReportPath, checklistReportPath, generatedAt), "utf8");
     writeFileSync(
       evidenceRecordPath,
       fillTemplate(readFileSync("docs/production-acceptance-evidence-template.md", "utf8"), {
@@ -208,9 +220,11 @@ function verifySelfTestContract() {
         closeoutSummaryPath,
         partialReportPath,
         checklistReportPath,
+        preflightManifestPath,
         readinessReportDigest: "verified in closeout summary artifact digests",
         partialReportDigest: sha256File(partialReportPath),
         checklistReportDigest: sha256File(checklistReportPath),
+        preflightManifestDigest: sha256File(preflightManifestPath),
       }),
       "utf8"
     );
@@ -223,6 +237,7 @@ function verifySelfTestContract() {
       `--summary-out=${closeoutSummaryPath}`,
       `--partials-out=${partialReportPath}`,
       `--checklist-out=${checklistReportPath}`,
+      `--preflight-manifest=${preflightManifestPath}`,
       "--branch=legacy-parity-runbook",
       "--commit=0404c6a",
       `--generated-at=${generatedAt}`,
@@ -237,6 +252,7 @@ function verifySelfTestContract() {
       `--evidence-record=${evidenceRecordPath}`,
       `--partial-report=${partialReportPath}`,
       `--checklist-report=${checklistReportPath}`,
+      `--preflight-manifest=${preflightManifestPath}`,
       `--manifest-out=${packageManifestPath}`,
     ]);
     const packageManifest = readJson<PackageManifest>(packageManifestPath);
@@ -250,6 +266,7 @@ function verifySelfTestContract() {
     assert.equal(packageManifest.artifacts.readinessReport.generatedAt, generatedAt);
     assert.equal(packageManifest.artifacts.partialReport.generatedAt, generatedAt);
     assert.equal(packageManifest.artifacts.evidenceChecklist.generatedAt, generatedAt);
+    assert.equal(packageManifest.artifacts.preflightManifest.generatedAt, generatedAt);
     assert.equal(packageManifest.artifacts.evidenceRecord.generatedAt, undefined);
     assert.deepEqual(packageManifest.closeout.generatedFrom, {
       matrix: "docs/page-parity-matrix.json",
@@ -265,6 +282,7 @@ function verifySelfTestContract() {
       `--evidence-record=${evidenceRecordPath}`,
       `--partial-report=${partialReportPath}`,
       `--checklist-report=${checklistReportPath}`,
+      `--preflight-manifest=${preflightManifestPath}`,
       `--manifest=${packageManifestPath}`,
     ]);
 
@@ -278,6 +296,7 @@ function verifySelfTestContract() {
       `--evidence-record=${evidenceRecordPath}`,
       `--partial-report=${partialReportPath}`,
       `--checklist-report=${checklistReportPath}`,
+      `--preflight-manifest=${preflightManifestPath}`,
       `--manifest=${staleManifestPath}`,
     ], false);
     assert.equal(stale.status, 1);
@@ -296,6 +315,7 @@ function verifySelfTestContract() {
       `--evidence-record=${evidenceRecordPath}`,
       `--partial-report=${partialReportPath}`,
       `--checklist-report=${checklistReportPath}`,
+      `--preflight-manifest=${preflightManifestPath}`,
       `--manifest=${sourceMismatchManifestPath}`,
     ], false);
     assert.equal(sourceMismatch.status, 1);
@@ -318,6 +338,7 @@ function verifySelfTestContract() {
       `--evidence-record=${evidenceRecordPath}`,
       `--partial-report=${partialReportPath}`,
       `--checklist-report=${checklistReportPath}`,
+      `--preflight-manifest=${preflightManifestPath}`,
     ], false);
     assert.equal(generatedAtMismatch.status, 1);
     assert.match(generatedAtMismatch.stderr, /readinessReport generatedAt drifted from package generatedAt/);
@@ -329,6 +350,7 @@ function verifySelfTestContract() {
       `--evidence-record=${evidenceRecordPath}`,
       `--partial-report=${partialReportPath}`,
       `--checklist-report=${checklistReportPath}`,
+      `--preflight-manifest=${preflightManifestPath}`,
       "--require-zero-partials",
     ], false);
     assert.equal(unresolvedFinal.status, 1);
@@ -341,6 +363,7 @@ function verifySelfTestContract() {
       `--evidence-record=${evidenceRecordPath}`,
       `--partial-report=${partialReportPath}`,
       `--checklist-report=${checklistReportPath}`,
+      `--preflight-manifest=${preflightManifestPath}`,
       "--branch=legacy-parity-runbook",
       "--commit=0404c6a",
       "--require-zero-partials",
@@ -374,6 +397,7 @@ function verifySelfTestContract() {
       cwd: process.cwd(),
       stdio: "ignore",
     });
+    writeFileSync(zeroPreflightManifestPath, preflightManifest(zeroPartialReportPath, zeroChecklistReportPath, generatedAt), "utf8");
     writeFileSync(
       zeroEvidenceRecordPath,
       fillTemplate(readFileSync("docs/production-acceptance-evidence-template.md", "utf8"), {
@@ -381,9 +405,11 @@ function verifySelfTestContract() {
         closeoutSummaryPath: zeroCloseoutSummaryPath,
         partialReportPath: zeroPartialReportPath,
         checklistReportPath: zeroChecklistReportPath,
+        preflightManifestPath: zeroPreflightManifestPath,
         readinessReportDigest: "verified in closeout summary artifact digests",
         partialReportDigest: sha256File(zeroPartialReportPath),
         checklistReportDigest: sha256File(zeroChecklistReportPath),
+        preflightManifestDigest: sha256File(zeroPreflightManifestPath),
       }),
       "utf8"
     );
@@ -396,6 +422,7 @@ function verifySelfTestContract() {
       `--summary-out=${zeroCloseoutSummaryPath}`,
       `--partials-out=${zeroPartialReportPath}`,
       `--checklist-out=${zeroChecklistReportPath}`,
+      `--preflight-manifest=${zeroPreflightManifestPath}`,
       "--branch=legacy-parity-runbook",
       "--commit=0404c6a",
       `--generated-at=${generatedAt}`,
@@ -412,6 +439,7 @@ function verifySelfTestContract() {
       `--evidence-record=${zeroEvidenceRecordPath}`,
       `--partial-report=${zeroPartialReportPath}`,
       `--checklist-report=${zeroChecklistReportPath}`,
+      `--preflight-manifest=${zeroPreflightManifestPath}`,
       `--manifest-out=${zeroPackageManifestPath}`,
       "--branch=legacy-parity-runbook",
       "--commit=0404c6a",
@@ -442,6 +470,7 @@ function verifySelfTestContract() {
       `--evidence-record=${zeroEvidenceRecordPath}`,
       `--partial-report=${zeroPartialReportPath}`,
       `--checklist-report=${zeroChecklistReportPath}`,
+      `--preflight-manifest=${zeroPreflightManifestPath}`,
       `--manifest=${zeroPackageManifestPath}`,
       "--branch=legacy-parity-runbook",
       "--commit=0404c6a",
@@ -454,6 +483,7 @@ function verifySelfTestContract() {
       `--evidence-record=${evidenceRecordPath}`,
       `--partial-report=${partialReportPath}`,
       `--checklist-report=${checklistReportPath}`,
+      `--preflight-manifest=${preflightManifestPath}`,
       "--branch=legacy-parity-runbook",
       "--commit=deadbeef",
     ], false);
@@ -471,6 +501,7 @@ function buildManifest(params: {
   evidenceRecordPath: string;
   partialReportPath: string;
   checklistReportPath: string;
+  preflightManifestPath: string;
   summary: CloseoutSummary;
 }): PackageManifest {
   return {
@@ -483,6 +514,7 @@ function buildManifest(params: {
       evidenceRecord: artifact(params.evidenceRecordPath),
       partialReport: artifact(params.partialReportPath),
       evidenceChecklist: artifact(params.checklistReportPath),
+      preflightManifest: artifact(params.preflightManifestPath),
     },
     closeout: {
       branch: params.summary.branch,
@@ -512,7 +544,7 @@ function artifact(path: string): ArtifactManifest {
 
 function assertPackageGeneratedAtConsistency(manifest: PackageManifest) {
   assertValidIsoTimestamp(manifest.generatedAt, "production evidence package generatedAt");
-  for (const artifactName of ["closeoutSummary", "readinessReport", "partialReport", "evidenceChecklist"] as const) {
+  for (const artifactName of ["closeoutSummary", "readinessReport", "partialReport", "evidenceChecklist", "preflightManifest"] as const) {
     const artifact = manifest.artifacts[artifactName];
     assert.equal(
       artifact.generatedAt,
@@ -584,9 +616,11 @@ type ArtifactPaths = {
   closeoutSummaryPath: string;
   partialReportPath: string;
   checklistReportPath: string;
+  preflightManifestPath: string;
   readinessReportDigest: string;
   partialReportDigest: string;
   checklistReportDigest: string;
+  preflightManifestDigest: string;
 };
 
 function filledValueFor(field: string, artifactPaths: ArtifactPaths) {
@@ -602,6 +636,8 @@ function filledValueFor(field: string, artifactPaths: ArtifactPaths) {
   if (field === "Partial gate report SHA-256") return artifactPaths.partialReportDigest;
   if (field === "Production evidence checklist") return artifactPaths.checklistReportPath;
   if (field === "Production evidence checklist SHA-256") return artifactPaths.checklistReportDigest;
+  if (field === "Production preflight manifest") return artifactPaths.preflightManifestPath;
+  if (field === "Production preflight manifest SHA-256") return artifactPaths.preflightManifestDigest;
   if (field === "Release decision") return "accepted";
   if (field === "Remaining production tickets") return "none";
   if (field === "Approval link/id") return "release-ticket-verified";
@@ -775,6 +811,41 @@ function zeroPartialGateMapMarkdown() {
     "| --- | --- | --- | --- |",
     "",
   ].join("\n");
+}
+
+function preflightManifest(partialReportPath: string, checklistReportPath: string, generatedAt: string) {
+  return `${JSON.stringify(
+    {
+      status: "production preflight artifacts verified",
+      schemaVersion: 1,
+      generatedAt,
+      generatedFrom: {
+        matrix: "docs/page-parity-matrix.json",
+        gateMap: "docs/partial-production-gate-map.md",
+      },
+      artifacts: {
+        partialReport: {
+          path: partialReportPath,
+          sha256: sha256File(partialReportPath),
+        },
+        evidenceChecklist: {
+          path: checklistReportPath,
+          sha256: sha256File(checklistReportPath),
+        },
+      },
+      blockingGateSummary: {
+        gates: 4,
+        ready: 8,
+        needsEvidence: 4,
+        blockingPartialRows: 17,
+        missingEvidenceItems: 32,
+        gatesToClose: ["PROD-CRON", "PROD-PROVIDERS", "PROD-NATIVE", "PROD-NATURE"],
+      },
+      redacted: true,
+    },
+    null,
+    2
+  )}\n`;
 }
 
 function partialReportSummary(path: string) {
