@@ -3,7 +3,7 @@
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
 **Program state:** Current-state discovery and benchmark synthesis active
-**Reported progress:** **10% done / 90% left**
+**Reported progress:** **12% done / 88% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -12,7 +12,7 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | Phase | Weight | Status | Earned | Evidence required to close |
 | --- | ---: | --- | ---: | --- |
 | 0. Safety and baseline | 3% | Complete | 3% | Clean branch, approved asset preservation, baseline screenshots and checks |
-| 1. Product discovery | 12% | In progress | 3% | Flow inventory, role/task matrix, current journeys, friction/risk register |
+| 1. Product discovery | 12% | In progress | 5% | Flow inventory, role/task matrix, current journeys, friction/risk register |
 | 2. Benchmark research | 10% | In progress | 4% | Pinterest taxonomy, Mobbin flow sheets, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | Not started | 0% | Strategy, three complete territories, selected brand constitution |
 | 4. IA and core UX | 12% | Not started | 0% | Sitemap, navigation model, Today model, tested wireframes |
@@ -20,7 +20,7 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **10%** |  |
+| **Total** | **100%** |  | **12%** |  |
 
 ## Confirmed Baseline
 
@@ -47,6 +47,8 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 - `docs/redesign/current-state-findings.md` records current strengths, risks, problem statements, and research questions.
 - `src/scripts/report-redesign-parity-domains.ts` assigns all 1,713 parity rows to canonical redesign or platform domains with zero unmapped rows.
 - The first confirmed runtime defects include dashboard horizontal overflow, colliding chart labels, unsafe all-present attendance defaults, ambiguous time context, and missing live ratio state.
+- `docs/redesign/role-runtime-audit.md` records authenticated manager, teacher, nurse, doctor, and parent structure without committing personal data; all temporary audit users were deleted.
+- Role runtime confirms an admin-clone manager home, identical nurse/doctor homes, teacher redirection to Today with 14 children selected by default, and a 213-report parent history rendered eagerly.
 
 ## Locked Decisions
 
@@ -87,9 +89,9 @@ The Mobbin MCP is registered and enabled at `https://api.mobbin.com/mcp` with OA
 
 ## Next Work Queue
 
-1. Capture authenticated teacher, manager, nurse, doctor, and parent runtime baselines.
-2. Trace the seven critical journeys through mutations, errors, and recovery.
-3. Capture compact desktop, tablet, and mobile current-state evidence.
+1. Trace the seven critical journeys through mutations, errors, and recovery.
+2. Capture compact desktop, tablet, and mobile current-state evidence.
+3. Inspect migrated permission variants without exposing identities.
 4. Complete Mobbin flow sheets for Revolut, Notion, Cosmos, Duolingo, Duolingo ABC, Genie, and Anything.
 5. Inspect direct competitor flows in live products or Mobbin; official-source capability research is complete.
 6. Expand the Pinterest taxonomy when the board changes.
@@ -172,6 +174,17 @@ An item is complete only when:
 - **Open item:** None for the Phase 0 gate.
 - **Next action:** Continue Phase 1 role and end-to-end journey discovery.
 - **Progress earned:** 1 additional percentage point; total 10%.
+
+### 2026-07-10 - Phase 1 role-specific runtime
+
+- **Question:** Does the current product adapt the work itself to each role, or only reduce navigation?
+- **Evidence:** Authenticated 1440 x 900 browser sessions for manager, teacher, nurse, doctor, and parent using short-lived audit users; structural route, navigation, action, overflow, and DOM measurements; source role model and permission fallback behavior.
+- **Decision:** Treat role-specific homes as a first-class IA requirement. Preserve shared records and permissions while changing hierarchy, ownership, urgency, and primary actions by role.
+- **Artifact:** `docs/redesign/role-runtime-audit.md`; role evidence integrated into the current-state findings and canonical flow inventory.
+- **Privacy:** No role screenshot or personal record content was committed. Four staff audit users and one parent audit user were deleted after sign-out; no operational record was mutated.
+- **Open items:** Real permission variants, critical-journey mutations, responsive behavior, and operator validation.
+- **Next action:** Trace J01-J07 through create, edit, confirmation, error, and recovery states.
+- **Progress earned:** 2 additional percentage points; total 12%.
 
 ## Work Log Template
 

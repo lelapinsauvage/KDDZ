@@ -133,31 +133,47 @@ The settings home lists sixteen destinations with equal card treatment, mixing o
 
 **Design requirement:** Group settings by organization, people/access, operations, communication, data, and legacy administration. Show scope and consequence before entry.
 
+### 11. Role-aware navigation stops at menu filtering
+
+Authenticated runtime passes show that the teacher is correctly redirected from Dashboard to Today, but the manager receives the administrator dashboard and information architecture. Nurse and doctor receive the same generic dashboard and the same Health, Children, and Communication navigation, differing only by role label.
+
+**Risk:** Users see fewer modules without receiving a home organized around their responsibilities, urgency, ownership, and completion criteria.
+
+**Design requirement:** Build role-specific home priorities on shared domain objects. Manager focuses live branch readiness; administrator focuses cross-site control; nurse focuses due health work; doctor focuses clinical review; teacher focuses the room; parent focuses child changes and obligations.
+
 ## Important Findings
 
-### 11. Loading behavior can obscure page identity
+### 12. Loading behavior can obscure page identity
 
 The first branch capture contained only shell and skeleton content after DOM ready; meaningful content arrived later. Streaming is appropriate, but the skeleton did not preserve a strong page identity or explain what was loading.
 
 **Design requirement:** Stable page frames, realistic skeleton geometry, and independent loading for slow sections.
 
-### 12. Empty-state quality is inconsistent but promising
+### 13. Empty-state quality is inconsistent but promising
 
 The message inbox provides a clear empty-state title and explanation. Other zero states appear as KPI values or blank chart regions without next actions.
 
 **Design requirement:** Reuse the message pattern: explain state, preserve filters, and offer the most relevant next step when one exists.
 
-### 13. The product mixes multiple visual eras
+### 14. The product mixes multiple visual eras
 
 The shell uses a dark enterprise palette; dashboard cards use saturated blocks; data tables use modern React controls; legacy terminology and imported dates remain visible; the settings hub resembles a separate component family.
 
 **Design requirement:** The design system must unify dense operations, forms, reports, records, and brand moments rather than polishing only the dashboard.
 
-### 14. Generic labels reduce confidence
+### 15. Generic labels reduce confidence
 
 "View More," "Setting," "General Info," "Medical Missing," and icon-only actions often omit the object, consequence, or expected result.
 
 **Design requirement:** Use task language such as "Review 12 incomplete medical records" or "Record payment," while keeping labels concise.
+
+### 16. The parent portal eagerly renders deep history
+
+The authenticated parent pass rendered 213 daily reports into the active tab at once. The resulting document was approximately 17,400 CSS pixels tall and contained 3,822 DOM elements at 1440 x 900.
+
+**Risk:** Initial load, memory, scanning, and return-to-position degrade as a child's history grows. Recent and actionable information competes with years of archival records.
+
+**Design requirement:** Prioritize today, unread state, obligations, and recent changes. Paginate, virtualize, or progressively disclose history while keeping every legacy record reachable.
 
 ## Existing Strengths to Preserve
 
@@ -252,3 +268,4 @@ These are hypotheses to test, not final navigation:
 - Test compact desktop, tablet, and mobile behavior.
 - Connect findings to specific parity rows and existing verification scripts.
 - Validate priority and terminology with real nursery operators or owner-provided operational policy.
+- Use `docs/redesign/role-runtime-audit.md` as the current role-home evidence and preserve its privacy boundary.

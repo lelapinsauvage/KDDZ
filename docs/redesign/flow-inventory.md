@@ -27,11 +27,11 @@ A canonical flow is the modern experience. Legacy `.php` routes, encrypted-id br
 | Role | Current navigation model | Canonical home need |
 | --- | --- | --- |
 | Administrator | Full entity-oriented navigation plus dynamic classes and system administration | Cross-branch state, risk, money, staffing, and exceptions |
-| Manager | Same broad structure as administrator, filtered by permissions | Branch readiness, ratios, staffing, attendance, parent and compliance actions |
-| Teacher | Today, reports, children, communication | Room roster, attendance, care recording, handover, messages |
-| Nurse | Dashboard, health, children, communication | Medical exceptions, medication, vaccinations, incidents, follow-up |
-| Doctor | Same health navigation as nurse | Assigned reviews, medical history, clinical actions |
-| Parent | Separate web/native surface | Child day, messages, notifications, calendar, finance |
+| Manager | Runtime confirms the same broad structure and dashboard as administrator, filtered by permissions | Branch readiness, ratios, staffing, attendance, parent and compliance actions |
+| Teacher | Runtime confirms Dashboard redirects to Today; reports, children, and communication remain adjacent | Room roster, attendance, care recording, handover, messages |
+| Nurse | Runtime confirms a generic dashboard plus health, children, and communication | Medical exceptions, medication, vaccinations, incidents, follow-up |
+| Doctor | Runtime confirms the same home and health navigation as nurse | Assigned reviews, medical history, clinical actions |
+| Parent | Runtime confirms a separate six-tab web/native-converged surface | Child day, messages, notifications, calendar, finance |
 
 ## Canonical Product Domains
 
@@ -192,9 +192,9 @@ Initial high-priority flows:
 | Evidence area | Status | Next evidence |
 | --- | --- | --- |
 | Admin/manager navigation | Captured from source and browser | Permission variants and dynamic class behavior |
-| Teacher navigation | Captured from source | Authenticated teacher runtime baseline |
-| Nurse/doctor navigation | Captured from source | Authenticated nurse and doctor runtime baseline |
-| Parent web/native | Route and API inventory complete | Runtime parent flow and native Mobbin analogues |
+| Teacher navigation | Authenticated runtime captured; Dashboard redirects to Today | Mutation, interruption, and permission variants |
+| Nurse/doctor navigation | Authenticated runtime captured; home and nav are currently identical | Responsibility split, clinical queues, and permission variants |
+| Parent web/native | Route/API inventory and authenticated web runtime complete | Native analogues, performance, and communication mutations |
 | Dashboard and Today | Desktop baseline complete | Compact desktop, tablet, mobile, and interaction traces |
 | Lists and tables | Representative children, staff, medical, reports captured | Keyboard, selection, export, delete, and empty/error behavior |
 | Child workspace | Details baseline complete | Edit, attendance, health, finance, and report subflows |
@@ -205,8 +205,8 @@ Initial high-priority flows:
 
 ## Next Discovery Actions
 
-1. Capture role-specific runtime baselines for teacher, nurse, doctor, manager, and parent.
-2. Trace J01 through J07 step by step, including mutations and error recovery.
-3. Record real nursery policy inputs for ratios, funded hours, billing, and compliance jurisdiction.
-4. Validate task priority with nursery operators or operational evidence.
+1. Trace J01 through J07 step by step, including mutations and error recovery.
+2. Record real nursery policy inputs for ratios, funded hours, billing, and compliance jurisdiction.
+3. Validate task priority with nursery operators or operational evidence.
+4. Inspect migrated permission variants without exposing identities.
 5. Rerun `pnpm exec tsx src/scripts/report-redesign-parity-domains.ts` after parity-matrix changes.
