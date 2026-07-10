@@ -324,6 +324,10 @@ Parent-safe projections never expose staff-only notes, other children, internal 
 
 The repository retains legacy iOS and Android parser contracts through `/ws/**`, `/api/parent/**`, PHP-compatible aliases, encrypted-ID bridges, and parent web routes.
 
+`native-parent-navigation-comparison.md` now closes the source-level interaction audit. It confirms that both archived native projects are parent-only clients: iOS has six visible operational destinations plus hidden/broken Messages and partial notification rendering, Android has five operational destinations plus visible empty Messages/Notifications placeholders, and parent web is the only complete messaging/notification surface. The old clients are compatibility fixtures, not implementation foundations.
+
+The recommended target is a new Expo/React Native parent companion sharing typed contracts and selected design tokens with the web product. Parent web remains the browser fallback and first complete-flow proving ground. Existing root and directory-prefixed PHP adapters remain live through real-device and installed-client cutover evidence.
+
 Rules:
 
 - Existing response shapes remain versioned and tested until all supported clients migrate.
@@ -331,7 +335,7 @@ Rules:
 - Breaking native changes require a new version, migration window, telemetry, and rollback path.
 - Parent-safe fields and permissions are evaluated before projection, not removed only in the client.
 - File URLs, dates, encodings, and empty/error semantics remain contract-tested.
-- Native clients need their own interaction audit before visual redesign; web screenshots are not a native specification.
+- Native source interaction audit is complete; current-device, assistive-technology, keyboard/safe-area, provider, and performance evidence remains required before visual migration.
 - Legacy routes remain valid deep links into canonical web workflows or compatibility rendering.
 
 ## Offline Capability Levels
@@ -447,7 +451,7 @@ The cross-device prototype must demonstrate complete handoff, not isolated scree
 2. Which browsers, iOS versions, Android versions, scanners, and tablets remain supported?
 3. Which actions are legally and operationally acceptable offline?
 4. How long may sensitive data remain cached on shared devices?
-5. What is the current native app release and API migration strategy?
+5. Which legacy native versions remain installed, what compatibility window applies, and who owns store/signing releases for the recommended replacement?
 6. Which parent obligations require push, email, SMS, in-app acknowledgment, or signatures?
 7. Which tasks move between devices most often, and what context is currently lost?
 8. What representative low-end hardware and nursery Wi-Fi conditions define the performance floor?

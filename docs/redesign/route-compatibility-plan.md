@@ -202,7 +202,7 @@ A signed-out production smoke at `localhost:3003` additionally confirmed that `/
 - Manager and practitioner card sorting and first-click tests.
 - Final validation of `Rooms`, `Team`, `Reports`, and calls under Messages.
 - Production authorization integration and allowed/denied route-loader, query, mutation, export, alias, API, and native evidence; capability-derived shell fixtures are complete.
-- Native staff and parent navigation comparison on real clients.
+- Real-client iOS/Android build, parser, push, deep-link, and supported-version acceptance; the source-level navigation comparison and 24-destination executable contract are complete.
 - Pilot browser-history matrix with real authorized records and sanitized evidence.
 - Approved analytics transport and governance, if analytics are enabled.
 - Complete alias-by-alias linkage from the parity matrix during each rollout wave.

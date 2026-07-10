@@ -2,6 +2,8 @@
 
 Legacy native apps must keep working behaviorally through the modern parent API/portal.
 
+The source-level navigation and modernization comparison is recorded in `docs/redesign/native-parent-navigation-comparison.md`; its executable 24-destination contract distinguishes working, hidden, placeholder, background, and external native capabilities without changing the parser contracts below.
+
 Parent web PWA status:
 
 - `/parent/login` now uses `/api/parent/login`, persists the parent JWT and child id in browser storage, and keeps failed login responses in the legacy `status: false` shape.

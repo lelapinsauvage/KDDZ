@@ -189,7 +189,7 @@ The following evidence is still required before production navigation changes:
 - Validation of calls under Messages.
 - Production capability integration and allowed/denied direct-route evidence across reads, writes, exports, aliases, APIs, and native contracts; the territory-neutral shell fixtures are complete.
 - Screen-reader and 200% zoom testing.
-- Native staff and parent navigation comparison.
+- Real-device native acceptance and supported-version evidence; the source-level comparison is complete and confirms the preserved iOS/Android clients are parent-only, not staff apps.
 - Pilot browser-history, deep-link, and authorization evidence against the accepted `route-compatibility-plan.md`; the territory-neutral route/analytics plan and executable registry are complete.
 
 ## Decision

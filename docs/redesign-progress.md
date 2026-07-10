@@ -2,8 +2,8 @@
 
 **Last updated:** 2026-07-10
 **Plan:** `docs/redesign-master-plan.md`
-**Program state:** Product discovery and benchmark research closed; territory-neutral IA, capability-derived navigation fixtures, route compatibility, state, motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; creative selection gate open
-**Reported progress:** **48% done / 52% left**
+**Program state:** Product discovery and benchmark research closed; territory-neutral staff IA, capability-derived navigation, route compatibility, native/parent convergence, state, motion, jurisdiction, localization, reliability, accessibility, performance, and data-delivery contracts documented and tested; creative selection gate open
+**Reported progress:** **49% done / 51% left**
 
 The percentage is weighted by verified phase gates. It is not an estimate based on time or code volume.
 
@@ -15,12 +15,12 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 | 1. Product discovery | 12% | Complete | 12% | Flow inventory, role/task matrix, current journeys, friction/risk register |
 | 2. Benchmark research | 10% | Complete | 10% | Pinterest taxonomy, Mobbin flow sheets, direct-competitor operations, benchmark synthesis |
 | 3. Brand strategy and direction | 10% | In progress | 6% | Strategy, three complete territories, selected brand constitution |
-| 4. IA and core UX | 12% | In progress | 6% | Sitemap, navigation model, Today model, tested wireframes |
+| 4. IA and core UX | 12% | In progress | 7% | Sitemap, navigation model, Today model, tested wireframes |
 | 5. Design system | 13% | In progress | 11% | Tokens, components, motion, responsive, accessibility, performance, and data-delivery foundations |
 | 6. Pilot core flows | 15% | Not started | 0% | Shell, Today, attendance, ratios, child profile verified |
 | 7. Full product rollout | 20% | Not started | 0% | All canonical flows migrated with parity evidence |
 | 8. Hardening and award polish | 5% | Not started | 0% | QA, performance, accessibility, award scorecards and assets |
-| **Total** | **100%** |  | **48%** |  |
+| **Total** | **100%** |  | **49%** |  |
 
 ## Confirmed Baseline
 
@@ -59,6 +59,7 @@ The percentage is weighted by verified phase gates. It is not an estimate based 
 - `docs/redesign/operational-architecture-synthesis.md` defines the live operating model, Today hierarchy, canonical objects, work-item lifecycle, role projections, and integrity gates.
 - `docs/redesign/brand-expression-synthesis.md` translates the approved identity seed and research into governed color, typography, shape, illustration, voice, motion, and territory criteria.
 - `docs/redesign/cross-device-synthesis.md` assigns desktop, tablet, mobile, parent, and native surfaces distinct jobs while preserving shared state, drafts, permissions, and compatibility contracts.
+- `docs/redesign/native-parent-navigation-comparison.md` maps 24 actual iOS, Android, and parent-web destinations, identifies hidden/placeholder native debt, and recommends a shared Expo/React Native replacement while preserving installed-client adapters.
 - `docs/redesign/targeted-reference-flow-study.md` adds source-linked Apple, Things, Headspace, Flighty, Airbnb, Stripe, and Anything evidence for motion purpose, consequence, recovery, live state, and handoff.
 - `docs/redesign/brand-strategy.md` defines purpose, promise, positioning, audience tensions, narrative, value pillars, message hierarchy, personality, voice, terminology, and trust requirements around `Care, visibly handled.`
 - `docs/redesign/creative-territory-briefs.md` defines Daylight, Signal, and Carebook as distinct build systems with shared realistic content, palette/type/motion hypotheses, screen requirements, risks, and kill criteria.
@@ -472,7 +473,7 @@ An item is complete only when:
 - **Artifacts:** `docs/redesign/route-compatibility-plan.md`, `src/lib/redesign-route-compatibility.ts`, `src/scripts/verify-redesign-route-compatibility.ts`, and updated IA, validation, master-plan, and progress artifacts.
 - **Verification:** The focused verifier passes against 332 routes and 28 critical aliases; it proves live/current route existence, planned-root absence, alias/destination integrity, design-lab exclusion, context declarations, privacy-safe observations, and native separation. A signed-out production browser smoke confirms same-origin legacy callback preservation plus Back/Forward restoration with an empty warning/error log. Focused ESLint, full TypeScript, and diff checks pass.
 - **Parity:** No production route imports the registry. No navigation, redirect, database behavior, permission, output, legacy alias, native response, or product UI changed.
-- **Evidence boundary:** The registry is the critical migration baseline, not an exhaustive replacement for 1,713 parity rows. Operator label/first-click evidence, production capability enforcement, real-record browser history/deep-link testing, native-client comparison, analytics governance, and rollout-by-rollout alias linkage remain open.
+- **Evidence boundary:** The registry is the critical migration baseline, not an exhaustive replacement for 1,713 parity rows. Operator label/first-click evidence, production capability enforcement, real-record browser history/deep-link testing, real-device native acceptance, analytics governance, and rollout-by-rollout alias linkage remain open.
 - **Next action:** Close creative selection, codify the selected constitution, then run the first vertical pilot on safe current routes and execute the route-entry/browser-history matrix before promoting any planned root.
 - **Progress earned:** 1 percentage point; Phase 4 reaches 5 of 12%; total 47%.
 
@@ -487,6 +488,19 @@ An item is complete only when:
 - **Evidence boundary:** This closes shell projection fixtures, not production authorization. First-organization fallback, direct-route gaps, assignment-aware reads/writes, transition capabilities, denial UX, and non-disclosure tests remain open release blockers.
 - **Next action:** Present the creative-territory decision packet. After selection, codify the brand constitution and begin the first vertical pilot on safe current routes with server authorization integration.
 - **Progress earned:** 1 percentage point; Phase 4 reaches 6 of 12%; total 48%.
+
+### 2026-07-10 - Phase 4 native and parent navigation convergence
+
+- **Question:** What parent product actually exists across the preserved iOS app, Android app, current parent web portal, restored PHP routes, and modern API, and what must be preserved, repaired, or replaced?
+- **Evidence:** Actual local UIKit/Storyboard/Swift and Android Java/XML/Retrofit source; iOS login, home, messaging, notification, push, and endpoint dispatch; Android login, home, navigation graph, Retrofit interface, placeholder view models, manifest, and build configuration; current parent web source and signed-out 390 x 844 browser entry; PHP/API compatibility matrix, native acceptance ledger, and route registry; current official Expo Router, SecureStore, and React Native architecture guidance.
+- **Decision:** Treat the archived apps as parent-only compatibility fixtures, not implementation foundations. Preserve working parser and PHP contracts, repair hidden/placeholder Messages and Notifications capability, use parent web as the complete behavioral baseline, and recommend a new Expo/React Native parent companion sharing typed contracts and selected tokens while legacy adapters remain live through installed-client cutover.
+- **Findings:** iOS has six operational home destinations, hidden/broken Messages, and eleven notification groups constrained by an eight-section UI. Android has five Retrofit-backed destinations and visible empty Messages/Notifications placeholders. Parent web alone has complete messaging, grouped notifications, and push controls. Legacy cleartext transport, stored credentials, Android credential literals, old platform stacks, signing ownership, and absent Android push are explicit migration risks; no secret value was copied.
+- **Artifacts:** `docs/redesign/native-parent-navigation-comparison.md`, `src/lib/redesign-native-parent-navigation.ts`, `src/scripts/verify-redesign-native-parent-navigation.ts`, and updates to cross-device, IA, route, API, native-acceptance, master-plan, and progress artifacts.
+- **Verification:** The verifier passes 24 destination contracts against all live parent/PHP/API routes and the preserved local native source; focused ESLint and full TypeScript pass. Browser confirms signed-out parent redirect/login semantics, named controls, zero 390px horizontal overflow, and no unnamed buttons. Public-repository tracked files contain no native signing/keystore artifact.
+- **Parity:** No production page, endpoint, payload, database, permission, legacy alias, or native source changed. The contract makes broken source states explicit so they cannot be mistaken for acceptable parity.
+- **Evidence boundary:** This is not a signed native build, simulator/emulator run, physical-device pass, provider push test, store release, or installed-version census. Those remain external acceptance gates.
+- **Next action:** Present the creative-territory decision packet. After selection, codify the brand constitution and start the parent-web or staff Today vertical pilot; create the new native workspace only after repository/signing ownership approval.
+- **Progress earned:** 1 percentage point; Phase 4 reaches 7 of 12%; total 49%.
 
 ## Work Log Template
 

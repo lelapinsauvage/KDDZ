@@ -35,6 +35,26 @@ Known limits:
 - Alarm rows were empty for this selected local parent, so alarm item shapes remain covered by reusable contract/unit verifiers and fixture-backed delivery verifiers, not by populated local native rows.
 - Production `notifications_nature` ordering/content still needs acceptance after the canonical production import.
 
+## 2026-07-10 Source Navigation Comparison
+
+Command:
+
+```bash
+pnpm exec tsx src/scripts/verify-redesign-native-parent-navigation.ts --require-legacy-source
+```
+
+Result: passed against 24 destination contracts and the preserved local iOS/Android source.
+
+Non-sensitive findings:
+
+- The archived iOS and Android projects are parent clients; no staff-native application was found in the supplied source.
+- iOS exposes six operational home destinations, hides an incomplete Messages controller, and parses eleven notification groups while the table declares only eight sections.
+- Android exposes five Retrofit-backed destinations plus visible but empty Messages and Notifications placeholders.
+- Parent web is currently the only surface with complete message compose/open/reply, grouped notifications, and push controls.
+- Cleartext transport, stored credentials, Android credential literals, old platform stacks, signing ownership, and absent Android push remain migration risks. No credential or signing value was copied into the repository.
+- Local build preflight is not green: full Xcode is not selected/installed for `xcodebuild`, and the archived Gradle 5.1.1 wrapper cannot start without a Java runtime. The preserved source was not modified to mask either prerequisite.
+- `docs/redesign/native-parent-navigation-comparison.md` records the convergence and replacement recommendation. This source pass is not simulator, emulator, signed build, provider, or physical-device evidence.
+
 Remaining native acceptance gates:
 
 These native gates roll up into `docs/legacy-production-acceptance-gates.md`; keep this ledger for non-sensitive local/native evidence and use the production gate register for final closure.
